@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		
+		<title>BWS quote builder</title>
+		<h1>Build a quote!</h1>
+		<meta name="pdfFile" content="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf">
+		<link rel="stylesheet" type="text/css" href="styles.css">
+		
+	</head>
+	
+	<script type="text/javascript" src="jquery-3.5.1.min.js"></script>
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript">			
+		$(document).ready(function() {
+			populateIndustries();
+		});
+	</script>
+	
+	<!-- <form onsubmit=> -->
+<!-- <p>What would you like for lunch?</p> -->
+<!-- <select name="fruit"> -->
+<!-- <option value ="none">Nothing</option> -->
+<!-- <option value ="guava">Guava</option> -->
+<!-- <option value ="lychee">Lychee</option> -->
+<!-- <option value ="papaya">Papaya</option> -->
+<!-- <option value ="watermelon">Watermelon</option> -->
+<!-- </select>  -->
+<!-- <p><input type="submit" value="Submit"></p> -->
+<!-- </form> -->
+<!-- <h3>Result:</h3> -->
+<!-- <iframe name="result" style="height:100px;width:200px;"></iframe> -->
+
+	
+	
+	<body>
+		<p src=pdfFile>hello world</p>
+		
+		<!-- pdf examples -->
+		<!-- <h1>PDF Example with iframe</h1> -->
+		<!-- <iframe src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" width="100%" height="500px"></iframe> -->
+		<!-- <h1>PDF Example</h1> -->
+		<!-- <p>Open a PDF file <a href="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf">example</a> -->
+		<!-- <embed src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" type="application/pdf" width="100%" height="600px" /> -->
+		
+		
+		<div class="grid-container" id="drop-down-selectors">
+			<div class="industry-selection">
+				<p class="industrySelectionP" id="industrySelectionP"> <a id="industrySelectionPLink" href="#industrySelection">Select an industry from the menu.</a></p>
+				<div class="dropdown" id="industrySelection">
+					<button class="dropbtn">Select an Industry</button>
+					<div class="dropdown-content" id="industryMenu">
+						<!-- Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+			
+			<div class="class-selection" id="classSelection">
+				<p class="classSelectionP" id="classSelectionP"> <a id="classSelectionPLink" href="#classSelection">Select a class from the menu.</a></p>
+				<div class="dropdown" id="classSelection">
+					<button class="dropbtn">Select a Class</button>
+					<div class="dropdown-content" id="classMenu">
+						<!--Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+			
+			<div class="model-selection", id="modelSelection">
+				<p class="modelSelectionP" id="modelSelectionP"> <a id="modelSelectionPLink" href="#modelSelection">Select a model from the menu.</a></p>
+				<div class="dropdown" id="modelSelection">
+					<button class="dropbtn">Select a Model</button>
+					<div class="dropdown-content" id="modelMenu">
+						<!--Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="pdfViewer" id=pdfViewer>
+			<embed src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" type="application/pdf" width="100%" height="600px" />
+		</div>
+		
+  </div>
+		
+	</body>	
+		
+		<!-- This produces a simple list -->
+		<!-- <ul industry="industry-select" style="display: block;"> -->
+		
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/end-dumps-live-bottoms/">End dumps &amp; live bottoms</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/equipment-paving-recovery/">Equipment - Paving &amp; Recovery</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/drop-deck/">Flat - Drop Deck</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/hrgn-lowboys/">HRGN Lowboys</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/logging/">Logging</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/oilfield/">Oilfield</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/rgn-double-drops/">RGN Double Drops</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/screeners-landblades/">Screeners &amp; Landblades</a> -->
+			<!-- </li> -->
+			<!-- <li> -->
+				<!-- <a href="https://www.bwstrailers.com/industry/specialized/">Specialized</a> -->
+			<!-- </li> -->
+		<!-- </ul> -->
+
+</html>

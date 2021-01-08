@@ -1,0 +1,63 @@
+html,
+
+.dropbtn {
+	background-color: black;
+	color: white;
+	padding: 16px;
+	font-size: 16px;
+	border: none;
+}
+		
+.dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.dropdown-content {
+	background-color: maroon;
+	display: none;
+	position: absolute;
+	min-width: 300px;
+	z-index: 1;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  background-color: #2196F3;
+  padding: 10px;
+  grid-column-gap: 50px;
+  grid-row-gap: 50px;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* .industry-selection { */
+	/* /* display: flex; */ */
+	/* align-items: center; */
+	/* justify-content: center; */
+/* } */
+
+/* .class-selection { */
+	/* /* display: flex; */ */
+	/* align-items: center; */
+	/* justify-content: center; */
+/* } */
+
+/* .model-selection { */
+	/* /* display: flex; */ */
+	/* align-items: center; */
+	/* justify-content: center; */
+/* } */
+
+.industryElem:hover {color: green;}
+.industryElem:active {color: blue;}
+.classElem:hover {color: green;}
+.classElem:active {color: blue;}
+.modelElem:hover {color: green;}
+.modelElem:active {color: blue;}
+	
+.dropdown-content a:hover {background-color: white;}
+.dropdown:hover .dropdown-content {display: block;}
+.dropdown:hover .dropbtn {background-color: grey;}
