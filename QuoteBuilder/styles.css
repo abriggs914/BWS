@@ -33,6 +33,50 @@ html,
   justify-content: center;
 }
 
+.optionLine {
+	/* float: left; */
+	align-items: flex-start;
+	display: flex;
+  /* align-items: center; */
+  /* justify-content: center; */
+  /* height: 100%; */
+  /* flex-direction: column; */
+  
+  
+  
+	/* display: -webkit-inline-box; */
+	/* position: relative; */
+	/* top: 50%; */
+	/* transform: translateY(-50%);  */
+}
+
+.optionsList:after {
+	background-color: green;
+    /* white-space: nowrap; */
+    /* overflow-x: auto; */
+    /* overflow-y: hidden; */
+	/* position: relative; */
+	display: table;
+	clear: both;
+}
+
+.optionsHeader {
+	display: flex;
+	/* position: relative; */
+}
+
+.descriptionSpan {
+	width: 30%;
+}
+
+.weightSpan {
+	width: 8%;
+}
+
+.priceSpan {
+	width: 8%;
+}
+
 /* .industry-selection { */
 	/* /* display: flex; */ */
 	/* align-items: center; */
