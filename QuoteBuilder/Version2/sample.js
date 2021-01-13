@@ -9,6 +9,9 @@ MIN_PAD_WIDTH = 10;
 MIN_DESC_WIDTH = 65;
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	Begin Option class
+
 class Option {
 	constructor(elementIDIn, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
 		this.elementID = elementIDIn;
@@ -119,6 +122,42 @@ class Option {
 	}
 }
 
+//	End Option class
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	Begin BaseSpec class
+
+class BaseSpec {
+	
+	constructor(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
+		this.idNum = idNum;
+		this.groupName = groupName;
+		this.sectionName = sectionName;
+		this.description = description;
+		this.sortG = sortG;
+		this.sortSE = sortSE;
+		this.sortGV2 = sortGV2;
+		this.sortSEV2 = sortSEV2;
+	}
+	
+	initHTML() {
+		return "<tr>" + this.getHTML() + "</tr>";
+	}
+	
+	getHTML() {
+		var html = "<td>";
+		html += "</td>";
+		return html;
+	}
+	
+	
+}
+
+//	End BaseSpec class
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function getDescriptionSpan() {
 	return "<span class='descriptionSpan'></span>";
 }
@@ -152,7 +191,7 @@ function updateQuantity(opNum) {
 	if (op != null) {
 		str = document.getElementById(op.quantityInputID()).value;
 		if (isNumeric(str)) {
-			op.quantity = Number(str);
+			op.quantity = Math.max(0, Number(str));
 			op.updateHTML();
 		}
 	}
@@ -163,7 +202,7 @@ function increment(opNum, attr) {
 	op = lookUpOption(opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
-		op[attr]++;
+		op[attr] = Math.max(0, op[attr] + 1);
 		op.updateHTML();
 	}
 }
@@ -173,7 +212,7 @@ function decrement(opNum, attr) {
 	op = lookUpOption(opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
-		op[attr]--;
+		op[attr] = Math.max(0, op[attr] - 1);
 		op.updateHTML();
 	}
 }
@@ -189,13 +228,28 @@ function isNumeric(str) {
 // Iterate the OPTIONS array and return the option with the
 // matching option number. Null otherwise.
 function lookUpOption(opNum) {
-	for (i in OPTIONS) {
+	for (var i in OPTIONS) {
 		var op = OPTIONS[i];
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
 		if (op.optionNum == opNum) {
 			return op;
+		}		
+	}
+	return null;
+}
+
+// Iterate the BASESPECS array and return the BaseSpec with the
+// matching BaseSpec id number. Null otherwise.
+function lookUpBaseSpec(bsNum) {
+	for (var i in BASESPECS) {
+		var bs = BASESPECS[i];
+		// console.log("op.optionNum: " + op.optionNum);
+		// console.log("opNum: " + opNum);
+		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
+		if (bs.idNum == bsNum) {
+			return bs;
 		}		
 	}
 	return null;
@@ -210,7 +264,7 @@ function createOption(elementID, optionNum, section, partNum, description, weigh
 	return op;
 }
 
-function generateHeader() {
+function generateOptionHeader() {
 	var html = "<tr>";
     html += "<th>Description</th>";
     html += "<th>Weight</th>";
@@ -226,13 +280,50 @@ function generateHeader() {
 	return html;
 }
 
-function initAllHTML() {
-	var str = generateHeader();
+function generateBaseSpecHeader() {
+	var html = "<tr>";
+    html += "<th>Group</th>";
+    html += "<th>Section</th>";
+    html += "<th>Description</th>";
+	html += "</tr>";
+	// var html = "<p>Description</p>";
+	// html += getDescriptionSpan();
+	// html += "<p>Weight</p>";
+	// html += getWeightSpan();
+	// html += "<p>Price</p>";
+	// html += getPriceSpan();
+	// document.getElementById("optionsHeader").innerHTML = html;
+	return html;
+}
+
+function initAllOptionHTML() {
+	var str = generateOptionHeader();
 	for (o in OPTIONS) {
 		var op = OPTIONS[o];
 		str += op.initHTML();
 	}
+	console.log("str: " + str);
+	console.log("document: " + document);
+	console.log("Object.keys(document): " + Object.keys(document));
+	console.log("document.innerHTML: " + document.innerHTML);
+	console.log("document.getElementById(optionsList): " + document.getElementById("optionsList"));
+	console.log("document.getElementById(optionsList).innerHTML: " + document.getElementById("optionsList").innerHTML);
 	document.getElementById("optionsList").innerHTML = str;
+}
+
+function initAllBaseSpecHTML() {
+	var str = generateBaseSpecHeader();
+	for (b in BASESPECS) {
+		var bs = BASESPECS[b];
+		str += bs.initHTML();
+	}
+	// console.log("str: " + str);
+	// console.log("document: " + document);
+	// console.log("Object.keys(document): " + Object.keys(document));
+	// console.log("document.innerHTML: " + document.innerHTML);
+	// console.log("document.getElementById(optionsList): " + document.getElementById("optionsList"));
+	// console.log("document.getElementById(optionsList).innerHTML: " + document.getElementById("optionsList").innerHTML);
+	document.getElementById("baseSpecsList").innerHTML = str;
 }
 
 function printOptions() {
@@ -244,14 +335,24 @@ function printOptions() {
 }
 
 
-OPTIONS = []
+OPTIONS = [];
 var o1 = createOption("option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1", "I1", "J1", "K1", HTMLFormat.INC_DEC);
 var o2 = createOption("option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2", "J2", "K2", HTMLFormat.CHECKBOX);
+var o3 = createOption("option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3", HTMLFormat.CHECKBOX);
+var o4 = createOption("option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4", "I4", "J4", "K4", HTMLFormat.INC_DEC);
 // var o = createOption("option001", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", HTMLFormat.INC_DEC);
 console.log("OPTION: " + o1);
 console.log("OPTION: " + o2);
+console.log("OPTION: " + o3);
+console.log("OPTION: " + o4);
 console.log("OPTION HTML: " + o1.getHTML());
 console.log("OPTION HTML: " + o2.getHTML());
+console.log("OPTION HTML: " + o3.getHTML());
+console.log("OPTION HTML: " + o4.getHTML());
 // document.getElementById("option001").innerHTML = o1.getHTML();
 // document.getElementById("option002").innerHTML = o2.getHTML();
-initAllHTML();
+initAllOptionHTML();
+
+
+BASESPECS = [];
+initAllBaseSpecHTML();

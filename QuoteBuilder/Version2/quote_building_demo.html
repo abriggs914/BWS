@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		
+		<title>BWS quote builder</title>
+		<h1>Build a quote!</h1>
+		<!-- <meta name="pdfFile" content="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf"> -->
+		<link rel="stylesheet" type="text/css" href="styles.css">
+		
+	</head>
+	
+	<!-- <form onsubmit=> -->
+<!-- <p>What would you like for lunch?</p> -->
+<!-- <select name="fruit"> -->
+<!-- <option value ="none">Nothing</option> -->
+<!-- <option value ="guava">Guava</option> -->
+<!-- <option value ="lychee">Lychee</option> -->
+<!-- <option value ="papaya">Papaya</option> -->
+<!-- <option value ="watermelon">Watermelon</option> -->
+<!-- </select>  -->
+<!-- <p><input type="submit" value="Submit"></p> -->
+<!-- </form> -->
+<!-- <h3>Result:</h3> -->
+<!-- <iframe name="result" style="height:100px;width:200px;"></iframe> -->
+
+	
+	
+	<body>
+		<p src=pdfFile>hello world</p>
+		
+		<!-- pdf examples -->
+		<!-- <h1>PDF Example with iframe</h1> -->
+		<!-- <iframe src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" width="100%" height="500px"></iframe> -->
+		<!-- <h1>PDF Example</h1> -->
+		<!-- <p>Open a PDF file <a href="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf">example</a> -->
+		<!-- <embed src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" type="application/pdf" width="100%" height="600px" /> -->
+		
+		<div class='csv_parser' id='csv_parser'>
+			<div class="input" id="input" style="display: block;">
+							
+							<div class="text-center">
+								Choose one or more delimited text files for Papa to parse.
+							</div>
+
+							<input type="file" id="files" multiple="">
+							
+							Sample files:
+
+							<ul>
+								<li>
+									<a href="/resources/files/normal.csv" id="local-normal-file">Normal file</a>
+								</li>
+								<li>
+									<a href="/resources/files/big.csv" id="local-large-file">Large file</a>
+								</li>
+								<li>
+									<a href="/resources/files/malformed.tsv" id="local-malformed-file">Malformed file</a>
+								</li>
+							</ul>
+						</div>
+			<button id="submit" class="green">Parse</button>
+		</div>
+		
+		
+		<div class="grid-container" id="drop-down-selectors">
+			<div class="industry-selection">
+				<p class="industrySelectionP" id="industrySelectionP"> <a id="industrySelectionPLink" href="#industrySelection">Select an industry from the menu.</a></p>
+				<div class="dropdown" id="industrySelection">
+					<button class="dropbtn">Select an Industry</button>
+					<div class="dropdown-content" id="industryMenu">
+						<!-- Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+			
+			<div class="class-selection" id="classSelection">
+				<p class="classSelectionP" id="classSelectionP"> <a id="classSelectionPLink" href="#classSelection">Select a class from the menu.</a></p>
+				<div class="dropdown" id="classSelection">
+					<button class="dropbtn">Select a Class</button>
+					<div class="dropdown-content" id="classMenu">
+						<!--Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+			
+			<div class="model-selection", id="modelSelection">
+				<p class="modelSelectionP" id="modelSelectionP"> <a id="modelSelectionPLink" href="#modelSelection">Select a model from the menu.</a></p>
+				<div class="dropdown" id="modelSelection">
+					<button class="dropbtn">Select a Model</button>
+					<div class="dropdown-content" id="modelMenu">
+						<!--Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="table-wrapper">
+			<table class="optionsList" id="optionsList">
+				<p>Nothing to display for options yet</p>
+			</table>
+		</div>
+
+		<div class="table-wrapper">
+			<table class="baseSpecsList" id="baseSpecsList">
+				<p>Nothing to display for base specs yet</p>
+			</table>
+		</div>
+		
+		<div class="pdfViewer" id=pdfViewer>
+			<embed src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" type="application/pdf" width="100%" height="600px" />
+		</div>
+		
+		
+	</body>			
+
+	<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<!-- <script src="http://code.jquery.com/jquery-plugins.js"></script> -->
+	<!-- <script src="src/jquery.csv.js"></script> -->
+
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript" src="sample.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="papaparse.min.js"></script>
+	<script type="text/javascript">			
+		$(document).ready(function() {
+			populateIndustries();
+		});
+		
+		var inputType = "local";
+		var stepped = 0, rowCount = 0, errorCount = 0, firstError;
+		var start, end;
+		var firstRun = true;
+		var maxUnparseLength = 10000;
+
+$(function()
+{
+	// Tabs
+	$('#tab-string').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input').hide();
+		$('#input').show();
+		$('#submit').text("Parse");
+		inputType = "string";
+	});
+
+	$('#tab-local').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input').hide();
+		$('#input').show();
+		$('#submit').text("Parse");
+		inputType = "local";
+	});
+
+	$('#tab-remote').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input').hide();
+		$('#input').show();
+		$('#submit').text("Parse");
+		inputType = "remote";
+	});
+
+	$('#tab-unparse').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input').hide();
+		$('#input').show();
+		$('#submit').text("Unparse");
+		inputType = "json";
+	});
+
+
+
+	// Sample files
+	$('#remote-normal-file').click(function() {
+		$('#url').val($('#local-normal-file').attr('href'));
+	});
+	$('#remote-large-file').click(function() {
+		$('#url').val($('#local-large-file').attr('href'));
+	});
+	$('#remote-malformed-file').click(function() {
+		$('#url').val($('#local-malformed-file').attr('href'));
+	});
+
+
+
+
+	// Demo invoked
+	$('#submit').click(function()
+	{
+		if ($(this).prop('disabled') == "true")
+			return;
+
+		stepped = 0;
+		rowCount = 0;
+		errorCount = 0;
+		firstError = undefined;
+
+		var config = buildConfig();
+		var input = $('#input').val();
+
+		if (inputType == "remote")
+			input = $('#url').val();
+		else if (inputType == "json")
+			input = $('#json').val();
+
+		// Allow only one parse at a time
+		$(this).prop('disabled', true);
+
+		if (!firstRun)
+			console.log("--------------------------------------------------");
+		else
+			firstRun = false;
+
+
+
+		if (inputType == "local")
+		{
+			if (!$('#files')[0].files.length)
+			{
+				alert("Please choose at least one file to parse.");
+				return enableButton();
+			}
+			
+			$('#files').parse({
+				config: config,
+				before: function(file, inputElem)
+				{
+					start = now();
+					console.log("Parsing file...", file);
+				},
+				error: function(err, file)
+				{
+					console.log("ERROR:", err, file);
+					firstError = firstError || err;
+					errorCount++;
+				},
+				complete: function()
+				{
+					end = now();
+					printStats("Done with all files");
+				}
+			});
+		}
+		else if (inputType == "json")
+		{
+			if (!input)
+			{
+				alert("Please enter a valid JSON string to convert to CSV.");
+				return enableButton();
+			}
+
+			start = now();
+			var csv = Papa.unparse(input, config);
+			end = now();
+
+			console.log("Unparse complete");
+			console.log("Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+			
+			if (csv.length > maxUnparseLength)
+			{
+				csv = csv.substr(0, maxUnparseLength);
+				console.log("(Results truncated for brevity)");
+			}
+
+			console.log(csv);
+
+			setTimeout(enableButton, 100);	// hackity-hack
+		}
+		else if (inputType == "remote" && !input)
+		{
+			alert("Please enter the URL of a file to download and parse.");
+			return enableButton();
+		}
+		else
+		{
+			start = now();
+			var results = Papa.parse(input, config);
+			console.log("Synchronous results:", results);
+			if (config.worker || config.download)
+				console.log("Running...");
+		}
+	});
+
+	$('#insert-tab').click(function()
+	{
+		$('#delimiter').val('\t');
+	});
+});
+
+
+
+
+function printStats(msg)
+{
+	if (msg)
+		console.log(msg);
+	console.log("       Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+	console.log("  Row count:", rowCount);
+	if (stepped)
+		console.log("    Stepped:", stepped);
+	console.log("     Errors:", errorCount);
+	if (errorCount)
+		console.log("First error:", firstError);
+}
+
+
+
+function buildConfig()
+{
+	return {
+		delimiter: $('#delimiter').val(),
+		header: $('#header').prop('checked'),
+		dynamicTyping: $('#dynamicTyping').prop('checked'),
+		skipEmptyLines: $('#skipEmptyLines').prop('checked'),
+		preview: parseInt($('#preview').val() || 0),
+		step: $('#stream').prop('checked') ? stepFn : undefined,
+		encoding: $('#encoding').val(),
+		worker: $('#worker').prop('checked'),
+		comments: $('#comments').val(),
+		complete: completeFn,
+		error: errorFn,
+		download: inputType == "remote"
+	};
+}
+
+function stepFn(results, parser)
+{
+	stepped++;
+	if (results)
+	{
+		if (results.data)
+			rowCount += results.data.length;
+		if (results.errors)
+		{
+			errorCount += results.errors.length;
+			firstError = firstError || results.errors[0];
+		}
+	}
+}
+
+function completeFn(results)
+{
+	end = now();
+
+	if (results && results.errors)
+	{
+		if (results.errors)
+		{
+			errorCount = results.errors.length;
+			firstError = results.errors[0];
+		}
+		if (results.data && results.data.length > 0)
+			rowCount = results.data.length;
+	}
+
+	printStats("Parse complete");
+	console.log("    typeof:", typeof results);
+	console.log("    results['data']:", results['data']);
+	console.log("    results['errors']:", results['errors']);
+	console.log("    results['meta']:", results['meta']);
+	console.log("    Object.keys(results):", Object.keys(results));
+	console.log("    Object.keys(results['results']):", Object.keys(results['data']));
+	console.log("    Results:", results);
+	console.log("    Header:", results['data'][0]);
+
+	// icky hack
+	setTimeout(enableButton, 100);
+}
+
+function errorFn(err, file)
+{
+	end = now();
+	console.log("ERROR:", err, file);
+	enableButton();
+}
+
+function enableButton()
+{
+	$('#submit').prop('disabled', false);
+}
+
+function now()
+{
+	return typeof window.performance !== 'undefined'
+			? window.performance.now()
+			: 0;
+}
+	</script>
+
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+		<title>Demo - Papa Parse</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, maximum-scale=1.0">
+		<meta name="theme-color" content="#ffffff">
+		<!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css"> -->
+		<!-- <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Arvo|Source+Sans+Pro:400,400italic,700|Lato:300,400"> -->
+		<!-- <link rel="stylesheet" href="/resources/css/unsemantic.css"> -->
+		<!-- <link rel="stylesheet" href="/resources/css/common.css"> -->
+		<!-- <link rel="stylesheet" href="/resources/css/demo.css"> -->
+		<!-- <script async="" src="//www.google-analytics.com/analytics.js"></script> -->
+		<script src="./jquery.min.js"></script>
+		<script>
+			// Returns a random number between min and max (inclusive)
+function randomInt(min, max)
+{
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+<!-- // BEGIN GOOGLE ANALYTICS -->
+<!-- (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ -->
+<!-- (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), -->
+<!-- m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) -->
+<!-- })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); -->
+<!-- ga('create', 'UA-86578-20', 'papaparse.com'); -->
+<!-- ga('send', 'pageview'); -->
+<!-- // END GOOGLE ANALYTICS -->
+		</script>
+		<script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+		<script>
+		var inputType = "string";
+var stepped = 0, rowCount = 0, errorCount = 0, firstError;
+var start, end;
+var firstRun = true;
+var maxUnparseLength = 10000;
+
+$(function()
+{
+	// Tabs
+	$('#tab-string').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input-area').hide();
+		$('#input-string').show();
+		$('#submit').text("Parse");
+		inputType = "string";
+	});
+
+	$('#tab-local').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input-area').hide();
+		$('#input-local').show();
+		$('#submit').text("Parse");
+		inputType = "local";
+	});
+
+	$('#tab-remote').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input-area').hide();
+		$('#input-remote').show();
+		$('#submit').text("Parse");
+		inputType = "remote";
+	});
+
+	$('#tab-unparse').click(function()
+	{
+		$('.tab').removeClass('active');
+		$(this).addClass('active');
+		$('.input-area').hide();
+		$('#input-unparse').show();
+		$('#submit').text("Unparse");
+		inputType = "json";
+	});
+
+
+
+	// Sample files
+	$('#remote-normal-file').click(function() {
+		$('#url').val($('#local-normal-file').attr('href'));
+	});
+	$('#remote-large-file').click(function() {
+		$('#url').val($('#local-large-file').attr('href'));
+	});
+	$('#remote-malformed-file').click(function() {
+		$('#url').val($('#local-malformed-file').attr('href'));
+	});
+
+
+
+
+	// Demo invoked
+	$('#submit').click(function()
+	{
+		if ($(this).prop('disabled') == "true")
+			return;
+
+		stepped = 0;
+		rowCount = 0;
+		errorCount = 0;
+		firstError = undefined;
+
+		var config = buildConfig();
+		var input = $('#input').val();
+
+		if (inputType == "remote")
+			input = $('#url').val();
+		else if (inputType == "json")
+			input = $('#json').val();
+
+		// Allow only one parse at a time
+		$(this).prop('disabled', true);
+
+		if (!firstRun)
+			console.log("--------------------------------------------------");
+		else
+			firstRun = false;
+
+
+
+		if (inputType == "local")
+		{
+			if (!$('#files')[0].files.length)
+			{
+				alert("Please choose at least one file to parse.");
+				return enableButton();
+			}
+			
+			$('#files').parse({
+				config: config,
+				before: function(file, inputElem)
+				{
+					start = now();
+					console.log("Parsing file...", file);
+				},
+				error: function(err, file)
+				{
+					console.log("ERROR:", err, file);
+					firstError = firstError || err;
+					errorCount++;
+				},
+				complete: function()
+				{
+					end = now();
+					printStats("Done with all files");
+				}
+			});
+		}
+		else if (inputType == "json")
+		{
+			if (!input)
+			{
+				alert("Please enter a valid JSON string to convert to CSV.");
+				return enableButton();
+			}
+
+			start = now();
+			var csv = Papa.unparse(input, config);
+			end = now();
+
+			console.log("Unparse complete");
+			console.log("Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+			
+			if (csv.length > maxUnparseLength)
+			{
+				csv = csv.substr(0, maxUnparseLength);
+				console.log("(Results truncated for brevity)");
+			}
+
+			console.log(csv);
+
+			setTimeout(enableButton, 100);	// hackity-hack
+		}
+		else if (inputType == "remote" && !input)
+		{
+			alert("Please enter the URL of a file to download and parse.");
+			return enableButton();
+		}
+		else
+		{
+			start = now();
+			var results = Papa.parse(input, config);
+			console.log("Synchronous results:", results);
+			if (config.worker || config.download)
+				console.log("Running...");
+		}
+	});
+
+	$('#insert-tab').click(function()
+	{
+		$('#delimiter').val('\t');
+	});
+});
+
+
+
+
+function printStats(msg)
+{
+	if (msg)
+		console.log(msg);
+	console.log("       Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+	console.log("  Row count:", rowCount);
+	if (stepped)
+		console.log("    Stepped:", stepped);
+	console.log("     Errors:", errorCount);
+	if (errorCount)
+		console.log("First error:", firstError);
+}
+
+
+
+function buildConfig()
+{
+	return {
+		delimiter: $('#delimiter').val(),
+		header: $('#header').prop('checked'),
+		dynamicTyping: $('#dynamicTyping').prop('checked'),
+		skipEmptyLines: $('#skipEmptyLines').prop('checked'),
+		preview: parseInt($('#preview').val() || 0),
+		step: $('#stream').prop('checked') ? stepFn : undefined,
+		encoding: $('#encoding').val(),
+		worker: $('#worker').prop('checked'),
+		comments: $('#comments').val(),
+		complete: completeFn,
+		error: errorFn,
+		download: inputType == "remote"
+	};
+}
+
+function stepFn(results, parser)
+{
+	stepped++;
+	if (results)
+	{
+		if (results.data)
+			rowCount += results.data.length;
+		if (results.errors)
+		{
+			errorCount += results.errors.length;
+			firstError = firstError || results.errors[0];
+		}
+	}
+}
+
+function completeFn(results)
+{
+	end = now();
+
+	if (results && results.errors)
+	{
+		if (results.errors)
+		{
+			errorCount = results.errors.length;
+			firstError = results.errors[0];
+		}
+		if (results.data && results.data.length > 0)
+			rowCount = results.data.length;
+	}
+
+	printStats("Parse complete");
+	console.log("    Results:", results);
+
+	// icky hack
+	setTimeout(enableButton, 100);
+}
+
+function errorFn(err, file)
+{
+	end = now();
+	console.log("ERROR:", err, file);
+	enableButton();
+}
+
+function enableButton()
+{
+	$('#submit').prop('disabled', false);
+}
+
+function now()
+{
+	return typeof window.performance !== 'undefined'
+			? window.performance.now()
+			: 0;
+}
+		</script>
+	</head>
+	<body>
+
+		<main>
+			<header>
+				<div class="grid-container">
+					<div class="grid-40 mobile-grid-50">
+						<div class="links">
+							<a href="/demo">
+								<i class="fa fa-magic fa-lg"></i> Demo
+							</a>
+							<a href="/docs">
+								<i class="fa fa-book fa-lg"></i> Docs
+							</a>
+							<a href="/faq">
+								<i class="fa fa-question fa-lg"></i> FAQ
+							</a>
+						</div>
+					</div>
+					<div class="grid-20 hide-on-mobile text-center">
+						<a href="/" class="text-logo">Papa Parse 5</a>
+					</div>
+					<div class="grid-40 mobile-grid-50 text-right">
+						<div class="links">
+							<a href="https://github.com/mholt/PapaParse">
+								<i class="fa fa-github fa-lg"></i> GitHub
+							</a>
+							<a href="http://stackoverflow.com/questions/tagged/papaparse">
+								<i class="fa fa-stack-overflow fa-lg"></i> Help
+							</a>
+						</div>
+					</div>
+				</div>
+			</header>
+
+
+			<h1>Choose a Demo</h1>
+
+			<div class="tabs">
+				<div class="tab" id="tab-string">String</div>
+				<div class="tab active" id="tab-local">Local File(s)</div>
+				<div class="tab" id="tab-remote">Remote File</div>
+				<div class="tab" id="tab-unparse">JSON to CSV</div>
+			</div>
+
+			<div class="grid-container">
+
+				<div class="grid-25">
+					<label>
+						<input type="checkbox" id="stream"> Stream
+						<dfn>Results are delivered row by row to a step function. Use with large inputs that would crash the browser.</dfn>
+					</label>
+
+					<label>
+						<input type="checkbox" id="worker"> Worker thread
+						<dfn>Uses a separate thread so the web page doesn't lock up.</dfn>
+					</label>
+
+					<label>
+						<input type="checkbox" id="header"> Header row
+						<dfn>Keys data by field name rather than an array.</dfn>
+					</label>
+
+					<label>
+						<input type="checkbox" id="dynamicTyping"> Dynamic typing
+						<dfn>Turns numeric data into numbers and true/false into booleans.</dfn>
+					</label>
+
+					<label>
+						<input type="checkbox" id="skipEmptyLines"> Skip empty lines
+						<dfn>By default, empty lines are parsed; check to skip.</dfn>
+					</label>
+
+				</div>
+
+				<div class="grid-75 grid-parent">
+
+					<div class="grid-33 push-66">
+						<label>
+							Delimiter:<input type="text" size="4" maxlength="1" placeholder="auto" id="delimiter"><a href="javascript:" id="insert-tab">tab</a>
+							<dfn>The delimiting character. Usually comma or tab. Default is comma.</dfn>
+						</label>
+
+						<label>
+							Preview:<input type="number" min="0" max="1000" placeholder="0" id="preview">
+							<dfn>If &gt; 0, stops parsing after this many rows.</dfn>
+						</label>
+
+						<label>
+							Encoding:<input type="text" id="encoding" placeholder="default" size="7">
+							<dfn>Only applies when reading local files. Default is specified by the browser (usually UTF-8).</dfn>
+						</label>
+
+						<label>
+							Comment char:<input type="text" size="7" maxlength="10" placeholder="default" id="comments">
+							<dfn>If specified, skips lines starting with this string.</dfn>
+						</label>
+					</div>
+
+					<div class="grid-66 pull-33">
+						<div class="input-area" id="input-string" style="display: none;">
+							<textarea id="input" placeholder="String input">Column 1,Column 2,Column 3,Column 4
+1-1,1-2,1-3,1-4
+2-1,2-2,2-3,2-4
+3-1,3-2,3-3,3-4
+4,5,6,7</textarea>
+						</div>
+						<div class="input-area" id="input-local" style="display: block;">
+							
+							<div class="text-center">
+								Choose one or more delimited text files for Papa to parse.
+							</div>
+
+							<input type="file" id="files" multiple="">
+							
+							Sample files:
+
+							<ul>
+								<li>
+									<a href="/resources/files/normal.csv" id="local-normal-file">Normal file</a>
+								</li>
+								<li>
+									<a href="/resources/files/big.csv" id="local-large-file">Large file</a>
+								</li>
+								<li>
+									<a href="/resources/files/malformed.tsv" id="local-malformed-file">Malformed file</a>
+								</li>
+							</ul>
+						</div>
+						<div class="input-area" id="input-remote" style="display: none;">
+							
+							<div class="text-center">
+								Type the URL of the file to be downloaded and parsed.
+								<br>
+								<small>(cross-origin requests require Access-Control-Allow-Origin header)</small>
+							</div>
+
+							<input type="text" id="url" placeholder="URL">
+
+							Sample files:
+
+							<ul>
+								<li>
+									<a href="javascript:" id="remote-normal-file">Normal file</a>
+								</li>
+								<li>
+									<a href="javascript:" id="remote-large-file">Large file</a>
+								</li>
+								<li>
+									<a href="javascript:" id="remote-malformed-file">Malformed file</a>
+								</li>
+							</ul>
+						</div>
+						<div class="input-area" id="input-unparse" style="display: none;">
+							<textarea id="json" placeholder="JSON string">[
+	{
+	    "Column 1": "1-1",
+	    "Column 2": "1-2",
+	    "Column 3": "1-3",
+	    "Column 4": "1-4"
+	},
+	{
+	    "Column 1": "2-1",
+	    "Column 2": "2-2",
+	    "Column 3": "2-3",
+	    "Column 4": "2-4"
+	},
+	{
+	    "Column 1": "3-1",
+	    "Column 2": "3-2",
+	    "Column 3": "3-3",
+	    "Column 4": "3-4"
+	},
+	{
+	    "Column 1": 4,
+	    "Column 2": 5,
+	    "Column 3": 6,
+	    "Column 4": 7
+	}
+]</textarea>
+						</div>
+						<div class="text-center">
+							<div class="see-results">
+								Results will appear in the console of your browser's inspector tools
+							</div>
+							<button id="submit" class="green">Parse</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</main>
+
+
+
+		<footer>
+			<!--<div class="footer-top">
+				<h3>Make Your Papa Proud</h3>
+				<h4><a href="https://github.com/mholt/PapaParse">Star</a> and <a href="https://github.com/mholt/PapaParse/blob/gh-pages/resources/js/lovers.js">shout</a> if you love #PapaParse</h4>
+			</div>-->
+			<div class="footer-main">
+				<div class="grid-container">
+					<div class="grid-40 text-center">
+						<div class="logo">P</div>
+						<br><br>
+						Papa Parse by <a href="https://twitter.com/mholt6">Matt Holt</a>
+						<br>
+						© 2013-2019
+					</div>
+					<div class="grid-15 mobile-grid-50 links">
+						<h5>Learn</h5>
+						<a href="/demo">Demo</a>
+						<a href="/docs">Documentation</a>
+						<a href="/faq">FAQ</a>
+					</div>
+					<div class="grid-15 mobile-grid-50 links">
+						<h5>Project</h5>
+						<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=S6VTL9FQ6L8EN&amp;item_name=PapaParse&amp;currency_code=EUR&amp;source=url">Donate</a>
+						<a href="https://github.com/mholt/PapaParse">GitHub</a>
+						<a href="https://twitter.com/search?q=%23PapaParse">Share</a>
+					</div>
+					<div class="clear hide-on-desktop"></div>
+					<div class="grid-15 mobile-grid-50 links">
+						<h5>Download</h5>
+						<a href="https://github.com/mholt/PapaParse/archive/master.zip">Latest (master)</a>
+						<hr>
+						<a href="https://github.com/mholt/PapaParse/blob/master/papaparse.min.js">Lil' Papa</a>
+						<a href="https://github.com/mholt/PapaParse/blob/master/papaparse.js">Fat Papa</a>
+					</div>
+					<div class="grid-15 mobile-grid-50 links">
+						<h5>Community</h5>
+						<a href="https://twitter.com/search?q=%23PapaParse">Twitter</a>
+						<a href="http://stackoverflow.com/questions/tagged/papaparse">Stack Overflow</a>
+					</div>
+				</div>
+			</div>
+		</footer>
+	
+
+</body>
+</html>

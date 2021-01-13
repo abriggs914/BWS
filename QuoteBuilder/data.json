@@ -358,6 +358,48 @@
 					]
 				]
 			]
+		],
+		"LINK_tags": [
+			"Tags",
+			"https://www.bwstrailers.com/industry/tags/",
+			[
+				[
+					"Air Ramp Tilt",
+					"https://www.bwstrailers.com/trailer/air-ramp-tilt/",
+					[
+						["20ART"],
+						["25ART"],
+						["30ART"]
+					]
+				],
+				[
+					"Air Tilt, No Ramp",
+					"https://www.bwstrailers.com/trailer/air-tilt-no-ramp/",
+					[
+						["20ANR"],
+						["25ANR"],
+						["30ANR"]
+					]
+				],
+				[
+					"Flat Deck, No Tilt",
+					"https://www.bwstrailers.com/trailer/flat-deck-no-tilt/",
+					[
+						["20FDNT"],
+						["25FDNT"],
+						["30FDNT"]
+					]
+				],
+				[
+					"Non Tilt Tag",
+					"https://www.bwstrailers.com/trailer/non-tilt-tag/",
+					[
+						["20NTT"],
+						["25NTT"],
+						["30NTT"]
+					]
+				]
+			]
 		]
 	}
 ]
