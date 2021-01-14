@@ -1,0 +1,18 @@
+Version1 / scratch files
+Jan. 12 2021
+	-	Created hyperlinks data set in json format and embeded within a script tag in the HTML file.
+	-	Simple buttons for Industry/Class/Model selection. With dynamic hyperlinked p tags upon selection.
+	-	Dynamic HTML table creation for options section.
+	-	HTMLFormat tags create CheckBox and Increment/Decrement widgets for option manipulation.
+	
+Version2
+Jan. 13 2021
+	-	Found a way of importing a csv file to the js program using papaparse module. Currently works locally,
+		will need to connect to the database to deliver the tables.
+	-	Currently supports csv extensions, Tables are delivered in xlsx format, will need to either
+		separate the pages within the xlsx to 2 unique csvs
+		or convert current program to support the xlsx
+	
+Version3
+Jan.14 2021
+		
