@@ -1,0 +1,149 @@
+/* html, */
+
+.dropbtn {
+	background-color: black;
+	color: white;
+	padding: 16px;
+	font-size: 16px;
+	border: none;
+}
+
+/* td, th { */
+  /* white-space: nowrap; */
+  /* overflow: hidden; */
+/* } */
+		
+.dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.dropdown-content {
+	background-color: maroon;
+	display: none;
+	position: absolute;
+	min-width: 300px;
+	z-index: 1;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  background-color: #2196F3;
+  padding: 10px;
+  grid-column-gap: 50px;
+  grid-row-gap: 50px;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* .optionLine { */
+	/* /* float: left; */ */
+	/* /* align-items: flex-start; */ */
+	/* /* display: flex; */ */
+  /* /* align-items: center; */ */
+  /* /* justify-content: center; */ */
+  /* /* height: 100%; */ */
+  /* /* flex-direction: column; */ */
+  
+  
+  
+	/* /* display: -webkit-inline-box; */ */
+	/* /* position: relative; */ */
+	/* /* top: 50%; */ */
+	/* /* transform: translateY(-50%);  */ */
+/* /* } */ */
+
+/* /* .optionsList:after { */ */
+	/* /* background-color: green; */ */
+    /* /* /* white-space: nowrap; */ */ */
+    /* /* /* overflow-x: auto; */ */ */
+    /* /* /* overflow-y: hidden; */ */ */
+	/* /* /* position: relative; */ */ */
+	/* /* display: table; */ */
+	/* /* clear: both; */ */
+	/* /* table-layout:fixed */ */
+/* /* } */ */
+
+/* /* .optionsHeader { */ */
+	/* /* display: flex; */ */
+	/* /* /* position: relative; */ */ */
+/* /* } */ */
+
+/* /* .descriptionSpan { */ */
+	/* /* width: 30%; */ */
+/* /* } */ */
+
+/* /* .weightSpan { */ */
+	/* /* width: 8%; */ */
+/* /* } */ */
+
+/* /* .priceSpan { */ */
+	/* /* width: 8%; */ */
+/* /* } */ */
+
+/* /* .inc_dec_widget { */ */
+	/* /* white-space: nowrap; */ */
+	/* /* overflow: hidden; */ */
+/* /* } */ */
+
+/* .industry-selection { */
+	/* display: flex; */
+	/* align-items: center; */
+	/* justify-content: center; */
+/* } */
+
+.class-selection {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.model-selection {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.inc_dec_widget {
+	display: contents;
+}
+
+/* /* */
+/* top, right, bottom, left */
+/* */ */
+td {
+	padding: 0px 8px 0px 8px;
+}
+
+th {
+	border: 1px solid rgba(212, 32, 47, 1);
+}
+
+table {
+	background-color: rgba(200, 180, 180, 1);
+	color: rgba(10, 10, 10, 1);
+}
+
+#npo-banner {
+	text-align: center;
+	background-color: rgba(150, 150, 150, 1);
+	color: black;
+	font-size: 20px;
+	padding: 3px 0px 3px 0px;
+}
+
+.industryElem:hover {color: green;}
+.industryElem:active {color: blue;}
+.classElem:hover {color: green;}
+.classElem:active {color: blue;}
+.modelElem:hover {color: green;}
+.modelElem:active {color: blue;}
+	
+.dropdown-content a:hover {background-color: white;}
+.dropdown:hover .dropdown-content {display: block;}
+.dropdown:hover .dropbtn {background-color: grey;}
+
+.optionLine:hover {background-color: white;}
+.baseSpecLine:hover {background-color: white;}
