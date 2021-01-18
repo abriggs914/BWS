@@ -81,7 +81,7 @@ class Option {
 		var w = ((this.weight.toLowerCase() == "null")? "NA" : this.weight );
 		var p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
 		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
-		html += "<td>" + d + "</td>";
+		html += "<td class='description-cell'>" + d + "</td>";
 		html += "<td style='text-align:center'>" + w + "</td>";
 		html += "<td style='text-align:right'>" + p + "</td>";
 		switch(this.htmlFormat) {
@@ -104,8 +104,8 @@ class Option {
 			case HTMLFormat.LIST_SELECTION 	:	break;
 			case HTMLFormat.CHECKBOX 		:	console.log("ERROR has occurred");
 		}
-		// html += "</tr>";
 		html += "";
+		// html += "";
 		return html;
 	}
 	
@@ -154,7 +154,7 @@ class BaseSpec {
 	getHTML() {
 		var html = "<td>" + titleCase(this.groupName) + "</td>";
 		html += "<td>" + titleCase(this.sectionName) + "</td>";
-		html += "<td>" + this.description + "</td>";
+		html += "<td class='description-cell'>" + this.description + "</td>";
 		return html;
 	}
 	
@@ -294,7 +294,7 @@ function createBaseSpec(idNum, groupName, sectionName, description, sortG, sortS
 }
 
 function generateOptionHeader() {
-	var html = "<thead>";
+	var html = "<thead class='list-header' id='options-header'>";
     html += "<th>Description</th>";
     html += "<th>Weight (lbs.)</th>";
     html += "<th>Price (CDN)</th>";
@@ -311,7 +311,7 @@ function generateOptionHeader() {
 }
 
 function generateBaseSpecHeader() {
-	var html = "<thead>";
+	var html = "<thead class='list-header' id='baseSpec-header'>";
     html += "<th>Group</th>";
     html += "<th>Section</th>";
     html += "<th>Description</th>";
