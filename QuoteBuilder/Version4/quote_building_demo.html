@@ -7,7 +7,6 @@
 		<title>BWS quote builder</title>
 		<h1>Build a quote!</h1>
 		<!-- <meta name="pdfFile" content="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf"> -->
-		<link rel="stylesheet" type="text/css" href="styles.css">
 		<link rel="stylesheet" type="text/css" href="salient-dynamic-styles.css">
 		
 		
@@ -131,6 +130,7 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 <noscript><style> .wpb_animate_when_almost_visible { opacity: 1; }</style></noscript>	
 <style></style>
 		
+		<link rel="stylesheet" type="text/css" href="styles.css">
 	</head>	
 	
 	<body>
@@ -217,7 +217,7 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 		
 		
 		<div class="grid-container" id="drop-down-selectors">
-			<div class="industry-selection">
+			<div class="industry-selection" id="industry-selection">
 				<p class="industrySelectionP" id="industrySelectionP"> <a id="industrySelectionPLink" href="#industrySelection">Select an industry from the menu.</a></p>
 				<div class="dropdown" id="industrySelection">
 					<button class="dropbtn">Select an Industry</button>
@@ -227,9 +227,9 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 				</div>
 			</div>
 			
-			<div class="class-selection" id="classSelection">
+			<div class="class-selection" id="class-selection">
 				<p class="classSelectionP" id="classSelectionP"> <a id="classSelectionPLink" href="#classSelection">Select a class from the menu.</a></p>
-				<div class="dropdown" id="classSelection">
+				<div class="dropdown" id="class-selection">
 					<button class="dropbtn">Select a Class</button>
 					<div class="dropdown-content" id="classMenu">
 						<!--Filled on document.ready() -->
@@ -237,9 +237,9 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 				</div>
 			</div>
 			
-			<div class="model-selection", id="modelSelection">
+			<div class="model-selection" id="model-selection">
 				<p class="modelSelectionP" id="modelSelectionP"> <a id="modelSelectionPLink" href="#modelSelection">Select a model from the menu.</a></p>
-				<div class="dropdown" id="modelSelection">
+				<div class="dropdown" id="model-selection">
 					<button class="dropbtn">Select a Model</button>
 					<div class="dropdown-content" id="modelMenu">
 						<!--Filled on document.ready() -->
@@ -249,28 +249,32 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 		</div>
 		
 		<div class="banner", id="npo-banner">
-			<h4>If you don't see what you're looking for; write it as a comment when you submit and sales will be in touch.</h4>
+			<h4 class="npo-banner">If you don't see what you're looking for; write it as a comment when you submit and sales will be in touch.</h4>
 		</div>
 
-		<div class="table-wrapper">
+		<button id="minimize-options-A">hide options</button>
+		<div class="table-wrapper" id="options-wrapper">
 			<h3>Options</h3>
 			<table class="optionsList" id="optionsList">
 				<tr><td>Nothing to display for options yet</td></tr>
 			</table>
 		</div>
+		<button id="minimize-options-B">hide options</button>
 
-		<div class="table-wrapper">
+		<button id="minimize-specs-A">hide base specs</button>
+		<div class="table-wrapper" id="specs-wrapper">
 			<h3>Base Specs</h3>
 			<table class="baseSpecsList" id="baseSpecsList">
 				<tr><td>Nothing to display for base specs yet</td></tr>
 			</table>
 		</div>
+		<button id="minimize-specs-B">hide base specs</button>
 		
 		<div class="submit-wrapper" id="submit-wrapper">
 			<textarea class="submit-comments-textarea" id="submit-comments-textarea" rows=15 cols=100 placeholder="Comments or concerns"></textarea>
 			<div class="banner", id="npo-banner">
-				<h4>Don't see what you're looking for?</h4>
-				<h4>Write it as a comment when you submit and sales will be in touch.</h4>
+				<h4 class="npo-banner">Don't see what you're looking for?</h4>
+				<h4 class="npo-banner">Write it as a comment when you submit and sales will be in touch.</h4>
 			</div>
 			<!-- <form class="submit-widget", id="submit-widget" action="collectQuote()"> -->
 			<div class="submit-widget", id="submit-widget">
@@ -302,13 +306,13 @@ html:not(.page-trans-loaded) { background-color: #ffffff; }
 					<!-- Footer widget area 1 -->
 					<div id="custom_html-4" class="widget_text widget widget_custom_html"><div class="textwidget custom-html-widget"><img src="https://www.bwstrailers.com/wp-content/uploads/2017/12/BWS-logo-chrome-final-web-2x.jpg" class="footer-logo">
 <br>
-<a href="tel:8888965777">Toll Free: 888-896-5777</a><br>
-<a href="L:5062764567">Local: 506-276-4567</a><br>
+<a href="tel:+18888965777">Toll Free: 1-888-896-5777</a><br>
+<a href="tel:+15062764567">Local: 1-506-276-4567</a><br>
 
 <a href="mailto:sales@bwstrailers.com">Email: sales@bwstrailers.com</a>
 <br>
-29 Hawkins Road<br>
-Centreville, NB, E7K 1A4
+<a href="https://www.google.ca/maps/place/29+Hawkins+Rd,+Centreville,+NB+E7K+1A4/@46.4253877,-67.7075831,17z/data=!3m1!4b1!4m5!3m4!1s0x4ca4a6a90d48e179:0xa30b75712ffc153c!8m2!3d46.425384!4d-67.7053944">29 Hawkins Road<br>
+Centreville, NB, E7K 1A4</a>
 <br></div></div>					</div><!--/span_3-->
 					
 											
@@ -446,7 +450,7 @@ Centreville, NB, E7K 1A4
 	<script src="https://bossanova.uk/jexcel/v3/xlsx.js"></script>
 	<script src="papaparse.min.js"></script>
 	<script type="text/javascript" src="main.js"></script>
-	<script type="text/javascript" src="sample.js"></script>
+	<!-- <script type="text/javascript" src="sample.js"></script> -->
 	<script type="text/javascript">			
 		$(document).ready(function() {
 			populateIndustries();
@@ -713,6 +717,45 @@ Centreville, NB, E7K 1A4
 					? window.performance.now()
 					: 0;
 		}
+		
+		//////////////////
+		// minimize and maximize div functionality
+		$("#minimize-options-A").click(function(){
+			if($(this).html() == "hide options"){
+				$(this).html("show options");
+				$("minimize-options-B").html("show options");
+			}
+			else{
+				$(this).html("hide options");
+				$("minimize-options-B").html("hide options");
+			}
+			$("#options-wrapper").slideToggle();
+		});
+		
+		$("#minimize-specs-A").click(function(){
+			console.log("$('minimize-specs-B').html: " + $("minimize-specs-B").html);
+			if($(this).html() == "hide base specs"){
+				$(this).html("show base specs");
+				$("minimize-specs-B").html("show base specs");
+			}
+			else{
+				$(this).html("hide base specs");
+				$("minimize-specs-B").html("show base specs");
+			}
+			$("#specs-wrapper").slideToggle();
+		});
+		
+		$("minimize-options-B").click(function() {
+			$("minimize-options-A").click();
+		});
+		
+		$("minimize-specs-B").click(function() {
+			$("minimize-specs-A").click();
+		});
+		
+		$("mailto-href").click(function() {
+			console.log("mailto-ref clicked")
+		});
 	</script>
 
 </html>
