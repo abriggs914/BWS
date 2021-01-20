@@ -220,9 +220,13 @@
 				</div>
 			</div>
 		</div>
+		
+		
 		<div class="banner", id="npo-banner">
 			<h4 class="npo-banner">If you don't see what you're looking for; write it as a comment when you submit and sales will be in touch.</h4>
 		</div>
+		
+		
 		<button id="minimize-options-A" onclick="toggleMinimizeOptions()">hide options</button>
 		<div class="table-wrapper" id="options-wrapper">
 			<h3>Options</h3>
@@ -233,6 +237,8 @@
 			</table>
 		</div>
 		<button id="minimize-options-B" onclick="toggleMinimizeOptions()">hide options</button>
+		
+		
 		<button id="minimize-specs-A" onclick="toggleMinimizeSpecs()">hide base specs</button>
 		<div class="table-wrapper" id="specs-wrapper">
 			<h3>Base Specs</h3>
@@ -243,6 +249,8 @@
 			</table>
 		</div>
 		<button id="minimize-specs-B" onclick="toggleMinimizeSpecs()">hide base specs</button>
+		
+		
 		<div class="submit-wrapper" id="submit-wrapper">
 			<textarea class="submit-comments-textarea" id="submit-comments-textarea" rows=15 cols=100 placeholder="Comments or concerns"></textarea>
 			<div class="banner", id="npo-banner">
@@ -251,15 +259,14 @@
 			</div>
 			<!-- <form class="submit-widget", id="submit-widget" action="collectQuote()"> -->
 			<div class="submit-widget", id="submit-widget">
-				<button class="sumbit-button" onclick="collectQuote()">Submit request for a quote</button>
+				<button class="sumbit-button" onclick="collectQuote(event)">Submit request for a quote</button>
 			</div>
 			<!-- </form> -->
 			<a id="mailto-href" href = "mailto:avery.briggs@bwstrailers.com?subject=Request for quote" display="hidden" data-rel="external"></a>
 			<!-- <a id="mailto-href" href="https://developer.mozilla.org/en-us/docs/web/html/element/textarea" display="hidden"></a> -->
 		</div>
-		<!-- <div class="pdfViewer" id=pdfViewer> -->
-		<!-- <embed src="file:///C:/Users/ABriggs/Documents/html/QuoteBuilder/This%20is%20a%20sample%20pdf.pdf" type="application/pdf" width="100%" height="600px" /> -->
-		<!-- </div> -->
+		
+		
 		<div id="footer-outer" data-midnight="light" data-cols="4" data-custom-color="false" data-disable-copyright="false" data-matching-section-color="true" data-copyright-line="false" data-using-bg-img="false" data-bg-img-overlay="0.8" data-full-width="false" data-using-widget-area="true" data-link-hover="default">
 			<div id="footer-widgets" data-has-widgets="true" data-cols="4">
 				<div class="container">
@@ -422,9 +429,11 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 	<script src="https://bossanova.uk/jexcel/v3/xlsx.js"></script>
 	<script src="papaparse.min.js"></script>
-	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript" src="links.js" name="links"></script>
+	<script type="text/javascript" src="main.js" name="main"></script>
 	<!-- <script type="text/javascript" src="sample.js"></script> -->
-	<script type="text/javascript">			
+	<script type="text/javascript">		
+		
 		$(document).ready(function() {
 			populateIndustries();
 		});
