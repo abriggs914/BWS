@@ -1,475 +1,5 @@
-//<!-- end dumps & live bottoms - dump trailer: https://www.bwstrailers.com/trailer/dump-trailer/ -->
-//<!-- end dumps & live bottoms - live bottom: https://www.bwstrailers.com/trailer/live-bottom-2/ -->
-//<!-- equipment-paving & recovery - equipment trailers: https://www.bwstrailers.com/trailer/equipment-trailer/ -->
-//<!-- equipment-paving & recovery - paving & recovery: https://www.bwstrailers.com/trailer/paving-recovery/ -->
-//<!-- flat - drop deck - highway B-train: https://www.bwstrailers.com/trailer/highway-b-train/ -->
-//<!-- flat - drop deck - highway drop: https://www.bwstrailers.com/trailer/highway-drop/ -->
-//<!-- HRGN lowboys - flip axle: https://www.bwstrailers.com/trailer/flip-axle/ -->
-//<!-- HRGN lowboys - hydraulic detachable GNK E: https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-e/ -->
-//<!-- HRGN lowboys - hydraulic detachable GNK H: https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-h/ -->
-//<!-- HRGN lowboys - hydraulic detachable GNK HS: https://www.bwstrailers.com/trailer/hydraulic-detachable-hs/ -->
-//<!-- HRGN lowboys - hydraulic detachable GNK: https://www.bwstrailers.com/trailer/hydraulic-detachable-goosneck/ -->
-//<!-- HRGN lowboys - hydraulic jeep 40 & 60 ton: https://www.bwstrailers.com/trailer/hydraulic-jeep-40-60-ton/ -->
-//<!-- Logging - eastern logger NB/NS/QC: https://www.bwstrailers.com/trailer/eastern-logger-nbns/ -->
-//<!-- Logging - eastern logger NL: https://www.bwstrailers.com/trailer/eastern-logger-nl/ -->
-//<!-- Logging - eastern logger NL B-train: https://www.bwstrailers.com/trailer/eastern-logger-b-train/ -->
-//<!-- Oilfield - oilfield float: https://www.bwstrailers.com/trailer/oilfield-float/ -->
-//<!-- Oilfield - oilfield jeep: https://www.bwstrailers.com/trailer/oilfield-jeep/ -->
-//<!-- Oilfield - rigidneck: https://www.bwstrailers.com/trailer/rigidneck/ -->
-//<!-- Oilfield - scissorneck: https://www.bwstrailers.com/trailer/scissorneck/ -->
-//<!-- Oilfield - single axle booster: https://www.bwstrailers.com/trailer/single-axle-booster/ -->
-//<!-- RGN double-drops - air detachable GNK: https://www.bwstrailers.com/trailer/air-detachable-gooseneck/ -->
-//<!-- RGN double-drops - air detachable GNK AG ULP: https://www.bwstrailers.com/trailer/air-detachable-gooseneck-ag-ulp-2/ -->
-//<!-- RGN double-drops - hydraulic detachable GNK: https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-ag/ -->
-//<!-- RGN double-drops - hydraulic detachable GNK AG ULP: https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-ag-ulp/ -->
-//<!-- RGN double-drops - hydraulic detachable GNK AGC: https://www.bwstrailers.com/trailer/hdg-agc-2/ -->
-//<!-- RGN double-drops - hydraulic detachable GNK AGNR: https://www.bwstrailers.com/trailer/hdg-agnr/ -->
-//<!-- RGN double-drops - mechanical detachable AG ULP: https://www.bwstrailers.com/trailer/mechanical-detachable-ag-ulp/ -->
-//<!-- RGN double-drops - mechanical detachable extendable: https://www.bwstrailers.com/trailer/mechanical-detachable-extendable/ -->
-//<!-- screeners & landblades - land pro: https://www.bwstrailers.com/trailer/land-pro/ -->
-//<!-- screeners & landblades - pit pro 360 cleaner: https://www.bwstrailers.com/trailer/pitpro-360-screener/ -->
-
-//<!-- specialized - cable reel: https://www.bwstrailers.com/trailer/cable-reel/ -->
-//<!-- specialized - hopper sander: https://www.bwstrailers.com/trailer/hopper-sander/ -->
-//<!-- specialized - nuclear: https://www.bwstrailers.com/trailer/nuclear/ -->
-//<!-- specialized - sander body: https://www.bwstrailers.com/trailer/sander-body/ -->
-//<!-- specialized - turnkey truck: https://www.bwstrailers.com/trailer/turnkey-truck/ -->
-//<!-- specialized - u body dump: https://www.bwstrailers.com/trailer/u-body-dump/ -->
-
-
-/*		Attention		*/
-// Cannot use '&' anywhere in any industry/class/model name. This is a mailto keyword 
-// and will not be represented in the email when it is generated.
-
-// Ajdust these values to alter the html as well.
-const LINK_end_dumps_live_bottoms = [
-	"End Dumps and Live Bottoms",
-	"https://www.bwstrailers.com/industry/end-dumps-live-bottoms/",
-	[
-		[
-			"Dump Trailer",
-			"https://www.bwstrailers.com/trailer/dump-trailer/",
-			[
-				["27DT2X"],
-				["32DT3X"],
-				["37DT3X"]
-			]
-		],
-		[
-			"Live Bottom",
-			"https://www.bwstrailers.com/trailer/live-bottom-2/",
-			[
-				["39ALB3X"],
-				["48ALB4X"]
-			]
-		]
-	]
-];
-const LINK_equipment_paving_recovery = [
-	"Equipment - Paving and Recovery",
-	"https://www.bwstrailers.com/industry/equipment-paving-recovery/",
-	[
-		[
-			"Equipment Trailers",
-			"https://www.bwstrailers.com/trailer/equipment-trailer/",
-			[
-				["42ET2X"],
-				["42ET3X"],
-				["48ET2X"],
-				["48ET3X"],
-				["53ET2X"],
-				["53ET3X"],
-				["53ET3XMR"],
-				["53ET4XMR"]
-			]
-		],
-		[
-			"Paving and Recovery",
-			"https://www.bwstrailers.com/trailer/paving-recovery/",
-			[
-				["48ET2XP"],
-				["48ET3XP"],
-				["53ET2XP"],
-				["53ET3XP"]
-			]
-		]
-	]
-];
-const LINK_flat_drop_deck = [
-	"Flat - Drop Deck",
-	"https://www.bwstrailers.com/industry/drop-deck/",
-	[
-		[
-			"Highway B-Train",
-			"https://www.bwstrailers.com/trailer/highway-b-train/",
-			[
-				["28HBT2X"],
-				["28HBT2X 2018"],
-				["32HBT3X"],
-				["32HBT3X 2018"]
-			]
-		],
-		[
-			"Highway Drop",
-			"https://www.bwstrailers.com/trailer/highway-drop/",
-			[
-				["40HD3XB"],
-				["42HD3X Heavy Duty"],
-				["48HD3X"],
-				["48HD5X"],
-				["53HD2X"],
-				["53HD3X 2018"],
-				["53HD4X"]
-			]
-		]
-	]
-];
-const LINK_hrgn_lowboys = [
-	"HRGN Lowboys",
-	"https://www.bwstrailers.com/industry/hrgn-lowboys/",
-	[
-		[
-			"Flip Axle",
-			"https://www.bwstrailers.com/trailer/flip-axle/",
-			[
-				["35FA"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck E",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-e/",
-			[
-				["55HDG3X E"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck H",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-h/",
-			[
-				["55HDG3X H"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck HS",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-hs/",
-			[
-				["55HDG3X HS"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-goosneck/",
-			[
-				["55HDG3X"]
-			]
-		],
-		[
-			"Hydraulic Jeep 40 and 60 Ton",
-			"https://www.bwstrailers.com/trailer/hydraulic-jeep-40-60-ton/",
-			[
-				["40JD2X HG"],
-				["60JD3X HG"]
-			]
-		]
-	]
-];
-const LINK_logging = [
-	"Logging",
-	"https://www.bwstrailers.com/industry/logging/",
-	[
-		[
-			"Eastern Logger NB/NS/QC",
-			"https://www.bwstrailers.com/trailer/eastern-logger-nbns/",
-			[
-				["46LD3X4T NS V2016"],
-				["46LF3X4T NS V2017"],
-				["48LD4X4T NB V2017"],
-				["51LD4X5T NB V2016"],
-				["48LF3X5T NB V2016"],
-				["48LF4X5T NB V2016"],
-				["51LF3X5T NB V2016"],
-				["51LF4X5T NB V2016"]
-			]
-		],
-		[
-			"Eastern Logger NL",
-			"https://www.bwstrailers.com/trailer/eastern-logger-nl/",
-			[
-				["46LF4X NL"]
-			]
-		],
-		[
-			"Eastern Logger NL B-Train",
-			"https://www.bwstrailers.com/trailer/eastern-logger-b-train/",
-			[
-				["27LBT2X NL"],
-				["28LBT2X NS"],
-				["30LBT2X ON"],
-				["37LBT3X NL"],
-				["39LBT3X NS"],
-				["39LBT3X ON"]
-			]
-		]
-	]
-];
-const LINK_oilfield = [
-	"Oilfield",
-	"https://www.bwstrailers.com/industry/oilfield/",
-	[
-		[
-			"Oilfield Float",
-			"https://www.bwstrailers.com/trailer/oilfield-float/",
-			[
-				["51OF3X"]
-			]
-		],
-		[
-			"Oilfield Jeep",
-			"https://www.bwstrailers.com/trailer/oilfield-jeep/",
-			[
-				["40OFJD2X"]
-			]
-		],
-		[
-			"Rigidneck",
-			"https://www.bwstrailers.com/trailer/rigidneck/",
-			[
-				["55LB3X LND"],
-				["55LB3X SND"],
-				["55LB3X LNF"]
-			]
-		],
-		[
-			"Scissorneck",
-			"https://www.bwstrailers.com/trailer/scissorneck/",
-			[
-				["40SN3X"],
-				["40SN3X SB"],
-				["60SN3X"]
-			]
-		],
-		[
-			"Single Axle Booster",
-			"https://www.bwstrailers.com/trailer/single-axle-booster/",
-			[
-				["11SB1X"]
-			]
-		]
-	]
-];
-const LINK_rgn_double_drops = [
-	"RGN Double Drops",
-	"https://www.bwstrailers.com/industry/rgn-double-drops/",
-	[
-		[
-			"Air Detachable Gooseneck",
-			"https://www.bwstrailers.com/trailer/air-detachable-gooseneck/",
-			[
-				["35ADG2X51 LP"]
-			]
-		],
-		[
-			"Air Detachable Gooseneck AG ULP",
-			"https://www.bwstrailers.com/trailer/air-detachable-gooseneck-ag-ulp-2/",
-			[
-				["35ADG2X48 AGULP"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-ag/",
-			[
-				["40HDG3X AG"],
-				["50HDG3X AG"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck AG ULP",
-			"https://www.bwstrailers.com/trailer/hydraulic-detachable-gooseneck-ag-ulp/",
-			[
-				["35HDG2X AG ULP"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck AGC",
-			"https://www.bwstrailers.com/trailer/hdg-agc-2/",
-			[
-				["35HDG2X53 AGC"]
-			]
-		],
-		[
-			"Hydraulic Detachable Gooseneck AGNR",
-			"https://www.bwstrailers.com/trailer/hdg-agnr/",
-			[
-				["35HDG2X53 AGNR"]
-			]
-		],
-		[
-			"Mechanical Detachable AG ULP",
-			"https://www.bwstrailers.com/trailer/mechanical-detachable-ag-ulp/",
-			[
-				["35MD2X48 AGULP"]
-			]
-		],
-		[
-			"Mechanical Detachable Extendable",
-			"https://www.bwstrailers.com/trailer/mechanical-detachable-extendable/",
-			[
-				["35MD2X EXT"],
-				["35MD2X53 EXT"]
-			]
-		]
-	]
-];
-const LINK_screeners_landblades = [
-	"Screeners and Landblades",
-	"https://www.bwstrailers.com/industry/screeners-landblades/",
-	[
-		[
-			"Land Pro",
-			"https://www.bwstrailers.com/trailer/land-pro/",
-			[
-				["LP14"],
-				["LP18"]
-			]
-		],
-		[
-			"Pit Pro 360 Cleaner",
-			"https://www.bwstrailers.com/trailer/pitpro-360-screener/",
-			[
-				["360"]
-			]
-		]
-	]
-];
-const LINK_specialized = [
-	"Specialized",
-	"https://www.bwstrailers.com/industry/specialized/",
-	[
-		[
-			"Cable Reel",
-			"https://www.bwstrailers.com/trailer/cable-reel/",
-			[
-				["14CR1X"]
-			]
-		],
-		[
-			"Hopper Sander",
-			"https://www.bwstrailers.com/trailer/hopper-sander/",
-			[
-				["2020"],
-				["2047"],
-				["2049"]
-			]
-		],
-		[
-			"Nuclear",
-			"https://www.bwstrailers.com/trailer/nuclear/",
-			[
-				["42DD3X"],
-				["45DD3X"],
-				["46DD4X WCS"],
-				["49DD4X"],
-				["50DD4X"]
-			]
-		],
-		[
-			"Sander Body",
-			"https://www.bwstrailers.com/trailer/sander-body/",
-			[
-				["2310NB"],
-				["2311NB"],
-				["2313NB"],
-				["2314NB"]
-			]
-		],
-		[
-			"Turnkey Truck",
-			"https://www.bwstrailers.com/trailer/turnkey-truck/",
-			[
-				["SICP2X NT"]
-			]
-		],
-		[
-			"U Body Dump",
-			"https://www.bwstrailers.com/trailer/u-body-dump/",
-			[
-				["2510"],
-				["2513"],
-				["2514"]
-			]
-		]
-	]
-];
-const LINK_tags = [
-	"Tags",
-	"https://www.bwstrailers.com/industry/tags/",
-	[
-		[
-			"Air Ramp Tilt",
-			"https://www.bwstrailers.com/trailer/air-ramp-tilt/",
-			[
-				["20ART"],
-				["25ART"],
-				["30ART"]
-			]
-		],
-		[
-			"Air Tilt, No Ramp",
-			"https://www.bwstrailers.com/trailer/air-tilt-no-ramp/",
-			[
-				["20ANR"],
-				["25ANR"],
-				["30ANR"]
-			]
-		],
-		[
-			"Flat Deck, No Tilt",
-			"https://www.bwstrailers.com/trailer/flat-deck-no-tilt/",
-			[
-				["20FDNT"],
-				["25FDNT"],
-				["30FDNT"]
-			]
-		],
-		[
-			"Non Tilt Tag",
-			"https://www.bwstrailers.com/trailer/non-tilt-tag/",
-			[
-				["20NTT"],
-				["25NTT"],
-				["30NTT"]
-			]
-		]
-	]
-];
-
-
-// Currently does't work as intended, the URL is expecting an "https" protocol,
-// and can't support local directory look-ups.
-async function loadLinks() {
-	const LINKS_FILE = "./data.json";
-	const response = await fetch(LINKS_FILE);
-	const data = await response.json();
-	console.log("data: " + data);	
-}
-
-// loadLinks();
-
-// TODO: Add in hrefs for each model. which will direct the user to the correct screen, and the 
-// correct position on the screen.
-const LINKS = [
-	LINK_end_dumps_live_bottoms,
-	LINK_equipment_paving_recovery,
-	LINK_flat_drop_deck,
-	LINK_hrgn_lowboys,
-	LINK_logging,
-	LINK_oilfield,
-	LINK_rgn_double_drops,
-	LINK_screeners_landblades,
-	LINK_specialized,
-	LINK_tags
-]
+// Script for quote building form.
+// includes Option and BaseSpec classes. 
 
 var CURRENT_INDUSTRY = -1;
 var CURRENT_CLASS = -1;
@@ -490,9 +20,8 @@ var MIN_DESC_WIDTH = 65;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //	Begin Option class
-
 class Option {
-	constructor(elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat) {
+	constructor(elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS) {
 		this.elementID = elementIDIn;
 		this.optionNum = optionNum;
 		this.section = section;
@@ -501,7 +30,6 @@ class Option {
 		this.weight = weight;
 		this.priceCDN = priceCDN;
 		this.priceUS = priceUS;
-		this.htmlFormat = htmlFormat;
 		
 		this.quantity = 0;
 		this.checkedStatus = false;
@@ -520,7 +48,7 @@ class Option {
 	}
 	
 	groupInfo() {
-		var str = this.optionNum.padEnd(MIN_PAD_WIDTH);
+		let str = this.optionNum.padEnd(MIN_PAD_WIDTH);
 		str += this.section.padEnd(MIN_PAD_WIDTH);
 		str += this.partNum.padEnd(MIN_PAD_WIDTH);
 		str += this.description.padEnd(MIN_DESC_WIDTH);
@@ -540,37 +68,25 @@ class Option {
 	}
 	
 	getHTML() {
-		var quantity = "quantity";
-		var RefId = 0;
-		var html = ""; //"<tr class='optionLine' id=" + this.optionLineID() + ">";
-		var d = ((this.description.toLowerCase() == "null")? "NA" : this.description );
-		var w = ((this.weight.toLowerCase() == "null")? "NA" : this.weight );
-		var p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
+		let quantity = "quantity";
+		let RefId = 0;
+		let html = ""; //"<tr class='optionLine' id=" + this.optionLineID() + ">";
+		let d = ((this.description.toLowerCase() == "null")? "NA" : this.description );
+		let w = ((this.weight.toLowerCase() == "null")? "NA" : this.weight );
+		let p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
 		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
-		html += "<td class='description-cell'>" + d + "</td>";
-		html += "<td style='text-align:center'>" + w + "</td>";
-		html += "<td style='text-align:right'>" + p + "</td>";
-		switch(this.htmlFormat) {
-			// case HTMLFormat.CHECKBOX 		:	html += "<td>";
-												// html += "<form action='updateCheckStatus()' class='checkbox_widget'>";
-												// html += "<input class='checkBox' id=" + this.checkStatusInputID() + " type='checkbox' onchange='updateCheckStatus(\"" + this.optionNum + "\")'>";
-												// html += "</form>";
-												// html += "</td>";
-												// break;
-			case HTMLFormat.INC_DEC 		:	html += "<td>";
-												html += "<form action='updateQuantity()' class='inc_dec_widget'>";
-												html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.optionNum + "\")' value=" + this.quantity + ">";
-												html += "</form>";
-												html += "<button class=incrementButton onclick='increment(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>+</button>";;
-												html += "<button class=decrementButton onclick='decrement(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>-</button>";
-												html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
-												html += "</td>";
-												break;
-			// case HTMLFormat.LIST_SELECTION 	:	break;
-			case HTMLFormat.CHECKBOX 		:	console.log("ERROR has occurred");
-		}
+		html += "<td class='description-cell' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
+		html += "<td style='text-align:center' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
+		html += "<td style='text-align:right' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
+		html += "<td>";
+		html += "<form action='updateQuantity()' class='inc_dec_widget'>";
+		html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.optionNum + "\")' value=" + this.quantity + ">";
+		html += "</form>";
+		html += "<button class=incrementButton onclick='increment(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";;
+		html += "<button class=decrementButton onclick='decrement(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
+		html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
+		html += "</td>";
 		html += "";
-		// html += "";
 		return html;
 	}
 	
@@ -584,8 +100,8 @@ class Option {
 	}
 	
 	getMailFormat() {
-		var str = this.quantity + " x ";
-		str += this.description;
+		let str = this.quantity + " x ";
+		str += this.description.substring(0, Math.min(this.description.length, 20));
 		str += " @ " + "$ " + parseFloat(this.priceCDN).toFixed(2) + " each.";
 		return str;
 	}
@@ -594,14 +110,12 @@ class Option {
 		return this.optionNum + " x " + this.quantity;
 	}
 }
-
 //	End Option class
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //	Begin BaseSpec class
-
 class BaseSpec {
 	
 	constructor(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
@@ -624,7 +138,7 @@ class BaseSpec {
 	}
 	
 	getHTML() {
-		var html = "<td>" + titleCase(this.groupName) + "</td>";
+		let html = "<td>" + titleCase(this.groupName) + "</td>";
 		html += "<td>" + titleCase(this.sectionName) + "</td>";
 		html += "<td class='description-cell'>" + this.description + "</td>";
 		return html;
@@ -632,9 +146,9 @@ class BaseSpec {
 	
 	
 }
-
 //	End BaseSpec class
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Called when the option line containing the checkbox is clicked.
 // Updates the option's checkStatus value.
@@ -649,7 +163,8 @@ function updateCheckStatus(opNum) {
 }
 
 // Called when the input value of the quantity input field is manually typed in.
-// Updates the option's internal quantity and redisplays the HTML.
+// Updates the option's internal quantity and re-displays the HTML.
+// Uses a red indicator to alert if non-numeric characters are in the quantity field.
 function updateQuantity(opNum) {
 	console.log("increment");
 	op = lookUpOption(opNum);
@@ -669,6 +184,7 @@ function updateQuantity(opNum) {
 	}
 }
 
+// Set an option's quantity back to 0.
 function resetQuantity(opNum, attr) {
 	console.log("reset " + attr);
 	op = lookUpOption(opNum);
@@ -680,6 +196,7 @@ function resetQuantity(opNum, attr) {
 	
 }
 
+// Increment an option's quantity by 1.
 function increment(opNum, attr) {
 	console.log("increment " + attr);
 	op = lookUpOption(opNum);
@@ -690,6 +207,7 @@ function increment(opNum, attr) {
 	}
 }
 
+// Decrement an option's quantity by 1.
 function decrement(opNum, attr) {
 	console.log("decrement " + attr);
 	op = lookUpOption(opNum);
@@ -711,8 +229,8 @@ function isNumeric(str) {
 // Iterate the OPTIONS array and return the option with the
 // matching option number. Null otherwise.
 function lookUpOption(opNum) {
-	for (var i in OPTIONS) {
-		var op = OPTIONS[i];
+	for (let i in OPTIONS) {
+		let op = OPTIONS[i];
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -726,8 +244,8 @@ function lookUpOption(opNum) {
 // Iterate the BASESPECS array and return the BaseSpec with the
 // matching BaseSpec id number. Null otherwise.
 function lookUpBaseSpec(bsNum) {
-	for (var i in BASESPECS) {
-		var bs = BASESPECS[i];
+	for (let i in BASESPECS) {
+		let bs = BASESPECS[i];
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -742,19 +260,22 @@ function lookUpBaseSpec(bsNum) {
 // Use this function to create options.
 // This ensures that the option will be included in the OPTIONS array.
 function createOption(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
-	op = new Option(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
+	let op = new Option(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
 	OPTIONS.push(op);
 	return op;
 }
 
 function createBaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
-	b = new BaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
+	let b = new BaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
 	BASESPECS.push(b);
 	return b;
 }
 
 function generateOptionHeader() {
-	var html = "<thead class='list-header' id='options-header'>";
+	let html = "<colgroup><col span='1' style='width: 80%; min-width: 80%; max-width: 80%;'>"
+	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'>"
+	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'></colgroup>";
+	html += "<thead class='list-header' id='options-header'>";
     html += "<th>Description</th>";
     html += "<th>Weight (lbs.)</th>";
     html += "<th>Price (CDN)</th>";
@@ -771,7 +292,10 @@ function generateOptionHeader() {
 }
 
 function generateBaseSpecHeader() {
-	var html = "<thead class='list-header' id='baseSpec-header'>";
+	let html = "<colgroup><col span='1' style='width: 80%; min-width: 80%; max-width: 80%;'>"
+	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'>"
+	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'></colgroup>";
+	html += "<thead class='list-header' id='baseSpec-header'>";
     html += "<th>Group</th>";
     html += "<th>Section</th>";
     html += "<th>Description</th>";
@@ -787,9 +311,9 @@ function generateBaseSpecHeader() {
 }
 
 function initAllOptionHTML() {
-	var str = generateOptionHeader();
+	let str = generateOptionHeader();
 	for (o in OPTIONS) {
-		var op = OPTIONS[o];
+		let op = OPTIONS[o];
 		str += op.initHTML();
 	}
 	console.log("str: " + str);
@@ -803,9 +327,9 @@ function initAllOptionHTML() {
 }
 
 function initAllBaseSpecHTML() {
-	var str = generateBaseSpecHeader();
-	for (b in BASESPECS) {
-		var bs = BASESPECS[b];
+	let str = generateBaseSpecHeader();
+	for (let b in BASESPECS) {
+		let bs = BASESPECS[b];
 		str += bs.initHTML();
 	}
 	// console.log("str: " + str);
@@ -828,19 +352,26 @@ function clearAllBaseSpecs() {
 
 function printOptions() {
 	console.log("\tOptions:");
-	for (o in OPTIONS) {
-		var op = OPTIONS[o];
+	for (let o in OPTIONS) {
+		let op = OPTIONS[o];
 		console.log("op	-	" + op + ", elem: " + op.elementID);
 	}
 }
 
-
-OPTIONS = [];
+var OPTIONS = [];
 //elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
-var o1 = createOption("option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", HTMLFormat.INC_DEC);
-var o2 = createOption("option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2", HTMLFormat.CHECKBOX);
-var o3 = createOption("option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3", HTMLFormat.CHECKBOX);
-var o4 = createOption("option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4", HTMLFormat.INC_DEC);
+var o1 = createOption("option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
+var o2 = createOption("option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
+var o3 = createOption("option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
+var o4 = createOption("option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4");
+
+var o5 = createOption("option005", "A5", "B5", "C5", "D5", "E5", "F5", "G5");
+var o6 = createOption("option006", "A6", "B6", "C6", "D6", "E6", "F6", "G6");
+var o7 = createOption("option007", "A7", "B7", "C7", "D7", "E7", "F7", "G7");
+var o8 = createOption("option008", "A8", "B8", "C8", "D8", "E8", "F8", "G8");
+var o9 = createOption("option009", "A9", "B9", "C9", "D9", "E9", "F9", "G9");
+var o10 = createOption("option010", "A10", "B10", "C10", "D10", "E10", "F10", "G10");
+var o11 = createOption("option011", "A11", "B11", "C11", "D11", "E11", "F11", "G11");
 // var o = createOption("option001", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", HTMLFormat.INC_DEC);
 console.log("OPTION: " + o1);
 console.log("OPTION: " + o2);
@@ -855,17 +386,16 @@ console.log("OPTION HTML: " + o4.getHTML());
 initAllOptionHTML();
 
 
-BASESPECS = [];
-var b1 = createBaseSpec("baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1")
+var BASESPECS = [];
+var b1 = createBaseSpec("baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
 initAllBaseSpecHTML();
 
 
 function populateIndustries() {
-	var str = "<ul>";
-	var i = 0;
+	let str = "<ul>";
 	// loop industries
-	for (i = 0; i < LINKS.length; i++) {
-		var name = LINKS[i][0]
+	for (let i = 0; i < LINKS.length; i++) {
+		let name = LINKS[i][0]
 		str += "<li class=\"industryElem\" onclick=\"selectIndustry(" + i + ")\">" + name + "</li>";
 	}
 	str += "</ul>";
@@ -873,13 +403,12 @@ function populateIndustries() {
 }
 
 function populateClasses() {
-	var str = "<ul>";
-	var i = 0;
+	let str = "<ul>";
 	// loop classes within industry
-	for (i = 0; i < LINKS[CURRENT_INDUSTRY][2].length; i++) {
-		var classes = LINKS[CURRENT_INDUSTRY][2][i];
+	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2].length; i++) {
+		let classes = LINKS[CURRENT_INDUSTRY][2][i];
 		console.log("classes: " + classes);
-		var name = classes[0];
+		let name = classes[0];
 		str += "<li class=\"classElem\" onclick=\"selectClass(" + i + ")\">" + name + "</li>";
 	}
 	str += "</ul>";
@@ -887,13 +416,12 @@ function populateClasses() {
 }
 
 function populateModels() {
-	var str = "<ul>";
-	var i = 0;
+	let str = "<ul>";
 	// loop models within class
-	for (i = 0; i < LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
-		var models = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
+	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
+		let models = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
 		console.log("models: " + models);
-		var name = models[0];
+		let name = models[0];
 		str += "<li class=\"modelElem\" onclick=\"selectModel(" + i + ")\">" + name + "</li>";
 	}
 	str += "</ul>";
@@ -906,7 +434,7 @@ function selectIndustry(n) {
 	// toggleHide("industryMenu")
 	CURRENT_INDUSTRY = n;
 	let arr = LINKS[n];
-	let txt = "<a id='industrySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+	let txt = "<a class='selectionPLink' id='industrySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
 	populateClasses(n);
 	document.getElementById("industrySelectionP").innerHTML = txt;
 	console.log("Click select industry, <" + txt + ">");
@@ -918,7 +446,7 @@ function selectClass(n) {
 	// toggleHide("classMenu")
 	CURRENT_CLASS = n;
 	let arr = LINKS[CURRENT_INDUSTRY][2][n];
-	let txt = "<a id='classSelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+	let txt = "<a class='selectionPLink' id='classSelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
 	populateModels(n);
 	document.getElementById("classSelectionP").innerHTML = txt;
 	console.log("Click select class, <" + txt + ">");
@@ -930,14 +458,14 @@ function selectModel(n) {
 	// toggleHide("modelMenu")
 	CURRENT_MODEL = n;
 	let arr = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
-	let txt = "<p id='modelSelectionPLink'>" + arr[0] + "</p>";
+	let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "'>" + arr[0] + "</a>";
 	document.getElementById("modelSelectionP").innerHTML = txt;
 	console.log("Click select model, <" + txt + ">");
 }
 
 function titleCase(str) {
   str = str.toLowerCase().split(' ');
-  for (var i = 0; i < str.length; i++) {
+  for (let i = 0; i < str.length; i++) {
     str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1); 
   }
   return str.join(' ');
@@ -946,13 +474,27 @@ function titleCase(str) {
 function blankMailTo() {
 	// var href = document.getElementById("mailto-href");
 	// href.innerHTML = "href = 'mailto:avery.briggs@bwstrailers.com?subject=Request for quote' display='hidden'"
+	let href = "mailto:avery.briggs@bwstrailers.com?subject=Request for quote display='hidden' data-rel='external'";
+	console.log("RESETTING MAILTO: " + $("mailto-href")["href"]);
+	// $("mailto-href").html("");
 	$("mailto-href").attr("href", "'mailto:avery.briggs@bwstrailers.com?subject=Request for quote' display='hidden'")
+	console.log("RESETTING MAILTO: " + $("mailto-href")["href"]);
+	return href;
+}
+
+function collectComments() {
+	let comments = document.getElementById("submit-comments-textarea").value;
+	comments = comments.replaceAll("&", "and");
+	comments = ((comments == "")? "NA" : comments);
+	comments = comments.split("\n");
+	comments = comments.join(MAIL_NL);
+	return comments;
 }
 
 function collectOptions() {
-	var options = MAIL_NL;
-	for (i in OPTIONS) {
-		console.log("i: " + i);
+	let options = "";
+	for (let i in OPTIONS) {
+		// console.log("i: " + i);
 		if (OPTIONS[i].quantity > 0) {
 			options += OPTIONS[i].getMailFormat() 
 			if (i < OPTIONS.length-1) {
@@ -960,34 +502,47 @@ function collectOptions() {
 			}
 		}
 	}
+	options = ((options == "")? "NA" : options);
 	console.log("options: " + options);
 	return options;
 }
 
-function collectQuote() {
+function collectQuote(event) {
+	if (event.ctrlKey) {
+		console.log("performing test 1");
+		selectIndustry(0);
+		selectClass(0);
+		selectModel(0);
+		document.getElementById("submit-comments-textarea").value = "this is a sample comment,\nplease read these comments,\nbecause they are very long,\nand they need to be split up by newline characters so the text doesn't appear all on one line.\njust like the line immediately above.\nthis comment & this comment\nshould break the parsing.\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n!\n@\n#\n$\n%\n^\n*\n(\n)[]\n{}\n-\n/\n+\n*\n_\n=\n`\n~\n\"dsd\"\n'dsd'\n?\n<>\n,.\ngot to the end";
+		for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 10; j++) {
+				increment(OPTIONS[i].optionNum, "quantity");
+			}
+		}
+	}
 	if (CURRENT_INDUSTRY < 0 || CURRENT_CLASS < 0 || CURRENT_MODEL < 0) {
 		alert("Please select an industry, a class, and a model to proceed.");
 		return;
 	}
-	blankMailTo();
+	// blankMailTo();
 	console.log("collecting the quote in function");
-	var href = document.getElementById("mailto-href");
-	var currRef = $("#mailto-href").attr('href');
+	let href = document.getElementById("mailto-href");
+	let currRef = $("#mailto-href").attr('href');
 	// currRef += "&body=THIS IS BODY TEXT%0D%0ASO IS THIS";
 	
 	//You can add newline by writing %0D%0A in the text of the body.
-	var industry = document.getElementById("industrySelectionPLink").innerHTML;
-	var clazz = document.getElementById("classSelectionPLink").innerHTML;
-	var model = document.getElementById("modelSelectionPLink").innerHTML;
-	var comments = document.getElementById("submit-comments-textarea").value;
-	var options = collectOptions();
-	comments = ((comments == "")? "NA" : comments);
-	comments = comments.split("\n");
-	comments = comments.join(MAIL_NL);
+	let industry = document.getElementById("industrySelectionPLink").innerHTML;
+	let clazz = document.getElementById("classSelectionPLink").innerHTML;
+	let model = document.getElementById("modelSelectionPLink").innerHTML;
+	let comments = collectComments();
+	let options = collectOptions();
 	console.log("INDUSTRY: " + industry);
 	console.log("CLAZZ: " + clazz);
 	console.log("MODEL: " + model);
 	
+	// ATTENTION!
+	// maximum size of body can only be 1969 characters.
+	// MAIL_NL contains 6 characters.
 	lines = [
 			currRef,
 			"&body=Dear BWS sales,",
@@ -1004,9 +559,10 @@ function collectQuote() {
 			"",
 			"Thank you."
 	]
-	var msg = lines.join(MAIL_NL);
+	let msg = lines.join(MAIL_NL);
 	$("#mailto-href").attr('href', msg);
 	document.getElementById("mailto-href").click();
+	$("#mailto-href").attr('href', blankMailTo());
 }
 
 // // elem is the id of the given element.
