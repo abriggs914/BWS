@@ -11,8 +11,8 @@
 
 
 .dropdown {
-  position: center;
-  margin: 0 auto;
+  /* position: center; */
+  /* margin: 0 auto; */
   white-space: nowrap;
   vertical-align: middle;
   text-align: center;
@@ -22,10 +22,24 @@
 
 .dropdown-content {
   background-color: maroon;
+  
+  
+  
+  
+  /* TODO change this back */
   display: none;
-  position: absolute;
-  min-width: 300px;
+  
+  
+  
+  
+  
+  /* position: absolute; */
+  min-width: 100px;
   z-index: 1;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0px 40px  0px 0px;
+  justify-content: center;
 
 }
 
@@ -105,6 +119,7 @@ th {
 	border-radius: 15px;
 	margin: 0px 0px 50px 0px;
 	font-weight: bold;
+	padding-top: 27px;
 	
 }
 
@@ -113,6 +128,10 @@ th {
 	vertical-align: center;
 }
 
+.menu-elem {
+	vertical-align: middle;
+	padding: 10px 10px 10px 20px;
+}
 
 #industrySelectionP {
   text-align: center;

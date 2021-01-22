@@ -392,7 +392,7 @@ initAllBaseSpecHTML();
 
 
 function populateIndustries() {
-	let str = "<ul>";
+	let str = "<ul class='menu-elem'>";
 	// loop industries
 	for (let i = 0; i < LINKS.length; i++) {
 		let name = LINKS[i][0]
@@ -403,26 +403,26 @@ function populateIndustries() {
 }
 
 function populateClasses() {
-	let str = "<ul>";
+	let str = "<ul class='menu-elem'>";
 	// loop classes within industry
 	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2].length; i++) {
 		let classes = LINKS[CURRENT_INDUSTRY][2][i];
 		console.log("classes: " + classes);
 		let name = classes[0];
-		str += "<li class=\"classElem\" onclick=\"selectClass(" + i + ")\">" + name + "</li>";
+		str += "<li class='classElem' onclick='selectClass(" + i + ")'>" + name + "</li>";
 	}
 	str += "</ul>";
 	document.getElementById("classMenu").innerHTML = str;
 }
 
 function populateModels() {
-	let str = "<ul>";
+	let str = "<ul class='menu-elem'>";
 	// loop models within class
 	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
 		let models = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
 		console.log("models: " + models);
 		let name = models[0];
-		str += "<li class=\"modelElem\" onclick=\"selectModel(" + i + ")\">" + name + "</li>";
+		str += "<li class='modelElem' onclick='selectModel(" + i + ")'>" + name + "</li>";
 	}
 	str += "</ul>";
 	document.getElementById("modelMenu").innerHTML = str;
