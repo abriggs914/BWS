@@ -225,10 +225,11 @@
 			<h4 class="npo-banner" id="npo-banner">If you don't see what you're looking for; write it as a comment when you submit and sales will be in touch.</h4>
 		</div>
 		
-		
-		<button id="minimize-options-A" onclick="toggleMinimizeOptions()">hide options</button>
+		<div class="list-wrapper">
+			<h3 class="list-title">Options</h3>
+			<button id="minimize-options-A" onclick="toggleMinimizeOptions()">-</button>
+		</div>
 		<div class="table-wrapper" id="options-wrapper">
-			<h3>Options</h3>
 			<table class="optionsList" id="optionsList">
 				<tr>
 					<td>Nothing to display for options yet</td>
@@ -238,9 +239,11 @@
 		<button id="minimize-options-B" onclick="toggleMinimizeOptions()">hide options</button>
 		
 		
-		<button id="minimize-specs-A" onclick="toggleMinimizeSpecs()">hide base specs</button>
+		<div class="list-wrapper">
+			<h3 class="list-title">Base Specs</h3>
+			<button id="minimize-specs-A" onclick="toggleMinimizeSpecs()">-</button>
+		</div>
 		<div class="table-wrapper" id="specs-wrapper">
-			<h3>Base Specs</h3>
 			<table class="baseSpecsList" id="baseSpecsList">
 				<tr>
 					<td>Nothing to display for base specs yet</td>
@@ -704,12 +707,12 @@
 		
 		function toggleMinimizeOptions() {
 			console.log("toggleMinimizeOptions");
-			if($("#minimize-options-A").html() == "hide options"){
-				$("#minimize-options-A").html("show options");
+			if($("#minimize-options-A").html() == "-"){
+				$("#minimize-options-A").html("+");
 				$("#minimize-options-B").html("show options");
 			}
 			else{
-				$("#minimize-options-A").html("hide options");
+				$("#minimize-options-A").html("-");
 				$("#minimize-options-B").html("hide options");
 			}
 			$("#options-wrapper").slideToggle();
@@ -717,12 +720,12 @@
 		
 		function toggleMinimizeSpecs() {
 			console.log("toggleMinimizeSpecs");
-			if($("#minimize-specs-A").html() == "hide base specs"){
-				$("#minimize-specs-A").html("show base specs");
+			if($("#minimize-specs-A").html() == "-"){
+				$("#minimize-specs-A").html("+");
 				$("#minimize-specs-B").html("show base specs");
 			}
 			else{
-				$("#minimize-specs-A").html("hide base specs");
+				$("#minimize-specs-A").html("-");
 				$("#minimize-specs-B").html("hide base specs");
 			}
 			$("#specs-wrapper").slideToggle();

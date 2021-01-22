@@ -43,7 +43,7 @@
   text-align: center;
   padding: 0px 40px  0px 0px;
   justify-content: center;
-  transition: all .5s linear;
+  transition: all .35s linear;
 
 }
 
@@ -54,7 +54,7 @@
   background-color: rgba(222, 0, 0, 1);
   padding: 10px;
   justify-content: center;
-  transition: all .5s linear;
+  transition: all .35s linear;
 
 }
 
@@ -85,6 +85,11 @@
   border: black solid 1px;
   border-radius: 15px;
 
+}
+
+
+.list-wrapper {
+	display: flex;
 }
 
 
@@ -273,3 +278,19 @@ table {
   background-color: white;
 }
 
+
+#minimize-specs-A {
+	margin: 3px 3px 20px 8px;
+}
+
+
+#minimize-options-A {
+	margin: 3px 3px 20px 8px;
+	border-radius: 25px;
+}
+
+
+.list-title {
+	margin-left: 50 px;
+	border-radius: 25px;
+}
