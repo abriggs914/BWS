@@ -26,7 +26,7 @@ with open(data_file, 'r') as data:
 			weeks[w] = 1 if w not in weeks else weeks[w] + 1
 		
 		keys = weeks.keys()
-		weeks = {i: (weeks[i] if i in keys else 0) for i in range(max(keys) + 1)}
+		weeks = {i: (weeks[i] if i in keys else 0) for i in range(1, max(keys) + 1)}
 		return weeks
 		
 	def total_quotes(dat):
