@@ -1,5 +1,7 @@
 import csv
+import locale
 
+locale.setlocale(locale.LC_ALL, "")
 data_file = "data.csv"
 US_CDN_RATIO = 1.209
 
@@ -21,7 +23,7 @@ with open(data_file, 'r') as data:
 	def dict_print(n, d, number=False, l=15, sep=5, marker="."):
 		if not d or not n:
 			return "None"
-		m = "\n--  " + str(n) + "  --\n\n"
+		m = "\n--  " + str(n).title() + "  --\n\n"
 		fill = 0
 		for k, v in d.items():
 			lk = len(str(k))
@@ -60,7 +62,8 @@ with open(data_file, 'r') as data:
 		return m
 		
 	def money(v):
-		return "$ %.2f" % v
+		# return "$ %.2f" % v
+		return locale.currency(v, grouping=True)
 			
 	def model_counts(dat) :
 		models = {}
@@ -77,10 +80,11 @@ with open(data_file, 'r') as data:
 		weeks = {}		
 		for qNo, info in dat.items():
 			w = int(info[fieldnames[2]].strip())
-			weeks[w] = 1 if w not in weeks else weeks[w] + 1
+			c = float(info[fieldnames[5]].strip()[1:])
+			weeks[w] = (1, c) if w not in weeks else (weeks[w][0] + 1, weeks[w][1] + c)
 		
 		keys = weeks.keys()
-		weeks = {i: (weeks[i] if i in keys else 0) for i in range(1, max(keys) + 1)}
+		weeks = {(weeks[i][0] if i in keys else 0): money(weeks[i][1] if i in keys else 0) for i in range(1, max(keys) + 1)}
 		return weeks
 	
 	def dealer_counts(dat) :
@@ -93,6 +97,44 @@ with open(data_file, 'r') as data:
 		ds.sort()
 		dealers = {d: dealers[d] for d in ds}
 		return dealers
+	
+	def dealer_costs(dat) :
+		dealers = {}
+		for qNo, info in dat.items():
+			d = info[fieldnames[3]].strip()
+			c = float(info[fieldnames[5]].strip()[1:])
+			dealers[d] = c if d not in dealers else dealers[d] + c
+		
+		ds = list(dealers.keys())
+		ds.sort()
+		dealers = {d: money(dealers[d]) for d in ds}
+		return dealers
+		
+	def highest_quoted_week(dat):
+		weeks = weekly_counts(dat)
+		best_week = None, None
+		# print("WEEKS: {w}".format(w=weeks))
+		for i, week in enumerate(weeks):
+			# print("i: {i}, w: {w}, w1: {w1}".format(i=i, w=week, w1=weeks[week]))
+			nQts, dollars = week, weeks[week]
+			if not all(best_week) or best_week[1] < nQts:
+				best_week = (i + 1, nQts)
+		if not all(best_week):
+			return "No quotes to report."
+		return "{n} quote{s} in week {w}".format(n=best_week[1], w=best_week[0], s=("s" if best_week[1] > 1 else ""))
+		
+	def lowest_quoted_week(dat):
+		weeks = weekly_counts(dat)
+		best_week = None, None
+		# print("WEEKS: {w}".format(w=weeks))
+		for i, week in enumerate(weeks):
+			# print("i: {i}, w: {w}, w1: {w1}".format(i=i, w=week, w1=weeks[week]))
+			nQts, dollars = week, weeks[week]
+			if not all(best_week) or best_week[1] > nQts:
+				best_week = (i + 1, nQts)
+		if not all(best_week):
+			return "No quotes to report."
+		return "{n} quote{s} in week {w}".format(n=best_week[1], w=best_week[0], s=("s" if best_week[1] > 1 else ""))
 		
 	def total_base(dat):
 		bases = []
@@ -226,8 +268,8 @@ with open(data_file, 'r') as data:
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]])
-			b = "$ %.2f" % base
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
 					top_5[b].append(content)
@@ -247,8 +289,8 @@ with open(data_file, 'r') as data:
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]])
-			b = "$ %.2f" % base
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
 					top_5[b].append(content)
@@ -268,8 +310,8 @@ with open(data_file, 'r') as data:
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]])
-			c = "$ %.2f" % cost
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
 					top_5[c].append(content)
@@ -289,8 +331,8 @@ with open(data_file, 'r') as data:
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]])
-			c = "$ %.2f" % cost
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
 					top_5[c].append(content)
@@ -302,13 +344,9 @@ with open(data_file, 'r') as data:
 		return top_5
 		
 	print(dict_print("Model Counts:", model_counts(data_dict)))
-	print(dict_print("Weekly Counts:", weekly_counts(data_dict)))
+	print(dict_print("Weekly Counts:", weekly_counts(data_dict), number=True))
 	print(dict_print("Dealer Counts:", dealer_counts(data_dict)))
-	print("\nTotal Quotes:\n" + str(total_quotes(data_dict)))
-	print("\nTotal Base Costs:\n" + money(total_base(data_dict)))
-	print("\nTotal Costs:\n" + money(total_cost(data_dict)))
-	print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
-	print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
+	print(dict_print("Dealer Costs:", dealer_costs(data_dict)))
 	print(dict_print("Top 5 Dealers:", top_5_dealers(data_dict), number=True))
 	print(dict_print("Top 5 Models:", top_5_models(data_dict), number=True))
 	print(dict_print("Bottom 5 Dealers:", bottom_5_dealers(data_dict), number=True))
@@ -318,13 +356,29 @@ with open(data_file, 'r') as data:
 	print(dict_print("top 5 costs: ", top_5_cost(data_dict), number=True))
 	print(dict_print("bottom 5 costs: ", bottom_5_cost(data_dict), number=True))
 	
+	statistical_reporting = {
+		"Total Quotes": total_quotes(data_dict),
+		"Highest quoted week": highest_quoted_week(data_dict),
+		"Lowest quoted week": lowest_quoted_week(data_dict),
+		"Total Base Costs": money(total_base(data_dict)),
+		"Total Costs": money(total_cost(data_dict)),
+		"Average Base Costs": money(avg_base(data_dict)),
+		"Average Costs": money(avg_cost(data_dict))
+	}
+	# print("\nTotal Quotes:\n" + str(total_quotes(data_dict)))
+	# print("\nTotal Base Costs:\n" + money(total_base(data_dict)))
+	# print("\nTotal Costs:\n" + money(total_cost(data_dict)))
+	# print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
+	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
+	print(dict_print("Statistical reporting", statistical_reporting))
+	
 	# break_dict_print = {
 		# 1: "A",
 		# 2: ["A"],
 		# 3: ["A", "B"],
 		# 4: [i for i in range(12)],
-		# 5: "A",
-		# 6: "A",
+		# "I'm hoping this long key will have som e weird effect on the spacing": "A",
+		# 6: "I'm hoping that this long value will have some weird effect on the spacing",
 		# 7: "A",
 		# 8: [i for i in range(12)],
 		# 9: "A",
