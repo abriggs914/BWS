@@ -81,6 +81,9 @@ with open(data_file, 'r') as data:
 		for qNo, info in dat.items():
 			w = int(info[fieldnames[2]].strip())
 			c = float(info[fieldnames[5]].strip()[1:])
+			u = info[fieldnames[6]].strip()
+			if u:
+				c *= US_CDN_RATIO
 			weeks[w] = (1, c) if w not in weeks else (weeks[w][0] + 1, weeks[w][1] + c)
 		
 		keys = weeks.keys()
@@ -103,6 +106,9 @@ with open(data_file, 'r') as data:
 		for qNo, info in dat.items():
 			d = info[fieldnames[3]].strip()
 			c = float(info[fieldnames[5]].strip()[1:])
+			u = info[fieldnames[6]].strip()
+			if u:
+				c *= US_CDN_RATIO
 			dealers[d] = c if d not in dealers else dealers[d] + c
 		
 		ds = list(dealers.keys())
@@ -260,15 +266,17 @@ with open(data_file, 'r') as data:
 		return bottom_5
 		
 	def top_5_base(dat):
-		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100) for k, info in dat.items()]
+		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		bases.sort(reverse=True, key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(bases):
-			qNo, base = info
+			qNo, base, us = info
 			if len(top_5) == 5:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if us:
+				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
@@ -281,15 +289,17 @@ with open(data_file, 'r') as data:
 		return top_5
 		
 	def bottom_5_base(dat):
-		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100) for k, info in dat.items()]
+		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		bases.sort(key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(bases):
-			qNo, base = info
+			qNo, base, us = info
 			if len(top_5) == 5:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if us:
+				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
@@ -302,15 +312,17 @@ with open(data_file, 'r') as data:
 		return top_5
 		
 	def top_5_cost(dat):
-		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100) for k, info in dat.items()]
+		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		costs.sort(reverse=True, key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(costs):
-			qNo, cost = info
+			qNo, cost, us = info
 			if len(top_5) == 5:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if us:
+				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
@@ -323,15 +335,17 @@ with open(data_file, 'r') as data:
 		return top_5
 		
 	def bottom_5_cost(dat):
-		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100) for k, info in dat.items()]
+		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		costs.sort(key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(costs):
-			qNo, cost = info
+			qNo, cost, us = info
 			if len(top_5) == 5:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if us:
+				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
