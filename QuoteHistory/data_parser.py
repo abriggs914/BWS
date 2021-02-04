@@ -64,6 +64,9 @@ with open(data_file, 'r') as data:
 	def money(v):
 		# return "$ %.2f" % v
 		return locale.currency(v, grouping=True)
+		
+	def money_value(m):
+		return float("".join(m[1:].split(",")))
 			
 	def model_counts(dat) :
 		models = {}
@@ -162,6 +165,17 @@ with open(data_file, 'r') as data:
 		
 	def total_quotes(dat):
 		return len(dat)
+		
+	def avg_weekly_reporting(dat):
+		weekly = weekly_counts(dat)
+		t = total_quotes(dat)
+		length = len(weekly)
+		weeks = {
+			"Average # quotes per week:": sum(weekly.keys()) / length,
+			"Average quote price per week": money(sum([money_value(wv) for wv in weekly.values()]) / length)
+		}
+		weeks.update({c: p for c, p in weekly.items()})
+		return weeks
 		
 	def avg_base(dat):
 		return total_base(dat) / total_quotes(dat)
@@ -369,6 +383,7 @@ with open(data_file, 'r') as data:
 	print(dict_print("bottom 5 bases: ", bottom_5_base(data_dict), number=True))
 	print(dict_print("top 5 costs: ", top_5_cost(data_dict), number=True))
 	print(dict_print("bottom 5 costs: ", bottom_5_cost(data_dict), number=True))
+	print(dict_print("Weekly reporting", avg_weekly_reporting(data_dict), number=True))
 	
 	statistical_reporting = {
 		"Total Quotes": total_quotes(data_dict),
