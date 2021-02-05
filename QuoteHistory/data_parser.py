@@ -3,7 +3,7 @@ import locale
 
 locale.setlocale(locale.LC_ALL, "")
 data_file = "data.csv"
-US_CDN_RATIO = 1.209
+US_CDN_RATIO = 1.269
 
 with open(data_file, 'r') as data:
 	data_dict = csv.DictReader(data, delimiter=',')
@@ -401,31 +401,31 @@ with open(data_file, 'r') as data:
 	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
 	print(dict_print("Statistical reporting", statistical_reporting))
 	
-	# break_dict_print = {
-		# 1: "A",
-		# 2: ["A"],
-		# 3: ["A", "B"],
-		# 4: [i for i in range(12)],
-		# "I'm hoping this long key will have som e weird effect on the spacing": "A",
-		# 6: "I'm hoping that this long value will have some weird effect on the spacing",
-		# 7: "A",
-		# 8: [i for i in range(12)],
-		# 9: "A",
-		# 10: "A",
-		# 11: "A",
-		# 12: "A",
-		# 13: [i for i in range(1200)],
-		# 14: "A",
-		# 15: ["A", "B", "C", "D", "E", "F"],
-		# 16: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
-		# 17: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
-		# 18: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
-		# 19: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
-		# 20: "A",
-		# 21: [i for i in range(12)]
-	# }
+	break_dict_print = {
+		1: "A",
+		2: ["A"],
+		3: ["A", "B"],
+		4: [i for i in range(12)],
+		"I'm hoping this long key will have som e weird effect on the spacing": "A",
+		6: "I'm hoping that this long value will have some weird effect on the spacing",
+		7: "A",
+		8: [i for i in range(12)],
+		9: {"A":1, "B":2, "C":3, "D":4, "E":5},
+		10: "A",
+		11: "A",
+		12: "A",
+		13: [i for i in range(120)],
+		14: "A",
+		15: ["A", "B", "C", "D", "E", "F"],
+		16: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
+		17: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
+		18: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
+		19: ["print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))", "print(dict_print(\"top 5 bases: \", top_5_base(data_dict), number=True))"],
+		20: "A",
+		21: [i for i in range(12)]
+	}
 	
-	# print(dict_print("Break dict print:", break_dict_print, number=True))
+	print(dict_print("Break dict print:", break_dict_print, number=True))
 	
 	
 	
