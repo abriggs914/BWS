@@ -15,17 +15,20 @@ with open(data_file, 'r') as data:
 	# Special lines and line count for values that are lists.
 	# n			-	Name of the dict, printed above the contents.
 	# d			-	dict object.
-	# number	-	Decide whether to number the content lines.
+	# number		-	Decide whether to number the content lines.
 	# l			-	Minimum number of chars in the content line.
 	# 				Spaces between keys and values are populated by marker.
 	# sep		-	Additional separation between keys and values.
-	# marker	-	Char that separates the key and value of a content line.
+	# marker		-	Char that separates the key and value of a content line.
 	def dict_print(n, d, number=False, l=15, sep=5, marker="."):
 		if not d or not n:
 			return "None"
 		m = "\n--  " + str(n).title() + "  --\n\n"
 		fill = 0
+		has_dict = False
 		for k, v in d.items():
+			# k = str(k).strip()
+			# v = str(v).strip()
 			lk = len(str(k))
 			lv = len(str(v))
 			# print("lk: {lk}, lv: {lv}".format(lk=lk, lv=lv))
@@ -39,6 +42,8 @@ with open(data_file, 'r') as data:
 					# print("\tv_elem: {n}<{ve}>".format(n=len(v_elem), ve=v_elem))
 				
 				fill += len(v)
+			elif type(v) == dict:
+				has_dict = True
 			l = max(l, (lk + lv))
 			# print("calculated L : {l}\tLK: {lk}\tLV: {lv}".format(l=l, lk=lk, lv=lv))
 		l += sep
@@ -49,7 +54,7 @@ with open(data_file, 'r') as data:
 			if type(v) != list:
 				v = [v]
 			for j, v_elem in enumerate(v):
-				ml = str(k)
+				ml = str(k).strip()
 				orig_ml = ml
 				num = str(i+1)
 				if number:
@@ -67,6 +72,13 @@ with open(data_file, 'r') as data:
 		
 	def money_value(m):
 		return float("".join(m[1:].split(",")))
+			
+	# Pad empty string on a dict key to wnsure that it will be a unique key
+	def unique_key(new_key, d):
+		if new_key not in d:
+			return new_key
+		print("\n\n\tRECURSE\n\n")
+		return unique_key(str(new_key) + " ", d)
 			
 	def model_counts(dat) :
 		models = {}
@@ -90,7 +102,20 @@ with open(data_file, 'r') as data:
 			weeks[w] = (1, c) if w not in weeks else (weeks[w][0] + 1, weeks[w][1] + c)
 		
 		keys = weeks.keys()
-		weeks = {(weeks[i][0] if i in keys else 0): money(weeks[i][1] if i in keys else 0) for i in range(1, max(keys) + 1)}
+		# weeks = {unique_key((weeks[i][0] if i in keys else 0), weeks): money(weeks[i][1] if i in keys else 0) for i in range(1, max(keys) + 1)}
+		# weeks = {i: money(weeks[i][1] if i in keys else 0) for i in range(1, max(keys) + 1)}
+		new_weeks = {}
+		for i in range(1, max(keys) + 1):
+			key = unique_key((weeks[i][0] if i in keys else 0), new_weeks)
+			val = money(weeks[i][1] if i in keys else 0)
+			# print("UNIQUE:\t<{k}>\n\t<{v}>".format(k=key, v=val))
+			new_weeks[key] = val
+		weeks.clear()
+		weeks.update(new_weeks)
+		# print("KEYS: {keys}\nRange: {range}\nWeeks: {weeks}".format(keys=keys, range=range(1, int(str(list(keys)[-1]).strip()) + 1), weeks=weeks))
+		# for i in range(-1,15):
+			# print("\t{i} in keys: {tf}".format(i=i, tf=i in keys))
+		# raise ValueError("QUIT HERE")
 		return weeks
 	
 	def dealer_counts(dat) :
@@ -126,6 +151,7 @@ with open(data_file, 'r') as data:
 		for i, week in enumerate(weeks):
 			# print("i: {i}, w: {w}, w1: {w1}".format(i=i, w=week, w1=weeks[week]))
 			nQts, dollars = week, weeks[week]
+			nQts = int(str(nQts).strip())
 			if not all(best_week) or best_week[1] < nQts:
 				best_week = (i + 1, nQts)
 		if not all(best_week):
@@ -139,6 +165,7 @@ with open(data_file, 'r') as data:
 		for i, week in enumerate(weeks):
 			# print("i: {i}, w: {w}, w1: {w1}".format(i=i, w=week, w1=weeks[week]))
 			nQts, dollars = week, weeks[week]
+			nQts = int(str(nQts).strip())
 			if not all(best_week) or best_week[1] > nQts:
 				best_week = (i + 1, nQts)
 		if not all(best_week):
@@ -171,7 +198,7 @@ with open(data_file, 'r') as data:
 		t = total_quotes(dat)
 		length = len(weekly)
 		weeks = {
-			"Average # quotes per week:": sum(weekly.keys()) / length,
+			"Average # quotes per week:": "%.3f" % (sum([int(str(k).strip()) for k in weekly.keys()]) / length),
 			"Average quote price per week": money(sum([money_value(wv) for wv in weekly.values()]) / length)
 		}
 		weeks.update({c: p for c, p in weekly.items()})
@@ -371,10 +398,21 @@ with open(data_file, 'r') as data:
 			
 		return top_5
 		
-	print(dict_print("Model Counts:", model_counts(data_dict)))
+	def sequential_quotes(dat):
+		qNos = list(dat.keys())
+		qNos.sort()
+		i = 0
+		for qNo in range(int(qNos[0].strip()), int(qNos[-1].strip()) + 1):
+			c = int(qNos[i]) == qNo
+			m = "check" if c else ""
+			print("qNo: {qNo}\t-\t{c}".format(qNo=qNo, c=m))
+			i += 1 if c else 0
+			
+		
+	print(dict_print("Model Counts:", model_counts(data_dict), number=True))
 	print(dict_print("Weekly Counts:", weekly_counts(data_dict), number=True))
-	print(dict_print("Dealer Counts:", dealer_counts(data_dict)))
-	print(dict_print("Dealer Costs:", dealer_costs(data_dict)))
+	print(dict_print("Dealer Counts:", dealer_counts(data_dict), number=True))
+	print(dict_print("Dealer Costs:", dealer_costs(data_dict), number=True))
 	print(dict_print("Top 5 Dealers:", top_5_dealers(data_dict), number=True))
 	print(dict_print("Top 5 Models:", top_5_models(data_dict), number=True))
 	print(dict_print("Bottom 5 Dealers:", bottom_5_dealers(data_dict), number=True))
@@ -400,6 +438,8 @@ with open(data_file, 'r') as data:
 	# print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
 	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
 	print(dict_print("Statistical reporting", statistical_reporting))
+	
+	sequential_quotes(data_dict)
 	
 	break_dict_print = {
 		1: "A",
