@@ -45,7 +45,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Total, US
 25668, 35FA, 5, Fort Garry Industries Ltd., $12532.4164, $13271, 0
 25672, 30ANR, 5, NorthEast Truck & Trailer Sales, $28828.4466, $29911, 0
 25673, 37DT3X, 5, NorthEast Truck & Trailer Sales, $68282.76, $74292, 0
-25674, 20ART, 5, Diamond International Trucks Ltd., $26725, $26801, 0
+25674, 20ART, 5, Diamond International Trucks Ltd., $26725, $30807, 0
 25683, 53ET4X MR, 5, Remorques Lewis Inc., $61196, $73947, 0
 25684, 32DT3X V2018, 5, Remorques Lewis Inc., $67949.5253, $67899, 0
 25685, 30ART, 5, NorthEast Truck & Trailer Sales, $31667, $32729, 0
@@ -54,4 +54,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Total, US
 25704, 25ART, 5, Fleet Maintenance Inc., $26191, $30502, 1
 25706, 30NTT, 6, Remorques Lewis Inc., $27657, $28453, 0
 25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $62836, 0
-25709, 25ART, 6, Wieland Sales Inc., $26191, $31384, 1
+25709, 25ART, 6, Wieland Sales Inc., $26191, $31322, 1
+25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $0, 0
+25714, 48HD3X, 6, Redhead Equipment Ltd., $39357.3457, $0, 0
+25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $0, 0

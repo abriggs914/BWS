@@ -11,6 +11,63 @@ with open(data_file, 'r') as data:
 	data_dict = {line[fieldnames[0]]: line for line in data_dict}
 	print("keys: " + str(fieldnames))
 		
+		# Preserving the previous working version
+		
+	# # Function returns a formatted string containing the contents of a dict object.
+	# # Special lines and line count for values that are lists.
+	# # n			-	Name of the dict, printed above the contents.
+	# # d			-	dict object.
+	# # number		-	Decide whether to number the content lines.
+	# # l			-	Minimum number of chars in the content line.
+	# # 				Spaces between keys and values are populated by marker.
+	# # sep		-	Additional separation between keys and values.
+	# # marker		-	Char that separates the key and value of a content line.
+	# def dict_print(n, d, number=False, l=15, sep=5, marker="."):
+		# if not d or not n:
+			# return "None"
+		# m = "\n--  " + str(n).title() + "  --\n\n"
+		# fill = 0
+		# has_dict = False
+		# for k, v in d.items():
+			# # k = str(k).strip()
+			# # v = str(v).strip()
+			# lk = len(str(k))
+			# lv = len(str(v))
+			# # print("lk: {lk}, lv: {lv}".format(lk=lk, lv=lv))
+			# if type(k) == list:
+				# lk += (2 * len(k) + 2 + len(k) - 1)
+			# if type(v) == list:
+				# lv = max([len(str(v_elem)) for v_elem in v])
+				
+				# # print("v: {v}".format(v=v))
+				# # for v_elem in v:
+					# # print("\tv_elem: {n}<{ve}>".format(n=len(v_elem), ve=v_elem))
+				
+				# fill += len(v)
+			# elif type(v) == dict:
+				# has_dict = True
+			# l = max(l, (lk + lv))
+			# # print("calculated L : {l}\tLK: {lk}\tLV: {lv}".format(l=l, lk=lk, lv=lv))
+		# l += sep
+		# fill = "".join([" " for i in range(len(str(fill + len(d))))])
+		# i = 0
+		# # print("FINAL L: {l}\nFill: {n}<{f}>".format(l=l, n=len(fill), f=fill))
+		# for k, v in d.items():
+			# if type(v) != list:
+				# v = [v]
+			# for j, v_elem in enumerate(v):
+				# ml = str(k).strip()
+				# orig_ml = ml
+				# num = str(i+1)
+				# if number:
+					# ml = fill + "  -  " + ml
+					# if j == 0:
+						# ml = num.ljust(len(fill)) + ml[len(fill):]
+				# ml += str(v_elem).rjust(l - len(orig_ml), marker) + "\n"
+				# m += "\t" + ml
+				# i += 1
+		# return m	
+		
 	# Function returns a formatted string containing the contents of a dict object.
 	# Special lines and line count for values that are lists.
 	# n			-	Name of the dict, printed above the contents.
@@ -26,27 +83,13 @@ with open(data_file, 'r') as data:
 		m = "\n--  " + str(n).title() + "  --\n\n"
 		fill = 0
 		has_dict = False
-		for k, v in d.items():
-			# k = str(k).strip()
-			# v = str(v).strip()
-			lk = len(str(k))
-			lv = len(str(v))
-			# print("lk: {lk}, lv: {lv}".format(lk=lk, lv=lv))
-			if type(k) == list:
-				lk += (2 * len(k) + 2 + len(k) - 1)
-			if type(v) == list:
-				lv = max([len(str(v_elem)) for v_elem in v])
-				
-				# print("v: {v}".format(v=v))
-				# for v_elem in v:
-					# print("\tv_elem: {n}<{ve}>".format(n=len(v_elem), ve=v_elem))
-				
-				fill += len(v)
-			elif type(v) == dict:
-				has_dict = True
-			l = max(l, (lk + lv))
-			# print("calculated L : {l}\tLK: {lk}\tLV: {lv}".format(l=l, lk=lk, lv=lv))
-		l += sep
+		
+		max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == list else 0) for k in d.keys()])
+		max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == list else len(str(v)) for v in d.values()])
+		fill += sum([len(v) for v in d.values() if type(v) == list])
+		l = max(l, (max_key + max_val)) + sep
+		# print("max_key: {mk}\nmax_val: {mv}\nfill: {fi}\nl: {l}".format(mk=max_key, mv=max_val, fi=fill, l=l))
+			
 		fill = "".join([" " for i in range(len(str(fill + len(d))))])
 		i = 0
 		# print("FINAL L: {l}\nFill: {n}<{f}>".format(l=l, n=len(fill), f=fill))
@@ -402,12 +445,23 @@ with open(data_file, 'r') as data:
 		qNos = list(dat.keys())
 		qNos.sort()
 		i = 0
-		for qNo in range(int(qNos[0].strip()), int(qNos[-1].strip()) + 1):
+		r = range(int(qNos[0].strip()), int(qNos[-1].strip()) + 1)
+		for qNo in r:
 			c = int(qNos[i]) == qNo
 			m = "check" if c else ""
 			print("qNo: {qNo}\t-\t{c}".format(qNo=qNo, c=m))
 			i += 1 if c else 0
 			
+		ir = r.stop - 1 - r.start
+		lq = len(qNos)
+		res = {
+			"range":  str(r.start) + " => " + str(r.stop-1),
+			"in range": ir,
+			"num": lq,
+			"percentage": "%.3f" % (100 * lq / ir) + " %"
+		}
+		print(dict_print("range of quotes", res))
+		# print("range of quotes:\n\t\t{rs} => {re}\nin range:\t{ir}\nnum:\t\t{n}\nPercentage:\t{p} %".format(rs=r.start, re=r.stop-1, ir=ir, n=lq, p="%.3f"%(100 * lq/ir)))
 		
 	print(dict_print("Model Counts:", model_counts(data_dict), number=True))
 	print(dict_print("Weekly Counts:", weekly_counts(data_dict), number=True))
