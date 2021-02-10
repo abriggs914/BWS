@@ -1,9 +1,19 @@
 import csv
 import locale
+import functools
 
 locale.setlocale(locale.LC_ALL, "")
 data_file = "data.csv"
 US_CDN_RATIO = 1.269
+TAB = "    "
+SEPARATOR = "  -  "
+TABLE_DIVIDER = "|"
+
+# calculate costing for stacked discounts
+costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 - b), discounts)
+# Usage: costing(741.89, [0.01, 0.015])
+# >>> 723.4540334999999
+# This demonstrates cost calculation for initial value 741.89 and stacked discounts of 1% and 1.5%
 
 with open(data_file, 'r') as data:
 	data_dict = csv.DictReader(data, delimiter=',')
@@ -66,7 +76,17 @@ with open(data_file, 'r') as data:
 				# ml += str(v_elem).rjust(l - len(orig_ml), marker) + "\n"
 				# m += "\t" + ml
 				# i += 1
-		# return m	
+		# return m
+	def pad_centre(text, l, pad_str=" "):
+		if l > 0:
+			h = (l - len(text)) // 2
+			odd = (((2 * h) + len(text)) == l)
+			text = text.rjust(h + len(text), pad_str)
+			h += 1 if not odd else 0
+			text = text.ljust(h + len(text), pad_str)
+			return text
+		else:
+			return ""
 		
 	# Function returns a formatted string containing the contents of a dict object.
 	# Special lines and line count for values that are lists.
@@ -77,20 +97,45 @@ with open(data_file, 'r') as data:
 	# 				Spaces between keys and values are populated by marker.
 	# sep		-	Additional separation between keys and values.
 	# marker		-	Char that separates the key and value of a content line.
-	def dict_print(n, d, number=False, l=15, sep=5, marker="."):
+	def dict_print(n, d, number=False, l=15, sep=5, marker=".", sort_header=False):
 		if not d or not n:
 			return "None"
 		m = "\n--  " + str(n).title() + "  --\n\n"
 		fill = 0
-		has_dict = False
 		
 		max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == list else 0) for k in d.keys()])
-		max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == list else len(str(v)) for v in d.values()])
+		max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == list else len(str(v)) if type(v) != dict else 0 for v in d.values()])
 		fill += sum([len(v) for v in d.values() if type(v) == list])
 		l = max(l, (max_key + max_val)) + sep
+		has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
+		header = []
+		max_cell = 0
+		
+		for k, v in has_dict:
+			for k in v:
+				key = str(k)
+				if key not in header:
+					header.append(key)
+					max_cell = max(max_cell, max(len(key), max([len(str(value)) for value in v.values()])))
+							
+		print("HEADER BEFORE:\n<{0}>".format(header))
+		if sort_header:
+			header.sort(key=lambda x: str(x).strip())
+		print("HEADER AFTER:\n<{0}>".format(header))
+							
+		table_header = TABLE_DIVIDER + TABLE_DIVIDER.join(map(lambda x: pad_centre(str(x), max_cell), header)) + TABLE_DIVIDER
+		empty_line = TABLE_DIVIDER + TABLE_DIVIDER.join([pad_centre(" ", max_cell) for i in range(len(header))]) + TABLE_DIVIDER
+		# print("HEADER:\n\t{0}\nMAX_CELL: {1}\nTABLE_HEADER: {2}".format(header, max_cell, table_header))
+		
+		
 		# print("max_key: {mk}\nmax_val: {mv}\nfill: {fi}\nl: {l}".format(mk=max_key, mv=max_val, fi=fill, l=l))
 			
 		fill = "".join([" " for i in range(len(str(fill + len(d))))])
+		table_width = l + len(fill) + len(SEPARATOR) + len(TAB) + len(table_header) - (4 * len(TABLE_DIVIDER))
+		table_tab = "".join([marker for i in range(len(TAB))])
+		if has_dict:
+			table_header_title = pad_centre("Table Header", l + len(SEPARATOR) - 1)
+			m += TAB + fill + SEPARATOR + table_header_title + table_header.rjust(table_width - len(table_header_title) - len(fill) - len(SEPARATOR)) + "\n"
 		i = 0
 		# print("FINAL L: {l}\nFill: {n}<{f}>".format(l=l, n=len(fill), f=fill))
 		for k, v in d.items():
@@ -101,11 +146,23 @@ with open(data_file, 'r') as data:
 				orig_ml = ml
 				num = str(i+1)
 				if number:
-					ml = fill + "  -  " + ml
+					ml = fill + SEPARATOR + ml
 					if j == 0:
 						ml = num.ljust(len(fill)) + ml[len(fill):]
-				ml += str(v_elem).rjust(l - len(orig_ml), marker) + "\n"
-				m += "\t" + ml
+				v_val = v_elem
+				if has_dict and type(v_elem) == dict:
+					v_val = ""
+				ml += str(v_val).rjust(l - len(orig_ml), marker) 
+				if has_dict:
+					ml += table_tab
+					if type(v_elem) == dict:
+						keys = {str(k).strip(): v for k, v in v_elem.items()}
+						vals = [keys[key] if key in keys else "" for key in header]
+						ml += TABLE_DIVIDER + TABLE_DIVIDER.join(map(lambda x: pad_centre(str(x), max_cell), vals)) + TABLE_DIVIDER
+					else:
+						ml += empty_line
+				ml += "\n"
+				m += TAB + ml
 				i += 1
 		return m
 		
@@ -139,7 +196,7 @@ with open(data_file, 'r') as data:
 		for qNo, info in dat.items():
 			w = int(info[fieldnames[2]].strip())
 			c = float(info[fieldnames[5]].strip()[1:])
-			u = info[fieldnames[6]].strip()
+			u = int(info[fieldnames[6]].strip())
 			if u:
 				c *= US_CDN_RATIO
 			weeks[w] = (1, c) if w not in weeks else (weeks[w][0] + 1, weeks[w][1] + c)
@@ -177,7 +234,7 @@ with open(data_file, 'r') as data:
 		for qNo, info in dat.items():
 			d = info[fieldnames[3]].strip()
 			c = float(info[fieldnames[5]].strip()[1:])
-			u = info[fieldnames[6]].strip()
+			u = int(info[fieldnames[6]].strip())
 			if u:
 				c *= US_CDN_RATIO
 			dealers[d] = c if d not in dealers else dealers[d] + c
@@ -219,7 +276,8 @@ with open(data_file, 'r') as data:
 		bases = []
 		for k, info in dat.items():
 			b = float(info[fieldnames[4]].strip()[1:])
-			if info[fieldnames[6]]:
+			u = int(info[fieldnames[6]].strip())
+			if u:
 				b *= US_CDN_RATIO
 			bases.append(b)
 		return sum(bases)
@@ -228,7 +286,8 @@ with open(data_file, 'r') as data:
 		costs = []
 		for k, info in dat.items():
 			c = float(info[fieldnames[5]].strip()[1:])
-			if info[fieldnames[6]]:
+			u = int(info[fieldnames[6]].strip())
+			if u:
 				c *= US_CDN_RATIO
 			costs.append(c)
 		return sum(costs)
@@ -359,7 +418,7 @@ with open(data_file, 'r') as data:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
-			if us:
+			if int(us.strip()):
 				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
@@ -382,7 +441,7 @@ with open(data_file, 'r') as data:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
-			if us:
+			if int(us.strip()):
 				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
@@ -405,7 +464,7 @@ with open(data_file, 'r') as data:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
-			if us:
+			if int(us.strip()):
 				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
@@ -428,7 +487,7 @@ with open(data_file, 'r') as data:
 				break
 			
 			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
-			if us:
+			if int(us.strip()):
 				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
@@ -504,7 +563,7 @@ with open(data_file, 'r') as data:
 		6: "I'm hoping that this long value will have some weird effect on the spacing",
 		7: "A",
 		8: [i for i in range(12)],
-		9: {"A":1, "B":2, "C":3, "D":4, "E":5},
+		9: {"A":"".join(["#" for i in range(16)]), "B":2, "C":3, "D":4, "E":5},
 		10: "A",
 		11: "A",
 		12: "A",
@@ -520,6 +579,25 @@ with open(data_file, 'r') as data:
 	}
 	
 	print(dict_print("Break dict print:", break_dict_print, number=True))
+	
+	test_dict_print = {
+		"set 1": {i: chr(i) for i in range(97, 107)},
+		"set 2": {i: chr(i-32) for i in range(97, 107)},
+		"set 3": {i-32: chr(i-32) for i in range(97, 107)},
+		"set 4": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 5": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 6": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 7": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 8": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 9": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 10": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 11": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 12": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 13": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 14": {chr(i-32): chr(i-32) for i in range(97, 107)}
+	}
+	
+	print(dict_print("test dict print", test_dict_print, number=True, sort_header=True))
 	
 	
 	
