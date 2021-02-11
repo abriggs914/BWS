@@ -4,10 +4,12 @@ import functools
 
 locale.setlocale(locale.LC_ALL, "")
 data_file = "data.csv"
+out_file = "output.txt"
 US_CDN_RATIO = 1.269
 TAB = "    "
 SEPARATOR = "  -  "
 TABLE_DIVIDER = "|"
+WRITING = False
 
 # calculate costing for stacked discounts
 costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 - b), discounts)
@@ -15,11 +17,43 @@ costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 
 # >>> 723.4540334999999
 # This demonstrates cost calculation for initial value 741.89 and stacked discounts of 1% and 1.5%
 
-with open(data_file, 'r') as data:
+# conversion functions for vonverting cost->CDN->US and any variation in-between
+PROFIT_MARGIN = 0.7
+FE_RATE = 1.269  # CDN => US
+cost_cdn = lambda x: x / PROFIT_MARGIN
+cost_us = lambda x: cost_cdn(x) / FE_RATE
+cdn_us = lambda x: x / FE_RATE
+us_cdn = lambda x : x * FE_RATE
+cdn_cost = lambda x: x * PROFIT_MARGIN
+us_cost = lambda x: cdn_cost(us_cdn(x))
+
+
+class Quote:
+
+	def __init__(self, number, model, week, dealer, base, cost, is_us):
+		self.number = number
+		self.model = model
+		self.week = week
+		self.dealer = dealer
+		self.base = base
+		self.cost = cost
+		self.is_us = is_us
+		
+	def __repr__(self):
+		return "Quote # %s" % self.number
+
+
+with open(data_file, 'r') as data, open(out_file, 'w') as out:
+
+	def write(content):
+		if WRITING:
+			write(content)
+	
 	data_dict = csv.DictReader(data, delimiter=',')
 	fieldnames = data_dict.fieldnames
 	data_dict = {line[fieldnames[0]]: line for line in data_dict}
 	print("keys: " + str(fieldnames))
+	write("keys: " + str(fieldnames) + "\n")
 		
 		# Preserving the previous working version
 		
@@ -97,7 +131,7 @@ with open(data_file, 'r') as data:
 	# 				Spaces between keys and values are populated by marker.
 	# sep		-	Additional separation between keys and values.
 	# marker		-	Char that separates the key and value of a content line.
-	def dict_print(n, d, number=False, l=15, sep=5, marker=".", sort_header=False):
+	def dict_print(n, d, number=False, l=15, sep=5, marker=".", sort_header=False, minumum_encapsulation=True):
 		if not d or not n:
 			return "None"
 		m = "\n--  " + str(n).title() + "  --\n\n"
@@ -110,6 +144,7 @@ with open(data_file, 'r') as data:
 		has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
 		header = []
 		max_cell = 0
+		max_cell_widths = []
 		
 		for k, v in has_dict:
 			for k in v:
@@ -117,16 +152,42 @@ with open(data_file, 'r') as data:
 				if key not in header:
 					header.append(key)
 					max_cell = max(max_cell, max(len(key), max([len(str(value)) for value in v.values()])))
+					
+		max_cell += 2
+		
+		# print("has_dict BEFORE: {hd}\nHeader: {h}".format(hd=has_dict, h= header))
+		if minumum_encapsulation:
+			for h in header:
+				max_col_width = len(" " + h + " ")
+				for k, d_val in has_dict:
+					# print("\td_val: {0}".format(d_val))
+					if h in d_val:
+						print("\t\th: <{h}>, len(d_val[h]): {lh}, d_val[h]: <{dh}>".format(h=h, lh=len(" " + str(d_val[h]) + " "), dh=d_val[h]))
+						max_col_width = max(max_col_width, len(" " + str(d_val[h]) + " "))
+				max_cell_widths.append(max_col_width) 
+				print("max_cell_widths:\n\t{mcw}".format(mcw=max_cell_widths))
 							
-		print("HEADER BEFORE:\n<{0}>".format(header))
+		# print("has_dict AFTER: {hd}\nHeader: {h}".format(hd=has_dict, h= header))
+		# print("max cells:\n\t{mc}".format(mc=max_cell_widths))
+		# print("HEADER BEFORE:\n<{0}>".format(header))
+		# write("HEADER BEFORE:\n<{0}>".format(header) + "\n")
 		if sort_header:
-			header.sort(key=lambda x: str(x).strip())
-		print("HEADER AFTER:\n<{0}>".format(header))
+			header.sort(key=lambda x: x.rjust(max_cell))
+			# header.sort(key=lambda x: str(x).strip())
+		# print("HEADER AFTER:\n<{0}>".format(header))
+		# write("HEADER AFTER:\n<{0}>".format(header) + "\n")
 							
 		table_header = TABLE_DIVIDER + TABLE_DIVIDER.join(map(lambda x: pad_centre(str(x), max_cell), header)) + TABLE_DIVIDER
 		empty_line = TABLE_DIVIDER + TABLE_DIVIDER.join([pad_centre(" ", max_cell) for i in range(len(header))]) + TABLE_DIVIDER
 		# print("HEADER:\n\t{0}\nMAX_CELL: {1}\nTABLE_HEADER: {2}".format(header, max_cell, table_header))
 		
+		if minumum_encapsulation:
+			for i in range(max(len(header), len(max_cell_widths))):
+				print("h: {h}, max cell widths: {mc}".format(h = header[i], mc=max_cell_widths[i]))
+			table_header = TABLE_DIVIDER + TABLE_DIVIDER.join([pad_centre(str(h), max_cell_widths[i]) for i, h in enumerate(header)]) + TABLE_DIVIDER
+			empty_line = TABLE_DIVIDER + TABLE_DIVIDER.join([pad_centre(" ", max_cell_widths[i]) for i in range(len(header))]) + TABLE_DIVIDER
+		else:
+			max_cell_widths = [max_cell for i in range(len(header))]
 		
 		# print("max_key: {mk}\nmax_val: {mv}\nfill: {fi}\nl: {l}".format(mk=max_key, mv=max_val, fi=fill, l=l))
 			
@@ -158,7 +219,7 @@ with open(data_file, 'r') as data:
 					if type(v_elem) == dict:
 						keys = {str(k).strip(): v for k, v in v_elem.items()}
 						vals = [keys[key] if key in keys else "" for key in header]
-						ml += TABLE_DIVIDER + TABLE_DIVIDER.join(map(lambda x: pad_centre(str(x), max_cell), vals)) + TABLE_DIVIDER
+						ml += TABLE_DIVIDER + TABLE_DIVIDER.join(pad_centre(str(cell), max_cell_widths[i]) for i, cell in enumerate(vals)) + TABLE_DIVIDER
 					else:
 						ml += empty_line
 				ml += "\n"
@@ -177,7 +238,6 @@ with open(data_file, 'r') as data:
 	def unique_key(new_key, d):
 		if new_key not in d:
 			return new_key
-		print("\n\n\tRECURSE\n\n")
 		return unique_key(str(new_key) + " ", d)
 			
 	def model_counts(dat) :
@@ -509,6 +569,7 @@ with open(data_file, 'r') as data:
 			c = int(qNos[i]) == qNo
 			m = "check" if c else ""
 			print("qNo: {qNo}\t-\t{c}".format(qNo=qNo, c=m))
+			write("qNo: {qNo}\t-\t{c}".format(qNo=qNo, c=m) + "\n")
 			i += 1 if c else 0
 			
 		ir = r.stop - 1 - r.start
@@ -520,21 +581,35 @@ with open(data_file, 'r') as data:
 			"percentage": "%.3f" % (100 * lq / ir) + " %"
 		}
 		print(dict_print("range of quotes", res))
+		write(dict_print("range of quotes", res) + "\n")
 		# print("range of quotes:\n\t\t{rs} => {re}\nin range:\t{ir}\nnum:\t\t{n}\nPercentage:\t{p} %".format(rs=r.start, re=r.stop-1, ir=ir, n=lq, p="%.3f"%(100 * lq/ir)))
 		
 	print(dict_print("Model Counts:", model_counts(data_dict), number=True))
+	write(dict_print("Model Counts:", model_counts(data_dict), number=True) + "\n")
 	print(dict_print("Weekly Counts:", weekly_counts(data_dict), number=True))
+	write(dict_print("Weekly Counts:", weekly_counts(data_dict), number=True) + "\n")
 	print(dict_print("Dealer Counts:", dealer_counts(data_dict), number=True))
+	write(dict_print("Dealer Counts:", dealer_counts(data_dict), number=True) + "\n")
 	print(dict_print("Dealer Costs:", dealer_costs(data_dict), number=True))
+	write(dict_print("Dealer Costs:", dealer_costs(data_dict), number=True) + "\n")
 	print(dict_print("Top 5 Dealers:", top_5_dealers(data_dict), number=True))
+	write(dict_print("Top 5 Dealers:", top_5_dealers(data_dict), number=True) + "\n")
 	print(dict_print("Top 5 Models:", top_5_models(data_dict), number=True))
+	write(dict_print("Top 5 Models:", top_5_models(data_dict), number=True) + "\n")
 	print(dict_print("Bottom 5 Dealers:", bottom_5_dealers(data_dict), number=True))
+	write(dict_print("Bottom 5 Dealers:", bottom_5_dealers(data_dict), number=True) + "\n")
 	print(dict_print("Bottom 5 Models:", bottom_5_models(data_dict), number=True))
+	write(dict_print("Bottom 5 Models:", bottom_5_models(data_dict), number=True) + "\n")
 	print(dict_print("top 5 bases: ", top_5_base(data_dict), number=True))
+	write(dict_print("top 5 bases: ", top_5_base(data_dict), number=True) + "\n")
 	print(dict_print("bottom 5 bases: ", bottom_5_base(data_dict), number=True))
+	write(dict_print("bottom 5 bases: ", bottom_5_base(data_dict), number=True) + "\n")
 	print(dict_print("top 5 costs: ", top_5_cost(data_dict), number=True))
+	write(dict_print("top 5 costs: ", top_5_cost(data_dict), number=True) + "\n")
 	print(dict_print("bottom 5 costs: ", bottom_5_cost(data_dict), number=True))
+	write(dict_print("bottom 5 costs: ", bottom_5_cost(data_dict), number=True) + "\n")
 	print(dict_print("Weekly reporting", avg_weekly_reporting(data_dict), number=True))
+	write(dict_print("Weekly reporting", avg_weekly_reporting(data_dict), number=True) + "\n")
 	
 	statistical_reporting = {
 		"Total Quotes": total_quotes(data_dict),
@@ -551,6 +626,7 @@ with open(data_file, 'r') as data:
 	# print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
 	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
 	print(dict_print("Statistical reporting", statistical_reporting))
+	write(dict_print("Statistical reporting", statistical_reporting) + "\n")
 	
 	sequential_quotes(data_dict)
 	
@@ -579,6 +655,7 @@ with open(data_file, 'r') as data:
 	}
 	
 	print(dict_print("Break dict print:", break_dict_print, number=True))
+	write(dict_print("Break dict print:", break_dict_print, number=True) + "\n")
 	
 	test_dict_print = {
 		"set 1": {i: chr(i) for i in range(97, 107)},
@@ -594,10 +671,12 @@ with open(data_file, 'r') as data:
 		"set 11": {chr(i-32): chr(i-32) for i in range(97, 107)},
 		"set 12": {chr(i-32): chr(i-32) for i in range(97, 107)},
 		"set 13": {chr(i-32): chr(i-32) for i in range(97, 107)},
-		"set 14": {chr(i-32): chr(i-32) for i in range(97, 107)}
+		"set 14": {chr(i-32): chr(i-32) for i in range(97, 107)},
+		"set 15": {"first name": "Avery", "last name": "Briggs", "fav number": 10001212154542115, "fav string": "qwertyuiopasdfghjklzxcvbnm"}
 	}
 	
 	print(dict_print("test dict print", test_dict_print, number=True, sort_header=True))
+	write(dict_print("test dict print", test_dict_print, number=True, sort_header=True) + "\n")
 	
 	
 	
