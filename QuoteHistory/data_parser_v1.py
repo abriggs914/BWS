@@ -6,7 +6,7 @@ locale.setlocale(locale.LC_ALL, "")
 data_file = "data.csv"
 out_file = "output.txt"
 US_CDN_RATIO = 1.269
-WRITING = False
+WRITING = True
 
 # calculate costing for stacked discounts
 costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 - b), discounts)
@@ -28,33 +28,19 @@ us_cost = lambda x: cdn_cost(us_cdn(x))
 class Quote:
 
 	def __init__(self, number, model, week, dealer, base, cost, is_us):
-		self.number = int(number.strip())
-		self.model = model.strip()
-		self.week = int(week.strip())
-		self.dealer = dealer.strip().title()
-		self.base = float(base.strip()[1:])
-		self.cost = float(cost.strip()[1:])
-		self.is_us = int(is_us.strip())
-		
-		self.baseCDN = self.base * (US_CDN_RATIO if self.is_us else 1)
-		self.costCDN = self.cost * (US_CDN_RATIO if self.is_us else 1)
-		print(dict_print({
-			"number": self.number,
-			"model": self.model,
-			"week": self.week,
-			"dealer": self.dealer,
-			"base": self.base,
-			"cost": self.cost,
-			"is_us": self.is_us,
-			"baseCDN": self.baseCDN,
-			"costCDN": self.costCDN,
-		}, "Initialized quote"))
+		self.number = number
+		self.model = model
+		self.week = week
+		self.dealer = dealer
+		self.base = base
+		self.cost = cost
+		self.is_us = is_us
 		
 	def __repr__(self):
-		return "Quote #%s" % self.number
+		return "Quote # %s" % self.number
 
 
-with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as out:
+with open(data_file, 'r') as data, open(out_file, 'w') as out:
 
 	def write(content):
 		if WRITING:
@@ -62,12 +48,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 	data_dict = csv.DictReader(data, delimiter=',')
 	fieldnames = data_dict.fieldnames
-	# data_dict = {line[fieldnames[0]]: line for line in data_dict}
-	quotes = [Quote(*line.values()) for line in data_dict]
+	data_dict = {line[fieldnames[0]]: line for line in data_dict}
 	print("keys: " + str(fieldnames))
 	write("keys: " + str(fieldnames))
-	
-	print("quotes: {0}".format(quotes))
 
 		
 			
@@ -79,8 +62,8 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 			
 	def model_counts(dat) :
 		models = {}
-		for qNo in dat:
-			m = qNo.model
+		for qNo, info in dat.items():
+			m = info[fieldnames[1]].strip()
 			models[m] = 1 if m not in models else models[m] + 1
 		
 		ms = list(models.keys())
@@ -90,9 +73,12 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 	def weekly_counts(dat) :
 		weeks = {}		
-		for qNo in dat:
-			w = qNo.week
-			c = qNo.costCDN
+		for qNo, info in dat.items():
+			w = int(info[fieldnames[2]].strip())
+			c = float(info[fieldnames[5]].strip()[1:])
+			u = int(info[fieldnames[6]].strip())
+			if u:
+				c *= US_CDN_RATIO
 			weeks[w] = (1, c) if w not in weeks else (weeks[w][0] + 1, weeks[w][1] + c)
 		
 		keys = weeks.keys()
@@ -114,8 +100,8 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 	def dealer_counts(dat) :
 		dealers = {}
-		for qNo in dat:
-			d = qNo.dealer
+		for qNo, info in dat.items():
+			d = info[fieldnames[3]].strip()
 			dealers[d] = 1 if d not in dealers else dealers[d] + 1
 		
 		ds = list(dealers.keys())
@@ -125,9 +111,12 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 	def dealer_costs(dat) :
 		dealers = {}
-		for qNo in dat:
-			d = qNo.dealer
-			c = qNo.costCDN
+		for qNo, info in dat.items():
+			d = info[fieldnames[3]].strip()
+			c = float(info[fieldnames[5]].strip()[1:])
+			u = int(info[fieldnames[6]].strip())
+			if u:
+				c *= US_CDN_RATIO
 			dealers[d] = c if d not in dealers else dealers[d] + c
 		
 		ds = list(dealers.keys())
@@ -165,9 +154,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		
 	def total_base(dat):
 		bases = []
-		for qNo in dat:
-			b = qNo.baseCDN
-			u = qNo.is_us
+		for k, info in dat.items():
+			b = float(info[fieldnames[4]].strip()[1:])
+			u = int(info[fieldnames[6]].strip())
 			if u:
 				b *= US_CDN_RATIO
 			bases.append(b)
@@ -175,9 +164,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		
 	def total_cost(dat):
 		costs = []
-		for qNo in dat:
-			c = qNo.costCDN
-			u = qNo.is_us
+		for k, info in dat.items():
+			c = float(info[fieldnames[5]].strip()[1:])
+			u = int(info[fieldnames[6]].strip())
 			if u:
 				c *= US_CDN_RATIO
 			costs.append(c)
@@ -300,16 +289,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return bottom_5
 		
 	def top_5_base(dat):
-		# bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
-		bases = [(i, round(100 * qNo.baseCDN) / 100) for i, qNo in enumerate(dat)]
+		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		bases.sort(reverse=True, key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(bases):
-			qNo, base = info
+			qNo, base, us = info
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if int(us.strip()):
+				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
@@ -322,15 +312,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return top_5
 		
 	def bottom_5_base(dat):
-		bases = [(i, round(100 * qNo.baseCDN) / 100) for i, qNo in enumerate(dat)]
+		bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		bases.sort(key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(bases):
-			qNo, base = info
+			qNo, base, us = info
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if int(us.strip()):
+				base *= US_CDN_RATIO
 			b = money(base)
 			if b in top_5:
 				if type(top_5[b]) == list:
@@ -343,15 +335,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return top_5
 		
 	def top_5_cost(dat):
-		costs = [(i, round(100 * qNo.costCDN) / 100) for i, qNo in enumerate(dat)]
+		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		costs.sort(reverse=True, key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(costs):
-			qNo, cost = info
+			qNo, cost, us = info
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if int(us.strip()):
+				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
@@ -364,15 +358,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return top_5
 		
 	def bottom_5_cost(dat):
-		costs = [(i, round(100 * qNo.costCDN) / 100) for i, qNo in enumerate(dat)]
+		costs = [(k, round(100 * float(info[fieldnames[5]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
 		costs.sort(key=lambda tup: tup[1])
 		top_5 = {}
 		for i, info in enumerate(costs):
-			qNo, cost = info
+			qNo, cost, us = info
 			if len(top_5) == 5:
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = "Quote #{n}, Model: {m}".format(n=qNo, m=dat[qNo][fieldnames[1]].strip())
+			if int(us.strip()):
+				cost *= US_CDN_RATIO
 			c = money(cost)
 			if c in top_5:
 				if type(top_5[c]) == list:
@@ -385,10 +381,10 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return top_5
 		
 	def sequential_quotes(dat):
-		qNos = [qNo.number for qNo in dat]
+		qNos = list(dat.keys())
 		qNos.sort()
 		i = 0
-		r = range(qNos[0], qNos[-1] + 1)
+		r = range(int(qNos[0].strip()), int(qNos[-1].strip()) + 1)
 		for qNo in r:
 			c = int(qNos[i]) == qNo
 			m = "check" if c else ""
@@ -406,47 +402,53 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		}
 		print(dict_print(res, "range of quotes"))
 		write(dict_print(res, "range of quotes"))
+		# print("range of quotes:\n\t\t{rs} => {re}\nin range:\t{ir}\nnum:\t\t{n}\nPercentage:\t{p} %".format(rs=r.start, re=r.stop-1, ir=ir, n=lq, p="%.3f"%(100 * lq/ir)))
 		
-	print(dict_print(model_counts(quotes), "Model Counts:", number=True))
-	write(dict_print(model_counts(quotes), "Model Counts:", number=True))
-	print(dict_print(weekly_counts(quotes), "Weekly Counts:", number=True))
-	write(dict_print(weekly_counts(quotes), "Weekly Counts:", number=True))
-	print(dict_print(dealer_counts(quotes), "Dealer Counts:", number=True))
-	write(dict_print(dealer_counts(quotes), "Dealer Counts:", number=True))
-	print(dict_print(dealer_costs(quotes), "Dealer Costs:", number=True))
-	write(dict_print(dealer_costs(quotes), "Dealer Costs:", number=True))
-	print(dict_print(top_5_dealers(quotes), "Top 5 Dealers:", number=True))
-	write(dict_print(top_5_dealers(quotes), "Top 5 Dealers:", number=True))
-	print(dict_print(top_5_models(quotes), "Top 5 Models:", number=True))
-	write(dict_print(top_5_models(quotes), "Top 5 Models:", number=True))
-	print(dict_print(bottom_5_dealers(quotes), "Bottom 5 Dealers:", number=True))
-	write(dict_print(bottom_5_dealers(quotes), "Bottom 5 Dealers:", number=True))
-	print(dict_print(bottom_5_models(quotes), "Bottom 5 Models:", number=True))
-	write(dict_print(bottom_5_models(quotes), "Bottom 5 Models:", number=True))
-	print(dict_print(top_5_base(quotes), "top 5 bases: ", number=True))
-	write(dict_print(top_5_base(quotes), "top 5 bases: ", number=True))
-	print(dict_print(bottom_5_base(quotes), "bottom 5 bases: ", number=True))
-	write(dict_print(bottom_5_base(quotes), "bottom 5 bases: ", number=True))
-	print(dict_print(top_5_cost(quotes), "top 5 costs: ", number=True))
-	write(dict_print(top_5_cost(quotes), "top 5 costs: ", number=True))
-	print(dict_print(bottom_5_cost(quotes), "bottom 5 costs: ", number=True))
-	write(dict_print(bottom_5_cost(quotes), "bottom 5 costs: ", number=True))
-	print(dict_print(avg_weekly_reporting(quotes), "Weekly reporting", number=True))
-	write(dict_print(avg_weekly_reporting(quotes), "Weekly reporting", number=True))
+	print(dict_print(model_counts(data_dict), "Model Counts:", number=True))
+	write(dict_print(model_counts(data_dict), "Model Counts:", number=True))
+	print(dict_print(weekly_counts(data_dict), "Weekly Counts:", number=True))
+	write(dict_print(weekly_counts(data_dict), "Weekly Counts:", number=True))
+	print(dict_print(dealer_counts(data_dict), "Dealer Counts:", number=True))
+	write(dict_print(dealer_counts(data_dict), "Dealer Counts:", number=True))
+	print(dict_print(dealer_costs(data_dict), "Dealer Costs:", number=True))
+	write(dict_print(dealer_costs(data_dict), "Dealer Costs:", number=True))
+	print(dict_print(top_5_dealers(data_dict), "Top 5 Dealers:", number=True))
+	write(dict_print(top_5_dealers(data_dict), "Top 5 Dealers:", number=True))
+	print(dict_print(top_5_models(data_dict), "Top 5 Models:", number=True))
+	write(dict_print(top_5_models(data_dict), "Top 5 Models:", number=True))
+	print(dict_print(bottom_5_dealers(data_dict), "Bottom 5 Dealers:", number=True))
+	write(dict_print(bottom_5_dealers(data_dict), "Bottom 5 Dealers:", number=True))
+	print(dict_print(bottom_5_models(data_dict), "Bottom 5 Models:", number=True))
+	write(dict_print(bottom_5_models(data_dict), "Bottom 5 Models:", number=True))
+	print(dict_print(top_5_base(data_dict), "top 5 bases: ", number=True))
+	write(dict_print(top_5_base(data_dict), "top 5 bases: ", number=True))
+	print(dict_print(bottom_5_base(data_dict), "bottom 5 bases: ", number=True))
+	write(dict_print(bottom_5_base(data_dict), "bottom 5 bases: ", number=True))
+	print(dict_print(top_5_cost(data_dict), "top 5 costs: ", number=True))
+	write(dict_print(top_5_cost(data_dict), "top 5 costs: ", number=True))
+	print(dict_print(bottom_5_cost(data_dict), "bottom 5 costs: ", number=True))
+	write(dict_print(bottom_5_cost(data_dict), "bottom 5 costs: ", number=True))
+	print(dict_print(avg_weekly_reporting(data_dict), "Weekly reporting", number=True))
+	write(dict_print(avg_weekly_reporting(data_dict), "Weekly reporting", number=True))
 	
 	statistical_reporting = {
-		"Total Quotes": total_quotes(quotes),
-		"Highest quoted week": highest_quoted_week(quotes),
-		"Lowest quoted week": lowest_quoted_week(quotes),
-		"Total Base Costs": money(total_base(quotes)),
-		"Total Costs": money(total_cost(quotes)),
-		"Average Base Costs": money(avg_base(quotes)),
-		"Average Costs": money(avg_cost(quotes))
+		"Total Quotes": total_quotes(data_dict),
+		"Highest quoted week": highest_quoted_week(data_dict),
+		"Lowest quoted week": lowest_quoted_week(data_dict),
+		"Total Base Costs": money(total_base(data_dict)),
+		"Total Costs": money(total_cost(data_dict)),
+		"Average Base Costs": money(avg_base(data_dict)),
+		"Average Costs": money(avg_cost(data_dict))
 	}
+	# print("\nTotal Quotes:\n" + str(total_quotes(data_dict)))
+	# print("\nTotal Base Costs:\n" + money(total_base(data_dict)))
+	# print("\nTotal Costs:\n" + money(total_cost(data_dict)))
+	# print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
+	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
 	print(dict_print(statistical_reporting, "Statistical reporting"))
 	write(dict_print(statistical_reporting, "Statistical reporting"))
 	
-	sequential_quotes(quotes)
+	sequential_quotes(data_dict)
 	
 	break_dict_print = {
 		1: "A",
@@ -472,7 +474,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		21: [i for i in range(12)]
 	}
 	
-	# print(dict_print(break_dict_print, "Break dict print:", number=True))
+	print(dict_print(break_dict_print, "Break dict print:", number=True))
 	# write(dict_print(break_dict_print, "Break dict print:", number=True))
 	
 	test_dict_print = {
@@ -493,5 +495,202 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"set 15": {"first name": "Avery", "last name": "Briggs", "fav number": 10001212154542115, "fav string": "qwertyuiopasdfghjklzxcvbnm"}
 	}
 	
-	# print(dict_print(test_dict_print, "test dict print", number=True, sort_header=True, min_encapsulation=True))
+	print(dict_print(test_dict_print, "test dict print", number=True, sort_header=True, min_encapsulation=True))
 	# write(dict_print(test_dict_print, "test dict print", number=True, sort_header=True, min_encapsulation=True))
+	
+	
+	
+	
+##############################################################################################
+##############################################################################################
+###########                       Version for collect function                    ############
+##############################################################################################
+##############################################################################################
+
+		
+	# def collect(dat, fieldname, each_predicate=None, each_func=None, all_predicate=None, all_func=None, is_int=False, is_float=False):
+		# # predicate Some - filter the list based on an anonymous selection function 
+		# # predicate None - don't filter ^ (All will be included)
+		# # func Some - apply a function to all returning values.
+		# # func None - return un-modified values.
+		
+		# values = {}
+		# for qNo, info in dat.items():
+			# val = info[fieldname].strip()
+			# values[val] = 
+			# models[m] = 1 if m not in models else models[m] + 1
+		# for qNo, info in dat.items():
+			# w = int(info[fieldnames[2]].strip())
+			# weeks[w] = 1 if w not in weeks else weeks[w] + 1
+		# for qNo, info in dat.items():
+			# d = info[fieldnames[3]].strip()
+			# dealers[d] = 1 if d not in dealers else dealers[d] + 1
+			
+	# def sort_dict_keys(d):
+		# keys = d.keys()
+		# keys.sort()
+		# return keys
+	
+	# def model_counts(dat) :
+		# models = collect(dat, fieldnames[1], all_func=sort_dict_keys)
+		# models = {m: models[m] for m in models}
+		# return models
+	
+	# def weekly_counts(dat) :
+		# weeks = {}		
+		# for qNo, info in dat.items():
+			# w = int(info[fieldnames[2]].strip())
+			# weeks[w] = 1 if w not in weeks else weeks[w] + 1
+		
+		# keys = weeks.keys()
+		# weeks = {i: (weeks[i] if i in keys else 0) for i in range(1, max(keys) + 1)}
+		# return weeks
+	
+	# def dealer_counts(dat) :
+		# dealers = {}
+		# for qNo, info in dat.items():
+			# d = info[fieldnames[3]].strip()
+			# dealers[d] = 1 if d not in dealers else dealers[d] + 1
+		
+		# ds = list(dealers.keys())
+		# ds.sort()
+		# dealers = {d: dealers[d] for d in ds}
+		# return dealers
+		
+	# def total_base(dat):
+		# bases = []
+		# for k, info in dat.items():
+			# b = float(info[fieldnames[4]].strip()[1:])
+			# if info[fieldnames[6]]:
+				# b *= US_CDN_RATIO
+			# bases.append(b)
+		# return sum(bases)
+		
+	# def total_cost(dat):
+		# costs = []
+		# for k, info in dat.items():
+			# c = float(info[fieldnames[5]].strip()[1:])
+			# if info[fieldnames[6]]:
+				# c *= US_CDN_RATIO
+			# costs.append(c)
+		# return sum(costs)
+		
+	# def total_quotes(dat):
+		# return len(dat)
+		
+	# def avg_base(dat):
+		# return total_base(dat) / total_quotes(dat)
+	
+	# def avg_cost(dat):
+		# return total_cost(dat) / total_quotes(dat)
+		
+	# def top_dealer(d):
+		# top_dealer = -1, None
+		# for d, c in d.items():
+			# if not top_dealer:
+				# top_dealer = c, d
+			# elif top_dealer[0] < c:
+				# top_dealer = c, d
+		# return top_dealer
+		
+	# def top_model(d):
+		# top_model = -1, None
+		# for m, c in d.items():
+			# if not top_model:
+				# top_model = c, m
+			# elif top_model[0] < c:
+				# top_model = c, m
+		# return top_model
+		
+	# def bottom_dealer(d):
+		# bottom_dealer = float("inf"), None
+		# for d, c in d.items():
+			# if not bottom_dealer:
+				# bottom_dealer = c, d
+			# elif bottom_dealer[0] > c:
+				# bottom_dealer = c, d
+		# return bottom_dealer
+		
+	# def bottom_model(d):
+		# bottom_model = float("inf"), None
+		# for m, c in d.items():
+			# if not bottom_model:
+				# bottom_model = c, m
+			# elif bottom_model[0] > c:
+				# bottom_model = c, m
+		# return bottom_model
+		
+	# def top_5_dealers(dat):
+		# top_5 = {}
+		# d = dealer_counts(dat)
+		# for i in range(min(5, len(d))):
+			# c, td = top_dealer(d)
+			# if c in top_5:
+				# if type(top_5[c]) == list:
+					# top_5[c].append(td)
+				# else:
+					# top_5[c] = [top_5[c], td]
+			# else:
+				# top_5[c] = td
+			# del d[td]
+		# return top_5
+		
+	# def bottom_5_dealers(dat):
+		# bottom_5 = {}
+		# d = dealer_counts(dat)
+		# for i in range(min(5, len(d))):
+			# c, bd = bottom_dealer(d)
+			# if c in bottom_5:
+				# if type(bottom_5[c]) == list:
+					# bottom_5[c].append(bd)
+				# else:
+					# bottom_5[c] = [bottom_5[c], bd]
+			# else:
+				# bottom_5[c] = bd
+			# del d[bd]
+		# return bottom_5
+		
+	# def top_5_models(dat):
+		# top_5 = {}
+		# m = model_counts(dat)
+		# for i in range(min(5, len(m))):
+			# c, tm = top_model(m)
+			# if c in top_5:
+				# if type(top_5[c]) == list:
+					# top_5[c].append(tm)
+				# else:
+					# top_5[c] = [top_5[c], tm]
+			# else:
+				# top_5[c] = tm
+			# del m[tm]
+		# return top_5
+		
+	# def bottom_5_models(dat):
+		# bottom_5 = {}
+		# m = model_counts(dat)
+		# for i in range(min(5, len(m))):
+			# c, bm = bottom_model(m)
+			# if c in bottom_5:
+				# if type(bottom_5[c]) == list:
+					# bottom_5[c].append(bm)
+				# else:
+					# bottom_5[c] = [bottom_5[c], bm]
+			# else:
+				# bottom_5[c] = bm
+			# del m[bm]
+		# return bottom_5
+		
+	# print(dict_print("Model Counts:", model_counts(data_dict)))
+	# print(dict_print("Weekly Counts:", weekly_counts(data_dict)))
+	# print(dict_print("Dealer Counts:", dealer_counts(data_dict)))
+	# print("\nTotal Quotes:\n" + str(total_quotes(data_dict)))
+	# print("\nTotal Base Costs:\n" + money(total_base(data_dict)))
+	# print("\nTotal Costs:\n" + money(total_cost(data_dict)))
+	# print("\nAverage Base Costs:\n" + money(avg_base(data_dict)))
+	# print("\nAverage Costs:\n" + money(avg_cost(data_dict)))
+	# print(dict_print("Top 5 Dealers:", top_5_dealers(data_dict), number=True))
+	# print(dict_print("Top 5 Models:", top_5_models(data_dict), number=True))
+	# print(dict_print("Bottom 5 Dealers:", bottom_5_dealers(data_dict), number=True))
+	# print(dict_print("Bottom 5 Models:", bottom_5_models(data_dict), number=True))
+	
+	

@@ -1,0 +1,400 @@
+keys: ['QuoteNo', ' QuoteModel', ' QuoteWeek', ' Dealer', ' Base', ' Total', ' US']
+
+--  Model Counts:  --
+
+    1   -  20ANR...............1
+    2   -  20ART...............2
+    3   -  20NTT...............2
+    4   -  25ANR...............1
+    5   -  25ART...............3
+    6   -  25NTT...............2
+    7   -  30ANR...............5
+    8   -  30ART...............2
+    9   -  30NTT...............5
+    10  -  32DT3X V2018........2
+    11  -  35ADG2X48 AGULP.....2
+    12  -  35ADG2X51 AGNR......1
+    13  -  35FA................1
+    14  -  35HDG2X48 AGULP.....1
+    15  -  37DT3X..............2
+    16  -  40ADG2X NR..........1
+    17  -  40HDG3X53 AG........1
+    18  -  46LF3X4T V2018......1
+    19  -  48ET2X..............1
+    20  -  48ET3X..............3
+    21  -  48HF2X..............2
+    22  -  48HF4X..............1
+    23  -  51LD4X5T V2018......1
+    24  -  51LF4X5T V2018......2
+    25  -  53ET2X..............1
+    26  -  53ET3X..............2
+    27  -  53ET3X MR WEST......1
+    28  -  53ET3XP.............3
+    29  -  53ET4X MR...........1
+    30  -  53ET4XP.............1
+    31  -  53HD3X 2018.........1
+    32  -  53HD3X V2018........1
+    33  -  53HF3X 2018.........1
+    34  -  55HDG3X.............4
+    35  -  55HDG3X E...........1
+    36  -  55HDG3X H...........1
+
+
+--  Weekly Counts:  --
+
+    1  -  0..............$0.00
+    2  -  1.........$83,465.00
+    3  -  20.....$1,127,577.48
+    4  -  18.....$1,155,166.52
+    5  -  14.......$654,156.22
+    6  -  10.......$280,367.62
+
+
+--  Dealer Counts:  --
+
+    1   -  Atlantic Powertrain & Equipment........1
+    2   -  BWS - US Direct Sales..................2
+    3   -  DH Agro Ltd............................1
+    4   -  Diamond International Trucks Ltd.......8
+    5   -  Fleet Maintenance Inc..................1
+    6   -  Fort Garry Industries Ltd..............3
+    7   -  Hale Trailer Brake & Wheel.............2
+    8   -  NorthEast Truck & Trailer Sales.......12
+    9   -  Nuss Truck & Equipment.................1
+    10  -  Redhead Equipment Ltd..................3
+    11  -  Remorques Lewis Inc...................22
+    12  -  S & S Trailers Sales Inc...............4
+    13  -  Trailers Plus..........................1
+    14  -  Wieland Sales Inc......................2
+
+
+--  Dealer Costs:  --
+
+    1   -  Atlantic Powertrain & Equipment..........$36,061.00
+    2   -  BWS - US Direct Sales....................$82,248.97
+    3   -  DH Agro Ltd..............................$70,578.00
+    4   -  Diamond International Trucks Ltd........$440,240.00
+    5   -  Fleet Maintenance Inc....................$38,707.04
+    6   -  Fort Garry Industries Ltd...............$143,519.00
+    7   -  Hale Trailer Brake & Wheel....................$0.00
+    8   -  NorthEast Truck & Trailer Sales.........$764,352.00
+    9   -  Nuss Truck & Equipment...................$32,637.41
+    10  -  Redhead Equipment Ltd...................$127,514.00
+    11  -  Remorques Lewis Inc...................$1,118,567.00
+    12  -  S & S Trailers Sales Inc................$336,003.28
+    13  -  Trailers Plus............................$34,490.00
+    14  -  Wieland Sales Inc........................$75,815.14
+
+
+--  Top 5 Dealers:  --
+
+    1  -  22..................Remorques Lewis Inc.
+    2  -  12.......NorthEast Truck & Trailer Sales
+    3  -  8......Diamond International Trucks Ltd.
+    4  -  4...............S & S Trailers Sales Inc
+    5  -  3.............Fort Garry Industries Ltd.
+
+
+--  Top 5 Models:  --
+
+    1  -  5..............30ANR
+       -  5..............30NTT
+    3  -  4............55HDG3X
+    4  -  3..............25ART
+       -  3.............48ET3X
+
+
+--  Bottom 5 Dealers:  --
+
+    1  -  1.....Atlantic Powertrain & Equipment
+       -  1........................DH Agro Ltd.
+       -  1..............Fleet Maintenance Inc.
+       -  1..............Nuss Truck & Equipment
+       -  1.......................Trailers Plus
+
+
+--  Bottom 5 Models:  --
+
+    1  -  1...............20ANR
+       -  1...............25ANR
+       -  1......35ADG2X51 AGNR
+       -  1................35FA
+       -  1.....35HDG2X48 AGULP
+
+
+--  Top 5 Bases:   --
+
+    1  -  $82,700.00..........Quote #25601, Model: 55HDG3X H
+    2  -  $79,749.69.......Quote #25625, Model: 40HDG3X53 AG
+    3  -  $75,803.00............Quote #25541, Model: 53ET4XP
+    4  -  $74,898.00............Quote #25579, Model: 55HDG3X
+       -  $74,898.00............Quote #25593, Model: 55HDG3X
+       -  $74,898.00............Quote #25594, Model: 55HDG3X
+       -  $74,898.00............Quote #25626, Model: 55HDG3X
+    8  -  $71,283.43.....Quote #25629, Model: 51LD4X5T V2018
+
+
+--  Bottom 5 Bases:   --
+
+    1  -  $12,532.42......Quote #25668, Model: 35FA
+    2  -  $24,659.21.....Quote #25728, Model: 20ANR
+    3  -  $21,771.00.....Quote #25590, Model: 20NTT
+       -  $21,771.00.....Quote #25721, Model: 20NTT
+    5  -  $27,943.38.....Quote #25665, Model: 20ART
+    6  -  $30,650.87.....Quote #25687, Model: 30ANR
+
+
+--  Top 5 Costs:   --
+
+    1  -  $92,761.00..........Quote #25593, Model: 55HDG3X
+    2  -  $89,339.00........Quote #25601, Model: 55HDG3X H
+    3  -  $84,009.00.....Quote #25625, Model: 40HDG3X53 AG
+    4  -  $83,792.00..........Quote #25626, Model: 55HDG3X
+    5  -  $83,465.00..........Quote #25541, Model: 53ET4XP
+
+
+--  Bottom 5 Costs:   --
+
+    1  -  $0.00..........Quote #25726, Model: 53ET3X
+       -  $0.00...........Quote #25728, Model: 20ANR
+       -  $0.00...........Quote #25729, Model: 30ANR
+    4  -  $13,271.00.......Quote #25668, Model: 35FA
+    5  -  $21,817.00......Quote #25721, Model: 20NTT
+    6  -  $32,637.41......Quote #25687, Model: 30ANR
+    7  -  $33,859.46......Quote #25665, Model: 20ART
+
+
+--  Weekly Reporting  --
+
+    1  -  Average # quotes per week:..............10.500
+    2  -  Average quote price per week.......$550,122.14
+    3  -  0........................................$0.00
+    4  -  1...................................$83,465.00
+    5  -  20...............................$1,127,577.48
+    6  -  18...............................$1,155,166.52
+    7  -  14.................................$654,156.22
+    8  -  10.................................$280,367.62
+
+
+--  Statistical Reporting  --
+
+    Total Quotes.............................63
+    Highest quoted week.....20 quotes in week 3
+    Lowest quoted week........1 quote in week 2
+    Total Base Costs..............$2,980,019.79
+    Total Costs...................$3,300,732.83
+    Average Base Costs...............$47,301.90
+    Average Costs....................$52,392.58
+
+qNo: 25526	-	check
+qNo: 25527	-	
+qNo: 25528	-	
+qNo: 25529	-	
+qNo: 25530	-	
+qNo: 25531	-	
+qNo: 25532	-	
+qNo: 25533	-	
+qNo: 25534	-	
+qNo: 25535	-	
+qNo: 25536	-	
+qNo: 25537	-	
+qNo: 25538	-	
+qNo: 25539	-	
+qNo: 25540	-	
+qNo: 25541	-	check
+qNo: 25542	-	check
+qNo: 25543	-	check
+qNo: 25544	-	check
+qNo: 25545	-	check
+qNo: 25546	-	
+qNo: 25547	-	check
+qNo: 25548	-	check
+qNo: 25549	-	check
+qNo: 25550	-	
+qNo: 25551	-	
+qNo: 25552	-	check
+qNo: 25553	-	
+qNo: 25554	-	
+qNo: 25555	-	check
+qNo: 25556	-	check
+qNo: 25557	-	check
+qNo: 25558	-	check
+qNo: 25559	-	check
+qNo: 25560	-	check
+qNo: 25561	-	
+qNo: 25562	-	
+qNo: 25563	-	
+qNo: 25564	-	
+qNo: 25565	-	
+qNo: 25566	-	
+qNo: 25567	-	
+qNo: 25568	-	check
+qNo: 25569	-	
+qNo: 25570	-	check
+qNo: 25571	-	check
+qNo: 25572	-	
+qNo: 25573	-	check
+qNo: 25574	-	
+qNo: 25575	-	
+qNo: 25576	-	
+qNo: 25577	-	
+qNo: 25578	-	
+qNo: 25579	-	check
+qNo: 25580	-	
+qNo: 25581	-	
+qNo: 25582	-	
+qNo: 25583	-	
+qNo: 25584	-	
+qNo: 25585	-	
+qNo: 25586	-	
+qNo: 25587	-	
+qNo: 25588	-	
+qNo: 25589	-	
+qNo: 25590	-	check
+qNo: 25591	-	
+qNo: 25592	-	
+qNo: 25593	-	check
+qNo: 25594	-	check
+qNo: 25595	-	
+qNo: 25596	-	
+qNo: 25597	-	check
+qNo: 25598	-	check
+qNo: 25599	-	
+qNo: 25600	-	
+qNo: 25601	-	check
+qNo: 25602	-	
+qNo: 25603	-	
+qNo: 25604	-	
+qNo: 25605	-	
+qNo: 25606	-	
+qNo: 25607	-	check
+qNo: 25608	-	
+qNo: 25609	-	
+qNo: 25610	-	
+qNo: 25611	-	
+qNo: 25612	-	
+qNo: 25613	-	
+qNo: 25614	-	
+qNo: 25615	-	
+qNo: 25616	-	
+qNo: 25617	-	
+qNo: 25618	-	
+qNo: 25619	-	
+qNo: 25620	-	
+qNo: 25621	-	
+qNo: 25622	-	check
+qNo: 25623	-	
+qNo: 25624	-	
+qNo: 25625	-	check
+qNo: 25626	-	check
+qNo: 25627	-	check
+qNo: 25628	-	
+qNo: 25629	-	check
+qNo: 25630	-	check
+qNo: 25631	-	check
+qNo: 25632	-	check
+qNo: 25633	-	
+qNo: 25634	-	
+qNo: 25635	-	
+qNo: 25636	-	check
+qNo: 25637	-	check
+qNo: 25638	-	
+qNo: 25639	-	check
+qNo: 25640	-	
+qNo: 25641	-	
+qNo: 25642	-	
+qNo: 25643	-	
+qNo: 25644	-	
+qNo: 25645	-	
+qNo: 25646	-	
+qNo: 25647	-	check
+qNo: 25648	-	check
+qNo: 25649	-	
+qNo: 25650	-	
+qNo: 25651	-	check
+qNo: 25652	-	
+qNo: 25653	-	
+qNo: 25654	-	
+qNo: 25655	-	
+qNo: 25656	-	
+qNo: 25657	-	
+qNo: 25658	-	
+qNo: 25659	-	
+qNo: 25660	-	
+qNo: 25661	-	
+qNo: 25662	-	
+qNo: 25663	-	
+qNo: 25664	-	
+qNo: 25665	-	check
+qNo: 25666	-	
+qNo: 25667	-	
+qNo: 25668	-	check
+qNo: 25669	-	
+qNo: 25670	-	
+qNo: 25671	-	
+qNo: 25672	-	check
+qNo: 25673	-	check
+qNo: 25674	-	check
+qNo: 25675	-	
+qNo: 25676	-	
+qNo: 25677	-	
+qNo: 25678	-	
+qNo: 25679	-	
+qNo: 25680	-	
+qNo: 25681	-	
+qNo: 25682	-	
+qNo: 25683	-	check
+qNo: 25684	-	check
+qNo: 25685	-	check
+qNo: 25686	-	
+qNo: 25687	-	check
+qNo: 25688	-	
+qNo: 25689	-	
+qNo: 25690	-	
+qNo: 25691	-	
+qNo: 25692	-	
+qNo: 25693	-	
+qNo: 25694	-	
+qNo: 25695	-	
+qNo: 25696	-	
+qNo: 25697	-	
+qNo: 25698	-	
+qNo: 25699	-	
+qNo: 25700	-	
+qNo: 25701	-	check
+qNo: 25702	-	
+qNo: 25703	-	
+qNo: 25704	-	check
+qNo: 25705	-	
+qNo: 25706	-	check
+qNo: 25707	-	check
+qNo: 25708	-	
+qNo: 25709	-	check
+qNo: 25710	-	
+qNo: 25711	-	
+qNo: 25712	-	
+qNo: 25713	-	check
+qNo: 25714	-	check
+qNo: 25715	-	check
+qNo: 25716	-	
+qNo: 25717	-	
+qNo: 25718	-	
+qNo: 25719	-	
+qNo: 25720	-	
+qNo: 25721	-	check
+qNo: 25722	-	
+qNo: 25723	-	
+qNo: 25724	-	
+qNo: 25725	-	
+qNo: 25726	-	check
+qNo: 25727	-	
+qNo: 25728	-	check
+qNo: 25729	-	check
+
+--  Range Of Quotes  --
+
+    range..........25526 => 25729
+    in range..................203
+    num........................63
+    percentage...........31.034 %
+
