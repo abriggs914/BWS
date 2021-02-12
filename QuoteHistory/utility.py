@@ -21,6 +21,11 @@ def pad_centre(text, l, pad_str=" "):
 		return ""
 			
 			
+## TODO
+## When a dict value is a list, the content lines are too long.
+## When a dict value is a list, opt to print the key only once per list (similarily to the numbering system)
+## Add functionality for the numbering system to only count the keys, instead of sum of keys and all lengths of values that are lists
+			
 # Function returns a formatted string containing the contents of a dict object.
 # Special lines and line count for values that are lists.
 # Supports dictionaries with special value types.
@@ -45,12 +50,31 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 	m = "\n--  " + str(n).title() + "  --\n\n"
 	fill = 0
 	
-	max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
-	max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
-	fill += sum([len(v) for v in d.values() if type(v) == (list or tuple)])
+	# max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
+	# max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
+	# fill += sum([len(v) for v in d.values() if type(v) == (list or tuple)])
+	# l = max(l, (max_key + max_val)) + sep
+	# has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
+	# has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
+	
+	max_key = float("-inf")
+	max_val = float("-inf")
+	fill = float("-inf")
+	l = float("-inf")
+	has_dict = False
+	has_list = False
+	
+	for k, v in d.items():
+		max_key = max((len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0)), max_key)
+		max_val = max((max([len(str(v_elem)) for v_elem in v] if v else [0]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0), max_val)
+			
+	
 	l = max(l, (max_key + max_val)) + sep
 	has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
 	has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
+	
+	
+	
 	header = []
 	max_cell = 0
 	max_cell_widths = []
