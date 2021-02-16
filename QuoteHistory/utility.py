@@ -44,7 +44,7 @@ def pad_centre(text, l, pad_str=" "):
 # min_encapsulation	-	If a table is necessary because of a value that is a
 #						dictionary, then opt to keep all column widths as small as
 #						possible. This will most likely produce varying widths.
-def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_header=False, min_encapsulation=False):
+def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_header=False, min_encapsulation=True):
 	if not d or not n:
 		return "None"
 	m = "\n--  " + str(n).title() + "  --\n\n"
