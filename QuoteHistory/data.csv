@@ -53,12 +53,14 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Total, US
 25701, 48ET2X, 5, BWS - US Direct Sales, $31117.6328, $38132, 1
 25704, 25ART, 5, Fleet Maintenance Inc., $26191, $30502, 1
 25706, 30NTT, 6, Remorques Lewis Inc., $27657, $28453, 0
-25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $62836, 0
+25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $66492, 0
 25709, 25ART, 6, Wieland Sales Inc., $26191, $31322, 1
 25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $39544, 0
 25714, 53HD3X V2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, 0
 25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $46194, 0
 25721, 20NTT, 6, Remorques Lewis Inc., $21771, $21817, 0
 25726, 53ET3X, 6, Remorques Lewis Inc., $45047.7666, $0, 0
-25728, 20ANR, 6, Hale Trailer Brake & Wheel, $19432, $0, 1
-25729, 30ANR, 6, Hale Trailer Brake & Wheel, $24153.5633, $0, 1
+25728, 20ANR, 6, Hale Trailer Brake & Wheel, $19432, $19166, 1
+25729, 30ANR, 6, Hale Trailer Brake & Wheel, $24153.5633, $26258, 1
+25739, 48ET2XP, 7, Hale Trailer Brake & Wheel, $42245.4257, $0, 1
+25745, 53ET3X, 7, Fort Garry Industries Ltd., $45047.7666, $0, 0

@@ -33,7 +33,23 @@ day_calculator = lambda day, holidays=0: (((day - 1) // 5) * 2) + day + holidays
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
 # This doesn't work with holidays yet. Want to have a dictionary of the day that the holiday fell on.
-weeks =  lambda day: [[day_calculator(j) for j in range(i, i + 5)] for i in range(1, 41, 5)]
+def work_weeks(day, holidays):
+	res = []
+	holidays.sort()
+	idx = 0
+	for i in range(1, day+1, 5):
+		r = []
+		for j in range(i, i+5):
+			week = day_calculator(j) // 5
+			dc = day_calculator(j, idx)
+			print("i: {i}, j: {j}, dc: {dc}, week: {w}".format(i=i, j=j, dc=dc, w=week))
+			if idx < len(holidays) and j != holidays[idx]:
+				r.append(dc)
+			else:
+				idx += 1
+		res.append(r)
+	return res
+	# return [[day_calculator(j) for j in range(i, i + 5)] for i in range(1, day+1, 5)]
 
 
 class Quote:
@@ -49,7 +65,10 @@ class Quote:
 		
 		self.baseCDN = self.base * (US_CDN_RATIO if self.is_us else 1)
 		self.costCDN = self.cost * (US_CDN_RATIO if self.is_us else 1)
-		print(dict_print({
+		print(dict_print(self.info_dict(), "Initialized quote"))
+		
+	def info_dict(self):
+		return {
 			"number": self.number,
 			"model": self.model,
 			"week": self.week,
@@ -59,11 +78,15 @@ class Quote:
 			"is_us": self.is_us,
 			"baseCDN": self.baseCDN,
 			"costCDN": self.costCDN,
-		}, "Initialized quote"))
+			"options": self.costCDN - self.baseCDN
+		}
 		
 	def __repr__(self):
 		return "Quote #%s" % self.number
 
+
+WRITING = input("To write results to \"output.txt\", type \"1\".\n\tHit enter to proceed.\n") == "1"
+print("Re-writing \"output.txt\"..." if WRITING else "Results:")
 
 with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as out:
 
@@ -79,6 +102,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	write("keys: " + str(fieldnames))
 	
 	print("quotes: {0}".format(quotes))
+	
+	print(dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history"))
+	write(dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history"))
 
 		
 			
@@ -458,3 +484,13 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	write(dict_print(statistical_reporting, "Statistical reporting"))
 	
 	sequential_quotes(quotes)
+
+
+
+	a = [work_weeks(i, [43]) for i in range(32)]
+	b = "\n".join([str(i) + "\t-\t"  + str(v) for i, v in enumerate(a)])
+	print(b)
+	
+	dw = lambda d: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7))
+	ds = [(i, dw(i)) for i in range(45)]
+	print("\n".join(list(map(str, ds))))
