@@ -43,19 +43,54 @@ def work_weeks(day, holidays):
 
 	res = []
 	holidays.sort()
+	print("holidays: {h}".format(h=holidays))
 	idx = 0
-	for i in range(1, day+1, 7):
-		r = []
-		for j in range(i, min(day+1, i+5)):
-			week = dw(j) // 5
-			dc = dw(j-idx, idx)
-			print("i: {i}, j: {j}, dc: {dc}, idx: {idx}, week: {w}, holidays[idx]: {hix}".format(i=i, j=j, dc=dc, idx=idx, w=week, hix=holidays[idx] if idx < len(holidays) else "empty"))
-			if idx >= len(holidays) or dc != holidays[idx]:
-				r.append(dc)
+	res = [dw(i) for i in range(1, day+1)]
+	res = [[res[i+j] for j in range(min(5, day - i))] for i in range(0, day+1, 7)]
+	
+	idx = 0
+	for i, week in enumerate(res):
+		for j, d in enumerate(week):
+			n = (i * 5) + j + 1
+			if idx < len(holidays):
+				# print("({i}, {j}) => ({hix1}[{idx}]) ({n} == {hix}) => {nhix}".format(i=i, j=j, n=n, hix=dw(holidays[idx]), nhix=(n==dw(holidays[idx])), hix1=holidays[idx], idx=idx))
+				if n > dw(holidays[idx]):
+					idx += 1
+					res[i][j] -= 1
+				elif n == dw(holidays[idx]):
+					idx += 1
+					res[i][j] = -1
 			else:
-				idx += 1
-		res.append(r)
+				res[i][j] -= len(holidays)
+				
+			
+	
+	# res = [[v if ((i*5) + j + 1) not in holidays else -1 for j, v in enumerate(r) ] for i, r in enumerate(res)]
+	res = dict(zip(list(range(len(res))), [{
+			"monday": week[0],
+			"tuesday": week[1],
+			"wednesday": week[2],
+			"thursday": week[3],
+			"friday": week[4],
+		} for week in res]
+	))
 	return res
+	
+	
+	# for i in range(1, day+1, 7):
+		# r = []
+		# for j in range(i, min(day+1, i+5)):
+			# week = dw(j) // 5
+			# dc = dw(j-idx, idx)
+			# print("i: {i}, j: {j}, dc: {dc}, idx: {idx}, week: {w}, holidays[idx]: {hix}".format(i=i, j=j, dc=dc, idx=idx, w=week, hix=holidays[idx] if idx < len(holidays) else "empty"))
+			# if idx >= len(holidays) or dc != holidays[idx]:
+				# r.append(dc)
+			# else:
+				# idx += 1
+		# res.append(r)
+	# return res
+	
+	
 	# i = 1
 	# while i < day+1:
 		# r = []
@@ -512,6 +547,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
-	a = [work_weeks(i, [6]) for i in range(1, 45)]
-	b = "\n".join([str(i) + " - " + str(v) for i, v in enumerate(a)])
-	print(b)
+	a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
+	# a = [work_weeks(i, [43]) for i in range(1, 45)]
+	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
+	print(dict_print(a, "work weeks"))
