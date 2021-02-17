@@ -66,12 +66,8 @@ def work_weeks(day, holidays):
 			
 	
 	# res = [[v if ((i*5) + j + 1) not in holidays else -1 for j, v in enumerate(r) ] for i, r in enumerate(res)]
-	res = dict(zip(list(range(len(res))), [{
-			"monday": week[0],
-			"tuesday": week[1],
-			"wednesday": week[2],
-			"thursday": week[3],
-			"friday": week[4],
+	days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+	res = dict(zip(list(range(len(res))), [{day[i]: res[week][i]
 		} for week in res]
 	))
 	return res
