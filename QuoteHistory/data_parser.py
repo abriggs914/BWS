@@ -29,26 +29,50 @@ us_cost = lambda x: cdn_cost(us_cdn(x))
 # which includes any weekends and excludes any holidays that would cause a skipped say.
 # usage: day_calculator(11) => 15
 # usage: day_calculator(11, 1) => 16
-day_calculator = lambda day, holidays=0: (((day - 1) // 5) * 2) + day + holidays
+day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holidays
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
 # This doesn't work with holidays yet. Want to have a dictionary of the day that the holiday fell on.
 def work_weeks(day, holidays):
+	
+	
+	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
+	# ds = [(i, dw(i)) for i in range(45)]
+	# print("\n".join(list(map(str, ds))))
+
+
 	res = []
 	holidays.sort()
 	idx = 0
-	for i in range(1, day+1, 5):
+	for i in range(1, day+1, 7):
 		r = []
-		for j in range(i, i+5):
-			week = day_calculator(j) // 5
-			dc = day_calculator(j, idx)
-			print("i: {i}, j: {j}, dc: {dc}, week: {w}".format(i=i, j=j, dc=dc, w=week))
-			if idx < len(holidays) and j != holidays[idx]:
+		for j in range(i, min(day+1, i+5)):
+			week = dw(j) // 5
+			dc = dw(j-idx, idx)
+			print("i: {i}, j: {j}, dc: {dc}, idx: {idx}, week: {w}, holidays[idx]: {hix}".format(i=i, j=j, dc=dc, idx=idx, w=week, hix=holidays[idx] if idx < len(holidays) else "empty"))
+			if idx >= len(holidays) or dc != holidays[idx]:
 				r.append(dc)
 			else:
 				idx += 1
 		res.append(r)
 	return res
+	# i = 1
+	# while i < day+1:
+		# r = []
+		# for j in range(i, min(day+1, i+5)):
+			# week = dw(j) // 5
+			# dc = dw(j-idx, idx)
+			# print("i: {i}, j: {j}, dc: {dc}, week: {w}".format(i=i, j=j, dc=dc, w=week))
+			# if idx >= len(holidays) or j != holidays[idx]:
+				# r.append(dc)
+			# else:
+				# idx += 1
+				# # r.append(-1)
+		# res.append(r)
+		# if not r:
+			# i -= 2
+		# i += 7
+	# return res
 	# return [[day_calculator(j) for j in range(i, i + 5)] for i in range(1, day+1, 5)]
 
 
@@ -484,13 +508,10 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	write(dict_print(statistical_reporting, "Statistical reporting"))
 	
 	sequential_quotes(quotes)
-
-
-
-	a = [work_weeks(i, [43]) for i in range(32)]
-	b = "\n".join([str(i) + "\t-\t"  + str(v) for i, v in enumerate(a)])
-	print(b)
 	
-	dw = lambda d: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7))
-	ds = [(i, dw(i)) for i in range(45)]
-	print("\n".join(list(map(str, ds))))
+	
+
+	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
+	a = [work_weeks(i, [6]) for i in range(1, 45)]
+	b = "\n".join([str(i) + " - " + str(v) for i, v in enumerate(a)])
+	print(b)
