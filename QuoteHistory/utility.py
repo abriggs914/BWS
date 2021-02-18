@@ -73,8 +73,6 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 	has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
 	has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
 	
-	
-	
 	header = []
 	max_cell = 0
 	max_cell_widths = []

@@ -1,66 +1,71 @@
-QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Total, US
-25541, 53ET4XP, 2, NorthEast Truck & Trailer Sales, $75803, $83465, 0
-25542, 30ANR, 3, NorthEast Truck & Trailer Sales, $28828.4466, $41511, 0
-25543, 53ET3X MR WEST, 3, Diamond International Trucks Ltd., $45674.9922, $55896, 0
-25544, 30NTT, 3, Trailers Plus, $27657, $34490, 0
-25545, 51LF4X5T V2018, 3, DH Agro Ltd., $70577.7069, $70578, 0
-25547, 48ET3X, 3, Fort Garry Industries Ltd., $43458.5409, $60557, 0
-25548, 30NTT, 3, Remorques Lewis Inc., $27657, $42077, 0
-25549, 25NTT, 3, Remorques Lewis Inc., $27227, $33181, 0
-25552, 30NTT, 3, Remorques Lewis Inc., $27657, $33612, 0
-25555, 48ET3X, 3, Diamond International Trucks Ltd., $43458.5409, $59380, 0
-25556, 53ET3X, 3, Diamond International Trucks Ltd., $45047.7666, $61835, 0
-25557, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $64238, 0
-25558, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $76717, 0
-25559, 53HD3X 2018, 3, Diamond International Trucks Ltd., $40552.5331, $45657, 0
-25560, 53HF3X 2018, 3, Diamond International Trucks Ltd., $40374.7541, $45710, 0
-25568, 30ART, 3, NorthEast Truck & Trailer Sales, $31667, $37480, 0
-25570, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $65746, 1
-25571, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $64073, 1
-25573, 35HDG2X48 AGULP, 3, S & S Trailers Sales Inc, $68541.8257, $77443, 1
-25579, 55HDG3X, 3, Remorques Lewis Inc., $74898, $74004, 0
-25590, 20NTT, 3, Remorques Lewis Inc., $21771, $27639, 0
-25593, 55HDG3X, 4, Remorques Lewis Inc., $74898, $92761, 0
-25594, 55HDG3X, 4, Remorques Lewis Inc., $74898, $75496, 0
-25597, 25ART, 4, Wieland Sales Inc., $26191, $28422, 1
-25598, 25NTT, 4, Remorques Lewis Inc., $27227, $30245, 0
-25601, 55HDG3X H, 4, Remorques Lewis Inc., $82700, $89339, 0
-25607, 40ADG2X NR, 4, Fort Garry Industries Ltd., $54008.4472, $69691, 0
-25526, 30NTT, 4, Remorques Lewis Inc., $27657, $37755, 0
-25622, 55HDG3X E, 4, NorthEast Truck & Trailer Sales, $64796, $74837, 0
-25625, 40HDG3X53 AG, 4, NorthEast Truck & Trailer Sales, $79749.6943, $84009, 0
-25626, 55HDG3X, 4, NorthEast Truck & Trailer Sales, $74898, $83792, 0
-25627, 37DT3X, 4, Remorques Lewis Inc., $68282.76, $77407, 0
-25629, 51LD4X5T V2018, 4, NorthEast Truck & Trailer Sales, $71283.4281, $82432, 0
-25630, 51LF4X5T V2018, 4, NorthEast Truck & Trailer Sales, $70577.7069, $82662, 0
-25631, 30ANR, 4, Atlantic Powertrain & Equipment, $28828.4466, $36061, 0
-25632, 48ET3X, 4, Remorques Lewis Inc., $43458.5409, $51279, 0
-25636, 25ANR, 4, Remorques Lewis Inc., $28281, $32794, 0
-25637, 53ET3XP, 4, Remorques Lewis Inc., $57411.3922, $61307, 0
-25639, 46LF3X4T V2018, 4, NorthEast Truck & Trailer Sales, $52186, $57232, 0
-25647, 48HF2X, 5, Remorques Lewis Inc., $36772, $45746, 0
-25648, 48HF4X, 5, Remorques Lewis Inc., $51153.7731, $58973, 0
-25651, 35ADG2X51 AGNR, 5, S & S Trailers Sales Inc, $53399.9416, $57516, 1
-25665, 20ART, 5, BWS - US Direct Sales, $22020, $26682, 1
-25668, 35FA, 5, Fort Garry Industries Ltd., $12532.4164, $13271, 0
-25672, 30ANR, 5, NorthEast Truck & Trailer Sales, $28828.4466, $29911, 0
-25673, 37DT3X, 5, NorthEast Truck & Trailer Sales, $68282.76, $74292, 0
-25674, 20ART, 5, Diamond International Trucks Ltd., $26725, $30807, 0
-25683, 53ET4X MR, 5, Remorques Lewis Inc., $61196, $73947, 0
-25684, 32DT3X V2018, 5, Remorques Lewis Inc., $67949.5253, $67899, 0
-25685, 30ART, 5, NorthEast Truck & Trailer Sales, $31667, $32729, 0
-25687, 30ANR, 5, Nuss Truck & Equipment, $24153.5633, $25719, 1
-25701, 48ET2X, 5, BWS - US Direct Sales, $31117.6328, $38132, 1
-25704, 25ART, 5, Fleet Maintenance Inc., $26191, $30502, 1
-25706, 30NTT, 6, Remorques Lewis Inc., $27657, $28453, 0
-25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $66492, 0
-25709, 25ART, 6, Wieland Sales Inc., $26191, $31322, 1
-25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $39544, 0
-25714, 53HD3X V2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, 0
-25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $46194, 0
-25721, 20NTT, 6, Remorques Lewis Inc., $21771, $21817, 0
-25726, 53ET3X, 6, Remorques Lewis Inc., $45047.7666, $0, 0
-25728, 20ANR, 6, Hale Trailer Brake & Wheel, $19432, $19166, 1
-25729, 30ANR, 6, Hale Trailer Brake & Wheel, $24153.5633, $26258, 1
-25739, 48ET2XP, 7, Hale Trailer Brake & Wheel, $42245.4257, $0, 1
-25745, 53ET3X, 7, Fort Garry Industries Ltd., $45047.7666, $0, 0
+QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
+25541, 53ET4XP, 2, NorthEast Truck & Trailer Sales, $75803, $84308, $83465, 8, 0
+25542, 30ANR, 3, NorthEast Truck & Trailer Sales, $28828.4466, $42431, $42007, 5, 0
+25543, 53ET3X MR WEST, 3, Diamond International Trucks Ltd., $45674.9922, $56461, $55896, 11, 0
+25544, 30NTT, 3, Trailers Plus, $27657, $34490, $34490, 6, 0
+25545, 51LF4X5T V2018, 3, DH Agro Ltd., $70577.7069, $70578, $70578, 0, 0
+25547, 48ET3X, 3, Fort Garry Industries Ltd., $43458.5409, $61169, $60557, 17, 0
+25548, 30NTT, 3, Remorques Lewis Inc., $27657, $43149, $42077, 7, 0
+25549, 25NTT, 3, Remorques Lewis Inc., $27227, $34027, $33181, 4, 0
+25552, 30NTT, 3, Remorques Lewis Inc., $27657, $34469, $33612, 4, 0
+25555, 48ET3X, 3, Diamond International Trucks Ltd., $43458.5409, $59980, $59380, 13, 0
+25556, 53ET3X, 3, Diamond International Trucks Ltd., $45047.7666, $62459, $61835, 13, 0
+25557, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $64887, $64238, 10, 0
+25558, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $77492, $76717, 15, 0
+25559, 53HD3X 2018, 3, Diamond International Trucks Ltd., $40552.5331, $46118, $45657, 9, 0
+25560, 53HF3X 2018, 3, Diamond International Trucks Ltd., $40374.7541, $46172, $45710, 9, 0
+25568, 30ART, 3, NorthEast Truck & Trailer Sales, $31667, $37858, $37480, 3, 0
+25570, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $65746, $65746, 10, 1
+25571, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $64073, $64073, 10, 1
+25573, 35HDG2X48 AGULP, 3, S & S Trailers Sales Inc, $68541.8257, $77443, $77443, 10, 1
+25579, 55HDG3X, 3, Remorques Lewis Inc., $74898, $74752, $74004, 5, 0
+25590, 20NTT, 3, Remorques Lewis Inc., $21771, $28344, $27639, 3, 0
+25593, 55HDG3X, 4, Remorques Lewis Inc., $74898, $93698, $92761, 8, 0
+25594, 55HDG3X, 4, Remorques Lewis Inc., $74898, $76259, $75496, 3, 0
+25597, 25ART, 4, Wieland Sales Inc., $26191, $31233, $28422, 6, 1
+25598, 25NTT, 4, Remorques Lewis Inc., $27227, $30550, $30245, 4, 0
+25601, 55HDG3X H, 4, Remorques Lewis Inc., $82700, $90241, $89339, 7, 0
+25607, 40ADG2X NR, 4, Fort Garry Industries Ltd., $54008.4472, $67618, $66942, 11, 0
+25526, 30NTT, 4, Remorques Lewis Inc., $27657, $38718, $37755, 7, 0
+25622, 55HDG3X E, 4, NorthEast Truck & Trailer Sales, $64796, $75593, $74837, 11, 0
+25625, 40HDG3X53 AG, 4, NorthEast Truck & Trailer Sales, $79749.6943, $84857, $84009, 5, 0
+25626, 55HDG3X, 4, NorthEast Truck & Trailer Sales, $74898, $84820, $83972, 9, 0
+25627, 37DT3X, 4, Remorques Lewis Inc., $68282.76, $78189, $77407, 8, 0
+25629, 51LD4X5T V2018, 4, NorthEast Truck & Trailer Sales, $71283.4281, $84246, $82432, 17, 0
+25630, 51LF4X5T V2018, 4, NorthEast Truck & Trailer Sales, $70577.7069, $85073, $82662, 19, 0
+25631, 30ANR, 4, Atlantic Powertrain & Equipment, $28828.4466, $36061, $36061, 6, 0
+25632, 48ET3X, 4, Remorques Lewis Inc., $43458.5409, $53399, $51279, 9, 0
+25636, 25ANR, 4, Remorques Lewis Inc., $28281, $34572, $33713, 8, 0
+25637, 53ET3XP, 4, Remorques Lewis Inc., $57411.3922, $63841, $61307, 5, 0
+25639, 46LF3X4T V2018, 4, NorthEast Truck & Trailer Sales, $52186, $57811, $57232, 8, 0
+25647, 48HF2X, 5, Remorques Lewis Inc., $36772, $46428, $45964, 6, 0
+25648, 48HF4X, 5, Remorques Lewis Inc., $51153.7731, $60788, $60180, 5, 0
+25651, 35ADG2X51 AGNR, 5, S & S Trailers Sales Inc, $53399.9416, $56822, $56822, 7, 1
+25665, 20ART, 5, BWS - US Direct Sales, $22020, $26682, $26682, 2, 1
+25668, 35FA, 5, Fort Garry Industries Ltd., $12532.4164, $13405, $13271, 4, 0
+25672, 30ANR, 5, NorthEast Truck & Trailer Sales, $28828.4466, $30213, $29911, 3, 0
+25673, 37DT3X, 5, NorthEast Truck & Trailer Sales, $68282.76, $75042, $74292, 6, 0
+25674, 20ART, 5, Diamond International Trucks Ltd., $26725, $31118, $30807, 10, 0
+25683, 53ET4X MR, 5, Remorques Lewis Inc., $61196, $74782, $72553, 9, 0
+25684, 32DT3X V2018, 5, Remorques Lewis Inc., $67949.5253, $79558, $67899, 8, 0
+25685, 30ART, 5, NorthEast Truck & Trailer Sales, $31667, $33060, $32729, 3, 0
+25687, 30ANR, 5, Nuss Truck & Equipment, $24153.5633, $28898, $28898, 2, 1
+25701, 48ET2X, 5, BWS - US Direct Sales, $31117.6328, $39312, $38132, 8, 1
+25704, 25ART, 5, Fleet Maintenance Inc., $26191, $32175, $30727, 10, 1
+25706, 30NTT, 6, Remorques Lewis Inc., $27657, $29178, $28453, 3, 0
+25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $77908, $66492, 8, 0
+25709, 25ART, 6, Wieland Sales Inc., $26191, $34768, $31322, 7, 1
+25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $39544, $39544, 7, 0
+25714, 53HD3X V2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, $41776, 7, 0
+25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $46194, $46194, 7, 0
+25721, 20NTT, 6, Remorques Lewis Inc., $21771, $22373, $21817, 1, 0
+25726, 53ET3X, 6, Remorques Lewis Inc., $45047.7666, $49757, $47782, 7, 0
+25728, 20ANR, 6, Hale Trailer Brake & Wheel, $19432, $21482, $19166, 7, 1
+25729, 30ANR, 6, Hale Trailer Brake & Wheel, $24153.5633, $30255, $26258, 10, 1
+25739, 48ET2XP, 7, Hale Trailer Brake & Wheel, $42245.4257, $50320, $46428, 7, 1
+25745, 53ET3X, 7, Fort Garry Industries Ltd., $45047.7666, $64668, $64022, 8, 0
+25748, 25NTT, 7, Fleet Maintenance Inc., $22704, $27834, $26025, 4, 1
+25749, 25ART, 7, Fleet Maintenance Inc., $26191, $29098, $27788, 4, 1
+25750, 25ART, 7, Fleet Maintenance Inc., $26191, $29910, $28564, 6, 1
+25752, 30NTT, 7, Remorques Lewis Inc., $27657, $28600, $27889, 1, 0
+25753, 48ET3X, 7, Northeast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
