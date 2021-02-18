@@ -34,12 +34,8 @@ day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holi
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
 # This doesn't work with holidays yet. Want to have a dictionary of the day that the holiday fell on.
 def work_weeks(day, holidays):
-	
-	
+		
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
-	# ds = [(i, dw(i)) for i in range(45)]
-	# print("\n".join(list(map(str, ds))))
-
 
 	res = []
 	holidays.sort()
@@ -47,64 +43,28 @@ def work_weeks(day, holidays):
 	idx = 0
 	res = [dw(i) for i in range(1, day+1)]
 	res = [[res[i+j] for j in range(min(5, day - i))] for i in range(0, day+1, 7)]
-	
-	idx = 0
-	for i, week in enumerate(res):
-		for j, d in enumerate(week):
-			n = (i * 5) + j + 1
-			if idx < len(holidays):
-				# print("({i}, {j}) => ({hix1}[{idx}]) ({n} == {hix}) => {nhix}".format(i=i, j=j, n=n, hix=dw(holidays[idx]), nhix=(n==dw(holidays[idx])), hix1=holidays[idx], idx=idx))
-				if n > dw(holidays[idx]):
-					idx += 1
-					res[i][j] -= 1
-				elif n == dw(holidays[idx]):
-					idx += 1
-					res[i][j] = -1
-			else:
-				res[i][j] -= len(holidays)
-				
-			
-	
-	# res = [[v if ((i*5) + j + 1) not in holidays else -1 for j, v in enumerate(r) ] for i, r in enumerate(res)]
 	days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
-	res = dict(zip(list(range(len(res))), [{day[i]: res[week][i]
-		} for week in res]
-	))
+	
+	idx = 1
+	res = {}
+	r = []
+	i = 0
+	while i < day:
+		if i+1 not in holidays:
+			r.append(idx)
+			idx += 1
+		else:
+			r.append(" ")
+		if len(r) == 5:
+			res[len(res)+1] = dict(zip(days, r))
+			r = []
+		if i % 7 == 4:
+			i += 2
+		i += 1
+	if r:
+		res[len(res)+1] = dict(zip(days[:len(r)], r))
+		
 	return res
-	
-	
-	# for i in range(1, day+1, 7):
-		# r = []
-		# for j in range(i, min(day+1, i+5)):
-			# week = dw(j) // 5
-			# dc = dw(j-idx, idx)
-			# print("i: {i}, j: {j}, dc: {dc}, idx: {idx}, week: {w}, holidays[idx]: {hix}".format(i=i, j=j, dc=dc, idx=idx, w=week, hix=holidays[idx] if idx < len(holidays) else "empty"))
-			# if idx >= len(holidays) or dc != holidays[idx]:
-				# r.append(dc)
-			# else:
-				# idx += 1
-		# res.append(r)
-	# return res
-	
-	
-	# i = 1
-	# while i < day+1:
-		# r = []
-		# for j in range(i, min(day+1, i+5)):
-			# week = dw(j) // 5
-			# dc = dw(j-idx, idx)
-			# print("i: {i}, j: {j}, dc: {dc}, week: {w}".format(i=i, j=j, dc=dc, w=week))
-			# if idx >= len(holidays) or j != holidays[idx]:
-				# r.append(dc)
-			# else:
-				# idx += 1
-				# # r.append(-1)
-		# res.append(r)
-		# if not r:
-			# i -= 2
-		# i += 7
-	# return res
-	# return [[day_calculator(j) for j in range(i, i + 5)] for i in range(1, day+1, 5)]
 
 
 class Quote:
@@ -543,7 +503,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
-	a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
+	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
+	a = work_weeks(45, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks"))
+	write(dict_print(a, "work weeks"))
