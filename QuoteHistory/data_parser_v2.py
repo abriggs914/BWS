@@ -95,17 +95,17 @@ class Quote:
 			"model": self.model,
 			"week": self.week,
 			"dealer": self.dealer,
-			"base": money(self.base),
-			"gross": money(self.gross),
-			"cost": money(self.cost),
+			"base": self.base,
+			"gross": self.gross,
+			"cost": self.cost,
 			"n_options": self.n_options,
 			"is_us": self.is_us,
-			"baseCDN": money(self.baseCDN),
-			"grossCDN": money(self.grossCDN),
-			"costCDN": money(self.costCDN),
-			"options": money(self.options),
-			"avg_option_cost": money(self.avg_option_cost),
-			"discounts": money(self.discount)
+			"baseCDN": self.baseCDN,
+			"grossCDN": self.grossCDN,
+			"costCDN": self.costCDN,
+			"options": self.options,
+			"avg_option_cost": self.avg_option_cost,
+			"discounts": self.discount
 		}
 		
 	def __repr__(self):
@@ -262,7 +262,6 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return weeks
 		
 	def avg_dealer_reporting(dat):
-		
 		pass
 		
 	def avg_base(dat):
@@ -367,32 +366,174 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 			del m[bm]
 		return bottom_5
 		
-		
-	
-	# Used for when the dict keys will be a monetary value.
-	# Works for tie conditions, ensuring 5 unique keys.
-	# Defalts to costCDN.
-	def rank_money(dat, category="costCDN", num=5, bottom=False):
-		values = [(i, round(100 * getattr(qNo, category) / 100)) for i, qNo in enumerate(dat)]
-		values.sort(reverse=not bottom, key=lambda tup: tup[1])
+	def top_5_base(dat, num=5):
+		# bases = [(k, round(100 * float(info[fieldnames[4]].strip()[1:])) / 100, info[fieldnames[6]].strip()) for k, info in dat.items()]
+		bases = [(i, round(100 * qNo.baseCDN) / 100) for i, qNo in enumerate(dat)]
+		bases.sort(reverse=True, key=lambda tup: tup[1])
 		top_5 = {}
-		for i, info in enumerate(values):
-			qNo, val = info
+		for i, info in enumerate(bases):
+			qNo, base = info
 			if len(top_5) == min(num, len(dat)):
 				break
 			
-			content = {"Quote": dat[qNo].number, "Model": dat[qNo].model}
-			v = money(val)
-			if v in top_5:
-				if type(top_5[v]) == list:
-					top_5[v].append(content)
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			b = money(base)
+			if b in top_5:
+				if type(top_5[b]) == list:
+					top_5[b].append(content)
 				else:
-					top_5[v] = [top_5[v]] + [content]
+					top_5[b] = [top_5[b]] + [content]
 			else:
-				top_5[v] = content
+				top_5[b] = content
 			
 		return top_5
 		
+	def bottom_5_base(dat, num=5):
+		bases = [(i, round(100 * qNo.baseCDN) / 100) for i, qNo in enumerate(dat)]
+		bases.sort(key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(bases):
+			qNo, base = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			b = money(base)
+			if b in top_5:
+				if type(top_5[b]) == list:
+					top_5[b].append(content)
+				else:
+					top_5[b] = [top_5[b]] + [content]
+			else:
+				top_5[b] = content
+			
+		return top_5
+		
+	def top_5_cost(dat, num=5):
+		costs = [(i, round(100 * qNo.costCDN) / 100) for i, qNo in enumerate(dat)]
+		costs.sort(reverse=True, key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(costs):
+			qNo, cost = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			c = money(cost)
+			if c in top_5:
+				if type(top_5[c]) == list:
+					top_5[c].append(content)
+				else:
+					top_5[c] = [top_5[c]] + [content]
+			else:
+				top_5[c] = content
+			
+		return top_5
+		
+	def bottom_5_cost(dat, num=5):
+		costs = [(i, round(100 * qNo.costCDN) / 100) for i, qNo in enumerate(dat)]
+		costs.sort(key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(costs):
+			qNo, cost = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			c = money(cost)
+			if c in top_5:
+				if type(top_5[c]) == list:
+					top_5[c].append(content)
+				else:
+					top_5[c] = [top_5[c]] + [content]
+			else:
+				top_5[c] = content
+			
+		return top_5
+		
+	def top_5_gross(dat, num=5):
+		grosses = [(i, round(100 * qNo.grossCDN) / 100) for i, qNo in enumerate(dat)]
+		grosses.sort(reverse=True, key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(grosses):
+			qNo, gross = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			g = money(gross)
+			if g in top_5:
+				if type(top_5[g]) == list:
+					top_5[g].append(content)
+				else:
+					top_5[g] = [top_5[g]] + [content]
+			else:
+				top_5[g] = content
+			
+		return top_5
+		
+	def bottom_5_gross(dat, num=5):
+		grosses = [(i, round(100 * qNo.grossCDN) / 100) for i, qNo in enumerate(dat)]
+		grosses.sort(key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(grosses):
+			qNo, gross = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			g = money(gross)
+			if g in top_5:
+				if type(top_5[g]) == list:
+					top_5[g].append(content)
+				else:
+					top_5[g] = [top_5[g]] + [content]
+			else:
+				top_5[g] = content
+			
+		return top_5
+		
+	def top_5_discounts(dat, num=5):
+		discounts = [(i, round(100 * qNo.discount) / 100) for i, qNo in enumerate(dat)]
+		discounts.sort(key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(discounts):
+			qNo, discount = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			d = money(discount)
+			if d in top_5:
+				if type(top_5[d]) == list:
+					top_5[d].append(content)
+				else:
+					top_5[d] = [top_5[d]] + [content]
+			else:
+				top_5[d] = content
+			
+		return top_5
+		
+	def bottom_5_discounts(dat, num=5):
+		discounts = [(i, round(100 * qNo.discount) / 100) for i, qNo in enumerate(dat)]
+		discounts.sort(reverse=True, key=lambda tup: tup[1])
+		top_5 = {}
+		for i, info in enumerate(discounts):
+			qNo, discount = info
+			if len(top_5) == min(num, len(dat)):
+				break
+			
+			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			d = money(discount)
+			if d in top_5:
+				if type(top_5[d]) == list:
+					top_5[d].append(content)
+				else:
+					top_5[d] = [top_5[d]] + [content]
+			else:
+				top_5[d] = content
+			
+		return top_5
 		
 	def top_5_customized(dat, num=5):
 		customs = [(i, qNo.n_options) for i, qNo in enumerate(dat)]
@@ -482,14 +623,14 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Bottom 5 Dealers:": (bottom_5_dealers, {"number": True}),
 		"Top 5 Models:": (top_5_models, {"number": True}),
 		"Bottom 5 Models:": (bottom_5_models, {"number": True}),
-		"Top 5 Bases:": (rank_money, {"category": "baseCDN"}, {"number": True}),
-		"Bottom 5 Bases:": (rank_money, {"category": "baseCDN", "bottom": True}, {"number": True}),
-		"Top 5 Gross:": (rank_money, {"category": "grossCDN"}, {"number": True}),
-		"Bottom 5 Gross:": (rank_money, {"category": "grossCDN", "bottom": True}, {"number": True}),
-		"Top 5 Discounts:": (rank_money, {"category": "discount", "bottom": True}, {"number": True}),
-		"Bottom 5 Discounts:": (rank_money, {"category": "discount"}, {"number": True}),
-		"Top 5 Costs:": (rank_money, {"category": "costCDN"}, {"number": True}),
-		"Bottom 5 Costs:": (rank_money, {"category": "costCDN", "bottom": True}, {"number": True}),
+		"Top 5 Bases:": (top_5_base, {"number": True}),
+		"Bottom 5 Bases:": (bottom_5_base, {"number": True}),
+		"Top 5 Gross:": (top_5_gross, {"number": True}),
+		"Bottom 5 Gross:": (bottom_5_gross, {"number": True}),
+		"Top 5 Discounts:": (top_5_discounts, {"number": True}),
+		"Bottom 5 Discounts:": (bottom_5_discounts, {"number": True}),
+		"Top 5 Cost:": (top_5_cost, {"number": True}),
+		"Bottom 5 Cost:": (bottom_5_cost, {"number": True}),
 		"Top 5 Customized:": (top_5_customized, {"number": True}),
 		"Bottom 5 Customized:": (bottom_5_customized, {"number": True}),
 		"Weekly Reporting": (avg_weekly_reporting, {"number": True}),
@@ -498,15 +639,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	}
 	
 	for title, dat in to_view.items():
-		if len(dat) == 3:
-			func, fargs, pargs = dat
-			print(dict_print(func(quotes, **fargs), title, **pargs))
-			write(dict_print(func(quotes, **fargs), title, **pargs))
-		else:
-			func, args = dat
-			print(dict_print(func(quotes), title, **args))
-			write(dict_print(func(quotes), title, **args))
-			
+		func, args = dat
+		print(dict_print(func(quotes), title, **args))
+		write(dict_print(func(quotes), title, **args))
 	
 	print(dict_print(to_view, "to view", number=True))
 	

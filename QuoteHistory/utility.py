@@ -150,7 +150,8 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 		
 def money(v):
 	# return "$ %.2f" % v
-	return locale.currency(v, grouping=True)
+	m = locale.currency(v, grouping=True)
+	return m[0] + " " + m[1:]
 	
 	
 def money_value(m):
