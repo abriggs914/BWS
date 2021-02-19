@@ -56,7 +56,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $77908, $66492, 8, 0
 25709, 25ART, 6, Wieland Sales Inc., $26191, $34768, $31322, 7, 1
 25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $39544, $39544, 7, 0
-25714, 53HD3X V2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, $41776, 7, 0
+25714, 53HD3X 2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, $41776, 7, 0
 25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $46194, $46194, 7, 0
 25721, 20NTT, 6, Remorques Lewis Inc., $21771, $22373, $21817, 1, 0
 25726, 53ET3X, 6, Remorques Lewis Inc., $45047.7666, $49757, $47782, 7, 0
@@ -69,3 +69,6 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25750, 25ART, 7, Fleet Maintenance Inc., $26191, $29910, $28564, 6, 1
 25752, 30NTT, 7, Remorques Lewis Inc., $27657, $28600, $27889, 1, 0
 25753, 48ET3X, 7, Northeast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
+25757, 53ET3X, 7, Northeast Truck & Trailer Sales, $45047.7666, $52695, $52168, 9, 0
+25758, 30NTT, 7, Remorques Lewis Inc., $27657, $0, $0, 0, 0
+25759, 53HD3X 2018, 7, Remorques Lewis Inc., $40552.5331, $0, $0, 0, 0
