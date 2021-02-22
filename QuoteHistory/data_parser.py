@@ -2,7 +2,9 @@ import csv
 import functools
 from utility import *
 
-locale.setlocale(locale.LC_ALL, "")
+# Quotes are up-to-date as of Feb.19/2021 Quote 25739
+
+
 data_file = "data.csv"
 out_file = "output.txt"
 US_CDN_RATIO = 1.269
@@ -262,8 +264,56 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		return weeks
 		
 	def avg_dealer_reporting(dat):
-		
-		pass
+		# table of dealers showing: totals [base, gross, cost, options], avgs [base/model, gross/model, cost/model, options/model]
+		# table of total dealers showing: totals [base, gross, cost, options], avgs [base/model, gross/model, cost/model, options/model]
+		# print("t: {t}, d: {d}".format(t=type(dat), d=dat))
+		res = {
+				"# Quotes": 0,
+				"First Quote": float("inf"),
+				"Last Quote": float("-inf"),
+				"Total BaseCDN": 0,
+				"Total GrossCDN": 0,
+				"Total CostCDN": 0,
+				"Total DiscountCDN": 0,
+				"Total Options": 0,
+				"Average BaseCDN": 0,
+				"Average GrossCDN": 0,
+				"Average CostCDN": 0,
+				"Average DiscountCDN": 0,
+				"Average Options": 0
+			}
+		dealers = list([info.dealer for info in dat])
+		dealers.sort()
+		res = dict(zip(dealers, [res.copy() for i in range(len(dealers))]))
+		for qNo in dat:
+			# print("RES: " + str(res))
+			res[qNo.dealer]["# Quotes"] += 1
+			res[qNo.dealer]["First Quote"] = min(res[qNo.dealer]["First Quote"], qNo.number)
+			res[qNo.dealer]["Last Quote"] = max(res[qNo.dealer]["Last Quote"], qNo.number)
+			res[qNo.dealer]["Total BaseCDN"] += qNo.baseCDN
+			res[qNo.dealer]["Total GrossCDN"] += qNo.grossCDN
+			res[qNo.dealer]["Total CostCDN"] += qNo.costCDN
+			res[qNo.dealer]["Total DiscountCDN"] += qNo.discount
+			res[qNo.dealer]["Total Options"] += qNo.n_options
+			
+			res[qNo.dealer]["Average BaseCDN"] += qNo.baseCDN
+			res[qNo.dealer]["Average GrossCDN"] += qNo.grossCDN
+			res[qNo.dealer]["Average CostCDN"] += qNo.costCDN
+			res[qNo.dealer]["Average DiscountCDN"] += qNo.discount
+			res[qNo.dealer]["Average Options"] += qNo.n_options
+			
+		for dealer in res:
+			res[dealer]["Total BaseCDN"] = money(res[dealer]["Total BaseCDN"])
+			res[dealer]["Total GrossCDN"] = money(res[dealer]["Total GrossCDN"])
+			res[dealer]["Total CostCDN"] = money(res[dealer]["Total CostCDN"])
+			res[dealer]["Total DiscountCDN"] = money(res[dealer]["Total DiscountCDN"])
+			
+			res[dealer]["Average BaseCDN"] = money(res[dealer]["Average BaseCDN"] / res[dealer]["# Quotes"])
+			res[dealer]["Average GrossCDN"] = money(res[dealer]["Average GrossCDN"] / res[dealer]["# Quotes"])
+			res[dealer]["Average CostCDN"] = money(res[dealer]["Average CostCDN"] / res[dealer]["# Quotes"])
+			res[dealer]["Average DiscountCDN"] = money(res[dealer]["Average DiscountCDN"] / res[dealer]["# Quotes"])
+			res[dealer]["Average Options"] /= res[dealer]["# Quotes"]
+		return res
 		
 	def avg_base(dat):
 		return total_base(dat) / total_quotes(dat)
@@ -493,6 +543,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Top 5 Customized:": (top_5_customized, {"number": True}),
 		"Bottom 5 Customized:": (bottom_5_customized, {"number": True}),
 		"Weekly Reporting": (avg_weekly_reporting, {"number": True}),
+		"Dealer Reporting": (avg_dealer_reporting, {"number": True}),
 		"Statistical Reporting": (lambda x: statistical_reporting, {}),
 		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1})
 	}
@@ -513,7 +564,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
-	a = work_weeks(47, [43])
+	a = work_weeks(50, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks"))
