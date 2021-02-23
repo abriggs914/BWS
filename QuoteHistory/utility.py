@@ -70,7 +70,7 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 			
 	
 	l = max(len(table_title), max(l, (max_key + max_val))) + sep
-	has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
+	has_dict = [(k, v) for k, v in d.items() if type(v) == dict or (type(v) == list and v and type(v[0]) == dict)]
 	has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
 	
 	header = []
@@ -79,13 +79,21 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 	
 	if has_list:
 		number = True
-	
-	for k, v in has_dict:
-		for k in v:
-			key = str(k)
+	print("has_dict: {hd}".format(hd=has_dict))
+	for k1, v in has_dict:
+		for k2 in v:
+			key = str(k2)
 			if key not in header:
-				header.append(key)
-				max_cell = max(max_cell, max(len(key), max([len(str(value)) for value in v.values()])))
+				if type(v) == dict:
+					print("key: {k}, v.values(): {vv}".format(k=key, vv=v.values()))
+					for value in v.values():
+						print("\t\tvalues: {v}".format(v=value))
+					header.append(key)
+					max_cell = max(max_cell, max(len(key), max([len(str(value)) for value in v.values()])))
+				else:
+					print("v[0]: {v0}".format(v0=v[0]))
+					max_cell = max(max_cell, max(len(key), max([max(len(str(vk)), len(str(vv))) for vk, vv in v[0].items()])))
+			# if type(v) == list or type(v) == dict
 				
 	max_cell += 2
 	
