@@ -64,14 +64,15 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25729, 30ANR, 6, Hale Trailer Brake & Wheel, $24153.5633, $30255, $26258, 10, 1
 25739, 48ET2XP, 7, Hale Trailer Brake & Wheel, $42245.4257, $50320, $46428, 7, 1
 25745, 53ET3X, 7, Fort Garry Industries Ltd., $45047.7666, $64668, $64022, 8, 0
-25748, 25NTT, 7, Fleet Maintenance Inc., $22704, $27834, $26025, 4, 1
-25749, 25ART, 7, Fleet Maintenance Inc., $26191, $29098, $27788, 4, 1
-25750, 25ART, 7, Fleet Maintenance Inc., $26191, $29910, $28564, 6, 1
-25752, 30NTT, 7, Remorques Lewis Inc., $27657, $28600, $27889, 1, 0
+25748, 25NTT, 7, Fleet Maintenance Inc., $22704, $26980, $25227, 5, 1
+25749, 25ART, 7, Fleet Maintenance Inc., $26191, $31325, $29915, 5, 1
+25750, 25ART, 7, Fleet Maintenance Inc., $26191, $29056, $27749, 6, 1
+25752, 30NTT, 7, Remorques Lewis Inc., $27657, $31473, $30691, 2, 0
 25753, 48ET3X, 7, Northeast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
 25757, 53ET3X, 7, Northeast Truck & Trailer Sales, $45047.7666, $52695, $52168, 9, 0
-25758, 30NTT, 7, Remorques Lewis Inc., $27657, $0, $0, 0, 0
-25759, 53HD3X 2018, 7, Remorques Lewis Inc., $40552.5331, $0, $0, 0, 0
-25769, 53ET4XP, 8, Remorques Lewis Inc., $75803, $0, $0, 0, 0
+25758, 30NTT, 7, Remorques Lewis Inc., $27657, $34388, $33533, 3, 0
+25759, 53HD3X 2018, 7, Remorques Lewis Inc., $40552.5331, $42834, $42405, 4, 0
+25769, 53ET4XP, 8, Remorques Lewis Inc., $75803, $88781, $85256, 19, 0
 25770, 53ET2X, 8, Remorques Lewis Inc., $38855.5659, $44691, $42916, 8, 0
 25771, 20ANR, 8, Hale Trailer Brake & Wheel, $19432, $20727, $18478, 4, 1
+25772, 53ET3XP, 8, NorthEast Truck & Trailer Sales, $57411.3922, $0, $0, 0, 0

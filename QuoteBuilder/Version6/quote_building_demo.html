@@ -464,6 +464,29 @@
 				if ($(this).prop('disabled') == "true") {
 					return;
 				}
+				
+				// Trying to invoke python code on click
+				$.ajax({
+					type:'POST',
+					<!-- url:'C:\Users\ABriggs\Documents\html\BWS\QuoteBuilder\Version6\main.py', -->
+					url:'~/main.py'
+					<!-- data: {param: text}, -->
+					<!-- cache:false, -->
+					<!-- async: 'asynchronous', -->
+					<!-- dataType: 'json', -->
+					<!-- success: function(data) { -->
+						<!-- console.log(JSON.stringify(data)) -->
+					<!-- }, -->
+					<!-- error: function(request, status, error) { -->
+						<!-- console.log('Error: ' + error) -->
+					<!-- } -->
+				}).done(function(o){
+					console.log("DONE")
+				});
+				return;
+				
+				
+				
 		
 				stepped = 0;
 				rowCount = 0;
