@@ -567,5 +567,5 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	a = work_weeks(52, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
-	print(dict_print(a, "work weeks", table_title="Weeks", sort_header=True))
+	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True
 	write(dict_print(a, "work weeks", table_title="Weeks"))

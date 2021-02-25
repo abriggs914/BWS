@@ -21,11 +21,6 @@ def pad_centre(text, l, pad_str=" "):
 		return ""
 			
 			
-## TODO
-## When a dict value is a list, the content lines are too long.
-## When a dict value is a list, opt to print the key only once per list (similarily to the numbering system)
-## Add functionality for the numbering system to only count the keys, instead of sum of keys and all lengths of values that are lists
-			
 # Function returns a formatted string containing the contents of a dict object.
 # Special lines and line count for values that are lists.
 # Supports dictionaries with special value types.
