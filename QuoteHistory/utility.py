@@ -32,8 +32,8 @@ def pad_centre(text, l, pad_str=" "):
 # Lists are printed line by line, but the counting index is constant for all elements. - Useful for ties.
 # Dicts are represented by a table which will dynamically generate a header and appropriately format cell values.
 # Strings, floats, ints, bools are simply converted to their string representations.
-# n					-	Name of the dict, printed above the contents.
 # d					-	dict object.
+# n					-	Name of the dict, printed above the contents.
 # number			-	Decide whether to number the content lines.
 # l					-	Minimum number of chars in the content line.
 # 						Spaces between keys and values are populated by marker.
@@ -44,11 +44,14 @@ def pad_centre(text, l, pad_str=" "):
 # min_encapsulation	-	If a table is necessary because of a value that is a
 #						dictionary, then opt to keep all column widths as small as
 #						possible. This will most likely produce varying widths.
-def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_header=False, min_encapsulation=True, table_title="Table Title"):
+# table_title		-	If a table is created, then displa the title in the first
+#						column directly above the row names.
+def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_header=False, min_encapsulation=True, table_title=""):
 	if not d or not n:
 		return "None"
 	m = "\n--  " + str(n).title() + "  --\n\n"
 	fill = 0
+	lenstr = lambda x: len(str(x))      
 	
 	# max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
 	# max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
@@ -79,21 +82,18 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 	
 	if has_list:
 		number = True
-	print("has_dict: {hd}".format(hd=has_dict))
 	for k1, v in has_dict:
 		for k2 in v:
 			key = str(k2)
 			if key not in header:
 				if type(v) == dict:
-					print("key: {k}, v.values(): {vv}".format(k=key, vv=v.values()))
-					for value in v.values():
-						print("\t\tvalues: {v}".format(v=value))
 					header.append(key)
 					max_cell = max(max_cell, max(len(key), max([len(str(value)) for value in v.values()])))
 				else:
-					print("v[0]: {v0}".format(v0=v[0]))
-					max_cell = max(max_cell, max(len(key), max([max(len(str(vk)), len(str(vv))) for vk, vv in v[0].items()])))
-			# if type(v) == list or type(v) == dict
+					for lst in v:
+						a = max(list(map(lenstr, list(map(str, lst.keys())))))
+						b = max(list(map(lenstr, list(map(str, lst.values())))))
+						max_cell = max(max_cell, max(a, b))
 				
 	max_cell += 2
 	
@@ -104,8 +104,11 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
 		for h in header:
 			max_col_width = len(" " + h + " ")
 			for k, d_val in has_dict:
+				# print("k: {k}\nt(k): {tk}\nd: {d}\nt(d): {td}".format(k=k, tk=type(k), d=d_val, td=type(d_val)))
 				if h in d_val:
 					max_col_width = max(max_col_width, len(" " + str(d_val[h]) + " "))
+				elif type(d_val) == list:
+					max_col_width = max(max_col_width, max([max(max(list(map(lenstr, [ek for ek in elem.keys() if ek == h]))), max(list(map(lenstr, [ev for ek, ev in elem.items() if ek == h])))) for elem in d_val]) + 2)
 			max_cell_widths.append(max_col_width) 
 						
 	table_header = TABLE_DIVIDER + TABLE_DIVIDER.join(map(lambda x: pad_centre(str(x), max_cell), header)) + TABLE_DIVIDER

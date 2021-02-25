@@ -457,7 +457,84 @@ with open("dict_print_tests.txt", "w" if WRITING else "r") as out:
 		"Omnimon_NX": [],
 		"Gallantmon_NX": [],
 		"Dragomon": ["", "", ""]
-}
+	}
+
+	long_list = {
+		'$ 0.00': [
+					{
+						'Quote': 25544,
+						'Model': '30NTT'
+					},
+					{
+						'Quote': 25545,
+						'Model': '51LF4X5T V2018'
+					},
+					{
+						'Quote': 25570,
+						'Model': '35ADG2X48 AGULP'
+					},
+					{
+						'Quote': 25571,
+						'Model': '35ADG2X48 AGULP'
+					},
+					{
+						'Quote': 25573,
+						'Model': '35HDG2X48 AGULP'
+					},
+					{
+						'Quote': 25631,
+						'Model': '30ANR'
+					},
+					{
+						'Quote': 25651,
+						'Model': '35ADG2X51 AGNR'
+					},
+					{
+						'Quote': 25665,
+						'Model': '20ART'
+					},
+					{
+						'Quote': 25687,
+						'Model': '30ANR'
+					},
+					{
+						'Quote': 25713,
+						'Model': '48HF2X'
+					},
+					{
+						'Quote': 25714,
+						'Model': '53HD3X 2018'
+					},
+					{
+						'Quote': 25715,
+						'Model': '53ET2X'
+					},
+					{
+						'Quote': 25772,
+						'Model': '53ET3XP'
+					},
+					{
+						'Quote': 25775,
+						'Model': '53ET3X'
+					}
+				],
+		'$ -134.00': {
+			'Quote': 25668,
+			'Model': '35FA'
+			},
+		'$ -302.00': {
+			'Quote': 25672,
+			'Model': '30ANR'
+			},
+		'$ -305.00': {
+			'Quote': 25598,
+			'Model': '25NTT'
+			},
+		'$ -311.00': {
+			'Quote': 25674,
+			'Model': '20ART'
+		}
+	}
 
 #############################################################################################################################################################
 
@@ -466,7 +543,8 @@ with open("dict_print_tests.txt", "w" if WRITING else "r") as out:
 		"test dict print:": (test_dict_print, {"number": True, "sort_header": True, "min_encapsulation": True}),
 		"times": (times, {"min_encapsulation": True}),
 		"fares": (fares, {"number": True, "min_encapsulation": True}),
-		"digimon": (digimon, {"number": True, "min_encapsulation": True})
+		"digimon": (digimon, {"number": True, "min_encapsulation": True}),
+		"long list": (long_list, {"number": True, "min_encapsulation": True})
 	}
 	
 	for title, vals in to_test.items():
