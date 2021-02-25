@@ -87,6 +87,7 @@ class Quote:
 		self.costCDN = self.cost * (US_CDN_RATIO if self.is_us else 1)
 		self.options = self.grossCDN - self.baseCDN
 		self.discount = self.costCDN - self.grossCDN
+		self.discount_pctg = 100 * abs(self.discount) / max(1, self.grossCDN)
 		self.avg_option_cost = self.options / max(1, self.n_options)
 		
 		print(dict_print(self.info_dict(), "Initialized quote"))
@@ -107,7 +108,8 @@ class Quote:
 			"costCDN": money(self.costCDN),
 			"options": money(self.options),
 			"avg_option_cost": money(self.avg_option_cost),
-			"discounts": money(self.discount)
+			"discounts": money(self.discount),
+			"discount %": ("%.3f" % self.discount_pctg) + " %"
 		}
 		
 	def __repr__(self):
@@ -564,7 +566,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
-	a = work_weeks(52, [43])
+	a = work_weeks(53, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True
