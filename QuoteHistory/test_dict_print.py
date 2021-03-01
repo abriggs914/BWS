@@ -535,6 +535,229 @@ with open("dict_print_tests.txt", "w" if WRITING else "r") as out:
 			'Model': '20ART'
 		}
 	}
+	
+	episodes_comparison = {
+		'The Office': {
+			1: 6,
+			2: 22,
+			3: 25,
+			4: 19,
+			5: 28,
+			6: 26,
+			7: 26,
+			8: 24,
+			9: 25
+		},
+		'Community': {
+			1: 25,
+			2: 24,
+			3: 22,
+			4: 13,
+			5: 13,
+			6: 13
+		},
+		'Game of Thrones': {
+			1: 10,
+			2: 10,
+			3: 10,
+			4: 10,
+			5: 10,
+			6: 10,
+			7: 7,
+			8: 6
+		},
+		'Final Space': {
+			1: 10,
+			2: 13
+		},
+		'Parks and Recreation': {
+			1: 6,
+			2: 24,
+			3: 16,
+			4: 22,
+			5: 22,
+			6: 22,
+			7: 13
+		},
+		'Silicon Valley': {
+			1: 8,
+			2: 10,
+			3: 10,
+			4: 10,
+			5: 8,
+			6: 7
+		},
+		'Brooklyn Nine-Nine': {
+			1: 22,
+			2: 23,
+			3: 23,
+			4: 22,
+			5: 22,
+			6: 18,
+			7: 13
+		},
+		'Workaholics': {
+			1: 10,
+			2: 10,
+			3: 20,
+			4: 13,
+			5: 13,
+			6: 10,
+			7: 10
+		},
+		'Trailer Park Boys': {
+			1: 6,
+			2: 7,
+			3: 8,
+			4: 8,
+			5: 10,
+			6: 6,
+			7: 10,
+			8: 10,
+			9: 10,
+			10: 10,
+			11: 10,
+			12: 10
+		},
+		'Arrested Develpoment': {
+			1: 22,
+			2: 18,
+			3: 13,
+			4: 15,
+			5: 16
+		},
+		'Chernobyl': {
+			1: 5
+		},
+		'Breaking Bad': {
+			1: 7,
+			2: 13,
+			3: 13,
+			4: 13,
+			5: 16
+		},
+		'Black Mirror': {
+			1: 3,
+			2: 3,
+			3: 6,
+			4: 6,
+			5: 3
+		},
+		'Better Call Saul': {
+			1: 10,
+			2: 10,
+			3: 10,
+			4: 10,
+			5: 10
+		},
+		'The IT Crowd': {
+			1: 6,
+			2: 6,
+			3: 6,
+			4: 7
+		},
+		'Avatar, the Last Airbender': {
+			1: 20,
+			2: 20,
+			3: 21
+		},
+		'Peaky Blinders': {
+			1: 6,
+			2: 6,
+			3: 6,
+			4: 6,
+			5: 6
+		},
+		'Curb your Enthusiasm': {
+			1: 10,
+			2: 10,
+			3: 10,
+			4: 10,
+			5: 10,
+			6: 10,
+			7: 10,
+			8: 10,
+			9: 10,
+			10: 10
+		},
+		'Letterkenny': {
+			1: 6,
+			2: 6,
+			3: 6,
+			4: 6,
+			5: 6,
+			6: 6,
+			7: 6,
+			8: 7,
+			9: 7
+		},
+		'Prison Break': {
+			1: 22,
+			2: 22,
+			3: 13,
+			4: 24,
+			5: 9
+		},
+		'Scrubs': {
+			1: 24,
+			2: 22,
+			3: 22,
+			4: 25,
+			5: 24,
+			6: 22,
+			7: 11,
+			8: 19,
+			9: 13
+		},
+		'Yu-Gi-Oh!': {
+			1: 49,
+			2: 48,
+			3: 47,
+			4: 40,
+			5: 52
+		},
+		'Misfits': {
+			1: 6,
+			2: 7,
+			3: 8,
+			4: 8,
+			5: 8
+		},
+		'The Mandalorian': {
+			1: 8,
+			2: 8
+		},
+		'Recess': {
+			1: 13,
+			2: 13,
+			3: 8,
+			4: 23,
+			5: 5,
+			6: 6
+		},
+		'The Proud Family': {
+			1: 21,
+			2: 31
+		},
+		'My Name is Earl': {
+			1: 24,
+			2: 23,
+			3: 22,
+			4: 27
+		},
+		'Futurama': {
+			1: 9,
+			2: 20,
+			3: 15,
+			4: 12,
+			5: 16,
+			6: 16,
+			7: 13,
+			8: 13,
+			9: 13,
+			10: 13
+		}
+	}
 
 #############################################################################################################################################################
 
@@ -544,7 +767,8 @@ with open("dict_print_tests.txt", "w" if WRITING else "r") as out:
 		"times": (times, {"min_encapsulation": True}),
 		"fares": (fares, {"number": True, "min_encapsulation": True}),
 		"digimon": (digimon, {"number": True, "min_encapsulation": True}),
-		"long list": (long_list, {"number": True, "min_encapsulation": True})
+		"long list": (long_list, {"number": True, "min_encapsulation": True}),
+		"episodes comparison": (episodes_comparison, {"number": True, "min_encapsulation": True})
 	}
 	
 	for title, vals in to_test.items():
