@@ -19,8 +19,13 @@ def pad_centre(text, l, pad_str=" "):
 		return text
 	else:
 		return ""
-			
-			
+
+
+def text_size(txt):
+	spl = txt.split("\n")
+	return len(spl), max([len(line) for line in spl])
+	
+	
 # Function returns a formatted string containing the contents of a dict object.
 # Special lines and line count for values that are lists.
 # Supports dictionaries with special value types.

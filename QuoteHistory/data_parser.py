@@ -118,6 +118,7 @@ class Quote:
 
 WRITING = input("To write results to \"output.txt\", type \"1\".\n\tHit enter to proceed.\n") == "1"
 print("Re-writing \"output.txt\"..." if WRITING else "Results:")
+to_view = {}
 
 with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as out:
 
@@ -129,13 +130,10 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	fieldnames = data_dict.fieldnames
 	# data_dict = {line[fieldnames[0]]: line for line in data_dict}
 	quotes = [Quote(*line.values()) for line in data_dict]
-	print("keys: " + str(fieldnames))
-	write("keys: " + str(fieldnames))
 	
-	print("quotes: {0}".format(quotes))
-	
-	print(dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history"))
-	write(dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history"))
+	to_view["keys"] = str(fieldnames)
+	to_view["quotes"] = str(quotes)
+	to_view["Quote History"] = dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history")
 
 		
 			
@@ -525,7 +523,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	}
 	
 		
-	to_view = {
+	to_view.update({
 		"Model Counts:": (model_counts, {"number": True}),
 		"Weekly Counts:": (weekly_counts, {"number": True}),
 		"Dealer Counts:": (dealer_counts, {"number": True}),
@@ -548,17 +546,33 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Dealer Reporting": (avg_dealer_reporting, {"number": True}),
 		"Statistical Reporting": (lambda x: statistical_reporting, {}),
 		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1})
-	}
+	})
 	
+	results = {}
 	for title, dat in to_view.items():
-		if len(dat) == 3:
+		if dat and type(dat) == str:
+			results[title] = dat
+		elif len(dat) == 3:
 			func, fargs, pargs = dat
-			print(dict_print(func(quotes, **fargs), title, **pargs))
-			write(dict_print(func(quotes, **fargs), title, **pargs))
+			results[title] = dict_print(func(quotes, **fargs), title, **pargs)
+			# print("results: " + str(results))
 		else:
 			func, args = dat
-			print(dict_print(func(quotes), title, **args))
-			write(dict_print(func(quotes), title, **args))
+			results[title] = dict_print(func(quotes), title, **args)
+			# print("results: " + str(results))
+		
+	sizes = [text_size(res) for title, res in results.items()]
+	contents_list = {}
+	line_num = len(results) + 5
+	for i, title in enumerate(results):
+		contents_list[line_num] = title
+		line_num += sizes[i][0]
+
+	# print(dict_print(results, "results"))
+	write(dict_print(contents_list, "contents_list"))
+	for title, res in results.items():
+		print(res)
+		write(res)
 			
 	
 	print(dict_print(to_view, "to view", number=True))
@@ -566,7 +580,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
-	a = work_weeks(57, [43])
+	a = work_weeks(58, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True
