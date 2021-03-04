@@ -16,6 +16,20 @@ costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 
 # >>> 723.4540334999999
 # This demonstrates cost calculation for initial value 741.89 and stacked discounts of 1% and 1.5%
 
+
+# cost		-	Monetary value
+# margin	-	Desired profit margin
+# FE		-	Federal exchange rate
+# increase	-	Price increase (percentage)
+def updated_costing(cost, margin=0.3, FE=1.269, increase=0):
+	cost *= (1 + (increase / 100))
+	return {
+		"cost": money(cost),
+		"CDN": money(cost / (1 - margin)),
+		"US": money((cost / (1 - margin)) / FE)
+	}
+# usage - print(dict_print(updated_costing(559.86, 0.15, 1.269, 4), "Updated costing"))
+
 # conversion functions for vonverting cost->CDN->US and any variation in-between
 PROFIT_MARGIN = 0.7
 FE_RATE = 1.269  # CDN => US
@@ -545,7 +559,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Weekly Reporting": (avg_weekly_reporting, {"number": True}),
 		"Dealer Reporting": (avg_dealer_reporting, {"number": True}),
 		"Statistical Reporting": (lambda x: statistical_reporting, {}),
-		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1})
+		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1, "number": True})
 	})
 	
 	results = {}
@@ -580,7 +594,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
-	a = work_weeks(59, [43])
+	a = work_weeks(60, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True
