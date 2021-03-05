@@ -1,6 +1,7 @@
 import csv
 import functools
 from utility import *
+import datetime
 
 # Quotes are up-to-date as of Feb.22/2021 Quote 25771
 
@@ -55,7 +56,7 @@ def work_weeks(day, holidays):
 
 	res = []
 	holidays.sort()
-	print("holidays: {h}".format(h=holidays))
+	print("Days past: {d}, holidays: {h}".format(d=day, h=holidays))
 	idx = 0
 	res = [dw(i) for i in range(1, day+1)]
 	res = [[res[i+j] for j in range(min(5, day - i))] for i in range(0, day+1, 7)]
@@ -594,7 +595,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
-	a = work_weeks(60, [43])
+	day_one = datetime.date.fromisoformat("2021-01-04")
+	today = datetime.date.today()
+	a = work_weeks((today - day_one).days + 1, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True

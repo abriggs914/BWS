@@ -81,6 +81,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25793, 40HDG3X AG, 9, Fort Garry Industries Ltd., $95282.9013, $100802, $99794, 6, 0
 25794, 25ANR, 9, Diamond International Trucks Ltd., $29412.24, $37758, $37380, 6, 0
 25795, 40ADG3X53 NR, 9, NorthEast Truck & Trailer Sales, $64634.6879, $69907, $69208, 3, 0
-25802, 40HDG4X SB P, 9, Remorques Lewis Inc., $103879.4581, $0, $0, 0, 0
+25802, 40HDG4X SB P, 9, Remorques Lewis Inc., $103879.4581, $118573, $118573, 13, 0
 25810, 32DT3X V2018, 9, Remorques Lewis Inc., $70667.5063, $0, $0, 0, 0
-25811, 20FDNT, 9, Weaco Equipment, $19612.32, $0, $0, 0, 1
+25811, 20FDNT, 9, Weaco Equipment, $19612.32, $29957, $29957, 6, 1
+25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $0, $0, 0, 0
