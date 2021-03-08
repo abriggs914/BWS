@@ -50,8 +50,10 @@ day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holi
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
 # This doesn't work with holidays yet. Want to have a dictionary of the day that the holiday fell on.
-def work_weeks(day, holidays):
+def work_weeks(first_day, holidays):
 		
+	today = datetime.date.today()
+	day = (today - first_day).days + 1
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
 
 	res = []
@@ -73,7 +75,8 @@ def work_weeks(day, holidays):
 		else:
 			r.append(" ")
 		if len(r) == 5:
-			res[len(res)+1] = dict(zip(days, r))
+			week_str = len(res) + 1
+			res[week_str] = dict(zip(days, r))
 			r = []
 		if i % 7 == 4:
 			i += 2
@@ -596,8 +599,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
 	day_one = datetime.date.fromisoformat("2021-01-04")
-	today = datetime.date.today()
-	a = work_weeks((today - day_one).days + 1, [43])
+	a = work_weeks(day_one, [43])
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", table_title="Weeks"))  #, sort_header=True

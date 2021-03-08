@@ -75,7 +75,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25769, 53ET4XP, 8, Remorques Lewis Inc., $75803, $88781, $85256, 19, 0
 25770, 53ET2X, 8, Remorques Lewis Inc., $38855.5659, $44691, $42916, 8, 0
 25771, 20ANR, 8, Hale Trailer Brake & Wheel, $19432, $20727, $18478, 4, 1
-25772, 53ET3XP, 8, NorthEast Truck & Trailer Sales, $59708, $71608, $70892, 12, 0
+25772, 53ET3XP, 8, NorthEast Truck & Trailer Sales, $59708, $79333, $78539, 12, 0
 25775, 53ET3X, 8, Redhead Equipment Ltd., $45047.7666, $55820, $55820, 0, 0
 25786, 30NTT, 8, Remorques Lewis Inc., $28763, $37439, $36509, 3, 0
 25793, 40HDG3X AG, 9, Fort Garry Industries Ltd., $95282.9013, $100802, $99794, 6, 0
@@ -84,4 +84,5 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25802, 40HDG4X SB P, 9, Remorques Lewis Inc., $103879.4581, $118573, $118573, 13, 0
 25810, 32DT3X V2018, 9, Remorques Lewis Inc., $70667.5063, $0, $0, 0, 0
 25811, 20FDNT, 9, Weaco Equipment, $19612.32, $29957, $29957, 6, 1
-25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $0, $0, 0, 0
+25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $92606, $72603, 6, 0
+25817, 35HDG2X Mini, 10, Remorques Lewis Inc., $79401.5572, $0, $0, 0, 0

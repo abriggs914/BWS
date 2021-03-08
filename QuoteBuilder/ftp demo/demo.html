@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script>
+			function ftp_click(){
+				console.log("ftp_click")  				
+				
+				function reqListener () {
+					console.log(this.responseText);
+				}
+				var oReq = new XMLHttpRequest();
+				oReq.onload = reqListener;
+				oReq.open("GET", "ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options", true);
+				oReq.send();
+			}
+			
+			<!-- $.ajax({ -->
+				<!-- url: "ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options", -->
+				<!-- type: "GET", -->
+				<!-- async: true, -->
+				<!-- dataType: "text", -->
+				<!-- crossdomain : true, -->
+				<!-- headers : { -->
+					<!-- user: "<username>", -->
+					<!-- password: "<password>" -->
+				<!-- }, -->
+				<!-- success: function(e){ -->
+					<!-- console.log("success"); -->
+					<!-- console.log(e); -->
+				<!-- }, -->
+				<!-- error: function(e){ -->
+					<!-- console.log("error"); -->
+					<!-- console.log(e); -->
+				<!-- }, -->
+			<!-- }); -->
+		</script>
+	</head>
+	<body>
+		<button id="ftp_button" onclick="ftp_click()" href="ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options.csv">FTP</button>
+	</body>
+</html>
