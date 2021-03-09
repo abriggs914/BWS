@@ -24,10 +24,11 @@ costing = lambda og, discounts: og * functools.reduce(lambda a, b: (1 - a) * (1 
 # increase	-	Price increase (percentage)
 def updated_costing(cost, margin=0.3, FE=1.269, increase=0):
 	cost *= (1 + (increase / 100))
+	margin = 1 - margin
 	return {
 		"cost": money(cost),
-		"CDN": money(cost / (1 - margin)),
-		"US": money((cost / (1 - margin)) / FE)
+		"CDN": money((cost / margin) if cost >= 0 else (cost * margin)),
+		"US": money(((cost / margin) if cost >= 0 else (cost * margin)) / FE)
 	}
 # usage - print(dict_print(updated_costing(559.86, 0.15, 1.269, 4), "Updated costing"))
 
@@ -75,14 +76,18 @@ def work_weeks(first_day, holidays):
 		else:
 			r.append(" ")
 		if len(r) == 5:
-			week_str = len(res) + 1
+			# week_str = len(res) + 1
+			monday = first_day + datetime.timedelta(days=7*len(res))
+			week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
 			res[week_str] = dict(zip(days, r))
 			r = []
 		if i % 7 == 4:
 			i += 2
 		i += 1
 	if r:
-		res[len(res)+1] = dict(zip(days[:len(r)], r))
+		monday = first_day + datetime.timedelta(days=7*len(res))
+		week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
+		res[week_str] = dict(zip(days[:len(r)], r))
 		
 	return res
 

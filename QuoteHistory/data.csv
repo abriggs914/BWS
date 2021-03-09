@@ -82,7 +82,9 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25794, 25ANR, 9, Diamond International Trucks Ltd., $29412.24, $37758, $37380, 6, 0
 25795, 40ADG3X53 NR, 9, NorthEast Truck & Trailer Sales, $64634.6879, $69907, $69208, 3, 0
 25802, 40HDG4X SB P, 9, Remorques Lewis Inc., $103879.4581, $118573, $118573, 13, 0
-25810, 32DT3X V2018, 9, Remorques Lewis Inc., $70667.5063, $0, $0, 0, 0
+25810, 32DT3X V2018, 9, Remorques Lewis Inc., $70667.5063, $85853, $73272, 9, 0
 25811, 20FDNT, 9, Weaco Equipment, $19612.32, $29957, $29957, 6, 1
 25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $92606, $72603, 6, 0
-25817, 35HDG2X Mini, 10, Remorques Lewis Inc., $79401.5572, $0, $0, 0, 0
+25817, 35HDG2X Mini, 10, Remorques Lewis Inc., $79401.5572, $89231, $89231, 6, 0
+25819, 51LF4X3T AB V2015, 10, Diamond International Trucks Ltd., $80617.8756, $0, $0, 0, 0
+25821, 20ANR, 10, Hale Trailer Brake & Wheel, $20209.28, $0, $0, 0, 1
