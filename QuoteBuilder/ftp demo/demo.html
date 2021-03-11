@@ -4,20 +4,51 @@
 	<head>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 		<script>
-			function ftp_click(){
-				console.log("ftp_click")  				
-				
-				function reqListener () {
-					console.log(this.responseText);
+		
+			let xhr = new XMLHttpRequest();
+			
+			xhr.open('GET', 'https://www.bwstrailers.com/wp-content/uploads/2020/11/BWS-Chrome-Final-WO-Manufacturing.png');
+			
+			xhr.send();
+			
+			xhr.onload = function() {
+				if (xhr.status != 200) { // HTTP error?
+					// handle error
+					alert( 'Error: ' + xhr.status);
+					return;
 				}
-				var oReq = new XMLHttpRequest();
-				oReq.onload = reqListener;
-				oReq.open("GET", "ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options", true);
-				oReq.send();
-			}
+				// get the response from xhr.response
+			};
+			
+			xhr.onprogress = function(event) {
+				// report progress
+				alert(`Loaded ${event.loaded} of ${event.total}`);
+			};
+			
+			xhr.onerror = function() {
+				// handle non-HTTP error (e.g. network down)
+			};
+
+
+			
+			<!-- function ftp_click(){ -->
+				<!-- console.log("ftp_click")  				 -->
+				
+				<!-- function reqListener () { -->
+					<!-- console.log(this.responseText); -->
+				<!-- } -->
+				<!-- var oReq = new XMLHttpRequest(); -->
+				<!-- oReq.onload = reqListener; -->
+				<!-- <!-- oReq.open("GET", "ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options.csv", [true, "files@bwstrailers.com", "c24bghckpb0p"]); --> -->
+				<!-- oReq.open("GET", "https://www.bwstrailers.com/wp-content/uploads/2020/11/BWS-Chrome-Final-WO-Manufacturing.png/allow-cors", true); -->
+				<!-- <!-- ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options.csv --> -->
+				<!-- <!-- ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options.csv --> -->
+				<!-- oReq.send(); -->
+			<!-- } -->
 			
 			<!-- $.ajax({ -->
-				<!-- url: "ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options", -->
+				<!-- <!-- url: "http://ftp.files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options", --> -->
+				<!-- url: "https://www.bwstrailers.com/wp-content/uploads/2020/11/BWS-Chrome-Final-WO-Manufacturing.png", -->
 				<!-- type: "GET", -->
 				<!-- async: true, -->
 				<!-- dataType: "text", -->
@@ -39,5 +70,7 @@
 	</head>
 	<body>
 		<button id="ftp_button" onclick="ftp_click()" href="ftp://files%40bwstrailers.com:c24bghckpb0p@162.214.152.107/Equipment_53ET3X_Options.csv">FTP</button>
+		<img id="img001" alt="This picture was loaded from the internet" width="500" height="500"></img>
+		<img id="img002" src="https://www.bwstrailers.com/wp-content/uploads/2020/11/BWS-Chrome-Final-WO-Manufacturing.png" alt="This picture was loaded from the internet" width="500" height="500"></img>
 	</body>
 </html>

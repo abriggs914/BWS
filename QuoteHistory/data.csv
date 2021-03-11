@@ -86,6 +86,6 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25811, 20FDNT, 9, Weaco Equipment, $19612.32, $29957, $29957, 6, 1
 25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $92606, $72603, 6, 0
 25817, 35HDG2X Mini, 10, Remorques Lewis Inc., $79401.5572, $89231, $89231, 6, 0
-25819, 51LF4X3T AB V2015, 10, Diamond International Trucks Ltd., $80617.8756, $0, $0, 0, 0
+25819, 51LF4X3T AB V2015, 10, Diamond International Trucks Ltd., $80617.8756, $99926, $98926, 3, 0
 25821, 20ANR, 10, Hale Trailer Brake & Wheel, $20209.28, $0, $0, 0, 1
-25828, 20FDNT, 10, Hale Trailer Brake & Wheel, $19612.32, $0, $0, 0, 1
+25828, 20FDNT, 10, Hale Trailer Brake & Wheel, $19612.32, $29516, $27345, 10, 1
