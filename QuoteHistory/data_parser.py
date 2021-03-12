@@ -32,6 +32,9 @@ def updated_costing(cost, margin=0.3, FE=1.269, increase=0):
 	}
 # usage - print(dict_print(updated_costing(559.86, 0.15, 1.269, 4), "Updated costing"))
 
+def update_costing(cost, margin=0.3, FE=1.269, increase=0):
+	print(dict_print(updated_costing(cost, margin, FE, increase), "Update costing {0}".format(money(cost))))
+
 # conversion functions for vonverting cost->CDN->US and any variation in-between
 PROFIT_MARGIN = 0.7
 FE_RATE = 1.269  # CDN => US

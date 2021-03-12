@@ -1,1 +1,6 @@
+"The Access-Control-Allow-Origin response header indicates whether the response can be shared with requesting code from the given origin."
 https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
+
+
+"For security reasons, browsers restrict cross-origin HTTP requests initiated from within scripts."
+https://ma.ttias.be/set-access-control-allow-origin-cors-headers-apache-vhost-htaccess/
