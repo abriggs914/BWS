@@ -8,7 +8,7 @@ import datetime
 
 data_file = "data.csv"
 out_file = "output.txt"
-US_CDN_RATIO = avg([1.269, 1.255])
+US_CDN_RATIO = avg([1.269, 1.255, 1.245])
 WRITING = False
 
 # calculate costing for stacked discounts

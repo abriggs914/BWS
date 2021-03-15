@@ -4,6 +4,8 @@
 var CURRENT_INDUSTRY = -1;
 var CURRENT_CLASS = -1;
 var CURRENT_MODEL = -1;
+var CURR_MODEL_OBJ = undefined;
+var LOADED_MODELS = []
 var MAIL_NL = "%0D%0A";
 
 
@@ -18,160 +20,11 @@ const HTMLFormat = {
 var MIN_PAD_WIDTH = 10;
 var MIN_DESC_WIDTH = 65;
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//	Begin Option class
-class Option {
-	constructor(elementIDIn, optionNumIn, sectionIn, partNumIn, descriptionIn, weightIn, priceCDNIn, priceUSIn) {
-		this.elementID = elementIDIn;
-		this.optionNum = optionNumIn;
-		this.section = sectionIn;
-		this.partNum = partNumIn;
-		this.description = descriptionIn;
-		this.weight = weightIn;
-		this.priceCDN = priceCDNIn;
-		this.priceUS = priceUSIn;
-		
-		this.quantity = 0;
-		this.checkedStatus = false;
-		this.htmlform = HTMLFormat.INC_DEC;  // default, all options can be incremented to at least 1.
-		this.minRange = 0;
-		this.maxRange = 1;
-	}
-	
-	optionLineID() {
-		return "optionLine_" + this.optionNum;
-	}
-	
-	checkStatusInputID() {
-		return "checkedStatusInput_" + this.optionNum;
-	}
-	
-	quantityInputID() {
-		return "quantityInput_" + this.optionNum;
-	}
-	
-	setHTMLFormat(htmlFormat) {
-		this.htmlform = htmlFormat;
-	}
-	
-	groupInfo() {
-		let str = this.optionNum.padEnd(MIN_PAD_WIDTH);
-		str += this.section.padEnd(MIN_PAD_WIDTH);
-		str += this.partNum.padEnd(MIN_PAD_WIDTH);
-		str += this.description.padEnd(MIN_DESC_WIDTH);
-		str += this.weight.padEnd(MIN_PAD_WIDTH);
-		str += this.cost.padEnd(MIN_PAD_WIDTH);
-		str += this.priceCDN.padEnd(MIN_PAD_WIDTH);
-		str += this.priceUS.padEnd(MIN_PAD_WIDTH);
-		str += this.priceMaterials.padEnd(MIN_PAD_WIDTH);
-		str += this.priceLabour.padEnd(MIN_PAD_WIDTH);
-		str += this.optionFlags.padEnd(MIN_PAD_WIDTH);
-		// str += this.quantity.toString().padEnd(MIN_PAD_WIDTH);
-		return str;
-	}
-	
-	initHTML() {
-		return "<tr class='optionLine' id=" + this.optionLineID() + ">" + this.getHTML() + "</tr>";
-	}
-	
-	getHTML() {
-		let quantity = "quantity";
-		let RefId = 0;
-		let html = "NONE"; //"<tr class='optionLine' id=" + this.optionLineID() + ">";
-		let d = ((this.description.toLowerCase() == "null")? "NA" : this.description );
-		let w = ((this.weight.toLowerCase() == "null")? "NA" : this.weight );
-		let p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
-		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
-		if (this.htmlform == HTMLFormat.INC_DEC) {
-			html = "<td class='description-cell' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
-			html += "<td style='text-align:center' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
-			html += "<td style='text-align:right' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
-			html += "<td>";
-			html += "<form action='updateQuantity()' class='inc_dec_widget'>";
-			html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.optionNum + "\")' value=" + this.quantity + ">";
-			html += "</form>";
-			html += "<button class=incrementButton onclick='increment(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";;
-			html += "<button class=decrementButton onclick='decrement(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
-			html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
-			html += "</td>";
-			html += "";
-		}
-		else if (this.htmlform == HTMLFormat.SLIDER) {
-			let half = (this.minRange + this.maxRange) / 2
-			html = "<td>" + d + "</td>";
-			html += "<td style='text-align:center'>" + w + "</td>";
-			html += "<td style='text-align:right'>" + p + "</td>";
-			html += "<td> <input class='slider' type='range' min=" + this.minRange + " max=" + this.maxRange + " value=" + half + " class='slider'></input> </td>";
-		}
-		return html;
-	}
-	
-	updateHTML() {
-		// console.log("hey there");
-		// console.log("this.optionLineID: " + this.optionLineID());
-		// console.log("document.getElementById(this.optionLineID): " + document.getElementById(this.optionLineID()));
-		// console.log("document.getElementById(this.optionLineID).innerHTML: " + document.getElementById(this.optionLineID()).innerHTML);
-		document.getElementById(this.optionLineID()).innerHTML = "";
-		document.getElementById(this.optionLineID()).innerHTML = this.getHTML();
-	}
-	
-	getMailFormat() {
-		let str = this.quantity + " x ";
-		str += this.description.substring(0, Math.min(this.description.length, 20));
-		str += " @ " + "$ " + parseFloat(this.priceCDN).toFixed(2) + " each.";
-		return str;
-	}
-	
-	toString() {
-		return this.optionNum + " x " + this.quantity;
-	}
-}
-//	End Option class
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//	Begin BaseSpec class
-class BaseSpec {
-	
-	constructor(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
-		this.idNum = idNum;
-		this.groupName = groupName;
-		this.sectionName = sectionName;
-		this.description = description;
-		this.sortG = sortG;
-		this.sortSE = sortSE;
-		this.sortGV2 = sortGV2;
-		this.sortSEV2 = sortSEV2;
-	}
-	
-	baseSpecLineID() {
-		return "baseSpecLine_" + this.idNum;
-	}
-	
-	initHTML() {
-		return "<tr class=baseSpecLine id=" + this.baseSpecLineID() + ">" + this.getHTML() + "</tr>";
-	}
-	
-	getHTML() {
-		let html = "<td>" + titleCase(this.groupName) + "</td>";
-		html += "<td>" + titleCase(this.sectionName) + "</td>";
-		html += "<td class='description-cell'>" + this.description + "</td>";
-		return html;
-	}
-	
-	
-}
-//	End BaseSpec class
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 // Called when the option line containing the checkbox is clicked.
 // Updates the option's checkStatus value.
-function updateCheckStatus(opNum) {
+function updateCheckStatus(model, opNum) {
 	console.log("update check status");
-	op = lookUpOption(opNum);
+	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
 		op.checkStatus = document.getElementById(op.checkStatusInputID()).value;
@@ -182,9 +35,9 @@ function updateCheckStatus(opNum) {
 // Called when the input value of the quantity input field is manually typed in.
 // Updates the option's internal quantity and re-displays the HTML.
 // Uses a red indicator to alert if non-numeric characters are in the quantity field.
-function updateQuantity(opNum) {
+function updateQuantity(model, opNum) {
 	console.log("increment");
-	op = lookUpOption(opNum);
+	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
 		str = document.getElementById(op.quantityInputID()).value;
@@ -202,9 +55,9 @@ function updateQuantity(opNum) {
 }
 
 // Set an option's quantity back to 0.
-function resetQuantity(opNum, attr) {
+function resetQuantity(model, opNum, attr) {
 	console.log("reset " + attr);
-	op = lookUpOption(opNum);
+	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
 		op[attr] = 0;
@@ -214,9 +67,9 @@ function resetQuantity(opNum, attr) {
 }
 
 // Increment an option's quantity by 1.
-function increment(opNum, attr) {
+function increment(model, opNum, attr) {
 	console.log("increment " + attr);
-	op = lookUpOption(opNum);
+	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
 		op[attr] = Math.max(0, op[attr] + 1);
@@ -225,9 +78,9 @@ function increment(opNum, attr) {
 }
 
 // Decrement an option's quantity by 1.
-function decrement(opNum, attr) {
+function decrement(model, opNum, attr) {
 	console.log("decrement " + attr);
-	op = lookUpOption(opNum);
+	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
 		op[attr] = Math.max(0, op[attr] - 1);
@@ -245,9 +98,10 @@ function isNumeric(str) {
 
 // Iterate the OPTIONS array and return the option with the
 // matching option number. Null otherwise.
-function lookUpOption(opNum) {
-	for (let i in OPTIONS) {
-		let op = OPTIONS[i];
+function lookUpOption(model, opNum) {
+	let options = model.optionsList
+	for (let i in options) {
+		let op = options[i];
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -258,11 +112,13 @@ function lookUpOption(opNum) {
 	return null;
 }
 
+
 // Iterate the BASESPECS array and return the BaseSpec with the
 // matching BaseSpec id number. Null otherwise.
-function lookUpBaseSpec(bsNum) {
-	for (let i in BASESPECS) {
-		let bs = BASESPECS[i];
+function lookUpBaseSpec(model, bsNum) {
+	let basespecs = model.baseSpecs
+	for (let i in basespecs) {
+		let bs = basespecs[i];
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -274,19 +130,34 @@ function lookUpBaseSpec(bsNum) {
 }
 
 
+function createModel(modelIn) {
+	modelIn = ((new String(modelIn) instanceof String)? modelIn : modelIn.modelName);
+	for (let mod in LOADED_MODELS) {
+		if (mod.modelName.toLowerCase() == modelIn) {
+			return mod;
+		}
+	}
+	let mod = new Model(modelIn);
+	LOADED_MODELS.push(mod)
+	return mod;
+}
+
+
 // Use this function to create options.
 // This ensures that the option will be included in the OPTIONS array.
-function createOption(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
+function createOption(model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
 	let op = new Option(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
-	OPTIONS.push(op);
+	model.optionsList.push(op);
 	return op;
 }
 
-function createBaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
+
+function createBaseSpec(model, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
 	let b = new BaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
-	BASESPECS.push(b);
+	model.baseSpecs.push(b);
 	return b;
 }
+
 
 function generateOptionHeader() {
 	let html = "<colgroup><col span='1' style='width: 80%; min-width: 80%; max-width: 80%;'>"
@@ -308,6 +179,7 @@ function generateOptionHeader() {
 	return html;
 }
 
+
 function generateBaseSpecHeader() {
 	let html = "<colgroup><col span='1' style='width: 80%; min-width: 80%; max-width: 80%;'>"
 	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'>"
@@ -327,10 +199,12 @@ function generateBaseSpecHeader() {
 	return html;
 }
 
-function initAllOptionHTML() {
+
+function initAllOptionHTML(model) {
+	let options = model.optionsList
 	let str = generateOptionHeader();
-	for (o in OPTIONS) {
-		let op = OPTIONS[o];
+	for (o in options) {
+		let op = options[o];
 		str += op.initHTML();
 	}
 	console.log("str: " + str);
@@ -343,10 +217,12 @@ function initAllOptionHTML() {
 	document.getElementById("optionsList").innerHTML = str;
 }
 
-function initAllBaseSpecHTML() {
+
+function initAllBaseSpecHTML(model) {
+	let baseSpecs = model.baseSpecs
 	let str = generateBaseSpecHeader();
-	for (let b in BASESPECS) {
-		let bs = BASESPECS[b];
+	for (let b in baseSpecs) {
+		let bs = baseSpecs[b];
 		str += bs.initHTML();
 	}
 	// console.log("str: " + str);
@@ -359,18 +235,11 @@ function initAllBaseSpecHTML() {
 	document.getElementById("baseSpecsList").innerHTML = str;
 }
 
-function clearAllOptions() {
-	OPTIONS = []
-}
-
-function clearAllBaseSpecs() {
-	BASESPECS = []
-}
-
-function printOptions() {
+function printOptions(model) {
+	let options = model.optionsList
 	console.log("\tOptions:");
-	for (let o in OPTIONS) {
-		let op = OPTIONS[o];
+	for (let o in options) {
+		let op = options[o];
 		console.log("op	-	" + op + ", elem: " + op.elementID);
 	}
 }
@@ -380,20 +249,20 @@ function randomHTMLFormat() {
 	return HTMLFormat.SLIDER
 }
 
-var OPTIONS = [];
 //elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
-var o1 = createOption("option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
-var o2 = createOption("option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
-var o3 = createOption("option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
-var o4 = createOption("option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4");
+var model1 = new Model("53ET3X")
+var o1 = createOption(model1, "option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
+var o2 = createOption(model1, "option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
+var o3 = createOption(model1, "option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
+var o4 = createOption(model1, "option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4");
 
-var o5 = createOption("option005", "A5", "B5", "C5", "D5", "E5", "F5", "G5");
-var o6 = createOption("option006", "A6", "B6", "C6", "D6", "E6", "F6", "G6");
-var o7 = createOption("option007", "A7", "B7", "C7", "D7", "E7", "F7", "G7");
-var o8 = createOption("option008", "A8", "B8", "C8", "D8", "E8", "F8", "G8");
-var o9 = createOption("option009", "A9", "B9", "C9", "D9", "E9", "F9", "G9");
-var o10 = createOption("option010", "A10", "B10", "C10", "D10", "E10", "F10", "G10");
-var o11 = createOption("option011", "A11", "B11", "C11", "D11", "E11", "F11", "G11");
+var o5 = createOption(model1, "option005", "A5", "B5", "C5", "D5", "E5", "F5", "G5");
+var o6 = createOption(model1, "option006", "A6", "B6", "C6", "D6", "E6", "F6", "G6");
+var o7 = createOption(model1, "option007", "A7", "B7", "C7", "D7", "E7", "F7", "G7");
+var o8 = createOption(model1, "option008", "A8", "B8", "C8", "D8", "E8", "F8", "G8");
+var o9 = createOption(model1, "option009", "A9", "B9", "C9", "D9", "E9", "F9", "G9");
+var o10 = createOption(model1, "option010", "A10", "B10", "C10", "D10", "E10", "F10", "G10");
+var o11 = createOption(model1, "option011", "A11", "B11", "C11", "D11", "E11", "F11", "G11");
 
 o1.setHTMLFormat(randomHTMLFormat());
 o2.setHTMLFormat(randomHTMLFormat());
@@ -409,12 +278,11 @@ console.log("OPTION HTML: " + o3.getHTML());
 console.log("OPTION HTML: " + o4.getHTML());
 // document.getElementById("option001").innerHTML = o1.getHTML();
 // document.getElementById("option002").innerHTML = o2.getHTML();
-initAllOptionHTML();
+initAllOptionHTML(model1);
 
 
-var BASESPECS = [];
-var b1 = createBaseSpec("baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
-initAllBaseSpecHTML();
+var b1 = createBaseSpec(model1, "baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
+initAllBaseSpecHTML(model1);
 
 
 function populateIndustries() {
@@ -478,15 +346,22 @@ function selectClass(n) {
 	console.log("Click select class, <" + txt + ">");
 }
 
+
+function lookUpModel(modelName) {
+	console.log("model name: " + modelName)
+}
+
+
 // Invoked when a model is selected via the select class button.
 // Adjusts the text and href values of the model report string.
 function selectModel(n) {
 	// toggleHide("modelMenu")
-	CURRENT_MODEL = n;
 	let arr = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
 	let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "'>" + arr[0] + "</a>";
 	document.getElementById("modelSelectionP").innerHTML = txt;
 	console.log("Click select model, <" + txt + ">");
+	CURRENT_MODEL = n;
+	CURR_MODEL_OBJ = lookUpModel(arr[0]);
 	
 	// parse the returned file here
 	$("#submit").click();
@@ -520,23 +395,25 @@ function collectComments() {
 	return comments;
 }
 
-function collectOptions() {
-	let options = "";
-	for (let i in OPTIONS) {
+function collectOptions(model) {
+	let options = model.optionsList
+	let res = "";
+	for (let i in options) {
 		// console.log("i: " + i);
-		if (OPTIONS[i].quantity > 0) {
-			options += OPTIONS[i].getMailFormat() 
-			if (i < OPTIONS.length-1) {
-				options += " " + MAIL_NL;
+		if (options[i].quantity > 0) {
+			res += options[i].getMailFormat() 
+			if (i < options.length-1) {
+				res += " " + MAIL_NL;
 			}
 		}
 	}
-	options = ((options == "")? "NA" : options);
-	console.log("options: " + options);
-	return options;
+	res = ((res == "")? "NA" : res);
+	console.log("options: " + res);
+	return res;
 }
 
-function collectQuote(event) {
+function collectQuote(event, model) {
+	let options = model.optionsList
 	if (event.ctrlKey) {
 		console.log("performing test 1");
 		selectIndustry(0);
@@ -545,7 +422,7 @@ function collectQuote(event) {
 		document.getElementById("submit-comments-textarea").value = "this is a sample comment,\nplease read these comments,\nbecause they are very long,\nand they need to be split up by newline characters so the text doesn't appear all on one line.\njust like the line immediately above.\nthis comment & this comment\nshould break the parsing.\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n!\n@\n#\n$\n%\n^\n*\n(\n)[]\n{}\n-\n/\n+\n*\n_\n=\n`\n~\n\"dsd\"\n'dsd'\n?\n<>\n,.\ngot to the end";
 		for (let i = 0; i < 10; i++) {
 			for (let j = 0; j < 10; j++) {
-				increment(OPTIONS[i].optionNum, "quantity");
+				increment(options[i].optionNum, "quantity");
 			}
 		}
 	}
@@ -562,9 +439,9 @@ function collectQuote(event) {
 	//You can add newline by writing %0D%0A in the text of the body.
 	let industry = document.getElementById("industrySelectionPLink").innerHTML;
 	let clazz = document.getElementById("classSelectionPLink").innerHTML;
-	let model = document.getElementById("modelSelectionPLink").innerHTML;
+	let mod = document.getElementById("modelSelectionPLink").innerHTML;
 	let comments = collectComments();
-	let options = collectOptions();
+	let ops = collectOptions();
 	console.log("INDUSTRY: " + industry);
 	console.log("CLAZZ: " + clazz);
 	console.log("MODEL: " + model);
@@ -576,10 +453,10 @@ function collectQuote(event) {
 			currRef,
 			"&body=Dear BWS sales,",
 			"",
-			"I am writing to you to express my interest in having a quote done up for the " + model + " model from the " + clazz + " class.",
+			"I am writing to you to express my interest in having a quote done up for the " + mod + " model from the " + clazz + " class.",
 			"",
 			"-- 	  	 Standard options		   --",
-			options,
+			ops,
 			// "----------------------------------------",
 			"",
 			"-- 		Comments and concerns	   --",

@@ -377,8 +377,6 @@
 		</div>
 	</body>
 	<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
-	<!-- <script src="http://code.jquery.com/jquery-plugins.js"></script> -->
-	<!-- <script src="src/jquery.csv.js"></script> -->
 	<link rel="stylesheet" id="gforms_formsmain_css-css" href="https://www.bwstrailers.com/wp-content/plugins/gravityforms/css/formsmain.min.css" type="text/css" media="all">
 	<link rel="stylesheet" id="gforms_reset_css-css" href="https://www.bwstrailers.com/wp-content/plugins/gravityforms/css/formreset.min.css" type="text/css" media="all">
 	<link rel="stylesheet" id="gforms_ready_class_css-css" href="https://www.bwstrailers.com/wp-content/plugins/gravityforms/css/readyclass.min.css" type="text/css" media="all">
@@ -430,8 +428,14 @@
 	<script type="text/javascript" src="https://www.bwstrailers.com/wp-content/plugins/gravityforms/js/placeholders.jquery.min.js" id="gform_placeholder-js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 	<script src="https://bossanova.uk/jexcel/v3/xlsx.js"></script>
+
+
+
 	<script src="papaparse.min.js"></script>
 	<script type="text/javascript" src="links.js" name="links"></script>
+	<script type="text/javascript" src="model.js" name="models"></script>
+	<script type="text/javascript" src="option.js" name="options"></script>
+	<script type="text/javascript" src="basespec.js" name="basespecs"></script>
 	<script type="text/javascript" src="main.js" name="main"></script>
 	<!-- <script type="text/javascript" src="sample.js"></script> -->
 	<script type="text/javascript">		
@@ -464,29 +468,6 @@
 				if ($(this).prop('disabled') == "true") {
 					return;
 				}
-				
-				// // Trying to invoke python code on click
-				// $.ajax({
-				// 	type:'POST',
-				// 	<!-- url:'C:\Users\ABriggs\Documents\html\BWS\QuoteBuilder\Version6\main.py', -->
-				// 	url:'~/main.py'
-				// 	<!-- data: {param: text}, -->
-				// 	<!-- cache:false, -->
-				// 	<!-- async: 'asynchronous', -->
-				// 	<!-- dataType: 'json', -->
-				// 	<!-- success: function(data) { -->
-				// 		<!-- console.log(JSON.stringify(data)) -->
-				// 	<!-- }, -->
-				// 	<!-- error: function(request, status, error) { -->
-				// 		<!-- console.log('Error: ' + error) -->
-				// 	<!-- } -->
-				// }).done(function(o){
-				// 	console.log("DONE")
-				// });
-				// return;
-				
-				
-				
 		
 				stepped = 0;
 				rowCount = 0;
@@ -640,6 +621,7 @@
 		// TODO will be changed when file handling is implemented
 		function completeFn(results) {
 			end = now();
+			model = createModel("HARD CODED MODEL")
 		
 			if (results && results.errors) {
 				if (results.errors) {
@@ -662,8 +644,10 @@
 			console.log("    Header:", results['data'][0]);
 			
 			// Reset current options and specs
-			clearAllOptions();
-			clearAllBaseSpecs();
+			if (model) {
+				model.clearAllOptions();
+				model.clearAllBaseSpecs();
+			}
 			
 			// Parsing Base specs csv
 			// ATTENTION!
@@ -683,7 +667,7 @@
 					let [a, b, c, d, e, f, g, h, i, j, k, l, m, n] = data;
 					console.log("data: <" + data + ">");
 					console.log("a: " + a);
-					createBaseSpec(a, d, e, f, i, j, l, m);
+					createBaseSpec(model, a, d, e, f, i, j, l, m);
 				}
 			}
 			initAllBaseSpecHTML();
@@ -707,7 +691,7 @@
 					console.log("data: <" + data + ">");
 					console.log("a: " + a);
 					if (p == "0") {
-						createOption(a, c, g, n, h, i, f, x);
+						createOption(model, a, c, g, n, h, i, f, x);
 					}
 				}
 			}
