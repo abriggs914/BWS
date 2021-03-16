@@ -4,7 +4,8 @@
 
 class BaseSpec {
 	
-	constructor(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
+	constructor(modelIn, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
+		this.model = modelIn;
 		this.idNum = idNum;
 		this.groupName = groupName;
 		this.sectionName = sectionName;

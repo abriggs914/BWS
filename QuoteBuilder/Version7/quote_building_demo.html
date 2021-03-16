@@ -189,6 +189,7 @@
 				<input type="file" id="files" multiple="">
 			</div>
 			<button id="submit" class="green">Parse</button>
+			<button id="toggleOptionSpecs" onclick="toggleOptionSpecs()">Option Sheet</button>
 		</div>
 		<div class="grid-container" id="drop-down-selectors">
 			<div class="selection" id="company-selection">
@@ -471,7 +472,7 @@
 		
 		// TODO this function will be removed when the page can load it's own csvs.
 		$(function() {
-		
+	
 			// Demo invoked
 			$('#submit').click(function() {
 				if ($(this).prop('disabled') == "true") {
@@ -485,21 +486,13 @@
 		
 				var config = buildConfig();
 				var input = $('#input').val();
-				input = "ftp://files%40bwstrailers.com:c24bghckpb0p@bwstrailers.com/Equipment_53ET3X_Options.csv";
-				var a = window.open(input);
-				console.log("\n\n\n\n\n\tkeys:\n" + Object.keys(a) + "\n\ta:\n" + a);
-				for (let key in Object.keys(a)) {
-					console.log("key: " + Object.keys(a)[Object.keys(a)[key]]);
+		
+				if (inputType == "remote") {
+					input = $('#url').val();
 				}
-				input = "C:\Users\ABriggs\Downloads";
-				$("#files").value = "C:\Users\ABriggs\Downloads\Equipment_53ET3X_Options.csv";
-				
-				// if (inputType == "remote") {
-				// 	input = "ftp://files%40bwstrailers.com:c24bghckpb0p@bwstrailers.com/Equipment_53ET3X_Options.csv"; -->
-				// }
-				// else if (inputType == "json") {
-				// 	input = $('#json').val();
-				// }
+				else if (inputType == "json") {
+					input = $('#json').val();
+				}
 							
 		
 				// Allow only one parse at a time
@@ -515,10 +508,10 @@
 		
 		
 				if (inputType == "local") {
-					// if (!$('#files')[0].files.length) {
-					// 	alert("Please choose at least one file to parse.");
-					// 	return enableButton();
-					// }
+					if (!$('#files')[0].files.length) {
+						alert("Please choose at least one file to parse.");
+						return enableButton();
+					}
 					
 					$('#files').parse({
 						config: config,
@@ -573,10 +566,6 @@
 				}
 			});
 		
-			// $('#insert-tab').click(function()
-			// {
-			// 	$('#delimiter').val('\t');
-			// });
 		});
 		
 		
@@ -630,7 +619,7 @@
 		// TODO will be changed when file handling is implemented
 		function completeFn(results) {
 			end = now();
-			model = createModel("HARD CODED MODEL")
+			let model = createModel("HARD CODED MODEL");
 		
 			if (results && results.errors) {
 				if (results.errors) {
@@ -658,53 +647,61 @@
 				model.clearAllBaseSpecs();
 			}
 			
-			// Parsing Base specs csv
-			// ATTENTION!
-			// These are hard coded values and depend on the format and order of the spec sheet table.
-			// If the table header is altered, these indices will need to be changed.
-			for (i in results['data']) {
-				var data = results['data'][i];
-				if (i > 0 && data != "") {
-					// csv header format:
-					//   0     ,  1        ,  2           ,  3     ,  4       ,  5           ,  6          ,  7        ,  8     ,  9      ,  10        ,  11      ,  12       ,  13
-					// ["IDStd", "Model No", "Standard No", "Group", "Section", "Description", "Start Date", "End Date", "SortG", "SortSe", "Selection", "SortGv2", "SortSev2", "New Spec Wording"]
-					// baseSpecs constructor format:
-					// idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2
-					// 0	, 3		   , 4			, 5			 , 8	, 9		, 11	 , 12
-					//                                 1, 1, 1, 1
-					//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
-					let [a, b, c, d, e, f, g, h, i, j, k, l, m, n] = data;
-					console.log("data: <" + data + ">");
-					console.log("a: " + a);
-					createBaseSpec(model, a, d, e, f, i, j, l, m);
-				}
-			}
-			initAllBaseSpecHTML();
-			
-			// Parsing Options csv
-			// ATTENTION!
-			// These are hard coded values and depend on the format and order of the spec sheet table.
-			// If the table header is altered, these indices will need to be changed.
-			for (i in results['data']) {
-				var data = results['data'][i];
-				if (i > 0 && data != "") {
-					// csv header format:
-					//   0   ,  1        ,  2         ,  3          ,  4        ,  5     ,  6        ,  7           ,  8      ,  9     ,  10          ,  11     ,  12     ,  13         ,  14        ,  15       ,  16        ,  17                 ,  18         ,  19               ,  20           ,  21               ,  22               ,  23 
-					// ["ID#", "Model No", "Option No", "Start Date", "End Date", "Price", "Sections", "Description", "Weight", "Width", "Deck Length", "Spread", "SortSe", "Draw/Part#", "Std Hours", "Obsolete", "Selection", "New Option Wording", "OptionInfo", "OptionPromptFlag", "OptionPrompt", "OptionConfigInfo", "Option_timestamp", "US Price"]
-					// options constructor format:
-					// elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
-					// 0		  , 2		 , 6      , 13     , 7          , 8     , 5       , 23     , HTMLFormat.INC_DEC
-					//                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2
-					//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
-					let [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x] = data;
-					console.log("data: <" + data + ">");
-					console.log("a: " + a);
-					if (p == "0") {
-						createOption(model, a, c, g, n, h, i, f, x);
+			// For testing purposes
+			let sheetMode = document.getElementById("toggleOptionSpecs").innerText;
+			console.log("sheetmode: " + sheetMode);
+
+			if (sheetMode == "Spec Sheet") {
+				// Parsing Base specs csv
+				// ATTENTION!
+				// These are hard coded values and depend on the format and order of the spec sheet table.
+				// If the table header is altered, these indices will need to be changed.
+				for (i in results['data']) {
+					var data = results['data'][i];
+					if (i > 0 && data != "") {
+						// csv header format:
+						//   0     ,  1        ,  2           ,  3     ,  4       ,  5           ,  6          ,  7        ,  8     ,  9      ,  10        ,  11      ,  12       ,  13
+						// ["IDStd", "Model No", "Standard No", "Group", "Section", "Description", "Start Date", "End Date", "SortG", "SortSe", "Selection", "SortGv2", "SortSev2", "New Spec Wording"]
+						// baseSpecs constructor format:
+						// idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2
+						// 0	, 3		   , 4			, 5			 , 8	, 9		, 11	 , 12
+						//                                 1, 1, 1, 1
+						//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
+						let [a, b, c, d, e, f, g, h, i, j, k, l, m, n] = data;
+						console.log("data: <" + data + ">");
+						console.log("a: " + a);
+						createBaseSpec(model, a, d, e, f, i, j, l, m);
 					}
 				}
+				initAllBaseSpecHTML(model);
 			}
-			initAllOptionHTML();
+			
+			else if (sheetMode == "Option Sheet") {
+				// Parsing Options csv
+				// ATTENTION!
+				// These are hard coded values and depend on the format and order of the spec sheet table.
+				// If the table header is altered, these indices will need to be changed.
+				for (i in results['data']) {
+					var data = results['data'][i];
+					if (i > 0 && data != "") {
+						// csv header format:
+						//   0   ,  1        ,  2         ,  3          ,  4        ,  5     ,  6        ,  7           ,  8      ,  9     ,  10          ,  11     ,  12     ,  13         ,  14        ,  15       ,  16        ,  17                 ,  18         ,  19               ,  20           ,  21               ,  22               ,  23 
+						// ["ID#", "Model No", "Option No", "Start Date", "End Date", "Price", "Sections", "Description", "Weight", "Width", "Deck Length", "Spread", "SortSe", "Draw/Part#", "Std Hours", "Obsolete", "Selection", "New Option Wording", "OptionInfo", "OptionPromptFlag", "OptionPrompt", "OptionConfigInfo", "Option_timestamp", "US Price"]
+						// options constructor format:
+						// elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
+						// 0		  , 2		 , 6      , 13     , 7          , 8     , 5       , 23     , HTMLFormat.INC_DEC
+						//                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2
+						//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
+						let [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x] = data;
+						console.log("data: <" + data + ">");
+						console.log("a: " + a);
+						if (p == "0") {
+							createOption(model, a, c, g, n, h, i, f, x);
+						}
+					}
+				}
+				initAllOptionHTML(model);
+			}
 				
 			// icky hack
 			setTimeout(enableButton, 100);
@@ -725,6 +722,267 @@
 					? window.performance.now()
 					: 0;
 		}
+
+
+
+
+
+		// 	// Demo invoked
+		// 	$('#submit').click(function() {
+		// 		if ($(this).prop('disabled') == "true") {
+		// 			return;
+		// 		}
+		
+		// 		stepped = 0;
+		// 		rowCount = 0;
+		// 		errorCount = 0;
+		// 		firstError = undefined;
+		
+		// 		var config = buildConfig();
+		// 		var input = $('#input').val();
+		// 		input = "ftp://files%40bwstrailers.com:c24bghckpb0p@bwstrailers.com/Equipment_53ET3X_Options.csv";
+		// 		var a = window.open(input);
+		// 		console.log("\n\n\n\n\n\tkeys:\n" + Object.keys(a) + "\n\ta:\n" + a);
+		// 		for (let key in Object.keys(a)) {
+		// 			console.log("key: " + Object.keys(a)[Object.keys(a)[key]]);
+		// 		}
+		// 		input = "C:\Users\ABriggs\Downloads";
+		// 		$("#files").value = "C:\Users\ABriggs\Downloads\Equipment_53ET3X_Options.csv";
+				
+		// 		// if (inputType == "remote") {
+		// 		// 	input = "ftp://files%40bwstrailers.com:c24bghckpb0p@bwstrailers.com/Equipment_53ET3X_Options.csv"; -->
+		// 		// }
+		// 		// else if (inputType == "json") {
+		// 		// 	input = $('#json').val();
+		// 		// }
+							
+		
+		// 		// Allow only one parse at a time
+		// 		$(this).prop('disabled', true);
+		
+		// 		if (!firstRun) {
+		// 			console.log("--------------------------------------------------");
+		// 		}
+		// 		else {
+		// 			firstRun = false;
+		// 		}
+		
+		
+		
+		// 		if (inputType == "local") {
+		// 			// if (!$('#files')[0].files.length) {
+		// 			// 	alert("Please choose at least one file to parse.");
+		// 			// 	return enableButton();
+		// 			// }
+					
+		// 			$('#files').parse({
+		// 				config: config,
+		// 				before: function(file, inputElem) {
+		// 					start = now();
+		// 					console.log("Parsing file...", file);
+		// 				},
+		// 				error: function(err, file) {
+		// 					console.log("ERROR:", err, file);
+		// 					firstError = firstError || err;
+		// 					errorCount++;
+		// 				},
+		// 				complete: function() {
+		// 					end = now();
+		// 					printStats("Done with all files");
+		// 				}
+		// 			});
+		// 		}
+		// 		else if (inputType == "json") {
+		// 			if (!input) {
+		// 				alert("Please enter a valid JSON string to convert to CSV.");
+		// 				return enableButton();
+		// 			}
+		
+		// 			start = now();
+		// 			var csv = Papa.unparse(input, config);
+		// 			end = now();
+		
+		// 			console.log("Unparse complete");
+		// 			console.log("Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+					
+		// 			if (csv.length > maxUnparseLength) {
+		// 				csv = csv.substr(0, maxUnparseLength);
+		// 				console.log("(Results truncated for brevity)");
+		// 			}
+		
+		// 			console.log(csv);
+		
+		// 			setTimeout(enableButton, 100);	// hackity-hack
+		// 		}
+		// 		else if (inputType == "remote" && !input) {
+		// 			alert("Please enter the URL of a file to download and parse.");
+		// 			return enableButton();
+		// 		}
+		// 		else {
+		// 			start = now();
+		// 			var results = Papa.parse(input, config);
+		// 			console.log("Synchronous results:", results);
+		// 			if (config.worker || config.download) {
+		// 				console.log("Running...");
+		// 			}
+		// 		}
+		// 	});
+		
+		// 	// $('#insert-tab').click(function()
+		// 	// {
+		// 	// 	$('#delimiter').val('\t');
+		// 	// });
+		// });
+		
+		
+		// function printStats(msg) {
+		// 	if (msg) {
+		// 		console.log(msg);
+		// 	}
+		// 	console.log("       Time:", (end-start || "(Unknown; your browser does not support the Performance API)"), "ms");
+		// 	console.log("  Row count:", rowCount);
+		// 	if (stepped) {
+		// 		console.log("    Stepped:", stepped);
+		// 	}
+		// 	console.log("     Errors:", errorCount);
+		// 	if (errorCount) {
+		// 		console.log("First error:", firstError);
+		// 	}
+		// }
+		
+		
+		// function buildConfig() {
+		// 	return {
+		// 		delimiter: $('#delimiter').val(),
+		// 		header: $('#header').prop('checked'),
+		// 		dynamicTyping: $('#dynamicTyping').prop('checked'),
+		// 		skipEmptyLines: $('#skipEmptyLines').prop('checked'),
+		// 		preview: parseInt($('#preview').val() || 0),
+		// 		step: $('#stream').prop('checked') ? stepFn : undefined,
+		// 		encoding: $('#encoding').val(),
+		// 		worker: $('#worker').prop('checked'),
+		// 		comments: $('#comments').val(),
+		// 		complete: completeFn,
+		// 		error: errorFn,
+		// 		download: inputType == "remote"
+		// 	};
+		// }
+		
+		// function stepFn(results, parser)
+		// {
+		// 	stepped++;
+		// 	if (results) {
+		// 		if (results.data) {
+		// 			rowCount += results.data.length;
+		// 		}
+		// 		if (results.errors) {
+		// 			errorCount += results.errors.length;
+		// 			firstError = firstError || results.errors[0];
+		// 		}
+		// 	}
+		// }
+		
+		// // TODO will be changed when file handling is implemented
+		// function completeFn(results) {
+		// 	end = now();
+		// 	model = createModel("HARD CODED MODEL")
+		
+		// 	if (results && results.errors) {
+		// 		if (results.errors) {
+		// 			errorCount = results.errors.length;
+		// 			firstError = results.errors[0];
+		// 		}
+		// 		if (results.data && results.data.length > 0){
+		// 			rowCount = results.data.length;
+		// 		}
+		// 	}
+		
+		// 	printStats("Parse complete");
+		// 	console.log("    typeof:", typeof results);
+		// 	console.log("    results['data']:", results['data']);
+		// 	console.log("    results['errors']:", results['errors']);
+		// 	console.log("    results['meta']:", results['meta']);
+		// 	console.log("    Object.keys(results):", Object.keys(results));
+		// 	console.log("    Object.keys(results['results']):", Object.keys(results['data']));
+		// 	console.log("    Results:", results);
+		// 	console.log("    Header:", results['data'][0]);
+			
+		// 	// Reset current options and specs
+		// 	if (model) {
+		// 		model.clearAllOptions();
+		// 		model.clearAllBaseSpecs();
+		// 	}
+			
+		// 	// Parsing Base specs csv
+		// 	// ATTENTION!
+		// 	// These are hard coded values and depend on the format and order of the spec sheet table.
+		// 	// If the table header is altered, these indices will need to be changed.
+		// 	for (i in results['data']) {
+		// 		var data = results['data'][i];
+		// 		if (i > 0 && data != "") {
+		// 			// csv header format:
+		// 			//   0     ,  1        ,  2           ,  3     ,  4       ,  5           ,  6          ,  7        ,  8     ,  9      ,  10        ,  11      ,  12       ,  13
+		// 			// ["IDStd", "Model No", "Standard No", "Group", "Section", "Description", "Start Date", "End Date", "SortG", "SortSe", "Selection", "SortGv2", "SortSev2", "New Spec Wording"]
+		// 			// baseSpecs constructor format:
+		// 			// idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2
+		// 			// 0	, 3		   , 4			, 5			 , 8	, 9		, 11	 , 12
+		// 			//                                 1, 1, 1, 1
+		// 			//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
+		// 			let [a, b, c, d, e, f, g, h, i, j, k, l, m, n] = data;
+		// 			console.log("data: <" + data + ">");
+		// 			console.log("a: " + a);
+		// 			createBaseSpec(model, a, d, e, f, i, j, l, m);
+		// 		}
+		// 	}
+		// 	initAllBaseSpecHTML();
+			
+		// 	// Parsing Options csv
+		// 	// ATTENTION!
+		// 	// These are hard coded values and depend on the format and order of the spec sheet table.
+		// 	// If the table header is altered, these indices will need to be changed.
+		// 	for (i in results['data']) {
+		// 		var data = results['data'][i];
+		// 		if (i > 0 && data != "") {
+		// 			// csv header format:
+		// 			//   0   ,  1        ,  2         ,  3          ,  4        ,  5     ,  6        ,  7           ,  8      ,  9     ,  10          ,  11     ,  12     ,  13         ,  14        ,  15       ,  16        ,  17                 ,  18         ,  19               ,  20           ,  21               ,  22               ,  23 
+		// 			// ["ID#", "Model No", "Option No", "Start Date", "End Date", "Price", "Sections", "Description", "Weight", "Width", "Deck Length", "Spread", "SortSe", "Draw/Part#", "Std Hours", "Obsolete", "Selection", "New Option Wording", "OptionInfo", "OptionPromptFlag", "OptionPrompt", "OptionConfigInfo", "Option_timestamp", "US Price"]
+		// 			// options constructor format:
+		// 			// elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
+		// 			// 0		  , 2		 , 6      , 13     , 7          , 8     , 5       , 23     , HTMLFormat.INC_DEC
+		// 			//                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2
+		// 			//   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3
+		// 			let [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x] = data;
+		// 			console.log("data: <" + data + ">");
+		// 			console.log("a: " + a);
+		// 			if (p == "0") {
+		// 				createOption(model, a, c, g, n, h, i, f, x);
+		// 			}
+		// 		}
+		// 	}
+		// 	initAllOptionHTML();
+				
+		// 	// icky hack
+		// 	setTimeout(enableButton, 100);
+		// }
+		
+		// function errorFn(err, file) {
+		// 	end = now();
+		// 	console.log("ERROR:", err, file);
+		// 	enableButton();
+		// }
+		
+		// function enableButton() {
+		// 	$('#submit').prop('disabled', false);
+		// }
+		
+		// function now() {
+		// 	return typeof window.performance !== 'undefined'
+		// 			? window.performance.now()
+		// 			: 0;
+		// }
+
+
+
 		
 		//////////////////
 		// minimize and maximize div functionality
@@ -758,5 +1016,15 @@
 		$("mailto-href").click(function() {
 			console.log("mailto-ref clicked")
 		});
+
+
+		// Testing function to indicate what the input file is. Options or specs
+		function toggleOptionSpecs() {
+			let texts = ["Option Sheet", "Spec Sheet"]
+			let curr = document.getElementById("toggleOptionSpecs").innerText;
+			console.log("inner text: " + curr);
+			let i = texts.indexOf(curr);
+			document.getElementById("toggleOptionSpecs").innerText = texts[(i + 1) % texts.length];
+		}
 	</script>
 </html>

@@ -80,21 +80,21 @@ class Option {
 		let p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
 		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
 		if (this.htmlform == HTMLFormat.INC_DEC) {
-			html = "<td class='description-cell' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
-			html += "<td style='text-align:center' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
-			html += "<td style='text-align:right' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
+			html = "<td class='description-cell' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
+			html += "<td style='text-align:center' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
+			html += "<td style='text-align:right' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
 			html += "<td>";
 			html += "<form action='updateQuantity()' class='inc_dec_widget'>";
-			html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.model + "\", \"" + this.optionNum + "\")' value=" + this.quantity + ">";
+			html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.model.modelName + "\", \"" + this.optionNum + "\")' value=" + this.quantity + ">";
 			html += "</form>";
-			html += "<button class=incrementButton onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";;
-			html += "<button class=decrementButton onclick='decrement(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
-			html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
+			html += "<button class=incrementButton onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";
+			html += "<button class=decrementButton onclick='decrement(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
+			html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
 			html += "</td>";
 			html += "";
 		}
 		else if (this.htmlform == HTMLFormat.SLIDER) {
-			let half = (this.minRange + this.maxRange) / 2
+			let half = (this.minRange + this.maxRange) / 2;
 			html = "<td>" + d + "</td>";
 			html += "<td style='text-align:center'>" + w + "</td>";
 			html += "<td style='text-align:right'>" + p + "</td>";

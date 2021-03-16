@@ -69,9 +69,9 @@ function resetQuantity(model, opNum, attr) {
 // Increment an option's quantity by 1.
 function increment(model, opNum, attr) {
 	console.log("increment " + attr + " on model: " + model + " for op: " + opNum);
-	console.log("model: " + Object.keys(model));
+	// console.log("model: " + Object.keys(model));
 	op = lookUpOption(model, opNum);
-	console.log("FOUND: " + op);
+	// console.log("FOUND: " + op);
 	if (op != null) {
 		op[attr] = Math.max(0, op[attr] + 1);
 		op.updateHTML();
@@ -100,13 +100,21 @@ function isNumeric(str) {
 // Iterate the OPTIONS array and return the option with the
 // matching option number. Null otherwise.
 function lookUpOption(model, opNum) {
+	// console.log("\tmodel in: " + model + ", type: " + typeof(model));
+	if (typeof(model) == "string") {
+		model = lookUpModel(model);
+	}
+	// console.log("\tmodel out: " + model + ", type: " + typeof(model));
 	let options = model.optionsList;
-	console.log("model: " + model + ", model options: " + model.optionsList);
-	console.log("model: " + Object.keys(model));
+	// console.log("model: " + model + ", model options: " + model.optionsList);
+	// console.log("model: " + Object.keys(model));
+	// for (let k in Object.keys(model)) {
+	// 	console.log("k: " + k + ", model[k]: " + model[k]);
+	// }
 	for (let i in options) {
-		console.log("\ti: " + i)
+		// console.log("\ti: " + i)
 		let op = options[i];
-		console.log("\top: " + op)
+		// console.log("\top: " + op)
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -135,9 +143,25 @@ function lookUpBaseSpec(model, bsNum) {
 }
 
 
+// String name in, returns the model object with same name.
+// Returns null if model not found.
+function lookUpModel(modelName) {
+	console.log("model name: " + modelName)
+	console.log("Loaded models: " + LOADED_MODELS)
+	for (let i in LOADED_MODELS) {
+		let model = LOADED_MODELS[i]
+		console.log("\t\tmodel in: " + model + ", type: " + typeof(model));
+		if (model.modelName.toLowerCase() == modelName.toLowerCase()) {
+			return model;
+		}
+	}
+}
+
+
 function createModel(modelIn) {
 	let model = ((new String(modelIn) instanceof String)? modelIn : modelIn.modelName);
-	for (let mod in LOADED_MODELS) {
+	for (let i in LOADED_MODELS) {
+		let mod = LOADED_MODELS[i];
 		if (mod.modelName.toLowerCase() == model) {
 			return mod;
 		}
@@ -164,6 +188,7 @@ function createOption(model, elementID, optionNum, section, partNum, description
 
 
 function createBaseSpec(model, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
+	console.log("model: " + model + ", type: " + typeof(model));
 	let b = new BaseSpec(model, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
 	model.baseSpecs.push(b);
 	return b;
@@ -230,6 +255,7 @@ function initAllOptionHTML(model) {
 
 
 function initAllBaseSpecHTML(model) {
+	console.log("model: " + model + ", type: " + typeof(model));
 	let baseSpecs = model.baseSpecs
 	let str = generateBaseSpecHeader();
 	for (let b in baseSpecs) {
@@ -356,11 +382,6 @@ function selectClass(n) {
 	populateModels(n);
 	document.getElementById("classSelectionP").innerHTML = txt;
 	console.log("Click select class, <" + txt + ">");
-}
-
-
-function lookUpModel(modelName) {
-	console.log("model name: " + modelName)
 }
 
 

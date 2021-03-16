@@ -12,8 +12,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25556, 53ET3X, 3, Diamond International Trucks Ltd., $45047.7666, $62459, $61835, 13, 0
 25557, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $64887, $64238, 10, 0
 25558, 53ET3XP, 3, Diamond International Trucks Ltd., $57411.3922, $77492, $76717, 15, 0
-25559, 53HD3X 2018, 3, Diamond International Trucks Ltd., $40552.5331, $46118, $45657, 9, 0
-25560, 53HF3X 2018, 3, Diamond International Trucks Ltd., $40374.7541, $46172, $45710, 9, 0
+25559, 53HD3X V2018, 3, Diamond International Trucks Ltd., $40552.5331, $46118, $45657, 9, 0
+25560, 53HF3X V2018, 3, Diamond International Trucks Ltd., $40374.7541, $46172, $45710, 9, 0
 25568, 30ART, 3, NorthEast Truck & Trailer Sales, $31667, $37858, $37480, 3, 0
 25570, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $65746, $65746, 10, 1
 25571, 35ADG2X48 AGULP, 3, S & S Trailers Sales Inc, $55235.2816, $64073, $64073, 10, 1
@@ -56,7 +56,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25707, 32DT3X V2018, 6, Remorques Lewis Inc., $67949.5253, $77908, $66492, 8, 0
 25709, 25ART, 6, Wieland Sales Inc., $26191, $34768, $31322, 7, 1
 25713, 48HF2X, 6, Redhead Equipment Ltd., $36772, $39544, $39544, 7, 0
-25714, 53HD3X 2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, $41776, 7, 0
+25714, 53HD3X V2018, 6, Redhead Equipment Ltd., $40552.5331, $41776, $41776, 7, 0
 25715, 53ET2X, 6, Redhead Equipment Ltd., $38855.5659, $46194, $46194, 7, 0
 25721, 20NTT, 6, Remorques Lewis Inc., $21771, $22373, $21817, 1, 0
 25726, 53ET3X, 6, Remorques Lewis Inc., $45047.7666, $49757, $47782, 7, 0
@@ -71,7 +71,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25753, 48ET3X, 7, Northeast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
 25757, 53ET3X, 7, Northeast Truck & Trailer Sales, $45047.7666, $52695, $52168, 9, 0
 25758, 30NTT, 7, Remorques Lewis Inc., $27657, $34388, $33533, 3, 0
-25759, 53HD3X 2018, 7, Remorques Lewis Inc., $40552.5331, $42834, $42405, 4, 0
+25759, 53HD3X V2018, 7, Remorques Lewis Inc., $40552.5331, $42834, $42405, 4, 0
 25769, 53ET4XP, 8, Remorques Lewis Inc., $75803, $88781, $85256, 19, 0
 25770, 53ET2X, 8, Remorques Lewis Inc., $38855.5659, $44691, $42916, 8, 0
 25771, 20ANR, 8, Hale Trailer Brake & Wheel, $19432, $20727, $18478, 4, 1
@@ -89,8 +89,12 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25819, 51LF4X3T AB V2015, 10, Diamond International Trucks Ltd., $80617.8756, $99926, $98926, 3, 0
 25821, 20ANR, 10, Hale Trailer Brake & Wheel, $20209.28, $0, $0, 0, 1
 25828, 20FDNT, 10, Hale Trailer Brake & Wheel, $19612.32, $29516, $27345, 10, 1
-25837, 35ADG2X AGNR, 10, S & S Trailers Sales Inc, $52259.6967, $0, $0, 0, 1
-25838, 25ANR, 10, Hale Trailer Brake & Wheel, $24642.8, $0, $0, 0, 1
-25839, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $0, $0, 0, 0
-25840, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $0, $0, 0, 0
+25837, 35ADG2X AGNR, 10, S & S Trailers Sales Inc, $52259.6967, $55500, $55500, 7, 1
+25838, 25ANR, 10, Hale Trailer Brake & Wheel, $24642.8, $29716, $25783, 6, 1
+25839, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $65165, $63523, 17, 0
+25840, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $59203, $58611, 13, 0
 25841, 53ET3XP, 10, Fort Garry Industries Ltd., $59707.8479, $0, $0, 0, 0
+25843, 35FA, 11, Fort Garry Industries Ltd., $13033.7131, $13034, $12903, 1, 0
+25844, 53HF3X V2018, 11, Diamond International Trucks Ltd., $41989.7443, $44001, $43561, 10, 0
+25845, 27DT2X V2018, 11, NorthEast Truck & Trailer Sales, $54522.1589, $65626, $64969, 9, 0
+25846, 25ART, 11, Wieland Sales Inc., $27238.64, $0, $0, 0, 1

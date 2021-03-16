@@ -8,14 +8,14 @@ class Model {
     }
 
     clearAllOptions() {
-        this.optionsList = []
+        this.optionsList = [];
     }
 
     clearAllBaseSpecs() {
-        this.optionsList = []
+        this.optionsList = [];
     }
 
     toString() {
-        return this.modelName + ", options [" + this.optionsList + "]"
+        return this.modelName; // + ", options [" + this.optionsList + "]";
     }
 }

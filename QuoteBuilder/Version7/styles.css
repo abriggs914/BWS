@@ -95,13 +95,11 @@
 
 tr:nth-child(even) {
   background-color: rgba(255, 48, 48, 1);
-
 }
 
 
 tr:nth-child(odd) {
   background-color: rgba(128, 112, 112, 1);
-
 }
 
 
@@ -111,7 +109,8 @@ th {
   font: bold;
   background-color: rgba(222, 0, 0, 1);
   color: white;
-
+  font-size: large;
+  font-weight: 600;
 }
 
 
@@ -141,6 +140,12 @@ th {
 .menu-elem {
 	vertical-align: middle;
 	padding: 10px 10px 10px 20px;
+}
+
+#companySelectionP {
+  text-align: center;
+  justify-content: center;
+
 }
 
 #industrySelectionP {
