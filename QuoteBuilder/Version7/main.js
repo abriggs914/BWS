@@ -68,7 +68,8 @@ function resetQuantity(model, opNum, attr) {
 
 // Increment an option's quantity by 1.
 function increment(model, opNum, attr) {
-	console.log("increment " + attr);
+	console.log("increment " + attr + " on model: " + model + " for op: " + opNum);
+	console.log("model: " + Object.keys(model));
 	op = lookUpOption(model, opNum);
 	console.log("FOUND: " + op);
 	if (op != null) {
@@ -99,9 +100,13 @@ function isNumeric(str) {
 // Iterate the OPTIONS array and return the option with the
 // matching option number. Null otherwise.
 function lookUpOption(model, opNum) {
-	let options = model.optionsList
+	let options = model.optionsList;
+	console.log("model: " + model + ", model options: " + model.optionsList);
+	console.log("model: " + Object.keys(model));
 	for (let i in options) {
+		console.log("\ti: " + i)
 		let op = options[i];
+		console.log("\top: " + op)
 		// console.log("op.optionNum: " + op.optionNum);
 		// console.log("opNum: " + opNum);
 		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
@@ -131,13 +136,19 @@ function lookUpBaseSpec(model, bsNum) {
 
 
 function createModel(modelIn) {
-	modelIn = ((new String(modelIn) instanceof String)? modelIn : modelIn.modelName);
+	let model = ((new String(modelIn) instanceof String)? modelIn : modelIn.modelName);
 	for (let mod in LOADED_MODELS) {
-		if (mod.modelName.toLowerCase() == modelIn) {
+		if (mod.modelName.toLowerCase() == model) {
 			return mod;
 		}
 	}
-	let mod = new Model(modelIn);
+	let mod;
+	if (modelIn instanceof Model) {
+		mod = modelIn;
+	}
+	else {
+		mod = new Model(model);
+	}
 	LOADED_MODELS.push(mod)
 	return mod;
 }
@@ -146,14 +157,14 @@ function createModel(modelIn) {
 // Use this function to create options.
 // This ensures that the option will be included in the OPTIONS array.
 function createOption(model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
-	let op = new Option(elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
+	let op = new Option(model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
 	model.optionsList.push(op);
 	return op;
 }
 
 
 function createBaseSpec(model, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2) {
-	let b = new BaseSpec(idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
+	let b = new BaseSpec(model, idNum, groupName, sectionName, description, sortG, sortSE, sortGV2, sortSEV2);
 	model.baseSpecs.push(b);
 	return b;
 }
@@ -250,7 +261,8 @@ function randomHTMLFormat() {
 }
 
 //elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
-var model1 = new Model("53ET3X")
+//model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat
+var model1 = createModel("53ET3X")
 var o1 = createOption(model1, "option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
 var o2 = createOption(model1, "option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
 var o3 = createOption(model1, "option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
@@ -422,7 +434,7 @@ function collectQuote(event, model) {
 		document.getElementById("submit-comments-textarea").value = "this is a sample comment,\nplease read these comments,\nbecause they are very long,\nand they need to be split up by newline characters so the text doesn't appear all on one line.\njust like the line immediately above.\nthis comment & this comment\nshould break the parsing.\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n!\n@\n#\n$\n%\n^\n*\n(\n)[]\n{}\n-\n/\n+\n*\n_\n=\n`\n~\n\"dsd\"\n'dsd'\n?\n<>\n,.\ngot to the end";
 		for (let i = 0; i < 10; i++) {
 			for (let j = 0; j < 10; j++) {
-				increment(options[i].optionNum, "quantity");
+				increment(mmodel, options[i].optionNum, "quantity");
 			}
 		}
 	}

@@ -95,7 +95,7 @@
 		<link rel="stylesheet" id="js_composer_front-css" href="https://www.bwstrailers.com/wp-content/plugins/js_composer_salient/assets/css/js_composer.min.css" type="text/css" media="all">
 		<!-- <link rel="stylesheet" id="dynamic-css-css" href="https://www.bwstrailers.com/wp-content/themes/salient/css/salient-dynamic-styles.css" type="text/css" media="all"> -->
 		<style id="dynamic-css-inline-css" type="text/css">
-			@media only screen and (min-width:1000px){body #ajax-content-wrap.no-scroll{min-height:calc(100vh - 134px);height:calc(100vh - 134px)!important;}}@media only screen and (min-width:1000px){#page-header-wrap.fullscreen-header,#page-header-wrap.fullscreen-header #page-header-bg,html:not(.nectar-box-roll-loaded) .nectar-box-roll > #page-header-bg.fullscreen-header,.nectar_fullscreen_zoom_recent_projects,#nectar_fullscreen_rows:not(.afterLoaded) > div{height:calc(100vh - 133px);}.wpb_row.vc_row-o-full-height.top-level,.wpb_row.vc_row-o-full-height.top-level > .col.span_12{min-height:calc(100vh - 133px);}html:not(.nectar-box-roll-loaded) .nectar-box-roll > #page-header-bg.fullscreen-header{top:134px;}.nectar-slider-wrap[data-fullscreen="true"]:not(.loaded),.nectar-slider-wrap[data-fullscreen="true"]:not(.loaded) .swiper-container{height:calc(100vh - 132px)!important;}.admin-bar .nectar-slider-wrap[data-fullscreen="true"]:not(.loaded),.admin-bar .nectar-slider-wrap[data-fullscreen="true"]:not(.loaded) .swiper-container{height:calc(100vh - 132px - 32px)!important;}}#nectar_fullscreen_rows{background-color:;}
+			@media only screen and (min-width:1000px){body #ajax-content-wrap.no-scroll{min-height:calc(100vh - 134px);height:calc(100vh - 134px)!important;}}@media only screen and (min-width:1000px){#page-header-wrap.fullscreen-header,#page-header-wrap.fullscreen-header #page-header-bg,html:not(.nectar-box-roll-loaded) .nectar-box-roll > #page-header-bg.fullscreen-header,.nectar_fullscreen_zoom_recent_projects,#nectar_fullscreen_rows:not(.afterLoaded) > div{height:calc(100vh - 133px);}.wpb_row.vc_row-o-full-height.top-level,.wpb_row.vc_row-o-full-height.top-level > .col.span_12{min-height:calc(100vh - 133px);}html:not(.nectar-box-roll-loaded) .nectar-box-roll > #page-header-bg.fullscreen-header{top:134px;}.nectar-slider-wrap[data-fullscreen="true"]:not(.loaded),.nectar-slider-wrap[data-fullscreen="true"]:not(.loaded) .swiper-container{height:calc(100vh - 132px)!important;}.admin-bar .nectar-slider-wrap[data-fullscreen="true"]:not(.loaded),.admin-bar .nectar-slider-wrap[data-fullscreen="true"]:not(.loaded) .swiper-container{height:calc(100vh - 132px - 32px)!important;}}#nectar_fullscreen_rows{background-color:white;}
 		</style>
 		<link rel="stylesheet" id="redux-google-fonts-salient_redux-css" href="https://fonts.googleapis.com/css?family=Montserrat%3A500%2C700%2C600%7COpen+Sans%3A700%2C600&amp;ver=1605015101" type="text/css" media="all">
 		<link rel="stylesheet" id="sabai-css" href="https://www.bwstrailers.com/wp-content/plugins/sabai/assets/css/main.min.css" type="text/css" media="all">
@@ -191,6 +191,15 @@
 			<button id="submit" class="green">Parse</button>
 		</div>
 		<div class="grid-container" id="drop-down-selectors">
+			<div class="selection" id="company-selection">
+				<p class="selectionP" id="companySelectionP"> <a id="companySelectionPLink" href="#companySelection">Select a company from the menu.</a></p>
+				<div class="dropdown" id="companySelection">
+					<button class="dropbtn">Select a Company</button>
+					<div class="dropdown-content" id="companyMenu">
+						<!-- Filled on document.ready() -->
+					</div>
+				</div>
+			</div>
 			<div class="selection" id="industry-selection">
 				<p class="selectionP" id="industrySelectionP"> <a id="industrySelectionPLink" href="#industrySelection">Select an industry from the menu.</a></p>
 				<div class="dropdown" id="industrySelection">

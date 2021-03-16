@@ -3,7 +3,8 @@
 //	Begin Option class
 
 class Option {
-	constructor(elementIDIn, optionNumIn, sectionIn, partNumIn, descriptionIn, weightIn, priceCDNIn, priceUSIn) {
+	constructor(modelIn, elementIDIn, optionNumIn, sectionIn, partNumIn, descriptionIn, weightIn, priceCDNIn, priceUSIn) {
+		this.model = modelIn;
 		this.elementID = elementIDIn;
 		this.optionNum = optionNumIn;
 		this.section = sectionIn;
@@ -79,16 +80,16 @@ class Option {
 		let p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
 		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
 		if (this.htmlform == HTMLFormat.INC_DEC) {
-			html = "<td class='description-cell' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
-			html += "<td style='text-align:center' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
-			html += "<td style='text-align:right' onclick='increment(\"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
+			html = "<td class='description-cell' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
+			html += "<td style='text-align:center' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
+			html += "<td style='text-align:right' onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
 			html += "<td>";
 			html += "<form action='updateQuantity()' class='inc_dec_widget'>";
-			html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.optionNum + "\")' value=" + this.quantity + ">";
+			html += "<input type=number, id=" + this.quantityInputID() + " onChange='updateQuantity(\"" + this.model + "\", \"" + this.optionNum + "\")' value=" + this.quantity + ">";
 			html += "</form>";
-			html += "<button class=incrementButton onclick='increment(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";;
-			html += "<button class=decrementButton onclick='decrement(\"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
-			html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
+			html += "<button class=incrementButton onclick='increment(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>+</button>";;
+			html += "<button class=decrementButton onclick='decrement(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\")'>-</button>";
+			html += "<button class=resetQuantityButton onclick='resetQuantity(\"" + this.model + "\", \"" + this.optionNum + "\"" + ",\"" + quantity + "\");'>clear</button>";
 			html += "</td>";
 			html += "";
 		}
