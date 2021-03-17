@@ -1,0 +1,131 @@
+ID#,Model No,Option No,Description,Line#,SpecGroup,SpecSortG,SpecSection,SpecSortSe,SpecDescription,SpecDescriptionBold,SpecDescriptionItalic,SpecDescriptionUnderline,SpecDescriptionBackColour,SpecDescriptionFontColour,SpecSortSeLine,osl_timestamp
+20049,53ET3X,53ET3X-88,Galvanizing for bi-fold ramp option,1,GENERAL SPECIFICATIONS,73,Color,60,bi-fold,0,0,0,NULL,NULL,0,0x00000001D2AC92AA
+20050,53ET3X,53ET3X-89,Galvanizing Unit,1,GENERAL SPECIFICATIONS,73,Color,60,Galvanized,0,0,0,NULL,NULL,0,0x00000001D2BDE07A
+20051,53ET3X,53ET3X-90,Zinc Paint,1,GENERAL SPECIFICATIONS,73,Color,60,Zinc Paint,0,0,0,NULL,NULL,0,0x00000001BF147E90
+20052,53ET3X,53ET3X-88,Galvanizing for bi-fold ramp option,NULL,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E91
+20053,53ET3X,53ET3X-89,Galvanizing Unit,2,GENERAL SPECIFICATIONS,73,Finishing,50,NULL,0,0,0,NULL,NULL,-96,0x00000001D2BEC8FD
+20054,53ET3X,53ET3X-90,Zinc Paint,NULL,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E93
+16849,53ET3X,53ET3X-82,* Axle Spacing 49 in.,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E82
+466,53ET3X,53ET3X-57,* Disc Brakes (PAN 22 Axles - Tires Size 22.5 or 24.5),1,SUSPENSION/AXLES,40,Brakes,40,* Disc Brakes (PAN 22 Axles - Tires Size 22.5 or 24.5),0,0,0,NULL,NULL,0,0x00000001BF147E1A
+467,53ET3X,53ET3X-58,"Alum. Wheel Pkg. 22.5  (6 machined, 6 polished)",1,SUSPENSION/AXLES,40,Wheels,110,"~8.25 x 22.5 Steel Disc - painted white~.~Alum. Wheel Pkg. 22.5  (6 machined, 6 polished)~",0,0,0,NULL,NULL,-95,0x00000001BF147E1B
+474,53ET3X,53ET3X-59,"Alum. Wheel Pkg. 22.5  (6 steel, 6 polished)",1,SUSPENSION/AXLES,40,Wheels,110,"~8.25 x 22.5 Steel Disc - painted white~.~Alum. Wheel Pkg. 22.5  (6 steel, 6 polished)~",0,0,0,NULL,NULL,-95,0x00000001BF147E1C
+735,53ET3X,53ET3X-48,"20,000 lbs electric Winch with 90 Ft of Cable installed in Gooseneck comes with lead/live roll at front of Gooseneck (Curb Side)",1,GOOSENECK,7,Winch,90,"20,000 lbs electric Winch with 90 Ft of Cable installed in Gooseneck comes with lead/live roll at front of Gooseneck (Curb Side)",0,0,0,NULL,NULL,0,0x00000001BF147E1D
+748,53ET3X,53ET3X-29,Winches (3 Bar Weld On) #14001NP side mount (hooks not included) BWS #24077,1,DECK,19,Load Securement,210,Winches (3 Bar Weld On) #14001NP side mount (hooks not included),0,0,0,NULL,NULL,0,0x00000001BF147E1E
+749,53ET3X,53ET3X-51,* 38 in. x 76 in. Air Operated Planked In,1,RAMPS,46,Rear,10,* 38 in. x 76 in. Air Operated Planked In,0,0,0,NULL,NULL,0,0x00000001BF147E1F
+842,53ET3X,53ET3X-52,* Disc Brakes (PAN 17 Axles - Tires Size 17.5),1,SUSPENSION/AXLES,40,Brakes,40,* Disc Brakes (PAN 17 Axles - Tires Size 17.5),0,0,0,NULL,NULL,0,0x00000001BF147E20
+1266,53ET3X,53ET3X-02,Dual Holland Mark V 2 Speed Landing Gear,1,DECK,19,Landing Gear,80,Dual Holland Mark V 2 Speed,0,0,0,NULL,NULL,0,0x00000001BF147E21
+1285,53ET3X,53ET3X-53,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC-Inside nominal width,1,DECK,19,Load Securement,90,*Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (overall width not effected),0,0,0,NULL,NULL,0,0x00000001BF147E22
+1336,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,1,SUSPENSION/AXLES,40,Tires,100,255/70R22.5,0,0,0,NULL,NULL,0,0x00000001BF156841
+1337,53ET3X,53ET3X-55,Heavy Duty Fenders (17.5),1,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - WITH grouser,0,0,0,NULL,NULL,0,0x00000001BF156763
+1441,53ET3X,53ET3X-56,"*15,000 lbs Electric Winch with 90 ft. of Cable c/w 2 Lead Live Roll - Located on top of GNK",1,GOOSENECK,7,Winch,90,"*15,000 lbs Electric Winch with 90 ft. of Cable c/w 2 Lead Live Roll - Located on top of GNK",0,0,0,NULL,NULL,0,0x00000001BF147E25
+2293,53ET3X,53ET3X-03,1 1/8 inch All Keruing/Apitong Floor-GNK Only,1,GOOSENECK,7,Floor,70,1 1/8 inch All Keruing/Apitong Floor,0,0,0,NULL,NULL,0,0x00000001BF147E26
+2294,53ET3X,53ET3X-04,Headboard Pockets and Rub Rail,1,GOOSENECK,7,Load Securement,100,Headboard Pockets and Rub Rail,0,0,0,NULL,NULL,0,0x00000001BF147E27
+2295,53ET3X,53ET3X-05,"*15,000 lbs Electric Winch with 90 ft. of Cable c/w Lead Live Roll - Located in Kick",1,GOOSENECK,7,Winch,90,"*15,000 lbs Electric Winch with 90 ft. of Cable c/w Lead Live Roll - Located in Kick",0,0,0,NULL,NULL,0,0x00000001BF147E28
+2296,53ET3X,53ET3X-06,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,1,DECK,19,Load Securement,90,"* Moulded Rub Rail, Stake Pockets and Spools 24 in. OC (Over all Width affected by option as shown)",0,0,0,NULL,NULL,0,0x00000001BF147E29
+2297,53ET3X,53ET3X-07,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,1,DECK,19,Load Securement,90,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Over all Width affected by option as shown),0,0,0,NULL,NULL,0,0x00000001BF147E2A
+2298,53ET3X,53ET3X-08,Heavy duty Rub Rail 3/8 in. X 3 in. In lieu of Moulded Rubrail,1,DECK,19,Load Securement,90,~Moulded Rub Rail~.~ Heavy Duty Rub Rail 3/8 in. X 3 in.~,0,0,0,NULL,NULL,-95,0x00000001BF147E2B
+2299,53ET3X,53ET3X-10,1 1/8 inch All Keruing/Apitong Floor-Deck Only,1,DECK,19,Floor,70,"1 1/8 inch All Keruing/Apitong Floor, 3/16 in. Formed Deck Plate over Wheels",0,0,0,NULL,NULL,0,0x00000001BF147E2C
+2300,53ET3X,53ET3X-11,* 114 in. width excluding load securement devices (over width permits may be required),1,TRAILER,1,Overall Width,20,12,0,0,0,NULL,NULL,-99,0x00000001BF147E2D
+2301,53ET3X,53ET3X-12,* 120 in. width excluding load securement devices (over width permits may be required),1,TRAILER,1,Overall Width,20,18,0,0,0,NULL,NULL,-99,0x00000001BF147E2E
+2302,53ET3X,53ET3X-14,Air Lift c/w  Control Box,1,SUSPENSION/AXLES,40,Air Lift,11,Air Lift c/w  Control Box,0,0,0,NULL,NULL,0,0x00000001BF147E2F
+2303,53ET3X,53ET3X-15,Alum. Wheel Pkg. 17.5  (12 polished),1,SUSPENSION/AXLES,40,Wheels,110,Alum. Wheel Pkg. 17.5  (12 polished),0,0,0,NULL,NULL,0,0x00000001BF147E30
+2304,53ET3X,53ET3X-16,"Alum. Wheel Pkg. 17.5  (6 steel, 6 polished)",1,SUSPENSION/AXLES,40,Wheels,110,"Alum. Wheel Pkg. 17.5  (6 steel, 6 polished)",0,0,0,NULL,NULL,0,0x00000001BF147E31
+2306,53ET3X,53ET3X-18,* Axle Spacing 72 in.,1,SUSPENSION/AXLES,40,Spread,20,*72 in.,0,0,0,NULL,NULL,0,0x00000001BF147E32
+2307,53ET3X,53ET3X-19,Winch Track,1,DECK,19,Load Securement,180,Winch Track,0,0,0,NULL,NULL,0,0x00000001BF147E33
+2308,53ET3X,53ET3X-20,Winches - Sliding  #5820 (hooks not included)(EACH),1,DECK,19,Load Securement,190,Winches - Sliding  #5820 (hooks not included),0,0,0,NULL,NULL,0,0x00000001BF147E34
+2309,53ET3X,53ET3X-21,Winches - Sliding - 3 Bar #14011NP (hooks not included)(EACH),1,DECK,19,Load Securement,200,Winches - Sliding - 3 Bar #14011NP (hooks not included),0,0,0,NULL,NULL,0,0x00000001BF147E35
+2310,53ET3X,53ET3X-22,Winches (3 Bar Weld On) #14006NP Undermount (hooks not included) BWS #24078,1,DECK,19,Load Securement,220,Winches (3 Bar Weld On) #14006NP Undermount (hooks not included),0,0,0,NULL,NULL,0,0x00000001BF147E36
+2311,53ET3X,53ET3X-23,Straps (3 in. x 30 ft. with Chain and Hook)(each),1,DECK,19,Load Securement,170,Straps (3 in. x 30 ft. with Chain and Hook),0,0,0,NULL,NULL,0,0x00000001BF147E37
+2312,53ET3X,53ET3X-24,J-Hooks,1,DECK,19,Load Securement,150,J-Hooks,0,0,0,NULL,NULL,0,0x00000001BF147E38
+2313,53ET3X,53ET3X-25,Load Securement C-Hooks for side mount installation,1,DECK,19,Load Securement,130,C-Hooks for side mount installation,0,0,0,NULL,NULL,0,0x00000001BF147E39
+2314,53ET3X,53ET3X-26,Chain Pull Outs (pair),1,DECK,19,Load Securement,110,Pair Chain Pull Outs,0,0,0,NULL,NULL,0,0x00000001BF147E3A
+2315,53ET3X,53ET3X-27,* In Floor Flush Mounted D-Rings (pair),1,DECK,19,Load Securement,100,Pair of in Floor Flush Mounted D-Rings,0,0,0,NULL,NULL,0,0x00000001BF147E3B
+2316,53ET3X,53ET3X-28,"Extra, Side Mount D-Rings (pair)",1,DECK,19,Load Securement,160,Pair of side mounted D-rings,0,0,0,NULL,NULL,0,0x00000001BF147E3C
+2317,53ET3X,53ET3X-30,* 45 in. x 76 in. Air Operated Planked,1,RAMPS,46,Rear,10,* 45 in. x 76 in. Air Operated Planked,0,0,0,NULL,NULL,0,0x00000001BF147E3D
+2318,53ET3X,53ET3X-31,* 45 in. x 76 in. Air Operated Self Cleaning,1,RAMPS,46,Rear,10,* 45 in. x 76 in. Air Operated Self Cleaning,0,0,0,NULL,NULL,0,0x00000001BF147E3E
+2319,53ET3X,53ET3X-32,"* 38 in. Reverse Folding Deck Levelling Ramp, Planked",1,RAMPS,46,Rear,10,"* 38 in. Reverse Folding Deck Levelling Ramp, Planked",0,0,0,NULL,NULL,0,0x00000001BF147E3F
+2320,53ET3X,53ET3X-33,* 5 ft. Inset Full Width Air Operated (Inset in Floor to Access Upper Deck),1,RAMPS,46,Front,20,* 5 ft. Inset Full Width Air Operated (Inset in Floor to Access Upper Deck),0,0,0,NULL,NULL,0,0x00000001BF147E40
+2321,53ET3X,53ET3X-34,Amber Flashing Strobe Lights(Mounted in Ramps),1,GENERAL SPECIFICATIONS,73,Lights,40,Amber Flashing Strobe (Mounted in Ramps),0,0,0,NULL,NULL,40,0x00000001BF147E41
+2322,53ET3X,53ET3X-35,LED 4 in. Wide Load Lights Pullout Style (Set of 4),1,GENERAL SPECIFICATIONS,73,Lights,40,LED 4 in. Wide Load Lights Pullout Style (Set of 4),0,0,0,NULL,NULL,50,0x00000001BF147E42
+2323,53ET3X,53ET3X-36,LED Light Enhancement Package (6 additional lights per side),1,GENERAL SPECIFICATIONS,73,Lights,40,LED Light Enhancement Package (6 additional lights per side),0,0,0,NULL,NULL,10,0x00000001BF147E43
+2324,53ET3X,53ET3X-37,LED City Light Package (Mounted in Self Cleaning Ramps),1,GENERAL SPECIFICATIONS,73,Lights,40,LED City Light Package (Mounted in Ramps),0,0,0,NULL,NULL,30,0x00000001BF147E44
+2325,53ET3X,53ET3X-38,BWS Yellow - PPG#920612,1,GENERAL SPECIFICATIONS,73,Color,60,BWS Yellow - PPG#920612,0,0,0,NULL,NULL,0,0x00000001BF147E45
+2326,53ET3X,53ET3X-39,BWS Red - PPG#911722,1,GENERAL SPECIFICATIONS,73,Color,60,BWS Red - PPG#911722,0,0,0,NULL,NULL,0,0x00000001BF147E46
+2327,53ET3X,53ET3X-42,Tire Carrier Only,1,GENERAL SPECIFICATIONS,73,Tire Carrier,80,Tire Carrier Only,0,0,0,NULL,NULL,0,0x00000001BF147E47
+2328,53ET3X,53ET3X-43,Additional Mudflaps with Brackets (pair),1,GENERAL SPECIFICATIONS,73,Mudflaps,70,Pair of additional Mudflap Brackets,0,0,0,NULL,NULL,10,0x00000001BF147E48
+2329,53ET3X,53ET3X-44,Toolbox Alum. (45 in. X 18 in. X 18 in.) + Brackets(Drivers Side),1,GENERAL SPECIFICATIONS,73,Toolbox  BIG CAT,90,Alum. (45 in. X 18 in. X 18 in.) + Brackets (Drivers Side),0,0,0,NULL,NULL,25,0x00000001BF147E49
+2355,53ET3X,53ET3X-09,"Flatbar Full Length of GNK,  Deck, B/T  and Between Wheels Curbside 6 in. From Siderail 1/4 x 2-1/2",1,DECK,19,Load Securement,120,Flatbar Full Length of Deck and Between Wheels Curbside 6 in. From Siderail,0,0,0,NULL,NULL,0,0x00000001BF147E4A
+2380,53ET3X,53ET3X-47,"* 60 in. x 24 in. Alum. (Inset in floor to access upper deck) Pair, to include 1 set of Mudflaps",1,RAMPS,46,Front,20,* 60 in. x 24 in. Alum. (Inset in floor to access upper deck) Pair.,0,0,0,NULL,NULL,0,0x00000001BF147E4B
+2438,53ET3X,53ET3X-49,* Removable 3rd Alum. Center Ramp to Gooseneck (60 in. x 24 in.),1,RAMPS,46,Front,20,* Removable 3rd Alum. Center Ramp to Gooseneck (60 in. x 24 in.),0,0,0,NULL,NULL,10,0x00000001BF147E4C
+2639,53ET3X,53ET3X-50,Winches (Weld On) #12004SP (hooks not included) BWS #24056,1,DECK,19,Load Securement,230,Winches (Weld On) #5820 (hooks not included),0,0,0,NULL,NULL,0,0x00000001BF147E4D
+2809,53ET3X,53ET3X-60,"* 60 in. x 22 in. Alum. (Inset in floor to access upper deck) Pair. Required with 102 in. trialer width, including Rub Rail and Pockets, to include 1 set of BWS Mudflaps",1,RAMPS,46,Front,20,* 60 in. x 22 in. Alum. (Inset in floor to access upper deck) Pair.,0,0,0,NULL,NULL,0,0x00000001BF147E4E
+2901,53ET3X,53ET3X-61,Load Securement G-Hooks for under mount installation,1,DECK,19,Load Securement,140,G-Hooks for under mount installation,0,0,0,NULL,NULL,0,0x00000001BF147E4F
+3083,53ET3X,53ET3X-62,Heavy Duty Fenders (17.5) w/ Grouser Bars,1,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - NO grouser,0,0,0,NULL,NULL,0,0x00000001BF156725
+3084,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,1,SUSPENSION/AXLES,40,Tires,100,255/70R22.5,0,0,0,NULL,NULL,0,0x00000001BF156842
+3144,53ET3X,53ET3X-65,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC when adding the Side Mount D Ring Option. Inside Nominal Width,1,DECK,19,Load Securement,90,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (overall width not affected),0,0,0,NULL,NULL,0,0x00000001BF147E52
+3145,53ET3X,53ET3X-67,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) when adding the Side Mount D Ring Option. Outside Nominal Width,1,DECK,19,Load Securement,90,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Over all Width affected by option as shown),0,0,0,NULL,NULL,0,0x00000001BF147E53
+4017,53ET3X,53ET3X-68,Toolbox Alum. (45 in. X 18 in. X 18 in.) + Brackets (Passengers Side),1,GENERAL SPECIFICATIONS,73,Toolbox,90,Alum. (45 in. X 18 in. X 18 in.) + Brackets(Passengers Side),0,0,0,NULL,NULL,15,0x00000001BF147E54
+4026,53ET3X,53ET3X-70,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of trailer by 4 in.) when adding Side Mount D Ring Option.  Outside Nominal Width,1,DECK,19,Load Securement,100,"* Moulded Rub Rail, Stake Pockets and Spools 24 in. OC (Over all Width affected by option as shown)",0,0,0,NULL,NULL,0,0x00000001BF147E55
+4177,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,2,SUSPENSION/AXLES,40,Hubs & Drums,90,"10 Stud, long Stud c/w Drums",0,0,0,NULL,NULL,0,0x00000001BF147E56
+4293,53ET3X,53ET3X-06,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,2,TRAILER,1,Overall Width,20,4,0,0,0,NULL,NULL,-99,0x00000001BF147E57
+4294,53ET3X,53ET3X-07,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,2,TRAILER,1,Overall Width,20,4,0,0,0,NULL,NULL,-99,0x00000001BF147E58
+4295,53ET3X,53ET3X-11,* 114 in. width excluding load securement devices (over width permits may be required),2,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E59
+4296,53ET3X,53ET3X-12,* 120 in. width excluding load securement devices (over width permits may be required),2,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E5A
+4297,53ET3X,53ET3X-18,* Axle Spacing 72 in.,2,BEAVERTAIL,43,Length,10,"5ft, Planked",0,0,0,NULL,NULL,0,0x00000001BF147E5B
+4306,53ET3X,53ET3X-47,"* 60 in. x 24 in. Alum. (Inset in floor to access upper deck) Pair, to include 1 set of Mudflaps",2,GENERAL SPECIFICATIONS,73,Mudflaps,70,"1, pair of Mudflaps for Alum ramps at goose neck. (part of the ramp option)",0,0,0,NULL,NULL,40,0x00000001BF147E5C
+4365,53ET3X,53ET3X-60,"* 60 in. x 22 in. Alum. (Inset in floor to access upper deck) Pair. Required with 102 in. trialer width, including Rub Rail and Pockets, to include 1 set of BWS Mudflaps",2,GENERAL SPECIFICATIONS,73,Mudflaps,71,"1, Pair of BWS Mudflaps for Alum ramps at goose neck. (part of the ramp option)",0,0,0,NULL,NULL,0,0x00000001BF147E5D
+4397,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,2,SUSPENSION/AXLES,40,Hubs & Drums,90,"10 Stud, long Stud c/w Drums",0,0,0,NULL,NULL,0,0x00000001BF147E5E
+4420,53ET3X,53ET3X-67,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) when adding the Side Mount D Ring Option. Outside Nominal Width,2,TRAILER,1,Overall Width,20,4,0,0,0,NULL,NULL,-99,0x00000001BF147E5F
+4527,53ET3X,53ET3X-70,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of trailer by 4 in.) when adding Side Mount D Ring Option.  Outside Nominal Width,2,TRAILER,1,Overall Width,20,4,0,0,0,NULL,NULL,-99,0x00000001BF147E60
+4570,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,3,SUSPENSION/AXLES,40,Wheels,110,8.25 x 22.5 Steel Disc - painted white,0,0,0,NULL,NULL,0,0x00000001BF147E61
+4616,53ET3X,53ET3X-06,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,3,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E62
+4617,53ET3X,53ET3X-07,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,3,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E63
+4618,53ET3X,53ET3X-11,* 114 in. width excluding load securement devices (over width permits may be required),3,SUSPENSION/AXLES,40,Axles,10,",88"" Track",0,0,0,NULL,NULL,-97,0x00000001BF147E64
+4619,53ET3X,53ET3X-12,* 120 in. width excluding load securement devices (over width permits may be required),3,SUSPENSION/AXLES,40,Axles,10,",90"" Track",0,0,0,NULL,NULL,-97,0x00000001BF147E65
+4647,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,3,SUSPENSION/AXLES,40,Wheels,110,8.25 x 22.5 Steel Disc - painted white,0,0,0,NULL,NULL,0,0x00000001BF147E66
+4665,53ET3X,53ET3X-67,* Moulded Rub Rail and Stake Pockets and Spools 48 in. OC (Increase width of Trailer by 4 in.) when adding the Side Mount D Ring Option. Outside Nominal Width,3,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E67
+4703,53ET3X,53ET3X-70,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of trailer by 4 in.) when adding Side Mount D Ring Option.  Outside Nominal Width,3,TRAILER,1,Overall Width,20,(Over width permits may be required),0,0,0,NULL,NULL,-97,0x00000001BF147E68
+4724,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,4,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - WITH grouser,0,0,0,NULL,NULL,0,0x00000001BF147E69
+4751,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,4,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - NO grouser,0,0,0,NULL,NULL,0,0x00000001BF147E6A
+4783,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,5,DECK,19,Loaded Deck Height,20,5,0,0,0,NULL,NULL,-99,0x00000001BF147E6B
+4789,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,5,DECK,19,Loaded Deck Height,20,5,0,0,0,NULL,NULL,-99,0x00000001BF147E6C
+5047,53ET3X,53ET3X-45,LED Wide Load Lights 2 1/2 in. Swing Out Style (Set of 4),1,GENERAL SPECIFICATIONS,73,Lights,40,LED Wide Load Lights 2 1/2 in. Swing Out Style (Set of 4),0,0,0,NULL,NULL,50,0x00000001BF147E6D
+5435,53ET3X,53ET3X-71,"In floor chain box at rear of GNK, deckplate cover included",1,GENERAL SPECIFICATIONS,763,Toolbox,200,"In floor chain box at rear of GNK, deckplate covers included",0,0,0,NULL,NULL,0,0x00000001BF147E6E
+5436,53ET3X,53ET3X-72,"In floor chain box at rear of Main deck, deckplate cover included",1,GENERAL SPECIFICATIONS,73,Toolbox,210,"In floor chain box at rear of maindeck, deckplate covers included",0,0,0,NULL,NULL,0,0x00000001BF147E6F
+5437,53ET3X,53ET3X-73,* 45 in. X 11 ft. Bi-Folding paver style ramp,1,RAMPS,46,Rear,10,45 in. X 11 ft. Bi-Folding paver style,0,0,0,NULL,NULL,0,0x00000001BF147E70
+5463,53ET3X,53ET3X-10,1 1/8 inch All Keruing/Apitong Floor-Deck Only,2,BEAVERTAIL,43,Length,10,~Planked~.~1 1/8 inch All Keruing/Apitong Floor~,0,0,0,NULL,NULL,-95,0x00000001BF147E71
+5994,53ET3X,53ET3X-18,* Axle Spacing 72 in.,3,DECK,19,Deck Length,10,36 ft. 2 in.,0,0,0,NULL,NULL,0,0x00000001BF147E72
+6088,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,6,SUSPENSION/AXLES,40,Brakes,40,16 1/2 in. x 7 in.,0,0,0,NULL,NULL,0,0x00000001BF147E73
+6089,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,6,SUSPENSION/AXLES,40,Brakes,40,16 1/2 in. x 7 in.,0,0,0,NULL,NULL,0,0x00000001BF147E74
+6289,53ET3X,53ET3X-65,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC when adding the Side Mount D Ring Option. Inside Nominal Width,2,SUSPENSION/AXLES,40,Axles,10,"~,90"" Track~.~,88"" Track~",0,0,0,NULL,NULL,-95,0x00000001BF147E75
+6290,53ET3X,53ET3X-53,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC-Inside nominal width,2,SUSPENSION/AXLES,40,Axles,10,"~,90"" Track~.~,88"" Track~",0,0,0,NULL,NULL,-95,0x00000001BF147E76
+10280,53ET3X,53ET3X-54,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and Grousar Bars,8,SUSPENSION/AXLES,40,Camshafts,80,28 Spline Enclosed,0,0,0,NULL,NULL,0,0x00000001BF147E77
+10281,53ET3X,53ET3X-63,Upgrade to 255/70R22.5 Tires and 10 stud Unimount Rims/Axles with Heavy Duty Fenders and NO Grousar Bars,8,SUSPENSION/AXLES,40,Camshafts,80,28 Spline Enclosed,0,0,0,NULL,NULL,0,0x00000001BF147E78
+11234,53ET3X,53ET3X-09,"Flatbar Full Length of GNK,  Deck, B/T  and Between Wheels Curbside 6 in. From Siderail 1/4 x 2-1/2",2,GOOSENECK,7,Load Securement,120,Flatbar Full Length Curbside 6 in. From Siderail 1/4 x 2-1/2,0,0,0,NULL,NULL,0,0x00000001BF147E79
+12649,53ET3X,53ET3X-000,NO OPTIONS FOR THIS WORK ORDER,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E7A
+12650,53ET3X,53ET3X-74,S & S Mudflaps,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E7B
+12651,53ET3X,53ET3X-75,Pierquip Mudflaps,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E7C
+15998,53ET3X,53ET3X-76," 1 1/2 inch Hard Wood,       Deck, GNK and Beaver tail.",1,DECK,19,Floor,70, 1 1/2 inch Hard Wood,0,0,0,NULL,NULL,0,0x00000001BF147E7D
+15999,53ET3X,53ET3X-77,"Alum. 5 ft. Long Self Cleaning to access Gooseneck, with under deck storage in Gooseneck",1,RAMPS,46,Front,20,"Alum. 5 ft. Long Self Cleaning to access Gooseneck, with under deck storage in Gooseneck",0,0,0,NULL,NULL,0,0x00000001BF147E7E
+16000,53ET3X,53ET3X-78,260 SUSP,1,SUSPENSION/AXLES,40,Suspension,30,"Ridewell RAR 260 U/S 6 1/2 in. Air Ride 25,000 lbs - includes air gauge and dump valve in enclosure",0,0,0,NULL,NULL,0,0x00000001BF147E7F
+16001,53ET3X,53ET3X-76," 1 1/2 inch Hard Wood,       Deck, GNK and Beaver tail.",2,GOOSENECK,7,Floor,70, 1 1/2 inch Hard Wood,0,0,0,NULL,NULL,0,0x00000001BF147E80
+16746,53ET3X,53ET3X-79,97.5 in. width excluding load securement devices,1,TRAILER,1,Overall Width,20,98 in.,0,0,0,NULL,NULL,0,0x00000001BF147E81
+17024,53ET3X,53ET3X-06,* Moulded Rub Rail and Stake Pockets and Spools 24 in. OC (Increase width of Trailer by 4 in.) Outside Nominal Width,4,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E83
+18331,53ET3X,53ET3X-83,Toolbox Alum. (42 in. X 18 in. X 14 in.) + Brackets (Passengers Side),1,GENERAL SPECIFICATIONS,73,Toolbox,90,Alum. (42 in. X 18 in. X 14 in.) + Brackets (Passengers Side),0,0,0,NULL,NULL,10,0x00000001BF147E84
+18332,53ET3X,53ET3X-84,Toolbox Alum. (42 in. X 18 in. X 14 in.) + Brackets (Drivers Side),1,GENERAL SPECIFICATIONS,73,Toolbox,90,Alum. (42 in. X 18 in. X 14 in.) + Brackets (Drivers Side),0,0,0,NULL,NULL,20,0x00000001BF147E85
+18333,53ET3X,53ET3X-83,Toolbox Alum. (42 in. X 18 in. X 14 in.) + Brackets (Passengers Side),2,,NULL,,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E86
+18472,53ET3X,53ET3X-85,Tire Upgrade to 235/75R17.5 Continental HTL2 EP,1,SUSPENSION/AXLES,40,Tires,100,Tire Upgrade to 235/75R17.5 Continental HTL2 EP,0,0,0,NULL,NULL,0,0x00000001BF147E87
+18473,53ET3X,53ET3X-86,Tire Upgrade to 245/75R17.5 Continental HTL2 ECO,1,SUSPENSION/AXLES,40,Tires,100,Tire Upgrade to 245/75R17.5 Continental HTL2 ECO,0,0,0,NULL,NULL,0,0x00000001BF147E88
+18474,53ET3X,53ET3X-85,Tire Upgrade to 235/75R17.5 Continental HTL2 EP,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E89
+18475,53ET3X,53ET3X-86,Tire Upgrade to 245/75R17.5 Continental HTL2 ECO,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E8A
+18519,53ET3X,53ET3X-87,Tire Upgrade to 255/70R22.5 Continental HSR2,1,SUSPENSION/AXLES,40,Tires,100,Tire Upgrade to 255/70R22.5 Continental HSR2,0,0,0,NULL,NULL,0,0x00000001BF147E8B
+18569,53ET3X,53ET3X-87,Tire Upgrade to 255/70R22.5 Continental HSR2,2,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E8C
+19490,53ET3X,53ET3X-83,Toolbox Alum. (42 in. X 18 in. X 14 in.) + Brackets (Passengers Side),3,,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E8D
+20689,53ET3X,53ET3X-91,NULL,1,GENERAL SPECIFICATIONS,73,Mudflaps,70,"Remove mud flaps, set up for flaps only – customer will install their own.",0,0,0,NULL,NULL,0,0x00000001BF147EA3
+21261,53ET3X,53ET3X-92,5/16 in. heavy duty smooth plate fenders - NO grouser,1,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - NO grouser,0,0,0,NULL,NULL,0,0x00000001BF147E9C
+21262,53ET3X,53ET3X-93,5/16 in. heavy duty smooth plate fenders - WITH grouser,1,GENERAL SPECIFICATIONS,73,Fenders,80,5/16 in. heavy duty smooth plate fenders - WITH grouser,0,0,0,NULL,NULL,0,0x00000001BF147E9D
+21271,53ET3X,53ET3X-92,5/16 in. heavy duty smooth plate fenders - NO grouser,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147E9F
+21272,53ET3X,53ET3X-93,5/16 in. heavy duty smooth plate fenders - WITH grouser,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001BF147EA0
+21345,53ET3X,53ET3X-55,5/16 in. heavy duty smooth plate fenders - WITH grouser,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001C16C0FE4
+21346,53ET3X,53ET3X-62,5/16 in. heavy duty smooth plate fenders - NO grouser,1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001C16C0FE5
+21347,53ET3X,53ET3X-91,"Remove mud flaps, set up for flaps only – customer will install their own.",1,NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,0x00000001C16C0FE6

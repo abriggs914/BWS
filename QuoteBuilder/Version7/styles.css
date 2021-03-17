@@ -94,12 +94,12 @@
 
 
 tr:nth-child(even) {
-  background-color: rgba(255, 48, 48, 1);
+  background-color: rgba(255, 48, 48, 0.65);
 }
 
 
 tr:nth-child(odd) {
-  background-color: rgba(128, 112, 112, 1);
+  background-color: rgba(128, 112, 112, 0.35);
 }
 
 
@@ -117,7 +117,7 @@ th {
 .selection {
   display: inline-block;
   margin: 10px 10px 10px 10px;
-  width: 33%;
+  width: 25%;
   vertical-align: middle;
 
 }

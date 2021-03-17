@@ -1,0 +1,47 @@
+IDStd,Model No,Standard No,Group,Section,Description,Start Date,End Date,SortG,SortSe,Selection,SortGv2,SortSev2,New Spec Wording
+13069809,Pony Truck Box,Pony Truck Box-026,GENERAL SPECIFICATIONS,Electrical System,"LED Grote",NULL,NULL,10,1,NULL,73,10,NULL
+13069810,Pony Truck Box,Pony Truck Box-055,STRUCTURE,Rear Steps,"Outside welded, Driver Side, inside ship loose",NULL,NULL,NULL,NULL,NULL,16,330,NULL
+13069811,Pony Truck Box,Pony Truck Box-061,STRUCTURE,Hoist,"Custom Hoist 84-4502-180 (ship loose)",NULL,NULL,NULL,NULL,NULL,16,270,NULL
+13069812,Pony Truck Box,Pony Truck Box-062,STRUCTURE,Grain Door,"No",NULL,NULL,NULL,NULL,NULL,16,260,NULL
+13069813,Pony Truck Box,Pony Truck Box-075,STRUCTURE,Fork Lift Package,"No",NULL,NULL,NULL,NULL,NULL,16,130,NULL
+13069814,Pony Truck Box,Pony Truck Box-077,STRUCTURE,Floor,"1/4 in. 6061",NULL,NULL,NULL,NULL,NULL,16,110,NULL
+13069815,Pony Truck Box,Pony Truck Box-085,STRUCTURE,Box Height,"48 in.",NULL,NULL,NULL,NULL,NULL,16,30,NULL
+13069816,Pony Truck Box,Pony Truck Box-087,STRUCTURE,Box Style,"Aluminum",NULL,NULL,NULL,NULL,NULL,16,10,NULL
+13069817,Pony Truck Box,Pony Truck Box-033,GENERAL SPECIFICATIONS,Shovel Holder,"No",NULL,NULL,NULL,NULL,NULL,73,150,NULL
+13069818,Pony Truck Box,Pony Truck Box-073,STRUCTURE,Side Boards,"2 in. x 12 in.",NULL,NULL,NULL,NULL,NULL,16,150,NULL
+13069819,Pony Truck Box,Pony Truck Box-074,STRUCTURE,Liner,"No",NULL,NULL,NULL,NULL,NULL,16,140,NULL
+13069820,Pony Truck Box,Pony Truck Box-082,STRUCTURE,Bulkhead,"58 1/4 in.",NULL,NULL,NULL,NULL,NULL,16,60,NULL
+13069821,Pony Truck Box,Pony Truck Box-083,STRUCTURE,Box Width Outside,"96 in.",NULL,NULL,NULL,NULL,NULL,16,50,NULL
+13069822,Pony Truck Box,Pony Truck Box-084,STRUCTURE,Box Width Inside,"91 in.",NULL,NULL,NULL,NULL,NULL,16,40,NULL
+13069823,Pony Truck Box,Pony Truck Box-050,STRUCTURE,Hydraulic Lines,"1 in. SCH 40 NPP",NULL,NULL,NULL,NULL,NULL,16,380,NULL
+13069824,Pony Truck Box,Pony Truck Box-090,TRAILER,Weight lbs +/- 2%,"3,200",NULL,NULL,NULL,NULL,NULL,1,60,NULL
+13069825,Pony Truck Box,Pony Truck Box-056,STRUCTURE,Front Steps,"No",NULL,NULL,NULL,NULL,NULL,16,320,NULL
+13069826,Pony Truck Box,Pony Truck Box-115,GENERAL SPECIFICATIONS,Rear Post Lights,"No",NULL,NULL,NULL,NULL,NULL,73,60,NULL
+13069827,Pony Truck Box,Pony Truck Box-114,GENERAL SPECIFICATIONS,Extruded Rubber with Longitude,"Included",NULL,NULL,NULL,NULL,NULL,73,220,NULL
+13069828,Pony Truck Box,Pony Truck Box-117,GENERAL SPECIFICATIONS,Jug Holder,"No",NULL,NULL,NULL,NULL,NULL,73,230,NULL
+13069829,Pony Truck Box,Pony Truck Box-112,GENERAL SPECIFICATIONS,Sock Adapter,"No",NULL,NULL,NULL,NULL,NULL,73,210,NULL
+13069830,Pony Truck Box,Pony Truck Box-112,GENERAL SPECIFICATIONS,Broom Holder,"No",NULL,NULL,NULL,NULL,NULL,73,160,NULL
+13069831,Pony Truck Box,Pony Truck Box-068,STRUCTURE,Tailgate Hinge Style,"Top Hinge",NULL,NULL,NULL,NULL,NULL,16,200,NULL
+13069832,Pony Truck Box,Pony Truck Box-069,STRUCTURE,Tailgate Locking,"Electric over Air Cylinder 4 in. x 8 in.",NULL,NULL,NULL,NULL,NULL,16,190,NULL
+13069833,Pony Truck Box,Pony Truck Box-060,STRUCTURE,Cylinder Top Pin to Floor,"48 in.",NULL,NULL,NULL,NULL,NULL,16,280,NULL
+13069834,Pony Truck Box,Pony Truck Box-080,STRUCTURE,Side Panels,"1/8 in. Inside and 3/32 in. outside",NULL,NULL,NULL,NULL,NULL,16,80,NULL
+13069835,Pony Truck Box,Pony Truck Box-063,STRUCTURE,Spreader Chain Blocks,"Included",NULL,NULL,NULL,NULL,NULL,16,250,NULL
+13069836,Pony Truck Box,Pony Truck Box-064,STRUCTURE,Tailgate Seal,"5/8 in. Aluminum Round Rod",NULL,NULL,NULL,NULL,NULL,16,240,NULL
+13069837,Pony Truck Box,Pony Truck Box-051,STRUCTURE,Header Pipe Type,"Straight, located on back door",NULL,NULL,NULL,NULL,NULL,16,370,NULL
+13069838,Pony Truck Box,Pony Truck Box-052,STRUCTURE,Tarp Shield,"Included",NULL,NULL,NULL,NULL,NULL,16,360,NULL
+13069839,Pony Truck Box,Pony Truck Box-053,STRUCTURE,Tarp Color,"Black",NULL,NULL,NULL,NULL,NULL,16,350,NULL
+13069840,Pony Truck Box,Pony Truck Box-054,STRUCTURE,Tarp,"Cramaro Mesh Flip Style",NULL,NULL,NULL,NULL,NULL,16,340,NULL
+13069841,Pony Truck Box,Pony Truck Box-088,TRAILER,Cubic Capacity w/boards,"30 cubic yards with 12 in. boards",NULL,NULL,NULL,NULL,NULL,1,80,NULL
+13069842,Pony Truck Box,Pony Truck Box-089,TRAILER,Cubic Capacity,"24 cubic yards",NULL,NULL,NULL,NULL,NULL,1,70,NULL
+13069843,Pony Truck Box,Pony Truck Box-058,STRUCTURE,Slope,"Full Slope. 10 degree",NULL,NULL,NULL,NULL,NULL,16,300,NULL
+13069844,Pony Truck Box,Pony Truck Box-059,STRUCTURE,Hoist Access Door,"No",NULL,NULL,NULL,NULL,NULL,16,290,NULL
+13069845,Pony Truck Box,Pony Truck Box-067,STRUCTURE,Compression/Winder Locks,"No",NULL,NULL,NULL,NULL,NULL,16,210,NULL
+13069846,Pony Truck Box,Pony Truck Box-071,STRUCTURE,Tailgate Wall,"3/16 in.",NULL,NULL,NULL,NULL,NULL,16,170,NULL
+13069847,Pony Truck Box,Pony Truck Box-072,STRUCTURE,Side Board Color,"Black, ship loose",NULL,NULL,NULL,NULL,NULL,16,160,NULL
+13069848,Pony Truck Box,Pony Truck Box-081,STRUCTURE,Walls,"Dura-Wall, Polished",NULL,NULL,NULL,NULL,NULL,16,70,NULL
+13069849,Pony Truck Box,Pony Truck Box-118,STRUCTURE,Length,"21 ft. 6 in.",NULL,NULL,NULL,NULL,NULL,16,20,NULL
+13069850,Pony Truck Box,Pony Truck Box-119,GENERAL SPECIFICATIONS,Calcium Tank,"No",NULL,NULL,NULL,NULL,NULL,73,140,NULL
+13069851,Pony Truck Box,Pony Truck Box-121,GENERAL SPECIFICATIONS,Man Door,"No",NULL,NULL,NULL,NULL,NULL,73,170,NULL
+13069852,Pony Truck Box,Pony Truck Box-122,GENERAL SPECIFICATIONS,Lights,"3 of LED in Siderail, including turn signal, one red at rear",NULL,NULL,NULL,NULL,NULL,73,30,NULL
+13069853,Pony Truck Box,Pony Truck Box-123,GENERAL SPECIFICATIONS,Back up Lights,"No",NULL,NULL,NULL,NULL,NULL,73,40,NULL
+13185889,Pony Truck Box,Pony Truck Box-124,GENERAL SPECIFICATIONS,Ship Loose,"1 tipper Assembly, 1 set mounting angles, 2 mounting plates, 1 inner lower mounting plate, 1 saddle with 2 saddle angles, 1 truck lower hoist pin, 2 Stargate mudflaps, 1 set light brackets with covers, 1 center light bracket, 1 set truck license plate clo,NULL,NULL,NULL,NULL,NULL,73,400,NULL
