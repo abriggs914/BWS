@@ -146,6 +146,7 @@ function lookUpBaseSpec(model, bsNum) {
 // String name in, returns the model object with same name.
 // Returns null if model not found.
 function lookUpModel(modelName) {
+	console.log("####")
 	console.log("model name: " + modelName)
 	console.log("Loaded models: " + LOADED_MODELS)
 	for (let i in LOADED_MODELS) {
@@ -446,7 +447,8 @@ function collectOptions(model) {
 }
 
 function collectQuote(event, model) {
-	let options = model.optionsList
+	console.log("event: " + event)
+	console.log("model: " + model)
 	if (event.ctrlKey) {
 		console.log("performing test 1");
 		selectIndustry(0);
@@ -455,7 +457,7 @@ function collectQuote(event, model) {
 		document.getElementById("submit-comments-textarea").value = "this is a sample comment,\nplease read these comments,\nbecause they are very long,\nand they need to be split up by newline characters so the text doesn't appear all on one line.\njust like the line immediately above.\nthis comment & this comment\nshould break the parsing.\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n!\n@\n#\n$\n%\n^\n*\n(\n)[]\n{}\n-\n/\n+\n*\n_\n=\n`\n~\n\"dsd\"\n'dsd'\n?\n<>\n,.\ngot to the end";
 		for (let i = 0; i < 10; i++) {
 			for (let j = 0; j < 10; j++) {
-				increment(mmodel, options[i].optionNum, "quantity");
+				increment(model, options[i].optionNum, "quantity");
 			}
 		}
 	}
@@ -463,6 +465,7 @@ function collectQuote(event, model) {
 		alert("Please select an industry, a class, and a model to proceed.");
 		return;
 	}
+	let options = model.optionsList
 	// blankMailTo();
 	console.log("collecting the quote in function");
 	let href = document.getElementById("mailto-href");
@@ -514,3 +517,19 @@ function collectQuote(event, model) {
 		// x.style.display = "none";
 	// }
 // }
+
+
+// Generating and saving a text file of the filled quote form.
+function genQuoteText(){
+	if (CURR_MODEL_OBJ == undefined){
+		console.log("Select a model first!")
+		return;
+	}
+	let industry = document.getElementById("industrySelectionPLink").innerHTML;
+	let clazz = document.getElementById("classSelectionPLink").innerHTML;
+	let mod = document.getElementById("modelSelectionPLink").innerHTML;
+	let comments = collectComments();
+	let ops = collectOptions(CURR_MODEL_OBJ);
+
+	console.log("industry: " + industry + "\nclazz: " + clazz + "\nmod: " + mod + "\ncomments: " + comments + "\nops: " + ops)
+}

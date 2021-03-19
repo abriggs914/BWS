@@ -190,6 +190,7 @@
 			</div>
 			<button id="submit" class="green">Parse</button>
 			<button id="toggleOptionSpecs" onclick="toggleOptionSpecs()">Option Sheet</button>
+			<button id="collectQuoteButton" onclick="genQuoteText()">Collect Quote</button>
 		</div>
 		<div class="grid-container" id="drop-down-selectors">
 			<div class="selection" id="company-selection">
@@ -271,7 +272,7 @@
 			</div>
 			<!-- <form class="submit-widget", id="submit-widget" action="collectQuote()"> -->
 			<div class="submit-widget", id="submit-widget">
-				<button class="sumbit-button" onclick="collectQuote(event)">Submit request for a quote</button>
+				<button class="sumbit-button" onclick="collectQuote(event, CURR_MODEL_OBJ)">Submit request for a quote</button>
 			</div>
 			<!-- </form> -->
 			<a id="mailto-href" href = "mailto:avery.briggs@bwstrailers.com?subject=Request for quote" display="hidden" data-rel="external"></a>

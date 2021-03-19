@@ -1,0 +1,1 @@
+__MODEL<37DT3X V2018>__CONTACT<__CNAME<John Doe>__CEMAIL<John.Doe@email.com>__CPHONE<(506)-123-4567-123>__DEALER<Dealer 1>__BRANCH<Branch 1>__CUSTOMER<John Doe Jr.>>__OPTIONSLIST<__OPTIONID<1 x 1<__COMMENT<>>>__OPTIONID<2 x 6<__COMMENT<2 pr. GNK, 4 pr. B/T>>>__OPTIONID<1 x 11<__COMMENT<>>>__OPTIONID<2 x 6<__COMMENT<>>>>__QCOMMENT<Can you also include lead time?>
