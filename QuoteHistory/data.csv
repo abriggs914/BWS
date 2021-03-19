@@ -93,8 +93,11 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25838, 25ANR, 10, Hale Trailer Brake & Wheel, $24642.8, $29716, $25783, 6, 1
 25839, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $65165, $63523, 17, 0
 25840, 48ET2X, 10, Diamond International Trucks Ltd., $43069.464, $59203, $58611, 13, 0
-25841, 53ET3XP, 10, Fort Garry Industries Ltd., $59707.8479, $0, $0, 0, 0
+25841, 53ET3XP, 10, Fort Garry Industries Ltd., $59707.8479, $83480, $82645, 10, 0
 25843, 35FA, 11, Fort Garry Industries Ltd., $13033.7131, $13034, $12903, 1, 0
 25844, 53HF3X V2018, 11, Diamond International Trucks Ltd., $41989.7443, $44001, $43561, 10, 0
 25845, 27DT2X V2018, 11, NorthEast Truck & Trailer Sales, $54522.1589, $65626, $64969, 9, 0
 25846, 25ART, 11, Wieland Sales Inc., $27238.64, $0, $0, 0, 1
+25861, 25ANR, 11, Diamond International Trucks Ltd., $29412.24, $0, $0, 0, 0
+25862, 25ANR, 11, Diamond International Trucks Ltd., $29412.24, $0, $0, 0, 0
+25863, 25NTT, 11, 
