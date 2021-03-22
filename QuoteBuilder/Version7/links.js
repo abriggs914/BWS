@@ -442,14 +442,7 @@ const LINK_tags = [
 	]
 ];
 
-/*		ATTENTION!		*/
-// Cannot use '&' anywhere in any industry/class/model name. This is a mailto keyword 
-// and will not be represented in the email when it is generated.
-
-// Ajdust these values to alter the html as well.
-// TODO: Add in hrefs for each model. which will direct the user to the correct screen, and the 
-// correct position on the screen.
-const LINKS = [
+const BWS_LINKS = [
 	LINK_end_dumps_live_bottoms,
 	LINK_equipment_paving_recovery,
 	LINK_flat_drop_deck,
@@ -460,4 +453,26 @@ const LINKS = [
 	LINK_screeners_landblades,
 	LINK_specialized,
 	LINK_tags
-]
+];
+
+const STARGATE_LINKS = [
+
+];
+
+/*		ATTENTION!		*/
+// Cannot use '&' anywhere in any industry/class/model name. This is a mailto keyword 
+// and will not be represented in the email when it is generated.
+
+// Ajdust these values to alter the html as well.
+// TODO: Add in hrefs for each model. which will direct the user to the correct screen, and the 
+// correct position on the screen.
+const LINKS = [
+	[
+		"BWS",
+		BWS_LINKS
+	],
+	[
+		"Stargate",
+		STARGATE_LINKS
+	]
+];

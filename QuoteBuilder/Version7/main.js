@@ -1,6 +1,7 @@
 // Script for quote building form.
 // includes Option and BaseSpec classes. 
 
+var CURRENT_COMPANY = -1;
 var CURRENT_INDUSTRY = -1;
 var CURRENT_CLASS = -1;
 var CURRENT_MODEL = -1;
@@ -201,10 +202,11 @@ function generateOptionHeader() {
 	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'>"
 	html += "<col span='1' style='width: 10%; min-width: 10%; max-width: 10%;'></colgroup>";
 	html += "<thead class='list-header' id='options-header'>";
-    html += "<th>Description</th>";
-    html += "<th>Weight (lbs.)</th>";
-    html += "<th>Price (CDN)</th>";
-    html += "<th>Quantity</th>";
+    html += "<th style='text-align:center'>Description</th>";
+    html += "<th style='text-align:center'>Weight (lbs.)</th>";
+    html += "<th style='text-align:center'>Price (CDN)</th>";
+    html += "<th style='text-align:center'>Quantity</th>";
+    html += "<th style='text-align:center'>Comment</th>";
 	html += "</thead>";
 	// var html = "<p>Description</p>";
 	// html += getDescriptionSpan();
@@ -324,11 +326,23 @@ var b1 = createBaseSpec(model1, "baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1
 initAllBaseSpecHTML(model1);
 
 
+function populateCompanies() {
+	let str = "<ul class='menu-elem'>";
+	// loop Companies
+	for (let i = 0; i < LINKS.length; i++) {
+		let name = LINKS[i][0]
+		str += "<li class=\"companyElem\" onclick=\"selectCompany(" + i + ")\">" + name + "</li>";
+	}
+	str += "</ul>";
+	document.getElementById("companyMenu").innerHTML = str;
+}
+
+
 function populateIndustries() {
 	let str = "<ul class='menu-elem'>";
 	// loop industries
-	for (let i = 0; i < LINKS.length; i++) {
-		let name = LINKS[i][0]
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][1].length; i++) {
+		let name = LINKS[CURRENT_COMPANY][1][i][0]
 		str += "<li class=\"industryElem\" onclick=\"selectIndustry(" + i + ")\">" + name + "</li>";
 	}
 	str += "</ul>";
@@ -338,8 +352,8 @@ function populateIndustries() {
 function populateClasses() {
 	let str = "<ul class='menu-elem'>";
 	// loop classes within industry
-	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2].length; i++) {
-		let classes = LINKS[CURRENT_INDUSTRY][2][i];
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2].length; i++) {
+		let classes = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][i];
 		console.log("classes: " + classes);
 		let name = classes[0];
 		str += "<li class='classElem' onclick='selectClass(" + i + ")'>" + name + "</li>";
@@ -351,8 +365,8 @@ function populateClasses() {
 function populateModels() {
 	let str = "<ul class='menu-elem'>";
 	// loop models within class
-	for (let i = 0; i < LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
-		let models = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
+		let models = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
 		console.log("models: " + models);
 		let name = models[0];
 		str += "<li class='modelElem' onclick='selectModel(" + i + ")'>" + name + "</li>";
@@ -361,28 +375,64 @@ function populateModels() {
 	document.getElementById("modelMenu").innerHTML = str;
 }
 
+// Invoked when a company is selected via the select company button.
+// Adjusts the text and href values of the company report string.
+function selectCompany(n) {
+	// toggleHide("companyMenu")
+
+	CURRENT_COMPANY = n;
+	if (CURRENT_INDUSTRY >= 0) {
+		clearCurrentIndustry();
+	}
+	if (CURRENT_CLASS >= 0) {
+		clearCurrentClass();
+	}
+	if (CURRENT_MODEL >= 0) {
+		clearCurrentModel();
+	}
+
+	let arr = LINKS[n];
+	let txt = "<a class='selectionPLink' id='companySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+	populateIndustries();
+	document.getElementById("companySelectionP").innerHTML = txt;
+	console.log("Click select company, <" + txt + ">");
+}
+
 // Invoked when an industry is selected via the select industry button.
 // Adjusts the text and href values of the industry report string.
 function selectIndustry(n) {
 	// toggleHide("industryMenu")
-	CURRENT_INDUSTRY = n;
-	let arr = LINKS[n];
-	let txt = "<a class='selectionPLink' id='industrySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
-	populateClasses(n);
-	document.getElementById("industrySelectionP").innerHTML = txt;
-	console.log("Click select industry, <" + txt + ">");
+	if (CURRENT_COMPANY >= 0) {
+		CURRENT_INDUSTRY = n;
+		if (CURRENT_CLASS >= 0) {
+			clearCurrentClass();
+		}
+		if (CURRENT_MODEL >= 0) {
+			clearCurrentModel();
+		}
+		let arr = LINKS[CURRENT_COMPANY][1][n];
+		let txt = "<a class='selectionPLink' id='industrySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+		populateClasses();
+		document.getElementById("industrySelectionP").innerHTML = txt;
+		console.log("Click select industry, <" + txt + ">");
+	}
 }
 
 // Invoked when a class is selected via the select class button.
 // Adjusts the text and href values of the class report string.
 function selectClass(n) {
 	// toggleHide("classMenu")
-	CURRENT_CLASS = n;
-	let arr = LINKS[CURRENT_INDUSTRY][2][n];
-	let txt = "<a class='selectionPLink' id='classSelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
-	populateModels(n);
-	document.getElementById("classSelectionP").innerHTML = txt;
-	console.log("Click select class, <" + txt + ">");
+	if (CURRENT_COMPANY >= 0 && CURRENT_INDUSTRY >= 0) {
+		CURRENT_CLASS = n;
+		if (CURRENT_MODEL >= 0) {
+			clearCurrentModel();
+		}
+		let arr = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][n];
+		let txt = "<a class='selectionPLink' id='classSelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+		populateModels();
+		document.getElementById("classSelectionP").innerHTML = txt;
+		console.log("Click select class, <" + txt + ">");
+	}
 }
 
 
@@ -390,15 +440,35 @@ function selectClass(n) {
 // Adjusts the text and href values of the model report string.
 function selectModel(n) {
 	// toggleHide("modelMenu")
-	let arr = LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
-	let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "'>" + arr[0] + "</a>";
-	document.getElementById("modelSelectionP").innerHTML = txt;
-	console.log("Click select model, <" + txt + ">");
-	CURRENT_MODEL = n;
-	CURR_MODEL_OBJ = lookUpModel(arr[0]);
-	
-	// parse the returned file here
-	$("#submit").click();
+	if (CURRENT_COMPANY >= 0 && CURRENT_INDUSTRY >= 0 && CURRENT_CLASS >= 0) {
+		let arr = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
+		let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "'>" + arr[0] + "</a>";
+		document.getElementById("modelSelectionP").innerHTML = txt;
+		console.log("Click select model, <" + txt + ">");
+		CURRENT_MODEL = n;
+		CURR_MODEL_OBJ = lookUpModel(arr[0]);
+		
+		// parse the returned file here
+		$("#submit").click();
+	}
+}
+
+function clearCurrentIndustry() {
+	CURRENT_INDUSTRY = -1;
+	document.getElementById("industryMenu").innerHTML = "";
+	document.getElementById("industrySelectionP").innerHTML = "<a id='industrySelectionPLink' href='#industrySelection'>Select an Industry</a>";
+}
+
+function clearCurrentClass() {
+	CURRENT_CLASS = -1;
+	document.getElementById("classMenu").innerHTML = "";
+	document.getElementById("classSelectionP").innerHTML = "<a id='classSelectionPLink' href='#classSelection'>Select a Class</a>";
+}
+
+function clearCurrentModel() {
+	CURRENT_MODEL = -1;
+	document.getElementById("modelMenu").innerHTML = "";
+	document.getElementById("modelSelectionP").innerHTML = "<a id='modelSelectionPLink' href='#modelSelection'>Select a Model</a>";
 }
 
 function titleCase(str) {

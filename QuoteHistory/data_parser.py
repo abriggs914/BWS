@@ -62,6 +62,9 @@ def work_weeks(first_day, holidays):
 
 	res = []
 	holidays.sort()
+	print("Days past: {d}, holidays:\n{h}".format(d=day, h="\n".join(holidays)))
+	diff = lambda h: (datetime.date.fromisoformat(h) - first_day).days + 1
+	holidays = [diff(h) for h in holidays]
 	print("Days past: {d}, holidays: {h}".format(d=day, h=holidays))
 	idx = 0
 	res = [dw(i) for i in range(1, day+1)]
@@ -611,7 +614,29 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
 	day_one = datetime.date.fromisoformat("2021-01-04")
-	a = work_weeks(day_one, [43])
+	holidays = [
+		"2021-02-15",
+		"2021-01-01",
+		"2021-04-02",
+		"2021-05-24",
+		"2021-07-01",
+		"2021-07-02",
+		"2021-08-02",
+		"2021-08-03",
+		"2021-08-04",
+		"2021-08-05",
+		"2021-08-06",
+		"2021-09-06",
+		"2021-10-11",
+		"2021-11-11",
+		"2021-12-24",
+		"2021-12-27",
+		"2021-12-28",
+		"2021-12-29",
+		"2021-12-30",
+		"2021-12-31"
+	]
+	a = work_weeks(day_one, holidays)
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", number=True, table_title="Weeks"))  #, sort_header=True

@@ -33,6 +33,10 @@ class Option {
 		return "quantityInput_" + this.optionNum;
 	}
 	
+	commentInputID() {
+		return "commentInput_" + this.optionNum;
+	}
+	
 	setHTMLFormat(htmlFormat) {
 		this.htmlform = htmlFormat;
 	}
@@ -74,13 +78,14 @@ class Option {
 	getHTML() {
 		let quantity = "quantity";
 		let RefId = 0;
-		let html = "NONE"; //"<tr class='optionLine' id=" + this.optionLineID() + ">";
+		let html = "NONE";
+		// let html = "<tr class='optionLine' id=" + this.optionLineID() + ">";
 		let d = ((this.description.toLowerCase() == "null")? "NA" : this.description );
 		let w = ((this.weight.toLowerCase() == "null")? "NA" : this.weight );
 		let p = ((this.priceCDN.toLowerCase() == "null")? "NA" : this.priceCDN );
 		p = ((isNumeric(p))? "$ " + parseFloat(p).toFixed(2) : p);
 		if (this.htmlform == HTMLFormat.INC_DEC) {
-			html = "<td class='description-cell' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
+			html += "<td class='description-cell' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + d + "</td>";
 			html += "<td style='text-align:center' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + w + "</td>";
 			html += "<td style='text-align:right' onclick='increment(\"" + this.model.modelName + "\", \"" + this.optionNum + "\"" + ",\"quantity\")'>" + p + "</td>";
 			html += "<td>";
@@ -95,11 +100,13 @@ class Option {
 		}
 		else if (this.htmlform == HTMLFormat.SLIDER) {
 			let half = (this.minRange + this.maxRange) / 2;
-			html = "<td>" + d + "</td>";
+			html += "<td>" + d + "</td>";
 			html += "<td style='text-align:center'>" + w + "</td>";
 			html += "<td style='text-align:right'>" + p + "</td>";
 			html += "<td> <input class='slider' type='range' min=" + this.minRange + " max=" + this.maxRange + " value=" + half + " class='slider'></input> </td>";
 		}
+		html += "<td><input class='option-comment' id='" + this.commentInputID() + "' placeholder='comment'></input></td>"
+		// html +- "</tr>"
 		return html;
 	}
 	
