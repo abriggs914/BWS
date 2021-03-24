@@ -2,6 +2,7 @@ import csv
 import functools
 from utility import *
 import datetime
+import calendar
 
 # Quotes are up-to-date as of Feb.22/2021 Quote 25771
 
@@ -64,8 +65,8 @@ def work_weeks(first_day, holidays):
 	holidays.sort()
 	print("Days past: {d}, holidays:\n{h}".format(d=day, h="\n".join(holidays)))
 	diff = lambda h: (datetime.date.fromisoformat(h) - first_day).days + 1
-	holidays = [diff(h) for h in holidays]
-	print("Days past: {d}, holidays: {h}".format(d=day, h=holidays))
+	holidays_nums = [diff(h) for h in holidays]
+	print("Days past: {d}, holidays_nums: {h}".format(d=day, h=holidays_nums))
 	idx = 0
 	res = [dw(i) for i in range(1, day+1)]
 	res = [[res[i+j] for j in range(min(5, day - i))] for i in range(0, day+1, 7)]
@@ -75,8 +76,9 @@ def work_weeks(first_day, holidays):
 	res = {}
 	r = []
 	i = 0
+	days_worked = 0
 	while i < day:
-		if i+1 not in holidays:
+		if i+1 not in holidays_nums:
 			r.append(idx)
 			idx += 1
 		else:
@@ -98,8 +100,55 @@ def work_weeks(first_day, holidays):
 		res[week_str] = {"sun": 7*len(res) + 1}
 		res[week_str].update(dict(zip(days[:len(r)], r)))
 		res[week_str].update({"sat": 7*len(res)})
+	days_worked = idx - 1
 		
+	months = dict(zip([calendar.month_name[i] for i in range(1, 13)], ["" for i in range(12)]))
+	next_holiday = None
+	print("months: " + str(months))
+	for d, holiday in zip(holidays_nums, holidays):
+		holiday = datetime.date.fromisoformat(holiday)
+		month = holiday.month
+		sday = day_string(holiday)
+		months[calendar.month_name[month]] += sday + ", "
+		print("holiday ({th}): {holiday}, hm: {hm}".format(th=type(holiday), holiday=holiday, hm=month))
+		if d > day+1:
+			if next_holiday is None:
+				next_holiday = holiday
+			else:
+				if d < (holiday - first_day).days + 1:
+					next_holiday = holiday
+		
+		
+	# print("days_worked: " + str(days_worked) + ", i: " + str(i) + ", idx: " + str(idx))
+	# for d, holiday in zip(holidays_nums, holidays)
+	res.update({
+		" ":"",
+		"Days Passed": day + 1,
+		"Days Worked": days_worked,
+		"Days Off": day - days_worked,
+		"Percentage Time Off": str((100 * (day - days_worked) / max(1, day))) + " %",
+		"Next Holiday": next_holiday,
+		"  ":"",
+		})
+	for month in months:
+		if months[month]:
+			months[month] = months[month][:-2]
+		
+	res.update(months)
 	return res
+
+def day_string(holiday):
+	wday = calendar.day_abbr[holiday.weekday()]
+	day = str(holiday.day)
+	if day in ["1", "21", "31"]:
+		suffix = "st"
+	elif day in ["2", "22"]:
+		suffix = "nd"
+	elif day in ["3", "23"]:
+		suffix = "rd"
+	else:
+		suffix = "th"
+	return wday + " " + day + suffix
 
 
 class Quote:

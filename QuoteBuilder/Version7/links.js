@@ -469,6 +469,7 @@ const STARGATE_LINKS = [
 const LINKS = [
 	[
 		"BWS",
+		"https://www.bwstrailers.com/",
 		BWS_LINKS
 	],
 	[

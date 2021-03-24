@@ -470,9 +470,11 @@
 		var start, end;
 		var firstRun = true;
 		var maxUnparseLength = 10000;
+		var FILE_NAME = undefined;
 		
 		// TODO this function will be removed when the page can load it's own csvs.
 		$(function() {
+
 	
 			// Demo invoked
 			$('#submit').click(function() {
@@ -517,6 +519,7 @@
 					$('#files').parse({
 						config: config,
 						before: function(file, inputElem) {
+							FILE_NAME = file;
 							start = now();
 							console.log("Parsing file...", file);
 						},
@@ -619,8 +622,11 @@
 		
 		// TODO will be changed when file handling is implemented
 		function completeFn(results) {
+			let file = FILE_NAME.name;
+			file = file.split("_")[1]
+			console.log("FILE_NAME: " + file)
 			end = now();
-			let model = createModel("HARD CODED MODEL");
+			let model = createModel(file);
 		
 			if (results && results.errors) {
 				if (results.errors) {
@@ -703,6 +709,7 @@
 				}
 				initAllOptionHTML(model);
 			}
+			setCurrModel(model)
 				
 			// icky hack
 			setTimeout(enableButton, 100);

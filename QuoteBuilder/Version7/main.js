@@ -7,7 +7,8 @@ var CURRENT_CLASS = -1;
 var CURRENT_MODEL = -1;
 var CURR_MODEL_OBJ = undefined;
 var LOADED_MODELS = []
-var MAIL_NL = "%0D%0A";
+const MAIL_NL = "%0D%0A";
+const NEW_WINDOW = "target=_'blank'"
 
 
 const HTMLFormat = {
@@ -157,6 +158,8 @@ function lookUpModel(modelName) {
 			return model;
 		}
 	}
+
+
 }
 
 
@@ -341,8 +344,8 @@ function populateCompanies() {
 function populateIndustries() {
 	let str = "<ul class='menu-elem'>";
 	// loop industries
-	for (let i = 0; i < LINKS[CURRENT_COMPANY][1].length; i++) {
-		let name = LINKS[CURRENT_COMPANY][1][i][0]
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][2].length; i++) {
+		let name = LINKS[CURRENT_COMPANY][2][i][0]
 		str += "<li class=\"industryElem\" onclick=\"selectIndustry(" + i + ")\">" + name + "</li>";
 	}
 	str += "</ul>";
@@ -352,8 +355,8 @@ function populateIndustries() {
 function populateClasses() {
 	let str = "<ul class='menu-elem'>";
 	// loop classes within industry
-	for (let i = 0; i < LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2].length; i++) {
-		let classes = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][i];
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2].length; i++) {
+		let classes = LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][i];
 		console.log("classes: " + classes);
 		let name = classes[0];
 		str += "<li class='classElem' onclick='selectClass(" + i + ")'>" + name + "</li>";
@@ -365,8 +368,8 @@ function populateClasses() {
 function populateModels() {
 	let str = "<ul class='menu-elem'>";
 	// loop models within class
-	for (let i = 0; i < LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
-		let models = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
+	for (let i = 0; i < LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][CURRENT_CLASS][2].length; i++) {
+		let models = LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][i];
 		console.log("models: " + models);
 		let name = models[0];
 		str += "<li class='modelElem' onclick='selectModel(" + i + ")'>" + name + "</li>";
@@ -392,7 +395,7 @@ function selectCompany(n) {
 	}
 
 	let arr = LINKS[n];
-	let txt = "<a class='selectionPLink' id='companySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+	let txt = "<a class='selectionPLink' id='companySelectionPLink' href=" + arr[1] + "' " + NEW_WINDOW + ">" + arr[0] + "</a>";
 	populateIndustries();
 	document.getElementById("companySelectionP").innerHTML = txt;
 	console.log("Click select company, <" + txt + ">");
@@ -410,8 +413,8 @@ function selectIndustry(n) {
 		if (CURRENT_MODEL >= 0) {
 			clearCurrentModel();
 		}
-		let arr = LINKS[CURRENT_COMPANY][1][n];
-		let txt = "<a class='selectionPLink' id='industrySelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+		let arr = LINKS[CURRENT_COMPANY][2][n];
+		let txt = "<a class='selectionPLink' id='industrySelectionPLink' href=" + arr[1] + "' " + NEW_WINDOW + ">" + arr[0] + "</a>";
 		populateClasses();
 		document.getElementById("industrySelectionP").innerHTML = txt;
 		console.log("Click select industry, <" + txt + ">");
@@ -427,8 +430,9 @@ function selectClass(n) {
 		if (CURRENT_MODEL >= 0) {
 			clearCurrentModel();
 		}
-		let arr = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][n];
-		let txt = "<a class='selectionPLink' id='classSelectionPLink' href=" + arr[1] + ">" + arr[0] + "</a>";
+		let arr = LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][n];
+		let txt = "<a class='selectionPLink' id='classSelectionPLink' href=" + arr[1] + "' " + NEW_WINDOW + ">" + arr[0] + "</a>";
+		console.log("class  txt: " + txt)
 		populateModels();
 		document.getElementById("classSelectionP").innerHTML = txt;
 		console.log("Click select class, <" + txt + ">");
@@ -441,16 +445,22 @@ function selectClass(n) {
 function selectModel(n) {
 	// toggleHide("modelMenu")
 	if (CURRENT_COMPANY >= 0 && CURRENT_INDUSTRY >= 0 && CURRENT_CLASS >= 0) {
-		let arr = LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
-		let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_COMPANY][1][CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "'>" + arr[0] + "</a>";
+		let arr = LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][CURRENT_CLASS][2][n];
+		let txt = "<a class='selectionPLink' id='modelSelectionPLink' href='" + LINKS[CURRENT_COMPANY][2][CURRENT_INDUSTRY][2][CURRENT_CLASS][1] + "' " + NEW_WINDOW + ">" + arr[0] + "</a>";
+		console.log("model txt: " + txt)
 		document.getElementById("modelSelectionP").innerHTML = txt;
 		console.log("Click select model, <" + txt + ">");
 		CURRENT_MODEL = n;
 		CURR_MODEL_OBJ = lookUpModel(arr[0]);
+		console.log("curr_model_obj: " + CURR_MODEL_OBJ)
 		
 		// parse the returned file here
 		$("#submit").click();
 	}
+}
+
+function setCurrModel(model) {
+	CURR_MODEL_OBJ = model
 }
 
 function clearCurrentIndustry() {

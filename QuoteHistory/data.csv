@@ -106,7 +106,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25870, 35FA, 12, S & S Trailers Sales Inc, $10589.8907, $11200, $11200, 3, 1
 25871, 35ADG2X AGNR, 12, S & S Trailers Sales Inc, $52259.6967, $55500, $55500, 7, 1
 25885, 48ET3X, 12, NorthEast Truck & Trailer Sales, $43458.5409, $57420, $56846, 10, 0
-25887, 27DT2X V2018, 12, Northeast Truck & Trailer Sales, $54522.1589, $0, $0, 0, 0
+25887, 27DT2X V2018, 12, Northeast Truck & Trailer Sales, $54522.1589, $57006, $56435, 5, 0
 25888, 53ET3X, 12, Fort Garry Industries Ltd., $46849.6773, $0, $0, 0, 0
-25889, 25NTT, 12, Remorques Lewis Inc., $28316.08, $0, $0, 0, 0
+25889, 25NTT, 12, Remorques Lewis Inc., $28316.08, $35284, $34407, 3, 0
 25890, 30ART, 12, Fort Garry Industries Ltd., $32933.68, $0, $0, 0, 0
+25895, 40ADG3X53 AGLP, 12, S & S Trailers Sales Inc, $69869.28, $74259, $74259, 6, 1
