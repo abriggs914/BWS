@@ -121,14 +121,16 @@ def work_weeks(first_day, holidays):
 		
 	# print("days_worked: " + str(days_worked) + ", i: " + str(i) + ", idx: " + str(idx))
 	# for d, holiday in zip(holidays_nums, holidays)
+	days = ["sun"] + days + ["sat"]
+	empty = dict(zip(days, ["---" for i in range(len(days))]))
 	res.update({
-		" ":"",
+		" ": empty,
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
 		"Days Off": day - days_worked,
 		"Percentage Time Off": str((100 * (day - days_worked) / max(1, day))) + " %",
 		"Next Holiday": next_holiday,
-		"  ":"",
+		"  ": empty,
 		})
 	for month in months:
 		if months[month]:
@@ -215,7 +217,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	
 	to_view["keys"] = str(fieldnames)
 	to_view["quotes"] = str(quotes)
-	to_view["Quote History"] = dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history")
+	to_view["Quote History"] = dict_print(dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes])), "Quote history", number=True)
 
 		
 			
