@@ -1,0 +1,496 @@
+f1_csv.fieldnames: ['Text0', 'Text5', 'Desc', 'LongDesc', 'Text89', 'Text91', 'Text64', 'Text19', 'Text15', 'Text17', 'Text66', 'Text94', 'Text67', 'Text68', 'Text69', 'Text70', 'Text71', 'Text72', 'Seq', 'Op', 'Comp', 'Desc_txt', 'LongDesc_txt', 'Text95', 'QtPer', 'SUOM', 'MC', '', 'RT', '', 'LC', '', 'TC', '', '', '', '', '', '', '', '', '']
+f2_csv.fieldnames: ['Text0', 'Text5', 'Text12', 'Text10', 'Text13', 'Text14', 'JobDesc', 'Text68', 'Text25', 'Text27', 'Text29', 'Text31', 'Text33', 'Text35', 'Text66', 'Text15', 'Text17', 'Text19', 'Text21', 'Text23', 'Text67', 'StockCode', 'StockDescription', 'Uom', 'WarehouseToUse', 'QtyRequired', 'QtyIssued', 'QtyVariance', 'ValueRequried', '', 'ValueIssued', '', 'Variance', '', 'Text37', '', '', '', '', '', '', '', '', '', '', '', '']
+Same fieldnames: False
+{'401433': 3.0 x SHOCK KIT DOUBLE:R/W #6040018, '402154-AXN': 1.0 x AXLE TA300P67E775-7042 ABS, '402155-AXN': 2.0 x AXLE TA300P67E775-7043 N/ABS, '402284': 1.0 x SENSOR #RM-200512, '402316': 1.0 x BLOCK #RM-200516, '402316-1': 1.0 x CLIP BLOCK #RM-200517, '402760': 1.0 x SUSP R.WELL WEST/LIFT AXLE, '402858': 1.0 x AXLE SSA703184-09128N511IMT23-, '40685': 3.0 x SUSP R.WELL 30000# 15" R/HT, '40900458': 12.0 x BRACKET 1 HL. SUSPENSION, '03020': 11.0 x BOLT HEX 3/8 X 1-1/4 UNC, '03132': 24.0 x BOLT HEX 5/8" X 1 1/2" UNC, '03241': 2.0 x NUT LOCK NYL 5/8 -11 UNC, '03273': 2.0 x WASHER FLAT 1-1/4, '03564': 20.0 x NUT LOCK NYL 3/8 -16 UNC, '03745': 14.0 x NUT LOCK MET 5/8 -18 UNF, '03751': 14.0 x BOLT HEX 5/8 X 2-1/2 UNF, '04213': 6.0 x CHAIN 1/2 GR70 7-LINKS, '04233': 2.0 x CHAIN 1/2 GR70 9-LINKS, '04263': 2.0 x LINK CONNECT  1/2" TWIN CLEVIS, '17066': 3.0 x COUPLING 1/8 STEEL MERCHANT, '17075': 3.0 x COUPLING 1/8 HALF COUPLER, '17142': 3.0 x FIT 1/8NPT STREET ELBOW, '24032': 10.0 x WINCH NARROW c/w WASHERS, '401281': 16.0 x POCKET EXTE (SOCKET)4-1/2"X 3", '401488': 8.0 x BUNK EXTE W/STAKE POCKT 104.5", '401499': 2.0 x BRACE LAND/GEAR 30"-36" AMS853, '402192': 1.0 x LIFT KIT #2990079 FOR, '402221': 1.0 x LIFT KIT #2990101, '402253': 1.0 x LANDING GEAR TLG60CCUBV191005, '402451': 2.0 x BRACE LAND/GEAR 18-24, '403645446': 2.0 x CHANNEL 4@5.4 X 46", '40900395': 2.0 x KEYHOLE PLATE, '40900454': 22.0 x GROMMET 1 HOLE LG. 10GA.-A36, '40900455': 14.0 x GROMMET 2 HOLE LG.  10GA.-A36, '40900476': 8.0 x CAP WINCH BRACKET  10GA, '40933018': 1.0 x PLATE 10 GA FRONT TR. ISO PLUG, '40933038': 2.0 x PLATE DBL BUNK TOP P/S, '40933039': 4.0 x PLATE DBL BUNK BOTTOM, '40933040': 4.0 x PLATE DBL BUNK REINFORCEMENT, '40933053': 16.0 x BRACKET BUNK SUPPORT STIFFINER, '40933344': 2.0 x LF-REAR GUSSET, '40933561': 2.0 x PLATE LF GUSSETT, '40934796': 1.0 x BRACKET ABS LIGHT, '40938152': 1.0 x PLATE CENTER REAR BACKER, '40946754': 13.0 x X-MEMBER 41-1/8" WITH HOLES, '40950458': 2.0 x FRONT SUSPENSION GUSSET, '40950614': 2.0 x PLATE DBL BUNK TOP D/S, '40950633': 22.0 x KEYHOLE PLATE, '40950643': 2.0 x REAR SKIRT BRACKET LF, '40950646': 4.0 x P-STIFFENER LOADER PIPES 9", '40952074': 1.0 x TOW HOOK BUMPER PIN BAR, '40952647': 2.0 x PLATE SERRATED EDGE FOR BUNK, '40953541': 2.0 x PLATE LANDING GEAR PROTECTOR, '40953551': 2.0 x FENDER SUPPORT P/S, '40953552': 1.0 x FENDER SUPPORT D/S, '40953555': 1.0 x FENDER SUPPORT D/S, '40953562': 4.0 x PLATE SERRATED EDGE FOR BUNK, '40954547': 1.0 x AIR BAG PLATE CUSTOM SSA, '40960454': 1.0 x GLAD HAND GUARD PLATE-LD133, '40964583': 7.0 x COUPLER BRACKET - PLATE, '40989461': 3.0 x X-MEMBER 33-1/4" WITH HOLES, '40991405': 2.0 x BRACKET AIR COUPLER SINGLE, '40994679': 2.0 x B-STIFFENER, '40994680': 4.0 x B-STIFFENER FOR HSS, '402440': 2.0 x RIM ALUM22.5 X 12.25 #29378XP, '40863K': 6.0 x RIM ALUML 8.25X24.5 POLISHED, '40864K': 6.0 x RIM ALUML 8.25X24.5 MACHINE, '409374': 12.0 x TIRE 11R24.5-16 S815, '409375': 2.0 x TIRE 385/65R22.5 S825, '17424': 6.5 x REDUCER #MAK 11/06/19, '17462': 18.0 x PAINT "BWS" LIGHT GREY AUE-370, '17464': 50.0 x PAINT BLACK #AUE-370 DRUM, '17470': 1.0 x PAINT BLACK #AUE-100 JET BLACK, '17547': 46.0 x PRIMER EWP435 GREY, '06151': 35.0 x WIRE 2 COND 14GA, '06466': 40.0 x GROMMET RB-265 1 1/2" IDX2 1/8, '06838': 1.0 x LIGHT KIT U/BLUE BWS-L-LED-ON, '401361': 1.0 x RECEPTACLE 7 PIN ISO #680-E72, '40213': 1.0 x RECEPTACLE 7 WAY 670-72, '40474': 2.0 x BOOT FOR 7 WAY SOCKET (#670-72, '03080': 12.0 x BOLT HEX 3/8 X 1-1/2 UNC, '03735': 9.0 x NUT LOCK NYL 1/4 -20 UNC, '06808': 1.0 x HEAT SHRINK & SOLDER SPLICE CO, '06834': 1.0 x HARNESS # 66123  10' 9", '07060': 12.0 x FIT TEE 3/8AIRx3/8AIRx3/8AIR, '07063': 6.0 x FIT STR 3/8AIRx1/4MNPT, '07065': 7.0 x FIT 90 3/8AIRx1/4MNPT, '07066': 3.0 x FIT 90 1/2AIRx3/8MNPT, '07069': 2.0 x FIT 90 3/8AIRx1/8MNPT, '07082': 2.0 x NIPPLE 1/8 CLOSE   112-A, '07100': 1.0 x FIT TEE 3/8AIRx3/8AIRx3/8MNPT, '07109': 14.0 x FITTING 1/2 TUBE X 3/8 NPT STR, '07128': 1.0 x FIT 90 1/2AIRx1/4MNPT, '07243': 3.0 x FIT 90 3/8AIRx3/8MNPT, '07244': 6.0 x FIT STR 3/8AIRx3/8MNPT, '07253': 1.0 x FITTING 1/4 SHUT OFF PV608-4, '07254': 8.0 x FIT TEE 3/8AIRx1/4MNPTx3/8AIR, '08290': 1.0 x GAUGE PG-100SG25 LIQUID FILL, '09682': 2.0 x FIT STR 3/4MNPTx1/2MNPT, '17077': 8.0 x BUSHING REDUCING - 3/8 x 1/4, '17090': 2.0 x PLUG 1/4 PIPE S1009-B, '17091': 5.0 x PLUG 3/8 PIPE S1009-C, '17105': 2.0 x NIPPLE 1/4 CLOSE, '17211': 2.0 x BUSHING REDUCING - 3/4 x 1/4, '401052': 3.0 x TANK AIR 1280/2002D  BIG 2PORT, '401230': 4.0 x HOSE AIR 3/8 RUBBER HAB-6-32C, '401457': 1.0 x REGULATOR 85 PSI # 90554676, '401530': 6.0 x ISOLATOR RUBBER/AIRTANK, '401824': 1.0 x ABS KIT 2S/1M, '401886': 3.0 x CABLE #201198BC USED ON, '40192': 1.0 x GLAD HAND SERVICE GHS-SC, '40193': 1.0 x GLAD HAND EMERGENCY GHE-SC, '40195': 2.0 x BOLT GLAD HAND TERM 1497-DBS, '40198': 3.0 x FITTING 1/4 NPT BRASS PETCOCK, '40203': 2.0 x VALVE QUICK RELEASE #TV229859, '402051': 6.0 x BRAKE MAXI 3030 1713030016, '402195': 1.0 x MODUAL RM-60-NK REV/MATIC, '402195-1': 1.0 x HARNESS #RM-200508, '402195-2': 1.0 x HARNESS #RM-60-7 BULLET, '402431': 1.0 x VALVE KIT HEIGHT CONTROL, '402677': 16.0 x BOLT GLAD HAND TERM 1495-C, '40358': 6.0 x 940-5 HOSE SPACER, '40482': 1.0 x BOLT TERMINAL #1495B-A, '40511': 12.0 x HOSE AIR 3/8 RUBBER HAB-6-24C, '40657': 1.0 x CONTROL BOX RA013-DUAL-1G, '40839': 2.0 x VALVE PRES. PROTECTION, '40853': 2.0 x VALVE RELAY 2 PORT N30108BD, '40950039': 2.0 x BRACKET RIDE HEIGHT, '06037': 2.0 x REFLECTOR AMBER #B491A, '06038': 2.0 x REFLECTOR RED B491R, '100121': 2.0 x DECAL DO NOT DRILL, '100166': 1.0 x DECAL WARNING "BWS LIABILITY", '100202': 1.0 x DECAL BWS 5-1/2 X 19, '100400': 1.0 x DECAL WARNING AIR SUSPENSION, '100530': 1.0 x DECAL WARNING "FULLY CHARGED, '100601': 1.0 x DECAL WARNING "METHYL HYDRATE", '100651': 1.0 x DECAL WARNING "AXLE RESTRAINT", '100746': 1.0 x DECAL CONNECTOR PIN LABEL, '101160': 1.0 x DECAL "NEW BWS", '101385': 2.0 x DECAL TORQUE AXLE, '101405': 1.0 x DECAL ABS, '101416': 1.0 x DECAL CAUTION ADJUST LIFT, '40854': 1.0 x SERIAL TAG CARD STOCK, '02561': 50.0 x BUSHING SNAP IN SB750-625 5/8", '03022': 20.0 x BOLT HEX SS 1/4 X 1 UNC, '03066': 4.0 x BOLT HEX 5/16 X 1 UNC, '03256': 4.0 x WASHER LOCK 5/16, '03266': 40.0 x WASHER FLAT 3/8, '03711': 32.0 x NUT LOCK NYL 5/16 -18 UNC, '03748': 4.0 x WASHER FENDER PL 3/8 X 1-1/2, '03789': 3.0 x WASHER FENDER SS 5/16 X 1-1/2, '03909': 27.0 x BOLT HEX SS 5/16 X 1-1/4 UNC, '04169': 14.0 x CABLE TIE 15-1/4" 83-6029C, '04203': 10.0 x CABLE 1/4" X 30' #49828-10-30, '06137': 4.0 x GROMMET TAIL LAMP 40700, '06155': 40.0 x WIRE 2 COND 10GA, '06659': 14.0 x HARNESS #66813, '06682': 7.0 x HARNESS #01-6681-J7 - 4', '06898': 12.0 x LIGHT STOP/TURN/BACKUP, '06899': 8.0 x HARNESS TAIL LIGHT, '06971': 1.0 x LIGHT GREEN #60824, '08055': 3.0 x FITTING GREASE STR. 1/8, '100915': 4.0 x SPRAY BOM EMPTY CANS, '13013': 17.0 x LOOM 1/4" SPLIT 83-8003-3, '13014': 10.0 x LOOM 1-1/2" SPLIT 83-8005-3, '17106': 2.0 x NIPPLE 1/4 X 2, '19097': 1.0 x FLAP MUD 36" x 24" PLAIN, '19125': 6.0 x FLAP MUD 24" X 30" (BWS), '23034': 2.0 x UNDERCOATING  AEROSOL, '401092': 14.0 x SEPARATOR 10 STUD HUBPILOT#590, '401703': 1.0 x HOLDER PERMIT #01175, '402194': 1.0 x VALVE PROPORTIONING SELF, '40933576': 2.0 x SIDE STAINLESS TRIM FOR, '40938157': 1.0 x CENTER STAINLESS TRIM FOR, '40994661': 1.0 x BEAM ASSY.8751LF4X5TNB TRI, '40945864': 6.0 x PLATE FLAT SUSPENSION, '40900403': 10.0 x BRACKET WINCH, '40900405': 10.0 x POCKET WINCH CHAIN, '40900467': 2.0 x BRACKET LANDING GEAR (SMALL), '40900470': 1.0 x BRACKET LANDING GEAR (LARGE), '40900473': 6.0 x BRACKET 7-1/8 " AIR TANK, '40900480': 1.0 x RIDE HEIGHT BRACKET, '40900483': 1.0 x BRACKET P S MUDFLAP, '40900489': 2.0 x BRACKET MUDFLAP, '40900489A': 1.0 x BRACKET MUDFLAP LH, '40900489B': 1.0 x BRACKET MUDFLAP RH, '40900493': 9.0 x HANDLE WINCH  BWS FABRICATED, '40900494': 7.0 x TUBE WINCH BRACKET 8", '40900496': 1.0 x TUBE WINCH BRACKET   18", '40900503-1': 8.0 x GROMMET SMALL ONE HOLE, '40900533': 1.0 x BRACKET RIDE HEIGHT, '40900678': 1.0 x BRACKET D S MUDFLAP, '40933026-108': 1.0 x BUNK HEAVY DUTY 108" FABRICATE, '40933064': 1.0 x BOX D S LOGGER TAILIGHT, '40933081': 1.0 x BRACKET CENTER MUDFLAP, '40933333': 1.0 x COUPLER PLATE ASSY BOLT-IN, '40933339': 1.0 x BOX P S LOGGER TAILIGHT, '40945277': 1.0 x BRACKET AIR CONTROL BOX, '40950628': 1.0 x BOX D S MIDWAY TURN LIGHT, '40950629': 1.0 x BOX P S MIDWAY TURN LIGHT, '40950637': 1.0 x FRONT MUDFLAP 7" HANGER ASSY, '40950639': 1.0 x FRONT MUDFLAP 7" HANGER ASSY, '40950647': 1.0 x HANDLE WINCH  BWS SHORT, '40953512': 1.0 x COVER PLATE 100KSI, '40953513': 1.0 x COVER PLATE 100KSI, '40953514': 1.0 x COVER PLATE 100 KSI, '40953515': 1.0 x COVER PLATE 100KSI, '40953516': 1.0 x COVER PLATE 100 KSI, '40953545': 1.0 x BUNK HEAVY DUTY 108" FABRICATE, '40953553': 2.0 x AXLE STOP 2-1/4", '40954620': 1.0 x BUMPER REAR PUSH/IMPACT, '40956379': 6.0 x SUSPENSION GUSSET, '40959206': 3.0 x HOSE ASSY 44-1/4" GREASE, '40994654': 1.0 x STEEL KIT FOR 51' LOG TRL 108", '40994655': 2.0 x BOTTOM WRAP, '40935045': 8.0 x STAKE BWS 4-1/2X3X112", '40961443': 12.0 x STAKE BWS 4-1/2X3X106", '40900492': 8.0 x BRACKET, ALUM. MUD FLAP, '40933615': 1.0 x BRACKET MUD FLAP, '40934834': 1.0 x BRACKET ALUMINUM MUDFLAP, '40934838': 1.0 x MUDFLAP FRONT OF CONTROL BOX}
+
+--  Bom_1_Parts  --
+
+          -                         | Quantity |                Desc                | Total cost |
+    1     -  402121-AXN-TBD.........|   1.0    |     AXLE TA300T67E775-8404 ABS     |  1301.25   |
+    2     -  402122-AXN-TBD.........|   2.0    |    AXLE TA300T67E775-8405 N/ABS    |  2445.34   |
+    3     -  402284.................|   1.0    |         SENSOR #RM-200512          |   87.08    |
+    4     -  402316.................|   1.0    |          BLOCK #RM-200516          |    7.84    |
+    5     -  402316-1...............|   1.0    |       CLIP BLOCK #RM-200517        |    6.22    |
+    6     -  402760.................|   1.0    |     SUSP R.WELL WEST/LIFT AXLE     |  4043.13   |
+    7     -  402858.................|   1.0    | AXLE SSA703184-09128N511IMT23-CAHD |   5067.0   |
+    8     -  40685..................|   3.0    |    SUSP R.WELL 30000# 15" R/HT     |  4713.28   |
+    9     -  40900458...............|   12.0   |      BRACKET 1 HL. SUSPENSION      |   25.98    |
+    10    -  03020..................|   11.0   |      BOLT HEX 3/8 X 1-1/4 UNC      |    1.23    |
+    11    -  03132..................|   24.0   |     BOLT HEX 5/8" X 1 1/2" UNC     |    9.35    |
+    12    -  03241..................|   2.0    |      NUT LOCK NYL 5/8 -11 UNC      |    0.44    |
+    13    -  03273..................|   2.0    |         WASHER FLAT 1-1/4          |    1.0     |
+    14    -  03564..................|   20.0   |      NUT LOCK NYL 3/8 -16 UNC      |    1.01    |
+    15    -  03745..................|   14.0   |      NUT LOCK MET 5/8 -18 UNF      |    3.38    |
+    16    -  03751..................|   14.0   |      BOLT HEX 5/8 X 2-1/2 UNF      |   12.15    |
+    17    -  04213..................|   6.0    |       CHAIN 1/2 GR70 7-LINKS       |    49.3    |
+    18    -  04233..................|   2.0    |       CHAIN 1/2 GR70 9-LINKS       |    19.8    |
+    19    -  04263..................|   2.0    |   LINK CONNECT  1/2" TWIN CLEVIS   |    16.5    |
+    20    -  24032..................|   10.0   |      WINCH NARROW c/w WASHERS      |   206.65   |
+    21    -  401281.................|   18.0   |   POCKET EXTE (SOCKET)4-1/2"X 3"   |   1458.0   |
+    22    -  401282.................|   8.0    |   BUNK EXTE W/STAKE POCKET- 99"    |   2560.0   |
+    23    -  401499.................|   2.0    |   BRACE LAND/GEAR 30"-36" AMS853   |   29.04    |
+    24    -  402253.................|   1.0    |   LANDING GEAR TLG60CCUBV191005    |   288.56   |
+    25    -  402451.................|   2.0    |       BRACE LAND/GEAR 18-24        |    14.5    |
+    26    -  403645446..............|   3.0    |        CHANNEL 4@5.4 X 46"         |   45.51    |
+    27    -  40900395...............|   2.0    |           KEYHOLE PLATE            |    2.34    |
+    28    -  40900454...............|   22.0   |    GROMMET 1 HOLE LG. 10GA.-A36    |   16.46    |
+    29    -  40900455...............|   14.0   |   GROMMET 2 HOLE LG.  10GA.-A36    |   14.75    |
+    30    -  40900476...............|   8.0    |      CAP WINCH BRACKET  10GA       |    6.17    |
+    31    -  40933018...............|   1.0    |   PLATE 10 GA FRONT TR. ISO PLUG   |    5.47    |
+    32    -  40933038...............|   3.0    |       PLATE DBL BUNK TOP P/S       |   28.78    |
+    33    -  40933039...............|   6.0    |       PLATE DBL BUNK BOTTOM        |   34.91    |
+    34    -  40933040...............|   6.0    |    PLATE DBL BUNK REINFORCEMENT    |   63.48    |
+    35    -  40933053...............|   16.0   |   BRACKET BUNK SUPPORT STIFFINER   |    22.2    |
+    36    -  40933344...............|   2.0    |           LF-REAR GUSSET           |   20.31    |
+    37    -  40933561...............|   2.0    |          PLATE LF GUSSETT          |   14.97    |
+    38    -  40934796...............|   1.0    |         BRACKET ABS LIGHT          |    6.53    |
+    39    -  40946754...............|   13.0   |    X-MEMBER 41-1/8" WITH HOLES     |   564.29   |
+    40    -  40950429...............|   2.0    |       REAR SUSPENSION GUSSET       |   20.68    |
+    41    -  40950458...............|   2.0    |      FRONT SUSPENSION GUSSET       |   11.56    |
+    42    -  40950614...............|   3.0    |       PLATE DBL BUNK TOP D/S       |    31.4    |
+    43    -  40950633...............|   22.0   |           KEYHOLE PLATE            |    23.3    |
+    44    -  40950643...............|   2.0    |       REAR SKIRT BRACKET LF        |    19.9    |
+    45    -  40950646...............|   4.0    |    P-STIFFENER LOADER PIPES 9"     |   20.32    |
+    46    -  40952074...............|   1.0    |      TOW HOOK BUMPER PIN BAR       |   163.85   |
+    47    -  40952647...............|   2.0    |    PLATE SERRATED EDGE FOR BUNK    |   49.72    |
+    48    -  40953078...............|   2.0    |      SUSPENSION STAND GUSSET       |   52.51    |
+    49    -  40953541...............|   2.0    |    PLATE LANDING GEAR PROTECTOR    |   41.71    |
+    50    -  40953551...............|   2.0    |         FENDER SUPPORT P/S         |   50.68    |
+    51    -  40953552...............|   1.0    |         FENDER SUPPORT D/S         |   42.58    |
+    52    -  40953555...............|   1.0    |         FENDER SUPPORT D/S         |   25.34    |
+    53    -  40953562...............|   4.0    |    PLATE SERRATED EDGE FOR BUNK    |   51.52    |
+    54    -  40960454...............|   1.0    |    GLAD HAND GUARD PLATE-LD133     |   47.38    |
+    55    -  40964583...............|   7.0    |      COUPLER BRACKET - PLATE       |    8.42    |
+    56    -  40990216...............|   6.0    |       REAR SUSPENSION GUSSET       |   165.0    |
+    57    -  40991405...............|   2.0    |     BRACKET AIR COUPLER SINGLE     |    6.46    |
+    58    -  40994672...............|   3.0    |      SSA X-MEMBER WITH HOLES       |    0.0     |
+    59    -  401101K................|   12.0   |    RIM STEEL 8.25X24.5 (2 HOLE)    |  1028.55   |
+    60    -  402440.................|   2.0    |   RIM ALUM22.5 X 12.25 #29378XP    |   1008.4   |
+    61    -  409374.................|   12.0   |        TIRE 11R24.5-16 S815        |  3466.44   |
+    62    -  409375.................|   2.0    |       TIRE 385/65R22.5 S825        |   867.96   |
+    63    -  17424..................|   6.5    |       REDUCER #MAK 11/06/19        |   46.18    |
+    64    -  17462..................|   12.0   |   PAINT "BWS" LIGHT GREY AUE-370   |   307.1    |
+    65    -  17464..................|   50.0   |     PAINT BLACK #AUE-370 DRUM      |   860.07   |
+    66    -  17470..................|   1.0    |   PAINT BLACK #AUE-100 JET BLACK   |   16.06    |
+    67    -  17492..................|   34.0   |          PRIMER SEP BLACK          |   603.54   |
+    68    -  17547..................|   12.0   |         PRIMER EWP435 GREY         |   213.41   |
+    69    -  06151..................|   35.0   |          WIRE 2 COND 14GA          |    8.75    |
+    70    -  06466..................|   40.0   |   GROMMET RB-265 1 1/2" IDX2 1/8   |    25.2    |
+    71    -  06629..................|   1.0    |    LIGHT KIT U/BLUE BWS-L-LED-H    |   420.0    |
+    72    -  401361.................|   1.0    |   RECEPTACLE 7 PIN ISO #680-E72    |   12.65    |
+    73    -  40213..................|   1.0    |      RECEPTACLE 7 WAY 670-72       |    8.6     |
+    74    -  40474..................|   2.0    |  BOOT FOR 7 WAY SOCKET (#670-722)  |    2.66    |
+    75    -  03080..................|   12.0   |      BOLT HEX 3/8 X 1-1/2 UNC      |    1.55    |
+    76    -  03735..................|   9.0    |      NUT LOCK NYL 1/4 -20 UNC      |    0.23    |
+    77    -  06808..................|   1.0    |   HEAT SHRINK & SOLDER SPLICE CO   |    0.6     |
+    78    -  06834..................|   1.0    |      HARNESS # 66123  10' 9"       |    6.62    |
+    79    -  07060..................|   12.0   |    FIT TEE 3/8AIRx3/8AIRx3/8AIR    |   41.04    |
+    80    -  07063..................|   6.0    |       FIT STR 3/8AIRx1/4MNPT       |   10.92    |
+    81    -  07065..................|   7.0    |       FIT 90 3/8AIRx1/4MNPT        |   15.53    |
+    82    -  07066..................|   3.0    |       FIT 90 1/2AIRx3/8MNPT        |   10.53    |
+    83    -  07069..................|   2.0    |       FIT 90 3/8AIRx1/8MNPT        |    4.47    |
+    84    -  07082..................|   2.0    |      NIPPLE 1/8 CLOSE   112-A      |    0.54    |
+    85    -  07100..................|   1.0    |   FIT TEE 3/8AIRx3/8AIRx3/8MNPT    |    3.8     |
+    86    -  07109..................|   14.0   |   FITTING 1/2 TUBE X 3/8 NPT STR   |   40.22    |
+    87    -  07128..................|   1.0    |       FIT 90 1/2AIRx1/4MNPT        |    3.31    |
+    88    -  07243..................|   3.0    |       FIT 90 3/8AIRx3/8MNPT        |    8.21    |
+    89    -  07244..................|   6.0    |       FIT STR 3/8AIRx3/8MNPT       |   11.49    |
+    90    -  07253..................|   1.0    |    FITTING 1/4 SHUT OFF PV608-4    |    7.55    |
+    91    -  07254..................|   8.0    |   FIT TEE 3/8AIRx1/4MNPTx3/8AIR    |   28.95    |
+    92    -  08290..................|   1.0    |    GAUGE PG-100SG25 LIQUID FILL    |   13.39    |
+    93    -  09682..................|   2.0    |      FIT STR 3/4MNPTx1/2MNPT       |    2.96    |
+    94    -  17077..................|   8.0    |    BUSHING REDUCING - 3/8 x 1/4    |    5.76    |
+    95    -  17090..................|   2.0    |       PLUG 1/4 PIPE S1009-B        |    0.28    |
+    96    -  17091..................|   5.0    |       PLUG 3/8 PIPE S1009-C        |    1.1     |
+    97    -  17105..................|   2.0    |          NIPPLE 1/4 CLOSE          |    0.97    |
+    98    -  17211..................|   2.0    |    BUSHING REDUCING - 3/4 x 1/4    |    3.0     |
+    99    -  401052.................|   3.0    |   TANK AIR 1280/2002D  BIG 2PORT   |   185.76   |
+    100   -  401230.................|   4.0    |   HOSE AIR 3/8 RUBBER HAB-6-32C    |   20.52    |
+    101   -  401530.................|   6.0    |      ISOLATOR RUBBER/AIRTANK       |    3.12    |
+    102   -  401824.................|   1.0    |           ABS KIT 2S/1M            |   274.69   |
+    103   -  401886.................|   3.0    |      CABLE #201198BC USED ON       |   23.19    |
+    104   -  40192..................|   1.0    |      GLAD HAND SERVICE GHS-SC      |    2.17    |
+    105   -  40193..................|   1.0    |     GLAD HAND EMERGENCY GHE-SC     |    2.17    |
+    106   -  40195..................|   2.0    |    BOLT GLAD HAND TERM 1497-DBS    |    8.76    |
+    107   -  40198..................|   3.0    |   FITTING 1/4 NPT BRASS PETCOCK    |   17.48    |
+    108   -  40203..................|   2.0    |   VALVE QUICK RELEASE #TV229859    |   24.64    |
+    109   -  402051.................|   6.0    |     BRAKE MAXI 3030 1713030016     |   461.46   |
+    110   -  402195.................|   1.0    |     MODUAL RM-60-NK REV/MATIC      |   287.38   |
+    111   -  402195-1...............|   1.0    |         HARNESS #RM-200508         |   35.01    |
+    112   -  402195-2...............|   1.0    |      HARNESS #RM-60-7 BULLET       |   63.79    |
+    113   -  402532.................|   1.0    |     CONTROL BOX RA016SSA-21LS      |   546.0    |
+    114   -  402677.................|   16.0   |     BOLT GLAD HAND TERM 1495-C     |   56.32    |
+    115   -  40358..................|   6.0    |         940-5 HOSE SPACER          |    3.36    |
+    116   -  40482..................|   1.0    |       BOLT TERMINAL #1495B-A       |    2.89    |
+    117   -  40511..................|   12.0   |   HOSE AIR 3/8 RUBBER HAB-6-24C    |   56.38    |
+    118   -  40572..................|   1.0    |     VALVE HT. CONTROL 90054007     |   40.14    |
+    119   -  40839..................|   2.0    |       VALVE PRES. PROTECTION       |   28.22    |
+    120   -  40846..................|   1.0    |   ROD CONNECTING NEWAY HT CONTRL   |    7.79    |
+    121   -  40853..................|   2.0    |    VALVE RELAY 2 PORT N30108BD     |   59.54    |
+    122   -  40950039...............|   1.0    |        BRACKET RIDE HEIGHT         |    6.29    |
+    123   -  06037..................|   2.0    |       REFLECTOR AMBER #B491A       |    1.22    |
+    124   -  06038..................|   2.0    |        REFLECTOR RED B491R         |    1.21    |
+    125   -  100121.................|   2.0    |         DECAL DO NOT DRILL         |    3.8     |
+    126   -  100166.................|   1.0    |   DECAL WARNING "BWS LIABILITY"    |    1.88    |
+    127   -  100202.................|   1.0    |        DECAL BWS 5-1/2 X 19        |    15.9    |
+    128   -  100400.................|   1.0    |    DECAL WARNING AIR SUSPENSION    |    1.9     |
+    129   -  100530.................|   1.0    |    DECAL WARNING "FULLY CHARGED    |    2.0     |
+    130   -  100601.................|   1.0    |   DECAL WARNING "METHYL HYDRATE"   |    3.1     |
+    131   -  100651.................|   1.0    |   DECAL WARNING "AXLE RESTRAINT"   |    1.37    |
+    132   -  100746.................|   1.0    |     DECAL CONNECTOR PIN LABEL      |    0.85    |
+    133   -  101160.................|   1.0    |          DECAL "NEW BWS"           |    4.73    |
+    134   -  101385.................|   2.0    |         DECAL TORQUE AXLE          |    3.9     |
+    135   -  101405.................|   1.0    |             DECAL ABS              |    0.3     |
+    136   -  101416.................|   1.0    |     DECAL CAUTION ADJUST LIFT      |    0.7     |
+    137   -  40854..................|   1.0    |       SERIAL TAG CARD STOCK        |    1.39    |
+    138   -  02561..................|   50.0   |   BUSHING SNAP IN SB750-625 5/8"   |    4.7     |
+    139   -  03022..................|   20.0   |      BOLT HEX SS 1/4 X 1 UNC       |    2.25    |
+    140   -  03066..................|   4.0    |       BOLT HEX 5/16 X 1 UNC        |    0.27    |
+    141   -  03256..................|   4.0    |          WASHER LOCK 5/16          |    0.05    |
+    142   -  03266..................|   40.0   |          WASHER FLAT 3/8           |    0.95    |
+    143   -  03711..................|   24.0   |     NUT LOCK NYL 5/16 -18 UNC      |    0.77    |
+    144   -  03748..................|   4.0    |    WASHER FENDER PL 3/8 X 1-1/2    |    0.23    |
+    145   -  03789..................|   3.0    |   WASHER FENDER SS 5/16 X 1-1/2    |    0.4     |
+    146   -  03909..................|   19.0   |    BOLT HEX SS 5/16 X 1-1/4 UNC    |    4.12    |
+    147   -  04169..................|   14.0   |     CABLE TIE 15-1/4" 83-6029C     |    1.19    |
+    148   -  100915.................|   4.0    |        SPRAY BOM EMPTY CANS        |   16.57    |
+    149   -  13013..................|   17.0   |     LOOM 1/4" SPLIT 83-8003-3      |    1.56    |
+    150   -  13014..................|   10.0   |    LOOM 1-1/2" SPLIT 83-8005-3     |    3.66    |
+    151   -  17106..................|   2.0    |           NIPPLE 1/4 X 2           |    1.06    |
+    152   -  19097..................|   1.0    |      FLAP MUD 36" x 24" PLAIN      |   17.61    |
+    153   -  19125..................|   4.0    |      FLAP MUD 24" X 30" (BWS)      |   75.04    |
+    154   -  23034..................|   2.0    |       UNDERCOATING  AEROSOL        |    14.5    |
+    155   -  401092.................|   14.0   |  SEPARATOR 10 STUD HUBPILOT#5903   |   42.64    |
+    156   -  401703.................|   1.0    |        HOLDER PERMIT #01175        |    9.88    |
+    157   -  402194.................|   1.0    |      VALVE PROPORTIONING SELF      |   214.22   |
+    158   -  40953492...............|   1.0    |     BEAM ASSY.8751LF4X5TNB TRI     |  6325.73   |
+    159   -  40934890...............|   4.0    |          SUSPENSION BLOCK          |   29.66    |
+    160   -  40945864...............|   6.0    |       PLATE FLAT SUSPENSION        |   24.81    |
+    161   -  40900403...............|   10.0   |           BRACKET WINCH            |   23.27    |
+    162   -  40900405...............|   10.0   |         POCKET WINCH CHAIN         |   52.45    |
+    163   -  40900467...............|   2.0    |    BRACKET LANDING GEAR (SMALL)    |    6.38    |
+    164   -  40900470...............|   1.0    |    BRACKET LANDING GEAR (LARGE)    |    4.43    |
+    165   -  40900473...............|   6.0    |      BRACKET 7-1/8 " AIR TANK      |   19.45    |
+    166   -  40900480...............|   1.0    |        RIDE HEIGHT BRACKET         |    3.38    |
+    167   -  40900483...............|   1.0    |        BRACKET P S MUDFLAP         |    3.56    |
+    168   -  40900489...............|   2.0    |          BRACKET MUDFLAP           |   16.42    |
+    169   -  40900489A..............|   1.0    |         BRACKET MUDFLAP LH         |    8.21    |
+    170   -  40900489B..............|   1.0    |         BRACKET MUDFLAP RH         |    5.61    |
+    171   -  40900493...............|   9.0    |    HANDLE WINCH  BWS FABRICATED    |   26.31    |
+    172   -  40900494...............|   7.0    |       TUBE WINCH BRACKET 8"        |   89.81    |
+    173   -  40900496...............|   1.0    |      TUBE WINCH BRACKET   18"      |   21.66    |
+    174   -  40900503-1.............|   8.0    |       GROMMET SMALL ONE HOLE       |    0.92    |
+    175   -  40900533...............|   1.0    |        BRACKET RIDE HEIGHT         |    2.06    |
+    176   -  40900678...............|   1.0    |        BRACKET D S MUDFLAP         |    3.56    |
+    177   -  40933026...............|   2.0    |   BUNK HEAVY DUTY 102" FABRICATE   |   634.13   |
+    178   -  40933064...............|   1.0    |      BOX D S LOGGER TAILIGHT       |   63.79    |
+    179   -  40933081...............|   1.0    |       BRACKET CENTER MUDFLAP       |   11.16    |
+    180   -  40933339...............|   1.0    |      BOX P S LOGGER TAILIGHT       |   64.44    |
+    181   -  40945277...............|   1.0    |      BRACKET AIR CONTROL BOX       |   31.69    |
+    182   -  40950628...............|   1.0    |     BOX D S MIDWAY TURN LIGHT      |    60.8    |
+    183   -  40950629...............|   1.0    |     BOX P S MIDWAY TURN LIGHT      |    60.8    |
+    184   -  40950637...............|   1.0    |    FRONT MUDFLAP 7" HANGER ASSY    |   92.33    |
+    185   -  40950639...............|   1.0    |    FRONT MUDFLAP 7" HANGER ASSY    |   95.45    |
+    186   -  40950647...............|   1.0    |      HANDLE WINCH  BWS SHORT       |    2.84    |
+    187   -  40953491...............|   1.0    |   STEEL KIT FOR 51' LOG TRL 108"   |  1516.16   |
+    188   -  40953553...............|   2.0    |          AXLE STOP 2-1/4"          |   42.73    |
+    189   -  40954620...............|   0.0    |      BUMPER REAR PUSH/IMPACT       |    0.0     |
+    190   -  40956379...............|   6.0    |         SUSPENSION GUSSET          |   87.98    |
+    191   -  40961220...............|   1.0    |   COUPLER PLATE ASS'Y WELD IN KP   |   423.74   |
+    192   -  40994655...............|   2.0    |            BOTTOM WRAP             |   263.15   |
+    193   -  40935045...............|   8.0    |       STAKE BWS 4-1/2X3X112"       |  2041.59   |
+    194   -  40961443...............|   12.0   |       STAKE BWS 4-1/2X3X106"       |  3030.59   |
+    195   -  40900492...............|   6.0    |      BRACKET, ALUM. MUD FLAP       |   19.93    |
+    196   -  40933615...............|   1.0    |          BRACKET MUD FLAP          |    7.91    |
+    197   -  40934834...............|   1.0    |      BRACKET ALUMINUM MUDFLAP      |    16.5    |
+    198   -  40934838...............|   1.0    |    MUDFLAP FRONT OF CONTROL BOX    |    9.12    |
+    199   -  40950644...............|   1.0    |     SKIRT REAR ALUMINUM LOGGER     |   81.03    |
+
+
+--  Bom_2_Parts  --
+
+          -                       | Quantity |              Desc              | Total cost |
+    1     -  401433...............|   3.0    | SHOCK KIT DOUBLE:R/W #6040018  |   526.32   |
+    2     -  402154-AXN...........|   1.0    |   AXLE TA300P67E775-7042 ABS   |  1722.27   |
+    3     -  402155-AXN...........|   2.0    |  AXLE TA300P67E775-7043 N/ABS  |  3258.71   |
+    4     -  402284...............|   1.0    |       SENSOR #RM-200512        |   87.08    |
+    5     -  402316...............|   1.0    |        BLOCK #RM-200516        |    7.84    |
+    6     -  402316-1.............|   1.0    |     CLIP BLOCK #RM-200517      |    6.22    |
+    7     -  402760...............|   1.0    |   SUSP R.WELL WEST/LIFT AXLE   |  4043.13   |
+    8     -  402858...............|   1.0    | AXLE SSA703184-09128N511IMT23- |   5067.0   |
+    9     -  40685................|   3.0    |  SUSP R.WELL 30000# 15" R/HT   |  4713.28   |
+    10    -  40900458.............|   12.0   |    BRACKET 1 HL. SUSPENSION    |   25.98    |
+    11    -  03020................|   11.0   |    BOLT HEX 3/8 X 1-1/4 UNC    |    1.24    |
+    12    -  03132................|   24.0   |   BOLT HEX 5/8" X 1 1/2" UNC   |    9.35    |
+    13    -  03241................|   2.0    |    NUT LOCK NYL 5/8 -11 UNC    |    0.44    |
+    14    -  03273................|   2.0    |       WASHER FLAT 1-1/4        |    1.0     |
+    15    -  03564................|   20.0   |    NUT LOCK NYL 3/8 -16 UNC    |    1.01    |
+    16    -  03745................|   14.0   |    NUT LOCK MET 5/8 -18 UNF    |    3.38    |
+    17    -  03751................|   14.0   |    BOLT HEX 5/8 X 2-1/2 UNF    |   12.09    |
+    18    -  04213................|   6.0    |     CHAIN 1/2 GR70 7-LINKS     |    49.3    |
+    19    -  04233................|   2.0    |     CHAIN 1/2 GR70 9-LINKS     |    19.8    |
+    20    -  04263................|   2.0    | LINK CONNECT  1/2" TWIN CLEVIS |    16.5    |
+    21    -  17066................|   3.0    |  COUPLING 1/8 STEEL MERCHANT   |    3.54    |
+    22    -  17075................|   3.0    |   COUPLING 1/8 HALF COUPLER    |    3.69    |
+    23    -  17142................|   3.0    |    FIT 1/8NPT STREET ELBOW     |    1.81    |
+    24    -  24032................|   10.0   |    WINCH NARROW c/w WASHERS    |   205.6    |
+    25    -  401281...............|   16.0   | POCKET EXTE (SOCKET)4-1/2"X 3" |   1296.0   |
+    26    -  401488...............|   8.0    | BUNK EXTE W/STAKE POCKT 104.5" |   2640.0   |
+    27    -  401499...............|   2.0    | BRACE LAND/GEAR 30"-36" AMS853 |    23.4    |
+    28    -  402192...............|   1.0    |     LIFT KIT #2990079 FOR      |   363.56   |
+    29    -  402221...............|   1.0    |       LIFT KIT #2990101        |   465.49   |
+    30    -  402253...............|   1.0    | LANDING GEAR TLG60CCUBV191005  |   288.56   |
+    31    -  402451...............|   2.0    |     BRACE LAND/GEAR 18-24      |    14.5    |
+    32    -  403645446............|   2.0    |      CHANNEL 4@5.4 X 46"       |   30.36    |
+    33    -  40900395.............|   2.0    |         KEYHOLE PLATE          |    2.34    |
+    34    -  40900454.............|   22.0   |  GROMMET 1 HOLE LG. 10GA.-A36  |   15.32    |
+    35    -  40900455.............|   14.0   | GROMMET 2 HOLE LG.  10GA.-A36  |    13.6    |
+    36    -  40900476.............|   8.0    |    CAP WINCH BRACKET  10GA     |    6.17    |
+    37    -  40933018.............|   1.0    | PLATE 10 GA FRONT TR. ISO PLUG |    5.47    |
+    38    -  40933038.............|   2.0    |     PLATE DBL BUNK TOP P/S     |   19.19    |
+    39    -  40933039.............|   4.0    |     PLATE DBL BUNK BOTTOM      |   23.27    |
+    40    -  40933040.............|   4.0    |  PLATE DBL BUNK REINFORCEMENT  |   42.32    |
+    41    -  40933053.............|   16.0   | BRACKET BUNK SUPPORT STIFFINER |   21.07    |
+    42    -  40933344.............|   2.0    |         LF-REAR GUSSET         |   18.67    |
+    43    -  40933561.............|   2.0    |        PLATE LF GUSSETT        |   14.97    |
+    44    -  40934796.............|   1.0    |       BRACKET ABS LIGHT        |    6.53    |
+    45    -  40938152.............|   1.0    |    PLATE CENTER REAR BACKER    |   52.86    |
+    46    -  40946754.............|   13.0   |  X-MEMBER 41-1/8" WITH HOLES   |   445.31   |
+    47    -  40950458.............|   2.0    |    FRONT SUSPENSION GUSSET     |   11.56    |
+    48    -  40950614.............|   2.0    |     PLATE DBL BUNK TOP D/S     |   20.94    |
+    49    -  40950633.............|   22.0   |         KEYHOLE PLATE          |    23.3    |
+    50    -  40950643.............|   2.0    |     REAR SKIRT BRACKET LF      |   13.86    |
+    51    -  40950646.............|   4.0    |  P-STIFFENER LOADER PIPES 9"   |   20.32    |
+    52    -  40952074.............|   1.0    |    TOW HOOK BUMPER PIN BAR     |   163.85   |
+    53    -  40952647.............|   2.0    |  PLATE SERRATED EDGE FOR BUNK  |    38.0    |
+    54    -  40953541.............|   2.0    |  PLATE LANDING GEAR PROTECTOR  |   41.71    |
+    55    -  40953551.............|   2.0    |       FENDER SUPPORT P/S       |   50.68    |
+    56    -  40953552.............|   1.0    |       FENDER SUPPORT D/S       |   42.58    |
+    57    -  40953555.............|   1.0    |       FENDER SUPPORT D/S       |   25.34    |
+    58    -  40953562.............|   4.0    |  PLATE SERRATED EDGE FOR BUNK  |   51.52    |
+    59    -  40954547.............|   1.0    |    AIR BAG PLATE CUSTOM SSA    |   19.33    |
+    60    -  40960454.............|   1.0    |  GLAD HAND GUARD PLATE-LD133   |   47.38    |
+    61    -  40964583.............|   7.0    |    COUPLER BRACKET - PLATE     |    8.26    |
+    62    -  40989461.............|   3.0    |  X-MEMBER 33-1/4" WITH HOLES   |   81.61    |
+    63    -  40991405.............|   2.0    |   BRACKET AIR COUPLER SINGLE   |    4.17    |
+    64    -  40994679.............|   2.0    |          B-STIFFENER           |    0.0     |
+    65    -  40994680.............|   4.0    |      B-STIFFENER FOR HSS       |    0.0     |
+    66    -  402440...............|   2.0    | RIM ALUM22.5 X 12.25 #29378XP  |   1008.4   |
+    67    -  40863K...............|   6.0    |  RIM ALUML 8.25X24.5 POLISHED  |  1363.81   |
+    68    -  40864K...............|   6.0    |  RIM ALUML 8.25X24.5 MACHINE   |  1270.07   |
+    69    -  409374...............|   12.0   |      TIRE 11R24.5-16 S815      |  3466.44   |
+    70    -  409375...............|   2.0    |     TIRE 385/65R22.5 S825      |   867.96   |
+    71    -  17424................|   6.5    |     REDUCER #MAK 11/06/19      |   46.18    |
+    72    -  17462................|   18.0   | PAINT "BWS" LIGHT GREY AUE-370 |   451.51   |
+    73    -  17464................|   50.0   |   PAINT BLACK #AUE-370 DRUM    |   914.82   |
+    74    -  17470................|   1.0    | PAINT BLACK #AUE-100 JET BLACK |   15.43    |
+    75    -  17547................|   46.0   |       PRIMER EWP435 GREY       |   992.99   |
+    76    -  06151................|   35.0   |        WIRE 2 COND 14GA        |    8.75    |
+    77    -  06466................|   40.0   | GROMMET RB-265 1 1/2" IDX2 1/8 |    25.2    |
+    78    -  06838................|   1.0    | LIGHT KIT U/BLUE BWS-L-LED-ON  |   895.0    |
+    79    -  401361...............|   1.0    | RECEPTACLE 7 PIN ISO #680-E72  |    12.6    |
+    80    -  40213................|   1.0    |    RECEPTACLE 7 WAY 670-72     |    8.6     |
+    81    -  40474................|   2.0    | BOOT FOR 7 WAY SOCKET (#670-72 |    2.66    |
+    82    -  03080................|   12.0   |    BOLT HEX 3/8 X 1-1/2 UNC    |    1.54    |
+    83    -  03735................|   9.0    |    NUT LOCK NYL 1/4 -20 UNC    |    0.23    |
+    84    -  06808................|   1.0    | HEAT SHRINK & SOLDER SPLICE CO |    0.6     |
+    85    -  06834................|   1.0    |    HARNESS # 66123  10' 9"     |    6.62    |
+    86    -  07060................|   12.0   |  FIT TEE 3/8AIRx3/8AIRx3/8AIR  |   41.04    |
+    87    -  07063................|   6.0    |     FIT STR 3/8AIRx1/4MNPT     |   10.92    |
+    88    -  07065................|   7.0    |     FIT 90 3/8AIRx1/4MNPT      |   15.54    |
+    89    -  07066................|   3.0    |     FIT 90 1/2AIRx3/8MNPT      |   10.53    |
+    90    -  07069................|   2.0    |     FIT 90 3/8AIRx1/8MNPT      |    4.47    |
+    91    -  07082................|   2.0    |    NIPPLE 1/8 CLOSE   112-A    |    0.54    |
+    92    -  07100................|   1.0    | FIT TEE 3/8AIRx3/8AIRx3/8MNPT  |    3.8     |
+    93    -  07109................|   14.0   | FITTING 1/2 TUBE X 3/8 NPT STR |   40.22    |
+    94    -  07128................|   1.0    |     FIT 90 1/2AIRx1/4MNPT      |    3.31    |
+    95    -  07243................|   3.0    |     FIT 90 3/8AIRx3/8MNPT      |    8.21    |
+    96    -  07244................|   6.0    |     FIT STR 3/8AIRx3/8MNPT     |   11.49    |
+    97    -  07253................|   1.0    |  FITTING 1/4 SHUT OFF PV608-4  |    7.55    |
+    98    -  07254................|   8.0    | FIT TEE 3/8AIRx1/4MNPTx3/8AIR  |   28.94    |
+    99    -  08290................|   1.0    |  GAUGE PG-100SG25 LIQUID FILL  |   13.39    |
+    100   -  09682................|   2.0    |    FIT STR 3/4MNPTx1/2MNPT     |    2.96    |
+    101   -  17077................|   8.0    |  BUSHING REDUCING - 3/8 x 1/4  |    5.76    |
+    102   -  17090................|   2.0    |     PLUG 1/4 PIPE S1009-B      |    0.28    |
+    103   -  17091................|   5.0    |     PLUG 3/8 PIPE S1009-C      |    1.1     |
+    104   -  17105................|   2.0    |        NIPPLE 1/4 CLOSE        |    0.97    |
+    105   -  17211................|   2.0    |  BUSHING REDUCING - 3/4 x 1/4  |    3.0     |
+    106   -  401052...............|   3.0    | TANK AIR 1280/2002D  BIG 2PORT |   185.76   |
+    107   -  401230...............|   4.0    | HOSE AIR 3/8 RUBBER HAB-6-32C  |   20.52    |
+    108   -  401457...............|   1.0    |  REGULATOR 85 PSI # 90554676   |   31.71    |
+    109   -  401530...............|   6.0    |    ISOLATOR RUBBER/AIRTANK     |    4.67    |
+    110   -  401824...............|   1.0    |         ABS KIT 2S/1M          |   274.69   |
+    111   -  401886...............|   3.0    |    CABLE #201198BC USED ON     |   23.19    |
+    112   -  40192................|   1.0    |    GLAD HAND SERVICE GHS-SC    |    2.17    |
+    113   -  40193................|   1.0    |   GLAD HAND EMERGENCY GHE-SC   |    2.17    |
+    114   -  40195................|   2.0    |  BOLT GLAD HAND TERM 1497-DBS  |    8.76    |
+    115   -  40198................|   3.0    | FITTING 1/4 NPT BRASS PETCOCK  |   17.46    |
+    116   -  40203................|   2.0    | VALVE QUICK RELEASE #TV229859  |   24.63    |
+    117   -  402051...............|   6.0    |   BRAKE MAXI 3030 1713030016   |   461.46   |
+    118   -  402195...............|   1.0    |   MODUAL RM-60-NK REV/MATIC    |   287.38   |
+    119   -  402195-1.............|   1.0    |       HARNESS #RM-200508       |   35.01    |
+    120   -  402195-2.............|   1.0    |    HARNESS #RM-60-7 BULLET     |   63.79    |
+    121   -  402431...............|   1.0    |    VALVE KIT HEIGHT CONTROL    |   130.84   |
+    122   -  402677...............|   16.0   |   BOLT GLAD HAND TERM 1495-C   |   56.32    |
+    123   -  40358................|   6.0    |       940-5 HOSE SPACER        |    3.36    |
+    124   -  40482................|   1.0    |     BOLT TERMINAL #1495B-A     |    2.89    |
+    125   -  40511................|   12.0   | HOSE AIR 3/8 RUBBER HAB-6-24C  |   56.18    |
+    126   -  40657................|   1.0    |   CONTROL BOX RA013-DUAL-1G    |   556.25   |
+    127   -  40839................|   2.0    |     VALVE PRES. PROTECTION     |   28.23    |
+    128   -  40853................|   2.0    |  VALVE RELAY 2 PORT N30108BD   |   59.53    |
+    129   -  40950039.............|   2.0    |      BRACKET RIDE HEIGHT       |   12.58    |
+    130   -  06037................|   2.0    |     REFLECTOR AMBER #B491A     |    1.34    |
+    131   -  06038................|   2.0    |      REFLECTOR RED B491R       |    1.34    |
+    132   -  100121...............|   2.0    |       DECAL DO NOT DRILL       |    3.8     |
+    133   -  100166...............|   1.0    | DECAL WARNING "BWS LIABILITY"  |    1.88    |
+    134   -  100202...............|   1.0    |      DECAL BWS 5-1/2 X 19      |    15.9    |
+    135   -  100400...............|   1.0    |  DECAL WARNING AIR SUSPENSION  |    1.9     |
+    136   -  100530...............|   1.0    |  DECAL WARNING "FULLY CHARGED  |    2.0     |
+    137   -  100601...............|   1.0    | DECAL WARNING "METHYL HYDRATE" |    3.1     |
+    138   -  100651...............|   1.0    | DECAL WARNING "AXLE RESTRAINT" |    1.37    |
+    139   -  100746...............|   1.0    |   DECAL CONNECTOR PIN LABEL    |    0.85    |
+    140   -  101160...............|   1.0    |        DECAL "NEW BWS"         |    4.73    |
+    141   -  101385...............|   2.0    |       DECAL TORQUE AXLE        |    3.9     |
+    142   -  101405...............|   1.0    |           DECAL ABS            |    0.3     |
+    143   -  101416...............|   1.0    |   DECAL CAUTION ADJUST LIFT    |    0.7     |
+    144   -  40854................|   1.0    |     SERIAL TAG CARD STOCK      |    1.36    |
+    145   -  02561................|   50.0   | BUSHING SNAP IN SB750-625 5/8" |    4.7     |
+    146   -  03022................|   20.0   |    BOLT HEX SS 1/4 X 1 UNC     |    2.21    |
+    147   -  03066................|   4.0    |     BOLT HEX 5/16 X 1 UNC      |    0.27    |
+    148   -  03256................|   4.0    |        WASHER LOCK 5/16        |    0.05    |
+    149   -  03266................|   40.0   |        WASHER FLAT 3/8         |    0.92    |
+    150   -  03711................|   32.0   |   NUT LOCK NYL 5/16 -18 UNC    |    1.03    |
+    151   -  03748................|   4.0    |  WASHER FENDER PL 3/8 X 1-1/2  |    0.23    |
+    152   -  03789................|   3.0    | WASHER FENDER SS 5/16 X 1-1/2  |    0.4     |
+    153   -  03909................|   27.0   |  BOLT HEX SS 5/16 X 1-1/4 UNC  |    5.79    |
+    154   -  04169................|   14.0   |   CABLE TIE 15-1/4" 83-6029C   |    1.19    |
+    155   -  04203................|   10.0   | CABLE 1/4" X 30' #49828-10-30  |   110.49   |
+    156   -  06137................|   4.0    |    GROMMET TAIL LAMP 40700     |    4.32    |
+    157   -  06155................|   40.0   |        WIRE 2 COND 10GA        |   23.63    |
+    158   -  06659................|   14.0   |         HARNESS #66813         |    56.0    |
+    159   -  06682................|   7.0    |    HARNESS #01-6681-J7 - 4'    |    56.7    |
+    160   -  06898................|   12.0   |     LIGHT STOP/TURN/BACKUP     |   360.0    |
+    161   -  06899................|   8.0    |       HARNESS TAIL LIGHT       |    78.0    |
+    162   -  06971................|   1.0    |       LIGHT GREEN #60824       |    5.0     |
+    163   -  08055................|   3.0    |    FITTING GREASE STR. 1/8     |    0.84    |
+    164   -  100915...............|   4.0    |      SPRAY BOM EMPTY CANS      |   16.52    |
+    165   -  13013................|   17.0   |   LOOM 1/4" SPLIT 83-8003-3    |    1.56    |
+    166   -  13014................|   10.0   |  LOOM 1-1/2" SPLIT 83-8005-3   |    3.66    |
+    167   -  17106................|   2.0    |         NIPPLE 1/4 X 2         |    1.05    |
+    168   -  19097................|   1.0    |    FLAP MUD 36" x 24" PLAIN    |   17.61    |
+    169   -  19125................|   6.0    |    FLAP MUD 24" X 30" (BWS)    |   112.56   |
+    170   -  23034................|   2.0    |     UNDERCOATING  AEROSOL      |    14.5    |
+    171   -  401092...............|   14.0   | SEPARATOR 10 STUD HUBPILOT#590 |   43.06    |
+    172   -  401703...............|   1.0    |      HOLDER PERMIT #01175      |    9.84    |
+    173   -  402194...............|   1.0    |    VALVE PROPORTIONING SELF    |   214.22   |
+    174   -  40933576.............|   2.0    |    SIDE STAINLESS TRIM FOR     |   38.68    |
+    175   -  40938157.............|   1.0    |   CENTER STAINLESS TRIM FOR    |   89.01    |
+    176   -  40994661.............|   1.0    |   BEAM ASSY.8751LF4X5TNB TRI   |  6136.14   |
+    177   -  40945864.............|   6.0    |     PLATE FLAT SUSPENSION      |   24.28    |
+    178   -  40900403.............|   10.0   |         BRACKET WINCH          |   23.15    |
+    179   -  40900405.............|   10.0   |       POCKET WINCH CHAIN       |   50.61    |
+    180   -  40900467.............|   2.0    |  BRACKET LANDING GEAR (SMALL)  |    6.28    |
+    181   -  40900470.............|   1.0    |  BRACKET LANDING GEAR (LARGE)  |    4.33    |
+    182   -  40900473.............|   6.0    |    BRACKET 7-1/8 " AIR TANK    |   18.92    |
+    183   -  40900480.............|   1.0    |      RIDE HEIGHT BRACKET       |    3.36    |
+    184   -  40900483.............|   1.0    |      BRACKET P S MUDFLAP       |    3.46    |
+    185   -  40900489.............|   2.0    |        BRACKET MUDFLAP         |   16.42    |
+    186   -  40900489A............|   1.0    |       BRACKET MUDFLAP LH       |    8.21    |
+    187   -  40900489B............|   1.0    |       BRACKET MUDFLAP RH       |    5.61    |
+    188   -  40900493.............|   9.0    |  HANDLE WINCH  BWS FABRICATED  |   26.31    |
+    189   -  40900494.............|   7.0    |     TUBE WINCH BRACKET 8"      |   81.32    |
+    190   -  40900496.............|   1.0    |    TUBE WINCH BRACKET   18"    |   18.95    |
+    191   -  40900503-1...........|   8.0    |     GROMMET SMALL ONE HOLE     |    4.99    |
+    192   -  40900533.............|   1.0    |      BRACKET RIDE HEIGHT       |    2.06    |
+    193   -  40900678.............|   1.0    |      BRACKET D S MUDFLAP       |    3.46    |
+    194   -  40933026-108.........|   1.0    | BUNK HEAVY DUTY 108" FABRICATE |   335.04   |
+    195   -  40933064.............|   1.0    |    BOX D S LOGGER TAILIGHT     |   63.79    |
+    196   -  40933081.............|   1.0    |     BRACKET CENTER MUDFLAP     |   11.06    |
+    197   -  40933333.............|   1.0    |   COUPLER PLATE ASSY BOLT-IN   |   703.73   |
+    198   -  40933339.............|   1.0    |    BOX P S LOGGER TAILIGHT     |   64.44    |
+    199   -  40945277.............|   1.0    |    BRACKET AIR CONTROL BOX     |   31.47    |
+    200   -  40950628.............|   1.0    |   BOX D S MIDWAY TURN LIGHT    |   62.65    |
+    201   -  40950629.............|   1.0    |   BOX P S MIDWAY TURN LIGHT    |   62.65    |
+    202   -  40950637.............|   1.0    |  FRONT MUDFLAP 7" HANGER ASSY  |   91.26    |
+    203   -  40950639.............|   1.0    |  FRONT MUDFLAP 7" HANGER ASSY  |   94.38    |
+    204   -  40950647.............|   1.0    |    HANDLE WINCH  BWS SHORT     |    2.84    |
+    205   -  40953512.............|   1.0    |       COVER PLATE 100KSI       |   216.56   |
+    206   -  40953513.............|   1.0    |       COVER PLATE 100KSI       |   216.56   |
+    207   -  40953514.............|   1.0    |      COVER PLATE 100 KSI       |   216.56   |
+    208   -  40953515.............|   1.0    |       COVER PLATE 100KSI       |   216.56   |
+    209   -  40953516.............|   1.0    |      COVER PLATE 100 KSI       |   216.56   |
+    210   -  40953545.............|   1.0    | BUNK HEAVY DUTY 108" FABRICATE |   392.62   |
+    211   -  40953553.............|   2.0    |        AXLE STOP 2-1/4"        |   41.88    |
+    212   -  40954620.............|   1.0    |    BUMPER REAR PUSH/IMPACT     |   468.21   |
+    213   -  40956379.............|   6.0    |       SUSPENSION GUSSET        |   87.98    |
+    214   -  40959206.............|   3.0    |    HOSE ASSY 44-1/4" GREASE    |   49.23    |
+    215   -  40994654.............|   1.0    | STEEL KIT FOR 51' LOG TRL 108" |  1399.89   |
+    216   -  40994655.............|   2.0    |          BOTTOM WRAP           |   263.15   |
+    217   -  40935045.............|   8.0    |     STAKE BWS 4-1/2X3X112"     |  2040.62   |
+    218   -  40961443.............|   12.0   |     STAKE BWS 4-1/2X3X106"     |  3029.13   |
+    219   -  40900492.............|   8.0    |    BRACKET, ALUM. MUD FLAP     |   26.46    |
+    220   -  40933615.............|   1.0    |        BRACKET MUD FLAP        |    7.88    |
+    221   -  40934834.............|   1.0    |    BRACKET ALUMINUM MUDFLAP    |   16.45    |
+    222   -  40934838.............|   1.0    |  MUDFLAP FRONT OF CONTROL BOX  |    9.12    |
+
+
+--  Diff_Bom  --
+
+          -                       | Quantity |              Desc              |     Total cost      |
+    1     -  401433...............|   3.0    | SHOCK KIT DOUBLE:R/W #6040018  |       526.32        |
+    2     -  402154-AXN...........|   1.0    |   AXLE TA300P67E775-7042 ABS   |       1722.27       |
+    3     -  402155-AXN...........|   2.0    |  AXLE TA300P67E775-7043 N/ABS  |       3258.71       |
+    4     -  17066................|   3.0    |  COUPLING 1/8 STEEL MERCHANT   |        3.54         |
+    5     -  17075................|   3.0    |   COUPLING 1/8 HALF COUPLER    |        3.69         |
+    6     -  17142................|   3.0    |    FIT 1/8NPT STREET ELBOW     |        1.81         |
+    7     -  401281...............|   -2.0   | POCKET EXTE (SOCKET)4-1/2"X 3" |       -162.0        |
+    8     -  401488...............|   8.0    | BUNK EXTE W/STAKE POCKT 104.5" |       2640.0        |
+    9     -  402192...............|   1.0    |     LIFT KIT #2990079 FOR      |       363.56        |
+    10    -  402221...............|   1.0    |       LIFT KIT #2990101        |       465.49        |
+    11    -  403645446............|   -1.0   |      CHANNEL 4@5.4 X 46"       | -15.149999999999999 |
+    12    -  40933038.............|   -1.0   |     PLATE DBL BUNK TOP P/S     |        -9.59        |
+    13    -  40933039.............|   -2.0   |     PLATE DBL BUNK BOTTOM      | -11.639999999999997 |
+    14    -  40933040.............|   -2.0   |  PLATE DBL BUNK REINFORCEMENT  | -21.159999999999997 |
+    15    -  40938152.............|   1.0    |    PLATE CENTER REAR BACKER    |        52.86        |
+    16    -  40950614.............|   -1.0   |     PLATE DBL BUNK TOP D/S     | -10.459999999999997 |
+    17    -  40954547.............|   1.0    |    AIR BAG PLATE CUSTOM SSA    |        19.33        |
+    18    -  40989461.............|   3.0    |  X-MEMBER 33-1/4" WITH HOLES   |        81.61        |
+    19    -  40994679.............|   2.0    |          B-STIFFENER           |         0.0         |
+    20    -  40994680.............|   4.0    |      B-STIFFENER FOR HSS       |         0.0         |
+    21    -  40863K...............|   6.0    |  RIM ALUML 8.25X24.5 POLISHED  |       1363.81       |
+    22    -  40864K...............|   6.0    |  RIM ALUML 8.25X24.5 MACHINE   |       1270.07       |
+    23    -  17462................|   6.0    | PAINT "BWS" LIGHT GREY AUE-370 | 144.40999999999997  |
+    24    -  17547................|   34.0   |       PRIMER EWP435 GREY       |       779.58        |
+    25    -  06838................|   1.0    | LIGHT KIT U/BLUE BWS-L-LED-ON  |        895.0        |
+    26    -  401457...............|   1.0    |  REGULATOR 85 PSI # 90554676   |        31.71        |
+    27    -  402431...............|   1.0    |    VALVE KIT HEIGHT CONTROL    |       130.84        |
+    28    -  40657................|   1.0    |   CONTROL BOX RA013-DUAL-1G    |       556.25        |
+    29    -  40950039.............|   1.0    |      BRACKET RIDE HEIGHT       |        6.29         |
+    30    -  03711................|   8.0    |   NUT LOCK NYL 5/16 -18 UNC    |        0.26         |
+    31    -  03909................|   8.0    |  BOLT HEX SS 5/16 X 1-1/4 UNC  |        1.67         |
+    32    -  04203................|   10.0   | CABLE 1/4" X 30' #49828-10-30  |       110.49        |
+    33    -  06137................|   4.0    |    GROMMET TAIL LAMP 40700     |        4.32         |
+    34    -  06155................|   40.0   |        WIRE 2 COND 10GA        |        23.63        |
+    35    -  06659................|   14.0   |         HARNESS #66813         |        56.0         |
+    36    -  06682................|   7.0    |    HARNESS #01-6681-J7 - 4'    |        56.7         |
+    37    -  06898................|   12.0   |     LIGHT STOP/TURN/BACKUP     |        360.0        |
+    38    -  06899................|   8.0    |       HARNESS TAIL LIGHT       |        78.0         |
+    39    -  06971................|   1.0    |       LIGHT GREEN #60824       |         5.0         |
+    40    -  08055................|   3.0    |    FITTING GREASE STR. 1/8     |        0.84         |
+    41    -  19125................|   2.0    |    FLAP MUD 24" X 30" (BWS)    | 37.519999999999996  |
+    42    -  40933576.............|   2.0    |    SIDE STAINLESS TRIM FOR     |        38.68        |
+    43    -  40938157.............|   1.0    |   CENTER STAINLESS TRIM FOR    |        89.01        |
+    44    -  40994661.............|   1.0    |   BEAM ASSY.8751LF4X5TNB TRI   |       6136.14       |
+    45    -  40933026-108.........|   1.0    | BUNK HEAVY DUTY 108" FABRICATE |       335.04        |
+    46    -  40933333.............|   1.0    |   COUPLER PLATE ASSY BOLT-IN   |       703.73        |
+    47    -  40953512.............|   1.0    |       COVER PLATE 100KSI       |       216.56        |
+    48    -  40953513.............|   1.0    |       COVER PLATE 100KSI       |       216.56        |
+    49    -  40953514.............|   1.0    |      COVER PLATE 100 KSI       |       216.56        |
+    50    -  40953515.............|   1.0    |       COVER PLATE 100KSI       |       216.56        |
+    51    -  40953516.............|   1.0    |      COVER PLATE 100 KSI       |       216.56        |
+    52    -  40953545.............|   1.0    | BUNK HEAVY DUTY 108" FABRICATE |       392.62        |
+    53    -  40954620.............|   1.0    |    BUMPER REAR PUSH/IMPACT     |       468.21        |
+    54    -  40959206.............|   3.0    |    HOSE ASSY 44-1/4" GREASE    |        49.23        |
+    55    -  40994654.............|   1.0    | STEEL KIT FOR 51' LOG TRL 108" |       1399.89       |
+    56    -  40900492.............|   2.0    |    BRACKET, ALUM. MUD FLAP     |  6.530000000000001  |
+
