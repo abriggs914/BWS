@@ -110,13 +110,22 @@ def work_weeks(first_day, holidays):
 		month = holiday.month
 		sday = day_string(holiday)
 		months[calendar.month_name[month]] += sday + ", "
-		print("holiday ({th}): {holiday}, hm: {hm}".format(th=type(holiday), holiday=holiday, hm=month))
-		if d > day+1:
+		print("holiday ({th}): {holiday}, d: {d}, day+1: {d1}, d>d1: {dd1}, hm: {hm}".format(th=type(holiday), d=d, holiday=holiday, hm=month, d1=(day), dd1=(d>day)))
+		if d > day:
 			if next_holiday is None:
 				next_holiday = holiday
 			else:
 				if d < (holiday - first_day).days + 1:
 					next_holiday = holiday
+					
+	if next_holiday:
+		holiday_diff = (next_holiday - today).days
+		when_holiday = "In " + str(holiday_diff) + " day" + ("s" if holiday_diff != 1 else "")
+		if holiday_diff == 1:
+			when_holiday = "Tomorrow"
+	else:
+		next_holiday = "None"
+		when_holiday = "None"
 		
 		
 	# print("days_worked: " + str(days_worked) + ", i: " + str(i) + ", idx: " + str(idx))
@@ -127,9 +136,10 @@ def work_weeks(first_day, holidays):
 		" ": empty,
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
-		"Days Off": day - days_worked,
+		"Days Off": day + 1 - days_worked,
 		"Percentage Time Off": str((100 * (day - days_worked) / max(1, day))) + " %",
-		"Next Holiday": next_holiday,
+		"Next Holiday": when_holiday + ", " + str(next_holiday),
+		# "Next Holiday": "In " + str(holiday_diff),
 		"  ": empty,
 		})
 	for month in months:
@@ -612,20 +622,20 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Weekly Counts:": (weekly_counts, {"number": True}),
 		"Dealer Counts:": (dealer_counts, {"number": True}),
 		"Dealer Costs:": (dealer_costs, {"number": True}),
-		"Top 5 Dealers:": (top_5_dealers, {"number": True}),
-		"Bottom 5 Dealers:": (bottom_5_dealers, {"number": True}),
-		"Top 5 Models:": (top_5_models, {"number": True}),
-		"Bottom 5 Models:": (bottom_5_models, {"number": True}),
-		"Top 5 Bases:": (rank_money, {"category": "baseCDN"}, {"number": True}),
-		"Bottom 5 Bases:": (rank_money, {"category": "baseCDN", "bottom": True}, {"number": True}),
-		"Top 5 Gross:": (rank_money, {"category": "grossCDN"}, {"number": True}),
-		"Bottom 5 Gross:": (rank_money, {"category": "grossCDN", "bottom": True}, {"number": True}),
-		"Top 5 Discounts:": (rank_money, {"category": "discount", "bottom": True}, {"number": True}),
-		"Bottom 5 Discounts:": (rank_money, {"category": "discount"}, {"number": True}),
-		"Top 5 Costs:": (rank_money, {"category": "costCDN"}, {"number": True}),
-		"Bottom 5 Costs:": (rank_money, {"category": "costCDN", "bottom": True}, {"number": True}),
-		"Top 5 Customized:": (top_5_customized, {"number": True}),
-		"Bottom 5 Customized:": (bottom_5_customized, {"number": True}),
+		"Top 10 Dealers:": (top_5_dealers, {"num": 10}, {"number": True}),
+		"Bottom 10 Dealers:": (bottom_5_dealers, {"num": 10}, {"number": True}),
+		"Top 10 Models:": (top_5_models, {"num": 10}, {"number": True}),
+		"Bottom 10 Models:": (bottom_5_models, {"num": 10}, {"number": True}),
+		"Top 10 Bases:": (rank_money, {"category": "baseCDN", "num": 10}, {"number": True}),
+		"Bottom 10 Bases:": (rank_money, {"category": "baseCDN", "bottom": True, "num": 10}, {"number": True}),
+		"Top 10 Gross:": (rank_money, {"category": "grossCDN", "num": 10}, {"number": True}),
+		"Bottom 10 Gross:": (rank_money, {"category": "grossCDN", "bottom": True, "num": 10}, {"number": True}),
+		"Top 10 Discounts:": (rank_money, {"category": "discount", "bottom": True, "num": 10}, {"number": True}),
+		"Bottom 10 Discounts:": (rank_money, {"category": "discount", "num": 10}, {"number": True}),
+		"Top 10 Costs:": (rank_money, {"category": "costCDN", "num": 10}, {"number": True}),
+		"Bottom 10 Costs:": (rank_money, {"category": "costCDN", "bottom": True, "num": 10}, {"number": True}),
+		"Top 10 Customized:": (top_5_customized, {"num": 10}, {"number": True}),
+		"Bottom 10 Customized:": (bottom_5_customized, {"num": 10}, {"number": True}),
 		"Weekly Reporting": (avg_weekly_reporting, {"number": True}),
 		"Dealer Reporting": (avg_dealer_reporting, {"number": True}),
 		"Statistical Reporting": (lambda x: statistical_reporting, {}),
