@@ -1,0 +1,65 @@
+pages: 1
+
+
+-----------
+
+
+25582, 10014753, 25NTT, 2B9B2TP32NA0012, 08-Feb-21, 28-May-21, 21-Jun-21, 21-Jun-21, 0, None, 03-Jul-21, None
+25533, 10014729, 25NTT, 2B9B2TP39NA0012, 03-Feb-21, 01-Jun-21, 23-Jun-21, 23-Jun-21, 0, None, 05-Jul-21, None
+25535, 10014743, 25NTT, 2B9B2TP37NA0013, 08-Feb-21, 03-Jun-21, 25-Jun-21, 25-Jun-21, 0, None, 07-Jul-21, None
+25647, 10014811, 48HF2X, 2B9B6FW23NA0013, 17-Mar-21, 25-May-21, 16-Jun-21, 09-Jul-21, 23, None, 15-Jun-21, None
+24840, 10014852, 27DT2X V2018, 2B9B6DL28NA0010, 19-Mar-21, 08-Jul-21, 30-Jul-21, 15-Aug-21, 16, None, 04-Aug-21, None
+24845, 10014851, 27DT2X V2018, 2B9B6DL26NA0010, 19-Mar-21, 06-Jul-21, 28-Jul-21, 15-Aug-21, 18, None, 02-Aug-21, None
+24523, 10014230, 55HDG3X, 2B9B6GY30MA0013, 24-May-20, 02-Sep-20, 01-Oct-20, 25-Aug-20, -37, 05-Oct-20, 10-Oct-20, 5
+25070, 10014520, 53ET4X MR, 2B9B6EY49NA0010, 12-Nov-20, 23-Feb-21, 17-Mar-21, 15-Mar-21, -2, 12-Mar-21, 26-Mar-21, 14
+#####, ########, #########, ###############, ##-###-##, ##-###-##, 18-Apr-21, ##-###-###, #, 19-Mar-21, 22-Apr-21, #
+
+est: 2021-07-03 00:00:00, mrp: 2021-06-21 00:00:00, avail: None
+business days between: 10, changes: (1, 1, 0)
+new_date: 2021-06-28 00:00:00
+
+est: 2021-07-05 00:00:00, mrp: 2021-06-23 00:00:00, avail: None
+business days between: 8, changes: (1, 1, 0)
+new_date: 2021-06-30 00:00:00
+
+est: 2021-07-07 00:00:00, mrp: 2021-06-25 00:00:00, avail: None
+business days between: 8, changes: (1, 1, 0)
+new_date: 2021-07-06 00:00:00
+
+est: 2021-06-15 00:00:00, mrp: 2021-06-16 00:00:00, avail: None
+business days between: 1, changes: (0, 1, 1)
+new_date: 2021-06-23 00:00:00
+
+est: 2021-08-04 00:00:00, mrp: 2021-07-30 00:00:00, avail: None
+business days between: 3, changes: (1, 1, 0)
+new_date: 2021-08-13 00:00:00
+
+est: 2021-08-02 00:00:00, mrp: 2021-07-28 00:00:00, avail: None
+business days between: 3, changes: (1, 1, 0)
+new_date: 2021-08-11 00:00:00
+
+est: 2020-10-10 00:00:00, mrp: 2020-10-01 00:00:00, avail: 2020-10-05 00:00:00
+
+est: 2021-03-26 00:00:00, mrp: 2021-03-17 00:00:00, avail: 2021-03-12 00:00:00
+
+est: 2021-04-22 00:00:00, mrp: 2021-04-18 00:00:00, avail: 2021-03-19 00:00:00
+
+	Needs estimated delivery date updated:
+
+(datetime.datetime(2021, 6, 23, 0, 0), 25647, 10014811, 48HF2X, 2B9B6FW23NA0013, 17-Mar-21, 25-May-21, 16-Jun-21, 09-Jul-21, 23, None, 15-Jun-21, None)
+(datetime.datetime(2021, 8, 13, 0, 0), 24840, 10014852, 27DT2X V2018, 2B9B6DL28NA0010, 19-Mar-21, 08-Jul-21, 30-Jul-21, 15-Aug-21, 16, None, 04-Aug-21, None)
+(datetime.datetime(2021, 8, 11, 0, 0), 24845, 10014851, 27DT2X V2018, 2B9B6DL26NA0010, 19-Mar-21, 06-Jul-21, 28-Jul-21, 15-Aug-21, 18, None, 02-Aug-21, None)
+(datetime.datetime(2020, 10, 12, 0, 0), 24523, 10014230, 55HDG3X, 2B9B6GY30MA0013, 24-May-20, 02-Sep-20, 01-Oct-20, 25-Aug-20, -37, 05-Oct-20, 10-Oct-20, 5)
+(datetime.datetime(2021, 3, 26, 0, 0), #####, ########, #########, ###############, ##-###-##, ##-###-##, 18-Apr-21, ##-###-###, #, 19-Mar-21, 22-Apr-21, #)
+
+	Review forward moving units:
+
+25582, 10014753, 25NTT, 2B9B2TP32NA0012, 08-Feb-21, 28-May-21, 21-Jun-21, 21-Jun-21, 0, None, 03-Jul-21, None
+25070, 10014520, 53ET4X MR, 2B9B6EY49NA0010, 12-Nov-20, 23-Feb-21, 17-Mar-21, 15-Mar-21, -2, 12-Mar-21, 26-Mar-21, 14
+#####, ########, #########, ###############, ##-###-##, ##-###-##, 18-Apr-21, ##-###-###, #, 19-Mar-21, 22-Apr-21, #
+
+	Review backward moving units:
+
+25647, 10014811, 48HF2X, 2B9B6FW23NA0013, 17-Mar-21, 25-May-21, 16-Jun-21, 09-Jul-21, 23, None, 15-Jun-21, None
+24840, 10014852, 27DT2X V2018, 2B9B6DL28NA0010, 19-Mar-21, 08-Jul-21, 30-Jul-21, 15-Aug-21, 16, None, 04-Aug-21, None
+24845, 10014851, 27DT2X V2018, 2B9B6DL26NA0010, 19-Mar-21, 06-Jul-21, 28-Jul-21, 15-Aug-21, 18, None, 02-Aug-21, None

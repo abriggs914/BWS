@@ -1,0 +1,68 @@
+Needs estimated delivery date updated:
+
+(datetime.datetime(2021, 6, 23, 0, 0), 25647, 10014811, 48HF2X, 2B9B6FW23NA0013, 17-Mar-21, 25-May-21, 16-Jun-21, 09-Jul-21, 23, None, 15-Jun-21, None)
+(datetime.datetime(2021, 8, 13, 0, 0), 24840, 10014852, 27DT2X V2018, 2B9B6DL28NA0010, 19-Mar-21, 08-Jul-21, 30-Jul-21, 15-Aug-21, 16, None, 04-Aug-21, None)
+(datetime.datetime(2021, 8, 11, 0, 0), 24845, 10014851, 27DT2X V2018, 2B9B6DL26NA0010, 19-Mar-21, 06-Jul-21, 28-Jul-21, 15-Aug-21, 18, None, 02-Aug-21, None)
+(datetime.datetime(2020, 10, 12, 0, 0), 24523, 10014230, 55HDG3X, 2B9B6GY30MA0013, 24-May-20, 02-Sep-20, 01-Oct-20, 25-Aug-20, -37, 05-Oct-20, 10-Oct-20, 5)
+(datetime.datetime(2021, 3, 26, 0, 0), #####, ########, #########, ###############, ##-###-##, ##-###-##, 18-Apr-21, ##-###-###, #, 19-Mar-21, 22-Apr-21, #)
+
+        Review forward moving units:
+
+25070, 10014520, 53ET4X MR, 2B9B6EY49NA0010, 12-Nov-20, 23-Feb-21, 17-Mar-21, 15-Mar-21, -2, 12-Mar-21, 26-Mar-21, 14
+#####, ########, #########, ###############, ##-###-##, ##-###-##, 18-Apr-21, ##-###-###, #, 19-Mar-21, 22-Apr-21, #
+
+        Review backward moving units:
+
+25647, 10014811, 48HF2X, 2B9B6FW23NA0013, 17-Mar-21, 25-May-21, 16-Jun-21, 09-Jul-21, 23, None, 15-Jun-21, None
+24840, 10014852, 27DT2X V2018, 2B9B6DL28NA0010, 19-Mar-21, 08-Jul-21, 30-Jul-21, 15-Aug-21, 16, None, 04-Aug-21, None
+24845, 10014851, 27DT2X V2018, 2B9B6DL26NA0010, 19-Mar-21, 06-Jul-21, 28-Jul-21, 15-Aug-21, 18, None, 02-Aug-21, None
+
+
+def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, backward_review_threshold=0, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
+		need_adjusting = []
+		forward_review = []
+		backward_review = []
+		for order in orders:
+			est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
+			mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
+			avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
+			print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
+			if avail:
+				new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
+				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+				if new_date < est:
+					# moving forward
+					if date_diff >= forward_review_threshold: # comparing business days
+						forward_review.append(order)
+						if date_diff >= forward_adjust_threshold:
+							need_adjusting.append((new_date, order))  # update pushed forward orders
+
+				elif new_date > est:
+					# moving backward
+					if date_diff >= backward_review_threshold: # comparing business days
+						backward_review.append(order)
+						if date_diff >= backward_adjust_threshold:
+							need_adjusting.append((new_date, order))  # update pushed backward orders
+				else:
+					# no change
+					pass
+			else:					
+				new_date = add_business_days(mrp, lead_days, HOLIDAYS_2021)
+				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+				if new_date < est:
+					# moving forward
+					if date_diff >= forward_review_threshold: # comparing business days
+						forward_review.append(order)
+						if date_diff >= forward_adjust_threshold:
+							need_adjusting.append((new_date, order))  # only update very far pushed forward orders
+
+				elif new_date > est:
+					# moving backward
+					if date_diff >= backward_review_threshold: # comparing business days
+						backward_review.append(order)
+						if date_diff >= backward_adjust_threshold:
+							need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+				else:
+					# no change
+					pass
+		return need_adjusting, forward_review, backward_review
