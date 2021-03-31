@@ -87,7 +87,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25813, 35HDG2X Mini NR, 9, Remorques Lewis Inc., $82055, $92606, $72603, 6, 0
 25817, 35HDG2X Mini, 10, Remorques Lewis Inc., $79401.5572, $89231, $89231, 6, 0
 25819, 51LF4X3T AB V2015, 10, Diamond International Trucks Ltd., $80617.8756, $99926, $98926, 3, 0
-25821, 20ANR, 10, Hale Trailer Brake & Wheel, $20209.28, $26537, $23770, 7, 1
+25821, 20ANR, 10, Hale Trailer Brake & Wheel, $20209.28, $25260, $22607, 7, 1
 25828, 20FDNT, 10, Hale Trailer Brake & Wheel, $19612.32, $29516, $27345, 10, 1
 25837, 35ADG2X AGNR, 10, S & S Trailers Sales Inc, $52259.6967, $55500, $55500, 7, 1
 25838, 25ANR, 10, Hale Trailer Brake & Wheel, $24642.8, $29716, $25783, 6, 1
@@ -114,6 +114,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25904, 25ANR, 12, Remorques Lewis Inc., $29412, $30393, $29638, 1, 0
 25907, 20ANR, 13, S & S Trailers Sales Inc, $20209.28, $22383, $22383, 3, 1
 25908, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $0, $0, 0, 0
-25910, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $0, $0, 0, 1
+25910, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $22812, $19587, 7, 1
 25911, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $0, $0, 0, 1
-25912, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $0, $0, 0, 1
+25912, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $25248, $21721, 9, 1
+25917, 35MD2X EXT, 13, Fort Garry Industries Ltd., $82962.1844, $90431, $89527, 8, 0
+25918, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $14605, $14459, 5, 0

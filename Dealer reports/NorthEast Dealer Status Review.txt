@@ -1,0 +1,129 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                              Northeast Truck & Trailer Sales
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  24829    10014377            20ART           2B9B2TN21MA0014           10-Sep-20       01-Dec-20       23-Dec-20         04-Jan-21          12     11-Dec-20        15-Dec-20        4
+
+  24950    10014406            20ANR           2B9B2TN24NA0010           07-Oct-20       15-Dec-20       15-Jan-21         14-Jan-21          -1     05-Feb-21        08-Feb-21        3
+
+  24931    10014402            30ART           2B9B2TR33NA0010           07-Oct-20       09-Dec-20       14-Jan-21         14-Jan-21          0      22-Jan-21        27-Jan-21        5
+  24933    10014405            20ANR           2B9B2TN22NA0010           07-Oct-20       11-Dec-20       13-Jan-21         19-Jan-21          6      26-Jan-21        29-Jan-21        3
+
+  24949    10014408            20ART           2B9B2TN22NA0010           07-Oct-20       17-Dec-20       19-Jan-21         25-Jan-21          6      08-Feb-21        10-Feb-21        2
+
+  25228    10014576         27DT2X V2018       2B9B6DL27NA0011           25-Nov-20       04-Feb-21       01-Mar-21         24-Feb-21          -5     26-Feb-21        03-Mar-21        5
+
+  24533    10014637        46LD3X4T V2018      2B9B6LV39NA0012           08-Jan-21       04-Mar-21       26-Mar-21         24-Mar-21          -2     25-Mar-21        30-Mar-21        5
+  25022    10014632            30ART           2B9B2TR3XNA0012           21-Dec-20       26-Mar-21       20-Apr-21         12-Apr-21          -8     15-Apr-21        21-Apr-21        6
+
+  25315    10014633            30ART           2B9B2TR38NA0012           21-Dec-20       30-Mar-21       22-Apr-21         15-Apr-21          -7     16-Apr-21        25-Apr-21        9
+
+  25487    10014739    51LF4X5T NB TRI V2016   2B9B6LX42NA001283         08-Feb-21       13-Apr-21       05-May-21         28-Apr-21          -7     05-May-21        11-May-21        6
+
+  24873    10014727            30ART           2B9B2TR30NA0012           03-Feb-21       20-Apr-21       12-May-21         05-May-21          -7                      19-May-21
+  25491    10014775        46LD3X4T V2018      2B9B6LV3XNA0012           12-Feb-21       06-May-21       28-May-21         28-May-21          0                       02-Jun-21
+
+  25622    10014907          55HDG3X E         2B9B6GY38NA0013           29-Mar-21       07-May-21       31-May-21         31-May-21          0                       05-Jun-21
+
+  25603    10014772          55HDG3X E         2B9B6GY38NA0013           12-Feb-21       26-Jul-21       24-Aug-21         07-Jun-21         -78                      02-Sep-21
+
+  25612                      55HDG3X H         2B9B6GY35NA0014                           14-May-21       07-Jun-21         07-Jun-21          0                       21-Jun-21
+
+  25368    10014771            53ET3X          2B9B6EY36NA0012           12-Feb-21       31-May-21       22-Jun-21         08-Jun-21         -14                      28-Jun-21
+  25716                    51LD4X5T V2018      2B9B6LY48NA0014                           21-May-21       14-Jun-21         14-Jun-21          0                       28-Jun-21
+
+  25591    10014774           55HDG3X          2B9B6GY30NA0013           12-Feb-21       28-Jul-21       26-Aug-21         14-Jun-21         -73                      31-Aug-21
+
+  25546    10014776        51LF4X5T V2018      2B9B6LX44NA001284         12-Feb-21       22-Jul-21       20-Aug-21         18-Jun-21         -63                      07-Sep-21
+
+  25717    10014782            30ART           2B9B2TR31NA0013           26-Feb-21       28-May-21       21-Jun-21         21-Jun-21          0                       03-Jul-21
+  25587    10014779    51LF4X5T NB TRI V2016   2B9B6LX46NA001304         12-Feb-21       31-May-21       22-Jun-21         21-Jun-21          -1                      27-Jun-21
+
+  25592    10014807           55HDG3X          2B9B6GY36NA0013           12-Mar-21       31-May-21       22-Jun-21         22-Jun-21          0                       27-Jun-21
+
+  25550    10014777        51LF4X5T V2018      2B9B6LX46NA001285         12-Feb-21       03-Jun-21       25-Jun-21         24-Jun-21          -1                      30-Jun-21
+
+  25502    10014780    51LF4X5T NB TRI V2016   2B9B6LX44NA001303         12-Feb-21       07-Jun-21       29-Jun-21         29-Jun-21          0                       04-Jul-21
+  25757    10014808            53ET3X          2B9B6EY38NA0014           12-Mar-21       28-May-21       21-Jun-21         02-Jul-21          11                      05-Jul-21
+
+  25586    10014778        51LF4X5T V2018      2B9B6LX42NA001302         12-Feb-21       11-Jun-21       07-Jul-21         05-Jul-21          -2                      12-Jul-21
+
+  25710    10014794            20ANR           2B9B2TN23NA0013           26-Feb-21       15-Jun-21       09-Jul-21         06-Jul-21          -3                      14-Jul-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 2
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                              Northeast Truck & Trailer Sales
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25650    10014773          55HDG3X E         2B9B6GY3XNA0013           12-Feb-21       17-Jun-21       12-Jul-21         06-Jul-21          -6                      17-Jul-21
+
+  25672    10014763            30ANR           2B9B2TR3XNA0013           08-Feb-21       15-Jun-21       09-Jul-21         08-Jul-21          -1                      13-Jul-21
+
+  25639    10014803        46LF3X4T V2018      2B9B6LV36NA0013           12-Mar-21       15-Jun-21       08-Jul-21         08-Jul-21          0                       13-Jul-21
+  25681    10014764            30ANR           2B9B2TR31NA0013           08-Feb-21       17-Jun-21       13-Jul-21         12-Jul-21          -1                      17-Jul-21
+
+  23871    10014824            53ET3X          2B9B6EY35NA0013           17-Mar-21       23-Jun-21       19-Jul-21         13-Jul-21          -6                      19-Jul-21
+
+  25682    10014765            30ANR           2B9B2TR33NA0013           08-Feb-21       21-Jun-21       15-Jul-21         14-Jul-21          -1                      19-Jul-21
+
+  25649    10014804        46LF3X4T V2018      2B9B6LV38NA0013           12-Mar-21       22-Jun-21       15-Jul-21         15-Jul-21          0                       20-Jul-21
+  25685    10014797            30ART           2B9B2TR37NA0013           26-Feb-21       23-Jun-21       19-Jul-21         16-Jul-21          -3                      21-Jul-21
+
+  25699    10014798            30ART           2B9B2TR39NA0013           26-Feb-21       25-Jun-21       21-Jul-21         20-Jul-21          -1                      25-Jul-21
+
+  25629    10014853        51LD4X5T V2018      2B9B6LY42NA0013           19-Mar-21       30-Jun-21       26-Jul-21         21-Jul-21          -5                      31-Jul-21
+
+  25700    10014799            30ART           2B9B2TR35NA0013           26-Feb-21       29-Jun-21       23-Jul-21         22-Jul-21          -1                      27-Jul-21
+  25630    10014886        51LF4X5T V2018      2B9B6LX47NA001344         22-Mar-21       24-Aug-21       16-Sep-21         22-Jul-21         -56                      22-Sep-21
+
+  25812                        53HD2X          2B9B6HY29NA0014                           30-Jun-21       26-Jul-21         26-Jul-21          0                       30-Jul-21
+
+  25671    10014854        51LD4X5T V2018      2B9B6LY44NA0013           19-Mar-21       13-Jul-21       11-Aug-21         30-Jul-21         -12                      16-Aug-21
+
+  25670    10014885        51LF4X5T V2018      2B9B6LX49NA001345         22-Mar-21       15-Jul-21       13-Aug-21         30-Jul-21         -14                      17-Aug-21
+
+  25680    10014883            37DT3X          2B9B6DS32NA0013           22-Mar-21       12-Jul-21       04-Aug-21         04-Aug-21          0                       09-Aug-21
+  25673    10014884            37DT3X          2B9B6DS30NA0013           22-Mar-21       14-Jul-21       06-Aug-21         06-Aug-21          0                       11-Aug-21
+
+  25150                        48ET3X          2B9B6EW30NA001                            20-Jul-21       18-Aug-21         09-Sep-21          22                      09-Sep-21
+
+  25151    10014900            53ET3X          2B9B6EY36NA0013           22-Mar-21       30-Jul-21       30-Aug-21         13-Sep-21          14                      13-Sep-21
+
+  25795                     40ADG3X53 NR       2B9B6GY39NA0014                           03-Sep-21       28-Sep-21         28-Sep-21          0                       05-Oct-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 2

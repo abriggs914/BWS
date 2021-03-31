@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                   BWS Manufacturing Ltd.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  23726    10013919            25ART           2B9B2TR39MA0010           17-Oct-19       14-Jan-20       10-Feb-20                                   29-Jan-20        30-Jan-20        1
+
+  23725    10013918           53ET3XP          2B9B6EY39MA0010           17-Oct-19       12-Dec-19       23-Jan-20                                   27-Jan-20        23-Jan-20        -4
+
+  25300    10014679           53ET3XP          2B9B6EY34NA0012           19-Jan-21       31-Mar-21       23-Apr-21                                   14-Apr-21        26-Apr-21        12
+  17631    10011822          50FA AGRI         2B950FA13G1001570         13-Oct-15       04-Dec-15       06-Jan-16         30-Dec-15          -7     15-Jan-16        30-Dec-15       -16
+
+  23886    10013988           55FA  B          2B9B4A514MA0011           03-Dec-19       06-Jan-20       03-Feb-20         03-Feb-20          0      19-Feb-20        03-Feb-20       -16
+
+  23887    10013989            JD2+1X          2B9B6JH31MA0011           03-Dec-19       15-Jan-20       11-Feb-20         11-Feb-20          0      18-Feb-20        11-Feb-20        -7
+
+  23888    10014025          55HDG3X HS        2B9B6GY3XMA0011           23-Dec-19       20-Jan-20       13-Feb-20         13-Feb-20          0      19-Feb-20        13-Feb-20        -6
+  24686    10014374           48LB4X A         2S9LB6469NM1132           09-Sep-20       19-Oct-20       17-Nov-20         05-Oct-20         -43     24-Nov-20        29-Nov-20        5
+
+  24687    10014375           48LB4X A         2S9LB6460NM1132           09-Sep-20       06-Nov-20       01-Dec-20         19-Oct-20         -43     23-Apr-21        13-Jan-21       -100
+
+  24688    10014376           48LB4X A         2S9LB6462NM1132           09-Sep-20       16-Nov-20       14-Dec-20         29-Oct-20         -46     15-Jan-21        20-Jan-21        5
+
+  25289    10014585           48LB4X A         9200006                   02-Dec-20       01-Apr-21       26-Apr-21         20-Jan-21         -96     22-Jan-21        28-Apr-21        96
+  25290    10014586           48LB4X A         9200003                   02-Dec-20       15-Apr-21       07-May-21         05-Feb-21         -91                      12-May-21
+
+  25291    10014587           48LB4X A         9200004                   02-Dec-20       27-Apr-21       19-May-21         24-Feb-21         -84                      24-May-21
+
+  25292    10014588           48LB4X A         9200005                   02-Dec-20       10-May-21       01-Jun-21         15-Mar-21         -78                      06-Jun-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

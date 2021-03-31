@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                     Wieland Sales Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  24943    10014578            20NTT           2B9B2TM26NA0011           02-Dec-20       26-Jan-21       18-Feb-21         16-Feb-21          -2     05-Feb-21        08-Feb-21        3
+
+  25157    10014579            20NTT           2B9B2TM28NA0011           02-Dec-20       28-Jan-21       22-Feb-21         18-Feb-21          -4     11-Feb-21        16-Feb-21        5
+
+  25320    10014675            25ART           2B9B2TR35NA0012           18-Jan-21       15-Apr-21       07-May-21         07-May-21          0                       12-May-21
+  25406    10014676            25ART           2B9B2TR37NA0012           18-Jan-21       11-Jun-21       07-Jul-21         10-May-21         -58                      14-Jul-21
+
+  25597    10014730            25ART           2B9B2TR39NA0013           03-Feb-21       19-Apr-21       11-May-21         11-May-21          0                       18-May-21
+
+  25846    10014908            25ART           2B9B2TR34NA0014           30-Mar-21       21-Apr-21       13-May-21         13-May-21          0                       20-May-21
+
+  25318    10014698            25NTT           2B9B2TP3XNA0012           22-Jan-21       23-Apr-21       17-May-21         17-May-21          0                       22-May-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

@@ -1,0 +1,129 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Hale Trailer Brake & Wheel
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25910                        20NTT           2B9B2TM2XNA0014
+
+  25911                        20NTT           2B9B2TM26NA0014
+
+  25912                        20NTT           2B9B2TM2XNA0014
+  25915                        20NTT           2B9B2TM28NA0014
+
+  25916                        20NTT           2B9B2TM21NA0014
+
+  25893                        25NTT           2B9B2TP30NA0014                           08-Sep-21       30-Sep-21
+
+  25909                        25NTT           2B9B2TP32NA0014                           10-Sep-21       04-Oct-21
+  25209    10014560            25ART           2B9B2TR37NA0011           19-Nov-20       15-Mar-21       07-Apr-21         26-Feb-21         -40     29-Mar-21        07-Apr-21        9
+
+  25210    10014561            25NTT           2B9B2TP35NA0011           20-Nov-20       01-Apr-21       26-Apr-21         26-Feb-21         -59     20-Apr-21        26-Apr-21        6
+
+  25212    10014563            25NTT           2B9B2TP39NA0011           20-Nov-20       07-Apr-21       29-Apr-21         26-Mar-21         -34     30-Apr-21        03-May-21        3
+
+  25333    10014617            20NTT           2B9B2TM29NA0012           15-Dec-20       30-Mar-21       22-Apr-21         14-Apr-21          -8     19-Apr-21        26-Apr-21        7
+  25371    10014652            30ART           2B9B2TR30NA0012           14-Jan-21       01-Apr-21       26-Apr-21         22-Apr-21          -4     21-Apr-21        27-Apr-21        6
+
+  25367    10014653            30ART           2B9B2TR39NA0012           14-Jan-21       06-Apr-21       28-Apr-21         26-Apr-21          -2     22-Apr-21        01-May-21        9
+
+  25336    10014800            20FDNT          2B9B2TK26NA0012           10-Mar-21       07-Apr-21       29-Apr-21         30-Apr-21          1      29-Apr-21        11-May-21        12
+
+  25418    10014801            20FDNT          2B9B2TK28NA0012           10-Mar-21       12-Apr-21       04-May-21         05-May-21          1      30-Apr-21        17-May-21        17
+
+  25448    10014702            20NTT           2B9B2TM2XNA0012           22-Jan-21       29-Apr-21       21-May-21         14-May-21          -7                      28-May-21
+  25449    10014703            20NTT           2B9B2TM28NA0012           22-Jan-21       03-May-21       25-May-21         18-May-21          -7                      25-May-21
+
+  25037                       48ET2XP          2B9B6EW24NA001                            04-Jun-21       28-Jun-21         01-Jun-21         -27                      27-Jun-21
+
+  25528    10014745            30NTT           2B9B2TP33NA0012           08-Feb-21       19-May-21       10-Jun-21         09-Jun-21          -1                      15-Jun-21
+
+  25525    10014747            30ANR           2B9B2TR30NA0012           08-Feb-21       21-May-21       14-Jun-21         10-Jun-21          -4                      19-Jun-21
+  25532    10014746            30NTT           2B9B2TP37NA0012           08-Feb-21       21-May-21       14-Jun-21         11-Jun-21          -3                      19-Jun-21
+
+  25527    10014748            30ANR           2B9B2TR39NA0012           08-Feb-21       26-May-21       17-Jun-21         14-Jun-21          -3                      22-Jun-21
+
+  25823    10014874            20ART           2B9B2TN26NA0014           22-Mar-21       16-Jul-21       16-Aug-21         16-Aug-21          0                       23-Aug-21
+
+  25824    10014875            20ART           2B9B2TN24NA0014           22-Mar-21       20-Jul-21       18-Aug-21         18-Aug-21          0                       25-Aug-21
+  25838    10014877            25ANR           2B9B2TR35NA0014           22-Mar-21       20-Jul-21       18-Aug-21         18-Aug-21          0                       25-Aug-21
+
+  25854    10014878            25ANR           2B9B2TR37NA0014           22-Mar-21       22-Jul-21       20-Aug-21         20-Aug-21          0                       27-Aug-21
+
+  25855    10014879            25ANR           2B9B2TR39NA0014           22-Mar-21       22-Jul-21       20-Aug-21         20-Aug-21          0                       27-Aug-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 2
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Hale Trailer Brake & Wheel
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25856    10014880            25ANR           2B9B2TR30NA0014           22-Mar-21       26-Jul-21       24-Aug-21         24-Aug-21          0                       31-Aug-21
+
+  25771    10014881            20ANR           2B9B2TN2XNA0014           22-Mar-21       10-Aug-21       01-Sep-21         14-Sep-21          13                      14-Sep-21
+
+  25773    10014882            20ANR           2B9B2TN21NA0014           22-Mar-21       12-Aug-21       03-Sep-21         16-Sep-21          13                      16-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 2

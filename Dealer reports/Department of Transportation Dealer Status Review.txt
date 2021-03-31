@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                Department of Transportation
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25125    10014482            2313NB          22630                     02-Nov-20       18-Feb-21       12-Mar-21         04-Mar-21          -8     09-Mar-21        10-Mar-21        1
+
+  25126    10014505            2313NB          22631                     05-Nov-20       19-Feb-21       15-Mar-21         08-Mar-21          -7     10-Mar-21        11-Mar-21        1
+
+  25127    10014506            2313NB          22632                     05-Nov-20       22-Feb-21       16-Mar-21         09-Mar-21          -7     12-Mar-21        12-Mar-21        0
+  25131    10014510            2313NB          22636                     05-Nov-20       26-Feb-21       22-Mar-21         15-Mar-21          -7     19-Mar-21        19-Mar-21        0
+
+  25132    10014511            2313NB          22637                     05-Nov-20       01-Mar-21       23-Mar-21         17-Mar-21          -6     22-Mar-21        22-Mar-21        0
+
+  25133    10014512            2313NB          22638                     05-Nov-20       02-Mar-21       24-Mar-21         18-Mar-21          -6     23-Mar-21        24-Mar-21        1
+
+  25134    10014513            2313NB          22639                     05-Nov-20       03-Mar-21       25-Mar-21         19-Mar-21          -6     24-Mar-21        25-Mar-21        1
+  25135    10014514            2313NB          22640                     05-Nov-20       04-Mar-21       26-Mar-21         22-Mar-21          -4     26-Mar-21        26-Mar-21        0
+
+  25136    10014515            2313NB          22641                     05-Nov-20       05-Mar-21       29-Mar-21         23-Mar-21          -6     29-Mar-21        01-Apr-21        3
+
+  25137    10014516            2313NB          22642                     05-Nov-20       08-Mar-21       30-Mar-21         24-Mar-21          -6     30-Mar-21        01-Apr-21        2
+
+  25138    10014517            2313NB          22643                     05-Nov-20       09-Mar-21       31-Mar-21         26-Mar-21          -5     31-Mar-21        31-Mar-21        0
+  25139    10014518            2313NB          22644                     05-Nov-20       10-Mar-21       01-Apr-21         29-Mar-21          -3     01-Apr-21        01-Apr-21        0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

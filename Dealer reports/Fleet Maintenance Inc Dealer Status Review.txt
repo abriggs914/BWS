@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                  Fleet Maintenance, Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  24342    10014164            25ANR           2B9B2TR39MA0012           20-Mar-20       21-Dec-20       21-Jan-21         03-Jul-20         -202    13-Jan-21        19-Jan-21        6
+
+  24341    10014163            25ANR           2B9B2TR37MA0012           20-Mar-20       17-Dec-20       19-Jan-21         15-Mar-21          55     08-Jan-21        08-Jan-21        0
+
+  25749    10014870            25ART           2B9B2TR32NA0014           22-Mar-21       28-Jul-21       26-Aug-21         25-Aug-21          -1                      30-Aug-21
+  25750    10014871            25ART           2B9B2TR34NA0014           22-Mar-21       30-Jul-21       30-Aug-21         27-Aug-21          -3                      01-Sep-21
+
+  25748    10014861            25NTT           2B9B2TP36NA0013           19-Mar-21       16-Jul-21       16-Aug-21         27-Aug-21          11                      31-Aug-21
+
+  25746    10014862            20NTT           2B9B2TM24NA0013           19-Mar-21       12-Jul-21       10-Aug-21         06-Sep-21          27                      06-Sep-21
+
+  25747    10014863            20NTT           2B9B2TM26NA0013           19-Mar-21       14-Jul-21       12-Aug-21         08-Sep-21          27                      08-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

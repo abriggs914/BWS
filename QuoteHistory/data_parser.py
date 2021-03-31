@@ -137,7 +137,7 @@ def work_weeks(first_day, holidays):
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
 		"Days Off": day + 1 - days_worked,
-		"Percentage Time Off": str((100 * (day - days_worked) / max(1, day))) + " %",
+		"Percentage Time Off": str((100 * (1 + day - days_worked) / max(1, day + 1))) + " %",
 		"Next Holiday": when_holiday + ", " + str(next_holiday),
 		# "Next Holiday": "In " + str(holiday_diff),
 		"  ": empty,
@@ -350,11 +350,11 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		weekly = weekly_counts(dat)
 		t = total_quotes(dat)
 		length = len(weekly)
-		weeks = {
+		weeks = {c: p for c, p in weekly.items()}
+		weeks.update({
 			"Average # quotes per week:": "%.3f" % (sum([int(str(k).strip()) for k in weekly.keys()]) / length),
 			"Average quote price per week": money(sum([money_value(wv) for wv in weekly.values()]) / length)
-		}
-		weeks.update({c: p for c, p in weekly.items()})
+		})
 		return weeks
 		
 	def avg_dealer_reporting(dat):

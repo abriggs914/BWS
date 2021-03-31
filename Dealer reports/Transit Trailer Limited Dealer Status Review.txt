@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                  Transit Trailer Limited
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25774                        50HF5X          2B9B6FX54NA0014
+
+  25922                        50HF5X          2B9B6FX56NA0014
+
+  25154    10014492            50HF5X          2B9B6FX54NA0011           04-Nov-20       20-Jan-21       11-Feb-21         29-Jan-21         -13     09-Feb-21        12-Feb-21        3
+  25214    10014569            30ART           2B9B2TR36NA0011           24-Nov-20       06-Jan-21       28-Jan-21         26-Feb-21          29     22-Jan-21        27-Jan-21        5
+
+  25226    10014573            30NTT           2B9B2TP34NA0011           25-Nov-20       21-Jan-21       12-Feb-21         26-Feb-21          14     29-Jan-21        03-Feb-21        5
+
+  25224    10014589            20NTT           2B9B2TM28NA0011           02-Dec-20       18-Feb-21       12-Mar-21         04-Mar-21          -8     05-Mar-21        17-Mar-21        12
+
+  25254    10014590            20NTT           2B9B2TM2XNA0011           02-Dec-20       22-Feb-21       16-Mar-21         11-Mar-21          -5     09-Mar-21        19-Mar-21        10
+  25263    10014592            20NTT           2B9B2TM27NA0011           02-Dec-20       25-Feb-21       19-Mar-21         15-Mar-21          -4     11-Mar-21        23-Mar-21        12
+
+  25253    10014597            30NTT           2B9B2TP30NA0011           08-Dec-20       05-Mar-21       29-Mar-21         17-Mar-21         -12     19-Mar-21        24-Mar-21        5
+
+  25229    10014591            20NTT           2B9B2TM25NA0011           02-Dec-20       02-Mar-21       24-Mar-21         22-Mar-21          -2     12-Mar-21        25-Mar-21        13
+
+  25219    10014678           53ET3XP          2B9B6EY37NA0011           19-Jan-21       05-Apr-21       27-Apr-21         02-Apr-21         -25     13-Apr-21        26-Apr-21        13
+  25347    10014657           53ET3XP          2B9B6EY3XNA0012           14-Jan-21       26-Apr-21       18-May-21         26-Apr-21         -22                      17-May-21
+
+  25360    10014658           53ET3XP          2B9B6EY36NA0012           14-Jan-21       28-Apr-21       20-May-21         28-Apr-21         -22                      18-May-21
+
+  25423    10014732           53ET3XP          2B9B6EY31NA0012           03-Feb-21       22-Apr-21       14-May-21         19-May-21          5                       19-May-21
+
+  25424    10014733           53ET3XP          2B9B6EY33NA0012           03-Feb-21       26-Apr-21       18-May-21         21-May-21          3                       23-May-21
+
+  25425    10014734           53ET3XP          2B9B6EY37NA0012           03-Feb-21       30-Apr-21       24-May-21         24-May-21          0                       29-May-21
+  25359    10014767           53ET4XP          2B9B6EY44NA0012           11-Feb-21       20-May-21       11-Jun-21         27-May-21         -15                      14-Jun-21
+
+  25718    10014830            30NTT           2B9B2TP39NA0013           18-Mar-21       29-Jun-21       22-Jul-21         22-Jul-21          0                       27-Jul-21
+
+  25724    10014831            30NTT           2B9B2TP30NA0013           18-Mar-21       06-Jul-21       28-Jul-21         27-Jul-21          -1                      02-Aug-21
+
+  25722    10014864            30ART           2B9B2TR36NA0013           22-Mar-21       08-Jul-21       30-Jul-21         29-Jul-21          -1                      04-Aug-21
+  25633                     53HD2X Crane       2B9B6HY25NA0014                           10-Aug-21       01-Sep-21         01-Sep-21          0                       15-Sep-21
+
+  25787                     53HD2X Crane       2B9B6HY27NA0014                           12-Aug-21       03-Sep-21         03-Sep-21          0                       17-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

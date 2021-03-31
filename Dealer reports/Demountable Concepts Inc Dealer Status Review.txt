@@ -1,0 +1,129 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Demountable Concepts, Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  24924    10014392       53VT2V FL CA-53      2B9B6VY23MA0014           30-Sep-20       03-Nov-20       02-Dec-20         01-Dec-20          -1     11-Dec-20        11-Dec-20        0
+
+  24925    10014393       53VT2V FL CA-53      2B9B6VY25MA0014           30-Sep-20       05-Nov-20       07-Dec-20         01-Dec-20          -6     09-Dec-20        09-Dec-20        0
+
+  24926    10014394       53VT2V FL CA-53      2B9B6VY27MA0014           30-Sep-20       09-Nov-20       02-Dec-20         01-Dec-20          -1     18-Dec-20        18-Dec-20        0
+  24927    10014395       53VT2V FL CA-53      2B9B6VY29MA0014           30-Sep-20       10-Nov-20       03-Dec-20         01-Dec-20          -2     21-Dec-20        21-Dec-20        0
+
+  24928    10014396       53VT2V FL CA-53      2B9B6VY20MA0014           30-Sep-20       12-Nov-20       04-Dec-20         01-Dec-20          -3     23-Dec-20        23-Dec-20        0
+
+  24929    10014397       53VT2V FL CA-53      2B9B6VY22MA0014           30-Sep-20       16-Nov-20       08-Dec-20         01-Dec-20          -7     04-Jan-21        04-Jan-21        0
+
+  25145    10014464          53VT2V DCI        2B9B6VY20NA0010           02-Nov-20       17-Mar-21       09-Apr-21         15-Jan-21         -84     30-Mar-21        05-Apr-21        6
+  25146    10014465          53VT2V DCI        2B9B6VY22NA0010           02-Nov-20       19-Mar-21       13-Apr-21         15-Jan-21         -88     01-Apr-21        06-Apr-21        5
+
+  25147    10014466          53VT2V DCI        2B9B6VY24NA0010           02-Nov-20       23-Mar-21       15-Apr-21         15-Jan-21         -90     06-Apr-21        11-Apr-21        5
+
+  25148    10014467          53VT2V DCI        2B9B6VY26NA0010           02-Nov-20       25-Mar-21       19-Apr-21         15-Jan-21         -94     08-Apr-21        19-Apr-21        11
+
+  25149    10014468          53VT2V DCI        2B9B6VY28NA0010           02-Nov-20       29-Mar-21       21-Apr-21         15-Jan-21         -96     09-Apr-21        21-Apr-21        12
+  25200    10014554          53VT2V DCI        2B9B6VY20NA0011           13-Nov-20       10-Feb-21       05-Mar-21         15-Jan-21         -49     04-Mar-21        26-Feb-21        -6
+
+  25201    10014555          53VT2V DCI        2B9B6VY22NA0011           13-Nov-20       11-Feb-21       08-Mar-21         15-Jan-21         -52                      11-Mar-21
+
+  25054    10014433       53VT2V FL CA-97      2B9B6VY22NA0010           21-Oct-20       10-Dec-20       12-Jan-21         15-Jan-21          3      11-Jan-21        12-Jan-21        1
+
+  25055    10014434       53VT2V FL CA-97      2B9B6VY24NA0010           21-Oct-20       14-Dec-20       14-Jan-21         15-Jan-21          1      12-Jan-21        14-Jan-21        2
+
+  25056    10014435       53VT2V FL CA-97      2B9B6VY26NA0010           21-Oct-20       16-Dec-20       18-Jan-21         15-Jan-21          -3     14-Jan-21        18-Jan-21        4
+  25057    10014436       53VT2V FL CA-97      2B9B6VY28NA0010           21-Oct-20       18-Dec-20       20-Jan-21         15-Jan-21          -5     15-Jan-21        20-Jan-21        5
+
+  25190    10014556            10GT1X          2B9B6NR17NA0011           13-Nov-20       02-Mar-21       24-Mar-21         15-Mar-21          -9     18-Mar-21        23-Mar-21        5
+
+  25506    10014692          53VT2V DCI        2B9B6VY23NA0012           22-Jan-21       05-May-21       27-May-21         31-Mar-21         -57                      01-Jun-21
+
+  25507    10014693          53VT2V DCI        2B9B6VY25NA0012           22-Jan-21       07-May-21       31-May-21         31-Mar-21         -61                      05-Jun-21
+  25508    10014694          53VT2V DCI        2B9B6VY27NA0012           22-Jan-21       11-May-21       02-Jun-21         31-Mar-21         -63                      07-Jun-21
+
+  25509    10014695          53VT2V DCI        2B9B6VY29NA0012           22-Jan-21       13-May-21       04-Jun-21         31-Mar-21         -65                      09-Jun-21
+
+  25510    10014696        53VT2V JB HUNT      2B9B6VY20NA0012           22-Jan-21       17-May-21       08-Jun-21         31-Mar-21         -69                      13-Jun-21
+
+  25511    10014697        53VT2V JB HUNT      2B9B6VY22NA0012           22-Jan-21       19-May-21       10-Jun-21         31-Mar-21         -71                      15-Jun-21
+  25732    10014834          53VT2V DCI        2B9B6VY27NA0013           18-Mar-21       09-Jul-21       09-Aug-21         15-Jun-21         -55                      14-Aug-21
+
+  25733    10014835          53VT2V DCI        2B9B6VY29NA0013           18-Mar-21       13-Jul-21       11-Aug-21         15-Jun-21         -57                      16-Aug-21
+
+  25734    10014836          53VT2V DCI        2B9B6VY20NA0013           18-Mar-21       15-Jul-21       13-Aug-21         15-Jun-21         -59                      18-Aug-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 2
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Demountable Concepts, Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25735    10014837          53VT2V DCI        2B9B6VY22NA0013           18-Mar-21       19-Jul-21       17-Aug-21         15-Jun-21         -63                      23-Aug-21
+
+  25790    10014838          53VT2V DCI        2B9B6VY27NA0014           18-Mar-21       21-Jul-21       19-Aug-21         15-Jul-21         -35                      02-Sep-21
+
+  25791    10014839          53VT2V DCI        2B9B6VY29NA0014           18-Mar-21       23-Jul-21       23-Aug-21         15-Jul-21         -39                      07-Sep-21
+  25719    10014829            10GT1X          2B9B6NR17NA0013           18-Mar-21       25-Jun-21       21-Jul-21         26-Jul-21          5                       26-Jul-21
+
+  25898                    53VT3V PENSKE       2B9B6VY20NA0014                           19-Aug-21       13-Sep-21         15-Sep-21          2                       20-Sep-21
+
+  25899                      53VT3V DCI        2B9B6VY22NA0014                           20-Aug-21       14-Sep-21         30-Sep-21          16                      21-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 2

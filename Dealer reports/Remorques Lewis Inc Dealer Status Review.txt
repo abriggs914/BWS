@@ -1,0 +1,259 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                    Remorques Lewis Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25501                     32DT3X V2018       2B9B6DR39NA0014
+
+  25919                     32DT3X V2018       2B9B6DR30NA0014
+
+  25920                     32DT3X V2018       2B9B6DR32NA0014
+  24523    10014230           55HDG3X          2B9B6GY30MA0013           24-May-20       02-Sep-20       01-Oct-20         25-Aug-20         -37     05-Oct-20        10-Oct-20        5
+
+  24876    10014437            53ET4X          2B9B6EY48NA0010           21-Oct-20       06-Jan-21       28-Jan-21         15-Jan-21         -13     10-Feb-21        12-Feb-21        2
+
+  24780    10014388         27DT2X V2018       2B9B6DL2XNA0010           29-Sep-20       19-Jul-21       17-Aug-21         15-Feb-21         -183                     03-Sep-21
+
+  24860    10014631           53ET4XP          2B9B6EY49NA0011           21-Dec-20       25-Feb-21       19-Mar-21         15-Feb-21         -32     16-Mar-21        21-Mar-21        5
+  25235    10014598            25NTT           2B9B2TP38NA0011           08-Dec-20       09-Mar-21       31-Mar-21         01-Mar-21         -30     22-Mar-21        27-Mar-21        5
+
+  25266    10014593           55FA  B          2B9B4A51XNA0011           07-Dec-20       03-Feb-21       26-Feb-21         01-Mar-21          3      01-Mar-21        03-Mar-21        2
+
+  25279    10014594          55HDG3X H         2B9B6GY30NA0011           07-Dec-20       31-Mar-21       23-Apr-21         01-Mar-21         -53     14-Apr-21        26-Apr-21        12
+
+  25069    10014443            25NTT           2B9B2TP30NA0010           26-Oct-20       09-Jun-21       05-Jul-21         15-Mar-21         -112                     10-Jul-21
+  24671    10014535         32DT3X V2018       2B9B6DR39NA0010           12-Nov-20       16-Mar-21       08-Apr-21         15-Mar-21         -24     31-Mar-21        03-Apr-21        3
+
+  24977    10014532            53ET3X          2B9B6EY31NA0010           12-Nov-20       03-Mar-21       25-Mar-21         15-Mar-21         -10     22-Mar-21        27-Mar-21        5
+
+  25072    10014450            53ET4X          2B9B6EY47NA0010           27-Oct-20       05-Mar-21       29-Mar-21         15-Mar-21         -14     23-Mar-21        29-Mar-21        6
+
+  25251    10014595          53ET4X MR         2B9B6EY48NA0011           07-Dec-20       15-Mar-21       07-Apr-21         15-Mar-21         -23     16-Apr-21        21-Apr-21        5
+
+  25252    10014596          53ET4X MR         2B9B6EY4XNA0011           07-Dec-20       24-Mar-21       16-Apr-21         15-Mar-21         -32     20-Apr-21        26-Apr-21        6
+  25377    10014646            20NTT           2B9B2TM24NA0012           13-Jan-21       22-Jun-21       15-Jul-21         30-Mar-21         -107                     22-Jul-21
+
+  25326    10014623            25NTT           2B9B2TP35NA0012           18-Dec-20       08-Mar-21       30-Mar-21         30-Mar-21          0      20-Apr-21        27-Apr-21        7
+
+  25340    10014624            25NTT           2B9B2TP37NA0012           18-Dec-20       10-Mar-21       01-Apr-21         30-Mar-21          -2     12-Apr-21        13-Apr-21        1
+
+  25341    10014625            25NTT           2B9B2TP39NA0012           18-Dec-20       12-Mar-21       06-Apr-21         30-Mar-21          -7     14-Apr-21        18-Apr-21        4
+  25380    10014661            25NTT           2B9B2TP34NA0012           15-Jan-21       09-Jun-21       02-Jul-21         30-Mar-21         -94                      07-Jul-21
+
+  25381    10014666            25NTT           2B9B2TP36NA0012           15-Jan-21       23-Apr-21       17-May-21         30-Mar-21         -48                      24-May-21
+
+  25383    10014626            25NTT           2B9B2TP3XNA0012           18-Dec-20       16-Mar-21       08-Apr-21         30-Mar-21          -9     15-Apr-21        20-Apr-21        5
+
+  25179    10014684          35MD2X EXT        2B9B66Z2XNA001206         21-Jan-21       10-Mar-21       01-Apr-21         30-Mar-21          -2     08-Apr-21        15-Apr-21        7
+  25342    10014622            53ET3X          2B9B6EY32NA0012           17-Dec-20       22-Apr-21       14-May-21         30-Mar-21         -45                      12-May-21
+
+  25376    10014674            53ET3X          2B9B6EY39NA0012           15-Jan-21       10-May-21       01-Jun-21         30-Mar-21         -63                      31-May-21
+
+  25379    10014673            53ET3X          2B9B6EY34NA0012           15-Jan-21       06-May-21       28-May-21         30-Mar-21         -59                      26-May-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 4
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                    Remorques Lewis Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25378    10014689        53ET3X MR EAST      2B9B6EY32NA0012           22-Jan-21       12-May-21       03-Jun-21         30-Mar-21         -65                      02-Jun-21
+
+  25382    10014627          55HDG3X H         2B9B6GY35NA0012           18-Dec-20       04-Mar-21       26-Mar-21         30-Mar-21          4      24-Mar-21        31-Mar-21        7
+
+  25618    10014762            25NTT           2B9B2TP38NA0013           08-Feb-21       27-Apr-21       19-May-21         01-Apr-21         -48                      26-May-21
+  25456    10014720         27DT2X V2018       2B9B6DL22NA0013           29-Jan-21       23-Mar-21       15-Apr-21         01-Apr-21         -14     07-Apr-21        22-Apr-21        15
+
+  24960    10014547            20NTT           2B9B2TM29NA0011           12-Nov-20       26-Mar-21       20-Apr-21         15-Apr-21          -5     07-Apr-21        12-Apr-21        5
+
+  25170    10014548            25NTT           2B9B2TP36NA0011           12-Nov-20       19-Mar-21       13-Apr-21         15-Apr-21          2      06-Apr-21        07-Apr-21        1
+
+  25171    10014549            25NTT           2B9B2TP38NA0011           12-Nov-20       23-Mar-21       15-Apr-21         15-Apr-21          0      07-Apr-21        11-Apr-21        4
+  25172    10014550            25NTT           2B9B2TP3XNA0011           12-Nov-20       25-Mar-21       19-Apr-21         15-Apr-21          -4     23-Apr-21        24-Apr-21        1
+
+  25173    10014551            25NTT           2B9B2TP31NA0011           12-Nov-20       29-Mar-21       21-Apr-21         15-Apr-21          -6     27-Apr-21        03-May-21        6
+
+  24841    10014528         27DT2X V2018       2B9B6DL22NA0010           12-Nov-20       18-Mar-21       12-Apr-21         15-Apr-21          3      05-Apr-21        05-Apr-21        0
+
+  24844    10014527         27DT2X V2018       2B9B6DL20NA0010           12-Nov-20       30-Jun-21       26-Jul-21         15-Apr-21         -102                     31-Jul-21
+  24673    10014538         32DT3X V2018       2B9B6DR32NA0010           12-Nov-20       05-Mar-21       29-Mar-21         15-Apr-21          17     23-Mar-21        28-Mar-21        5
+
+  24674    10014544         32DT3X V2018       2B9B6DR34NA0010           12-Nov-20       09-Mar-21       31-Mar-21         15-Apr-21          15     29-Mar-21        30-Mar-21        1
+
+  25167    10014533            53ET3X          2B9B6EY36NA0011           12-Nov-20       07-Apr-21       29-Apr-21         15-Apr-21         -14     16-Apr-21        28-Apr-21        12
+
+  24983    10014558            53ET4X          2B9B6EY43NA0011           13-Nov-20       30-Mar-21       22-Apr-21         15-Apr-21          -7     22-Apr-21        28-Apr-21        6
+
+  25168    10014521          53ET4X MR         2B9B6EY41NA0011           12-Nov-20       25-Mar-21       19-Apr-21         15-Apr-21          -4     16-Apr-21        18-Apr-21        2
+  25169    10014523          55HDG3X E         2B9B6GY31NA0011           12-Nov-20       25-Feb-21       19-Mar-21         15-Apr-21          27     12-Mar-21        24-Mar-21        12
+
+  25413    10014711          55HDG3X E         2B9B6GY34NA0012           25-Jan-21       08-Apr-21       30-Apr-21         15-Apr-21         -15     23-Apr-21        03-May-21        10
+
+  25414    10014669          55HDG3X E         2B9B6GY36NA0012           15-Jan-21       14-Apr-21       06-May-21         15-Apr-21         -21     29-Apr-21        10-May-21        11
+
+  25415    10014672          55HDG3X E         2B9B6GY38NA0012           15-Jan-21       30-Apr-21       24-May-21         15-Apr-21         -39                      29-May-21
+  25416    10014670          55HDG3X E         2B9B6GY31NA0012           15-Jan-21       20-Apr-21       12-May-21         15-Apr-21         -27     03-May-21        17-May-21        14
+
+  25476    10014726        40ADG3X53 AGNR      2B9B6GY39NA0013           03-Feb-21       23-Mar-21       15-Apr-21         21-Apr-21          6      09-Apr-21        20-Apr-21        11
+
+  25311    10014719            25NTT           2B9B2TP31NA0013           29-Jan-21       03-May-21       25-May-21         22-Apr-21         -33                      30-May-21
+
+  25548    10014721            30NTT           2B9B2TP3XNA0013           29-Jan-21       09-Apr-21       03-May-21         26-Apr-21          -7     03-May-21        03-May-21        0
+  25488    10014740            25NTT           2B9B2TP30NA0012           08-Feb-21       29-Apr-21       21-May-21         01-May-21         -20                      26-May-21
+
+  25174    10014736            30NTT           2B9B2TP30NA0013           05-Feb-21       13-Apr-21       05-May-21         01-May-21          -4     05-May-21        12-May-21        7
+
+  25344    10014766           53ET3XP          2B9B6EY39NA0012           09-Feb-21       28-Apr-21       20-May-21         01-May-21         -19                      25-May-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 4
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                    Remorques Lewis Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25590    10014735            20NTT           2B9B2TM25NA0013           05-Feb-21       05-Apr-21       27-Apr-21         15-May-21          18     28-Apr-21        02-May-21        4
+
+  25246    10014659            25NTT           2B9B2TP33NA0011           15-Jan-21       11-Jun-21       07-Jul-21         15-May-21         -53                      12-Jul-21
+
+  25247    10014660            25NTT           2B9B2TP35NA0011           15-Jan-21       24-Jun-21       19-Jul-21         15-May-21         -65                      26-Jul-21
+  25248    10014664            25NTT           2B9B2TP31NA0011           15-Jan-21       15-Apr-21       07-May-21         15-May-21          8      05-May-21        17-May-21        12
+
+  25249    10014665            25NTT           2B9B2TP33NA0011           15-Jan-21       19-Apr-21       11-May-21         15-May-21          4      06-May-21        18-May-21        12
+
+  24842    10014667         27DT2X V2018       2B9B6DL20NA0010           15-Jan-21       08-Apr-21       30-Apr-21         15-May-21          15     29-Apr-21        05-May-21        6
+
+  24843    10014668         27DT2X V2018       2B9B6DL24NA0010           15-Jan-21       12-Apr-21       04-May-21         15-May-21          11     30-Apr-21        09-May-21        9
+  25250    10014615           35MD2X53         2B9B6GY23NA0011           15-Dec-20       14-Jun-21       08-Jul-21         15-May-21         -54                      13-Jul-21
+
+  25243    10014663            53ET4X          2B9B6EY40NA0011           15-Jan-21       04-May-21       26-May-21         15-May-21         -11                      24-May-21
+
+  25245    10014690            53HF4X          2B9B6FY45NA0011           22-Jan-21       05-Apr-21       27-Apr-21         15-May-21          18     20-Apr-21        03-May-21        13
+
+  25417    10014671          55HDG3X E         2B9B6GY33NA0012           15-Jan-21       26-Apr-21       18-May-21         15-May-21          -3                      24-May-21
+  25307    10014707            20NTT           2B9B2TP32NA0011           25-Jan-21       07-May-21       31-May-21         01-Jun-21          1                       05-Jun-21
+
+  25308    10014710            20NTT           2B9B2TM2XNA0011           25-Jan-21       12-May-21       03-Jun-21         01-Jun-21          -2                      07-Jun-21
+
+  25305    10014706            25NTT           2B9B2TP34NA0011           25-Jan-21       07-Jun-21       29-Jun-21         01-Jun-21         -28                      04-Jul-21
+
+  25306    10014728            25NTT           2B9B2TP36NA0011           03-Feb-21       21-Apr-21       13-May-21         01-Jun-21          19                      24-May-21
+
+  25301    10014768        53ET3X MR EAST      2B9B6EY39NA0011           11-Feb-21       10-Aug-21       01-Sep-21         01-Jun-21         -92                      06-Sep-21
+  25302    10014769          53ET4X MR         2B9B6EY4XNA0011           11-Feb-21       27-May-21       18-Jun-21         01-Jun-21         -17                      21-Jun-21
+
+  25303    10014712            53HD4X          2B9B6HY4XNA0011           27-Jan-21       02-Jun-21       24-Jun-21         01-Jun-21         -23                      23-Jun-21
+
+  25304    10014691            53HF4X          2B9B6FY46NA0011           22-Jan-21       08-Apr-21       30-Apr-21         01-Jun-21          32     22-Apr-21        06-May-21        14
+
+  25536    10014741            25NTT           2B9B2TP35NA0013           08-Feb-21       13-May-21       04-Jun-21         03-Jun-21          -1                      09-Jun-21
+  25588    10014742            25NTT           2B9B2TP34NA0013           08-Feb-21       17-May-21       08-Jun-21         07-Jun-21          -1                      13-Jun-21
+
+  25636    10014781            25ANR           2B9B2TR30NA0013           26-Feb-21       05-May-21       27-May-21         12-Jun-21          16                      01-Jun-21
+
+  24838    10014687         27DT2X V2018       2B9B6DL22NA0010           22-Jan-21       14-May-21       07-Jun-21         15-Jun-21          8                       12-Jun-21
+
+  24839    10014688         27DT2X V2018       2B9B6DL24NA0010           22-Jan-21       18-May-21       09-Jun-21         15-Jun-21          6                       14-Jun-21
+  24847    10014546         32DT3X V2018       2B9B6DR37NA0010           12-Nov-20       25-May-21       16-Jun-21         15-Jun-21          -1                      21-Jun-21
+
+  24848    10014545         32DT3X V2018       2B9B6DR39NA0010           12-Nov-20       20-May-21       11-Jun-21         15-Jun-21          4                       16-Jun-21
+
+  25534    10014752            25NTT           2B9B2TP30NA0012           08-Feb-21       26-May-21       17-Jun-21         17-Jun-21          0                       29-Jun-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 3 of 4
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                    Remorques Lewis Inc.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25582    10014753            25NTT           2B9B2TP32NA0012           08-Feb-21       28-May-21       21-Jun-21         21-Jun-21          0                       03-Jul-21
+
+  25533    10014729            25NTT           2B9B2TP39NA0012           03-Feb-21       01-Jun-21       23-Jun-21         23-Jun-21          0                       05-Jul-21
+
+  25535    10014743            25NTT           2B9B2TP37NA0013           08-Feb-21       03-Jun-21       25-Jun-21         25-Jun-21          0                       07-Jul-21
+  25647    10014811            48HF2X          2B9B6FW23NA0013           17-Mar-21       25-May-21       16-Jun-21         09-Jul-21          23                      15-Jun-21
+
+  24840    10014852         27DT2X V2018       2B9B6DL28NA0010           19-Mar-21       08-Jul-21       30-Jul-21         15-Aug-21          16                      04-Aug-21
+
+  24845    10014851         27DT2X V2018       2B9B6DL26NA0010           19-Mar-21       06-Jul-21       28-Jul-21         15-Aug-21          18                      02-Aug-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 4 of 4

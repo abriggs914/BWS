@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                        DH Agro Ltd.
+
+                                                                           Print Date: Wednesday, March 31, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  21771    10011675             LP14           9100070                   07-May-15       03-Jul-15       27-Jul-15         02-Mar-21        2,045    14-Aug-15        21-Mar-03      -4,529
+
+  25213    10014887             LP18           9100103                   22-Mar-21       05-Jul-21       27-Jul-21         23-Jul-21          -4                      30-Jul-21
+
+  25688    10014888             LP18           9100104                   22-Mar-21       09-Jul-21       09-Aug-21         28-Jul-21         -12                      13-Aug-21
+  25689    10014889             LP18           9100105                   22-Mar-21       14-Jul-21       12-Aug-21         03-Aug-21          -9                      19-Aug-21
+
+  25690    10014890             LP18           9100106                   22-Mar-21       16-Jul-21       16-Aug-21         05-Aug-21         -11                      23-Aug-21
+
+  25691    10014891             LP18           9100107                   22-Mar-21       20-Jul-21       18-Aug-21         09-Aug-21          -9                      25-Aug-21
+
+  25692    10014892             LP18           9100108                   22-Mar-21       22-Jul-21       20-Aug-21         12-Aug-21          -8                      27-Aug-21
+  25693    10014893             LP18           9100109                   22-Mar-21       27-Jul-21       25-Aug-21         17-Aug-21          -8                      01-Sep-21
+
+  25694    10014894             LP18           9100110                   22-Mar-21       30-Jul-21       30-Aug-21         02-Sep-21          3                       07-Sep-21
+
+  25695    10014895             LP18           9100111                   22-Mar-21       11-Aug-21       02-Sep-21         08-Sep-21          6                       09-Sep-21
+
+  25696    10014896             LP18           9100112                   22-Mar-21       16-Aug-21       08-Sep-21         10-Sep-21          2                       15-Sep-21
+  25697    10014897             LP18           9100113                   22-Mar-21       18-Aug-21       10-Sep-21         14-Sep-21          4                       17-Sep-21
+
+  25698    10014898             LP18           9100114                   22-Mar-21       20-Aug-21       14-Sep-21         17-Sep-21          3                       21-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1
