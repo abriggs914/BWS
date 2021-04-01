@@ -100,7 +100,8 @@ class Order:
 		line = self.line
 
 		nd = dt.datetime.strftime(new_date, "%d-%b-%y")
-		data = [self.quote, self.WO, self.model_no, self.serial_number, self.order, self.production, self.MRP_finish, self.req_delivery_date, self.P, self.available_date, self.est_delivery, self.F, nd]
+		# data = [self.quote, self.WO[-5:], self.model_no, self.serial_number[-8:], self.order, self.production, self.MRP_finish, self.req_delivery_date, self.P, self.available_date, self.est_delivery, self.F, nd]
+		data = [self.quote, self.WO[-5:], self.model_no[:21], self.serial_number[-8:], self.production, self.MRP_finish, self.P, self.available_date, self.est_delivery, self.F, nd]
 		items = []
 		start = 0
 		stop = 0
@@ -110,7 +111,8 @@ class Order:
 		while i < len(data):
 			stop = dividers[i]
 			print("i", i, "len(res)", len(res), "(", start, ",", stop, ")", "s-s", (stop - start))
-			res += str(data[i]).rjust(stop - len(res))
+			d = data[i] if data[i] != None else "-"
+			res += str(d).rjust(stop - len(res))
 			# s = "".join(line[start: stop]).strip()
 			# if s:
 			# 	items.append(s)
@@ -200,8 +202,8 @@ def dealer_delivery_report_updates(dealer, file_name):
 			spl = line.split()
 			if spl == ["Date", "Date", "Date"]:
 				if header_line == None:
-					header_line = [l.strip() for l in lines[i - 1].split("   ") if l] + ["New Estimated Delivery"]
-					print("header_line:", header_line)
+					header_line = [l.strip() for l in lines[i - 1].split("   ") if l] + ["New Delivery"]
+					print("header_line BEFORE:", header_line)
 				i += 1
 				page_data = []
 				while i < len(lines) and "Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date" not in lines[i]:
@@ -213,6 +215,34 @@ def dealer_delivery_report_updates(dealer, file_name):
 				data.append(page_data)
 			i += 1
 				
+
+		refined_header = []
+		for col_name in header_line:
+			temp = col_name.lower()
+			if "quote" in temp:
+				temp = temp.replace("quote", "Q")
+			if "date" in temp:
+				temp = temp.replace("date", "")
+			if "production" in temp:
+				temp = temp.replace("production", "prod.")
+			if "delivery" in temp:
+				temp = temp.replace("delivery", "del.")
+			if "number" in temp:
+				temp = temp.replace("number", "#")
+			if "available" in temp:
+				temp = temp.replace("available", "avail.")
+			if "finish" in temp:
+				temp = temp.replace("finish", "")
+			if "model no" in temp:
+				temp = temp.replace("no", "")
+			if "order" == temp:
+				continue
+			if "req." in temp:
+				continue
+			temp = temp.strip().title()
+			refined_header.append(temp)
+		header_line = refined_header
+		print("header_line AFTER:", header_line)
 
 		print("pages: " + str(pages))
 		print("\n\n-----------\n\n")
@@ -286,9 +316,9 @@ def dealer_delivery_report_updates(dealer, file_name):
 			return need_adjusting, forward_review, backward_review, manual_review
 
 		def write_est_delivery_update_report(dealer, col_names, orders):
-			header = "\n\tDealer Delivery Report for " + " ".join(dealer) + "."
-			header += "\n\tThe following orders need their estimated delivery dates updated.\n"
-			dividers = [0 for i in range(13)]
+			header = "\n\n\tDealer Delivery Report for << " + " ".join(dealer) + " >>"
+			header += "\n\tThe following orders need their estimated delivery dates updated.\n\n"
+			dividers = [0 for i in range(11)]
 			x = 0
 			manual_review = []
 			for order_line in orders:
@@ -299,9 +329,24 @@ def dealer_delivery_report_updates(dealer, file_name):
 					print("spl", spl)
 					for i in range(len(spl)):
 						col_name = col_names[i]
+						ls = len(spl[i])
+						if "serial" in col_name.lower():
+							ls = 8
+						if "model" in col_name.lower():
+							ls = min(20, ls)
+						if "wo#" in col_name.lower():
+							ls = 5
+						if "p" == col_name.lower():
+							ls = len(spl[8])
+							if spl[8] == None or spl[8] == "_":
+								ls = 1
+						if "f" == col_name.lower():
+							ls = len(spl[11])
+							if spl[11] == None or spl[11] == "_" or spl[11].lower() == "none":
+								ls = 1
 						print("col_name", col_name)
-						off = 0 if i == 0 else dividers[i - 1] + 4
-						dividers[i] = max(dividers[i], len(spl[i]) + off, len(col_name) + off)
+						off = 0 if i == 0 else dividers[i - 1] + 3
+						dividers[i] = max(dividers[i], ls + off, len(col_name) + off)
 				except:
 					manual_review.append(order)
 
