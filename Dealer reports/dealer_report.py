@@ -95,36 +95,30 @@ class Order:
 			self.manual_review = True
 			# raise ValueError("items:\n\t" + str(items))		
 
-	def report_format(self, dividers, new_date):
-		s = str(self)
+	def report_format(self, dividers, new_date, spacer_len):
 		line = self.line
 
 		nd = dt.datetime.strftime(new_date, "%d-%b-%y")
 		# data = [self.quote, self.WO[-5:], self.model_no, self.serial_number[-8:], self.order, self.production, self.MRP_finish, self.req_delivery_date, self.P, self.available_date, self.est_delivery, self.F, nd]
 		data = [self.quote, self.WO[-5:], self.model_no[:21], self.serial_number[-8:], self.production, self.MRP_finish, self.P, self.available_date, self.est_delivery, self.F, nd]
-		items = []
-		start = 0
 		stop = 0
 		i = 0
 		res = ""
-		print("len(gd):", len(dividers), "gd", dividers, "\nlen(data):", len(data))
+		# print("len(gd):", len(dividers), "gd", dividers, "\nlen(data):", len(data))
 		while i < len(data):
 			stop = dividers[i]
-			print("i", i, "len(res)", len(res), "(", start, ",", stop, ")", "s-s", (stop - start))
+			# print("i", i, "len(res)", len(res), "(", start, ",", stop, ")", "s-s", (stop - start))
 			d = data[i] if data[i] != None else "-"
-			res += str(d).rjust(stop - len(res))
-			# s = "".join(line[start: stop]).strip()
-			# if s:
-			# 	items.append(s)
+			x = 0
+			if i > 0:
+				x = spacer_len
+			res += pad_centre(str(d), (stop - len(res)))
 			start = dividers[i]
 			if i + 1 < len(dividers):
 				stop = dividers[i + 1]
 			else:
 				stop = len(line)
 			i += 1
-		# spl = s.split(", ")
-
-		# return "\t".join(spl)
 		return res
 
 	def __repr__(self):
@@ -203,7 +197,7 @@ def dealer_delivery_report_updates(dealer, file_name):
 			if spl == ["Date", "Date", "Date"]:
 				if header_line == None:
 					header_line = [l.strip() for l in lines[i - 1].split("   ") if l] + ["New Delivery"]
-					print("header_line BEFORE:", header_line)
+					# print("header_line BEFORE:", header_line)
 				i += 1
 				page_data = []
 				while i < len(lines) and "Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date" not in lines[i]:
@@ -242,10 +236,10 @@ def dealer_delivery_report_updates(dealer, file_name):
 			temp = temp.strip().title()
 			refined_header.append(temp)
 		header_line = refined_header
-		print("header_line AFTER:", header_line)
+		# print("header_line AFTER:", header_line)
 
 		print("pages: " + str(pages))
-		print("\n\n-----------\n\n")
+		# print("\n\n-----------\n\n")
 		
 		def create_orders():
 			orders = []
@@ -271,7 +265,7 @@ def dealer_delivery_report_updates(dealer, file_name):
 					est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
 					mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
 					avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
-					print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
+					# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
 					if avail:
 						new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
 						date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
@@ -316,6 +310,7 @@ def dealer_delivery_report_updates(dealer, file_name):
 			return need_adjusting, forward_review, backward_review, manual_review
 
 		def write_est_delivery_update_report(dealer, col_names, orders):
+			spacer_len = 3
 			header = "\n\n\tDealer Delivery Report for << " + " ".join(dealer) + " >>"
 			header += "\n\tThe following orders need their estimated delivery dates updated.\n\n"
 			dividers = [0 for i in range(11)]
@@ -326,7 +321,7 @@ def dealer_delivery_report_updates(dealer, file_name):
 					new_date, order = order_line
 					nd = dt.datetime.strftime(new_date, "%d-%b-%y")
 					spl = list(map( str.strip, (str(order) + "," + nd).split(",")))
-					print("spl", spl)
+					# print("spl", spl)
 					for i in range(len(spl)):
 						col_name = col_names[i]
 						ls = len(spl[i])
@@ -344,17 +339,20 @@ def dealer_delivery_report_updates(dealer, file_name):
 							ls = len(spl[11])
 							if spl[11] == None or spl[11] == "_" or spl[11].lower() == "none":
 								ls = 1
-						print("col_name", col_name)
-						off = 0 if i == 0 else dividers[i - 1] + 3
+						# print("col_name", col_name)
+						off = 0 if i == 0 else dividers[i - 1] + spacer_len
 						dividers[i] = max(dividers[i], ls + off, len(col_name) + off)
 				except:
 					manual_review.append(order)
 
 			col_line = ""
 			for i, div in enumerate(dividers):
-				col_line += col_names[i].rjust(div - len(col_line))
+				x = 0
+				if i > 0:
+					x = spacer_len
+				col_line += pad_centre(col_names[i], x + (max(len(col_names[i]) + 1, div - len(col_line))))
 			header += col_line + "\n"
-			orders = [order.report_format(dividers, new_date) for new_date, order in orders]
+			orders = [order.report_format(dividers, new_date, spacer_len) for new_date, order in orders]
 			write_results(ORDERS_TO_CHANGE_OUTPUT, header, orders)
 			return manual_review
 
