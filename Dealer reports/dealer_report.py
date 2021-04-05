@@ -1,5 +1,6 @@
 import re
 import os
+import easygui as gui
 import datetime as dt
 from test_suite import *
 
@@ -136,51 +137,59 @@ class Order:
 			est_delivery=self.est_delivery,
 			F=self.F)
 
+def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
+	need_adjusting = []
+	forward_review = []
+	backward_review = []
+	manual_review = []
+	for order in orders:
+		try :
+			est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
+			mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
+			avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
+			# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
+			if avail:
+				new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
+				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+				if new_date < est:
+					# moving forward
+					if date_diff >= forward_review_threshold: # comparing business days
+						forward_review.append((new_date, order))
+					if date_diff >= forward_adjust_threshold:
+						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
 
-def minmax(a, b):
-	if a <= b:
-		return a, b
-	return b, a
+				elif new_date > est:
+					# moving backward
+					if date_diff >= backward_review_threshold: # comparing business days
+						backward_review.append((new_date, order))
+					if date_diff >= backward_adjust_threshold:
+						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+				else:
+					# no change
+					pass
+			else:					
+				new_date = add_business_days(mrp, lead_days, HOLIDAYS_2021)
+				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+				if new_date < est:
+					# moving forward
+					if date_diff >= forward_review_threshold: # comparing business days
+						forward_review.append((new_date, order))
+					if date_diff >= forward_adjust_threshold:
+						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
 
+				elif new_date > est:
+					# moving backward
+					if date_diff >= backward_review_threshold: # comparing business days
+						backward_review.append((new_date, order))
+					if date_diff >= backward_adjust_threshold:
+						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+				else:
+					# no change
+					pass
+		except:
+			manual_review.append(order)
 
-def add_business_days(d, bd, holidays=None):
-	if holidays == None:
-		holidays = []
-	i = 0
-	t = dt.datetime(d.year, d.month, d.day)
-	# print("holidays: " + str(holidays))
-	while i < bd:
-		t = t + dt.timedelta(days=1)
-		# print("t: " + str(t) + ", (t not in holidays): " + str(t not in holidays))
-		if t.weekday() < 5 and t not in holidays:
-			i += 1
-	return t
-
-
-def business_days_between(d1, d2, holidays=None):
-	business_days = 0
-	if holidays == None:
-		holidays = []
-	date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
-	date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
-
-	date_1, date_2 = minmax(date_1, date_2)
-
-	diff = (date_2 - date_1).days
-	temp = date_1
-	for i in range(diff):
-		temp = date_1 + dt.timedelta(days=i+1)
-		if temp.weekday() < 5 and temp not in holidays: # Monday == 0, Sunday == 6 
-			business_days += 1
-	i = 0
-	while temp.weekday() >= 5 or temp in holidays:
-		temp = temp + dt.timedelta(days=1)
-		if temp not in holidays:
-			business_days += 1
-			break
-	# print("temp: {temp}\ndate_2: {date_2}\ntemp < date_2: {td2}".format(temp=temp, date_2=date_2, td2=(temp < date_2)))
-	# print("business_days: " + str(business_days))
-	return business_days
+	return need_adjusting, forward_review, backward_review, manual_review
 
 def dealer_delivery_report_updates(dealer, file_name):
 	print("file_name", file_name)
@@ -255,60 +264,7 @@ def dealer_delivery_report_updates(dealer, file_name):
 					# print(orders[-1])
 			return orders, manual_review_orders
 
-		def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
-			need_adjusting = []
-			forward_review = []
-			backward_review = []
-			manual_review = []
-			for order in orders:
-				try :
-					est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
-					mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
-					avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
-					# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
-					if avail:
-						new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
-						date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
-						if new_date < est:
-							# moving forward
-							if date_diff >= forward_review_threshold: # comparing business days
-								forward_review.append((new_date, order))
-							if date_diff >= forward_adjust_threshold:
-								need_adjusting.append((new_date, order))  # only update very far pushed forward orders
-
-						elif new_date > est:
-							# moving backward
-							if date_diff >= backward_review_threshold: # comparing business days
-								backward_review.append((new_date, order))
-							if date_diff >= backward_adjust_threshold:
-								need_adjusting.append((new_date, order))  # only update very far pushed backward orders
-						else:
-							# no change
-							pass
-					else:					
-						new_date = add_business_days(mrp, lead_days, HOLIDAYS_2021)
-						date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
-						if new_date < est:
-							# moving forward
-							if date_diff >= forward_review_threshold: # comparing business days
-								forward_review.append((new_date, order))
-							if date_diff >= forward_adjust_threshold:
-								need_adjusting.append((new_date, order))  # only update very far pushed forward orders
-
-						elif new_date > est:
-							# moving backward
-							if date_diff >= backward_review_threshold: # comparing business days
-								backward_review.append((new_date, order))
-							if date_diff >= backward_adjust_threshold:
-								need_adjusting.append((new_date, order))  # only update very far pushed backward orders
-						else:
-							# no change
-							pass
-				except:
-					manual_review.append(order)
-
-			return need_adjusting, forward_review, backward_review, manual_review
-
+		
 		def write_est_delivery_update_report(dealer, col_names, orders):
 			spacer_len = 3
 			header = "\n\n\tDealer Delivery Report for << " + " ".join(dealer) + " >>"
@@ -474,8 +430,9 @@ def run_reports():
 		d = dt.datetime.strftime(dt.datetime.now(), "%d-%b-%y")
 		out.write("Dealer Delivery Reports as of " + d)
 
-	files = os.listdir()
-	files = [f for f in files if "Dealer Status Review" in f and f.endswith(".txt")]
+	files = os.listdir("Reports")
+	# s = "C:\Users\ABriggs\Documents\BWS\Dealer reports\Reports\Atlantic Powertrain Dealer Status Review.txt"
+	files = ["Reports/" + f for f in files if "Dealer Status Review" in f and f.endswith(".txt")]
 	for f in files:
 		dealer = f.split()[:-3]
 		dealer_delivery_report_updates(dealer, f)

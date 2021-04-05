@@ -119,4 +119,9 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25912, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $25248, $21721, 9, 1
 25917, 35MD2X EXT, 13, Fort Garry Industries Ltd., $82962.1844, $90431, $89527, 8, 0
 25918, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $14605, $14459, 5, 0
-25925, 53ET3XP, 13, Fleet Maintenance Inc., $48411.7695, $75671, $74536, 13, 1
+25925, 53ET3XP, 13, Fleet Maintenance Inc., $48411.7695, $74043, $72932, 11, 1
+25941, 20ANR, 14, Fleet Maintenance Inc., $20209.28, $0, $0, 0, 1
+25966, 20ART, 14, Remorques Lewis Inc., $27794, $0, $0, 0, 0
+25967, 25ART, 14, Remorques Lewis Inc., $32488.56, $0, $0, 0, 0
+25972, 30ANR, 14, Hale Trailer Brake & Wheel, $29981.5845, $35884, $31217, 7, 1
+25973, 30ANR, 14, Hale Trailer Brake & Wheel, $29981.5845, $34994, $30433, 6, 1

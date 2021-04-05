@@ -12,6 +12,12 @@ def lenstr(x):
     return len(str(x))
 
 
+def minmax(a, b):
+	if a <= b:
+		return a, b
+	return b, a
+
+
 def avg(lst):
     try:
         return sum(lst) / max(1, len(lst))
@@ -273,3 +279,42 @@ def show(arr):
             res += "}"
     res += "}\n"
     print(res)
+
+    
+def add_business_days(d, bd, holidays=None):
+	if holidays == None:
+		holidays = []
+	i = 0
+	t = dt.datetime(d.year, d.month, d.day)
+	# print("holidays: " + str(holidays))
+	while i < bd:
+		t = t + dt.timedelta(days=1)
+		# print("t: " + str(t) + ", (t not in holidays): " + str(t not in holidays))
+		if t.weekday() < 5 and t not in holidays:
+			i += 1
+	return t
+
+def business_days_between(d1, d2, holidays=None):
+	business_days = 0
+	if holidays == None:
+		holidays = []
+	date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
+	date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
+
+	date_1, date_2 = minmax(date_1, date_2)
+
+	diff = (date_2 - date_1).days
+	temp = date_1
+	for i in range(diff):
+		temp = date_1 + dt.timedelta(days=i+1)
+		if temp.weekday() < 5 and temp not in holidays: # Monday == 0, Sunday == 6 
+			business_days += 1
+	i = 0
+	while temp.weekday() >= 5 or temp in holidays:
+		temp = temp + dt.timedelta(days=1)
+		if temp not in holidays:
+			business_days += 1
+			break
+	# print("temp: {temp}\ndate_2: {date_2}\ntemp < date_2: {td2}".format(temp=temp, date_2=date_2, td2=(temp < date_2)))
+	# print("business_days: " + str(business_days))
+	return business_days

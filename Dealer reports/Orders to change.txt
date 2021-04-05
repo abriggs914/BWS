@@ -1,21 +1,7 @@
-Dealer Delivery Reports as of 01-Apr-21
+Dealer Delivery Reports as of 05-Apr-21
 
 
-	Dealer Delivery Report for << Atlantic Powertrain >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#        Model      Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-24899 14717   28LBT2X NS   NA001166   01-Apr-21   26-Apr-21    5   26-Apr-21   01-May-21   5   03-May-21  
-25375 14737      30ART     30NA0012   27-Apr-21   19-May-21   -5       -       24-May-21   -   27-May-21  
-25269 14662     53ET3XP    30NA0011   30-Apr-21   24-May-21   -9       -       28-May-21   -   31-May-21  
-25274 14609      30ART     3XNA0011   07-May-21   31-May-21    1       -       05-Jun-21   -   07-Jun-21  
-25275 14610      30ART     31NA0011   28-Apr-21   20-May-21   12       -       26-May-21   -   28-May-21  
-25277 14612      30ART     35NA0011   05-May-21   27-May-21    5       -       01-Jun-21   -   03-Jun-21  
-
-EOF
-
-
-	Dealer Delivery Report for << BD Equipment >>
+	Dealer Delivery Report for << Reports/Atlantic Powertrain >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -23,7 +9,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << BWS CDN Direct >>
+	Dealer Delivery Report for << Reports/BD Equipment >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -31,193 +17,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << BWS Manufacturing Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#        Model      Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F     New Del.  
-17631 11822    50FA AGRI   G1001570   04-Dec-15   06-Jan-16    -7   15-Jan-16   30-Dec-15    -16   22-Jan-16  
-23886 13988     55FA  B    14MA0011   06-Jan-20   03-Feb-20    0    19-Feb-20   03-Feb-20    -16   26-Feb-20  
-23887 13989     JD2+1X     31MA0011   15-Jan-20   11-Feb-20    0    18-Feb-20   11-Feb-20    -7    25-Feb-20  
-23888 14025   55HDG3X HS   3XMA0011   20-Jan-20   13-Feb-20    0    19-Feb-20   13-Feb-20    -6    26-Feb-20  
-24686 14374    48LB4X A    69NM1132   19-Oct-20   17-Nov-20   -43   24-Nov-20   29-Nov-20     5    01-Dec-20  
-24687 14375    48LB4X A    60NM1132   06-Nov-20   01-Dec-20   -43   23-Apr-21   13-Jan-21   -100   30-Apr-21  
-24688 14376    48LB4X A    62NM1132   16-Nov-20   14-Dec-20   -46   15-Jan-21   20-Jan-21     5    22-Jan-21  
-25289 14585    48LB4X A     9200006   01-Apr-21   26-Apr-21   -96   22-Jan-21   28-Apr-21    96    29-Jan-21  
-25290 14586    48LB4X A     9200003   15-Apr-21   07-May-21   -91       -       12-May-21     -    14-May-21  
-25291 14587    48LB4X A     9200004   27-Apr-21   19-May-21   -84       -       24-May-21     -    27-May-21  
-25292 14588    48LB4X A     9200005   10-May-21   01-Jun-21   -78       -       06-Jun-21     -    08-Jun-21  
-
-EOF
-
-
-	Dealer Delivery Report for << BWS US Direct >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25335 14650   25ART   37NA0012   30-Mar-21   22-Apr-21   -38   22-Apr-21   27-Apr-21   5   29-Apr-21  
-25010 14601   25ART   37NA0011   15-Mar-21   07-Apr-21    -8   31-Mar-21   03-Apr-21   3   08-Apr-21  
-25316 14602   25ART   39NA0011   17-Mar-21   09-Apr-21    -8   01-Apr-21   03-Apr-21   2   09-Apr-21  
-25317 14603   25ART   30NA0011   24-Mar-21   16-Apr-21   -11   01-Apr-21   05-Apr-21   4   09-Apr-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Clarks Truck >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P    Avail.     Est. Del.    F    New Del.  
-25522 14796   25ART   3XNA0013   17-Jun-21   13-Jul-21   0       -       18-Jul-21   -   20-Jul-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Demountable Concepts Inc >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#          Model         Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-24924 14392   53VT2V FL CA-53   23MA0014   03-Nov-20   02-Dec-20    -1   11-Dec-20   11-Dec-20    0   18-Dec-20  
-24925 14393   53VT2V FL CA-53   25MA0014   05-Nov-20   07-Dec-20    -6   09-Dec-20   09-Dec-20    0   16-Dec-20  
-24926 14394   53VT2V FL CA-53   27MA0014   09-Nov-20   02-Dec-20    -1   18-Dec-20   18-Dec-20    0   25-Dec-20  
-24927 14395   53VT2V FL CA-53   29MA0014   10-Nov-20   03-Dec-20    -2   21-Dec-20   21-Dec-20    0   28-Dec-20  
-24928 14396   53VT2V FL CA-53   20MA0014   12-Nov-20   04-Dec-20    -3   23-Dec-20   23-Dec-20    0   30-Dec-20  
-24929 14397   53VT2V FL CA-53   22MA0014   16-Nov-20   08-Dec-20    -7   04-Jan-21   04-Jan-21    0   11-Jan-21  
-25145 14464      53VT2V DCI     20NA0010   17-Mar-21   09-Apr-21   -84   30-Mar-21   05-Apr-21    6   07-Apr-21  
-25146 14465      53VT2V DCI     22NA0010   19-Mar-21   13-Apr-21   -88   01-Apr-21   06-Apr-21    5   09-Apr-21  
-25147 14466      53VT2V DCI     24NA0010   23-Mar-21   15-Apr-21   -90   06-Apr-21   11-Apr-21    5   13-Apr-21  
-25200 14554      53VT2V DCI     20NA0011   10-Feb-21   05-Mar-21   -49   04-Mar-21   26-Feb-21   -6   11-Mar-21  
-25201 14555      53VT2V DCI     22NA0011   11-Feb-21   08-Mar-21   -52       -       11-Mar-21    -   15-Mar-21  
-25054 14433   53VT2V FL CA-97   22NA0010   10-Dec-20   12-Jan-21    3    11-Jan-21   12-Jan-21    1   18-Jan-21  
-25055 14434   53VT2V FL CA-97   24NA0010   14-Dec-20   14-Jan-21    1    12-Jan-21   14-Jan-21    2   19-Jan-21  
-25056 14435   53VT2V FL CA-97   26NA0010   16-Dec-20   18-Jan-21    -3   14-Jan-21   18-Jan-21    4   21-Jan-21  
-25057 14436   53VT2V FL CA-97   28NA0010   18-Dec-20   20-Jan-21    -5   15-Jan-21   20-Jan-21    5   22-Jan-21  
-25190 14556        10GT1X       17NA0011   02-Mar-21   24-Mar-21    -9   18-Mar-21   23-Mar-21    5   25-Mar-21  
-25506 14692      53VT2V DCI     23NA0012   05-May-21   27-May-21   -57       -       01-Jun-21    -   03-Jun-21  
-25507 14693      53VT2V DCI     25NA0012   07-May-21   31-May-21   -61       -       05-Jun-21    -   07-Jun-21  
-25508 14694      53VT2V DCI     27NA0012   11-May-21   02-Jun-21   -63       -       07-Jun-21    -   09-Jun-21  
-25509 14695      53VT2V DCI     29NA0012   13-May-21   04-Jun-21   -65       -       09-Jun-21    -   11-Jun-21  
-25510 14696    53VT2V JB HUNT   20NA0012   17-May-21   08-Jun-21   -69       -       13-Jun-21    -   15-Jun-21  
-25511 14697    53VT2V JB HUNT   22NA0012   19-May-21   10-Jun-21   -71       -       15-Jun-21    -   17-Jun-21  
-25732 14834      53VT2V DCI     27NA0013   09-Jul-21   09-Aug-21   -55       -       14-Aug-21    -   16-Aug-21  
-25733 14835      53VT2V DCI     29NA0013   13-Jul-21   11-Aug-21   -57       -       16-Aug-21    -   18-Aug-21  
-25734 14836      53VT2V DCI     20NA0013   15-Jul-21   13-Aug-21   -59       -       18-Aug-21    -   20-Aug-21  
-25735 14837      53VT2V DCI     22NA0013   19-Jul-21   17-Aug-21   -63       -       23-Aug-21    -   24-Aug-21  
-25719 14829        10GT1X       17NA0013   25-Jun-21   21-Jul-21    5        -       26-Jul-21    -   28-Jul-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Department of Transportation >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25125 14482   2313NB     22630    18-Feb-21   12-Mar-21   -8   09-Mar-21   10-Mar-21   1   16-Mar-21  
-25126 14505   2313NB     22631    19-Feb-21   15-Mar-21   -7   10-Mar-21   11-Mar-21   1   17-Mar-21  
-25127 14506   2313NB     22632    22-Feb-21   16-Mar-21   -7   12-Mar-21   12-Mar-21   0   19-Mar-21  
-25131 14510   2313NB     22636    26-Feb-21   22-Mar-21   -7   19-Mar-21   19-Mar-21   0   26-Mar-21  
-25132 14511   2313NB     22637    01-Mar-21   23-Mar-21   -6   22-Mar-21   22-Mar-21   0   29-Mar-21  
-25133 14512   2313NB     22638    02-Mar-21   24-Mar-21   -6   23-Mar-21   24-Mar-21   1   30-Mar-21  
-25134 14513   2313NB     22639    03-Mar-21   25-Mar-21   -6   24-Mar-21   25-Mar-21   1   31-Mar-21  
-25135 14514   2313NB     22640    04-Mar-21   26-Mar-21   -4   26-Mar-21   26-Mar-21   0   05-Apr-21  
-25136 14515   2313NB     22641    05-Mar-21   29-Mar-21   -6   29-Mar-21   01-Apr-21   3   06-Apr-21  
-25137 14516   2313NB     22642    08-Mar-21   30-Mar-21   -6   30-Mar-21   01-Apr-21   2   07-Apr-21  
-25138 14517   2313NB     22643    09-Mar-21   31-Mar-21   -5   31-Mar-21   31-Mar-21   0   08-Apr-21  
-25139 14518   2313NB     22644    10-Mar-21   01-Apr-21   -3   01-Apr-21   01-Apr-21   0   09-Apr-21  
-
-EOF
-
-
-	Dealer Delivery Report for << DH Agro Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P      Avail.     Est. Del.      F      New Del.  
-21771 11675    LP14    9100070   03-Jul-15   27-Jul-15  2,045  14-Aug-15   21-Mar-03    -4,529   21-Aug-15  
-25213 14887    LP18    9100103   05-Jul-21   27-Jul-21    -4       -       30-Jul-21      -      10-Aug-21  
-25688 14888    LP18    9100104   09-Jul-21   09-Aug-21   -12       -       13-Aug-21      -      16-Aug-21  
-25695 14895    LP18    9100111   11-Aug-21   02-Sep-21    6        -       09-Sep-21      -      10-Sep-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Diamond International Trucks Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#        Model       Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-23637 14540      48ET3X     W33NA001   09-Mar-21   31-Mar-21   -16   09-Apr-21   05-Apr-21   -4  16-Apr-21  
-23895 14557      48ET3X     W30NA001   11-Mar-21   05-Apr-21   -20   14-Apr-21   05-Apr-21   -9  21-Apr-21  
-25264 14599      25NTT      36NA0011   11-Mar-21   05-Apr-21    -5   29-Mar-21   29-Mar-21   0   06-Apr-21  
-25499 14806    37LBT3X W    32NA0012   27-May-21   18-Jun-21    -9       -       23-Jun-21   -   25-Jun-21  
-25500 14805    27LBT2X W    2XNA0012   25-May-21   16-Jun-21    -5       -       21-Jun-21   -   23-Jun-21  
-24909 14785   53HD3X 2018   33NA0013   16-Jun-21   12-Jul-21   -19       -       12-Jul-21   -   19-Jul-21  
-25560 14822   53HF3X 2018   36NA0013   02-Jun-21   24-Jun-21    1        -       30-Jun-21   -   05-Jul-21  
-25640 14789      48ET3X     W39NA001   17-Jun-21   13-Jul-21   -13       -       13-Jul-21   -   20-Jul-21  
-25646 14823   53HF3X 2018   38NA0013   04-Jun-21   28-Jun-21    2        -       05-Jul-21   -   07-Jul-21  
-25641 14790      48ET3X     W30NA001   21-Jun-21   15-Jul-21   -10       -       19-Jul-21   -   22-Jul-21  
-25475 14795      25ANR      30NA0013   11-Jun-21   07-Jul-21    -1       -       11-Jul-21   -   14-Jul-21  
-25557 14792     53ET3XP     36NA0013   25-Jun-21   21-Jul-21   -14       -       21-Jul-21   -   28-Jul-21  
-25644 14793     53ET3XP     38NA0013   29-Jun-21   23-Jul-21   -14       -       26-Jul-21   -   30-Jul-21  
-25555 14791      48ET3X     W37NA001   18-Jun-21   13-Jul-21    0        -       18-Jul-21   -   20-Jul-21  
-25556 14825      53ET3X     36NA0013   22-Jun-21   15-Jul-21    -2       -       20-Jul-21   -   22-Jul-21  
-25642 14827      53ET3X     32NA0013   05-Jul-21   27-Jul-21   -12       -       27-Jul-21   -   10-Aug-21  
-25652 14828      53ET3X     36NA0013   28-Jun-21   22-Jul-21    -3       -       27-Jul-21   -   29-Jul-21  
-25558 14832     53ET3XP     3XNA0013   07-Jul-21   29-Jul-21   -10       -       09-Aug-21   -   12-Aug-21  
-25643 14826      53ET3X     34NA0013   24-Jun-21   19-Jul-21    1        -       24-Jul-21   -   26-Jul-21  
-25645 14833     53ET3XP     31NA0013   09-Jul-21   09-Aug-21   -19       -       09-Aug-21   -   16-Aug-21  
-25675 14899      48ET3X     W30NA001   06-Jul-21   28-Jul-21    -2       -       09-Aug-21   -   11-Aug-21  
-25105 14849      20ART      25NA0014   05-Jul-21   27-Jul-21    20       -       30-Aug-21   -   10-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Fleet Maintenance Inc >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp        P      Avail.     Est. Del.    F    New Del.  
-24342 14164   25ANR   39MA0012   21-Dec-20   21-Jan-21   -202   13-Jan-21   19-Jan-21   6   20-Jan-21  
-24341 14163   25ANR   37MA0012   17-Dec-20   19-Jan-21    55    08-Jan-21   08-Jan-21   0   15-Jan-21  
-25749 14870   25ART   32NA0014   28-Jul-21   26-Aug-21    -1        -       30-Aug-21   -   02-Sep-21  
-25750 14871   25ART   34NA0014   30-Jul-21   30-Aug-21    -3        -       01-Sep-21   -   07-Sep-21  
-25746 14862   20NTT   24NA0013   12-Jul-21   10-Aug-21    27        -       06-Sep-21   -   17-Aug-21  
-25747 14863   20NTT   26NA0013   14-Jul-21   12-Aug-21    27        -       08-Sep-21   -   19-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Fort Garry Industries Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model     Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25349 14651   53ET3XP   38NA0012   20-Apr-21   12-May-21   -21   05-May-21   10-May-21   5   12-May-21  
-25605 14722    25ANR    3XNA0013   19-Apr-21   11-May-21    -4       -       16-May-21   -   18-May-21  
-25609 14723    25ANR    31NA0013   26-Apr-21   18-May-21    -7       -       18-May-21   -   26-May-21  
-25397 14655    25ANR    35NA0012   28-Apr-21   20-May-21    -3       -       24-May-21   -   28-May-21  
-25399 14724    53ET3X   35NA0012   14-May-21   07-Jun-21   -21       -       07-Jun-21   -   14-Jun-21  
-25547 14738    48ET3X   W38NA001   18-May-21   09-Jun-21   -22       -       09-Jun-21   -   16-Jun-21  
-25617 14731    25ANR    31NA0013   30-Apr-21   24-May-21    -5       -       24-May-21   -   31-May-21  
-25433 14783   53ET3XP   37NA0013   10-Jun-21   06-Jul-21   -14       -       05-Jul-21   -   13-Jul-21  
-25703 14784   53ET3XP   35NA0013   14-Jun-21   08-Jul-21   -14       -       05-Jul-21   -   15-Jul-21  
-25634 14786    25ANR    30NA0013   07-Jun-21   29-Jun-21    0        -       05-Jul-21   -   08-Jul-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Hale Trailer Brake & Wheel >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25210 14561   25NTT   35NA0011   01-Apr-21   26-Apr-21   -59   20-Apr-21   26-Apr-21   6   27-Apr-21  
-25212 14563   25NTT   39NA0011   07-Apr-21   29-Apr-21   -34   30-Apr-21   03-May-21   3   07-May-21  
-25371 14652   30ART   30NA0012   01-Apr-21   26-Apr-21    -4   21-Apr-21   27-Apr-21   6   28-Apr-21  
-25448 14702   20NTT   2XNA0012   29-Apr-21   21-May-21    -7       -       28-May-21   -   31-May-21  
-25449 14703   20NTT   28NA0012   03-May-21   25-May-21    -7       -       25-May-21   -   01-Jun-21  
-25528 14745   30NTT   33NA0012   19-May-21   10-Jun-21    -1       -       15-Jun-21   -   17-Jun-21  
-25525 14747   30ANR   30NA0012   21-May-21   14-Jun-21    -4       -       19-Jun-21   -   21-Jun-21  
-25532 14746   30NTT   37NA0012   21-May-21   14-Jun-21    -3       -       19-Jun-21   -   21-Jun-21  
-25527 14748   30ANR   39NA0012   26-May-21   17-Jun-21    -3       -       22-Jun-21   -   24-Jun-21  
-
-EOF
-
-
-	Dealer Delivery Report for << I-29 Trailer Sales Inc >>
+	Dealer Delivery Report for << Reports/BWS CDN Direct >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -225,17 +25,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << M & K Trailer Center of Grand Rapids LLC >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P    Avail.     Est. Del.    F    New Del.  
-25196 14613    19SB    9200000   25-Jan-21   17-Feb-21   0       -       22-Feb-21   -   24-Feb-21  
-25202 14614    19SB    9200001   29-Jan-21   23-Feb-21   0       -       26-Feb-21   -   02-Mar-21  
-
-EOF
-
-
-	Dealer Delivery Report for << McCorkle Sales Inc >>
+	Dealer Delivery Report for << Reports/BWS Manufacturing Ltd >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -243,93 +33,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << NorthEast >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#             Model           Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-24829 14377           20ART          21MA0014   01-Dec-20   23-Dec-20    12   11-Dec-20   15-Dec-20   4   18-Dec-20  
-24950 14406           20ANR          24NA0010   15-Dec-20   15-Jan-21    -1   05-Feb-21   08-Feb-21   3   12-Feb-21  
-24931 14402           30ART          33NA0010   09-Dec-20   14-Jan-21    0    22-Jan-21   27-Jan-21   5   29-Jan-21  
-24933 14405           20ANR          22NA0010   11-Dec-20   13-Jan-21    6    26-Jan-21   29-Jan-21   3   02-Feb-21  
-24949 14408           20ART          22NA0010   17-Dec-20   19-Jan-21    6    08-Feb-21   10-Feb-21   2   16-Feb-21  
-25228 14576       27DT2X V2018       27NA0011   04-Feb-21   01-Mar-21    -5   26-Feb-21   03-Mar-21   5   05-Mar-21  
-24533 14637      46LD3X4T V2018      39NA0012   04-Mar-21   26-Mar-21    -2   25-Mar-21   30-Mar-21   5   01-Apr-21  
-25022 14632           30ART          3XNA0012   26-Mar-21   20-Apr-21    -8   15-Apr-21   21-Apr-21   6   22-Apr-21  
-25487 14739   51LF4X5T NB TRI V2016  NA001283   13-Apr-21   05-May-21    -7   05-May-21   11-May-21   6   12-May-21  
-25491 14775      46LD3X4T V2018      3XNA0012   06-May-21   28-May-21    0        -       02-Jun-21   -   04-Jun-21  
-25622 14907         55HDG3X E        38NA0013   07-May-21   31-May-21    0        -       05-Jun-21   -   07-Jun-21  
-25368 14771          53ET3X          36NA0012   31-May-21   22-Jun-21   -14       -       28-Jun-21   -   29-Jun-21  
-25591 14774          55HDG3X         30NA0013   28-Jul-21   26-Aug-21   -73       -       31-Aug-21   -   02-Sep-21  
-25587 14779   51LF4X5T NB TRI V2016  NA001304   31-May-21   22-Jun-21    -1       -       27-Jun-21   -   29-Jun-21  
-25592 14807          55HDG3X         36NA0013   31-May-21   22-Jun-21    0        -       27-Jun-21   -   29-Jun-21  
-25550 14777      51LF4X5T V2018      NA001285   03-Jun-21   25-Jun-21    -1       -       30-Jun-21   -   06-Jul-21  
-25502 14780   51LF4X5T NB TRI V2016  NA001303   07-Jun-21   29-Jun-21    0        -       04-Jul-21   -   08-Jul-21  
-25586 14778      51LF4X5T V2018      NA001302   11-Jun-21   07-Jul-21    -2       -       12-Jul-21   -   14-Jul-21  
-25710 14794           20ANR          23NA0013   15-Jun-21   09-Jul-21    -3       -       14-Jul-21   -   16-Jul-21  
-25650 14773         55HDG3X E        3XNA0013   17-Jun-21   12-Jul-21    -6       -       17-Jul-21   -   19-Jul-21  
-25672 14763           30ANR          3XNA0013   15-Jun-21   09-Jul-21    -1       -       13-Jul-21   -   16-Jul-21  
-25639 14803      46LF3X4T V2018      36NA0013   15-Jun-21   08-Jul-21    0        -       13-Jul-21   -   15-Jul-21  
-25681 14764           30ANR          31NA0013   17-Jun-21   13-Jul-21    -1       -       17-Jul-21   -   20-Jul-21  
-23871 14824          53ET3X          35NA0013   23-Jun-21   19-Jul-21    -6       -       19-Jul-21   -   26-Jul-21  
-25682 14765           30ANR          33NA0013   21-Jun-21   15-Jul-21    -1       -       19-Jul-21   -   22-Jul-21  
-25649 14804      46LF3X4T V2018      38NA0013   22-Jun-21   15-Jul-21    0        -       20-Jul-21   -   22-Jul-21  
-25685 14797           30ART          37NA0013   23-Jun-21   19-Jul-21    -3       -       21-Jul-21   -   26-Jul-21  
-25699 14798           30ART          39NA0013   25-Jun-21   21-Jul-21    -1       -       25-Jul-21   -   28-Jul-21  
-25629 14853      51LD4X5T V2018      42NA0013   30-Jun-21   26-Jul-21    -5       -       31-Jul-21   -   09-Aug-21  
-25700 14799           30ART          35NA0013   29-Jun-21   23-Jul-21    -1       -       27-Jul-21   -   30-Jul-21  
-25630 14886      51LF4X5T V2018      NA001344   24-Aug-21   16-Sep-21   -56       -       22-Sep-21   -   23-Sep-21  
-25671 14854      51LD4X5T V2018      44NA0013   13-Jul-21   11-Aug-21   -12       -       16-Aug-21   -   18-Aug-21  
-25670 14885      51LF4X5T V2018      NA001345   15-Jul-21   13-Aug-21   -14       -       17-Aug-21   -   20-Aug-21  
-25680 14883          37DT3X          32NA0013   12-Jul-21   04-Aug-21    0        -       09-Aug-21   -   13-Aug-21  
-25673 14884          37DT3X          30NA0013   14-Jul-21   06-Aug-21    0        -       11-Aug-21   -   13-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Northeast Truck & Trailer Sales >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#             Model           Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-24829 14377           20ART          21MA0014   01-Dec-20   23-Dec-20    12   11-Dec-20   15-Dec-20   4   18-Dec-20  
-24950 14406           20ANR          24NA0010   15-Dec-20   15-Jan-21    -1   05-Feb-21   08-Feb-21   3   12-Feb-21  
-24931 14402           30ART          33NA0010   09-Dec-20   14-Jan-21    0    22-Jan-21   27-Jan-21   5   29-Jan-21  
-24933 14405           20ANR          22NA0010   11-Dec-20   13-Jan-21    6    26-Jan-21   29-Jan-21   3   02-Feb-21  
-24949 14408           20ART          22NA0010   17-Dec-20   19-Jan-21    6    08-Feb-21   10-Feb-21   2   16-Feb-21  
-25228 14576       27DT2X V2018       27NA0011   04-Feb-21   01-Mar-21    -5   26-Feb-21   03-Mar-21   5   05-Mar-21  
-24533 14637      46LD3X4T V2018      39NA0012   04-Mar-21   26-Mar-21    -2   25-Mar-21   30-Mar-21   5   01-Apr-21  
-25022 14632           30ART          3XNA0012   26-Mar-21   20-Apr-21    -8   15-Apr-21   21-Apr-21   6   22-Apr-21  
-25487 14739   51LF4X5T NB TRI V2016  NA001283   13-Apr-21   05-May-21    -7   05-May-21   11-May-21   6   12-May-21  
-25491 14775      46LD3X4T V2018      3XNA0012   06-May-21   28-May-21    0        -       02-Jun-21   -   04-Jun-21  
-25622 14907         55HDG3X E        38NA0013   07-May-21   31-May-21    0        -       05-Jun-21   -   07-Jun-21  
-25368 14771          53ET3X          36NA0012   31-May-21   22-Jun-21   -14       -       28-Jun-21   -   29-Jun-21  
-25591 14774          55HDG3X         30NA0013   28-Jul-21   26-Aug-21   -73       -       31-Aug-21   -   02-Sep-21  
-25587 14779   51LF4X5T NB TRI V2016  NA001304   31-May-21   22-Jun-21    -1       -       27-Jun-21   -   29-Jun-21  
-25592 14807          55HDG3X         36NA0013   31-May-21   22-Jun-21    0        -       27-Jun-21   -   29-Jun-21  
-25550 14777      51LF4X5T V2018      NA001285   03-Jun-21   25-Jun-21    -1       -       30-Jun-21   -   06-Jul-21  
-25502 14780   51LF4X5T NB TRI V2016  NA001303   07-Jun-21   29-Jun-21    0        -       04-Jul-21   -   08-Jul-21  
-25586 14778      51LF4X5T V2018      NA001302   11-Jun-21   07-Jul-21    -2       -       12-Jul-21   -   14-Jul-21  
-25710 14794           20ANR          23NA0013   15-Jun-21   09-Jul-21    -3       -       14-Jul-21   -   16-Jul-21  
-25650 14773         55HDG3X E        3XNA0013   17-Jun-21   13-Jul-21    -7       -       17-Jul-21   -   20-Jul-21  
-25672 14763           30ANR          3XNA0013   15-Jun-21   09-Jul-21    -1       -       13-Jul-21   -   16-Jul-21  
-25639 14803      46LF3X4T V2018      36NA0013   15-Jun-21   08-Jul-21    0        -       13-Jul-21   -   15-Jul-21  
-25681 14764           30ANR          31NA0013   17-Jun-21   13-Jul-21    -1       -       17-Jul-21   -   20-Jul-21  
-23871 14824          53ET3X          35NA0013   23-Jun-21   19-Jul-21    -6       -       19-Jul-21   -   26-Jul-21  
-25682 14765           30ANR          33NA0013   21-Jun-21   15-Jul-21    -1       -       19-Jul-21   -   22-Jul-21  
-25649 14804      46LF3X4T V2018      38NA0013   22-Jun-21   15-Jul-21    0        -       20-Jul-21   -   22-Jul-21  
-25685 14797           30ART          37NA0013   23-Jun-21   19-Jul-21    -3       -       21-Jul-21   -   26-Jul-21  
-25699 14798           30ART          39NA0013   25-Jun-21   21-Jul-21    -1       -       25-Jul-21   -   28-Jul-21  
-25629 14853      51LD4X5T V2018      42NA0013   30-Jun-21   26-Jul-21    -5       -       31-Jul-21   -   09-Aug-21  
-25700 14799           30ART          35NA0013   29-Jun-21   23-Jul-21    -1       -       27-Jul-21   -   30-Jul-21  
-25630 14886      51LF4X5T V2018      NA001344   24-Aug-21   16-Sep-21   -56       -       22-Sep-21   -   23-Sep-21  
-25671 14854      51LD4X5T V2018      44NA0013   13-Jul-21   11-Aug-21   -12       -       16-Aug-21   -   18-Aug-21  
-25670 14885      51LF4X5T V2018      NA001345   15-Jul-21   13-Aug-21   -14       -       17-Aug-21   -   20-Aug-21  
-25680 14883          37DT3X          32NA0013   12-Jul-21   10-Aug-21    -6       -       09-Aug-21   -   17-Aug-21  
-25673 14884          37DT3X          30NA0013   14-Jul-21   12-Aug-21    -6       -       11-Aug-21   -   19-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Premier Technology Inc >>
+	Dealer Delivery Report for << Reports/BWS US Direct >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -337,196 +41,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << Redhead Equipment Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#        Model       Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25429 14715      25ANR      35NA0012   17-May-21   08-Jun-21    -8       -       13-Jun-21   -   15-Jun-21  
-25483 14716      25ANR      31NA0012   19-May-21   10-Jun-21   -10       -       15-Jun-21   -   17-Jun-21  
-25430 14709      25ART      33NA0012   13-May-21   04-Jun-21    -4       -       09-Jun-21   -   11-Jun-21  
-25484 14708      25ART      35NA0012   11-May-21   02-Jun-21    -2       -       07-Jun-21   -   09-Jun-21  
-25428 14704   51LF3X3T SK   NA001263   28-Apr-21   20-May-21    11       -       25-May-21   -   28-May-21  
-25485 14705   51LF3X3T SK   NA001264   03-May-21   25-May-21    6        -       30-May-21   -   01-Jun-21  
-25288 14770     53ET3XP     31NA0012   08-Jun-21   30-Jun-21   -30       -       29-Jun-21   -   09-Jul-21  
-25808 14904     53ET3XP     35NA0014   31-Aug-21   23-Sep-21    -2       -       28-Sep-21   -   30-Sep-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Remorques Lewis >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#          Model        Serial #     Prod.       Mrp        P      Avail.     Est. Del.    F    New Del.  
-24523 14230       55HDG3X      30MA0013   02-Sep-20   01-Oct-20    -37   05-Oct-20   10-Oct-20    5   12-Oct-20  
-24860 14631       53ET4XP      49NA0011   25-Feb-21   19-Mar-21    -32   16-Mar-21   21-Mar-21    5   23-Mar-21  
-25235 14598        25NTT       38NA0011   09-Mar-21   31-Mar-21    -30   22-Mar-21   27-Mar-21    5   29-Mar-21  
-25266 14593       55FA  B      1XNA0011   03-Feb-21   26-Feb-21     3    01-Mar-21   03-Mar-21    2   08-Mar-21  
-25069 14443        25NTT       30NA0010   09-Jun-21   05-Jul-21   -112       -       10-Jul-21    -   12-Jul-21  
-24671 14535    32DT3X V2018    39NA0010   16-Mar-21   08-Apr-21    -24   31-Mar-21   03-Apr-21    3   08-Apr-21  
-24675 14536    32DT3X V2018    36NA0010   01-Mar-21   23-Mar-21    -8    17-Mar-21   22-Mar-21    5   24-Mar-21  
-24977 14532       53ET3X       31NA0010   03-Mar-21   25-Mar-21    -10   22-Mar-21   27-Mar-21    5   29-Mar-21  
-25071 14529   53ET3X MR EAST   31NA0010   01-Mar-21   23-Mar-21    -8    18-Mar-21   23-Mar-21    5   25-Mar-21  
-25072 14450       53ET4X       47NA0010   05-Mar-21   29-Mar-21    -14   23-Mar-21   29-Mar-21    6   30-Mar-21  
-25251 14595      53ET4X MR     48NA0011   15-Mar-21   07-Apr-21    -23   16-Apr-21   06-Apr-21   -10  23-Apr-21  
-25252 14596      53ET4X MR     4XNA0011   24-Mar-21   16-Apr-21    -32   20-Apr-21   11-Apr-21   -9   27-Apr-21  
-25326 14623        25NTT       35NA0012   08-Mar-21   30-Mar-21     0    20-Apr-21   11-Apr-21   -9   27-Apr-21  
-25340 14624        25NTT       37NA0012   10-Mar-21   01-Apr-21    -2    12-Apr-21   13-Apr-21    1   19-Apr-21  
-25341 14625        25NTT       39NA0012   12-Mar-21   06-Apr-21    -7    14-Apr-21   18-Apr-21    4   21-Apr-21  
-25380 14661        25NTT       34NA0012   09-Jun-21   02-Jul-21    -94       -       07-Jul-21    -   09-Jul-21  
-25381 14666        25NTT       36NA0012   23-Apr-21   17-May-21    -48       -       24-May-21    -   25-May-21  
-25383 14626        25NTT       3XNA0012   16-Mar-21   08-Apr-21    -9    15-Apr-21   20-Apr-21    5   22-Apr-21  
-25179 14684     35MD2X EXT     NA001206   10-Mar-21   01-Apr-21    -2    08-Apr-21   06-Apr-21   -2   15-Apr-21  
-25342 14622       53ET3X       32NA0012   22-Apr-21   14-May-21    -45       -       12-May-21    -   21-May-21  
-25376 14674       53ET3X       39NA0012   10-May-21   01-Jun-21    -63       -       31-May-21    -   08-Jun-21  
-25379 14673       53ET3X       34NA0012   06-May-21   28-May-21    -59       -       26-May-21    -   04-Jun-21  
-25378 14689   53ET3X MR EAST   32NA0012   12-May-21   03-Jun-21    -65       -       02-Jun-21    -   10-Jun-21  
-25618 14762        25NTT       38NA0013   27-Apr-21   19-May-21    -48       -       26-May-21    -   27-May-21  
-25456 14720    27DT2X V2018    22NA0013   23-Mar-21   15-Apr-21    -14   07-Apr-21   10-Apr-21    3   14-Apr-21  
-24960 14547        20NTT       29NA0011   26-Mar-21   20-Apr-21    -5    07-Apr-21   12-Apr-21    5   14-Apr-21  
-25170 14548        25NTT       36NA0011   19-Mar-21   13-Apr-21     2    06-Apr-21   07-Apr-21    1   13-Apr-21  
-25171 14549        25NTT       38NA0011   23-Mar-21   15-Apr-21     0    07-Apr-21   11-Apr-21    4   14-Apr-21  
-25172 14550        25NTT       3XNA0011   25-Mar-21   19-Apr-21    -4    23-Apr-21   24-Apr-21    1   30-Apr-21  
-25173 14551        25NTT       31NA0011   29-Mar-21   21-Apr-21    -6    27-Apr-21   26-Apr-21   -1   04-May-21  
-24841 14528    27DT2X V2018    22NA0010   18-Mar-21   12-Apr-21     3    05-Apr-21   05-Apr-21    0   12-Apr-21  
-24844 14527    27DT2X V2018    20NA0010   30-Jun-21   26-Jul-21   -102       -       31-Jul-21    -   09-Aug-21  
-24670 14537    32DT3X V2018    37NA0010   03-Mar-21   25-Mar-21    21    19-Mar-21   24-Mar-21    5   26-Mar-21  
-24673 14538    32DT3X V2018    32NA0010   05-Mar-21   29-Mar-21    17    23-Mar-21   28-Mar-21    5   30-Mar-21  
-24674 14544    32DT3X V2018    34NA0010   09-Mar-21   31-Mar-21    15    29-Mar-21   30-Mar-21    1   06-Apr-21  
-24983 14558       53ET4X       43NA0011   30-Mar-21   22-Apr-21    -7    22-Apr-21   20-Apr-21   -2   29-Apr-21  
-25168 14521      53ET4X MR     41NA0011   25-Mar-21   19-Apr-21    -4    16-Apr-21   18-Apr-21    2   23-Apr-21  
-25415 14672      55HDG3X E     38NA0012   30-Apr-21   24-May-21    -39       -       29-May-21    -   31-May-21  
-25311 14719        25NTT       31NA0013   03-May-21   25-May-21    -33       -       30-May-21    -   01-Jun-21  
-25548 14721        30NTT       3XNA0013   09-Apr-21   03-May-21    -7    03-May-21   03-May-21    0   10-May-21  
-25488 14740        25NTT       30NA0012   29-Apr-21   21-May-21    -20       -       26-May-21    -   31-May-21  
-25344 14766       53ET3XP      39NA0012   28-Apr-21   20-May-21    -19       -       25-May-21    -   28-May-21  
-25590 14735        20NTT       25NA0013   05-Apr-21   27-Apr-21    18    28-Apr-21   02-May-21    4   05-May-21  
-25246 14659        25NTT       33NA0011   11-Jun-21   07-Jul-21    -53       -       12-Jul-21    -   14-Jul-21  
-24842 14667    27DT2X V2018    20NA0010   08-Apr-21   30-Apr-21    15    29-Apr-21   05-May-21    6   06-May-21  
-25250 14615      35MD2X53      23NA0011   14-Jun-21   08-Jul-21    -54       -       13-Jul-21    -   15-Jul-21  
-25243 14663       53ET4X       40NA0011   04-May-21   26-May-21    -11       -       24-May-21    -   02-Jun-21  
-25417 14671      55HDG3X E     33NA0012   26-Apr-21   18-May-21    -3        -       22-May-21    -   26-May-21  
-25307 14707        20NTT       32NA0011   07-May-21   31-May-21     1        -       05-Jun-21    -   07-Jun-21  
-25308 14710        20NTT       2XNA0011   12-May-21   03-Jun-21    -2        -       07-Jun-21    -   10-Jun-21  
-25305 14706        25NTT       34NA0011   07-Jun-21   29-Jun-21    -28       -       04-Jul-21    -   08-Jul-21  
-25301 14768   53ET3X MR EAST   39NA0011   10-Aug-21   01-Sep-21    -92       -       06-Sep-21    -   09-Sep-21  
-25302 14769      53ET4X MR     4XNA0011   27-May-21   18-Jun-21    -17       -       19-Jun-21    -   25-Jun-21  
-25303 14712       53HD4X       4XNA0011   02-Jun-21   24-Jun-21    -23       -       23-Jun-21    -   05-Jul-21  
-25536 14741        25NTT       35NA0013   13-May-21   04-Jun-21    -1        -       09-Jun-21    -   11-Jun-21  
-25588 14742        25NTT       34NA0013   17-May-21   08-Jun-21    -1        -       13-Jun-21    -   15-Jun-21  
-25636 14781        25ANR       30NA0013   05-May-21   27-May-21    16        -       01-Jun-21    -   03-Jun-21  
-24838 14687    27DT2X V2018    22NA0010   14-May-21   07-Jun-21     8        -       12-Jun-21    -   14-Jun-21  
-24839 14688    27DT2X V2018    24NA0010   18-May-21   09-Jun-21     6        -       14-Jun-21    -   16-Jun-21  
-24847 14546    32DT3X V2018    37NA0010   25-May-21   16-Jun-21    -1        -       21-Jun-21    -   23-Jun-21  
-24848 14545    32DT3X V2018    39NA0010   20-May-21   11-Jun-21     4        -       16-Jun-21    -   18-Jun-21  
-25647 14811       48HF2X       23NA0013   25-May-21   16-Jun-21    23        -       15-Jun-21    -   23-Jun-21  
-24840 14852    27DT2X V2018    28NA0010   08-Jul-21   30-Jul-21    16        -       04-Aug-21    -   13-Aug-21  
-24845 14851    27DT2X V2018    26NA0010   06-Jul-21   28-Jul-21    18        -       02-Aug-21    -   11-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Remorques Lewis Inc >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#          Model        Serial #     Prod.       Mrp        P      Avail.     Est. Del.    F    New Del.  
-24523 14230       55HDG3X      30MA0013   02-Sep-20   01-Oct-20    -37   05-Oct-20   10-Oct-20   5   12-Oct-20  
-24876 14437       53ET4X       48NA0010   06-Jan-21   28-Jan-21    -13   10-Feb-21   12-Feb-21   2   18-Feb-21  
-24860 14631       53ET4XP      49NA0011   25-Feb-21   19-Mar-21    -32   16-Mar-21   21-Mar-21   5   23-Mar-21  
-25235 14598        25NTT       38NA0011   09-Mar-21   31-Mar-21    -30   22-Mar-21   27-Mar-21   5   29-Mar-21  
-25266 14593       55FA  B      1XNA0011   03-Feb-21   26-Feb-21     3    01-Mar-21   03-Mar-21   2   08-Mar-21  
-25069 14443        25NTT       30NA0010   09-Jun-21   05-Jul-21   -112       -       10-Jul-21   -   12-Jul-21  
-24671 14535    32DT3X V2018    39NA0010   16-Mar-21   08-Apr-21    -24   31-Mar-21   03-Apr-21   3   08-Apr-21  
-24977 14532       53ET3X       31NA0010   03-Mar-21   25-Mar-21    -10   22-Mar-21   27-Mar-21   5   29-Mar-21  
-25072 14450       53ET4X       47NA0010   05-Mar-21   29-Mar-21    -14   23-Mar-21   29-Mar-21   6   30-Mar-21  
-25251 14595      53ET4X MR     48NA0011   15-Mar-21   07-Apr-21    -23   16-Apr-21   21-Apr-21   5   23-Apr-21  
-25252 14596      53ET4X MR     4XNA0011   24-Mar-21   16-Apr-21    -32   20-Apr-21   26-Apr-21   6   27-Apr-21  
-25340 14624        25NTT       37NA0012   10-Mar-21   01-Apr-21    -2    12-Apr-21   13-Apr-21   1   19-Apr-21  
-25341 14625        25NTT       39NA0012   12-Mar-21   06-Apr-21    -7    14-Apr-21   18-Apr-21   4   21-Apr-21  
-25380 14661        25NTT       34NA0012   09-Jun-21   02-Jul-21    -94       -       07-Jul-21   -   09-Jul-21  
-25381 14666        25NTT       36NA0012   23-Apr-21   17-May-21    -48       -       24-May-21   -   25-May-21  
-25383 14626        25NTT       3XNA0012   16-Mar-21   08-Apr-21    -9    15-Apr-21   20-Apr-21   5   22-Apr-21  
-25342 14622       53ET3X       32NA0012   22-Apr-21   14-May-21    -45       -       12-May-21   -   21-May-21  
-25376 14674       53ET3X       39NA0012   10-May-21   01-Jun-21    -63       -       31-May-21   -   08-Jun-21  
-25379 14673       53ET3X       34NA0012   06-May-21   28-May-21    -59       -       26-May-21   -   04-Jun-21  
-25378 14689   53ET3X MR EAST   32NA0012   12-May-21   03-Jun-21    -65       -       02-Jun-21   -   10-Jun-21  
-25618 14762        25NTT       38NA0013   27-Apr-21   19-May-21    -48       -       26-May-21   -   27-May-21  
-24960 14547        20NTT       29NA0011   26-Mar-21   20-Apr-21    -5    07-Apr-21   12-Apr-21   5   14-Apr-21  
-25170 14548        25NTT       36NA0011   19-Mar-21   13-Apr-21     2    06-Apr-21   07-Apr-21   1   13-Apr-21  
-25171 14549        25NTT       38NA0011   23-Mar-21   15-Apr-21     0    07-Apr-21   11-Apr-21   4   14-Apr-21  
-25172 14550        25NTT       3XNA0011   25-Mar-21   19-Apr-21    -4    23-Apr-21   24-Apr-21   1   30-Apr-21  
-25173 14551        25NTT       31NA0011   29-Mar-21   21-Apr-21    -6    27-Apr-21   03-May-21   6   04-May-21  
-24841 14528    27DT2X V2018    22NA0010   18-Mar-21   12-Apr-21     3    05-Apr-21   05-Apr-21   0   12-Apr-21  
-24844 14527    27DT2X V2018    20NA0010   30-Jun-21   26-Jul-21   -102       -       31-Jul-21   -   09-Aug-21  
-24673 14538    32DT3X V2018    32NA0010   05-Mar-21   29-Mar-21    17    23-Mar-21   28-Mar-21   5   30-Mar-21  
-24674 14544    32DT3X V2018    34NA0010   09-Mar-21   31-Mar-21    15    29-Mar-21   30-Mar-21   1   06-Apr-21  
-24983 14558       53ET4X       43NA0011   30-Mar-21   22-Apr-21    -7    22-Apr-21   28-Apr-21   6   29-Apr-21  
-25168 14521      53ET4X MR     41NA0011   25-Mar-21   19-Apr-21    -4    16-Apr-21   18-Apr-21   2   23-Apr-21  
-25415 14672      55HDG3X E     38NA0012   30-Apr-21   24-May-21    -39       -       29-May-21   -   31-May-21  
-25311 14719        25NTT       31NA0013   03-May-21   25-May-21    -33       -       30-May-21   -   01-Jun-21  
-25548 14721        30NTT       3XNA0013   09-Apr-21   03-May-21    -7    03-May-21   03-May-21   0   10-May-21  
-25488 14740        25NTT       30NA0012   29-Apr-21   21-May-21    -20       -       26-May-21   -   31-May-21  
-25344 14766       53ET3XP      39NA0012   28-Apr-21   20-May-21    -19       -       25-May-21   -   28-May-21  
-25590 14735        20NTT       25NA0013   05-Apr-21   27-Apr-21    18    28-Apr-21   02-May-21   4   05-May-21  
-25246 14659        25NTT       33NA0011   11-Jun-21   07-Jul-21    -53       -       12-Jul-21   -   14-Jul-21  
-24842 14667    27DT2X V2018    20NA0010   08-Apr-21   30-Apr-21    15    29-Apr-21   05-May-21   6   06-May-21  
-25250 14615      35MD2X53      23NA0011   14-Jun-21   08-Jul-21    -54       -       13-Jul-21   -   15-Jul-21  
-25243 14663       53ET4X       40NA0011   04-May-21   26-May-21    -11       -       24-May-21   -   02-Jun-21  
-25417 14671      55HDG3X E     33NA0012   26-Apr-21   18-May-21    -3        -       24-May-21   -   26-May-21  
-25307 14707        20NTT       32NA0011   07-May-21   31-May-21     1        -       05-Jun-21   -   07-Jun-21  
-25308 14710        20NTT       2XNA0011   12-May-21   03-Jun-21    -2        -       07-Jun-21   -   10-Jun-21  
-25305 14706        25NTT       34NA0011   07-Jun-21   29-Jun-21    -28       -       04-Jul-21   -   08-Jul-21  
-25301 14768   53ET3X MR EAST   39NA0011   10-Aug-21   01-Sep-21    -92       -       06-Sep-21   -   09-Sep-21  
-25302 14769      53ET4X MR     4XNA0011   27-May-21   18-Jun-21    -17       -       21-Jun-21   -   25-Jun-21  
-25303 14712       53HD4X       4XNA0011   02-Jun-21   24-Jun-21    -23       -       23-Jun-21   -   05-Jul-21  
-25536 14741        25NTT       35NA0013   13-May-21   04-Jun-21    -1        -       09-Jun-21   -   11-Jun-21  
-25588 14742        25NTT       34NA0013   17-May-21   08-Jun-21    -1        -       13-Jun-21   -   15-Jun-21  
-25636 14781        25ANR       30NA0013   05-May-21   27-May-21    16        -       01-Jun-21   -   03-Jun-21  
-24838 14687    27DT2X V2018    22NA0010   14-May-21   07-Jun-21     8        -       12-Jun-21   -   14-Jun-21  
-24839 14688    27DT2X V2018    24NA0010   18-May-21   09-Jun-21     6        -       14-Jun-21   -   16-Jun-21  
-24847 14546    32DT3X V2018    37NA0010   25-May-21   16-Jun-21    -1        -       21-Jun-21   -   23-Jun-21  
-24848 14545    32DT3X V2018    39NA0010   20-May-21   11-Jun-21     4        -       16-Jun-21   -   18-Jun-21  
-25647 14811       48HF2X       23NA0013   25-May-21   16-Jun-21    23        -       15-Jun-21   -   23-Jun-21  
-24840 14852    27DT2X V2018    28NA0010   08-Jul-21   30-Jul-21    16        -       04-Aug-21   -   13-Aug-21  
-24845 14851    27DT2X V2018    26NA0010   06-Jul-21   28-Jul-21    18        -       02-Aug-21   -   11-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << S & S Trailers Sales Inc >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#          Model        Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25459 14677        35FA        15NA0012   04-Mar-21   26-Mar-21   35   05-Apr-21   09-Apr-21   4   12-Apr-21  
-25436 14685   35ADG2X53 AGNR   27NA0012   14-Apr-21   06-May-21    5   05-May-21   11-May-21   6   12-May-21  
-25441 14686   35ADG2X53 AGNR   23NA0012   16-Apr-21   10-May-21    3       -       15-May-21   -   17-May-21  
-25651 14787   35ADG2X51 AGNR   28NA0013   08-Jun-21   30-Jun-21    0       -       05-Jul-21   -   09-Jul-21  
-25676 14788   35ADG2X51 AGNR   25NA0013   10-Jun-21   06-Jul-21   -1       -       11-Jul-21   -   13-Jul-21  
-25837 14902    35ADG2X AGNR    W20NA001   12-Aug-21   03-Sep-21    0       -       10-Sep-21   -   13-Sep-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Schwing Bioset >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#        Model      Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25208 14584   51HD3X CON   34NA0011   22-Jan-21   16-Feb-21   11   11-Feb-21   15-Feb-21   4   19-Feb-21  
-25259 14583   51HD3X CON   36NA0011   03-Feb-21   26-Feb-21    1   24-Feb-21   26-Feb-21   2   03-Mar-21  
-25519 14812   51HD3X CON   31NA0013   01-Jun-21   23-Jun-21   82       -       13-Sep-21   -   30-Jun-21  
-25760 14813   51HD3X CON   38NA0013   07-Jun-21   29-Jun-21   79       -       16-Sep-21   -   08-Jul-21  
-25761 14814   51HD3X CON   3XNA0013   11-Jun-21   07-Jul-21   76       -       21-Sep-21   -   14-Jul-21  
-25762 14815   51HD3X CON   31NA0013   17-Jun-21   13-Jul-21   72       -       23-Sep-21   -   20-Jul-21  
-25763 14816   51HD3X CON   33NA0013   23-Jun-21   19-Jul-21   70       -       27-Sep-21   -   26-Jul-21  
-25764 14817   51HD3X CON   35NA0013   29-Jun-21   23-Jul-21   68       -       29-Sep-21   -   30-Jul-21  
-25765 14818   51HD3X CON   37NA0013   08-Jul-21   30-Jul-21   63       -       01-Oct-21   -   13-Aug-21  
-25766 14819   51HD3X CON   39NA0013   14-Jul-21   12-Aug-21   54       -       05-Oct-21   -   19-Aug-21  
-25767 14820   51HD3X CON   30NA0013   20-Jul-21   18-Aug-21   50       -       07-Oct-21   -   25-Aug-21  
-25768 14821   51HD3X CON   32NA0013   26-Jul-21   24-Aug-21   48       -       12-Oct-21   -   31-Aug-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Semi Trailer Sales >>
+	Dealer Delivery Report for << Reports/Clarks Truck >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -534,19 +49,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << Stargate Mgf (2020) Ltd >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#       Model      Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25090 14500   Pony 3X17     9194     30-Mar-21   22-Apr-21   -21   20-Apr-21   26-Apr-21   6   27-Apr-21  
-25091 14501   Pony 3X17     9400     14-Apr-21   06-May-21   -35       -       04-May-21   -   13-May-21  
-25385 14628   Pony 3X17     9410     14-Apr-21   06-May-21   -23       -       07-May-21   -   13-May-21  
-25818 14810      CD1X     79 Dolly   29-Apr-21   21-May-21    0        -       28-May-21   -   31-May-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Summit Trailer Ltd >>
+	Dealer Delivery Report for << Reports/Demountable Concepts Inc >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -554,7 +57,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << TEC Equipment Inc >>
+	Dealer Delivery Report for << Reports/Department of Transportation >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -562,90 +65,183 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << Trailers Plus >>
+	Dealer Delivery Report for << Reports/DH Agro Ltd >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25446 14713   30ART   32NA0012   14-May-21   07-Jun-21    -3       -       09-Jun-21   -   14-Jun-21  
-25445 14701   30NTT   32NA0012   11-May-21   02-Jun-21    2        -       07-Jun-21   -   09-Jun-21  
-25451 14699   30NTT   34NA0012   22-Apr-21   14-May-21    25       -       19-May-21   -   21-May-21  
-25447 14725   30ART   30NA0012   20-Apr-21   12-May-21    28       -       17-May-21   -   19-May-21  
-25452 14700   30NTT   36NA0012   26-Apr-21   18-May-21    22       -       23-May-21   -   26-May-21  
-25450 14714   30ART   34NA0012   18-May-21   09-Jun-21    2        -       14-Jun-21   -   16-Jun-21  
-25561 14754   30NTT   36NA0012   01-Jun-21   23-Jun-21    -5       -       28-Jun-21   -   30-Jun-21  
-25565 14755   30NTT   38NA0012   03-Jun-21   25-Jun-21    -3       -       30-Jun-21   -   06-Jul-21  
-25566 14756   30NTT   3XNA0012   07-Jun-21   29-Jun-21    -4       -       04-Jul-21   -   08-Jul-21  
-25656 14757   30NTT   36NA0013   21-Jun-21   14-Jul-21    0        -       19-Jul-21   -   21-Jul-21  
-25657 14758   30NTT   38NA0013   23-Jun-21   16-Jul-21    0        -       21-Jul-21   -   23-Jul-21  
-25658 14759   30NTT   3XNA0013   25-Jun-21   20-Jul-21    0        -       25-Jul-21   -   27-Jul-21  
-25737 14865   30ART   30NA0013   12-Jul-21   10-Aug-21   -11       -       16-Aug-21   -   17-Aug-21  
-25736 14855   30NTT   39NA0013   08-Jul-21   30-Jul-21    0        -       09-Aug-21   -   13-Aug-21  
-25738 14866   30ART   34NA0013   14-Jul-21   12-Aug-21    -8       -       17-Aug-21   -   19-Aug-21  
-25835 14860   30NTT   34NA0014   30-Aug-21   22-Sep-21    -2       -       27-Sep-21   -   29-Sep-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Transit Trailer Limited >>
+	Dealer Delivery Report for << Reports/Diamond International Trucks Ltd >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model     Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25154 14492    50HF5X   54NA0011   20-Jan-21   11-Feb-21   -13   09-Feb-21   12-Feb-21   3   17-Feb-21  
-25214 14569    30ART    36NA0011   06-Jan-21   28-Jan-21    29   22-Jan-21   27-Jan-21   5   29-Jan-21  
-25226 14573    30NTT    34NA0011   21-Jan-21   12-Feb-21    14   29-Jan-21   03-Feb-21   5   05-Feb-21  
-25253 14597    30NTT    30NA0011   05-Mar-21   29-Mar-21   -12   19-Mar-21   24-Mar-21   5   26-Mar-21  
-25347 14657   53ET3XP   3XNA0012   26-Apr-21   18-May-21   -22       -       17-May-21   -   26-May-21  
-25360 14658   53ET3XP   36NA0012   28-Apr-21   20-May-21   -22       -       18-May-21   -   28-May-21  
-25423 14732   53ET3XP   31NA0012   22-Apr-21   14-May-21    5        -       19-May-21   -   21-May-21  
-25424 14733   53ET3XP   33NA0012   26-Apr-21   18-May-21    3        -       23-May-21   -   26-May-21  
-25425 14734   53ET3XP   37NA0012   30-Apr-21   24-May-21    0        -       29-May-21   -   31-May-21  
-25359 14767   53ET4XP   44NA0012   20-May-21   11-Jun-21   -15       -       14-Jun-21   -   18-Jun-21  
-25718 14830    30NTT    39NA0013   29-Jun-21   22-Jul-21    0        -       27-Jul-21   -   29-Jul-21  
-25724 14831    30NTT    30NA0013   06-Jul-21   28-Jul-21    -1       -       02-Aug-21   -   11-Aug-21  
-25722 14864    30ART    36NA0013   08-Jul-21   30-Jul-21    -1       -       04-Aug-21   -   13-Aug-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Weaco Equipment >>
+	Dealer Delivery Report for << Reports/Fleet Maintenance Inc >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25495 14744   25ART   35NA0012   20-May-21   11-Jun-21   -3       -       15-Jun-21   -   18-Jun-21  
-25496 14749   25ANR   3XNA0012   21-May-21   14-Jun-21   -4       -       19-Jun-21   -   21-Jun-21  
-25563 14750   25ANR   31NA0012   26-May-21   17-Jun-21   -3       -       22-Jun-21   -   24-Jun-21  
-25564 14751   25ANR   33NA0012   28-May-21   21-Jun-21   -4       -       26-Jun-21   -   28-Jun-21  
-25497 14760   20ANR   20NA0012   01-Jun-21   23-Jun-21   -2       -       28-Jun-21   -   30-Jun-21  
-25562 14761   20ANR   22NA0012   03-Jun-21   25-Jun-21   -2       -       30-Jun-21   -   06-Jul-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Wieland >>
+	Dealer Delivery Report for << Reports/Fort Garry Industries Ltd >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-24943 14578   20NTT   26NA0011   26-Jan-21   18-Feb-21   -2   05-Feb-21   08-Feb-21   3   12-Feb-21  
-25157 14579   20NTT   28NA0011   28-Jan-21   22-Feb-21   -4   11-Feb-21   16-Feb-21   5   19-Feb-21  
-25320 14675   25ART   35NA0012   15-Apr-21   07-May-21    0       -       12-May-21   -   14-May-21  
-25318 14698   25NTT   3XNA0012   23-Apr-21   17-May-21    0       -       22-May-21   -   25-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Wieland Sales Inc >>
+	Dealer Delivery Report for << Reports/Hale Trailer Brake & Wheel >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-24943 14578   20NTT   26NA0011   26-Jan-21   18-Feb-21   -2   05-Feb-21   08-Feb-21   3   12-Feb-21  
-25157 14579   20NTT   28NA0011   28-Jan-21   22-Feb-21   -4   11-Feb-21   16-Feb-21   5   19-Feb-21  
-25320 14675   25ART   35NA0012   15-Apr-21   07-May-21    0       -       12-May-21   -   14-May-21  
-25318 14698   25NTT   3XNA0012   23-Apr-21   17-May-21    0       -       22-May-21   -   25-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Willrett Farm Equipment >>
+	Dealer Delivery Report for << Reports/I-29 Trailer Sales Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/M & K Trailer Center of Grand Rapids LLC >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/McCorkle Sales Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Northeast Truck & Trailer Sales >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Premier Technology Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Redhead Equipment Ltd >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Remorques Lewis Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/S & S Trailers Sales Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Schwing Bioset >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Semi Trailer Sales >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Stargate Mgf (2020) Ltd >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Summit Trailer Ltd >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/TEC Equipment Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Trailers Plus >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Transit Trailer Limited >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Weaco Equipment >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Wieland Sales Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/Willrett Farm Equipment >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
