@@ -1,4 +1,5 @@
 import locale
+import datetime as dt
 
 TAB = "    "
 SEPARATOR = "  -  "
@@ -16,6 +17,25 @@ def minmax(a, b):
 	if a <= b:
 		return a, b
 	return b, a
+
+
+def intersection(a, b):
+    res = []
+    l = a if len(a) >= len(b) else b
+    m = b if len(a) >= len(b) else a
+    for i in l:
+        if i in m:
+            res.append(i)
+    return res
+    
+
+def disjoint(a, b):
+    overlap = intersection(a, b)
+    res = []
+    for el in a + b:
+        if el not in overlap:
+            res.append(el)
+    return res
 
 
 def avg(lst):

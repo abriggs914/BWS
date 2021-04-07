@@ -113,7 +113,7 @@ class Order:
 			x = 0
 			if i > 0:
 				x = spacer_len
-			res += pad_centre(str(d), (stop - len(res)))
+			res += pad_centre(str(d), (x + stop - len(res)))
 			start = dividers[i]
 			if i + 1 < len(dividers):
 				stop = dividers[i + 1]
@@ -150,49 +150,93 @@ def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, ba
 			# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
 			if avail:
 				new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
-				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
-				if new_date < est:
-					# moving forward
-					if date_diff >= forward_review_threshold: # comparing business days
-						forward_review.append((new_date, order))
-					if date_diff >= forward_adjust_threshold:
-						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
-
-				elif new_date > est:
-					# moving backward
-					if date_diff >= backward_review_threshold: # comparing business days
-						backward_review.append((new_date, order))
-					if date_diff >= backward_adjust_threshold:
-						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
-				else:
-					# no change
-					pass
 			else:					
 				new_date = add_business_days(mrp, lead_days, HOLIDAYS_2021)
-				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
-				if new_date < est:
-					# moving forward
-					if date_diff >= forward_review_threshold: # comparing business days
-						forward_review.append((new_date, order))
-					if date_diff >= forward_adjust_threshold:
-						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
+			date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+			# print("date_diff:", date_diff)
+			if new_date < est:
+				# moving forward
+				if date_diff >= forward_review_threshold: # comparing business days
+					forward_review.append((new_date, order))
+				if date_diff >= forward_adjust_threshold:
+					need_adjusting.append((new_date, order))  # only update very far pushed forward orders
 
-				elif new_date > est:
-					# moving backward
-					if date_diff >= backward_review_threshold: # comparing business days
-						backward_review.append((new_date, order))
-					if date_diff >= backward_adjust_threshold:
-						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
-				else:
-					# no change
-					pass
+			elif new_date > est:
+				# moving backward
+				if date_diff >= backward_review_threshold: # comparing business days
+					backward_review.append((new_date, order))
+				if date_diff >= backward_adjust_threshold:
+					need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+			else:
+				# no change
+				pass
 		except:
+			print("Exception caught in need_est_delivery_update")
 			manual_review.append(order)
 
 	return need_adjusting, forward_review, backward_review, manual_review
 
-def dealer_delivery_report_updates(dealer, file_name):
+
+# def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
+# 	need_adjusting = []
+# 	forward_review = []
+# 	backward_review = []
+# 	manual_review = []
+# 	for order in orders:
+# 		try :
+# 			est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
+# 			mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
+# 			avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
+# 			# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
+# 			if avail:
+# 				new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
+# 				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+# 				print("date_diff:", date_diff)
+# 				if new_date < est:
+# 					# moving forward
+# 					if date_diff >= forward_review_threshold: # comparing business days
+# 						forward_review.append((new_date, order))
+# 					if date_diff >= forward_adjust_threshold:
+# 						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
+
+# 				elif new_date > est:
+# 					# moving backward
+# 					if date_diff >= backward_review_threshold: # comparing business days
+# 						backward_review.append((new_date, order))
+# 					if date_diff >= backward_adjust_threshold:
+# 						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+# 				else:
+# 					# no change
+# 					pass
+# 			else:					
+# 				new_date = add_business_days(mrp, lead_days, HOLIDAYS_2021)
+# 				date_diff = business_days_between(est, new_date, HOLIDAYS_2021)
+# 				print("date_diff:", date_diff)
+# 				if new_date < est:
+# 					# moving forward
+# 					if date_diff >= forward_review_threshold: # comparing business days
+# 						forward_review.append((new_date, order))
+# 					if date_diff >= forward_adjust_threshold:
+# 						need_adjusting.append((new_date, order))  # only update very far pushed forward orders
+
+# 				elif new_date > est:
+# 					# moving backward
+# 					if date_diff >= backward_review_threshold: # comparing business days
+# 						backward_review.append((new_date, order))
+# 					if date_diff >= backward_adjust_threshold:
+# 						need_adjusting.append((new_date, order))  # only update very far pushed backward orders
+# 				else:
+# 					# no change
+# 					pass
+# 		except:
+# 			print("Exception caught in need_est_delivery_update")
+# 			manual_review.append(order)
+
+# 	return need_adjusting, forward_review, backward_review, manual_review
+
+def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
 	print("file_name", file_name)
+	all_for_adjusting = []
 	with open(file_name, 'r') as f:
 		lines = f.readlines()
 		
@@ -320,12 +364,14 @@ def dealer_delivery_report_updates(dealer, file_name):
 				wf.write("\nEOF")
 
 		orders, manual_review_orders = create_orders()
-		need_adjusted, forward_review, backward_review, manual_review = need_est_delivery_update(orders)
+		# print("manual review after creation:", [q.quote if q.manual_review is False else q.line for q in orders])
+		need_adjusted, forward_review, backward_review, manual_review = need_est_delivery_update(orders, lead_days=lead_days, forward_review_threshold=forward_review_threshold, backward_review_threshold=backward_review_threshold, forward_adjust_threshold=forward_adjust_threshold, backward_adjust_threshold=backward_adjust_threshold)
 
 		manual_review_orders += manual_review
 
 		print("\n\tNeeds estimated delivery date updated:\n")
 		for order in need_adjusted:
+			all_for_adjusting.append(order)
 			print(order)
 		manual_review_orders.append(write_est_delivery_update_report(dealer, header_line, need_adjusted))
 
@@ -425,6 +471,8 @@ def dealer_delivery_report_updates(dealer, file_name):
 
 		# do_test()
 
+		return all_for_adjusting
+
 def run_reports():
 	with open(ORDERS_TO_CHANGE_OUTPUT, 'w') as out:
 		d = dt.datetime.strftime(dt.datetime.now(), "%d-%b-%y")
@@ -433,9 +481,34 @@ def run_reports():
 	files = os.listdir("Reports")
 	# s = "C:\Users\ABriggs\Documents\BWS\Dealer reports\Reports\Atlantic Powertrain Dealer Status Review.txt"
 	files = ["Reports/" + f for f in files if "Dealer Status Review" in f and f.endswith(".txt")]
+	# files = ["Reports/Remorques Lewis Inc Dealer Status Review.txt", "Reports/Hale Trailer Brake & Wheel Dealer Status Review.txt"]
+	need_adjusted = []
 	for f in files:
 		dealer = f.split()[:-3]
-		dealer_delivery_report_updates(dealer, f)
+		need_adj = dealer_delivery_report_updates(dealer, f, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=6)
+		if need_adj != None:
+			need_adjusted += need_adj
+	
+	print("\n\tFinal tally of orders that require estimated delivery update:\n")
+	for order in need_adjusted:
+		print(order)
+
+	# desired = [25433, 25703, 24847, 24848, 25647, 25243, 25342, 25376, 25379, 25378, 25519, 25760, 25761, 25762, 25763, 25764, 25765, 25766, 25767, 25768, 25091]
+	desired = [25433, 25703, 25647, 25243, 25342, 25376, 25379, 25378, 25519, 25760, 25761, 25762, 25763, 25764, 25765, 25766, 25767, 25768, 25091]
+	# desired = [25433, 25703, 25647, 25243, 25342, 25376, 25379, 25378, 25765, 25766, 25767, 25768, 25091]
+	desired.sort()
+	print("desired\n", desired)
+	adjs = [int(q[1].quote) for q in need_adjusted]
+	adjs.sort()
+	print("adjs:\n", adjs)
+	print("equal?", adjs == (desired))
+	right = intersection(adjs, desired)
+	right.sort()
+	print("right:", right)
+	print("Got all required:", right==desired)
+	diff = disjoint(adjs, desired)
+	diff.sort()
+	print("diff:", diff)
 
 run_reports()
 
