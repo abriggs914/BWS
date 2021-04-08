@@ -3,7 +3,7 @@
 
 
 
-                                                                          M & K Trailer Center of Grand Rapids LLC
+                                                                                   BWS - CDN Direct Sales
 
                                                                             Print Date: Thursday, April 8, 2021
 
@@ -12,9 +12,9 @@
 
   Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
                                                                                             Date            Date                                                        Date
-  25196    10014613             19SB           9200000                   10-Dec-20       25-Jan-21       17-Feb-21         17-Feb-21          0                       22-Feb-21
+  25755                       53ET3XP          2B9B6EY3XNA0013                           23-Jul-21       23-Aug-21         15-Jul-21         -39                      28-Aug-21
 
-  25202    10014614             19SB           9200001                   10-Dec-20       29-Jan-21       23-Feb-21         23-Feb-21          0                       26-Feb-21
+  25756                       53ET3XP          2B9B6EY31NA0013                           28-Jul-21       26-Aug-21         15-Jul-21         -42                      31-Aug-21
 
 
 

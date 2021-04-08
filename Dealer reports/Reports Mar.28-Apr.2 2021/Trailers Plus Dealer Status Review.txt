@@ -5,7 +5,7 @@
 
                                                                                        Trailers Plus
 
-                                                                            Print Date: Thursday, April 8, 2021
+                                                                           Print Date: Wednesday, March 31, 2021
 
                                                                                     Delivery Date Review
 
@@ -28,10 +28,10 @@
 
   25566    10014756            30NTT           2B9B2TP3XNA0012           08-Feb-21       07-Jun-21       29-Jun-21         25-Jun-21          -4                      04-Jul-21
 
-  25656    10014757            30NTT           2B9B2TP36NA0013           08-Feb-21       20-Sep-21       13-Oct-21         14-Jul-21         -91                      20-Oct-21
+  25656    10014757            30NTT           2B9B2TP36NA0013           08-Feb-21       21-Jun-21       14-Jul-21         14-Jul-21          0                       19-Jul-21
 
-  25657    10014758            30NTT           2B9B2TP38NA0013           08-Feb-21       22-Sep-21       15-Oct-21         16-Jul-21         -91                      22-Oct-21
-  25658    10014759            30NTT           2B9B2TP3XNA0013           08-Feb-21       24-Sep-21       19-Oct-21         20-Jul-21         -91                      26-Oct-21
+  25657    10014758            30NTT           2B9B2TP38NA0013           08-Feb-21       23-Jun-21       16-Jul-21         16-Jul-21          0                       21-Jul-21
+  25658    10014759            30NTT           2B9B2TP3XNA0013           08-Feb-21       25-Jun-21       20-Jul-21         20-Jul-21          0                       25-Jul-21
 
   25737    10014865            30ART           2B9B2TR30NA0013           22-Mar-21       12-Jul-21       10-Aug-21         30-Jul-21         -11                      16-Aug-21
 
@@ -49,11 +49,11 @@
   25834    10014859            30NTT           2B9B2TP32NA0014           19-Mar-21       26-Aug-21       20-Sep-21         20-Sep-21          0                       27-Sep-21
   25835    10014860            30NTT           2B9B2TP34NA0014           19-Mar-21       30-Aug-21       22-Sep-21         20-Sep-21          -2                      27-Sep-21
 
-  25868                        20NTT           2B9B2TM20NA0014                           21-Jun-21       15-Jul-21         13-Oct-21          90                      22-Jul-21
+  25868                        20NTT           2B9B2TM20NA0014                           20-Sep-21       13-Oct-21         13-Oct-21          0                       20-Oct-21
 
-  25903                        20NTT           2B9B2TM22NA0014                           23-Jun-21       19-Jul-21         15-Oct-21          88                      26-Jul-21
+  25903                        20NTT           2B9B2TM22NA0014                           22-Sep-21       15-Oct-21         15-Oct-21          0                       22-Oct-21
 
-  25869                        20NTT           2B9B2TM29NA0014                           25-Jun-21       21-Jul-21         19-Oct-21          90                      28-Jul-21
+  25869                        20NTT           2B9B2TM29NA0014                           24-Sep-21       19-Oct-21         19-Oct-21          0                       26-Oct-21
 
 
 

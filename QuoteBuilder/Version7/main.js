@@ -73,7 +73,7 @@ function increment(model, opNum, attr) {
 	console.log("increment " + attr + " on model: " + model + " for op: " + opNum);
 	// console.log("model: " + Object.keys(model));
 	op = lookUpOption(model, opNum);
-	// console.log("FOUND: " + op);
+	console.log("FOUND: " + op);
 	if (op != null) {
 		op[attr] = Math.max(0, op[attr] + 1);
 		op.updateHTML();
@@ -104,11 +104,12 @@ function isNumeric(str) {
 function lookUpOption(model, opNum) {
 	// console.log("\tmodel in: " + model + ", type: " + typeof(model));
 	if (typeof(model) == "string") {
+		console.log("string look up")
 		model = lookUpModel(model);
 	}
 	// console.log("\tmodel out: " + model + ", type: " + typeof(model));
 	let options = model.optionsList;
-	// console.log("model: " + model + ", model options: " + model.optionsList);
+	console.log("model: " + model + ", model options: " + model.optionsList);
 	// console.log("model: " + Object.keys(model));
 	// for (let k in Object.keys(model)) {
 	// 	console.log("k: " + k + ", model[k]: " + model[k]);
@@ -117,9 +118,9 @@ function lookUpOption(model, opNum) {
 		// console.log("\ti: " + i)
 		let op = options[i];
 		// console.log("\top: " + op)
-		// console.log("op.optionNum: " + op.optionNum);
-		// console.log("opNum: " + opNum);
-		// console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
+		console.log("op.optionNum: " + op.optionNum);
+		console.log("opNum: " + opNum);
+		console.log("op.optionNum == opNum: " + (op.optionNum == opNum));
 		if (op.optionNum == opNum) {
 			return op;
 		}		
@@ -154,6 +155,10 @@ function lookUpModel(modelName) {
 	for (let i in LOADED_MODELS) {
 		let model = LOADED_MODELS[i]
 		console.log("\t\tmodel in: " + model + ", type: " + typeof(model));
+		console.log("model.modelName.toLowerCase(): " + model.modelName.toLowerCase())
+		console.log("modelName.toLowerCase(): " + modelName.toLowerCase())
+		console.log("model.modelName.toLowerCase() == modelName.toLowerCase(): " + (model.modelName.toLowerCase() == modelName.toLowerCase()))
+		console.log("model.modelName.toLowerCase() === modelName.toLowerCase(): " + (model.modelName.toLowerCase() === modelName.toLowerCase()))
 		if (model.modelName.toLowerCase() == modelName.toLowerCase()) {
 			return model;
 		}
@@ -168,6 +173,7 @@ function createModel(modelIn) {
 	for (let i in LOADED_MODELS) {
 		let mod = LOADED_MODELS[i];
 		if (mod.modelName.toLowerCase() == model) {
+			alert("model " + model + ", already exists.")
 			return mod;
 		}
 	}
@@ -176,6 +182,7 @@ function createModel(modelIn) {
 		mod = modelIn;
 	}
 	else {
+		alert("creating new model " + model)
 		mod = new Model(model);
 	}
 	LOADED_MODELS.push(mod)
@@ -294,40 +301,6 @@ function randomHTMLFormat() {
 
 //elementIDIn, optionNum, section, partNum, description, weight, priceCDN, priceUS, htmlFormat
 //model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat
-var model1 = createModel("53ET3X")
-var o1 = createOption(model1, "option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
-var o2 = createOption(model1, "option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
-var o3 = createOption(model1, "option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
-var o4 = createOption(model1, "option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4");
-
-var o5 = createOption(model1, "option005", "A5", "B5", "C5", "D5", "E5", "F5", "G5");
-var o6 = createOption(model1, "option006", "A6", "B6", "C6", "D6", "E6", "F6", "G6");
-var o7 = createOption(model1, "option007", "A7", "B7", "C7", "D7", "E7", "F7", "G7");
-var o8 = createOption(model1, "option008", "A8", "B8", "C8", "D8", "E8", "F8", "G8");
-var o9 = createOption(model1, "option009", "A9", "B9", "C9", "D9", "E9", "F9", "G9");
-var o10 = createOption(model1, "option010", "A10", "B10", "C10", "D10", "E10", "F10", "G10");
-var o11 = createOption(model1, "option011", "A11", "B11", "C11", "D11", "E11", "F11", "G11");
-
-o1.setHTMLFormat(randomHTMLFormat());
-o2.setHTMLFormat(randomHTMLFormat());
-
-// var o = createOption("option001", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", HTMLFormat.INC_DEC);
-console.log("OPTION: " + o1);
-console.log("OPTION: " + o2);
-console.log("OPTION: " + o3);
-console.log("OPTION: " + o4);
-console.log("OPTION HTML: " + o1.getHTML());
-console.log("OPTION HTML: " + o2.getHTML());
-console.log("OPTION HTML: " + o3.getHTML());
-console.log("OPTION HTML: " + o4.getHTML());
-// document.getElementById("option001").innerHTML = o1.getHTML();
-// document.getElementById("option002").innerHTML = o2.getHTML();
-initAllOptionHTML(model1);
-
-
-var b1 = createBaseSpec(model1, "baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
-initAllBaseSpecHTML(model1);
-
 
 function populateCompanies() {
 	let str = "<ul class='menu-elem'>";
@@ -503,25 +476,26 @@ function blankMailTo() {
 function collectComments() {
 	let comments = document.getElementById("submit-comments-textarea").value;
 	comments = comments.replaceAll("&", "and");
+	comments = comments.replaceAll(":", "");
 	comments = ((comments == "")? "NA" : comments);
-	comments = comments.split("\n");
-	comments = comments.join(MAIL_NL);
+	// comments = comments.split("\n");
+	// comments = comments.join(MAIL_NL);
 	return comments;
 }
 
 function collectOptions(model) {
-	let options = model.optionsList
-	let res = "";
+	let options = model.optionsList;
+	let res = [];
 	for (let i in options) {
 		// console.log("i: " + i);
 		if (options[i].quantity > 0) {
-			res += options[i].getMailFormat() 
-			if (i < options.length-1) {
-				res += " " + MAIL_NL;
-			}
+			res.push(options[i].getExportFormat());
+			// if (i < options.length-1) {
+				// res += " " + MAIL_NL;
+			// }
 		}
 	}
-	res = ((res == "")? "NA" : res);
+	// res = ((res == [])? "NA" : res);
 	console.log("options: " + res);
 	return res;
 }
@@ -561,6 +535,8 @@ function collectQuote(event, model) {
 	console.log("INDUSTRY: " + industry);
 	console.log("CLAZZ: " + clazz);
 	console.log("MODEL: " + model);
+	console.log("COMMENTS:" + comments)
+	console.log("OPS:" + ops)
 	
 	// ATTENTION!
 	// maximum size of body can only be 1969 characters.
@@ -613,3 +589,45 @@ function genQuoteText(){
 
 	console.log("industry: " + industry + "\nclazz: " + clazz + "\nmod: " + mod + "\ncomments: " + comments + "\nops: " + ops)
 }
+
+
+//#############################################################
+// Main stuff
+
+function demoInit() {
+	var model1 = createModel("53ET3X")
+	var o1 = createOption(model1, "option001", "A1", "B1", "C1", "D1", "E1", "F1", "G1");
+	var o2 = createOption(model1, "option002", "A2", "B2", "C2", "D2", "E2", "F2", "G2");
+	var o3 = createOption(model1, "option003", "A3", "B3", "C3", "D3", "E3", "F3", "G3");
+	var o4 = createOption(model1, "option004", "A4", "B4", "C4", "D4", "E4", "F4", "G4");
+
+	var o5 = createOption(model1, "option005", "A5", "B5", "C5", "D5", "E5", "F5", "G5");
+	var o6 = createOption(model1, "option006", "A6", "B6", "C6", "D6", "E6", "F6", "G6");
+	var o7 = createOption(model1, "option007", "A7", "B7", "C7", "D7", "E7", "F7", "G7");
+	var o8 = createOption(model1, "option008", "A8", "B8", "C8", "D8", "E8", "F8", "G8");
+	var o9 = createOption(model1, "option009", "A9", "B9", "C9", "D9", "E9", "F9", "G9");
+	var o10 = createOption(model1, "option010", "A10", "B10", "C10", "D10", "E10", "F10", "G10");
+	var o11 = createOption(model1, "option011", "A11", "B11", "C11", "D11", "E11", "F11", "G11");
+
+	o1.setHTMLFormat(randomHTMLFormat());
+	o2.setHTMLFormat(randomHTMLFormat());
+
+	// var o = createOption("option001", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", HTMLFormat.INC_DEC);
+	console.log("OPTION: " + o1);
+	console.log("OPTION: " + o2);
+	console.log("OPTION: " + o3);
+	console.log("OPTION: " + o4);
+	console.log("OPTION HTML: " + o1.getHTML());
+	console.log("OPTION HTML: " + o2.getHTML());
+	console.log("OPTION HTML: " + o3.getHTML());
+	console.log("OPTION HTML: " + o4.getHTML());
+	// document.getElementById("option001").innerHTML = o1.getHTML();
+	// document.getElementById("option002").innerHTML = o2.getHTML();
+	initAllOptionHTML(model1);
+
+
+	var b1 = createBaseSpec(model1, "baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
+	initAllBaseSpecHTML(model1);
+}
+
+//demoInit();

@@ -627,6 +627,7 @@
 			console.log("FILE_NAME: " + file)
 			end = now();
 			let model = createModel(file);
+			alert("Model: " + model)
 		
 			if (results && results.errors) {
 				if (results.errors) {
@@ -713,6 +714,7 @@
 				
 			// icky hack
 			setTimeout(enableButton, 100);
+			alert("Model options: " + model.optionsList)
 		}
 		
 		function errorFn(err, file) {

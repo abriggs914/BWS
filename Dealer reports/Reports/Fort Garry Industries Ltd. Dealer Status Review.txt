@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Fort Garry Industries Ltd.
+
+                                                                            Print Date: Thursday, April 8, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25350    10014647            30ANR           2B9B2TR31NA0012           14-Jan-21       29-Mar-21       21-Apr-21         19-Apr-21          -2     08-Apr-21        26-Apr-21        18
+
+  25364    10014648            30ANR           2B9B2TR33NA0012           14-Jan-21       31-Mar-21       23-Apr-21         21-Apr-21          -2     09-Apr-21        26-Apr-21        17
+
+  25349    10014651           53ET3XP          2B9B6EY38NA0012           14-Jan-21       20-Apr-21       12-May-21         21-Apr-21         -21     05-May-21        10-May-21        5
+  25372    10014654            25ANR           2B9B2TR32NA0012           14-Jan-21       06-Apr-21       28-Apr-21         22-Apr-21          -6     21-Apr-21        28-Apr-21        7
+
+  25365    10014649            30ANR           2B9B2TR35NA0012           14-Jan-21       05-Apr-21       27-Apr-21         23-Apr-21          -4     13-Apr-21        28-Apr-21        15
+
+  25373    10014656            25ANR           2B9B2TR34NA0012           14-Jan-21       08-Apr-21       30-Apr-21         26-Apr-21          -4     26-Apr-21        03-May-21        7
+
+  25605    10014722            25ANR           2B9B2TR3XNA0013           29-Jan-21       20-Apr-21       12-May-21         07-May-21          -5                      17-May-21
+  25843    10014850             35FA           2B9B4A519NA0014           19-Mar-21       10-May-21       01-Jun-21         10-May-21         -22                      08-Jun-21
+
+  25609    10014723            25ANR           2B9B2TR31NA0013           29-Jan-21       26-Apr-21       18-May-21         11-May-21          -7                      18-May-21
+
+  25397    10014655            25ANR           2B9B2TR35NA0012           14-Jan-21       28-Apr-21       20-May-21         17-May-21          -3                      24-May-21
+
+  25399    10014724            53ET3X          2B9B6EY35NA0012           29-Jan-21       14-May-21       07-Jun-21         17-May-21         -21                      07-Jun-21
+  25547    10014738            48ET3X          2B9B6EW38NA001            05-Feb-21       18-May-21       09-Jun-21         18-May-21         -22                      09-Jun-21
+
+  25617    10014731            25ANR           2B9B2TR31NA0013           03-Feb-21       30-Apr-21       24-May-21         19-May-21          -5                      24-May-21
+
+  25433    10014783           53ET3XP          2B9B6EY37NA0013           26-Feb-21       10-Jun-21       06-Jul-21         22-Jun-21         -14                      13-Jul-21
+
+  25703    10014784           53ET3XP          2B9B6EY35NA0013           26-Feb-21       14-Jun-21       08-Jul-21         24-Jun-21         -14                      15-Jul-21
+
+  25634    10014786            25ANR           2B9B2TR30NA0013           26-Feb-21       07-Jun-21       29-Jun-21         29-Jun-21          0                       05-Jul-21
+  25797    10014867            30ART           2B9B2TR35NA0014           22-Mar-21       20-Aug-21       14-Sep-21         14-Sep-21          0                       21-Sep-21
+
+  25815    10014868            30ART           2B9B2TR37NA0014           22-Mar-21       24-Aug-21       16-Sep-21         16-Sep-21          0                       23-Sep-21
+
+  25816    10014869            30ART           2B9B2TR39NA0014           22-Mar-21       26-Aug-21       20-Sep-21         20-Sep-21          0                       27-Sep-21
+
+  25798    1000149            53ET3XP          2B9B6EY31NA0014           22-Mar-21       27-Aug-21       21-Sep-21         21-Sep-21          0                       28-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

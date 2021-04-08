@@ -3,7 +3,7 @@
 
 
 
-                                                                          M & K Trailer Center of Grand Rapids LLC
+                                                                                    Clark's Truck Center
 
                                                                             Print Date: Thursday, April 8, 2021
 
@@ -12,9 +12,9 @@
 
   Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
                                                                                             Date            Date                                                        Date
-  25196    10014613             19SB           9200000                   10-Dec-20       25-Jan-21       17-Feb-21         17-Feb-21          0                       22-Feb-21
+  25522    10014796            25ART           2B9B2TR3XNA0013           26-Feb-21       17-Jun-21       13-Jul-21         13-Jul-21          0                       18-Jul-21
 
-  25202    10014614             19SB           9200001                   10-Dec-20       29-Jan-21       23-Feb-21         23-Feb-21          0                       26-Feb-21
+
 
 
 
