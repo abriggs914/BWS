@@ -26,8 +26,10 @@ function raw_format(model, options, option_comments, q_comment, contact, c_email
 	contents += option_list_tag + "<";
 	for (let i = 0; i < options.length; i++) {
 		var op_id = options[i];
+		var op_spl = op_id.split(" x ")
 		var op_comment = option_comments[i];
-		contents += option_tag + "<" + op_id[0] + " x " + op_id[1] + "<" + comment_tag + "<" + op_comment + ">>>";
+		console.log("op_id: <" + op_id + ">\nop_co: <" + op_comment + ">");
+		contents += option_tag + "<" + op_spl[0] + " x " + op_spl[1] + "<" + comment_tag + "<" + op_comment + ">>>";
 	}
 	// contents += "".join([option_tag + "<" + op_id[0] + " x " + op_id[1] + "<" + comment_tag + "<" + op_comment + ">>>" for op_id, op_comment in zip(options, option_comments)])
 	contents += ">";
@@ -72,16 +74,24 @@ function rich_format(model, options, option_comments, q_comment, contact, c_emai
 }
 
 
-const model = "37DT3X V2018";
-const options = [[1, 1], [2, 6], [1, 11], [2, 6]];
-const option_comments = ["", "2 pr. GNK, 4 pr. B/T", "", ""];
-const q_comment = "Can you also include lead time?";
-const contact = "John Doe";
-const c_email = "John.Doe@email.com";
-const c_phone = "(506)-123-4567-123";
-const dealer = "Dealer 1";
-const branch = "Branch 1";
-const customer = "John Doe Jr.";
+let model = "37DT3X V2018";
+let options = [[1, 1], [2, 6], [1, 11], [2, 6]];
+let option_comments = ["", "2 pr. GNK, 4 pr. B/T", "", ""];
+let q_comment = "Can you also include lead time?";
+let contact = "John Doe";
+let c_email = "John.Doe@email.com";
+let c_phone = "(506)-123-4567-123";
+let dealer = "Dealer 1";
+let branch = "Branch 1";
+let customer = "John Doe Jr.";
+
+const spoof = true;
+
+if (spoof) {
+	model = "53ET3X"
+	options = ["1 x 53ET3X-58","1 x 53ET3X-02","1 x 53ET3X-10","1 x 53ET3X-12","1 x 53ET3X-18","1 x 53ET3X-19","5 x 53ET3X-20","1 x 53ET3X-21","9 x 53ET3X-28","1 x 53ET3X-34","1 x 53ET3X-39","1 x 53ET3X-68"]
+	option_comments = ["","","","","","","","","2 pr. GNK, 4 pr. B/T","","",""]
+}
 
 console.log("\n\tRaw format\n" + raw_format(
 	model,

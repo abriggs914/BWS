@@ -531,13 +531,33 @@ function collectQuote(event, model) {
 	let clazz = document.getElementById("classSelectionPLink").innerHTML;
 	let mod = document.getElementById("modelSelectionPLink").innerHTML;
 	let comments = collectComments();
-	let ops = collectOptions();
+	let collectedOptions = collectOptions();
+	let ops = [];
+	let opComments = [];
+	for (let i = 0; i < collectComments.length; i++) {
+		let collected = collectComments[i];
+		let spl = collected.split(";;;");
+		ops.push(spl[0])
+		opComments.push(spl[1])
+	}
 	console.log("INDUSTRY: " + industry);
 	console.log("CLAZZ: " + clazz);
 	console.log("MODEL: " + model);
 	console.log("COMMENTS:" + comments)
 	console.log("OPS:" + ops)
+	console.log("OPCOMMENTS:" + opComments)
 	
+	//
+	const contact = "John Doe";
+	const c_email = "John.Doe@email.com";
+	const c_phone = "(506)-123-4567-123";
+	const dealer = "Dealer 1";
+	const branch = "Branch 1";
+	const customer = "John Doe Jr.";
+	//
+
+
+
 	// ATTENTION!
 	// maximum size of body can only be 1969 characters.
 	// MAIL_NL contains 6 characters.

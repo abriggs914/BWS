@@ -547,7 +547,8 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 			if len(top_5) == min(num, len(dat)):
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			# content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = {"Quote": dat[qNo].number, "Model": dat[qNo].model}
 			n = n_options
 			if n in top_5:
 				if type(top_5[n]) == list:
@@ -568,7 +569,8 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 			if len(top_5) == min(num, len(dat)):
 				break
 			
-			content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			# content = "Quote #{n}, Model: {m}".format(n=dat[qNo].number, m=dat[qNo].model)
+			content = {"Quote": dat[qNo].number, "Model": dat[qNo].model}
 			n = n_options
 			if n in top_5:
 				if type(top_5[n]) == list:
