@@ -474,9 +474,7 @@ function blankMailTo() {
 }
 
 function collectComments() {
-	let comments = document.getElementById("submit-comments-textarea").value;
-	comments = comments.replaceAll("&", "and");
-	comments = comments.replaceAll(":", "");
+	let comments = clean(document.getElementById("submit-comments-textarea").value);
 	comments = ((comments == "")? "NA" : comments);
 	// comments = comments.split("\n");
 	// comments = comments.join(MAIL_NL);
@@ -531,29 +529,42 @@ function collectQuote(event, model) {
 	let clazz = document.getElementById("classSelectionPLink").innerHTML;
 	let mod = document.getElementById("modelSelectionPLink").innerHTML;
 	let comments = collectComments();
-	let collectedOptions = collectOptions();
+	let collectedOps = collectOptions(model);
 	let ops = [];
 	let opComments = [];
-	for (let i = 0; i < collectComments.length; i++) {
-		let collected = collectComments[i];
+	for (let i = 0; i < collectedOps.length; i++) {
+		let collected = collectedOps[i];
 		let spl = collected.split(";;;");
 		ops.push(spl[0])
-		opComments.push(spl[1])
+		opComments.push(clean(spl[1]))
 	}
 	console.log("INDUSTRY: " + industry);
 	console.log("CLAZZ: " + clazz);
 	console.log("MODEL: " + model);
-	console.log("COMMENTS:" + comments)
-	console.log("OPS:" + ops)
-	console.log("OPCOMMENTS:" + opComments)
+	console.log("COMMENTS:" + comments);
+	console.log("OPS:" + ops);
+	console.log("OPCOMMENTS:" + opComments);
+
+	let contact = clean(document.getElementById("submit-contact-input").value);
+	let cemail = clean(document.getElementById("submit-cemail-input").value);
+	let cphone = clean(document.getElementById("submit-cphone-input").value);
+	let dealer = clean(document.getElementById("submit-dealer-input").value);
+	let branch = clean(document.getElementById("submit-branch-input").value);
+	let cname = clean(document.getElementById("submit-cname-input").value);
 	
-	//
-	const contact = "John Doe";
-	const c_email = "John.Doe@email.com";
-	const c_phone = "(506)-123-4567-123";
-	const dealer = "Dealer 1";
-	const branch = "Branch 1";
-	const customer = "John Doe Jr.";
+	console.log("CONTACT:" + contact);
+	console.log("EMAIL:" + cemail);
+	console.log("PHONE:" + cphone);
+	console.log("DEALER:" + dealer);
+	console.log("BRANCH:" + branch);
+	console.log("CUSTOMER:" + cname);
+
+	console.log("Calculated output\n\n" + raw_format(model, ops, opComments, comments, contact, cemail, cphone, dealer, branch, cname) + "\n")
+	console.log("Calculated output\n\n" + rich_format(model, ops, opComments, comments, contact, cemail, cphone, dealer, branch, cname) + "\n")
+	
+	// const dealer = "Dealer 1";
+	// const branch = "Branch 1";
+	// const customer = "John Doe Jr.";
 	//
 
 
@@ -648,6 +659,25 @@ function demoInit() {
 
 	var b1 = createBaseSpec(model1, "baseSpec001", "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1");
 	initAllBaseSpecHTML(model1);
+}
+
+function clean(s) {
+	let res = "";
+	const invalid = ["&", ":", "\\", "'", "\""]
+	for (let i = 0; i < s.length; i++) {
+		let l = s[i];
+		let c = l.charCodeAt();
+		for (let j = 0; j < invalid.length; j++) {
+			let v = invalid[j].charCodeAt();
+			if (c == v) {
+				l = "";
+				break;
+			}
+		}
+		res += l;
+	}	
+	// return s.replaceAll("&", "and").replaceAll(":", "").replaceAll("\\", "").replaceAll("'", "").replaceAll("\"", "");
+	return res;
 }
 
 //demoInit();

@@ -1,0 +1,51 @@
+
+
+# rows = []
+# for i in range(5):
+#     cols = []
+#     for j in range(4):
+#         e = tk.Entry(relief=tk.GROOVE)
+#         e.grid(row=i, column=j, sticky=tk.NSEW)
+#         e.insert(tk.END, '%d.%d' % (i, j))
+#         cols.append(e)
+#     rows.append(cols)
+# tk.mainloop()
+
+
+
+# window = tk.Tk()
+# top = tk.Frame()
+
+# sheet = tksheet.Sheet(top)
+
+# sheet.grid()
+
+# sheet.set_sheet_data([[f"{ri+cj}" for cj in range(4)] for ri in range(5)])
+
+# # table enable choices listed below:
+
+# sheet.enable_bindings(("single_select",
+#                        "row_select",
+#                        "column_width_resize",
+#                        "arrowkeys",
+#                        "right_click_popup_menu",
+#                        "rc_select",
+#                        "rc_insert_row",
+#                        "rc_delete_row",
+#                        "copy",
+#                        "cut",
+#                        "paste",
+#                        "delete",
+#                        "undo",
+#                        "edit_cell"))
+# sheet.change_theme(theme = "dark green")
+
+
+# zquit = tk.Button(top, text="QUIT", fg="red",
+#                               command=sheet.master.destroy)
+
+
+# # top.pack(side="bottom")    # no 
+# # sheet.pack(side="bottom")  # hidden?
+# # zquit.pack(side="bottom")  # no
+# top.mainloop()

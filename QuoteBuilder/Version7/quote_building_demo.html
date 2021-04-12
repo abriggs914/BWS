@@ -124,6 +124,7 @@
 			<style> .wpb_animate_when_almost_visible { opacity: 1; }</style>
 		</noscript>
 		<link rel="stylesheet" type="text/css" href="styles.css">
+		<script type="text/javascript" src="output_generator_demo.js"></script>
 	</head>
 	<body>
 		<div id="header-space" data-header-mobile-fixed="1"></div>
@@ -265,6 +266,21 @@
 		
 		
 		<div class="submit-wrapper" id="submit-wrapper">
+			<form action="">
+				<label for="contact"><strong>Contact:</strong></label>
+				<input class="submit-input" type="text" id="submit-contact-input" name="contact" rows=15 cols=100 placeholder="Contact Name"></input>
+				<label for="phone"><strong>Phone Number:</strong></label>
+				<input class="submit-input" type="tel" id="submit-cphone-input" name="phone" rows=15 cols=100 placeholder="-123-4567-123" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" required>
+				<label for="email"><strong>Email:</strong></label>
+				<input class="submit-input" type="email" id="submit-cemail-input" name="email" placeholder="email.address@email.com">
+				<label for="dealer"><strong>Company / Dealer Name:</strong></label>
+				<input class="submit-input" type="text" id="submit-dealer-input" name="dealer" rows=15 cols=100 placeholder="Dealer Name"></input>
+				<label for="branch"><strong>Branch Location:</strong></label>
+				<input class="submit-input" type="text" id="submit-branch-input" name="branch" rows=15 cols=100 placeholder="Branch Location"></input>
+				<label for="cname"><strong>Customer:</strong></label>
+				<input class="submit-input" type="text" id="submit-cname-input" name="cname" rows=15 cols=100 placeholder="Customer Name"></input>	
+			</form>
+
 			<textarea class="submit-comments-textarea" id="submit-comments-textarea" rows=15 cols=100 placeholder="Comments or concerns"></textarea>
 			<div class="banner">
 				<h4 class="npo-banner" id="npo-banner">Don't see what you're looking for?</h4>

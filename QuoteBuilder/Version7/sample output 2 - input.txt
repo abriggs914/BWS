@@ -1,0 +1,14 @@
+Avery Briggs, No Chrs ' " \
+123-456-7890
+email@email.ca
+Dealer Name with no escapes \" \"\n\n\t"
+No :: colons, M:A::
+Customer #1
+Make sure \there are no special "Stop\"characters in the text.
+
+
+Breakdown: 3 pr. GNK, 10 pr. Main deck, 2 pr. on B/T
+1 ramp, with no escape characters \
+with White accents
+no dangling quotes either "
+Or here '
