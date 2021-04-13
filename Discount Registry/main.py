@@ -3,11 +3,13 @@ import easygui
 from utility import *
 from discount import Discount
 import tkinter as tk
-import tksheet
+# import tksheet
 
 discount_entries = []
 dealers = []
 dims = [0, 0, 0, 0, 0]
+sort_status = None
+
 
 with open("discount_registry.csv") as f:
     f_dict = csv.DictReader(f)
@@ -51,50 +53,138 @@ class Application(tk.Frame):
 print(dims)
 def main_view():
     window_main = tk.Tk(className='Tkinter - TutorialKart')
-    window_main.geometry('400x200')
-
-    listbox_1 = tk.Listbox(window_main, selectmode=tk.EXTENDED, width=200)
-
-    for i, discount in enumerate(discount_entries):
-        listbox_1.insert(i, discount.table_entry(dims))
+    window_main.geometry('600x400')
+    myFont = tk.font.Font(family='consolas')
+    
     # listbox_1.insert(2, "Perl")
     # listbox_1.insert(3, "C")
     # listbox_1.insert(4, "PHP")
     # listbox_1.insert(5, "JSP")
     # listbox_1.insert(6, "Ruby")
 
+    def clear_data(listbox):
+        listbox.delete(0, len(discount_entries))
+
+    def add_data(listbox):
+        for i, discount in enumerate(discount_entries):
+            # print(discount.table_entry(dims))
+            listbox.insert(i, discount.table_entry(dims))
+
+    def init_listbox():
+        
+        listbox = tk.Listbox(window_main, selectmode=tk.EXTENDED, width=200)
+        listbox['font'] = myFont
+
+        add_data(listbox)
+        
+        return listbox
+
+    listbox = init_listbox()
+
     def create_function():
         print('Create a new discount')
 
     def edit_function():
-        selection = listbox_1.curselection()
+        selection = listbox.curselection()
         print('Edit a discount :', selection)
 
     def delete_function():
-        selection = listbox_1.curselection()
+        selection = listbox.curselection()
         print('Delete a discount :', selection)
 
     def submit_function():
-        selection = listbox_1.curselection()
+        selection = listbox.curselection()
         print('Listbox selection :', selection)
+
+    def sort_by_dealer():
+        global sort_status
+        rev = sort_status == sort_by_dealer
+        if rev:
+            rev = rev if discount_entries[0].dealer.lower() < discount_entries[-1].dealer.lower() else not rev
+        discount_entries.sort(key=lambda d: d.dealer.lower(), reverse=rev)
+        clear_data(listbox)
+        add_data(listbox)
+        sort_status = sort_by_dealer
+
+    def sort_by_model():
+        global sort_status
+        rev = sort_status == sort_by_model
+        if rev:
+            rev = rev if discount_entries[0].model.lower() < discount_entries[-1].model.lower() else not rev
+        discount_entries.sort(key=lambda d: d.model.lower(), reverse=rev)
+        clear_data(listbox)
+        add_data(listbox)
+        sort_status = sort_by_model
+
+    def sort_by_slot():
+        global sort_status
+        rev = sort_status == sort_by_slot
+        if rev:
+            rev = rev if discount_entries[0].slot < discount_entries[-1].slot else not rev
+        discount_entries.sort(key=lambda d: d.slot, reverse=rev)
+        clear_data(listbox)
+        add_data(listbox)
+        sort_status = sort_by_slot
+
+    def sort_by_market():
+        global sort_status
+        rev = sort_status == sort_by_market
+        if rev:
+            rev = rev if discount_entries[0].market < discount_entries[-1].market else not rev
+        discount_entries.sort(key=lambda d: d.market, reverse=rev)
+        clear_data(listbox)
+        add_data(listbox)
+        sort_status = sort_by_market
+
+    def sort_by_freight():
+        global sort_status
+        rev = sort_status == sort_by_freight
+        if rev:
+            rev = rev if discount_entries[0].freight < discount_entries[-1].freight else not rev
+        discount_entries.sort(key=lambda d: d.freight, reverse=rev)
+        clear_data(listbox)
+        add_data(listbox)
+        sort_status = sort_by_freight
     
-    listbox_1.pack()
+    print("sort_status:", sort_status)
+    print("dir:", dir())
+    sort_btn_frame = tk.Frame(window_main)
+    sort_btn_frame.pack(side=tk.TOP)
 
-    btn_frame = tk.Frame(window_main)
-    btn_frame.pack(side=tk.BOTTOM)
+    btn_sort_dealer = tk.Button(sort_btn_frame, text='Sort by Dealer', command=sort_by_dealer)
+    btn_sort_dealer.pack(side=tk.LEFT)
 
-    btn_create = tk.Button(btn_frame, text='Create', command=create_function)
+    btn_sort_model = tk.Button(sort_btn_frame, text='Sort by Model', command=sort_by_model)
+    btn_sort_model.pack(side=tk.LEFT)
+
+    btn_sort_slot = tk.Button(sort_btn_frame, text='Sort by Slot %', command=sort_by_slot)
+    btn_sort_slot.pack(side=tk.LEFT)
+
+    btn_sort_market = tk.Button(sort_btn_frame, text='Sort by Market %', command=sort_by_market)
+    btn_sort_market.pack(side=tk.LEFT)
+
+    btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
+    btn_sort_freight.pack(side=tk.LEFT)
+
+
+    listbox.pack()
+
+
+    ctrl_btn_frame = tk.Frame(window_main)
+    ctrl_btn_frame.pack(side=tk.BOTTOM)
+
+    btn_create = tk.Button(ctrl_btn_frame, text='Create', command=create_function)
     btn_create.pack(side=tk.LEFT)
 
-    btn_edit = tk.Button(btn_frame, text='Edit', command=edit_function)
+    btn_edit = tk.Button(ctrl_btn_frame, text='Edit', command=edit_function)
     btn_edit.pack(side=tk.LEFT)
 
-    btn_delete = tk.Button(btn_frame, text='Delete', command=delete_function)
+    btn_delete = tk.Button(ctrl_btn_frame, text='Delete', command=delete_function)
     btn_delete.pack(side=tk.LEFT)
     # btn_submit = tk.Button(window_main, text='Submit', command=submit_function)
     # btn_submit.pack()
 
-    btn_quit = tk.Button(btn_frame, text="QUIT", fg="red",
+    btn_quit = tk.Button(ctrl_btn_frame, text="QUIT", fg="red",
                                 command=window_main.destroy)
     btn_quit.pack(side=tk.TOP)
     
