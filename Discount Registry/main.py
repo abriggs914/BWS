@@ -55,6 +55,14 @@ def main_view():
     window_main = tk.Tk(className='Tkinter - TutorialKart')
     window_main.geometry('600x400')
     myFont = tk.font.Font(family='consolas')
+
+    entry_var_search = tk.StringVar()
+    search_radio_input = tk.IntVar()
+    radio_var_dealer = 1
+    radio_var_model = 2
+    first_player_option_1 = 1
+    first_player_option_2 = 2
+    first_player_option_3 = 3
     
     # listbox_1.insert(2, "Perl")
     # listbox_1.insert(3, "C")
@@ -145,10 +153,17 @@ def main_view():
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_freight
+
+    def submit_search():
+        print("performing search")
     
     print("sort_status:", sort_status)
     print("dir:", dir())
-    sort_btn_frame = tk.Frame(window_main)
+    
+    mod_btn_frame = tk.Frame(window_main)
+    mod_btn_frame.pack(side=tk.TOP)
+
+    sort_btn_frame = tk.Frame(mod_btn_frame)
     sort_btn_frame.pack(side=tk.TOP)
 
     btn_sort_dealer = tk.Button(sort_btn_frame, text='Sort by Dealer', command=sort_by_dealer)
@@ -166,6 +181,50 @@ def main_view():
     btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
     btn_sort_freight.pack(side=tk.LEFT)
 
+
+    search_btn_frame = tk.Frame(mod_btn_frame)
+    search_btn_frame.pack(side=tk.BOTTOM)
+
+    fg = "gray91"
+    bg = "DarkOrange1"
+
+    search_entry = tk.Entry(
+		search_btn_frame,
+		width=35,
+		bg=bg,
+		fg=fg,
+		font=myFont,
+		textvariable=entry_var_search
+	)
+    search_entry.pack(side=tk.LEFT)
+    
+    radio_btn_dealer = tk.Radiobutton(
+		search_btn_frame,
+		text="Dealer",
+		bg=bg,
+		fg=fg,
+		font=myFont,
+		variable=search_radio_input,
+		value=radio_var_dealer,
+		indicatoron = 0
+	)
+    radio_btn_dealer.pack(side=tk.LEFT)
+    
+    radio_btn_model = tk.Radiobutton(
+		search_btn_frame,
+		text="Model",
+		bg=bg,
+		fg=fg,
+		font=myFont,
+		variable=search_radio_input,
+		value=radio_var_model,
+		indicatoron = 0
+	)
+    radio_btn_model.pack(side=tk.LEFT)
+
+    btn_submit_search = tk.Button(search_btn_frame, text='Search', command=submit_search)
+    btn_submit_search.pack(side=tk.LEFT)
+    
 
     listbox.pack()
 
