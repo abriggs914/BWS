@@ -137,3 +137,6 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26072, 48LD3X5T V2018, 14, NorthEast Truck & Trailer Sales, $59079.544, $65972, $65312, 11, 0
 26073, 48LF3X5T V2018, 14, NorthEast Truck & Trailer Sales, $58494.466, $65419, $64765, 11, 0
 26074, 48LD4X5T V2018, 14, NorthEast Truck & Trailer Sales, $73022.2383, $81083, $80272, 12, 0
+26103, 20FDNT, 15, Remorques Lewis Inc., $23829.52, $29393, $28662, 3, 0
+26104, 25FDNT, 15, Remorques Lewis Inc., $29181.36, $36742, $35829, 4, 0
+26105, 20NTT, 15, Remorques Lewis Inc., $22641.84, $0, $0, 0, 0

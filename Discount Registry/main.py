@@ -21,7 +21,7 @@ with open("discount_registry.csv") as f:
         # app header
         #   Date, Dealer, Model, Class, Slot, Market, Freight
         vals = list(entry.values())
-        vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:5])) + ["IMPLEMENT CLASS"] + vals[5:]
+        vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
         discount = Discount(*vals)
         print("discount", discount)
         original_entries.append(discount)
@@ -30,8 +30,8 @@ with open("discount_registry.csv") as f:
         dims[1] = max(dims[1], len(discount.dealer))
         dims[2] = max(dims[2], len(discount.model))
         dims[3] = max(dims[3], len(discount.clazz))
-        dims[4] = max(dims[4], len(percent(discount.slot)))
-        dims[5] = max(dims[5], len(percent(discount.market)))
+        dims[4] = max(dims[4], len(percent(discount.slot, 3)))
+        dims[5] = max(dims[5], len(percent(discount.market, 3)))
         dims[6] = max(dims[6], len(money(discount.freight)))
     # discout_entries = {k: v for k, v in f_dict.items()}
 
@@ -68,8 +68,24 @@ def main_view():
     min_width = 1050
     size = str(min_width) + 'x' + str(round(min_width * (6/9)))
     window_main.geometry(size)
+    listbox = None
+
     font_1 = tk.font.Font(family='consolas')
     font_2 = tk.font.Font(family='consolas', weight='bold')
+    fg = "gray84"
+    bg = "red3"
+    abg = "red4"
+    afg = "gray84"
+    sc = "red4"
+
+    check_btn_date = None
+    check_btn_dealer = None
+    check_btn_model = None
+    check_btn_class = None
+    check_btn_slot = None
+    check_btn_market = None
+    check_btn_freight = None
+    search_entry = None
 
     entry_var_search = tk.StringVar()
     # search_check_input = tk.IntVar()
@@ -96,7 +112,7 @@ def main_view():
 
     def add_data(listbox):
         header = TABLE_HEADER
-        listbox.insert(0, "| " + " | ".join(list(map(lambda x: pad_centre(x, dims[header.index(x)]), header))) + "|")
+        listbox.insert(0, "| " + " | ".join(list(map(lambda x: pad_centre(x, dims[header.index(x)]), header))) + " |")
         for i, discount in enumerate(discount_entries):
             # print(discount.table_entry(dims))
             listbox.insert(i+1, discount.table_entry(dims))
@@ -110,25 +126,26 @@ def main_view():
         
         return listbox
 
-    listbox = init_listbox()
-
     def create_function():
         print('Create a new discount')
 
     def edit_function():
+        global listbox
         selection = listbox.curselection()
         print('Edit a discount :', selection)
 
     def delete_function():
+        global listbox
         selection = listbox.curselection()
         print('Delete a discount :', selection)
 
     def submit_function():
+        global listbox
         selection = listbox.curselection()
         print('Listbox selection :', selection)
 
     def sort_by_date():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_date
         if rev:
             rev = rev if discount_entries[0].date < discount_entries[-1].date else not rev
@@ -138,7 +155,7 @@ def main_view():
         sort_status = sort_by_date
 
     def sort_by_dealer():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_dealer
         if rev:
             rev = rev if discount_entries[0].dealer.lower() < discount_entries[-1].dealer.lower() else not rev
@@ -148,7 +165,7 @@ def main_view():
         sort_status = sort_by_dealer
 
     def sort_by_model():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_model
         if rev:
             rev = rev if discount_entries[0].model.lower() < discount_entries[-1].model.lower() else not rev
@@ -158,7 +175,7 @@ def main_view():
         sort_status = sort_by_model
 
     def sort_by_class():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_class
         if rev:
             rev = rev if discount_entries[0].clazz < discount_entries[-1].clazz else not rev
@@ -168,7 +185,7 @@ def main_view():
         sort_status = sort_by_class
 
     def sort_by_slot():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_slot
         if rev:
             rev = rev if discount_entries[0].slot < discount_entries[-1].slot else not rev
@@ -178,7 +195,7 @@ def main_view():
         sort_status = sort_by_slot
 
     def sort_by_market():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_market
         if rev:
             rev = rev if discount_entries[0].market < discount_entries[-1].market else not rev
@@ -188,7 +205,7 @@ def main_view():
         sort_status = sort_by_market
 
     def sort_by_freight():
-        global sort_status
+        global sort_status, listbox
         rev = sort_status == sort_by_freight
         if rev:
             rev = rev if discount_entries[0].freight < discount_entries[-1].freight else not rev
@@ -198,7 +215,7 @@ def main_view():
         sort_status = sort_by_freight
 
     def submit_search():
-        global discount_entries
+        global discount_entries, listbox
         print("\nperforming search")
         query = entry_var_search.get().lower()
         date = check_var_date.get()
@@ -218,6 +235,9 @@ def main_view():
             "freight": freight,
         }
 
+        percentages = ["slot", "market"]
+        monies = ["freight"]
+
         none_selected = not any(list(check_data.values()))
         if none_selected:
             return
@@ -232,6 +252,10 @@ def main_view():
                 if val:
                     print("\tchecking entry:", entry, ", at attr:", attr)
                     s = str(getattr(entry, attr)).lower()
+                    if attr in percentages:
+                        s = percent(float(s), 3)
+                    if attr in monies:
+                        s = money(float(s))
                     if s not in query and query not in s:
                         include = False
                         # break
@@ -247,206 +271,215 @@ def main_view():
         clear_data(listbox)
         discount_entries = filtered.copy()
         add_data(listbox)
+        reset_check_buttons()
         # print(dict_print(check_data, "res", number=True))
 
     
     def re_pop_entries():
+        global listbox
         clear_data(listbox)
         repopulate_entries()
         add_data(listbox)
+
+
+    def reset_check_buttons():
+        global check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry
+        checkbuttons = [check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight]
+        for btn in checkbuttons:
+            btn.deselect()
+        search_entry.delete(0, len(search_entry.get()))
         
     
-    # print("sort_status:", sort_status)
-    # print("dir:", dir())
-    
-    mod_btn_frame = tk.Frame(window_main)
-    mod_btn_frame.pack(side=tk.TOP)
+    def main_loop():
+        global listbox, check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry
+        listbox = init_listbox()
+        # print("sort_status:", sort_status)
+        # print("dir:", dir())
+        
+        mod_btn_frame = tk.Frame(window_main)
+        mod_btn_frame.pack(side=tk.TOP)
 
-    sort_btn_frame = tk.Frame(mod_btn_frame)
-    sort_btn_frame.pack(side=tk.TOP)
+        sort_btn_frame = tk.Frame(mod_btn_frame)
+        sort_btn_frame.pack(side=tk.TOP)
 
-    btn_sort_date = tk.Button(sort_btn_frame, text='Sort by Date', command=sort_by_date)
-    btn_sort_date.pack(side=tk.LEFT)
+        btn_sort_date = tk.Button(sort_btn_frame, text='Sort by Date', command=sort_by_date)
+        btn_sort_date.pack(side=tk.LEFT)
 
-    btn_sort_dealer = tk.Button(sort_btn_frame, text='Sort by Dealer', command=sort_by_dealer)
-    btn_sort_dealer.pack(side=tk.LEFT)
+        btn_sort_dealer = tk.Button(sort_btn_frame, text='Sort by Dealer', command=sort_by_dealer)
+        btn_sort_dealer.pack(side=tk.LEFT)
 
-    btn_sort_model = tk.Button(sort_btn_frame, text='Sort by Model', command=sort_by_model)
-    btn_sort_model.pack(side=tk.LEFT)
+        btn_sort_model = tk.Button(sort_btn_frame, text='Sort by Model', command=sort_by_model)
+        btn_sort_model.pack(side=tk.LEFT)
 
-    btn_sort_class = tk.Button(sort_btn_frame, text='Sort by Class', command=sort_by_class)
-    btn_sort_class.pack(side=tk.LEFT)
+        btn_sort_class = tk.Button(sort_btn_frame, text='Sort by Class', command=sort_by_class)
+        btn_sort_class.pack(side=tk.LEFT)
 
-    btn_sort_slot = tk.Button(sort_btn_frame, text='Sort by Slot %', command=sort_by_slot)
-    btn_sort_slot.pack(side=tk.LEFT)
+        btn_sort_slot = tk.Button(sort_btn_frame, text='Sort by Slot %', command=sort_by_slot)
+        btn_sort_slot.pack(side=tk.LEFT)
 
-    btn_sort_market = tk.Button(sort_btn_frame, text='Sort by Market %', command=sort_by_market)
-    btn_sort_market.pack(side=tk.LEFT)
+        btn_sort_market = tk.Button(sort_btn_frame, text='Sort by Market %', command=sort_by_market)
+        btn_sort_market.pack(side=tk.LEFT)
 
-    btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
-    btn_sort_freight.pack(side=tk.LEFT)
-
-
-    search_btn_frame = tk.Frame(mod_btn_frame)
-    search_btn_frame.pack(side=tk.BOTTOM)
-
-    fg = "gray84"
-    bg = "red3"
-    abg = "red4"
-    afg = "gray84"
-    sc = "red4"
-
-    search_entry = tk.Entry(
-		search_btn_frame,
-		width=35,
-		bg=fg,
-		fg=bg,
-		font=font_2,
-		textvariable=entry_var_search
-	)
-    search_entry.pack(side=tk.LEFT)
-    
-    check_btn_date = tk.Checkbutton(
-		search_btn_frame,
-		text="Date",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_date,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_date.pack(side=tk.LEFT)
-    
-    check_btn_dealer = tk.Checkbutton(
-		search_btn_frame,
-		text="Dealer",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_dealer,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_dealer.pack(side=tk.LEFT)
-    
-    check_btn_model = tk.Checkbutton(
-		search_btn_frame,
-		text="Model",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_model,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_model.pack(side=tk.LEFT)
-    
-    check_btn_class = tk.Checkbutton(
-		search_btn_frame,
-		text="Class",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_class,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_class.pack(side=tk.LEFT)
-    
-    check_btn_slot = tk.Checkbutton(
-		search_btn_frame,
-		text="Slot",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_slot,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_slot.pack(side=tk.LEFT)
-    
-    check_btn_market = tk.Checkbutton(
-		search_btn_frame,
-		text="Market",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_market,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_market.pack(side=tk.LEFT)
-    
-    check_btn_freight = tk.Checkbutton(
-		search_btn_frame,
-		text="Freight",
-		bg=bg,
-		fg=fg,
-		font=font_1,
-		variable=check_var_freight,
-		onvalue=1,
-		offvalue=0,
-		indicatoron = 0,
-        activebackground=abg,
-        activeforeground=afg,
-        selectcolor=sc
-	)
-    check_btn_freight.pack(side=tk.LEFT)
-
-    btn_submit_search = tk.Button(search_btn_frame, text='Search', command=submit_search)
-    btn_submit_search.pack(side=tk.LEFT)
-
-    btn_repop_search = tk.Button(search_btn_frame, text='Show all entries', command=re_pop_entries)
-    btn_repop_search.pack(side=tk.LEFT)
-    
-
-    listbox.pack()
+        btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
+        btn_sort_freight.pack(side=tk.LEFT)
 
 
-    ctrl_btn_frame = tk.Frame(window_main)
-    ctrl_btn_frame.pack(side=tk.BOTTOM)
+        search_btn_frame = tk.Frame(mod_btn_frame)
+        search_btn_frame.pack(side=tk.BOTTOM)
 
-    btn_create = tk.Button(ctrl_btn_frame, text='Create', command=create_function)
-    btn_create.pack(side=tk.LEFT)
 
-    btn_edit = tk.Button(ctrl_btn_frame, text='Edit', command=edit_function)
-    btn_edit.pack(side=tk.LEFT)
+        search_entry = tk.Entry(
+            search_btn_frame,
+            width=35,
+            bg=fg,
+            fg=bg,
+            font=font_2,
+            textvariable=entry_var_search
+        )
+        search_entry.pack(side=tk.LEFT)
+        
+        check_btn_date = tk.Checkbutton(
+            search_btn_frame,
+            text="Date",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_date,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_date.pack(side=tk.LEFT)
+        
+        check_btn_dealer = tk.Checkbutton(
+            search_btn_frame,
+            text="Dealer",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_dealer,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_dealer.pack(side=tk.LEFT)
+        
+        check_btn_model = tk.Checkbutton(
+            search_btn_frame,
+            text="Model",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_model,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_model.pack(side=tk.LEFT)
+        
+        check_btn_class = tk.Checkbutton(
+            search_btn_frame,
+            text="Class",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_class,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_class.pack(side=tk.LEFT)
+        
+        check_btn_slot = tk.Checkbutton(
+            search_btn_frame,
+            text="Slot",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_slot,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_slot.pack(side=tk.LEFT)
+        
+        check_btn_market = tk.Checkbutton(
+            search_btn_frame,
+            text="Market",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_market,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_market.pack(side=tk.LEFT)
+        
+        check_btn_freight = tk.Checkbutton(
+            search_btn_frame,
+            text="Freight",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=check_var_freight,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        check_btn_freight.pack(side=tk.LEFT)
 
-    btn_delete = tk.Button(ctrl_btn_frame, text='Delete', command=delete_function)
-    btn_delete.pack(side=tk.LEFT)
-    # btn_submit = tk.Button(window_main, text='Submit', command=submit_function)
-    # btn_submit.pack()
+        btn_submit_search = tk.Button(search_btn_frame, text='Search', command=submit_search)
+        btn_submit_search.pack(side=tk.LEFT)
 
-    btn_quit = tk.Button(ctrl_btn_frame, text="QUIT", fg="red",
-                                command=window_main.destroy)
-    btn_quit.pack(side=tk.TOP)
-    
-    window_main.mainloop()
+        btn_repop_search = tk.Button(search_btn_frame, text='Show all entries', command=re_pop_entries)
+        btn_repop_search.pack(side=tk.LEFT)
+        
 
+        listbox.pack()
+
+
+        ctrl_btn_frame = tk.Frame(window_main)
+        ctrl_btn_frame.pack(side=tk.BOTTOM)
+
+        btn_create = tk.Button(ctrl_btn_frame, text='Create', command=create_function)
+        btn_create.pack(side=tk.LEFT)
+
+        btn_edit = tk.Button(ctrl_btn_frame, text='Edit', command=edit_function)
+        btn_edit.pack(side=tk.LEFT)
+
+        btn_delete = tk.Button(ctrl_btn_frame, text='Delete', command=delete_function)
+        btn_delete.pack(side=tk.LEFT)
+        # btn_submit = tk.Button(window_main, text='Submit', command=submit_function)
+        # btn_submit.pack()
+
+        btn_quit = tk.Button(ctrl_btn_frame, text="QUIT", fg="red",
+                                    command=window_main.destroy)
+        btn_quit.pack(side=tk.TOP)
+
+        window_main.mainloop()
+
+    main_loop()
 
 main_view()
