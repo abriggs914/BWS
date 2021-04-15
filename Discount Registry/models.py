@@ -1,6 +1,6 @@
 
-non_current = "NC"
-current = "E"
+non_current = 0
+current = 1
 
 models = {
     "Agriculture": [

@@ -5,7 +5,7 @@
 
                                                                                    BWS Manufacturing Ltd.
 
-                                                                            Print Date: Thursday, April 15, 2021
+                                                                            Print Date: Thursday, April 8, 2021
 
                                                                                     Delivery Date Review
 
@@ -26,16 +26,16 @@
   23888    10014025          55HDG3X HS        2B9B6GY3XMA0011           23-Dec-19       20-Jan-20       13-Feb-20         13-Feb-20          0      19-Feb-20        13-Feb-20        -6
   24686    10014374           48LB4X A         2S9LB6469NM1132           09-Sep-20       19-Oct-20       17-Nov-20         05-Oct-20         -43     24-Nov-20        29-Nov-20        5
 
+  24687    10014375           48LB4X A         2S9LB6460NM1132           09-Sep-20       06-Nov-20       01-Dec-20         19-Oct-20         -43     23-Apr-21        30-Apr-21        7
+
   24688    10014376           48LB4X A         2S9LB6462NM1132           09-Sep-20       16-Nov-20       14-Dec-20         29-Oct-20         -46     15-Jan-21        20-Jan-21        5
 
   25289    10014585           48LB4X A         9200006                   02-Dec-20       03-May-21       25-May-21         20-Jan-21         -125    22-Jan-21        01-Jun-21       130
-
   25290    10014586           48LB4X A         9200003                   02-Dec-20       25-May-21       16-Jun-21         05-Feb-21         -131                     23-Jun-21
+
   25291    10014587           48LB4X A         9200004                   02-Dec-20       08-Jun-21       30-Jun-21         24-Feb-21         -126                     07-Jul-21
 
   25292    10014588           48LB4X A         9200005                   02-Dec-20       21-Jun-21       15-Jul-21         15-Mar-21         -122                     22-Jul-21
-
-  24687    10014375           48LB4X A         2S9LB6460NM1132           09-Sep-20       06-Nov-20       01-Dec-20         03-Jun-21         184     23-Apr-21        30-Apr-21        7
 
 
 

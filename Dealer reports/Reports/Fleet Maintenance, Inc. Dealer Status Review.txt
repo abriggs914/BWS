@@ -5,7 +5,7 @@
 
                                                                                   Fleet Maintenance, Inc.
 
-                                                                            Print Date: Thursday, April 8, 2021
+                                                                            Print Date: Thursday, April 15, 2021
 
                                                                                     Delivery Date Review
 
@@ -16,15 +16,15 @@
 
   24341    10014163            25ANR           2B9B2TR37MA0012           20-Mar-20       17-Dec-20       19-Jan-21         15-Mar-21          55     08-Jan-21        08-Jan-21        0
 
-  25943                  Frameless Alum. U                                               30-Jun-21       26-Jul-21         30-Jun-21         -26
-  25949                  Frameless Alum. U                                               28-Jul-21       26-Aug-21         30-Jun-21         -57
+  25943                  Frameless Alum. U                                               30-Jun-21       26-Jul-21         30-Jun-21         -26                      03-Aug-21
+  25949                  Frameless Alum. U                                               28-Jul-21       26-Aug-21         30-Jun-21         -57                      02-Sep-21
 
-  25956                  Frameless Alum. U                                               13-Aug-21       07-Sep-21         30-Jun-21         -69
+  25956                  Frameless Alum. U                                               13-Aug-21       07-Sep-21         30-Jun-21         -69                      14-Sep-21
 
-  25961                  Frameless Alum. U                                               16-Jul-21       16-Aug-21         30-Jun-21         -47
+  25961                  Frameless Alum. U                                               16-Jul-21       16-Aug-21         30-Jun-21         -47                      23-Aug-21
 
-  25950                  Frameless Alum. U                                               01-Jun-21       23-Jun-21         30-Jun-21          7
-  25951                  Frameless Alum. U                                               18-Jun-21       14-Jul-21         30-Jun-21         -14
+  25950                  Frameless Alum. U                                               01-Jun-21       23-Jun-21         30-Jun-21          7                       30-Jun-21
+  25951                  Frameless Alum. U                                               18-Jun-21       14-Jul-21         30-Jun-21         -14                      21-Jul-21
 
   25749    10014870            25ART           2B9B2TR32NA0014           22-Mar-21       28-Jul-21       26-Aug-21         25-Aug-21          -1                      30-Aug-21
 
@@ -35,26 +35,26 @@
 
   25747    10014863            20NTT           2B9B2TM26NA0013           19-Mar-21       14-Jul-21       12-Aug-21         08-Sep-21          27                      08-Sep-21
 
-  25957                  Frameless Alum. U                                               14-Sep-21       06-Oct-21         30-Sep-21          -6
+  25957                  Frameless Alum. U                                               14-Sep-21       06-Oct-21         30-Sep-21          -6                      13-Oct-21
 
-  25958                  Frameless Alum. U                                               23-Sep-21       18-Oct-21         30-Sep-21         -18
+  25958                  Frameless Alum. U                                               23-Sep-21       18-Oct-21         30-Sep-21         -18                      04-Nov-21
 
-  25962                  Frameless Alum. U                                               30-Sep-21       25-Oct-21         30-Sep-21         -25
-  25963                  Frameless Alum. U                                               14-Oct-21       05-Nov-21         30-Sep-21         -36
+  25962                  Frameless Alum. U                                               30-Sep-21       25-Oct-21         30-Sep-21         -25                      01-Nov-21
+  25963                  Frameless Alum. U                                               14-Oct-21       05-Nov-21         30-Sep-21         -36                      12-Nov-21
 
-  25952                  Frameless Alum. U                                               24-Aug-21       16-Sep-21         30-Sep-21          14
+  25952                  Frameless Alum. U                                               24-Aug-21       16-Sep-21         30-Sep-21          14                      23-Sep-21
 
-  25953                  Frameless Alum. U                                               02-Sep-21       27-Sep-21         30-Sep-21          3
+  25953                  Frameless Alum. U                                               02-Sep-21       27-Sep-21         30-Sep-21          3                       04-Oct-21
 
-  25959                  Frameless Alum. U                                               22-Oct-21       16-Nov-21         03-Jan-22          48
-  25960                  Frameless Alum. U                                               02-Nov-21       25-Nov-21         03-Jan-22          39
+  25959                  Frameless Alum. U                                               22-Oct-21       16-Nov-21         03-Jan-22          48                      23-Nov-21
+  25960                  Frameless Alum. U                                               02-Nov-21       25-Nov-21         03-Jan-22          39                      02-Dec-21
 
-  25964                  Frameless Alum. U                                               12-Nov-21       06-Dec-21         03-Jan-22          28
+  25964                  Frameless Alum. U                                               12-Nov-21       06-Dec-21         03-Jan-22          28                      13-Dec-21
 
-  25965                  Frameless Alum. U                                               22-Nov-21       14-Dec-21         03-Jan-22          20
+  25965                  Frameless Alum. U                                               22-Nov-21       14-Dec-21         03-Jan-22          20                      21-Dec-21
 
-  25954                  Frameless Alum. U                                               30-Nov-21       22-Dec-21         03-Jan-22          12
-  25955                  Frameless Alum. U                                               10-Dec-21       04-Jan-22         03-Jan-22          -1
+  25954                  Frameless Alum. U                                               30-Nov-21       22-Dec-21         03-Jan-22          12                      05-Jan-22
+  25955                  Frameless Alum. U                                               10-Dec-21       04-Jan-22         03-Jan-22          -1                      11-Jan-22
 
 
 

@@ -1,0 +1,194 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                     TEC Equipment Inc.
+
+                                                                            Print Date: Thursday, April 8, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  26012                        20ANR           2B9B2TN26NA0015                           26-Aug-21       20-Sep-21
+
+  26013                        20ANR           2B9B2TN23NA0015                           01-Oct-21       26-Oct-21
+
+  26014                        20ANR           2B9B2TN25NA0015                           12-Nov-21       07-Dec-21
+  26016                        20ANR           2B9B2TN2XNA0015                           30-Aug-21       22-Sep-21
+
+  26017                        20ANR           2B9B2TN21NA0015                           05-Oct-21       28-Oct-21
+
+  26018                        20ANR           2B9B2TN29NA0015                           17-Nov-21       09-Dec-21
+
+  26020                        20ANR           2B9B2TN28NA0015                           01-Sep-21       24-Sep-21
+  26021                        20ANR           2B9B2TN25NA0015                           07-Oct-21       01-Nov-21
+
+  26022                        20ANR           2B9B2TN27NA0015                           19-Nov-21       13-Dec-21
+
+  26024                        20ANR           2B9B2TN26NA0015                           03-Sep-21       28-Sep-21
+
+  26025                        20ANR           2B9B2TN23NA0015                           12-Oct-21       03-Nov-21
+  26026                        20ANR           2B9B2TN20NA0015                           23-Nov-21       15-Dec-21
+
+  25996                        20NTT           2B9B2TM22NA0015                           26-Aug-21       20-Sep-21
+
+  25997                        20NTT           2B9B2TM2XNA0015                           05-Oct-21       28-Oct-21
+
+  25998                        20NTT           2B9B2TM27NA0015                           12-Nov-21       07-Dec-21
+
+  26000                        20NTT           2B9B2TM26NA0015                           30-Aug-21       22-Sep-21
+  26001                        20NTT           2B9B2TM28NA0015                           07-Oct-21       01-Nov-21
+
+  26002                        20NTT           2B9B2TM25NA0015                           17-Nov-21       09-Dec-21
+
+  26004                        20NTT           2B9B2TM24NA0015                           01-Sep-21       24-Sep-21
+
+  26005                        20NTT           2B9B2TM21NA0015                           12-Oct-21       03-Nov-21
+  26006                        20NTT           2B9B2TM23NA0015                           19-Nov-21       13-Dec-21
+
+  26008                        20NTT           2B9B2TM28NA0015                           03-Sep-21       28-Sep-21
+
+  26009                        20NTT           2B9B2TM2XNA0015                           14-Oct-21       05-Nov-21
+
+  26010                        20NTT           2B9B2TM27NA0015                           23-Nov-21       15-Dec-21
+  25980                      35ADG2X NR        2B9B6GW2XNA001                            08-Sep-21       30-Sep-21
+
+  25981                      35ADG2X NR        2B9B6GW27NA001                            01-Oct-21       26-Oct-21
+
+  25982                      35ADG2X NR        2B9B6GW24NA001                            15-Nov-21       07-Dec-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 3
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                     TEC Equipment Inc.
+
+                                                                            Print Date: Thursday, April 8, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25984                      35ADG2X NR        2B9B6GW23NA001                            10-Sep-21       04-Oct-21
+
+  25985                      35ADG2X NR        2B9B6GW25NA001                            05-Oct-21       28-Oct-21
+
+  25986                      35ADG2X NR        2B9B6GW22NA001                            17-Nov-21       09-Dec-21
+  25988                      35ADG2X NR        2B9B6GW21NA001                            14-Sep-21       06-Oct-21
+
+  25989                      35ADG2X NR        2B9B6GW29NA001                            07-Oct-21       01-Nov-21
+
+  25990                      35ADG2X NR        2B9B6GW20NA001                            19-Nov-21       13-Dec-21
+
+  25992                      35ADG2X NR        2B9B6GW25NA001                            16-Sep-21       08-Oct-21
+  25993                      35ADG2X NR        2B9B6GW27NA001                            12-Oct-21       03-Nov-21
+
+  25994                      35ADG2X NR        2B9B6GW24NA001                            23-Nov-21       15-Dec-21
+
+  26028                        48ET2X          2B9B6EW2XNA001                            03-Sep-21       28-Sep-21
+
+  26029                        48ET2X          2B9B6EW27NA001                            05-Oct-21       28-Oct-21
+  26030                        48ET2X          2B9B6EW29NA001                            15-Nov-21       07-Dec-21
+
+  26032                        48ET2X          2B9B6EW23NA001                            08-Sep-21       30-Sep-21
+
+  26033                        48ET2X          2B9B6EW25NA001                            07-Oct-21       01-Nov-21
+
+  26034                        48ET2X          2B9B6EW22NA001                            17-Nov-21       09-Dec-21
+
+  26036                        48ET2X          2B9B6EW21NA001                            10-Sep-21       04-Oct-21
+  26037                        48ET2X          2B9B6EW29NA001                            12-Oct-21       03-Nov-21
+
+  26038                        48ET2X          2B9B6EW20NA001                            19-Nov-21       13-Dec-21
+
+  26040                        48ET2X          2B9B6EW2XNA001                            14-Sep-21       06-Oct-21
+
+  26041                        48ET2X          2B9B6EW27NA001                            14-Oct-21       05-Nov-21
+  26042                        48ET2X          2B9B6EW24NA001                            23-Nov-21       15-Dec-21
+
+  25723    10014909             35FA           2B9B4A518NA0014           05-Apr-21       12-May-21       03-Jun-21         03-Jun-21          0                       10-Jun-21
+
+  25848    10014915            20ANR           2B9B2TN23NA0014           05-Apr-21       25-May-21       16-Jun-21         16-Jun-21          0                       23-Jun-21
+
+  25847    10014919            20NTT           2B9B2TM2XNA0014           05-Apr-21       25-May-21       16-Jun-21         16-Jun-21          0                       23-Jun-21
+  25878    10014916            20ANR           2B9B2TN20NA0014           05-Apr-21       28-May-21       21-Jun-21         21-Jun-21          0                       28-Jun-21
+
+  25875    10014920            20NTT           2B9B2TM23NA0014           05-Apr-21       28-May-21       21-Jun-21         21-Jun-21          0                       28-Jun-21
+
+  25877    10014917            20ANR           2B9B2TN29NA0014           05-Apr-21       01-Jun-21       23-Jun-21         23-Jun-21          0                       30-Jun-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 3
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                     TEC Equipment Inc.
+
+                                                                            Print Date: Thursday, April 8, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25849    10014923          35ADG2X NR        2B9B6GW27NA001            05-Apr-21       01-Jun-21       23-Jun-21         23-Jun-21          0                       30-Jun-21
+
+  25850    10014927            48ET2X          2B9B6EW21NA001            05-Apr-21       08-Jun-21       30-Jun-21         24-Jun-21          -6                      30-Jun-21
+
+  25876    10014918            20ANR           2B9B2TN27NA0014           05-Apr-21       03-Jun-21       25-Jun-21         25-Jun-21          0                       05-Jul-21
+  25879    10014926          35ADG2X NR        2B9B6GW2XNA001            05-Apr-21       30-Jun-21       26-Jul-21         25-Jun-21         -31                      09-Aug-21
+
+  25880    10014925          35ADG2X NR        2B9B6GW21NA001            05-Apr-21       24-Jun-21       20-Jul-21         28-Jun-21         -22                      27-Jul-21
+
+  25874    10014921            20NTT           2B9B2TM21NA0014           05-Apr-21       07-Jun-21       29-Jun-21         29-Jun-21          0                       08-Jul-21
+
+  25881    10014924          35ADG2X NR        2B9B6GW23NA001            05-Apr-21       18-Jun-21       14-Jul-21         29-Jun-21         -15                      21-Jul-21
+  25882    10014930            48ET2X          2B9B6EW24NA001            05-Apr-21       14-Jul-21       12-Aug-21         30-Jun-21         -43                      19-Aug-21
+
+  25873    10014922            20NTT           2B9B2TM2XNA0014           05-Apr-21       09-Jun-21       05-Jul-21         05-Jul-21          0                       12-Jul-21
+
+  25883    10014929            48ET2X          2B9B6EW26NA001            05-Apr-21       08-Jul-21       30-Jul-21         05-Jul-21         -25                      09-Aug-21
+
+  25884    10014928            48ET2X          2B9B6EW28NA001            05-Apr-21       14-Jun-21       08-Jul-21         06-Jul-21          -2                      13-Jul-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 3 of 3

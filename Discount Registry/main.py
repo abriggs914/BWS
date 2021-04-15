@@ -66,16 +66,32 @@ print(dims)
 
 
 def create_view(edit=False):
-    root = tk.Tk(className='Create / Edit Discount')
-    window_main = tk.Frame(root)
+    root_create = tk.Tk(className='Create / Edit Discount')
+    window_create = tk.Frame(root_create)
     # window_create = tk.Frame(root)
-    window_main.pack()
+    window_create.pack()
+    submit = False
 
-    btn_quit = tk.Button(window_main, text="QUIT", fg="red",
-                                    command=root.destroy)
+    def q():
+        global submit
+        # print("pre-quit")
+        # window_main.destroy()
+        print("mid-quit")
+        # root_create.destroy()
+        # print("post-quit")
+        submit = True
+
+    btn_quit = tk.Button(window_create, text="QUIT", fg="red",
+                                    command=q)
     btn_quit.pack(side=tk.TOP)
     
-    root.mainloop()
+    print("Before root.mainloop() in create_view")
+    while not submit:
+        print("\tsubmit", submit)
+        # root_create.draw()
+        root_create.update_idletasks()
+        root_create.update()
+    print("After root.mainloop() in create_view")
 
     return "results"
 
@@ -121,7 +137,7 @@ def main_view():
     check_var_market = tk.IntVar()
     check_var_freight = tk.IntVar()
 
-    check_var_freight.trace_add("write", freight_written)
+    # check_var_freight.trace_add("write", freight_written)
     
     # listbox_1.insert(2, "Perl")
     # listbox_1.insert(3, "C")
@@ -154,11 +170,11 @@ def main_view():
 
     def enable(frame):
         for child in frame.winfo_children():
-            # print("t: {", type(child), "} child:", child)
+            print("t: {", type(child), "} child:", child)
             if type(child) == tk.Frame:
                 enable(child)
             else:
-                child.configure(state='enable')
+                child.configure(state='normal')
 
     def disable(frame):
         for child in frame.winfo_children():

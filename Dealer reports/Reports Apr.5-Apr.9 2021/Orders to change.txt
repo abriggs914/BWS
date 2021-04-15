@@ -1,19 +1,15 @@
-Dealer Delivery Reports as of 15-Apr-21
-
-Adjusting deliveries moved back by at least 5 days 
-Adjusting deliveries moved forward by at least 7 days 
+Dealer Delivery Reports as of 08-Apr-21
 
 
-	Dealer Delivery Report for << Reports/Atlantic Powertrain & Equipment >>
+	Dealer Delivery Report for << Reports/Atlantic Powertrain >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25375   14737    30ART   30NA0012   29-Apr-21   21-May-21   -7       -       24-May-21   -   31-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
 
-	Dealer Delivery Report for << Reports/B & D Equipment Inc. dba E & R Trailers Sales >>
+	Dealer Delivery Report for << Reports/BD Equipment >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -32,8 +28,7 @@ EOF
 	Dealer Delivery Report for << Reports/BWS - US Direct Sales >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25316   14602    25ART   39NA0011   17-Mar-21   09-Apr-21   -8   01-Apr-21   03-Apr-21   2   09-Apr-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -59,30 +54,7 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
-	Dealer Delivery Report for << Reports/Demountable Concepts, Inc. >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#          Model         Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-24924   14392    53VT2V FL CA-53   23MA0014   03-Nov-20   02-Dec-20   -1   11-Dec-20   11-Dec-20   0   18-Dec-20  
-24925   14393    53VT2V FL CA-53   25MA0014   05-Nov-20   07-Dec-20   -6   09-Dec-20   09-Dec-20   0   16-Dec-20  
-
-EOF
-
-
-	Dealer Delivery Report for << Reports/Department of Transportation >>
-	The following orders need their estimated delivery dates updated.
-
- Q#      Wo#      Model    Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25131   14510    2313NB     22636    26-Feb-21   22-Mar-21   -7   19-Mar-21   19-Mar-21   0   26-Mar-21  
-25132   14511    2313NB     22637    01-Mar-21   23-Mar-21   -6   22-Mar-21   22-Mar-21   0   29-Mar-21  
-25135   14514    2313NB     22640    04-Mar-21   26-Mar-21   -4   26-Mar-21   26-Mar-21   0   05-Apr-21  
-25138   14517    2313NB     22643    09-Mar-21   31-Mar-21   -5   31-Mar-21   31-Mar-21   0   08-Apr-21  
-25139   14518    2313NB     22644    10-Mar-21   01-Apr-21   -3   01-Apr-21   01-Apr-21   0   09-Apr-21  
-
-EOF
-
-
-	Dealer Delivery Report for << Reports/DH Agro Ltd. >>
+	Dealer Delivery Report for << Reports/Demountable Concepts, Inc >>
 	The following orders need their estimated delivery dates updated.
 
 Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
@@ -90,17 +62,29 @@ Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F  
 EOF
 
 
+	Dealer Delivery Report for << Reports/Department of Transportation >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Reports/DH Agro Ltd. >>
+	The following orders need their estimated delivery dates updated.
+
+ Q#      Wo#      Model    Serial #    Prod.       Mrp       P    Avail.     Est. Del.       F       New Del.  
+21771   11675     LP14    9100070   03-Jul-15   27-Jul-15  2,045 14-Aug-15  21-Mar-03     -4,529    21-Aug-15  
+
+EOF
+
+
 	Dealer Delivery Report for << Reports/Diamond International Trucks Ltd. >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#        Model       Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-24909   14785    53HD3X 2018   33NA0013   16-Jun-21   12-Jul-21   -19       -       12-Jul-21   -   19-Jul-21  
-25640   14789       48ET3X     W39NA001   17-Jun-21   13-Jul-21   -13       -       13-Jul-21   -   20-Jul-21  
-25557   14792      53ET3XP     36NA0013   25-Jun-21   21-Jul-21   -14       -       21-Jul-21   -   28-Jul-21  
-25674   14809       20ART      27NA0014   11-Jun-21   07-Jul-21    6        -       27-Jul-21   -   14-Jul-21  
-25642   14827       53ET3X     32NA0013   05-Jul-21   27-Jul-21   -12       -       27-Jul-21   -   10-Aug-21  
-25645   14833      53ET3XP     31NA0013   09-Jul-21   09-Aug-21   -19       -       09-Aug-21   -   16-Aug-21  
-25105   14849       20ART      25NA0014   05-Jul-21   27-Jul-21    20       -       30-Aug-21   -   10-Aug-21  
+ Q#      Wo#      Model    Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
+25675   14899    48ET3X   W30NA001   13-Jul-21   11-Aug-21   -16       -       09-Aug-21   -   18-Aug-21  
+25105   14849     20ART   25NA0014   05-Jul-21   27-Jul-21    20       -       30-Aug-21   -   10-Aug-21  
 
 EOF
 
@@ -109,7 +93,6 @@ EOF
 	The following orders need their estimated delivery dates updated.
 
  Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-24341   14163    25ANR   37MA0012   17-Dec-20   19-Jan-21   55   08-Jan-21   08-Jan-21   0   15-Jan-21  
 25746   14862    20NTT   24NA0013   12-Jul-21   10-Aug-21   27       -       07-Sep-21   -   17-Aug-21  
 25747   14863    20NTT   26NA0013   14-Jul-21   12-Aug-21   27       -       08-Sep-21   -   19-Aug-21  
 
@@ -119,12 +102,7 @@ EOF
 	Dealer Delivery Report for << Reports/Fort Garry Industries Ltd. >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25350   14647     30ANR   31NA0012   29-Mar-21   21-Apr-21    -2   08-Apr-21   26-Apr-21   18  15-Apr-21  
-25609   14723     25ANR   31NA0013   26-Apr-21   18-May-21    -7       -       18-May-21   -   26-May-21  
-25399   14724    53ET3X   35NA0012   14-May-21   07-Jun-21   -21       -       07-Jun-21   -   14-Jun-21  
-25547   14738    48ET3X   W38NA001   18-May-21   09-Jun-21   -22       -       09-Jun-21   -   16-Jun-21  
-25617   14731     25ANR   31NA0013   30-Apr-21   24-May-21    -5       -       24-May-21   -   31-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -132,8 +110,7 @@ EOF
 	Dealer Delivery Report for << Reports/Hale Trailer Brake & Wheel >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25449   14703    20NTT   28NA0012   03-May-21   25-May-21   -7       -       25-May-21   -   01-Jun-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -165,10 +142,8 @@ EOF
 	Dealer Delivery Report for << Reports/Northeast Truck & Trailer Sales >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#       Model      Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25622   14907    55HDG3X E   38NA0013   14-May-21   07-Jun-21   -7       -       07-Jun-21   -   14-Jun-21  
-23871   14824      53ET3X    35NA0013   23-Jun-21   19-Jul-21   -6       -       19-Jul-21   -   26-Jul-21  
-25150   14932      48ET3X    W30NA001   20-Jul-21   18-Aug-21   22       -       09-Sep-21   -   25-Aug-21  
+ Q#      Wo#      Model    Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
+25150   14932    48ET3X   W30NA001   20-Jul-21   18-Aug-21   22       -       09-Sep-21   -   25-Aug-21  
 
 EOF
 
@@ -201,13 +176,8 @@ EOF
 	Dealer Delivery Report for << Reports/Remorques Lewis Inc. >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#         Model       Serial #     Prod.       Mrp        P      Avail.     Est. Del.    F    New Del.  
-24780   14388    27DT2X V2018   2XNA0010   19-Jul-21   17-Aug-21   -183       -       03-Sep-21   -   24-Aug-21  
-25172   14550        25NTT      3XNA0011   25-Mar-21   19-Apr-21    -4    23-Apr-21   24-Apr-21   1   30-Apr-21  
-25415   14672      55HDG3X E    38NA0012   10-May-21   01-Jun-21    -47       -       31-May-21   -   08-Jun-21  
-25548   14721        30NTT      3XNA0013   09-Apr-21   03-May-21    -7    03-May-21   03-May-21   0   10-May-21  
-25417   14671      55HDG3X E    33NA0012   04-May-21   26-May-21    -11       -       24-May-21   -   02-Jun-21  
-25303   14712       53HD4X      4XNA0011   02-Jun-21   24-Jun-21    -23       -       23-Jun-21   -   05-Jul-21  
+ Q#      Wo#      Model    Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
+25303   14712    53HD4X   4XNA0011   02-Jun-21   24-Jun-21   -23       -       23-Jun-21   -   05-Jul-21  
 
 EOF
 
@@ -231,8 +201,7 @@ EOF
 	Dealer Delivery Report for << Reports/Stargate Mgf (2020) Ltd. >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#       Model      Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
-25386   14629    Pony 3X17     9411     20-Apr-21   12-May-21   -26       -       31-May-21   -   19-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -248,9 +217,7 @@ EOF
 	Dealer Delivery Report for << Reports/TEC Equipment Inc. >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #     Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25850   14927    48ET2X   W21NA001   08-Jun-21   30-Jun-21   -6       -       30-Jun-21   -   09-Jul-21  
-26028   14998    48ET2X   W2XNA001   03-Sep-21   28-Sep-21    0       -       28-Sep-21   -   05-Oct-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -258,10 +225,7 @@ EOF
 	Dealer Delivery Report for << Reports/Trailers Plus >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25451   14699    30NTT   34NA0012   27-Apr-21   19-May-21   20       -       19-May-21   -   27-May-21  
-25447   14725    30ART   30NA0012   23-Apr-21   17-May-21   23       -       17-May-21   -   25-May-21  
-25452   14700    30NTT   36NA0012   29-Apr-21   21-May-21   19       -       24-May-21   -   31-May-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 
@@ -269,8 +233,7 @@ EOF
 	Dealer Delivery Report for << Reports/Transit Trailer Limited >>
 	The following orders need their estimated delivery dates updated.
 
- Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
-25722   14864    30ART   36NA0013   08-Jul-21   30-Jul-21   -1       -       04-Aug-21   -   13-Aug-21  
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
 

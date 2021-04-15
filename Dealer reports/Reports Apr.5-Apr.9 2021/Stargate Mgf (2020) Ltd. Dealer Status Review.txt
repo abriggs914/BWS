@@ -5,7 +5,7 @@
 
                                                                                   Stargate Mgf (2020) Ltd.
 
-                                                                            Print Date: Thursday, April 15, 2021
+                                                                            Print Date: Thursday, April 8, 2021
 
                                                                                     Delivery Date Review
 
@@ -37,23 +37,23 @@
 
   25390    10014645          Pony 3X17                                   13-Jan-21       18-May-21       09-Jun-21         28-Apr-21         -42                      25-Jun-21
 
-  25389    10014639          Pony 3X17                                   13-Jan-21       05-May-21       27-May-21         04-May-21         -23                      03-Jun-21
+  25389    10014639          Pony 3X17                                   13-Jan-21       05-May-21       27-May-21         04-May-21         -23                      07-Jul-21
 
   25818    10014810             CD1X           8779 Dolly                17-Mar-21       29-Apr-21       21-May-21         21-May-21          0                       28-May-21
+  25395    10014644          Pony 3X17                                   13-Jan-21       18-May-21       09-Jun-21         25-May-21         -15                      21-Jun-21
+
   25094    10014504          Pony 3X17         9444                      05-Nov-20       23-Apr-21       17-May-21         01-Jun-21          15                      01-Jun-21
 
   25860    10014933             CD2X           8786DOLLY                 05-Apr-21       14-May-21       07-Jun-21         07-Jun-21          0                       14-Jun-21
 
   25391    10014640          Pony 3X17         9449                      13-Jan-21       10-May-21       01-Jun-21         08-Jun-21          7                       08-Jun-21
-
   25392    10014641          Pony 3X17         9451                      13-Jan-21       10-May-21       01-Jun-21         14-Jun-21          13                      14-Jun-21
+
   25393    10014642          Pony 3X17         9452                      13-Jan-21       13-May-21       04-Jun-21         15-Jun-21          11                      15-Jun-21
 
   25394    10014643          Pony 3X17         9448                      13-Jan-21       13-May-21       04-Jun-21         22-Jun-21          18                      16-Jun-21
 
   25859                      Dump SF4X         9450                                      17-Jun-21       13-Jul-21         13-Jul-21          0                       20-Jul-21
-
-  25395    10014644          Pony 3X17         9463                      13-Jan-21       18-May-21       09-Jun-21         30-Jul-21          51                      21-Jun-21
   25803                         30SB           8782                                      26-Jul-21       24-Aug-21         24-Aug-21          0                       31-Aug-21
 
   25825                     Dump 36SF3X        8783                                      09-Aug-21       31-Aug-21         31-Aug-21          0                       07-Sep-21
@@ -70,7 +70,7 @@ SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer
 
                                                                                   Stargate Mgf (2020) Ltd.
 
-                                                                            Print Date: Thursday, April 15, 2021
+                                                                            Print Date: Thursday, April 8, 2021
 
                                                                                     Delivery Date Review
 

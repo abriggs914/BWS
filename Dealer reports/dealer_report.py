@@ -474,9 +474,17 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 		return all_for_adjusting
 
 def run_reports():
+	ld = 5
+	frt = 5
+	brt = 3
+	fat = 7
+	bat = 5
 	with open(ORDERS_TO_CHANGE_OUTPUT, 'w') as out:
 		d = dt.datetime.strftime(dt.datetime.now(), "%d-%b-%y")
 		out.write("Dealer Delivery Reports as of " + d)
+		out.write("\n\nUsing lead time of {0} days".format(ld))
+		out.write("\nAdjusting deliveries moved back by at least {0} days ".format(bat))
+		out.write("\nAdjusting deliveries moved forward by at least {0} days ".format(fat))
 
 	files = os.listdir("Reports")
 	# s = "C:\Users\ABriggs\Documents\BWS\Dealer reports\Reports\Atlantic Powertrain Dealer Status Review.txt"
@@ -485,7 +493,7 @@ def run_reports():
 	need_adjusted = []
 	for f in files:
 		dealer = f.split()[:-3]
-		need_adj = dealer_delivery_report_updates(dealer, f, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=6)
+		need_adj = dealer_delivery_report_updates(dealer, f, lead_days=ld, forward_review_threshold=frt, backward_review_threshold=brt, forward_adjust_threshold=fat, backward_adjust_threshold=bat)
 		if need_adj != None:
 			need_adjusted += need_adj
 	
