@@ -63,11 +63,35 @@ discount_entries.sort(key=lambda d: d.date, reverse=True)
 # app.mainloop()
 
 print(dims)
+
+
+def create_view(edit=False):
+    root = tk.Tk(className='Create / Edit Discount')
+    window_main = tk.Frame(root)
+    # window_create = tk.Frame(root)
+    window_main.pack()
+
+    btn_quit = tk.Button(window_main, text="QUIT", fg="red",
+                                    command=root.destroy)
+    btn_quit.pack(side=tk.TOP)
+    
+    root.mainloop()
+
+    return "results"
+
+
+def freight_written(*args):
+    print("Freight written", args)
+
+
 def main_view():
-    window_main = tk.Tk(className='Discout Registry')
+    root = tk.Tk(className='Discount Registry')
+    window_main = tk.Frame(root)
+    # window_create = tk.Frame(root)
+    window_main.pack()
     min_width = 1050
     size = str(min_width) + 'x' + str(round(min_width * (6/9)))
-    window_main.geometry(size)
+    root.geometry(size)
     listbox = None
 
     font_1 = tk.font.Font(family='consolas')
@@ -96,6 +120,8 @@ def main_view():
     check_var_slot = tk.IntVar()
     check_var_market = tk.IntVar()
     check_var_freight = tk.IntVar()
+
+    check_var_freight.trace_add("write", freight_written)
     
     # listbox_1.insert(2, "Perl")
     # listbox_1.insert(3, "C")
@@ -126,13 +152,41 @@ def main_view():
         
         return listbox
 
+    def enable(frame):
+        for child in frame.winfo_children():
+            # print("t: {", type(child), "} child:", child)
+            if type(child) == tk.Frame:
+                enable(child)
+            else:
+                child.configure(state='enable')
+
+    def disable(frame):
+        for child in frame.winfo_children():
+            # print("t: {", type(child), "} child:", child)
+            if type(child) == tk.Frame:
+                disable(child)
+            else:
+                child.configure(state='disable')
+
     def create_function():
+        disable(window_main)
         print('Create a new discount')
+        new_discount = create_view()
+        print("new discount:", new_discount)
+        enable(window_main)
 
     def edit_function():
         global listbox
         selection = listbox.curselection()
+        if 0 in selection:
+            selection.remove(0)
         print('Edit a discount :', selection)
+        disable(window_main)
+        new_discounts = []
+        for sel in selection:
+            new_discounts.append(create_view(edit=(discount_entries[sel])))
+        print("edited discounts:", new_discounts)
+        enable(window_main)
 
     def delete_function():
         global listbox
@@ -475,10 +529,10 @@ def main_view():
         # btn_submit.pack()
 
         btn_quit = tk.Button(ctrl_btn_frame, text="QUIT", fg="red",
-                                    command=window_main.destroy)
+                                    command=root.destroy)
         btn_quit.pack(side=tk.TOP)
 
-        window_main.mainloop()
+        root.mainloop()
 
     main_loop()
 
