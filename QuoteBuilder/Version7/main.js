@@ -193,8 +193,10 @@ function createModel(modelIn) {
 // Use this function to create options.
 // This ensures that the option will be included in the OPTIONS array.
 function createOption(model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat) {
+	console.log("\n\tmodel: " + model + "\n\telementID: " +  elementID + "\n\toptionNum: " +  optionNum + "\n\tsection: " +  section + "\n\tpartNum: " +  partNum + "\n\tdescription: " +  description + "\n\tweight: " +  weight + "\n\tcost: " +  cost + "\n\tpriceCDN: " +  priceCDN + "\n\tpriceUS: " +  priceUS + "\n\tpriceMaterials:" +  priceMaterials + "\n\tpriceLabour: " +  priceLabour + "\n\toptionFlags: " +  optionFlags + "\n\thtmlFormat: " +  htmlFormat)
 	let op = new Option(model, elementID, optionNum, section, partNum, description, weight, cost, priceCDN, priceUS, priceMaterials, priceLabour, optionFlags, htmlFormat);
 	model.optionsList.push(op);
+	console.log("OPTION: " + op)
 	return op;
 }
 

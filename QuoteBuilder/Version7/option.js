@@ -131,13 +131,13 @@ class Option {
 		var comment = document.getElementById(this.commentInputID()).value;
 		// str += this.description.substring(0, Math.min(this.description.length, 20));
 		// str += " @ " + "$ " + parseFloat(this.priceCDN).toFixed(2) + " each.";
-		str += this.optionNum;
+		str += this.elementID;
 		str += ";;;" + comment;
 		return str;
 	}
 	
 	toString() {
-		return this.optionNum + " x " + this.quantity;
+		return this.quantity + " x " + this.elementID;
 	}
 }
 
