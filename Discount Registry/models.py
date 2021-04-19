@@ -317,3 +317,5 @@ print("{n} total classes".format(n=len(models)))
 print("{n} total models".format(n=len(current_models) + len(non_current_models)))
 print("{n} current models".format(n=len(current_models)))
 print("{n} non-current models".format(n=len(non_current_models)))
+
+print("current models[0]:",current_models[0])

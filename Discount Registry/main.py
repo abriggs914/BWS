@@ -1,20 +1,30 @@
 import csv
 import easygui
+import datetime
+from models import *
 from utility import *
 from discount import *
 import tkinter as tk
+from tkcalendar import Calendar
 # import tksheet
+
+admin=easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges", default_choice="No")  # allows a little more functionality  ! Beware of data consistency when using !
+
+min_width = 1050
+size = str(min_width) + 'x' + str(round(min_width * (6/9)))
 
 original_entries = []  # Do not modify - contains the original contents from the file
 discount_entries = []  # working entries, for display purposes only
-dealers = []
+dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
+models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
+class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
 dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
 
 
 with open("discount_registry.csv") as f:
     f_dict = csv.DictReader(f)
-    for entry in f_dict:
+    for i, entry in enumerate(f_dict):
         print(entry)
         # csv header
         #   dealer,model,slot,market,freight,date
@@ -23,6 +33,22 @@ with open("discount_registry.csv") as f:
         vals = list(entry.values())
         vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
         discount = Discount(*vals)
+
+        if discount.dealer not in dealers_entries:
+            dealers_entries[discount.dealer] = [i]
+        else:
+            dealers_entries[discount.dealer].append(i)
+
+        if discount.model not in models_entries:
+            models_entries[discount.model] = [i]
+        else:
+            models_entries[discount.model].append(i)
+
+        if discount.clazz not in class_entries:
+            class_entries[discount.clazz] = [i]
+        else:
+            class_entries[discount.clazz].append(i)
+
         print("discount", discount)
         original_entries.append(discount)
         discount_entries.append(discount)
@@ -66,34 +92,119 @@ print(dims)
 
 
 def create_view(edit=False):
+    today = datetime.date.today()
+    label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
+    label_names = dict(zip(label_names_list, [[] for i in range(len(label_names_list))]))
     root_create = tk.Tk(className='Create / Edit Discount')
+    root_create.geometry(size)
     window_create = tk.Frame(root_create)
+    new_discount = None
     # window_create = tk.Frame(root)
     window_create.pack()
-    submit = False
+
+    # date,dealer,model,class,slot,market,freight
+    submit = tk.BooleanVar()
+    entry_var_dealer = tk.StringVar()
+    entry_var_model = tk.StringVar()
+    entry_var_class = tk.StringVar()
+    entry_var_slot = tk.DoubleVar()
+    entry_var_market = tk.DoubleVar()
+    entry_var_freight = tk.DoubleVar()
+    
+    selection_dealer = tk.StringVar()
+    selection_model = tk.StringVar()
+    selection_class = tk.StringVar()
+
+    frame_labels = tk.Frame(window_create)
+    frame_labels.pack(side=tk.LEFT)
+
+    frame_entries = tk.Frame(window_create)
+    frame_entries.pack(side=tk.RIGHT)
+
+
+    if admin:
+
+        year = today.year
+        month = today.month
+        day = today.day
+        cal = Calendar(frame_entries, selectmode = 'day',
+                    year = year, month = month,
+                    day = day)
+        
+        # cal.pack(pady = 20)
+        
+        def grad_date():
+            date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
+            date_in = date_in.strftime("%Y-%m-%d")
+            date.config(text = "Selected Date is: " + date_in)
+        
+        # Add Button and Label
+        btn_get_date = tk.Button(frame_entries, text = "Get Date",
+            command = grad_date) 
+        # btn_get_date.pack(pady = 20)
+        
+        date = tk.Label(frame_entries, text = "")
+        # date.pack(pady = 20)
+
+        label_names["Date"].append(cal)
+        label_names["Date"].append(btn_get_date)
+        label_names["Date"].append(date)
+
+    else:
+        
+        entry_date = tk.Entry(frame_entries, text=today)
+        label_names["Date"].append(entry_date)
+    
+    # Combobox creation
+    combobox_dealer = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_dealer)
+    combobox_dealer['values'] = list(dealers_entries.keys())
+    label_names["Dealer"].append(combobox_dealer)
+    combobox_dealer.current()
+    
+    combobox_model = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_model)
+    combobox_model['values'] = list(models_entries.keys())
+    label_names["Model"].append(combobox_model)
+    combobox_model.current()
+    
+    combobox_class = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_class)
+    combobox_class['values'] = list(class_entries.keys())
+    label_names["Class"].append(combobox_class)
+    combobox_class.current()
+
+
+
+
+
+    for i, lbl_name in enumerate(label_names_list):
+        entry_widget = label_names[lbl_name]
+        if len(entry_widget) == 0:
+            print("\t\tSKIPPED label_name:", lbl_name)
+            continue
+        lbl = tk.Label(frame_labels, text=lbl_name)
+        lbl.grid(row=i, column=0, sticky=tk.N)
+        print("label_name:", lbl_name)
+        for j, widget in enumerate(entry_widget):
+            widget.grid(row=i, column=1 + j, sticky=tk.N)
 
     def q():
-        global submit
-        # print("pre-quit")
-        # window_main.destroy()
-        print("mid-quit")
-        # root_create.destroy()
-        # print("post-quit")
-        submit = True
+        global new_discount
+        submit.set(True)
+        new_discount = Discount(d, m, s, m, f, c, t)
 
     btn_quit = tk.Button(window_create, text="QUIT", fg="red",
                                     command=q)
-    btn_quit.pack(side=tk.TOP)
+    btn_quit.pack(side=tk.BOTTOM)
     
     print("Before root.mainloop() in create_view")
-    while not submit:
-        print("\tsubmit", submit)
+    while not submit.get():
+        # print("\tsubmit", submit.get())
         # root_create.draw()
         root_create.update_idletasks()
         root_create.update()
     print("After root.mainloop() in create_view")
+    root_create.destroy()
 
-    return "results"
+    return new_discount
 
 
 def freight_written(*args):
@@ -105,8 +216,6 @@ def main_view():
     window_main = tk.Frame(root)
     # window_create = tk.Frame(root)
     window_main.pack()
-    min_width = 1050
-    size = str(min_width) + 'x' + str(round(min_width * (6/9)))
     root.geometry(size)
     listbox = None
 
@@ -170,7 +279,7 @@ def main_view():
 
     def enable(frame):
         for child in frame.winfo_children():
-            print("t: {", type(child), "} child:", child)
+            # print("t: {", type(child), "} child:", child)
             if type(child) == tk.Frame:
                 enable(child)
             else:
