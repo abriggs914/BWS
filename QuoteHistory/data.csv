@@ -113,9 +113,9 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25895, 40ADG3X53 AGLP, 12, S & S Trailers Sales Inc, $69869.28, $74259, $74259, 6, 1
 25904, 25ANR, 12, Remorques Lewis Inc., $29412, $30393, $29638, 1, 0
 25907, 20ANR, 13, S & S Trailers Sales Inc, $20209.28, $22383, $22383, 3, 1
-25908, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $0, $0, 0, 0
+25908, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $13034, $12903, 1, 0
 25910, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $22812, $19587, 7, 1
-25911, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $0, $0, 0, 1
+25911, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $24887, $21404, 8, 1
 25912, 20NTT, 13, Hale Trailer Brake & Wheel, $18618.08, $25248, $21721, 9, 1
 25917, 35MD2X EXT, 13, Fort Garry Industries Ltd., $82962.1844, $90431, $89527, 8, 0
 25918, 35FA, 13, Fort Garry Industries Ltd., $13033.7131, $14605, $14459, 5, 0
@@ -125,8 +125,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25967, 25ART, 14, Remorques Lewis Inc., $32488.56, $40153, $39155, 4, 0
 25972, 30ANR, 14, Hale Trailer Brake & Wheel, $29981.5845, $35884, $31217, 7, 1
 25973, 30ANR, 14, Hale Trailer Brake & Wheel, $29981.5845, $34994, $30433, 6, 1
-26044, 48HF3X, 14, NorthEast Truck & Trailer Sales, $40395.3813, $0, $0, 0, 0
-26045, 53HF3X V2018, 14, NorthEast Truck & Trailer Sales, $41989.7443, $0, $0, 0, 0
+26044, 48HF3X, 14, NorthEast Truck & Trailer Sales, $40395.3813, $48748, $48261, 5, 0
+26045, 53HF3X V2018, 14, NorthEast Truck & Trailer Sales, $41989.7443, $49831, $49332, 5, 0
 26047, 53HD4X, 14, Remorques Lewis Inc., $66636.96, $70866, $65246, 4, 0
 26049, 20NTT, 14, Remorques Lewis Inc., $22641.84, $28078, $27381, 2, 0
 26052, 53ET3X, 14, Remorques Lewis Inc., $46849.6773, $54286, $52131, 7, 0
@@ -139,7 +139,9 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26074, 48LD4X5T V2018, 14, NorthEast Truck & Trailer Sales, $73022.2383, $81083, $80272, 12, 0
 26103, 20FDNT, 15, Remorques Lewis Inc., $23829.52, $29393, $28662, 3, 0
 26104, 25FDNT, 15, Remorques Lewis Inc., $29181.36, $36742, $35829, 4, 0
-26105, 20NTT, 15, Remorques Lewis Inc., $22641.84, $0, $0, 0, 0
+26105, 20NTT, 15, Remorques Lewis Inc., $22641.84, $23322, $22743, 2, 0
 26108, 25FDNT, 15, NorthEast Truck & Trailer Sales, $29181.36, $0, $0, 0, 0
 26113, 51LF3X3T AB V2016, 16, Diamond International Trucks Ltd., $60846.24, $0, $0, 0, 0
 26114, 51LF4X3T AB V2015, 16, Diamond International Trucks Ltd., $80617.8756, $0, $0, 0, 0
+26115, 37LBT3X W, 16, Diamond International Trucks Ltd., $49696.6427, $0, $0, 0, 0
+26116, 27LBT2X W, 16, Diamond International Trucks Ltd., $36532.7257, $0, $0, 0, 0

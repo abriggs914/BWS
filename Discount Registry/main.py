@@ -102,6 +102,14 @@ def create_view(edit=False):
     # window_create = tk.Frame(root)
     window_create.pack()
 
+    font_1 = tk.font.Font(family='consolas')
+    font_2 = tk.font.Font(family='consolas', weight='bold')
+    fg = "gray84"
+    bg = "red3"
+    abg = "red4"
+    afg = "gray84"
+    sc = "red4"
+
     # date,dealer,model,class,slot,market,freight
     submit = tk.BooleanVar()
     entry_var_dealer = tk.StringVar()
@@ -114,6 +122,8 @@ def create_view(edit=False):
     selection_dealer = tk.StringVar()
     selection_model = tk.StringVar()
     selection_class = tk.StringVar()
+    
+    current_model_var = tk.IntVar()
 
     frame_labels = tk.Frame(window_create)
     frame_labels.pack(side=tk.LEFT)
@@ -149,6 +159,22 @@ def create_view(edit=False):
         label_names["Date"].append(cal)
         label_names["Date"].append(btn_get_date)
         label_names["Date"].append(date)
+
+        current_checkbox = tk.Checkbutton(
+            frame_entries,
+            text="Include non-current models",
+            variable=current_model_var, 
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        label_names["Model"].append(current_checkbox)
 
     else:
         
@@ -189,7 +215,14 @@ def create_view(edit=False):
     def q():
         global new_discount
         submit.set(True)
-        new_discount = Discount(d, m, s, m, f, c, t)
+        d = "dealer"
+        m = "model"
+        s = "slot"
+        k = "market"
+        f = "freight"
+        c = "class"
+        t = "date"
+        new_discount = Discount(d, m, s, k, f, c, t)
 
     btn_quit = tk.Button(window_create, text="QUIT", fg="red",
                                     command=q)

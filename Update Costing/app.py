@@ -1,5 +1,5 @@
 import tkinter as tk
-from utility import *
+from utility import money
 
 def updated_costing(cost, margin=30, FE=1.245, increase=0):
 	cost *= (1 + (increase / 100))
@@ -70,17 +70,19 @@ class App(tk.Frame):
 
         try:
             if all([c, m, i, e]):
-                c = float(self.cost.get())
-                m = float(self.margin.get())
-                i = float(self.increase.get())
-                e = float(self.exchange.get())
+                c = float(c)
+                m = float(m)
+                i = float(i)
+                e = float(e)
+                
+                result = "\n".join([k.ljust(6) + v for k, v in updated_costing(c, m, e, i).items()])
+                self.text_display.insert('1.0', result)
+
                 print("cost    ", money(c))
                 print("margin  ", money(m))
                 print("increase", money(i))
                 print("exchange", money(e))
-                
-                result = "\n".join([k.ljust(6) + v for k, v in updated_costing(c, m, e, i).items()])
-                self.text_display.insert('1.0', result)
+                print("results:\n" + result)
             else:
                 raise ValueError
         except ValueError:

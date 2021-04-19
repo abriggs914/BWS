@@ -608,6 +608,14 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 			"percentage": "%.3f" % (100 * lq / ir) + " %"
 		})
 		return res
+		
+	def unfinished_quotes(dat):
+		res = {}
+		# return dict(zip([qNo.number for qNo in quotes], [qNo.info_dict() for qNo in quotes]))
+		for q in dat:
+			if q.cost == 0:
+				res[q] = q.info_dict()
+		return res
 	
 	statistical_reporting = {
 		"Total Quotes": total_quotes(quotes),
@@ -642,7 +650,8 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"Weekly Reporting": (avg_weekly_reporting, {"number": True}),
 		"Dealer Reporting": (avg_dealer_reporting, {"number": True}),
 		"Statistical Reporting": (lambda x: statistical_reporting, {}),
-		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1, "number": True})
+		"Range of Quotes": (sequential_quotes, {"l": 1, "sep": 1, "number": True}),
+		"Unfinished": (unfinished_quotes, {"number": True})
 	})
 	
 	results = {}
