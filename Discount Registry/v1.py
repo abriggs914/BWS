@@ -92,15 +92,13 @@ print(dims)
 
 
 def create_view(edit=False):
-    global root, window_main
-    # root['className'] = 'Create / Edit Discount'
-    window_main.pack_forget()
 
     today = datetime.date.today()
     label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
     label_names = dict(zip(label_names_list, [[] for i in label_names_list]))
-    # root.geometry(size)
-    window_create = tk.Frame(window_main)
+    root_create = tk.Tk(className='Create / Edit Discount')
+    root_create.geometry(size)
+    window_create = tk.Frame(root_create)
     new_discount = None
     # window_create = tk.Frame(root)
     window_create.pack()
@@ -295,13 +293,12 @@ def create_view(edit=False):
         print("Before root.mainloop() in create_view")
         try:
             while not submit.get():
-                pass
                 # print("\tsubmit", submit.get())
                 # root_create.draw()
-                # root.update_idletasks()
-                # root.update()
+                root_create.update_idletasks()
+                root_create.update()
             print("After root.mainloop() in create_view")
-            # root.destroy()
+            root_create.destroy()
         except tk.TclError:
             print("_tkinter.TclError")
 
@@ -315,11 +312,11 @@ def freight_written(*args):
 
 
 def main_view():
-    global root, window_main
-    # root['className'] = 'Discount Registry'
-    window_main.pack_forget()
-    window_main.pack()
+    root = tk.Tk(className='Discount Registry')
+    window_main = tk.Frame(root)
     # window_create = tk.Frame(root)
+    window_main.pack()
+    root.geometry(size)
     listbox = None
 
     font_1 = tk.font.Font(family='consolas')
@@ -764,9 +761,4 @@ def main_view():
 
     main_loop()
 
-
-root = tk.Tk(className='Discount Registry')
-root.geometry(size)
-window_main = tk.Frame(root)
-window_main.pack()
 main_view()

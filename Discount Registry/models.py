@@ -2,7 +2,7 @@
 non_current = 0
 current = 1
 
-models = {
+by_class = {
     "Agriculture": [
         ("LP14", "14 Ft Land Pro", non_current),
         ("LP18", "18 Ft Land Pro", current),
@@ -297,13 +297,29 @@ models = {
         ("48LD3X5T USAE", "48 ft. Tridem  5 Tier Drop Frame - USAE", non_current),
         ("48LF3X5T USAE", "48 ft. Tridem 5 Tier Taper Frame- USAE", non_current),
         ("51LF4X3T US", "51 ft. Quad 3 Tier Taper Frame - US", non_current)
+    ],
+    "Tags": [
+        ("20ANR", "FILL THIS IN", current),
+        ("20ART", "FILL THIS IN", current),
+        ("20NTT", "FILL THIS IN", current),
+        ("20FDNT", "FILL THIS IN", current),
+    ],
+    "DELETE THIS CLASS": [
+        ("B", "FILL THIS IN", non_current),
+        ("D", "FILL THIS IN", current),
+        ("F", "FILL THIS IN", non_current),
     ]
 }
+
+by_models = {}
+for clazz, vals in by_class.items():
+    for model_name, model_desc, status in vals:
+        by_models[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:]) 
 
 current_models = []
 non_current_models = []
 
-for clazz, lst in models.items():
+for clazz, lst in by_class.items():
     for model in lst:
         model_abbr, model_name, status = model
         if status == current:
@@ -313,9 +329,11 @@ for clazz, lst in models.items():
         else:
             raise ValueError("UNKNOWN status classification")
 
-print("{n} total classes".format(n=len(models)))
+print("{n} total classes".format(n=len(by_class)))
 print("{n} total models".format(n=len(current_models) + len(non_current_models)))
 print("{n} current models".format(n=len(current_models)))
 print("{n} non-current models".format(n=len(non_current_models)))
 
-print("current models[0]:",current_models[0])
+print("current models[0]:", current_models[0])
+
+list_of_models = current_models + non_current_models
