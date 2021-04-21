@@ -22,6 +22,23 @@ dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
 
 
+def enable(frame):
+    for child in frame.winfo_children():
+        # print("t: {", type(child), "} child:", child)
+        if type(child) == tk.Frame:
+            enable(child)
+        else:
+            child.configure(state='normal')
+
+def disable(frame):
+    for child in frame.winfo_children():
+        # print("t: {", type(child), "} child:", child)
+        if type(child) == tk.Frame:
+            disable(child)
+        else:
+            child.configure(state='disabled')
+
+
 with open("discount_registry.csv") as f:
     f_dict = csv.DictReader(f)
     for i, entry in enumerate(f_dict):
@@ -95,6 +112,7 @@ def create_view(edit=False):
     global root, window_main
     # root['className'] = 'Create / Edit Discount'
     window_main.pack_forget()
+    window_main.pack()
 
     today = datetime.date.today()
     label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
@@ -295,7 +313,8 @@ def create_view(edit=False):
         print("Before root.mainloop() in create_view")
         try:
             while not submit.get():
-                pass
+                root.update()
+            #     pass
                 # print("\tsubmit", submit.get())
                 # root_create.draw()
                 # root.update_idletasks()
@@ -308,6 +327,8 @@ def create_view(edit=False):
         return new_discount
 
     main_loop()
+    disable(window_create)
+    return new_discount
 
 
 def freight_written(*args):
@@ -319,6 +340,8 @@ def main_view():
     # root['className'] = 'Discount Registry'
     window_main.pack_forget()
     window_main.pack()
+    window_view = tk.Frame(window_main)
+    window_view.pack()
     # window_create = tk.Frame(root)
     listbox = None
 
@@ -373,35 +396,19 @@ def main_view():
 
     def init_listbox():
         
-        listbox = tk.Listbox(window_main, selectmode=tk.EXTENDED, width=200)
+        listbox = tk.Listbox(window_view, selectmode=tk.EXTENDED, width=200)
         listbox['font'] = font_1
 
         add_data(listbox)
         
         return listbox
 
-    def enable(frame):
-        for child in frame.winfo_children():
-            # print("t: {", type(child), "} child:", child)
-            if type(child) == tk.Frame:
-                enable(child)
-            else:
-                child.configure(state='normal')
-
-    def disable(frame):
-        for child in frame.winfo_children():
-            # print("t: {", type(child), "} child:", child)
-            if type(child) == tk.Frame:
-                disable(child)
-            else:
-                child.configure(state='disable')
-
     def create_function():
-        disable(window_main)
+        disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
         print("new discount:", new_discount)
-        enable(window_main)
+        enable(window_view)
 
     def edit_function():
         global listbox
@@ -409,12 +416,12 @@ def main_view():
         if 0 in selection:
             selection.remove(0)
         print('Edit a discount :', selection)
-        disable(window_main)
+        disable(window_view)
         new_discounts = []
         for sel in selection:
             new_discounts.append(create_view(edit=(discount_entries[sel])))
         print("edited discounts:", new_discounts)
-        enable(window_main)
+        enable(window_view)
 
     def delete_function():
         global listbox
@@ -578,7 +585,7 @@ def main_view():
         # print("sort_status:", sort_status)
         # print("dir:", dir())
         
-        mod_btn_frame = tk.Frame(window_main)
+        mod_btn_frame = tk.Frame(window_view)
         mod_btn_frame.pack(side=tk.TOP)
 
         sort_btn_frame = tk.Frame(mod_btn_frame)
@@ -742,7 +749,7 @@ def main_view():
         listbox.pack()
 
 
-        ctrl_btn_frame = tk.Frame(window_main)
+        ctrl_btn_frame = tk.Frame(window_view)
         ctrl_btn_frame.pack(side=tk.BOTTOM)
 
         btn_create = tk.Button(ctrl_btn_frame, text='Create', command=create_function)
