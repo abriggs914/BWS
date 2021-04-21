@@ -29,6 +29,28 @@ class Discount:
     def table_entry(self, dims):
         return table_format(self.dealer, self.model, self.slot, self.market, self.freight, self.clazz, self.date, dims)
 
+    def registry_entry(self):
+        # dealer,model,slot,market,freight,date
+        return ",".join(list(map(str, [
+            self.dealer,
+            self.model,
+            self.slot * 100,
+            self.market * 100,
+            self.freight,
+            self.date
+        ])))
+
+    def __eq__(self, d):
+        return all([
+            self.dealer.lower() == d.dealer.lower(),
+            self.model.lower() == d.model.lower(),
+            self.clazz.lower() == d.clazz.lower(),
+            self.date == d.date,
+            self.slot == d.slot,
+            self.market == d.market,
+            self.freight == d.freight
+        ])
+
     def __repr__(self):
         # print("slot: " + str(self.slot) + ", t(): " + str(type(self.slot)))
         # print("market: " + str(self.market) + ", t(): " + str(type(self.market)))

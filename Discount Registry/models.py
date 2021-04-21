@@ -1,3 +1,5 @@
+import csv
+from utility import dict_print
 
 non_current = 0
 current = 1
@@ -474,18 +476,23 @@ by_class = {
         ("40EPT1X", "40 ft. Extendable Pole", non_current),
         ("WTT2X", "Tandem Water Treatment Trailer", non_current)
     ],
-    "DELETE THIS CLASS": [
-        ("B", "FILL THIS IN", non_current),
-        ("D", "FILL THIS IN", current),
-        ("F", "FILL THIS IN", non_current),
-    ]
+    "UNKOWN": []
 }
+
+with open("unknown entries.csv", 'r') as f:
+    csvdict = csv.DictReader(f)
+    for d in csvdict:
+        # print(d)
+        vals = (d["model"], d["description"], d["status"] == "current")
+        by_class["UNKOWN"].append(vals)
 
 by_models = {}
 for clazz, vals in by_class.items():
     for model_name, model_desc, status in vals:
         by_models[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:]) 
 
+print(dict_print(by_models, "By Model"))
+print(dict_print(by_class, "By Class"))
 current_models = []
 non_current_models = []
 

@@ -21,6 +21,13 @@ class_entries = {} # holds a dictionary of classes, with a list of indexes refer
 dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
 
+def hide(frame):
+    for child in frame.winfo_children():
+        # print("t: {", type(child), "} child:", child)
+        if type(child) == tk.Frame:
+            enable(child)
+        else:
+            child.configure(state=tk.HIDDEN)
 
 def enable(frame):
     for child in frame.winfo_children():
@@ -28,7 +35,7 @@ def enable(frame):
         if type(child) == tk.Frame:
             enable(child)
         else:
-            child.configure(state='normal')
+            child.configure(state=tk.NORMAL)
 
 def disable(frame):
     for child in frame.winfo_children():
@@ -36,50 +43,67 @@ def disable(frame):
         if type(child) == tk.Frame:
             disable(child)
         else:
-            child.configure(state='disabled')
+            child.configure(state=tk.DISABLED)
 
 
-with open("discount_registry.csv") as f:
-    f_dict = csv.DictReader(f)
-    for i, entry in enumerate(f_dict):
-        print(entry)
-        # csv header
-        #   dealer,model,slot,market,freight,date
-        # app header
-        #   Date, Dealer, Model, Class, Slot, Market, Freight
-        vals = list(entry.values())
-        vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
-        discount = Discount(*vals)
+def update_discounts(d):
+    for discount in original_entries:
+        if discount == d:
+            return
 
-        if discount.dealer not in dealers_entries:
-            dealers_entries[discount.dealer] = [i]
-        else:
-            dealers_entries[discount.dealer].append(i)
+    with open("discount_registry.csv", 'a') as f:
+        f.write("\n" + d.registry_entry())
+    read_entries()
 
-        if discount.model not in models_entries:
-            models_entries[discount.model] = [i]
-        else:
-            models_entries[discount.model].append(i)
+def read_entries():
+    global original_entries, discount_entries, dealers_entries, models_entries, class_entries, dims
+    original_entries = []  # Do not modify - contains the original contents from the file
+    discount_entries = []  # working entries, for display purposes only
+    dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
+    models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
+    class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
+    dims = [0, 0, 0, 0, 0, 0, 0]
+    with open("discount_registry.csv", 'r') as f:
+        f_dict = csv.DictReader(f)
+        for i, entry in enumerate(f_dict):
+            print(entry)
+            # csv header
+            #   dealer,model,slot,market,freight,date
+            # app header
+            #   Date, Dealer, Model, Class, Slot, Market, Freight
+            vals = list(entry.values())
+            vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
+            discount = Discount(*vals)
 
-        if discount.clazz not in class_entries:
-            class_entries[discount.clazz] = [i]
-        else:
-            class_entries[discount.clazz].append(i)
+            if discount.dealer not in dealers_entries:
+                dealers_entries[discount.dealer] = [i]
+            else:
+                dealers_entries[discount.dealer].append(i)
 
-        print("discount", discount)
-        original_entries.append(discount)
-        discount_entries.append(discount)
-        dims[0] = max(dims[0], len(str(discount.date)))
-        dims[1] = max(dims[1], len(discount.dealer))
-        dims[2] = max(dims[2], len(discount.model))
-        dims[3] = max(dims[3], len(discount.clazz))
-        dims[4] = max(dims[4], len(percent(discount.slot, 3)))
-        dims[5] = max(dims[5], len(percent(discount.market, 3)))
-        dims[6] = max(dims[6], len(money(discount.freight)))
-    # discout_entries = {k: v for k, v in f_dict.items()}
+            if discount.model not in models_entries:
+                models_entries[discount.model] = [i]
+            else:
+                models_entries[discount.model].append(i)
 
-original_entries.sort(key=lambda d: d.date, reverse=True)
-discount_entries.sort(key=lambda d: d.date, reverse=True)
+            if discount.clazz not in class_entries:
+                class_entries[discount.clazz] = [i]
+            else:
+                class_entries[discount.clazz].append(i)
+
+            print("discount", discount)
+            original_entries.append(discount)
+            discount_entries.append(discount)
+            dims[0] = max(dims[0], len(str(discount.date)))
+            dims[1] = max(dims[1], len(discount.dealer))
+            dims[2] = max(dims[2], len(discount.model))
+            dims[3] = max(dims[3], len(discount.clazz))
+            dims[4] = max(dims[4], len(percent(discount.slot, 3)))
+            dims[5] = max(dims[5], len(percent(discount.market, 3)))
+            dims[6] = max(dims[6], len(money(discount.freight)))
+        # discout_entries = {k: v for k, v in f_dict.items()}
+
+    original_entries.sort(key=lambda d: d.date, reverse=True)
+    discount_entries.sort(key=lambda d: d.date, reverse=True)
 
 # class Application(tk.Frame):
 #     def __init__(self, master=None):
@@ -105,8 +129,6 @@ discount_entries.sort(key=lambda d: d.date, reverse=True)
 # app = Application(master=root)
 # app.mainloop()
 
-print(dims)
-
 
 def create_view(edit=False):
     global root, window_main
@@ -122,7 +144,6 @@ def create_view(edit=False):
     new_discount = None
     # window_create = tk.Frame(root)
     window_create.pack()
-
 
 
     font_1 = tk.font.Font(family='consolas')
@@ -145,6 +166,7 @@ def create_view(edit=False):
     selection_dealer = tk.StringVar()
     selection_model = tk.StringVar()
     selection_class = tk.StringVar()
+    selection_date = tk.StringVar()
     
     current_model_var = tk.IntVar()
 
@@ -164,6 +186,7 @@ def create_view(edit=False):
 
     def status_change(*args):
         print("Status change")
+        raise ValueError("Investigate the set_models function")
         set_models()
     
     current_model_var.trace_add("write", status_change)
@@ -176,7 +199,7 @@ def create_view(edit=False):
         combobox_model['values'] = [m for m in list(models_entries.keys()) if current_model_var.get() or by_models[m][2]]
 
     def main_loop():
-        global combobox_model
+        global combobox_model, new_discount
         
         combobox_model = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_model)
 
@@ -195,13 +218,20 @@ def create_view(edit=False):
             day = today.day
             cal = Calendar(frame_entries, selectmode = 'day',
                         year = year, month = month,
-                        day = day)
+                        day = day, textvariable=selection_date,
+                        firstweekday="sunday", date_pattern="y-mm-dd")
+            # selection_date.set(datetime.datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d"))
+            cal.selection_set(today)
+            print("Init calendar:", cal.get_date())
+            cal._display_selection()
+            selection_date.set(cal.get_date())
             
             # cal.pack(pady = 20)
             
             def grad_date():
-                date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
-                date_in = date_in.strftime("%Y-%m-%d")
+                # date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
+                # date_in = date_in.strftime("%Y-%m-%d")
+                date_in = cal.get_date()
                 date.config(text = "Selected Date is: " + date_in)
                 print("Selected Date is: " + date_in)
                 print("current_model_var: " + str(current_model_var.get()))
@@ -240,12 +270,12 @@ def create_view(edit=False):
             label_names["Date"].append(entry_date)
         
         # Combobox creation
-        combobox_dealer = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_dealer)
+        combobox_dealer = tk.ttk.Combobox(frame_entries, width=27, textvariable=selection_dealer)
         combobox_dealer['values'] = list(dealers_entries.keys())
         label_names["Dealer"].append(combobox_dealer)
         combobox_dealer.current()
         
-        combobox_class = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_class)
+        combobox_class = tk.ttk.Combobox(frame_entries, width=27, textvariable=selection_class)
         combobox_class['values'] = list(class_entries.keys())
         label_names["Class"].append(combobox_class)
         combobox_class.current()
@@ -294,21 +324,45 @@ def create_view(edit=False):
                 # print("widget.size():", widget.size())
                 widget.grid(row=i, column=1 + j, sticky="nsew", padx=5, pady=5)
 
-        def q():
+        def save_quit():
             global new_discount
-            submit.set(True)
-            d = "dealer"
-            m = "model"
-            s = 0
-            k = 0
-            f = 0
-            c = "class"
-            t = "2021-04-19"
-            new_discount = Discount(d, m, s, k, f, c, t)
+            try:
+                d = selection_dealer.get()
+                m = selection_model.get()
+                s = slot_var.get()
+                k = market_var.get()
+                f = freight_var.get()
+                c = selection_class.get()
+                t = cal.get_date()
+                if not all([d, m, s, k, f, c, t]):
+                    raise ValueError("Please check submission values")
 
-        btn_quit = tk.Button(window_create, text="QUIT", fg="red",
+                s = float(s) / 100
+                k = float(k) / 100
+                # t = datetime.datetime.strptime(t, "%m/%d/%y")
+                # t = t.strftime("%Y-%m-%d")
+                t = cal.get_date()
+                new_discount = Discount(d, m, s, k, f, c, t)
+                submit.set(True)
+                print("local new discount:", new_discount)
+                print("local new discount:", new_discount.table_entry(dims))
+            except TypeError:
+                print("Type error")
+            except ValueError:
+                print("Value error")
+
+        def q():
+            submit.set(True)
+            print("Quitting without saving")
+
+        frame_btn = tk.Frame(window_create)
+        frame_btn.pack(side=tk.BOTTOM)
+        btn_save_quit = tk.Button(frame_btn, text="Save & Quit", fg="green",
+                                        command=save_quit)
+        btn_quit = tk.Button(frame_btn, text="Quit Without Saving", fg="red",
                                         command=q)
-        btn_quit.pack(side=tk.BOTTOM)
+        btn_save_quit.pack(side=tk.LEFT)
+        btn_quit.pack(side=tk.RIGHT)
         
         print("Before root.mainloop() in create_view")
         try:
@@ -324,10 +378,12 @@ def create_view(edit=False):
         except tk.TclError:
             print("_tkinter.TclError")
 
+        print("global new_discount:", new_discount)
         return new_discount
 
-    main_loop()
-    disable(window_create)
+    new_discount = main_loop()
+    # disable(window_create)
+    window_create.destroy()
     return new_discount
 
 
@@ -404,10 +460,15 @@ def main_view():
         return listbox
 
     def create_function():
+        global listbox
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
+        if new_discount:
+            update_discounts(new_discount)
         print("new discount:", new_discount)
+        clear_data(listbox)
+        add_data(listbox)
         enable(window_view)
 
     def edit_function():
@@ -421,6 +482,8 @@ def main_view():
         for sel in selection:
             new_discounts.append(create_view(edit=(discount_entries[sel])))
         print("edited discounts:", new_discounts)
+        clear_data(listbox)
+        add_data(listbox)
         enable(window_view)
 
     def delete_function():
@@ -569,6 +632,7 @@ def main_view():
         clear_data(listbox)
         repopulate_entries()
         add_data(listbox)
+        search_entry.delete(0, len(search_entry.get()))
 
 
     def reset_check_buttons():
@@ -576,7 +640,7 @@ def main_view():
         checkbuttons = [check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight]
         for btn in checkbuttons:
             btn.deselect()
-        search_entry.delete(0, len(search_entry.get()))
+        # search_entry.delete(0, len(search_entry.get()))
         
     
     def main_loop():
@@ -772,6 +836,8 @@ def main_view():
     main_loop()
 
 
+read_entries()
+print(dims)
 root = tk.Tk(className='Discount Registry')
 root.geometry(size)
 window_main = tk.Frame(root)
