@@ -197,7 +197,15 @@ def create_view(edit=False):
         print("setting models, current_model_var:", current_model_var.get())
         print("list(models_entries.keys()):", list(models_entries.keys()))
         print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", by_models["20ART"][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or by_models["20ART"][2]))
-        combobox_model['values'] = [m for m in list(models_entries.keys()) if current_model_var.get() or by_models[m][2]]
+        # assert current_model_var.get() in by_models
+        # print("\n\n\n\nASSERTION PASSED\n\n\n\n")
+        # combobox_model['values'] = [m for m in list(models_entries.keys()) if current_model_var.get() or by_models[m][2]]
+        print("\nBY_MODELS:\n" + "\n".join(list(by_models.keys())))
+        combobox_model['values'] = []
+        for m in list(models_entries.keys()):
+            print("\t\tm", m)
+            print("\t\tby_models[m][2]", by_models[m][2])
+            print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or by_models[m][2]))
 
     def main_loop():
         global combobox_model, new_discount
@@ -465,14 +473,16 @@ def main_view():
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
+        did_update = False
         if new_discount:
+            did_update = True
             update_discounts(new_discount)
-        print("new discount:", new_discount)
+        print("new discount {0}:".format(did_update), new_discount)
         adjust_models(new_discount)
         read_entries()
+        enable(window_view)
         clear_data(listbox)
         add_data(listbox)
-        enable(window_view)
 
     def edit_function():
         global listbox

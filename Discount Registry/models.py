@@ -16,10 +16,15 @@ with open("unknown entries.csv", 'r') as f:
 
 def create_by_model():
     res = {}
+    last = None
     for clazz, vals in by_class.items():
-        # print("vals\t", vals)
+        print("vals\t", vals)
         for model_name, model_desc, status in vals:
-            res[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:]) 
+            last = model_name
+            res[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:])
+
+    if last:
+        print("CREATING BY MODEL", res[last])
     return res
 
 by_models = create_by_model()

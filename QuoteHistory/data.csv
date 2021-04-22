@@ -140,8 +140,11 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26103, 20FDNT, 15, Remorques Lewis Inc., $23829.52, $29393, $28662, 3, 0
 26104, 25FDNT, 15, Remorques Lewis Inc., $29181.36, $36742, $35829, 4, 0
 26105, 20NTT, 15, Remorques Lewis Inc., $22641.84, $23322, $22743, 2, 0
-26108, 25FDNT, 15, NorthEast Truck & Trailer Sales, $29181.36, $0, $0, 0, 0
+26108, 25FDNT, 15, NorthEast Truck & Trailer Sales, $29181.36, $47656, $47180, 13, 0
 26113, 51LF3X3T AB V2016, 16, Diamond International Trucks Ltd., $60846.24, $0, $0, 0, 0
 26114, 51LF4X3T AB V2015, 16, Diamond International Trucks Ltd., $80617.8756, $0, $0, 0, 0
 26115, 37LBT3X W, 16, Diamond International Trucks Ltd., $49696.6427, $0, $0, 0, 0
 26116, 27LBT2X W, 16, Diamond International Trucks Ltd., $36532.7257, $0, $0, 0, 0
+26127, 25FDNT, 16, NorthEast Truck & Trailer Sales, $30348.6144, $0, $0, 0, 0
+26131, 32HBT3X 2018, 16, Remorques Lewis Inc., $41858.8655, $0, $0, 0, 0
+26132, 28HBT2X 2018, 16, Remorques Lewis Inc., $28922.5492, $0, $0, 0, 0
