@@ -1,5 +1,4 @@
 import csv
-import easygui
 import datetime
 from models import *
 from utility import *
@@ -196,6 +195,8 @@ def create_view(edit=False):
         global combobox_model
         print("current_model_var:", current_model_var.trace_info())
         print("setting models, current_model_var:", current_model_var.get())
+        print("list(models_entries.keys()):", list(models_entries.keys()))
+        print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", by_models["20ART"][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or by_models["20ART"][2]))
         combobox_model['values'] = [m for m in list(models_entries.keys()) if current_model_var.get() or by_models[m][2]]
 
     def main_loop():
@@ -467,6 +468,8 @@ def main_view():
         if new_discount:
             update_discounts(new_discount)
         print("new discount:", new_discount)
+        adjust_models(new_discount)
+        read_entries()
         clear_data(listbox)
         add_data(listbox)
         enable(window_view)

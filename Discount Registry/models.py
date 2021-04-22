@@ -1,484 +1,12 @@
 import csv
+import easygui
+from models_writer import *
 from utility import dict_print
 
-non_current = 0
-current = 1
+by_class = gen_by_class()
+by_class["UNKOWN"] = []
 
-by_class = {
-    "Agriculture": [
-        ("LP14", "14 Ft Land Pro", non_current),
-        ("LP18", "18 Ft Land Pro", current),
-        ("PD14", "14 Ft Production Dozer", current),
-        ("PD16", "16 Ft Production Dozer", current),
-        ("PD18", "18 Ft Production Dozer", current)
-    ],
-    "Cable Reel": [
-        ("14CR1X", "14 ft. Single Axle Cable Reel", current)
-    ],
-    "Chassis": [
-        ("12CC2X", "12 Ft. Tandem Container Chassis", non_current),
-        ("20PC2X", "20 Ft. Tandem Electric Brake", non_current),
-        ("27CC2X", "27 ft. Tandem Pull B-Train", current),
-        ("27CC3X", "27 ft. Tridem Lead B-Train", current),
-        ("30CC2X", "30 Ft. Tandem Container Chassis", non_current),
-        ("30PC3X", "30 Ft. Tridem Electric Brake", non_current),
-        ("40CC3X", "40 ft. Container Chassis", current),
-        ("40CC3X53EXT", "40 ft. Extendible Container Chassis", current),
-        ("42CC3X", "42 Ft. Container Chassis", current),
-        ("Pony 3X17", "Pony Trailer Quad", current)
-    ],
-    "Container Chassis": [
-        ("10GT1X", "Single Axle - Glass", current),
-        ("10GT2X", "Tandem - Glass", non_current),
-        ("12GT1X", "Single Axle - Glass", non_current),
-        ("12GT2X", "Tandem - Glass", current),
-        ("20VT1V Mexico", "20 ft. 1 Van - DCI Mexico", non_current),
-        ("25VT2V DCI", "25 ft. 2 Van - DCI", non_current),
-        ("26VT1V Mexico", "26 ft. Single Axle", non_current),
-        ("30DT3X-CHASSIS", "30 ft. Dump Chassis", non_current),
-        ("33VT2V DCI Tag", "33 ft. 2 Van - DCI Tag", current),
-        ("34VT1V Hostler", "34 ft. Single Axle", non_current),
-        ("38GT1X", "38 ft. Single Axle - Glass", non_current),
-        ("38GT2X", "38 ft. Tandem - Glass", non_current),
-        ("40CC2X", "40 ft. Tandem", non_current),
-        ("40GT1X", "40 ft. Single Axle - Glass", non_current),
-        ("40GT2X", "40 ft. Tandem - Glass", current),
-        ("40VT2V Mexico", "40 ft. 2 Van - DCI Mexico", current),
-        ("42VT2V Mexico", "42 ft. 2 Van - DCI Mexico", non_current),
-        ("47GT2X", "47 ft. Tandem - Glass", non_current),
-        ("48GT2X", "48 ft. Tandem - Glass", non_current),
-        ("51GT2X", "51 ft. Tandem - Glass", non_current),
-        ("51VT2V DCI", "51 ft. 2 Van - DCI", non_current),
-        ("51VT4V DCI", "51' 4 Van - DCI", current),
-        ("53VT2V CAL", "53 ft. 2 Van - California", current),
-        ("53VT2V DCI", "53 ft. 2 Van - DCI", current),
-        ("53VT2V DCI LD", "53 ft. 2 Van - DCI Low Deck", non_current),
-        ("53VT2V FL CA", "53 ft. 2 Van - Frito Lay Canada", current),
-        ("53VT2V FL CA-53", "53 ft. 2 Van - Frito Lay Canada", current),
-        ("53VT2V FL CA-97", "53 ft. 2 Van - Frito Lay Canada", current),
-        ("53VT2V FL US", "53 ft. 2 Van - Tandem Axle Truck Frito Lay US", non_current),
-        ("53VT2V FL US-97", "53 ft. 2 Van - Tandem Axle Truck Frito Lay US", current),
-        ("53VT2V Frito Lay", "53 ft. 2 Van - DCI Frito Lay", non_current),
-        ("53VT2V JB HUNT", "53 ft. 2 Van - J.B. Hunt", current),
-        ("53VT2V Penske", "53 ft. 2 Van - DCI PENSKE", current),
-        ("53VT2VSAT Frito Lay US 2018", "53 ft. 2 Van - Single Axle Truck Frito Lay US", non_current),
-        ("53VT2VTAT Frito Lay US 2018", "53 ft. 2 Van - Tandem Axle Truck Frito Lay US", non_current),
-        ("53VT3V DCI", "53 ft. 3 Van - DCI", current),
-        ("53VT3V PENSKE", "53 ft. 3 Van - PENSKE", current),
-        ("53VT3X DCI V2021", "53 ft. 3 Van - DCI", current)
-    ],
-    "Converters/Boosters": [
-        ("11CD1X", "11 Ton Single Axle Convertor Dolly", non_current),
-        ("11SB1X", "11 Ton Steer Single Axle Booster", current),
-        ("11SB1X SB", "11 Ton Steer Single Axle Booster", non_current),
-        ("11SB2X SB", "11 Ton Steer Tandem Axle Booster", non_current),
-        ("22CD2X", "22 Ton Converter Dolly Tandem", non_current)
-    ],
-    "Dump": [
-        ("26DT2X", "26 ft. Tandem 1/4 Frame U-Body", non_current),
-        ("27DT2X", "27 ft. Tandem 1/4 Frame U-Body", non_current),
-        ("27DT2X HV", "27 ft. Tandem 1/4 Frame U-Body High Volume", non_current),
-        ("27DT2X V2018", "27 ft. Tandem 1/4 Frame U-Body", current),
-        ("27DT2XU", "27 ft. Tandem 1/4 Frame U-Body", non_current),
-        ("27PD2X", "28 ft. Tandem Pup Dump", non_current),
-        ("28DPT2X", "28 ft. Tandem Pup Chassie", non_current),
-        ("28DPT3X", "28 ft. Tridem Pup Chassie", non_current),
-        ("32DT3X", "32 ft. Tridem 1/4 Frame U-Body", non_current),
-        ("32DT3X V2018", "32 ft. Tridem 1/4 Frame U-Body", current),
-        ("36ALB2X", "36 ft. Tandem", non_current),
-        ("37DT2X", "37 ft.Tandem 1/4 Frame U-Body", non_current),
-        ("37DT2X HV", "37 ft.Tandem 1/4 Frame U-Body, High Volume", non_current),
-        ("37DT3X", "37 ft. Tridem 1/4 Frame U-Body", current),
-        ("37DT4X FF", "37 ft. Tridem Full Frame U-Body", non_current),
-        ("38ALB3XS", "38 ft. Triaxle", non_current),
-        ("39ALB3X", "39 ft. Tridem", non_current),
-        ("41ALB3X", "41 ft. Tridem", non_current),
-        ("48ALB4X", "48 ft. QUAD-SPIF", non_current),
-        ("53EWF4X", "53Ft. Quad Elliptical Walking Floor Transfer Trailer", current),
-        ("SFUB2X", "U-Body Frameless Steel Scrap Tandem Dump", non_current),
-        ("SPECIAL", "PROPOSED", non_current)
-    ],
-    "End Dumps": [
-        ("End Dump 4X", "End Dump 4X", current),
-        ("Frameless Alum. U Body 2X", "Frameless Alum. U Body 2X", current),
-        ("Frameless Alum. U Body 3X", "Frameless Alum. U Body 3X", current)
-    ],
-    "Equipment": [
-        ("42ET2X", "42 ft. Tandem", current),
-        ("42ET3X", "42 ft. Tridem", current),
-        ("48ET2X", "48 ft. Tandem", current),
-        ("48ET3X", "48 ft. Tridem", current),
-        ("48ET3X MR", "48 ft. Tridem Manual Ramp", non_current),
-        ("53ET2X", "53 ft. Tandem", current),
-        ("53ET3X", "53 ft. Tridem", current),
-        ("53ET3X MR EAST", "53 ft. Tridem Manual Ramp", current),
-        ("53ET3X MR WEST", "53 ft. Tridem Manual Ramp", current),
-        ("53ET4X", "53 ft. Quad", current),
-        ("53ET4X MR", "53 ft. Quad Manual Ramp", current)
-    ],
-    "Highway": [
-        ("28HBT2X", "28 ft. Tandem Pull B-Train - Lumber Spec", current),
-        ("28HBT2X 2018", "28 ft. Tandem Pull B-Train", current),
-        ("28HBT2XHD", "28 ft. Tandem Pull B-Train - Heavy Duty Spec", non_current),
-        ("28HBT3X", "28 ft. Tridem Pull B Train", current),
-        ("29HD3X Rail", "29 ft. Tridem Drop Deck, Rail", non_current),
-        ("32HBT3X", "32 ft.Tridem Lead B-Train - Lumber Spec", current),
-        ("32HBT3X 2018", "32 ft. Tridem Lead B-Train", current),
-        ("32HBT3XHD", "32 ft. Tridem Lead B-Train - Heavy Duty Spec", non_current),
-        ("32HBT4X", "32 ft. Quad Lead B-Train", current),
-        ("35HD2X", "35 ft. Tandem Drop Deck", non_current),
-        ("40HD2X Penske CUSTOM", "40 ft. Tandem Drop Deck - Penske Custom", current),
-        ("40HD3XB", "40 Ft. Tridem Drop Deck", non_current),
-        ("42HD2X HD", "42 FT. Tandem Heavy Duty Drop Deck", non_current),
-        ("42HD3X 2018", "42 ft. Tridem Drop Deck", non_current),
-        ("42HD3X HD", "42 FT. Tridem Heavy Duty Drop Deck", non_current),
-        ("42HF2X", "42 ft. Tridem Flat Deck - Single Tire", non_current),
-        ("42HF3X HD", "42 ft. Tridem Flat Deck - Single Tire", non_current),
-        ("45HD2X", "45 ft. Tandem Drop Deck", non_current),
-        ("46HDD2X Custom", "46 ft. Tandem Double Drop Deck - Custom", non_current),
-        ("48HD2X", "48 ft. Tandem Drop Deck", non_current),
-        ("48HD2X SPECIAL", "48 ft. Tandem Drop Deck", non_current),
-        ("48HD3X", "48 ft. Tridem Drop Deck", current),
-        ("48HD5X", "48 ft. Five Drop Deck", non_current),
-        ("48HDD2X", "48 ft. Tridem Double Drop Deck", non_current),
-        ("48HDD2X Custom", "48 ft. Tandem Double Drop Deck - Custom", non_current),
-        ("48HDD2X Custom V1", "48 ft. Tandem Double Drop Deck - Custom Ver. 1", non_current),
-        ("48HDD2X EXT", "48 ft. Tandem Doubel Drop Deck Extendable", current),
-        ("48HDD3X", "48 ft. Tridem Double Drop Deck", current),
-        ("48HF2X", "48 ft. Tandem Flat Deck", current),
-        ("48HF3X", "48 ft. Tridem Flat Deck", current),
-        ("48HF4X", "48 ft. Quad Flat Deck", current),
-        ("50HF5X", "50 ft. 5 Axle Flat Deck", current),
-        ("51HD3X CON", "51 ft. Tridem Drop Deck", current),
-        ("53HD2X", "53 ft. Tandem Drop Deck", current),
-        ("53HD2X Crane", "53 ft. Tandem Bridge Crane Drop Deck", current),
-        ("53HD2X EXT", "53 ft. Highway Drop Deck Extendable", current),
-        ("53HD2X EXT H", "53 ft. Highway Drop Deck Extendable", non_current),
-        ("53HD2X EXT_temp1", "53 ft. Highway Drop Deck Extendable", non_current),
-        ("53HD3X", "53 ft. Tridem Drop Deck", non_current),
-        ("53HD3X 2018", "53 ft. Tridem Drop Deck", current),
-        ("53HD3X EXT", "53 ft. Highway Drop Deck Extendable", current),
-        ("53HD4X", "53 ft. Quad Drop Deck", current),
-        ("53HDD2X", "53 ft. Tandem Double Drop Deck", non_current),
-        ("53HDD3X", "53 ft. Tridem Double Drop Deck", current),
-        ("53HF3X", "53 ft. Tridem Flat Deck", non_current),
-        ("53HF3X 2018", "53 ft. Tridem Flat Deck", current),
-        ("53HF3X Pioneer", "53 ft. Tridem Flat Deck - Pioneer", current),
-        ("53HF3XEXT", "53 ft. Tridem Flat Deck Extendable", current),
-        ("53HF4X", "53 ft. Quad Flat Deck", current),
-        ("53HF4X - Super Single", "53 ft. Quad Flat Deck", non_current),
-        ("53OHD3X", "53 ft. Tridem Oilfield Drop Deck", non_current),
-        ("FA", "Single Axle Flip", current),
-        ("Fleet Only", "", non_current)
-    ],
-    "Hydraulics": [
-        ("25HDG2X Mini", "25 Ton Tandem Square Back Mini Deck", non_current),
-        ("25HDG2X Mini NR", "25 Ton Tandem Square Back Mini Deck", non_current),
-        ("25HDG2X SB", "25 Ton Tandem Mini Quad Deck", current),
-        ("35HDG2X Mini", "35 Ton Tandem Square Back Mini Deck", current),
-        ("35HDG2X Mini NR", "35 Ton Tandem Square Back Mini Deck", non_current),
-        ("35HDG2X NR", "35 Ton Tandem 48 ft. Non RTAC", current),
-        ("35HDG2X SB", "35 Ton Tandem Mini Quad Deck", current),
-        ("35HDG2X48 AGULP", "35 Ton Tandem - 48 ft. Agri Ultra Low Pro HDG", current),
-        ("35HDG2X53 AGC", "35 Ton Tandem 53 ft. Agri - Chopper", non_current),
-        ("35HDG2X53 AGNR", "35 Ton Tandem 53 ft. Agri - Non RTAC", current),
-        ("40HDG3X AG", "40 Ton Tridem  Agriculture", current),
-        ("40HDG3X53 AG", "40 Ton Tridem 53 ft. Agri", current),
-        ("40HDG4X SB P", "40 Ton Quad Squareback Paver", current),
-        ("40HSN3X", "", current),
-        ("50FA AGRI", "50 Ton Single Axle Flip Agriculture", current),
-        ("50HDG3X AG", "50 Ton Tridem  Agriculture", current),
-        ("51HDG3X SB", "51 Ton Tridem Square Back", current),
-        ("51HDG3X SBLH", "51 Ton Tridem Square Back Light Haul", current),
-        ("55FA", "55 Ton Single Axle Flip - Heavy Haul", non_current),
-        ("55FA  B", "55 Ton Single Axle Flip", current),
-        ("55FA LH", "55 Ton Single Axle Flip - Light Haul", current),
-        ("55HDG3X", "55 ton Tridem Square Back", current),
-        ("55HDG3X BT", "55 Ton Tridem Beavertail", current),
-        ("55HDG3X BTHH", "55 Ton Tridem Beavertail - Heavy Haul", current),
-        ("55HDG3X BTHH AG", "55 Ton Tridem Beavertail - Heavy Haul AG", current),
-        ("55HDG3X E", "55 ton Tridem Square Back - Elite", current),
-        ("55HDG3X H", "55 ton Tridem Square Back Heavy", current),
-        ("55HDG3X HS", "55 ton Tridem Square Back Heavy Spread Axle", current),
-        ("55HDG3X Q1", "55 Ton Tridem Square Back", non_current),
-        ("55HDG3X SB", "55 Ton Tridem Square Back", non_current),
-        ("55HDG3X SBHH", "55 Ton Tridem Square Back - Heavy Haul", current),
-        ("55HDG3X SBHH AG", "55 Ton Tridem Square Back - Heavy Haul", current),
-        ("55HDG3X SBLH", "55 Ton Tridem Square Back - Light Haul", current),
-        ("55HDG3X SBLH PQ", "55 Ton Tridem Square Back - Light Haul PQ", non_current),
-        ("55HDG3X SBPD", "55 Ton Tridem Square Back Pin Deck", current),
-        ("55HDG3X US", "55 ton Tridem Square Back", current),
-        ("55HDG4X SB", "55 Ton Quad Squareback", non_current),
-        ("60HDG3X HB_temp1", "60 ton Tridem Square Back", non_current),
-        ("60HDG4X SB", "60 Ton Quad Squareback", non_current),
-        ("60HDGSB", "60 Ton Tridem Squareback", non_current),
-        ("70HDG4X SB", "70 Ton Quad Squareback", non_current),
-        ("DECK - Bellemar", "55 ton Drop Side Pin Deck", current),
-        ("GNK - Bellemare", "55 Ton Gooseneck", current)
-    ],
-    "Jeep Dolly": [
-        ("20JD1X HP", "20 Ton Single Axle High Profile", non_current),
-        ("20JD1X LP", "20 Ton Single Axle Low Profile", current),
-        ("40JD2X HG", "40 Ton Tandem Hydraulic", current),
-        ("40JD2X OF", "40 Ton Tandem Oilfield", current),
-        ("40JD2X WL", "40 Ton Tandem  Western Log", current),
-        ("60JD3X HG", "60 Ton Tridem Hydraulic", non_current),
-        ("JD2+1X", "Tridem Hydraulic", current),
-        ("JD2X", "Tandem Hydraulic", current)
-    ],
-    "Log": [
-        ("50LF4X5T NB", "50' 5 Tier Quad - NB", current),
-        ("51LF4X5T NB", "51' 5 Tier Quad - NB", current),
-        ("53LF4X5T NB", "53' 5 Tier Quad - NB", current),
-        ("64LBT5X NL", "64' 5 Axle B-Train - NL", current)
-    ],
-    "Log Eastern": [
-        ("25LPT2X", "25 Foot Tandem", non_current),
-        ("25LPT3X", "25 Foot Tridem Pup", non_current),
-        ("25LPT3X JDI", "25 ft. Logging Pup Trailer", non_current),
-        ("27LBT2X NL", "27 ft. Tandem 1 Tier Pull B-Train - NL", current),
-        ("28LBT2X NS", "28 ft. Tandem 3 Tier Pull B-Train - NS", current),
-        ("30LBT2X ON", "30 ft. Tandem 3 Tier  Pull B-Train - Ontario", non_current),
-        ("37LBT3X NL", "37 ft. Tridem 1 Tier Lead B-Train - NL", current),
-        ("39LBT3X NS", "39 ft.Tridem 3 Tier Lead B-Train - NS", current),
-        ("39LBT3X ON", "39 ft. Tridem 3 Tier Lead B-Train - Ontario", non_current),
-        ("42LD3X NL", "42 ft. Tridem Pulp -  NL", non_current),
-        ("46LD3X4T NS", "46 ft. Tridem 4 Tier Drop Frame - NS", non_current),
-        ("46LD3X4T NS V2016", "46 ft. Tridem 4 Tier Drop Frame - NS", current),
-        ("46LD3X4T V2016", "46 ft. Tridem 4 Tier Drop Frame", non_current),
-        ("46LD3X4T V2018", "46 ft. Tridem 4 Tier Drop Frame - NS", current),
-        ("46LD3X4TLW NS", "46`4 Tier Tridem - NS Lightweight", non_current),
-        ("46LD4X NL", "46 ft. Quad Pulp - NL", non_current),
-        ("46LD4X4T NS", "46 ft. Quad 4 Tier Drop Frame - NS", non_current),
-        ("46LF3X4T NL", "46 ft.Tridem 4 Tier Taper Frame -  NL", non_current),
-        ("46LF3X4T NS", "46 ft. Tridem 4 Tier Taper Frame -  NS", non_current),
-        ("46LF3X4T NS V2017", "46 ft. Tridem 4 Tier Taper Frame -  NS", non_current),
-        ("46LF3X4T V2018", "46 ft. Tridem 4 Tier Taper Frame", current),
-        ("46LF4X NL", "46 ft. Quad Pulp Taper Frame - NL", current),
-        ("48LD3X5T V2018", "48 ft. Tri 5 Tier Drop Frame", current),
-        ("48LD4X4T NB V2017", "48 ft. Quad 4 Tier Drop Frame - NB", non_current),
-        ("48LD4X4T V2018", "48 ft. Quad 4 Tier Drop Frame", non_current),
-        ("48LD4X5T NB V2016", "48 ft. Quad 5 Tier Drop Frame - NB", current),
-        ("48LD4X5T ON", "48 ft. Quad 5 Tier Drop Frame - ON", non_current),
-        ("48LD4X5T V2018", "48 ft. Quad 5 Tier Drop Frame", current),
-        ("48LF3X NL", "48 ft. Tridem Pulp Taper Frame - NL", non_current),
-        ("48LF3X5T NB", "48 ft. Tridem 5  Tier Taper Frame - NB", current),
-        ("48LF3X5T NB V2016", "48 ft. Tridem 5  Tier Taper Frame - NB", non_current),
-        ("48LF3X5T NB V2018", "48 ft. Tridem 5  Tier Taper Frame - NB", non_current),
-        ("48LF3X5T V2018", "48 ft. Tridem 5  Tier Taper Frame", current),
-        ("48LF4X NL", "48 ft. Quad Pulp Taper Frame - NL", non_current),
-        ("48LF4X5T NB", "48 ft. Quad 5 Tier Taper Frame - NB", current),
-        ("48LF4X5T NB V2016", "48 ft. Quad 5 Tier Taper Frame - NB", current),
-        ("48LF4X5T V2018", "48 ft. Quad 5 Tier Taper Frame - NB", non_current),
-        ("51LD4X5T NB V2016", "51 ft. Quad  5 Tier Drop Frame - NB", current),
-        ("51LD4X5T NS/NB", "51' 5 Tier Quad - NS/NB", current),
-        ("51LD4X5T ON", "51 ft. Quad 5 Tier Drop Frame - ON", current),
-        ("51LD4X5T V2018", "51 ft. Quad  5 Tier Drop Frame - NB", current),
-        ("51LD5X5T ON", "51 ft.  5 Axle 5 Tier Drop Frame  - ON", non_current),
-        ("51LD5X5T ON V2017", "51 ft. Five Axle 5 Tier Drop Frame - ON", non_current),
-        ("51LF3X5T NB", "51 ft. Tridem 5  Tier Taper Frame - NB", current),
-        ("51LF3X5T NB V2016", "51 ft. Tridem 5  Tier Taper Frame - NB", non_current),
-        ("51LF4X5T NB TRI V2016", "51 ft. Quad 5 Tier Taper Frame , Tri drive capable- NB", current),
-        ("51LF4X5T NB V2013", "51' 5 Tier Quad - NB", current),
-        ("51LF4X5T NB V2016", "51 ft. Quad 5 Tier Taper Frame - NB", current),
-        ("51LF4X5T V2018", "51 ft. Quad 5 Tier Taper Frame", current),
-        ("52LD4X5T", "52 ft. Quad 5 Tier Drop Frame", current),
-        ("52LF4X5T", "52 ft. Quad 5 Tier Taper Frame", current),
-        ("53LD3X5T JDIHD", "53 ft. 5 Tier Tridem Drop Frame Heavy Duty - JDI", non_current)
-    ],
-    "Log US": [
-        ("42LD3X4T USAE", "42 ft. Tridem 4 Tier Drop Frame - USAE", non_current),
-        ("46LD2X4T US", "46 ft. Tandem  4 Tier - US", non_current),
-        ("46LD3X2T US", "46 ft. Tridem 2 Tier - US", non_current),
-        ("46LD3X4T US", "46 ft. Tridem 4 Tier  -  US", non_current),
-        ("46LD3X4T USAE", "46 ft. Tridem 4 Tier Drop Frame - USAE", non_current),
-        ("46LD3X5T HALE", "46 ft. Tridem  5 Tier Drop Frame", current),
-        ("46LF3X MN", "46 ft. Tridem Pulp Taper Frame -  MN", non_current),
-        ("46LF3X4T USAE", "46 ft. Tridem 4 Tier Taper Frame - USAE", non_current),
-        ("48LD3X5T US", "48 ft. Tridem 5 Tier Drop Frame -  US", non_current),
-        ("48LD3X5T USAE", "48 ft. Tridem  5 Tier Drop Frame - USAE", non_current),
-        ("48LF3X5T USAE", "48 ft. Tridem 5 Tier Taper Frame- USAE", non_current),
-        ("51LF4X3T US", "51 ft. Quad 3 Tier Taper Frame - US", non_current)
-    ],
-    "Log Western": [
-        ("27LBT2X W", "27 ft. Tandem 1 Tier  Pull B-Train - Western", current),
-        ("27LD2X", "28 ft. Tandem 1  Tier Lead B-Train - Manitoba", non_current),
-        ("30LBT2X W", "30 ft. Tandem 1 Tier  Pull B-Train - Western", current),
-        ("37LBT2X W", "37 ft. Tandem 2 Tier Lead B-Train - Western", current),
-        ("37LBT3X W", "37 ft. Tridem 2 Tier Lead B-Train - Western", current),
-        ("39LBT2X W", "39 ft. Tandem 2 Tier Lead B-Train - Western", current),
-        ("39LBT3X W", "39 ft. Tridem 2 Tier Lead B-Train - Western", current),
-        ("40LD3X", "40 ft. Tridem 2 Tier Pull B-Train - Manitoba", non_current),
-        ("46LD3X2T BC", "46 ft. Tridem 2 Tier Drop Frame - BC", non_current),
-        ("48LF3X3T AB", "48' 3 Tier Tridem - AB", current),
-        ("48LF4X3T AB", "48' 3 Tier Quad - AB", current),
-        ("50LD3X3T BC", "50' 3 Tier Tridem - BC", current),
-        ("50LF3X3T AB", "50' 3 Tier Tridem - AB", non_current),
-        ("50LF3X3T SK", "50 ft. Tridem 3 Tier Taper Frame - SK", non_current),
-        ("50LF3X3T HD", "50 ft. Triaxle 3 Tier Taper Frame Heavy Duty - AB", non_current),
-        ("50LF4X3T AB", "50' 3 Tier Quad - AB", current),
-        ("50LF4X3T HD", "50 ft. Quad 3 Tier Taper Frame Heavy Duty - AB", non_current),
-        ("51LF3X3T AB V2016", "51 ft. Tridem 3 Tier Taper Frame - AB", current),
-        ("51LF3X3T PEAK", "51 ft. Tridem 3 Tier Taper Frame", non_current),
-        ("51LF3X3T SK", "51 ft. Tridem 3 Tier Shortwood Taper Frame - SK", current),
-        ("51LF4X3T AB V2015", "51 ft. Quad 3 Tier Taper Frame - AB", current),
-        ("53LD3X3T BC", "53 ft. Tridem 3 Tier Drop Frame - BC", non_current),
-        ("53LD3X3T BCHD", "53 ft. Tridem 3 Tier Drop Frame Heavy Duty - BC", non_current)
-    ],
-    "Machinery": [
-        ("20PAG2X", "20 Ton Tandem Agriculture", non_current),
-        ("30ADG2X48 AGULP", "35 Ton Tandem 48 ft. Agri Ultra Low Pro", current),
-        ("30ADG2X51 AGLP", "30 Ton Tandem 51 ft. Agri Low Profile", non_current),
-        ("30ADG2X51 LP", "30 TON AIR DETACHABLE TRAILER 51 FT", non_current),
-        ("30ADG2X53 AGLP", "30 Ton Tandem 53 ft. Agri Low Profile", non_current),
-        ("35ADG2X AGNR", "35 Ton Tandem 48 ft. Agri-Non RTAC", current),
-        ("35ADG2X AGR", "35 Ton Tandem 48 ft. Agri RTAC", non_current),
-        ("35ADG2X NR", "35 Ton Tandem 48 ft. Non RTAC", current),
-        ("35ADG2X R", "35 Ton Tandem 48 ft. RTAC", non_current),
-        ("35ADG2X37 AGNR", "35 Ton Tandem 37 ft.  Agri - Non RTAC", non_current),
-        ("35ADG2X48 AGULP", "35 Ton Tandem 48 ft. Agri Ultra Low Pro", current),
-        ("35ADG2X51 AGC", "35 Ton Tandem 51 ft. Agri - Chopper", non_current),
-        ("35ADG2X51 AGLP", "35 Ton Tandem 51 ft. Agri Low Profile", current),
-        ("35ADG2X51 AGNR", "35 Ton Tandem 51 ft. Agri - Non RTAC", current),
-        ("35ADG2X51 LP", "35 Ton Tandem 51 ft. Low Profile", non_current),
-        ("35ADG2X53 AGC", "35 Ton Tandem 53 ft. Agri - Chopper", non_current),
-        ("35ADG2X53 AGCO", "35 Ton Tandem 53 ft. Agri - Non RTAC", non_current),
-        ("35ADG2X53 AGNR", "35 Ton Tandem 53 ft. Agri - Non RTAC", current),
-        ("35ADG2X53 AGS", "35 Ton Tandem 53 ft.  Agri  8 ft. Spread", current),
-        ("35ADG3X53 AGNR", "35 Ton Tridem 53 ft.  Agri - Non RTAC", non_current),
-        ("35DD2X BT", "35 Ton Double Drop Beaver Tail", non_current),
-        ("35FA", "35 Ton Single Axle Flip", current),
-        ("35HDG2X53", "35 Ton Tandem Hydraulic - 53 ft.", non_current),
-        ("35MD2X BT", "35 Ton Tandem Beaver Tail", non_current),
-        ("35MD2X EXT", "35 Ton Tandem Mechanical Extendable", current),
-        ("35MD2X NR", "35 Ton Mechanical Detachable Gooseneck", current),
-        ("35MD2X48", "35 Ton Tandem Mechanical - 48 Ft.", current),
-        ("35MD2X48 AGULP", "35 Ton Tandem 48 ft. Agri Ultra Low Pro", non_current),
-        ("35MD2X48 P", "35 Ton Tandem Mechanical - 48 Ft.Pin Deck", non_current),
-        ("35MD2X53", "35 Ton Tandem Mechanical - 53 ft.", current),
-        ("35MD2X53 EXT", "35 Ton Tandem Mechanical Extendable", current),
-        ("40ADG2X NR", "40 Ton Tandem 48 ft. - Non RTAC", current),
-        ("40ADG3X AGR", "40 Ton Tridem 49 ft 5 in. Agri RTAC", current),
-        ("40ADG3X R", "40 Ton Tridem 49 ft. 5 in. RTAC", current),
-        ("40ADG3X53 AGLP", "40 Ton Tridem 53 ft. Agri - Non RTAC Low pro", current),
-        ("40ADG3X53 AGNR", "40 Ton Tridem 53 ft. Agri - Non RTAC", current),
-        ("40ADG3X53 NR", "40Ton Tridem 53 ft. -Non RTAC", current),
-        ("45MD3X EXT", "45 Ton Tridem Mechanical Extendable", non_current),
-        ("50ADG3X53 NR", "50 Ton Tridem 53 ft. Non RTAC", non_current)
-    ],
-    "Nuclear": [
-        ("40NS2 US", "Tandem Nitro Stinger", non_current),
-        ("42DD2X", "42 ft. Tandem Double Drop", non_current),
-        ("42DD3X WCS", "42 ft. Tridem Double Drop  - WCS", non_current),
-        ("44DD2X", "44 ft. Tandem Double Drop", non_current),
-        ("47DD3X", "47 ft. Tridem Double Drop", current),
-        ("51DD3X HD", "51 ft. Tridem Double Drop", non_current),
-        ("53DD4X", "53 ft. Quad Double Drop", current)
-    ],
-    "Oilfield": [
-        ("40SN3X", "40 Ton Tridem Scissorneck", current),
-        ("40SN3X M", "40 Ton Tridem Military Scissorneck", non_current),
-        ("40SN3X SB", "40 Ton Tridem Square Back Scissorneck", non_current),
-        ("50SN3X", "50 Ton Tridem Scissorneck", non_current),
-        ("50SN3X 2018", "50 Ton Tridem Scissorneck", non_current),
-        ("51OF3X", "51 Ton Tridem  Oilfield Float", non_current),
-        ("55LB3X", "55 Ton Tridem Lowboy Ridigneck", current),
-        ("55LB3X LND", "55 Ton Tridem Lowbed Long Neck - 6\" Drop", current),
-        ("55LB3X LNF", "55 Ton Tridem TriDrive Neck Lowbed", current),
-        ("55LB3X SND", "55 Ton Tridem  Short Neck - 6\" Drop Lowbed", current),
-        ("60SN3X", "60 Ton Tridem Scissorneck", non_current)
-    ],
-    "Paving & Recovery": [
-        ("48ET2XP", "48 ft. Tandem", current),
-        ("48ET3XP", "48 ft. Tridem", current),
-        ("53ET2XP", "53 ft. Tandem", current),
-        ("53ET3XP", "53 ft. Tridem", current),
-        ("53ET3XP MI", "53 ft. Tridem Michigan Paver", non_current),
-        ("53ET4XP", "53 ft. Quad", current)
-    ],
-    "Screener": [
-        ("360", "20 ft. Single Axle Screener", current)
-    ],
-    "Snow & Ice Control": [
-        ("1155", "15.5 ft. Unibody Dump", current),
-        ("2311", "11 ft. All Season Sander Body", non_current),
-        ("2313", "13 ft. All Season Sander Body", non_current),
-        ("2513 DC", "13 ft. U-Body Dual Cross Conveyor Dump", current),
-        ("2514 DC", "14 ft. U-Body Dual Cross Converyor Dump", current),
-        ("2514 SNC", "14 ft. U-Body Dump", non_current),
-        ("3434 PMB", "11 ft. Power Angle Plow", non_current),
-        ("3920-94 PMP", "11 ft. Hydraulic Snow Wing", non_current),
-        ("Installation", "Installation Body, Plow, Wing and Headworks", non_current),
-        ("SICD2X NT", "Dump Truck 2 Axle", non_current),
-        ("SICP1X NT", "Plow Truck 1 Axle", non_current),
-        ("SPUD KIT 4300", "BULK BODY SPUD 4300", non_current),
-        ("TC1X", "Truck Complete", non_current),
-        ("TC2X", "Truck complete 2 Axle", non_current),
-        ("TEMP", "TEMP", non_current),
-    ],
-    "Stargate": [
-        ("TB48", "Truck Box - 48 in.", current),
-        ("17PDB", "Pony Dump Body", non_current),
-        ("19SB", "19 ft. 6 in. Steel Dump Body", current),
-        ("24SB", "24 ft. Steel Dump Body", current),
-        ("28LB2X A", "28 ft. Tandem Aluminum", current),
-        ("30SB", "30 ft. Steel Dump Body", current),
-        ("38LB3X A", "38 ft. TRIDEM Aluminum", current),
-        ("48LB4X A", "48 ft. QUAD Aluminum", non_current),
-        ("B-Train Dump_temp1", "Steel Lead B-Train Dump Trailer", non_current),
-        ("B-Train Pull Dump_temp1", "Steel Lead B-Train Dump Trailer", non_current),
-        ("CD1X", "Converter Dolly Single Axle", current),
-        ("CD2X", "Converter Dolly Tandem", current),
-        ("Dump 36SF3X", "36 ft - Steel Frame Dump", current),
-        ("Dump SF3X", "40 ft - Steel Frame Dump", current),
-        ("Dump SF4X", "45 ft - Steel Frame Dump", current),
-        ("End Dump - temp1", "Dura-Wall Frame Type End Dump", non_current),
-        ("Pony Chassis", "Pony Chassis Tridem", current),
-        ("Pony Dump 3X17", "Pony Dump Trailer Tridem", current),
-        ("PY-FR454-WR3X", "28 ft. Tandem Pup Dump", non_current),
-        ("Steel End Dump 2X", "36 ft - Steel End Dump", current),
-        ("UBF2X", "U Body Frameless Aluminum Tandem Dump", current),
-    ],
-    "Tags": [
-        ("15BWS2X", "15 Ton Non Tilt Tandem Deckover Electric Brake", non_current),
-        ("15BWS2X G", "15 Ton Non Tilt Tandem Electric Brake", non_current),
-        ("20ANR", "20 Ton Tandem Air Tilt/No Ramp", current),
-        ("20ART", "20 Ton Tandem Air Tilt/Air Ramp", current),
-        ("20BWS2X", "20 Ton Tandem Non Tilt Deckover", non_current),
-        ("20BWS3X", "20 Ton Non Tilt Tridem Deckover Electric Brake", non_current),
-        ("20FDNT", "20 Ton Tandem Flat Deck Non Tilt", current),
-        ("20FDNT ECO", "20 Ton Tandem Flat Deck Non Tilt Deckover", non_current),
-        ("20FDNT ECO New Jersey Turnpike Authority", "20 Ton Flat Deck Non Tilt Deckover New Jersey Turnpike Authority", current),
-        ("20MTT", "20 Ton Tandem  Manual Tilt", non_current),
-        ("20NTT", "20 Ton Tandem Non Tilt", current),
-        ("20NTTS", "20 Ton Tandem Non Tilt Sprayer", non_current),
-        ("20PLS2X", "20 Ton Tandem Pallet Loading", non_current),
-        ("20PT2X", "20 Ton Tandem Pup", non_current),
-        ("25ANR", "25 Ton Tridem Air Tilt/No Ramp", current),
-        ("25ANR-F", "25 Ton Tridem Air Tilt/No Ramp", current),
-        ("25ART", "25 Ton Tridem Air Tilt/Air Ramp", current),
-        ("25ART-F", "25 Ton Tridem Air Tilt/Air Ramp", current),
-        ("25BWS3X", "25 Ton Tridem Non Tilt Deckover", non_current),
-        ("25FDNT", "25 Ton Tridem Flat Deck Non Tilt", current),
-        ("25FDNT ECO", "25 Ton Tridem Flat Deck Non Tilt Deckover", non_current),
-        ("25MTT", "25 Ton Manual Tilt Tridem", current),
-        ("25NTT", "25 Ton Tridem Non Tilt", current),
-        ("25NTT-F", "25 Ton Tridem Non Tilt", current),
-        ("25PT3X", "25 Ton Tridem Pup", non_current),
-        ("25PVR", "25 Ton Air Tilt/Air Ramp Paver Tridem", current),
-        ("30ANR", "30 Ton Tridem Air Tilt/No Ramp", current),
-        ("30ANR-F", "30 Ton Tridem Air Tilt/No Ramp", current),
-        ("30ART", "30 Ton Tridem Air Tilt/Air Ramp", current),
-        ("30FDNT", "30 Ton Flat Deck Non Tilt", current),
-        ("30NTT", "30 Ton Tridem Non Tilt", current),
-        ("30NTT-F", "30 Ton Tridem Non Tilt", non_current),
-        ("30PVR", "30 Ton Air Tilt/Air Ramp Paver Tridem", current),
-        ("40EPT1X", "40 ft. Extendable Pole", non_current),
-        ("WTT2X", "Tandem Water Treatment Trailer", non_current)
-    ],
-    "UNKOWN": []
-}
-
+# for testing purposes
 with open("unknown entries.csv", 'r') as f:
     csvdict = csv.DictReader(f)
     for d in csvdict:
@@ -486,25 +14,34 @@ with open("unknown entries.csv", 'r') as f:
         vals = (d["model"], d["description"], d["status"] == "current")
         by_class["UNKOWN"].append(vals)
 
-by_models = {}
-for clazz, vals in by_class.items():
-    for model_name, model_desc, status in vals:
-        by_models[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:]) 
+def create_by_model():
+    res = {}
+    for clazz, vals in by_class.items():
+        # print("vals\t", vals)
+        for model_name, model_desc, status in vals:
+            res[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:]) 
+    return res
+
+by_models = create_by_model()
 
 print(dict_print(by_models, "By Model"))
 print(dict_print(by_class, "By Class"))
-current_models = []
-non_current_models = []
 
-for clazz, lst in by_class.items():
-    for model in lst:
-        model_abbr, model_name, status = model
-        if status == current:
-            current_models.append(model)
-        elif status == non_current:
-            non_current_models.append(model)
-        else:
-            raise ValueError("UNKNOWN status classification")
+def split_by_status():
+    c, nc = [], []
+    for clazz, lst in by_class.items():
+        for model in lst:
+            print("model\t", model)
+            model_abbr, model_name, status = model
+            if status == current:
+                c.append(model)
+            elif status == non_current:
+                nc.append(model)
+            else:
+                raise ValueError("UNKNOWN status classification \"" + str(status) + "\"")
+    return c, nc
+
+current_models, non_current_models = split_by_status()
 
 print("{n} total classes".format(n=len(by_class)))
 print("{n} total models".format(n=len(current_models) + len(non_current_models)))
@@ -514,3 +51,18 @@ print("{n} non-current models".format(n=len(non_current_models)))
 print("current models[0]:", current_models[0])
 
 list_of_models = current_models + non_current_models
+
+def adjust_models(new_discount):
+    global by_class, by_models, current_models, non_current_models, list_of_models
+    c = new_discount.clazz
+    m = new_discount.model
+    d = easygui.enterbox(msg="Describe this model \"" + m + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
+    s = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
+    s = 1 if s else 0
+    add_model(c, m, d, s)
+    
+    by_class = gen_by_class()
+    by_class["UNKOWN"] = []
+    current_models, non_current_models = split_by_status()
+    list_of_models = current_models + non_current_models
+    by_models = create_by_model()
