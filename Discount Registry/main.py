@@ -89,7 +89,7 @@ def read_entries():
             else:
                 class_entries[discount.clazz].append(i)
 
-            print("discount", discount)
+            # print("discount", discount)
             original_entries.append(discount)
             discount_entries.append(discount)
             dims[0] = max(dims[0], len(str(discount.date)))
@@ -199,13 +199,25 @@ def create_view(edit=False):
         print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", by_models["20ART"][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or by_models["20ART"][2]))
         # assert current_model_var.get() in by_models
         # print("\n\n\n\nASSERTION PASSED\n\n\n\n")
-        # combobox_model['values'] = [m for m in list(models_entries.keys()) if current_model_var.get() or by_models[m][2]]
-        print("\nBY_MODELS:\n" + "\n".join(list(by_models.keys())))
-        combobox_model['values'] = []
-        for m in list(models_entries.keys()):
-            print("\t\tm", m)
-            print("\t\tby_models[m][2]", by_models[m][2])
+        # print("\nBY_MODELS:\n" + "\n".join(list(by_models.keys())))
+        # print("LAST ENTRIES:", list(by_models.keys())[-5:])
+
+        
+        def ins(m):
+            print("\tm", m)
+            print("\t\tby_models[\"{0}\"]".format(m), by_models[m])
+            print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(by_models[m][2])), by_models[m][2])
             print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or by_models[m][2]))
+            return current_model_var.get() or by_models[m][2]
+                # combobox_model["values"] = combobox_model["values"] + [m] 
+
+
+        combobox_model['values'] = [m for m in list(models_entries.keys()) if ins(m)]
+        # combobox_model['values'] = []
+        print("combobox_model[\"values\"] {0}:".format(type(combobox_model["values"])), combobox_model["values"])
+        print("current_model_var.get()", current_model_var.get())
+        # for m in list(models_entries.keys()):
+            
 
     def main_loop():
         global combobox_model, new_discount
@@ -469,7 +481,7 @@ def main_view():
         return listbox
 
     def create_function():
-        global listbox
+        global listbox, by_models
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
@@ -483,21 +495,23 @@ def main_view():
         enable(window_view)
         clear_data(listbox)
         add_data(listbox)
+        by_models = create_by_model()
+        # print("LAST ENTRIES:", list(by_models.keys())[-5:])
 
     def edit_function():
         global listbox
         selection = listbox.curselection()
-        if 0 in selection:
-            selection.remove(0)
-        print('Edit a discount :', selection)
-        disable(window_view)
-        new_discounts = []
-        for sel in selection:
-            new_discounts.append(create_view(edit=(discount_entries[sel])))
-        print("edited discounts:", new_discounts)
-        clear_data(listbox)
-        add_data(listbox)
-        enable(window_view)
+        # if 0 in selection:
+        #     selection.remove(0)
+        # print('Edit a discount :', selection)
+        # disable(window_view)
+        # new_discounts = []
+        # for sel in selection:
+        #     new_discounts.append(create_view(edit=(discount_entries[sel])))
+        # print("edited discounts:", new_discounts)
+        # clear_data(listbox)
+        # add_data(listbox)
+        # enable(window_view)
 
     def delete_function():
         global listbox
@@ -849,10 +863,11 @@ def main_view():
     main_loop()
 
 
-read_entries()
-print(dims)
-root = tk.Tk(className='Discount Registry')
-root.geometry(size)
-window_main = tk.Frame(root)
-window_main.pack()
-main_view()
+if __name__ == "__main__":
+    read_entries()
+    print(dims)
+    root = tk.Tk(className='\Discount Registry')
+    root.geometry(size)
+    window_main = tk.Frame(root)
+    window_main.pack()
+    main_view()

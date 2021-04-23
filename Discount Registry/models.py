@@ -4,24 +4,23 @@ from models_writer import *
 from utility import dict_print
 
 by_class = gen_by_class()
-by_class["UNKOWN"] = []
-
-# for testing purposes
-with open("unknown entries.csv", 'r') as f:
-    csvdict = csv.DictReader(f)
-    for d in csvdict:
-        # print(d)
-        vals = (d["model"], d["description"], d["status"] == "current")
-        by_class["UNKOWN"].append(vals)
 
 def create_by_model():
     res = {}
     last = None
     for clazz, vals in by_class.items():
-        print("vals\t", vals)
+        # print("vals\t", vals)
         for model_name, model_desc, status in vals:
             last = model_name
             res[model_name] = [clazz, model_desc, status] #  v[0][0]: [k] + list(v[1:])
+            # if model_name not in res:
+            # else:
+            #     old = res[model_name]
+            #     old_class = old[0]
+                
+            #     edit_registry(model_name)
+            #     del res[model_name]
+
 
     if last:
         print("CREATING BY MODEL", res[last])
@@ -29,14 +28,14 @@ def create_by_model():
 
 by_models = create_by_model()
 
-print(dict_print(by_models, "By Model"))
-print(dict_print(by_class, "By Class"))
+# print(dict_print(by_models, "By Model"))
+# print(dict_print(by_class, "By Class"))
 
 def split_by_status():
     c, nc = [], []
     for clazz, lst in by_class.items():
         for model in lst:
-            print("model\t", model)
+            # print("model\t", model)
             model_abbr, model_name, status = model
             if status == current:
                 c.append(model)
@@ -67,7 +66,10 @@ def adjust_models(new_discount):
     add_model(c, m, d, s)
     
     by_class = gen_by_class()
-    by_class["UNKOWN"] = []
     current_models, non_current_models = split_by_status()
     list_of_models = current_models + non_current_models
     by_models = create_by_model()
+
+
+def get_by_models():
+    return by_models

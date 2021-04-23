@@ -496,11 +496,21 @@ def gen_by_class():
         r = csv.DictReader(f)
         for row in r:
             lst = list(row.values())
-            vals = lst[1:-1] + [current if lst[-1] == "True" else non_current]
+            vals = lst[1:-1] + [current if lst[-1] == "True" or lst[-1] == "1" else non_current]
             if row["class"] in res:
                 res[row["class"]].append(vals)
             else:
                 res[row["class"]] = [vals]
+
+    res["UNKOWN"] = []
+
+    # for testing purposes
+    with open("unknown entries.csv", 'r') as f:
+        csvdict = csv.DictReader(f)
+        for d in csvdict:
+            # print(d)
+            vals = (d["model"], d["description"], d["status"] == "current")
+            res["UNKOWN"].append(vals)
     return res
                 
 if __name__ == "__main__":

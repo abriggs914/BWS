@@ -78,6 +78,7 @@ def work_weeks(first_day, holidays):
 	r = []
 	i = 0
 	days_worked = 0
+	week = 1
 	while i < day:
 		if i+1 not in holidays_nums:
 			r.append(idx)
@@ -88,10 +89,12 @@ def work_weeks(first_day, holidays):
 			# week_str = len(res) + 1
 			monday = first_day + datetime.timedelta(days=7*len(res))
 			week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
-			res[week_str] = {"sun": 7*len(res) + 1}
+			res[week_str] = {"week": week}
+			res[week_str].update({"sun": 7*len(res) + 1})
 			res[week_str].update(dict(zip(days, r)))
 			res[week_str].update({"sat": 7*len(res)})
 			r = []
+			week += 1
 		if i % 7 == 4:
 			i += 2
 		i += 1

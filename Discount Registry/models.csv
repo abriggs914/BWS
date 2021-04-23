@@ -424,15 +424,4 @@ Tags,30NTT-F,30 Ton Tridem Non Tilt,0
 Tags,30PVR,30 Ton Air Tilt/Air Ramp Paver Tridem,1
 Tags,40EPT1X,40 ft. Extendable Pole,0
 Tags,WTT2X,Tandem Water Treatment Trailer,0
-ggggg,gggggg,Has 7 g's,1
-hhhh,hhhhhh,dfgsaagdsfgd gdfg   gdfgfgdfgdgd,0
-gafdgsdfgsdfgh,fdsgfafgasfgsfdgsd,gjkfhkfdthkfjhkljhhjjhhjkfjk,1
-sfdgsdfgsdfgsfg,sgfdgsdfgsfdg,fhdstzrhstdyjg,1
-33,31,1331,1
-14,14,14,1
-15,15,15,0
-17,17,17,1
-18,18,18,0
-19,19,19,1
-20,20,20,0
-21,21,21,1
+IMPLEMENT CLASS,53ET3X,This should already have a description,1
