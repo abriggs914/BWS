@@ -89,8 +89,9 @@ def work_weeks(first_day, holidays):
 			# week_str = len(res) + 1
 			monday = first_day + datetime.timedelta(days=7*len(res))
 			week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
+			lr = len(res)
 			res[week_str] = {"week": week}
-			res[week_str].update({"sun": 7*len(res) + 1})
+			res[week_str].update({"sun": 7*lr + 1})
 			res[week_str].update(dict(zip(days, r)))
 			res[week_str].update({"sat": 7*len(res)})
 			r = []
