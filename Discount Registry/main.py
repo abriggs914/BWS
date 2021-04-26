@@ -81,6 +81,7 @@ def read_entries():
             vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
             discount = Discount(*vals)
             print("discount: ", discount)
+            print("discount.model:", discount.model)
 
             if discount.dealer not in dealers_entries:
                 dealers_entries[discount.dealer] = [i]

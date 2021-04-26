@@ -58,7 +58,7 @@ day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holi
 def work_weeks(first_day, holidays):
 		
 	today = datetime.date.today()
-	# today = datetime.date.fromisoformat("2022-01-04")
+	# today = datetime.date.fromisoformat("2021-04-02")
 	day = (today - first_day).days + 1
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
 
@@ -103,12 +103,16 @@ def work_weeks(first_day, holidays):
 		monday = first_day + datetime.timedelta(days=7*len(res))
 		week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
 		res[week_str] = {"sun": 7*len(res) + 1}
+		res[week_str].update({"week": week})
 		res[week_str].update(dict(zip(days[:len(r)], r)))
 		res[week_str].update({"sat": 7*len(res)})
 	days_worked = idx - 1
 		
 	months = dict(zip([calendar.month_name[i] for i in range(1, 13)], ["" for i in range(12)]))
 	next_holiday = None
+	last_holiday = None
+	# when_holiday_next = None
+	# when_holiday_last = None
 	print("months: " + str(months))
 	for d, holiday in zip(holidays_nums, holidays):
 		holiday = datetime.date.fromisoformat(holiday)
@@ -122,31 +126,52 @@ def work_weeks(first_day, holidays):
 			else:
 				if d < (holiday - first_day).days + 1:
 					next_holiday = holiday
+		
+		if d <= day:
+			if last_holiday is None:
+				last_holiday = holiday
+			else:
+				if d >= (holiday - first_day).days + 1:
+					last_holiday = holiday
+			# else:
+				# if d 
 					
 	if next_holiday:
 		holiday_diff = (next_holiday - today).days
-		when_holiday = "In " + str(holiday_diff) + " day" + ("s" if holiday_diff != 1 else "")
+		when_holiday_next = "In " + str(holiday_diff) + " day" + ("s" if holiday_diff != 1 else "")
 		if holiday_diff == 1:
-			when_holiday = "Tomorrow"
+			when_holiday_next = "Tomorrow"
 	else:
 		next_holiday = "None"
-		when_holiday = "None"
+		when_holiday_next = "None"
+					
+	if last_holiday:
+		holiday_diff = (last_holiday - today).days
+		when_holiday_last = str(abs(holiday_diff)) + " day" + ("s" if holiday_diff != 1 else "") + " ago"
+		if holiday_diff == 1:
+			when_holiday_last = "Tomorrow"
+	else:
+		last_holiday = "None"
+		when_holiday_last = "None"
 		
 		
 	# print("days_worked: " + str(days_worked) + ", i: " + str(i) + ", idx: " + str(idx))
 	# for d, holiday in zip(holidays_nums, holidays)
-	days = ["sun"] + days + ["sat"]
-	empty = dict(zip(days, ["---" for i in range(len(days))]))
+	days = ["week"] + ["sun"] + days + ["sat"]
+	empty = dict(zip( days, ["---" for i in range(len(days))]))
 	res.update({
 		" ": empty,
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
 		"Days Off": day + 1 - days_worked,
-		"Percentage Time Off": str((100 * (1 + day - days_worked) / max(1, day + 1))) + " %",
-		"Next Holiday": when_holiday + ", " + str(next_holiday),
+		"Percentage Time Off": str((100 * (1 + day - days_worked) / max(1, day + 1))) + " %"
 		# "Next Holiday": "In " + str(holiday_diff),
-		"  ": empty,
 		})
+	if when_holiday_next:
+		res.update({"Next Holiday": when_holiday_next + ", " + str(next_holiday)})
+	if when_holiday_last:
+		res.update({"Last Holiday": when_holiday_last + ", " + str(last_holiday)})
+	res.update({"  ": empty})
 	for month in months:
 		if months[month]:
 			months[month] = months[month][:-2]

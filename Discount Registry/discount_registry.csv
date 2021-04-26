@@ -1,10 +1,2 @@
 dealer,model,slot,market,freight,date
-Remorques Lewis,20ANR <TAGS>,1,1.5,0,2021-04-13
-Remorques Lewis,20ART <TAGS>,1,1.5,0,2021-04-13
-Remorques Lewis,20NTT <TAGS>,1,1.5,0,2021-04-13
-Remorques Lewis,20FDNT <TAGS>,1,1.5,0,2021-04-13
-A,B <UNKNOWN>,2,2.5,400,2021-04-11
-C,D <UNKNOWN>,0.875,6,300,2021-04-12
-E,F <UNKNOWN>,4,10,100,2021-04-14
-Northeast Truck & Trailer,53ET3X <EQUIPMENT>,1,0,0,2021-04-15
-G,26DT2X <DUMP>,8.245,3.225,650,2021-04-19
+12,12 <12>,12.0,12.0,12.0,2021-04-26

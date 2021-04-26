@@ -14,11 +14,13 @@ def read_order_options():
 		
 		print("header:", reader.fieldnames)
 		
-		wheel_counts = {
-			"17.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []},
-			"22.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []},
-			"24.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []}
-		}
+		# wheel_counts = {
+			# "17.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []},
+			# "22.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []},
+			# "24.5": {"steel": 0, "machined": 0, "polished": 0, "orders": []}
+		# }
+		titles = ["17.5", "22.5", "24.5"]
+		wheel_counts = dict(zip(titles, [dict(zip(["steel", "machined", "polished", "orders"], [0, 0, 0, []])) for v in titles]))
 		for order in ordered_options:
 			for wheel_count in wheel_counts:
 				if wheel_count in order["Description"]:
@@ -49,3 +51,5 @@ def read_delivery_dates():
 	with open("table.csv", 'r') as f:
 		reader = csv.DictReader(f)
 		
+if __name__ == "__main__":
+	read_order_options()
