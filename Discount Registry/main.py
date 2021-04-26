@@ -5,6 +5,7 @@ from utility import *
 from discount import *
 import tkinter as tk
 from tkcalendar import Calendar
+from models_writer import current, non_current
 # import tksheet
 
 admin=easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges", default_choice="No")  # allows a little more functionality  ! Beware of data consistency when using !
@@ -70,9 +71,16 @@ def read_entries():
             #   dealer,model,slot,market,freight,date
             # app header
             #   Date, Dealer, Model, Class, Slot, Market, Freight
+
             vals = list(entry.values())
-            vals = vals[:2] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
+            name_spl = vals[1].split(" ")
+            model_name = name_spl[0].strip()
+            model_class = name_spl[1].strip()[1:-1]
+            m = DS.look_up_by_name(model_name, model_class)
+            print("found:", m)
+            vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
             discount = Discount(*vals)
+            print("discount: ", discount)
 
             if discount.dealer not in dealers_entries:
                 dealers_entries[discount.dealer] = [i]
@@ -80,22 +88,22 @@ def read_entries():
                 dealers_entries[discount.dealer].append(i)
 
             if discount.model not in models_entries:
-                models_entries[discount.model] = [i]
+                models_entries[DS.model_key(discount.model)] = [i]
             else:
-                models_entries[discount.model].append(i)
+                models_entries[DS.model_key(discount.model)].append(i)
 
-            if discount.clazz not in class_entries:
-                class_entries[discount.clazz] = [i]
+            if discount.model.clazz not in class_entries:
+                class_entries[discount.model.clazz] = [i]
             else:
-                class_entries[discount.clazz].append(i)
+                class_entries[discount.model.clazz].append(i)
 
             # print("discount", discount)
             original_entries.append(discount)
             discount_entries.append(discount)
             dims[0] = max(dims[0], len(str(discount.date)))
             dims[1] = max(dims[1], len(discount.dealer))
-            dims[2] = max(dims[2], len(discount.model))
-            dims[3] = max(dims[3], len(discount.clazz))
+            dims[2] = max(dims[2], len(str(discount.model)))
+            dims[3] = max(dims[3], len(discount.model.clazz))
             dims[4] = max(dims[4], len(percent(discount.slot, 3)))
             dims[5] = max(dims[5], len(percent(discount.market, 3)))
             dims[6] = max(dims[6], len(money(discount.freight)))
@@ -131,6 +139,7 @@ def read_entries():
 
 def create_view(edit=False):
     global root, window_main
+    new_discount = None
     # root['className'] = 'Create / Edit Discount'
     window_main.pack_forget()
     window_main.pack()
@@ -140,7 +149,6 @@ def create_view(edit=False):
     label_names = dict(zip(label_names_list, [[] for i in label_names_list]))
     # root.geometry(size)
     window_create = tk.Frame(window_main)
-    new_discount = None
     # window_create = tk.Frame(root)
     window_create.pack()
 
@@ -185,7 +193,7 @@ def create_view(edit=False):
 
     def status_change(*args):
         print("Status change")
-        raise ValueError("Investigate the set_models function")
+        # raise ValueError("Investigate the set_models function")
         set_models()
     
     current_model_var.trace_add("write", status_change)
@@ -196,7 +204,11 @@ def create_view(edit=False):
         print("current_model_var:", current_model_var.trace_info())
         print("setting models, current_model_var:", current_model_var.get())
         print("list(models_entries.keys()):", list(models_entries.keys()))
-        print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", by_models["20ART"][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or by_models["20ART"][2]))
+        tmn = "20ART"
+        tmc = "TAGS"
+        mlr = DS.look_up_by_name(tmn, tmc)
+        print("model look up results:", mlr)
+        print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", DS.by_model[str(mlr)][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or DS.by_model[str(mlr)][2]))
         # assert current_model_var.get() in by_models
         # print("\n\n\n\nASSERTION PASSED\n\n\n\n")
         # print("\nBY_MODELS:\n" + "\n".join(list(by_models.keys())))
@@ -204,11 +216,13 @@ def create_view(edit=False):
 
         
         def ins(m):
+            spl = m.split(" ")
+            m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
             print("\tm", m)
-            print("\t\tby_models[\"{0}\"]".format(m), by_models[m])
-            print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(by_models[m][2])), by_models[m][2])
-            print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or by_models[m][2]))
-            return current_model_var.get() or by_models[m][2]
+            print("\t\tby_models[\"{0}\"]".format(m), m.status)
+            # print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(DS.by_model[str(DS.look_up_by_name(m))][2])), DS.by_model[str(DS.look_up_by_name(m))][2])
+            # print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or DS.by_model[str(DS.look_up_by_name(m))][2]))
+            return current_model_var.get() or m.status
                 # combobox_model["values"] = combobox_model["values"] + [m] 
 
 
@@ -355,7 +369,15 @@ def create_view(edit=False):
                 f = freight_var.get()
                 c = selection_class.get()
                 t = cal.get_date()
-                if not all([d, m, s, k, f, c, t]):
+
+                model = DS.look_up_by_name(m, c)
+                if model == None:
+                    desc = easygui.enterbox(msg="Describe this model \"" + m + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
+                    stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
+                    stat = current if s else non_current
+                    model = Model(c, m, desc, stat)
+                    DS.update(model)
+                if not all([d, model, s, k, f, c, t]):
                     raise ValueError("Please check submission values")
 
                 s = float(s) / 100
@@ -363,7 +385,7 @@ def create_view(edit=False):
                 # t = datetime.datetime.strptime(t, "%m/%d/%y")
                 # t = t.strftime("%Y-%m-%d")
                 t = cal.get_date()
-                new_discount = Discount(d, m, s, k, f, c, t)
+                new_discount = Discount(d, model, s, k, f, c, t)
                 submit.set(True)
                 print("local new discount:", new_discount)
                 print("local new discount:", new_discount.table_entry(dims))
@@ -403,6 +425,8 @@ def create_view(edit=False):
         return new_discount
 
     new_discount = main_loop()
+    # DS.update(new_discount.new_model_entry())
+    print("global new_discount:", new_discount)
     # disable(window_create)
     window_create.destroy()
     return new_discount
@@ -490,12 +514,12 @@ def main_view():
             did_update = True
             update_discounts(new_discount)
         print("new discount {0}:".format(did_update), new_discount)
-        adjust_models(new_discount)
-        read_entries()
+        # DS.adjust_models(new_discount)
+        # read_entries()
         enable(window_view)
         clear_data(listbox)
         add_data(listbox)
-        by_models = create_by_model()
+        # by_models = create_by_model()
         # print("LAST ENTRIES:", list(by_models.keys())[-5:])
 
     def edit_function():
@@ -864,6 +888,8 @@ def main_view():
 
 
 if __name__ == "__main__":
+    DS = DataSet()
+    DS.init()
     read_entries()
     print(dims)
     root = tk.Tk(className='\Discount Registry')
