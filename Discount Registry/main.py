@@ -62,7 +62,7 @@ def read_entries():
     dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
     models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
     class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
-    dims = [0, 0, 0, 0, 0, 0, 0]
+    dims = [len(h) for h in TABLE_HEADER]
     with open("discount_registry.csv", 'r') as f:
         f_dict = csv.DictReader(f)
         for i, entry in enumerate(f_dict):
@@ -103,7 +103,7 @@ def read_entries():
             discount_entries.append(discount)
             dims[0] = max(dims[0], len(str(discount.date)))
             dims[1] = max(dims[1], len(discount.dealer))
-            dims[2] = max(dims[2], len(str(discount.model)))
+            dims[2] = max(dims[2], len(str(discount.model.model_name)))
             dims[3] = max(dims[3], len(discount.model.clazz))
             dims[4] = max(dims[4], len(percent(discount.slot, 3)))
             dims[5] = max(dims[5], len(percent(discount.market, 3)))
@@ -112,6 +112,8 @@ def read_entries():
 
     original_entries.sort(key=lambda d: d.date, reverse=True)
     discount_entries.sort(key=lambda d: d.date, reverse=True)
+
+    print("NEW DIMS:", dims)
 
 # class Application(tk.Frame):
 #     def __init__(self, master=None):
@@ -385,7 +387,7 @@ def create_view(edit=False):
                 k = float(k) / 100
                 # t = datetime.datetime.strptime(t, "%m/%d/%y")
                 # t = t.strftime("%Y-%m-%d")
-                t = cal.get_date()
+                t = cal.get_date() 
                 new_discount = Discount(d, model, s, k, f, c, t)
                 submit.set(True)
                 print("local new discount:", new_discount)
@@ -491,6 +493,8 @@ def main_view():
 
     def add_data(listbox):
         header = TABLE_HEADER
+        if not discount_entries:
+            return
         listbox.insert(0, "| " + " | ".join(list(map(lambda x: pad_centre(x, dims[header.index(x)]), header))) + " |")
         for i, discount in enumerate(discount_entries):
             # print(discount.table_entry(dims))

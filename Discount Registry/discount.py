@@ -55,11 +55,7 @@ class Discount:
         return all([
             self.dealer.lower() == d.dealer.lower(),
             self.model.model_name.lower() == d.model.model_name.lower(),
-            self.model.clazz.lower() == d.model.clazz.lower(),
-            self.date == d.date,
-            self.slot == d.slot,
-            self.market == d.market,
-            self.freight == d.freight
+            self.model.clazz.lower() == d.model.clazz.lower()
         ])
 
     def __repr__(self):

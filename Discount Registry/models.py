@@ -193,5 +193,16 @@ class Model:
         self.description = description
         self.status = status
 
+    def __eq__(self, m):
+        if not (hasattr(self, "model_name") and hasattr(self, "clazz")):
+            return False
+        return self.model_name.lower() == m.model_name.lower() and self.clazz.lower() == m.clazz.lower()
+    
+    def __key(self):
+        return (self.model_name, self.clazz, self.description, self.status)
+
+    def __hash__(self):
+        return hash(self.__key())
+
     def __repr__(self):
         return self.model_name + " <" + self.clazz + ">"
