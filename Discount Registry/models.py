@@ -194,7 +194,9 @@ class Model:
         self.status = status
 
     def __eq__(self, m):
-        if not (hasattr(self, "model_name") and hasattr(self, "clazz")):
+        print("self: <" + str(self) + ">")
+        print("m   : <" + str(m) + ">")
+        if m is None or not (hasattr(self, "model_name") or not hasattr(self, "clazz")):
             return False
         return self.model_name.lower() == m.model_name.lower() and self.clazz.lower() == m.clazz.lower()
     

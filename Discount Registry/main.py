@@ -47,10 +47,31 @@ def disable(frame):
 
 
 def update_discounts(d):
+    s = d.slot
+    m = d.market
+    f = d.freight
     for discount in original_entries:
         if discount == d:
-            return
+            if any([
+                s != discount.slot,
+                m != discount.market,
+                f != discount.freight,
+            ]):
 
+                print("CURRENT DISCOUNTS:\n" + "\n".join(list(map(str, original_entries))))
+                raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\n")
+            else:
+                # The entered values match existing records - no changes
+                return
+
+    append_discount(d)
+
+def write_discount(d):
+    with open("discount_registry.csv", 'r+') as f:
+        f.write("\n" + d.registry_entry())
+    read_entries()
+
+def append_discount(d):
     with open("discount_registry.csv", 'a') as f:
         f.write("\n" + d.registry_entry())
     read_entries()
@@ -114,31 +135,6 @@ def read_entries():
     discount_entries.sort(key=lambda d: d.date, reverse=True)
 
     print("NEW DIMS:", dims)
-
-# class Application(tk.Frame):
-#     def __init__(self, master=None):
-#         super().__init__(master)
-#         self.master = master
-#         self.pack()
-#         self.create_widgets()
-
-#     def create_widgets(self):
-#         self.hi_there = tk.Button(self)
-#         self.hi_there["text"] = "Hello World\n(click me)"
-#         self.hi_there["command"] = self.say_hi
-#         self.hi_there.pack(side="top")
-
-#         self.quit = tk.Button(self, text="QUIT", fg="red",
-#                               command=self.master.destroy)
-#         self.quit.pack(side="bottom")
-
-#     def say_hi(self):
-#         print("hi there, everyone!")
-
-# root = tk.Tk()
-# app = Application(master=root)
-# app.mainloop()
-
 
 def create_view(edit=False):
     global root, window_main

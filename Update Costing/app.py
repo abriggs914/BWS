@@ -4,11 +4,11 @@ from utility import money
 def updated_costing(cost, margin=30, FE=1.245, increase=0):
 	cost *= (1 + (increase / 100))
 	margin = (100 - margin) / 100
-	return {
+	return (cost, {
 		"COST": money(cost),
 		"CDN": money((cost / margin) if cost >= 0 else (cost * margin)),
 		"US": money(((cost / margin) if cost >= 0 else (cost * margin)) / FE)
-	}
+	})
 
 class App(tk.Frame):
 
@@ -20,8 +20,9 @@ class App(tk.Frame):
         self.margin = tk.StringVar()
         self.increase = tk.StringVar()
         self.exchange = tk.StringVar()
+        self.calculated_cost = tk.StringVar()
 
-
+        self.current_cost_btn = tk.Button(self, text="use calculated cost", command=self.use_calculated_cost)
         self.label_cost = tk.Label(self, text="Cost")
         self.entry_cost = tk.Entry(self, textvariable=self.cost)
         self.label_margin = tk.Label(self, text="% Margin")
@@ -36,7 +37,6 @@ class App(tk.Frame):
         self.btn_sub = tk.Button(self, text="submit", command=self.submit)
         self.btn_clear = tk.Button(self, text="clear", command=self.clear_fields)
 
-
         self.label_cost.grid(column=0, row=0, sticky=tk.N)
         self.entry_cost.grid(column=1, row=0, sticky=tk.N)
         self.label_margin.grid(column=0, row=1, sticky=tk.N)
@@ -48,8 +48,16 @@ class App(tk.Frame):
         
         self.text_display.grid(column=0, row = 4, columnspan=2, sticky=tk.N)
 
-        self.btn_sub.grid(column=0, row=5, columnspan=2, sticky=tk.N, pady=5)
-        self.btn_clear.grid(column=0, row=6, columnspan=2, sticky=tk.N, pady=5)
+        self.current_cost_btn.grid(column=0, row=5, columnspan=2, stick=tk.N, pady=5)
+        self.btn_sub.grid(column=0, row=6, columnspan=2, sticky=tk.N, pady=5)
+        self.btn_clear.grid(column=0, row=7, columnspan=2, sticky=tk.N, pady=5)
+
+    def use_calculated_cost(self):
+        if self.calculated_cost.get():
+            self.cost.set("%.2f" % float(self.calculated_cost.get()))
+        else:
+            self.text_display.delete('1.0', tk.END)
+            self.text_display.insert('1.0', "Invalid")
 
     def run(self):
         self.mainloop()
@@ -75,20 +83,22 @@ class App(tk.Frame):
                 i = float(i)
                 e = float(e)
                 
-                result = "\n".join([k.ljust(6) + v for k, v in updated_costing(c, m, e, i).items()])
+                val, vals = updated_costing(c, m, e, i)
+                result = "\n".join([k.ljust(6) + v for k, v in vals.items()])
+                self.calculated_cost.set(val)
                 self.text_display.insert('1.0', result)
 
-                print("cost    ", money(c))
-                print("margin  ", money(m))
-                print("increase", money(i))
-                print("exchange", money(e))
-                print("results:\n" + result)
+                # print("cost    ", money(c))
+                # print("margin  ", money(m))
+                # print("increase", money(i))
+                # print("exchange", money(e))
+                # print("results:\n" + result)
             else:
                 raise ValueError
         except ValueError:
                 self.text_display.insert('1.0', "Invalid")
 
 if __name__ == "__main__":
-    root = tk.Tk(className="Price Calculator")
+    root = tk.Tk(className="\Price Calculator")
     app = App(root)
     app.run()
