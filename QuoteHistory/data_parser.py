@@ -58,7 +58,7 @@ day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holi
 def work_weeks(first_day, holidays):
 		
 	today = datetime.date.today()
-	# today = datetime.date.fromisoformat("2021-04-02")
+	# today = datetime.date.fromisoformat("2022-01-04")
 	day = (today - first_day).days + 1
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
 
