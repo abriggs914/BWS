@@ -103,7 +103,7 @@ class DataSet:
             r = csv.DictReader(f)
             for row in r:
                 lst = list(row.values())
-                print("lst:\t", lst)
+                # print("lst:\t", lst)
                 # vals = lst[] + [current if lst[-1] == "True" or lst[-1] == "1" else non_current]
                 # print("VALS:\t", dict(zip(["clazz", "model_name", "description", "status"], vals)))
                 m = Model(*lst)

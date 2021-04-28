@@ -20,6 +20,7 @@ models_entries = {} # holds a dictionary of models, with a list of indexes refer
 class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
 dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
+new_discount = None
 
 def hide(frame):
     for child in frame.winfo_children():
@@ -59,16 +60,25 @@ def update_discounts(d):
             ]):
 
                 print("CURRENT DISCOUNTS:\n" + "\n".join(list(map(str, original_entries))))
-                raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\n")
+                # raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\ntype(original_entries): " + str(type(original_entries)) + "\n\ntype(discount_entries): " + str(type(discount_entries)))
+                update_discount(discount)
+                # return
             else:
                 # The entered values match existing records - no changes
                 return
 
     append_discount(d)
 
-def write_discount(d):
-    with open("discount_registry.csv", 'r+') as f:
-        f.write("\n" + d.registry_entry())
+def update_discount(d):
+    header = "dealer,model,slot,market,freight,date"
+    # if d in discount_entries:
+    original_entries.remove(d)
+    with open("discount_registry.csv", 'w') as f:
+        f.write(header)
+        for d in original_entries:
+            f.write("\n" + d.registry_entry())
+    
+    original_entries.append(d)
     read_entries()
 
 def append_discount(d):
@@ -138,7 +148,6 @@ def read_entries():
 
 def create_view(edit=False):
     global root, window_main
-    new_discount = None
     # root['className'] = 'Create / Edit Discount'
     window_main.pack_forget()
     window_main.pack()
@@ -369,6 +378,9 @@ def create_view(edit=False):
                 c = selection_class.get()
                 t = cal.get_date()
 
+                if all([d, s, k, f, c, t]):
+                    raise ValueError("Please check submission values")
+
                 model = DS.look_up_by_name(m, c)
                 if model == None:
                     desc = easygui.enterbox(msg="Describe this model \"" + m + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
@@ -376,7 +388,7 @@ def create_view(edit=False):
                     stat = current if s else non_current
                     model = Model(c, m, desc, stat)
                     DS.update(model)
-                if not all([d, model, s, k, f, c, t]):
+                if not model:
                     raise ValueError("Please check submission values")
 
                 s = float(s) / 100
@@ -572,8 +584,8 @@ def main_view():
         global sort_status, listbox
         rev = sort_status == sort_by_model
         if rev:
-            rev = rev if discount_entries[0].model.lower() < discount_entries[-1].model.lower() else not rev
-        discount_entries.sort(key=lambda d: d.model.lower(), reverse=rev)
+            rev = rev if discount_entries[0].model.model_name.lower() < discount_entries[-1].model.model_name.lower() else not rev
+        discount_entries.sort(key=lambda d: d.model.model_name.lower(), reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_model
