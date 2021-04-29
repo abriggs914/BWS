@@ -193,6 +193,14 @@ def test():
     main_view()
 
 if __name__ == "__main__":
+    a = ("first second", ["first", "second"])
+    b = ("first second third", ["first", "second third"])
+    c = ("fi rst second", ["first", "second"])
+    d = ("first sec ond", ["firstsec", "ond"])
+    e = ("fir st sec ond", ["first", "second"])
+    e = ("firstsecond", ["firstsecond"])
+
+
     var = "1"
     def foo():
         # global var

@@ -166,6 +166,8 @@ class DataSet:
         return m.model_name + " <" + m.clazz.upper() + ">"
 
     def look_up_by_name(self, name, clazz):
+        print("Searching models for m=\"" + str(name) + "\", c=\"" + str(name) + "\"")
+        print("In: ", self.models)
         if not hasattr(self, "models"):
             raise DataSetNotInitialized("Attribute \"models\" has not been initialized yet. Unable to create \"by_model\".")
 

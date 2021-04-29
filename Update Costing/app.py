@@ -1,4 +1,4 @@
-import tkinter as tk
+from tkinter import Frame, StringVar, Button, Label, Text, Entry, N, END, Tk
 from utility import money
 
 def updated_costing(cost, margin=30, FE=1.245, increase=0):
@@ -10,53 +10,53 @@ def updated_costing(cost, margin=30, FE=1.245, increase=0):
 		"US": money(((cost / margin) if cost >= 0 else (cost * margin)) / FE)
 	})
 
-class App(tk.Frame):
+class App(Frame):
 
     def __init__(self, master=None):
         super().__init__(master)
         self.pack(pady=35, padx=35)
 
-        self.cost = tk.StringVar()
-        self.margin = tk.StringVar()
-        self.increase = tk.StringVar()
-        self.exchange = tk.StringVar()
-        self.calculated_cost = tk.StringVar()
+        self.cost = StringVar()
+        self.margin = StringVar()
+        self.increase = StringVar()
+        self.exchange = StringVar()
+        self.calculated_cost = StringVar()
 
-        self.current_cost_btn = tk.Button(self, text="use calculated cost", command=self.use_calculated_cost)
-        self.label_cost = tk.Label(self, text="Cost")
-        self.entry_cost = tk.Entry(self, textvariable=self.cost)
-        self.label_margin = tk.Label(self, text="% Margin")
-        self.entry_margin = tk.Entry(self, textvariable=self.margin)
-        self.label_increase = tk.Label(self, text="% Increase")
-        self.entry_increase = tk.Entry(self, textvariable=self.increase)
-        self.label_exchange = tk.Label(self, text="Exchange")
-        self.entry_exchange = tk.Entry(self, textvariable=self.exchange)
+        self.current_cost_btn = Button(self, text="use calculated cost", command=self.use_calculated_cost)
+        self.label_cost = Label(self, text="Cost")
+        self.entry_cost = Entry(self, textvariable=self.cost)
+        self.label_margin = Label(self, text="% Margin")
+        self.entry_margin = Entry(self, textvariable=self.margin)
+        self.label_increase = Label(self, text="% Increase")
+        self.entry_increase = Entry(self, textvariable=self.increase)
+        self.label_exchange = Label(self, text="Exchange")
+        self.entry_exchange = Entry(self, textvariable=self.exchange)
 
-        self.text_display = tk.Text(self, height = 5, width = 20)
+        self.text_display = Text(self, height = 5, width = 20)
 
-        self.btn_sub = tk.Button(self, text="submit", command=self.submit)
-        self.btn_clear = tk.Button(self, text="clear", command=self.clear_fields)
+        self.btn_sub = Button(self, text="submit", command=self.submit)
+        self.btn_clear = Button(self, text="clear", command=self.clear_fields)
 
-        self.label_cost.grid(column=0, row=0, sticky=tk.N)
-        self.entry_cost.grid(column=1, row=0, sticky=tk.N)
-        self.label_margin.grid(column=0, row=1, sticky=tk.N)
-        self.entry_margin.grid(column=1, row=1, sticky=tk.N)
-        self.label_increase.grid(column=0, row=2, sticky=tk.N)
-        self.entry_increase.grid(column=1, row=2, sticky=tk.N)
-        self.label_exchange.grid(column=0, row=3, sticky=tk.N)
-        self.entry_exchange.grid(column=1, row=3, sticky=tk.N)
+        self.label_cost.grid(column=0, row=0, sticky=N)
+        self.entry_cost.grid(column=1, row=0, sticky=N)
+        self.label_margin.grid(column=0, row=1, sticky=N)
+        self.entry_margin.grid(column=1, row=1, sticky=N)
+        self.label_increase.grid(column=0, row=2, sticky=N)
+        self.entry_increase.grid(column=1, row=2, sticky=N)
+        self.label_exchange.grid(column=0, row=3, sticky=N)
+        self.entry_exchange.grid(column=1, row=3, sticky=N)
         
-        self.text_display.grid(column=0, row = 4, columnspan=2, sticky=tk.N)
+        self.text_display.grid(column=0, row = 4, columnspan=2, sticky=N)
 
-        self.current_cost_btn.grid(column=0, row=5, columnspan=2, stick=tk.N, pady=5)
-        self.btn_sub.grid(column=0, row=6, columnspan=2, sticky=tk.N, pady=5)
-        self.btn_clear.grid(column=0, row=7, columnspan=2, sticky=tk.N, pady=5)
+        self.current_cost_btn.grid(column=0, row=5, columnspan=2, stick=N, pady=5)
+        self.btn_sub.grid(column=0, row=6, columnspan=2, sticky=N, pady=5)
+        self.btn_clear.grid(column=0, row=7, columnspan=2, sticky=N, pady=5)
 
     def use_calculated_cost(self):
         if self.calculated_cost.get():
             self.cost.set("%.2f" % float(self.calculated_cost.get()))
         else:
-            self.text_display.delete('1.0', tk.END)
+            self.text_display.delete('1.0', END)
             self.text_display.insert('1.0', "Invalid")
 
     def run(self):
@@ -67,10 +67,10 @@ class App(tk.Frame):
         self.margin.set("")
         self.increase.set("")
         self.exchange.set("")
-        self.text_display.delete('1.0', tk.END)
+        self.text_display.delete('1.0', END)
 
     def submit(self):
-        self.text_display.delete('1.0', tk.END)
+        self.text_display.delete('1.0', END)
         c = self.cost.get()
         m = self.margin.get()
         i = self.increase.get()
@@ -99,6 +99,6 @@ class App(tk.Frame):
                 self.text_display.insert('1.0', "Invalid")
 
 if __name__ == "__main__":
-    root = tk.Tk(className="\Price Calculator")
+    root = Tk(className="\Price Calculator")
     app = App(root)
     app.run()

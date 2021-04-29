@@ -20,13 +20,12 @@ def table_format(d, m, s, k, f, c, t, dims):
 
 class Discount:
 
-    def __init__(self, dealer, model, slot, market, freight, clazz, date):
+    def __init__(self, dealer, model, slot, market, freight, date):
         self.dealer = dealer
         self.model = model
         self.slot = float(slot)
         self.market = float(market)
         self.freight = float(freight)
-        # self.clazz = clazz
         self.date = datetime.date.fromisoformat(date)
 
     def table_entry(self, dims):

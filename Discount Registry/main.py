@@ -104,12 +104,14 @@ def read_entries():
             #   Date, Dealer, Model, Class, Slot, Market, Freight
 
             vals = list(entry.values())
-            name_spl = vals[1].split(" ")
+            name_val = vals[1]
+            name_spl = name_val.split("<")
             model_name = name_spl[0].strip()
-            model_class = name_spl[1].strip()[1:-1]
+            model_class = name_spl[1].strip()[0:-1]
             m = DS.look_up_by_name(model_name, model_class)
             print("found:", m)
-            vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + ["IMPLEMENT CLASS"] + vals[5:]
+            vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + vals[5:]
+            # print("vals:", vals)
             discount = Discount(*vals)
             print("discount: ", discount)
             print("discount.model:", discount.model)
@@ -120,9 +122,9 @@ def read_entries():
                 dealers_entries[discount.dealer].append(i)
 
             if discount.model not in models_entries:
-                models_entries[DS.model_key(discount.model)] = [i]
+                models_entries[discount.model] = [i]
             else:
-                models_entries[DS.model_key(discount.model)].append(i)
+                models_entries[discount.model].append(i)
 
             if discount.model.clazz not in class_entries:
                 class_entries[discount.model.clazz] = [i]
@@ -203,8 +205,15 @@ def create_view(edit=False):
         print("Status change")
         # raise ValueError("Investigate the set_models function")
         set_models()
+
+    def model_chosen(*args):
+        if not selection_class.get():
+            print("selection_model.get()", selection_model.get())
+            # selection_class.set()
+        print("Model selected or cleared")
     
     current_model_var.trace_add("write", status_change)
+    selection_model.trace_add(("write", "unset"), model_chosen)
     
 
     def set_models():
@@ -224,8 +233,9 @@ def create_view(edit=False):
 
         
         def ins(m):
-            spl = m.split(" ")
-            m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
+            # spl = m.split(" ")
+            # print("m:", m, "spl",spl)
+            # m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
             print("\tm", m)
             print("\t\tby_models[\"{0}\"]".format(m), m.status)
             # print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(DS.by_model[str(DS.look_up_by_name(m))][2])), DS.by_model[str(DS.look_up_by_name(m))][2])
@@ -234,7 +244,7 @@ def create_view(edit=False):
                 # combobox_model["values"] = combobox_model["values"] + [m] 
 
 
-        combobox_model['values'] = [m for m in list(models_entries.keys()) if ins(m)]
+        combobox_model['values'] = [m.model_name for m in models_entries.keys() if ins(m)]
         # combobox_model['values'] = []
         print("combobox_model[\"values\"] {0}:".format(type(combobox_model["values"])), combobox_model["values"])
         print("current_model_var.get()", current_model_var.get())
@@ -378,10 +388,12 @@ def create_view(edit=False):
                 c = selection_class.get()
                 t = cal.get_date()
 
-                if all([d, s, k, f, c, t]):
+                if not all([d, s, k, f, c, t]):
                     raise ValueError("Please check submission values")
 
+                # print("here 1")
                 model = DS.look_up_by_name(m, c)
+                # print("here 2")
                 if model == None:
                     desc = easygui.enterbox(msg="Describe this model \"" + m + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
                     stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
@@ -396,7 +408,7 @@ def create_view(edit=False):
                 # t = datetime.datetime.strptime(t, "%m/%d/%y")
                 # t = t.strftime("%Y-%m-%d")
                 t = cal.get_date() 
-                new_discount = Discount(d, model, s, k, f, c, t)
+                new_discount = Discount(d, model, s, k, f, t)
                 submit.set(True)
                 print("local new discount:", new_discount)
                 print("local new discount:", new_discount.table_entry(dims))
@@ -594,8 +606,8 @@ def main_view():
         global sort_status, listbox
         rev = sort_status == sort_by_class
         if rev:
-            rev = rev if discount_entries[0].clazz < discount_entries[-1].clazz else not rev
-        discount_entries.sort(key=lambda d: d.clazz, reverse=rev)
+            rev = rev if discount_entries[0].model.clazz < discount_entries[-1].model.clazz else not rev
+        discount_entries.sort(key=lambda d: d.model.clazz, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_class
@@ -682,7 +694,7 @@ def main_view():
                         # if the value is 1, then we want to include that name in the filtering process
             if any(matches):
                 filtered.append(entry)
-                print("NEW entry{ " + str(matches) + " }", entry)
+                # print("NEW entry{ " + str(matches) + " }", entry)
         
         clear_data(listbox)
         discount_entries = filtered.copy()
@@ -692,11 +704,12 @@ def main_view():
 
     
     def re_pop_entries():
-        global listbox
+        global listbox, search_entry
         clear_data(listbox)
         repopulate_entries()
         add_data(listbox)
-        search_entry.delete(0, len(search_entry.get()))
+        if search_entry.get():
+            search_entry.delete(0, len(search_entry.get()))
 
 
     def reset_check_buttons():
