@@ -54,7 +54,6 @@ us_cost = lambda x: cdn_cost(us_cdn(x))
 day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holidays
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
-# This doesn't work with holidays yet. Want to have a dictionary of the day that the holiday fell on.
 def work_weeks(first_day, holidays):
 		
 	today = datetime.date.today()

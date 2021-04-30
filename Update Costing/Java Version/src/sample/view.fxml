@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox id="vbox_window" fx:id="vbox_window" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+   <children>
+       <Label id="label_title" fx:id="label_title" text="Calculate a Price:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0">
+           <font>
+               <Font name="Consolas Bold" size="14.0" />
+           </font>
+           <padding>
+               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+           </padding>
+       </Label>
+      <GridPane>
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" maxWidth="115.0" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints />
+        </rowConstraints>
+         <children>
+            <Label id="label_cost" fx:id="label_cost" text="Cost ($)" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                <font>
+                    <Font name="Consolas Bold" size="14.0" />
+                </font>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField id="textfield_cost" fx:id="textfield_cost" alignment="CENTER_RIGHT" promptText="Non-zero deciimal number in CDN dolllars" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+               <GridPane.margin>
+                  <Insets bottom="6.0" left="5.0" right="5.0" top="6.0" />
+               </GridPane.margin></TextField>
+            <Label id="label_margin" fx:id="label_margin" text="Margin (%)" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                <font>
+                    <Font name="Consolas Bold" size="14.0" />
+                </font>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField id="textfield_margin" fx:id="textfield_margin" alignment="CENTER_RIGHT" promptText="Profit margin as a percentage" GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+               <GridPane.margin>
+                  <Insets bottom="6.0" left="5.0" right="5.0" top="6.0" />
+               </GridPane.margin></TextField>
+            <Label id="label_increase" fx:id="label_increase" text="Increase (%)" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                <font>
+                    <Font name="Consolas Bold" size="14.0" />
+                </font>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField id="textfield_increase" fx:id="textfield_increase" alignment="CENTER_RIGHT" promptText="Overall price increase as a percentage" GridPane.columnIndex="1" GridPane.rowIndex="3">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+               <GridPane.margin>
+                  <Insets bottom="6.0" left="5.0" right="5.0" top="6.0" />
+               </GridPane.margin></TextField>
+            <Label id="label_exchange" fx:id="label_exchange" text="Exchange Rate" GridPane.columnIndex="0" GridPane.rowIndex="4">
+                <font>
+                    <Font name="Consolas Bold" size="14.0" />
+                </font>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField id="textfield_exchange" fx:id="textfield_exchange" alignment="CENTER_RIGHT" promptText="US to CDN exchange rate" GridPane.columnIndex="1" GridPane.rowIndex="4">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+               <GridPane.margin>
+                  <Insets bottom="6.0" left="5.0" right="5.0" top="6.0" />
+               </GridPane.margin></TextField>
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </GridPane>
+      <TextArea id="textarea_results" fx:id="textarea_results" prefHeight="129.0" prefWidth="600.0">
+          <font>
+              <Font name="Consolas Bold" size="18.0" />
+          </font>
+         <VBox.margin>
+            <Insets bottom="10.0" left="50.0" right="50.0" top="10.0" />
+         </VBox.margin>
+      </TextArea>
+      <Button id="button_use_calculated_cost" fx:id="button_use_calculated_cost" accessibleText="insert calculated cost into cost field" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#use_calculated_cost_clicked" text="use calculated cost" textAlignment="CENTER">
+         <font>
+            <Font name="Consolas Bold" size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </VBox.margin>
+      </Button>
+      <Button id="button_submit" fx:id="button_submit" accessibleText="submit entries" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#clicked_submit" text="submit" textAlignment="CENTER">
+         <font>
+            <Font name="Consolas Bold" size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </VBox.margin>
+      </Button>
+      <Button id="button_clear" fx:id="button_clear" accessibleText="clear all fields" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#clicked_clear" text="clear" textAlignment="CENTER">
+         <font>
+            <Font name="Consolas Bold" size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </VBox.margin>
+      </Button>
+   </children>
+</VBox>
