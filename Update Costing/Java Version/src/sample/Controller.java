@@ -36,7 +36,7 @@ public class Controller {
 
     private double[] validate(String[] collection) {
         double[] values = new double[4];
-        System.out.println(Arrays.toString(collection));
+//        System.out.println(Arrays.toString(collection));
         for(int i = 0; i < collection.length; i++) {
             String value = collection[i];
             try {
@@ -81,16 +81,16 @@ public class Controller {
     }
 
     public void use_calculated_cost_clicked() {
+//        System.out.println("use_calculated_cost_clicked: ");
         if (lastCalculated != null && !lastCalculated.equals("")) {
             textfield_cost.setText(lastCalculated);
         }
-//        System.out.println("use_calculated_cost_clicked: ");
     }
 
     public void clicked_submit() {
 //        System.out.println("clicked_submit");
-        String[] collecton = collectFields();
-        double[] values = validate(collecton);
+        String[] collection = collectFields();
+        double[] values = validate(collection);
         if (values != null) {
             textarea_results.setText(generateOutput(values));
         }

@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Update Costing:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Update_Costing_jar</output-path>
+    <root id="archive" name="Java Version.jar">
+      <element id="module-output" name="Java Version" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/src.zip" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx-swt.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.web.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.base.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.fxml.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.media.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.swing.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.controls.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/JavaFX-sdk-11.0.2/lib/javafx.graphics.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../../Program Files/Java/jdk1.8.0_291/jre/lib/ext/jfxrt.jar" path-in-jar="/" />
+      <element id="library" level="project" name="JavaFX-sdk-11.0" />
+      <element id="library" level="application" name="javafx-sdk-11.0" />
+      <element id="library" level="project" name="javafx-src" />
+    </root>
+  </artifact>
+</component>
