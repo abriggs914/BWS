@@ -89,7 +89,7 @@ class DataSet:
 
     def init(self):
         self.read_entries()
-        self.create_by_model()
+        # self.create_by_model()
 
     # Add a model and update the by_model, by_class, and models attributes
     def update(self, m):
@@ -127,11 +127,11 @@ class DataSet:
 
         # print(dict_print(self.by_class, "self.by_class after creation"))
 
-    def create_by_model(self):
-        if not hasattr(self, "models"):
-            raise DataSetNotInitialized("Attribute \"models\" has not been initialized yet. Unable to create \"by_model\".")
+    # def create_by_model(self):
+    #     if not hasattr(self, "models"):
+    #         raise DataSetNotInitialized("Attribute \"models\" has not been initialized yet. Unable to create \"by_model\".")
         
-        self.by_model = {self.model_key(m): (m.clazz, m.description, m.status) for m in self.models}
+    #     self.by_model = {self.model_key(m): (m.clazz, m.description, m.status) for m in self.models}
         # print(dict_print(self.by_model, "self.by_model after creation"))
 
         # self.by_model = {}

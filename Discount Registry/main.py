@@ -21,6 +21,8 @@ class_entries = {} # holds a dictionary of classes, with a list of indexes refer
 dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
 new_discount = None
+status_update = None
+full_size = None
 
 def hide(frame):
     for child in frame.winfo_children():
@@ -48,6 +50,7 @@ def disable(frame):
 
 
 def update_discounts(d):
+    global status_update
     s = d.slot
     m = d.market
     f = d.freight
@@ -62,12 +65,15 @@ def update_discounts(d):
                 print("CURRENT DISCOUNTS:\n" + "\n".join(list(map(str, original_entries))))
                 # raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\ntype(original_entries): " + str(type(original_entries)) + "\n\ntype(discount_entries): " + str(type(discount_entries)))
                 update_discount(discount)
-                # return
+                status_update = "Updated discount: [\n\t" + str(discount) + "] to [" + str(d) + "\n]"
+                append_discount(d)
+                return
             else:
                 # The entered values match existing records - no changes
                 return
 
     append_discount(d)
+    status_update = "Created discount: [\n\t" + str(d) + "\n]"
 
 def update_discount(d):
     header = "dealer,model,slot,market,freight,date"
@@ -148,8 +154,9 @@ def read_entries():
 
     print("NEW DIMS:", dims)
 
+# edit must be a discount object.
 def create_view(edit=False):
-    global root, window_main
+    global root, window_main, status_update
     # root['className'] = 'Create / Edit Discount'
     window_main.pack_forget()
     window_main.pack()
@@ -198,6 +205,7 @@ def create_view(edit=False):
     frame_entries.pack(side=tk.RIGHT)
 
     combobox_model = None
+    status_update = "STATUS UPDATE"
 
     
 
@@ -207,8 +215,16 @@ def create_view(edit=False):
         set_models()
 
     def model_chosen(*args):
+        model_name = selection_model.get()
+        print("selection_model.get()", model_name)
         if not selection_class.get():
-            print("selection_model.get()", selection_model.get())
+            matching_models = [m for m in DS.models if m.model_name == model_name]
+            print("matching models", matching_models)
+            if len(matching_models) == 1:
+                selection_class.set(matching_models[0].clazz)
+            # else:
+
+            # model = DS.look_up_by_name(name, clazz)
             # selection_class.set()
         print("Model selected or cleared")
     
@@ -221,11 +237,11 @@ def create_view(edit=False):
         print("current_model_var:", current_model_var.trace_info())
         print("setting models, current_model_var:", current_model_var.get())
         print("list(models_entries.keys()):", list(models_entries.keys()))
-        tmn = "20ART"
-        tmc = "TAGS"
-        mlr = DS.look_up_by_name(tmn, tmc)
-        print("model look up results:", mlr)
-        print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", DS.by_model[str(mlr)][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or DS.by_model[str(mlr)][2]))
+        # tmn = "20ART"
+        # tmc = "TAGS"
+        # mlr = DS.look_up_by_name(tmn, tmc)
+        # print("model look up results:", mlr)
+        # print("current_model_var.get():", current_model_var.get(), "by_models[\"20ART\"][2]:", DS.by_model[str(mlr)][2], "current_model_var.get() or by_models[\"20ART\"][2]:", (current_model_var.get() or DS.by_model[str(mlr)][2]))
         # assert current_model_var.get() in by_models
         # print("\n\n\n\nASSERTION PASSED\n\n\n\n")
         # print("\nBY_MODELS:\n" + "\n".join(list(by_models.keys())))
@@ -391,13 +407,15 @@ def create_view(edit=False):
                 if not all([d, s, k, f, c, t]):
                     raise ValueError("Please check submission values")
 
-                # print("here 1")
                 model = DS.look_up_by_name(m, c)
-                # print("here 2")
+
                 if model == None:
+                    reply = easygui.ynbox(msg="Do you want to create a new model entry?", default_choice="No", cancel_choice="No", title="Model Creation")
+                    if not reply:
+                        return
                     desc = easygui.enterbox(msg="Describe this model \"" + m + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
                     stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
-                    stat = current if s else non_current
+                    stat = current if stat else non_current
                     model = Model(c, m, desc, stat)
                     DS.update(model)
                 if not model:
@@ -447,11 +465,29 @@ def create_view(edit=False):
         print("global new_discount:", new_discount)
         return new_discount
 
+
+    if edit:
+        e_model = edit.model
+        e_dealer = edit.dealer
+        e_date = edit.date
+        e_frieght = edit.freight
+        e_slot = edit.slot
+        e_market = edit.market
+
+        cal.selection_set(e_date)
+        selection_model.set(e_model.model_name)
+        selection_class.set(e_model.clazz)
+        slot_var.set(e_slot)
+        market_var.set(e_market)
+        freight_var.set(e_freight)
+
+
     new_discount = main_loop()
     # DS.update(new_discount.new_model_entry())
     print("global new_discount:", new_discount)
     # disable(window_create)
     window_create.destroy()
+
     return new_discount
 
 
@@ -529,8 +565,16 @@ def main_view():
         
         return listbox
 
+    def new_status_update(txt):
+        status_window.configure(state='normal')
+        if txt == None:
+            raise ValueError("txt is None")
+        status_window.insert(tk.END, txt + "\n")
+        status_window.configure(state='disabled')
+
+
     def create_function():
-        global listbox, by_models
+        global listbox
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
@@ -538,6 +582,7 @@ def main_view():
         if new_discount:
             did_update = True
             update_discounts(new_discount)
+            new_status_update(status_update)
         print("new discount {0}:".format(did_update), new_discount)
         # DS.adjust_models(new_discount)
         # read_entries()
@@ -550,12 +595,24 @@ def main_view():
     def edit_function():
         global listbox
         selection = listbox.curselection()
-        # if 0 in selection:
-        #     selection.remove(0)
-        # print('Edit a discount :', selection)
-        # disable(window_view)
-        # new_discounts = []
-        # for sel in selection:
+        if 0 in selection:
+            selection.remove(0)
+        print('Edit a discount :', selection)
+        disable(window_view)
+        new_discounts = []
+        for sel in selection:
+            new_discount = create_view(edit=discount_entries[sel])
+            did_update = False
+            if new_discount:
+                did_update = True
+                update_discounts(new_discount)
+                new_status_update(status_update)
+
+        enable(window_view)
+        clear_data(listbox)
+        add_data(listbox)
+
+
         #     new_discounts.append(create_view(edit=(discount_entries[sel])))
         # print("edited discounts:", new_discounts)
         # clear_data(listbox)
@@ -721,7 +778,7 @@ def main_view():
         
     
     def main_loop():
-        global listbox, check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry
+        global listbox, check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry, status_window
         listbox = init_listbox()
         # print("sort_status:", sort_status)
         # print("dir:", dir())
@@ -893,6 +950,14 @@ def main_view():
         ctrl_btn_frame = tk.Frame(window_view)
         ctrl_btn_frame.pack(side=tk.BOTTOM)
 
+        print("Fullsize: " + str(full_size))
+        status_window = tk.Text(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4", font=font_2)
+        # new_status_update("")
+        status_window.pack(side=tk.TOP)
+
+        # status_window_2 = tk.Message(ctrl_btn_frame, msg="tk.Message")
+        # status_window_2.pack()
+
         btn_create = tk.Button(ctrl_btn_frame, text='Create', command=create_function)
         btn_create.pack(side=tk.LEFT)
 
@@ -912,14 +977,35 @@ def main_view():
 
     main_loop()
 
+class FullScreenApp(object):
+    def __init__(self, master, **kwargs):
+        global full_size
+        self.master=master
+        pad=3
+        self._geom='200x200+0+0'
+        full_size = "{0}x{1}+0+0".format(master.winfo_screenwidth()-pad, master.winfo_screenheight()-pad)
+        master.geometry(full_size)
+        master.bind('<Escape>',self.toggle_geom)            
+    def toggle_geom(self,event):
+        geom=self.master.winfo_geometry()
+        print(geom,self._geom)
+        self.master.geometry(self._geom)
+        self._geom=geom
 
 if __name__ == "__main__":
+
+    
+
+# root.mainloop()
+
+
     DS = DataSet()
     DS.init()
     read_entries()
     print(dims)
     root = tk.Tk(className='\Discount Registry')
-    root.geometry(size)
+    app = FullScreenApp(root)
+    # root.geometry(size)
     window_main = tk.Frame(root)
     window_main.pack()
     main_view()
