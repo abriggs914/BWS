@@ -153,8 +153,12 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26136, 37LBT3X W, 16, Diamond International Trucks Ltd., $51684.5084, $55938, $55379, 9, 0
 26137, 27LBT2X W, 16, Diamond International Trucks Ltd., $37994.0347, $45338, $44885, 9, 0
 26141, 40HDG3X AG, 17, Fort Garry Industries Ltd., $99094.2174, $107405, $106331, 5, 0
-26184, 25ART, 17, Northeast Truck & Trailer Sales, $33788.1024, $0, $0, 0, 0
-26185, 25ANR, 17, Northeast Truck & Trailer Sales, $30588.7296, $0, $0, 0, 0
-26186, 37DT3X, 17, Northeast Truck & Trailer Sales, $73854.6332, $0, $0, 0, 0
-26187, 27DT2X V2018, 17, Northeast Truck & Trailer Sales, $56703.0453, $0, $0, 0, 0
+26184, 25ART, 17, Northeast Truck & Trailer Sales, $33788.1024, $35294, $24941, 3, 0
+26185, 25ANR, 17, Northeast Truck & Trailer Sales, $30588.7296, $32086, $31765, 3, 0
+26186, 37DT3X, 17, Northeast Truck & Trailer Sales, $73854.6332, $80724, $79917, 6, 0
+26187, 27DT2X V2018, 17, Northeast Truck & Trailer Sales, $56703.0453, $59286, $58693, 5, 0
 26188, 25ART, 17, Hale Trailer Brake & Wheel, $28328.1856, $0, $0, 0, 1
+26195, 40ADG3X53 AGNR, 18, Fort Garry Industries Ltd., $79360.5084, $0, $0, 0, 0
+26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $0, $0, 0, 0
+26197, 53ET3XP, 18, Redhead Equipment Ltd., $62096.1618, $0, $0, 0, 0
+26198, 35ADG2X AGNR, 18, Fort Garry Industries Ltd., $66892.4149, $0, $0, 0, 0

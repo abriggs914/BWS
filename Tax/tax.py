@@ -1,3 +1,7 @@
+
+from utility import dict_print
+from sys import maxsize
+
 brackets = {
 	"first $43,835": (lambda x: x <= 43835, (0, 43835), (24.68, 12.34, (-5.99, 14.83))),
 	"over $43,835 up to $49,020": (lambda x: 43835 < x <= 49020, (43835, 49020), (29.82, 14.91, (1.1, 20.75))),
@@ -7,8 +11,16 @@ brackets = {
 	"over $142,534 up to $151,978": (lambda x: 142534 < x <= 151978, (142534, 151978), (43.84, 21.92, (20.45, 36.87))),
 	"over $151,978 up to $162,383": (lambda x: 151978 < x <= 162383, (151978, 162383), (47.16, 23.58, (25.03, 40.69))),
 	"over $162,383 up to $216,511": (lambda x: 162383 < x <= 216511, (162383, 216511), (49.62, 24.81, (28.43, 43.52))),
-	"over $216,511": (lambda x: 216511 < x, (216511, float("inf")), (53.3, 26.65, (33.51, 47.75))),
+	"over $216,511": (lambda x: 216511 < x, (216511, maxsize), (53.3, 26.65, (33.51, 47.75))),
 }
+
+# brackets = {
+	# "first $43,401": (lambda x: x <= 43401, (0, 43401), (9.68, 0, (0, 0))),
+	# "over $43,401 up to $86,803": (lambda x: 43401 < x <= 86803, (43401, 86803), (14.82, 0, (0, 0))),
+	# "over $86,803 up to $141,122": (lambda x: 86803 < x <= 141122, (86803, 141122), (16.52, 0, (0, 0))),
+	# "over $141,122 up to $160,776": (lambda x: 141122 < x <= 160776, (141122, 160776), (17.84, 0, (0, 0))),
+	# "over $160776": (lambda x: 160776 > x, (160776, maxsize), (20.3, 0, (0, 0)))
+# }
 
 values = {
 	"salary": 40000,
@@ -20,16 +32,23 @@ def calc_taxes(vals):
 	s = vals["salary"]
 	m = s
 	for bracket, bracket_vals in brackets.items():
+		print("bracket:", bracket)
 		func, r, b_vals = bracket_vals
 		low, high = r
 		if m <= 0:
 			break
 		else:
+			p = b_vals[0] / 100
+			print("m:",m,"p:",p)
 			if m in range(low, high):
-				vals["paid taxes"] += m * b_vals[0]
+				vals["paid taxes"] += m * p
+				vals["marginal bracket"] = bracket
 			else:
-				vals["paid taxes"] += high * b_vals[0]
+				vals["paid taxes"] += high * p
+			m -= high
+	vals["earnings"] = vals["salary"] - vals["paid taxes"]
 
 
 if __name__ == "__main__":
 	calc_taxes(values)
+	print(dict_print(values, "Values"))
