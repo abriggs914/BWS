@@ -1,4 +1,5 @@
 import csv
+import time
 import datetime
 from models import *
 from utility import *
@@ -197,6 +198,7 @@ def create_view(edit=False):
     slot_var = tk.StringVar()
     market_var = tk.StringVar()
     freight_var = tk.StringVar()
+    feedback_var = tk.StringVar()
 
     frame_labels = tk.Frame(window_create)
     frame_labels.pack(side=tk.LEFT)
@@ -437,16 +439,37 @@ def create_view(edit=False):
 
         def q():
             submit.set(True)
+            time.sleep(2)
             print("Quitting without saving")
+
+        def mass_apply():
+            print("mass apply")
+            d = selection_dealer.get()
+            m = selection_model.get()
+            c = selection_class.get()
+
+            # [d] => apply to all models within dealer
+            # [d, c] => apply to all models within class within dealer
+
 
         frame_btn = tk.Frame(window_create)
         frame_btn.pack(side=tk.BOTTOM)
-        btn_save_quit = tk.Button(frame_btn, text="Save & Quit", fg="green",
+
+        sub_frame_btn = tk.Frame(frame_btn)
+        sub_frame_btn.pack(side=tk.BOTTOM)
+
+        btn_save_quit = tk.Button(sub_frame_btn, text="Save & Quit", fg="green",
                                         command=save_quit)
-        btn_quit = tk.Button(frame_btn, text="Quit Without Saving", fg="red",
+        btn_quit = tk.Button(sub_frame_btn, text="Quit Without Saving", fg="red",
                                         command=q)
+        btn_mass_apply = tk.Button(sub_frame_btn, text="Mass Apply", fg="deepskyblue4", command=mass_apply)
+        feedback_window = tk.Text(frame_btn, state='disabled', width=100, height=10, bg="grey80", fg="red4", font=font_2)
+        # text_area.bind('<KeyRelease>', lambda *args: update_feedback())
+        # new_status_update("")
+        feedback_window.pack(side=tk.BOTTOM)
+        btn_mass_apply.pack(side=tk.LEFT)
+        btn_quit.pack(side=tk.LEFT)
         btn_save_quit.pack(side=tk.LEFT)
-        btn_quit.pack(side=tk.RIGHT)
         
         print("Before root.mainloop() in create_view")
         try:
@@ -461,6 +484,16 @@ def create_view(edit=False):
             # root.destroy()
         except tk.TclError:
             print("_tkinter.TclError")
+
+        ts = time.time()
+        tn = time.time()
+        tp = tn - ts
+        while tp < 2:
+            tn = time.time()
+            tp = tn - ts
+            feedback_window.insert(tk.END, ".1")
+            print(".")
+            
 
         print("global new_discount:", new_discount)
         return new_discount
