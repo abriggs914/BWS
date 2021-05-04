@@ -52,6 +52,7 @@ class Discount:
 
     def __eq__(self, d):
         return all([
+            same_calendar_day(self.date, d.date),
             self.dealer.lower() == d.dealer.lower(),
             self.model.model_name.lower() == d.model.model_name.lower(),
             self.model.clazz.lower() == d.model.clazz.lower()

@@ -216,6 +216,16 @@ def percent(v, d=2):
     return (("%." + str(d) + "f") % (v * 100)) + " %"
 
 
+def same_calendar_day(d1, d2):
+    if type(d1) != type(d2) and type(d1) != datetime.datetime:
+        raise ValueError("Check types of d1: <{d1}> and d2: <{d2}>.\nBoth values must be datetime.datetime objects.".format(d1=d1, d2=d2))
+    return all([
+        d1.year == d2.year,
+        d1.month == d2.month,
+        d1.day == d2.day
+    ])
+
+
 def compute_min_edit_distance(a, b, show=False):
     len_a = len(a)
     len_b = len(b)

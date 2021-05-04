@@ -447,6 +447,25 @@ def create_view(edit=False):
             d = selection_dealer.get()
             m = selection_model.get()
             c = selection_class.get()
+            print("d: <{d}>, m: <{m}>, C: <{c}>".format(d=d, m=m, c=c))
+            if d and c:
+                # apply a given discount structure to each model within the given class for the given dealer
+                if c in DS.by_class:
+                    models = DS.by_class[c]
+                    if d in dealers_entries:
+                        for model in models:
+                            print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(model, d, c))
+                    else:
+                        print("Dealer: <{0}> not found in dealers_entries when mass applying to class: <{1}>".format(d, c))
+                else:
+                    print("Class: <{0}> not found in DS.by_class when mass applying>".format(c))
+                    # if model.clazz.lower() == c.lower():
+
+            elif d:
+                print("Act on dealer <{0}>".format(d))
+                # apply a given discount structure to all models of all class within given dealer.
+            else:
+                print("No action.")
 
             # [d] => apply to all models within dealer
             # [d, c] => apply to all models within class within dealer
@@ -470,7 +489,25 @@ def create_view(edit=False):
         btn_mass_apply.pack(side=tk.LEFT)
         btn_quit.pack(side=tk.LEFT)
         btn_save_quit.pack(side=tk.LEFT)
+
         
+        if edit:
+            e_model = edit.model
+            e_dealer = edit.dealer
+            e_date = edit.date
+            e_freight = edit.freight
+            e_slot = edit.slot * 100
+            e_market = edit.market * 100
+
+            selection_dealer.set(e_dealer)
+            selection_date.set(e_date)
+            selection_model.set(e_model.model_name)
+            selection_class.set(e_model.clazz)
+            slot_var.set(e_slot)
+            market_var.set(e_market)
+            freight_var.set(e_freight)
+        
+
         print("Before root.mainloop() in create_view")
         try:
             while not submit.get():
@@ -497,22 +534,6 @@ def create_view(edit=False):
 
         print("global new_discount:", new_discount)
         return new_discount
-
-
-    if edit:
-        e_model = edit.model
-        e_dealer = edit.dealer
-        e_date = edit.date
-        e_frieght = edit.freight
-        e_slot = edit.slot
-        e_market = edit.market
-
-        cal.selection_set(e_date)
-        selection_model.set(e_model.model_name)
-        selection_class.set(e_model.clazz)
-        slot_var.set(e_slot)
-        market_var.set(e_market)
-        freight_var.set(e_freight)
 
 
     new_discount = main_loop()
@@ -564,6 +585,7 @@ def main_view():
     check_var_slot = tk.IntVar()
     check_var_market = tk.IntVar()
     check_var_freight = tk.IntVar()
+    include_all_discounts = tk.IntVar()
 
     # check_var_freight.trace_add("write", freight_written)
     
@@ -586,6 +608,9 @@ def main_view():
             return
         listbox.insert(0, "| " + " | ".join(list(map(lambda x: pad_centre(x, dims[header.index(x)]), header))) + " |")
         for i, discount in enumerate(discount_entries):
+            if not include_all_discounts.get():
+                if discount.slot == 0 and discount.market == 0 and discount.freight == 0:
+                    continue
             # print(discount.table_entry(dims))
             listbox.insert(i+1, discount.table_entry(dims))
 
@@ -627,9 +652,10 @@ def main_view():
 
     def edit_function():
         global listbox
-        selection = listbox.curselection()
+        selection = list(listbox.curselection())
         if 0 in selection:
             selection.remove(0)
+        selection = list(map(lambda x: x - 1, selection))
         print('Edit a discount :', selection)
         disable(window_view)
         new_discounts = []
@@ -791,6 +817,12 @@ def main_view():
         add_data(listbox)
         reset_check_buttons()
         # print(dict_print(check_data, "res", number=True))
+
+
+    def toggle_include_all_discounts(*args):
+        global listbox
+        clear_data(listbox)
+        add_data(listbox)
 
     
     def re_pop_entries():
@@ -975,6 +1007,23 @@ def main_view():
 
         btn_repop_search = tk.Button(search_btn_frame, text='Show all entries', command=re_pop_entries)
         btn_repop_search.pack(side=tk.LEFT)
+
+        check_btn_include_all_discounts = tk.Checkbutton(
+            search_btn_frame,
+            text="Include discounts with only \'0\' entries",
+            bg=bg,
+            fg=fg,
+            font=font_1,
+            variable=include_all_discounts,
+            onvalue=1,
+            offvalue=0,
+            indicatoron = 0,
+            activebackground=abg,
+            activeforeground=afg,
+            selectcolor=sc
+        )
+        include_all_discounts.trace_add("write", toggle_include_all_discounts)
+        check_btn_include_all_discounts.pack(side=tk.LEFT)
         
 
         listbox.pack()

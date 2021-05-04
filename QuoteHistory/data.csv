@@ -146,8 +146,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26115, 37LBT3X W, 16, Diamond International Trucks Ltd., $49696.6427, $53814, $53276, 9, 0
 26116, 27LBT2X W, 16, Diamond International Trucks Ltd., $36532.7257, $44551, $44106, 9, 0
 26127, 25FDNT, 16, NorthEast Truck & Trailer Sales, $30348.6144, $49556, $49061, 13, 0
-26131, 32HBT3X 2018, 16, Remorques Lewis Inc., $41858.8655, $0, $0, 0, 0
-26132, 28HBT2X 2018, 16, Remorques Lewis Inc., $28922.5492, $0, $0, 0, 0
+26131, 32HBT3X 2018, 16, Remorques Lewis Inc., $41858.8655, $53384, $53384, 6, 0
+26132, 28HBT2X 2018, 16, Remorques Lewis Inc., $28922.5492, $39139, $39139, 6, 0
 26134, 51LF4X3T AB V2015, 16, Diamond International Trucks Ltd., $83842.5906, $88246, $87364, 2, 0
 26135, 51LF3X3T AB V2016, 16, Diamond International Trucks Ltd., $63280.0896, $70082, $69381, 6, 0
 26136, 37LBT3X W, 16, Diamond International Trucks Ltd., $51684.5084, $55938, $55379, 9, 0
@@ -162,3 +162,4 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $0, $0, 0, 0
 26197, 53ET3XP, 18, Redhead Equipment Ltd., $62096.1618, $0, $0, 0, 0
 26198, 35ADG2X AGNR, 18, Fort Garry Industries Ltd., $66892.4149, $0, $0, 0, 0
+26200, 30ANR, 18, S & S Trailers Sales Inc, $26124.494, $30465, $30465, 3, 1

@@ -147,8 +147,8 @@ def work_weeks(first_day, holidays):
 	if last_holiday:
 		holiday_diff = (last_holiday - today).days
 		when_holiday_last = str(abs(holiday_diff)) + " day" + ("s" if holiday_diff != 1 else "") + " ago"
-		if holiday_diff == 1:
-			when_holiday_last = "Tomorrow"
+		if abs(holiday_diff) == 1:
+			when_holiday_last = "Yesterday"
 	else:
 		last_holiday = "None"
 		when_holiday_last = "None"
