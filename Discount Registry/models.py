@@ -99,19 +99,21 @@ class DataSet:
     def read_entries(self):
         self.by_class = {}
         self.models = []
-        with open("models.csv", 'r') as f:
+        with open("model_list.csv", 'r') as f:
             r = csv.DictReader(f)
             for row in r:
                 lst = list(row.values())
-                # print("lst:\t", lst)
+                print("KEYS: " + str(row.keys()))
+                print("VALS: " + str(row.values()))
+                print("lst:\t", lst, ", status:", lst[-1], ", type(status):", type(lst[-1]))
                 # vals = lst[] + [current if lst[-1] == "True" or lst[-1] == "1" else non_current]
                 # print("VALS:\t", dict(zip(["clazz", "model_name", "description", "status"], vals)))
-                m = Model(*lst)
+                m = Model(*lst[:-2] + [int(lst[-2]), int(lst[-1])])
                 self.models.append(m)
-                if row["class"] in self.by_class:
-                    self.by_class[row["class"]].append(m)
+                if row["class"].upper() in self.by_class:
+                    self.by_class[row["class"].upper()].append(m)
                 else:
-                    self.by_class[row["class"]] = [m]
+                    self.by_class[row["class"].upper()] = [m]
 
         self.by_class["UNKOWN"] = []
 
@@ -189,11 +191,12 @@ class DataSet:
 
 
 class Model:
-    def __init__(self, clazz, model_name, description, status):
+    def __init__(self, clazz, model_name, description, status, proposed):
         self.clazz = clazz.upper()
         self.model_name = model_name
         self.description = description
-        self.status = status
+        self.status = not status # file lists non-current status, so need to inverse the value
+        self.proposed = proposed
 
     def __eq__(self, m):
         print("self: <" + str(self) + ">")

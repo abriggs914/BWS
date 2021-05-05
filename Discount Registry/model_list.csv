@@ -1,0 +1,462 @@
+class,model_name,description,status,proposed
+Log Eastern,46LD3X4T NS,46 ft. Tridem 4 Tier Drop Frame - NS,1,1
+Log US,46LD3X4T US,46 ft. Tridem 4 Tier  -  US,0,1
+Log Eastern,46LF3X4T NS,46 ft. Tridem 4 Tier Taper Frame -  NS,0,1
+Log Eastern,46LF3X4T NL,46 ft.Tridem 4 Tier Taper Frame -  NL,0,1
+Log US,48LD3X5T US,48 ft. Tridem 5 Tier Drop Frame -  US,0,1
+Log Eastern,48LF3X5T NB,48 ft. Tridem 5  Tier Taper Frame - NB,1,0
+Log Eastern,51LF3X5T NB,51 ft. Tridem 5  Tier Taper Frame - NB,1,0
+Log,64LBT5X NL,64' 5 Axle B-Train - NL,1,0
+Machinery,35ADG2X AGNR,35 Ton Tandem 48 ft. Agri-Non RTAC,0,0
+Machinery,35ADG2X AGR,35 Ton Tandem 48 ft. Agri RTAC,0,1
+Machinery,35ADG2X NR,35 Ton Tandem 48 ft. Non RTAC,0,0
+Machinery,35ADG2X R,35 Ton Tandem 48 ft. RTAC,0,1
+Machinery,35FA,35 Ton Single Axle Flip,0,0
+Machinery,40ADG2X NR,40 Ton Tandem 48 ft. - Non RTAC,0,0
+Machinery,40ADG3X AGR,40 Ton Tridem 49 ft 5 in. Agri RTAC,0,0
+Machinery,40ADG3X R,40 Ton Tridem 49 ft. 5 in. RTAC,0,0
+Oilfield,40SN3X,40 Ton Tridem Scissorneck,0,0
+Oilfield,55LB3X,55 Ton Tridem Lowboy Ridigneck,1,0
+Snow & Ice Control,2510,10 ft.  U-Body Dump,0,0
+Snow & Ice Control,2513,13 ft. U-Body Dump,0,0
+Snow & Ice Control,2514,14 ft. U-Body Dump,0,0
+Tags,20ANR,20 Ton Tandem Air Tilt/No Ramp,0,0
+Paving & Recovery,53ET2XP,53 ft. Tandem,0,0
+Hydraulics,55HDG3X BT,55 Ton Tridem Beavertail,1,0
+Log Eastern,48LF4X5T NB,48 ft. Quad 5 Tier Taper Frame - NB,1,0
+Log Western,48LF4X3T AB,48' 3 Tier Quad - AB,1,0
+Tags,15BWS2X,15 Ton Non Tilt Tandem Deckover Electric Brake,0,1
+Log Western,50LD3X3T BC,50' 3 Tier Tridem - BC,1,0
+Hydraulics,55HDG3X SBPD,55 Ton Tridem Square Back Pin Deck,1,0
+Hydraulics,25HDG2X SB,25 Ton Tandem Mini Quad Deck,1,0
+Highway,51HD3X CON,51 ft. Tridem Drop Deck,0,0
+Tags,20BWS3X,20 Ton Non Tilt Tridem Deckover Electric Brake,0,1
+Log Eastern,46LD4X4T NS,46 ft. Quad 4 Tier Drop Frame - NS,0,1
+Log Western,50LF4X3T AB,50' 3 Tier Quad - AB,1,0
+Machinery,35MD2X NR,35 Ton Mechanical Detachable Gooseneck,1,0
+Log,51LF4X5T NB,51' 5 Tier Quad - NB,1,0
+Tags,30PVR,30 Ton Air Tilt/Air Ramp Paver Tridem,1,0
+Log Western,51LF3X3T SK,51 ft. Tridem 3 Tier Shortwood Taper Frame - SK,0,0
+Dump,37DT3X,37 ft. Tridem 1/4 Frame U-Body,0,0
+Highway,Fleet Only,NULL,1,0
+Hydraulics,60HDGSB,60 Ton Tridem Squareback,0,1
+Jeep Dolly,40JD2X WL,40 Ton Tandem  Western Log,0,0
+Jeep Dolly,40JD2X OF,40 Ton Tandem Oilfield,0,0
+Container Chassis,40GT2X,40 ft. Tandem - Glass,1,0
+Highway,32HBT3X,32 ft.Tridem Lead B-Train - Lumber Spec,0,0
+Machinery,35MD2X53 EXT,35 Ton Tandem Mechanical Extendable,0,0
+Log Western,37LBT2X W,37 ft. Tandem 2 Tier Lead B-Train - Western,0,0
+Hydraulics,55FA,55 Ton Single Axle Flip - Heavy Haul,0,1
+Oilfield,40SN3X SB,40 Ton Tridem Square Back Scissorneck,0,1
+Nuclear,42DD3X,42 ft. Tridem Double Drop,0,0
+Equipment,53ET3X MR WEST,53 ft. Tridem Manual Ramp,0,0
+Log,50LF4X5T NB,50' 5 Tier Quad - NB,1,0
+Tags,20FDNT,20 Ton Tandem Flat Deck Non Tilt,0,0
+Log Eastern,39LBT3X NS,39 ft.Tridem 3 Tier Lead B-Train - NS,0,0
+Snow & Ice Control,2311NB,11 ft. NB All Season Body,0,0
+Highway,48HDD2X Custom V1,48 ft. Tandem Double Drop Deck - Custom Ver. 1,0,1
+Log Eastern,28LBT2X NS,28 ft. Tandem 3 Tier Pull B-Train - NS,0,0
+Hydraulics,55HDG4X SB,55 Ton Quad Squareback,0,1
+Equipment,48ET3X MR,48 ft. Tridem Manual Ramp,0,1
+Highway,28HBT2XHD,28 ft. Tandem Pull B-Train - Heavy Duty Spec,0,1
+Machinery,35ADG2X53 AGNR,35 Ton Tandem 53 ft. Agri - Non RTAC,0,0
+Tags,20PLS2X,20 Ton Tandem Pallet Loading,0,1
+Highway,32HBT3XHD,32 ft. Tridem Lead B-Train - Heavy Duty Spec,0,1
+Screener,360,20 ft. Single Axle Screener,0,0
+Jeep Dolly,20JD1X HP,20 Ton Single Axle High Profile,0,1
+Jeep Dolly,20JD1X LP,20 Ton Single Axle Low Profile,0,0
+Jeep Dolly,40JD2X HG,40 Ton Tandem Hydraulic,0,0
+Jeep Dolly,60JD3X HG,60 Ton Tridem Hydraulic,0,1
+Cable Reel,14CR1X,14 ft. Single Axle Cable Reel,0,0
+Container Chassis,25VT2V DCI,25 ft. 2 Van - DCI,0,1
+Container Chassis,40VT2V Mexico,40 ft. 2 Van - DCI Mexico,0,0
+Container Chassis,51VT4V DCI,51' 4 Van - DCI,0,0
+Container Chassis,53VT2V DCI,53 ft. 2 Van - DCI,0,0
+Container Chassis,53VT2V Penske,53 ft. 2 Van - DCI PENSKE,0,0
+Container Chassis,53VT3V DCI,53 ft. 3 Van - DCI,0,0
+Dump,27DT2X,27 ft. Tandem 1/4 Frame U-Body,0,1
+Equipment,42ET2X,42 ft. Tandem,0,0
+Equipment,48ET2X,48 ft. Tandem,0,0
+Equipment,53ET2X,53 ft. Tandem,0,0
+Paving & Recovery,53ET3XP,53 ft. Tridem,0,0
+Highway,53HD3X,53 ft. Tridem Drop Deck,0,1
+Highway,53HF3X,53 ft. Tridem Flat Deck,0,1
+Hydraulics,35HDG2X SB,35 Ton Tandem Mini Quad Deck,1,0
+Hydraulics,40HDG4X SB P,40 Ton Quad Squareback Paver,0,0
+Log Eastern,42LD3X NL,42 ft. Tridem Pulp -  NL,0,1
+Tags,25NTT-F,25 Ton Tridem Non Tilt,1,0
+Converters/Boosters,11CD1X,11 Ton Single Axle Convertor Dolly,0,1
+Highway,48HD3X,48 ft. Tridem Drop Deck,0,0
+Log Western,53LD3X3T BC,53 ft. Tridem 3 Tier Drop Frame - BC,0,1
+Log Western,50LF4X3T HD,50 ft. Quad 3 Tier Taper Frame Heavy Duty - AB,0,1
+Log Eastern,51LF4X5T NB V2016,51 ft. Quad 5 Tier Taper Frame - NB,1,0
+Log US,46LD2X4T US,46 ft. Tandem  4 Tier - US,0,1
+Hydraulics,55HDG3X BTHH,55 Ton Tridem Beavertail - Heavy Haul,0,0
+Hydraulics,55HDG3X SBHH,55 Ton Tridem Square Back - Heavy Haul,0,0
+Hydraulics,60HDG4X SB,60 Ton Quad Squareback,0,1
+Machinery,50ADG3X53 NR,50 Ton Tridem 53 ft. Non RTAC,0,1
+Highway,53HF3X Pioneer,53 ft. Tridem Flat Deck - Pioneer,1,0
+Machinery,30ADG2X51 AGLP,30 Ton Tandem 51 ft. Agri Low Profile,0,1
+Container Chassis,38GT1X,38 ft. Single Axle - Glass,0,1
+Tags,30NTT,30 Ton Tridem Non Tilt,0,0
+Log Eastern,27LBT2X NL,27 ft. Tandem 1 Tier Pull B-Train - NL,0,0
+Log Eastern,37LBT3X NL,37 ft. Tridem 1 Tier Lead B-Train - NL,0,0
+Agriculture,PD16,16 Ft Production Dozer,1,0
+Nuclear,42DD3X WCS,42 ft. Tridem Double Drop  - WCS,0,1
+Oilfield,55LB3X LND,"55 Ton Tridem Lowbed Long Neck - 6 "" Drop",0,0
+Hydraulics,40HSN3X,NULL,1,0
+Agriculture,PD18,18 Ft Production Dozer,1,0
+Hydraulics,35HDG2X Mini,35 Ton Tandem Square Back Mini Deck,0,0
+Log Eastern,46LD3X4TLW NS,46`4 Tier Tridem - NS Lightweight,0,1
+Log Western,39LBT2X W,39 ft. Tandem 2 Tier Lead B-Train - Western,0,0
+Log Western,39LBT3X W,39 ft. Tridem 2 Tier Lead B-Train - Western,0,0
+Snow & Ice Control,1155,15.5 ft. Unibody Dump,0,0
+Tags,30FDNT,30 Ton Flat Deck Non Tilt,0,0
+Nuclear,42DD2X,42 ft. Tandem Double Drop,0,1
+Machinery,40ADG3X53 NR,40Ton Tridem 53 ft. -Non RTAC,0,0
+Highway,53HDD2X,53 ft. Tandem Double Drop Deck,0,1
+Highway,53OHD3X,53 ft. Tridem Oilfield Drop Deck,0,1
+Log Eastern,51LF4X5T NB V2013,51' 5 Tier Quad - NB,1,0
+Highway,53HF4X,53 ft. Quad Flat Deck,0,0
+Highway,53HF4X - Super Single,53 ft. Quad Flat Deck,0,1
+Container Chassis,48GT2X,48 ft. Tandem - Glass,0,1
+Log Eastern,51LD4X5T NS/NB,51' 5 Tier Quad - NS/NB,1,0
+Log Eastern,18LPT3X,18 ft. Pup Trailer,0,1
+Nuclear,46DD4X WCS,46 ft. Quad Double Drop - WCS,0,0
+Hydraulics,50HDG3X AG,50 Ton Tridem  Agriculture,0,0
+Machinery,40ADG3X53 AGNR,40 Ton Tridem 53 ft. Agri - Non RTAC,0,0
+Log Eastern,48LF4X NL,48 ft. Quad Pulp Taper Frame - NL,0,1
+Machinery,35ADG3X53 AGNR,35 Ton Tridem 53 ft.  Agri - Non RTAC,0,1
+Dump,27PD2X,28 ft. Tandem Pup Dump,0,1
+Log Eastern,51LD5X5T ON,51 ft.  5 Axle 5 Tier Drop Frame  - ON,0,1
+Tags,30ANR-F,30 Ton Tridem Air Tilt/No Ramp,1,0
+Converters/Boosters,11SB1X SB,11 Ton Steer Single Axle Booster,0,1
+Log US,46LD3X4T USAE,46 ft. Tridem 4 Tier Drop Frame - USAE,0,1
+Hydraulics,55HDG3X E,55 ton Tridem Square Back - Elite,0,0
+Log Eastern,51LD4X5T NB V2016,51 ft. Quad  5 Tier Drop Frame - NB,1,0
+Log Eastern,25LPT3X JDI,25 ft. Logging Pup Trailer,0,1
+Log Eastern,53LD3X5T JDIHD,53 ft. 5 Tier Tridem Drop Frame Heavy Duty - JDI,0,1
+Agriculture,LP14,14 Ft Land Pro,0,1
+Log Western,51LF3X3T AB V2016,51 ft. Tridem 3 Tier Taper Frame - AB,0,0
+Log Eastern,48LD4X4T V2018,48 ft. Quad 4 Tier Drop Frame,0,1
+Hydraulics,50FA AGRI,50 Ton Single Axle Flip Agriculture,0,0
+Hydraulics,55FA LH,55 Ton Single Axle Flip - Light Haul,0,0
+Oilfield,40SN3X M,40 Ton Tridem Military Scissorneck,0,1
+Log Eastern,46LD3X4T NS V2016,46 ft. Tridem 4 Tier Drop Frame - NS,1,0
+Log Eastern,46LF3X4T NS V2017,46 ft. Tridem 4 Tier Taper Frame -  NS,0,1
+Log Eastern,48LF3X5T NB V2016,48 ft. Tridem 5  Tier Taper Frame - NB,0,1
+Log Eastern,48LF4X5T NB V2016,48 ft. Quad 5 Tier Taper Frame - NB,1,0
+Log Eastern,51LF3X5T NB V2016,51 ft. Tridem 5  Tier Taper Frame - NB,0,1
+Snow & Ice Control,2514 DC,14 ft. U-Body Dual Cross Converyor Dump,0,0
+Nuclear,40NS2 US,Tandem Nitro Stinger,0,1
+Nuclear,44DD2X,44 ft. Tandem Double Drop,0,1
+Machinery,35ADG2X37 AGNR,35 Ton Tandem 37 ft.  Agri - Non RTAC,0,1
+Log US,46LD3X2T US,46 ft. Tridem 2 Tier - US,0,1
+Log Western,50LF3X3T HD,50 ft. Triaxle 3 Tier Taper Frame Heavy Duty - AB,0,1
+Chassis,20PC2X,20 Ft. Tandem Electric Brake,0,1
+Agriculture,PD14,14 Ft Production Dozer,1,0
+Paving & Recovery,53ET3XP MI,53 ft. Tridem Michigan Paver,1,1
+Converters/Boosters,11SB1X,11 Ton Steer Single Axle Booster,0,0
+Log Western,51LF4X3T AB V2015,51 ft. Quad 3 Tier Taper Frame - AB,0,0
+Machinery,35MD2X EXT,35 Ton Tandem Mechanical Extendable,0,0
+Log US,46LF3X MN,46 ft. Tridem Pulp Taper Frame -  MN,0,1
+Hydraulics,51HDG3X SB,51 Ton Tridem Square Back,0,0
+Machinery,30ADG2X51 LP,30 Ton Tandem 51 ft. Low Profile,0,1
+Hydraulics,55HDG3X SB,55 Ton Tridem Square Back,0,1
+Log Eastern,48LF3X NL,48 ft. Tridem Pulp Taper Frame - NL,0,1
+Highway,48HD2X,48 ft. Tandem Drop Deck,0,1
+Log US,48LD3X5T USAE,48 ft. Tridem  5 Tier Drop Frame - USAE,0,1
+Log Western,53LD3X3T BCHD,53 ft. Tridem 3 Tier Drop Frame Heavy Duty - BC,0,1
+Log US,51LF4X3T US,51 ft. Quad 3 Tier Taper Frame - US,0,1
+Container Chassis,51VT2V DCI,51 ft. 2 Van - DCI,0,1
+Container Chassis,12GT1X,Single Axle - Glass,0,1
+Dump,28DPT3X,28 ft. Tridem Pup Chassie,0,1
+Dump,SPECIAL,PROPOSED,0,1
+Machinery,35ADG2X53 AGC,35 Ton Tandem 53 ft. Agri - Chopper,0,1
+Log Eastern,39LBT3X ON,39 ft. Tridem 3 Tier Lead B-Train - Ontario,0,1
+Snow & Ice Control,TC1X,Truck Complete,0,1
+Snow & Ice Control,1040G,13 ft. Unibody Dump,0,0
+Snow & Ice Control,3434 PMB,11 ft. Power Angle Plow,0,1
+Snow & Ice Control,2311,11 ft. All Season Sander Body,0,1
+Snow & Ice Control,2313,13 ft. All Season Sander Body,0,1
+Snow & Ice Control,SICD2X NT,Dump Truck 2 Axle,0,1
+Snow & Ice Control,SICP1X NT,Plow Truck 1 Axle,0,1
+Snow & Ice Control,1030G,10 ft. Unibody Dump,0,0
+Snow & Ice Control,1050G,14 ft. Unibody Dump,0,0
+Snow & Ice Control,2049,SLIDE IN HOPPER SANDER 9 CU YD,0,0
+Snow & Ice Control,SICP2X NT,Plow Truck 2 Axle,0,0
+Highway,53HF3XEXT,53 ft. Tridem Flat Deck Extendable,0,0
+Container Chassis,26VT1V Mexico,26 ft. Single Axle,0,1
+Log Eastern,51LF4X5T NB TRI V2016,"51 ft. Quad 5 Tier Taper Frame , Tri drive capable- NB",0,0
+Chassis,40CC3X,40 ft. Container Chassis,0,0
+Dump,26DT2X,26 ft. Tandem 1/4 Frame U-Body,0,1
+Tags,15BWS2X G,15 Ton Non Tilt Tandem Electric Brake,0,1
+Machinery,20PAG2X,20 Ton Tandem Agriculture,0,1
+Highway,29HD3X Rail,"29 ft. Tridem Drop Deck, Rail",0,1
+Log Eastern,48LD4X5T NB V2016,48 ft. Quad 5 Tier Drop Frame - NB,1,0
+Snow & Ice Control,2514 SNC,14 ft. U-Body Dump,0,1
+Highway,42HD2X HD,42 FT. Tandem Heavy Duty Drop Deck,0,1
+Chassis,40CC3X53EXT,40 ft. Extendible Container Chassis,0,0
+Oilfield,60SN3X,60 Ton Tridem Scissorneck,0,1
+Machinery,35ADG2X51 AGC,35 Ton Tandem 51 ft. Agri - Chopper,0,1
+Nuclear,49DD3X HD,49 ft. Tridem Double Drop,0,0
+Snow & Ice Control,2047,SLIDE IN HOPPER SANDER 7 CU YD,0,0
+Log Western,30LBT2X W,30 ft. Tandem 1 Tier  Pull B-Train - Western,0,0
+Log Eastern,51LF4X5T V2018,51 ft. Quad 5 Tier Taper Frame,0,0
+Highway,48HD2X PEAT,48 Ft. Tandem Drop Deck,0,0
+Machinery,35ADG2X53 AGCO,35 Ton Tandem 53 ft. Agri - Non RTAC,0,1
+Machinery,35ADG2X48 AGULP,35 Ton Tandem 48 ft. Agri Ultra Low Pro,0,0
+Chassis,30CC2X,30 Ft. Tandem Container Chassis,0,1
+Chassis,12CC2X,12 Ft. Tandem Container Chassis,0,1
+Container Chassis,42VT2V Mexico,42 ft. 2 Van - DCI Mexico,0,1
+Highway,39BT2X SCRAP,38 ft. Tandem Pull B-Train - Scrap Heavy Duty Spec,0,0
+Highway,20BT3X SCRAP,22 ft. Tridem Lead B-Train - Scrap Heavy Duty Spec,0,0
+Dump,32DT3X,32 ft. Tridem 1/4 Frame U-Body,0,1
+Log Eastern,48LF4X5T V2018,48 ft. Quad 5 Tier Taper Frame - NB,0,1
+Dump,28DPT2X,28 ft. Tandem Pup Chassie,0,1
+Machinery,35MD2X48,35 Ton Tandem Mechanical - 48 Ft.,0,0
+Machinery,35MD2X53,35 Ton Tandem Mechanical - 53 ft.,0,0
+Machinery,35MD2X BT,35 Ton Tandem Beaver Tail,0,1
+Highway,53HD4X,53 ft. Quad Drop Deck,0,0
+Hydraulics,35HDG2X53 AGC,35 Ton Tandem 53 ft. Agri - Chopper,0,1
+Chassis,22CC2X,22 Ft. Tandem Container Chassis,0,0
+Machinery,35DD2X BT,35 Ton Double Drop Beaver Tail,0,1
+Container Chassis,30DT3X-CHASSIS,30 ft. Dump Chassis,0,1
+Equipment,53ET4X MR,53 ft. Quad Manual Ramp,0,0
+Equipment,53ET3X MR EAST,53 ft. Tridem Manual Ramp,0,0
+Machinery,35MD2X48 P,35 Ton Tandem Mechanical - 48 Ft.Pin Deck,0,1
+Nuclear,50DD4X,50 ft. Quad Double Drop,0,0
+Hydraulics,35HDG2X53 AGNR,35 Ton Tandem 53 ft. Agri - Non RTAC,0,0
+Highway,28HBT3X,28 ft. Tridem Pull B Train,1,0
+Highway,32HBT3X 2018,32 ft. Tridem Lead B-Train,0,0
+Highway,53HD3X 2018,53 ft. Tridem Drop Deck,0,0
+Highway,48HF4X,48 ft. Quad Flat Deck,0,0
+Paving & Recovery,53ET4XP,53 ft. Quad,0,0
+Converters/Boosters,22CD2X,22 Ton Converter Dolly Tandem,0,1
+Container Chassis,53VT2VSAT Frito Lay US 2018,53 ft. 2 Van - Single Axle Truck Frito Lay US,1,1
+Dump,38ALB3XS,38 ft. Triaxle,0,1
+Equipment,53ET4X,53 ft. Quad,0,0
+Snow & Ice Control,SPUD KIT 4300,BULK BODY SPUD 4300,0,1
+Log Western,51LF3X3T PEAK,51 ft. Tridem 3 Tier Taper Frame,0,1
+Log Eastern,46LD3X4T V2016,46 ft. Tridem 4 Tier Drop Frame,1,1
+Highway,50HF5X,50 ft. 5 Axle Flat Deck,0,0
+Chassis,42CC3X,42 Ft. Container Chassis,0,0
+Log Eastern,48LF3X5T V2018,48 ft. Tridem 5  Tier Taper Frame,0,0
+Container Chassis,53VT2V FL CA,53 ft. 2 Van - Frito Lay Canada,0,0
+Nuclear,51DD3X HD,51 ft. Tridem Double Drop,0,1
+Nuclear,50DD3X,50 ft. Tridem Double Drop,0,0
+Dump,36ALB2X,36 ft. Tandem,0,1
+Log Eastern,48LD3X5T V2018,48 ft. Tri 5 Tier Drop Frame,0,0
+Hydraulics,55HDG3X BTHH AG,55 Ton Tridem Beavertail - Heavy Haul AG,0,0
+Dump,32DT3X V2018,32 ft. Tridem 1/4 Frame U-Body,0,0
+Oilfield,50SN3X 2018,50 Ton Tridem Scissorneck,0,1
+Chassis,20CC2X,20 ft. Tandem Pull B-Train,0,0
+Chassis,20CC3X,20 ft. Tridem Lead B-Train,0,0
+Dump,41ALB3X,41 ft. Tridem,0,1
+Log Western,37LBT3X PEAK,37 ft. Tridem 2 Tier Lead B-Train - Western,0,0
+Hydraulics,55HDG3X SBHH AG,55 Ton Tridem Square Back - Heavy Haul,0,0
+Oilfield,50SN3X,50 Ton Tridem Scissorneck,0,1
+Machinery,45MD3X EXT,45 Ton Tridem Mechanical Extendable,0,1
+Nuclear,53DD4X,53 ft. Quad Double Drop,0,0
+Jeep Dolly,JD2+1X,Tridem Hydraulic,0,0
+Hydraulics,60HDG3X HB_temp1,60 ton Tridem Square Back,0,1
+Hydraulics,55HDG3X,55 ton Tridem Square Back,0,0
+Hydraulics,55HDG3X H,55 ton Tridem Square Back Heavy,0,0
+Hydraulics,55FA  B,55 Ton Single Axle Flip,0,0
+Hydraulics,55HDG3X Q1,55 Ton Tridem Square Back,0,1
+Dump,27DT2X V2018,27 ft. Tandem 1/4 Frame U-Body,0,0
+Container Chassis,53VT2V FL CA-97,53 ft. 2 Van - Frito Lay Canada,0,0
+Container Chassis,53VT2V FL US-97,53 ft. 2 Van - Tandem Axle Truck Frito Lay US,0,0
+Hydraulics,55HDG3X US,55 ton Tridem Square Back,0,0
+Log Eastern,46LF4X NL,46 ft. Quad Pulp Taper Frame - NL,0,0
+Container Chassis,53VT2V JB HUNT,53 ft. 2 Van - J.B. Hunt,0,0
+Machinery,35HDG2X53,35 Ton Tandem Hydraulic - 53 ft.,0,1
+Stargate,PY-FR454-WR3X,28 ft. Tandem Pup Dump,0,1
+Hydraulics,DECK - Bellemar,55 ton Drop Side Pin Deck,0,0
+Log Eastern,52LD4X5T,52 ft. Quad 5 Tier Drop Frame,0,0
+Container Chassis,33VT2V DCI Tag,33 ft. 2 Van - DCI Tag,0,0
+Highway,53HD2X EXT_temp1,53 ft. Highway Drop Deck Extendable,0,1
+Chassis,Pony 3X17,Pony Trailer Quad,0,0
+Stargate,48LB4X A,48 ft. QUAD Aluminum,0,0
+Dump,53EWF4X,53Ft. Quad Elliptical Walking Floor Transfer Trailer,0,0
+Stargate, TB48,Truck Box - 48 in.,0,0
+Highway,40HD3XB,40 Ft. Tridem Drop Deck,0,1
+Highway,45HD2X,45 ft. Tandem Drop Deck,0,1
+Container Chassis,40CC2X,40 ft. Tandem,0,1
+Converters/Boosters,11SB2X SB,11 Ton Steer Tandem Axle Booster,0,1
+Stargate,Dump SF3X,40 ft - Steel Frame Dump,0,0
+Stargate,30SB,30 ft. Steel Dump Body,0,0
+Stargate,B-Train Pull Dump_temp1,Steel Lead B-Train Dump Trailer,0,1
+Stargate,CD2X,Converter Dolly Tandem,0,0
+Stargate,24SB,24 ft. Steel Dump Body,0,0
+Highway,32HBT4X,32 ft. Quad Lead B-Train,1,0
+Highway,48HDD2X EXT,48 ft. Tandem Doubel Drop Deck Extendable,0,0
+Hydraulics,35HDG2X NR,35 Ton Tandem 48 ft. Non RTAC,0,0
+Log Eastern,48LF3X5T NB V2018,48 ft. Tridem 5  Tier Taper Frame - NB,0,1
+Log Eastern,51LD4X5T V2018,51 ft. Quad  5 Tier Drop Frame - NB,0,0
+Stargate,UBF2X,U Body Frameless Aluminum Tandem Dump,0,0
+DUMP,SFUB2X,U-Body Frameless Steel Scrap Tandem Dump,0,1
+Highway,FA, Single Axle Flip,0,0
+Stargate,38LB3X A,38 ft. TRIDEM Aluminum,0,0
+Stargate,28LB2X A,28 ft. Tandem Aluminum,0,0
+Stargate,CD1X,Converter Dolly Single Axle,0,0
+Container Chassis,53VT3X DCI V2021,53 ft. 3 Van - DCI,0,0
+Highway,48HDD2X,48 ft. Tridem Double Drop Deck,0,1
+Container Chassis,53VT3V PENSKE,53 ft. 3 Van - PENSKE,0,0
+End Dumps,End Dump 4X,End Dump 4X,0,0
+Tags,20NTTS,20 Ton Tandem Non Tilt Sprayer,0,1
+Stargate,Dump SF2X,21 Ft - Steel Frame Dump,0,0
+Highway,53HD2X Crane,53 ft. Tandem Bridge Crane Drop Deck,0,0
+Stargate,Steel End Dump 2X,36 ft - Steel End Dump,0,0
+Stargate,17PDB,Pony Dump Body,0,1
+End Dumps,Frameless Alum. U Body 2X,Frameless Alum. U Body 2X,0,0
+End Dumps,Frameless Alum. U Body 3X,Frameless Alum. U Body 3X,0,0
+Oilfield,55LB3X SND,"55 Ton Tridem  Short Neck - 6"" Drop Lowbed",0,0
+Oilfield,55LB3X LNF,55 Ton Tridem TriDrive Neck Lowbed,0,0
+Machinery,35ADG2X51 AGLP,35 Ton Tandem 51 ft. Agri Low Profile,0,1
+Hydraulics,25HDG2X Mini NR,25 Ton Tandem Square Back Mini Deck,1,1
+Log Western,37LBT3X W,37 ft. Tridem 2 Tier Lead B-Train - Western,0,0
+Log Western,27LBT2X W,27 ft. Tandem 1 Tier  Pull B-Train - Western,0,0
+Machinery,35ADG2X51 AGNR,35 Ton Tandem 51 ft. Agri - Non RTAC,0,0
+Container Chassis,53VT2V Frito Lay,53 ft. 2 Van - DCI Frito Lay,0,1
+Machinery,35ADG2X53 AGS,35 Ton Tandem 53 ft.  Agri  8 ft. Spread,0,0
+Chassis,44CC3X,44 ft. Bulk Body Chassis - Air Ride,0,0
+Equipment,42ET3X,42 ft. Tridem,0,0
+Log,53LF4X5T NB,53' 5 Tier Quad - NB,1,0
+Oilfield,51OF3X,51 Ton Tridem  Oilfield Float,0,1
+Highway,48HDD2X Custom,48 ft. Tandem Double Drop Deck - Custom,0,1
+Container Chassis,53VT2V FL US,53 ft. 2 Van - Tandem Axle Truck Frito Lay US,0,1
+Hydraulics,35HDG2X Mini NR,35 Ton Tandem Square Back Mini Deck,1,1
+Highway,48HF2X,48 ft. Tandem Flat Deck,0,0
+Highway,48HF3X,48 ft. Tridem Flat Deck,0,0
+Hydraulics,40HDG3X AG,40 Ton Tridem  Agriculture,0,0
+Container Chassis,40GT1X,40 ft. Single Axle - Glass,0,1
+Highway,48HD2X SPECIAL,48 ft. Tandem Drop Deck,0,1
+Highway,42HF2X,42 ft. Tridem Flat Deck - Single Tire,0,1
+Hydraulics,55HDG3X SBLH PQ,55 Ton Tridem Square Back - Light Haul PQ,1,1
+Log US,46LF3X4T USAE,46 ft. Tridem 4 Tier Taper Frame - USAE,0,1
+Machinery,30ADG2X53 AGLP,30 Ton Tandem 53 ft. Agri Low Profile,0,1
+Log US,48LF3X5T USAE,48 ft. Tridem 5 Tier Taper Frame- USAE,0,1
+Tags,20FDNT ECO New Jersey Turnpike Authority,20 Ton Flat Deck Non Tilt Deckover New Jersey Turnpike Authority,1,0
+Highway,53HDD3X,53 ft. Tridem Double Drop Deck,0,0
+Machinery,30ADG2X48 AGULP,35 Ton Tandem 48 ft. Agri Ultra Low Pro,1,0
+Highway,28HBT2X 2018,28 ft. Tandem Pull B-Train,0,0
+Tags,25ART-F,25 Ton Tridem Air Tilt/Air Ramp,1,0
+Paving & Recovery,48ET2XP,48 ft. Tandem,0,0
+Log Western,51LF3X3T SK V2016,51 ft. Tridem 3 Tier Shortwood Taper Frame - SK,0,1
+Paving & Recovery,48ET3XP,48 ft. Tridem,0,0
+Log Western,40LD3X,40 ft. Tridem 2 Tier Pull B-Train - Manitoba,0,1
+Log Western,27LD2X,28 ft. Tandem 1  Tier Lead B-Train - Manitoba,0,1
+Container Chassis,20VT1V Mexico,20 ft. 1 Van - DCI Mexico,0,1
+Highway,46HDD2X Custom,46 ft. Tandem Double Drop Deck - Custom,0,1
+Highway,42HF3X HD,42 ft. Tridem Flat Deck - Single Tire,0,1
+Chassis,27BC2X,27 ft. Bulk Chassis,0,0
+Chassis,45BC3X,45 ft. Bulk Chassis,0,0
+Container Chassis,53VT2V CAL,53 ft. 2 Van - California,0,0
+Tags,40EPT1X,40 ft. Extendable Pole,0,1
+Highway,35HD2X,35 ft. Tandem Drop Deck,0,1
+Container Chassis,38GT2X,38 ft. Tandem - Glass,0,1
+Container Chassis,51GT2X,51 ft. Tandem - Glass,0,1
+Container Chassis,47GT2X,47 ft. Tandem - Glass,0,1
+Log Eastern,51LD4X5T ON,51 ft. Quad 5 Tier Drop Frame - ON,0,0
+Log Eastern,25LPT2X,25 Foot Tandem,0,1
+Hydraulics,55HDG3X SBLH,55 Ton Tridem Square Back - Light Haul,1,0
+Log Eastern,46LF3X4T V2018,46 ft. Tridem 4 Tier Taper Frame,0,0
+Highway,42HD3X 2018,42 ft. Tridem Drop Deck,0,1
+Highway,53HD2X,53 ft. Tandem Drop Deck,0,0
+Highway,48HD5X,48 ft. Five Drop Deck,0,1
+Agriculture,LP18,18 Ft Land Pro,0,0
+Log Eastern,25LPT3X,25 Foot Tridem Pup,0,1
+Container Chassis,10GT1X,Single Axle - Glass,0,0
+Dump,37DT2X,37 ft.Tandem 1/4 Frame U-Body,0,1
+Tags,30 ANR MINE,30 Ton Tandem Air Tilt/No Ramp,0,0
+Hydraulics,51HDG3X SBLH,51 Ton Tridem Square Back Light Haul,1,0
+Container Chassis,53VT2VTAT Frito Lay US 2018,53 ft. 2 Van - Tandem Axle Truck Frito Lay US,1,1
+Tags,25ANR-F,25 Ton Tridem Air Tilt/No Ramp,1,0
+Tags,30NTT-F,30 Ton Tridem Non Tilt,1,1
+Hydraulics,25HDG2X Mini,25 Ton Tandem Square Back Mini Deck,0,1
+Highway,53HD3X 2018 LDECK,53 ft. Tridem Drop Deck,0,1
+Dump,27DT2XU,27 ft. Tandem 1/4 Frame U-Body,0,1
+Highway,53HF3X 2018,53 ft. Tridem Flat Deck,0,0
+Chassis,27CC3X,27 ft. Tridem Lead B-Train,1,0
+Nuclear,47DD3X,47 ft. Tridem Double Drop,0,0
+Log Eastern,46LD3X4T V2018,46 ft. Tridem 4 Tier Drop Frame - NS,0,0
+Machinery,40ADG3X53 AGLP,40 Ton Tridem 53 ft. Agri - Non RTAC Low pro,0,0
+Log Western,28LBT2X PEAK,27 ft. Tandem 1 Tier Pull B-Train - Western,0,0
+Container Chassis,34VT1V Hostler,34 ft. Single Axle,0,1
+Container Chassis,53VT2V DCI LD,53 ft. 2 Van - DCI Low Deck,0,1
+Jeep Dolly,JD2X,Tandem Hydraulic,0,0
+Tags,20PT2X,20 Ton Tandem Pup,0,1
+Container Chassis,53VT2V FL CA-53,53 ft. 2 Van - Frito Lay Canada,0,0
+Chassis,30PC3X,30 Ft. Tridem Electric Brake,0,1
+Tags,WTT2X,Tandem Water Treatment Trailer,0,1
+Log Eastern,46LD4X NL,46 ft. Quad Pulp - NL,0,1
+Dump,37DT4X FF,37 ft. Tridem Full Frame U-Body,0,1
+Dump,48ALB4X,48 ft. QUAD-SPIF,0,1
+Chassis,27CC2X,27 ft. Tandem Pull B-Train,1,0
+Hydraulics,55HDG3X HS,55 ton Tridem Square Back Heavy Spread Axle,0,0
+Highway,53HD2X EXT,53 ft. Highway Drop Deck Extendable,0,0
+Nuclear,45DD3X,45 ft. Tridem Double Drop,0,0
+Log US,42LD3X4T USAE,42 ft. Tridem 4 Tier Drop Frame - USAE,0,1
+Dump,39ALB3X,39 ft. Tridem,0,1
+Log US,46LD3X5T HALE,46 ft. Tridem  5 Tier Drop Frame,0,0
+Hydraulics,GNK - Bellemare,55 Ton Gooseneck,0,0
+Log Eastern,52LF4X5T,52 ft. Quad 5 Tier Taper Frame,0,0
+Snow & Ice Control,2513 DC,13 ft. U-Body Dual Cross Conveyor Dump,0,0
+Stargate,Dump SF4X,45 ft - Steel Frame Dump,0,0
+Stargate,Dump 36SF3X,36 ft - Steel Frame Dump,0,0
+Stargate,Pony Dump 3X17,Pony Dump Trailer Tridem,0,0
+Highway,48HDD3X,48 ft. Tridem Double Drop Deck,0,0
+Highway,53HD2X EXT H,53 ft. Highway Drop Deck Extendable,0,1
+Stargate,19SB,19 ft. 6 in. Steel Dump Body,0,0
+Highway,40HD2X Penske CUSTOM,40 ft. Tandem Drop Deck - Penske Custom,0,0
+Log Eastern,48LD4X4T NB V2017,48 ft. Quad 4 Tier Drop Frame - NB,0,1
+Tags,25PT3X,25 Ton Tridem Pup,0,1
+Log Eastern,48LD4X5T ON,48 ft. Quad 5 Tier Drop Frame - ON,0,1
+Container Chassis,10GT2X,Tandem - Glass,0,1
+Container Chassis,12GT2X,Tandem - Glass,0,0
+Hydraulics,40HDG3X53 AG,40 Ton Tridem 53 ft. Agri,0,0
+Log Eastern,48LD4X5T V2018,48 ft. Quad 5 Tier Drop Frame,0,0
+Stargate,End Dump - temp1,Dura-Wall Frame Type End Dump,0,1
+Stargate,B-Train Dump_temp1,Steel Lead B-Train Dump Trailer,0,1
+Stargate,Pony Chassis,Pony Chassis Tridem,0,0
+Tags,20ART,20 Ton Tandem Air Tilt/Air Ramp,0,0
+Tags,20MTT,20 Ton Tandem  Manual Tilt,0,1
+Tags,20NTT,20 Ton Tandem Non Tilt,0,0
+Tags,25ANR,25 Ton Tridem Air Tilt/No Ramp,0,0
+Tags,25ART,25 Ton Tridem Air Tilt/Air Ramp,0,0
+Tags,25MTT,25 Ton Manual Tilt Tridem,1,0
+Tags,25NTT,25 Ton Tridem Non Tilt,0,0
+Tags,25PVR,25 Ton Air Tilt/Air Ramp Paver Tridem,1,0
+Snow & Ice Control,2313NB,13 ft. NB All Season Body,0,0
+Snow & Ice Control,2314NB,14 ft. NB All Season Body,0,0
+Tags,20FDNT ECO,20 Ton Tandem Flat Deck Non Tilt Deckover,0,1
+Tags,25FDNT,25 Ton Tridem Flat Deck Non Tilt,0,0
+Tags,25FDNT ECO,25 Ton Tridem Flat Deck Non Tilt Deckover,0,1
+Tags,20BWS2X,20 Ton Tandem Non Tilt Deckover,0,1
+Tags,25BWS3X,25 Ton Tridem Non Tilt Deckover,0,1
+Equipment,48ET3X,48 ft. Tridem,0,0
+Equipment,53ET3X,53 ft. Tridem,0,0
+Tags,30ANR,30 Ton Tridem Air Tilt/No Ramp,0,0
+Tags,30ART,30 Ton Tridem Air Tilt/Air Ramp,0,0
+Log Western,48LF3X3T AB,48' 3 Tier Tridem - AB,1,0
+Log Western,50LF3X3T AB,50' 3 Tier Tridem - AB,0,1
+Log Western,50LF3X3T SK,50 ft. Tridem 3 Tier Taper Frame - SK,0,1
+Machinery,35ADG2X51 LP,35 Ton Tandem 51 ft. Low Profile,0,1
+Dump,37DT2X HV,"37 ft.Tandem 1/4 Frame U-Body, High Volume",0,1
+Dump,27DT2X HV,27 ft. Tandem 1/4 Frame U-Body High Volume,0,1
+Log Eastern,30LBT2X ON,30 ft. Tandem 3 Tier  Pull B-Train - Ontario,0,1
+Snow & Ice Control,TC2X,Truck complete 2 Axle,0,1
+Snow & Ice Control,3920-94 PMP,11 ft. Hydraulic Snow Wing,0,1
+Snow & Ice Control,Installation,"Installation Body, Plow, Wing and Headworks",0,1
+Log Western,46LD3X2T BC,46 ft. Tridem 2 Tier Drop Frame - BC,0,1
+Snow & Ice Control,2310NB,10 ft. NB All Season Body,0,0
+Snow & Ice Control,TEMP,TEMP,0,1
+Highway,53HD3X EXT,53 ft. Highway Drop Deck Extendable,0,0
+Hydraulics,35HDG2X48 AGULP,35 Ton Tandem - 48 ft. Agri Ultra Low Pro HDG,0,0
+Machinery,35MD2X48 AGULP,35 Ton Tandem 48 ft. Agri Ultra Low Pro,0,1
+Snow & Ice Control,2020,HOPPER SANDER 8.5 CU YD,0,0
+Log Eastern,51LD5X5T ON V2017,51 ft. Five Axle 5 Tier Drop Frame - ON,0,1
+Highway,42HD3X HD,42 FT. Tridem Heavy Duty Drop Deck,0,1
+Hydraulics,70HDG4X SB,70 Ton Quad Squareback,0,1
+Highway,28HBT2X,28 ft. Tandem Pull B-Train - Lumber Spec,0,0

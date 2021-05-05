@@ -3,6 +3,9 @@ import easygui
 from utility import *
 from discount import Discount
 import tkinter as tk
+
+# from tkinter import *
+from tkinter.scrolledtext import ScrolledText
 # import tksheet
 
 
@@ -192,6 +195,22 @@ def test():
 
     main_view()
 
+
+def other():
+    #Import the library
+
+    #Create an object of tkinter window or frame
+    win = tk.Tk()
+
+    #Define the geometry of window
+    win.geometry("650x250")
+
+    #Create an instance of Text Widget
+    ScrolledText(win).pack()
+
+    win.mainloop()
+
+
 if __name__ == "__main__":
     a = ("first second", ["first", "second"])
     b = ("first second third", ["first", "second third"])
@@ -212,3 +231,5 @@ if __name__ == "__main__":
     print("var global:", var)
     foo()
     print("var global:", var)
+
+    other()

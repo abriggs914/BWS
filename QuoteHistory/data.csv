@@ -158,8 +158,9 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26186, 37DT3X, 17, Northeast Truck & Trailer Sales, $73854.6332, $80724, $79917, 6, 0
 26187, 27DT2X V2018, 17, Northeast Truck & Trailer Sales, $56703.0453, $59286, $58693, 5, 0
 26188, 25ART, 17, Hale Trailer Brake & Wheel, $28328.1856, $0, $0, 0, 1
-26195, 40ADG3X53 AGNR, 18, Fort Garry Industries Ltd., $79360.5084, $0, $0, 0, 0
-26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $0, $0, 0, 0
-26197, 53ET3XP, 18, Redhead Equipment Ltd., $62096.1618, $0, $0, 0, 0
-26198, 35ADG2X AGNR, 18, Fort Garry Industries Ltd., $66892.4149, $0, $0, 0, 0
+26195, 40ADG3X53 AGNR, 18, Fort Garry Industries Ltd., $79360.5084, $87472, $86597, 6, 0
+26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $15189, $15037, 4, 0
+26197, 53ET3XP, 18, Redhead Equipment Ltd., $62096.1618, $72230, $72230, 9, 0
+26198, 35ADG2X AGNR, 18, Fort Garry Industries Ltd., $66892.4149, $74181, $73439, 6, 0
 26200, 30ANR, 18, S & S Trailers Sales Inc, $26124.494, $30465, $30465, 3, 1
+26211, 25ART, 18, Redhead Equipment Ltd., $33788.1024, $0, $0, 0, 0

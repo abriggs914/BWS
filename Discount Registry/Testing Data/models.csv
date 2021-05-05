@@ -397,7 +397,7 @@ Tags,20BWS2X,20 Ton Tandem Non Tilt Deckover,0
 Tags,20BWS3X,20 Ton Non Tilt Tridem Deckover Electric Brake,0
 Tags,20FDNT,20 Ton Tandem Flat Deck Non Tilt,1
 Tags,20FDNT ECO,20 Ton Tandem Flat Deck Non Tilt Deckover,0
-Tags,20FDNT ECO New Jersey Turnpike Authority,20 Ton Flat Deck Non Tilt Deckover New Jersey Turnpike Authority,0
+Tags,20FDNT ECO New Jersey Turnpike Authority,20 Ton Flat Deck Non Tilt Deckover New Jersey Turnpike Authority,1
 Tags,20MTT,20 Ton Tandem  Manual Tilt,0
 Tags,20NTT,20 Ton Tandem Non Tilt,1
 Tags,20NTTS,20 Ton Tandem Non Tilt Sprayer,0
@@ -424,3 +424,36 @@ Tags,30NTT-F,30 Ton Tridem Non Tilt,0
 Tags,30PVR,30 Ton Air Tilt/Air Ramp Paver Tridem,1
 Tags,40EPT1X,40 ft. Extendable Pole,0
 Tags,WTT2X,Tandem Water Treatment Trailer,0
+12,12,12,1
+13,13,13,1
+14,14,14,1
+15,15,15,1
+14,15,1514,1
+NEW CLASS,New Model,New Model Description,1
+16,16,16,1
+W,w,None,1
+Q,q,None,1
+18,18,18,1
+19,19,19,0
+30,30,30,0
+21,21,21,1
+22,22,22,1
+23,23,23,1
+24,24,24,1
+18,2,16,1
+23,21,21,1
+6,6,6,1
+113,113,1131311,1
+191,191,asdfsd,1
+22,21,of class 22,1
+151,151,151,1
+7,7,7i,1
+8,8,8i,1
+9,9,9i,1
+4,5,654,1
+330,300,300,1
+004,40,40040440444,0
+162,163,1634,0
+18,6,of 18,1
+18,1981919,dkfa;kdsjf;lka,0
+65165,5448,zsdfjalks,1
