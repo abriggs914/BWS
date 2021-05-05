@@ -226,6 +226,14 @@ def same_calendar_day(d1, d2):
     ])
 
 
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+
+
 def compute_min_edit_distance(a, b, show=False):
     len_a = len(a)
     len_b = len(b)

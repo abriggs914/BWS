@@ -1,6 +1,7 @@
 import csv
 import time
 import datetime
+import traceback
 from models import *
 from utility import *
 from discount import *
@@ -11,6 +12,7 @@ from models_writer import current, non_current
 
 admin=easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges", default_choice="No")  # allows a little more functionality  ! Beware of data consistency when using !
 
+root = None
 min_width = 1050
 size = str(min_width) + 'x' + str(round(min_width * (6/9)))
 
@@ -163,6 +165,8 @@ def create_view(edit=False):
     window_main.pack()
 
     today = datetime.date.today()
+    
+    feedback_contents = []
     label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
     label_names = dict(zip(label_names_list, [[] for i in label_names_list]))
     # root.geometry(size)
@@ -208,6 +212,7 @@ def create_view(edit=False):
 
     combobox_model = None
     status_update = "STATUS UPDATE"
+    SEM = "Please check submission values.\n"
 
     
 
@@ -271,6 +276,8 @@ def create_view(edit=False):
 
     def main_loop():
         global combobox_model, new_discount
+
+        # up = lambda *args: feedback_window.insert(tk.END, ".1")
         
         combobox_model = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_model)
 
@@ -406,10 +413,46 @@ def create_view(edit=False):
                 c = selection_class.get()
                 t = cal.get_date()
 
-                if not all([d, s, k, f, c, t]):
-                    raise ValueError("Please check submission values")
+                t_d, t_m, t_s, t_k, t_f, t_c, t_t = [True if item else False for item in [d, m, s, k, f, c, t]]
+                missing_entries = ""
+                if not t_d:
+                    missing_entries += "\n\tDealer field is blank."
+                if not t_m:
+                    missing_entries += "\n\tModel field is blank."
+                if not t_c:
+                    missing_entries += "\n\tClass field is blank."
+                if not t_s:
+                    missing_entries += "\n\tSlot field is blank."
+                if not t_k:
+                    missing_entries += "\n\tMarket field is blank."
+                if not t_f:
+                    missing_entries += "\n\tFreight field is blank."
+
+                if not all([t_d, t_m, t_s, t_k, t_f, t_c, t_t]):
+                    feedback(SEM + missing_entries, err=True)
+                    raise ValueError()
+                # if not t_t:
+                #     feedback(SEM + "\tDealer field is blank.")
+                #     raise ValueError()
+
+                value_issues = ""
+                if not isfloat(s):
+                    value_issues += "\n\tSlot value must be a decimal number."
+                if not isfloat(k):
+                    value_issues += "\n\tMarket value must be a decimal number."
+                if not isfloat(f):
+                    value_issues += "\n\tFreight value must be a decimal number."
+                if value_issues:
+                    feedback(SEM + value_issues, err=True)
+                    raise ValueError()
+
+                if all(list(map(lambda v: float(v) == 0, [s, k, f]))):
+                    reply = easygui.ynbox(msg="Are you sure you want to create a\ndiscount with all \'0\' values?", default_choice="No", cancel_choice="No", title="Discount Creation")
+                    if not reply:
+                        return
 
                 model = DS.look_up_by_name(m, c)
+                do_update = False
 
                 if model == None:
                     reply = easygui.ynbox(msg="Do you want to create a new model entry?", default_choice="No", cancel_choice="No", title="Model Creation")
@@ -419,9 +462,12 @@ def create_view(edit=False):
                     stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
                     stat = current if stat else non_current
                     model = Model(c, m, desc, stat)
-                    DS.update(model)
+                    do_update = True
                 if not model:
+                    feedback(SEM + "Please check submission values <not model>", err=True)
                     raise ValueError("Please check submission values")
+                if do_update:
+                    DS.update(model)
 
                 s = float(s) / 100
                 k = float(k) / 100
@@ -432,43 +478,79 @@ def create_view(edit=False):
                 submit.set(True)
                 print("local new discount:", new_discount)
                 print("local new discount:", new_discount.table_entry(dims))
+                feedback("Discount creation successfull! <{0}>".format(new_discount))
             except TypeError:
                 print("Type error")
+                # feedback("Please check submission values <TypeError>")
+                traceback.print_exc()
             except ValueError:
                 print("Value error")
+                # feedback("Please check submission values <ValueError>")
+                traceback.print_exc()
 
         def q():
             submit.set(True)
-            time.sleep(2)
+            # time.sleep(2)
             print("Quitting without saving")
+            feedback("Quitting without saving")
 
         def mass_apply():
+            global new_discount
             print("mass apply")
             d = selection_dealer.get()
             m = selection_model.get()
             c = selection_class.get()
             print("d: <{d}>, m: <{m}>, C: <{c}>".format(d=d, m=m, c=c))
-            if d and c:
-                # apply a given discount structure to each model within the given class for the given dealer
-                if c in DS.by_class:
-                    models = DS.by_class[c]
-                    if d in dealers_entries:
-                        for model in models:
-                            print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(model, d, c))
+            if d or c:
+                new_discount = []
+                if d and c:
+                    # apply a given discount structure to each model within the given class for the given dealer
+                    if c in DS.by_class:
+                        models = DS.by_class[c]
+                        if d in dealers_entries:
+                            for model in models:
+                                print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(model, d, c))
+                        else:
+                            print("Dealer: <{0}> not found in dealers_entries when mass applying to class: <{1}>".format(d, c))
                     else:
-                        print("Dealer: <{0}> not found in dealers_entries when mass applying to class: <{1}>".format(d, c))
-                else:
-                    print("Class: <{0}> not found in DS.by_class when mass applying>".format(c))
-                    # if model.clazz.lower() == c.lower():
+                        print("Class: <{0}> not found in DS.by_class when mass applying>".format(c))
+                        # if model.clazz.lower() == c.lower():
 
-            elif d:
-                print("Act on dealer <{0}>".format(d))
-                # apply a given discount structure to all models of all class within given dealer.
-            else:
-                print("No action.")
+                elif d:
+                    print("Act on dealer <{0}>".format(d))
+                    # apply a given discount structure to all models of all class within given dealer.
+                else:
+                    print("No action.")
 
             # [d] => apply to all models within dealer
             # [d, c] => apply to all models within class within dealer
+
+        def feedback(txt, err=False):
+            if txt == None:
+                raise ValueError("txt is None")
+            feedback_window.configure(state='normal')
+            if not feedback_contents or all([er for er, cont in feedback_contents]):
+                feedback_contents.clear()
+                print("Feedbackvar:", feedback_var.get())
+                if feedback_var.get():
+                    feedback_window.delete('1.0', tk.END)
+                    feedback_var.set("")
+            feedback_contents.append((err, txt))
+
+            feedback_var.set(feedback_var.get() + txt + "\n")
+            feedback_window.insert(tk.END, txt + "\n")
+            # for i in range(10):
+            #     up()
+            # root.after(500, up)
+            # root.after(500, up)
+            # root.after(500, up)
+            # root.after(500, up)
+            # root.after(500, up)
+            # root.after(500, up)
+            # feedback_window.update()
+            # root.update()
+            feedback_window.configure(state='disabled')
+            # time.sleep(10)
 
 
         frame_btn = tk.Frame(window_create)
@@ -482,14 +564,14 @@ def create_view(edit=False):
         btn_quit = tk.Button(sub_frame_btn, text="Quit Without Saving", fg="red",
                                         command=q)
         btn_mass_apply = tk.Button(sub_frame_btn, text="Mass Apply", fg="deepskyblue4", command=mass_apply)
-        feedback_window = tk.Text(frame_btn, state='disabled', width=100, height=10, bg="grey80", fg="red4", font=font_2)
+        feedback_window = tk.Text(frame_btn, width=100, height=10, bg="grey80", fg="red4", font=font_2)
         # text_area.bind('<KeyRelease>', lambda *args: update_feedback())
         # new_status_update("")
         feedback_window.pack(side=tk.BOTTOM)
+        feedback("")
         btn_mass_apply.pack(side=tk.LEFT)
         btn_quit.pack(side=tk.LEFT)
         btn_save_quit.pack(side=tk.LEFT)
-
         
         if edit:
             e_model = edit.model
@@ -506,6 +588,8 @@ def create_view(edit=False):
             slot_var.set(e_slot)
             market_var.set(e_market)
             freight_var.set(e_freight)
+            
+            feedback("Editing: <{0}>".format(edit))
         
 
         print("Before root.mainloop() in create_view")
@@ -522,14 +606,26 @@ def create_view(edit=False):
         except tk.TclError:
             print("_tkinter.TclError")
 
-        ts = time.time()
-        tn = time.time()
-        tp = tn - ts
-        while tp < 2:
-            tn = time.time()
-            tp = tn - ts
-            feedback_window.insert(tk.END, ".1")
-            print(".")
+        # up = lambda *args: feedback_window.insert(tk.END, ".1")
+        # for i in range(10):
+        #     up()
+        # root.after(500, up)
+        # root.after(500, up)
+        # root.after(500, up)
+        # root.after(500, up)
+        # root.after(500, up)
+        # root.after(500, up)
+        # feedback_window.update()
+        # time.sleep(10)
+
+        # ts = time.time()
+        # tn = time.time()
+        # tp = tn - ts
+        # while tp < 2:
+        #     tn = time.time()
+        #     tp = tn - ts
+        #     feedback_window.insert(tk.END, ".1")
+        #     print(".")
             
 
         print("global new_discount:", new_discount)
@@ -539,6 +635,7 @@ def create_view(edit=False):
     new_discount = main_loop()
     # DS.update(new_discount.new_model_entry())
     print("global new_discount:", new_discount)
+    time.sleep(1)
     # disable(window_create)
     window_create.destroy()
 
@@ -632,15 +729,18 @@ def main_view():
 
 
     def create_function():
-        global listbox
+        global listbox, new_discount
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
         did_update = False
         if new_discount:
             did_update = True
-            update_discounts(new_discount)
-            new_status_update(status_update)
+            if type(new_discount) != list:
+                new_discount = [new_discount]
+            for discount in new_discount:
+                update_discounts(discount)
+                new_status_update(status_update)
         print("new discount {0}:".format(did_update), new_discount)
         # DS.adjust_models(new_discount)
         # read_entries()
@@ -1075,7 +1175,7 @@ class FullScreenApp(object):
         self._geom=geom
 
 if __name__ == "__main__":
-
+    # global root
     
 
 # root.mainloop()
