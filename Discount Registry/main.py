@@ -503,7 +503,7 @@ def create_view(edit=False):
                 # if j not in covered_cols:
                 #     covered_cols.append(j)
                 # print("widget.size():", widget.size())
-                widget.bind("<Tab>", focus_next_window)
+                widget.bind("<Tab>", focus_next_window)  #TODO: why doesn't this work?
                 if not isinstance(widget, tk.Button):
                     widget.grid(row=i, column=1 + j, sticky="nsew", padx=5, pady=5)
                 else:
