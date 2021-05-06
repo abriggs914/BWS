@@ -33,6 +33,7 @@ CREATE_BG = "lightsteelblue"
 CREATE_BTN_BG = "lightslategray"
 CREATE_LBL_BG = "lightslategray"
 INFO_MSG_FG = "firebrick4"
+IMPLEMENT_PROPOSED_FIELD = 0
 
 font_1 = None
 font_2 = None
@@ -82,6 +83,7 @@ def update_discounts(d):
     f = d.freight
     for discount in original_entries:
         if discount == d:
+            print("DISCOUNT FOUND IN ORIGINAL_ENTRIES")
             if any([
                 s != discount.slot,
                 m != discount.market,
@@ -97,6 +99,7 @@ def update_discounts(d):
             else:
                 # The entered values match existing records - no changes
                 return
+    print("DISCOUNT NOT FOUND IN ORIGINAL_ENTRIES")
 
     append_discount(d)
     status_update = "Created discount: [\t" + str(d) + "\t]"
@@ -116,6 +119,55 @@ def update_discount(d):
 def append_discount(d):
     with open("discount_registry.csv", 'a') as f:
         f.write("\n" + d.registry_entry())
+    read_entries()
+
+def remove_discount(d):
+    print("Removing discount entry: {0}".format(d))
+    entries = {}
+    targets = []
+    with open("discount_registry.csv", 'r+') as f:
+        # f_dict = csv.DictReader(f)
+        lines = list(f.readlines())
+        new_lines = []
+        header = None
+        print("lines:", lines)
+        for i, line in enumerate(lines):
+            print("\tline: <{0}>\n\tline.strip(): <{1}>\n\tline.strip().split(\",\"): <{2}>".format(line, line.strip(), line.strip().split(",")))
+            if i == 0:
+                header = line.strip().split(",")
+                continue
+            entry = dict(zip(header, line.strip().split(",")))
+            print("header:", header,",line: <{0}>".format(line), ",entry:", entry)
+            e_d = entry["dealer"]
+            e_m = entry["model"]
+            spl = e_m.split("<")
+            e_c = spl[1][:-1].strip()
+            print("spl: {0}, e_c: {1}, spl[0].strip(): <{2}>".format(spl, e_c, spl[0].strip()))
+            e_m = DS.look_up_by_name(spl[0].strip(), e_c)
+            if e_m == None:
+                raise ValueError("Model look up returned None")
+            d_d = d.dealer
+            d_m = d.model
+            d_c = d_m.clazz
+            if all([
+                e_d.lower() == d_d.lower(),
+                e_m.model_name.lower() == d_m.model_name.lower(),
+                e_c.lower() == d_c.lower(),
+            ]):
+                targets.append(entry)
+            else:
+                new_lines.append(",".join(list(entry.values())))
+            entries["Entry {0}".format(i)] = list(entry.values())
+
+        f.truncate(0)
+        f.seek(0)
+        f.write(",".join(header))
+        for line in new_lines:
+            print("writing line: {0}".format(line))
+            f.write("\n" + line)
+    print(dict_print(entries, "Entries"))
+    print("Targeting:", targets)
+    # raise ValueError("Stop here")
     read_entries()
 
 def read_entries():
@@ -139,6 +191,7 @@ def read_entries():
             name_val = vals[1]
             name_spl = name_val.split("<")
             model_name = name_spl[0].strip()
+            print("vals <{vals}>\nname_val: <{nv}>\nname_spl: <{ns}>\nmodel_name: <{mn}>".format(vals=vals, nv=name_val, ns=name_spl, mn=model_name))
             model_class = name_spl[1].strip()[0:-1]
             m = DS.look_up_by_name(model_name, model_class)
             # print("found:", m)
@@ -192,7 +245,7 @@ def load_all_models():
     # dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
     # models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
     for model in DS.models:
-        print("model:", model, "type(model):", type(model))
+        # print("model:", model, "type(model):", type(model))
         if model not in models_entries:
             models_entries[model] = [-1]
 
@@ -251,7 +304,7 @@ def create_view(edit=False):
     status_update = "STATUS UPDATE"
     SEM = "Please check submission values.\n"
 
-    def ins(m):
+    def ins(m, override=False):
         # spl = m.split(" ")
         # print("m:", m, "spl",spl)
         # m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
@@ -261,7 +314,7 @@ def create_view(edit=False):
         # print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or DS.by_model[str(DS.look_up_by_name(m))][2]))
         if current_model_var.get() or m.status:
             print("INCLUDE")
-        return current_model_var.get() or m.status
+        return current_model_var.get() or m.status or override
         # combobox_model["values"] = combobox_model["values"] + [m] 
 
     def status_change(*args):
@@ -343,14 +396,14 @@ def create_view(edit=False):
             
             # cal.pack(pady = 20)
             
-            def set_today():
+            def cal_set_today():
                 # date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
                 # date_in = date_in.strftime("%Y-%m-%d")
                 # date_in = cal.get_date()
                 # date.config(text = "Selected Date is: " + date_in)
                 # print("Selected Date is: " + date_in)
                 # print("current_model_var: " + str(current_model_var.get()))
-                cal.set_selection
+                cal.selection_set(datetime.datetime.today())
             
             # Add Button and Label
             btn_set_today = tk.Button(
@@ -365,7 +418,7 @@ def create_view(edit=False):
             # date.pack(pady = 20)
 
             label_names["Date"].append(cal)
-            label_names["Date"].append(btn_get_date)
+            label_names["Date"].append(btn_set_today)
             label_names["Date"].append(date)
 
             current_checkbox = tk.Checkbutton(
@@ -430,7 +483,9 @@ def create_view(edit=False):
         )
         label_names["Freight"].append(spinbox_freight)
 
-
+        def focus_next_window(event):
+            event.widget.tk_focusNext().focus()
+            return("break")
 
             # window_create.rowconfigure(i, weight=1, minsize=300)
             #         window_create.columnconfigure(j, weight=1, minsize=100)
@@ -448,7 +503,11 @@ def create_view(edit=False):
                 # if j not in covered_cols:
                 #     covered_cols.append(j)
                 # print("widget.size():", widget.size())
-                widget.grid(row=i, column=1 + j, sticky="nsew", padx=5, pady=5)
+                widget.bind("<Tab>", focus_next_window)
+                if not isinstance(widget, tk.Button):
+                    widget.grid(row=i, column=1 + j, sticky="nsew", padx=5, pady=5)
+                else:
+                    widget.grid(row=i, column=1 + j, sticky="sw", padx=5, pady=5)
 
         def submit_entries(p_d=None, p_m=None, p_s=None, p_k=None, p_f=None, p_t=None):
             disc = None
@@ -518,7 +577,10 @@ def create_view(edit=False):
                     desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
                     stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
                     stat = current if stat else non_current
-                    model = Model(c, m, desc, stat)
+                    # stat = non_current if stat else current
+                    model = Model(c, m, desc, stat, IMPLEMENT_PROPOSED_FIELD)
+                    print("model entry creation:", model.fields_list())
+                    # raise ValueError("STOP")
                     do_update = True
                 if not model:
                     feedback(SEM + "Please check submission values <not model>", err=True)
@@ -549,7 +611,7 @@ def create_view(edit=False):
         def validate_zeros(s, k, f):
             reply = True
             if all(list(map(lambda v: float(v) == 0, [s, k, f]))):
-                reply = easygui.ynbox(msg="Are you sure you want to create a\ndiscount with all \'0\' values?", default_choice="No", cancel_choice="No", title="Discount Creation")
+                reply = easygui.ynbox(msg="Are you sure you want to create a\ndiscount with all \"0\" values?", default_choice="No", cancel_choice="No", title="Discount Creation")
             return reply
 
         def save_quit():
@@ -563,7 +625,7 @@ def create_view(edit=False):
             feedback("Quitting without saving")
 
         def mass_apply():
-            global new_discount
+            global new_discount, dealers_entries
             print("mass apply")
             d = selection_dealer.get()
             m = selection_model.get()
@@ -588,22 +650,56 @@ def create_view(edit=False):
             print("d: <{d}>, m: <{m}>, C: <{c}>".format(d=d, m=m, c=c))
             if d or c:
                 new_discount = []
+                new_model = None
                 if d and c:
+
+                    if d not in dealers_entries:
+                        reply = easygui.ynbox(msg="Dealer \"{0}\" not found.\nWould you like to create a new entry?".format(d), default_choice="No", cancel_choice="No", title="Dealer Creation")
+                        if reply:
+                            dealers_entries[d] = [len(original_entries)]
+
+                    if c not in DS.by_class and m:
+                        reply = easygui.ynbox(msg="Class \"{0}\" not found.\nWould you like to create a new entry?".format(c), default_choice="No", cancel_choice="No", title="Dealer Creation")
+                        if reply:
+                            class_entries[c] = [len(original_entries)]
+                            
+                            
+                            desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
+                            stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
+                            stat = current if stat else non_current
+                            # stat = non_current if stat else current
+                            new_model = Model(c, m, desc, stat, IMPLEMENT_PROPOSED_FIELD)
+                            DS.update(new_model)
+
+
+                            # DS.add_class(c, model)
+
                     # apply a given discount structure to each model within the given class for the given dealer
                     # "1% slot on all Tags"
+                    
                     if c in DS.by_class:
-                        models = [m_val for m_val in DS.by_class[c] if ins(m_val)]
-                        for m_val in DS.by_class[c]:
-                            print("m_val:", m_val, ", ins(m_val)", ins(m_val))
+                        print("DS.by_class[c]:", DS.by_class[c])
+                        models = [m_val for m_val in DS.by_class[c] if ins(m_val) or (True if m and m_val.model_name.lower() == m.lower() else False)]
+                        if new_model != None:
+                            models.append(new_model)
+                        # for m_val in DS.by_class[c]:
+                        #     print("m_val:", m_val, ", ins(m_val)", ins(m_val))
                         model_ref = {str(m_val): m_val for m_val in models}
+                        print("models:", models)
+                        print("model_ref:", model_ref)
+                        
                         if d in dealers_entries:
-                            filtered_models = easygui.multchoicebox(
-                                msg="Apply a {0} % slot, {1} % market, and a {2} freight discount to dealer \"{3}\"?\n\nNo selection defaults to all listed models.\n\nSelected Models will have this discount structure applied.".format(s, k, money(float(f)), d),
-                                title="Filter Models",
-                                choices=models,
-                                preselect=None
-                                # preselect=[i for i in range(len(models))]
-                            )
+                            if len(models) > 1:
+                                filtered_models = easygui.multchoicebox(
+                                    msg="Apply Discount Structure:\n\t\"{0} % slot, {1} % market, and a {2} freight\"\nTo dealer \"{3}\"?\n\nNo selection defaults to all listed models.\n\nSelected Models will have this discount structure applied.".format(s, k, money(float(f)), d),
+                                    title="Filter Models",
+                                    choices=models,
+                                    preselect=None
+                                    # preselect=[i for i in range(len(models))]
+                                )
+                            else:
+                                filtered_models = list(map(str, models))
+                            print("filtered_models:", filtered_models)
                             filtered_models = [model_ref[m_val] for m_val in filtered_models]
                             print("filtered_models:", filtered_models)
                             if not filtered_models:
@@ -656,6 +752,14 @@ def create_view(edit=False):
             feedback_window.insert(tk.END, txt + "\n")
             feedback_window.configure(state='disabled')
 
+        def clear_fields(*args):
+            selection_dealer.set("")
+            selection_model.set("")
+            selection_class.set("")
+            selection_slot.set(0)
+            selection_market.set(0)
+            selection_freight.set(0)
+
 
         frame_btn = tk.Frame(window_create, bg=CREATE_BG)
         frame_btn.pack(side=tk.BOTTOM)
@@ -686,6 +790,14 @@ def create_view(edit=False):
             bg=CREATE_BTN_BG,
             font=font_2,
             command=mass_apply
+        )
+        btn_clear_fields = tk.Button(
+            sub_frame_btn,
+            text="Clear Fields",
+            fg=fg,
+            bg=bg,
+            font=font_2,
+            command=clear_fields
         )
         feedback_window = ScrolledText(frame_btn, width=100, height=10, bg="grey80", fg="red4", font=font_2)
         # feedback_window = tk.Text(frame_btn, width=100, height=10, bg="grey80", fg="red4", font=font_2)
@@ -870,6 +982,7 @@ def main_view():
         enable(window_view)
         clear_data(listbox)
         add_data(listbox)
+        info_msg_var.set(discount_display_info())
         # by_models = create_by_model()
         # print("LAST ENTRIES:", list(by_models.keys())[-5:])
 
@@ -904,12 +1017,31 @@ def main_view():
     def delete_function():
         global listbox
         selection = listbox.curselection()
-        print('Delete a discount :', selection)
+        selection = list(listbox.curselection())
+        if 0 in selection:
+            selection.remove(0)
+        selection = [x - 1 for x in selection]
+        print("before deletion: ", listbox["values"])
+        for sel in selection:
+            print("discount_entries ({0})".format(len(discount_entries)), discount_entries)
+            discount = discount_entries[sel]
+            print("ATTEMPTING TO REMOVE DISCOUNT:", discount)
+            discount_entries.remove(discount)
+            original_entries.remove(discount)
+            remove_discount(discount)
 
-    def submit_function():
-        global listbox
-        selection = listbox.curselection()
-        print('Listbox selection :', selection)
+        print('Delete a discount :', selection)
+        print("before clear: ", listbox["values"])
+        clear_data(listbox)
+        print("after clear: ", listbox["values"])
+        add_data(listbox)
+        print("after addition: ", listbox["values"])
+        info_msg_var.set(discount_display_info())
+
+    # def submit_function():
+    #     global listbox
+    #     selection = listbox.curselection()
+    #     print('Listbox selection :', selection)
 
     def sort_by_date():
         global sort_status, listbox
@@ -1017,7 +1149,7 @@ def main_view():
             for attr, val in check_data.items():
                 i += 1
                 if val:
-                    print("\tchecking entry:", entry, ", at attr:", attr)
+                    # print("\tchecking entry:", entry, ", at attr:", attr)
                     s = str(getattr(entry, attr)).lower()
                     if attr in percentages:
                         s = percent(float(s), 3)
@@ -1040,6 +1172,7 @@ def main_view():
         add_data(listbox)
         reset_check_buttons()
         # print(dict_print(check_data, "res", number=True))
+        info_msg_var.set(discount_display_info())
 
 
     def toggle_include_all_discounts(*args):
@@ -1098,7 +1231,7 @@ def main_view():
         btn_sort_market = tk.Button(sort_btn_frame, text='Sort by Market %', command=sort_by_market)
         btn_sort_market.pack(side=tk.LEFT)
 
-        btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
+        btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight $', command=sort_by_freight)
         btn_sort_freight.pack(side=tk.LEFT)
 
         info_msg_var.set(discount_display_info())
@@ -1316,12 +1449,7 @@ class FullScreenApp(object):
 
 if __name__ == "__main__":
     # global root
-    
-
-# root.mainloop()
-
-    # TODO: sorting stopped working?
-
+    # root.mainloop()
     DS = DataSet()
     DS.init()
     read_entries()

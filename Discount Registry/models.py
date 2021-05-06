@@ -108,7 +108,9 @@ class DataSet:
                 print("lst:\t", lst, ", status:", lst[-1], ", type(status):", type(lst[-1]))
                 # vals = lst[] + [current if lst[-1] == "True" or lst[-1] == "1" else non_current]
                 # print("VALS:\t", dict(zip(["clazz", "model_name", "description", "status"], vals)))
-                m = Model(*lst[:-2] + [int(lst[-2]), int(lst[-1])])
+                vals = lst[:-2] + [int(lst[-2]), int(lst[-1])]
+                vals[-2] = non_current if vals[-2] == current else current
+                m = Model(*vals)
                 self.models.append(m)
                 if row["class"].upper() in self.by_class:
                     self.by_class[row["class"].upper()].append(m)
@@ -168,7 +170,7 @@ class DataSet:
         return m.model_name + " <" + m.clazz.upper() + ">"
 
     def look_up_by_name(self, name, clazz):
-        # print("Searching models for m=\"" + str(name) + "\", c=\"" + str(name) + "\"")
+        print("Searching models for m=\"" + str(name) + "\", c=\"" + str(clazz) + "\"")
         # print("In: ", self.models)
         if not hasattr(self, "models"):
             raise DataSetNotInitialized("Attribute \"models\" has not been initialized yet. Unable to create \"by_model\".")
@@ -186,8 +188,13 @@ class DataSet:
                 return m
 
     def write_new_model(self, m):
-        with open("models.csv", 'a') as f:
-            f.write("\n" + ",".join(list(map(str, [m.clazz, m.model_name, m.description, m.status]))))
+        with open("model_list.csv", 'a') as f:
+            f.write("\n" + ",".join(list(map(str, [m.clazz, m.model_name, m.description, m.status, m.proposed]))))
+
+    # def add_class(self, c, m):
+    #     if c.upper() in self.by_class:
+    #         raise ValueError("Class \"{0}\" already exists in DS.by_class!".format(c))
+    #     self.by_class[c.upper()] = [m]
 
 
 class Model:
@@ -195,8 +202,11 @@ class Model:
         self.clazz = clazz.strip().upper()
         self.model_name = model_name.strip()
         self.description = description.strip()
-        self.status = not status # file lists non-current status, so need to inverse the value
+        self.status = status #0 if status else 1 # file lists non-current status, so need to inverse the value
         self.proposed = proposed
+
+    def fields_list(self):
+        return [self.clazz, self.model_name, self.description, self.status, self.proposed]
 
     def __eq__(self, m):
         print("self: <" + str(self) + ">")
