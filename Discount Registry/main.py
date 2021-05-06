@@ -1,5 +1,6 @@
 import csv
 import time
+import random
 import datetime
 import traceback
 from models import *
@@ -28,6 +29,22 @@ sort_status = None
 new_discount = None
 status_update = None
 full_size = None
+CREATE_BG = "lightsteelblue"
+CREATE_BTN_BG = "lightslategray"
+CREATE_LBL_BG = "lightslategray"
+INFO_MSG_FG = "firebrick4"
+
+font_1 = None
+font_2 = None
+font_3 = None
+fg = "gray84"
+bg = "red3"
+abg = "red4"
+afg = "gray84"
+sc = "red4"
+
+def discount_display_info():
+    return "Showing {0} / {1} discount entries".format(len(discount_entries), len(original_entries))
 
 def hide(frame):
     for child in frame.winfo_children():
@@ -112,7 +129,7 @@ def read_entries():
     with open("discount_registry.csv", 'r') as f:
         f_dict = csv.DictReader(f)
         for i, entry in enumerate(f_dict):
-            print(entry)
+            print("entry:", entry)
             # csv header
             #   dealer,model,slot,market,freight,date
             # app header
@@ -126,10 +143,10 @@ def read_entries():
             m = DS.look_up_by_name(model_name, model_class)
             # print("found:", m)
             vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + vals[5:]
-            # print("vals:", vals)
+            print("\tvals:", vals)
             discount = Discount(*vals)
-            # print("discount: ", discount)
-            # print("discount.model:", discount.model)
+            print("discount: ", discount)
+            print("discount.model:", discount.model)
 
             if discount.dealer not in dealers_entries:
                 dealers_entries[discount.dealer] = [i]
@@ -199,18 +216,9 @@ def create_view(edit=False):
     label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
     label_names = dict(zip(label_names_list, [[] for i in label_names_list]))
     # root.geometry(size)
-    window_create = tk.Frame(window_main)
+    window_create = tk.Frame(window_main, bg=CREATE_BG)
     # window_create = tk.Frame(root)
     window_create.pack()
-
-
-    font_1 = tk.font.Font(family='consolas')
-    font_2 = tk.font.Font(family='consolas', weight='bold')
-    fg = "gray84"
-    bg = "red3"
-    abg = "red4"
-    afg = "gray84"
-    sc = "red4"
 
     # date,dealer,model,class,slot,market,freight
     submit = tk.BooleanVar()
@@ -233,10 +241,10 @@ def create_view(edit=False):
     freight_var = tk.StringVar()
     feedback_var = tk.StringVar()
 
-    frame_labels = tk.Frame(window_create)
+    frame_labels = tk.Frame(window_create, bg=CREATE_BG)
     frame_labels.pack(side=tk.LEFT)
 
-    frame_entries = tk.Frame(window_create)
+    frame_entries = tk.Frame(window_create, bg=CREATE_BG)
     frame_entries.pack(side=tk.RIGHT)
 
     combobox_model = None
@@ -335,20 +343,25 @@ def create_view(edit=False):
             
             # cal.pack(pady = 20)
             
-            def grad_date():
+            def set_today():
                 # date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
                 # date_in = date_in.strftime("%Y-%m-%d")
-                date_in = cal.get_date()
-                date.config(text = "Selected Date is: " + date_in)
-                print("Selected Date is: " + date_in)
-                print("current_model_var: " + str(current_model_var.get()))
+                # date_in = cal.get_date()
+                # date.config(text = "Selected Date is: " + date_in)
+                # print("Selected Date is: " + date_in)
+                # print("current_model_var: " + str(current_model_var.get()))
+                cal.set_selection
             
             # Add Button and Label
-            btn_get_date = tk.Button(frame_entries, text = "Get Date",
-                command = grad_date) 
+            btn_set_today = tk.Button(
+                frame_entries,
+                text = "Today",
+                command=cal_set_today,
+                bg=CREATE_BTN_BG
+            ) 
             # btn_get_date.pack(pady = 20)
             
-            date = tk.Label(frame_entries, text = "")
+            date = tk.Label(frame_entries, text = "", bg=CREATE_LBL_BG)
             # date.pack(pady = 20)
 
             label_names["Date"].append(cal)
@@ -428,7 +441,7 @@ def create_view(edit=False):
             if len(entry_widget) == 0:
                 print("\t\tSKIPPED label_name:", lbl_name)
                 continue
-            lbl = tk.Label(frame_entries, text=lbl_name)
+            lbl = tk.Label(frame_entries, text=lbl_name, bg=CREATE_BG)
             lbl.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
             print("label_name:", lbl_name)
             for j, widget in enumerate(entry_widget):
@@ -644,17 +657,36 @@ def create_view(edit=False):
             feedback_window.configure(state='disabled')
 
 
-        frame_btn = tk.Frame(window_create)
+        frame_btn = tk.Frame(window_create, bg=CREATE_BG)
         frame_btn.pack(side=tk.BOTTOM)
 
-        sub_frame_btn = tk.Frame(frame_btn)
+        sub_frame_btn = tk.Frame(frame_btn, bg=CREATE_BG)
         sub_frame_btn.pack(side=tk.BOTTOM)
 
-        btn_save_quit = tk.Button(sub_frame_btn, text="Save & Quit", fg="green",
-                                        command=save_quit)
-        btn_quit = tk.Button(sub_frame_btn, text="Quit Without Saving", fg="red",
-                                        command=q)
-        btn_mass_apply = tk.Button(sub_frame_btn, text="Mass Apply", fg="deepskyblue4", command=mass_apply)
+        btn_save_quit = tk.Button(
+            sub_frame_btn,
+            text="Save & Quit",
+            fg="green",
+            bg=CREATE_BTN_BG,
+            font=font_2,
+            command=save_quit
+        )
+        btn_quit = tk.Button(
+            sub_frame_btn,
+            text="Quit Without Saving",
+            fg="red",
+            bg=CREATE_BTN_BG,
+            font=font_2,
+            command=q
+        )
+        btn_mass_apply = tk.Button(
+            sub_frame_btn,
+            text="Mass Apply",
+            fg="deepskyblue4",
+            bg=CREATE_BTN_BG,
+            font=font_2,
+            command=mass_apply
+        )
         feedback_window = ScrolledText(frame_btn, width=100, height=10, bg="grey80", fg="red4", font=font_2)
         # feedback_window = tk.Text(frame_btn, width=100, height=10, bg="grey80", fg="red4", font=font_2)
         # text_area.bind('<KeyRelease>', lambda *args: update_feedback())
@@ -748,14 +780,6 @@ def main_view():
     # window_create = tk.Frame(root)
     listbox = None
 
-    font_1 = tk.font.Font(family='consolas')
-    font_2 = tk.font.Font(family='consolas', weight='bold')
-    fg = "gray84"
-    bg = "red3"
-    abg = "red4"
-    afg = "gray84"
-    sc = "red4"
-
     check_btn_date = None
     check_btn_dealer = None
     check_btn_model = None
@@ -775,6 +799,7 @@ def main_view():
     check_var_market = tk.IntVar()
     check_var_freight = tk.IntVar()
     include_all_discounts = tk.IntVar()
+    info_msg_var = tk.StringVar()
 
     # check_var_freight.trace_add("write", freight_written)
     
@@ -804,9 +829,15 @@ def main_view():
             listbox.insert(i+1, discount.table_entry(dims))
 
     def init_listbox():
+        listbox_frame = tk.Frame(window_view)
+        listbox_frame.pack(side=tk.TOP)
         
-        listbox = tk.Listbox(window_view, selectmode=tk.EXTENDED, width=200)
+        scrollbar = tk.Scrollbar(listbox_frame, orient="vertical")
+        listbox = tk.Listbox(listbox_frame, selectmode=tk.EXTENDED, yscrollcommand=scrollbar.set, width=200)
         listbox['font'] = font_1
+
+        scrollbar.config(command=listbox.yview)
+        scrollbar.pack(side="right", fill="y")
 
         add_data(listbox)
         
@@ -1036,11 +1067,14 @@ def main_view():
     
     def main_loop():
         global listbox, check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry, status_window
-        listbox = init_listbox()
+        # listbox = init_listbox()
         # print("sort_status:", sort_status)
         # print("dir:", dir())
         
-        mod_btn_frame = tk.Frame(window_view)
+        btns_frame = tk.Frame(window_view)
+        btns_frame.pack(side=tk.TOP)
+
+        mod_btn_frame = tk.Frame(btns_frame)
         mod_btn_frame.pack(side=tk.TOP)
 
         sort_btn_frame = tk.Frame(mod_btn_frame)
@@ -1067,6 +1101,9 @@ def main_view():
         btn_sort_freight = tk.Button(sort_btn_frame, text='Sort by Freight %', command=sort_by_freight)
         btn_sort_freight.pack(side=tk.LEFT)
 
+        info_msg_var.set(discount_display_info())
+        info_label = tk.Label(mod_btn_frame, text="", fg=INFO_MSG_FG, bg=CREATE_LBL_BG, textvariable=info_msg_var, font=font_2, padx=20, pady=10)
+        info_label.pack(side=tk.LEFT)
 
         search_btn_frame = tk.Frame(mod_btn_frame)
         search_btn_frame.pack(side=tk.BOTTOM)
@@ -1218,14 +1255,22 @@ def main_view():
         check_btn_include_all_discounts.pack(side=tk.LEFT)
         
 
-        listbox.pack()
+        # listbox.pack()
 
 
         ctrl_btn_frame = tk.Frame(window_view)
         ctrl_btn_frame.pack(side=tk.BOTTOM)
 
+        def cursor_enter(*args):
+            chx = ["arrow", "circle", "clock", "cross", "dotbox", "exchange", "fleur", "heart", "heart", "man", "mouse", "pirate", "plus", "shuttle", "sizing" ,"spider" ,"spraycan" ,"star", "target", "tcross", "trek", "watch"]
+            status_window.configure(cursor=random.choice(chx))
+        def cursor_leave(*args):
+            status_window.configure(cursor="circle")
+
         print("Fullsize: " + str(full_size))
         status_window = ScrolledText(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4", font=font_2)
+        status_window.bind("<Enter>", cursor_enter)
+        status_window.bind("<Leave>", cursor_leave)
         # status_window = tk.Text(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4", font=font_2)
         # new_status_update("")
         status_window.pack(side=tk.TOP)
@@ -1248,6 +1293,8 @@ def main_view():
                                     command=root.destroy)
         btn_quit.pack(side=tk.TOP)
 
+        listbox = init_listbox()
+        listbox.pack()
         root.mainloop()
 
     main_loop()
@@ -1273,12 +1320,16 @@ if __name__ == "__main__":
 
 # root.mainloop()
 
+    # TODO: sorting stopped working?
 
     DS = DataSet()
     DS.init()
     read_entries()
     print(dims)
     root = tk.Tk(className='\Discount Registry')
+    font_1 = tk.font.Font(family='consolas')
+    font_2 = tk.font.Font(family='consolas', weight='bold')
+    font_3 = tk.font.Font(family='consolas', weight='bold', size=16)
     app = FullScreenApp(root)
     # root.geometry(size)
     window_main = tk.Frame(root)

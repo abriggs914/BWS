@@ -21,7 +21,7 @@ def table_format(d, m, s, k, f, c, t, dims):
 class Discount:
 
     def __init__(self, dealer, model, slot, market, freight, date):
-        self.dealer = dealer
+        self.dealer = dealer.strip()
         self.model = model
         self.slot = float(slot)
         self.market = float(market)

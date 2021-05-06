@@ -192,9 +192,9 @@ class DataSet:
 
 class Model:
     def __init__(self, clazz, model_name, description, status, proposed):
-        self.clazz = clazz.upper()
-        self.model_name = model_name
-        self.description = description
+        self.clazz = clazz.strip().upper()
+        self.model_name = model_name.strip()
+        self.description = description.strip()
         self.status = not status # file lists non-current status, so need to inverse the value
         self.proposed = proposed
 
