@@ -10,20 +10,22 @@ import tkinter as tk
 from tkcalendar import Calendar
 from tkinter.scrolledtext import ScrolledText
 from models_writer import current, non_current
+
 # import tksheet
 
-admin=easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges", default_choice="No")  # allows a little more functionality  ! Beware of data consistency when using !
+admin = easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges",
+                      default_choice="No")  # allows a little more functionality  ! Beware of data consistency when using !
 TRUE_FOR_NOW = True
 
 root = None
 min_width = 1050
-size = str(min_width) + 'x' + str(round(min_width * (6/9)))
+size = str(min_width) + 'x' + str(round(min_width * (6 / 9)))
 
 original_entries = []  # Do not modify - contains the original contents from the file
 discount_entries = []  # working entries, for display purposes only
-dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
-models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
-class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
+dealers_entries = {}  # holds a dictionary of dealers, with a list of indexes referencing original_entries
+models_entries = {}  # holds a dictionary of models, with a list of indexes referencing original_entries
+class_entries = {}  # holds a dictionary of classes, with a list of indexes referencing original_entries
 dims = [0, 0, 0, 0, 0, 0, 0]
 sort_status = None
 new_discount = None
@@ -44,8 +46,10 @@ abg = "red4"
 afg = "gray84"
 sc = "red4"
 
+
 def discount_display_info():
     return "Showing {0} / {1} discount entries".format(len(discount_entries), len(original_entries))
+
 
 def hide(frame):
     for child in frame.winfo_children():
@@ -54,6 +58,7 @@ def hide(frame):
             enable(child)
         else:
             child.configure(state=tk.HIDDEN)
+
 
 def enable(frame):
     for child in frame.winfo_children():
@@ -64,6 +69,7 @@ def enable(frame):
             continue
         else:
             child.configure(state=tk.NORMAL)
+
 
 def disable(frame):
     for child in frame.winfo_children():
@@ -104,6 +110,7 @@ def update_discounts(d):
     append_discount(d)
     status_update = "Created discount: [\t" + str(d) + "\t]"
 
+
 def update_discount(d):
     header = "dealer,model,slot,market,freight,date"
     # if d in discount_entries:
@@ -112,14 +119,16 @@ def update_discount(d):
         f.write(header)
         for d in original_entries:
             f.write("\n" + d.registry_entry())
-    
+
     original_entries.append(d)
     read_entries()
+
 
 def append_discount(d):
     with open("discount_registry.csv", 'a') as f:
         f.write("\n" + d.registry_entry())
     read_entries()
+
 
 def remove_discount(d):
     print("Removing discount entry: {0}".format(d))
@@ -132,12 +141,14 @@ def remove_discount(d):
         header = None
         print("lines:", lines)
         for i, line in enumerate(lines):
-            print("\tline: <{0}>\n\tline.strip(): <{1}>\n\tline.strip().split(\",\"): <{2}>".format(line, line.strip(), line.strip().split(",")))
+            print("\tline: <{0}>\n\tline.strip(): <{1}>\n\tline.strip().split(\",\"): <{2}>".format(line, line.strip(),
+                                                                                                    line.strip().split(
+                                                                                                        ",")))
             if i == 0:
                 header = line.strip().split(",")
                 continue
             entry = dict(zip(header, line.strip().split(",")))
-            print("header:", header,",line: <{0}>".format(line), ",entry:", entry)
+            print("header:", header, ",line: <{0}>".format(line), ",entry:", entry)
             e_d = entry["dealer"]
             e_m = entry["model"]
             spl = e_m.split("<")
@@ -170,13 +181,14 @@ def remove_discount(d):
     # raise ValueError("Stop here")
     read_entries()
 
+
 def read_entries():
     global original_entries, discount_entries, dealers_entries, models_entries, class_entries, dims
     original_entries = []  # Do not modify - contains the original contents from the file
     discount_entries = []  # working entries, for display purposes only
-    dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
-    models_entries = {} # holds a dictionary of models, with a list of indexes referencing original_entries
-    class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
+    dealers_entries = {}  # holds a dictionary of dealers, with a list of indexes referencing original_entries
+    models_entries = {}  # holds a dictionary of models, with a list of indexes referencing original_entries
+    class_entries = {}  # holds a dictionary of classes, with a list of indexes referencing original_entries
     dims = [len(h) for h in TABLE_HEADER]
     with open("discount_registry.csv", 'r') as f:
         f_dict = csv.DictReader(f)
@@ -191,7 +203,9 @@ def read_entries():
             name_val = vals[1]
             name_spl = name_val.split("<")
             model_name = name_spl[0].strip()
-            print("vals <{vals}>\nname_val: <{nv}>\nname_spl: <{ns}>\nmodel_name: <{mn}>".format(vals=vals, nv=name_val, ns=name_spl, mn=model_name))
+            print("vals <{vals}>\nname_val: <{nv}>\nname_spl: <{ns}>\nmodel_name: <{mn}>".format(vals=vals, nv=name_val,
+                                                                                                 ns=name_spl,
+                                                                                                 mn=model_name))
             model_class = name_spl[1].strip()[0:-1]
             m = DS.look_up_by_name(model_name, model_class)
             # print("found:", m)
@@ -233,10 +247,10 @@ def read_entries():
 
     print("NEW DIMS:", dims)
 
-    
     if TRUE_FOR_NOW or admin:
         load_all_models()
         load_all_classes()
+
 
 def load_all_models():
     print("DS:", DS)
@@ -248,6 +262,7 @@ def load_all_models():
         # print("model:", model, "type(model):", type(model))
         if model not in models_entries:
             models_entries[model] = [-1]
+
 
 def load_all_classes():
     # class_entries = {} # holds a dictionary of classes, with a list of indexes referencing original_entries
@@ -264,7 +279,7 @@ def create_view(edit=False):
     window_main.pack()
 
     today = datetime.date.today()
-    
+
     feedback_contents = []
     label_names_list = ["Date", "Dealer", "Model", "Class", "Slot", "Market", "Freight"]
     label_names = dict(zip(label_names_list, [[] for i in label_names_list]))
@@ -281,12 +296,12 @@ def create_view(edit=False):
     entry_var_slot = tk.DoubleVar()
     entry_var_market = tk.DoubleVar()
     entry_var_freight = tk.DoubleVar()
-    
+
     selection_dealer = tk.StringVar()
     selection_model = tk.StringVar()
     selection_class = tk.StringVar()
     selection_date = tk.StringVar()
-    
+
     current_model_var = tk.IntVar()
 
     slot_var = tk.StringVar()
@@ -308,7 +323,8 @@ def create_view(edit=False):
         # spl = m.split(" ")
         # print("m:", m, "spl",spl)
         # m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
-        print("============================\n\tm.status", m.status, "\n\tcurrent_model_var.get():", current_model_var.get(), "\n\tOR", (current_model_var.get() or m.status))
+        print("============================\n\tm.status", m.status, "\n\tcurrent_model_var.get():",
+              current_model_var.get(), "\n\tOR", (current_model_var.get() or m.status))
         print("\t\tby_models[\"{0}\"]".format(m), m.status)
         # print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(DS.by_model[str(DS.look_up_by_name(m))][2])), DS.by_model[str(DS.look_up_by_name(m))][2])
         # print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or DS.by_model[str(DS.look_up_by_name(m))][2]))
@@ -335,10 +351,9 @@ def create_view(edit=False):
             # model = DS.look_up_by_name(name, clazz)
             # selection_class.set()
         print("Model selected or cleared")
-    
+
     current_model_var.trace_add("write", status_change)
     selection_model.trace_add(("write", "unset"), model_chosen)
-    
 
     def set_models():
         global combobox_model
@@ -362,14 +377,13 @@ def create_view(edit=False):
         print("combobox_model[\"values\"] {0}:".format(type(combobox_model["values"])), combobox_model["values"])
         print("current_model_var.get()", current_model_var.get())
         # for m in list(models_entries.keys()):
-            
 
     def main_loop():
         global combobox_model, new_discount
 
         # up = lambda *args: feedback_window.insert(tk.END, ".1")
-        
-        combobox_model = tk.ttk.Combobox(frame_entries, width = 27, textvariable = selection_model)
+
+        combobox_model = tk.ttk.Combobox(frame_entries, width=27, textvariable=selection_model)
 
         # print("models_entries.keys():", models_entries.keys())
         # print("by_models:", by_models)
@@ -384,18 +398,18 @@ def create_view(edit=False):
             year = today.year
             month = today.month
             day = today.day
-            cal = Calendar(frame_entries, selectmode = 'day',
-                        year = year, month = month,
-                        day = day, textvariable=selection_date,
-                        firstweekday="sunday", date_pattern="y-mm-dd")
+            cal = Calendar(frame_entries, selectmode='day',
+                           year=year, month=month,
+                           day=day, textvariable=selection_date,
+                           firstweekday="sunday", date_pattern="y-mm-dd")
             # selection_date.set(datetime.datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d"))
             cal.selection_set(today)
             print("Init calendar:", cal.get_date())
             cal._display_selection()
             selection_date.set(cal.get_date())
-            
+
             # cal.pack(pady = 20)
-            
+
             def cal_set_today():
                 # date_in = datetime.datetime.strptime(cal.get_date(), "%m/%d/%y")
                 # date_in = date_in.strftime("%Y-%m-%d")
@@ -404,17 +418,17 @@ def create_view(edit=False):
                 # print("Selected Date is: " + date_in)
                 # print("current_model_var: " + str(current_model_var.get()))
                 cal.selection_set(datetime.datetime.today())
-            
+
             # Add Button and Label
             btn_set_today = tk.Button(
                 frame_entries,
-                text = "Today",
+                text="Today",
                 command=cal_set_today,
                 bg=CREATE_BTN_BG
-            ) 
+            )
             # btn_get_date.pack(pady = 20)
-            
-            date = tk.Label(frame_entries, text = "", bg=CREATE_LBL_BG)
+
+            date = tk.Label(frame_entries, text="", bg=CREATE_LBL_BG)
             # date.pack(pady = 20)
 
             label_names["Date"].append(cal)
@@ -424,7 +438,7 @@ def create_view(edit=False):
             current_checkbox = tk.Checkbutton(
                 frame_entries,
                 text="Include non-current models",
-                variable=current_model_var, 
+                variable=current_model_var,
                 bg=bg,
                 fg=fg,
                 font=font_1,
@@ -438,10 +452,10 @@ def create_view(edit=False):
             label_names["Model"].append(current_checkbox)
 
         else:
-            
+
             entry_date = tk.Entry(frame_entries, text=today)
             label_names["Date"].append(entry_date)
-        
+
         # Combobox creation
         combobox_dealer = tk.ttk.Combobox(frame_entries, width=27, textvariable=selection_dealer)
         dealer_names = list(dealers_entries.keys())
@@ -449,7 +463,7 @@ def create_view(edit=False):
         combobox_dealer['values'] = dealer_names
         label_names["Dealer"].append(combobox_dealer)
         combobox_dealer.current()
-        
+
         combobox_class = tk.ttk.Combobox(frame_entries, width=27, textvariable=selection_class)
         class_names = list(class_entries.keys())
         class_names.sort()
@@ -485,7 +499,7 @@ def create_view(edit=False):
 
         def focus_next_window(event):
             event.widget.tk_focusNext().focus()
-            return("break")
+            return ("break")
 
             # window_create.rowconfigure(i, weight=1, minsize=300)
             #         window_create.columnconfigure(j, weight=1, minsize=100)
@@ -503,7 +517,7 @@ def create_view(edit=False):
                 # if j not in covered_cols:
                 #     covered_cols.append(j)
                 # print("widget.size():", widget.size())
-                widget.bind("<Tab>", focus_next_window)  #TODO: why doesn't this work?
+                widget.bind("<Tab>", focus_next_window)  # TODO: why doesn't this work?
                 if not isinstance(widget, tk.Button):
                     widget.grid(row=i, column=1 + j, sticky="nsew", padx=5, pady=5)
                 else:
@@ -523,9 +537,8 @@ def create_view(edit=False):
                 for val in [d, m, c]:
                     val.replace(",", "")
 
-
                 t_d, t_m, t_s, t_k, t_f, t_c, t_t = [True if item else False for item in [d, m, s, k, f, c, t]]
-                print("\tVALUES\nm:",m,"\nc:", c,"\nt_c:", t_c,"\np_m:", p_m,"\ntype(p_m):", type(p_m))
+                print("\tVALUES\nm:", m, "\nc:", c, "\nt_c:", t_c, "\np_m:", p_m, "\ntype(p_m):", type(p_m))
                 missing_entries = ""
                 if not t_d and p_t == None:
                     missing_entries += "\n\tDealer field is blank."
@@ -571,11 +584,14 @@ def create_view(edit=False):
                 do_update = False
 
                 if model == None:
-                    reply = easygui.ynbox(msg="Do you want to create a new model entry?", default_choice="No", cancel_choice="No", title="Model Creation")
+                    reply = easygui.ynbox(msg="Do you want to create a new model entry?", default_choice="No",
+                                          cancel_choice="No", title="Model Creation")
                     if not reply:
                         return
-                    desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
-                    stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
+                    desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"",
+                                            title="Description")  # .ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
+                    stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"],
+                                         default_choice="Current", cancel_choice="Current", title="Status")
                     stat = current if stat else non_current
                     # stat = non_current if stat else current
                     model = Model(c, m, desc, stat, IMPLEMENT_PROPOSED_FIELD)
@@ -592,7 +608,7 @@ def create_view(edit=False):
                 k = float(k) / 100
                 # t = datetime.datetime.strptime(t, "%m/%d/%y")
                 # t = t.strftime("%Y-%m-%d")
-                t = cal.get_date() 
+                t = cal.get_date()
                 disc = Discount(d, model, s, k, f, t)
                 submit.set(True)
                 print("local new discount:", disc)
@@ -611,7 +627,8 @@ def create_view(edit=False):
         def validate_zeros(s, k, f):
             reply = True
             if all(list(map(lambda v: float(v) == 0, [s, k, f]))):
-                reply = easygui.ynbox(msg="Are you sure you want to create a\ndiscount with all \"0\" values?", default_choice="No", cancel_choice="No", title="Discount Creation")
+                reply = easygui.ynbox(msg="Are you sure you want to create a\ndiscount with all \"0\" values?",
+                                      default_choice="No", cancel_choice="No", title="Discount Creation")
             return reply
 
         def save_quit():
@@ -654,32 +671,37 @@ def create_view(edit=False):
                 if d and c:
 
                     if d not in dealers_entries:
-                        reply = easygui.ynbox(msg="Dealer \"{0}\" not found.\nWould you like to create a new entry?".format(d), default_choice="No", cancel_choice="No", title="Dealer Creation")
+                        reply = easygui.ynbox(
+                            msg="Dealer \"{0}\" not found.\nWould you like to create a new entry?".format(d),
+                            default_choice="No", cancel_choice="No", title="Dealer Creation")
                         if reply:
                             dealers_entries[d] = [len(original_entries)]
 
                     if c not in DS.by_class and m:
-                        reply = easygui.ynbox(msg="Class \"{0}\" not found.\nWould you like to create a new entry?".format(c), default_choice="No", cancel_choice="No", title="Dealer Creation")
+                        reply = easygui.ynbox(
+                            msg="Class \"{0}\" not found.\nWould you like to create a new entry?".format(c),
+                            default_choice="No", cancel_choice="No", title="Dealer Creation")
                         if reply:
                             class_entries[c] = [len(original_entries)]
-                            
-                            
-                            desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"", title="Description")  #.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
-                            stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current", title="Status")
+
+                            desc = easygui.enterbox(msg="Describe this model \"" + m + "\" from class \"" + c + "\"",
+                                                    title="Description")  # .ynbox(msg="Is this model current?", choices=["Current", "Non-current"], default_choice="Current", cancel_choice="Current")
+                            stat = easygui.ynbox(msg="Is this model current?", choices=["Current", "Non-current"],
+                                                 default_choice="Current", cancel_choice="Current", title="Status")
                             stat = current if stat else non_current
                             # stat = non_current if stat else current
                             new_model = Model(c, m, desc, stat, IMPLEMENT_PROPOSED_FIELD)
                             DS.update(new_model)
 
-
                             # DS.add_class(c, model)
 
                     # apply a given discount structure to each model within the given class for the given dealer
                     # "1% slot on all Tags"
-                    
+
                     if c in DS.by_class:
                         print("DS.by_class[c]:", DS.by_class[c])
-                        models = [m_val for m_val in DS.by_class[c] if ins(m_val) or (True if m and m_val.model_name.lower() == m.lower() else False)]
+                        models = [m_val for m_val in DS.by_class[c] if
+                                  ins(m_val) or (True if m and m_val.model_name.lower() == m.lower() else False)]
                         if new_model != None:
                             models.append(new_model)
                         # for m_val in DS.by_class[c]:
@@ -687,11 +709,12 @@ def create_view(edit=False):
                         model_ref = {str(m_val): m_val for m_val in models}
                         print("models:", models)
                         print("model_ref:", model_ref)
-                        
+
                         if d in dealers_entries:
                             if len(models) > 1:
                                 filtered_models = easygui.multchoicebox(
-                                    msg="Apply Discount Structure:\n\t\"{0} % slot, {1} % market, and a {2} freight\"\nTo dealer \"{3}\"?\n\nNo selection defaults to all listed models.\n\nSelected Models will have this discount structure applied.".format(s, k, money(float(f)), d),
+                                    msg="Apply Discount Structure:\n\t\"{0} % slot, {1} % market, and a {2} freight\"\nTo dealer \"{3}\"?\n\nNo selection defaults to all listed models.\n\nSelected Models will have this discount structure applied.".format(
+                                        s, k, money(float(f)), d),
                                     title="Filter Models",
                                     choices=models,
                                     preselect=None
@@ -706,13 +729,16 @@ def create_view(edit=False):
                                 filtered_models = models.copy()
                             for model in filtered_models:
                                 disc = submit_entries(p_d=d, p_m=model, p_t=datetime.datetime.today())
-                                print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(model, d, c))
+                                print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(
+                                    model, d, c))
                                 if disc == None:
                                     feedback("Error mass applying discount structure")
                                     return
                                 new_discount.append(disc)
                         else:
-                            print("Dealer: <{0}> not found in dealers_entries when mass applying to class: <{1}>".format(d, c))
+                            print(
+                                "Dealer: <{0}> not found in dealers_entries when mass applying to class: <{1}>".format(
+                                    d, c))
                             # reply = easygui.ynbox(msg="No entries found for dealer \"{0}\".\nWould you like to create an entry?".format(d), default_choice="No", cancel_choice="No", title="Dealer Initialization")
                             feedback("No entries found for dealer \"{0}\".".format(d), err=True)
                     else:
@@ -759,7 +785,6 @@ def create_view(edit=False):
             selection_slot.set(0)
             selection_market.set(0)
             selection_freight.set(0)
-
 
         frame_btn = tk.Frame(window_create, bg=CREATE_BG)
         frame_btn.pack(side=tk.BOTTOM)
@@ -808,7 +833,8 @@ def create_view(edit=False):
         btn_mass_apply.pack(side=tk.LEFT)
         btn_quit.pack(side=tk.LEFT)
         btn_save_quit.pack(side=tk.LEFT)
-        
+        btn_clear_fields.pack(side=tk.LEFT)
+
         if edit:
             e_model = edit.model
             e_dealer = edit.dealer
@@ -824,19 +850,18 @@ def create_view(edit=False):
             slot_var.set(e_slot)
             market_var.set(e_market)
             freight_var.set(e_freight)
-            
+
             feedback("Editing: <{0}>".format(edit))
-        
 
         print("Before root.mainloop() in create_view")
         try:
             while not submit.get():
                 root.update()
             #     pass
-                # print("\tsubmit", submit.get())
-                # root_create.draw()
-                # root.update_idletasks()
-                # root.update()
+            # print("\tsubmit", submit.get())
+            # root_create.draw()
+            # root.update_idletasks()
+            # root.update()
             print("After root.mainloop() in create_view")
             # root.destroy()
         except tk.TclError:
@@ -862,11 +887,9 @@ def create_view(edit=False):
         #     tp = tn - ts
         #     feedback_window.insert(tk.END, ".1")
         #     print(".")
-            
 
         print("global new_discount:", new_discount)
         return new_discount
-
 
     new_discount = main_loop()
     # DS.update(new_discount.new_model_entry())
@@ -914,7 +937,7 @@ def main_view():
     info_msg_var = tk.StringVar()
 
     # check_var_freight.trace_add("write", freight_written)
-    
+
     # listbox_1.insert(2, "Perl")
     # listbox_1.insert(3, "C")
     # listbox_1.insert(4, "PHP")
@@ -938,12 +961,12 @@ def main_view():
                 if discount.slot == 0 and discount.market == 0 and discount.freight == 0:
                     continue
             # print(discount.table_entry(dims))
-            listbox.insert(i+1, discount.table_entry(dims))
+            listbox.insert(i + 1, discount.table_entry(dims))
 
     def init_listbox():
         listbox_frame = tk.Frame(window_view)
         listbox_frame.pack(side=tk.TOP)
-        
+
         scrollbar = tk.Scrollbar(listbox_frame, orient="vertical")
         listbox = tk.Listbox(listbox_frame, selectmode=tk.EXTENDED, yscrollcommand=scrollbar.set, width=200)
         listbox['font'] = font_1
@@ -952,16 +975,15 @@ def main_view():
         scrollbar.pack(side="right", fill="y")
 
         add_data(listbox)
-        
+
         return listbox
 
     def new_status_update(txt):
         status_window.configure(state='normal')
-        if txt == None:
+        if txt is None:
             raise ValueError("txt is None")
         status_window.insert(tk.END, txt + "\n")
         status_window.configure(state='disabled')
-
 
     def create_function():
         global listbox, new_discount
@@ -1007,7 +1029,6 @@ def main_view():
         clear_data(listbox)
         add_data(listbox)
 
-
         #     new_discounts.append(create_view(edit=(discount_entries[sel])))
         # print("edited discounts:", new_discounts)
         # clear_data(listbox)
@@ -1016,12 +1037,14 @@ def main_view():
 
     def delete_function():
         global listbox
-        selection = listbox.curselection()
+        # selection = listbox.curselection()
         selection = list(listbox.curselection())
         if 0 in selection:
             selection.remove(0)
         selection = [x - 1 for x in selection]
-        print("before deletion: ", listbox["values"])
+        print("before deletion: ", listbox.get(0, listbox.size()))
+        print("before clear: ", listbox.get(0, listbox.size()))
+        clear_data(listbox)
         for sel in selection:
             print("discount_entries ({0})".format(len(discount_entries)), discount_entries)
             discount = discount_entries[sel]
@@ -1031,11 +1054,9 @@ def main_view():
             remove_discount(discount)
 
         print('Delete a discount :', selection)
-        print("before clear: ", listbox["values"])
-        clear_data(listbox)
-        print("after clear: ", listbox["values"])
+        print("after clear: ", listbox.get(0, listbox.size()))
         add_data(listbox)
-        print("after addition: ", listbox["values"])
+        print("after addition: ", listbox.get(0, listbox.size()))
         info_msg_var.set(discount_display_info())
 
     # def submit_function():
@@ -1067,7 +1088,8 @@ def main_view():
         global sort_status, listbox
         rev = sort_status == sort_by_model
         if rev:
-            rev = rev if discount_entries[0].model.model_name.lower() < discount_entries[-1].model.model_name.lower() else not rev
+            rev = rev if discount_entries[0].model.model_name.lower() < discount_entries[
+                -1].model.model_name.lower() else not rev
         discount_entries.sort(key=lambda d: d.model.model_name.lower(), reverse=rev)
         clear_data(listbox)
         add_data(listbox)
@@ -1161,12 +1183,12 @@ def main_view():
                     matches.append(include)
                 if i != len(check_data):
                     include = True
-                
-                        # if the value is 1, then we want to include that name in the filtering process
+
+                    # if the value is 1, then we want to include that name in the filtering process
             if any(matches):
                 filtered.append(entry)
                 # print("NEW entry{ " + str(matches) + " }", entry)
-        
+
         clear_data(listbox)
         discount_entries = filtered.copy()
         add_data(listbox)
@@ -1174,13 +1196,11 @@ def main_view():
         # print(dict_print(check_data, "res", number=True))
         info_msg_var.set(discount_display_info())
 
-
     def toggle_include_all_discounts(*args):
         global listbox
         clear_data(listbox)
         add_data(listbox)
 
-    
     def re_pop_entries():
         global listbox, search_entry
         clear_data(listbox)
@@ -1189,21 +1209,20 @@ def main_view():
         if search_entry.get():
             search_entry.delete(0, len(search_entry.get()))
 
-
     def reset_check_buttons():
         global check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry
-        checkbuttons = [check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight]
+        checkbuttons = [check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot,
+                        check_btn_market, check_btn_freight]
         for btn in checkbuttons:
             btn.deselect()
         # search_entry.delete(0, len(search_entry.get()))
-        
-    
+
     def main_loop():
         global listbox, check_btn_date, check_btn_dealer, check_btn_model, check_btn_class, check_btn_slot, check_btn_market, check_btn_freight, search_entry, status_window
         # listbox = init_listbox()
         # print("sort_status:", sort_status)
         # print("dir:", dir())
-        
+
         btns_frame = tk.Frame(window_view)
         btns_frame.pack(side=tk.TOP)
 
@@ -1235,12 +1254,12 @@ def main_view():
         btn_sort_freight.pack(side=tk.LEFT)
 
         info_msg_var.set(discount_display_info())
-        info_label = tk.Label(mod_btn_frame, text="", fg=INFO_MSG_FG, bg=CREATE_LBL_BG, textvariable=info_msg_var, font=font_2, padx=20, pady=10)
+        info_label = tk.Label(mod_btn_frame, text="", fg=INFO_MSG_FG, bg=CREATE_LBL_BG, textvariable=info_msg_var,
+                              font=font_2, padx=20, pady=10)
         info_label.pack(side=tk.LEFT)
 
         search_btn_frame = tk.Frame(mod_btn_frame)
         search_btn_frame.pack(side=tk.BOTTOM)
-
 
         search_entry = tk.Entry(
             search_btn_frame,
@@ -1251,7 +1270,7 @@ def main_view():
             textvariable=entry_var_search
         )
         search_entry.pack(side=tk.LEFT)
-        
+
         check_btn_date = tk.Checkbutton(
             search_btn_frame,
             text="Date",
@@ -1261,13 +1280,13 @@ def main_view():
             variable=check_var_date,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_date.pack(side=tk.LEFT)
-        
+
         check_btn_dealer = tk.Checkbutton(
             search_btn_frame,
             text="Dealer",
@@ -1277,13 +1296,13 @@ def main_view():
             variable=check_var_dealer,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_dealer.pack(side=tk.LEFT)
-        
+
         check_btn_model = tk.Checkbutton(
             search_btn_frame,
             text="Model",
@@ -1293,13 +1312,13 @@ def main_view():
             variable=check_var_model,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_model.pack(side=tk.LEFT)
-        
+
         check_btn_class = tk.Checkbutton(
             search_btn_frame,
             text="Class",
@@ -1309,13 +1328,13 @@ def main_view():
             variable=check_var_class,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_class.pack(side=tk.LEFT)
-        
+
         check_btn_slot = tk.Checkbutton(
             search_btn_frame,
             text="Slot",
@@ -1325,13 +1344,13 @@ def main_view():
             variable=check_var_slot,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_slot.pack(side=tk.LEFT)
-        
+
         check_btn_market = tk.Checkbutton(
             search_btn_frame,
             text="Market",
@@ -1341,13 +1360,13 @@ def main_view():
             variable=check_var_market,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         check_btn_market.pack(side=tk.LEFT)
-        
+
         check_btn_freight = tk.Checkbutton(
             search_btn_frame,
             text="Freight",
@@ -1357,7 +1376,7 @@ def main_view():
             variable=check_var_freight,
             onvalue=1,
             offvalue=0,
-            indicatoron = 0,
+            indicatoron=0,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
@@ -1379,29 +1398,31 @@ def main_view():
             variable=include_all_discounts,
             onvalue=1,
             offvalue=0,
-            indicatoron = 1,
+            indicatoron=1,
             activebackground=abg,
             activeforeground=afg,
             selectcolor=sc
         )
         include_all_discounts.trace_add("write", toggle_include_all_discounts)
         check_btn_include_all_discounts.pack(side=tk.LEFT)
-        
 
         # listbox.pack()
-
 
         ctrl_btn_frame = tk.Frame(window_view)
         ctrl_btn_frame.pack(side=tk.BOTTOM)
 
         def cursor_enter(*args):
-            chx = ["arrow", "circle", "clock", "cross", "dotbox", "exchange", "fleur", "heart", "heart", "man", "mouse", "pirate", "plus", "shuttle", "sizing" ,"spider" ,"spraycan" ,"star", "target", "tcross", "trek", "watch"]
+            chx = ["arrow", "circle", "clock", "cross", "dotbox", "exchange", "fleur", "heart", "heart", "man", "mouse",
+                   "pirate", "plus", "shuttle", "sizing", "spider", "spraycan", "star", "target", "tcross", "trek",
+                   "watch"]
             status_window.configure(cursor=random.choice(chx))
+
         def cursor_leave(*args):
             status_window.configure(cursor="circle")
 
         print("Fullsize: " + str(full_size))
-        status_window = ScrolledText(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4", font=font_2)
+        status_window = ScrolledText(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4",
+                                     font=font_2)
         status_window.bind("<Enter>", cursor_enter)
         status_window.bind("<Leave>", cursor_leave)
         # status_window = tk.Text(ctrl_btn_frame, state='disabled', width=200, height=5, bg="lightblue4", fg="red4", font=font_2)
@@ -1423,7 +1444,7 @@ def main_view():
         # btn_submit.pack()
 
         btn_quit = tk.Button(ctrl_btn_frame, text="QUIT", fg="red",
-                                    command=root.destroy)
+                             command=root.destroy)
         btn_quit.pack(side=tk.TOP)
 
         listbox = init_listbox()
@@ -1432,34 +1453,40 @@ def main_view():
 
     main_loop()
 
+
 class FullScreenApp(object):
     def __init__(self, master, **kwargs):
         global full_size
-        self.master=master
-        pad=3
-        self._geom='200x200+0+0'
-        full_size = "{0}x{1}+0+0".format(master.winfo_screenwidth()-pad, master.winfo_screenheight()-pad)
+        self.master = master
+        pad = 3
+        self._geom = '200x200+0+0'
+        full_size = "{0}x{1}+0+0".format(master.winfo_screenwidth() - pad, master.winfo_screenheight() - pad)
         master.geometry(full_size)
-        master.bind('<Escape>',self.toggle_geom)            
-    def toggle_geom(self,event):
-        geom=self.master.winfo_geometry()
-        print(geom,self._geom)
+        master.bind('<Escape>', self.toggle_geom)
+
+    def toggle_geom(self, event):
+        geom = self.master.winfo_geometry()
+        print(geom, self._geom)
         self.master.geometry(self._geom)
-        self._geom=geom
+        self._geom = geom
+
 
 if __name__ == "__main__":
-    # global root
-    # root.mainloop()
-    DS = DataSet()
-    DS.init()
-    read_entries()
-    print(dims)
-    root = tk.Tk(className='\Discount Registry')
-    font_1 = tk.font.Font(family='consolas')
-    font_2 = tk.font.Font(family='consolas', weight='bold')
-    font_3 = tk.font.Font(family='consolas', weight='bold', size=16)
-    app = FullScreenApp(root)
-    # root.geometry(size)
-    window_main = tk.Frame(root)
-    window_main.pack()
-    main_view()
+    try:
+        # global root
+        # root.mainloop()
+        DS = DataSet()
+        DS.init()
+        read_entries()
+        print(dims)
+        root = tk.Tk(className='\Discount Registry')
+        font_1 = tk.font.Font(family='consolas')
+        font_2 = tk.font.Font(family='consolas', weight='bold')
+        font_3 = tk.font.Font(family='consolas', weight='bold', size=16)
+        app = FullScreenApp(root)
+        # root.geometry(size)
+        window_main = tk.Frame(root)
+        window_main.pack()
+        main_view()
+    except:
+        easygui.exceptionbox()

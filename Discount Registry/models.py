@@ -124,10 +124,13 @@ class DataSet:
             csvdict = csv.DictReader(f)
             for d in csvdict:
                 # print(d)
-                vals = (d["model"], d["description"], d["status"] == "current")
+                vals = (d["model_name"], d["description"], current if not d["status"] else non_current, d["proposed"])
                 m = Model("UNKNOWN", *vals)
                 self.models.append(m)
-                self.by_class["UNKOWN"].append(vals)
+                if d["class"] in self.by_class:
+                    self.by_class[d["class"]].append(vals)
+                else:
+                    self.by_class[d["class"]] = [vals]
 
         # print(dict_print(self.by_class, "self.by_class after creation"))
 
