@@ -96,7 +96,7 @@ def update_discounts(d):
                 f != discount.freight,
             ]):
 
-                print("CURRENT DISCOUNTS:\n" + "\n".join(list(map(str, original_entries))))
+                # print("CURRENT DISCOUNTS:\n" + "\n".join(list(map(str, original_entries))))
                 # raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\ntype(original_entries): " + str(type(original_entries)) + "\n\ntype(discount_entries): " + str(type(discount_entries)))
                 update_discount(discount)
                 status_update = "Updated discount: [\t" + str(discount) + "] to [" + str(d) + "\t]"
@@ -105,7 +105,9 @@ def update_discounts(d):
             else:
                 # The entered values match existing records - no changes
                 return
-    print("DISCOUNT NOT FOUND IN ORIGINAL_ENTRIES")
+        # else:
+        #     print("")
+    print("DISCOUNT {d} NOT FOUND IN ORIGINAL_ENTRIES".format(d=d))
 
     append_discount(d)
     status_update = "Created discount: [\t" + str(d) + "\t]"
@@ -139,21 +141,21 @@ def remove_discount(d):
         lines = list(f.readlines())
         new_lines = []
         header = None
-        print("lines:", lines)
+        # print("lines:", lines)
         for i, line in enumerate(lines):
-            print("\tline: <{0}>\n\tline.strip(): <{1}>\n\tline.strip().split(\",\"): <{2}>".format(line, line.strip(),
-                                                                                                    line.strip().split(
-                                                                                                        ",")))
+            # print("\tline: <{0}>\n\tline.strip(): <{1}>\n\tline.strip().split(\",\"): <{2}>".format(line, line.strip(),
+            #                                                                                         line.strip().split(
+            #                                                                                             ",")))
             if i == 0:
                 header = line.strip().split(",")
                 continue
             entry = dict(zip(header, line.strip().split(",")))
-            print("header:", header, ",line: <{0}>".format(line), ",entry:", entry)
+            # print("header:", header, ",line: <{0}>".format(line), ",entry:", entry)
             e_d = entry["dealer"]
             e_m = entry["model"]
             spl = e_m.split("<")
             e_c = spl[1][:-1].strip()
-            print("spl: {0}, e_c: {1}, spl[0].strip(): <{2}>".format(spl, e_c, spl[0].strip()))
+            # print("spl: {0}, e_c: {1}, spl[0].strip(): <{2}>".format(spl, e_c, spl[0].strip()))
             e_m = DS.look_up_by_name(spl[0].strip(), e_c)
             if e_m == None:
                 raise ValueError("Model look up returned None")
@@ -174,10 +176,10 @@ def remove_discount(d):
         f.seek(0)
         f.write(",".join(header))
         for line in new_lines:
-            print("writing line: {0}".format(line))
             f.write("\n" + line)
-    print(dict_print(entries, "Entries"))
-    print("Targeting:", targets)
+            # print("writing line: {0}".format(line))
+    # print(dict_ print(entries, "Entries"))
+    # print("Targeting:", targets)
     # raise ValueError("Stop here")
     read_entries()
 
@@ -193,7 +195,7 @@ def read_entries():
     with open("discount_registry.csv", 'r') as f:
         f_dict = csv.DictReader(f)
         for i, entry in enumerate(f_dict):
-            print("entry:", entry)
+            # print("entry:", entry)
             # csv header
             #   dealer,model,slot,market,freight,date
             # app header
@@ -203,17 +205,17 @@ def read_entries():
             name_val = vals[1]
             name_spl = name_val.split("<")
             model_name = name_spl[0].strip()
-            print("vals <{vals}>\nname_val: <{nv}>\nname_spl: <{ns}>\nmodel_name: <{mn}>".format(vals=vals, nv=name_val,
-                                                                                                 ns=name_spl,
-                                                                                                 mn=model_name))
+            # print("vals <{vals}>\nname_val: <{nv}>\nname_spl: <{ns}>\nmodel_name: <{mn}>".format(vals=vals, nv=name_val,
+            #                                                                                      ns=name_spl,
+            #                                                                                      mn=model_name))
             model_class = name_spl[1].strip()[0:-1]
             m = DS.look_up_by_name(model_name, model_class)
             # print("found:", m)
             vals = vals[:1] + [m] + list(map(lambda x: float(x) / 100, vals[2:4])) + vals[4:5] + vals[5:]
-            print("\tvals:", vals)
+            # print("\tvals:", vals)
             discount = Discount(*vals)
-            print("discount: ", discount)
-            print("discount.model:", discount.model)
+            # print("discount: ", discount)
+            # print("discount.model:", discount.model)
 
             if discount.dealer not in dealers_entries:
                 dealers_entries[discount.dealer] = [i]
@@ -245,7 +247,7 @@ def read_entries():
     original_entries.sort(key=lambda d: d.date, reverse=True)
     discount_entries.sort(key=lambda d: d.date, reverse=True)
 
-    print("NEW DIMS:", dims)
+    # print("NEW DIMS:", dims)
 
     if TRUE_FOR_NOW or admin:
         load_all_models()
@@ -253,7 +255,7 @@ def read_entries():
 
 
 def load_all_models():
-    print("DS:", DS)
+    # print("DS:", DS)
     # original_entries = []  # Do not modify - contains the original contents from the file
     # discount_entries = []  # working entries, for display purposes only
     # dealers_entries = {} # holds a dictionary of dealers, with a list of indexes referencing original_entries
@@ -323,13 +325,13 @@ def create_view(edit=False):
         # spl = m.split(" ")
         # print("m:", m, "spl",spl)
         # m = DS.look_up_by_name(spl[0].strip(), spl[1].strip()[1:-1])
-        print("============================\n\tm.status", m.status, "\n\tcurrent_model_var.get():",
-              current_model_var.get(), "\n\tOR", (current_model_var.get() or m.status))
-        print("\t\tby_models[\"{0}\"]".format(m), m.status)
+        # print("============================\n\tm.status", m.status, "\n\tcurrent_model_var.get():",
+        #       current_model_var.get(), "\n\tOR", (current_model_var.get() or m.status))
+        # print("\t\tby_models[\"{0}\"]".format(m), m.status)
         # print("\t\tcurrent_model_var.get() {0}".format(type(current_model_var.get())), current_model_var.get(), "\n\t\tby_models[m][2] {0}".format(type(DS.by_model[str(DS.look_up_by_name(m))][2])), DS.by_model[str(DS.look_up_by_name(m))][2])
         # print("\t\tcurrent_model_var.get() or by_models[m][2]", (current_model_var.get() or DS.by_model[str(DS.look_up_by_name(m))][2]))
-        if current_model_var.get() or m.status:
-            print("INCLUDE")
+        # if current_model_var.get() or m.status:
+        #     print("INCLUDE")
         return current_model_var.get() or m.status or override
         # combobox_model["values"] = combobox_model["values"] + [m] 
 
@@ -343,7 +345,7 @@ def create_view(edit=False):
         print("selection_model.get()", model_name)
         if not selection_class.get():
             matching_models = [m for m in DS.models if m.model_name == model_name]
-            print("matching models", matching_models)
+            # print("matching models", matching_models)
             if len(matching_models) == 1:
                 selection_class.set(matching_models[0].clazz)
             # else:
@@ -374,8 +376,8 @@ def create_view(edit=False):
         model_names.sort()
         combobox_model['values'] = model_names
         # combobox_model['values'] = []
-        print("combobox_model[\"values\"] {0}:".format(type(combobox_model["values"])), combobox_model["values"])
-        print("current_model_var.get()", current_model_var.get())
+        # print("combobox_model[\"values\"] {0}:".format(type(combobox_model["values"])), combobox_model["values"])
+        # print("current_model_var.get()", current_model_var.get())
         # for m in list(models_entries.keys()):
 
     def main_loop():
@@ -508,11 +510,11 @@ def create_view(edit=False):
         for i, lbl_name in enumerate(label_names_list):
             entry_widget = label_names[lbl_name]
             if len(entry_widget) == 0:
-                print("\t\tSKIPPED label_name:", lbl_name)
+                # print("\t\tSKIPPED label_name:", lbl_name)
                 continue
             lbl = tk.Label(frame_entries, text=lbl_name, bg=CREATE_BG)
             lbl.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
-            print("label_name:", lbl_name)
+            # print("label_name:", lbl_name)
             for j, widget in enumerate(entry_widget):
                 # if j not in covered_cols:
                 #     covered_cols.append(j)
@@ -526,31 +528,31 @@ def create_view(edit=False):
         def submit_entries(p_d=None, p_m=None, p_s=None, p_k=None, p_f=None, p_t=None):
             disc = None
             try:
-                d = selection_dealer.get() if p_d == None else p_d
-                m = selection_model.get() if p_m == None else p_m.model_name
-                s = slot_var.get() if p_s == None else p_s
-                k = market_var.get() if p_k == None else p_k
-                f = freight_var.get() if p_f == None else p_f
-                c = selection_class.get() if p_m == None else "" if not isinstance(p_m, Model) else p_m.clazz
-                t = cal.get_date() if p_t == None else p_t
+                d = selection_dealer.get() if p_d is None else p_d
+                m = selection_model.get() if p_m is None else p_m.model_name
+                s = slot_var.get() if p_s is None else p_s
+                k = market_var.get() if p_k is None else p_k
+                f = freight_var.get() if p_f is None else p_f
+                c = selection_class.get() if p_m is None else "" if not isinstance(p_m, Model) else p_m.clazz
+                t = cal.get_date() if p_t is None else p_t
 
                 for val in [d, m, c]:
                     val.replace(",", "")
 
                 t_d, t_m, t_s, t_k, t_f, t_c, t_t = [True if item else False for item in [d, m, s, k, f, c, t]]
-                print("\tVALUES\nm:", m, "\nc:", c, "\nt_c:", t_c, "\np_m:", p_m, "\ntype(p_m):", type(p_m))
+                # print("\tVALUES\nm:", m, "\nc:", c, "\nt_c:", t_c, "\np_m:", p_m, "\ntype(p_m):", type(p_m))
                 missing_entries = ""
-                if not t_d and p_t == None:
+                if not t_d and p_t is None:
                     missing_entries += "\n\tDealer field is blank."
-                if not t_m and p_m == None:
+                if not t_m and p_m is None:
                     missing_entries += "\n\tModel field is blank."
                 if not t_c:
                     missing_entries += "\n\tClass field is blank."
-                if not t_s and p_s == None:
+                if not t_s and p_s is None:
                     missing_entries += "\n\tSlot field is blank."
-                if not t_k and p_k == None:
+                if not t_k and p_k is None:
                     missing_entries += "\n\tMarket field is blank."
-                if not t_f and p_f == None:
+                if not t_f and p_f is None:
                     missing_entries += "\n\tFreight field is blank."
 
                 if not all([t_d, t_m, t_s, t_k, t_f, t_c, t_t]):
@@ -571,8 +573,8 @@ def create_view(edit=False):
                     feedback(SEM + value_issues, err=True)
                     raise ValueError()
 
-                print("not any([p_d, p_m, p_s, p_k, p_f, p_t])", (not any([p_d, p_m, p_s, p_k, p_f, p_t])))
-                print("not validate_zeros(s, k, f)", (not validate_zeros(s, k, f)))
+                # print("not any([p_d, p_m, p_s, p_k, p_f, p_t])", (not any([p_d, p_m, p_s, p_k, p_f, p_t])))
+                # print("not validate_zeros(s, k, f)", (not validate_zeros(s, k, f)))
                 if not any([p_d, p_m, p_s, p_k, p_f, p_t]) and not validate_zeros(s, k, f):
                     return
                 # if all(list(map(lambda v: float(v) == 0, [s, k, f]))):
@@ -595,7 +597,7 @@ def create_view(edit=False):
                     stat = current if stat else non_current
                     # stat = non_current if stat else current
                     model = Model(c, m, desc, stat, IMPLEMENT_PROPOSED_FIELD)
-                    print("model entry creation:", model.fields_list())
+                    # print("model entry creation:", model.fields_list())
                     # raise ValueError("STOP")
                     do_update = True
                 if not model:
@@ -611,8 +613,8 @@ def create_view(edit=False):
                 t = cal.get_date()
                 disc = Discount(d, model, s, k, f, t)
                 submit.set(True)
-                print("local new discount:", disc)
-                print("local new discount:", disc.table_entry(dims))
+                # print("local new discount:", disc)
+                # print("local new discount:", disc.table_entry(dims))
                 feedback("Discount creation successful! <{0}>".format(disc))
             except TypeError:
                 print("Type error")
@@ -643,6 +645,7 @@ def create_view(edit=False):
 
         def mass_apply():
             global new_discount, dealers_entries
+            submit.set(True)
             print("mass apply")
             d = selection_dealer.get()
             m = selection_model.get()
@@ -664,7 +667,7 @@ def create_view(edit=False):
 
             if not validate_zeros(s, k, f):
                 return
-            print("d: <{d}>, m: <{m}>, C: <{c}>".format(d=d, m=m, c=c))
+            # print("d: <{d}>, m: <{m}>, C: <{c}>".format(d=d, m=m, c=c))
             if d or c:
                 new_discount = []
                 new_model = None
@@ -699,16 +702,16 @@ def create_view(edit=False):
                     # "1% slot on all Tags"
 
                     if c in DS.by_class:
-                        print("DS.by_class[c]:", DS.by_class[c])
+                        # print("DS.by_class[c]:", DS.by_class[c])
                         models = [m_val for m_val in DS.by_class[c] if
                                   ins(m_val) or (True if m and m_val.model_name.lower() == m.lower() else False)]
-                        if new_model != None:
+                        if new_model is not None:
                             models.append(new_model)
                         # for m_val in DS.by_class[c]:
                         #     print("m_val:", m_val, ", ins(m_val)", ins(m_val))
                         model_ref = {str(m_val): m_val for m_val in models}
-                        print("models:", models)
-                        print("model_ref:", model_ref)
+                        # print("models:", models)
+                        # print("model_ref:", model_ref)
 
                         if d in dealers_entries:
                             if len(models) > 1:
@@ -722,15 +725,15 @@ def create_view(edit=False):
                                 )
                             else:
                                 filtered_models = list(map(str, models))
-                            print("filtered_models:", filtered_models)
+                            # print("filtered_models:", filtered_models)
                             filtered_models = [model_ref[m_val] for m_val in filtered_models]
-                            print("filtered_models:", filtered_models)
+                            # print("filtered_models:", filtered_models)
                             if not filtered_models:
                                 filtered_models = models.copy()
                             for model in filtered_models:
                                 disc = submit_entries(p_d=d, p_m=model, p_t=datetime.datetime.today())
-                                print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(
-                                    model, d, c))
+                                # print("Found model: <{0}> for dealer: <{1}> when mass applying to class: <{2}>".format(
+                                #     model, d, c))
                                 if disc == None:
                                     feedback("Error mass applying discount structure")
                                     return
@@ -782,9 +785,9 @@ def create_view(edit=False):
             selection_dealer.set("")
             selection_model.set("")
             selection_class.set("")
-            selection_slot.set(0)
-            selection_market.set(0)
-            selection_freight.set(0)
+            slot_var.set(0)
+            market_var.set(0)
+            freight_var.set(0)
 
         frame_btn = tk.Frame(window_create, bg=CREATE_BG)
         frame_btn.pack(side=tk.BOTTOM)
@@ -853,7 +856,7 @@ def create_view(edit=False):
 
             feedback("Editing: <{0}>".format(edit))
 
-        print("Before root.mainloop() in create_view")
+        # print("Before root.mainloop() in create_view")
         try:
             while not submit.get():
                 root.update()
@@ -888,12 +891,12 @@ def create_view(edit=False):
         #     feedback_window.insert(tk.END, ".1")
         #     print(".")
 
-        print("global new_discount:", new_discount)
+        # print("global new_discount:", new_discount)
         return new_discount
 
     new_discount = main_loop()
     # DS.update(new_discount.new_model_entry())
-    print("global new_discount:", new_discount)
+    # print("global new_discount:", new_discount)
     time.sleep(1.75)
     # disable(window_create)
     window_create.destroy()
@@ -968,7 +971,7 @@ def main_view():
         listbox_frame.pack(side=tk.TOP)
 
         scrollbar = tk.Scrollbar(listbox_frame, orient="vertical")
-        listbox = tk.Listbox(listbox_frame, selectmode=tk.EXTENDED, yscrollcommand=scrollbar.set, width=200)
+        listbox = tk.Listbox(listbox_frame, selectmode=tk.EXTENDED, yscrollcommand=scrollbar.set, width=200, height=21)
         listbox['font'] = font_1
 
         scrollbar.config(command=listbox.yview)
@@ -987,6 +990,7 @@ def main_view():
 
     def create_function():
         global listbox, new_discount
+        listbox.configure(height=10)
         disable(window_view)
         print('Create a new discount')
         new_discount = create_view()
@@ -1002,6 +1006,7 @@ def main_view():
         # DS.adjust_models(new_discount)
         # read_entries()
         enable(window_view)
+        listbox.configure(height=21)
         clear_data(listbox)
         add_data(listbox)
         info_msg_var.set(discount_display_info())
@@ -1042,22 +1047,39 @@ def main_view():
         if 0 in selection:
             selection.remove(0)
         selection = [x - 1 for x in selection]
-        print("before deletion: ", listbox.get(0, listbox.size()))
-        print("before clear: ", listbox.get(0, listbox.size()))
+        cpy = discount_entries.copy()
         clear_data(listbox)
         for sel in selection:
-            print("discount_entries ({0})".format(len(discount_entries)), discount_entries)
-            discount = discount_entries[sel]
-            print("ATTEMPTING TO REMOVE DISCOUNT:", discount)
-            discount_entries.remove(discount)
-            original_entries.remove(discount)
-            remove_discount(discount)
-
-        print('Delete a discount :', selection)
-        print("after clear: ", listbox.get(0, listbox.size()))
+            remove_discount(cpy[sel])
+            # discount_entries.remove(cpy[sel])
+            # original_entries.remove(cpy[sel])
         add_data(listbox)
-        print("after addition: ", listbox.get(0, listbox.size()))
+        if sort_status:
+            sort_status()
+
         info_msg_var.set(discount_display_info())
+
+        # # selection = listbox.curselection()
+        # selection = list(listbox.curselection())
+        # if 0 in selection:
+        #     selection.remove(0)
+        # selection = [x - 1 for x in selection]
+        # # print("before deletion: ", listbox.get(0, listbox.size()))
+        # print("before clear: ", listbox.get(0, listbox.size()))
+        # clear_data(listbox)
+        # for sel in selection:
+        #     print("discount_entries ({0})".format(len(discount_entries)), discount_entries)
+        #     discount = discount_entries[sel]
+        #     print("ATTEMPTING TO REMOVE DISCOUNT:", discount)
+        #     discount_entries.remove(discount)
+        #     original_entries.remove(discount)
+        #     remove_discount(discount)
+        #
+        # print('Delete a discount :', selection)
+        # print("after clear: ", listbox.get(0, listbox.size()))
+        # add_data(listbox)
+        # print("after addition: ", listbox.get(0, listbox.size()))
+        # info_msg_var.set(discount_display_info())
 
     # def submit_function():
     #     global listbox
@@ -1067,73 +1089,94 @@ def main_view():
     def sort_by_date():
         global sort_status, listbox
         rev = sort_status == sort_by_date
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].date < discount_entries[-1].date else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.date, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_date
+        new_status_update("Discounts sorted by " + d + " date.")
 
     def sort_by_dealer():
         global sort_status, listbox
         rev = sort_status == sort_by_dealer
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].dealer.lower() < discount_entries[-1].dealer.lower() else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.dealer.lower(), reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_dealer
+        new_status_update("Discounts sorted by " + d + " dealer.")
 
     def sort_by_model():
         global sort_status, listbox
         rev = sort_status == sort_by_model
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].model.model_name.lower() < discount_entries[
                 -1].model.model_name.lower() else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.model.model_name.lower(), reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_model
+        new_status_update("Discounts sorted by " + d + " model.")
 
     def sort_by_class():
         global sort_status, listbox
         rev = sort_status == sort_by_class
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].model.clazz < discount_entries[-1].model.clazz else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.model.clazz, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_class
+        new_status_update("Discounts sorted by " + d + " class.")
 
     def sort_by_slot():
         global sort_status, listbox
         rev = sort_status == sort_by_slot
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].slot < discount_entries[-1].slot else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.slot, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_slot
+        new_status_update("Discounts sorted by " + d + " slot.")
 
     def sort_by_market():
         global sort_status, listbox
         rev = sort_status == sort_by_market
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].market < discount_entries[-1].market else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.market, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_market
+        new_status_update("Discounts sorted by " + d + " market.")
 
     def sort_by_freight():
         global sort_status, listbox
         rev = sort_status == sort_by_freight
+        d = "ascending"
         if rev:
             rev = rev if discount_entries[0].freight < discount_entries[-1].freight else not rev
+            d = "descending"
         discount_entries.sort(key=lambda d: d.freight, reverse=rev)
         clear_data(listbox)
         add_data(listbox)
         sort_status = sort_by_freight
+        new_status_update("Discounts sorted by " + d + " freight.")
 
     def submit_search():
         global discount_entries, listbox
@@ -1156,6 +1199,9 @@ def main_view():
             "freight": freight,
         }
 
+        categories = [(k if k != "clazz" else "class").title() for k, v in check_data.items() if v]
+        new_status_update("Performing search for \"" + query + "\" on categories: { " + ",".join(categories) + " }")
+
         percentages = ["slot", "market"]
         monies = ["freight"]
 
@@ -1164,6 +1210,7 @@ def main_view():
             return
 
         filtered = []
+        query = query.lower()
         for entry in discount_entries:
             include = True
             matches = []
@@ -1172,7 +1219,10 @@ def main_view():
                 i += 1
                 if val:
                     # print("\tchecking entry:", entry, ", at attr:", attr)
-                    s = str(getattr(entry, attr)).lower()
+                    if attr == "clazz":
+                        s = str(getattr(entry.model, attr)).lower()
+                    else:
+                        s = str(getattr(entry, attr)).lower()
                     if attr in percentages:
                         s = percent(float(s), 3)
                     if attr in monies:
