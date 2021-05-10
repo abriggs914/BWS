@@ -103,9 +103,9 @@ class DataSet:
             r = csv.DictReader(f)
             for row in r:
                 lst = list(row.values())
-                print("KEYS: " + str(row.keys()))
-                print("VALS: " + str(row.values()))
-                print("lst:\t", lst, ", status:", lst[-1], ", type(status):", type(lst[-1]))
+                # print("KEYS: " + str(row.keys()))
+                # print("VALS: " + str(row.values()))
+                # print("lst:\t", lst, ", status:", lst[-1], ", type(status):", type(lst[-1]))
                 # vals = lst[] + [current if lst[-1] == "True" or lst[-1] == "1" else non_current]
                 # print("VALS:\t", dict(zip(["clazz", "model_name", "description", "status"], vals)))
                 vals = lst[:-2] + [int(lst[-2]), int(lst[-1])]
@@ -125,12 +125,14 @@ class DataSet:
             for d in csvdict:
                 # print(d)
                 vals = (d["model_name"], d["description"], current if not d["status"] else non_current, d["proposed"])
-                m = Model("UNKNOWN", *vals)
+                # print("entry vals: ", vals)
+                m = Model(d["class"], *vals)
+                # print("M:\t\t",m)
                 self.models.append(m)
                 if d["class"] in self.by_class:
-                    self.by_class[d["class"]].append(vals)
+                    self.by_class[d["class"]].append(m)
                 else:
-                    self.by_class[d["class"]] = [vals]
+                    self.by_class[d["class"]] = [m]
 
         # print(dict_print(self.by_class, "self.by_class after creation"))
 
@@ -169,11 +171,13 @@ class DataSet:
         # if last:
         #     print("CREATING BY MODEL", self.by_model[last])
 
+        # print(dict_print(self.by_class, "by_class"))
+
     def model_key(self, m):
         return m.model_name + " <" + m.clazz.upper() + ">"
 
     def look_up_by_name(self, name, clazz):
-        print("Searching models for m=\"" + str(name) + "\", c=\"" + str(clazz) + "\"")
+        # print("Searching models for m=\"" + str(name) + "\", c=\"" + str(clazz) + "\"")
         # print("In: ", self.models)
         if not hasattr(self, "models"):
             raise DataSetNotInitialized("Attribute \"models\" has not been initialized yet. Unable to create \"by_model\".")
@@ -212,8 +216,8 @@ class Model:
         return [self.clazz, self.model_name, self.description, self.status, self.proposed]
 
     def __eq__(self, m):
-        print("self: <" + str(self) + ">")
-        print("m   : <" + str(m) + ">")
+        # print("self: <" + str(self) + ">")
+        # print("m   : <" + str(m) + ">")
         if m is None or not (hasattr(self, "model_name") or not hasattr(self, "clazz")):
             return False
         return self.model_name.lower() == m.model_name.lower() and self.clazz.lower() == m.clazz.lower()
@@ -226,3 +230,7 @@ class Model:
 
     def __repr__(self):
         return self.model_name + " <" + self.clazz + ">"
+
+if __name__ == "__main__":
+    ds = DataSet()
+    ds.init()
