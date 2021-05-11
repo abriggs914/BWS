@@ -11,6 +11,7 @@
 #
 # # Import the pandas library
 import pandas as pd
+import csv
 #
 # # Make a data frame with dots to show on the map
 #
@@ -95,15 +96,15 @@ class Map(folium.Map):
 
 # Define coordinates of where we want to center our map
 coords = [46.427230736465326, -67.70498453648138]
-map = Map(center=coords, zoom_start=13)
+mp = Map(center=coords, zoom_start=13)
 
 # add marker one by one on the map
 for i in range(0, len(data)):
     folium.Marker(
         location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
         popup=data.iloc[i]['name'],
-    ).add_to(map)
-map.showMap()
+    ).add_to(mp)
+mp.showMap()
 
 response = requests.get(
     'https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA')
@@ -113,3 +114,12 @@ resp_json_payload = response.json()
 print(resp_json_payload)
 print(resp_json_payload['results'])
 # print(resp_json_payload['results'][0]['geometry']['location'])
+
+if False:
+    with open("dealers_info.csv", "r") as f, open("out.csv", "w") as o, open("addresses.txt", "w") as a:
+        f_dicts = csv.DictReader(f)
+        o.write(";;".join(f_dicts.fieldnames))
+        for f_dict in f_dicts:
+            if "NULL" not in f_dict.values():
+                o.write("\n" + ";;".join(list(map(lambda s: str(s).strip(), f_dict.values()))))
+                a.write(", ".join(list(map(lambda s: str(s).strip(), f_dict.values()))) + "\n")
