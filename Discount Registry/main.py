@@ -3,10 +3,10 @@ import time
 import random
 import datetime
 import traceback
+import tkinter as tk
 from models import *
 from utility import *
 from discount import *
-import tkinter as tk
 from tkcalendar import Calendar
 from tkinter.scrolledtext import ScrolledText
 from models_writer import current, non_current
@@ -100,7 +100,7 @@ def update_discounts(d):
                 # raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\ntype(original_entries): " + str(type(original_entries)) + "\n\ntype(discount_entries): " + str(type(discount_entries)))
                 update_discount(discount)
                 status_update = "Updated discount: [\t" + str(discount) + "] to [" + str(d) + "\t]"
-                append_discount(d)
+                # append_discount(d)
                 return
             else:
                 # The entered values match existing records - no changes
@@ -604,6 +604,8 @@ def create_view(edit=False):
                     feedback(SEM + "Please check submission values <not model>", err=True)
                     raise ValueError("Please check submission values")
                 if do_update:
+                    print("performing DS.update")
+                    # raise ValueError("performing DS.update")
                     DS.update(model)
 
                 s = float(s) / 100
@@ -987,6 +989,7 @@ def main_view():
             raise ValueError("txt is None")
         status_window.insert(tk.END, txt + "\n")
         status_window.configure(state='disabled')
+        status_window.see(tk.INSERT)
 
     def create_function():
         global listbox, new_discount
@@ -1051,10 +1054,11 @@ def main_view():
         clear_data(listbox)
         for sel in selection:
             remove_discount(cpy[sel])
+            new_status_update("Successfully removed {0} from entries".format(cpy[sel]))
             # discount_entries.remove(cpy[sel])
             # original_entries.remove(cpy[sel])
         add_data(listbox)
-        if sort_status:
+        if discount_entries and sort_status:
             sort_status()
 
         info_msg_var.set(discount_display_info())

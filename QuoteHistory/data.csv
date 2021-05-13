@@ -157,7 +157,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26185, 25ANR, 17, Northeast Truck & Trailer Sales, $30588.7296, $32086, $31765, 3, 0
 26186, 37DT3X, 17, Northeast Truck & Trailer Sales, $73854.6332, $80724, $79917, 6, 0
 26187, 27DT2X V2018, 17, Northeast Truck & Trailer Sales, $56703.0453, $59286, $58693, 5, 0
-26188, 25ART, 17, Hale Trailer Brake & Wheel, $28328.1856, $0, $0, 0, 1
+26188, 25ART, 17, Hale Trailer Brake & Wheel, $28328.1856, $34789, $30941, 5, 1
 26195, 40ADG3X53 AGNR, 18, Fort Garry Industries Ltd., $79360.5084, $87472, $86597, 6, 0
 26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $15189, $15037, 4, 0
 26197, 53ET3XP, 18, Redhead Equipment Ltd., $62096.1618, $72230, $72230, 9, 0
@@ -183,3 +183,12 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26268, 27LBT2X W, 19, Diamond International Trucks Ltd., $37994.0347, $0, $0, 0, 0
 26269, 37LBT3X W, 19, Diamond International Trucks Ltd., $51684.5084, $0, $0, 0, 0
 26270, 50HDG3X AG, 19, Diamond International Trucks Ltd., $105244.9737, $0, $0, 0, 0
+26272, 40JD2X HG, 19, Fort Garry Industries Ltd., $35152, $35593, $35237, 1, 0
+26273, 30ANR, 19, NorthEast Truck & Trailer Sales, $31180.8479, $39235, $38842, 3, 0
+26274, 25ANR, 19, Diamond International Trucks Ltd., $30588.7296, $30589, $30283, 0, 0
+26275, 25ART, 19, Diamond International Trucks Ltd., $33788.1024, $33788, $33450, 0, 0
+26276, 25NTT, 19, Diamond International Trucks Ltd., $29448.7232, $29449, $29154, 0, 0
+26277, 42ET3X, 19, Diamond International Trucks Ltd., $44792.2426, $44792, $44344, 0, 0
+26278, 48ET3X, 19, Diamond International Trucks Ltd., $47004.7578, $47005, $46535, 0, 0
+26279, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $48724, $48236, 0, 0
+26280, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $62096, $61475, 0, 0
