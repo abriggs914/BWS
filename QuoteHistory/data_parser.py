@@ -3,6 +3,8 @@ import functools
 from utility import *
 import datetime
 import calendar
+from matplotlib import pyplot as plt
+import random
 
 # Quotes are up-to-date as of Feb.22/2021 Quote 25771
 
@@ -742,3 +744,85 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", number=True, table_title="Weeks"))  #, sort_header=True
 	write(dict_print(a, "work weeks", number=True, table_title="Weeks"))
+
+
+	import numpy as np
+	# import pandas as pd
+	x = '''
+		import seaborn as sns
+		import pandas as pd
+		import numpy as np; np.random.seed(8)
+		mean, cov = [4, 6], [(1.5, .7), (.7, 1)]
+		x, y = np.random.multivariate_normal(mean, cov, 80).T
+		ax = sns.regplot(x=x, y=y, color="g")
+		x, y = pd.Series(x, name="x_var"), pd.Series(y, name="y_var")
+		ax = sns.regplot(x=x, y=y, marker="+")
+	'''
+		
+		
+	x = '''
+		import numpy as np; np.random.seed(8)
+		mean, cov = [4, 6], [(1.5, .7), (.7, 1)]
+		x, y = np.random.multivariate_normal(mean, cov, 80).T
+		ax = sns.regplot(x=x, y=y, color="g")
+	'''
+		
+		
+	x = '''
+		# data_reduced= pd.read_csv('fake.txt',sep='\s+')
+		plotting = {"Weekly Counts:": (weekly_counts, {"number": True})}
+		func, args = list(plotting.values())[0]
+		# res = func(quotes)
+		data_reduced = func(quotes)
+		sns.regplot(data_reduced[0],data_reduced[len(data_reduced - 1)])
+	'''
+
+
+
+
+
+
+
+
+	plotting = {"Weekly Counts:": (weekly_counts, {"number": True})}
+	func, args = list(plotting.values())[0]
+	res = func(quotes)
+	x = '''
+		# results[title] = dict_print(func(quotes), title, **args)
+		print("func(quotes, **fargs):", func(quotes))
+		print(dict_print(func(quotes), "TESTING", **args))
+		# results[title] = dict_print(func(quotes, **fargs), title, **pargs)
+		#Create a variable numbers_a and set it equal to the range of numbers 1 through 12 (inclusive).
+		numbers_a = range(1,13)
+
+		#Create a variable numbers_b and set it equal to a random sample of twelve numbers within range(1000).
+		numbers_b = [random.randint(0,1001) for i in range(12)]
+	'''
+	x = '''
+		#Now lets plot these number sets against each other using plt. Call plt.plot() with your two variables as its arguments.
+		plt.scatter(numbers_a, numbers_b, label="Quotes per Week")
+
+		#Now call plt.show() and run your code!
+		#You should see a graph of random numbers displayed. Youve used two Python modules to accomplish this (random and matplotlib).
+		plt.show()
+	'''
+
+	x = [[x] for x in range(len(res))]
+	y = list(map(lambda x: int(str(x).strip()), res.keys()))
+	N = len(x)
+	# print("x:", len(x), "x:", x)
+	# print("y:", len(y), "y:", y)
+	# print("N:", N)
+	# print("np.ones((N,1)):", np.ones(N))
+
+	plt.axhline(0, color='r', zorder=-1)
+	plt.axvline(0, color='r', zorder=-1)
+	plt.scatter(x, y, label="Quotes per Week")
+
+	# fit least-squares with an intercept
+	w = np.linalg.lstsq(np.hstack((x, np.ones((N,1)))), y, rcond=None)[0]
+	xx = np.linspace(*plt.gca().get_xlim()).T
+
+	# plot best-fit line
+	plt.plot(xx, w[0]*xx + w[1], '-k')
+	plt.show()

@@ -192,3 +192,6 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26278, 48ET3X, 19, Diamond International Trucks Ltd., $47004.7578, $47005, $46535, 0, 0
 26279, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $48724, $48236, 0, 0
 26280, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $62096, $61475, 0, 0
+26282, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $0, $0, 0, 0
+26283, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $0, $0, 0, 0
+26284, 53ET3X, 19, Redhead Equipment Ltd., $48723.6644, $0, $0, 0, 0
