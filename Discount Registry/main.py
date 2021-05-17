@@ -87,6 +87,7 @@ def update_discounts(d):
     s = d.slot
     m = d.market
     f = d.freight
+    print("original_entries:", original_entries)
     for discount in original_entries:
         if discount == d:
             print("DISCOUNT FOUND IN ORIGINAL_ENTRIES")
@@ -100,7 +101,7 @@ def update_discounts(d):
                 # raise ValueError("\n\n\tNeed to overwrite:\n\"" + str(discount) + "\"\n\twith:\n\"" + str(d) + "\"\n\ntype(original_entries): " + str(type(original_entries)) + "\n\ntype(discount_entries): " + str(type(discount_entries)))
                 update_discount(discount)
                 status_update = "Updated discount: [\t" + str(discount) + "] to [" + str(d) + "\t]"
-                # append_discount(d)
+                append_discount(d)
                 return
             else:
                 # The entered values match existing records - no changes

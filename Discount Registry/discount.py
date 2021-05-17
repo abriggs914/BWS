@@ -53,9 +53,11 @@ class Discount:
     def __eq__(self, d):
         if not all([
             hasattr(d, "dealer"),
-            hasattr(d, "model_name"),
-            hasattr(d, "clazz")
+            hasattr(d, "model")
         ]):
+            print("d: {0} does not contain all vars".format(d))
+            if type(d) == str:
+                raise ValueError("Invalid comparison between Discount and {0}".format(type(d)))
             return False
         return all([
             # same_calendar_day(self.date, d.date),
