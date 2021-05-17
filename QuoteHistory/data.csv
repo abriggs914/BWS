@@ -167,21 +167,21 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26247, 32DT3X V2018, 19, Remorques Lewis Inc., $73494.2066, $0, $0, 0, 0
 26248, 30NTT, 19, Remorques Lewis Inc., $29913.8112, $51256, $49982, 7, 0
 26130, 53HF4X, 19, Remorques Lewis Inc., $56563.2019, $78351, $70974, 19, 0
-26255, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $0, $0, 0, 0
-26256, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $0, $0, 0, 0
-26257, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $0, $0, 0, 0
-26258, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26259, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26260, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26261, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26262, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26263, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26264, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26265, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $0, $0, 0, 0
-26266, 55LB3X SND, 19, Diamond International Trucks Ltd., $67611.638, $0, $0, 0, 0
-26267, 55LB3X LNF, 19, Diamond International Trucks Ltd., $67311.9761, $0, $0, 0, 0
-26268, 27LBT2X W, 19, Diamond International Trucks Ltd., $37994.0347, $0, $0, 0, 0
-26269, 37LBT3X W, 19, Diamond International Trucks Ltd., $51684.5084, $0, $0, 0, 0
+26255, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $70593, $69887, 15, 0
+26256, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $73981, $73242, 18, 0
+26257, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $73884, $73145, 16, 0
+26258, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $73835, $73097, 12, 0
+26259, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $71881, $71163, 11, 0
+26260, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $77956, $77176, 15, 0
+26261, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $73669, $72932, 13, 0
+26262, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $75279, $74526, 12, 0
+26263, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $73325, $72592, 11, 0
+26264, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $79399, $78605, 15, 0
+26265, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $75113, $74362, 13, 0
+26266, 55LB3X SND, 19, Diamond International Trucks Ltd., $67611.638, $70308, $69605, 3, 0
+26267, 55LB3X LNF, 19, Diamond International Trucks Ltd., $67311.9761, $76079, $75318, 4, 0
+26268, 27LBT2X W, 19, Diamond International Trucks Ltd., $37994.0347, $45748, $45291, 9, 0
+26269, 37LBT3X W, 19, Diamond International Trucks Ltd., $51684.5084, $55938, $55379, 9, 0
 26270, 50HDG3X AG, 19, Diamond International Trucks Ltd., $105244.9737, $0, $0, 0, 0
 26272, 40JD2X HG, 19, Fort Garry Industries Ltd., $35152, $35593, $35237, 1, 0
 26273, 30ANR, 19, NorthEast Truck & Trailer Sales, $31180.8479, $39235, $38842, 3, 0
@@ -192,6 +192,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26278, 48ET3X, 19, Diamond International Trucks Ltd., $47004.7578, $47005, $46535, 0, 0
 26279, 53ET3X, 19, Diamond International Trucks Ltd., $48723.6644, $48724, $48236, 0, 0
 26280, 53ET3XP, 19, Diamond International Trucks Ltd., $62096.1618, $62096, $61475, 0, 0
-26282, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $0, $0, 0, 0
-26283, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $0, $0, 0, 0
-26284, 53ET3X, 19, Redhead Equipment Ltd., $48723.6644, $0, $0, 0, 0
+26282, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $45593, $45593, 4, 0
+26283, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $47124, $47124, 5, 0
+26284, 53ET3X, 19, Redhead Equipment Ltd., $48723.6644, $59098, $59098, 8, 0
+26285, 30NTT, 20, Remorques Lewis Inc., $29913.8112, $0, $0, 0, 0

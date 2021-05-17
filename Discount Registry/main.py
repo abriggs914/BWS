@@ -87,7 +87,7 @@ def update_discounts(d):
     s = d.slot
     m = d.market
     f = d.freight
-    print("original_entries:", original_entries)
+    # print("original_entries:", original_entries)
     for discount in original_entries:
         if discount == d:
             print("DISCOUNT FOUND IN ORIGINAL_ENTRIES")
@@ -108,7 +108,7 @@ def update_discounts(d):
                 return
         # else:
         #     print("")
-    print("DISCOUNT {d} NOT FOUND IN ORIGINAL_ENTRIES".format(d=d))
+    # print("DISCOUNT {d} NOT FOUND IN ORIGINAL_ENTRIES".format(d=d))
 
     append_discount(d)
     status_update = "Created discount: [\t" + str(d) + "\t]"
