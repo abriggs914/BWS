@@ -22,35 +22,65 @@ brackets = {
 	"over $160776": (lambda x: 160776 > x, (160776, maxsize), (20.3, 0, (0, 0)))
 }
 
-values = {
-	"salary": 40000,
-	"paid taxes": 0,
-	"earnings": 0
-}
 
 def calc_taxes(vals):
+	print("vals 1:", vals)
 	s = vals["salary"]
 	m = s
+	t = 0
 	for bracket, bracket_vals in brackets.items():
-		print("bracket:", bracket)
 		func, r, b_vals = bracket_vals
 		low, high = r
+		print("\nbracket:", bracket, "(low, high):", ("(" + str(low) + ", " + str(high) + ")"), "m:", m)
 		if m <= 0:
 			break
 		else:
 			p = b_vals[0] / 100
-			print("b_vals[0]:",b_vals[0],"m:",m,"p:",p)
-			if m in range(low, high):
-				vals[bracket] = m * p
-				vals["paid taxes"] += vals[bracket]
+			print("b_vals[0]:",b_vals[0],"m:",m,"p:",p,"range?", (m in range(low, high)),"res", (m * p if ((m in range(low, high)) or (m >= high)) else high))
+			vals[bracket] = min(m, high) * p
+			if (m + t) in range(low, high):
+				vals["paid taxes"] += m * p  # vals[bracket]
 				vals["marginal bracket"] = bracket
 			else:
-				vals[bracket] = high
-				vals["paid taxes"] += vals[bracket]
+				t += high
+				# vals[bracket] = high
+				vals["paid taxes"] += m * p  # vals[bracket]
 			m -= high
 	vals["earnings"] = vals["salary"] - vals["paid taxes"]
+	vals["% Taxes"] = (1 - (vals["earnings"] / vals["salary"])) * 100
+	print("vals 2:", vals)
 
 
 if __name__ == "__main__":
-	calc_taxes(values)
-	print(dict_print(values, "Values"))
+	values_40000 = {
+		"salary": 40000,
+		"paid taxes": 0,
+		"earnings": 0
+	}
+	values_50000 = {
+		"salary": 50000,
+		"paid taxes": 0,
+		"earnings": 0
+	}
+	values_86000 = {
+		"salary": 86000,
+		"paid taxes": 0,
+		"earnings": 0
+	}
+	values_365000 = {
+		"salary": 365000,
+		"paid taxes": 0,
+		"earnings": 0
+	}
+
+	calc_taxes(values_40000)
+	print(dict_print(values_40000, "Values"))
+
+	calc_taxes(values_50000)
+	print(dict_print(values_50000, "Values"))
+
+	calc_taxes(values_86000)
+	print(dict_print(values_86000, "Values"))
+
+	calc_taxes(values_365000)
+	print(dict_print(values_365000, "Values"))
