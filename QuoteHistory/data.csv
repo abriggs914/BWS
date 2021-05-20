@@ -182,7 +182,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26267, 55LB3X LNF, 19, Diamond International Trucks Ltd., $67311.9761, $76079, $75318, 4, 0
 26268, 27LBT2X W, 19, Diamond International Trucks Ltd., $37994.0347, $45748, $45291, 9, 0
 26269, 37LBT3X W, 19, Diamond International Trucks Ltd., $51684.5084, $55938, $55379, 9, 0
-26270, 50HDG3X AG, 19, Diamond International Trucks Ltd., $105244.9737, $0, $0, 0, 0
+26270, 50HDG3X AG, 19, Diamond International Trucks Ltd., $105244.9737, $142953, $141523, 16, 0
 26272, 40JD2X HG, 19, Fort Garry Industries Ltd., $35152, $35593, $35237, 1, 0
 26273, 30ANR, 19, NorthEast Truck & Trailer Sales, $31180.8479, $39235, $38842, 3, 0
 26274, 25ANR, 19, Diamond International Trucks Ltd., $30588.7296, $30589, $30283, 0, 0
@@ -196,6 +196,6 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26283, 48ET2X, 19, Redhead Equipment Ltd., $41510.0916, $47124, $47124, 5, 0
 26284, 53ET3X, 19, Redhead Equipment Ltd., $48723.6644, $59098, $59098, 8, 0
 26285, 30NTT, 20, Remorques Lewis Inc., $29913.8112, $38246, $37295, 7, 0
-26287, 40HDG3X AG, 20, Fort Garry Industries Ltd., $99094.2174, $0, $0, 0, 0
-26288, 55HDG3X BTHH, 20, Redhead Equipment Ltd., $98641.92, $0, $0, 0, 0
+26287, 50HDG3X AG, 20, Fort Garry Industries Ltd., $105244.9737, $111867, $110749, 2, 0
+26288, 55HDG3X BTHH, 20, Redhead Equipment Ltd., $98641.92, $123663, $123663, 8, 0
 26294, 53ET3X, 20, Redhead Equipment Ltd., $48723.6644, $62502, $62502, 4, 0
