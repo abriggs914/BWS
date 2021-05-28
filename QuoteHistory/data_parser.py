@@ -807,7 +807,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		plt.show()
 	'''
 
-	x = [[x] for x in range(len(res))]
+	x = [[x + 1] for x in range(len(res))]
 	y = list(map(lambda x: int(str(x).strip()), res.keys()))
 	N = len(x)
 	# print("x:", len(x), "x:", x)
@@ -817,6 +817,10 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	plt.axhline(0, color='r', zorder=-1)
 	plt.axvline(0, color='r', zorder=-1)
+	plt.title("# Quotes per Week")
+	plt.xlabel("Week")
+	plt.ylabel("# Quotes")
+	plt.grid(color = 'grey', linestyle = '--', linewidth = 0.5)
 	plt.scatter(x, y, label="Quotes per Week")
 
 	# fit least-squares with an intercept
@@ -826,3 +830,15 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	# plot best-fit line
 	plt.plot(xx, w[0]*xx + w[1], '-k')
 	plt.show()
+	
+'''
+# Viewing change in time off ratio starting 2021-05-28 to 200 days into the future.
+# Starting with 102 worked days, how does the ratio change as less time off is taken.
+
+l = list(range(146, 201))
+l1 = l[:7]
+mods = dict(zip(list(map(lambda x: x % 7, l1)), ["fri", "sat", "sun", "mon", "tue", "wed", "thu"]))
+w_mods = [147 % 7, 148 % 7]
+g = lambda wd, lst: [] if not lst else [(mods[lst[0] % 7], wd, lst[0], 100 * (1 - (wd / lst[0])))] + g(wd if not lst[1:] or lst[1] % 7 in w_mods else wd + 1, lst[1:])
+print("\n".join(list(map(str, g(102, l)))))
+'''
