@@ -68,8 +68,8 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25749, 25ART, 7, Fleet Maintenance Inc., $26191, $31325, $29915, 5, 1
 25750, 25ART, 7, Fleet Maintenance Inc., $26191, $29056, $27749, 6, 1
 25752, 30NTT, 7, Remorques Lewis Inc., $27657, $31473, $30691, 2, 0
-25753, 48ET3X, 7, Northeast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
-25757, 53ET3X, 7, Northeast Truck & Trailer Sales, $45047.7666, $52695, $52168, 9, 0
+25753, 48ET3X, 7, NorthEast Truck & Trailer Sales, $43458.5409, $48394, $47910, 4, 0
+25757, 53ET3X, 7, NorthEast Truck & Trailer Sales, $45047.7666, $52695, $52168, 9, 0
 25758, 30NTT, 7, Remorques Lewis Inc., $27657, $34388, $33533, 3, 0
 25759, 53HD3X V2018, 7, Remorques Lewis Inc., $40552.5331, $42834, $42405, 4, 0
 25769, 53ET4XP, 8, Remorques Lewis Inc., $75803, $88781, $85256, 19, 0
@@ -106,7 +106,7 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 25870, 35FA, 12, S & S Trailers Sales Inc, $10589.8907, $11200, $11200, 3, 1
 25871, 35ADG2X AGNR, 12, S & S Trailers Sales Inc, $52259.6967, $55500, $55500, 7, 1
 25885, 48ET3X, 12, NorthEast Truck & Trailer Sales, $43458.5409, $57420, $56846, 10, 0
-25887, 27DT2X V2018, 12, Northeast Truck & Trailer Sales, $54522.1589, $57006, $56435, 5, 0
+25887, 27DT2X V2018, 12, NorthEast Truck & Trailer Sales, $54522.1589, $57006, $56435, 5, 0
 25888, 53ET3X, 12, Fort Garry Industries Ltd., $46849.6773, $61503, $60888, 16, 0
 25889, 25NTT, 12, Remorques Lewis Inc., $28316.08, $35284, $34407, 3, 0
 25890, 30ART, 12, Fort Garry Industries Ltd., $32933.68, $51614, $51098, 10, 0
@@ -153,10 +153,10 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26136, 37LBT3X W, 16, Diamond International Trucks Ltd., $51684.5084, $55938, $55379, 9, 0
 26137, 27LBT2X W, 16, Diamond International Trucks Ltd., $37994.0347, $45338, $44885, 9, 0
 26141, 40HDG3X AG, 17, Fort Garry Industries Ltd., $99094.2174, $107405, $106331, 5, 0
-26184, 25ART, 17, Northeast Truck & Trailer Sales, $33788.1024, $35294, $24941, 3, 0
-26185, 25ANR, 17, Northeast Truck & Trailer Sales, $30588.7296, $32086, $31765, 3, 0
-26186, 37DT3X, 17, Northeast Truck & Trailer Sales, $73854.6332, $80724, $79917, 6, 0
-26187, 27DT2X V2018, 17, Northeast Truck & Trailer Sales, $56703.0453, $59286, $58693, 5, 0
+26184, 25ART, 17, NorthEast Truck & Trailer Sales, $33788.1024, $35294, $24941, 3, 0
+26185, 25ANR, 17, NorthEast Truck & Trailer Sales, $30588.7296, $32086, $31765, 3, 0
+26186, 37DT3X, 17, NorthEast Truck & Trailer Sales, $73854.6332, $80724, $79917, 6, 0
+26187, 27DT2X V2018, 17, NorthEast Truck & Trailer Sales, $56703.0453, $59286, $58693, 5, 0
 26188, 25ART, 17, Hale Trailer Brake & Wheel, $28328.1856, $34789, $30941, 5, 1
 26195, 40ADG3X53 AGNR, 18, Fort Garry Industries Ltd., $79360.5084, $87472, $86597, 6, 0
 26196, 35FA, 18, Fort Garry Industries Ltd., $13555.0616, $15189, $15037, 4, 0
@@ -199,10 +199,11 @@ QuoteNo, QuoteModel, QuoteWeek, Dealer, Base, Gross, Total, n_options, US
 26287, 50HDG3X AG, 20, Fort Garry Industries Ltd., $105244.9737, $111867, $110749, 2, 0
 26288, 55HDG3X BTHH, 20, Redhead Equipment Ltd., $98641.92, $123663, $123663, 8, 0
 26294, 53ET3X, 20, Redhead Equipment Ltd., $48723.6644, $62502, $62502, 4, 0
-26296, 30ANR, 20, Fort Garry Ltd., $31180.8479, $47644, $47168, 10, 0
+26296, 30ANR, 20, Fort Garry Industries Ltd., $31180.8479, $47644, $47168, 10, 0
 26297, 10GT1X, 21, Demountable Concepts Inc., $28050.2144, $31923, $31923, 6, 0
 26299, 35FA, 21, B & D Equipment Inc. dba E & R Trailers Sales, $11013.4863, $11161, $11161, 1, 1
 26302, 53ET3XP, 21, Redhead Equipment Ltd., $62096.1618, $72230, $72230, 9, 0
 26304, 42ET2X, 21, Hale Trailer Brake & Wheel, $32659.3037, $39951, $36779, 7, 1
 26305, 55HDG3X, 21, Fort Garry Industries Ltd., $81009.6768, $84471, $83626, 1, 0
 26306, 40JD2X HG, 21, Fort Garry Industries Ltd., $35152, $35152, $34800, 1, 0
+26315, 51LF4X5T V2018, 22, NorthEast Truck & Trailer Sales, $76336.8478, $91248, $90335, 19, 0
