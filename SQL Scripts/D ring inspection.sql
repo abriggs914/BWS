@@ -1,5 +1,4 @@
 USE BWSdb
-GO
 
 SELECT * FROM [Configurations_Specs]
 	WHERE ([Description] LIKE '%45%'
@@ -42,3 +41,4 @@ SELECT * FROM [Standards]
 		AND [Description] NOT LIKE '%spring%'
 		AND [Description] NOT LIKE '%bearing%'
 		AND [Description] NOT LIKE '%steering%'
+GO
