@@ -63,3 +63,11 @@ SELECT * FROM [Options]
 		AND [Description] NOT LIKE '%when adding%'
 		AND [Obsolete] = 0
 	ORDER BY [Model No];
+
+	
+SELECT * FROM [Orders] ORDER BY [Quote Date]
+SELECT * FROM [Order Options] ORDER BY [Description]
+SELECT * FROM [Order Options_SpecLines]
+SELECT * FROM [Order Options_FactoryLines]
+SELECT * FROM [Order Standards]
+SELECT * FROM [Order]

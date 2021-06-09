@@ -6,3 +6,8 @@ SELECT * FROM [Orders] AS A WITH (NOLOCK)
 			WHERE B.[Sales Person] LIKE '%avery%'
 		)
 	ORDER BY A.[Quote#]
+
+
+SELECT * FROM [Orders] AS A WITH (NOLOCK)
+	WHERE [Notes] LIKE '%brig%'
+	ORDER BY [Quote Date]
