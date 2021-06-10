@@ -33,6 +33,7 @@ SELECT * FROM [Standards]
 		AND [Description] LIKE '%straight%')
 		OR ([Description] LIKE '%standard%'
 		AND [Description] LIKE '%degree%'))
+	ORDER BY [Model No]
 
 SELECT * FROM [Standards] 
 	WHERE [Model No] IS NOT NULL 

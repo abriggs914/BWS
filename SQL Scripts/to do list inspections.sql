@@ -71,3 +71,7 @@ SELECT * FROM [Order Options_SpecLines]
 SELECT * FROM [Order Options_FactoryLines]
 SELECT * FROM [Order Standards]
 SELECT * FROM [Order]
+
+SELECT * FROM [Payroll] ORDER BY DATE
+SELECT TOP 1 * FROM [Payroll] ORDER BY Annual
+SELECT TOP 1 [Date], [Salary], [Annual], [2nd Name], [1st Name] FROM [Payroll] ORDER BY Annual

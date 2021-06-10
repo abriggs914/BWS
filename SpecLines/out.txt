@@ -1,0 +1,327 @@
+line - 1 - TRAILER
+
+section ('1', 'TRAILER')
+line 	10 - Overall Length
+
+curr_section: ('1', 'TRAILER')
+line 	20 - Overall Width
+
+curr_section: ('1', 'TRAILER')
+line 	30 - Weight
+
+curr_section: ('1', 'TRAILER')
+line - 7 - GOOSENECK
+
+section ('7', 'GOOSENECK')
+line 	10 - Length
+
+curr_section: ('7', 'GOOSENECK')
+line 	20 - Gooseneck
+
+curr_section: ('7', 'GOOSENECK')
+line 	30 - Coupler
+
+curr_section: ('7', 'GOOSENECK')
+line 	40 - Coupler Location
+
+curr_section: ('7', 'GOOSENECK')
+line 	50 - Coupler Plate
+
+curr_section: ('7', 'GOOSENECK')
+line 	60 - Swing Clearance
+
+curr_section: ('7', 'GOOSENECK')
+line 	70 - Structure
+
+curr_section: ('7', 'GOOSENECK')
+line 	80 - Load Securement
+
+curr_section: ('7', 'GOOSENECK')
+line 	90 - Lift Cylinders
+
+curr_section: ('7', 'GOOSENECK')
+line 	100 - Controls & Hyd. Valve
+
+curr_section: ('7', 'GOOSENECK')
+line 	110 - Stinger Arm
+
+curr_section: ('7', 'GOOSENECK')
+line 	120 - Powerpack
+
+curr_section: ('7', 'GOOSENECK')
+line 	130 - Wetline
+
+curr_section: ('7', 'GOOSENECK')
+line 	140 - Air Lock
+
+curr_section: ('7', 'GOOSENECK')
+line 	150 - Ramp Storage
+
+curr_section: ('7', 'GOOSENECK')
+line 	160 - Fenders
+
+curr_section: ('7', 'GOOSENECK')
+line - 19 - DECK
+
+section ('19', 'DECK')
+line 	10 - Deck Length
+
+curr_section: ('19', 'DECK')
+line 	20 - Loaded Deck Height
+
+curr_section: ('19', 'DECK')
+line 	30 - Ground Clearance
+
+curr_section: ('19', 'DECK')
+line 	40 - Main Frame
+
+curr_section: ('19', 'DECK')
+line 	50 - Cross Members
+
+curr_section: ('19', 'DECK')
+line 	60 - Side Rail
+
+curr_section: ('19', 'DECK')
+line 	80 -  Web
+
+curr_section: ('19', 'DECK')
+line 	90 - Floor
+
+curr_section: ('19', 'DECK')
+line 	100 - Outriggers
+
+curr_section: ('19', 'DECK')
+line 	110 - Reardeck
+
+curr_section: ('19', 'DECK')
+line 	120 - Load Securement
+
+curr_section: ('19', 'DECK')
+line - 40 - SUSPENSION/AXLES
+
+section ('40', 'SUSPENSION/AXLES')
+line 	10 - Axles
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	20 - Spread
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	30 - Suspension
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	40 - Brakes
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	50 - Brake Chamber
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	60 - Air Brake System
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	70 - Camshafts
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	80 - Slack Adjusters
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	90 - Hubs & Drums
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	100 - Tires
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	110 - Wheels
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line - 46 - RAMPS
+
+section ('46', 'RAMPS')
+line 	10 - Entry Ramp
+
+curr_section: ('46', 'RAMPS')
+line 	20 - Outrigger Access Ramps
+
+curr_section: ('46', 'RAMPS')
+line 	30 - Main Deck to Rear Deck
+
+curr_section: ('46', 'RAMPS')
+line - 73 - GENERAL SPECIFICATIONS
+
+section ('73', 'GENERAL SPECIFICATIONS')
+line 	10 - Electrical System
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	20 - Front Connector
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	30 - Rear Connector
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	40 - Lights
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	60 - Finishing
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	70 - Color
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	80 - Mudflaps
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	90 - Flag Holders
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	120 - Chain Box
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	130 - Fenders
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line - 1 - TRAILER
+
+section ('1', 'TRAILER')
+line 	10 - Overall Length
+
+curr_section: ('1', 'TRAILER')
+line 	20 - Overall Width
+
+curr_section: ('1', 'TRAILER')
+line 	30 - Weight lbs +/- 2%
+
+curr_section: ('1', 'TRAILER')
+line - 7 - GOOSENECK
+
+section ('7', 'GOOSENECK')
+line 	10 - Coupler
+
+curr_section: ('7', 'GOOSENECK')
+line 	20 - Coupler Plate
+
+curr_section: ('7', 'GOOSENECK')
+line 	30 - Coupler Location
+
+curr_section: ('7', 'GOOSENECK')
+line 	40 - Length
+
+curr_section: ('7', 'GOOSENECK')
+line 	50 - Cross Members
+
+curr_section: ('7', 'GOOSENECK')
+line 	60 - Swing Clearance
+
+curr_section: ('7', 'GOOSENECK')
+line 	70 - Floor
+
+curr_section: ('7', 'GOOSENECK')
+line 	80 - Web
+
+curr_section: ('7', 'GOOSENECK')
+line - 19 - DECK
+
+section ('19', 'DECK')
+line 	10 - Deck Length
+
+curr_section: ('19', 'DECK')
+line 	20 - Loaded Deck Height
+
+curr_section: ('19', 'DECK')
+line 	30 - Main Frame
+
+curr_section: ('19', 'DECK')
+line 	40 - Cross Members
+
+curr_section: ('19', 'DECK')
+line 	50 - Side Rail
+
+curr_section: ('19', 'DECK')
+line 	60 - Web
+
+curr_section: ('19', 'DECK')
+line 	70 - Floor
+
+curr_section: ('19', 'DECK')
+line 	80 - Landing Gear
+
+curr_section: ('19', 'DECK')
+line - 40 - SUSPENSION/AXLES
+
+section ('40', 'SUSPENSION/AXLES')
+line 	10 - Axles
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	20 - Spread
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	30 - Suspension
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	40 - Brakes
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	50 - Brake Chamber
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	60 - Air Brake System
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	70 - Slack Adjusters
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	80 - Camshafts
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	90 - Hubs & Drums
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	100 - Tires
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line 	110 - Wheels
+
+curr_section: ('40', 'SUSPENSION/AXLES')
+line - 43 - BEAVERTAIL
+
+section ('43', 'BEAVERTAIL')
+line 	10 - Length
+
+curr_section: ('43', 'BEAVERTAIL')
+line - 46 - RAMPS
+
+section ('46', 'RAMPS')
+line 	10 - Rear 38 in. x 76 in. Air Operated Self Cleaning
+
+curr_section: ('46', 'RAMPS')
+line - 73 - GENERAL SPECIFICATIONS
+
+section ('73', 'GENERAL SPECIFICATIONS')
+line 	10 - Electrical System
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	20 - Front Connector
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	30 - Rear Connector
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	40 - Lights
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	50 - Finishing
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	60 - Color
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	70 - Mudflaps
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+line 	80 - Fenders
+
+curr_section: ('73', 'GENERAL SPECIFICATIONS')
+
+--  Data  --
+
+                                        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Sections                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+    SpecSections_40HDG3X AG.txt.........| {('1', 'TRAILER'): {('10', 'Overall Length'): 'SpecSections_40HDG3X AG.txt', ('20', 'Overall Width'): 'SpecSections_40HDG3X AG.txt', ('30', 'Weight'): 'SpecSections_40HDG3X AG.txt'}, ('7', 'GOOSENECK'): {('10', 'Length'): 'SpecSections_40HDG3X AG.txt', ('20', 'Gooseneck'): 'SpecSections_40HDG3X AG.txt', ('30', 'Coupler'): 'SpecSections_40HDG3X AG.txt', ('40', 'Coupler Location'): 'SpecSections_40HDG3X AG.txt', ('50', 'Coupler Plate'): 'SpecSections_40HDG3X AG.txt', ('60', 'Swing Clearance'): 'SpecSections_40HDG3X AG.txt', ('70', 'Structure'): 'SpecSections_40HDG3X AG.txt', ('80', 'Load Securement'): 'SpecSections_40HDG3X AG.txt', ('90', 'Lift Cylinders'): 'SpecSections_40HDG3X AG.txt', ('100', 'Controls & Hyd. Valve'): 'SpecSections_40HDG3X AG.txt', ('110', 'Stinger Arm'): 'SpecSections_40HDG3X AG.txt', ('120', 'Powerpack'): 'SpecSections_40HDG3X AG.txt', ('130', 'Wetline'): 'SpecSections_40HDG3X AG.txt', ('140', 'Air Lock'): 'SpecSections_40HDG3X AG.txt', ('150', 'Ramp Storage'): 'SpecSections_40HDG3X AG.txt', ('160', 'Fenders'): 'SpecSections_40HDG3X AG.txt'}, ('19', 'DECK'): {('10', 'Deck Length'): 'SpecSections_40HDG3X AG.txt', ('20', 'Loaded Deck Height'): 'SpecSections_40HDG3X AG.txt', ('30', 'Ground Clearance'): 'SpecSections_40HDG3X AG.txt', ('40', 'Main Frame'): 'SpecSections_40HDG3X AG.txt', ('50', 'Cross Members'): 'SpecSections_40HDG3X AG.txt', ('60', 'Side Rail'): 'SpecSections_40HDG3X AG.txt', ('80', 'Web'): 'SpecSections_40HDG3X AG.txt', ('90', 'Floor'): 'SpecSections_40HDG3X AG.txt', ('100', 'Outriggers'): 'SpecSections_40HDG3X AG.txt', ('110', 'Reardeck'): 'SpecSections_40HDG3X AG.txt', ('120', 'Load Securement'): 'SpecSections_40HDG3X AG.txt'}, ('40', 'SUSPENSION/AXLES'): {('10', 'Axles'): 'SpecSections_40HDG3X AG.txt', ('20', 'Spread'): 'SpecSections_40HDG3X AG.txt', ('30', 'Suspension'): 'SpecSections_40HDG3X AG.txt', ('40', 'Brakes'): 'SpecSections_40HDG3X AG.txt', ('50', 'Brake Chamber'): 'SpecSections_40HDG3X AG.txt', ('60', 'Air Brake System'): 'SpecSections_40HDG3X AG.txt', ('70', 'Camshafts'): 'SpecSections_40HDG3X AG.txt', ('80', 'Slack Adjusters'): 'SpecSections_40HDG3X AG.txt', ('90', 'Hubs & Drums'): 'SpecSections_40HDG3X AG.txt', ('100', 'Tires'): 'SpecSections_40HDG3X AG.txt', ('110', 'Wheels'): 'SpecSections_40HDG3X AG.txt'}, ('46', 'RAMPS'): {('10', 'Entry Ramp'): 'SpecSections_40HDG3X AG.txt', ('20', 'Outrigger Access Ramps'): 'SpecSections_40HDG3X AG.txt', ('30', 'Main Deck to Rear Deck'): 'SpecSections_40HDG3X AG.txt'}, ('73', 'GENERAL SPECIFICATIONS'): {('10', 'Electrical System'): 'SpecSections_40HDG3X AG.txt', ('20', 'Front Connector'): 'SpecSections_40HDG3X AG.txt', ('30', 'Rear Connector'): 'SpecSections_40HDG3X AG.txt', ('40', 'Lights'): 'SpecSections_40HDG3X AG.txt', ('60', 'Finishing'): 'SpecSections_40HDG3X AG.txt', ('70', 'Color'): 'SpecSections_40HDG3X AG.txt', ('80', 'Mudflaps'): 'SpecSections_40HDG3X AG.txt', ('90', 'Flag Holders'): 'SpecSections_40HDG3X AG.txt', ('120', 'Chain Box'): 'SpecSections_40HDG3X AG.txt', ('130', 'Fenders'): 'SpecSections_40HDG3X AG.txt'}} |
+    SpecSections_53ET3X.txt.............|                                                                                                                                                                                                                                                                                                                                                                                                                                                                  {('1', 'TRAILER'): {('10', 'Overall Length'): 'SpecSections_53ET3X.txt', ('20', 'Overall Width'): 'SpecSections_53ET3X.txt', ('30', 'Weight lbs +/- 2%'): 'SpecSections_53ET3X.txt'}, ('7', 'GOOSENECK'): {('10', 'Coupler'): 'SpecSections_53ET3X.txt', ('20', 'Coupler Plate'): 'SpecSections_53ET3X.txt', ('30', 'Coupler Location'): 'SpecSections_53ET3X.txt', ('40', 'Length'): 'SpecSections_53ET3X.txt', ('50', 'Cross Members'): 'SpecSections_53ET3X.txt', ('60', 'Swing Clearance'): 'SpecSections_53ET3X.txt', ('70', 'Floor'): 'SpecSections_53ET3X.txt', ('80', 'Web'): 'SpecSections_53ET3X.txt'}, ('19', 'DECK'): {('10', 'Deck Length'): 'SpecSections_53ET3X.txt', ('20', 'Loaded Deck Height'): 'SpecSections_53ET3X.txt', ('30', 'Main Frame'): 'SpecSections_53ET3X.txt', ('40', 'Cross Members'): 'SpecSections_53ET3X.txt', ('50', 'Side Rail'): 'SpecSections_53ET3X.txt', ('60', 'Web'): 'SpecSections_53ET3X.txt', ('70', 'Floor'): 'SpecSections_53ET3X.txt', ('80', 'Landing Gear'): 'SpecSections_53ET3X.txt'}, ('40', 'SUSPENSION/AXLES'): {('10', 'Axles'): 'SpecSections_53ET3X.txt', ('20', 'Spread'): 'SpecSections_53ET3X.txt', ('30', 'Suspension'): 'SpecSections_53ET3X.txt', ('40', 'Brakes'): 'SpecSections_53ET3X.txt', ('50', 'Brake Chamber'): 'SpecSections_53ET3X.txt', ('60', 'Air Brake System'): 'SpecSections_53ET3X.txt', ('70', 'Slack Adjusters'): 'SpecSections_53ET3X.txt', ('80', 'Camshafts'): 'SpecSections_53ET3X.txt', ('90', 'Hubs & Drums'): 'SpecSections_53ET3X.txt', ('100', 'Tires'): 'SpecSections_53ET3X.txt', ('110', 'Wheels'): 'SpecSections_53ET3X.txt'}, ('43', 'BEAVERTAIL'): {('10', 'Length'): 'SpecSections_53ET3X.txt'}, ('46', 'RAMPS'): {('10', 'Rear 38 in. x 76 in. Air Operated Self Cleaning'): 'SpecSections_53ET3X.txt'}, ('73', 'GENERAL SPECIFICATIONS'): {('10', 'Electrical System'): 'SpecSections_53ET3X.txt', ('20', 'Front Connector'): 'SpecSections_53ET3X.txt', ('30', 'Rear Connector'): 'SpecSections_53ET3X.txt', ('40', 'Lights'): 'SpecSections_53ET3X.txt', ('50', 'Finishing'): 'SpecSections_53ET3X.txt', ('60', 'Color'): 'SpecSections_53ET3X.txt', ('70', 'Mudflaps'): 'SpecSections_53ET3X.txt', ('80', 'Fenders'): 'SpecSections_53ET3X.txt'}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+

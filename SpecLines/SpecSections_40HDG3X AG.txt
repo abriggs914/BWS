@@ -1,0 +1,60 @@
+- 1 - TRAILER
+	10 - Overall Length
+	20 - Overall Width
+	30 - Weight
+- 7 - GOOSENECK
+	10 - Length
+	20 - Gooseneck
+	30 - Coupler
+	40 - Coupler Location
+	50 - Coupler Plate
+	60 - Swing Clearance
+	70 - Structure
+	80 - Load Securement
+	90 - Lift Cylinders
+	100 - Controls & Hyd. Valve
+	110 - Stinger Arm
+	120 - Powerpack
+	130 - Wetline
+	140 - Air Lock
+	150 - Ramp Storage
+	160 - Fenders
+- 19 - DECK
+	10 - Deck Length
+	20 - Loaded Deck Height
+	30 - Ground Clearance
+	40 - Main Frame
+	50 - Cross Members
+	60 - Side Rail
+	80 -  Web
+	90 - Floor
+	100 - Outriggers
+	110 - Reardeck
+	120 - Load Securement
+- 40 - SUSPENSION/AXLES
+	10 - Axles
+	20 - Spread
+	30 - Suspension
+	40 - Brakes
+	50 - Brake Chamber
+	60 - Air Brake System
+	70 - Camshafts
+	80 - Slack Adjusters
+	90 - Hubs & Drums
+	100 - Tires
+	110 - Wheels
+- 46 - RAMPS
+	10 - Entry Ramp
+	20 - Outrigger Access Ramps
+	30 - Main Deck to Rear Deck
+- 73 - GENERAL SPECIFICATIONS
+	10 - Electrical System
+	20 - Front Connector
+	30 - Rear Connector
+	40 - Lights
+	60 - Finishing
+	70 - Color
+	80 - Mudflaps
+	90 - Flag Holders
+	120 - Chain Box
+	130 - Fenders

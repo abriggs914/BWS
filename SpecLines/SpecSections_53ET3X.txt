@@ -1,0 +1,47 @@
+- 1 - TRAILER
+	10 - Overall Length
+	20 - Overall Width
+	30 - Weight lbs +/- 2%
+- 7 - GOOSENECK
+	10 - Coupler
+	20 - Coupler Plate
+	30 - Coupler Location
+	40 - Length
+	50 - Cross Members
+	60 - Swing Clearance
+	70 - Floor
+	80 - Web
+- 19 - DECK
+	10 - Deck Length
+	20 - Loaded Deck Height
+	30 - Main Frame
+	40 - Cross Members
+	50 - Side Rail
+	60 - Web
+	70 - Floor
+	80 - Landing Gear
+- 40 - SUSPENSION/AXLES
+	10 - Axles
+	20 - Spread
+	30 - Suspension
+	40 - Brakes
+	50 - Brake Chamber
+	60 - Air Brake System
+	70 - Slack Adjusters
+	80 - Camshafts
+	90 - Hubs & Drums
+	100 - Tires
+	110 - Wheels
+- 43 - BEAVERTAIL
+	10 - Length
+- 46 - RAMPS
+	10 - Rear 38 in. x 76 in. Air Operated Self Cleaning
+- 73 - GENERAL SPECIFICATIONS
+	10 - Electrical System
+	20 - Front Connector
+	30 - Rear Connector
+	40 - Lights
+	50 - Finishing
+	60 - Color
+	70 - Mudflaps
+	80 - Fenders
