@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                              Atlantic Powertrain & Equipment
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  24899    10014717          28LBT2X NS        2B9B6L527NA001166         28-Jan-21       01-Apr-21       26-Apr-21         01-May-21          5      27-Apr-21        01-May-21        4
+
+  24898    10014718          39LBT3X NS        2B9B64R38NA0011           28-Jan-21       07-Apr-21       29-Apr-21         01-May-21          2      29-Apr-21        04-May-21        5
+
+  25375    10014737            30ART           2B9B2TR30NA0012           05-Feb-21       06-May-21       28-May-21         14-May-21         -14     25-May-21        03-Jun-21        9
+  25269    10014662           53ET3XP          2B9B6EY30NA0011           15-Jan-21       04-May-21       26-May-21         15-May-21         -11     19-May-21        28-May-21        9
+
+  25274    10014609            30ART           2B9B2TR3XNA0011           09-Dec-20       14-May-21       07-Jun-21         01-Jun-21          -6     03-Jun-21        14-Jun-21        11
+
+  25275    10014610            30ART           2B9B2TR31NA0011           09-Dec-20       28-Apr-21       20-May-21         01-Jun-21          12     11-May-21        26-May-21        15
+
+  25276    10014611            30ART           2B9B2TR33NA0011           09-Dec-20       30-Apr-21       24-May-21         01-Jun-21          8      21-May-21        31-May-21        10
+  25277    10014612            30ART           2B9B2TR35NA0011           09-Dec-20       12-May-21       03-Jun-21         01-Jun-21          -2     02-Jun-21        03-Jun-21        1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

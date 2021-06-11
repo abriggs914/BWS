@@ -1,0 +1,129 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                       Trailers Plus
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25446    10014713            30ART           2B9B2TR32NA0012           27-Jan-21       11-May-21       02-Jun-21         04-Jun-21          2      03-Jun-21        09-Jun-21        6
+
+  25445    10014701            30NTT           2B9B2TP32NA0012           22-Jan-21       18-May-21       09-Jun-21         04-Jun-21          -5     07-Jun-21        10-Jun-21        3
+
+  25450    10014714            30ART           2B9B2TR34NA0012           27-Jan-21       13-May-21       04-Jun-21         11-Jun-21          7      02-Jun-21        14-Jun-21        12
+  25561    10014754            30NTT           2B9B2TP36NA0012           08-Feb-21       03-Jun-21       25-Jun-21         18-Jun-21          -7     25-Jun-21        28-Jun-21        3
+
+  25565    10014755            30NTT           2B9B2TP38NA0012           08-Feb-21       07-Jun-21       29-Jun-21         22-Jun-21          -7     08-Jul-21        13-Jul-21        5
+
+  25566    10014756            30NTT           2B9B2TP3XNA0012           08-Feb-21       09-Jun-21       05-Jul-21         25-Jun-21         -10     05-Jul-21        08-Jul-21        3
+
+  25656    10014757            30NTT           2B9B2TP36NA0013           08-Feb-21       20-Sep-21       13-Oct-21         14-Jul-21         -91                      20-Oct-21
+  25657    10014758            30NTT           2B9B2TP38NA0013           08-Feb-21       22-Sep-21       15-Oct-21         16-Jul-21         -91                      22-Oct-21
+
+  25658    10014759            30NTT           2B9B2TP3XNA0013           08-Feb-21       24-Sep-21       19-Oct-21         20-Jul-21         -91                      26-Oct-21
+
+  25737    10014865            30ART           2B9B2TR30NA0013           22-Mar-21       12-Jul-21       10-Aug-21         30-Jul-21         -11                      16-Aug-21
+
+  25736    10014855            30NTT           2B9B2TP39NA0013           19-Mar-21       08-Jul-21       30-Jul-21         30-Jul-21          0                       09-Aug-21
+  25738    10014866            30ART           2B9B2TR34NA0013           22-Mar-21       14-Jul-21       12-Aug-21         04-Aug-21          -8                      19-Aug-21
+
+  25829    10014876            30ANR           2B9B2TR34NA0014           22-Mar-21       19-Aug-21       13-Sep-21         10-Sep-21          -3                      20-Sep-21
+
+  25831    10014856            30NTT           2B9B2TP37NA0014           19-Mar-21       18-Aug-21       10-Sep-21         10-Sep-21          0                       17-Sep-21
+
+  25832    10014857            30NTT           2B9B2TP39NA0014           19-Mar-21       20-Aug-21       14-Sep-21         14-Sep-21          0                       21-Sep-21
+
+  25833    10014858            30NTT           2B9B2TP30NA0014           19-Mar-21       24-Aug-21       16-Sep-21         16-Sep-21          0                       23-Sep-21
+  25834    10014859            30NTT           2B9B2TP32NA0014           19-Mar-21       26-Aug-21       20-Sep-21         20-Sep-21          0                       27-Sep-21
+
+  25835    10014860            30NTT           2B9B2TP34NA0014           19-Mar-21       30-Aug-21       22-Sep-21         20-Sep-21          -2                      29-Sep-21
+
+  25868    10014937            20NTT           2B9B2TM20NA0014           13-Apr-21       21-Jun-21       15-Jul-21         13-Oct-21          90                      22-Jul-21
+
+  25903    10014938            20NTT           2B9B2TM22NA0014           13-Apr-21       23-Jun-21       19-Jul-21         15-Oct-21          88                      26-Jul-21
+  25869    10014939            20NTT           2B9B2TM29NA0014           13-Apr-21       25-Jun-21       21-Jul-21         19-Oct-21          90                      28-Jul-21
+
+  26212    10015143            30ART           2B9B2TR36PA0010           08-Jun-21       12-Jan-22       03-Feb-22         28-Feb-22          25                      10-Feb-22
+
+  26216                        30ART           2B9B2TR38PA0010                           15-Mar-22       06-Apr-22         28-Feb-22         -37                      13-Apr-21
+
+  26239    10015144            30ART           2B9B2TR38PA0010           08-Jun-21       14-Jan-22       07-Feb-22         28-Feb-22          21                      14-Feb-22
+  26240    10015145            30ART           2B9B2TR3XPA0010           08-Jun-21       18-Jan-22       09-Feb-22         28-Feb-22          19                      16-Feb-22
+
+  26241    10015146            30ART           2B9B2TR36PA0010           08-Jun-21       20-Jan-22       11-Feb-22         28-Feb-22          17                      18-Feb-22
+
+  26242                        30ART           2B9B2TR3XPA0010                           17-Mar-22       08-Apr-22         28-Feb-22         -39                      15-Apr-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 2
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                       Trailers Plus
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  26215                        20NTT           2B9B2TM21PA0010                           01-Feb-22       24-Feb-22         31-Mar-22          35                      03-Mar-22
+
+  26230                        20NTT           2B9B2TM23PA0010                           03-Feb-22       28-Feb-22         31-Mar-22          31                      04-Mar-22
+
+  26231                        20NTT           2B9B2TM25PA0010                                                             31-Mar-22                                  31-Jan-22
+  26213                        30ANR           2B9B2TR30PA0010                           21-Mar-22       12-Apr-22         31-Mar-22         -12                      19-Apr-21
+
+  26237                        30ANR           2B9B2TR32PA0010                           23-Mar-22       14-Apr-22         31-Mar-22         -14                      21-Apr-21
+
+  26238                        30ANR           2B9B2TR30PA0010                           25-Mar-22       18-Apr-22         31-Mar-22         -18                      23-Apr-21
+
+  26214                        30NTT           2B9B2TP31PA0010                                                             31-Mar-22                                  31-Mar-22
+  26232                        30NTT           2B9B2TP33PA0010                                                             31-Mar-22                                  31-Mar-22
+
+  26233                        30NTT           2B9B2TP3XPA0010                                                             31-Mar-22                                  31-Mar-22
+
+  26234                        30NTT           2B9B2TP31PA0010                                                             31-Mar-22                                  31-Mar-22
+
+  26235                        30NTT           2B9B2TP33PA0010                                                             31-Mar-22                                  31-Mar-22
+  26236                        30NTT           2B9B2TP35PA0010                                                             31-Mar-22                                  30-Mar-22
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 2

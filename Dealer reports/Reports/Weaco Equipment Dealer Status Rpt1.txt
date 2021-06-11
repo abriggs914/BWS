@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                      Weaco Equipment
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25495    10014744            25ART           2B9B2TR35NA0012           08-Feb-21       31-May-21       22-Jun-21         08-Jun-21         -14     11-Jun-21        16-Jun-21        5
+
+  25496    10014749            25ANR           2B9B2TR3XNA0012           08-Feb-21       02-Jun-21       24-Jun-21         10-Jun-21         -14     18-Jun-21        23-Jun-21        5
+
+  25563    10014750            25ANR           2B9B2TR31NA0012           08-Feb-21       04-Jun-21       28-Jun-21         14-Jun-21         -14     30-Jun-21        05-Jul-21        5
+  25564    10014751            25ANR           2B9B2TR33NA0012           08-Feb-21       08-Jun-21       30-Jun-21         17-Jun-21         -13     07-Jul-21        12-Jul-21        5
+
+  25497    10014760            20ANR           2B9B2TN20NA0012           08-Feb-21       03-Jun-21       25-Jun-21         21-Jun-21          -4     28-Jun-21        05-Jul-21        7
+
+  25562    10014761            20ANR           2B9B2TN22NA0012           08-Feb-21       07-Jun-21       29-Jun-21         23-Jun-21          -6     29-Jun-21        05-Jul-21        6
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

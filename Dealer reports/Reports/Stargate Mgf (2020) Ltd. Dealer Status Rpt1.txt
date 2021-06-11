@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                  Stargate Mgf (2020) Ltd.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  26329                         CD1X           9603
+
+  24545                      Dump SF4X         8960                                      02-Jun-20       30-Jun-20         11-Jun-20         -19                      07-Jul-20
+
+  25389    10014639          Pony 3X17         9465                      13-Jan-21       07-May-21       31-May-21         04-May-21         -27     07-Jun-21        10-Jun-21        3
+  25818    10014810             CD1X           8779 Dolly                17-Mar-21       29-Apr-21       21-May-21         21-May-21          0                       28-May-21
+
+  25860    10014933             CD2X           8786DOLLY                 05-Apr-21       14-May-21       07-Jun-21         07-Jun-21          0                       14-Jun-21
+
+  25391    10014640          Pony 3X17         9449                      13-Jan-21       12-May-21       03-Jun-21         08-Jun-21          5      08-Jun-21        11-Jun-21        3
+
+  25392    10014641          Pony 3X17         9451                      13-Jan-21       12-May-21       03-Jun-21         14-Jun-21          11     10-Jun-21        14-Jun-21        4
+  25393    10014642          Pony 3X17         9452                      13-Jan-21       17-May-21       08-Jun-21         15-Jun-21          7      17-Jun-21        22-Jun-21        5
+
+  25394    10014643          Pony 3X17         9448                      13-Jan-21       17-May-21       08-Jun-21         22-Jun-21          14     18-Jun-21        24-Jun-21        6
+
+  26208                      Dump SF2X         9464                                      31-Aug-21       23-Sep-21         09-Jul-21         -76                      30-Sep-21
+
+  25859    10015015          Dump SF4X         9450                      05-May-21       24-Jun-21       20-Jul-21         13-Jul-21          -7                      27-Jul-21
+  25390    10014645          Pony 3X17         9471                      13-Jan-21       25-May-21       16-Jun-21         14-Jul-21          28     23-Jun-21        25-Jun-21        2
+
+  25395    10014644          Pony 3X17         9463                      13-Jan-21       25-May-21       16-Jun-21         30-Jul-21          44     22-Jun-21        25-Jun-21        3
+
+  26311    10015115             CD1X           8794 DOLLY                08-Jun-21       21-Jul-21       19-Aug-21         20-Aug-21          1                       26-Aug-21
+
+  25803    10015014             30SB           8782                      05-May-21       26-Jul-21       24-Aug-21         24-Aug-21          0                       31-Aug-21
+
+  25825    10015012         Dump 36SF3X        8783                      04-May-21       10-Aug-21       01-Sep-21         31-Aug-21          -1                      07-Sep-21
+  25805                     End Dump 4X        8776                                      12-Aug-21       03-Sep-21         31-Aug-21          -3                      13-Sep-21
+
+  25807                     End Dump 4X        8777                                      17-Aug-21       09-Sep-21         02-Sep-21          -7                      16-Sep-21
+
+  25827    10015013         Dump 36SF3X        8784                      04-May-21       13-Aug-21       07-Sep-21         07-Sep-21          0                       14-Sep-21
+
+  26209                         30SB           8789                                      07-Sep-21       29-Sep-21         29-Sep-21          0                       06-Oct-21
+  26210                         30SB           8790                                      13-Sep-21       05-Oct-21         05-Oct-21          0                       12-Oct-21
+
+  26217    10015113          Pony 3X17         9467                      08-Jun-21       30-Jun-21       26-Jul-21         18-Oct-21          84                      09-Aug-21
+
+  26218    10015114          Pony 3X17         9468                      08-Jun-21       07-Jul-21       29-Jul-21         21-Oct-21          84                      12-Aug-21
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

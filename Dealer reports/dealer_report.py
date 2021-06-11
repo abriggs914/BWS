@@ -8,7 +8,7 @@ from test_suite import *
 # file_name = "C:/Users/ABriggs/Documents/BWS/Dealer reports/demo_1.txt"
 ORDERS_TO_CHANGE_OUTPUT = "Orders to change.txt"
 
-HOLIDAYS_2021 = list(map(lambda x : dt.datetime.strptime(x, "%Y-%m-%d"), [
+HOLIDAYS_2021 = list(map(lambda x: dt.datetime.strptime(x, "%Y-%m-%d"), [
 		"2021-02-15",
 		"2021-01-01",
 		"2021-04-02",
@@ -30,6 +30,7 @@ HOLIDAYS_2021 = list(map(lambda x : dt.datetime.strptime(x, "%Y-%m-%d"), [
 		"2021-12-30",
 		"2021-12-31"
 	]))
+
 
 class Order:
 	def __init__(self, data, line):
@@ -137,16 +138,17 @@ class Order:
 			est_delivery=self.est_delivery,
 			F=self.F)
 
+
 def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
 	need_adjusting = []
 	forward_review = []
 	backward_review = []
 	manual_review = []
 	for order in orders:
-		try :
+		try:
 			est = dt.datetime.strptime(order.est_delivery, "%d-%b-%y")
 			mrp = dt.datetime.strptime(order.MRP_finish, "%d-%b-%y")
-			avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date != None else None
+			avail = dt.datetime.strptime(order.available_date, "%d-%b-%y") if order.available_date is not None else None
 			# print("\nest: {est}, mrp: {mrp}, avail: {avail}".format(est=est, mrp=mrp, avail=avail))
 			if avail:
 				new_date = add_business_days(avail, lead_days, HOLIDAYS_2021)
@@ -170,8 +172,10 @@ def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, ba
 			else:
 				# no change
 				pass
-		except:
-			print("Exception caught in need_est_delivery_update")
+		except ValueError:
+			print("ValueError Exception caught in need_est_delivery_update")
+		except TypeError:
+			print("TypeError Exception caught in need_est_delivery_update")
 			manual_review.append(order)
 
 	return need_adjusting, forward_review, backward_review, manual_review
@@ -234,6 +238,7 @@ def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, ba
 
 # 	return need_adjusting, forward_review, backward_review, manual_review
 
+
 def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
 	print("file_name", file_name)
 	all_for_adjusting = []
@@ -247,8 +252,9 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 		while i < len(lines):
 			line = lines[i]
 			spl = line.split()
+			# print("i:", i, "spl", spl)
 			if spl == ["Date", "Date", "Date"]:
-				if header_line == None:
+				if header_line is None:
 					header_line = [l.strip() for l in lines[i - 1].split("   ") if l] + ["New Delivery"]
 					# print("header_line BEFORE:", header_line)
 				i += 1
@@ -262,7 +268,7 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 				data.append(page_data)
 			i += 1
 				
-
+		# print("header_line", header_line)
 		refined_header = []
 		for col_name in header_line:
 			temp = col_name.lower()
@@ -473,6 +479,7 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 
 		return all_for_adjusting
 
+
 def run_reports():
 	ld = 5
 	frt = 5
@@ -488,19 +495,20 @@ def run_reports():
 
 	files = os.listdir("Reports")
 	# s = "C:\Users\ABriggs\Documents\BWS\Dealer reports\Reports\Atlantic Powertrain Dealer Status Review.txt"
-	files = ["Reports/" + f for f in files if "Dealer Status Review" in f and f.endswith(".txt")]
+	files = ["Reports/" + f for f in files if "Dealer Status" in f and f.endswith(".txt")]
 	# files = ["Reports/Remorques Lewis Inc Dealer Status Review.txt", "Reports/Hale Trailer Brake & Wheel Dealer Status Review.txt"]
 	need_adjusted = []
 	for f in files:
-		dealer = f.split()[:-3]
+		dealer = f[f.index("/") + 1:].split()[:-3]
 		need_adj = dealer_delivery_report_updates(dealer, f, lead_days=ld, forward_review_threshold=frt, backward_review_threshold=brt, forward_adjust_threshold=fat, backward_adjust_threshold=bat)
-		if need_adj != None:
+		if need_adj is not None:
 			need_adjusted += need_adj
 	
 	print("\n\tFinal tally of orders that require estimated delivery update:\n")
 	for order in need_adjusted:
 		print(order)
 
+	testing = '''
 	# desired = [25433, 25703, 24847, 24848, 25647, 25243, 25342, 25376, 25379, 25378, 25519, 25760, 25761, 25762, 25763, 25764, 25765, 25766, 25767, 25768, 25091]
 	desired = [25433, 25703, 25647, 25243, 25342, 25376, 25379, 25378, 25519, 25760, 25761, 25762, 25763, 25764, 25765, 25766, 25767, 25768, 25091]
 	# desired = [25433, 25703, 25647, 25243, 25342, 25376, 25379, 25378, 25765, 25766, 25767, 25768, 25091]
@@ -517,6 +525,7 @@ def run_reports():
 	diff = disjoint(adjs, desired)
 	diff.sort()
 	print("diff:", diff)
+	'''
 
 run_reports()
 

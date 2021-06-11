@@ -59,7 +59,8 @@ day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holi
 def work_weeks(first_day, holidays):
 		
 	today = datetime.date.today()
-	# today = datetime.date.fromisoformat("2032-01-04")
+	# today = datetime.date.fromisoformat("2021-07-04")
+	# today = datetime.date.fromisoformat("2021-05-25")
 	day = (today - first_day).days + 1
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
 
@@ -73,6 +74,8 @@ def work_weeks(first_day, holidays):
 	res = [dw(i) for i in range(1, day+1)]
 	res = [[res[i+j] for j in range(min(5, day - i))] for i in range(0, day+1, 7)]
 	days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+	week_day_header = ["Worked", "Total", "Off", "Percentage Worked"]
+	week_days = dict(zip(week_day_header, [dict(zip(days, [0 for day in days])) for j in week_day_header]))
 	
 	idx = 1
 	res = {}
@@ -80,7 +83,27 @@ def work_weeks(first_day, holidays):
 	i = 0
 	days_worked = 0
 	week = 1
+	monday = first_day
+	str_holidays = list(map(str, holidays))
 	while i < day:
+		date_today = first_day + datetime.timedelta(days=i)
+		day_of_week = datetime.date.fromisoformat(str(date_today))
+		sdow = days[day_of_week.weekday()]
+		is_holiday = str(date_today) in str_holidays
+		# print("week_days:", week_days)
+		# print("week_day_header:", week_day_header[0])
+		# print("day_of_week", day_of_week)
+		# print("sdwo",sdow)
+		# print("week_days[week_day_header[0][day_of_week]]:", week_days[week_day_header[0]])
+		
+		week_days[week_day_header[0]].update({sdow: week_days[week_day_header[0]][sdow] + (0 if is_holiday else 1)})
+		week_days[week_day_header[1]].update({sdow: week_days[week_day_header[1]][sdow] + 1})
+		week_days[week_day_header[2]].update({sdow: week_days[week_day_header[2]][sdow] + (1 if is_holiday else 0)})
+		week_days[week_day_header[3]].update({sdow: percent(week_days[week_day_header[0]][sdow] / max(1, week_days[week_day_header[1]][sdow]))})
+		
+		print("TODAY", date_today, ",", days[day_of_week.weekday()], ("\tholiday!" if is_holiday else ""))
+		
+		# print("i:", i, "day:", day)
 		if i+1 not in holidays_nums:
 			r.append(idx)
 			idx += 1
@@ -89,6 +112,7 @@ def work_weeks(first_day, holidays):
 		if len(r) == 5:
 			# week_str = len(res) + 1
 			monday = first_day + datetime.timedelta(days=7*len(res))
+			# print("monday  og", monday)
 			week_str = str(monday) + " => " + str(monday + datetime.timedelta(days=4))
 			lr = len(res)
 			res[week_str] = {"week": week}
@@ -109,17 +133,18 @@ def work_weeks(first_day, holidays):
 		res[week_str].update({"sat": 7*len(res)})
 	days_worked = idx - 1
 		
-	months = dict(zip([calendar.month_name[i] for i in range(1, 13)], ["" for i in range(12)]))
+	months = dict(zip([calendar.month_name[i] + " 2021" for i in range(1, 13)], ["" for i in range(12)]))
 	next_holiday = None
 	last_holiday = None
 	# when_holiday_next = None
 	# when_holiday_last = None
 	print("months: " + str(months))
+	holidays_past = 0
 	for d, holiday in zip(holidays_nums, holidays):
 		holiday = datetime.date.fromisoformat(holiday)
 		month = holiday.month
 		sday = day_string(holiday)
-		months[calendar.month_name[month]] += sday + ", "
+		months[calendar.month_name[month] + " 2021"] += sday + ", "
 		print("holiday ({th}): {holiday}, d: {d}, day+1: {d1}, d>d1: {dd1}, hm: {hm}".format(th=type(holiday), d=d, holiday=holiday, hm=month, d1=(day), dd1=(d>day)))
 		if d > day:
 			if next_holiday is None:
@@ -134,6 +159,7 @@ def work_weeks(first_day, holidays):
 			else:
 				if d >= (holiday - first_day).days + 1:
 					last_holiday = holiday
+					holidays_past += 1
 			# else:
 				# if d 
 					
@@ -165,6 +191,7 @@ def work_weeks(first_day, holidays):
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
 		"Days Off": day + 1 - days_worked,
+		"Holidays Taken": holidays_past,
 		"Percentage Time Off": str((100 * (1 + day - days_worked) / max(1, day + 1))) + " %"
 		# "Next Holiday": "In " + str(holiday_diff),
 		})
@@ -177,6 +204,10 @@ def work_weeks(first_day, holidays):
 		if months[month]:
 			months[month] = months[month][:-2]
 		
+	res.update(week_days)
+	res.update({
+		"   ": empty
+	})
 	res.update(months)
 	return res
 

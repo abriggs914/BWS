@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                     Wieland Sales Inc.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25406    10014676            25ART           2B9B2TR37NA0012           18-Jan-21       16-Jun-21       12-Jul-21         10-May-21         -63                      19-Jul-21
+
+  25318    10014698            25NTT           2B9B2TP3XNA0012           22-Jan-21       04-May-21       26-May-21         17-May-21          -9     24-May-21        24-May-21        0
+
+  25975    10015090            25ART           2B9B2TR38NA0016           01-Jun-21       19-Oct-21       10-Nov-21         15-Nov-21          5                       17-Nov-21
+  26109    10015091            25ART           2B9B2TR3XNA0016           01-Jun-21       21-Oct-21       15-Nov-21         15-Nov-21          0                       22-Nov-21
+
+  26110    10015092            25ART           2B9B2TR31NA0016           01-Jun-21       25-Oct-21       17-Nov-21         15-Nov-21          -2                      24-Nov-21
+
+  26111    10015061           53ET3XP          2B9B6EY36NA0016           25-May-21       05-Oct-21       28-Oct-21         15-Nov-21          18                      08-Nov-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

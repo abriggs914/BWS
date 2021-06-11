@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                  Fleet Maintenance, Inc.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25943    10015028      Frameless Alum. U     9500                      07-May-21       05-Jul-21       27-Jul-21         30-Jun-21         -27                      04-Aug-21
+
+  25949    10015022      Frameless Alum. U                               07-May-21       14-Sep-21       06-Oct-21         30-Jun-21         -98                      13-Oct-21
+
+  25956    10015023      Frameless Alum. U                               07-May-21       23-Sep-21       18-Oct-21         30-Jun-21         -110                     25-Oct-21
+  25961    10015029      Frameless Alum. U     9501                      07-May-21       16-Jul-21       16-Aug-21         30-Jun-21         -47                      23-Aug-21
+
+  25950    10015016      Frameless Alum. U                               07-May-21       12-Nov-21       06-Dec-21         30-Jun-21         -159                     13-Dec-21
+
+  25951    10015017      Frameless Alum. U                               07-May-21       22-Nov-21       14-Dec-21         30-Jun-21         -167                     21-Dec-21
+
+  25749    10014870            25ART           2B9B2TR32NA0014           22-Mar-21       12-Aug-21       03-Sep-21         25-Aug-21          -9                      13-Sep-21
+  25750    10014871            25ART           2B9B2TR34NA0014           22-Mar-21       16-Aug-21       08-Sep-21         27-Aug-21         -12                      15-Sep-21
+
+  25748    10014861            25NTT           2B9B2TP36NA0013           19-Mar-21       16-Jul-21       16-Aug-21         27-Aug-21          11                      23-Aug-21
+
+  25746    10014862            20NTT           2B9B2TM24NA0013           19-Mar-21       12-Jul-21       10-Aug-21         06-Sep-21          27                      17-Aug-21
+
+  25747    10014863            20NTT           2B9B2TM26NA0013           19-Mar-21       14-Jul-21       12-Aug-21         08-Sep-21          27                      19-Aug-21
+  25957    10015024      Frameless Alum. U                               07-May-21       30-Sep-21       25-Oct-21         30-Sep-21         -25                      01-Nov-21
+
+  25958    10015025      Frameless Alum. U                               07-May-21       14-Oct-21       05-Nov-21         30-Sep-21         -36                      12-Nov-21
+
+  25962    10015030      Frameless Alum. U     9502                      07-May-21       30-Jul-21       30-Aug-21         30-Sep-21          31                      07-Sep-21
+
+  25963    10015031      Frameless Alum. U     9503                      07-May-21       13-Aug-21       07-Sep-21         30-Sep-21          23                      14-Sep-21
+
+  25952    10015018      Frameless Alum. U                               07-May-21       30-Nov-21       22-Dec-21         30-Sep-21         -83                      05-Jan-22
+  25953    10015019      Frameless Alum. U                               07-May-21       10-Dec-21       04-Jan-22         30-Sep-21         -96                      11-Jan-22
+
+  25959    10015026      Frameless Alum. U                               07-May-21       22-Oct-21       16-Nov-21         03-Jan-22          48                      23-Nov-21
+
+  25960    10015027      Frameless Alum. U                               07-May-21       02-Nov-21       25-Nov-21         03-Jan-22          39                      02-Dec-21
+
+  25964    10015032      Frameless Alum. U     9504                      07-May-21       24-Aug-21       16-Sep-21         03-Jan-22         109                      23-Sep-21
+  25965    10015033      Frameless Alum. U     9505                      07-May-21       02-Sep-21       27-Sep-21         03-Jan-22          98                      04-Oct-21
+
+  25954    10015020      Frameless Alum. U                               07-May-21       21-Dec-21       13-Jan-22         03-Jan-22         -10                      20-Jan-22
+
+  25955    10015021      Frameless Alum. U                               07-May-21       10-Jan-22       01-Feb-22         03-Jan-22         -29                      08-Feb-22
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

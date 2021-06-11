@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 Demountable Concepts, Inc.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25506    10014692          53VT2V DCI        2B9B6VY23NA0012           22-Jan-21       02-Jun-21       24-Jun-21         31-Mar-21         -85     28-Jun-21        05-Jul-21        7
+
+  25507    10014693          53VT2V DCI        2B9B6VY25NA0012           22-Jan-21       13-May-21       04-Jun-21         31-Mar-21         -65     11-Jun-21        16-Jun-21        5
+
+  25508    10014694          53VT2V DCI        2B9B6VY27NA0012           22-Jan-21       17-May-21       08-Jun-21         31-Mar-21         -69     14-Jun-21        17-Jun-21        3
+  25509    10014695          53VT2V DCI        2B9B6VY29NA0012           22-Jan-21       25-May-21       16-Jun-21         31-Mar-21         -77     16-Jun-21        21-Jun-21        5
+
+  25510    10014696        53VT2V JB HUNT      2B9B6VY20NA0012           22-Jan-21       27-May-21       18-Jun-21         31-Mar-21         -79     17-Jun-21        25-Jun-21        8
+
+  25511    10014697        53VT2V JB HUNT      2B9B6VY22NA0012           22-Jan-21       31-May-21       22-Jun-21         31-Mar-21         -83     21-Jun-21        29-Jun-21        8
+
+  25732    10014834          53VT2V DCI        2B9B6VY27NA0013           18-Mar-21       16-Jul-21       16-Aug-21         15-Jun-21         -62                      23-Aug-21
+  25733    10014835          53VT2V DCI        2B9B6VY29NA0013           18-Mar-21       20-Jul-21       18-Aug-21         15-Jun-21         -64                      25-Aug-21
+
+  25734    10014836          53VT2V DCI        2B9B6VY20NA0013           18-Mar-21       22-Jul-21       20-Aug-21         15-Jun-21         -66                      27-Aug-21
+
+  25735    10014837          53VT2V DCI        2B9B6VY22NA0013           18-Mar-21       26-Jul-21       24-Aug-21         15-Jun-21         -70                      31-Aug-21
+
+  25790    10014838          53VT2V DCI        2B9B6VY27NA0014           18-Mar-21       29-Jul-21       27-Aug-21         15-Jul-21         -43                      02-Sep-21
+  25791    10014839          53VT2V DCI        2B9B6VY29NA0014           18-Mar-21       27-Jul-21       25-Aug-21         15-Jul-21         -41                      07-Sep-21
+
+  25719    10014829            10GT1X          2B9B6NR17NA0013           18-Mar-21       28-Jun-21       22-Jul-21         26-Jul-21          4                       27-Jul-21
+
+  25898                    53VT3V PENSKE       2B9B6VY20NA0014                           23-Aug-21       15-Sep-21         15-Sep-21          0                       20-Sep-21
+
+  25899                      53VT3V DCI        2B9B6VY22NA0014                           26-Aug-21       20-Sep-21         30-Sep-21          10                      27-Sep-21
+
+  26290    10015136          53VT2V DCI        2B9B6VY26PA0011           08-Jun-21       15-Dec-21       07-Jan-22         15-Jan-22          8                       14-Jan-22
+  26291    10015137          53VT2V DCI        2B9B6VY28PA0011           08-Jun-21       16-Dec-21       10-Jan-22         15-Jan-22          5                       17-Jan-22
+
+  26292    10015138          53VT2V DCI        2B9B6VY2XPA0011           08-Jun-21       17-Dec-21       11-Jan-22         15-Jan-22          4                       18-Jan-22
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

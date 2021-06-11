@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                 S & S Trailers Sales, Inc
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25789    10014802             35FA           2B9B4A518NA0014           10-Mar-21       14-Apr-21       06-May-21         10-May-21          4      14-Jun-21        17-Jun-21        3
+
+  25651    10014787        35ADG2X51 AGNR      2B9B6GX28NA0013           26-Feb-21       16-Jun-21       12-Jul-21         30-Jun-21         -12                      19-Jul-21
+
+  25676    10014788        35ADG2X51 AGNR      2B9B6GX25NA0013           26-Feb-21       22-Jun-21       16-Jul-21         05-Jul-21         -11                      23-Jul-21
+  25907    10014931            20ANR           2B9B2TN26NA0014           05-Apr-21       15-Jun-21       09-Jul-21         13-Jul-21          4                       16-Jul-21
+
+  25837    10014902         35ADG2X AGNR       2B9B6GW20NA001            22-Mar-21       24-Aug-21       16-Sep-21         03-Sep-21         -13                      23-Sep-21
+
+  25892    10014910             35FA           2B9B4A516NA0014           05-Apr-21       13-Aug-21       07-Sep-21         07-Sep-21          0                       14-Sep-21
+
+  25870    10014911             35FA           2B9B4A514NA0014           05-Apr-21       17-Aug-21       09-Sep-21         09-Sep-21          0                       16-Sep-21
+  25871    10014958         35ADG2X AGNR       2B9B6GW25NA001            14-Apr-21       26-Aug-21       20-Sep-21         20-Sep-21          0                       27-Sep-21
+
+  25895    10014959        40ADG3X53 AGLP      2B9B6GY37NA0014           14-Apr-21       30-Aug-21       22-Sep-21         22-Sep-21          0                       29-Sep-21
+
+  25896    10014960        40ADG3X53 AGLP      2B9B6GY39NA0014           14-Apr-21       01-Sep-21       24-Sep-21         24-Sep-21          0                       01-Oct-21
+
+  26200    10015043            30ANR           2B9B2TR39NA0016           25-May-21       14-Sep-21       06-Oct-21         06-Oct-21          0                       13-Oct-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1

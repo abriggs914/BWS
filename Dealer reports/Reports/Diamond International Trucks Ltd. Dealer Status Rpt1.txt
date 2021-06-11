@@ -1,0 +1,194 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                             Diamond International Trucks Ltd.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25499    10014806          37LBT3X W         2B9B64R32NA0012           12-Mar-21       27-May-21       18-Jun-21         09-Jun-21          -9     18-Jun-21        23-Jun-21        5
+
+  25500    10014805          27LBT2X W         2B9B6LK2XNA0012           12-Mar-21       04-Jun-21       28-Jun-21         11-Jun-21         -17     21-Jun-21        28-Jun-21        7
+
+  24909    10014785         53HD3X 2018        2B9B6HY33NA0013           26-Feb-21       22-Jun-21       16-Jul-21         23-Jun-21         -23                      23-Jul-21
+  25560    10014822         53HF3X 2018        2B9B6FY36NA0013           17-Mar-21       10-Jun-21       06-Jul-21         25-Jun-21         -11                      13-Jul-21
+
+  25640    10014789            48ET3X          2B9B6EW39NA001            26-Feb-21       25-Jun-21       21-Jul-21         30-Jun-21         -21                      28-Jul-21
+
+  25646    10014823         53HF3X 2018        2B9B6FY38NA0013           17-Mar-21       14-Jun-21       08-Jul-21         30-Jun-21          -8                      15-Jul-21
+
+  25641    10014790            48ET3X          2B9B6EW30NA001            26-Feb-21       28-Jun-21       22-Jul-21         05-Jul-21         -17                      29-Jul-21
+  25475    10014795            25ANR           2B9B2TR30NA0013           26-Feb-21       18-Jun-21       14-Jul-21         06-Jul-21          -8                      21-Jul-21
+
+  25557    10014792           53ET3XP          2B9B6EY36NA0013           26-Feb-21       06-Jul-21       28-Jul-21         07-Jul-21         -21                      04-Aug-21
+
+  25644    10014793           53ET3XP          2B9B6EY38NA0013           26-Feb-21       12-Jul-21       10-Aug-21         09-Jul-21         -32                      17-Aug-21
+
+  25674    10014809            20ART           2B9B2TN27NA0014           12-Mar-21       11-Jun-21       07-Jul-21         13-Jul-21          6                       14-Jul-21
+  25555    10014791            48ET3X          2B9B6EW37NA001            26-Feb-21       25-Jun-21       21-Jul-21         13-Jul-21          -8                      28-Jul-21
+
+  25556    10014825            53ET3X          2B9B6EY36NA0013           17-Mar-21       29-Jun-21       23-Jul-21         13-Jul-21         -10                      30-Jul-21
+
+  25642    10014827            53ET3X          2B9B6EY32NA0013           17-Mar-21       09-Jul-21       09-Aug-21         15-Jul-21         -25                      16-Aug-21
+
+  25652    10014828            53ET3X          2B9B6EY36NA0013           17-Mar-21       07-Jul-21       29-Jul-21         19-Jul-21         -10                      05-Aug-21
+
+  25558    10014832           53ET3XP          2B9B6EY3XNA0013           18-Mar-21       16-Jul-21       16-Aug-21         19-Jul-21         -28                      23-Aug-21
+  25643    10014826            53ET3X          2B9B6EY34NA0013           17-Mar-21       05-Jul-21       27-Jul-21         20-Jul-21          -7                      04-Aug-21
+
+  25645    10014833           53ET3XP          2B9B6EY31NA0013           18-Mar-21       15-Jul-21       13-Aug-21         21-Jul-21         -23                      20-Aug-21
+
+  25675    10014899            48ET3X          2B9B6EW30NA001            22-Mar-21       21-Jul-21       19-Aug-21         26-Jul-21         -24                      26-Aug-21
+
+  25105    10014849            20ART           2B9B2TN25NA0014           18-Mar-21       05-Jul-21       27-Jul-21         16-Aug-21          20                      03-Aug-21
+  24908    10014840      51LF4X3T AB V2015     2B9B6LY47NA0014           18-Mar-21       19-Aug-21       13-Sep-21         03-Sep-21         -10                      20-Sep-21
+
+  25780    10014843      51LF3X3T AB V2016     2B9B6LX36NA001410         18-Mar-21       24-Aug-21       16-Sep-21         08-Sep-21          -8                      23-Sep-21
+
+  25778    10014841      51LF4X3T AB V2015     2B9B6LY49NA0014           18-Mar-21       24-Aug-21       16-Sep-21         09-Sep-21          -7                      23-Sep-21
+
+  25781    10014844      51LF3X3T AB V2016     2B9B6LX38NA001411         18-Mar-21       27-Aug-21       21-Sep-21         14-Sep-21          -7                      28-Sep-21
+  25779    10014842      51LF4X3T AB V2015     2B9B6LY40NA0014           18-Mar-21       27-Aug-21       21-Sep-21         15-Sep-21          -6                      29-Sep-21
+
+  25782    10014845      51LF3X3T AB V2016     2B9B6LX3XNA001412         18-Mar-21       31-Aug-21       23-Sep-21         17-Sep-21          -6                      01-Oct-21
+
+  25783    10014846      51LF3X3T AB V2016     2B9B6LX31NA001413         18-Mar-21       02-Sep-21       27-Sep-21         01-Oct-21          4                       06-Oct-21
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 3
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                             Diamond International Trucks Ltd.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25784    10014847      51LF3X3T AB V2016     2B9B6LX33NA001414         18-Mar-21       07-Sep-21       29-Sep-21         01-Oct-21          2                       12-Oct-21
+
+  25785    10014848      51LF3X3T AB V2016     2B9B6LX35NA001415         18-Mar-21       09-Sep-21       01-Oct-21         01-Oct-21          0                       14-Oct-21
+
+  25777                      50HDG3X AG        2B9B6GY34NA0014                           21-Sep-21       14-Oct-21         14-Oct-21          0                       21-Oct-21
+  26140    10015122            48ET3X          2B9B6EW37PA001            08-Jun-21       08-Dec-21       31-Dec-21         31-Dec-21          0                       07-Jan-22
+
+  26148    10015123            48ET3X          2B9B6EW39PA001            08-Jun-21       10-Dec-21       04-Jan-22         04-Jan-22          0                       11-Jan-22
+
+  26134    10015128      51LF4X3T AB V2015     2B9B6LY48PA0010           08-Jun-21       13-Dec-21       05-Jan-22         05-Jan-22          0                       12-Jan-22
+
+  25839    10015130            42ET3X          2B9B6ET38PA0010           08-Jun-21       14-Dec-21       06-Jan-22         06-Jan-22          0                       13-Jan-22
+  25840    10015131            42ET3X          2B9B6ET30PA0010           08-Jun-21       16-Dec-21       10-Jan-22         10-Jan-22          0                       17-Jan-22
+
+  26179    10015129      51LF4X3T AB V2015     2B9B6LY4XPA0010           08-Jun-21       17-Dec-21       11-Jan-22         11-Jan-22          0                       18-Jan-22
+
+  25861                        25ANR           2B9B2TR37PA0010                           21-Dec-21       13-Jan-22         12-Jan-22          -1                      19-Jan-22
+
+  25931                        25NTT           2B9B2TP3XPA0010                           20-Dec-21       12-Jan-22         12-Jan-22          0                       19-Jan-22
+  25862                        25ANR           2B9B2TR37PA0010                           23-Dec-21       17-Jan-22         14-Jan-22          -3                      24-Jan-22
+
+  25932                        25ART           2B9B2TR32PA0010                           22-Dec-21       14-Jan-22         14-Jan-22          0                       21-Jan-22
+
+  26155                        25NTT           2B9B2TP38PA0010                           22-Dec-21       14-Jan-22         14-Jan-22          0                       21-Jan-22
+
+  26135    10015151      51LF3X3T AB V2016     2B9B6LX30PA001034         09-Jun-21       22-Dec-21       14-Jan-22         14-Jan-22          0                       21-Jan-22
+
+  25933                        25ART           2B9B2TR38PA0010                           04-Jan-22       26-Jan-22         26-Jan-22          0                       02-Feb-22
+  26178    10015152      51LF3X3T AB V2016     2B9B6LX36PA001054         09-Jun-21       05-Jan-22       27-Jan-22         27-Jan-22          0                       03-Feb-22
+
+  25934                        25ART           2B9B2TR37PA0010                           06-Jan-22       28-Jan-22         28-Jan-22          0                       04-Feb-22
+
+  26176    10015124            48ET3X          2B9B6EW30PA001            08-Jun-21       07-Jan-22       31-Jan-22         31-Jan-22          0                       07-Feb-22
+
+  26161                        25ANR           2B9B2TR39PA0010                           10-Jan-22       01-Feb-22         01-Feb-22          0                       08-Feb-22
+  26171    10015132            42ET3X          2B9B6ET36PA0010           08-Jun-21       11-Jan-22       02-Feb-22         02-Feb-22          0                       09-Feb-22
+
+  26164                        25ANR           2B9B2TR39PA0010                           12-Jan-22       03-Feb-22         03-Feb-22          0                       10-Feb-22
+
+  26169                        25NTT           2B9B2TP36PA0010                           12-Jan-22       03-Feb-22         03-Feb-22          0                       10-Feb-22
+
+  26172    10015133            42ET3X          2B9B6ET34PA0010           08-Jun-21       13-Jan-22       04-Feb-22         04-Feb-22          0                       11-Feb-22
+  26170                        25NTT           2B9B2TP3XPA0010                           14-Jan-22       07-Feb-22         07-Feb-22          0                       14-Feb-22
+
+  26177    10015125            48ET3X          2B9B6EW39PA001            08-Jun-21       17-Jan-22       08-Feb-22         08-Feb-22          0                       15-Feb-22
+
+  26162                        25ANR           2B9B2TR30PA0010                           01-Feb-22       24-Feb-22         24-Feb-22          0                       03-Mar-22
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 2 of 3
+
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                             Diamond International Trucks Ltd.
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25935                        25ART           2B9B2TR33PA0010                           01-Feb-22       24-Feb-22         24-Feb-22          0                       03-Mar-22
+
+  26139    10015126            48ET3X          2B9B6EW37PA001            08-Jun-21       02-Feb-22       25-Feb-22         25-Feb-22          0                       04-Mar-22
+
+  26163                        25ANR           2B9B2TR30PA0010                           03-Feb-22       28-Feb-22         28-Feb-22          0                       07-Mar-22
+  26165                        25ART           2B9B2TR34PA0010                           03-Feb-22       28-Feb-22         28-Feb-22          0                       07-Mar-22
+
+  26173    10015134            42ET3X          2B9B6ET38PA0010           08-Jun-21       04-Feb-22       01-Mar-22         01-Mar-22          0                       08-Mar-22
+
+  26166                        25ART           2B9B2TR36PA0010                           07-Feb-22       02-Mar-22         02-Mar-22          0                       09-Mar-22
+
+  26174    10015135            42ET3X          2B9B6ET3XPA0010           08-Jun-21       08-Feb-22       03-Mar-22         03-Mar-22          0                       10-Mar-22
+  26167                        25ART           2B9B2TR3XPA0010                           09-Feb-22       04-Mar-22         04-Mar-22          0                       11-Mar-22
+
+  26175    10015127            48ET3X          2B9B6EW37PA001            08-Jun-21       10-Feb-22       07-Mar-22         07-Mar-22          0                       14-Mar-22
+
+  26168                        25ART           2B9B2TR31PA0010                           11-Feb-22       08-Mar-22         08-Mar-22          0                       15-Mar-22
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 3 of 3

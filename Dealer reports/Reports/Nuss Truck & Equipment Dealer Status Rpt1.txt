@@ -1,0 +1,64 @@
+
+                                                                                     INTERNAL DOCUMENT
+
+
+
+                                                                                   Nuss Truck & Equipment
+
+                                                                             Print Date: Friday, June 11, 2021
+
+                                                                                    Delivery Date Review
+
+
+  Quote#     WO#              Model No         Serial Number               Order        Production      MRP Finish     Req. Delivery Date     P   Available Date    Est. Delivery      F
+                                                                                            Date            Date                                                        Date
+  25519    10014812          51HD3X CON        2B9B6HX31NA0013           17-Mar-21       10-Jun-21       06-Jul-21         13-Sep-21          69                      14-Jul-21
+
+  25760    10014813          51HD3X CON        2B9B6HX38NA0013           17-Mar-21       16-Jun-21       12-Jul-21         16-Sep-21          66                      19-Jul-21
+
+  25761    10014814          51HD3X CON        2B9B6HX3XNA0013           17-Mar-21       21-Jun-21       15-Jul-21         21-Sep-21          68                      22-Jul-21
+  25762    10014815          51HD3X CON        2B9B6HX31NA0013           17-Mar-21       24-Jun-21       20-Jul-21         23-Sep-21          65                      27-Jul-21
+
+  25763    10014816          51HD3X CON        2B9B6HX33NA0013           17-Mar-21       29-Jun-21       23-Jul-21         27-Sep-21          66                      30-Jul-21
+
+  25764    10014817          51HD3X CON        2B9B6HX35NA0013           17-Mar-21       08-Jul-21       30-Jul-21         29-Sep-21          61                      13-Aug-21
+
+  25765    10014818          51HD3X CON        2B9B6HX37NA0013           17-Mar-21       14-Jul-21       12-Aug-21         01-Oct-21          50                      19-Aug-21
+  25766    10014819          51HD3X CON        2B9B6HX39NA0013           17-Mar-21       20-Jul-21       18-Aug-21         05-Oct-21          48                      25-Aug-21
+
+  25767    10014820          51HD3X CON        2B9B6HX30NA0013           17-Mar-21       26-Jul-21       24-Aug-21         07-Oct-21          44                      31-Aug-21
+
+  25768    10014821          51HD3X CON        2B9B6HX32NA0013           17-Mar-21       30-Jul-21       30-Aug-21         11-Oct-21          42                      07-Sep-21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAR-050 Rev#6 Sept 14,                                          Criteria: Dealer, PO Date, Date Completed, Shipped Date and Date                                                 Page 1 of 1
