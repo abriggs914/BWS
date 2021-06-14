@@ -1,4 +1,4 @@
-Dealer Delivery Reports as of 11-Jun-21
+Dealer Delivery Reports as of 14-Jun-21
 
 Using lead time of 5 days
 Adjusting deliveries moved back by at least 5 days 
