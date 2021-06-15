@@ -46,10 +46,24 @@ class PDF(FPDF):
         # self.line(5.0, 5.0, 5.0, 292.0)  # left one
         # self.line(205.0, 5.0, 205.0, 292.0)  # right one
 
-    def table(self, title, x, y, w, colours=((255, 255, 255))):
+    def table(self, title, x, y, w, contents, colours=((255, 255, 255))):
+        if not isinstance(contents, dict) and dict:
+            raise ValueError("Parameter \"contents\" must be a populated dict object.")
         self.titles(title, x, y, w, 40, BWS_RED)
         self.set_fill_color(*BWS_BLACK)
-        self.rect(x, y, w, 1, 'FD')
+        header = []
+
+        for i, itms in enumerate(contents):
+            row, col_vals = itms
+            header_vals = list(col_vals.keys())
+            for head in header_vals:
+                if head not in header:
+                    header.append(head)
+
+        n_rows = len(contents)
+        n_cols = len(header)
+        height =
+        self.rect(x, y, w, height, 'FD')
 
 
 pdf = PDF(orientation='P', unit='mm', format='A4')
