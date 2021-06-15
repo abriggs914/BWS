@@ -160,7 +160,41 @@ INNER JOIN
 		) row_num, *
 	FROM 
 		[ApInvoicePay]
-	ORDER BY [JournalDate]
 	) AS A
 ON 
 	ApInvoicePay.[Supplier] = A.[Supplier];
+
+/*
+SELECT
+	*
+FROM
+	(
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [Supplier]
+			ORDER BY [Supplier]
+		) row_num, *
+	FROM 
+		[ApInvoicePay]
+	ORDER BY [JournalDate]
+)
+*/
+
+WITH TopSuppliers AS (
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [Supplier]
+			ORDER BY [Supplier] ASC
+		) AS row_num, *
+	FROM 
+		[ApInvoicePay]
+)
+SELECT 
+	*
+FROM
+	TopSuppliers WITH (NOLOCK)
+WHERE
+	TopSuppliers.[row_num] = 1
+ORDER BY [JournalDate]
+
+-- https://www.tutorialgateway.org/select-rows-with-maximum-value-on-a-column-in-sql-server/
