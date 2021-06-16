@@ -4,7 +4,7 @@ from random import random, choice
 import datetime as dt
 
 #	General Utility functions
-#	Version............1.4
+#	Version............1.5
 #	Date........2021-06-15
 #	Author....Avery Briggs
 
@@ -637,3 +637,11 @@ def lstindex(lst, target):
 		if val == target:
 			return i
 	return -1
+	
+
+def cos_x(degrees, amplitude=1, period=1, phase_shift=0, vertical_shift=0):
+	return (amplitude * (cos(period * (degrees + phase_shift)))) + vertical_shift
+	
+
+def sin_x(degrees, amplitude=1, period=1, phase_shift=0, vertical_shift=0):
+	return (amplitude * (sin(period * (degrees + phase_shift)))) + vertical_shift
