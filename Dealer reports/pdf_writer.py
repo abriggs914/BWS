@@ -1,5 +1,7 @@
+import datetime
 import math
 import os
+import random
 
 from utility import *
 from colour_utility import *
@@ -11,6 +13,7 @@ MAX_X = 210
 MARGIN_LINES_WIDTH = 3
 MARGIN_LINES_MARGIN = 5
 table_count = 0
+FILE_NAME = "test.pdf"
 
 
 class PDF(FPDF):
@@ -59,6 +62,17 @@ class PDF(FPDF):
         # self.line(5.0, 5.0, 5.0, 292.0)  # left one
         # self.line(205.0, 5.0, 205.0, 292.0)  # right one
 
+    def footer(self):
+        old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.text_color.split(" ")[: -1]))
+        self.set_text_color(*BLACK)
+        # Go to 1.5 cm from bottom
+        self.set_y(-15)
+        # Select Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        # Print centered page number
+        self.cell(0, 10, 'Page %s' % self.page_no(), 0, 0, 'C')
+        self.set_text_color(*old_colour)
+
     def table(
             self,
             title,
@@ -80,27 +94,32 @@ class PDF(FPDF):
             left_margin=8,
             right_margin=8,
             line_width=0,
-            footer_colours=(BLACK, WHITE)
+            top_link_colours=(WHITE, TEAL),
+            footer_colours=(BLACK, WHITE),
+            new_page_for_table=False,
+            show_row_names=False,
+            include_top_chart_link=True,
+            include_top_doc_link=False
     ):
         global table_count
         if not isinstance(contents, dict) or not dict:
             raise ValueError("Parameter \"contents\" must be a populated dict object.")
 
-        # pdf.line(0, 35, MARGIN_LINES_MARGIN, 35)
-        # pdf.line(0, 40, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH, 40)
-        # pdf.line(0, 45, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + TABLE_MARGIN, 45)
-        # pdf.line(0, 50, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + TABLE_MARGIN + left_margin, 50)
+        def add_new_page():
+            old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.fill_color.split(" ")[: -1]))
+            self.add_page()
+            self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
+                              MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
+            self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+            self.set_fill_color(*footer_colours[0])
+            # self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
+            self.set_fill_color(*old_colour)
 
         cx = cy = 0
-        # page_left = self.h - (2 * (TABLE_MARGIN + MARGIN_LINES_WIDTH))
-        # page_left = self.h - y
 
         header = []
         content_lst = [[]]
-        # otx = TABLE_MARGIN + MARGIN_LINES_WIDTH + left_margin
-        # oty = TABLE_MARGIN + MARGIN_LINES_WIDTH + top_margin
-        # ocx = otx + (1.5 * line_width)
-        # ocy = oty + line_width + th
+        title_page = self.page_no()
 
         otx = x + left_margin
         oty = y + top_margin
@@ -113,7 +132,7 @@ class PDF(FPDF):
             # print("row:", row, "col_vals:", col_vals)
             content_lst.append([])
             for head, value in col_vals.items():
-                h_names = [h[0] for h in header]
+                h_names = [h[0] if h else "" for h in header]
                 j = lstindex(h_names, head)
                 mhv = max(len(str(head)), len(str(value)))
                 if j == -1:
@@ -122,7 +141,7 @@ class PDF(FPDF):
                 else:
                     header[j] = (head, max(header[j][1], mhv))
 
-                h_names = [h[0] for h in header]
+                h_names = [h[0] if h else "" for h in header]
                 j = lstindex(h_names, head)
                 c = len(content_lst[i + 1])
                 if 0 < i:
@@ -146,26 +165,25 @@ class PDF(FPDF):
 
         # self.set_fill_color(*BWS_BLACK)
 
-        self.titles(title, otx - left_margin, oty + (title_v_margin / 2) + top_margin, w,
-                    title_height, title_colour)
-
-        x_txt = y_txt = 0
-        if desc_txt:
-            y_txt = oty + (title_v_margin / 2) + top_margin + title_height + title_v_margin
-            x_txt, y_txt = self.texts(otx, y_txt, desc_txt)
-            ocy += y_txt + title_v_margin
-        print("y_txt:", y_txt, "oty + (title_v_margin / 2) + top_margin:", (oty + (title_v_margin / 2) + top_margin), "title_height:", title_height, "oty + (title_v_margin / 2) + top_margin + title_height", oty + (title_v_margin / 2) + top_margin + title_height)
+        print("before")
+        print(content_lst)
+        if show_row_names:
+            n_cols += 1
+            header.insert(0, "#")
+            keys = [header[0]] + list(contents.keys())
+            for i in range(n_rows + 1):
+                if i == 0:
+                    content_lst[0].insert(0, header[0])
+                else:
+                    k = keys[i]
+                    content_lst[i].insert(0, k)
+        print("after")
+        print(content_lst)
 
         for row in content_lst:
             row += [None for i in range(max(0, n_cols - len(row)))]
 
-        # height = page_left - top_margin - bottom_margin - (2 * title_margin) - ((2 + n_rows) * line_width)
-        # height = self.h - y  # top_margin - bottom_margin - (2 * title_margin) - ((2 + n_rows) * line_width)
-        # width = w - (2 * (TABLE_MARGIN + MARGIN_LINES_WIDTH)) - left_margin - right_margin - (
-        #             (1 + n_cols) * line_width)
         width = w - (2 * left_margin)
-
-        # cell_height = height / (1 + n_rows)
         cell_width = width / n_cols
 
         # self.set_fill_color(*BWS_GREY)
@@ -175,6 +193,36 @@ class PDF(FPDF):
         space_used = 0
         page_space_used = 0
         # print("ocy:", ocy, "height:", height, "self.h:", self.h)
+
+        dth = 0 if desc_txt is None else 40
+        print("\t\tTITLE", title)
+        print("self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin):", (self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)))
+        if new_page_for_table or (self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)) >= self.h:
+            add_new_page()
+            page_left = self.h
+            pages += 1
+            print("\tpage break on line i={}".format(i))
+            i_off += i
+            page_space_used += space_used
+            space_used = 0
+            ocy = 0
+            oty = 0
+            title_page = self.page_no()
+
+
+        # Begin Writing to page
+
+        self.titles(title, otx - left_margin, oty + (title_v_margin / 2) + top_margin, w,
+                    title_height, title_colour)
+        self.line(otx - left_margin, oty + (title_v_margin / 2) + top_margin - 2, otx - left_margin + w, oty + (title_v_margin / 2) + top_margin - 2)
+
+        x_txt = y_txt = 0
+        if desc_txt:
+            y_txt = oty + (title_v_margin / 2) + top_margin + title_height + title_v_margin
+            x_txt, y_txt = self.texts(otx, y_txt, desc_txt)
+            ocy += y_txt + title_v_margin
+        print("y_txt:", y_txt, "oty + (title_v_margin / 2) + top_margin:", (oty + (title_v_margin / 2) + top_margin), "title_height:", title_height, "oty + (title_v_margin / 2) + top_margin + title_height", oty + (title_v_margin / 2) + top_margin + title_height)
+
         for i in range(n_rows + 1):
 
             if i == 0:
@@ -205,11 +253,7 @@ class PDF(FPDF):
                 np = True
 
             if np:
-                old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.fill_color.split(" ")[: -1]))
-                self.add_page()
-                self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
-                                  MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
-                self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+                add_new_page()
                 page_left = self.h
                 pages += 1
                 print("\tpage break on line i={}".format(i))
@@ -217,9 +261,6 @@ class PDF(FPDF):
                 page_space_used += space_used
                 space_used = 0
                 ocy = 0
-                self.set_fill_color(*footer_colours[0])
-                self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
-                self.set_fill_color(*old_colour)
 
             space_used += ch
             for j in range(n_cols):
@@ -248,9 +289,25 @@ class PDF(FPDF):
 
         # self.rect(x, y, w, height, 'FD')
 
+        y_link = self.get_y() + title_v_margin
+        if include_top_chart_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 30, y_link)
+            self.cell(30, 5, "Top of Chart", 1, 1, 'C', fill=1, link=("{}/{}#page={}".format(os.getcwd(), FILE_NAME, title_page)))
+
+        if include_top_doc_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 65, y_link)
+            self.cell(30, 5, "Top of Document", 1, 1, 'C', fill=1,
+                     link=("{}/{}#page={}".format(os.getcwd(), FILE_NAME, 1)))
+
+        # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
+        # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
         print("self.w:", self.w, "width:", width)
         print("header:", header)
-        # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
+        print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
         print("(N x M): ({} x {})".format(n_rows, n_cols))
         # print("(H x W): ({} x {})".format(height, width))
         print("(CH x CW): ({} x {})".format(cell_height, cell_width))
@@ -258,20 +315,48 @@ class PDF(FPDF):
         return cx, cy
 
 
+def random_test_set(n, start=0, end=None, step=1):
+    step = max(1, step)
+    if end is None:
+        end = start + (n * step)
+    if end < start:
+        start, end = end, start
+    if start + (n * step) != end:
+        end = start + (n * step)
+    r_keys = ["a", "b", "c", "d", "e"]
+
+    def random_test_entry(m):
+        return {choice(r_keys): int(round(random_in_range(1, 101))) for i in range(m)}
+
+    return {i: random_test_entry(choice(list(range(5)))) for i in range(start, end, step)}
+
 if __name__ == "__main__":
-    TITLE_HEIGHT = 40
+    TITLE_HEIGHT = 12
+    TITLE_MARGIN = 15
     TABLE_MARGIN = 10
     FOOTER_MARGIN = 10
+    TXT_MARGIN = 6
 
     pdf = PDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(True, margin=5)
     pdf.set_title("Dealer Delivery Reports")
+    pdf.set_author('Avery Briggs')
     pdf.add_page()
-    print("pdf.page_no():", pdf.page_no())
+
     pdf.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
                      MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
-    pdf.titles("Dealer Delivery Reports", 0, 0, MAX_X, TITLE_HEIGHT, BWS_BLACK)
-    pdf.set_author('Avery Briggs')
+    pdf.titles("Dealer Delivery Reports", MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN, TITLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN, MAX_X - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)), TITLE_HEIGHT, BWS_BLACK)
+
+    date = datetime.datetime.now()
+    pdf.texts(
+        MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + TXT_MARGIN,
+        TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN,
+        "Prepared at {} on: {}".format(
+            datetime.datetime.strftime(date, "%I:%M:%S %p"),
+            datetime.datetime.strftime(date, "%Y-%m-%d")
+        ),
+        font=('Arial', '', 10)
+    )
 
     # TABLE_X = 5 + MARGIN_LINES_WIDTH + TABLE_MARGIN
     # TABLE_Y = 10 + MARGIN_LINES_WIDTH + TABLE_MARGIN
@@ -712,16 +797,12 @@ if __name__ == "__main__":
     }
     contents_5 = {'Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Total': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Off': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Percentage Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}}
 
-    def random_test_set(n):
-        r_keys = ["a", "b", "c", "d", "e"]
-
-        def random_test_entry(n):
-            return {i-: random_in_range(1, 101) for i in range(n)}
-
-
-
     TABLE_X = TABLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN
-    TABLE_Y = TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT
+    TABLE_Y = TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN
+
+    TABLE_LEFT_MARGIN = 8
+    TITLE_V_MARGIN = 5
+
     table1 = pdf.table(
         title="Remorques Lewis",
         x=TABLE_X,
@@ -767,9 +848,11 @@ if __name__ == "__main__":
         w=TABLE_W,
         contents=contents_4,
         header_colours=[BLACK, BWS_RED],
-        colours=[[BLUEVIOLET, GREEN_2, YELLOW_4, RED, GREEN, BLUE],
-                 [WHITE, BLACK, BLACK, BLUE, RED, GREEN]],
-        desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?"
+        colours=[[BLUEVIOLET, GREEN_2, YELLOW_4, BLUE, RED, ORANGE],
+                 [WHITE, BLACK, BLACK, ORANGE, BLUE, WHITE]],
+        desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?",
+        new_page_for_table=True,
+        show_row_names=True
     )
 
     TABLE_Y = table4[1] + (2 * TABLE_MARGIN)
@@ -786,6 +869,39 @@ if __name__ == "__main__":
         desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?"
     )
 
+    TABLE_Y = table5[1] + (2 * TABLE_MARGIN)
+
+    table6 = pdf.table(
+        title="Random Test Set",
+        x=TABLE_X,
+        y=TABLE_Y,
+        w=TABLE_W,
+        contents=random_test_set(30, start=60, step=101),
+        header_colours=[BLACK, BWS_RED],
+        colours=[[BLACK],
+                 [WHITE]],
+        desc_txt="This is a random test set",
+        show_row_names=True
+    )
+
+    TABLE_Y = table6[1] + (2 * TABLE_MARGIN)
+
+    table7 = pdf.table(
+        title="Clean Table",
+        x=TABLE_X,
+        y=TABLE_Y,
+        w=TABLE_W,
+        left_margin=TABLE_LEFT_MARGIN,
+        title_v_margin=TITLE_V_MARGIN,
+        contents=random_test_set(43),
+        header_colours=[GRAY_30, BLACK],
+        colours=[[WHITE, GRAY_69],
+                 [BLACK]],
+        desc_txt="Plain black, white and grey table, more professional looking.",
+        show_row_names=True,
+        include_top_doc_link=True
+    )
+
     # pdf.line(15, 25, 15, 26)
     # pdf.line(25, 25, 25, 27)
     # pdf.line(35, 25, 35, 28)
@@ -794,13 +910,13 @@ if __name__ == "__main__":
     # pdf.line(0, 35, 5, 35)
     # pdf.line(0, 35, 8, 35)
 
-    pdf.output('test.pdf', 'F')
+    pdf.output(FILE_NAME, 'F')
 
     print("table1:", table1)
     print("table2:", table2)
     print("table3:", table3)
     print("table4:", table4)
-    webbrowser.open("test.pdf")
+    webbrowser.open(FILE_NAME)
 
     print(dict_print({
         "TABLE_MARGIN": TABLE_MARGIN,

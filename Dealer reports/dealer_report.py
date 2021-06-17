@@ -238,10 +238,160 @@ def need_est_delivery_update(orders, lead_days=5, forward_review_threshold=5, ba
 
 # 	return need_adjusting, forward_review, backward_review, manual_review
 
+def create_orders(data):
+	orders = []
+	manual_review_orders = []
+	for page in data:
+		for dat in page:
+			order = Order(data, dat)
+			# print(dir(order))
+			if not order.manual_review:
+				orders.append(order)
+			else:
+				manual_review_orders.append(order)
+	# print(orders[-1])
+	return orders, manual_review_orders
+
+
+def write_est_delivery_update_report(dealer, col_names, orders):
+	spacer_len = 3
+	header = "\n\n\tDealer Delivery Report for << " + " ".join(dealer) + " >>"
+	header += "\n\tThe following orders need their estimated delivery dates updated.\n\n"
+	dividers = [0 for i in range(11)]
+	x = 0
+	manual_review = []
+	for order_line in orders:
+		try:
+			new_date, order = order_line
+			nd = dt.datetime.strftime(new_date, "%d-%b-%y")
+			spl = list(map(str.strip, (str(order) + "," + nd).split(",")))
+			# print("spl", spl)
+			for i in range(len(spl)):
+				col_name = col_names[i]
+				ls = len(spl[i])
+				if "serial" in col_name.lower():
+					ls = 8
+				if "model" in col_name.lower():
+					ls = min(20, ls)
+				if "wo#" in col_name.lower():
+					ls = 5
+				if "p" == col_name.lower():
+					ls = len(spl[8])
+					if spl[8] == None or spl[8] == "_":
+						ls = 1
+				if "f" == col_name.lower():
+					ls = len(spl[11])
+					if spl[11] == None or spl[11] == "_" or spl[11].lower() == "none":
+						ls = 1
+				# print("col_name", col_name)
+				off = 0 if i == 0 else dividers[i - 1] + spacer_len
+				dividers[i] = max(dividers[i], ls + off, len(col_name) + off)
+		except:
+			manual_review.append(order)
+
+	col_line = ""
+	for i, div in enumerate(dividers):
+		x = 0
+		if i > 0:
+			x = spacer_len
+		col_line += pad_centre(col_names[i], x + (max(len(col_names[i]) + 1, div - len(col_line))))
+	header += col_line + "\n"
+	orders = [order.report_format(dividers, new_date, spacer_len) for new_date, order in orders]
+	write_results(ORDERS_TO_CHANGE_OUTPUT, header, orders)
+	return manual_review
+
+
+def write_results(file, header, data):
+	with open(file, 'a') as wf:
+		wf.write("\n" + header)
+		for dat in data:
+			wf.write(dat + "\n")
+		wf.write("\nEOF")
+
+
+def do_test():
+	bd_test_set = {
+		"test_1, 03-Jul-21 -> 21-Jun-21 - no holidays": [
+			[
+				dt.datetime.strptime("21-Jun-21", "%d-%b-%y"),
+				dt.datetime.strptime("03-Jul-21", "%d-%b-%y")
+			],
+			10
+		],
+		"test_2, 21-Jun-21 -> 03-Jul-21 - no holidays": [
+			[
+				dt.datetime.strptime("03-Jul-21", "%d-%b-%y"),
+				dt.datetime.strptime("21-Jun-21", "%d-%b-%y")
+			],
+			10
+		],
+		"test_3, 02-Aug-21 -> 28-Jul-21 - no holidays": [
+			[
+				dt.datetime.strptime("02-Aug-21", "%d-%b-%y"),
+				dt.datetime.strptime("28-Jul-21", "%d-%b-%y")
+			],
+			3
+		],
+		"test_4, 02-Aug-21 -> 28-Jul-21": [
+			[
+				dt.datetime.strptime("02-Aug-21", "%d-%b-%y"),
+				dt.datetime.strptime("28-Jul-21", "%d-%b-%y"),
+				HOLIDAYS_2021
+			],
+			3
+		],
+		"test_5, 07-Jul-21 -> 25-Jun-21": [
+			[
+				dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
+				dt.datetime.strptime("25-Jun-21", "%d-%b-%y"),
+				HOLIDAYS_2021
+			],
+			6
+		],
+		"test_6, 07-Jul-21 -> 25-Jun-21 - no holidays": [
+			[
+				dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
+				dt.datetime.strptime("25-Jun-21", "%d-%b-%y")
+			],
+			8
+		]
+	}
+
+	add_business_days_test_set = {
+		"test_1, 07-Jul-21 + 7 business days - no holidays": [
+			[
+				dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
+				7
+			],
+			dt.datetime(2021, 7, 16)
+		],
+		"test_2, 27-Jun-21 + 7 business days - no holidays": [
+			[
+				dt.datetime.strptime("27-Jun-21", "%d-%b-%y"),
+				7
+			],
+			dt.datetime(2021, 7, 6)
+		],
+		"test_3, 27-Jun-21 + 7 business days": [
+			[
+				dt.datetime.strptime("27-Jun-21", "%d-%b-%y"),
+				7,
+				HOLIDAYS_2021
+			],
+			dt.datetime(2021, 7, 8)
+		]
+	}
+	tests_to_run = [
+		(business_days_between, bd_test_set),
+		(add_business_days, add_business_days_test_set)
+	]
+	run_multiple_tests(tests_to_run)
+
 
 def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_review_threshold=5, backward_review_threshold=3, forward_adjust_threshold=10, backward_adjust_threshold=float("-inf")):
 	print("file_name", file_name)
 	all_for_adjusting = []
+
 	with open(file_name, 'r') as f:
 		lines = f.readlines()
 		
@@ -299,79 +449,14 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 
 		print("pages: " + str(pages))
 		# print("\n\n-----------\n\n")
-		
-		def create_orders():
-			orders = []
-			manual_review_orders = []
-			for page in data:
-				for dat in page:
-					order = Order(data, dat)
-					# print(dir(order))
-					if not order.manual_review:
-						orders.append(order)
-					else:
-						manual_review_orders.append(order)
-					# print(orders[-1])
-			return orders, manual_review_orders
 
-		
-		def write_est_delivery_update_report(dealer, col_names, orders):
-			spacer_len = 3
-			header = "\n\n\tDealer Delivery Report for << " + " ".join(dealer) + " >>"
-			header += "\n\tThe following orders need their estimated delivery dates updated.\n\n"
-			dividers = [0 for i in range(11)]
-			x = 0
-			manual_review = []
-			for order_line in orders:
-				try:
-					new_date, order = order_line
-					nd = dt.datetime.strftime(new_date, "%d-%b-%y")
-					spl = list(map( str.strip, (str(order) + "," + nd).split(",")))
-					# print("spl", spl)
-					for i in range(len(spl)):
-						col_name = col_names[i]
-						ls = len(spl[i])
-						if "serial" in col_name.lower():
-							ls = 8
-						if "model" in col_name.lower():
-							ls = min(20, ls)
-						if "wo#" in col_name.lower():
-							ls = 5
-						if "p" == col_name.lower():
-							ls = len(spl[8])
-							if spl[8] == None or spl[8] == "_":
-								ls = 1
-						if "f" == col_name.lower():
-							ls = len(spl[11])
-							if spl[11] == None or spl[11] == "_" or spl[11].lower() == "none":
-								ls = 1
-						# print("col_name", col_name)
-						off = 0 if i == 0 else dividers[i - 1] + spacer_len
-						dividers[i] = max(dividers[i], ls + off, len(col_name) + off)
-				except:
-					manual_review.append(order)
-
-			col_line = ""
-			for i, div in enumerate(dividers):
-				x = 0
-				if i > 0:
-					x = spacer_len
-				col_line += pad_centre(col_names[i], x + (max(len(col_names[i]) + 1, div - len(col_line))))
-			header += col_line + "\n"
-			orders = [order.report_format(dividers, new_date, spacer_len) for new_date, order in orders]
-			write_results(ORDERS_TO_CHANGE_OUTPUT, header, orders)
-			return manual_review
-
-		def write_results(file, header, data):
-			with open(file, 'a') as wf:
-				wf.write("\n" + header)
-				for dat in data:
-					wf.write(dat + "\n")
-				wf.write("\nEOF")
-
-		orders, manual_review_orders = create_orders()
+		orders, manual_review_orders = create_orders(data)
 		# print("manual review after creation:", [q.quote if q.manual_review is False else q.line for q in orders])
 		need_adjusted, forward_review, backward_review, manual_review = need_est_delivery_update(orders, lead_days=lead_days, forward_review_threshold=forward_review_threshold, backward_review_threshold=backward_review_threshold, forward_adjust_threshold=forward_adjust_threshold, backward_adjust_threshold=backward_adjust_threshold)
+		print("need_Adjusted({}): {}: {}".format(len(need_adjusted), type(need_adjusted), need_adjusted))
+		print("forward_review({}): {}: {}".format(len(forward_review), type(forward_review), forward_review))
+		print("backward_review({}): {}: {}".format(len(backward_review), type(backward_review), backward_review))
+		print("manual_review({}): {}: {}".format(len(manual_review), type(manual_review), manual_review))
 
 		manual_review_orders += manual_review
 
@@ -396,88 +481,9 @@ def dealer_delivery_report_updates(dealer, file_name, lead_days=5, forward_revie
 			except:
 				print("CHECK: ", order)
 
-		def do_test():
-				
-			bd_test_set = {
-				"test_1, 03-Jul-21 -> 21-Jun-21 - no holidays": [
-					[
-						dt.datetime.strptime("21-Jun-21", "%d-%b-%y"),
-						dt.datetime.strptime("03-Jul-21", "%d-%b-%y")
-					],
-					10
-				],
-				"test_2, 21-Jun-21 -> 03-Jul-21 - no holidays": [
-					[
-						dt.datetime.strptime("03-Jul-21", "%d-%b-%y"),
-						dt.datetime.strptime("21-Jun-21", "%d-%b-%y")
-					],
-					10
-				],
-				"test_3, 02-Aug-21 -> 28-Jul-21 - no holidays": [
-					[
-						dt.datetime.strptime("02-Aug-21", "%d-%b-%y"),
-						dt.datetime.strptime("28-Jul-21", "%d-%b-%y")
-					],
-					3
-				],
-				"test_4, 02-Aug-21 -> 28-Jul-21": [
-					[
-						dt.datetime.strptime("02-Aug-21", "%d-%b-%y"),
-						dt.datetime.strptime("28-Jul-21", "%d-%b-%y"),
-						HOLIDAYS_2021
-					],
-					3
-				],
-				"test_5, 07-Jul-21 -> 25-Jun-21": [
-					[
-						dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
-						dt.datetime.strptime("25-Jun-21", "%d-%b-%y"),
-						HOLIDAYS_2021
-					],
-					6
-				],
-				"test_6, 07-Jul-21 -> 25-Jun-21 - no holidays": [
-					[
-						dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
-						dt.datetime.strptime("25-Jun-21", "%d-%b-%y")
-					],
-					8
-				]
-			}
+	# do_test()
 
-			add_business_days_test_set = {
-				"test_1, 07-Jul-21 + 7 business days - no holidays": [
-					[
-						dt.datetime.strptime("07-Jul-21", "%d-%b-%y"),
-						7
-					],
-					dt.datetime(2021, 7, 16)
-				],
-				"test_2, 27-Jun-21 + 7 business days - no holidays": [
-					[
-						dt.datetime.strptime("27-Jun-21", "%d-%b-%y"),
-						7
-					],
-					dt.datetime(2021, 7, 6)
-				],
-				"test_3, 27-Jun-21 + 7 business days": [
-					[
-						dt.datetime.strptime("27-Jun-21", "%d-%b-%y"),
-						7,
-						HOLIDAYS_2021
-					],
-					dt.datetime(2021, 7, 8)
-				]
-			}
-			tests_to_run = [
-				(business_days_between, bd_test_set),
-				(add_business_days, add_business_days_test_set)
-			]
-			run_multiple_tests(tests_to_run)
-
-		# do_test()
-
-		return all_for_adjusting
+	return all_for_adjusting
 
 
 def run_reports():

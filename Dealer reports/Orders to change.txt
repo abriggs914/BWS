@@ -1,4 +1,4 @@
-Dealer Delivery Reports as of 15-Jun-21
+Dealer Delivery Reports as of 17-Jun-21
 
 Using lead time of 5 days
 Adjusting deliveries moved back by at least 5 days 
@@ -103,5 +103,162 @@ EOF
  Q#      Wo#      Model    Serial #    Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
 25373   14656    25ANR   34NA0012   08-Apr-21   30-Apr-21    -4   03-May-21   03-May-21    0   10-May-21  
 25617   14731    25ANR   31NA0013   10-May-21   01-Jun-21   -13   25-May-21   24-May-21   -1   01-Jun-21  
+
+EOF
+
+
+	Dealer Delivery Report for << Hale Trailer Brake & Wheel >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << I-29 Trailer Sales Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << M & K Trailer Center of Grand Rapids LLC >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << McCorkle Sales Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Northeast Truck & Trailer Sales >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Nuss Truck & Equipment >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Premier Technology Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Redhead Equipment Ltd. >>
+	The following orders need their estimated delivery dates updated.
+
+ Q#      Wo#        Model       Serial #     Prod.       Mrp       P    Avail.     Est. Del.    F    New Del.  
+25428   14704    51LF3X3T SK   NA001263   06-May-21   28-May-21   3   26-May-21   25-May-21   -1   02-Jun-21  
+
+EOF
+
+
+	Dealer Delivery Report for << Remorques Lewis Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+ Q#      Wo#       Model      Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
+25417   14671    55HDG3X E   33NA0012   04-May-21   26-May-21   -11   19-May-21   07-Jun-21    19   27-May-21  
+25289   14585     48LB4X A    9200006   06-Jul-21   28-Jul-21    5    22-Jan-21   09-Aug-21   199   29-Jan-21  
+
+EOF
+
+
+	Dealer Delivery Report for << S & S Trailers Sales, Inc >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Semi Trailer Sales >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Stargate Mgf (2020) Ltd. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Summit Trailer Ltd. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << TEC Equipment Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Trailers Plus >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Transit Trailer Limited >>
+	The following orders need their estimated delivery dates updated.
+
+ Q#      Wo#      Model     Serial #     Prod.       Mrp       P      Avail.     Est. Del.    F    New Del.  
+25424   14733    53ET3XP   33NA0012   11-May-21   02-Jun-21   -12   27-May-21   24-May-21   -3   03-Jun-21  
+
+EOF
+
+
+	Dealer Delivery Report for << Weaco Equipment >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
+
+EOF
+
+
+	Dealer Delivery Report for << Wieland Sales Inc. >>
+	The following orders need their estimated delivery dates updated.
+
+ Q#      Wo#      Model    Serial #    Prod.       Mrp       P     Avail.     Est. Del.    F    New Del.  
+25318   14698    25NTT   3XNA0012   04-May-21   26-May-21   -9   24-May-21   24-May-21   0   31-May-21  
+
+EOF
+
+
+	Dealer Delivery Report for << Willrett Farm Equipment >>
+	The following orders need their estimated delivery dates updated.
+
+Q#   Wo#    Model    Serial #    Prod.    Mrp    P    Avail.    Est. Del.    F    New Del.  
 
 EOF
