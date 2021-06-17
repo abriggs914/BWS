@@ -712,6 +712,14 @@ if __name__ == "__main__":
     }
     contents_5 = {'Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Total': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Off': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}, 'Percentage Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}}
 
+    def random_test_set(n):
+        r_keys = ["a", "b", "c", "d", "e"]
+
+        def random_test_entry(n):
+            return {i-: random_in_range(1, 101) for i in range(n)}
+
+
+
     TABLE_X = TABLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN
     TABLE_Y = TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT
     table1 = pdf.table(
