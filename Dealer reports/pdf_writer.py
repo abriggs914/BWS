@@ -129,7 +129,6 @@ class PDF(FPDF):
         self.cell(0, 10, txt, 0, 0, 'C')
         self.set_text_color(*old_colour)
 
-
     def table(
             self,
             title,
@@ -146,10 +145,10 @@ class PDF(FPDF):
             title_h_margin=5,
             title_height=10,
             title_colour=BWS_RED,
-            top_margin=8,
-            bottom_margin=8,
-            left_margin=8,
-            right_margin=8,
+            top_margin=5,
+            bottom_margin=5,
+            left_margin=5,
+            right_margin=5,
             line_width=0,
             top_link_colours=(WHITE, TEAL),
             footer_colours=(BLACK, WHITE),
@@ -166,7 +165,7 @@ class PDF(FPDF):
             null_entry="",
             col_align=None,
             header_font=('Arial', 'B', 14),
-            cell_font=('Arial', '', 10)
+            cell_font=('Arial', '', 8)
             # time_stamp=False
     ):
         contents = self.preprocess_contents(contents)
@@ -289,6 +288,8 @@ class PDF(FPDF):
         self.titles(title, otx - left_margin, oty + (title_v_margin / 2) + top_margin, w,
                     title_height, title_colour)
 
+        ocy += title_height + title_v_margin
+
         x_txt = y_txt = 0
         if desc_txt:
             y_txt = oty + (title_v_margin / 2) + top_margin + title_height + title_v_margin
@@ -317,19 +318,84 @@ class PDF(FPDF):
 
             def row_height():
                 self.set_font(*cell_font)
-                print("self.get_string_width(str(content_lst[i][4]).strip():", self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
-                print("max([]):", (max(
-                    [self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]
-                )))
-                print("max([]) / cell_width:", (max([self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]) / cell_width))
-                print("[math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)]\n\t", [math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
-                return max([math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
+                """
+                # print("self.get_string_width(str(content_lst[i][4]).strip():", self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
+                # print("max([]):", (max(
+                #     [self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]
+                # )))
+                # print("max([]) / cell_width:", (max([self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]) / cell_width))
+                # print("[math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)]\n\t", [math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
+                # print("max([ceil(string_w(str(c_lst[i={i}][q]).strip() if c_lst[i={i}][q] is not None else null_entry) / cell_width) for q in range(n_cols={nc})]): {r}".format(i=i, nc=n_cols, r=(max([math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)]))))
+                # return max([math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
+                """
+                """
+                res = 0
+                for q in range(n_cols):
+                    ct = str(content_lst[i][q])#.strip()
+                    sct = math.ceil(self.get_string_width(ct))
+                    cww = math.floor(cell_width - 4.55)
+                    sctd = self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cww
+                    csctd = math.ceil(sctd)
+
+                    sp_splt = ct.split(" ")
+                    line = ""
+                    line_c = 1
+                    for ij, word in enumerate(sp_splt):
+                        spf = "" if ij == 0 else " "
+                        spe = "" if ij == n_cols - 1 else " "
+                        line += spf + word.strip()
+                        ln = line + spe
+                        print("line ({}) ({}): <{}> math.ceil(math.ceil(self.get_string_width(ln)) / cww): {}".format(len(ln), math.ceil(self.get_string_width(ln)), ln, (math.ceil(math.ceil(self.get_string_width(ln)) / cww))))
+                        if math.ceil(math.ceil(self.get_string_width(ln)) / cww) > 1:
+                            print("\tBREAK line ({}) ({}): <{}>".format(len(ln), self.get_string_width(ln), ln))
+                            line_c += 1
+                            line = ""
+
+                    res = max(res, line_c - csctd)
+
+                    res = max(res, csctd)
+                    print(dict_print({"ct": ct, "ch": ch, "sct": sct, "cww": cww, "sctd": sctd, "csctd": csctd, "line_C": line_c, "res": res}, "Calculated values"))
+                return res
+                """
+
+                res = 0
+                for q in range(n_cols):
+                    ct = str(content_lst[i][q])#.strip()
+                    sct = math.ceil(self.get_string_width(ct))
+                    cww = math.floor(cell_width - 5)
+                    sctd = self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cww
+                    csctd = math.ceil(sctd)
+
+                    sp_splt = ct.split(" ")
+                    line = ""
+                    line_c = 1
+                    for ij, word in enumerate(sp_splt):
+                        spf = "" if ij == 0 else " "
+                        spe = "" if ij == n_cols - 1 else " "
+                        line += spf + word.strip()
+                        ln = line + spe
+                        if ij < len(sp_splt) - 1:
+                            next_word = sp_splt[ij + 1]
+                            if self.get_string_width(ln + next_word) >= cww:
+                                print("\tBREAK line ({}) ({}): <{}>".format(len(ln), self.get_string_width(ln), ln))
+                                line_c += 1
+                                line = ""
+                                ln = ""
+                    res = max(res, line_c)
+                    # if res:
+                    # print()
+                res = max(1, res - 1)
+                # if res > 1:
+                #     res -= 1
+                return res
+
+
 
             trh = row_height()
             rh += trh - 1
             print("trh:", trh)
             och = ch
-            ch = max(ch, ch * trh)
+            ch = max(ch, ch * (trh - 1))
 
             # cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
             #         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
@@ -355,9 +421,9 @@ class PDF(FPDF):
                 space_used = 0
                 ocy = 0
 
-            space_used += ch
+            space_used += ch + (max(0, (trh - 2)) * och)
             j = 0
-            cy = self.get_y()
+            cy = self.get_y()# - (max(0, trh - 2) * och)
             while j in range(n_cols):
                 if start_with_header and np:
                     cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
@@ -401,15 +467,21 @@ class PDF(FPDF):
                 # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
                 if trh - 1:
                     bs = "F" + ("" if not cell_border_style else "D")
-                    self.rect(cx, cy, cell_width, ch, bs)
-                self.multi_cell(w=cell_width, h=och, txt=cell_value, border=cell_border_style, align=align, fill=1)
+                    old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
+                    print("old_colo:", old_colo)
+                    self.set_fill_color(*TURQUOISE)
+                    w_off = 1
+                    self.rect(cx - w_off, cy, cell_width + (2 * w_off), (max(0, (trh)) * och), bs)
+                    self.set_fill_color(*old_colo)
+                self.multi_cell(w=cell_width, h=och, txt=cell_value[:300], border=cell_border_style, align=align, fill=1)
                 # x, y, name, font=('Arial', '', 12), font_colour=BLACK
                 j += 1
             if start_with_header and np:
                 i -= 1
                 off += 1
             i += 1
-            self.set_y(self.get_y() + ((trh - 1) * ch))
+            print("\t\tcy:", cy, "\n\t\tself.get_y()", self.get_y())
+            self.set_y(cy + och + (max(0, (trh if trh > 1 else 0)) * och))
 
         # self.rect(x, y, w, height, 'FD')
 

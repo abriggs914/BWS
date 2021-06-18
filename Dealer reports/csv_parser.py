@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
 	TITLE_HEIGHT = 12
 	TITLE_MARGIN = 15
-	TABLE_MARGIN = 10
+	TABLE_MARGIN = 6
 	FOOTER_MARGIN = 10
 	TXT_MARGIN = 10
 	ori = "P"
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 	TABLE_X = TABLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN
 	TABLE_Y = TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN
 
-	TABLE_LEFT_MARGIN = 8
+	# TABLE_LEFT_MARGIN = 6
 	TITLE_V_MARGIN = 5
 
 	table1 = pdf.table(
@@ -86,6 +86,7 @@ if __name__ == "__main__":
 		y=TABLE_Y,
 		w=TABLE_W,
 		contents=data,
+		desc_txt="Last 100 Quotes as of 2021-06-15",
 		# contents=random_test_set(453),
 		header_colours=[GRAY_30, BLACK],
 		colours=[[WHITE, GRAY_69],

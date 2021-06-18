@@ -2,24 +2,24 @@ USE BWSdb
 GO
 
 
----- Starting wage
---WITH CurrentPay AS (
---	SELECT
---		ROW_NUMBER() OVER (
---			PARTITION BY [2nd Name], [1st Name]
---			ORDER BY [Date]
---		) AS row_num, *
---	FROM 
---		[Payroll]
---),
---CP AS (SELECT * FROM [Orders])
---SELECT 
---	[Emp#], [Date], [2nd Name], [1st Name], [Salary], [Annual], [Bonus%], [Dep Life], [Health], [Dental], [Vacation%], [RRSP%], [RaiseID]
---FROM
---	CurrentPay WITH (NOLOCK)
---WHERE
---	CurrentPay.[row_num] = 1
---ORDER BY [Date]
+-- Starting wage
+WITH CurrentPay AS (
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [2nd Name], [1st Name]
+			ORDER BY [Date]
+		) AS row_num, *
+	FROM 
+		[Payroll]
+),
+CP AS (SELECT * FROM [Orders])
+SELECT 
+	[Emp#], [Date], [2nd Name], [1st Name], [Salary], [Annual], [Bonus%], [Dep Life], [Health], [Dental], [Vacation%], [RRSP%], [RaiseID]
+FROM
+	CurrentPay WITH (NOLOCK)
+WHERE
+	CurrentPay.[row_num] = 1
+ORDER BY [Date]
 
 
 -- Current wage
