@@ -1,6 +1,6 @@
 import webbrowser
 
-from pdf_writer import PDF, MARGIN_LINES_MARGIN, MARGIN_LINES_WIDTH, MAX_X, MAX_Y
+from pdf_writer import PDF, MARGIN_LINES_MARGIN, MARGIN_LINES_WIDTH, MAX_X, MAX_Y, random_test_set
 from colour_utility import *
 
 # Python program to read a csv and create a PDF of it's data
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 	TABLE_MARGIN = 10
 	FOOTER_MARGIN = 10
 	TXT_MARGIN = 10
-	ori = "L"
+	ori = "P"
 
 	if ori == "L":
 		MAX_X, MAX_Y = MAX_Y, MAX_X
@@ -68,19 +68,6 @@ if __name__ == "__main__":
 	pdf.titles("Dealer Delivery Reports", MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN,
 			   TITLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN,
 			   MAX_X - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)), TITLE_HEIGHT, BWS_BLACK)
-
-	date = datetime.datetime.now()
-	pdf.texts(
-		MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + TXT_MARGIN,
-		TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN,
-		0,
-		10,
-		"Prepared at {} on {}".format(
-			datetime.datetime.strftime(date, "%I:%M:%S %p"),
-			datetime.datetime.strftime(date, "%Y-%m-%d")
-		),
-		font=('Arial', '', 10)
-	)
 
 	# TABLE_X = 5 + MARGIN_LINES_WIDTH + TABLE_MARGIN
 	# TABLE_Y = 10 + MARGIN_LINES_WIDTH + TABLE_MARGIN
@@ -99,6 +86,7 @@ if __name__ == "__main__":
 		y=TABLE_Y,
 		w=TABLE_W,
 		contents=data,
+		# contents=random_test_set(453),
 		header_colours=[GRAY_30, BLACK],
 		colours=[[WHITE, GRAY_69],
 				 [BLACK]],
@@ -106,8 +94,24 @@ if __name__ == "__main__":
 		include_top_doc_link=True,
 		new_page_for_table=False,
 		row_name_col_lbl="Date",
-		start_with_header=True
+		start_with_header=True,
+		cell_border_style=1,
+		col_align={"Date": "L", "$": "R", "Name": "L"}
 	)
 
+	# date = datetime.datetime.now()
+	# pdf.texts(
+	# 	MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + TXT_MARGIN,
+	# 	TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN,
+	# 	0,
+	# 	10,
+	# 	"Prepared at {} on {}".format(
+	# 		datetime.datetime.strftime(date, "%I:%M:%S %p"),
+	# 		datetime.datetime.strftime(date, "%Y-%m-%d")
+	# 	),
+	# 	font=('Arial', '', 10)
+	# )
+
+	pdf.time_stamp()
 	pdf.output(FILE_NAME, 'F')
 	webbrowser.open(FILE_NAME)
