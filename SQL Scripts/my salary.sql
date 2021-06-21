@@ -22,6 +22,25 @@ WHERE
 ORDER BY [Date]
 
 
+-- Currebt wage
+WITH CurrentPay AS (
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [2nd Name], [1st Name]
+			ORDER BY [Date] DESC
+		) AS row_num, *
+	FROM 
+		[Payroll]
+),
+CP AS (SELECT * FROM [Orders])
+SELECT 
+	[Emp#], [Date], [2nd Name], [1st Name], [Salary], [Annual], [Bonus%], [Dep Life], [Health], [Dental], [Vacation%], [RRSP%], [RaiseID]
+FROM
+	CurrentPay WITH (NOLOCK)
+WHERE
+	CurrentPay.[row_num] = 1
+ORDER BY [Date]
+
 -- Current wage
 WITH CurrentPay AS (
 	SELECT
@@ -32,19 +51,20 @@ WITH CurrentPay AS (
 	FROM 
 		[Payroll]
 	WHERE
-		CurrentPay.[row_num] = 1
-),
-FirstPay AS (
-	SELECT
-		ROW_NUMBER() OVER (
-			PARTITION BY [2nd Name], [1st Name]
-			ORDER BY [Date]
-		) AS row_num, *
-	FROM 
-		[Payroll]
-	WHERE
-		FirstPay.[row_num] = 1
+		[row_num] = 1
 )
+
+--FirstPay AS (
+--	SELECT
+--		ROW_NUMBER() OVER (
+--			PARTITION BY [2nd Name], [1st Name]
+--			ORDER BY [Date]
+--		) AS row_num, *
+--	FROM 
+--		[Payroll]
+--	WHERE
+--		FirstPay.[row_num] = 1
+--)
 SELECT 
 	CurrentPay.[Emp#],
 	CurrentPay.[Date] AS [Last Pay Rise],
