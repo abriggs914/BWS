@@ -841,7 +841,7 @@ class PDF(FPDF):
             rh += trh - 1
             print("trh:", trh)
             och = ch
-            ch = max(ch, ch * (trh - 1))
+            # ch = max(ch, ch * (trh - 1))
 
             # cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
             #         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
@@ -858,11 +858,37 @@ class PDF(FPDF):
                 np = True
 
             if np:
+                ch = header_height
+                self.set_font(*header_font)
+
+            max_cell_value = float("-inf")
+            j = 0
+            cell_heights = []
+            while j in range(n_cols):
+                if (start_with_header and np) or i == 0:
+                    cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
+                else:
+                    cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
+                max_cell_value = max(max_cell_value, len(str(cell_value)))
+                # if start_with_header and np:
+                #     ch = header_height
+                # else:
+                #     ch = cell_height
+                cell_heights.append(math.ceil(self.get_string_width(str(cell_value)) / col_widths[j]) * ch)
+                j += 1
+
+            max_multi_cell_rows = max(cell_heights)
+            max_cell_width = max(col_widths) - 4
+            one_chr = self.get_string_width(" ")
+
+            if (max_multi_cell_rows * ch) > self.h:
+                np = True
+
+            if np:
                 add_new_page()
                 page_left = self.h
                 pages += 1
                 print("\tpage break on line i={}, start next page with header: {}".format(i, start_with_header))
-                i_off += i
                 page_space_used += space_used
                 space_used = 0
                 ocy = 0
@@ -872,29 +898,35 @@ class PDF(FPDF):
             wo_10015162 = False
             m_c_y = cy
             cx = ocx
-            max_cell_value = float("-inf")
-            j = 0
-            while j in range(n_cols):
-                if start_with_header and np:
-                    cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
-                else:
-                    cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
-                max_cell_value = max(max_cell_value, len(str(cell_value)))
-                j += 1
+
+            # j = 0
+            # while j in range(n_cols):
+            #     if start_with_header and np:
+            #         cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
+            #     else:
+            #         cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
+            #     # if start_with_header and np:
+            #     #     ch = header_height
+            #     # else:
+            #     #     ch = cell_height
+            #     j += 1
+
+            print("content_lst[{}]:".format(i), content_lst[i], "\ncell_heights:", cell_heights, "\nma")
+
 
             j = 0
             while j in range(n_cols):
-                if start_with_header and np:
+                if i == 0 or (start_with_header and np):
                     cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
                     print("cv:", cell_value)
-                    self.set_font('Arial', 'B', 14)
+                    self.set_font(*header_font)
                     self.set_fill_color(*header_colours[0])
                     self.set_text_color(*header_colours[1])
-                    ch = header_height
+                    # ch = header_height
                 else:
                     cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
-                    ch = cell_height
-                cell_value = pad_centre(cell_value, max_cell_value - 1)
+                    # ch = cell_height
+                # cell_value = pad_centre(cell_value, max_cell_value)
                 cw = col_widths[j] + (line_width / 2)
                 # cy = ocy + (((i - i_off) * ch) + max(0, ((1 if i else 0) * cch) - 5)) - (pages * height)
                 # cy = self.get_y()#ocy + (((i + rh - pages) * cell_height) + (((1 if (start_with_header and np) else 1) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
@@ -926,15 +958,30 @@ class PDF(FPDF):
                 self.set_xy(cx, cy)
                 # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
                 if trh - 1:
-                    bs = "F" + ("" if not cell_border_style else "D")
+                    # bs = "F" + ("" if not cell_border_style else "D")
                     # old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
                     # print("old_colo:", old_colo)
                     # self.set_fill_color(*TURQUOISE)
                     w_off = 1
-                    # self.rect(cx - w_off, cy, cell_width + (2 * w_off), (max(0, (trh)) * och), bs)
+                    self.rect(self.get_x(), self.get_y(), col_widths[j], max_multi_cell_rows, "F")
                     # self.set_fill_color(*old_colo)
                 bef = self.get_y()
-                self.multi_cell(w=col_widths[j], h=ch, txt=cell_value, border=cell_border_style, align=align, fill=1)
+
+
+
+                cvw = self.get_string_width(str(cell_value)) + 2
+                diff = max_cell_width - cvw
+                hdiff = diff // 2
+                l_chars = int(hdiff // one_chr)
+                r_chars = int(hdiff // one_chr) + (1 if (2 * hdiff) != diff else 0)
+                # cell_value = "".join([" " for ia in range(l_chars)]) + str(cell_value) + "".join([" " for ia in range(r_chars)])
+
+
+
+                brdr = "T"
+                if i == 0 or (np and start_with_header):
+                    brdr += "B"
+                self.multi_cell(w=col_widths[j], h=ch, txt=cell_value, border="T", align=align, fill=1)
                 cx += col_widths[j]
                 aft = self.get_y()
                 m_c_y = max(m_c_y , self.get_y(), max(0, (trh if trh > 1 else 0)) * och)
