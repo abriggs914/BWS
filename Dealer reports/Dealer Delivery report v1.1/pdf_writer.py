@@ -874,7 +874,25 @@ class PDF(FPDF):
                 #     ch = header_height
                 # else:
                 #     ch = cell_height
-                cell_heights.append(math.ceil(self.get_string_width(str(cell_value)) / col_widths[j]) * ch)
+                elt = len([word for word in str(cell_value).split(" ") if (len(word) / max(1, len(str(cell_value)))) >= 0.5])
+                print(dict_print({
+                    "cell_value": cell_value,
+                    "col_widths[{}]".format(j): col_widths[j],
+                    "len(str(cell_value).split(" "))": len(str(cell_value).split(" ")),
+                    "self.get_string_width(str(cell_value))": self.get_string_width(str(cell_value)),
+                    "(col_widths[j] - len(str(cell_value).split(" "))-1))": (col_widths[j] - len(str(cell_value).split(" "))-1),
+                    "self.get_string_width(str(cell_value)) / (col_widths[j] - (len(str(cell_value).split(" ")) - 1))": self.get_string_width(str(cell_value)) / (col_widths[j] - (len(str(cell_value).split(" ")) - 1)),
+                    "math.ceil(self.get_string_width(str(cell_value)) / (col_widths[j] - len(str(cell_value).split(" "))-1))": math.ceil(self.get_string_width(str(cell_value)) / (col_widths[j] - len(str(cell_value).split(" "))-1)),
+                    "ch": ch,
+                    "math.ceil(self.get_string_width(str(cell_value)) / (col_widths[j] - len(str(cell_value).split(" "))-1)) * ch": math.ceil(self.get_string_width(str(cell_value)) / (col_widths[j] - len(str(cell_value).split(" "))-1)) * ch,
+                    "math.ceil(self.get_string_width(str(cell_value)) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch": math.ceil(self.get_string_width(str(cell_value)) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch,
+                    "math.ceil((math.ceil(self.get_string_width(str(cell_value))) + 1) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch": math.ceil((math.ceil(self.get_string_width(str(cell_value))) + 1) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch,
+                    "(math.ceil(self.get_string_width(str(cell_value))) + 1)": (math.ceil(self.get_string_width(str(cell_value))) + 1),
+                    "(math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))": (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1)),
+                    "elt": elt,
+                    "math.ceil((math.ceil(self.get_string_width(str(cell_value))) + 1 + elt) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch": math.ceil((math.ceil(self.get_string_width(str(cell_value))) + 1 + elt) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch
+                }))
+                cell_heights.append(math.ceil((math.ceil(self.get_string_width(str(cell_value))) + 1 + elt) / (math.floor(col_widths[j]) - (len(str(cell_value).split(" ")) - 1))) * ch)
                 j += 1
 
             max_multi_cell_rows = max(cell_heights)
@@ -913,15 +931,23 @@ class PDF(FPDF):
 
             print("content_lst[{}]:".format(i), content_lst[i], "\ncell_heights:", cell_heights, "\nma")
 
+            if i == 0 or (start_with_header and np):
+                self.set_font(*header_font)
+                self.set_fill_color(*header_colours[0])
+                self.set_text_color(*header_colours[1])
+                # ch = header_height
 
+            # self.rect(cx, self.get_y(), sum(col_widths), max_multi_cell_rows, "FD")
+            self.set_x(cx)
+            self.multi_cell(sum(col_widths), max_multi_cell_rows, "", "TBLR", "C", 1)
             j = 0
             while j in range(n_cols):
                 if i == 0 or (start_with_header and np):
                     cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
                     print("cv:", cell_value)
-                    self.set_font(*header_font)
-                    self.set_fill_color(*header_colours[0])
-                    self.set_text_color(*header_colours[1])
+                    # self.set_font(*header_font)
+                    # self.set_fill_color(*header_colours[0])
+                    # self.set_text_color(*header_colours[1])
                     # ch = header_height
                 else:
                     cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
@@ -957,12 +983,13 @@ class PDF(FPDF):
 
                 self.set_xy(cx, cy)
                 # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
-                if trh - 1:
+                if 1:
                     # bs = "F" + ("" if not cell_border_style else "D")
                     # old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
                     # print("old_colo:", old_colo)
-                    # self.set_fill_color(*TURQUOISE)
+                    # self.set_fill_color(*darken(GOLD_4, j / n_cols))
                     w_off = 1
+                    print("cell_value", cell_value, "max_multi_cell_rows", max_multi_cell_rows, ", (i, j): ({}, {})".format(i, j))
                     self.rect(self.get_x(), self.get_y(), col_widths[j], max_multi_cell_rows, "F")
                     # self.set_fill_color(*old_colo)
                 bef = self.get_y()
@@ -981,7 +1008,11 @@ class PDF(FPDF):
                 brdr = "T"
                 if i == 0 or (np and start_with_header):
                     brdr += "B"
-                self.multi_cell(w=col_widths[j], h=ch, txt=cell_value, border="T", align=align, fill=1)
+                if j == 0:
+                    brdr += "L"
+                if j == n_cols - 1:
+                    brdr += "R"
+                self.multi_cell(w=col_widths[j], h=ch, txt=cell_value, border=brdr, align=align, fill=1)
                 cx += col_widths[j]
                 aft = self.get_y()
                 m_c_y = max(m_c_y , self.get_y(), max(0, (trh if trh > 1 else 0)) * och)
