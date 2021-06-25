@@ -40,7 +40,8 @@ END
 ;
 GO
 
+PIVOT
 EXEC
 	[GetSlotReport]
-		@StartDate = '2021-06-23'
+		@StartDate = '0001-01-01'
 ;
