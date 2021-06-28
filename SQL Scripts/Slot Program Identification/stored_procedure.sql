@@ -1,6 +1,6 @@
 USE BWSdb
 GO
-
+/*
 IF EXISTS (SELECT 1 FROM SYS.procedures where name ='GetSlotReport')
 BEGIN
 DROP PROCEDURE [GetSlotReport]
@@ -8,7 +8,8 @@ END
 GO
  
 CREATE PROCEDURE [GetSlotReport]
-	(@StartDate Date)
+	@StartDate AS Date,
+	@SlotStatus AS Int = 1
 AS
 BEGIN
 	-- Monthly slot counts for each dealer
@@ -22,26 +23,45 @@ BEGIN
 			[Production Slots]
 	)
 	
-	SELECT 
-		[Dealers].[COMPANY NAME], [Slot Types], DateName(mm, [Slot Date]) AS [Month], COUNT(*) AS [# Slots]
-	FROM
-		SlotTypes WITH (NOLOCK)
-	INNER JOIN
-		[Dealers]
-	ON
-		[Dealers].[ID] = [SlotTypes].[Dealer]
-	WHERE 
-		[Slot Date] >= @StartDate
-	GROUP BY
-		[Dealers].[COMPANY NAME], [Slot Types], [Slot Date]
+	SELECT
+		*
+	FROM (
+		SELECT 
+			[Dealers].[COMPANY NAME], [Slot Types] AS [Slot Type], DateName(mm, [Slot Date]) AS [Month], COUNT(*) AS [# Slots]
+		FROM
+			SlotTypes WITH (NOLOCK)
+		INNER JOIN
+			[Dealers]
+		ON
+			[Dealers].[ID] = [SlotTypes].[Dealer]
+		WHERE
+			[Slot Types] IS NOT NULL
+			AND [Slot Date] >= @StartDate
+			AND [Slot Status] = @SlotStatus
+		GROUP BY
+			[Dealers].[COMPANY NAME], [Slot Types], [Slot Date]
+	) AS [SourceTable]
+	PIVOT (
+		SUM([# Slots])
+		FOR [Month] IN ([January], [February], [March], [April], [May], [June], [July], [August] ,[September], [October], [November], [December])
+	) AS PivotTable
 	ORDER BY
-		[Dealers].[COMPANY NAME], [Slot Types], [Slot Date]
+		[COMPANY NAME], [Slot Type]
 END
 ;
 GO
 
-PIVOT
+--PRINT 'Get slot Report 2021-06-30, Slot status=0'
 EXEC
 	[GetSlotReport]
-		@StartDate = '0001-01-01'
+		@StartDate = '2021-06-30',
+		@SlotStatus = 0
 ;
+
+--PRINT 'Get slot Report 2021-06-30, Slot status=1'
+EXEC
+	[GetSlotReport]
+		@StartDate = '2021-06-30',
+		@SlotStatus = 1
+;
+*/
