@@ -34,6 +34,6 @@ def foo2(a, b=[]):
 
 
 x = [1]
-print(foo1(14, [1]))
-print(foo1(15, [2]))
-print(foo1(16, [3]))
+print(foo1(14))
+print(foo1(15))
+print(foo1(16))
