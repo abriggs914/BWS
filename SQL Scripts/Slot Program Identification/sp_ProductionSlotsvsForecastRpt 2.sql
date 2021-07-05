@@ -13,306 +13,440 @@ GO
 
 ALTER PROCEDURE [dbo].[sp_ProductionSlotsvsForecastRpt 2] 
 	-- Add the parameters for the stored procedure here
-	@sd datetime,
-	@ss int = 2
+	@sd DATETIME,
+	@ss INT = 2
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
+	-- INTerfering with SELECT statements.
 	SET NOCOUNT ON;
 
 	CREATE TABLE #T (
-		[COMPANY NAME] varchar(50),
-		[Slot Type] varchar(50),
-		[GROUPING] int,
-		[Label] varchar(50),
-		[Initials] varchar(10),
-		[LabelTtl] varchar(50),
-		[Slot Status] int,
-		[Month #] int,
-		[January] int,
-		[February] int,
-		[March] int,
-		[April] int,
-		[May] int,
-		[June] int,
-		[July] int,
-		[August] int,
-		[September] int,
-		[October] int,
-		[November] int,
-		[December] int 
-	)
+		[COMPANY NAME] VARCHAR(50),
+		[Slot Type] VARCHAR(50),
+		[GROUPING] INT,
+		[Label] VARCHAR(50),
+		[Initials] VARCHAR(10),
+		[LabelTtl] VARCHAR(50),
+		[Slot Status] INT,
+		[Month #] INT,
+		[January] INT,
+		[February] INT,
+		[March] INT,
+		[April] INT,
+		[May] INT,
+		[June] INT,
+		[July] INT,
+		[August] INT,
+		[September] INT,
+		[October] INT,
+		[November] INT,
+		[December] INT
+	);
 
-	INSERT INTO #T EXEC [dbo].[sp_GetSlotReport] @StartDate = @sd, @SlotStatus = @ss
-	
+	INSERT INTO
+		#T
+	EXEC
+		[dbo].[sp_GetSlotReport]
+			@StartDate = @sd,
+			@SlotStatus = @ss
+	;
 
     -- Insert statements for procedure here
-	declare @m1 datetime = DATEADD(mm, DATEDIFF(mm, 0, @sd), 0)
+	DECLARE @m1 DATETIME = DATEADD(mm, DATEDIFF(mm, 0, @sd), 0);
 
-	declare @m2 datetime = dateadd(month, 1, @m1),
-			@m3 datetime = dateadd(month, 2, @m1),
-			@m4 datetime = dateadd(month, 3, @m1),
-			@m5 datetime = dateadd(month, 4, @m1),
-			@m6 datetime = dateadd(month, 5, @m1),
-			@m7 datetime = dateadd(month, 6, @m1),
-			@m8 datetime = dateadd(month, 7, @m1),
-			@m9 datetime = dateadd(month, 8, @m1),
-			@m10 datetime = dateadd(month, 9, @m1),
-			@m11 datetime = dateadd(month, 10, @m1),
-			@m12 datetime = dateadd(month, 11, @m1)
-	
-	----Drop and create temp table in tmpdb SQL database for faster processing for fetching Access Quote Hours grouped by WorkCentre
-	--IF OBJECT_ID('tempdb..#AccessQuoteHours') IS NOT NULL
-	--	DROP TABLE #AccessQuoteHours
+	DECLARE @m2 DATETIME = DATEADD(MONTH, 1, @m1),
+			@m3 DATETIME = DATEADD(MONTH, 2, @m1),
+			@m4 DATETIME = DATEADD(MONTH, 3, @m1),
+			@m5 DATETIME = DATEADD(MONTH, 4, @m1),
+			@m6 DATETIME = DATEADD(MONTH, 5, @m1),
+			@m7 DATETIME = DATEADD(MONTH, 6, @m1),
+			@m8 DATETIME = DATEADD(MONTH, 7, @m1),
+			@m9 DATETIME = DATEADD(MONTH, 8, @m1),
+			@m10 DATETIME = DATEADD(MONTH, 9, @m1),
+			@m11 DATETIME = DATEADD(MONTH, 10, @m1),
+			@m12 DATETIME = DATEADD(MONTH, 11, @m1)
+	;
 
-	--create table #AccessQuoteHours
-	--(
-	--	Quote# int,
-	--	WorkCentre varchar(30),
-	--	NetBudget decimal(9, 2)
-	--)
-
-	----INSERT INTO #tab EXEC [sp_GetSlotReport] @StartDate = '2021-06-29'
-	
-	--insert into #AccessQuoteHours
-	--select Quote#, WorkCentre, sum([Hours]) as NetHours
-	--			from (select Quote#, 'A' as WorkCentre, sum(Axles) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'A', sum(Axles * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'A', sum(Axles * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 1]) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 1] * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 1] * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 2]) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 2] * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'T', sum([Step 2] * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Blast) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Blast * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Blast * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Paint) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Paint * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'P', sum(Paint * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Finish - GNK]) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Finish - GNK] * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Finish - GNK] * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Final Assembly]) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Final Assembly] * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Final Assembly] * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Tire Assembly]) as [Hours]
-	--				  from [Order Hours] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Tire Assembly] * Qty) as [Hours]
-	--				  from [Order Options] with (nolock)
-	--				  group by Quote#
-
-	--				  union all select Quote#, 'F', sum([Tire Assembly] * Qty) as [Hours]
-	--				  from [Custom Work] with (nolock)
-	--				  group by Quote#) as mainsub
-	--			group by Quote#, WorkCentre
-
-	--Final select statement
-	select 'Production Slots VS Forecast Report - ' AS [RptGroupName], [COMPANY NAME], [GROUPING], Label, Initials, LabelTtl, [Slot Type],
-	@m1 as Month1Date,
-	SUM(CASE 
-		WHEN [Month #] = month(@m1) then [January]
-		WHEN [Month #] = month(@m2) then [February]
-		WHEN [Month #] = month(@m3) then [March]
-		WHEN [Month #] = month(@m4) then [April]
-		WHEN [Month #] = month(@m5) then [May]
-		WHEN [Month #] = month(@m6) then [June]
-		WHEN [Month #] = month(@m7) then [July]
-		WHEN [Month #] = month(@m8) then [August]
-		WHEN [Month #] = month(@m9) then [September]
-		WHEN [Month #] = month(@m10) then [October]
-		WHEN [Month #] = month(@m11) then [November]
-		WHEN [Month #] = month(@m12) then [December]
-		ELSE 0
-	end) as Month1Slots,
-	@m2 as Month2Date,
-	sum([February]) as Month2Slots,
-	@m3 as Month3Date,
-	sum([March]) as Month3Slots,
-	@m4 as Month4Date,
-	sum([April]) as Month4Slots,
-	@m5 as Month5Date,
-	sum([May]) as Month5Slots,
-	@m6 as Month6Date,
-	sum([June]) as Month6Slots,
-	@m7 as Month7Date,
-	sum([July]) as Month7Slots,
-	@m8 as Month8Date,
-	sum([August]) as Month8Slots,
-	@m9 as Month9Date,
-	sum([September]) as Month9Slots,
-	@m10 as Month10Date,
-	sum([October]) as Month10Slots,
-	@m11 as Month11Date,
-	sum([November]) as Month11Slots,
-	@m12 as Month12Date,
-	SUM(CASE 
-		WHEN [Month #] = month(@m1) then 1
-		WHEN [Month #] = month(@m2) then 1
-		WHEN [Month #] = month(@m3) then 1
-		WHEN [Month #] = month(@m4) then 1
-		WHEN [Month #] = month(@m5) then 1
-		WHEN [Month #] = month(@m6) then 1
-		WHEN [Month #] = month(@m7) then 1
-		WHEN [Month #] = month(@m8) then 1
-		WHEN [Month #] = month(@m9) then 1
-		WHEN [Month #] = month(@m10) then 1
-		WHEN [Month #] = month(@m11) then 1
-		WHEN [Month #] = month(@m12) then 1
-		ELSE 0
-	end) as Month12Slots
-	
-	from #T
-	group by [#T].[COMPANY NAME], [#T].[GROUPING], [#T].[Label], [#T].[Initials], [#T].[LabelTtl], [Slot Type]
-END
+	SELECT
+		'All ' + (
+			CASE
+				WHEN @ss = 0 THEN 'Unassigned '
+				WHEN @ss = 1 THEN 'Assigned '
+				ELSE ''
+			END
+		) + 'Production Slots VS. Forecast Report Beginning: ' AS [RptGroupName],
+		@sd AS [Start Date],
+		[COMPANY NAME],
+		[GROUPING],
+		[Label],
+		[Initials],
+		[LabelTtl],
+		[Slot Type],
+		@m1 AS Month1Date,
+		(SUM(CASE WHEN [January] IS NULL THEN 0 ELSE [January] END) + 
+		SUM(CASE WHEN [February] IS NULL THEN 0 ELSE [February] END) +
+		SUM(CASE WHEN [March] IS NULL THEN 0 ELSE [March] END) +
+		SUM(CASE WHEN [April] IS NULL THEN 0 ELSE [April] END) +
+		SUM(CASE WHEN [May] IS NULL THEN 0 ELSE [May] END) +
+		SUM(CASE WHEN [June] IS NULL THEN 0 ELSE [June] END) +
+		SUM(CASE WHEN [July] IS NULL THEN 0 ELSE [July] END) +
+		SUM(CASE WHEN [August] IS NULL THEN 0 ELSE [August] END) +
+		SUM(CASE WHEN [September] IS NULL THEN 0 ELSE [September] END) +
+		SUM(CASE WHEN [October] IS NULL THEN 0 ELSE [October] END) +
+		SUM(CASE WHEN [November] IS NULL THEN 0 ELSE [November] END) +
+		SUM(CASE WHEN [December] IS NULL THEN 0 ELSE [December] END)
+		) AS [Sum],
+		SUM(CASE 
+			WHEN 1 = MONTH(@m1) THEN [January]
+			WHEN 2 = MONTH(@m1) THEN [February]
+			WHEN 3 = MONTH(@m1) THEN [March]
+			WHEN 4 = MONTH(@m1) THEN [April]
+			WHEN 5 = MONTH(@m1) THEN [May]
+			WHEN 6 = MONTH(@m1) THEN [June]
+			WHEN 7 = MONTH(@m1) THEN [July]
+			WHEN 8 = MONTH(@m1) THEN [August]
+			WHEN 9 = MONTH(@m1) THEN [September]
+			WHEN 10 = MONTH(@m1) THEN [October]
+			WHEN 11 = MONTH(@m1) THEN [November]
+			WHEN 12 = MONTH(@m1) THEN [December]
+			ELSE 0
+			END
+		) AS Month1Slots,
+		@m2 AS Month2Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m2) THEN [January]
+			WHEN 2 = MONTH(@m2) THEN [February]
+			WHEN 3 = MONTH(@m2) THEN [March]
+			WHEN 4 = MONTH(@m2) THEN [April]
+			WHEN 5 = MONTH(@m2) THEN [May]
+			WHEN 6 = MONTH(@m2) THEN [June]
+			WHEN 7 = MONTH(@m2) THEN [July]
+			WHEN 8 = MONTH(@m2) THEN [August]
+			WHEN 9 = MONTH(@m2) THEN [September]
+			WHEN 10 = MONTH(@m2) THEN [October]
+			WHEN 11 = MONTH(@m2) THEN [November]
+			WHEN 12 = MONTH(@m2) THEN [December]
+			ELSE 0
+			END
+		) AS Month2Slots,
+		@m3 AS Month3Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m3) THEN [January]
+			WHEN 2 = MONTH(@m3) THEN [February]
+			WHEN 3 = MONTH(@m3) THEN [March]
+			WHEN 4 = MONTH(@m3) THEN [April]
+			WHEN 5 = MONTH(@m3) THEN [May]
+			WHEN 6 = MONTH(@m3) THEN [June]
+			WHEN 7 = MONTH(@m3) THEN [July]
+			WHEN 8 = MONTH(@m3) THEN [August]
+			WHEN 9 = MONTH(@m3) THEN [September]
+			WHEN 10 = MONTH(@m3) THEN [October]
+			WHEN 11 = MONTH(@m3) THEN [November]
+			WHEN 12 = MONTH(@m3) THEN [December]
+			ELSE 0
+			END
+		) AS Month3Slots,
+		@m4 AS Month4Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m4) THEN [January]
+			WHEN 2 = MONTH(@m4) THEN [February]
+			WHEN 3 = MONTH(@m4) THEN [March]
+			WHEN 4 = MONTH(@m4) THEN [April]
+			WHEN 5 = MONTH(@m4) THEN [May]
+			WHEN 6 = MONTH(@m4) THEN [June]
+			WHEN 7 = MONTH(@m4) THEN [July]
+			WHEN 8 = MONTH(@m4) THEN [August]
+			WHEN 9 = MONTH(@m4) THEN [September]
+			WHEN 10 = MONTH(@m4) THEN [October]
+			WHEN 11 = MONTH(@m4) THEN [November]
+			WHEN 12 = MONTH(@m4) THEN [December]
+			ELSE 0
+			END
+		) AS Month4Slots,
+		@m5 AS Month5Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m5) THEN [January]
+			WHEN 2 = MONTH(@m5) THEN [February]
+			WHEN 3 = MONTH(@m5) THEN [March]
+			WHEN 4 = MONTH(@m5) THEN [April]
+			WHEN 5 = MONTH(@m5) THEN [May]
+			WHEN 6 = MONTH(@m5) THEN [June]
+			WHEN 7 = MONTH(@m5) THEN [July]
+			WHEN 8 = MONTH(@m5) THEN [August]
+			WHEN 9 = MONTH(@m5) THEN [September]
+			WHEN 10 = MONTH(@m5) THEN [October]
+			WHEN 11 = MONTH(@m5) THEN [November]
+			WHEN 12 = MONTH(@m5) THEN [December]
+			ELSE 0
+			END
+		) AS Month5Slots,
+		@m6 AS Month6Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m6) THEN [January]
+			WHEN 2 = MONTH(@m6) THEN [February]
+			WHEN 3 = MONTH(@m6) THEN [March]
+			WHEN 4 = MONTH(@m6) THEN [April]
+			WHEN 5 = MONTH(@m6) THEN [May]
+			WHEN 6 = MONTH(@m6) THEN [June]
+			WHEN 7 = MONTH(@m6) THEN [July]
+			WHEN 8 = MONTH(@m6) THEN [August]
+			WHEN 9 = MONTH(@m6) THEN [September]
+			WHEN 10 = MONTH(@m6) THEN [October]
+			WHEN 11 = MONTH(@m6) THEN [November]
+			WHEN 12 = MONTH(@m6) THEN [December]
+			ELSE 0
+			END
+		) AS Month6Slots,
+		@m7 AS Month7Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m7) THEN [January]
+			WHEN 2 = MONTH(@m7) THEN [February]
+			WHEN 3 = MONTH(@m7) THEN [March]
+			WHEN 4 = MONTH(@m7) THEN [April]
+			WHEN 5 = MONTH(@m7) THEN [May]
+			WHEN 6 = MONTH(@m7) THEN [June]
+			WHEN 7 = MONTH(@m7) THEN [July]
+			WHEN 8 = MONTH(@m7) THEN [August]
+			WHEN 9 = MONTH(@m7) THEN [September]
+			WHEN 10 = MONTH(@m7) THEN [October]
+			WHEN 11 = MONTH(@m7) THEN [November]
+			WHEN 12 = MONTH(@m7) THEN [December]
+			ELSE 0
+			END
+		) AS Month7Slots,
+		@m8 AS Month8Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m8) THEN [January]
+			WHEN 2 = MONTH(@m8) THEN [February]
+			WHEN 3 = MONTH(@m8) THEN [March]
+			WHEN 4 = MONTH(@m8) THEN [April]
+			WHEN 5 = MONTH(@m8) THEN [May]
+			WHEN 6 = MONTH(@m8) THEN [June]
+			WHEN 7 = MONTH(@m8) THEN [July]
+			WHEN 8 = MONTH(@m8) THEN [August]
+			WHEN 9 = MONTH(@m8) THEN [September]
+			WHEN 10 = MONTH(@m8) THEN [October]
+			WHEN 11 = MONTH(@m8) THEN [November]
+			WHEN 12 = MONTH(@m8) THEN [December]
+			ELSE 0
+			END
+		) AS Month8Slots,
+		@m9 AS Month9Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m9) THEN [January]
+			WHEN 2 = MONTH(@m9) THEN [February]
+			WHEN 3 = MONTH(@m9) THEN [March]
+			WHEN 4 = MONTH(@m9) THEN [April]
+			WHEN 5 = MONTH(@m9) THEN [May]
+			WHEN 6 = MONTH(@m9) THEN [June]
+			WHEN 7 = MONTH(@m9) THEN [July]
+			WHEN 8 = MONTH(@m9) THEN [August]
+			WHEN 9 = MONTH(@m9) THEN [September]
+			WHEN 10 = MONTH(@m9) THEN [October]
+			WHEN 11 = MONTH(@m9) THEN [November]
+			WHEN 12 = MONTH(@m9) THEN [December]
+			ELSE 0
+			END
+		) AS Month9Slots,
+		@m10 AS Month10Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m10) THEN [January]
+			WHEN 2 = MONTH(@m10) THEN [February]
+			WHEN 3 = MONTH(@m10) THEN [March]
+			WHEN 4 = MONTH(@m10) THEN [April]
+			WHEN 5 = MONTH(@m10) THEN [May]
+			WHEN 6 = MONTH(@m10) THEN [June]
+			WHEN 7 = MONTH(@m10) THEN [July]
+			WHEN 8 = MONTH(@m10) THEN [August]
+			WHEN 9 = MONTH(@m10) THEN [September]
+			WHEN 10 = MONTH(@m10) THEN [October]
+			WHEN 11 = MONTH(@m10) THEN [November]
+			WHEN 12 = MONTH(@m10) THEN [December]
+			ELSE 0
+			END
+		) AS Month10Slots,
+		@m11 AS Month11Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m11) THEN [January]
+			WHEN 2 = MONTH(@m11) THEN [February]
+			WHEN 3 = MONTH(@m11) THEN [March]
+			WHEN 4 = MONTH(@m11) THEN [April]
+			WHEN 5 = MONTH(@m11) THEN [May]
+			WHEN 6 = MONTH(@m11) THEN [June]
+			WHEN 7 = MONTH(@m11) THEN [July]
+			WHEN 8 = MONTH(@m11) THEN [August]
+			WHEN 9 = MONTH(@m11) THEN [September]
+			WHEN 10 = MONTH(@m11) THEN [October]
+			WHEN 11 = MONTH(@m11) THEN [November]
+			WHEN 12 = MONTH(@m11) THEN [December]
+			ELSE 0
+			END
+		) AS Month11Slots,
+		@m12 AS Month12Date,
+		SUM(CASE 
+			WHEN 1 = MONTH(@m12) THEN [January]
+			WHEN 2 = MONTH(@m12) THEN [February]
+			WHEN 3 = MONTH(@m12) THEN [March]
+			WHEN 4 = MONTH(@m12) THEN [April]
+			WHEN 5 = MONTH(@m12) THEN [May]
+			WHEN 6 = MONTH(@m12) THEN [June]
+			WHEN 7 = MONTH(@m12) THEN [July]
+			WHEN 8 = MONTH(@m12) THEN [August]
+			WHEN 9 = MONTH(@m12) THEN [September]
+			WHEN 10 = MONTH(@m12) THEN [October]
+			WHEN 11 = MONTH(@m12) THEN [November]
+			WHEN 12 = MONTH(@m12) THEN [December]
+			ELSE 0
+			END
+		) AS Month12Slots
+		FROM
+			#T
+		GROUP BY
+			[#T].[COMPANY NAME],
+			[#T].[GROUPING],
+			[#T].[Label],
+			[#T].[Initials],
+			[#T].[LabelTtl],
+			[Slot Type]
+	END
 GO
 
 
 /*
-sum(case when [Month #] = month(@m1) then 1 else 0 end) as Month1Slots,
-	@m2 as Month2Date,
-	sum(case when [Month #] = month(@m2) then 1 else 0 end) as Month2Slots,
-	@m3 as Month3Date,
-	sum(case when [Month #] = month(@m3) then 1 else 0 end) as Month3Slots,
-	@m4 as Month4Date,
-	sum(case when [Month #] = month(@m4) then 1 else 0 end) as Month4Slots,
-	@m5 as Month5Date,
-	sum(case when [Month #] = month(@m5) then 1 else 0 end) as Month5Slots,
-	@m6 as Month6Date,
-	sum(case when [Month #] = month(@m6) then 1 else 0 end) as Month6Slots,
-	@m7 as Month7Date,
-	sum(case when [Month #] = month(@m7) then 1 else 0 end) as Month7Slots,
-	@m8 as Month8Date,
-	sum(case when [Month #] = month(@m8) then 1 else 0 end) as Month8Slots,
-	@m9 as Month9Date,
-	sum(case when [Month #] = month(@m9) then 1 else 0 end) as Month9Slots,
-	@m10 as Month10Date,
-	sum(case when [Month #] = month(@m10) then 1 else 0 end) as Month10Slots,
-	@m11 as Month11Date,
-	sum(case when [Month #] = month(@m11) then 1 else 0 end) as Month11Slots,
-	@m12 as Month12Date,
-	sum(case when [Month #] = month(@m12) then 1 else 0 end) as Month12Slots
+sum(CASE WHEN [Month #] = MONTH(@m1) THEN 1 ELSE 0 end) AS Month1Slots,
+	@m2 AS Month2Date,
+	sum(CASE WHEN [Month #] = MONTH(@m2) THEN 1 ELSE 0 end) AS Month2Slots,
+	@m3 AS Month3Date,
+	sum(CASE WHEN [Month #] = MONTH(@m3) THEN 1 ELSE 0 end) AS Month3Slots,
+	@m4 AS Month4Date,
+	sum(CASE WHEN [Month #] = MONTH(@m4) THEN 1 ELSE 0 end) AS Month4Slots,
+	@m5 AS Month5Date,
+	sum(CASE WHEN [Month #] = MONTH(@m5) THEN 1 ELSE 0 end) AS Month5Slots,
+	@m6 AS Month6Date,
+	sum(CASE WHEN [Month #] = MONTH(@m6) THEN 1 ELSE 0 end) AS Month6Slots,
+	@m7 AS Month7Date,
+	sum(CASE WHEN [Month #] = MONTH(@m7) THEN 1 ELSE 0 end) AS Month7Slots,
+	@m8 AS Month8Date,
+	sum(CASE WHEN [Month #] = MONTH(@m8) THEN 1 ELSE 0 end) AS Month8Slots,
+	@m9 AS Month9Date,
+	sum(CASE WHEN [Month #] = MONTH(@m9) THEN 1 ELSE 0 end) AS Month9Slots,
+	@m10 AS Month10Date,
+	sum(CASE WHEN [Month #] = MONTH(@m10) THEN 1 ELSE 0 end) AS Month10Slots,
+	@m11 AS Month11Date,
+	sum(CASE WHEN [Month #] = MONTH(@m11) THEN 1 ELSE 0 end) AS Month11Slots,
+	@m12 AS Month12Date,
+	sum(CASE WHEN [Month #] = MONTH(@m12) THEN 1 ELSE 0 end) AS Month12Slots
 */
 
 /*
 
 	(CASE 
-		WHEN [Month #] = month(@m1) then sum([January])
-		WHEN [Month #] = month(@m2) then sum([February])
-		WHEN [Month #] = month(@m3) then sum([March])
-		WHEN [Month #] = month(@m4) then sum([April])
-		WHEN [Month #] = month(@m5) then sum([May])
-		WHEN [Month #] = month(@m6) then sum([June])
-		WHEN [Month #] = month(@m7) then sum([July])
-		WHEN [Month #] = month(@m8) then sum([August])
-		WHEN [Month #] = month(@m9) then sum([September])
-		WHEN [Month #] = month(@m10) then sum([October])
-		WHEN [Month #] = month(@m11) then sum([November])
-		WHEN [Month #] = month(@m12) then sum([December])
+		WHEN [Month #] = MONTH(@m1) THEN sum([January])
+		WHEN [Month #] = MONTH(@m2) THEN sum([February])
+		WHEN [Month #] = MONTH(@m3) THEN sum([March])
+		WHEN [Month #] = MONTH(@m4) THEN sum([April])
+		WHEN [Month #] = MONTH(@m5) THEN sum([May])
+		WHEN [Month #] = MONTH(@m6) THEN sum([June])
+		WHEN [Month #] = MONTH(@m7) THEN sum([July])
+		WHEN [Month #] = MONTH(@m8) THEN sum([August])
+		WHEN [Month #] = MONTH(@m9) THEN sum([September])
+		WHEN [Month #] = MONTH(@m10) THEN sum([October])
+		WHEN [Month #] = MONTH(@m11) THEN sum([November])
+		WHEN [Month #] = MONTH(@m12) THEN sum([December])
 		ELSE 0
-	end) as Month1Slots,
+	end) AS Month1Slots,
 */
 
 /*
 SUM(CASE 
-		WHEN [Month #] = month(@m1) then [January]
-		WHEN [Month #] = month(@m2) then [February]
-		WHEN [Month #] = month(@m3) then [March]
-		WHEN [Month #] = month(@m4) then [April]
-		WHEN [Month #] = month(@m5) then [May]
-		WHEN [Month #] = month(@m6) then [June]
-		WHEN [Month #] = month(@m7) then [July]
-		WHEN [Month #] = month(@m8) then [August]
-		WHEN [Month #] = month(@m9) then [September]
-		WHEN [Month #] = month(@m10) then [October]
-		WHEN [Month #] = month(@m11) then [November]
-		WHEN [Month #] = month(@m12) then [December]
+		WHEN [Month #] = MONTH(@m1) THEN [January]
+		WHEN [Month #] = MONTH(@m2) THEN [February]
+		WHEN [Month #] = MONTH(@m3) THEN [March]
+		WHEN [Month #] = MONTH(@m4) THEN [April]
+		WHEN [Month #] = MONTH(@m5) THEN [May]
+		WHEN [Month #] = MONTH(@m6) THEN [June]
+		WHEN [Month #] = MONTH(@m7) THEN [July]
+		WHEN [Month #] = MONTH(@m8) THEN [August]
+		WHEN [Month #] = MONTH(@m9) THEN [September]
+		WHEN [Month #] = MONTH(@m10) THEN [October]
+		WHEN [Month #] = MONTH(@m11) THEN [November]
+		WHEN [Month #] = MONTH(@m12) THEN [December]
 		ELSE 0
-	end) as Month1Slots,
+	end) AS Month1Slots,
 */
 
 /*
 
 	SUM(CASE 
-		WHEN [Month #] = month(@m1) then 1
-		WHEN [Month #] = month(@m2) then 1
-		WHEN [Month #] = month(@m3) then 1
-		WHEN [Month #] = month(@m4) then 1
-		WHEN [Month #] = month(@m5) then 1
-		WHEN [Month #] = month(@m6) then 1
-		WHEN [Month #] = month(@m7) then 1
-		WHEN [Month #] = month(@m8) then 1
-		WHEN [Month #] = month(@m9) then 1
-		WHEN [Month #] = month(@m10) then 1
-		WHEN [Month #] = month(@m11) then 1
-		WHEN [Month #] = month(@m12) then 1
+		WHEN [Month #] = MONTH(@m1) THEN 1
+		WHEN [Month #] = MONTH(@m2) THEN 1
+		WHEN [Month #] = MONTH(@m3) THEN 1
+		WHEN [Month #] = MONTH(@m4) THEN 1
+		WHEN [Month #] = MONTH(@m5) THEN 1
+		WHEN [Month #] = MONTH(@m6) THEN 1
+		WHEN [Month #] = MONTH(@m7) THEN 1
+		WHEN [Month #] = MONTH(@m8) THEN 1
+		WHEN [Month #] = MONTH(@m9) THEN 1
+		WHEN [Month #] = MONTH(@m10) THEN 1
+		WHEN [Month #] = MONTH(@m11) THEN 1
+		WHEN [Month #] = MONTH(@m12) THEN 1
 		ELSE 0
-	end) as Month1Slots,
+	end) AS Month1Slots,
+*/
+
+
+/*
+USE [BWSdb]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Avery Briggs>
+-- Create date: <2021-06-29>
+-- Description:	<Generate the Dealer Slots VS Forecast report.>
+--=============================================
+
+ALTER PROCEDURE [dbo].[sp_ProductionSlotsvsForecastRpt 2] 
+	-- Add the parameters for the stored procedure here
+	@sd DATETIME,
+	@ss INT = 2
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- INTerfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	CREATE TABLE #T (
+		[COMPANY NAME] VARCHAR(50),
+		[Slot Type] VARCHAR(50),
+		[GROUPING] INT,
+		[Label] VARCHAR(50),
+		[Initials] VARCHAR(10),
+		[LabelTtl] VARCHAR(50),
+		[Slot Status] INT,
+		[Month #] INT,
+		[January] INT,
+		[February] INT,
+		[March] INT,
+		[April] INT,
+		[May] INT,
+		[June] INT,
+		[July] INT,
+		[August] INT,
+		[September] INT,
+		[October] INT,
+		[November] INT,
+		[December] INT 
+	)
+
+	INSERT INTO #T EXEC [dbo].[sp_GetSlotReport] @StartDate = @sd, @SlotStatus = @ss
+	SELECT
+		*
+	FROM
+		#T
+END
+GO
 */

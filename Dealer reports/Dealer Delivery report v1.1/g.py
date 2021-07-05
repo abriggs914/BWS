@@ -33,6 +33,10 @@ def foo2(a, b=[]):
     return b
 
 
+a, _ = divmod(18, 4)
+
+print(_)
+
 x = [1]
 print(foo1(14))
 print(foo1(15))

@@ -22,7 +22,7 @@ WHERE
 ORDER BY [Date]
 
 
--- Currebt wage
+-- Current wage
 WITH CurrentPay AS (
 	SELECT
 		ROW_NUMBER() OVER (
