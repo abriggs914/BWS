@@ -21,6 +21,39 @@ BEGIN
 	-- INTerfering with SELECT statements.
 	SET NOCOUNT ON;
 
+    -- Insert statements for procedure here
+	DECLARE @m1 DATETIME = DATEADD(mm, DATEDIFF(mm, 0, @sd), 0);
+
+	DECLARE @m2 DATETIME = DATEADD(MONTH, 1, @m1),
+			@m3 DATETIME = DATEADD(MONTH, 2, @m1),
+			@m4 DATETIME = DATEADD(MONTH, 3, @m1),
+			@m5 DATETIME = DATEADD(MONTH, 4, @m1),
+			@m6 DATETIME = DATEADD(MONTH, 5, @m1),
+			@m7 DATETIME = DATEADD(MONTH, 6, @m1),
+			@m8 DATETIME = DATEADD(MONTH, 7, @m1),
+			@m9 DATETIME = DATEADD(MONTH, 8, @m1),
+			@m10 DATETIME = DATEADD(MONTH, 9, @m1),
+			@m11 DATETIME = DATEADD(MONTH, 10, @m1),
+			@m12 DATETIME = DATEADD(MONTH, 11, @m1)
+	;
+	
+	-- Only allow queries of at most 1 year prior or 1 year in the future.
+	DECLARE @MinDate DATETIME = DATEADD(MONTH, -12, GETDATE());
+	DECLARE @MaxDate DATETIME = DATEADD(MONTH, 12, GETDATE());
+
+	IF @sd < @MinDate BEGIN
+		SET @sd = @MinDate
+		SET @MaxDate = DATEADD(MONTH, 11, @sd)
+	END
+	IF @sd > @MaxDate BEGIN
+		SET @sd = @MaxDate
+		SET @MinDate = DATEADD(MONTH, -11, @sd)
+	END
+
+	SET @MinDate = @sd
+	SET @MaxDate = DATEADD(MONTH, 11, @sd)
+
+	
 	CREATE TABLE #T (
 		[COMPANY NAME] VARCHAR(50),
 		[Slot Type] VARCHAR(50),
@@ -49,24 +82,36 @@ BEGIN
 	EXEC
 		[dbo].[sp_GetSlotReport]
 			@StartDate = @sd,
+			@EndDate = @MaxDate,
 			@SlotStatus = @ss
 	;
 
-    -- Insert statements for procedure here
-	DECLARE @m1 DATETIME = DATEADD(mm, DATEDIFF(mm, 0, @sd), 0);
-
-	DECLARE @m2 DATETIME = DATEADD(MONTH, 1, @m1),
-			@m3 DATETIME = DATEADD(MONTH, 2, @m1),
-			@m4 DATETIME = DATEADD(MONTH, 3, @m1),
-			@m5 DATETIME = DATEADD(MONTH, 4, @m1),
-			@m6 DATETIME = DATEADD(MONTH, 5, @m1),
-			@m7 DATETIME = DATEADD(MONTH, 6, @m1),
-			@m8 DATETIME = DATEADD(MONTH, 7, @m1),
-			@m9 DATETIME = DATEADD(MONTH, 8, @m1),
-			@m10 DATETIME = DATEADD(MONTH, 9, @m1),
-			@m11 DATETIME = DATEADD(MONTH, 10, @m1),
-			@m12 DATETIME = DATEADD(MONTH, 11, @m1)
-	;
+	-- NULL Record to keep report creation from throwing an error.
+	IF (SELECT COUNT(1) FROM #T) = 0
+		INSERT INTO
+			#T (
+				[COMPANY NAME],
+				[Slot Type],
+				[GROUPING],
+				[Label],
+				[Initials],
+				[LabelTtl],
+				[Slot Status],
+				[Month #],
+				[January],
+				[February],
+				[March],
+				[April],
+				[May],
+				[June],
+				[July],
+				[August],
+				[September],
+				[October],
+				[November],
+				[December]
+			)
+		VALUES ('', '', 0, '', '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	SELECT
 		'All ' + (
@@ -83,20 +128,21 @@ BEGIN
 		[Initials],
 		[LabelTtl],
 		[Slot Type],
-		@m1 AS Month1Date,
-		(SUM(CASE WHEN [January] IS NULL THEN 0 ELSE [January] END) + 
-		SUM(CASE WHEN [February] IS NULL THEN 0 ELSE [February] END) +
-		SUM(CASE WHEN [March] IS NULL THEN 0 ELSE [March] END) +
-		SUM(CASE WHEN [April] IS NULL THEN 0 ELSE [April] END) +
-		SUM(CASE WHEN [May] IS NULL THEN 0 ELSE [May] END) +
-		SUM(CASE WHEN [June] IS NULL THEN 0 ELSE [June] END) +
-		SUM(CASE WHEN [July] IS NULL THEN 0 ELSE [July] END) +
-		SUM(CASE WHEN [August] IS NULL THEN 0 ELSE [August] END) +
-		SUM(CASE WHEN [September] IS NULL THEN 0 ELSE [September] END) +
-		SUM(CASE WHEN [October] IS NULL THEN 0 ELSE [October] END) +
-		SUM(CASE WHEN [November] IS NULL THEN 0 ELSE [November] END) +
-		SUM(CASE WHEN [December] IS NULL THEN 0 ELSE [December] END)
+		(
+			SUM(CASE WHEN [January] IS NULL THEN 0 ELSE [January] END) + 
+			SUM(CASE WHEN [February] IS NULL THEN 0 ELSE [February] END) +
+			SUM(CASE WHEN [March] IS NULL THEN 0 ELSE [March] END) +
+			SUM(CASE WHEN [April] IS NULL THEN 0 ELSE [April] END) +
+			SUM(CASE WHEN [May] IS NULL THEN 0 ELSE [May] END) +
+			SUM(CASE WHEN [June] IS NULL THEN 0 ELSE [June] END) +
+			SUM(CASE WHEN [July] IS NULL THEN 0 ELSE [July] END) +
+			SUM(CASE WHEN [August] IS NULL THEN 0 ELSE [August] END) +
+			SUM(CASE WHEN [September] IS NULL THEN 0 ELSE [September] END) +
+			SUM(CASE WHEN [October] IS NULL THEN 0 ELSE [October] END) +
+			SUM(CASE WHEN [November] IS NULL THEN 0 ELSE [November] END) +
+			SUM(CASE WHEN [December] IS NULL THEN 0 ELSE [December] END)
 		) AS [Sum],
+		@m1 AS Month1Date,
 		SUM(CASE 
 			WHEN 1 = MONTH(@m1) THEN [January]
 			WHEN 2 = MONTH(@m1) THEN [February]
