@@ -99,3 +99,5 @@ ORDER BY [Per Week]
 --ORDER BY [2nd Name]
 
 -- table of current values with columns of first day, and first wage. difference columns for days and wages
+
+SELECT [2nd Name], [1st Name], * FROM [Hours Worked] INNER JOIN [Payroll] ON [Hours Worked].[Emp#] = [Payroll].[Emp#]
