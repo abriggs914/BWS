@@ -1,6 +1,15 @@
 USE BWSdb
 GO
 
+SELECT
+	[Date], [2nd Name], [1st Name], [Salary], [Annual], [Health], [Dental]
+FROM 
+	[Payroll]
+GROUP BY
+	[2nd Name], [1st Name], [Date], [Salary], [Annual], [Health], [Dental]
+ORDER BY
+	[2nd Name], [1st Name], [Date]
+;
 
 -- Starting wage
 WITH CurrentPay AS (

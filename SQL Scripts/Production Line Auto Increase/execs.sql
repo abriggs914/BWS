@@ -18,4 +18,7 @@ DECLARE @Tomorrow DATE;
 SET @Prod1Date = '2021-07-07'
 SET @Tomorrow = '2021-07-08'
 SELECT DATEDIFF(d, @Tomorrow, @Prod1Date) AS [Date Diff];
-SELECT [dbo].NEXT_BUSINESS_DAY(@Prod1Date) AS [Next Business Day];
+SELECT [dbo].NEXT_BUSINESS_DAY(@Prod1Date, DEFAULT) AS [Next Business Day];
+
+SELECT * FROM [Production];
+SELECT * FROM [dtProductionSchedule];
