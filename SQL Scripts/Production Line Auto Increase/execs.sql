@@ -22,3 +22,33 @@ SELECT [dbo].NEXT_BUSINESS_DAY(@Prod1Date, DEFAULT) AS [Next Business Day];
 
 SELECT * FROM [Production];
 SELECT * FROM [dtProductionSchedule];
+
+
+
+-- Insure that the update criteria matched the query results
+DECLARE @Line VARCHAR(3);
+DECLARE @StartDate DATE;
+SET @Line = 'T1'
+SET @StartDate = '2021-07-08'
+
+SELECT
+	*
+FROM
+	[dtProductionSchedule]
+Where
+	@Line LIKE [WO Line 1]
+	AND @StartDate <= [Prod Date 1]
+;
+SELECT
+	*
+FROM
+	[Production]
+Where
+	@Line LIKE [Prod Line]
+	AND @StartDate <= [Prod Date]
+;
+
+EXEC [dbo].[sp_ProductionScheduleDateShift]
+	@Line = @Line,
+	@StartDate = @StartDate,
+	@Days = 1
