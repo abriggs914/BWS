@@ -1,10 +1,12 @@
 USE BWSdb
 GO
 
-/*
-SELECT * FROM [Defects]
-SELECT * FROM [Defects_Location]
-*/
+DECLARE @PRINT BIT = 0;
+
+IF @PRINT = 1 BEGIN
+	SELECT * FROM [Defects];
+	SELECT * FROM [Defects_Location];
+END
 
 DECLARE @StartDate DATETIME;
 DECLARE @EndDate DATETIME;
@@ -81,5 +83,47 @@ UNION ALL (
 			SUM([OtherTable].[Rear])
 		FROM
 			[OtherTable]
+)
+;
+
+
+--WITH [OtherTable] AS 
+SELECT
+	Defects_Location.Location,
+	Sum(Defects.[#FrontDefects]) AS Front,
+	Sum(Defects.[#RearDefects]) AS Rear
+FROM
+	Defects
+INNER JOIN
+	Defects_Location
+ON
+	Defects.LocationID = Defects_Location.[LocationID#]
+WHERE
+	(((Defects.[Input Date]) Between @StartDate	And @EndDate))
+	AND [Defects_Location].[Location] NOT IN (SELECT [ID] FROM @OtherLines)
+GROUP BY
+	Defects_Location.Location HAVING (((Defects_Location.Location) Is Not Null))
+UNION ALL (
+		SELECT 
+			'Other' AS [Other],
+			SUM([Front]),
+			SUM([Rear])
+		FROM (
+			SELECT
+				Defects_Location.Location,
+				Sum(Defects.[#FrontDefects]) AS Front,
+				Sum(Defects.[#RearDefects]) AS Rear
+			FROM
+				Defects
+			INNER JOIN
+				Defects_Location
+			ON
+				Defects.LocationID = Defects_Location.[LocationID#]
+			WHERE
+				(((Defects.[Input Date]) Between @StartDate	And @EndDate))
+				AND [Defects_Location].[Location] IN (SELECT [ID] FROM @OtherLines)
+			GROUP BY
+				Defects_Location.Location HAVING (((Defects_Location.Location) Is Not Null))
+		) AS [OtherTable]
 )
 ;
