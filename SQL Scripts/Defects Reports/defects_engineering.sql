@@ -169,3 +169,18 @@ SELECT
 		[ProblemID]
 	FROM
 		[Defects_Print]
+
+
+
+SELECT
+	[Staff],
+	[Revision#],
+	*
+FROM
+	[Defects_Print]
+INNER JOIN
+	[Design StaffV2]
+ON
+	[Engineer] = [ID-SaleStaff]
+ORDER BY
+	[Input Date] DESC
