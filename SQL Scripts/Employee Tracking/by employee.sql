@@ -169,3 +169,45 @@ ON
 ORDER BY
 	[EntryDate], [Employees].[2nd Name], [Employees].[1st Name]
 ;
+
+
+DECLARE @NEW_RECORD_DATE DATETIME = '2021-07-23'
+
+SELECT
+	[2nd Name],
+	[1st Name],
+	[Emp#],
+	[#FrontDefects],
+	[#RearDefects],
+	[#Defects]
+FROM
+	[Defects]
+LEFT JOIN
+	[Employees]
+ON
+	[EmployeeID] = [Emp#]
+WHERE
+	[Input Date] >= @NEW_RECORD_DATE
+UNION ALL
+SELECT
+	[2nd Name],
+	[1st Name],
+	[Emp#],
+	[#FrontDefects],
+	[#RearDefects],
+	[#Defects]
+FROM
+	[Defects]
+LEFT JOIN
+	[Employees]
+ON
+	[EmployeeID] = [Emp#]
+WHERE
+	[Input Date] < @NEW_RECORD_DATE
+	
+SELECT * FROM [dtProductionSchedule]
+SELECT * FROM [Production] ORDER BY [Prod Date] DESC
+SELECT COUNT(1) FROM [Production]
+SELECT COUNT(1) FROM (
+	SELECT DISTINCT [WO#] FROM [Production]
+) AS [A]
