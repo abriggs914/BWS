@@ -2,11 +2,11 @@ USE BWSdb
 GO
 
 
-SELECT * FROM [WO]
-SELECT * FROM [v_Access/SysproWORef]
-SELECT * FROM [Order Hours]
-SELECT * FROM [Hours Worked]
-SELECT * FROM [Hours Required]
+--SELECT * FROM [WO]
+--SELECT * FROM [v_Access/SysproWORef]
+--SELECT * FROM [Order Hours]
+--SELECT * FROM [Hours Worked]
+--SELECT * FROM [Hours Required]
 
 SELECT
 	[Emp#],
@@ -30,3 +30,5 @@ SELECT Employees.[Emp#], (Employees.[2nd Name] + ', ' + Employees.[1st Name]) AS
 FROM Employees
 WHERE Employees.[Emp#] IS NOT NULL 	AND Employees.[1st Name] IS NOT NULL 	AND Employees.[2nd Name] IS NOT NULL 
 ORDER BY [Name]
+
+SELECT * FROM [Production]

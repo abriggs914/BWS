@@ -205,9 +205,78 @@ ON
 WHERE
 	[Input Date] < @NEW_RECORD_DATE
 	
-SELECT * FROM [dtProductionSchedule]
-SELECT * FROM [Production] ORDER BY [Prod Date] DESC
+
 SELECT COUNT(1) FROM [Production]
 SELECT COUNT(1) FROM (
 	SELECT DISTINCT [WO#] FROM [Production]
 ) AS [A]
+
+
+DECLARE @startdate DATETIME = '2021-07-26';
+SELECT Defects.[DefectID#], Defects.[Input Date], Defects.[WO#], Defects.Name, Defects.[#FrontDefects], Defects.[#RearDefects], Defects.[#Defects], Defects.LocationID, Defects.CauseID, Defects.EmployeeID
+FROM Defects
+WHERE (((Defects.[Input Date])=@startdate));
+
+select * from defects
+
+SELECT * FROM [Defects_Causes]
+SELECT * FROM [Defects_Location]
+SELECT * FROM [Defects_BPF_Location]
+
+select [IExpUnitRunTim] from [SysproCompanyA].[dbo]. [WipArcJobAllLab]
+select * from [SysproCompanyA].[dbo].[BomWorkCentre]
+
+SELECT * FROM [dtProductionSchedule]
+SELECT * FROM [Hours Required]
+SELECT * FROM [Hours Worked]
+SELECT * FROM [Order Hours] -- WO# and either(budgeted hours, production hours) by line
+SELECT * FROM [Work Hours] -- useless.
+
+SELECT * FROM [Budget Std]
+SELECT * FROM [Production] ORDER BY [Prod Date] DESC
+
+-----------------------------------------------------------------------------------------------------------------------
+
+
+DECLARE @SD AS DATETIME;
+DECLARE @ED AS DATETIME;
+DECLARE @EMPS AS VARCHAR(MAX);
+DECLARE @WCS AS VARCHAR(MAX);
+SET @SD = '2021-01-01'
+SET @ED = '2021-08-01'
+
+IF @EMPS LIKE '' BEGIN
+	SET @EMPS = 'Change this'
+END
+ELSE BEGIN
+	SET @EMPS = 'And this'
+END
+
+IF @WCS LIKE '' BEGIN
+	SET @WCS = 'Change this'
+END
+ELSE BEGIN
+	SET @WCS = 'And this'
+END
+
+select * from [SysproCompanyA].[dbo].[BomWorkCentre]
+SELECT
+	ROW_NUMBER() OVER(
+		PARTITION BY [EmployeeNumber], [WOrkCentreCode]
+		ORDER BY [LoggedOff]
+	) AS [Row #],
+	*
+FROM (
+	SELECT
+		DATEDIFF(MINUTE, [LoggedOn], [LoggedOff]) AS [LoggedInTime],
+		*
+	FROM
+		[SysproCompanyA].[dbo].[ClkTransaction]
+	--GROUP BY [WorkCentreCode]
+) AS [SourceTable]
+WHERE
+	[LoggedInTime] IS NOT NULL
+	AND [LoggedOn] BETWEEN @SD AND @ED
+	AND [LoggedOff] BETWEEN @SD AND @ED
+ORDER BY 
+	[EmployeeNumber], [WorkCentreCode], [LoggedOff]
