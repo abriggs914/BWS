@@ -32,3 +32,25 @@ WHERE Employees.[Emp#] IS NOT NULL 	AND Employees.[1st Name] IS NOT NULL 	AND Em
 ORDER BY [Name]
 
 SELECT * FROM [Production]
+
+
+SELECT
+	*
+FROM
+	[Defects]
+ORDER BY
+	[Input Date] DESC
+;
+
+SELECT
+	*
+FROM
+	[Defects_Location]
+	
+SELECT
+	*
+FROM
+	[Defects_Print]
+ORDER BY
+	[Input Date] DESC
+;

@@ -234,6 +234,7 @@ SELECT * FROM [Work Hours] -- useless.
 
 SELECT * FROM [Budget Std]
 SELECT * FROM [Production] ORDER BY [Prod Date] DESC
+SELECT * FROM [dtProductionSchedule] ORDER BY [Prod Date 1] DESC
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -278,5 +279,6 @@ WHERE
 	[LoggedInTime] IS NOT NULL
 	AND [LoggedOn] BETWEEN @SD AND @ED
 	AND [LoggedOff] BETWEEN @SD AND @ED
+	AND [WorkCentreCode] != 'M'
 ORDER BY 
 	[EmployeeNumber], [WorkCentreCode], [LoggedOff]
