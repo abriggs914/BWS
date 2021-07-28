@@ -37,7 +37,7 @@ SELECT * FROM [Production]
 SELECT
 	*
 FROM
-	[Defects]
+	[Defects_Print]
 ORDER BY
 	[Input Date] DESC
 ;

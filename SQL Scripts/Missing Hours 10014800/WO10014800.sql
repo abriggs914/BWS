@@ -1,0 +1,8 @@
+USE BWSdb
+GO
+
+SELECT * FROM [Orders] WHERE [WO#] = 10014800;
+
+SELECT * FROM [Order Options] WHERE [WO#] = 10014800
+
+SELECT * FROM [Custom Work] WHERE [WO#] = 10014800

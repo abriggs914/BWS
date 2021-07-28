@@ -25,4 +25,4 @@ ORDER BY
 	[Prod Date 1] DESC
 
 
-SELECT * FROM [SysproCompanyA].[dbo].[BomEmployee] WHERE [Employee] LIKE '%578%' ORDER BY [Name]
+SELECT * FROM [SysproCompanyA].[dbo].[BomEmployee]
