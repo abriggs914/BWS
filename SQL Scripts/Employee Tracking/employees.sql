@@ -54,3 +54,5 @@ FROM
 ORDER BY
 	[Input Date] DESC
 ;
+
+SELECT * FROM [SysproCompanyA].[dbo].[BomEmployee]

@@ -2,7 +2,7 @@ use SysproCompanyA
 go
 
 select 
-	cast(Timestamp as bigint),
+	cast(Timestamp as bigint) AS [Time Int],
 	*
 from
 	ClkTransaction with (nolock)

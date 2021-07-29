@@ -186,7 +186,7 @@ class App(Frame):
         # TODO this needs attention
         for file_n in files:
             print("EXEC:", ('cmd.exe \"C:\\Program Files\\Microsoft Office\\root\\Office16\\MSACCESS.EXE\" \"{}\" /decompile'.format(file_n)))
-            os.system('cmd.exe \"C:\\Program Files\\Microsoft Office\\root\\Office16\\MSACCESS.EXE\" \"{}\" /decompile'.format(file_n))
+            # os.system('cmd.exe \"C:\\Program Files\\Microsoft Office\\root\\Office16\\MSACCESS.EXE\" \"{}\" /decompile'.format(file_n))
 
     def run(self):
         self.mainloop()

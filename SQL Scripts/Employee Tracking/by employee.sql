@@ -238,6 +238,8 @@ SELECT * FROM [dtProductionSchedule] ORDER BY [Prod Date 1] DESC
 
 -----------------------------------------------------------------------------------------------------------------------
 
+USE SysproCompanyA
+GO
 
 DECLARE @SD AS DATETIME;
 DECLARE @ED AS DATETIME;
@@ -260,12 +262,18 @@ ELSE BEGIN
 	SET @WCS = 'And this'
 END
 
-select * from [SysproCompanyA].[dbo].[BomWorkCentre]
+SELECT
+	*
+FROM
+	[SysproCompanyA].[dbo].[BomWorkCentre]
+
+
 SELECT
 	ROW_NUMBER() OVER(
-		PARTITION BY [EmployeeNumber], [WOrkCentreCode]
+		PARTITION BY [EmployeeNumber], [WorkCentreCode]
 		ORDER BY [LoggedOff]
 	) AS [Row #],
+	[Name],
 	*
 FROM (
 	SELECT
@@ -275,10 +283,13 @@ FROM (
 		[SysproCompanyA].[dbo].[ClkTransaction]
 	--GROUP BY [WorkCentreCode]
 ) AS [SourceTable]
+INNER JOIN
+	[BomEmployee]
+ON
+	[BomEmployee].[Employee] = [EmployeeNumber]
 WHERE
 	[LoggedInTime] IS NOT NULL
 	AND [LoggedOn] BETWEEN @SD AND @ED
 	AND [LoggedOff] BETWEEN @SD AND @ED
-	AND [WorkCentreCode] != 'M'
 ORDER BY 
 	[EmployeeNumber], [WorkCentreCode], [LoggedOff]

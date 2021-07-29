@@ -26,3 +26,5 @@ ORDER BY
 
 
 SELECT * FROM [SysproCompanyA].[dbo].[BomEmployee]
+
+SELECT * FROM [SysproCompanyA].[dbo].[ClkTransaction]
