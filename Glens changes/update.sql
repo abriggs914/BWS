@@ -9,7 +9,7 @@ SELECT * FROM [dtProductionSchedule]
 UPDATE
 	[dtProductionSchedule]
 SET
-	[Stargate WO#] = [SysproCompanyA].[dbo].[InvMaster].[LongDesc]
+	[Stargate WO#] = [SysproCompanyA].[dbo].[InvMaster].[StockCode]
 FROM
 	[dtProductionSchedule]
 INNER JOIN

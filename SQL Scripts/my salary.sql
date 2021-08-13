@@ -110,3 +110,52 @@ ORDER BY [Per Week]
 -- table of current values with columns of first day, and first wage. difference columns for days and wages
 
 SELECT [2nd Name], [1st Name], * FROM [Hours Worked] INNER JOIN [Payroll] ON [Hours Worked].[Emp#] = [Payroll].[Emp#]
+
+
+
+
+
+-- Current wage
+WITH CurrentPay AS (
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [2nd Name], [1st Name]
+			ORDER BY [Date]
+		) AS row_num, *
+	FROM 
+		[Payroll]
+),
+CP AS (SELECT * FROM [Orders])
+SELECT
+	[row_num] AS [Raise#],
+	[Date],
+	[Emp#],
+	[2nd Name],
+	[1st Name],
+	[Salary],
+	[Annual]
+FROM
+	[CurrentPay]
+GROUP BY
+	[row_num],
+	[Date],
+	[Emp#],
+	[2nd Name],
+	[1st Name],
+	[Salary],
+	[Annual]
+ORDER BY
+	[2nd Name],
+	[1st Name],
+	[Raise#]
+	
+
+
+
+SELECT 
+	[Emp#], [Date], [2nd Name], [1st Name], [Salary], [Annual], [Bonus%], [Dep Life], [Health], [Dental], [Vacation%], [RRSP%], [RaiseID]
+FROM
+	CurrentPay WITH (NOLOCK)
+WHERE
+	CurrentPay.[row_num] = 1
+ORDER BY [Date]
