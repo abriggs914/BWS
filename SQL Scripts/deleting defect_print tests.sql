@@ -11,7 +11,7 @@ FROM
 WHERE
 	[ReportedBy] LIKE '%Avery Briggs%'
 	OR [ReportedBy] LIKE '%James Crawford%'
-	OR [ReportedBy] IS NULL
+	OR [Comment] LIKE '%THIS IS A TEST%'
 ;
 
 SELECT * FROM [Defects_Print] ORDER BY [Input Date] DESC;

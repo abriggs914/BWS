@@ -184,3 +184,53 @@ ON
 	[Engineer] = [ID-SaleStaff]
 ORDER BY
 	[Input Date] DESC
+
+
+
+
+----------------------------------------------------------------------------------------------------------------
+BEGIN TRAN;
+
+
+SELECT
+	[Staff],
+	[Revision#],
+	*
+FROM
+	[Defects_Print]
+INNER JOIN
+	[Design StaffV2]
+ON
+	[Engineer] = [ID-SaleStaff]
+WHERE
+	[Defect] LIKE '7'
+ORDER BY
+	[Input Date] DESC
+;
+
+UPDATE
+	[Defects_Print]
+SET
+	[Defect] = 'Other'
+WHERE
+	[Defect] LIKE '7'
+
+
+SELECT
+	[Staff],
+	[Revision#],
+	*
+FROM
+	[Defects_Print]
+INNER JOIN
+	[Design StaffV2]
+ON
+	[Engineer] = [ID-SaleStaff]
+WHERE
+	[Defect] LIKE '7'
+ORDER BY
+	[Input Date] DESC
+;
+
+ROLLBACK;
+COMMIT;

@@ -10,7 +10,8 @@ import numpy as np
 from utility import *
 from colour_utility import *
 
-title = 'Annual Cost Per Productive Hour'
+title = 'Monthly Labour Costs'
+
 
 class MoneyFormatter(FormatStrFormatter):
     def __init__(self, fmt):
@@ -25,34 +26,39 @@ class MoneyFormatter(FormatStrFormatter):
         return money(x)
 
 
-def create():
+def create(start_date='1900-01-01', end_date='2021-08-09'):
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
     cursor = cnxn.cursor()
 
-    start_date = '1900-01-01'
+    assert end_date > start_date
+    start_date = start_date
     # start_date = '2021-04-01'
-    end_date = '2021-08-09'
+    end_date = end_date
 
     costs_per_year = """
-    select year(ActCompleteDate) as YearCompleted,
-    sum(ExpLabCurrent) / sum(case when NetProductiveTime is null then 0 else NetProductiveTime end) as [Cost Per Productive Hour]
-    from SysproCompanyA.[dbo].WipMaster with (nolock)
-    left outer join (select Job, sum(RunTime) as NetProductiveTime
-                    from SysproCompanyA.[dbo].WipLabJnl with (nolock)
-                    inner join SysproCompanyA.[dbo].BomMachine with (nolock) on WipLabJnl.Machine = BomMachine.Machine
-                    where NonProdCode = ''
+        select 
+            DATENAME(MONTH, ActCompleteDate) + ' - ' + CAST(year(ActCompleteDate) AS NVARCHAR(4)) AS [Completed],
+            sum(ExpLabCurrent) as [Current Labour Cost]
+        from SysproCompanyA.[dbo].WipMaster with (nolock)
+        left outer join (select Job, sum(RunTime) as NetProductiveTime
+        from SysproCompanyA.[dbo].WipLabJnl with (nolock)
+            inner join SysproCompanyA.[dbo].BomMachine with (nolock) on WipLabJnl.Machine = BomMachine.Machine
+                where NonProdCode = ''
                     and (Description not like 'Rework%' or Description not like 'REWORK%')
-                    group by Job) as subNetProdHours on WipMaster.Job = subNetProdHours.Job
-    where ActCompleteDate is not null
-    group by year(ActCompleteDate)
+                group by Job) as subNetProdHours on WipMaster.Job = subNetProdHours.Job
+        where ActCompleteDate is not null AND [ActCompleteDate] BETWEEN \'{start_date}\' AND \'{end_date}\'
+        group by DATENAME(MONTH, ActCompleteDate) + ' - ' + CAST(year(ActCompleteDate) AS NVARCHAR(4)), YEAR([ActCompleteDate]), MONTH([ActCompleteDate])
+        ORDER BY YEAR(ActCompleteDate), MONTH(ActCompleteDate)
     ;
-    """
+    """.format(start_date=start_date, end_date=end_date)
 
     table_result = pd.read_sql(costs_per_year, cnxn)
 
     # Or create a Excel file with the results
     df = pd.DataFrame(table_result)
-    ax = df.plot(kind='bar', x="YearCompleted", figsize=(11, 14))
+    if df.size == 0:
+        print("ERROR")
+    ax = df.plot(kind='bar', x="Completed", figsize=(20, 14))
     ax.set_title(title)
     ax.yaxis.set_major_formatter(MoneyFormatter("{:,}"))
     plt.minorticks_on()
