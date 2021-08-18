@@ -1,0 +1,5 @@
+SELECT [Job]
+FROM WipJobAllLab
+WHERE [Job] IS NOT NULL
+GROUP BY [Job]
+ORDER BY [Job];

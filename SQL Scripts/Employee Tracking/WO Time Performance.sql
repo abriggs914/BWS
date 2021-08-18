@@ -12,6 +12,8 @@ GO
 DECLARE @JOB AS VARCHAR(20);
 SET @JOB = '10014747'
 
+-- SELECT * FROM [BWSdb].[dbo].[Defects] WHERE CAST([WO#] AS VARCHAR(10)) = @JOB
+
 /*
 [Operation],
 [UnitValueRequired],
@@ -29,15 +31,139 @@ SET @JOB = '10014747'
 	[ICapacityReqd],
 	[CapacityIssued]
 */
-SELECT *
+/*
+SELECT
+	SUM(IExpUnitRunTim) AS [Total Budgeted Hours],
+	SUM([RunTimeIssued]) AS [Total Hours Issued],
+	SUM([RunTimeIssued]) - SUM(IExpUnitRunTim) AS [Hours Over Budget]
 FROM
 	[WipJobAllLab]
 WHERE
 	[Job] LIKE @JOB
-ORDER BY
-	[Job],
-	[Operation]
+GROUP BY
+	[Job]
+;
 
+SELECT
+	COUNT(*) AS [Total Defects]
+FROM
+	[BWSdb].[dbo].[Defects]
+WHERE
+	CAST([WO#] AS VARCHAR(10)) = @JOB
+;
+
+*/
+
+
+SELECT 
+	[WO#],
+	SUM([4 Total Budgeted Hours]) AS [4 Total Budgeted Hours],
+	SUM([4 Total Hours Issued]) AS [4 Total Hours Issued],
+	SUM([4 Hours Over Budget]) AS [4 Hours Over Budget],
+	SUM([5 Total Budgeted Hours]) AS [5 Total Budgeted Hours],
+	SUM([5 Total Hours Issued]) AS [5 Total Hours Issued],
+	SUM([5 Hours Over Budget]) AS [5 Hours Over Budget],
+	[Total Defects]
+FROM (
+
+SELECT
+	@Job AS [WO#],
+	[4 Total Budgeted Hours],
+	[4 Total Hours Issued],
+	[4 Hours Over Budget],
+	[5 Total Budgeted Hours],
+	[5 Total Hours Issued],
+	[5 Hours Over Budget],
+	(
+		SELECT
+			COUNT(*)
+		FROM
+			[BWSdb].[dbo].[Defects]
+		WHERE
+			CAST([WO#] AS VARCHAR(10)) = @JOB
+	) AS [Total Defects]
+FROM (
+	SELECT
+		'' AS [Job],
+		SUM(IExpUnitRunTim) AS [4 Total Budgeted Hours],
+		SUM([RunTimeIssued]) AS [4 Total Hours Issued],
+		SUM([RunTimeIssued]) - SUM(IExpUnitRunTim) AS [4 Hours Over Budget],
+		0 AS [5 Total Budgeted Hours],
+		0 AS [5 Total Hours Issued],
+		0 AS [5 Hours Over Budget]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @JOB
+		AND [Operation] = 4
+	GROUP BY
+		[Job]
+) AS [SrcTable1]
+
+UNION (
+
+	SELECT
+		@Job AS [WO#],
+		0 AS [4 Total Budgeted Hours],
+		0 AS [4 Total Hours Issued],
+		0 AS [4 Hours Over Budget],
+		[5 Total Budgeted Hours],
+		[5 Total Hours Issued],
+		[5 Hours Over Budget],
+		(
+			SELECT
+				COUNT(*)
+			FROM
+				[BWSdb].[dbo].[Defects]
+			WHERE
+				CAST([WO#] AS VARCHAR(10)) = @JOB
+		) AS [Total Defects]
+	FROM (
+		SELECT
+			0 AS [4 Total Budgeted Hours],
+			0 AS [4 Total Hours Issued],
+			0 AS [4 Hours Over Budget],
+			SUM(IExpUnitRunTim) AS [5 Total Budgeted Hours],
+			SUM([RunTimeIssued]) AS [5 Total Hours Issued],
+			SUM([RunTimeIssued]) - SUM(IExpUnitRunTim) AS [5 Hours Over Budget]
+		FROM
+			[WipJobAllLab]
+		WHERE
+			[Job] LIKE @JOB
+			AND [Operation] = 5
+		GROUP BY
+			[Job]
+	) AS [SrcTable2]
+)
+) AS [SrcTable3]
+GROUP BY
+	[WO#],
+	[Total Defects]
+;
+/*
+SELECT
+	COUNT(*) AS [Total Defects]
+FROM
+	[BWSdb].[dbo].[Defects]
+WHERE
+	CAST([WO#] AS VARCHAR(10)) = @JOB
+;
+*/
+/*
+
+
+
+
+
+SELECT
+	COUNT(*) AS [Total Defects]
+FROM
+	
+WHERE
+	CAST([WO#] AS VARCHAR(10)) = @JOB
+;
+*/
+/*
 ------------------
 Group BY
 	[Job],
@@ -150,4 +276,4 @@ Group BY
 	[WipJobAllLab].[SecondSeq],
 	[WipJobAllLab].[TimeStamp],
 	[WipJobAllLab].[JobNest]
-;
+;*/
