@@ -1,7 +1,7 @@
 USE BWSdb
 GO
 
-SELECT * FROM [Defects_Print]
+SELECT * FROM [Defects_Print] ORDER BY [Input Date] DESC
 SELECT * FROM [Defects_Print_Problems]
 
 --BEGIN TRAN;
