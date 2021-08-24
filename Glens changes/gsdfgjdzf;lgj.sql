@@ -21,6 +21,7 @@ SELECT DATENAME(MONTH, [Slot Date]) + ' ' + CAST(YEAR([Slot Date]) AS VARCHAR(4)
 
 SELECT
 	[Date],
+	[Date_abbrev],
 	[Slot Types],
 	COUNT(*) AS [# Slots],
 	[Y#],
@@ -35,6 +36,7 @@ FROM (
 		@dealer AS [Company Name],
 		dbo.fn_SlotEstimatedDeliveryDate(CASE WHEN [Prod Date 1] IS NULL THEN [Prod Date 2] ELSE [Prod Date 1] END) AS DeliveryDate,
 		DATENAME(MONTH, [Slot Date]) + ' ' + CAST(YEAR([Slot Date]) AS VARCHAR(4))  AS [Date],
+		CONVERT(CHAR(3), [Slot Date], 0) + ' ' + CAST(YEAR([Slot Date]) AS VARCHAR(4))  AS [Date_abbrev],
 		MONTH([Slot Date]) AS [M#],
 		YEAR([Slot Date]) AS [Y#]
 	FROM 
@@ -55,6 +57,7 @@ FROM (
 GROUP BY
 	[Slot Types],
 	[Date],
+	[Date_abbrev],
 	[Y#],
 	[M#]
 ORDER BY
