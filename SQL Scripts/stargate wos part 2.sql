@@ -65,8 +65,6 @@ ORDER BY
 	[TimeStamp] DESC
 WHERE*/
 
-USE SysproCompanyS
-GO
 
 /*
 SELECT
@@ -79,20 +77,18 @@ ORDER BY
 */
 
 
+USE SysproCompanyS
+GO
 DECLARE @SD AS DATETIME;
 DECLARE @ED AS DATETIME;
-SET @SD = '2000-08-12';
-SET @ED = '2021-08-19';
-
-SELECT
-	@SD AS [SD],
-	@ED AS [ED]
-;
+SET @SD = '2021-07-01';
+SET @ED = '2021-08-25';
 SELECT	
 	@SD AS [SD],
 	@ED AS [ED],
-	[PlannedStartDate],
-	[StockCode],
+	[WipJobAllLab].[PlannedStartDate],
+	[WipJobAllLab].[PlannedEndDate],
+	[WipJobAllMat].[StockCode],
 	[WipJobAllLab].[Job]
 FROM
 	[WipJobAllLab]
@@ -101,7 +97,27 @@ INNER JOIN
 ON
 	[WipJobAllLab].[Job] = [WipJobAllMat].[Job] AND [Operation] = [OperationOffset]
 WHERE
-	[PlannedStartDate] BETWEEN @SD AND @ED AND [StockCode] LIKE 'SP%'
+	[PlannedStartDate] BETWEEN @SD AND @ED AND [WipJobAllMat].[StockCode] LIKE 'SP%'
+;
+
+SELECT
+	@SD AS [SD],
+	@ED AS [ED]
+;
+SELECT	
+	@SD AS [SD],
+	@ED AS [ED],
+	[WipJobAllLab].[PlannedStartDate],
+	[WipJobAllMat].[StockCode],
+	[WipJobAllLab].[Job]
+FROM
+	[WipJobAllLab]
+INNER JOIN
+	[WipJobAllMat]
+ON
+	[WipJobAllLab].[Job] = [WipJobAllMat].[Job] AND [Operation] = [OperationOffset]
+WHERE
+	[PlannedStartDate] BETWEEN @SD AND @ED AND [WipJobAllMat].[StockCode] LIKE 'SP%'
 ;
 
 /*
