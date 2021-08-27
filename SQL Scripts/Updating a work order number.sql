@@ -1,0 +1,16 @@
+USE BWSdb
+GO
+
+SELECT * FROM [Design] WHERE [WO#] = 10015182
+SELECT * FROM [Orders] WHERE [Quote#] = 25933
+
+BEGIN TRAN;
+
+SELECT * FROM [Design] WHERE [Quote#] = 25933
+
+UPDATE [Design] SET [WO#] = 10015184 WHERE [Quote#] = 25933
+
+SELECT * FROM [Design] WHERE [Quote#] = 25933
+
+ROLLBACK
+COMMIT;

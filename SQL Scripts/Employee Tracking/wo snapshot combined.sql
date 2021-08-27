@@ -87,10 +87,13 @@ ORDER BY
 ;
 
 DECLARE @JOB AS VARCHAR(20);
-SET @JOB = '70000202'
+SET @JOB = '20014154'
+SET @JOB = '20045600'
+SET @JOB = '20032509'
 
-SELECT * FROM [ClkTransaction] WHERE [JobNumber] = @JOB AND [WorkCentreCode] LIKE '%S%'
-SELECT * FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) = '7' AND [WorkCentreCode] LIKE '%S%' ORDER BY [JobNumber]
+-- All who worked on this job
+SELECT * FROM [ClkTransaction] WHERE [JobNumber] = @JOB AND [WorkCentreCode] LIKE '%S%' 
+--SELECT * FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) != '1' AND [WorkCentreCode] LIKE '%S%' ORDER BY [JobNumber]
 DECLARE @JOB2 AS VARCHAR(20);
 SET @JOB2 = '20044765'
 SELECT
@@ -117,10 +120,10 @@ ORDER BY
 ;
 
 SELECT * FROM (
-SELECT [JobNumber], [Operation] FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) != '1' AND [WorkCentreCode] LIKE '%S%' GROUP BY [JobNumber], [Operation], [WorkCentreCode]
+SELECT [JobNumber], [Operation] FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) != '1' AND [WorkCentreCode] LIKE '%S%'
 ) AS [SrcTable]
 GROUP BY
 	[Operation],
 	[JobNumber]
 HAVING
-	COUNT([Operation]) = 1
+	COUNT([Operation]) = 2
