@@ -86,7 +86,7 @@ ORDER BY
 	[LoggedOff] DESC, [TransactionID] ASC
 ;
 
-DECLARE @JOB AS VARCHAR(20);
+--DECLARE @JOB AS VARCHAR(20);
 SET @JOB = '20014154'
 SET @JOB = '20045600'
 SET @JOB = '20032509'
@@ -127,3 +127,20 @@ GROUP BY
 	[JobNumber]
 HAVING
 	COUNT([Operation]) = 2
+ORDER BY
+	[JobNumber]
+
+WITH [SRC] AS (
+SELECT [JobNumber], [Operation] FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) != '1' AND [WorkCentreCode] LIKE '%S%'
+GROUP BY
+	[Operation],
+	[JobNumber]
+)
+SELECT 
+	*
+FROM
+	[SRC]
+HAVING
+	COUNT([Operation]) > 1
+ORDER BY
+	[JobNumber]
