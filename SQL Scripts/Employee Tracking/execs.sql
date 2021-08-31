@@ -1,17 +1,21 @@
 USE SysproCompanyA
 GO
 
+EXEC sp_WOSnapshotSubsHoursData @WO='70003117'
+EXEC sp_WOSnapshotSubsHoursData @WO='80000224'
+EXEC sp_WOSnapshotSubsHoursData @WO='20021300'
+
 
 DECLARE @JOBS TABLE ([JobNumber] VARCHAR(10) PRIMARY KEY);
 /*
 INSERT INTO @JOBS VALUES 
 	('70003117'),
 	('80000224'),
-	('20021300')
+	('20021300') -- Special case
 ;*/
 
 INSERT INTO @JOBS VALUES 
-	('70003117')
+	('20021300')
 ;
 DECLARE @WODATA TABLE (
 	[Operation] VARCHAR(25),
@@ -41,7 +45,6 @@ FROM
 WHERE
 	[JobNumber] IN (SELECT [JobNumber] FROM @JOBS)
 	AND [WorkCentreCode] LIKE '%S%'
-	AND [Operation] != 0
 GROUP BY
 	[Operation],
 	[OperationComplete],
@@ -55,46 +58,6 @@ ORDER BY
 
 
 SELECT * FROM @WODATA
-
-
-SELECT
-	*
-FROM (
-	SELECT
-		ROW_NUMBER() OVER (
-			PARTITION BY 
-				[Operation]
-			ORDER BY 
-				[LoggedOff] DESC,
-				[TransactionID] DESC
-		) AS [RowNum],
-		*
-	FROM	
-		@WODATA
-) AS [SrcTable]
-WHERE
-	[RowNum] = 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SELECT
 	*
 FROM
@@ -142,24 +105,44 @@ SELECT * FROM @OPERATIONS
 SELECT * FROM @OPERATIONS WHERE [RowNum] = 1
 
 
-SELECT --TOP (SELECT COUNT(*) FROM @OPERATIONS WHERE [RowNum] = 1)
-	[@OPERATIONS].[Operation],
+SELECT TOP (SELECT COUNT(*) FROM @OPERATIONS WHERE [RowNum] = 1)
+	[SrcTable].[Operation],
 	[OperationComplete],
 	[EmployeeNumber],
 	[EmployeeName],
 	[LoggedOff],
 	[TransactionID]
-FROM
-	@OPERATIONS
+FROM (
+	SELECT	
+		[@OPERATIONS].[Operation], [RowNum]
+	FROM
+		@WODATA
+	INNER JOIN
+		@OPERATIONS
+	ON
+		[@OPERATIONS].[Operation] = [@WODATA].[Operation]
+	WHERE
+		[@OPERATIONS].[RowNum] = 1
+	--ORDER BY 
+		--[Operation]
+) AS [SrcTable]
 INNER JOIN
 	@WODATA
 ON
-	[@OPERATIONS].[Operation] = [@WODATA].[Operation]
+	[SrcTable].[Operation] = [@WODATA].[Operation]
 WHERE
-	[RowNum] = 1
+	[SrcTable].[RowNum] = 1
 ORDER BY
 	[LoggedOff] DESC, [TransactionID] DESC
 ;
+
+
+
+
+
+
+
+
 
 DECLARE @LEDATA TABLE (
 	[Operation] VARCHAR(25),

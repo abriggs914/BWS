@@ -76,3 +76,42 @@ UNION (
 )
 )  AS SrcTable3
 GROUP BY [WO#], [Total Defects];
+
+
+
+DECLARE @WO AS VARCHAR(35);
+SET @WO = '20014154';
+SELECT
+	0 AS [4 Total Budgeted Hours],
+	0 AS [4 Total Hours Issued],
+	0 AS [4 Hours Over Budget],
+	SUM(IExpUnitRunTim) AS [5 Total Budgeted Hours],
+	SUM([RunTimeIssued]) AS [5 Total Hours Issued],
+	SUM([RunTimeIssued]) - SUM(IExpUnitRunTim) AS [5 Hours Over Budget]
+FROM
+	[WipJobAllLab]
+WHERE
+	[Job] LIKE @WO
+	AND [Operation] = 5
+GROUP BY
+	[Job]
+
+DECLARE @WO AS VARCHAR(35);
+SET @WO = '70003117';
+SELECT
+	ROW_NUMBER() OVER (
+		PARTITION BY [Operation]
+		ORDER BY [Operation]
+	) AS [RowNum],
+	[Operation],
+	SUM(IExpUnitRunTim) AS [Total Budgeted Hours],
+	SUM([RunTimeIssued]) AS [Total Hours Issued],
+	SUM([RunTimeIssued]) - SUM(IExpUnitRunTim) AS [Hours Over Budget],
+	SUM([RunTimeIssued]) / SUM(IExpUnitRunTim) AS [Pct Over Budget]
+FROM
+	[WipJobAllLab]
+WHERE
+	[Job] LIKE @WO
+	AND [WorkCentre] LIKE '%S%'
+GROUP BY
+	[Operation]

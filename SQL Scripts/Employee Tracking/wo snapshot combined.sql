@@ -130,6 +130,7 @@ HAVING
 ORDER BY
 	[JobNumber]
 
+
 WITH [SRC] AS (
 SELECT [JobNumber], [Operation] FROM [ClkTransaction] WHERE LEFT([JobNumber], 1) != '1' AND [WorkCentreCode] LIKE '%S%'
 GROUP BY
@@ -137,10 +138,12 @@ GROUP BY
 	[JobNumber]
 )
 SELECT 
-	*
+	[JobNumber]
 FROM
 	[SRC]
+GROUP BY
+	[JobNumber]
 HAVING
-	COUNT([Operation]) > 1
+	COUNT([Operation]) > 2
 ORDER BY
 	[JobNumber]

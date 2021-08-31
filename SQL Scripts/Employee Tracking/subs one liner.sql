@@ -1,0 +1,923 @@
+USE SysproCompanyA
+
+DECLARE @WO VARCHAR(25);
+SET @WO = '20021300'
+SET @WO = '70003117'
+
+SELECT 
+	SUM([RowNum OP 0]) AS [RowNum OP 0],
+	SUM([OP 0 ISSUE]) AS [OP 0 ISSUE],
+	SUM([OP 0 BUDGET]) AS [OP 0 BUDGET],
+	SUM([RowNum OP 1]) AS [RowNum OP 1],
+	SUM([OP 1 ISSUE]) AS [OP 1 ISSUE],
+	SUM([OP 1 BUDGET]) AS [OP 1 BUDGET],
+	SUM([RowNum OP 2]) AS [RowNum OP 2],
+	SUM([OP 2 ISSUE]) AS [OP 2 ISSUE],
+	SUM([OP 2 BUDGET]) AS [OP 2 BUDGET],
+	SUM([RowNum OP 3]) AS [RowNum OP 3],
+	SUM([OP 3 ISSUE]) AS [OP 3 ISSUE],
+	SUM([OP 3 BUDGET]) AS [OP 3 BUDGET],
+	SUM([RowNum OP 4]) AS [RowNum OP 4],
+	SUM([OP 4 ISSUE]) AS [OP 4 ISSUE],
+	SUM([OP 4 BUDGET]) AS [OP 4 BUDGET],
+	SUM([RowNum OP 5]) AS [RowNum OP 5],
+	SUM([OP 5 ISSUE]) AS [OP 5 ISSUE],
+	SUM([OP 5 BUDGET]) AS [OP 5 BUDGET],
+	SUM([RowNum OP 6]) AS [RowNum OP 6],
+	SUM([OP 6 ISSUE]) AS [OP 6 ISSUE],
+	SUM([OP 6 BUDGET]) AS [OP 6 BUDGET],
+	SUM([RowNum OP 7]) AS [RowNum OP 7],
+	SUM([OP 7 ISSUE]) AS [OP 7 ISSUE],
+	SUM([OP 7 BUDGET]) AS [OP 7 BUDGET],
+	SUM([RowNum OP 8]) AS [RowNum OP 8],
+	SUM([OP 8 ISSUE]) AS [OP 8 ISSUE],
+	SUM([OP 8 BUDGET]) AS [OP 8 BUDGET],
+	SUM([RowNum OP 9]) AS [RowNum OP 9],
+	SUM([OP 9 ISSUE]) AS [OP 9 ISSUE],
+	SUM([OP 9 BUDGET]) AS [OP 9 BUDGET],
+	SUM([RowNum OP 10]) AS [RowNum OP 10],
+	SUM([OP 10 ISSUE]) AS [OP 10 ISSUE],
+	SUM([OP 10 BUDGET]) AS [OP 10 BUDGET],
+	SUM([RowNum OP 11]) AS [RowNum OP 11],
+	SUM([OP 11 ISSUE]) AS [OP 11 ISSUE],
+	SUM([OP 11 BUDGET]) AS [OP 11 BUDGET],
+	SUM([RowNum OP 12]) AS [RowNum OP 12],
+	SUM([OP 12 ISSUE]) AS [OP 12 ISSUE],
+	SUM([OP 12 BUDGET]) AS [OP 12 BUDGET],
+	SUM([RowNum OP 13]) AS [RowNum OP 13],
+	SUM([OP 13 ISSUE]) AS [OP 13 ISSUE],
+	SUM([OP 13 BUDGET]) AS [OP 13 BUDGET],
+	SUM([RowNum OP 14]) AS [RowNum OP 14],
+	SUM([OP 14 ISSUE]) AS [OP 14 ISSUE],
+	SUM([OP 14 BUDGET]) AS [OP 14 BUDGET]
+FROM (
+	SELECT
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 0],
+		SUM(IExpUnitRunTim) AS [OP 0 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 0
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 1],
+		SUM(IExpUnitRunTim) AS [OP 1 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 1
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 2],
+		SUM(IExpUnitRunTim) AS [OP 2 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 2
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 3],
+		SUM(IExpUnitRunTim) AS [OP 3 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 3
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 4],
+		SUM(IExpUnitRunTim) AS [OP 4 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 4
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 5],
+		SUM(IExpUnitRunTim) AS [OP 5 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 5
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 6],
+		SUM(IExpUnitRunTim) AS [OP 6 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 6
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 7],
+		SUM(IExpUnitRunTim) AS [OP 7 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 7
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 8],
+		SUM(IExpUnitRunTim) AS [OP 8 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 8
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 9],
+		SUM(IExpUnitRunTim) AS [OP 9 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 9
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 10],
+		SUM(IExpUnitRunTim) AS [OP 10 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 10
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 11],
+		SUM(IExpUnitRunTim) AS [OP 11 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 11
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 12],
+		SUM(IExpUnitRunTim) AS [OP 12 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 12
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 13],
+		SUM(IExpUnitRunTim) AS [OP 13 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 13 BUDGET],
+		NULL AS [RowNum OP 14],
+		NULL AS [OP 14 ISSUE],
+		NULL AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 13
+	GROUP BY
+		[Operation]
+	UNION
+	SELECT
+		NULL AS [RowNum OP 0],
+		NULL AS [OP 0 ISSUE],
+		NULL AS [OP 0 BUDGET],
+		NULL AS [RowNum OP 1],
+		NULL AS [OP 1 ISSUE],
+		NULL AS [OP 1 BUDGET],
+		NULL AS [RowNum OP 2],
+		NULL AS [OP 2 ISSUE],
+		NULL AS [OP 2 BUDGET],
+		NULL AS [RowNum OP 3],
+		NULL AS [OP 3 ISSUE],
+		NULL AS [OP 3 BUDGET],
+		NULL AS [RowNum OP 4],
+		NULL AS [OP 4 ISSUE],
+		NULL AS [OP 4 BUDGET],
+		NULL AS [RowNum OP 5],
+		NULL AS [OP 5 ISSUE],
+		NULL AS [OP 5 BUDGET],
+		NULL AS [RowNum OP 6],
+		NULL AS [OP 6 ISSUE],
+		NULL AS [OP 6 BUDGET],
+		NULL AS [RowNum OP 7],
+		NULL AS [OP 7 ISSUE],
+		NULL AS [OP 7 BUDGET],
+		NULL AS [RowNum OP 8],
+		NULL AS [OP 8 ISSUE],
+		NULL AS [OP 8 BUDGET],
+		NULL AS [RowNum OP 9],
+		NULL AS [OP 9 ISSUE],
+		NULL AS [OP 9 BUDGET],
+		NULL AS [RowNum OP 10],
+		NULL AS [OP 10 ISSUE],
+		NULL AS [OP 10 BUDGET],
+		NULL AS [RowNum OP 11],
+		NULL AS [OP 11 ISSUE],
+		NULL AS [OP 11 BUDGET],
+		NULL AS [RowNum OP 12],
+		NULL AS [OP 12 ISSUE],
+		NULL AS [OP 12 BUDGET],
+		NULL AS [RowNum OP 13],
+		NULL AS [OP 13 ISSUE],
+		NULL AS [OP 13 BUDGET],
+		ROW_NUMBER() OVER (
+			PARTITION BY [Operation]
+			ORDER BY [Operation]
+		) AS [RowNum OP 14],
+		SUM(IExpUnitRunTim) AS [OP 14 ISSUE],
+		SUM([RunTimeIssued]) AS [OP 14 BUDGET]
+	FROM
+		[WipJobAllLab]
+	WHERE
+		[Job] LIKE @WO
+		AND [WorkCentre] LIKE '%S%'
+		AND [Operation] = 14
+	GROUP BY
+		[Operation]
+) AS [SrcTable]
