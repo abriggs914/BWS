@@ -1,0 +1,6 @@
+USE BWSdb
+GO
+
+DECLARE @TN VARCHAR(10);
+SELECT COALESCE([Model No], [Model No]) FROM [Orders]
+SELECT COALESCE(@TN, [Model No]) FROM [Orders]
