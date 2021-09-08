@@ -6,6 +6,7 @@ import calendar
 from matplotlib import pyplot as plt
 import random
 
+
 # Quotes are up-to-date as of Feb.22/2021 Quote 25771
 
 
