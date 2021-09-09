@@ -34,7 +34,7 @@ WHERE
 	AND [Description] LIKE '%Galv%'
 ;
 
-ROLLBACK
+ROLLBACK;
 COMMIT;
 
 
