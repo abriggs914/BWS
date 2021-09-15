@@ -31,6 +31,32 @@ DECLARE @T TABLE (
 	[Hourly Wage] FLOAT
 )
 ;
+DECLARE @T2 TABLE (
+	[row_num] INT,
+	[RaiseID] INT,
+	[EmpID] BIGINT,
+	[Date] DATETIME,
+	[STS] VARCHAR(50),
+	[Salary] FLOAT,
+	[Annual] MONEY,
+	[Bonus%] FLOAT,
+	[Dep Life] FLOAT,
+	[Health] FLOAT,
+	[Dental] FLOAT,
+	[Vacation%] FLOAT,
+	[RRSP%] FLOAT,
+	[Absent] FLOAT,
+	[Late] FLOAT,
+	[Leave Early] FLOAT,
+	[NQ] BIT,
+	[Reason] NVARCHAR(MAX),
+	[2nd Name] NVARCHAR(MAX),
+	[1st Name] NVARCHAR(MAX),
+	[Hourly/Salary] NVARCHAR(MAX),
+	[Comments] NVARCHAR(MAX),
+	[Hourly Wage] FLOAT
+)
+;
 
 INSERT INTO @T
 SELECT
@@ -51,6 +77,9 @@ SELECT
 FROM 
 	[Payroll]
 ;
+
+INSERT INTO @T2
+SELECT * FROM @T
 
 
 
@@ -86,7 +115,16 @@ FROM
 --ORDER BY
 --	[Year]
 
+DECLARE @years TABLE ([Year] INT);
 
+INSERT INTO @years
+SELECT DISTINCT
+	YEAR([Date]) AS [Year]
+FROM
+	[Payroll]
+ORDER BY
+	[Year]
+;
 
 -- annual wages
 SELECT
@@ -105,7 +143,9 @@ SELECT
 		SELECT TOP 50 PERCENT
 			[Hourly Wage]
 		FROM
-			@T
+			@T2
+		WHERE
+			YEAR(@T.[Date]) = YEAR(@T2.[Date])
 		ORDER BY
 			[Hourly Wage]
 	) AS BottomHalf)
@@ -116,9 +156,9 @@ SELECT
 			SELECT TOP 50 PERCENT
 				[Hourly Wage]
 			FROM
-				@T
+				@T2
 			WHERE
-				YEAR([Date]) = YEAR([Date])
+				YEAR(@T.[Date]) = YEAR(@T2.[Date])
 			ORDER BY
 				[Hourly Wage] DESC
 		) AS TopHalf

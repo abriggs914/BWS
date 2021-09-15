@@ -6,8 +6,8 @@ SELECT
 	[JobDeliveryDate],
 	[StockCode],
 	[Job],
-	CAST([SalesOrder] AS BIGINT) AS [SalesOrder],
-	CAST([PurchaseOrder] AS BIGINT) AS [PurchaseOrder],
+	REPLACE(LTRIM(REPLACE([SalesOrder], '0', ' ')), ' ', '0') AS [SalesOrder],
+	REPLACE(LTRIM(REPLACE([PurchaseOrder], '0', ' ')), ' ', '0') AS [PurchaseOrder],
 	[Complete]
 From 
 	[WipMaster] 
