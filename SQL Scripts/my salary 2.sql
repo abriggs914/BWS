@@ -144,8 +144,6 @@ SELECT
 			[Hourly Wage]
 		FROM
 			@T2
-		WHERE
-			YEAR(@T.[Date]) = YEAR(@T2.[Date])
 		ORDER BY
 			[Hourly Wage]
 	) AS BottomHalf)
@@ -157,8 +155,6 @@ SELECT
 				[Hourly Wage]
 			FROM
 				@T2
-			WHERE
-				YEAR(@T.[Date]) = YEAR(@T2.[Date])
 			ORDER BY
 				[Hourly Wage] DESC
 		) AS TopHalf
