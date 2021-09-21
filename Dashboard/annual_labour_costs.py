@@ -1,4 +1,5 @@
 import random
+import os
 import pyodbc
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ class MoneyFormatter(FormatStrFormatter):
         return money(x)
 
 
-def create():
+def create(path=None):
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
     cursor = cnxn.cursor()
 
@@ -60,5 +61,21 @@ def create():
     plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
     ax.set_xlabel("Year")
 
+
     # plt.show()
-    plt.savefig('{}.png'.format(title))
+    if path is not None:
+        try:
+            if not path[-1] == '/':
+                path = path + '/'
+            if not os.path.isdir(path):
+                os.makedirs(path)
+        except NotADirectoryError:
+            print("Directory: \"{}\" not found.\nDefaulting to current directory.".format(path))
+            path = ''
+        except FileNotFoundError:
+            print("Directory: \"{}\" not found.\nDefaulting to current directory.".format(path))
+            path = ''
+    else:
+        path = ''
+
+    plt.savefig(path + '{}.png'.format(title))

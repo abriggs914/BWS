@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as font_manager
 import numpy as np
+import os
 
 from utility import *
 from colour_utility import *
@@ -193,7 +194,7 @@ def func(pct, allvalues):
 #     plt.show()
 
 
-def pie_chart():
+def pie_chart(path=None):
     tableResult = pd.read_sql(top_20_highest_grossing_models_2021_07_01__2021_08_01, cnxn)
     df = pd.DataFrame(tableResult)
     print("df A:\n", df)
@@ -290,6 +291,33 @@ def pie_chart():
                                                                                money(total_sales).rjust(25)),
                    ha="right")
 
-    plt.savefig('Top 20 Highest Grossing Models from {start_date} to {end_date}.png'.format(start_date=start_date,
-                                                                                            end_date=end_date))
+    # plt.savefig('Top 20 Highest Grossing Models from {start_date} to {end_date}.png'.format(start_date=start_date,
+    #                                                                                         end_date=end_date))
+    if path is not None:
+        try:
+            if not path[-1] == '/':
+                path = path + '/'
+            if not os.path.isdir(path):
+                os.makedirs(path)
+        except NotADirectoryError:
+            print("Directory: \"{}\" not found.\nDefaulting to current directory.".format(path))
+            path = ''
+        except FileNotFoundError:
+            print("Directory: \"{}\" not found.\nDefaulting to current directory.".format(path))
+            path = ''
+
+        # Just save to the same directory if it exists
+        # except FileExistsError:
+        #     files = os.listdir()
+        #     files = [file for file in files if ((path in file) or (file in path))]
+        #     n = len(files) + 1
+        #     print("Directory: \"{}\" already exists.\nDefaulting to \"{}\" directory.".format(path, path + '({})'.format(n)))
+        #     path = path + '({})'.format(n)
+    else:
+        path = ''
+
+    plt.savefig(path + 'Top 20 Highest Grossing Models from {start_date} to {end_date}.png'.format(
+                start_date=start_date,
+                end_date=end_date))
+
     plt.show()

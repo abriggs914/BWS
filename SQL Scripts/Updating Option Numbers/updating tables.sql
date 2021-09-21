@@ -1,6 +1,20 @@
 USE BWSdb
 GO
 
+--[Budget Options V2]
+--[Order OptionsV2]
+--[OptionsV2]
+--[Options_FactoryLinesV2]
+--[Options_SpecLinesV2]
+
+--SELECT * FROM [Custom WorkV2]
+--SELECT * FROM [Options V2_ModelLink]
+--SELECT * FROM [StandardsV2]
+--SELECT * FROM [OrdersV2]
+--SELECT * FROM [Options V2_Master]
+--SELECT * FROM [Options V2_Sections]
+--SELECT * FROM [Options V2_SpecLines]
+
 --SELECT
 --	*
 --FROM
@@ -64,7 +78,7 @@ FROM
 SELECT
 	*
 FROM
-	[Order Options] WITH (NOLOCK)
+	[Budget Options V2] WITH (NOLOCK)
 	
 SELECT
 	*
@@ -77,16 +91,7 @@ ON
 
 
 
---ON
---	[Options].[Option No] = [Budget Options].[Option No]
---WHERE
---	[Options].[Model No] LIKE '%-%'
-
-
-
-
-
-
+---------------------------------------------------------------------------------------------------------------
 
 -- Update Options
 BEGIN TRAN;
@@ -147,6 +152,9 @@ ROLLBACK
 COMMIT;
 
 
+
+
+
 -- Update Order Options
 BEGIN TRAN;
 SELECT 
@@ -176,4 +184,46 @@ FROM
 ;
 
 ROLLBACK
+COMMIT;
+
+
+
+
+
+BEGIN TRAN;
+
+SELECT * FROM [Options_FactoryLinesV2] WHERE [CompanyID] = 1
+UPDATE
+	[Options_FactoryLinesV2]
+SET
+	[Option No] = [Model No] + '-' + RIGHT('00000' + SUBSTRING(
+		[Options_FactoryLinesV2].[Option No],
+		LEN([Options_FactoryLinesV2].[Option No]) - CHARINDEX(REVERSE([Options_FactoryLinesV2].[Option No]), REVERSE([Options_FactoryLinesV2].[Option No])),
+		LEN([Options_FactoryLinesV2].[Option No])), 5)
+WHERE	
+	[CompanyID] = 1
+	
+SELECT * FROM [Options_FactoryLinesV2] WHERE [CompanyID] = 1
+ROLLBACK;
+COMMIT;
+
+
+
+
+
+BEGIN TRAN;
+
+SELECT * FROM [Options_SpecLinesV2] WHERE [CompanyID] = 1
+UPDATE
+	[Options_SpecLinesV2]
+SET
+	[Option No] = [Model No] + '-' + RIGHT('00000' + SUBSTRING(
+		[Options_SpecLinesV2].[Option No],
+		LEN([Options_SpecLinesV2].[Option No]) - CHARINDEX(REVERSE([Options_SpecLinesV2].[Option No]), REVERSE([Options_SpecLinesV2].[Option No])),
+		LEN([Options_SpecLinesV2].[Option No])), 5)
+WHERE	
+	[CompanyID] = 1
+	
+SELECT * FROM [Options_SpecLinesV2] WHERE [CompanyID] = 1
+ROLLBACK;
 COMMIT;
