@@ -6,6 +6,7 @@ import monthly_labour_costs
 import monthly_productive_hours
 import monthly_cost_per_productive_hour
 
+path = "\\server3\Projects\#IMPORTANT SCRIPT FOR LORI - For working on Senior Management Dashboard in SysproCompanyA (for stored procs, views, etc).sql"
 
 if __name__ == '__main__':
     pie_chart(path='2021-09-21')
