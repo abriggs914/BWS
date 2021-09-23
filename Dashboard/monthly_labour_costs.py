@@ -28,6 +28,7 @@ class MoneyFormatter(FormatStrFormatter):
 
 
 def create(start_date='1900-01-01', end_date='2021-08-09', path=None):
+    print("Creating graph \"{}\"...".format(title))
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
     cursor = cnxn.cursor()
 

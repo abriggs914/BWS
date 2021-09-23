@@ -46,6 +46,7 @@ def create(path=None):
                     group by Job) as subNetProdHours on WipMaster.Job = subNetProdHours.Job
     where ActCompleteDate is not null
     group by year(ActCompleteDate)
+    order by year(ActCompleteDate)
     ;
     """
 

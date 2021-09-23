@@ -27,6 +27,7 @@ class MoneyFormatter(FormatStrFormatter):
 
 
 def create(path=None):
+    print("Creating graph \"{}\"...".format(title))
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
     cursor = cnxn.cursor()
 

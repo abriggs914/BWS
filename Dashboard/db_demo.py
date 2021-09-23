@@ -64,6 +64,12 @@ top_20_most_expensive_orders = """
 start_date = '1900-01-01'
 # start_date = '2021-04-01'
 end_date = '2021-08-09'
+
+
+title = "Top 20 Highest Grossing Models from {start_date} to {end_date}".format(start_date=start_date,
+                                                                                      end_date=end_date)
+
+
 top_20_highest_grossing_models_2021_07_01__2021_08_01 = """
 SELECT TOP 20
     CAST(SUM([Count]) AS VARCHAR(4)) + ' x ' + [Model No] +  + ' ($ ' + REPLACE(CONVERT(VARCHAR(50), (CAST(SUM([SP]) AS MONEY)), 1), '.00', '') + ')' AS [Model No],
@@ -195,6 +201,7 @@ def func(pct, allvalues):
 
 
 def pie_chart(path=None):
+    print("Creating graph \"{}\"...".format(title))
     tableResult = pd.read_sql(top_20_highest_grossing_models_2021_07_01__2021_08_01, cnxn)
     df = pd.DataFrame(tableResult)
     print("df A:\n", df)
@@ -282,8 +289,7 @@ def pie_chart(path=None):
 
     # ax.xaxis.set_label_position('top')
     # ax.set_title("Top 20 Highest Grossing Models from 2021-07-01 to 2021-08-01", y=0.0, pad=500, fontweight="Bold")
-    plt.title("Top 20 Highest Grossing Models from {start_date} to {end_date}".format(start_date=start_date,
-                                                                                      end_date=end_date),
+    plt.title(title,
               fontweight="bold", y=1, pad=30)
     # show plot
 
@@ -316,8 +322,6 @@ def pie_chart(path=None):
     else:
         path = ''
 
-    plt.savefig(path + 'Top 20 Highest Grossing Models from {start_date} to {end_date}.png'.format(
-                start_date=start_date,
-                end_date=end_date))
+    plt.savefig(path + title)
 
     plt.show()
