@@ -61,13 +61,13 @@ top_20_most_expensive_orders = """
         [Orders].[Model No]
 """
 
-start_date = '1900-01-01'
-# start_date = '2021-04-01'
-end_date = '2021-08-09'
+start_date_g = '1900-01-01'
+# start_date_g = '2021-04-01'
+end_date_g = '2021-08-09'
 
 
-title = "Top 20 Highest Grossing Models from {start_date} to {end_date}".format(start_date=start_date,
-                                                                                      end_date=end_date)
+title = "Top 20 Highest Grossing Models from {start_date} to {end_date}".format(start_date=start_date_g,
+                                                                                      end_date=end_date_g)
 
 
 top_20_highest_grossing_models_2021_07_01__2021_08_01 = """
@@ -134,7 +134,7 @@ GROUP BY
 ORDER BY
     [Total Sales] DESC
 ;
-""".format(start_date=start_date, end_date=end_date)
+""".format(start_date=start_date_g, end_date=end_date_g)
 
 
 def others():
@@ -200,7 +200,15 @@ def func(pct, allvalues):
 #     plt.show()
 
 
-def pie_chart(path=None):
+def pie_chart(start_date='1900-01-01', end_date='2100-01-01', path=None):
+    global start_date_g, end_date_g, title
+
+    assert end_date > start_date
+
+    start_date_g = start_date
+    end_date_g = end_date
+    title = "Top 20 Highest Grossing Models from {start_date} to {end_date}".format(start_date=start_date_g,
+                                                                                      end_date=end_date_g)
     print("Creating graph \"{}\"...".format(title))
     tableResult = pd.read_sql(top_20_highest_grossing_models_2021_07_01__2021_08_01, cnxn)
     df = pd.DataFrame(tableResult)
@@ -322,6 +330,7 @@ def pie_chart(path=None):
     else:
         path = ''
 
-    plt.savefig(path + title)
-
-    plt.show()
+    path = path + title
+    plt.savefig(path)
+    # plt.show()
+    return path
