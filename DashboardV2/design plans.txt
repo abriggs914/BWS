@@ -1,0 +1,34 @@
+
+Defects
+Sales counts / popularity
+Sales Revenue / gross
+Costs Employee / plant / model
+Options best performing options
+Dealers Sales / Revenue / Warranty / Quotes vs. purchases
+Supplier
+Trailer line
+
+
+	- By Model
+	- By Year / Month / Week
+	- By Employee
+	- By Plant
+	- By Dealer
+	
+-	TOP||BOTTOM N Gross By Model Sold BETWEEN(D1, D2)
+-	TOP||BOTTOM N Cost By Model Sold BETWEEN(D1, D2)
+-	TOP||BOTTOM N Revenue By Model Sold BETWEEN(D1, D2)
+-	TOP||BOTTOM N Defects By Model Sold BETWEEN(D1, D2)
+
+$ := [Revenue, Net, Cost]
+
+	Mapped over a Date Range
+Model $
+Dealer $
+Model Sale Counts
+Dealer Sale Counts
+Dealer Model Counts
+Defect Model Counts
+Warranty Model Counts
+Warranty Dealer Counts
+Dealer Quotes VS Orders by Model Counts

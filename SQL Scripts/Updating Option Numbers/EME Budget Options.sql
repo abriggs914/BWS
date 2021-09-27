@@ -59,3 +59,83 @@ ORDER BY
 	[BWSdb_Budget Options V2].Sections,
 	[BWSdb_Budget Options V2].SortSe,
 	[BWSdb_Budget Options V2].Description;
+
+
+	
+DECLARE @model NVARCHAR(MAX); --[Forms]![Edit Existing Model Parameters]![Model No]
+DECLARE @cid AS INT; --[Forms]![Edit Existing Model Parameters]![Frame41]
+SET @model = '3X - Working Copy';
+SET @cid = 1;
+SELECT * FROM [Budget Options]
+WHERE 
+	(([Budget Options].[Model No])=@model)
+
+
+BEGIN TRAN;
+
+DECLARE @model NVARCHAR(MAX); --[Forms]![Edit Existing Model Parameters]![Model No]
+DECLARE @cid AS INT; --[Forms]![Edit Existing Model Parameters]![Frame41]
+SET @model = '3X - Working Copy';
+SET @cid = 1;
+SELECT * FROM [Budget Options V2]
+WHERE 
+	((([Budget Options V2].[Model No])=@model)
+	AND (([Budget Options V2].CompanyID)=@cid))
+	AND [Description] LIKE '%THIS IS A TEST%'
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+
+DELETE
+	[Budget Options V2]
+WHERE 
+	((([Budget Options V2].[Model No])=@model)
+	AND (([Budget Options V2].CompanyID)=@cid))
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+	AND [Description] LIKE '%THIS IS A TEST%'
+	
+
+SELECT * FROM [Budget Options V2]
+WHERE 
+	((([Budget Options V2].[Model No])=@model)
+	AND (([Budget Options V2].CompanyID)=@cid))
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+	AND [Description] LIKE '%THIS IS A TEST%'
+
+ROLLBACK;
+COMMIT;
+
+
+
+
+
+
+BEGIN TRAN;
+
+DECLARE @model NVARCHAR(MAX); --[Forms]![Edit Existing Model Parameters]![Model No]
+DECLARE @cid AS INT; --[Forms]![Edit Existing Model Parameters]![Frame41]
+SET @model = '3X - Working Copy';
+SET @cid = 1;
+SELECT * FROM [OptionsV2]
+WHERE 
+	((([OptionsV2].[Model No])=@model)
+	AND (([OptionsV2].CompanyID)=@cid))
+	AND [Description] LIKE '%THIS IS A TEST%'
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+
+DELETE
+	[OptionsV2]
+WHERE 
+	((([OptionsV2].[Model No])=@model)
+	AND (([OptionsV2].CompanyID)=@cid))
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+	AND [Description] LIKE '%THIS IS A TEST%'
+	
+
+SELECT * FROM [OptionsV2]
+WHERE 
+	((([OptionsV2].[Model No])=@model)
+	AND (([OptionsV2].CompanyID)=@cid))
+	--AND ([Option No] LIKE '%100%' OR [Option No] LIKE '%101%' or [Option No] LIKE '%102%' or [Option No] LIKE '%103%' or [Option No] LIKE '%104%')
+	AND [Description] LIKE '%THIS IS A TEST%'
+
+ROLLBACK;
+COMMIT;
