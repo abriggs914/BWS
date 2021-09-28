@@ -12,16 +12,22 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
 
     assert end_date > start_date, "Supplied Start Date \"{}\" is after supplied End Date \"{}\"".format(start_date,
                                                                                                         end_date)
+    assert output_filename is not None, "Output file needs a name."
+    assert output_filename != "", "Output file needs a name."
 
-    print("A parsed_query:", query)
+    # print("A parsed_query:", query)
     if col is not None:
-        print("col is not none")
+        # print("col is not none")
         query.format(SD=start_date, ED=end_date, COL=col)
+        query = query.replace("{SD}", start_date)
+        query = query.replace("{ED}", end_date)
+        query = query.replace("{COL}", col)
     else:
-        print("col is none")
-        query.format(SD=start_date, ED=end_date)
+        # print("col is none")
+        query = query.replace("{SD}", start_date)
+        query = query.replace("{ED}", end_date)
 
-    print("B parsed_query:", query)
+    # print("B parsed_query:", query)
     if path is not None:
         try:
             if not path[-1] == '/':
