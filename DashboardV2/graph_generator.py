@@ -3,6 +3,7 @@ import pyodbc
 import pandas as pd
 from formatters import *
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 
 def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-01', end_date='2100-01-01', col=None,
@@ -46,21 +47,32 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
     try:
         table_result = pd.read_sql(query, cnxn)
         df = pd.DataFrame(table_result)
-        ax = df.plot(kind='bar', x=x_axis, figsize=(11, 14))
+
+        paperheight = 8.3
+        paperwidth = 11.7
+        margin = 1.25
+
+        ax = df.plot(kind='bar', x=x_axis, figsize=(paperwidth - 2 * margin, paperheight - 2 * margin))
         if draw_title:
             ax.set_title(title, fontdict={'family': 'Courier New',
                                           'style': 'normal', 'size': 19})
         ax.yaxis.set_major_formatter(formatter("{:,}"))
+        # formatter = ticker.FormatStrFormatter('?%s')
+        # ax.xaxis.set_major_formatter(formatter)
         plt.minorticks_on()
         plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
         plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
         if x_lbl is not None:
-            ax.set_xlabel(x_lbl)
+            ax.set_xlabel(x_lbl, fontsize=16)
+            # ax.xaxis.set_label_coords(0.5, -0.1)
         if y_lbl is not None:
-            ax.set_ylabel(y_lbl)
+            ax.set_ylabel(y_lbl, fontsize=16)
+            # ax.yaxis.set_label_coords(-0.1, 0.5)
 
         path = path + '{}.png'.format(output_filename)
 
+        plt.xticks(rotation=45)
+        plt.tight_layout()
         plt.savefig(path, transparent=True)
 
         # plt.savefig(path, bbox_inches='tight', transparent="True", pad_inches=0)

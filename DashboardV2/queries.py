@@ -758,6 +758,48 @@ QUERY__annual_labour_labour_budget = {
 }
 
 
+QUERY__monthly_labour_budget_budget = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_MonthlyLabourBudget] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'B\'
+        ''',
+        "output_filename": "Monthly Labour Budget - Budget",
+        "x_axis": "Date",
+        "title": "Monthly Labour Budget - Budget",
+        "x_lbl": "Month",
+        "y_lbl": "Budget",
+        "formatter": HoursFormatter
+}
+
+
+QUERY__monthly_labour_budget_labour = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_MonthlyLabourBudget] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'L\'
+        ''',
+        "output_filename": "Monthly Labour Budget - Labour",
+        "x_axis": "Date",
+        "title": "Monthly Labour Budget - Labour",
+        "x_lbl": "Month",
+        "y_lbl": "Labour",
+        "formatter": HoursFormatter
+}
+
+
+QUERY__monthly_labour_labour_budget = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_MonthlyLabourBudget] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'A\'
+        ''',
+        "output_filename": "Monthly Labour VS. Budget",
+        "x_axis": "Date",
+        "title": "Monthly Labour VS. Budget",
+        "x_lbl": "Month",
+        "y_lbl": "Hours",
+        "formatter": HoursFormatter
+}
+
+
 QUERY__annual_material_budget_budget = {
         "query": '''
     select year(ActCompleteDate) AS [Date],
@@ -1022,4 +1064,229 @@ QUERY__monthly_inventory = {
         "x_lbl": "Month",
         "y_lbl": "Count",
         "formatter": IntFormatter
+}
+
+
+QUERY__annual_wip = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualWIPValue] @SD=\'{SD}\', @ED=\'{ED}\';''',
+        "output_filename": "Annual WIP",
+        "x_axis": "Date",
+        "title": "Annual WIP",
+        "x_lbl": "Year",
+        "y_lbl": "WIP",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__monthly_wip = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_MonthlyWIPValue] @SD=\'{SD}\', @ED=\'{ED}\';''',
+        "output_filename": "Monthly WIP",
+        "x_axis": "Date",
+        "title": "Monthly WIP",
+        "x_lbl": "Month",
+        "y_lbl": "WIP",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_inventory = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualInventoryTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'I\';
+        ''',
+        "output_filename": "Annual G1 Inventory",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Inventory",
+        "x_lbl": "Year",
+        "y_lbl": "Inventory",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_cost_of_sales_inventory = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualInventoryTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'C\';
+        ''',
+        "output_filename": "Annual G1 Cost Of Sales - Inventory",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Cost Of Sales - Inventory",
+        "x_lbl": "Year",
+        "y_lbl": "Cost Of Sales",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__inventory_g1_cost_of_sales = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualInventoryTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'IC\';
+        ''',
+        "output_filename": "Annual G1 Inventory VS. Cost Of Sales",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Inventory VS. Cost Of Sales",
+        "x_lbl": "Year",
+        "y_lbl": "$",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__inventory_g1_turnover_days = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualInventoryTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'I\';
+        ''',
+        "output_filename": "Annual G1 Inventory Turnover Days",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Inventory Turnover Days",
+        "x_lbl": "Year",
+        "y_lbl": "# Days",
+        "formatter": CeilFormatter
+}
+
+
+QUERY__annual_g1_receivables = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualReceivablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'R\';
+        ''',
+        "output_filename": "Annual G1 Receivables",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Receivables",
+        "x_lbl": "Annual",
+        "y_lbl": "Receivables",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_cost_of_sales_receivables = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualReceivablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'C\';
+        ''',
+        "output_filename": "Annual G1 Cost Of Sales - Receivables",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Cost Of Sales - Receivables",
+        "x_lbl": "Year",
+        "y_lbl": "Cost Of Sales",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_receivables_cost_of_sales = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualReceivablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'RC\';
+        ''',
+        "output_filename": "Annual G1 Receivables VS. Cost Of Sales",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Receivables VS. Cost Of Sales",
+        "x_lbl": "Year",
+        "y_lbl": "$",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_receivables_turnover_days = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualReceivablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'T\';
+        ''',
+        "output_filename": "Annual G1 Receivables Turnover Days",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Receivables Turnover Days",
+        "x_lbl": "Year",
+        "y_lbl": "# Days",
+        "formatter": CeilFormatter
+}
+
+
+QUERY__annual_g1_payables = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualPayablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'PA\';
+        ''',
+        "output_filename": "Annual G1 Payables",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Payables",
+        "x_lbl": "Annual",
+        "y_lbl": "Payables",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_cost_of_sales_payables = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualPayablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'PU\';
+        ''',
+        "output_filename": "Annual G1 Purchases - Payables",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Purchases - Payables",
+        "x_lbl": "Year",
+        "y_lbl": "Cost Of Sales",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_payables_cost_of_sales = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualPayablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'PP\';
+        ''',
+        "output_filename": "Annual G1 Payables VS. Purchases",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Payables VS. Purchases",
+        "x_lbl": "Year",
+        "y_lbl": "$",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__annual_g1_payables_turnover_days = {
+        "query": '''
+    SET NOCOUNT ON;
+    EXEC [dbo].[sp_AnnualPayablesTurnover] @SD=\'{SD}\', @ED=\'{ED}\', @COL=\'T\';
+        ''',
+        "output_filename": "Annual G1 Payables Turnover Days",
+        "x_axis": "GlYear",
+        "title": "Annual G1 Payables Turnover Days",
+        "x_lbl": "Year",
+        "y_lbl": "# Days",
+        "formatter": CeilFormatter
+}
+
+
+QUERY__cycle_excess_money = {
+        "query": '''
+    select CycleCount, sum([Excess Value]) as [Excess$]
+    from v_ExcessInventoryPrint
+    group by CycleCount
+        ''',
+        "output_filename": "Excess Money",
+        "x_axis": "CycleCount",
+        "title": "Excess Money",
+        "x_lbl": "Cycle",
+        "y_lbl": "$",
+        "formatter": MoneyFormatter
+}
+
+
+QUERY__cycle_excess_percent = {
+        "query": '''
+    select CycleCount, 
+    case sum([Excess Value]) when 0 then 0.00 else sum([Excess Value]) / sum([Value On Hand]) end as [Excess%]
+    from v_ExcessInventoryPrint
+    group by CycleCount
+        ''',
+        "output_filename": "Excess Money (%)",
+        "x_axis": "CycleCount",
+        "title": "Excess Money (%)",
+        "x_lbl": "Cycle",
+        "y_lbl": "%",
+        "formatter": PercentFormatter
 }

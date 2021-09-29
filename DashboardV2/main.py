@@ -215,11 +215,14 @@ def create_graphs(date_path=None, clear_dir=False):
 
 #query, output_filename, x_axis, title='', start_date='1900-01-01', end_date='2100-01-01', col=None,
 # path=None, draw_title=False, x_lbl=None, y_lbl=None, formatter=IntFormatter
-def gen_graphs(date_path=None, clear_dir=False):
+def gen_graphs(file_name=None, date_path=None, clear_dir=False, p_start_date=None, p_end_date=None, replace_pdf=False, cap=None):
     if date_path is None:
         date_path = datetime.datetime.now().isoformat().split("T")[0]
     items = [d for d in dir(queries) if "QUERY__" in d]
+    if cap is not None:
+        items = items[:cap]
     print("parsed items", items)
+    item_count_a = len(items)
     output_files = []
     for q_obj_name in items:
         query_data = eval("queries." + q_obj_name)
@@ -229,6 +232,13 @@ def gen_graphs(date_path=None, clear_dir=False):
         title = query_data["title"] if "title" in query_data else ""
         start_date = query_data["start_date"] if "start_date" in query_data else '1900-01-01'
         end_date = query_data["end_date"] if "end_date" in query_data else '2100-01-01'
+
+        if p_start_date is not None:
+            start_date = p_start_date
+
+        if p_end_date is not None:
+            end_date = p_end_date
+
         col = query_data["col"] if "col" in query_data else None
         path = query_data["path"] if "path" in query_data else None
         draw_title = query_data["draw_title"] if "draw_title" in query_data else False
@@ -240,11 +250,29 @@ def gen_graphs(date_path=None, clear_dir=False):
             path = date_path
         if clear_dir:
             shutil.rmtree(path)
-        output_files.append(create_graph(query, output_filename, x_axis, title=title, start_date=start_date, end_date=end_date, col=col, path=path, draw_title=draw_title, x_lbl=x_lbl, y_lbl=y_lbl, formatter=formatter))
+        output_files.append((create_graph(query, output_filename, x_axis, title=title, start_date=start_date, end_date=end_date, col=col, path=path, draw_title=draw_title, x_lbl=x_lbl, y_lbl=y_lbl, formatter=formatter), (start_date, end_date, col)))
 
-    print("\n\n\tRESULTING FILES:\n" + "\n".join(output_files))
+    print("\n\n\tRESULTING FILES:\n" + "\n".join([of[0] for of in output_files]))
+    item_count_b = len(output_files)
 
-    FILE_NAME = 'Dashboard Outputs.pdf'
+    assert (item_count_b - item_count_a) == 0, "At least one query was parsed incorrectly and overwrote an existing image."
+
+    file_name.replace(".pdf", "")
+    if file_name is None:
+        FILE_NAME = '\\Dashboard Outputs'
+    else:
+        if file_name[0] != "\\":
+            file_name = "\\" + file_name
+        FILE_NAME = file_name
+    FILE_NAME = date_path + FILE_NAME
+    if not replace_pdf:
+        number_copies = 1
+        og_name = FILE_NAME
+        while os.path.exists(FILE_NAME):
+            number_copies += 1
+            FILE_NAME = og_name + " ({})".format(number_copies)
+    if ".pdf" != FILE_NAME[-4]:
+        FILE_NAME = FILE_NAME + ".pdf"
     print("\n\n\tCreating pdf \"{}\"...\n".format(FILE_NAME))
     pdf = PDF(FILE_NAME, orientation='L', unit='mm', format='A4')
     pdf.set_auto_page_break(True, margin=5)
@@ -252,13 +280,19 @@ def gen_graphs(date_path=None, clear_dir=False):
     pdf.set_author('Avery Briggs')
     TITLE_WIDTH = pdf.w * 0.85
 
-    for file_name in output_files:
+    for file_name, params in output_files:
+        start_date, end_date, col = params
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
         strip_file_name = file_name.split("/")[-1].split(".png")[0].strip()
         pdf.titles(strip_file_name, (pdf.w - TITLE_WIDTH) / 2, 10, TITLE_WIDTH, TITLE_HEIGHT, BWS_BLACK)
+        if start_date is not None and start_date != "":
+            start_date = date_str_format(start_date)
+            end_date = date_str_format(end_date)
+            pdf.titles("{} - {}".format(start_date, end_date), (pdf.w - (pdf.w * 0.21)) / 2, 6 + TITLE_HEIGHT, pdf.w * 0.21, TITLE_HEIGHT, font=('Arial', '', 10), colour=BWS_BLACK)
+
         print("adding image:", file_name)
-        pdf.add_image(file_name, 10, 15, pdf.w * 0.985, pdf.h * 0.875, "")
+        pdf.add_image(file_name, 10, 14 + TITLE_HEIGHT, (pdf.w - TITLE_HEIGHT) * 0.96, pdf.h * 0.8, "")
 
         pdf.time_stamp()
     pdf.output(FILE_NAME, 'F')
@@ -266,10 +300,30 @@ def gen_graphs(date_path=None, clear_dir=False):
 
 
 if __name__ == '__main__':
+
     start_time = datetime.datetime.now()
 
+    graphs_to_make = {
+        "All Data": {
+            "file_name": "All BWS data",
+            "cap":7
+        },
+        "2021": {
+            "file_name": "Data from 2021",
+            "p_start_date": "2021-01-01",
+            "p_end_date": "2021-12-31",
+            "cap":7
+        }
+    }
+
+    print(dict_print(graphs_to_make, "Graphs to Make", number=True))
+
     # create_graphs()
-    gen_graphs()
+    # gen_graphs(p_start_date="2021-09-21", p_end_date="2021-09-30")
+    # gen_graphs(p_start_date="2021-01-01", p_end_date="2021-09-29")
+
+    for output_file, graph_data in graphs_to_make.items():
+        gen_graphs(**graph_data)
 
     end_time = datetime.datetime.now()
     diff = end_time - start_time

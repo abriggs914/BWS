@@ -7,8 +7,8 @@ import sys
 
 """
 	General Utility Functions
-	Version..............1.19
-	Date...........2021-09-20
+	Version..............1.21
+	Date...........2021-09-29
 	Author.......Avery Briggs
 """
 
@@ -668,6 +668,32 @@ def dot_product(a, b):
     return (a[0] * b[0]) + (b[0] * b[1])
 
 
+def reduce(lst, p, how="left"):
+    if not isinstance(how, str):
+        how = str(how)
+    how = how.lower()
+    if how not in ["left", "center", "right", "distributed"]:
+        how = "distributed"
+
+    l = len(lst)
+    n_items = round(l * p)
+    if n_items <= 0:
+        return []
+
+    if how == "left":
+        return lst[:n_items]
+    elif how == "center":
+        a = (l - n_items) // 2
+        b = (l + n_items) // 2
+        if l % 2 == 1:
+            b += 1
+        return lst[a:b]
+    elif how == "right":
+        return lst[l - n_items:]
+    else:
+        return lst[0: l: l // n_items]
+
+
 class Line:
     def __init__(self, x1, y1, x2, y2):
         self.x1 = x1
@@ -887,6 +913,39 @@ class Rect:
 
     def __repr__(self):
         return "<rect(" + ", ".join(list(map(str, [self.x, self.y, self.width, self.height]))) + ")>"
+
+
+def date_suffix(day):
+    s_day = str(day)
+    if s_day[-1] == "1":
+        res = "st"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    elif s_day[-1] == "2":
+        res = "nd"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    elif s_day[-1] == "3":
+        res = "rd"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    else:
+        res = "th"
+    return res
+
+
+# Takes "2021-08-03" -< August 3rd, 2021
+def date_str_format(date_str):
+    date_obj = dt.datetime.fromisoformat(date_str)
+    suffix = date_suffix(date_obj.day)
+    res = dt.datetime.strftime(date_obj, "%B %d###, %Y").replace("###", suffix)
+    s_res = res.split(" ")
+    x = s_res[1] if s_res[1][0] != "0" else s_res[1][1:]
+    res = " ".join([s_res[0], x, s_res[2]])
+    return res
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "
