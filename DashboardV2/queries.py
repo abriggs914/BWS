@@ -76,7 +76,7 @@ QUERY__annual_cost_per_productive_hour = {
 
 
 QUERY__monthly_labour_costs = {
-        "query": '''select 
+        "query": '''select
             DATENAME(MONTH, ActCompleteDate) + ' - ' + CAST(year(ActCompleteDate) AS NVARCHAR(4)) AS [Completed],
             sum(ExpLabCurrent) as [Current Labour Cost]
         from SysproCompanyA.[dbo].WipMaster with (nolock)
@@ -99,7 +99,7 @@ QUERY__monthly_labour_costs = {
 
 
 QUERY__monthly_productive_hours = {
-        "query": '''select 
+        "query": '''select
             DATENAME(MONTH, ActCompleteDate) + ' - ' + CAST(year(ActCompleteDate) AS NVARCHAR(4)) AS [Completed],
             sum(case when NetProductiveTime is null then 0 else NetProductiveTime end) as [Net Productive Hours]
         from SysproCompanyA.[dbo].WipMaster with (nolock)
@@ -122,7 +122,7 @@ QUERY__monthly_productive_hours = {
 
 
 QUERY__monthly_cost_per_productive_hour = {
-        "query": '''select 
+        "query": '''select
             DATENAME(MONTH, ActCompleteDate) + ' - ' + CAST(year(ActCompleteDate) AS NVARCHAR(4)) AS [Completed],
             sum(ExpLabCurrent) / sum(case when NetProductiveTime is null then 0 else NetProductiveTime end) as [Cost Per Productive Hour]
         from SysproCompanyA.[dbo].WipMaster with (nolock)
@@ -170,7 +170,7 @@ QUERY__monthly_non_productive_hour_totals = {
             where JobClassification in ('REP', 'PAR', 'TRA', 'SUB', 'WAR', 'FIX', 'R&D')
             or (JobClassification = 'MAIN' and WorkCentre not in ('MI', 'WI', 'NP'))
             group by year(TrnDate), month(TrnDate)
-    
+
             union all select year(EntryDate) as JnlYear,
             month(EntryDate) as JnlMonth,
             sum(RunTime) as NetHours
@@ -183,8 +183,8 @@ QUERY__monthly_non_productive_hour_totals = {
             as mainsub
             group by PostYear, PostMonth
             )
-        
-        as SubProdHours	
+
+        as SubProdHours
         on year(EntryDate) = PostYear
                                                            and month(EntryDate) = PostMonth
         where BomEmployee.WorkCentre not in ('MI', 'WI', 'NP') AND [EntryDate] BETWEEN \'{SD}\' and \'{ED}\'
@@ -240,7 +240,7 @@ QUERY__monthly_net_productive_hour_totals = {
             group by PostYear, PostMonth
             )
 
-        as SubProdHours	
+        as SubProdHours
         on year(EntryDate) = PostYear
                                                            and month(EntryDate) = PostMonth
         where BomEmployee.WorkCentre not in ('MI', 'WI', 'NP') AND [EntryDate] BETWEEN \'{SD}\' and \'{ED}\'
@@ -296,7 +296,7 @@ QUERY__monthly_non_productive_hour_percentages = {
             group by PostYear, PostMonth
             )
 
-        as SubProdHours	
+        as SubProdHours
         on year(EntryDate) = PostYear
                                                            and month(EntryDate) = PostMonth
         where BomEmployee.WorkCentre not in ('MI', 'WI', 'NP') AND [EntryDate] BETWEEN \'{SD}\' and \'{ED}\'
@@ -443,7 +443,7 @@ QUERY__annual_non_productive_hour_percentages = {
                 where JobClassification in ('REP', 'PAR', 'TRA', 'SUB', 'WAR', 'FIX', 'R&D')
                 or (JobClassification = 'MAIN' and WorkCentre not in ('MI', 'WI', 'NP'))
                 group by year(TrnDate), month(TrnDate)
-    
+
                 union all select year(EntryDate) as JnlYear,
                 month(EntryDate) as JnlMonth,
                 sum(RunTime) as NetHours
@@ -456,7 +456,7 @@ QUERY__annual_non_productive_hour_percentages = {
                 as mainsub
                 group by PostYear, PostMonth
                 )
-        
+
     as SubProdHours on year(EntryDate) = PostYear
     where BomEmployee.WorkCentre not in ('MI', 'WI', 'NP') AND [EntryDate] BETWEEN \'{SD}\' and \'{ED}\'
     group by year(EntryDate)
@@ -621,10 +621,10 @@ QUERY__monthly_manufacturing_hours_variance = {
 QUERY__annual_manufacturing_hours_variance = {
         "query": '''
     SET NOCOUNT ON;
-    EXEC [dbo].[sp_MonthlyManufacturingVariance] @SD=\'{SD}\', @ED=\'{ED}\';''',
-        "output_filename": "Monthly Manufacturing Hours Variance",
+    EXEC [dbo].[sp_AnnualManufacturingVariance] @SD=\'{SD}\', @ED=\'{ED}\';''',
+        "output_filename": "Annual Manufacturing Hours Variance",
         "x_axis": "Date",
-        "title": "Monthly Manufacturing Hours Variance",
+        "title": "Annual Manufacturing Hours Variance",
         "x_lbl": "Year",
         "y_lbl": "Hours",
         "formatter": HoursFormatter
@@ -913,7 +913,7 @@ QUERY__annual_overtime = {
 
 QUERY__monthly_overtime = {
         "query": '''
-    select 
+    select
     DATENAME(MONTH, CAST(CAST(year(OTDate) AS varchar(50))+'-'+RIGHT('00'+CAST(month(OTDate) AS varchar(50)), 2)+'-01' AS DATETIME)) + ' - ' + CAST(year(OTDate) AS varchar(30)) AS [Date],
     sum(Overtime) as Overtime
     from BWSdb.dbo.dtOvertimeYTD with (nolock)
@@ -1263,7 +1263,7 @@ QUERY__annual_g1_payables_turnover_days = {
 
 QUERY__cycle_excess_money = {
         "query": '''
-    select CycleCount, sum([Excess Value]) as [Excess$]
+    select CAST(CycleCount AS NVARCHAR(4)) AS [CycleCount], sum([Excess Value]) as [Excess$]
     from v_ExcessInventoryPrint
     group by CycleCount
         ''',
@@ -1278,7 +1278,7 @@ QUERY__cycle_excess_money = {
 
 QUERY__cycle_excess_percent = {
         "query": '''
-    select CycleCount, 
+    select CAST(CycleCount AS NVARCHAR(4)) AS [CycleCount],
     case sum([Excess Value]) when 0 then 0.00 else sum([Excess Value]) / sum([Value On Hand]) end as [Excess%]
     from v_ExcessInventoryPrint
     group by CycleCount
@@ -1288,5 +1288,5 @@ QUERY__cycle_excess_percent = {
         "title": "Excess Money (%)",
         "x_lbl": "Cycle",
         "y_lbl": "%",
-        "formatter": PercentFormatter
+        "formatter": PercentRFormatter
 }

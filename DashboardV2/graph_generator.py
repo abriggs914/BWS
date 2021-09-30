@@ -1,5 +1,6 @@
 import os
 import pyodbc
+import numpy as np
 import pandas as pd
 from formatters import *
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import matplotlib.ticker as ticker
 
 def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-01', end_date='2100-01-01', col=None,
                  path=None, draw_title=False, x_lbl=None, y_lbl=None, formatter=IntFormatter):
-    print("Creating graph \"{}\"...".format(title))
+    # print("Creating graph \"{}\"...".format(title))
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=SysproCompanyA;UID=SRS;PWD=')
 
     assert end_date > start_date, "Supplied Start Date \"{}\" is after supplied End Date \"{}\"".format(start_date,
@@ -63,17 +64,27 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
         plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
         plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
         if x_lbl is not None:
-            ax.set_xlabel(x_lbl, fontsize=16)
+            ax.set_xlabel(x_lbl, fontsize=15)
             # ax.xaxis.set_label_coords(0.5, -0.1)
         if y_lbl is not None:
-            ax.set_ylabel(y_lbl, fontsize=16)
+            ax.set_ylabel(y_lbl, fontsize=15)
             # ax.yaxis.set_label_coords(-0.1, 0.5)
 
-        path = path + '{}.png'.format(output_filename)
+        save_path = path + '{}.png'.format(output_filename)
 
-        plt.xticks(rotation=45)
+        step = 1
+        n_per_x_axis = 20
+        x_values = ax.get_xticklabels()
+        x_count = len(x_values)
+        while x_count > n_per_x_axis:
+            step += 1
+            x_count -= n_per_x_axis
+        # x_ticks_values = x_values[:len(x_values):step]
+        # plt.xticks(ticks=np.arange(0, (len(x_values) + step), step),
+        #    labels = x_ticks_values, rotation=45)
+        plt.xticks(ticks=np.arange(0, (len(x_values) + step), step), rotation=65)
         plt.tight_layout()
-        plt.savefig(path, transparent=True)
+        fig = plt.savefig(save_path, transparent=True)
 
         # plt.savefig(path, bbox_inches='tight', transparent="True", pad_inches=0)
 
@@ -81,13 +92,14 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
         # plt.savefig(path)
 
         plt.clf()
+        plt.close(fig)
     except TypeError:
-        path = os.getcwd().replace("\\", "/") + "/" + path + 'EMPTY - {}.jpg'.format(title)
+        save_path = os.getcwd().replace("\\", "/") + "/" + path + 'EMPTY - {}.jpg'.format(title)
         print("\tNo data returned. -> {}".format(path))
 
         original = NO_DATA_FILE
-        target = path
+        target = save_path
         shutil.copyfile(original, target)
 
     cnxn.close()
-    return path
+    return save_path
