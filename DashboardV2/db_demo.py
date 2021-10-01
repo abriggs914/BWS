@@ -286,7 +286,7 @@ def pie_chart(start_date='1900-01-01', end_date='2100-01-01', path=None, pdf=Non
 
     if df.empty:
         path = os.getcwd().replace("\\", "/") + "/" + path + "/" + 'EMPTY - {}.jpg'.format(title)
-        print("\tNo data returned. -> {}".format(path))
+        # print("\tNo data returned. -> {}".format(path))
         original = NO_DATA_FILE
         target = path
         shutil.copyfile(original, target)
@@ -348,7 +348,7 @@ def pie_chart(start_date='1900-01-01', end_date='2100-01-01', path=None, pdf=Non
         inc = max_r / len(df)
         explode = [(len(df) - i) * inc for i in range(len(df))]
 
-        fig, ax = plt.subplots(figsize=(15, 8))
+        fig, ax = plt.subplots(figsize=(15, 8), clear=True)
         plt.subplots_adjust(left=-0.15, right=0.9, top=0.8, bottom=0.05)
         # plt.subplot(2, 1, 1)
         # plt.pie(vals, labels=lbls)

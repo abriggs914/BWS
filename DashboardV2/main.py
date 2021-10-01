@@ -256,7 +256,7 @@ def gen_graphs(file_name=None, date_path=None, pdf_path=None, items=None, file_t
         message = message.ljust(100, ".") + bar(i, item_count_a).rjust(21, ".")
         print(message)
 
-    print("\n\n\tRESULTING FILES:\n" + "\n".join([of[0] for of in output_files]))
+    # print("\n\n\tRESULTING FILES:\n" + "\n".join([of[0] for of in output_files]))
     item_count_b = len(output_files)
 
     assert (item_count_b - item_count_a) == 0, "At least one query was parsed incorrectly and overwrote an existing image."
@@ -293,10 +293,10 @@ def gen_graphs(file_name=None, date_path=None, pdf_path=None, items=None, file_t
     # if FILE_NAME[-4:] != ".pdf":
     #     FILE_NAME = FILE_NAME + ".pdf"
     if not replace_pdf:
-        number_copies = 1
+        number_copies = 0
         og_name = FILE_NAME
-        print("trying not to overwrite the previous outputs.", FILE_NAME)
-        print("os.path.exists(FILE_NAME)", os.path.exists(FILE_NAME))
+        print("Trying not to overwrite the previous outputs.", FILE_NAME)
+        print("os.path.exists(FILE_NAME)", os.path.exists(FILE_NAME + ".pdf"))
         while os.path.exists(FILE_NAME + ".pdf"):
             number_copies += 1
             og_name.replace(".pdf", "")
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     }
 
     yearly_graphs_to_make = {}
-    for year in range(1995, 1990):
+    for year in range(2005, 2022):
         t = {k: v for k, v in yearly_graph_data.items()}
         t.update({
             "file_under_title": yearly_graph_data["file_under_title"].format(year),
@@ -410,9 +410,9 @@ if __name__ == '__main__':
     graphs_to_make.update(yearly_graphs_to_make)
 
     decade_graphs_to_make = {}
-    for year in range(1995, 2022, 10):
-        a = year
-        b = int(year) + 10
+    for year in range(2005, 2026, 10):
+        a = year - 5
+        b = int(year) + 5
         t = {k: v for k, v in decade_graph_data.items()}
         t.update({
             "file_under_title": decade_graph_data["file_under_title"].format(a, b),
@@ -431,7 +431,7 @@ if __name__ == '__main__':
     # gen_graphs(p_start_date="2021-01-01", p_end_date="2021-09-29")
 
     for output_file, graph_data in graphs_to_make.items():
-        graph_data.update({"return_object": True})
+        graph_data.update({"return_object": True, "date_path": "Draft Version 3"})
         pdf, save_args = gen_graphs(**graph_data)
         if "date_path" in graph_data and "pdf_path" in graph_data:
             x = "\\" if graph_data["pdf_path"][0] != "\\" and graph_data["date_path"][-1] != "\\" else ""
@@ -446,7 +446,7 @@ if __name__ == '__main__':
         else:
             pie_chart(path=none_path, pdf=pdf)
         pdf.output(*save_args)
-        print("Creating PDF: {}".format(output_file))
+        # print("Creating PDF: {}".format(output_file))
 
     end_time = datetime.datetime.now()
     diff = end_time - start_time

@@ -3,6 +3,8 @@ import pyodbc
 import numpy as np
 import pandas as pd
 from formatters import *
+import matplotlib
+import importlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
@@ -15,7 +17,10 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
     assert end_date > start_date, "Supplied Start Date \"{}\" is after supplied End Date \"{}\"".format(start_date,
                                                                                                         end_date)
     assert output_filename is not None, "Output file needs a name."
-    assert output_filename != "", "Output file needs a name."
+    assert isinstance(output_filename, str) and output_filename != "", "Output file needs a name."
+
+    importlib.reload(matplotlib)
+    matplotlib.use('Agg')
 
     # print("A parsed_query:", query)
     if col is not None:
@@ -95,7 +100,7 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
         plt.close(fig)
     except TypeError:
         save_path = os.getcwd().replace("\\", "/") + "/" + path + 'EMPTY - {}.jpg'.format(title)
-        print("\tNo data returned. -> {}".format(path))
+        # print("\tNo data returned. -> {}".format(path))
 
         original = NO_DATA_FILE
         target = save_path

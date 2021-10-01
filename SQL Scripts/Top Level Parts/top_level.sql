@@ -1,6 +1,14 @@
 USE SysproCompanyA
 GO
 
-SELECT * FROM [WipMaster] ORDER BY [JobStartDate] DESC;
-SELECT * FROM [WipJobAllLab] ORDER BY [PlannedStartDate] DESC;
+SELECT * FROM [WipMaster] WITH (NOLOCK) ORDER BY [Job] DESC;
+SELECT * FROM [MrpJobMaster] WITH (NOLOCK) ORDER BY [Job] DESC;
+SELECT * FROM [WipJobAllLab] WITH (NOLOCK) ORDER BY [Job] DESC;
+SELECT * FROM [WipLabJnl] WITH (NOLOCK) ORDER BY [Job] DESC;
 SELECT * FROM [WipJobAllMat];
+
+
+USE BWSdb
+GO
+
+SELECT * FROM [Production]
