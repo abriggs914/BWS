@@ -279,7 +279,7 @@ def pie_chart(start_date='1900-01-01', end_date='2100-01-01', path=None, pdf=Non
 
     # print("QUERY:" ,top_20_highest_grossing_models_2021_07_01__2021_08_01)
 
-    print("Creating graph \"{}\"...".format(title))
+    # print("Creating graph \"{}\"...".format(title))
     tableResult = pd.read_sql(top_20_highest_grossing_models_2021_07_01__2021_08_01, cnxn)
     df = pd.DataFrame(tableResult)
     # print("df A:\n", df)

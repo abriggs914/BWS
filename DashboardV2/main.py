@@ -252,9 +252,9 @@ def gen_graphs(file_name=None, date_path=None, pdf_path=None, items=None, file_t
         if clear_dir:
             shutil.rmtree(path)
         output_files.append((create_graph(query, output_filename, x_axis, title=title, start_date=start_date, end_date=end_date, col=col, path=path, draw_title=draw_title, x_lbl=x_lbl, y_lbl=y_lbl, formatter=formatter), (start_date, end_date, col)))
-        message = "Successfully created graph \"{}\"".format(title)
-        message = message.ljust(100, ".") + bar(i, item_count_a).rjust(21, ".")
-        print(message)
+        # message = "Successfully created graph \"{}\"".format(title)
+        # message = message.ljust(100, ".") + bar(i, item_count_a).rjust(21, ".")
+        # print(message)
 
     # print("\n\n\tRESULTING FILES:\n" + "\n".join([of[0] for of in output_files]))
     item_count_b = len(output_files)
@@ -303,7 +303,7 @@ def gen_graphs(file_name=None, date_path=None, pdf_path=None, items=None, file_t
             FILE_NAME = og_name + " ({})".format(number_copies)
     if ".pdf" != FILE_NAME[-4]:
         FILE_NAME = FILE_NAME + ".pdf"
-    print("\n\n\tCreating pdf \"{}\"...\n".format(FILE_NAME))
+    # print("\n\n\tCreating pdf \"{}\"...\n".format(FILE_NAME))
     pdf = PDF(FILE_NAME, orientation='L', unit='mm', format='A4')
     pdf.set_auto_page_break(True, margin=5)
     pdf.set_title("Dashboard Outputs")
@@ -430,8 +430,14 @@ if __name__ == '__main__':
     # gen_graphs(p_start_date="2021-09-21", p_end_date="2021-09-30")
     # gen_graphs(p_start_date="2021-01-01", p_end_date="2021-09-29")
 
-    for output_file, graph_data in graphs_to_make.items():
-        graph_data.update({"return_object": True, "date_path": "Draft Version 3"})
+    total = len(graphs_to_make)
+    for i, dat in enumerate(graphs_to_make.items()):
+        output_file, graph_data = dat
+        graph_data.update({"return_object": True, "date_path": "Draft Version 4"})
+
+        importlib.reload(matplotlib)
+        matplotlib.use('Agg')
+
         pdf, save_args = gen_graphs(**graph_data)
         if "date_path" in graph_data and "pdf_path" in graph_data:
             x = "\\" if graph_data["pdf_path"][0] != "\\" and graph_data["date_path"][-1] != "\\" else ""
@@ -445,7 +451,14 @@ if __name__ == '__main__':
             pie_chart(start_date=p_start_date, end_date=p_end_date, path=none_path, pdf=pdf)
         else:
             pie_chart(path=none_path, pdf=pdf)
+
+        # MUST SAVE PDF
         pdf.output(*save_args)
+
+        message = "Successfully created pdf \"{}\"".format(save_args[0])
+        message = message.ljust(100, ".") + bar(i+1, total).rjust(21, ".")
+        print(message)
+
         # print("Creating PDF: {}".format(output_file))
 
     end_time = datetime.datetime.now()

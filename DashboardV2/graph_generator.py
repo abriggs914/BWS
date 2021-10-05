@@ -19,9 +19,6 @@ def create_graph(query, output_filename, x_axis, title='', start_date='1900-01-0
     assert output_filename is not None, "Output file needs a name."
     assert isinstance(output_filename, str) and output_filename != "", "Output file needs a name."
 
-    importlib.reload(matplotlib)
-    matplotlib.use('Agg')
-
     # print("A parsed_query:", query)
     if col is not None:
         # print("col is not none")
