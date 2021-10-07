@@ -1,4 +1,4 @@
 USE SysproCompanyA
 GO
 
-EXEC [dbo].[sp_TopLevelWOSubsReport] @WO = '10014747'
+EXEC [dbo].[sp_TopLevelWOSubsReport] @WO = '10014747', @INCOMPLETEONLY = 1
