@@ -935,7 +935,7 @@ SET @quote = 17386
 
 
 				
-	--Code -88 - infinite find and replace array (minics code 0) with fett and inches addition (mimics code -98)
+	--Code -88 - infinite find and replace array (minics code 0) with feet and inches addition (mimics code -98)
 	--Drop and create temp table in tmpdb SQL database for faster processing
 	--Code reference: http://stackoverflow.com/questions/8726111/sql-server-find-nth-occurrence-in-a-string
 	IF OBJECT_ID('tempdb..#T1') IS NOT NULL
@@ -986,6 +986,9 @@ SET @quote = 17386
 	and substring(img, starts, case when pos > 0 then pos - starts else len(img) end) <> ''
 	order by img, starts
 
+	
+	SELECT * FROM #specs
+	SELECT * FROM @t1
 
 
 

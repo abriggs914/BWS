@@ -1,0 +1,5 @@
+DECLARE @A AS INT;
+
+SELECT @A = 10 FROM [Employees]
+
+PRINT 'A: ' + CAST(@A AS NVARCHAR(MAX));
