@@ -1,0 +1,26 @@
+
+USE Stargatedb
+GO
+
+BEGIN TRAN;
+
+SELECT * FROM [Payroll]
+
+UPDATE
+	[Payroll]
+SET 
+	[RRSP VOL%] = 0.0 
+WHERE
+	[RRSP VOL%] IS NULL
+
+UPDATE
+	[Payroll]
+SET 
+	[RRSP ER%] = 0.0
+WHERE
+	[RRSP ER%] IS NULL
+	
+SELECT * FROM [Payroll]
+
+ROLLBACK;
+COMMIT;

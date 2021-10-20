@@ -7,11 +7,18 @@ SELECT * FROM [dtOvertimeYTD]
 
 USE Stargatedb
 GO
+SELECT * FROM [Status]
+SELECT * FROM [Employees]
+SELECT * FROM [Hours Worked]
+SELECT * FROM [Dept]
+SELECT * FROM [Hours Worked] ORDER BY [DateWorked]
 SELECT * FROM [dtOvertimeYTD]
+
+
+sp_AbsentGraphbyDept
 
 EXEC [dbo].[sp_WeeklyRpt] @startdate='2021-05-12', @enddate='2021-10-25';
 
-SELECT * FROM [Hours Worked] ORDER BY [DateWorked]
 SELECT * FROM [Employees]
 SELECT * FROM [Dept]
 
