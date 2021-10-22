@@ -433,7 +433,7 @@ if __name__ == '__main__':
     total = len(graphs_to_make)
     for i, dat in enumerate(graphs_to_make.items()):
         output_file, graph_data = dat
-        graph_data.update({"return_object": True, "date_path": "Draft Version 5"})
+        graph_data.update({"return_object": True, "date_path": "Draft Version 6"})
 
         importlib.reload(matplotlib)
         matplotlib.use('Agg')
