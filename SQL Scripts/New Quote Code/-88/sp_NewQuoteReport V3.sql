@@ -1063,25 +1063,19 @@ BEGIN
 			inner join @ftandin as b on a.SortGv2 = b.SortGv2 and a.SortSev2 = b.SortSev2
 			where Changed = 1
 
-			----Update @specs tv with lines from @ftandin tv
-			--update #specs
-			--set Description = case when b.Feet is null then a.Description --No Feet/Inches additions
-			--					   when b.Feet = 0 then case when NPO = 1 then '*NPO*: ' else '' end + left(Description, b.InchesPosition) + cast(b.Inches as nvarchar) + right(Description, len(Description) - (CHARINDEX('in.', Description) - 2)) --Inches addition only
-			--					   when b.Inches = 0 then case when NPO = 1 then '*NPO*: ' else '' end + left(Description, b.FeetPosition) + cast(b.Feet as nvarchar) + right(Description, len(Description) - (CHARINDEX('ft.', Description) - 2)) --Feet addition only
-			--					   when b.Feet <> 0 and CHARINDEX('in.', Description) = 0 then case when NPO = 1 then '*NPO*: ' else '' end + left(Description, b.FeetPosition) + cast(b.Feet as nvarchar) + ' ft. ' + cast(b.Inches as nvarchar) + ' in. ' 
-			--																				   + right(Description, len(Description) - (len(cast(b.Feet as nvarchar) + ' ft. '))) --Changes ft. to ft. and in.
-			--					   when b.Inches <> 0 and CHARINDEX('ft.', Description) = 0 then case when NPO = 1 then '*NPO*: ' else '' end + left(Description, b.InchesPosition) + cast(b.Feet as nvarchar) + ' ft. ' + cast(b.Inches as nvarchar) + right(Description, len(Description) - (CHARINDEX('in.', Description) - 2)) --Changes in. to ft. and in.
-			--					   else case when NPO = 1 then '*NPO*: ' else '' end + left(Description, b.FeetPosition) + cast(b.Feet as nvarchar) + ' ft. ' + cast(b.Inches as nvarchar) + right(Description, len(Description) - (CHARINDEX('in.', Description) - 2)) end, 
-			--Price = case when b.Price is null then a.Price when a.Price is null then b.Price else a.Price + b.Price end,
-			--HideShowOptionPriceWording = case when a.HideShowOptionPriceWording = 1 then 1 when b.HideShowOptionPriceWording is null then a.HideShowOptionPriceWording else b.HideShowOptionPriceWording end,
-			--Bold = b.Bold,
-			--Italic = b.Italic,
-			--Underline = b.Underline,
-			--BackColour = b.BackColour,
-			--FontColour = b.FontColour
-			--from #specs as a
-			--inner join @ftandin as b on a.SortGv2 = b.SortGv2 and a.SortSev2 = b.SortSev2
-			--where Changed = 1
+			--Update @specs tv with lines from @ftandin tv
+			update #specs
+			set Description = @new_description, 
+			Price = case when b.Price is null then a.Price when a.Price is null then b.Price else a.Price + b.Price end,
+			HideShowOptionPriceWording = case when a.HideShowOptionPriceWording = 1 then 1 when b.HideShowOptionPriceWording is null then a.HideShowOptionPriceWording else b.HideShowOptionPriceWording end,
+			Bold = b.Bold,
+			Italic = b.Italic,
+			Underline = b.Underline,
+			BackColour = b.BackColour,
+			FontColour = b.FontColour
+			from #specs as a
+			inner join @ftandin as b on a.SortGv2 = b.SortGv2 and a.SortSev2 = b.SortSev2
+			where Changed = 1
 
 			--print 'new description: '
 			--print 'new description ' + @new_description
