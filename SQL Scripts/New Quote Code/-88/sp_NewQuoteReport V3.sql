@@ -13,7 +13,8 @@ GO
 ---- Description:	<Description,,>
 ---- =============================================
 ALTER PROCEDURE [dbo].[sp_NewQuoteReport V3] 
-	-- Add the parameters for the stored procedure here
+	 --Add the parameters for the stored procedure here
+--DECLARE
 	@quote varchar(8), @quoterev int
 --SET @quote = 'SG100403'
 --SET @quoterev = 1;
@@ -871,6 +872,7 @@ BEGIN
 
 
 
+
 	delete from @t
 	WHERE 1=1
 					
@@ -1106,7 +1108,7 @@ BEGIN
 			--Update the description in the Specs table, based on the Spec Line and the Option/NPO Qty
 			update #specs
 			set Description = @new_description,
-			Price = case when b.Price is null then a.Price when a.Price is null then b.Price else a.Price + b.Price end,
+			Price = (case when b.Price is null then a.Price when a.Price is null then b.Price else a.Price + b.Price end) / 2,
 			HideShowOptionPriceWording = case when a.HideShowOptionPriceWording = 1 then 1 when b.HideShowOptionPriceWording is null then a.HideShowOptionPriceWording else b.HideShowOptionPriceWording end
 			from #specs as a
 			inner join (select [Order OptionsV2_SpecLines].SpecSortG, [Order OptionsV2_SpecLines].SpecSortSe, FirstLine,
@@ -1142,6 +1144,14 @@ BEGIN
 						where [Custom WorkV2].SGQuote = @quote and SpecSortSeLine = '-88') as b on a.SortGv2 = b.SpecSortG
 																								and a.SortSev2 = b.SpecSortSe
 																								and a.SpecSortSeLine = b.FirstLine
+
+
+
+
+
+
+
+	
 
 
 
