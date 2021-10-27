@@ -51,6 +51,37 @@ def align_behind(time, interval, threshold=0, start_time=None, end_time=None):
     return time
 
 
+# Used for signing-out. Takes care of employees clocking-out late.
+# interval in minutes
+# threshold in minutes
+def round_time(time, interval, up_down=1, threshold=0, start_time=None, end_time=None):
+    if start_time is None:
+        start_time = dt.datetime(time.year, time.month, time.day, 0, 0, 0)
+    if end_time is None:
+        end_time = dt.datetime(time.year, time.month, time.day, 0, 0, 0) + dt.timedelta(days=1) + dt.timedelta(
+            minutes=interval)
+
+    n_minutes = (end_time - start_time).total_seconds() / 60
+    intervals = [start_time + dt.timedelta(minutes=(i * interval)) for i in range(ceil(n_minutes / interval))]
+    intervals = [inter for inter in intervals if start_time <= inter <= end_time]
+    if up_down == 0:
+        intervals.reverse()
+    # print("intervals:", "\n".join([str(d) for d in intervals]))
+    dates = []
+    for t in intervals:
+        t_time = t
+        dates.append(t_time)
+        t_time = t_time + dt.timedelta(minutes=-threshold)
+        if up_down == 1:
+            if t_time >= time:
+                break
+        elif up_down == 0:
+            if t_time <= time:
+                break
+            # print("t_time:", t_time, "time:", time)
+    return dates[-1]
+
+
 def write_align_ahead_tests():
     with open("align_ahead output.txt", "w")  as f:
         td = dt.datetime(2021, 10, 26, 0, 0, 0)
@@ -161,21 +192,53 @@ if __name__ == '__main__':
         print(dict_print(emp_dict, "Results"))
 
         t1 = dt.datetime.now()
-        t2 = dt.datetime(2021, 10, 26, 7, 56, 0)
-        t3 = dt.datetime(2021, 10, 26, 7, 57, 0)
-        t4 = dt.datetime(2021, 10, 26, 7, 58, 0)
-        t5 = dt.datetime(2021, 10, 26, 7, 59, 0)
-        t6 = dt.datetime(2021, 10, 26, 8, 0, 0)
-        t7 = dt.datetime(2021, 10, 26, 8, 1, 0)
-        t8 = dt.datetime(2021, 10, 26, 8, 2, 0)
-        t9 = dt.datetime(2021, 10, 26, 8, 3, 0)
-        t10 = dt.datetime(2021, 10, 26, 8, 4, 0)
+        t2 = dt.datetime(2021, 10, 27, 7, 56, 0)
+        t3 = dt.datetime(2021, 10, 27, 7, 57, 0)
+        t4 = dt.datetime(2021, 10, 27, 7, 58, 0)
+        t5 = dt.datetime(2021, 10, 27, 7, 59, 0)
+        t6 = dt.datetime(2021, 10, 27, 8, 0, 0)
+        t7 = dt.datetime(2021, 10, 27, 8, 1, 0)
+        t8 = dt.datetime(2021, 10, 27, 8, 2, 0)
+        t9 = dt.datetime(2021, 10, 27, 8, 3, 0)
+        t10 = dt.datetime(2021, 10, 27, 8, 4, 0)
         interval = 15
-        threshold = 3
+        threshold = 2
+        up_down = 1
         print("align_ahead \"" + str(t1) + "\":", align_ahead(t1, interval, threshold))
 
+        print("\n\n\tRounding Up")
         for t in [t2, t3, t4, t5, t6, t7, t8, t9, t10]:
-            print("t: \"{}\": {}".format(t, align_ahead(t, interval, threshold)))
+            print("t: \"{}\": {}".format(t, round_time(t, interval, up_down=up_down, threshold=threshold)))
+        print("\n\n\tRounding Down")
+        for t in [t2, t3, t4, t5, t6, t7, t8, t9, t10]:
+            print("t: \"{}\": {}".format(t, round_time(t, interval, up_down=0, threshold=threshold)))
 
         # write_align_ahead_tests()
-        write_align_behind_tests()
+        # write_align_behind_tests()
+
+        t2 = dt.datetime(2021, 10, 27, 7, 47, 0)
+        t3 = dt.datetime(2021, 10, 27, 7, 48, 0)
+        t4 = dt.datetime(2021, 10, 27, 7, 53, 0)
+        t5 = dt.datetime(2021, 10, 27, 8, 2, 0)
+        t6 = dt.datetime(2021, 10, 27, 8, 3, 0)
+        t7 = dt.datetime(2021, 10, 27, 16, 0, 0)
+        t8 = dt.datetime(2021, 10, 27, 16, 14, 0)
+        t9 = dt.datetime(2021, 10, 27, 16, 18, 0)
+        t10 = dt.datetime(2021, 10, 27, 16, 27, 0)
+        t11 = dt.datetime(2021, 10, 27, 16, 28, 0)
+        t12 = dt.datetime(2021, 10, 27, 16, 29, 0)
+        t13 = dt.datetime(2021, 10, 27, 16, 31, 0)
+        t14 = dt.datetime(2021, 10, 27, 16, 35, 0)
+
+        start_date = dt.datetime(2021, 10, 27, 8)
+        end_date = dt.datetime(2021, 10, 27, 16, 30) + dt.timedelta(minutes=interval)
+        print("\n\n\tSigning In")
+        for t in [t2, t3, t4, t5, t6]:
+            print("t: \"{}\": {}".format(t,
+                                         round_time(t, interval, up_down=1, threshold=threshold, start_time=start_date,
+                                                    end_time=end_date)))
+        print("\n\n\tSigning Out")
+        for t in [t7, t8, t9, t10, t11, t12, t13]:
+            print("t: \"{}\": {}".format(t,
+                                         round_time(t, interval, up_down=0, threshold=threshold, start_time=start_date,
+                                                    end_time=end_date)))

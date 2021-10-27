@@ -70,6 +70,8 @@ INNER JOIN (
 ) AS [C]
 ON
 	[A].[Job] = [C].[Job]
+WHERE
+	((@INCOMPLETEONLY = 1 AND [WipMaster].[Complete] = 'N') OR @INCOMPLETEONLY = 0)
 ORDER BY
 	[ph], [Complete], [WipMaster.JobStartDate], [WipMaster.StockCode]
 END
