@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[sp_TopLevelWOReport]
 AS
 BEGIN
 
-DECLARE @T TABLE ([ph] INT, [WipMaster.JobStartDate] DATETIME, [WipMaster.Job] NVARCHAR(100), [WipMaster.StockCode] NVARCHAR(MAX), [WipMaster.StockDescription] NVARCHAR(MAX), [QtyOnHand] INT, [QtyIssued] INT, [QtyRequired] INT, [HrsIssued] FLOAT, [Complete] VARCHAR(1))
+DECLARE @T TABLE ([ph] INT, [MadeIn] BIT, [WipMaster.JobStartDate] DATETIME, [WipMaster.Job] NVARCHAR(100), [WipMaster.StockCode] NVARCHAR(MAX), [WipMaster.StockDescription] NVARCHAR(MAX), [QtyOnHand] INT, [QtyIssued] INT, [QtyRequired] INT, [HrsIssued] FLOAT, [Complete] VARCHAR(1), [Warehouse] INT)
 
 INSERT INTO @T
 EXEC [dbo].[sp_TopLevelWOSubsReport] @WO=@WO, @INCOMPLETEONLY=@INCOMPLETEONLY
@@ -19,15 +19,17 @@ SELECT * FROM @T
 UNION ALL
 SELECT 
 	(CASE WHEN [QtyOnHand] = 0 THEN 0 ELSE 1 END) AS [ph],
+	0 AS [MadeIn],
 	[MLatestDueDate] AS [WipMaster.JobStartDate],
-	'PO#' + [PurchaseOrder] AS [WipMaster.Job],
+	'PO#' + RIGHT([PurchaseOrder], 8) AS [WipMaster.Job],
 	[MStockCode] AS [WipMaster.StockCode],
 	[A].[StockDescription] AS [WipMaster.StockDescription],
 	[QtyOnHand],
 	[QtyIssued],
 	[UnitQtyReqd] AS [QtyRequired],
 	[RunTimeIssued] AS [HrsIssued],
-	[Complete] AS [Complete]
+	[Complete] AS [Complete],
+	[A].[Warehouse]
 FROM (
 SELECT
 	'THIS ONE' as [MARKER],

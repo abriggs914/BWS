@@ -1,0 +1,95 @@
+USE SysproCompanyA
+GO
+
+-- ================================================
+-- Template generated from Template Explorer using:
+-- Create Trigger (New Menu).SQL
+--
+-- Use the Specify Values for Template Parameters 
+-- command (Ctrl-Shift-M) to fill in the parameter 
+-- values below.
+--
+-- See additional Create Trigger templates for more
+-- examples of different Trigger statements.
+--
+-- This block of comments will not be included in
+-- the definition of the function.
+-- ================================================
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE TRIGGER [dbo].[tr_ShopClkRounding] 
+   ON  [dbo].[ClkTransaction]
+   AFTER UPDATE
+
+AS 
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+	
+	DECLARE @today AS DATETIME;
+
+	DECLARE @inTime AS DATETIME, @outTime AS DATETIME;
+	DECLARE @shift_start_date AS DATETIME, @shift_end_date AS DATETIME;
+	DECLARE @interval INT;
+	DECLARE @threshold INT;
+	DECLARE @transactionID INT;
+	
+	SELECT @inTime = [LoggedOn] FROM inserted i
+	SELECT @outTime = [LoggedOff] FROM inserted i
+	SELECT @transactionID = [TransactionID] FROM inserted i
+
+	-- These vars will change based on the shift passed. These values can be found on ShopClk tables
+	SET @interval = 15;
+	SET @threshold = 3;
+	SET @today = GETDATE()
+	SET @shift_start_date = CAST((DATEPART(YEAR, @today) + '-' + DATEPART(MONTH, @today) + '-' + DATEPART(DAY, @today) + ' 07:00:00') AS DATETIME)
+	SET @shift_end_date = CAST((DATEPART(YEAR, @today) + '-' + DATEPART(MONTH, @today) + '-' + DATEPART(DAY, @today) + ' 16:30:00') AS DATETIME)
+
+	DECLARE @rounded TABLE ([In / Out] VARCHAR(3), [InTime] DATETIME, [Start Date] DATETIME, [End Date] DATETIME, [RoundedTime] DATETIME, [Threshold] INT, [Interval] INT);
+
+	IF @outTime IS NULL BEGIN
+		-- Sign-In
+		INSERT INTO @rounded EXEC [dbo].[RoundTime] @time = @inTime, @interval = @interval, @in_out = 1, @threshold = @threshold, @start_date = @shift_start_date, @end_date = @shift_end_date
+		
+		UPDATE
+			[ClkTransaction]
+		SET
+			[InTimeFromShopClk] = (SELECT [RoundedTime] FROM @rounded)
+		WHERE
+			[TransactionID] = @transactionID
+
+	END
+	ELSE BEGIN
+		-- Sign-Out
+		INSERT INTO @rounded EXEC [dbo].[RoundTime] @time = @inTime, @interval = @interval, @in_out = 1, @threshold = @threshold, @start_date = @shift_start_date, @end_date = @shift_end_date
+		UPDATE
+			[ClkTransaction]
+		SET
+			[InTimeFromShopClk] = (SELECT [RoundedTime] FROM @rounded)
+		WHERE
+			[TransactionID] = @transactionID
+
+		DELETE FROM @rounded WHERE 1=1;
+
+		INSERT INTO @rounded EXEC [dbo].[RoundTime] @time = @outTime, @interval = @interval, @in_out = 0, @threshold = @threshold, @start_date = @shift_start_date, @end_date = @shift_end_date
+		UPDATE
+			[ClkTransaction]
+		SET
+			[OutTimeFromShopClk] = (SELECT [RoundedTime] FROM @rounded)
+		WHERE
+			[TransactionID] = @transactionID
+
+	END
+
+END
+GO

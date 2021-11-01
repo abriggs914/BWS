@@ -115,4 +115,3 @@ IF @test_stargate_shift_3 = 1 BEGIN
 END
 
 SELECT * FROM @RESULTS
-]
