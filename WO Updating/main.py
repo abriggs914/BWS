@@ -136,5 +136,4 @@ def main_loop():
 
 
 if __name__ == '__main__':
-    print('PyCharm')
     main_loop()

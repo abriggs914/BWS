@@ -1,0 +1,28 @@
+DECLARE @t as TIME(7);
+SET @t = '3:30 PM';
+DECLARE @d as DATE;
+SET @d = '11-02-2021';
+
+
+SELECT ((CAST(DATEPART(HOUR, @t) AS VARCHAR(2)) + ':' + CAST(DATEPART(MINUTE, @t) AS VARCHAR(2)))) AS [X]
+
+
+----SET @d = '2021/11/02';
+--DECLARE @dt AS DATETIME;
+--SET @dt = CAST(@d AS varchar(100)) + ' ' + CAST(@t AS varchar(100));
+
+SELECT
+	@d AS [Date],
+	CAST(@d AS VARCHAR(30)) AS [D],
+	@t AS [Time],
+	CAST(@d AS VARCHAR(30)) + ' ' + ((CAST(DATEPART(HOUR, @t) AS VARCHAR(2)) + ':' + CAST(DATEPART(MINUTE, @t) AS VARCHAR(2)))) AS [X],
+	CAST(CAST(@d AS VARCHAR(30)) + ' ' + ((CAST(DATEPART(HOUR, @t) AS VARCHAR(2)) + ':' + CAST(DATEPART(MINUTE, @t) AS VARCHAR(2)))) AS DATETIME) AS [X1]
+	--, CAST((CAST(@d AS VARCHAR(30)) + ' ' + CAST(@t AS VARCHAR(30))) AS DATETIME) AS [X1]
+--SELECT @d AS [Date], @t AS [Time], @dt AS [DateTime]
+
+DECLARE @t2 AS DATETIME;
+--SET @t2 = '2021-11-02 15:30:00.0000000';
+--SET @t2 = '2021-11-02 15:30:00.000';
+--SET @t2 = @t;
+
+SELECT @t2 AS [T2]

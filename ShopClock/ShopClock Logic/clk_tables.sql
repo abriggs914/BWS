@@ -1,6 +1,7 @@
 USE SysproCompanyA
 GO
 
+SELECT TOP 200 *  FROM [ClkShiftRoundRules]
 SELECT TOP 200 *  FROM [ClkTransaction]
 SELECT * FROM [ClkShiftDetail]
 SELECT TOP 200 *  FROM [ClkShiftMaster]
