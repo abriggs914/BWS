@@ -24,8 +24,7 @@ DECLARE @shift_3_end_time AS DATETIME;
 DECLARE @shift_3_interval AS INT;
 DECLARE @shift_3_threshold AS INT;
 
-DECLARE @RESULTS TABLE ([In / Out] VARCHAR(3), [InTime] DATETIME, [Start Date] DATETIME, [End Date] DATETIME, [RoundedTime] DATETIME, [Threshold] INT, [Interval] INT)
-
+DECLARE @RESULTS TABLE ([In / Out] VARCHAR(3), [Start Date] DATETIME, [End Date] DATETIME, [InTime] DATETIME, [RoundedTime] DATETIME, [Threshold] INT, [Interval] INT)
 --EXEC [dbo].[sp_RoundTime] @time='2021-10-27 10:28:00', @interval=15, @threshold=2
 --EXEC [dbo].[sp_RoundTime] @time='2021-10-27 11:41:00', @interval=15, @threshold=2
 
