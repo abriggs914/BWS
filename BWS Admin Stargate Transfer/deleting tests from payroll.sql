@@ -1,0 +1,14 @@
+USE Stargatedb
+GO
+
+BEGIN TRAN;
+SELECT * FROM [Payroll]
+
+DELETE FROM
+	[Payroll]
+WHERE
+	YEAR([Date]) = 2022
+
+SELECT * FROM [Payroll]
+ROLLBACK;
+COMMIT;
