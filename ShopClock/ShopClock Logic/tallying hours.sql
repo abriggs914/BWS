@@ -19,9 +19,11 @@ DECLARE @shift_end_date AS DATETIME;
 DECLARE @empNum AS BIGINT;
 SET @empNum = 200241;
 DECLARE @sd AS DATETIME;
-SET @sd = '2020-11-01';
+SET @sd = '2021-11-04';
 DECLARE @ed AS DATETIME;
 SET @ed = '2021-11-05';
+
+SELECT [OutTimeFromShopClk] - [InTimeFromShopClk] AS [Diff], * FROM [ClkTransaction] WHERE [EmployeeNumber] = @empNum AND ([InTimeFromShopClk] BETWEEN @sd AND @ed OR [OutTimeFromShopClk] BETWEEN @sd AND @ed) ORDER BY [InTimeFromShopClk], [OutTimeFromShopClk]
 
 DECLARE @clkTransVals TABLE ([ShiftID] INT, [LoggedOn] DATETIME, [InTimeFromShopClk] DATETIME, [LoggedOff] DATETIME, [OutTimeFromShopClk] DATETIME);
 INSERT INTO @clkTransVals
@@ -61,6 +63,8 @@ FROM
 INNER JOIN @clkShiftVals ON [@clkTransVals].[ShiftID] = [@clkShiftVals].[ShiftID]
 GROUP BY
 	[StartTime], [EndTime], [LoggedOn], [LoggedOff], [InTimeFromShopClk], [OutTimeFromShopClk]
+ORDER BY
+	[LoggedOn], [LoggedOff]
 
 --SELECT 
 --	[TransactionID],
@@ -88,12 +92,20 @@ GROUP BY
 
 
 SELECT
-	((60 * (SUM((DATEPART(HOUR, [InTimeFromShopClk]))))) + SUM((DATEPART(MINUTE, [InTimeFromShopClk])))) / 60 AS [Pay]
+	@sd AS [StartDate],
+	@ed AS [EndDate],
+	SUM(DATEPART(HOUR, [OutTimeFromShopClk] - [InTimeFromShopClk])) AS [A],
+	SUM(DATEPART(MINUTE, [OutTimeFromShopClk] - [InTimeFromShopClk])) AS [B],
+	(60 * (SUM(DATEPART(HOUR, [OutTimeFromShopClk] - [InTimeFromShopClk])))) AS [C],
+	(60 * (SUM(DATEPART(HOUR, [OutTimeFromShopClk] - [InTimeFromShopClk])))) + SUM(DATEPART(MINUTE, [OutTimeFromShopClk] - [InTimeFromShopClk])) AS [D],
+	ROUND(((60 * (SUM(DATEPART(HOUR, [OutTimeFromShopClk] - [InTimeFromShopClk])))) + SUM(DATEPART(MINUTE, [OutTimeFromShopClk] - [InTimeFromShopClk]))) / 60.0, 2) AS [Pay]
 FROM
 	[ClkTransaction]
 WHERE
 	[EmployeeNumber] = @empNum 
-	AND	([LoggedOn] BETWEEN @sd AND @ed OR [LoggedOff] BETWEEN @sd AND @ed)
+	AND	([InTimeFromShopClk] BETWEEN @sd AND @ed OR [OutTimeFromShopClk] BETWEEN @sd AND @ed)
+
+
 SELECT
 	*
 FROM
