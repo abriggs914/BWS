@@ -22,8 +22,17 @@ SELECT
 	[Province],
 	[Health],
 	[Dental],
-	[Dep Life],
+	[Dep Life]
 
 FROM [Employees]
-UNION ALL
-SELECT * FROM [Employees - Salary]
+
+
+SELECT * FROM [Payroll]
+
+USE SysproCompanyS
+GO
+SELECT * FROM [BomEmployee]
+
+
+--UNION ALL
+--SELECT * FROM [Employees - Salary]
