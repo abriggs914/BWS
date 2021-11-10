@@ -15,3 +15,6 @@ FROM
 WHERE
 	[EmployeeNumber] LIKE '200102'
 	AND [InTimeFromShopClk] BETWEEN '2021-11-01' AND '2021-11-05'
+
+
+EXEC [dbo].[sp_ClkLabourOverride] @sd='2021-11-09', @ed='2021-11-10'
