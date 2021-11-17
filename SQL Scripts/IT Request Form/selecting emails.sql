@@ -42,7 +42,9 @@ SELECT
 	[dbo].ToProperCase([SysproCompanyA].[dbo].[ClkEmployee].[Name]) AS [B],
 	[SysproCompanyA].[dbo].[ClkEmployee].[Name] AS [C],
 	[dbo].ToProperCase([SysproCompanyA].[dbo].[BomEmployee].[Name]) AS [D],
-	[SysproCompanyA].[dbo].[BomEmployee].[Name] AS [E]
+	[SysproCompanyA].[dbo].[BomEmployee].[Name] AS [E],
+	[SysproCompanyA].[dbo].[ClkEmployee].[Name] AS [F],
+	[SysproCompanyA].[dbo].[BomEmployee].[Name] AS [G]
 FROM
 	@SRC
 LEFT JOIN
@@ -56,6 +58,9 @@ ON
 ORDER BY
 	[Email]
 
+	
+SELECT [Name] FROM [SysproCompanyA].[dbo].[BomEmployee] ORDER BY [Name]
+SELECT [Name] FROM [SysproCompanyA].[dbo].[ClkEmployee] ORDER BY [Name]
 
 
 
