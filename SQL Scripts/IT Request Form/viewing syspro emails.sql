@@ -1,9 +1,21 @@
 USE BWSdb
 GO
 
-SELECT * FROm [IT Requests]
+DECLARE @SRC TABLE ([EMP#] INT, [Name] NVARCHAR(MAX), [Email] NVARCHAR(250))
+
+INSERT INTO @SRC
+EXEC [dbo].[sp_EmployeeEmails]
 
 
-USE Sysprodb
-GO
-SELECT * FROM dbo.AdmOperator
+SELECT * FROM @SRC
+
+
+
+
+
+--SELECT * FROm [IT Requests]
+
+
+--USE Sysprodb
+--GO
+--SELECT * FROM dbo.AdmOperator

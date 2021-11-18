@@ -28,6 +28,8 @@ LEFT JOIN
 	[Employees]
 ON
 	[Sysprodb].[dbo].[AdmOperator].[Name] COLLATE DATABASE_DEFAULT = ([Employees].[1st Name] + ' ' + [Employees].[2nd Name]) COLLATE DATABASE_DEFAULT
+WHERE
+	[Email] IS NOT NULL AND LTRIM(RTRIM([Email])) != '' AND LEN(LTRIM(RTRIM([Email]))) > 3 
 ;
 
 SELECT * FROM @SRC
@@ -39,28 +41,29 @@ SELECT
 	[@SRC].[1st Name] + ' ' + [@SRC].[2nd Name] AS [Name],
 	[Email],
 	([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name]) AS [A],
-	[dbo].ToProperCase([SysproCompanyA].[dbo].[ClkEmployee].[Name]) AS [B],
-	[SysproCompanyA].[dbo].[ClkEmployee].[Name] AS [C],
-	[dbo].ToProperCase([SysproCompanyA].[dbo].[BomEmployee].[Name]) AS [D],
-	[SysproCompanyA].[dbo].[BomEmployee].[Name] AS [E],
-	[SysproCompanyA].[dbo].[ClkEmployee].[Name] AS [F],
-	[SysproCompanyA].[dbo].[BomEmployee].[Name] AS [G]
+	[dbo].ToProperCase([ClkEmployee].[Name]) AS [B],
+	[ClkEmployee].[Name] AS [C],
+	[dbo].ToProperCase([BomEmployee].[Name]) AS [D],
+	[BomEmployee].[Name] AS [E],
+	[ClkEmployee].[Name] AS [F],
+	[BomEmployee].[Name] AS [G]
 FROM
 	@SRC
 LEFT JOIN
 	[SysproCompanyA].[dbo].[ClkEmployee]
 ON
-	[dbo].ToProperCase([SysproCompanyA].[dbo].[ClkEmployee].[Name]) = ([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])
+	LOWER([dbo].ToProperCase([SysproCompanyA].[dbo].[ClkEmployee].[Name])) = LOWER(([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name]))
 LEFT JOIN
 	[SysproCompanyA].[dbo].[BomEmployee]
 ON
-	[dbo].ToProperCase([SysproCompanyA].[dbo].[BomEmployee].[Name]) = ([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])
+	LOWER([dbo].ToProperCase([SysproCompanyA].[dbo].[BomEmployee].[Name])) = LOWER(([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name]))
 ORDER BY
 	[Email]
 
 	
-SELECT [Name] FROM [SysproCompanyA].[dbo].[BomEmployee] ORDER BY [Name]
-SELECT [Name] FROM [SysproCompanyA].[dbo].[ClkEmployee] ORDER BY [Name]
+SELECT DISTINCT [Employee], [Name] FROM [SysproCompanyA].[dbo].[BomEmployee]
+UNION 
+SELECT DISTINCT [Employee], [Name] FROM [SysproCompanyA].[dbo].[ClkEmployee] ORDER BY [Name]
 
 
 

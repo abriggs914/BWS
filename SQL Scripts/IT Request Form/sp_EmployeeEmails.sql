@@ -47,6 +47,7 @@ BEGIN
 		[dbo].ToProperCase([SysproCompanyA].[dbo].[BomEmployee].[Name]) = ([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])
 	WHERE
 		([Emp#] IS NOT NULL AND [Emp#] <> '') OR ([@SRC].[1st Name] + ' ' + [@SRC].[2nd Name] IS NOT NULL AND [@SRC].[1st Name] + ' ' + [@SRC].[2nd Name] <> '') OR ([Email] IS NOT NULL AND [Email] <> '')
+		AND [Email] IS NOT NULL AND LTRIM(RTRIM([Email])) != '' AND LEN(LTRIM(RTRIM([Email]))) > 3 
 	ORDER BY
-		(CASE WHEN [@SRC].[1st Name] + ' ' + [@SRC].[2nd Name] IS NULL THEN 1 ELSE 0 END)
+		(CASE WHEN [@SRC].[1st Name] + ' ' + [@SRC].[2nd Name] IS NULL THEN 1 ELSE 0 END), [@SRC].[1st Name] + ' ' + [@SRC].[2nd Name]
 END
