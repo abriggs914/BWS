@@ -29,7 +29,7 @@ WHERE
 
 SELECT * FROM @SRC
 
-SELECT
+SELECT DISTINCT
 	(CASE WHEN [Emp#] IS NULL THEN (CASE WHEN [T1].[Employee] IS NULL THEN RIGHT([T2].[Employee], 3) ELSE RIGHT([T1].[Employee], 3) END) ELSE [Emp#] END) AS [Emp#],
 	[NameFromSyspro],
 	[1st Name],
@@ -156,6 +156,8 @@ LEFT JOIN (
 	) AS [T2]
 ON
 	LOWER([T2].[Name]) COLLATE DATABASE_DEFAULT = LOWER(([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])) COLLATE DATABASE_DEFAULT OR LOWER([T2].[Name]) COLLATE DATABASE_DEFAULT = LOWER(([@SRC].[2nd Name] + ' ' + [@SRC].[1st Name])) COLLATE DATABASE_DEFAULT OR LOWER([T2].[Name]) COLLATE DATABASE_DEFAULT = LOWER(([@SRC].[2nd Name] + ',' + [@SRC].[1st Name])) COLLATE DATABASE_DEFAULT
+WHERE
+	1 = (CASE WHEN LOWER(([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])) IS NULL THEN 1 ELSE (CASE WHEN LOWER(([@SRC].[2nd Name] + ', ' + [@SRC].[1st Name])) COLLATE DATABASE_DEFAULT = LOWER([T1].[Name]) COLLATE DATABASE_DEFAULT THEN 1 ELSE 0 END) END)
 ORDER BY
 	[1st Name], [2nd Name]--[Email]
 
