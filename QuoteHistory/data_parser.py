@@ -770,9 +770,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2021-12-24",
 		"2021-12-27",
 		"2021-12-28",
-		"2021-12-29",
-		"2021-12-30",
-		"2021-12-31"
+		"2021-12-29"
 	]
 	a = work_weeks(day_one, holidays)
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
