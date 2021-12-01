@@ -34,18 +34,57 @@ END
 
 SELECT 
 	1 AS ph,
+
+	MIN([SRC].UnassignedID) AS UnassignedID,
+	COALESCE(@var, [SRC].StatusUnassigned) AS StatusUnassigned,
+	COALESCE(@var, [SRC].Unassigned) AS Unassigned,
+
 	MIN([SRC].AssignedJamesID) AS AssignedJamesID,
 	COALESCE(@var, [SRC].StatusJames) AS StatusJames,
 	COALESCE(@var, [SRC].AssignedJames) AS AssignedJames,
+
 	MIN([SRC].AssignedJamieID) AS AssignedJamieID,
 	COALESCE(@var, [SRC].StatusJamie) AS StatusJamie,
 	COALESCE(@var, [SRC].AssignedJamie) AS AssignedJamie,
+
 	MIN([SRC].AssignedAveryID) AS AssignedAveryID,
 	COALESCE(@var, [SRC].StatusAvery) AS StatusAvery,
 	COALESCE(@var, [SRC].AssignedAvery) AS AssignedAvery
 FROM (
 	SELECT
 		1 AS [ph],
+
+		[ITRequestID#] AS UnassignedID,
+		[Status] AS StatusUnassigned,
+		[Directory] AS Unassigned,
+
+		0 AS AssignedJamesID,
+		NULL AS StatusJames,
+		NULL AS AssignedJames,
+
+		0 AS AssignedJamieID,
+		NULL AS StatusJamie,
+		NULL AS AssignedJamie,
+
+		0 AS AssignedAveryID,
+		NULL AS StatusAvery,
+		NULL AS AssignedAvery
+	FROM 
+		[IT Requests]
+	LEFT JOIN 
+		[IT Personnel]
+	ON
+		[IT Requests].[ITPersonAssignedID] = [IT Personnel].[ITPersonID#]
+	WHERE
+		([IT Personnel].[ITPersonID#] < 2 OR [IT Personnel].[ITPersonID#] IS NULL OR [IT Requests].[ITPersonAssignedID] IS NULL) AND
+		[Status] IN (SELECT [val] FROM @valid) AND [Directory] IS NOT NULL
+UNION
+	SELECT
+		1 AS [ph],
+
+		0 AS UnassignedID,
+		NULL AS StatusUnassigned,
+		NULL AS Unassigned,
 
 		[ITRequestID#] AS AssignedJamesID,
 		[Status] AS StatusJames,
@@ -71,6 +110,10 @@ UNION
 	SELECT
 		1 AS [ph],
 
+		0 AS UnassignedID,
+		NULL AS StatusUnassigned,
+		NULL AS Unassigned,
+
 		0 AS AssignedJamesID,
 		NULL AS AssignedJames,
 		NULL AS StatusJames,
@@ -94,6 +137,10 @@ UNION
 	SELECT
 		1 AS [ph],
 
+		0 AS UnassignedID,
+		NULL AS StatusUnassigned,
+		NULL AS Unassigned,
+
 		0 AS AssignedJamesID, 
 		NULL AS StatusJames,
 		NULL AS AssignedJames,
@@ -115,6 +162,6 @@ UNION
 	WHERE
 		[IT Personnel].[ITPersonID#] = 4 AND [Status] IN (SELECT [val] FROM @valid) AND [Directory] IS NOT NULL
 )  AS SRC
-GROUP BY [ph], [AssignedJames], [AssignedJamie], [AssignedAvery], [StatusJames], [StatusJamie], [StatusAvery];
+GROUP BY [ph], [AssignedJames], [AssignedJamie], [AssignedAvery], [Unassigned], [StatusJames], [StatusJamie], [StatusAvery], [StatusUnassigned];
 
 SELECT * FROM [IT Requests]
