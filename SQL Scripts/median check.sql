@@ -73,5 +73,5 @@ END
 SELECT * FROM @T;
 SELECT * FROM @years
 SELECT @c1 AS [C1], @c2 AS [C2]
-SELECT [Year], ([A] + [B]) / 2 AS [MedianC] FROM @medians
+SELECT *, ([A] + [B]) / 2 AS [MedianC] FROM @medians
 
