@@ -1,0 +1,36 @@
+
+
+DECLARE @T1 AS TABLE ([ID] INT IDENTITY(1,1), [Val] FLOAT, [Date] DATETIME);
+
+INSERT INTO @T1 ([Val], [Date]) VALUES 
+(6.4, '2021-12-06'),
+(3.1, '2021-09-13'),
+(9.6, '2021-10-06'),
+(8.8, '2021-11-06'),
+(4.5, '2021-01-06')
+;
+
+DECLARE @T2 AS TABLE ([ID] INT IDENTITY(1,1), [Val] FLOAT);
+
+INSERT INTO @T2 ([Val]) VALUES 
+	(NULL)
+;
+
+SELECT * FROM @T1, @T2
+
+SELECT 
+	*
+FROM
+	@T1
+LEFT JOIN
+	@T2
+ON 
+	1=1
+
+
+SELECT TOP 1
+	[Val]
+FROM
+	@T1
+GROUP BY
+	YEAR([Date])
