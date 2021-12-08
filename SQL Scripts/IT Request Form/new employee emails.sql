@@ -7,6 +7,11 @@ SELECT DISTINCT [Name], [Location], [Email] FROM [Sysprodb].[dbo].[AdmOperator] 
 SELECT DISTINCT * FROM [Sysprodb].[dbo].[AdmOperator] WHERE [Email] IS NOT NULL AND [Email] <> ''
 SELECT DISTINCT [dbo].[ToProperCase]([Name]) FROM [Sysprodb].[dbo].[AdmOperator]
 
+DECLARE @ValidStatus TABLE ([Code] NVARCHAR(MAX));
+INSERT INTO @ValidStatus
+SELECT [Status Code] FROM [Status] WHERE [Status Code] NOT IN (('L'), ('LD'), ('Q'), ('T'), ('EFR'))
+
+
 SELECT
 	[Company],
 	[2nd Name],
@@ -25,7 +30,6 @@ FROM (
 				[2nd Name],
 				[1st Name],
 				[NameConcat],
-				[Dept],
 				[C]
 			ORDER BY
 				[Date Hired] DESC
@@ -50,6 +54,8 @@ FROM (
 			[dbo].[ToProperCase]([1st Name] + ' ' + [2nd Name]) AS [C]
 		FROM 
 			[Employees]
+		WHERE
+			[Status] NOT IN (SELECT [Code] FROM @ValidStatus)
 		GROUP BY
 			[2nd Name],
 			[1st Name], 
@@ -67,6 +73,8 @@ FROM (
 				[dbo].[ToProperCase]([1st Name] + ' ' + [2nd Name]) AS [C]
 			FROM 
 				[Employees - Salary]
+			WHERE
+				[Status] NOT IN (SELECT [Code] FROM @ValidStatus)
 			GROUP BY
 				[2nd Name],
 				[1st Name], 
@@ -84,6 +92,8 @@ FROM (
 				[dbo].[ToProperCase]([1st Name] + ' ' + [2nd Name]) AS [C]
 			FROM 
 				[Stargatedb].[dbo].[Employees]
+			WHERE
+				[Status] NOT IN (SELECT [Code] FROM @ValidStatus)
 			GROUP BY
 				[2nd Name],
 				[1st Name], 
@@ -101,6 +111,8 @@ FROM (
 				[dbo].[ToProperCase]([1st Name] + ' ' + [2nd Name]) AS [C]
 			FROM 
 				[Stargatedb].[dbo].[Employees - Salary]
+			WHERE
+				[Status] NOT IN (SELECT [Code] FROM @ValidStatus)
 			GROUP BY
 				[2nd Name],
 				[1st Name], 
@@ -131,6 +143,20 @@ GROUP BY
 	[Dept],
 	[C],
 	[Email]
+UNION
+	(SELECT 
+		'Syspro' AS [Company],
+		'2nd Name' AS [2nd Name],
+		'1st Name' AS [1st Name],
+		[Name],
+		0 AS [Dept],
+		0 AS [Emp#],
+		'C' AS C,
+		'2021-12-08' AS [DateHired],
+		[Email]
+	FROM [Sysprodb].[dbo].[AdmOperator]
+	WHERE [Email] IS NOT NULL AND LTRIM(RTRIM([Email])) <> ''
+	)
 ORDER BY
 	[Company],
 	[2nd Name],
