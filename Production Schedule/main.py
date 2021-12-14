@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # w = 700
     # h = 500
     # Inclusive start and end dates
-    start_date = dt.datetime(2021, 2, 8)
+    start_date = dt.datetime(2021, 11, 15)
     end_date = dt.datetime(2021, 12, 13)
     lines = [
         "GNK1",
