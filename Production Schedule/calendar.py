@@ -2,6 +2,7 @@ import easygui
 import tkinter
 from utility import *
 from colour_utility import *
+import mouse
 
 
 class CalendarTile:
@@ -20,32 +21,42 @@ class CalendarTile:
         assert isinstance(self.rect, Rect2)
 
         self.rect = self.rect.translated((col * self.rect.width), (row * self.rect.height))
-        self.rect = (self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width, self.rect.bottom - self.border_width)
+        self.rect = (
+        self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width,
+        self.rect.bottom - self.border_width)
 
     def __copy__(self):
-        return CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour, self.text)
+        return CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
+                            self.text)
 
     def __repr__(self):
-        return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line, self.date)
+        return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
+                                                                       self.date)
 
 
 class Calendar:
 
     def __init__(self, canvas, w, h, start_date, end_date, lines):
-        assert isinstance(start_date, dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(start_date)
-        assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(end_date)
-        assert isinstance(start_date, dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(start_date)
+        assert isinstance(start_date,
+                          dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+            start_date)
+        assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(
+            end_date)
+        assert isinstance(start_date,
+                          dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+            start_date)
         assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
 
         self.width = w
         self.height = h
         self.canvas = canvas
         self.lines = lines
+        self.switch_use_hover = True
         self.border_width = 3
         self.readable_width = 100
         self.readable_height = 75
-        self.readable_width = 185
-        self.readable_height = 175
+        self.readable_width = 250
+        self.readable_height = 250
 
         # Capping max days at 60
         date_diff = (end_date - start_date).days
@@ -54,11 +65,13 @@ class Calendar:
         date_diff = int(ceil((end_date - start_date).days))
         self.rows = len(self.lines)
         self.cols = date_diff
-        self.dates = [start_date + dt.timedelta(days=1+i) for i in range(date_diff)]
+        self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
 
         # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
-        self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)), (h - self.border_width) / max(1, len(self.lines)))
-        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+        self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
+                               (h - self.border_width) / max(1, len(self.lines)))
+        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+                               j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
 
         print("{}\n{}".format(len(self.tiles), self.tiles))
@@ -66,8 +79,12 @@ class Calendar:
         self.dragging = None
         self.selected = None
         self.hovered = None
+        self.hover_select = None
         self.draw_canvas()
         self.bind_canvas()
+
+    def set_user_hover_mode(self, use_hover):
+        self.switch_use_hover = use_hover
 
     def bind_canvas(self):
         self.canvas.bind("<Motion>", self.hovering)
@@ -82,24 +99,29 @@ class Calendar:
         self.canvas.unbind("<B1-Motion>")
 
     def leaving(self, *args):
-        self.tiles = [tile.__copy__() for tile in self.og_tiles]
-        self.entering = False
+        # self.tiles = [tile.__copy__() for tile in self.og_tiles]
+        for i, tile in enumerate(self.og_tiles):
+            self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
+        self.hovered = None
         self.draw_canvas()
 
     def hover_entering(self, *args):
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
-        self.hovered = self.r_c_to_i(self.x_y_to_r_c(mouse_x, mouse_y))
+        self.hovered = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
 
     def hovering(self, *args):
-        print("hovering")
+        if not self.switch_use_hover:
+            return
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         r, c = self.x_y_to_r_c(mouse_x, mouse_y)
         tw = self.tile_rect.width
         th = self.tile_rect.height
-        ntw = (self.width - (self.readable_width - tw)) / max(1, self.cols)
-        nth = (self.height - (self.readable_height - th)) / max(1, self.rows)
+        rw = max(tw, self.readable_width)
+        rh = max(th, self.readable_height)
+        ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
+        nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
         if self.hovered != self.r_c_to_i(r, c):
             for i, row in enumerate(range(self.rows)):
                 for j, col in enumerate(range(self.cols)):
@@ -107,16 +129,17 @@ class Calendar:
                     x1, y1, x2, y2 = self.tiles[idx].rect
                     bw = self.tiles[idx].border_width
                     nx1 = j * ntw
-                    nx1 += self.readable_width - ntw if j > c else 0
-                    nx2 = nx1 + (self.readable_width if j == c else ntw)
+                    nx1 += rw - ntw if j > c else 0
+                    nx2 = nx1 + (rw if j == c else ntw)
                     ny1 = i * nth
-                    ny1 += self.readable_height - nth if i > r else 0
-                    ny2 = ny1 + (self.readable_height if i == r else nth)
+                    ny1 += rh - nth if i > r else 0
+                    ny2 = ny1 + (rh if i == r else nth)
                     if nx1 == 0:
                         nx1 = bw
                     if ny1 == 0:
                         ny1 = bw
                     self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
+            self.hovered = self.r_c_to_i(r, c)
         # for i, tile in enumerate(self.tiles):
         #     tr, tc = self.i_to_r_c(i)
         #     x1, y1, x2, y2 = self.tiles[i].rect
@@ -154,10 +177,10 @@ class Calendar:
         #                     # self.tiles[i].rect = (x1 - (max(0, tc - 1) * d_width) + self.readable_width, y1, (x1 - (max(0, tc - 1) * d_width) + n_width + self.readable_width), y2)
         #                     self.tiles[i].rect = (x1 + sd_width, y1, (x1 + sd_width + n_width), y2)
 
-            # if not handled:
-            #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
+        # if not handled:
+        #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
 
-        self.draw_canvas()
+            self.draw_canvas()
 
     def hovering_old(self, *args):
         print("hovering")
@@ -182,7 +205,7 @@ class Calendar:
                     if tc == c:
                         hw = self.readable_width / 2
                         # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
-                        self.tiles[i].rect = (x1 - (2*hw), y1, x1 + (2*hw), y2)
+                        self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
                         # handled = True
                     else:
                         # t_width = self.width / max(1, self.cols)
@@ -190,7 +213,8 @@ class Calendar:
                         n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
                         d_width = t_width - n_width
                         sd_width = tc * d_width
-                        print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:", t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc,  "sd_width:", sd_width)
+                        print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:",
+                              t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
                         # s_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
                         # p_width = (x2 - x1) / s_width
                         # self.tiles[i].rect = (x1 + (self.readable_height - (x2 - x1)), y1, x1 + s_width, y2)
@@ -215,19 +239,22 @@ class Calendar:
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num == self.dragging:
+                if tile_num == self.dragging or tile_num == self.selected or tile_num == self.hover_select:
                     outline = WHITE
                 else:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num == self.dragging:
+                if tile_num == self.dragging or tile_num == self.selected or tile_num == self.hover_select:
                     outline = GRAY_15
                 else:
                     outline = bgc
             tile_num = tile.text if tile.text is not None else tile_num
-            self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline), width=self.border_width)
-            self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2), tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc), font="Times 12 italic bold", text=str(tile_num))
+            self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
+                                         width=self.border_width)
+            self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                    tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                    font="Times 12 italic bold", text=str(tile_num))
 
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
@@ -236,11 +263,19 @@ class Calendar:
         return (i // self.cols), (i % self.cols)
 
     def x_y_to_r_c(self, x, y):
-        tw = self.tile_rect.width
-        th = self.tile_rect.height
-        r = int(y // th)
-        c = int(x // tw)
-        return r, c
+        # tw = self.tile_rect.width
+        # th = self.tile_rect.height
+        # r = int(y // th)
+        # c = int(x // tw)
+        # return r, c
+        for i, tile in enumerate(self.tiles):
+            x1, y1, x2, y2 = tile.rect
+            r, c = self.i_to_r_c(i)
+            bw = tile.border_width
+            if x1 - (2 * bw) <= x <= x2 + (2 * bw) and y1 - (2 * bw) <= y <= y2 + (2 * bw):
+                return r, c
+
+        print("Could not map x and y: ({}, {})".format(x, y))
 
     def release_drag(self, *args):
         self.dragging = None
@@ -279,10 +314,13 @@ class Calendar:
                     self.dragging = self.r_c_to_i(tile.row, tile.col)
                 elif hover_tile != self.dragging:
                     print("Swapping self.dragging: {} with hovering tile: {}".format(self.dragging, hover_tile))
+                    self.hover_select = hover_tile
                     self.unbind_canvas()
+                    self.draw_canvas()
                     self.swap_tiles(self.dragging, hover_tile)
                     self.dragging = None
                     self.selected = None
+                    self.hover_select = None
                     self.draw_canvas()
                     self.bind_canvas()
             i += 1
@@ -290,7 +328,8 @@ class Calendar:
             # print("type(drag_event):", type(drag_event))
 
     def swap_tiles(self, dragging_tile, hover_tile):
-        ans = easygui.ynbox(msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile), title="Swap Confirm", default_choice="No",)
+        ans = easygui.ynbox(msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile),
+                            title="Swap Confirm", default_choice="No", )
         print("ans:", ans)
         if not ans:
             print("Swap declined")

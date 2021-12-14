@@ -3,13 +3,16 @@ import tkinter
 
 
 if __name__ == '__main__':
+
+
+
     print('PyCharm')
 
     # w = 700
     # h = 500
     # Inclusive start and end dates
-    start_date = dt.datetime(2021, 11, 15)
-    end_date = dt.datetime(2021, 12, 13)
+    start_date = dt.datetime(2021, 11, 24)
+    end_date = dt.datetime(2021, 12, 14)
     lines = [
         "GNK1",
         "GNK2",
@@ -34,6 +37,7 @@ if __name__ == '__main__':
         "T10",
         "T11"
     ]
+    switch_calendar_use_hover = True
 
     print("I should see {} rows by {} cols".format(len(lines), (end_date - start_date).days))
 
@@ -43,14 +47,26 @@ if __name__ == '__main__':
     window.geometry("{}x{}".format(win_w, win_h))
     window.title("Production Schedule")
 
-    calendar_frame = tkinter.Frame(window)
-    canvas = tkinter.Canvas(calendar_frame, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+    frame_calendar = tkinter.Frame(window)
+    canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
     print("GEOMETRY:", canvas.winfo_geometry())
     c = Calendar(canvas, can_w, can_h, start_date, end_date, lines)
 
     label_title = tkinter.Label(window, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date, "%Y-%m-%d"), dt.datetime.strftime(end_date, "%Y-%m-%d")))
 
+    def switch_calendar_use_hover_gsm(*args):
+        global switch_calendar_use_hover
+        switch_calendar_use_hover = not switch_calendar_use_hover
+        c.set_user_hover_mode(switch_calendar_use_hover)
+        print("USING HOVER: <{}>".format(switch_calendar_use_hover))
+
+    frame_calendar_control = tkinter.Frame(window)
+    btn_calendar_use_hover = tkinter.Button(frame_calendar_control, text="Use Hover", command=switch_calendar_use_hover_gsm)
+
+    btn_calendar_use_hover.pack()
+
     label_title.pack()
     canvas.pack()
-    calendar_frame.pack()
+    frame_calendar_control.pack()
+    frame_calendar.pack()
     window.mainloop()
