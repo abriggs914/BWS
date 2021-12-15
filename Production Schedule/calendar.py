@@ -108,23 +108,30 @@ class Calendar:
         self.draw_canvas()
 
     def hover_entering(self, *args):
-        event = args[0]
-        mouse_x, mouse_y = event.x, event.y
-        self.hovered = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
+        pass
+        # event = args[0]
+        # mouse_x, mouse_y = event.x, event.y
+        # self.hovered = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
+        # print("entering:", self.hovered)
+        # self.draw_canvas()
 
     def hovering(self, *args):
         if not self.switch_use_hover:
             return
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
-        r, c = self.x_y_to_r_c(mouse_x, mouse_y)
+        rc = self.x_y_to_r_c(mouse_x, mouse_y)
+        if rc is None:
+            print("rc is None")
+            return
+        r, c = rc
         tw = self.tile_rect.width
         th = self.tile_rect.height
         rw = max(tw, self.readable_width)
         rh = max(th, self.readable_height)
         ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
         nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
-        if self.hovered != self.r_c_to_i(r, c):
+        if self.hovered != self.r_c_to_i(r, c) or self.hovered is None:
             for i, row in enumerate(range(self.rows)):
                 for j, col in enumerate(range(self.cols)):
                     idx = self.r_c_to_i(row, col)
@@ -241,13 +248,13 @@ class Calendar:
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num == self.dragging or tile_num == self.selected or tile_num == self.hover_select:
+                if tile_num in [self.dragging, self.selected, self.hover_select]:
                     outline = WHITE
                 else:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num == self.dragging or tile_num == self.selected or tile_num == self.hover_select:
+                if tile_num in [self.dragging, self.selected, self.hover_select]:
                     outline = GRAY_15
                 else:
                     outline = bgc
@@ -290,8 +297,10 @@ class Calendar:
             print("self.selected is not None")
             if self.selected != new_select:
                 print("self.selected {}, new_select: {}".format(self.selected, new_select))
+                self.hover_select = new_select
+                self.draw_canvas()
                 self.swap_tiles(self.selected, new_select)
-                self.selected = None
+                self.hover_select = None
             self.selected = None
             self.draw_canvas()
             return
