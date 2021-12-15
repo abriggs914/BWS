@@ -2,7 +2,7 @@ import easygui
 import tkinter
 from utility import *
 from colour_utility import *
-import mouse
+# import mouse
 
 
 class CalendarTile:
@@ -70,7 +70,9 @@ class Calendar:
         # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
         self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
                                (h - self.border_width) / max(1, len(self.lines)))
-        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+        # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+        #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17) for
                                j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
 
