@@ -8,8 +8,8 @@ import os
 
 """
 	General Utility Functions
-	Version..............1.31
-	Date...........2021-12-01
+	Version..............1.32
+	Date...........2021-12-16
 	Author.......Avery Briggs
 """
 
@@ -364,7 +364,7 @@ def show(arr):
 
 
 def add_business_days(d, bd, holidays=None):
-    if holidays == None:
+    if holidays is None:
         holidays = []
     i = 0
     t = dt.datetime(d.year, d.month, d.day)
@@ -379,7 +379,7 @@ def add_business_days(d, bd, holidays=None):
 
 def business_days_between(d1, d2, holidays=None):
     business_days = 0
-    if holidays == None:
+    if holidays is None:
         holidays = []
     date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
     date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
@@ -1474,44 +1474,44 @@ def next_available_file_name(path):
         path = ".".join(spl[:-1]) + " ({}).".format(counter) + spl[-1]
     path.replace("/", "\\")
     return path
-	
+
 
 # leap year calculation: https://www.timeanddate.com/date/leapyear.html
 def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
-	start_year, end_year = minmax(start_year, end_year)
-	start_year = clamp(1, start_year, end_year)
-	end_year = clamp(start_year + 1, end_year + 1, 10000)
-		
-	r_y = list(range(start_year, end_year))
-	r_m = list(range(1, 13))
-	r_d = list(range(1, 32))
-	r_dsm = list(range(1, 31))
-	r_df = list(range(1, 29))
-	r_dfl = list(range(1, 30))
-	r_sm = [2, 4, 6, 9, 11]
-	y = choice(r_y)
-	m = choice(r_m)
-	if start_m in r_m:
-		m = start_m
-	if m in r_sm:
-		d = choice(r_dsm)
-		if start_d in r_dsm:
-			d = start_d
-	else:
-		d = choice(r_d)
-		if start_d in r_d:
-			d = start_d
-		
-	if m == 2:
-		d = choice(r_df)
-		if start_d in r_df:
-			d = start_d
-		if y % 4 == 0 and (y % 100 != 0 or y % 400 == 0):
-			d = choice(r_dfl)
-			if start_d in r_dfl:
-				d = start_d
-			
-	return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
+    start_year, end_year = minmax(start_year, end_year)
+    start_year = clamp(1, start_year, end_year)
+    end_year = clamp(start_year + 1, end_year + 1, 10000)
+
+    r_y = list(range(start_year, end_year))
+    r_m = list(range(1, 13))
+    r_d = list(range(1, 32))
+    r_dsm = list(range(1, 31))
+    r_df = list(range(1, 29))
+    r_dfl = list(range(1, 30))
+    r_sm = [2, 4, 6, 9, 11]
+    y = choice(r_y)
+    m = choice(r_m)
+    if start_m in r_m:
+        m = start_m
+    if m in r_sm:
+        d = choice(r_dsm)
+        if start_d in r_dsm:
+            d = start_d
+    else:
+        d = choice(r_d)
+        if start_d in r_d:
+            d = start_d
+
+    if m == 2:
+        d = choice(r_df)
+        if start_d in r_df:
+            d = start_d
+        if y % 4 == 0 and (y % 100 != 0 or y % 400 == 0):
+            d = choice(r_dfl)
+            if start_d in r_dfl:
+                d = start_d
+
+    return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "

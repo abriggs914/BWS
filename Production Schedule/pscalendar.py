@@ -1,7 +1,8 @@
+import math
+
 import easygui
 import tkinter
-from utility import *
-from colour_utility import *
+from pdf_writer import *
 # import mouse
 
 
@@ -29,14 +30,15 @@ class CalendarTile:
         return CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
                             self.text)
 
-    def __repr__(self):
-        return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
-                                                                       self.date)
+    def __repr__(self):\
+        # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
+        #                                                                self.date)
+        return "date: {}, line: {}".format(self.date, self.line)
 
 
-class Calendar:
+class PSCalendar:
 
-    def __init__(self, canvas, w, h, start_date, end_date, lines):
+    def __init__(self, canvas, w, h, start_date, end_date, data, lines, dates):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -47,6 +49,8 @@ class Calendar:
             start_date)
         assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
 
+        self.start_date = start_date
+        self.end_date = end_date
         self.width = w
         self.height = h
         self.canvas = canvas
@@ -57,23 +61,59 @@ class Calendar:
         self.readable_height = 75
         self.readable_width = 250
         self.readable_height = 250
+        self.hiding_non_selected_tiles = True
+        self.export_pdf_mode = "TABLOID"
 
-        # Capping max days at 60
-        date_diff = (end_date - start_date).days
-        if date_diff > 60:
-            end_date = start_date + dt.timedelta(days=60)
-        date_diff = int(ceil((end_date - start_date).days))
-        self.rows = len(self.lines)
-        self.cols = date_diff
-        self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
+        # # Capping max days at 60
+        # # TODO this needs to omit non-production days (weekends)
+        # date_diff = (end_date - start_date).days
+        # if date_diff > 60:
+        #     end_date = start_date + dt.timedelta(days=60)
+        # date_diff = int(ceil((end_date - start_date).days))
+        # self.rows = len(self.lines)
+        # self.cols = date_diff
+        # self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
+        self.rows = len(lines)
+        self.cols = len(dates)
+        self.dates = dates
 
         # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
         self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
                                (h - self.border_width) / max(1, len(self.lines)))
         # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
         #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
-        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17) for
+        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17, text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for
                                j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+
+        for i, tile in enumerate(self.tiles):
+            idxrc = (i // self.rows), (i % self.rows)
+            print("idxrc:", idxrc)
+            idx = (idxrc[1] * self.rows) + idxrc[0] #          self.r_c_to_i(idxrc[1], idxrc[0])
+            # idxrc = i // self.rows , (i % self.cols)
+            # idx = (self.cols * (i // self.rows)) + (i % self.cols)
+            idx = i
+            print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+            data_row = data.iloc[idx:idx+1, :]
+            if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
+                # print("data_row:", data_row)
+                if math.isnan(data_row['WO#'].tolist()[0]):
+                    continue
+                wo = int(data_row['WO#'].tolist()[0])
+                model_name = data_row['InputField1'].tolist()[0]
+                dealer = data_row['InputField2'].tolist()[0]
+                status = data_row["Stock/Sold"].tolist()[0]
+                beam = data_row["Beam WO#"].tolist()[0]
+                job_start = data_row["JobStartDate"].tolist()[0]
+                self.tiles[i].text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+
+        # self.tiles = [CalendarTile(self.tile_rect, self.border_width, 0, i, "Dates", date, BLACK, text=date.strftime("%Y-%m-%d")) for i, date in enumerate(self.dates)] + self.tiles
+        # self.rows += 1
+        # tiles = []
+        # for i, tile in range(len(self.rows):
+        #
+        #
+        # self.cols += 1
+
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
 
         print("{}\n{}".format(len(self.tiles), self.tiles))
@@ -82,8 +122,130 @@ class Calendar:
         self.selected = None
         self.hovered = None
         self.hover_select = None
+        self.current_hover = None
         self.draw_canvas()
         self.bind_canvas()
+
+    # def __init__(self, canvas, w, h, start_date, end_date, data, lines, dates):
+    #     assert isinstance(start_date,
+    #                       dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+    #         start_date)
+    #     assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(
+    #         end_date)
+    #     assert isinstance(start_date,
+    #                       dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+    #         start_date)
+    #     assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
+    #
+    #     lines = ["NONE"] + lines
+    #     dates = ["NONE"] + dates
+    #
+    #     self.start_date = start_date
+    #     self.end_date = end_date
+    #     self.width = w
+    #     self.height = h
+    #     self.canvas = canvas
+    #     self.lines = lines
+    #     self.switch_use_hover = True
+    #     self.border_width = 3
+    #     self.readable_width = 100
+    #     self.readable_height = 75
+    #     self.readable_width = 250
+    #     self.readable_height = 250
+    #     self.hiding_non_selected_tiles = True
+    #     self.export_pdf_mode = "TABLOID"
+    #
+    #     # # Capping max days at 60
+    #     # # TODO this needs to omit non-production days (weekends)
+    #     # date_diff = (end_date - start_date).days
+    #     # if date_diff > 60:
+    #     #     end_date = start_date + dt.timedelta(days=60)
+    #     # date_diff = int(ceil((end_date - start_date).days))
+    #     # self.rows = len(self.lines)
+    #     # self.cols = date_diff
+    #     # self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
+    #     self.rows = len(lines)
+    #     self.cols = len(dates)
+    #     self.dates = dates
+    #
+    #     # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
+    #     self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
+    #                            (h - self.border_width) / max(1, len(self.lines)))
+    #     # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+    #     #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+    #     self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17 if i != 0 and j != 0 else BLACK,
+    #                                         text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d") if isinstance(date, datetime.datetime) else date)) for
+    #                            j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+    #
+    #     for i, tile in enumerate(self.tiles):
+    #         idxrc = (i // self.rows), (i % self.rows)
+    #         print("idxrc:", idxrc)
+    #         idx = (idxrc[1] * self.rows) + idxrc[0]  # self.r_c_to_i(idxrc[1], idxrc[0])
+    #         # idxrc = i // self.rows , (i % self.cols)
+    #         # idx = (self.cols * (i // self.rows)) + (i % self.cols)
+    #         idx = i
+    #         print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+    #         data_row = data.iloc[idx:idx + 1, :]
+    #         if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
+    #             # print("data_row:", data_row)
+    #             # if idxrc[0] == 0 or idxrc[1] == 0:
+    #             if i < self.cols or i % self.cols == 0:
+    #                 continue
+    #             if not data_row['WO#'].tolist():
+    #                 continue
+    #             if math.isnan(data_row['WO#'].tolist()[0]):
+    #                 continue
+    #             wo = int(data_row['WO#'].tolist()[0])
+    #             model_name = data_row['InputField1'].tolist()[0]
+    #             dealer = data_row['InputField2'].tolist()[0]
+    #             status = data_row["Stock/Sold"].tolist()[0]
+    #             beam = data_row["Beam WO#"].tolist()[0]
+    #             job_start = data_row["JobStartDate"].tolist()[0]
+    #             self.tiles[i].text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+    #
+    #     # self.tiles = [CalendarTile(self.tile_rect, self.border_width, 0, i, "Dates", date, BLACK, text=date.strftime("%Y-%m-%d")) for i, date in enumerate(self.dates)] + self.tiles
+    #     # self.rows += 1
+    #     # tiles = []
+    #     # for i, tile in range(len(self.rows):
+    #     #
+    #     #
+    #     # self.cols += 1
+    #
+    #     self.og_tiles = [tile.__copy__() for tile in self.tiles]
+    #
+    #     print("{}\n{}".format(len(self.tiles), self.tiles))
+    #
+    #     self.dragging = None
+    #     self.selected = None
+    #     self.hovered = None
+    #     self.hover_select = None
+    #     self.current_hover = None
+    #     self.draw_canvas()
+    #     self.bind_canvas()
+
+    def export_to_pdf(self):
+        print("exporting...")
+        if self.export_pdf_mode == "TABLOID":
+            w_pdf = 600
+            h_pdf = 750
+            w_pdf, h_pdf = h_pdf, w_pdf
+
+        else:
+            print("Requested PDF export size not supported yet.")
+            return
+
+        # Init FPDF object
+        pdf = PDF(FILE_NAME, 'L', 'mm', (h_pdf, w_pdf))
+        pdf.set_auto_page_break(True, margin=5)
+        pdf.set_title("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")))
+        pdf.set_author('Avery Briggs')
+        pdf.add_page()
+        pdf.margin_border(BWS_RED, WHITE)
+        pdf.time_stamp()
+
+        # Save and Open
+        pdf.output(FILE_NAME, 'F')
+        pdf.open_in_browser()
 
     def set_user_hover_mode(self, use_hover):
         self.switch_use_hover = use_hover
@@ -105,13 +267,13 @@ class Calendar:
         for i, tile in enumerate(self.og_tiles):
             self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
         self.hovered = None
+        self.current_hover = None
         self.draw_canvas()
 
     def hover_entering(self, *args):
-        pass
-        # event = args[0]
-        # mouse_x, mouse_y = event.x, event.y
-        # self.hovered = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        self.current_hover = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
         # print("entering:", self.hovered)
         # self.draw_canvas()
 
@@ -125,6 +287,7 @@ class Calendar:
             print("rc is None")
             return
         r, c = rc
+        self.current_hover = self.r_c_to_i(*rc)
         tw = self.tile_rect.width
         th = self.tile_rect.height
         rw = max(tw, self.readable_width)
@@ -241,29 +404,38 @@ class Calendar:
 
     def draw_canvas(self):
         self.canvas.delete("all")
+
         for tile in self.tiles:
+            show_txt = not self.hiding_non_selected_tiles
             # print("tile.rect.tupl:", tile.rect)
             bgc = tile.colour
             r, c = tile.row, tile.col
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num in [self.dragging, self.selected, self.hover_select]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover]:
                     outline = WHITE
+                    show_txt = True
                 else:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num in [self.dragging, self.selected, self.hover_select]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover]:
                     outline = GRAY_15
+                    show_txt = True
                 else:
                     outline = bgc
-            tile_num = tile.text if tile.text is not None else tile_num
+            tile_txt = tile.text if tile.text is not None else tile_num
             self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
                                          width=self.border_width)
-            self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                    tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
-                                    font="Times 12 italic bold", text=str(tile_num))
+            if show_txt:
+                self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                        font="Times 12 italic bold", text=str(tile_txt))
+            else:
+                self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                        font="Times 12 italic bold", text=str(tile_num))
 
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
