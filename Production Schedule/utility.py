@@ -1,3 +1,4 @@
+import datetime
 from locale import currency, setlocale, LC_ALL
 from math import e, ceil, sin, cos, radians
 from random import random, choice, randint
@@ -8,8 +9,8 @@ import os
 
 """
 	General Utility Functions
-	Version..............1.32
-	Date...........2021-12-16
+	Version..............1.33
+	Date...........2021-12-17
 	Author.......Avery Briggs
 """
 
@@ -1512,6 +1513,19 @@ def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
                 d = start_d
 
     return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
+
+
+def is_date(date_in, fmt="%Y-%m-%d"):
+    if isinstance(date_in, datetime.datetime) or isinstance(date_in, datetime.date):
+        return True
+    try:
+        d = datetime.datetime.strptime(date_in, fmt)
+        return True
+    except TypeError:
+        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+    except ValueError:
+        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+    return False
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "

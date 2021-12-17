@@ -33,12 +33,12 @@ class CalendarTile:
     def __repr__(self):\
         # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
         #                                                                self.date)
-        return "date: {}, line: {}".format(self.date, self.line)
+        return "date: {}, line: {}".format(self.date.strftime("%Y-%m-%d"), self.line)
 
 
 class PSCalendar:
 
-    def __init__(self, canvas, w, h, start_date, end_date, data, lines, dates):
+    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates, border_width):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -49,20 +49,24 @@ class PSCalendar:
             start_date)
         assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
 
+        self.version_num = 1
         self.start_date = start_date
         self.end_date = end_date
         self.width = w
         self.height = h
         self.canvas = canvas
+        self.canvas_header_col = canvas_header_col
+        self.canvas_header_row = canvas_header_row
         self.lines = lines
         self.switch_use_hover = True
-        self.border_width = 3
+        self.border_width = border_width
         self.readable_width = 100
         self.readable_height = 75
         self.readable_width = 250
         self.readable_height = 250
         self.hiding_non_selected_tiles = True
         self.export_pdf_mode = "TABLOID"
+        self.pdf_min_encapsulation = True
 
         # # Capping max days at 60
         # # TODO this needs to omit non-production days (weekends)
@@ -235,16 +239,37 @@ class PSCalendar:
             return
 
         # Init FPDF object
-        pdf = PDF(FILE_NAME, 'L', 'mm', (h_pdf, w_pdf))
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        f_name = title + ".pdf"
+        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
         pdf.set_auto_page_break(True, margin=5)
-        pdf.set_title("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")))
+        pdf.set_title(title)
         pdf.set_author('Avery Briggs')
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
         pdf.time_stamp()
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+
+        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.text for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
+        print(dict_print(contents, "Contents"))
+        pdf.table(
+            "",
+            10,
+            25,
+            pdf.w - 20,
+            contents,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date",
+            cell_height=3.75,
+            cell_font=('Arial', '', 8)
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
 
         # Save and Open
-        pdf.output(FILE_NAME, 'F')
+        pdf.output(f_name, 'F')
         pdf.open_in_browser()
 
     def set_user_hover_mode(self, use_hover):
@@ -436,6 +461,92 @@ class PSCalendar:
                 self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
                                         font="Times 12 italic bold", text=str(tile_num))
+        self.redraw_legend()
+
+    def redraw_legend(self):
+        self.canvas_header_row.delete("all")
+        self.canvas_header_col.delete("all")
+
+        for i, tile in enumerate(self.tiles):
+            r, c = self.i_to_r_c(i)
+            rect = tile.rect
+            if r == 0 or c == 0:
+                tw = (rect[2] - rect[0]) + self.border_width
+                th = (rect[3] - rect[1]) + self.border_width
+                if r == 0:
+                    th = 25
+                if c == 0:
+                    tw = 60
+                if r == 0:
+                    self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                if c == 0:
+                    self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+
+
+        # th = self.tile_rect.h
+        # # cw, ch = canvas_header_col.size()
+        # cw, ch = 60, self.height
+        # tw = cw
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, line in enumerate(self.lines):
+        #     print("line:", line)
+        #     l_rect = (0, i * th, tw, (i + 1) * th)
+        #     # l_rect = l_rect[2] - l_rect[0], l_rect[3] - l_rect[1]
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2), l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_col.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=line)
+        #
+        # tw = self.tile_rect.w
+        # # cw, ch = canvas_header_row.size()
+        # cw, ch = self.width, 25
+        # th = ch
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, date in enumerate(self.dates):
+        #     print("date:", date)
+        #     l_rect = ((i * tw), 0, ((i + 1) * tw), th)
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2) + 60, l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_row.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold",
+        #                                        text=date.strftime("%Y-%m-%d"))
+        #
+        #
+
+
+
+
+
+        # self.canvas_header_row.delete("all")
+        # self.canvas_header_col.delete("all")
+        #
+        # th = self.tile_rect.h
+        # # cw, ch = canvas_header_col.size()
+        # cw, ch = 60, self.height
+        # tw = cw
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, line in enumerate(self.lines):
+        #     print("line:", line)
+        #     l_rect = (0, i * th, tw, (i + 1) * th)
+        #     # l_rect = l_rect[2] - l_rect[0], l_rect[3] - l_rect[1]
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2), l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_col.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=line)
+        #
+        # tw = self.tile_rect.w
+        # # cw, ch = canvas_header_row.size()
+        # cw, ch = self.width, 25
+        # th = ch
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, date in enumerate(self.dates):
+        #     print("date:", date)
+        #     l_rect = ((i * tw), 0, ((i + 1) * tw), th)
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2) + 60, l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_row.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold",
+        #                                   text=date.strftime("%Y-%m-%d"))
 
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c

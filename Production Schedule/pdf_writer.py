@@ -767,28 +767,22 @@ class PDF(FPDF):
                 #                           range(n_cols)]) / cell_width)
 
             trh = row_height()
-            # rh += trh - 1
-            print("rh:", rh)
-            ch = max(ch, ch * rh)
+            rh += trh - 1
+            print("trh:", trh)
+            och = ch
+            ch = max(ch, ch * (trh - 1))
 
-            cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, (
-                    (1 if i else 0) * header_height) - 5)) - (
-                         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+            # cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+            #         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
             # print("\tself.get_y():", self.get_y(), "ch:", ch, "self.h:", self.h, "(self.get_y() + ch):", (self.get_y() + ch), "(self.get_y() + ch) >= self.h:", (self.get_y() + ch) >= self.h)
             # print("\tcy:", cy, "ch:", ch, "self.h:", self.h, "(cy + ch):", (cy + ch), "(cy + ch) >= self.h:", ((cy + ch) >= self.h))
-            print("\t\t(self.get_y() + max(cell_height, header_height)):",
-                  (self.get_y() + max(cell_height, header_height)),
-                  "\n\t\tself.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:",
-                  (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height),
-                  "\n\t\t(self.get_y() + max(cell_height, header_height)) >= self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:",
-                  (self.get_y() + max(cell_height, header_height)) >= (self.h - (
-                          2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height))
+            # print("\t\t(self.get_y() + max(cell_height, header_height)):", (self.get_y() + max(cell_height, header_height)), "\n\t\tself.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height), "\n\t\t(self.get_y() + max(cell_height, header_height)) >= self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.get_y() + max(cell_height, header_height)) >= (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height))
             np = False
             if i == 0:
-                if (self.get_y() + max(cell_height, header_height)) >= self.h - (
+                if (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
                         2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
                     np = True
-            elif (self.get_y() + max(cell_height, header_height)) >= self.h - (
+            elif (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
                     2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)):
                 np = True
 
@@ -802,8 +796,11 @@ class PDF(FPDF):
                 space_used = 0
                 ocy = 0
 
-            space_used += ch
+            space_used += ch + (max(0, (trh - 2)) * och)
             j = 0
+            cy = self.get_y()  # - (max(0, trh - 2) * och)
+            wo_10015162 = False
+            m_c_y = cy
             while j in range(n_cols):
                 if start_with_header and np:
                     cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
@@ -817,19 +814,17 @@ class PDF(FPDF):
                 cw = cell_width + (line_width / 2)
                 cx = ocx + (j * cw)
                 # cy = ocy + (((i - i_off) * ch) + max(0, ((1 if i else 0) * cch) - 5)) - (pages * height)
-                cy = ocy + (((i + rh - pages) * cell_height) + (
-                        ((1 if (start_with_header and np) else 1) + off) * header_height) + max(0, (
-                        (1 if i else 0) * header_height) - 5)) - (
-                             1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+                # cy = self.get_y()#ocy + (((i + rh - pages) * cell_height) + (((1 if (start_with_header and np) else 1) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+                #   1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
                 # if rh:
                 #     cy -= cell_height
-                print(
-                    "pages: {} i: {} j: {} cx: {} cy: {}, self.get_y: {} cv: {} su: {} psu: {}".format(pages, i, j, cx,
-                                                                                                       cy,
-                                                                                                       self.get_y(),
-                                                                                                       cell_value,
-                                                                                                       space_used,
-                                                                                                       page_space_used))
+                # print(
+                #     "pages: {} i: {} j: {} cx: {} cy: {}, self.get_y: {} cv: {} su: {} psu: {}".format(pages, i, j, cx,
+                #                                                                                        cy,
+                #                                                                                        self.get_y(),
+                #                                                                                        cell_value,
+                #                                                                                        space_used,
+                #                                                                                        page_space_used))
                 # self.rect(cx, cy, cell_width, ch, 'DF')
                 # self.texts(cx + (cw / 2), cy + (ch / 2), cell_value)
                 # self.texts(cx, cy, cell_value)
@@ -846,13 +841,43 @@ class PDF(FPDF):
                         align = col_align[col_name]
 
                 self.set_xy(cx, cy)
-                self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
+                # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
+                if trh - 1:
+                    bs = "F" + ("" if not cell_border_style else "D")
+                    # old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
+                    # print("old_colo:", old_colo)
+                    # self.set_fill_color(*TURQUOISE)
+                    w_off = 1
+                    # self.rect(cx - w_off, cy, cell_width + (2 * w_off), (max(0, (trh)) * och), bs)
+                    # self.set_fill_color(*old_colo)
+                bef = self.get_y()
+                self.multi_cell(w=cell_width, h=och, txt=cell_value[:300], border=cell_border_style, align=align,
+                                fill=1)
+                aft = self.get_y()
+                m_c_y = max(m_c_y, self.get_y(), max(0, (trh if trh > 1 else 0)) * och)
                 # x, y, name, font=('Arial', '', 12), font_colour=BLACK
                 j += 1
+                print(
+                    "page: {}\n\t(i, j): ({}, {})\n\t(cx, cy): ({}, {})\n\tself.get_y: {}\n\tcv: {} su: {} psu: {}\n\t(aft, bef): ({}, {})\n\ttrh: {}\n\tm_c_y: {}".format(
+                        pages, i, j, cx,
+                        cy,
+                        self.get_y(),
+                        cell_value,
+                        space_used,
+                        page_space_used, aft, bef, trh, m_c_y))
+
+                if cell_value == "10015162":
+                    wo_10015162 = True
+
             if start_with_header and np:
                 i -= 1
                 off += 1
             i += 1
+            print("\t\tcy:", cy, "\n\t\tself.get_y()", self.get_y())
+            # self.set_y(cy + och + (max(0, (trh if trh > 1 else 0)) * och))
+            self.set_y(m_c_y)
+            # if wo_10015162:
+            #     raise ValueError("Hey ")
 
         # self.rect(x, y, w, height, 'FD')
 
