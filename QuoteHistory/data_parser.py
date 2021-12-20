@@ -57,7 +57,9 @@ us_cost = lambda x: cdn_cost(us_cdn(x))
 day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holidays
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
-def work_weeks(first_day, holidays):
+def work_weeks(first_day, public_holdays, personal_holidays):
+	holidays = public_holdays + personal_holidays
+	holidays.sort()
 		
 	today = datetime.date.today()
 	# today = datetime.date.fromisoformat("2021-07-04")
@@ -141,7 +143,8 @@ def work_weeks(first_day, holidays):
 	# when_holiday_next = None
 	# when_holiday_last = None
 	print("months: " + str(months))
-	holidays_past = 0
+	holidays_past_pu = 0
+	holidays_past_pr = 0
 	for d, holiday in zip(holidays_nums, holidays):
 		holiday = datetime.date.fromisoformat(holiday)
 		month = holiday.month
@@ -161,7 +164,10 @@ def work_weeks(first_day, holidays):
 			else:
 				if d >= (holiday - first_day).days + 1:
 					last_holiday = holiday
-					holidays_past += 1
+					if holiday.strftime("%Y-%m-%d") in public_holidays:
+						holidays_past_pu += 1
+					if holiday.strftime("%Y-%m-%d") in personal_holidays:
+						holidays_past_pr += 1
 			# else:
 				# if d 
 					
@@ -193,7 +199,8 @@ def work_weeks(first_day, holidays):
 		"Days Passed": day + 1,
 		"Days Worked": days_worked,
 		"Days Off": day + 1 - days_worked,
-		"Holidays Taken": holidays_past,
+		"Public Holidays Taken": holidays_past_pu,
+		"Personal Holidays Taken": holidays_past_pr,
 		"Percentage Time Off": str((100 * (1 + day - days_worked) / max(1, day + 1))) + " %"
 		# "Next Holiday": "In " + str(holiday_diff),
 		})
@@ -750,29 +757,36 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 	# a = [work_weeks(i, [43, 8,9,10,11,12,13,14,15,16,17]) for i in range(1, 45)]
 	# a = work_weeks(45, [43, 8,9,10,11,12,13,14,15,16,17])
 	day_one = datetime.date.fromisoformat("2021-01-04")
-	holidays = [
+	public_holidays = [
 		"2021-02-15",
-		"2021-01-01",
 		"2021-04-02",
 		"2021-05-24",
 		"2021-07-01",
-		"2021-07-02",
 		"2021-08-02",
+		"2021-09-06",
+		"2021-10-11",
+		"2021-11-11",
+		"2021-12-24",
+		"2021-12-27",
+	]
+	personal_holidays = [
+		
+		"2021-07-02",
 		"2021-08-03",
 		"2021-08-04",
 		"2021-08-05",
 		"2021-08-06",
-		"2021-09-06",
-		"2021-10-11",
 		"2021-10-29",
-		"2021-11-11",
 		"2021-12-23",
-		"2021-12-24",
-		"2021-12-27",
 		"2021-12-28",
-		"2021-12-29"
+		"2021-12-29",
+		"2021-12-30",
+		"2021-12-31"
 	]
-	a = work_weeks(day_one, holidays)
+	
+	holidays = public_holidays + personal_holidays
+	holidays.sort()
+	a = work_weeks(day_one, public_holidays, personal_holidays)
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", number=True, table_title="Weeks"))  #, sort_header=True

@@ -18,6 +18,20 @@ class CalendarTile:
         self.date = date
         self.colour = colour
         self.text = text
+        self.top_level_wo_idx = None
+
+        self.wo_num = None
+        self.model_name = None
+        self.dealer = None
+        self.status = None
+        self.beam = None
+        self.job_start = None
+
+        # if self.line[0] == "B":
+        #     # Beam Line
+        #     self.top_level_wo_idx =
+        # if self.line[:3] == "GNK":
+        #     # GNK Line
 
         assert isinstance(self.rect, Rect2)
 
@@ -26,9 +40,67 @@ class CalendarTile:
         self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width,
         self.rect.bottom - self.border_width)
 
+    def set_data(self, wo, model_name, dealer, status, beam, job_start):
+        self.wo_num = wo
+        self.model_name = model_name
+        self.dealer = dealer
+        self.status = status
+        self.beam = beam
+        self.job_start = job_start
+        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+
+    def get_data(self):
+        return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start
+
+    def is_beam(self):
+        return self.line[0] == "B"
+
+    def is_gnk(self):
+        return self.line[:3] == "GNK"
+
+    def is_top_level_wo(self):
+        return str(self.wo_num)[:4] == "1001"
+
+    def get_pdf_text(self):
+        return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(self.line, self.date)
+
+    def info_dict(self):
+        return dict(zip([
+            "row",
+            "col",
+            "line",
+            "date",
+            "colour",
+            "text",
+            "top_level_wo_idx",
+            "wo_num",
+            "model_name",
+            "dealer",
+            "status",
+            "beam",
+            "job_start"
+        ],
+        [
+            self.row,
+            self.col,
+            self.line,
+            self.date,
+            self.colour,
+            self.text,
+            self.top_level_wo_idx,
+            self.wo_num,
+            self.model_name,
+            self.dealer,
+            self.status,
+            self.beam,
+            self.job_start
+        ]))
+
     def __copy__(self):
-        return CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
+        ct = CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
                             self.text)
+        ct.set_data(*self.get_data())
+        return ct
 
     def __repr__(self):\
         # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
@@ -38,7 +110,7 @@ class CalendarTile:
 
 class PSCalendar:
 
-    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates, border_width):
+    def __init__(self, canvas, canvas_header_col, canvas_header_row, pop_up_canvas, w, h, start_date, end_date, data, lines, dates, border_width):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -57,6 +129,7 @@ class PSCalendar:
         self.canvas = canvas
         self.canvas_header_col = canvas_header_col
         self.canvas_header_row = canvas_header_row
+        self.canvas_pop_up = pop_up_canvas
         self.lines = lines
         self.switch_use_hover = True
         self.border_width = border_width
@@ -91,12 +164,12 @@ class PSCalendar:
 
         for i, tile in enumerate(self.tiles):
             idxrc = (i // self.rows), (i % self.rows)
-            print("idxrc:", idxrc)
+            # print("idxrc:", idxrc)
             idx = (idxrc[1] * self.rows) + idxrc[0] #          self.r_c_to_i(idxrc[1], idxrc[0])
             # idxrc = i // self.rows , (i % self.cols)
             # idx = (self.cols * (i // self.rows)) + (i % self.cols)
             idx = i
-            print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+            # print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
             data_row = data.iloc[idx:idx+1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
                 # print("data_row:", data_row)
@@ -108,7 +181,7 @@ class PSCalendar:
                 status = data_row["Stock/Sold"].tolist()[0]
                 beam = data_row["Beam WO#"].tolist()[0]
                 job_start = data_row["JobStartDate"].tolist()[0]
-                self.tiles[i].text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start)
 
         # self.tiles = [CalendarTile(self.tile_rect, self.border_width, 0, i, "Dates", date, BLACK, text=date.strftime("%Y-%m-%d")) for i, date in enumerate(self.dates)] + self.tiles
         # self.rows += 1
@@ -127,6 +200,7 @@ class PSCalendar:
         self.hovered = None
         self.hover_select = None
         self.current_hover = None
+        # self.showing_pop_up = False
         self.draw_canvas()
         self.bind_canvas()
 
@@ -227,10 +301,83 @@ class PSCalendar:
     #     self.draw_canvas()
     #     self.bind_canvas()
 
+    # Exports to a one-page tabloid pdf.
+    # Beware small texts
+    def export_to_pdf_full(self):
+        print("exporting...")
+        if self.export_pdf_mode == "TABLOID":
+            w_pdf = 625
+            h_pdf = 750
+            w_pdf = 500
+            h_pdf = 750
+            w_pdf = 470
+            h_pdf = 750
+            # w_pdf = 279
+            # h_pdf = 432
+            # w_pdf = 432
+            # h_pdf = 279
+
+            w_pdf = 590
+            h_pdf = 750
+            w_pdf, h_pdf = h_pdf, w_pdf
+
+        else:
+            print("Requested PDF export size not supported yet.")
+            return
+
+        # Init FPDF object
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        f_name = title + "_full.pdf"
+        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        pdf.set_auto_page_break(True, margin=5)
+        pdf.set_title(title)
+        pdf.set_author('Avery Briggs')
+        pdf.add_page()
+        pdf.margin_border(BWS_RED, WHITE)
+        pdf.time_stamp()
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+
+        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
+        print(dict_print(contents, "Contents"))
+        pdf.table(
+            "",
+            10,
+            20,
+            pdf.w - 20,
+            contents,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
+
+        # Save and Open
+        pdf.output(f_name, 'F')
+        pdf.open_in_browser()
+
+    # Exports to a two-page tabloid pdf.
+    # Splits the 11 lines into 2 pages.
     def export_to_pdf(self):
         print("exporting...")
         if self.export_pdf_mode == "TABLOID":
-            w_pdf = 600
+            w_pdf = 625
+            h_pdf = 750
+            w_pdf = 500
+            h_pdf = 750
+            w_pdf = 470
+            h_pdf = 750
+            # w_pdf = 279
+            # h_pdf = 432
+            # w_pdf = 432
+            # h_pdf = 279
+
+            w_pdf = 590
             h_pdf = 750
             w_pdf, h_pdf = h_pdf, w_pdf
 
@@ -250,20 +397,45 @@ class PSCalendar:
         pdf.time_stamp()
         pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
 
-        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.text for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
-        print(dict_print(contents, "Contents"))
+        contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[:len(self.lines)])}
+        contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[len(self.lines):])}
+        print(dict_print(contents_first, "Contents First"))
+        print(dict_print(contents_last, "Contents Last"))
+        # contents_first = contents[:len(contents) // 2]
+        # contents_last = contents[len(contents) // 2:]
         pdf.table(
             "",
             10,
-            25,
+            20,
             pdf.w - 20,
-            contents,
+            contents_first,
             header_colours=[GRAY_36, WHITE],
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
-            row_name_col_lbl="Date",
-            cell_height=3.75,
-            cell_font=('Arial', '', 8)
+            row_name_col_lbl="Date / Line",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
+        pdf.add_page()
+        pdf.table(
+            "",
+            10,
+            20,
+            pdf.w - 20,
+            contents_last,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date / Line",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # , new_page_for_table=True
             # ,
             # header_font=('Arial', 'B', 20)
         )
@@ -280,12 +452,43 @@ class PSCalendar:
         self.canvas.bind("<Leave>", self.leaving)
         self.canvas.bind("<Enter>", self.hover_entering)
         self.canvas.bind("<Button-1>", self.click_print)
+        self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
         self.canvas.bind("<B1-Motion>", self.drag_print)
         self.canvas.bind("<ButtonRelease-1>", self.release_drag)
 
     def unbind_canvas(self):
         self.canvas.unbind("<Button-1>")
         self.canvas.unbind("<B1-Motion>")
+
+    def dbl_click_tile(self, *args):
+        # if self.showing_pop_up:
+        #     self.showing_pop_up = not self.showing_pop_up
+        #     return
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        r, c = self.x_y_to_r_c(mouse_x, mouse_y)
+        i = self.r_c_to_i(r, c)
+        if i in range(len(self.tiles)):
+            # self.showing_pop_up = True
+            tile = self.tiles[i]
+            rect = tile.rect
+            tw = rect[2] - rect[0]
+            th = rect[3] - rect[1]
+            tile.colour = brighten(tile.colour, 0.25)
+            h, w = 12, 25
+            try:
+                x = int(event.x_root) + tw
+                y = int(event.y_root)
+                self.canvas_pop_up.tk_popup(event.x_root,
+                                     event.y_root)
+            finally:
+                self.canvas_pop_up.grab_release()
+            # cpu = self.canvas_pop_up
+            # cpu.delete("all")
+            # cpu.config(height=h, width=w)
+            # cpu.config(x1=30, y1=12)
+            self.draw_canvas()
+        self.selected = None
 
     def leaving(self, *args):
         # self.tiles = [tile.__copy__() for tile in self.og_tiles]
@@ -430,6 +633,11 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
+        # if self.showing_pop_up:
+        #     self.canvas_pop_up.config(state="disabled")
+        # else:
+        #     self.canvas_pop_up.config(state="normal")
+
         for tile in self.tiles:
             show_txt = not self.hiding_non_selected_tiles
             # print("tile.rect.tupl:", tile.rect)
@@ -453,11 +661,14 @@ class PSCalendar:
             tile_txt = tile.text if tile.text is not None else tile_num
             self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
                                          width=self.border_width)
+            print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
             if show_txt:
                 self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
                                         font="Times 12 italic bold", text=str(tile_txt))
             else:
+                # raise ValueError("HEY")
+                tile_num = "" if tile.wo_num is None else tile.wo_num
                 self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
                                         font="Times 12 italic bold", text=str(tile_num))
@@ -478,9 +689,11 @@ class PSCalendar:
                 if c == 0:
                     tw = 60
                 if r == 0:
-                    self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                    # self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                    self.canvas_header_row.create_text(60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
                 if c == 0:
-                    self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+                    # self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+                    self.canvas_header_col.create_text(tw / 2, rect[1] + (th / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
 
 
         # th = self.tile_rect.h
@@ -630,7 +843,19 @@ class PSCalendar:
             return
         old_tile = self.tiles[dragging_tile].text, self.tiles[dragging_tile].colour
         new_tile = self.tiles[hover_tile].text, self.tiles[hover_tile].colour
-        self.tiles[dragging_tile].text = new_tile[0] if new_tile[0] is not None else str(hover_tile)
+        # self.tiles[dragging_tile].text = new_tile[0] if new_tile[0] is not None else str(hover_tile)
+        t_data = self.tiles[dragging_tile].__copy__()
+        self.tiles[dragging_tile].set_data(*self.tiles[hover_tile].get_data())
         self.tiles[dragging_tile].colour = new_tile[1]
-        self.tiles[hover_tile].text = old_tile[0] if old_tile[0] is not None else str(dragging_tile)
+        # self.tiles[hover_tile].text = old_tile[0] if old_tile[0] is not None else str(dragging_tile)
+        self.tiles[hover_tile].set_data(*t_data.get_data())
         self.tiles[hover_tile].colour = old_tile[1]
+
+    def add_day(self, *args):
+        if args:
+            drag_event = args[0]
+            mouse_x, mouse_y = drag_event.x, drag_event.y
+            r, c = self.x_y_to_r_c(mouse_x, mouse_y)
+            print("mouseX: {}\nmouseY: {}\nr: {}\nc: {}".format(mouse_x, mouse_y, r, c))
+        else:
+            print("args:", args)

@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     def create_calendar(start_date, end_date, lines, dates, data):
         canvas.delete("all")
-        return PSCalendar(canvas, canvas_header_col, canvas_header_row, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+        return PSCalendar(canvas, canvas_header_col, canvas_header_row, canvas_pop_up, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
 
 
     # w = 700
@@ -101,7 +101,10 @@ if __name__ == '__main__':
     bw = border_width
     canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + bw, bg=rgb_to_hex(BLACK))
     canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + bw, width=60, bg=rgb_to_hex(BLACK))
+    canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     cal = create_calendar(start_date_1, end_date_1, lines, dates, data)
+    canvas_pop_up.add_command(label="Add 1 Day", command=cal.add_day)
+    canvas_pop_up.add_separator()
 
     label_title = tkinter.Label(window, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
 
@@ -137,6 +140,7 @@ if __name__ == '__main__':
     frame_calendar_search_control_b = tkinter.Frame(frame_calendar_search_entries)
     frame_calendar_search_control_c = tkinter.Frame(frame_calendar_search_control)
     btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns, text="Use Hover", command=switch_calendar_use_hover_gsm)
+    btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns, text="Export pdf (Full)", command=cal.export_to_pdf_full)
     btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns, text="Export pdf", command=cal.export_to_pdf)
 
     stringvar_calendar_search_start_date = tkinter.StringVar(value=start_date_1.strftime("%Y-%m-%d"))
@@ -167,9 +171,13 @@ if __name__ == '__main__':
     # frame_calendar_control.pack(side=tkinter.LEFT)
     frame_calendar_control.pack()
     btn_calendar_use_hover.pack()
+    btn_calendar_export_pdf_full.pack()
     btn_calendar_export_pdf.pack()
     frame_calendar_control_btns.pack(side=tkinter.LEFT)
     # frame_calendar_control_btns.pack()
     frame_calendar.pack()
     submit_calendar_search()
     window.mainloop()
+
+    # for i, t in enumerate(cal.tiles):
+    #     print(dict_print(t.info_dict(), "Tile: #{}".format(i)))
