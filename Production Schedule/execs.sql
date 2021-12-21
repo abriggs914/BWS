@@ -63,3 +63,6 @@ SELECT * FROM @T2 ORDER BY [Prod Date], [GroupID]
 SELECT * FROM @T2 ORDER BY [InputField2]
 
 SELECT * FROM @T2 WHERE [InputField1] IS NOT NULL AND [InputField2] IS NOT NULL ORDER BY [InputField2]
+
+SELECT PATINDEX('%S%', [Prod Line]) FROM @T2
+SELECT * FROM @T2 WHERE LEFT([Prod Line], 1) = 'T' AND PATINDEX('%S%', [Prod Line]) < 1

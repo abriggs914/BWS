@@ -103,8 +103,6 @@ if __name__ == '__main__':
     canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + bw, width=60, bg=rgb_to_hex(BLACK))
     canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     cal = create_calendar(start_date_1, end_date_1, lines, dates, data)
-    canvas_pop_up.add_command(label="Add 1 Day", command=cal.add_day)
-    canvas_pop_up.add_separator()
 
     label_title = tkinter.Label(window, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
 
