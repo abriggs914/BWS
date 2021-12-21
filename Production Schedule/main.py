@@ -9,26 +9,55 @@ def get_production_data(start_date, end_date):
     assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
     assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
     assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
-    query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
-    cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
-    table_result = pd.read_sql(query, cnxn)
-    df1 = pd.DataFrame(table_result)
-    df2 = pd.DataFrame(table_result)
-    df3 = pd.DataFrame(table_result)
-    pd.to_datetime(df1['Prod Date'], unit='s')
-    pd.to_datetime(df2['Prod Date'], unit='s')
-    pd.to_datetime(df3['Prod Date'], unit='s')
-    ordered_df = df2.sort_values(by="GroupID")
-    lines = ordered_df.drop_duplicates('GroupID')
-    # lines = lines.iloc[:, :1].tolist()
-    lines = lines['Prod Line'].tolist()
-    ordered_df = df3.sort_values(by="Prod Date")
-    dates = ordered_df.drop_duplicates('Prod Date')
-    # dates = dates.iloc[:, 3:4].tolist()
-    dates = dates['Prod Date'].tolist()
-    print("columns:", df1.columns)
-    ordered_df = df1.sort_values(by=["GroupID", "Prod Date"])
-    cnxn.close()
+    try:
+        query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
+        cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
+        table_result = pd.read_sql(query, cnxn)
+        df1 = pd.DataFrame(table_result)
+        df2 = pd.DataFrame(table_result)
+        df3 = pd.DataFrame(table_result)
+        pd.to_datetime(df1['Prod Date'], unit='s')
+        pd.to_datetime(df2['Prod Date'], unit='s')
+        pd.to_datetime(df3['Prod Date'], unit='s')
+        ordered_df = df2.sort_values(by="GroupID")
+        lines = ordered_df.drop_duplicates('GroupID')
+        # lines = lines.iloc[:, :1].tolist()
+        lines = lines['Prod Line'].tolist()
+        ordered_df = df3.sort_values(by="Prod Date")
+        dates = ordered_df.drop_duplicates('Prod Date')
+        # dates = dates.iloc[:, 3:4].tolist()
+        dates = dates['Prod Date'].tolist()
+        print("columns:", df1.columns)
+        ordered_df = df1.sort_values(by=["GroupID", "Prod Date"])
+        cnxn.close()
+    except pyodbc.OperationalError as e:
+        lines = [
+            "GNK1",
+            "GNK2",
+            "TBF",
+            "PBF",
+            "B1",
+            "B2",
+            "B3",
+            "B4",
+            "TS1",
+            "TS2",
+            "TS3",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6",
+            "T7",
+            "T8",
+            "T9",
+            "T10",
+            "T11"
+        ]
+        dates = []
+        ordered_df = pd.DataFrame()
+        print("e: ", e)
     return lines, dates, ordered_df
     # return df
 
@@ -36,35 +65,8 @@ def get_production_data(start_date, end_date):
 if __name__ == '__main__':
 
     def get_data(start_date, end_date):
-        try:
-            lines, dates, data = get_production_data(start_date, end_date)
-        except ValueError:
-            lines = [
-                "GNK1",
-                "GNK2",
-                "TBF",
-                "PBF",
-                "B1",
-                "B2",
-                "B3",
-                "B4",
-                "TS1",
-                "TS2",
-                "TS3",
-                "T1",
-                "T2",
-                "T3",
-                "T4",
-                "T5",
-                "T6",
-                "T7",
-                "T8",
-                "T9",
-                "T10",
-                "T11"
-            ]
-            dates = []
-            data = []
+        lines, dates, data = get_production_data(start_date, end_date)
+
         print("lines:\n\n", lines)
         print("dates:\n\n", dates)
         print("data:\n\n", data)
