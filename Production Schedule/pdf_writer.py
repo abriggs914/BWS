@@ -746,8 +746,9 @@ class PDF(FPDF):
                 #     cv = max([self.get_string_width(str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry)])
                 # else:
                 #     cv = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
-                print("self.get_string_width(str(content_lst[i][4]).strip():",
-                      self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
+                # print("content_lst[i]:", content_lst[i])
+                # print("self.get_string_width(str(content_lst[i][4]).strip():",
+                #       self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
                 print("max([]):", (max(
                     [self.get_string_width(
                         str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in
