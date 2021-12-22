@@ -200,6 +200,7 @@ class PSCalendar:
         self.hovered = None
         self.hover_select = None
         self.current_hover = None
+        self.dbl_clicked = None
         # self.showing_pop_up = False
         self.draw_canvas()
         self.bind_canvas()
@@ -444,6 +445,17 @@ class PSCalendar:
         pdf.output(f_name, 'F')
         pdf.open_in_browser()
 
+    def populate_pop_up_menu(self):
+        self.canvas_pop_up.add_command(label="Add 1 Day", command=self.add_day)
+        self.canvas_pop_up.add_command(label="Subtract 1 Day", command=self.subtract_day)
+        self.canvas_pop_up.add_separator()
+        self.canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
+        self.canvas_pop_up.add_radiobutton(label="A")
+        self.canvas_pop_up.add_radiobutton(label="B")
+
+    def wipe_pop_up_menu(self):
+        self.canvas_pop_up.delete(0, 6)
+
     def set_user_hover_mode(self, use_hover):
         self.switch_use_hover = use_hover
 
@@ -460,6 +472,11 @@ class PSCalendar:
         self.canvas.unbind("<Button-1>")
         self.canvas.unbind("<B1-Motion>")
 
+    def unbind_for_pop_up(self):
+        self.canvas.unbind("<Motion>")
+        self.canvas.unbind("<Leave>")
+        self.unbind_canvas()
+
     def dbl_click_tile(self, *args):
         # if self.showing_pop_up:
         #     self.showing_pop_up = not self.showing_pop_up
@@ -469,28 +486,71 @@ class PSCalendar:
         r, c = self.x_y_to_r_c(mouse_x, mouse_y)
         i = self.r_c_to_i(r, c)
         if i in range(len(self.tiles)):
+            self.wipe_pop_up_menu()
             # self.showing_pop_up = True
+            self.dbl_clicked = i
             tile = self.tiles[i]
             rect = tile.rect
             tw = rect[2] - rect[0]
             th = rect[3] - rect[1]
-            tile.colour = brighten(tile.colour, 0.25)
+            # tile.colour = brighten(tile.colour, 0.25)
             h, w = 12, 25
-            try:
+            # try:
+            if 1:
+
+                self.dbl_clicked = self.r_c_to_i(r, c)
+                print("double clicked:", self.dbl_clicked)
+                tw = self.tile_rect.width
+                th = self.tile_rect.height
+                rw = max(tw, self.readable_width)
+                rh = max(th, self.readable_height)
+                ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
+                nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
+                if 1:
+                    for i, row in enumerate(range(self.rows)):
+                        for j, col in enumerate(range(self.cols)):
+                            idx = self.r_c_to_i(row, col)
+                            x1, y1, x2, y2 = self.tiles[idx].rect
+                            bw = self.tiles[idx].border_width
+                            nx1 = j * ntw
+                            nx1 += rw - ntw if j > c else 0
+                            nx2 = nx1 + (rw if j == c else ntw)
+                            ny1 = i * nth
+                            ny1 += rh - nth if i > r else 0
+                            ny2 = ny1 + (rh if i == r else nth)
+                            if nx1 == 0:
+                                nx1 = bw
+                            if ny1 == 0:
+                                ny1 = bw
+                            self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
+
+                self.draw_canvas()
+                self.populate_pop_up_menu()
+                print("TRY", self.dbl_clicked)
+                self.unbind_for_pop_up()
                 x = int(event.x_root) + tw
                 y = int(event.y_root)
                 self.canvas_pop_up.tk_popup(event.x_root,
-                                     event.y_root)
-            finally:
-                self.canvas_pop_up.grab_release()
+                                            event.y_root)
+
+            # finally:
+            if 1:
+                print("FINALLY", self.dbl_clicked)
+                # self.canvas_pop_up.grab_release()
+                self.bind_canvas()
             # cpu = self.canvas_pop_up
             # cpu.delete("all")
             # cpu.config(height=h, width=w)
             # cpu.config(x1=30, y1=12)
-            self.draw_canvas()
+            # self.draw_canvas()
         self.selected = None
+        self.hovered = None
+        self.hover_select = None
+        self.dragging = None
+        self.current_hover = None
 
     def leaving(self, *args):
+        print("Left")
         # self.tiles = [tile.__copy__() for tile in self.og_tiles]
         for i, tile in enumerate(self.og_tiles):
             self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
@@ -646,14 +706,14 @@ class PSCalendar:
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = WHITE
                     show_txt = True
                 else:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = GRAY_15
                     show_txt = True
                 else:
@@ -661,7 +721,7 @@ class PSCalendar:
             tile_txt = tile.text if tile.text is not None else tile_num
             self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
                                          width=self.border_width)
-            print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
+            # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
             if show_txt:
                 self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
@@ -786,6 +846,7 @@ class PSCalendar:
         self.dragging = None
 
     def click_print(self, *args):
+        print("BEGIN: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         new_select = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
@@ -796,13 +857,16 @@ class PSCalendar:
                 self.hover_select = new_select
                 self.draw_canvas()
                 self.swap_tiles(self.selected, new_select)
-                self.hover_select = None
+            self.hover_select = None
             self.selected = None
             self.draw_canvas()
+            print("END A: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
             return
         self.dragging = new_select
         self.selected = new_select
+        self.hover_select = new_select
         self.draw_canvas()
+        print("END B: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
 
     def drag_print(self, *args):
         drag_event = args[0]
@@ -851,11 +915,18 @@ class PSCalendar:
         self.tiles[hover_tile].set_data(*t_data.get_data())
         self.tiles[hover_tile].colour = old_tile[1]
 
-    def add_day(self, *args):
-        if args:
-            drag_event = args[0]
-            mouse_x, mouse_y = drag_event.x, drag_event.y
-            r, c = self.x_y_to_r_c(mouse_x, mouse_y)
-            print("mouseX: {}\nmouseY: {}\nr: {}\nc: {}".format(mouse_x, mouse_y, r, c))
-        else:
-            print("args:", args)
+    def add_day(self):
+        print("add_day clicked:", self.dbl_clicked)
+        tile = self.tiles[self.dbl_clicked]
+        print("tile:", tile)
+        tile.colour = darken(tile.colour, 0.1)
+        self.dbl_clicked = None
+        self.draw_canvas()
+
+    def subtract_day(self):
+        print("add_day clicked:", self.dbl_clicked)
+        tile = self.tiles[self.dbl_clicked]
+        print("tile:", tile)
+        tile.colour = brighten(tile.colour, 0.1)
+        self.dbl_clicked = None
+        self.draw_canvas()
