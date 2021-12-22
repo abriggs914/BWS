@@ -141,15 +141,6 @@ class PSCalendar:
         self.export_pdf_mode = "TABLOID"
         self.pdf_min_encapsulation = True
 
-        # # Capping max days at 60
-        # # TODO this needs to omit non-production days (weekends)
-        # date_diff = (end_date - start_date).days
-        # if date_diff > 60:
-        #     end_date = start_date + dt.timedelta(days=60)
-        # date_diff = int(ceil((end_date - start_date).days))
-        # self.rows = len(self.lines)
-        # self.cols = date_diff
-        # self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
         self.rows = len(lines)
         self.cols = len(dates)
         self.dates = dates
@@ -445,6 +436,38 @@ class PSCalendar:
         pdf.output(f_name, 'F')
         pdf.open_in_browser()
 
+    def toggle_use_hover(self):
+        self.set_user_hover_mode(not self.switch_use_hover)
+
+    def is_tile_normal_height(self, tile_num):
+        """T if tile height matches default tile height."""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        return int(tile[3] - tile[1]) == int(og_tile[3] - og_tile[1])
+
+    def is_tile_normal_width(self, tile_num):
+        """T if tile width matches default tile width"""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        return int(tile[2] - tile[0]) == int(og_tile[2] - og_tile[0])
+
+    def is_tile_enlarged(self, tile_num):
+        """Must have larger height AND width (used for hover select)"""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        tw = tile[2] - tile[0]
+        th = tile[3] - tile[1]
+        ow = og_tile[2] - og_tile[0]
+        oh = og_tile[3] - og_tile[1]
+        # print("tile_num: {} is{} enlarged".format(tile_num, "" if (not self.is_tile_normal_height(tile_num) and not self.is_tile_normal_width(tile_num)) else " not"))
+        return tw > ow and th > oh
+
+    def is_tile_normal_size(self, tile_num):
+        """Must have matching width and height"""
+        return self.is_tile_normal_height(tile_num) and self.is_tile_normal_width(tile_num)
+
     def populate_pop_up_menu(self):
         self.canvas_pop_up.add_command(label="Add 1 Day", command=self.add_day)
         self.canvas_pop_up.add_command(label="Subtract 1 Day", command=self.subtract_day)
@@ -465,6 +488,7 @@ class PSCalendar:
         self.canvas.bind("<Enter>", self.hover_entering)
         self.canvas.bind("<Button-1>", self.click_print)
         self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
+        self.canvas.bind("<Button-3>", self.dbl_click_tile)
         self.canvas.bind("<B1-Motion>", self.drag_print)
         self.canvas.bind("<ButtonRelease-1>", self.release_drag)
 
@@ -549,11 +573,18 @@ class PSCalendar:
         self.dragging = None
         self.current_hover = None
 
+        if not self.switch_use_hover:
+            self.re_init_tile_rects()
+            self.draw_canvas()
+
+    def re_init_tile_rects(self):
+        for i, tile in enumerate(self.og_tiles):
+            self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
+
     def leaving(self, *args):
         print("Left")
         # self.tiles = [tile.__copy__() for tile in self.og_tiles]
-        for i, tile in enumerate(self.og_tiles):
-            self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
+        self.re_init_tile_rects()
         self.hovered = None
         self.current_hover = None
         self.draw_canvas()
@@ -566,8 +597,6 @@ class PSCalendar:
         # self.draw_canvas()
 
     def hovering(self, *args):
-        if not self.switch_use_hover:
-            return
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         rc = self.x_y_to_r_c(mouse_x, mouse_y)
@@ -582,6 +611,13 @@ class PSCalendar:
         rh = max(th, self.readable_height)
         ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
         nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
+
+        if not self.switch_use_hover:
+            if self.hovered != self.r_c_to_i(r, c) or self.hovered is None:
+                self.hovered = self.r_c_to_i(r, c)
+            self.draw_canvas()
+            return
+
         if self.hovered != self.r_c_to_i(r, c) or self.hovered is None:
             for i, row in enumerate(range(self.rows)):
                 for j, col in enumerate(range(self.cols)):
@@ -693,10 +729,10 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        # if self.showing_pop_up:
-        #     self.canvas_pop_up.config(state="disabled")
-        # else:
-        #     self.canvas_pop_up.config(state="normal")
+        print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        # if self.current_hover is not None:
+        #     print(self.tiles_to_the_right(self.current_hover))
+        #     print(self.tiles_to_the_left(self.current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
 
         for tile in self.tiles:
             show_txt = not self.hiding_non_selected_tiles
@@ -708,14 +744,16 @@ class PSCalendar:
                 fgc = WHITE
                 if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = WHITE
-                    show_txt = True
+                    if tile_num == self.current_hover:
+                        show_txt = True
                 else:
                     outline = bgc
             else:
                 fgc = BLACK
                 if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = GRAY_15
-                    show_txt = True
+                    if tile_num == self.current_hover:
+                        show_txt = True
                 else:
                     outline = bgc
             tile_txt = tile.text if tile.text is not None else tile_num
@@ -723,15 +761,39 @@ class PSCalendar:
                                          width=self.border_width)
             # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
             if show_txt:
-                self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                if not self.is_tile_enlarged(tile_num):
+                    wo_num = tile.wo_num if tile.wo_num is not None else ""
+                    tile_txt = "<{}>".format(wo_num)
+                if tile_txt:
+                    can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
                                         font="Times 12 italic bold", text=str(tile_txt))
+                    bounds = self.canvas.bbox(can_txt)
+                    can_t_w = bounds[2] - bounds[0]
+                    if can_t_w > (tile.rect[2] - tile.rect[0]):
+                        self.canvas.delete(can_txt)
+                        wo_num = tile.wo_num if tile.wo_num is not None else ""
+                        tile_txt = "<{}>".format(str(wo_num)[-4:])
+                        can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                            tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                            font="Times 12 italic bold", text=str(tile_txt))
+
             else:
                 # raise ValueError("HEY")
                 tile_num = "" if tile.wo_num is None else tile.wo_num
-                self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
                                         font="Times 12 italic bold", text=str(tile_num))
+                bounds = self.canvas.bbox(can_txt)
+                can_t_w = bounds[2] - bounds[0]
+                if can_t_w > (tile.rect[2] - tile.rect[0]):
+                    self.canvas.delete(can_txt)
+                    wo_num = tile.wo_num if tile.wo_num is not None else ""
+                    tile_num = str(wo_num)[-4:]
+                    can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                                      tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
+                                                      fill=rgb_to_hex(fgc),
+                                                      font="Times 12 italic bold", text=str(tile_num))
         self.redraw_legend()
 
     def redraw_legend(self):
@@ -742,18 +804,28 @@ class PSCalendar:
             r, c = self.i_to_r_c(i)
             rect = tile.rect
             if r == 0 or c == 0:
+                # print("i: {}, r: {}, c: {}".format(i, r, c))
                 tw = (rect[2] - rect[0]) + self.border_width
                 th = (rect[3] - rect[1]) + self.border_width
+                coo = 0
+                roo = 0
+                te = self.is_tile_enlarged(self.r_c_to_i(r, c))
                 if r == 0:
                     th = 25
+                    # if c == 0 and te:
+                    #     coo = tw / 2
+                    #     print("coo:", coo)
                 if c == 0:
                     tw = 60
+                    # if r == 0 and te:
+                    #     roo = th / 2
+                    #     print("roo:", roo)
                 if r == 0:
                     # self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
-                    self.canvas_header_row.create_text(60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                    self.canvas_header_row.create_text(coo + 60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
                 if c == 0:
                     # self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
-                    self.canvas_header_col.create_text(tw / 2, rect[1] + (th / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+                    self.canvas_header_col.create_text(tw / 2, roo + rect[1] + (th / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
 
 
         # th = self.tile_rect.h
@@ -865,6 +937,7 @@ class PSCalendar:
         self.dragging = new_select
         self.selected = new_select
         self.hover_select = new_select
+        self.dbl_clicked = None
         self.draw_canvas()
         print("END B: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
 
@@ -915,11 +988,42 @@ class PSCalendar:
         self.tiles[hover_tile].set_data(*t_data.get_data())
         self.tiles[hover_tile].colour = old_tile[1]
 
+    def tiles_to_the_right(self, tile_num, start_date=None, end_date=None):
+        r, c = self.i_to_r_c(tile_num)
+        tiles = list(range(tile_num + 1, ((r + 1) * self.cols)))
+        if start_date is not None or end_date is not None:
+            for i in range(self.r_c_to_i(r, 0), self.r_c_to_i(r, self.cols)):
+                # comparing <class 'pandas._libs.tslibs.timestamps.Timestamp'> to Datetime.Datetime
+                date = dt.datetime.combine(self.dates[i % self.cols].date(), dt.time(0, 0))
+                if i in tiles:
+                    if start_date is not None and start_date > date:
+                        tiles.remove(i)
+                    if end_date is not None and end_date < date:
+                        tiles.remove(i)
+        return tiles
+
+    def tiles_to_the_left(self, tile_num, start_date=None, end_date=None):
+        r, c = self.i_to_r_c(tile_num)
+        tiles = list(range(self.r_c_to_i(r, 0), tile_num))
+        if start_date or end_date:
+            for i in range(self.r_c_to_i(r, 0), self.r_c_to_i(r, self.cols)):
+                # comparing <class 'pandas._libs.tslibs.timestamps.Timestamp'> to Datetime.Datetime
+                date = dt.datetime.combine(self.dates[i % self.cols].date(), dt.time(0, 0))
+                if i in tiles:
+                    if start_date is not None and start_date > date:
+                        tiles.remove(i)
+                    if end_date is not None and end_date < date:
+                        tiles.remove(i)
+        return tiles
+
     def add_day(self):
         print("add_day clicked:", self.dbl_clicked)
         tile = self.tiles[self.dbl_clicked]
         print("tile:", tile)
-        tile.colour = darken(tile.colour, 0.1)
+
+        for t in [self.dbl_clicked] + self.tiles_to_the_right(self.dbl_clicked):
+            tile = self.tiles[t]
+            tile.colour = brighten(tile.colour, 0.1)
         self.dbl_clicked = None
         self.draw_canvas()
 
@@ -927,6 +1031,9 @@ class PSCalendar:
         print("add_day clicked:", self.dbl_clicked)
         tile = self.tiles[self.dbl_clicked]
         print("tile:", tile)
-        tile.colour = brighten(tile.colour, 0.1)
+
+        for t in [self.dbl_clicked] + self.tiles_to_the_left(self.dbl_clicked):
+            tile = self.tiles[t]
+            tile.colour = brighten(tile.colour, 0.1)
         self.dbl_clicked = None
         self.draw_canvas()

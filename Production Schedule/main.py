@@ -1,5 +1,6 @@
 
 import tkinter
+from tkinter import ttk
 import pyodbc
 from pscalendar import *
 import pandas as pd
@@ -77,6 +78,16 @@ if __name__ == '__main__':
         canvas.delete("all")
         return PSCalendar(canvas, canvas_header_col, canvas_header_row, canvas_pop_up, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
 
+    def create_calendar_p(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width):
+        canvas_a.delete("all")
+        return PSCalendar(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+
+
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##                                                   Constants                                                    ##
+    ##                                                                                                                ##
+    ####################################################################################################################
 
     # w = 700
     # h = 500
@@ -93,20 +104,76 @@ if __name__ == '__main__':
     border_width = 3
     win_w, win_h = 1900, 950
     can_w, can_h = win_w * 0.96, win_h * 0.8
+
     window = tkinter.Tk()
     window.geometry("{}x{}".format(win_w, win_h))
+    win_w, win_h = window.winfo_screenwidth(), window.winfo_screenheight()
+    can_w, can_h = win_w * 0.96, win_h * 0.76
+    window.geometry("%dx%d+0+0" % (win_w, win_h))
+    window.state('zoomed')
     window.title("Production Schedule")
 
-    frame_calendar = tkinter.Frame(window)
+    def on_tab_change(event):
+        tab_name = event.widget.tab('current')['text']
+        idx = tab_names.index(tab_name)
+        cal = tab_cals[idx]
+
+        btn_calendar_use_hover.config(command=cal.toggle_use_hover)
+        btn_calendar_export_pdf_full.config(command=cal.export_to_pdf_full)
+        btn_calendar_export_pdf.config(command=cal.export_to_pdf)
+
+    tab_control = ttk.Notebook(window)
+    tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
+
+    tab_1 = ttk.Frame(tab_control)
+    frame_calendar = tkinter.Frame(tab_1)
     canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
-    print("GEOMETRY:", canvas.winfo_geometry())
-    bw = border_width
-    canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + bw, bg=rgb_to_hex(BLACK))
-    canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + bw, width=60, bg=rgb_to_hex(BLACK))
+    canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + border_width, bg=rgb_to_hex(BLACK))
+    canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + border_width, width=60, bg=rgb_to_hex(BLACK))
     canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     cal = create_calendar(start_date_1, end_date_1, lines, dates, data)
+    tab_cals = []
+    tab_2 = ttk.Frame(tab_control)
+    tab_3 = ttk.Frame(tab_control)
+    tab_4 = ttk.Frame(tab_control)
+    tab_5 = ttk.Frame(tab_control)
+    tab_6 = ttk.Frame(tab_control)
+    tab_7 = ttk.Frame(tab_control)
+    tabs = [tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
+    tab_names = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
+    last_date = cal.end_date
+    for i, tab in enumerate(tabs):
+        c_frame_calendar = tkinter.Frame(tab)
+        can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+        can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + border_width, width=60, bg=rgb_to_hex(BLACK))
+        can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + border_width, bg=rgb_to_hex(BLACK))
+        can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
+        last_date = last_date + dt.timedelta(days=1)
+        c_end_date = last_date + dt.timedelta(days=31)
+        c_lines, c_dates, dat = get_data(last_date, c_end_date)
+        print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
+        print("c_dates", c_dates)
+        psc = create_calendar_p(can, can_h_c, can_h_r, can_p_u, can_w, can_h, last_date, c_end_date, dat, lines, c_dates, border_width)
+        c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
+            dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
+        c_label_title.pack()
+        can_h_r.pack()
+        can_h_c.pack(side=tkinter.LEFT)
+        can.pack()
+        c_frame_calendar.pack()
+        tab_cals.append(psc)
+        last_date += dt.timedelta(days=31)
 
-    label_title = tkinter.Label(window, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
+    label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
+
+    for tab, tab_name in zip(tabs, tab_names):
+        tab_control.add(tab, text=tab_name)
+
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
 
     def switch_calendar_use_hover_gsm(*args):
         global switch_calendar_use_hover
@@ -123,6 +190,8 @@ if __name__ == '__main__':
                 sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
                 ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
                 if sd <= ed:
+                    entry_calendar_search_start_date.config(fg=rgb_to_hex(BLACK))
+                    entry_calendar_search_end_date.config(fg=rgb_to_hex(BLACK))
                     ed = ed if (ed - sd).days <= 60 else sd + dt.timedelta(days=60)
                     stringvar_calendar_search_start_date.set(sd.strftime("%Y-%m-%d"))
                     stringvar_calendar_search_end_date.set(ed.strftime("%Y-%m-%d"))
@@ -131,6 +200,9 @@ if __name__ == '__main__':
                     label_title.config(text="Production Schedule\n{} - {}".format(dt.datetime.strftime(sd, "%Y-%m-%d"), dt.datetime.strftime(ed, "%Y-%m-%d")))
                     btn_calendar_export_pdf.config(command=cal.export_to_pdf)
                     cal.redraw_legend()
+                else:
+                    entry_calendar_search_start_date.config(fg=rgb_to_hex(RED))
+                    entry_calendar_search_end_date.config(fg=rgb_to_hex(RED))
 
     frame_calendar_control = tkinter.Frame(window)
     frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
@@ -177,6 +249,7 @@ if __name__ == '__main__':
     # frame_calendar_control_btns.pack()
     frame_calendar.pack()
     submit_calendar_search()
+    tab_control.pack(expand=1, fill="both")
     window.mainloop()
 
     # for i, t in enumerate(cal.tiles):
