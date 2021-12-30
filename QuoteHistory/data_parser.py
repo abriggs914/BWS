@@ -768,6 +768,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2021-11-11",
 		"2021-12-24",
 		"2021-12-27",
+		"2022-01-03",
+		"2022-02-21",
+		"2022-04-15",
+		"2022-05-23",
+		"2022-07-01",
+		"2022-08-01",
+		"2022-09-05",
+		"2022-10-10",
+		"2022-11-11",
+		"2022-12-26",
+		"2022-12-27"
 	]
 	personal_holidays = [
 		
@@ -779,9 +790,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2021-10-29",
 		"2021-12-23",
 		"2021-12-28",
-		"2021-12-29",
-		"2021-12-30",
-		"2021-12-31"
+		"2021-12-29"
 	]
 	
 	holidays = public_holidays + personal_holidays
