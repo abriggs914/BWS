@@ -110,7 +110,7 @@ class CalendarTile:
 
 class PSCalendar:
 
-    def __init__(self, canvas, canvas_header_col, canvas_header_row, pop_up_canvas, w, h, start_date, end_date, data, lines, dates, border_width):
+    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates, border_width):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -129,7 +129,7 @@ class PSCalendar:
         self.canvas = canvas
         self.canvas_header_col = canvas_header_col
         self.canvas_header_row = canvas_header_row
-        self.canvas_pop_up = pop_up_canvas
+        # self.canvas_pop_up = pop_up_canvas
         self.lines = lines
         self.switch_use_hover = True
         self.border_width = border_width
@@ -468,16 +468,16 @@ class PSCalendar:
         """Must have matching width and height"""
         return self.is_tile_normal_height(tile_num) and self.is_tile_normal_width(tile_num)
 
-    def populate_pop_up_menu(self):
-        self.canvas_pop_up.add_command(label="Add 1 Day", command=self.add_day)
-        self.canvas_pop_up.add_command(label="Subtract 1 Day", command=self.subtract_day)
-        self.canvas_pop_up.add_separator()
-        self.canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
-        self.canvas_pop_up.add_radiobutton(label="A")
-        self.canvas_pop_up.add_radiobutton(label="B")
-
-    def wipe_pop_up_menu(self):
-        self.canvas_pop_up.delete(0, 6)
+    # def populate_pop_up_menu(self):
+    #     self.canvas_pop_up.add_command(label="Add 1 Day", command=self.add_day)
+    #     self.canvas_pop_up.add_command(label="Subtract 1 Day", command=self.subtract_day)
+    #     self.canvas_pop_up.add_separator()
+    #     self.canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
+    #     self.canvas_pop_up.add_radiobutton(label="A")
+    #     self.canvas_pop_up.add_radiobutton(label="B")
+    #
+    # def wipe_pop_up_menu(self):
+    #     self.canvas_pop_up.delete(0, 6)
 
     def set_user_hover_mode(self, use_hover):
         self.switch_use_hover = use_hover
@@ -487,8 +487,8 @@ class PSCalendar:
         self.canvas.bind("<Leave>", self.leaving)
         self.canvas.bind("<Enter>", self.hover_entering)
         self.canvas.bind("<Button-1>", self.click_print)
-        self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
-        self.canvas.bind("<Button-3>", self.dbl_click_tile)
+        # self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
+        # self.canvas.bind("<Button-3>", self.dbl_click_tile)
         self.canvas.bind("<B1-Motion>", self.drag_print)
         self.canvas.bind("<ButtonRelease-1>", self.release_drag)
 
@@ -510,7 +510,7 @@ class PSCalendar:
         r, c = self.x_y_to_r_c(mouse_x, mouse_y)
         i = self.r_c_to_i(r, c)
         if i in range(len(self.tiles)):
-            self.wipe_pop_up_menu()
+            # self.wipe_pop_up_menu()
             # self.showing_pop_up = True
             self.dbl_clicked = i
             tile = self.tiles[i]
@@ -549,29 +549,23 @@ class PSCalendar:
                             self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
 
                 self.draw_canvas()
-                self.populate_pop_up_menu()
+                # self.populate_pop_up_menu()
                 print("TRY", self.dbl_clicked)
-                self.unbind_for_pop_up()
+                # self.unbind_for_pop_up()
                 x = int(event.x_root) + tw
                 y = int(event.y_root)
-                self.canvas_pop_up.tk_popup(event.x_root,
-                                            event.y_root)
+                # self.canvas_pop_up.tk_popup(event.x_root,
+                #                             event.y_root)
 
             # finally:
             if 1:
                 print("FINALLY", self.dbl_clicked)
                 # self.canvas_pop_up.grab_release()
-                self.bind_canvas()
             # cpu = self.canvas_pop_up
             # cpu.delete("all")
             # cpu.config(height=h, width=w)
             # cpu.config(x1=30, y1=12)
             # self.draw_canvas()
-        self.selected = None
-        self.hovered = None
-        self.hover_select = None
-        self.dragging = None
-        self.current_hover = None
 
         if not self.switch_use_hover:
             self.re_init_tile_rects()
@@ -729,7 +723,8 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        # print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+
         # if self.current_hover is not None:
         #     print(self.tiles_to_the_right(self.current_hover))
         #     print(self.tiles_to_the_left(self.current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
@@ -1016,7 +1011,7 @@ class PSCalendar:
                         tiles.remove(i)
         return tiles
 
-    def add_day(self):
+    def add_day(self, event):
         print("add_day clicked:", self.dbl_clicked)
         tile = self.tiles[self.dbl_clicked]
         print("tile:", tile)
