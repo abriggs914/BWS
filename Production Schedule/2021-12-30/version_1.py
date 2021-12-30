@@ -1,0 +1,6149 @@
+import math
+
+import easygui
+import tkinter
+from pdf_writer import *
+
+import random
+
+#	General Utility file of RGB colour values
+#	Version............1.6
+#	Date........2021-11-21
+#	Author....Avery Briggs
+
+WILDERNESS_MINT = (98, 152, 100)
+
+BWS_RED = (171, 35, 40)  # Crimson red
+BWS_BLACK = (37, 40, 42)  # Black
+BWS_GREY = (162, 170, 173)
+
+STARGATE_BLUE = (27, 69, 129)
+
+BLACK = (0, 0, 0)  # Black
+WHITE = (255, 255, 255)  # White
+DARK_GRAY = (50, 50, 50)  # Dark gray
+LIGHT_GRAY = (175, 175, 175)  # Light gray
+RED = (255, 0, 0)  # Red
+GREEN = (0, 255, 0)  # Green
+BLUE = (0, 0, 255)  # Blue
+
+ALICEBLUE = (240, 248, 255)
+ANTIQUEWHITE = (250, 235, 215)
+ANTIQUEWHITE_1 = (255, 239, 219)
+ANTIQUEWHITE_2 = (238, 223, 204)
+ANTIQUEWHITE_3 = (205, 192, 176)
+ANTIQUEWHITE_4 = (139, 131, 120)
+AQUAMARINE_1__AQUAMARINE_ = (127, 255, 212)
+AQUAMARINE_2 = (118, 238, 198)
+AQUAMARINE_3__MEDIUMAQUAMARINE_ = (102, 205, 170)
+AQUAMARINE_4 = (69, 139, 116)
+AZURE_1__AZURE_ = (240, 255, 255)
+AZURE_2 = (224, 238, 238)
+AZURE_3 = (193, 205, 205)
+AZURE_4 = (131, 139, 139)
+BANANA = (227, 207, 87)
+BEIGE = (245, 245, 220)
+BISQUE_1__BISQUE_ = (255, 228, 196)
+BISQUE_2 = (238, 213, 183)
+BISQUE_3 = (205, 183, 158)
+BISQUE_4 = (139, 125, 107)
+BLANCHEDALMOND = (255, 235, 205)
+BLUEVIOLET = (138, 43, 226)
+BLUE_2 = (0, 0, 238)
+BLUE_3__MEDIUMBLUE_ = (0, 0, 205)
+BLUE_4__DARKBLUE_ = (0, 0, 139)
+BRICK = (156, 102, 31)
+BROWN = (165, 42, 42)
+BROWN_1 = (255, 64, 64)
+BROWN_2 = (238, 59, 59)
+BROWN_3 = (205, 51, 51)
+BROWN_4 = (139, 35, 35)
+BURLYWOOD = (222, 184, 135)
+BURLYWOOD_1 = (255, 211, 155)
+BURLYWOOD_2 = (238, 197, 145)
+BURLYWOOD_3 = (205, 170, 125)
+BURLYWOOD_4 = (139, 115, 85)
+BURNTSIENNA = (138, 54, 15)
+BURNTUMBER = (138, 51, 36)
+CADETBLUE = (95, 158, 160)
+CADETBLUE_1 = (152, 245, 255)
+CADETBLUE_2 = (142, 229, 238)
+CADETBLUE_3 = (122, 197, 205)
+CADETBLUE_4 = (83, 134, 139)
+CADMIUMORANGE = (255, 97, 3)
+CADMIUMYELLOW = (255, 153, 18)
+CARROT = (237, 145, 33)
+CHARTREUSE_1__CHARTREUSE_ = (127, 255, 0)
+CHARTREUSE_2 = (118, 238, 0)
+CHARTREUSE_3 = (102, 205, 0)
+CHARTREUSE_4 = (69, 139, 0)
+CHOCOLATE = (210, 105, 30)
+CHOCOLATE_1 = (255, 127, 36)
+CHOCOLATE_2 = (238, 118, 33)
+CHOCOLATE_3 = (205, 102, 29)
+CHOCOLATE_4__SADDLEBROWN_ = (139, 69, 19)
+COBALT = (61, 89, 171)
+COBALTGREEN = (61, 145, 64)
+COLDGREY = (128, 138, 135)
+CORAL = (255, 127, 80)
+CORAL_1 = (255, 114, 86)
+CORAL_2 = (238, 106, 80)
+CORAL_3 = (205, 91, 69)
+CORAL_4 = (139, 62, 47)
+CORNFLOWERBLUE = (100, 149, 237)
+CORNSILK_1__CORNSILK_ = (255, 248, 220)
+CORNSILK_2 = (238, 232, 205)
+CORNSILK_3 = (205, 200, 177)
+CORNSILK_4 = (139, 136, 120)
+CRIMSON = (220, 20, 60)
+CYAN__AQUA = (0, 255, 255)
+CYAN_2 = (0, 238, 238)
+CYAN_3 = (0, 205, 205)
+CYAN_4__DARKCYAN_ = (0, 139, 139)
+DARKGOLDENROD = (184, 134, 11)
+DARKGOLDENROD_1 = (255, 185, 15)
+DARKGOLDENROD_2 = (238, 173, 14)
+DARKGOLDENROD_3 = (205, 149, 12)
+DARKGOLDENROD_4 = (139, 101, 8)
+DARKGRAY = (169, 169, 169)
+DARKGREEN = (0, 100, 0)
+DARKKHAKI = (189, 183, 107)
+DARKOLIVEGREEN = (85, 107, 47)
+DARKOLIVEGREEN_1 = (202, 255, 112)
+DARKOLIVEGREEN_2 = (188, 238, 104)
+DARKOLIVEGREEN_3 = (162, 205, 90)
+DARKOLIVEGREEN_4 = (110, 139, 61)
+DARKORANGE = (255, 140, 0)
+DARKORANGE_1 = (255, 127, 0)
+DARKORANGE_2 = (238, 118, 0)
+DARKORANGE_3 = (205, 102, 0)
+DARKORANGE_4 = (139, 69, 0)
+DARKORCHID = (153, 50, 204)
+DARKORCHID_1 = (191, 62, 255)
+DARKORCHID_2 = (178, 58, 238)
+DARKORCHID_3 = (154, 50, 205)
+DARKORCHID_4 = (104, 34, 139)
+DARKSALMON = (233, 150, 122)
+DARKSEAGREEN = (143, 188, 143)
+DARKSEAGREEN_1 = (193, 255, 193)
+DARKSEAGREEN_2 = (180, 238, 180)
+DARKSEAGREEN_3 = (155, 205, 155)
+DARKSEAGREEN_4 = (105, 139, 105)
+DARKSLATEBLUE = (72, 61, 139)
+DARKSLATEGRAY = (47, 79, 79)
+DARKSLATEGRAY_1 = (151, 255, 255)
+DARKSLATEGRAY_2 = (141, 238, 238)
+DARKSLATEGRAY_3 = (121, 205, 205)
+DARKSLATEGRAY_4 = (82, 139, 139)
+DARKTURQUOISE = (0, 206, 209)
+DARKVIOLET = (148, 0, 211)
+DEEPPINK_1__DEEPPINK_ = (255, 20, 147)
+DEEPPINK_2 = (238, 18, 137)
+DEEPPINK_3 = (205, 16, 118)
+DEEPPINK_4 = (139, 10, 80)
+DEEPSKYBLUE_1__DEEPSKYBLUE_ = (0, 191, 255)
+DEEPSKYBLUE_2 = (0, 178, 238)
+DEEPSKYBLUE_3 = (0, 154, 205)
+DEEPSKYBLUE_4 = (0, 104, 139)
+DIMGRAY__GRAY_42_ = (105, 105, 105)
+DODGERBLUE_1__DODGERBLUE_ = (30, 144, 255)
+DODGERBLUE_2 = (28, 134, 238)
+DODGERBLUE_3 = (24, 116, 205)
+DODGERBLUE_4 = (16, 78, 139)
+EGGSHELL = (252, 230, 201)
+EMERALDGREEN = (0, 201, 87)
+FIREBRICK = (178, 34, 34)
+FIREBRICK_1 = (255, 48, 48)
+FIREBRICK_2 = (238, 44, 44)
+FIREBRICK_3 = (205, 38, 38)
+FIREBRICK_4 = (139, 26, 26)
+FLESH = (255, 125, 64)
+FLORALWHITE = (255, 250, 240)
+FORESTGREEN = (34, 139, 34)
+GAINSBORO = (220, 220, 220)
+GHOSTWHITE = (248, 248, 255)
+GOLDENROD = (218, 165, 32)
+GOLDENROD_1 = (255, 193, 37)
+GOLDENROD_2 = (238, 180, 34)
+GOLDENROD_3 = (205, 155, 29)
+GOLDENROD_4 = (139, 105, 20)
+GOLD_1__GOLD_ = (255, 215, 0)
+GOLD_2 = (238, 201, 0)
+GOLD_3 = (205, 173, 0)
+GOLD_4 = (139, 117, 0)
+GRAY = (128, 128, 128)
+GRAY_1 = (3, 3, 3)
+GRAY_10 = (26, 26, 26)
+GRAY_11 = (28, 28, 28)
+GRAY_12 = (31, 31, 31)
+GRAY_13 = (33, 33, 33)
+GRAY_14 = (36, 36, 36)
+GRAY_15 = (38, 38, 38)
+GRAY_16 = (41, 41, 41)
+GRAY_17 = (43, 43, 43)
+GRAY_18 = (46, 46, 46)
+GRAY_19 = (48, 48, 48)
+GRAY_2 = (5, 5, 5)
+GRAY_20 = (51, 51, 51)
+GRAY_21 = (54, 54, 54)
+GRAY_22 = (56, 56, 56)
+GRAY_23 = (59, 59, 59)
+GRAY_24 = (61, 61, 61)
+GRAY_25 = (64, 64, 64)
+GRAY_26 = (66, 66, 66)
+GRAY_27 = (69, 69, 69)
+GRAY_28 = (71, 71, 71)
+GRAY_29 = (74, 74, 74)
+GRAY_3 = (8, 8, 8)
+GRAY_30 = (77, 77, 77)
+GRAY_31 = (79, 79, 79)
+GRAY_32 = (82, 82, 82)
+GRAY_33 = (84, 84, 84)
+GRAY_34 = (87, 87, 87)
+GRAY_35 = (89, 89, 89)
+GRAY_36 = (92, 92, 92)
+GRAY_37 = (94, 94, 94)
+GRAY_38 = (97, 97, 97)
+GRAY_39 = (99, 99, 99)
+GRAY_4 = (10, 10, 10)
+GRAY_40 = (102, 102, 102)
+GRAY_42 = (107, 107, 107)
+GRAY_43 = (110, 110, 110)
+GRAY_44 = (112, 112, 112)
+GRAY_45 = (115, 115, 115)
+GRAY_46 = (117, 117, 117)
+GRAY_47 = (120, 120, 120)
+GRAY_48 = (122, 122, 122)
+GRAY_49 = (125, 125, 125)
+GRAY_5 = (13, 13, 13)
+GRAY_50 = (127, 127, 127)
+GRAY_51 = (130, 130, 130)
+GRAY_52 = (133, 133, 133)
+GRAY_53 = (135, 135, 135)
+GRAY_54 = (138, 138, 138)
+GRAY_55 = (140, 140, 140)
+GRAY_56 = (143, 143, 143)
+GRAY_57 = (145, 145, 145)
+GRAY_58 = (148, 148, 148)
+GRAY_59 = (150, 150, 150)
+GRAY_6 = (15, 15, 15)
+GRAY_60 = (153, 153, 153)
+GRAY_61 = (156, 156, 156)
+GRAY_62 = (158, 158, 158)
+GRAY_63 = (161, 161, 161)
+GRAY_64 = (163, 163, 163)
+GRAY_65 = (166, 166, 166)
+GRAY_66 = (168, 168, 168)
+GRAY_67 = (171, 171, 171)
+GRAY_68 = (173, 173, 173)
+GRAY_69 = (176, 176, 176)
+GRAY_7 = (18, 18, 18)
+GRAY_70 = (179, 179, 179)
+GRAY_71 = (181, 181, 181)
+GRAY_72 = (184, 184, 184)
+GRAY_73 = (186, 186, 186)
+GRAY_74 = (189, 189, 189)
+GRAY_75 = (191, 191, 191)
+GRAY_76 = (194, 194, 194)
+GRAY_77 = (196, 196, 196)
+GRAY_78 = (199, 199, 199)
+GRAY_79 = (201, 201, 201)
+GRAY_8 = (20, 20, 20)
+GRAY_80 = (204, 204, 204)
+GRAY_81 = (207, 207, 207)
+GRAY_82 = (209, 209, 209)
+GRAY_83 = (212, 212, 212)
+GRAY_84 = (214, 214, 214)
+GRAY_85 = (217, 217, 217)
+GRAY_86 = (219, 219, 219)
+GRAY_87 = (222, 222, 222)
+GRAY_88 = (224, 224, 224)
+GRAY_89 = (227, 227, 227)
+GRAY_9 = (23, 23, 23)
+GRAY_90 = (229, 229, 229)
+GRAY_91 = (232, 232, 232)
+GRAY_92 = (235, 235, 235)
+GRAY_93 = (237, 237, 237)
+GRAY_94 = (240, 240, 240)
+GRAY_95 = (242, 242, 242)
+GRAY_97 = (247, 247, 247)
+GRAY_98 = (250, 250, 250)
+GRAY_99 = (252, 252, 252)
+GREENYELLOW = (173, 255, 47)
+GREEN_1__LIME_ = (0, 255, 0)
+GREEN_2 = (0, 238, 0)
+GREEN_3 = (0, 205, 0)
+GREEN_4 = (0, 139, 0)
+HONEYDEW_1__HONEYDEW_ = (240, 255, 240)
+HONEYDEW_2 = (224, 238, 224)
+HONEYDEW_3 = (193, 205, 193)
+HONEYDEW_4 = (131, 139, 131)
+HOTPINK = (255, 105, 180)
+HOTPINK_1 = (255, 110, 180)
+HOTPINK_2 = (238, 106, 167)
+HOTPINK_3 = (205, 96, 144)
+HOTPINK_4 = (139, 58, 98)
+INDIANRED = (205, 92, 92)
+INDIANRED_1 = (255, 106, 106)
+INDIANRED_2 = (238, 99, 99)
+INDIANRED_3 = (205, 85, 85)
+INDIANRED_4 = (139, 58, 58)
+INDIAN_RED = (176, 23, 31)
+INDIGO = (75, 0, 130)
+IVORYBLACK = (41, 36, 33)
+IVORY_1__IVORY_ = (255, 255, 240)
+IVORY_2 = (238, 238, 224)
+IVORY_3 = (205, 205, 193)
+IVORY_4 = (139, 139, 131)
+KHAKI = (240, 230, 140)
+KHAKI_1 = (255, 246, 143)
+KHAKI_2 = (238, 230, 133)
+KHAKI_3 = (205, 198, 115)
+KHAKI_4 = (139, 134, 78)
+LAVENDER = (230, 230, 250)
+LAVENDERBLUSH_1__LAVENDERBLUSH_ = (255, 240, 245)
+LAVENDERBLUSH_2 = (238, 224, 229)
+LAVENDERBLUSH_3 = (205, 193, 197)
+LAVENDERBLUSH_4 = (139, 131, 134)
+LAWNGREEN = (124, 252, 0)
+LEMONCHIFFON_1__LEMONCHIFFON_ = (255, 250, 205)
+LEMONCHIFFON_2 = (238, 233, 191)
+LEMONCHIFFON_3 = (205, 201, 165)
+LEMONCHIFFON_4 = (139, 137, 112)
+LIGHTBLUE = (173, 216, 230)
+LIGHTBLUE_1 = (191, 239, 255)
+LIGHTBLUE_2 = (178, 223, 238)
+LIGHTBLUE_3 = (154, 192, 205)
+LIGHTBLUE_4 = (104, 131, 139)
+LIGHTCORAL = (240, 128, 128)
+LIGHTCYAN_1__LIGHTCYAN_ = (224, 255, 255)
+LIGHTCYAN_2 = (209, 238, 238)
+LIGHTCYAN_3 = (180, 205, 205)
+LIGHTCYAN_4 = (122, 139, 139)
+LIGHTGOLDENRODYELLOW = (250, 250, 210)
+LIGHTGOLDENROD_1 = (255, 236, 139)
+LIGHTGOLDENROD_2 = (238, 220, 130)
+LIGHTGOLDENROD_3 = (205, 190, 112)
+LIGHTGOLDENROD_4 = (139, 129, 76)
+LIGHTGREY = (211, 211, 211)
+LIGHTPINK = (255, 182, 193)
+LIGHTPINK_1 = (255, 174, 185)
+LIGHTPINK_2 = (238, 162, 173)
+LIGHTPINK_3 = (205, 140, 149)
+LIGHTPINK_4 = (139, 95, 101)
+LIGHTSALMON_1__LIGHTSALMON_ = (255, 160, 122)
+LIGHTSALMON_2 = (238, 149, 114)
+LIGHTSALMON_3 = (205, 129, 98)
+LIGHTSALMON_4 = (139, 87, 66)
+LIGHTSEAGREEN = (32, 178, 170)
+LIGHTSKYBLUE = (135, 206, 250)
+LIGHTSKYBLUE_1 = (176, 226, 255)
+LIGHTSKYBLUE_2 = (164, 211, 238)
+LIGHTSKYBLUE_3 = (141, 182, 205)
+LIGHTSKYBLUE_4 = (96, 123, 139)
+LIGHTSLATEBLUE = (132, 112, 255)
+LIGHTSLATEGRAY = (119, 136, 153)
+LIGHTSTEELBLUE = (176, 196, 222)
+LIGHTSTEELBLUE_1 = (202, 225, 255)
+LIGHTSTEELBLUE_2 = (188, 210, 238)
+LIGHTSTEELBLUE_3 = (162, 181, 205)
+LIGHTSTEELBLUE_4 = (110, 123, 139)
+LIGHTYELLOW_1__LIGHTYELLOW_ = (255, 255, 224)
+LIGHTYELLOW_2 = (238, 238, 209)
+LIGHTYELLOW_3 = (205, 205, 180)
+LIGHTYELLOW_4 = (139, 139, 122)
+LIMEGREEN = (50, 205, 50)
+LINEN = (250, 240, 230)
+MAGENTA_2 = (238, 0, 238)
+MAGENTA_3 = (205, 0, 205)
+MAGENTA_4__DARKMAGENTA_ = (139, 0, 139)
+MAGENTA__FUCHSIA_ = (255, 0, 255)
+MANGANESEBLUE = (3, 168, 158)
+MAROON = (128, 0, 0)
+MAROON_1 = (255, 52, 179)
+MAROON_2 = (238, 48, 167)
+MAROON_3 = (205, 41, 144)
+MAROON_4 = (139, 28, 98)
+MEDIUMORCHID = (186, 85, 211)
+MEDIUMORCHID_1 = (224, 102, 255)
+MEDIUMORCHID_2 = (209, 95, 238)
+MEDIUMORCHID_3 = (180, 82, 205)
+MEDIUMORCHID_4 = (122, 55, 139)
+MEDIUMPURPLE = (147, 112, 219)
+MEDIUMPURPLE_1 = (171, 130, 255)
+MEDIUMPURPLE_2 = (159, 121, 238)
+MEDIUMPURPLE_3 = (137, 104, 205)
+MEDIUMPURPLE_4 = (93, 71, 139)
+MEDIUMSEAGREEN = (60, 179, 113)
+MEDIUMSLATEBLUE = (123, 104, 238)
+MEDIUMSPRINGGREEN = (0, 250, 154)
+MEDIUMTURQUOISE = (72, 209, 204)
+MEDIUMVIOLETRED = (199, 21, 133)
+MELON = (227, 168, 105)
+MIDNIGHTBLUE = (25, 25, 112)
+MINT = (189, 252, 201)
+MINTCREAM = (245, 255, 250)
+MISTYROSE_1__MISTYROSE_ = (255, 228, 225)
+MISTYROSE_2 = (238, 213, 210)
+MISTYROSE_3 = (205, 183, 181)
+MISTYROSE_4 = (139, 125, 123)
+MOCCASIN = (255, 228, 181)
+NAVAJOWHITE_1__NAVAJOWHITE_ = (255, 222, 173)
+NAVAJOWHITE_2 = (238, 207, 161)
+NAVAJOWHITE_3 = (205, 179, 139)
+NAVAJOWHITE_4 = (139, 121, 94)
+NAVY = (0, 0, 128)
+OLDLACE = (253, 245, 230)
+OLIVE = (128, 128, 0)
+OLIVEDRAB = (107, 142, 35)
+OLIVEDRAB_1 = (192, 255, 62)
+OLIVEDRAB_2 = (179, 238, 58)
+OLIVEDRAB_3__YELLOWGREEN_ = (154, 205, 50)
+OLIVEDRAB_4 = (105, 139, 34)
+ORANGE = (255, 128, 0)
+ORANGERED_1__ORANGERED_ = (255, 69, 0)
+ORANGERED_2 = (238, 64, 0)
+ORANGERED_3 = (205, 55, 0)
+ORANGERED_4 = (139, 37, 0)
+ORANGE_1__ORANGE_ = (255, 165, 0)
+ORANGE_2 = (238, 154, 0)
+ORANGE_3 = (205, 133, 0)
+ORANGE_4 = (139, 90, 0)
+ORCHID = (218, 112, 214)
+ORCHID_1 = (255, 131, 250)
+ORCHID_2 = (238, 122, 233)
+ORCHID_3 = (205, 105, 201)
+ORCHID_4 = (139, 71, 137)
+PALEGOLDENROD = (238, 232, 170)
+PALEGREEN = (152, 251, 152)
+PALEGREEN_1 = (154, 255, 154)
+PALEGREEN_2__LIGHTGREEN_ = (144, 238, 144)
+PALEGREEN_3 = (124, 205, 124)
+PALEGREEN_4 = (84, 139, 84)
+PALETURQUOISE_1 = (187, 255, 255)
+PALETURQUOISE_2__PALETURQUOISE_ = (174, 238, 238)
+PALETURQUOISE_3 = (150, 205, 205)
+PALETURQUOISE_4 = (102, 139, 139)
+PALEVIOLETRED = (219, 112, 147)
+PALEVIOLETRED_1 = (255, 130, 171)
+PALEVIOLETRED_2 = (238, 121, 159)
+PALEVIOLETRED_3 = (205, 104, 137)
+PALEVIOLETRED_4 = (139, 71, 93)
+PAPAYAWHIP = (255, 239, 213)
+PEACHPUFF_1__PEACHPUFF_ = (255, 218, 185)
+PEACHPUFF_2 = (238, 203, 173)
+PEACHPUFF_3 = (205, 175, 149)
+PEACHPUFF_4 = (139, 119, 101)
+PEACOCK = (51, 161, 201)
+PINK = (255, 192, 203)
+PINK_1 = (255, 181, 197)
+PINK_2 = (238, 169, 184)
+PINK_3 = (205, 145, 158)
+PINK_4 = (139, 99, 108)
+PLUM = (221, 160, 221)
+PLUM_1 = (255, 187, 255)
+PLUM_2 = (238, 174, 238)
+PLUM_3 = (205, 150, 205)
+PLUM_4 = (139, 102, 139)
+POWDERBLUE = (176, 224, 230)
+PURPLE = (128, 0, 128)
+PURPLE_1 = (155, 48, 255)
+PURPLE_2 = (145, 44, 238)
+PURPLE_3 = (125, 38, 205)
+PURPLE_4 = (85, 26, 139)
+RASPBERRY = (135, 38, 87)
+RAWSIENNA = (199, 97, 20)
+RED_1__RED_ = (255, 0, 0)
+RED_2 = (238, 0, 0)
+RED_3 = (205, 0, 0)
+RED_4__DARKRED_ = (139, 0, 0)
+ROSYBROWN = (188, 143, 143)
+ROSYBROWN_1 = (255, 193, 193)
+ROSYBROWN_2 = (238, 180, 180)
+ROSYBROWN_3 = (205, 155, 155)
+ROSYBROWN_4 = (139, 105, 105)
+ROYALBLUE = (65, 105, 225)
+ROYALBLUE_1 = (72, 118, 255)
+ROYALBLUE_2 = (67, 110, 238)
+ROYALBLUE_3 = (58, 95, 205)
+ROYALBLUE_4 = (39, 64, 139)
+SALMON = (250, 128, 114)
+SALMON_1 = (255, 140, 105)
+SALMON_2 = (238, 130, 98)
+SALMON_3 = (205, 112, 84)
+SALMON_4 = (139, 76, 57)
+SANDYBROWN = (244, 164, 96)
+SAPGREEN = (48, 128, 20)
+SEAGREEN_1 = (84, 255, 159)
+SEAGREEN_2 = (78, 238, 148)
+SEAGREEN_3 = (67, 205, 128)
+SEAGREEN_4__SEAGREEN_ = (46, 139, 87)
+SEASHELL_1__SEASHELL_ = (255, 245, 238)
+SEASHELL_2 = (238, 229, 222)
+SEASHELL_3 = (205, 197, 191)
+SEASHELL_4 = (139, 134, 130)
+SEPIA = (94, 38, 18)
+SGI_BEET = (142, 56, 142)
+SGI_BRIGHTGRAY = (197, 193, 170)
+SGI_CHARTREUSE = (113, 198, 113)
+SGI_DARKGRAY = (85, 85, 85)
+SGI_GRAY_12 = (30, 30, 30)
+SGI_GRAY_16 = (40, 40, 40)
+SGI_GRAY_32 = (81, 81, 81)
+SGI_GRAY_36 = (91, 91, 91)
+SGI_GRAY_52 = (132, 132, 132)
+SGI_GRAY_56 = (142, 142, 142)
+SGI_GRAY_72 = (183, 183, 183)
+SGI_GRAY_76 = (193, 193, 193)
+SGI_GRAY_92 = (234, 234, 234)
+SGI_GRAY_96 = (244, 244, 244)
+SGI_LIGHTBLUE = (125, 158, 192)
+SGI_LIGHTGRAY = (170, 170, 170)
+SGI_OLIVEDRAB = (142, 142, 56)
+SGI_SALMON = (198, 113, 113)
+SGI_SLATEBLUE = (113, 113, 198)
+SGI_TEAL = (56, 142, 142)
+SIENNA = (160, 82, 45)
+SIENNA_1 = (255, 130, 71)
+SIENNA_2 = (238, 121, 66)
+SIENNA_3 = (205, 104, 57)
+SIENNA_4 = (139, 71, 38)
+SILVER = (192, 192, 192)
+SKYBLUE = (135, 206, 235)
+SKYBLUE_1 = (135, 206, 255)
+SKYBLUE_2 = (126, 192, 238)
+SKYBLUE_3 = (108, 166, 205)
+SKYBLUE_4 = (74, 112, 139)
+SLATEBLUE = (106, 90, 205)
+SLATEBLUE_1 = (131, 111, 255)
+SLATEBLUE_2 = (122, 103, 238)
+SLATEBLUE_3 = (105, 89, 205)
+SLATEBLUE_4 = (71, 60, 139)
+SLATEGRAY = (112, 128, 144)
+SLATEGRAY_1 = (198, 226, 255)
+SLATEGRAY_2 = (185, 211, 238)
+SLATEGRAY_3 = (159, 182, 205)
+SLATEGRAY_4 = (108, 123, 139)
+SNOW_1__SNOW_ = (255, 250, 250)
+SNOW_2 = (238, 233, 233)
+SNOW_3 = (205, 201, 201)
+SNOW_4 = (139, 137, 137)
+SPRINGGREEN = (0, 255, 127)
+SPRINGGREEN_1 = (0, 238, 118)
+SPRINGGREEN_2 = (0, 205, 102)
+SPRINGGREEN_3 = (0, 139, 69)
+STEELBLUE = (70, 130, 180)
+STEELBLUE_1 = (99, 184, 255)
+STEELBLUE_2 = (92, 172, 238)
+STEELBLUE_3 = (79, 148, 205)
+STEELBLUE_4 = (54, 100, 139)
+TAN = (210, 180, 140)
+TAN_1 = (255, 165, 79)
+TAN_2 = (238, 154, 73)
+TAN_3__PERU_ = (205, 133, 63)
+TAN_4 = (139, 90, 43)
+TEAL = (0, 128, 128)
+THISTLE = (216, 191, 216)
+THISTLE_1 = (255, 225, 255)
+THISTLE_2 = (238, 210, 238)
+THISTLE_3 = (205, 181, 205)
+THISTLE_4 = (139, 123, 139)
+TOMATO_1__TOMATO_ = (255, 99, 71)
+TOMATO_2 = (238, 92, 66)
+TOMATO_3 = (205, 79, 57)
+TOMATO_4 = (139, 54, 38)
+TURQUOISE = (64, 224, 208)
+TURQUOISEBLUE = (0, 199, 140)
+TURQUOISE_1 = (0, 245, 255)
+TURQUOISE_2 = (0, 229, 238)
+TURQUOISE_3 = (0, 197, 205)
+TURQUOISE_4 = (0, 134, 139)
+VIOLET = (238, 130, 238)
+VIOLETRED = (208, 32, 144)
+VIOLETRED_1 = (255, 62, 150)
+VIOLETRED_2 = (238, 58, 140)
+VIOLETRED_3 = (205, 50, 120)
+VIOLETRED_4 = (139, 34, 82)
+WARMGREY = (128, 128, 105)
+WHEAT = (245, 222, 179)
+WHEAT_1 = (255, 231, 186)
+WHEAT_2 = (238, 216, 174)
+WHEAT_3 = (205, 186, 150)
+WHEAT_4 = (139, 126, 102)
+WHITE_SMOKE__GRAY_96_ = (245, 245, 245)
+YELLOW_1__YELLOW_ = (255, 255, 0)
+YELLOW_2 = (238, 238, 0)
+YELLOW_3 = (205, 205, 0)
+YELLOW_4 = (139, 139, 0)
+
+
+def get_all_colours(rtype=list, return_hex=False):
+    lst = [
+        WILDERNESS_MINT,
+        BWS_RED,
+        BWS_BLACK,
+        BWS_GREY,
+        STARGATE_BLUE,
+        BLACK,
+        WHITE,
+        DARK_GRAY,
+        LIGHT_GRAY,
+        RED,
+        GREEN,
+        BLUE,
+        ALICEBLUE,
+        ANTIQUEWHITE,
+        ANTIQUEWHITE_1,
+        ANTIQUEWHITE_2,
+        ANTIQUEWHITE_3,
+        ANTIQUEWHITE_4,
+        AQUAMARINE_1__AQUAMARINE_,
+        AQUAMARINE_2,
+        AQUAMARINE_3__MEDIUMAQUAMARINE_,
+        AQUAMARINE_4,
+        AZURE_1__AZURE_,
+        AZURE_2,
+        AZURE_3,
+        AZURE_4,
+        BANANA,
+        BEIGE,
+        BISQUE_1__BISQUE_,
+        BISQUE_2,
+        BISQUE_3,
+        BISQUE_4,
+        BLACK,
+        BLANCHEDALMOND,
+        BLUE,
+        BLUEVIOLET,
+        BLUE_2,
+        BLUE_3__MEDIUMBLUE_,
+        BLUE_4__DARKBLUE_,
+        BRICK,
+        BROWN,
+        BROWN_1,
+        BROWN_2,
+        BROWN_3,
+        BROWN_4,
+        BURLYWOOD,
+        BURLYWOOD_1,
+        BURLYWOOD_2,
+        BURLYWOOD_3,
+        BURLYWOOD_4,
+        BURNTSIENNA,
+        BURNTUMBER,
+        CADETBLUE,
+        CADETBLUE_1,
+        CADETBLUE_2,
+        CADETBLUE_3,
+        CADETBLUE_4,
+        CADMIUMORANGE,
+        CADMIUMYELLOW,
+        CARROT,
+        CHARTREUSE_1__CHARTREUSE_,
+        CHARTREUSE_2,
+        CHARTREUSE_3,
+        CHARTREUSE_4,
+        CHOCOLATE,
+        CHOCOLATE_1,
+        CHOCOLATE_2,
+        CHOCOLATE_3,
+        CHOCOLATE_4__SADDLEBROWN_,
+        COBALT,
+        COBALTGREEN,
+        COLDGREY,
+        CORAL,
+        CORAL_1,
+        CORAL_2,
+        CORAL_3,
+        CORAL_4,
+        CORNFLOWERBLUE,
+        CORNSILK_1__CORNSILK_,
+        CORNSILK_2,
+        CORNSILK_3,
+        CORNSILK_4,
+        CRIMSON,
+        CYAN_2,
+        CYAN_3,
+        CYAN_4__DARKCYAN_,
+        CYAN__AQUA,
+        DARKGOLDENROD,
+        DARKGOLDENROD_1,
+        DARKGOLDENROD_2,
+        DARKGOLDENROD_3,
+        DARKGOLDENROD_4,
+        DARKGRAY,
+        DARKGREEN,
+        DARKKHAKI,
+        DARKOLIVEGREEN,
+        DARKOLIVEGREEN_1,
+        DARKOLIVEGREEN_2,
+        DARKOLIVEGREEN_3,
+        DARKOLIVEGREEN_4,
+        DARKORANGE,
+        DARKORANGE_1,
+        DARKORANGE_2,
+        DARKORANGE_3,
+        DARKORANGE_4,
+        DARKORCHID,
+        DARKORCHID_1,
+        DARKORCHID_2,
+        DARKORCHID_3,
+        DARKORCHID_4,
+        DARKSALMON,
+        DARKSEAGREEN,
+        DARKSEAGREEN_1,
+        DARKSEAGREEN_2,
+        DARKSEAGREEN_3,
+        DARKSEAGREEN_4,
+        DARKSLATEBLUE,
+        DARKSLATEGRAY,
+        DARKSLATEGRAY_1,
+        DARKSLATEGRAY_2,
+        DARKSLATEGRAY_3,
+        DARKSLATEGRAY_4,
+        DARKTURQUOISE,
+        DARKVIOLET,
+        DEEPPINK_1__DEEPPINK_,
+        DEEPPINK_2,
+        DEEPPINK_3,
+        DEEPPINK_4,
+        DEEPSKYBLUE_1__DEEPSKYBLUE_,
+        DEEPSKYBLUE_2,
+        DEEPSKYBLUE_3,
+        DEEPSKYBLUE_4,
+        DIMGRAY__GRAY_42_,
+        DIMGRAY__GRAY_42_,
+        DODGERBLUE_1__DODGERBLUE_,
+        DODGERBLUE_2,
+        DODGERBLUE_3,
+        DODGERBLUE_4,
+        EGGSHELL,
+        EMERALDGREEN,
+        FIREBRICK,
+        FIREBRICK_1,
+        FIREBRICK_2,
+        FIREBRICK_3,
+        FIREBRICK_4,
+        FLESH,
+        FLORALWHITE,
+        FORESTGREEN,
+        GAINSBORO,
+        GHOSTWHITE,
+        GOLDENROD,
+        GOLDENROD_1,
+        GOLDENROD_2,
+        GOLDENROD_3,
+        GOLDENROD_4,
+        GOLD_1__GOLD_,
+        GOLD_2,
+        GOLD_3,
+        GOLD_4,
+        GRAY,
+        GRAY_1,
+        GRAY_10,
+        GRAY_11,
+        GRAY_12,
+        GRAY_13,
+        GRAY_14,
+        GRAY_15,
+        GRAY_16,
+        GRAY_17,
+        GRAY_18,
+        GRAY_19,
+        GRAY_2,
+        GRAY_20,
+        GRAY_21,
+        GRAY_22,
+        GRAY_23,
+        GRAY_24,
+        GRAY_25,
+        GRAY_26,
+        GRAY_27,
+        GRAY_28,
+        GRAY_29,
+        GRAY_3,
+        GRAY_30,
+        GRAY_31,
+        GRAY_32,
+        GRAY_33,
+        GRAY_34,
+        GRAY_35,
+        GRAY_36,
+        GRAY_37,
+        GRAY_38,
+        GRAY_39,
+        GRAY_4,
+        GRAY_40,
+        GRAY_42,
+        GRAY_43,
+        GRAY_44,
+        GRAY_45,
+        GRAY_46,
+        GRAY_47,
+        GRAY_48,
+        GRAY_49,
+        GRAY_5,
+        GRAY_50,
+        GRAY_51,
+        GRAY_52,
+        GRAY_53,
+        GRAY_54,
+        GRAY_55,
+        GRAY_56,
+        GRAY_57,
+        GRAY_58,
+        GRAY_59,
+        GRAY_6,
+        GRAY_60,
+        GRAY_61,
+        GRAY_62,
+        GRAY_63,
+        GRAY_64,
+        GRAY_65,
+        GRAY_66,
+        GRAY_67,
+        GRAY_68,
+        GRAY_69,
+        GRAY_7,
+        GRAY_70,
+        GRAY_71,
+        GRAY_72,
+        GRAY_73,
+        GRAY_74,
+        GRAY_75,
+        GRAY_76,
+        GRAY_77,
+        GRAY_78,
+        GRAY_79,
+        GRAY_8,
+        GRAY_80,
+        GRAY_81,
+        GRAY_82,
+        GRAY_83,
+        GRAY_84,
+        GRAY_85,
+        GRAY_86,
+        GRAY_87,
+        GRAY_88,
+        GRAY_89,
+        GRAY_9,
+        GRAY_90,
+        GRAY_91,
+        GRAY_92,
+        GRAY_93,
+        GRAY_94,
+        GRAY_95,
+        GRAY_97,
+        GRAY_98,
+        GRAY_99,
+        GREEN,
+        GREENYELLOW,
+        GREEN_1__LIME_,
+        GREEN_2,
+        GREEN_3,
+        GREEN_4,
+        HONEYDEW_1__HONEYDEW_,
+        HONEYDEW_2,
+        HONEYDEW_3,
+        HONEYDEW_4,
+        HOTPINK,
+        HOTPINK_1,
+        HOTPINK_2,
+        HOTPINK_3,
+        HOTPINK_4,
+        INDIANRED,
+        INDIANRED_1,
+        INDIANRED_2,
+        INDIANRED_3,
+        INDIANRED_4,
+        INDIAN_RED,
+        INDIGO,
+        IVORYBLACK,
+        IVORY_1__IVORY_,
+        IVORY_2,
+        IVORY_3,
+        IVORY_4,
+        KHAKI,
+        KHAKI_1,
+        KHAKI_2,
+        KHAKI_3,
+        KHAKI_4,
+        LAVENDER,
+        LAVENDERBLUSH_1__LAVENDERBLUSH_,
+        LAVENDERBLUSH_2,
+        LAVENDERBLUSH_3,
+        LAVENDERBLUSH_4,
+        LAWNGREEN,
+        LEMONCHIFFON_1__LEMONCHIFFON_,
+        LEMONCHIFFON_2,
+        LEMONCHIFFON_3,
+        LEMONCHIFFON_4,
+        LIGHTBLUE,
+        LIGHTBLUE_1,
+        LIGHTBLUE_2,
+        LIGHTBLUE_3,
+        LIGHTBLUE_4,
+        LIGHTCORAL,
+        LIGHTCYAN_1__LIGHTCYAN_,
+        LIGHTCYAN_2,
+        LIGHTCYAN_3,
+        LIGHTCYAN_4,
+        LIGHTGOLDENRODYELLOW,
+        LIGHTGOLDENROD_1,
+        LIGHTGOLDENROD_2,
+        LIGHTGOLDENROD_3,
+        LIGHTGOLDENROD_4,
+        LIGHTGREY,
+        LIGHTPINK,
+        LIGHTPINK_1,
+        LIGHTPINK_2,
+        LIGHTPINK_3,
+        LIGHTPINK_4,
+        LIGHTSALMON_1__LIGHTSALMON_,
+        LIGHTSALMON_2,
+        LIGHTSALMON_3,
+        LIGHTSALMON_4,
+        LIGHTSEAGREEN,
+        LIGHTSKYBLUE,
+        LIGHTSKYBLUE_1,
+        LIGHTSKYBLUE_2,
+        LIGHTSKYBLUE_3,
+        LIGHTSKYBLUE_4,
+        LIGHTSLATEBLUE,
+        LIGHTSLATEGRAY,
+        LIGHTSTEELBLUE,
+        LIGHTSTEELBLUE_1,
+        LIGHTSTEELBLUE_2,
+        LIGHTSTEELBLUE_3,
+        LIGHTSTEELBLUE_4,
+        LIGHTYELLOW_1__LIGHTYELLOW_,
+        LIGHTYELLOW_2,
+        LIGHTYELLOW_3,
+        LIGHTYELLOW_4,
+        LIMEGREEN,
+        LINEN,
+        MAGENTA_2,
+        MAGENTA_3,
+        MAGENTA_4__DARKMAGENTA_,
+        MAGENTA__FUCHSIA_,
+        MANGANESEBLUE,
+        MAROON,
+        MAROON_1,
+        MAROON_2,
+        MAROON_3,
+        MAROON_4,
+        MEDIUMORCHID,
+        MEDIUMORCHID_1,
+        MEDIUMORCHID_2,
+        MEDIUMORCHID_3,
+        MEDIUMORCHID_4,
+        MEDIUMPURPLE,
+        MEDIUMPURPLE_1,
+        MEDIUMPURPLE_2,
+        MEDIUMPURPLE_3,
+        MEDIUMPURPLE_4,
+        MEDIUMSEAGREEN,
+        MEDIUMSLATEBLUE,
+        MEDIUMSPRINGGREEN,
+        MEDIUMTURQUOISE,
+        MEDIUMVIOLETRED,
+        MELON,
+        MIDNIGHTBLUE,
+        MINT,
+        MINTCREAM,
+        MISTYROSE_1__MISTYROSE_,
+        MISTYROSE_2,
+        MISTYROSE_3,
+        MISTYROSE_4,
+        MOCCASIN,
+        NAVAJOWHITE_1__NAVAJOWHITE_,
+        NAVAJOWHITE_2,
+        NAVAJOWHITE_3,
+        NAVAJOWHITE_4,
+        NAVY,
+        OLDLACE,
+        OLIVE,
+        OLIVEDRAB,
+        OLIVEDRAB_1,
+        OLIVEDRAB_2,
+        OLIVEDRAB_3__YELLOWGREEN_,
+        OLIVEDRAB_4,
+        ORANGE,
+        ORANGERED_1__ORANGERED_,
+        ORANGERED_2,
+        ORANGERED_3,
+        ORANGERED_4,
+        ORANGE_1__ORANGE_,
+        ORANGE_2,
+        ORANGE_3,
+        ORANGE_4,
+        ORCHID,
+        ORCHID_1,
+        ORCHID_2,
+        ORCHID_3,
+        ORCHID_4,
+        PALEGOLDENROD,
+        PALEGREEN,
+        PALEGREEN_1,
+        PALEGREEN_2__LIGHTGREEN_,
+        PALEGREEN_3,
+        PALEGREEN_4,
+        PALETURQUOISE_1,
+        PALETURQUOISE_2__PALETURQUOISE_,
+        PALETURQUOISE_3,
+        PALETURQUOISE_4,
+        PALEVIOLETRED,
+        PALEVIOLETRED_1,
+        PALEVIOLETRED_2,
+        PALEVIOLETRED_3,
+        PALEVIOLETRED_4,
+        PAPAYAWHIP,
+        PEACHPUFF_1__PEACHPUFF_,
+        PEACHPUFF_2,
+        PEACHPUFF_3,
+        PEACHPUFF_4,
+        PEACOCK,
+        PINK,
+        PINK_1,
+        PINK_2,
+        PINK_3,
+        PINK_4,
+        PLUM,
+        PLUM_1,
+        PLUM_2,
+        PLUM_3,
+        PLUM_4,
+        POWDERBLUE,
+        PURPLE,
+        PURPLE_1,
+        PURPLE_2,
+        PURPLE_3,
+        PURPLE_4,
+        RASPBERRY,
+        RAWSIENNA,
+        RED_1__RED_,
+        RED_2,
+        RED_3,
+        RED_4__DARKRED_,
+        ROSYBROWN,
+        ROSYBROWN_1,
+        ROSYBROWN_2,
+        ROSYBROWN_3,
+        ROSYBROWN_4,
+        ROYALBLUE,
+        ROYALBLUE_1,
+        ROYALBLUE_2,
+        ROYALBLUE_3,
+        ROYALBLUE_4,
+        SALMON,
+        SALMON_1,
+        SALMON_2,
+        SALMON_3,
+        SALMON_4,
+        SANDYBROWN,
+        SAPGREEN,
+        SEAGREEN_1,
+        SEAGREEN_2,
+        SEAGREEN_3,
+        SEAGREEN_4__SEAGREEN_,
+        SEASHELL_1__SEASHELL_,
+        SEASHELL_2,
+        SEASHELL_3,
+        SEASHELL_4,
+        SEPIA,
+        SGI_BEET,
+        SGI_BRIGHTGRAY,
+        SGI_CHARTREUSE,
+        SGI_DARKGRAY,
+        SGI_GRAY_12,
+        SGI_GRAY_16,
+        SGI_GRAY_32,
+        SGI_GRAY_36,
+        SGI_GRAY_52,
+        SGI_GRAY_56,
+        SGI_GRAY_72,
+        SGI_GRAY_76,
+        SGI_GRAY_92,
+        SGI_GRAY_96,
+        SGI_LIGHTBLUE,
+        SGI_LIGHTGRAY,
+        SGI_OLIVEDRAB,
+        SGI_SALMON,
+        SGI_SLATEBLUE,
+        SGI_TEAL,
+        SIENNA,
+        SIENNA_1,
+        SIENNA_2,
+        SIENNA_3,
+        SIENNA_4,
+        SILVER,
+        SKYBLUE,
+        SKYBLUE_1,
+        SKYBLUE_2,
+        SKYBLUE_3,
+        SKYBLUE_4,
+        SLATEBLUE,
+        SLATEBLUE_1,
+        SLATEBLUE_2,
+        SLATEBLUE_3,
+        SLATEBLUE_4,
+        SLATEGRAY,
+        SLATEGRAY_1,
+        SLATEGRAY_2,
+        SLATEGRAY_3,
+        SLATEGRAY_4,
+        SNOW_1__SNOW_,
+        SNOW_2,
+        SNOW_3,
+        SNOW_4,
+        SPRINGGREEN,
+        SPRINGGREEN_1,
+        SPRINGGREEN_2,
+        SPRINGGREEN_3,
+        STEELBLUE,
+        STEELBLUE_1,
+        STEELBLUE_2,
+        STEELBLUE_3,
+        STEELBLUE_4,
+        TAN,
+        TAN_1,
+        TAN_2,
+        TAN_3__PERU_,
+        TAN_4,
+        TEAL,
+        THISTLE,
+        THISTLE_1,
+        THISTLE_2,
+        THISTLE_3,
+        THISTLE_4,
+        TOMATO_1__TOMATO_,
+        TOMATO_2,
+        TOMATO_3,
+        TOMATO_4,
+        TURQUOISE,
+        TURQUOISEBLUE,
+        TURQUOISE_1,
+        TURQUOISE_2,
+        TURQUOISE_3,
+        TURQUOISE_4,
+        VIOLET,
+        VIOLETRED,
+        VIOLETRED_1,
+        VIOLETRED_2,
+        VIOLETRED_3,
+        VIOLETRED_4,
+        WARMGREY,
+        WHEAT,
+        WHEAT_1,
+        WHEAT_2,
+        WHEAT_3,
+        WHEAT_4,
+        WHITE,
+        WHITE_SMOKE__GRAY_96_,
+        WHITE_SMOKE__GRAY_96_,
+        YELLOW_1__YELLOW_,
+        YELLOW_2,
+        YELLOW_3,
+        YELLOW_4
+    ]
+
+    names = [
+        "WILDERNESS_MINT",
+        "BWS_RED",
+        "BWS_BLACK",
+        "BWS_GREY",
+        "STARGATE_BLUE",
+        "BLACK",
+        "WHITE",
+        "DARK_GRAY",
+        "LIGHT_GRAY",
+        "RED",
+        "GREEN",
+        "BLUE",
+        "ALICEBLUE",
+        "ANTIQUEWHITE",
+        "ANTIQUEWHITE_1",
+        "ANTIQUEWHITE_2",
+        "ANTIQUEWHITE_3",
+        "ANTIQUEWHITE_4",
+        "AQUAMARINE_1__AQUAMARINE_",
+        "AQUAMARINE_2",
+        "AQUAMARINE_3__MEDIUMAQUAMARINE_",
+        "AQUAMARINE_4",
+        "AZURE_1__AZURE_",
+        "AZURE_2",
+        "AZURE_3",
+        "AZURE_4",
+        "BANANA",
+        "BEIGE",
+        "BISQUE_1__BISQUE_",
+        "BISQUE_2",
+        "BISQUE_3",
+        "BISQUE_4",
+        "BLACK",
+        "BLANCHEDALMOND",
+        "BLUE",
+        "BLUEVIOLET",
+        "BLUE_2",
+        "BLUE_3__MEDIUMBLUE_",
+        "BLUE_4__DARKBLUE_",
+        "BRICK",
+        "BROWN",
+        "BROWN_1",
+        "BROWN_2",
+        "BROWN_3",
+        "BROWN_4",
+        "BURLYWOOD",
+        "BURLYWOOD_1",
+        "BURLYWOOD_2",
+        "BURLYWOOD_3",
+        "BURLYWOOD_4",
+        "BURNTSIENNA",
+        "BURNTUMBER",
+        "CADETBLUE",
+        "CADETBLUE_1",
+        "CADETBLUE_2",
+        "CADETBLUE_3",
+        "CADETBLUE_4",
+        "CADMIUMORANGE",
+        "CADMIUMYELLOW",
+        "CARROT",
+        "CHARTREUSE_1__CHARTREUSE_",
+        "CHARTREUSE_2",
+        "CHARTREUSE_3",
+        "CHARTREUSE_4",
+        "CHOCOLATE",
+        "CHOCOLATE_1",
+        "CHOCOLATE_2",
+        "CHOCOLATE_3",
+        "CHOCOLATE_4__SADDLEBROWN_",
+        "COBALT",
+        "COBALTGREEN",
+        "COLDGREY",
+        "CORAL",
+        "CORAL_1",
+        "CORAL_2",
+        "CORAL_3",
+        "CORAL_4",
+        "CORNFLOWERBLUE",
+        "CORNSILK_1__CORNSILK_",
+        "CORNSILK_2",
+        "CORNSILK_3",
+        "CORNSILK_4",
+        "CRIMSON",
+        "CYAN_2",
+        "CYAN_3",
+        "CYAN_4__DARKCYAN_",
+        "CYAN__AQUA",
+        "DARKGOLDENROD",
+        "DARKGOLDENROD_1",
+        "DARKGOLDENROD_2",
+        "DARKGOLDENROD_3",
+        "DARKGOLDENROD_4",
+        "DARKGRAY",
+        "DARKGREEN",
+        "DARKKHAKI",
+        "DARKOLIVEGREEN",
+        "DARKOLIVEGREEN_1",
+        "DARKOLIVEGREEN_2",
+        "DARKOLIVEGREEN_3",
+        "DARKOLIVEGREEN_4",
+        "DARKORANGE",
+        "DARKORANGE_1",
+        "DARKORANGE_2",
+        "DARKORANGE_3",
+        "DARKORANGE_4",
+        "DARKORCHID",
+        "DARKORCHID_1",
+        "DARKORCHID_2",
+        "DARKORCHID_3",
+        "DARKORCHID_4",
+        "DARKSALMON",
+        "DARKSEAGREEN",
+        "DARKSEAGREEN_1",
+        "DARKSEAGREEN_2",
+        "DARKSEAGREEN_3",
+        "DARKSEAGREEN_4",
+        "DARKSLATEBLUE",
+        "DARKSLATEGRAY",
+        "DARKSLATEGRAY_1",
+        "DARKSLATEGRAY_2",
+        "DARKSLATEGRAY_3",
+        "DARKSLATEGRAY_4",
+        "DARKTURQUOISE",
+        "DARKVIOLET",
+        "DEEPPINK_1__DEEPPINK_",
+        "DEEPPINK_2",
+        "DEEPPINK_3",
+        "DEEPPINK_4",
+        "DEEPSKYBLUE_1__DEEPSKYBLUE_",
+        "DEEPSKYBLUE_2",
+        "DEEPSKYBLUE_3",
+        "DEEPSKYBLUE_4",
+        "DIMGRAY__GRAY_42_",
+        "DIMGRAY__GRAY_42_",
+        "DODGERBLUE_1__DODGERBLUE_",
+        "DODGERBLUE_2",
+        "DODGERBLUE_3",
+        "DODGERBLUE_4",
+        "EGGSHELL",
+        "EMERALDGREEN",
+        "FIREBRICK",
+        "FIREBRICK_1",
+        "FIREBRICK_2",
+        "FIREBRICK_3",
+        "FIREBRICK_4",
+        "FLESH",
+        "FLORALWHITE",
+        "FORESTGREEN",
+        "GAINSBORO",
+        "GHOSTWHITE",
+        "GOLDENROD",
+        "GOLDENROD_1",
+        "GOLDENROD_2",
+        "GOLDENROD_3",
+        "GOLDENROD_4",
+        "GOLD_1__GOLD_",
+        "GOLD_2",
+        "GOLD_3",
+        "GOLD_4",
+        "GRAY",
+        "GRAY_1",
+        "GRAY_10",
+        "GRAY_11",
+        "GRAY_12",
+        "GRAY_13",
+        "GRAY_14",
+        "GRAY_15",
+        "GRAY_16",
+        "GRAY_17",
+        "GRAY_18",
+        "GRAY_19",
+        "GRAY_2",
+        "GRAY_20",
+        "GRAY_21",
+        "GRAY_22",
+        "GRAY_23",
+        "GRAY_24",
+        "GRAY_25",
+        "GRAY_26",
+        "GRAY_27",
+        "GRAY_28",
+        "GRAY_29",
+        "GRAY_3",
+        "GRAY_30",
+        "GRAY_31",
+        "GRAY_32",
+        "GRAY_33",
+        "GRAY_34",
+        "GRAY_35",
+        "GRAY_36",
+        "GRAY_37",
+        "GRAY_38",
+        "GRAY_39",
+        "GRAY_4",
+        "GRAY_40",
+        "GRAY_42",
+        "GRAY_43",
+        "GRAY_44",
+        "GRAY_45",
+        "GRAY_46",
+        "GRAY_47",
+        "GRAY_48",
+        "GRAY_49",
+        "GRAY_5",
+        "GRAY_50",
+        "GRAY_51",
+        "GRAY_52",
+        "GRAY_53",
+        "GRAY_54",
+        "GRAY_55",
+        "GRAY_56",
+        "GRAY_57",
+        "GRAY_58",
+        "GRAY_59",
+        "GRAY_6",
+        "GRAY_60",
+        "GRAY_61",
+        "GRAY_62",
+        "GRAY_63",
+        "GRAY_64",
+        "GRAY_65",
+        "GRAY_66",
+        "GRAY_67",
+        "GRAY_68",
+        "GRAY_69",
+        "GRAY_7",
+        "GRAY_70",
+        "GRAY_71",
+        "GRAY_72",
+        "GRAY_73",
+        "GRAY_74",
+        "GRAY_75",
+        "GRAY_76",
+        "GRAY_77",
+        "GRAY_78",
+        "GRAY_79",
+        "GRAY_8",
+        "GRAY_80",
+        "GRAY_81",
+        "GRAY_82",
+        "GRAY_83",
+        "GRAY_84",
+        "GRAY_85",
+        "GRAY_86",
+        "GRAY_87",
+        "GRAY_88",
+        "GRAY_89",
+        "GRAY_9",
+        "GRAY_90",
+        "GRAY_91",
+        "GRAY_92",
+        "GRAY_93",
+        "GRAY_94",
+        "GRAY_95",
+        "GRAY_97",
+        "GRAY_98",
+        "GRAY_99",
+        "GREEN",
+        "GREENYELLOW",
+        "GREEN_1__LIME_",
+        "GREEN_2",
+        "GREEN_3",
+        "GREEN_4",
+        "HONEYDEW_1__HONEYDEW_",
+        "HONEYDEW_2",
+        "HONEYDEW_3",
+        "HONEYDEW_4",
+        "HOTPINK",
+        "HOTPINK_1",
+        "HOTPINK_2",
+        "HOTPINK_3",
+        "HOTPINK_4",
+        "INDIANRED",
+        "INDIANRED_1",
+        "INDIANRED_2",
+        "INDIANRED_3",
+        "INDIANRED_4",
+        "INDIAN_RED",
+        "INDIGO",
+        "IVORYBLACK",
+        "IVORY_1__IVORY_",
+        "IVORY_2",
+        "IVORY_3",
+        "IVORY_4",
+        "KHAKI",
+        "KHAKI_1",
+        "KHAKI_2",
+        "KHAKI_3",
+        "KHAKI_4",
+        "LAVENDER",
+        "LAVENDERBLUSH_1__LAVENDERBLUSH_",
+        "LAVENDERBLUSH_2",
+        "LAVENDERBLUSH_3",
+        "LAVENDERBLUSH_4",
+        "LAWNGREEN",
+        "LEMONCHIFFON_1__LEMONCHIFFON_",
+        "LEMONCHIFFON_2",
+        "LEMONCHIFFON_3",
+        "LEMONCHIFFON_4",
+        "LIGHTBLUE",
+        "LIGHTBLUE_1",
+        "LIGHTBLUE_2",
+        "LIGHTBLUE_3",
+        "LIGHTBLUE_4",
+        "LIGHTCORAL",
+        "LIGHTCYAN_1__LIGHTCYAN_",
+        "LIGHTCYAN_2",
+        "LIGHTCYAN_3",
+        "LIGHTCYAN_4",
+        "LIGHTGOLDENRODYELLOW",
+        "LIGHTGOLDENROD_1",
+        "LIGHTGOLDENROD_2",
+        "LIGHTGOLDENROD_3",
+        "LIGHTGOLDENROD_4",
+        "LIGHTGREY",
+        "LIGHTPINK",
+        "LIGHTPINK_1",
+        "LIGHTPINK_2",
+        "LIGHTPINK_3",
+        "LIGHTPINK_4",
+        "LIGHTSALMON_1__LIGHTSALMON_",
+        "LIGHTSALMON_2",
+        "LIGHTSALMON_3",
+        "LIGHTSALMON_4",
+        "LIGHTSEAGREEN",
+        "LIGHTSKYBLUE",
+        "LIGHTSKYBLUE_1",
+        "LIGHTSKYBLUE_2",
+        "LIGHTSKYBLUE_3",
+        "LIGHTSKYBLUE_4",
+        "LIGHTSLATEBLUE",
+        "LIGHTSLATEGRAY",
+        "LIGHTSTEELBLUE",
+        "LIGHTSTEELBLUE_1",
+        "LIGHTSTEELBLUE_2",
+        "LIGHTSTEELBLUE_3",
+        "LIGHTSTEELBLUE_4",
+        "LIGHTYELLOW_1__LIGHTYELLOW_",
+        "LIGHTYELLOW_2",
+        "LIGHTYELLOW_3",
+        "LIGHTYELLOW_4",
+        "LIMEGREEN",
+        "LINEN",
+        "MAGENTA_2",
+        "MAGENTA_3",
+        "MAGENTA_4__DARKMAGENTA_",
+        "MAGENTA__FUCHSIA_",
+        "MANGANESEBLUE",
+        "MAROON",
+        "MAROON_1",
+        "MAROON_2",
+        "MAROON_3",
+        "MAROON_4",
+        "MEDIUMORCHID",
+        "MEDIUMORCHID_1",
+        "MEDIUMORCHID_2",
+        "MEDIUMORCHID_3",
+        "MEDIUMORCHID_4",
+        "MEDIUMPURPLE",
+        "MEDIUMPURPLE_1",
+        "MEDIUMPURPLE_2",
+        "MEDIUMPURPLE_3",
+        "MEDIUMPURPLE_4",
+        "MEDIUMSEAGREEN",
+        "MEDIUMSLATEBLUE",
+        "MEDIUMSPRINGGREEN",
+        "MEDIUMTURQUOISE",
+        "MEDIUMVIOLETRED",
+        "MELON",
+        "MIDNIGHTBLUE",
+        "MINT",
+        "MINTCREAM",
+        "MISTYROSE_1__MISTYROSE_",
+        "MISTYROSE_2",
+        "MISTYROSE_3",
+        "MISTYROSE_4",
+        "MOCCASIN",
+        "NAVAJOWHITE_1__NAVAJOWHITE_",
+        "NAVAJOWHITE_2",
+        "NAVAJOWHITE_3",
+        "NAVAJOWHITE_4",
+        "NAVY",
+        "OLDLACE",
+        "OLIVE",
+        "OLIVEDRAB",
+        "OLIVEDRAB_1",
+        "OLIVEDRAB_2",
+        "OLIVEDRAB_3__YELLOWGREEN_",
+        "OLIVEDRAB_4",
+        "ORANGE",
+        "ORANGERED_1__ORANGERED_",
+        "ORANGERED_2",
+        "ORANGERED_3",
+        "ORANGERED_4",
+        "ORANGE_1__ORANGE_",
+        "ORANGE_2",
+        "ORANGE_3",
+        "ORANGE_4",
+        "ORCHID",
+        "ORCHID_1",
+        "ORCHID_2",
+        "ORCHID_3",
+        "ORCHID_4",
+        "PALEGOLDENROD",
+        "PALEGREEN",
+        "PALEGREEN_1",
+        "PALEGREEN_2__LIGHTGREEN_",
+        "PALEGREEN_3",
+        "PALEGREEN_4",
+        "PALETURQUOISE_1",
+        "PALETURQUOISE_2__PALETURQUOISE_",
+        "PALETURQUOISE_3",
+        "PALETURQUOISE_4",
+        "PALEVIOLETRED",
+        "PALEVIOLETRED_1",
+        "PALEVIOLETRED_2",
+        "PALEVIOLETRED_3",
+        "PALEVIOLETRED_4",
+        "PAPAYAWHIP",
+        "PEACHPUFF_1__PEACHPUFF_",
+        "PEACHPUFF_2",
+        "PEACHPUFF_3",
+        "PEACHPUFF_4",
+        "PEACOCK",
+        "PINK",
+        "PINK_1",
+        "PINK_2",
+        "PINK_3",
+        "PINK_4",
+        "PLUM",
+        "PLUM_1",
+        "PLUM_2",
+        "PLUM_3",
+        "PLUM_4",
+        "POWDERBLUE",
+        "PURPLE",
+        "PURPLE_1",
+        "PURPLE_2",
+        "PURPLE_3",
+        "PURPLE_4",
+        "RASPBERRY",
+        "RAWSIENNA",
+        "RED_1__RED_",
+        "RED_2",
+        "RED_3",
+        "RED_4__DARKRED_",
+        "ROSYBROWN",
+        "ROSYBROWN_1",
+        "ROSYBROWN_2",
+        "ROSYBROWN_3",
+        "ROSYBROWN_4",
+        "ROYALBLUE",
+        "ROYALBLUE_1",
+        "ROYALBLUE_2",
+        "ROYALBLUE_3",
+        "ROYALBLUE_4",
+        "SALMON",
+        "SALMON_1",
+        "SALMON_2",
+        "SALMON_3",
+        "SALMON_4",
+        "SANDYBROWN",
+        "SAPGREEN",
+        "SEAGREEN_1",
+        "SEAGREEN_2",
+        "SEAGREEN_3",
+        "SEAGREEN_4__SEAGREEN_",
+        "SEASHELL_1__SEASHELL_",
+        "SEASHELL_2",
+        "SEASHELL_3",
+        "SEASHELL_4",
+        "SEPIA",
+        "SGI_BEET",
+        "SGI_BRIGHTGRAY",
+        "SGI_CHARTREUSE",
+        "SGI_DARKGRAY",
+        "SGI_GRAY_12",
+        "SGI_GRAY_16",
+        "SGI_GRAY_32",
+        "SGI_GRAY_36",
+        "SGI_GRAY_52",
+        "SGI_GRAY_56",
+        "SGI_GRAY_72",
+        "SGI_GRAY_76",
+        "SGI_GRAY_92",
+        "SGI_GRAY_96",
+        "SGI_LIGHTBLUE",
+        "SGI_LIGHTGRAY",
+        "SGI_OLIVEDRAB",
+        "SGI_SALMON",
+        "SGI_SLATEBLUE",
+        "SGI_TEAL",
+        "SIENNA",
+        "SIENNA_1",
+        "SIENNA_2",
+        "SIENNA_3",
+        "SIENNA_4",
+        "SILVER",
+        "SKYBLUE",
+        "SKYBLUE_1",
+        "SKYBLUE_2",
+        "SKYBLUE_3",
+        "SKYBLUE_4",
+        "SLATEBLUE",
+        "SLATEBLUE_1",
+        "SLATEBLUE_2",
+        "SLATEBLUE_3",
+        "SLATEBLUE_4",
+        "SLATEGRAY",
+        "SLATEGRAY_1",
+        "SLATEGRAY_2",
+        "SLATEGRAY_3",
+        "SLATEGRAY_4",
+        "SNOW_1__SNOW_",
+        "SNOW_2",
+        "SNOW_3",
+        "SNOW_4",
+        "SPRINGGREEN",
+        "SPRINGGREEN_1",
+        "SPRINGGREEN_2",
+        "SPRINGGREEN_3",
+        "STEELBLUE",
+        "STEELBLUE_1",
+        "STEELBLUE_2",
+        "STEELBLUE_3",
+        "STEELBLUE_4",
+        "TAN",
+        "TAN_1",
+        "TAN_2",
+        "TAN_3__PERU_",
+        "TAN_4",
+        "TEAL",
+        "THISTLE",
+        "THISTLE_1",
+        "THISTLE_2",
+        "THISTLE_3",
+        "THISTLE_4",
+        "TOMATO_1__TOMATO_",
+        "TOMATO_2",
+        "TOMATO_3",
+        "TOMATO_4",
+        "TURQUOISE",
+        "TURQUOISEBLUE",
+        "TURQUOISE_1",
+        "TURQUOISE_2",
+        "TURQUOISE_3",
+        "TURQUOISE_4",
+        "VIOLET",
+        "VIOLETRED",
+        "VIOLETRED_1",
+        "VIOLETRED_2",
+        "VIOLETRED_3",
+        "VIOLETRED_4",
+        "WARMGREY",
+        "WHEAT",
+        "WHEAT_1",
+        "WHEAT_2",
+        "WHEAT_3",
+        "WHEAT_4",
+        "WHITE",
+        "WHITE_SMOKE__GRAY_96_",
+        "WHITE_SMOKE__GRAY_96_",
+        "YELLOW_1__YELLOW_",
+        "YELLOW_2",
+        "YELLOW_3",
+        "YELLOW_4"
+    ]
+
+    if return_hex:
+        lst = [rgb_to_hex(c) for c in lst]
+
+    if rtype == dict:
+        return dict(zip(names, lst))
+    elif isinstance(rtype, str) and rtype.lower() == "both":
+        return names, lst
+    elif isinstance(rtype, str) and rtype.lower() == "names":
+        return names
+    else:
+        return lst
+
+
+def random_colour():
+    return random.choice(get_all_colours())
+
+
+# def rgb_to_hex(colour):
+#    return "#" + "".join([hex(x).split("x")[-1] for x in colour]).upper()
+
+def rgb_to_hex(colour):
+    r, g, b = None, None, None
+    try:
+        r, g, b = colour
+        return "#{}{}{}".format(*list(map(lambda x: hex(int(x) % 256)[2:].rjust(2, "0"), [r, g, b]))).upper()
+    except ValueError:
+        raise ValueError("Failed to convert r: {}, g: {}, b: {} values to a hex colour.".format(r, g, b))
+
+
+def hex_to_rgb(colour):
+    return (int(colour[1:3], 16), int(colour[3:5], 16), int(colour[5:], 16))
+
+###########################################################################################################################
+###########################################################################################################################
+import datetime
+from locale import currency, setlocale, LC_ALL
+from math import e, ceil, sin, cos, radians
+from random import random, choice, randint
+import datetime as dt
+import shutil
+import sys
+import os
+
+"""
+	General Utility Functions
+	Version..............1.33
+	Date...........2021-12-17
+	Author.......Avery Briggs
+"""
+
+
+def func_def():
+    pass
+
+
+class Foo:
+    def __init__(self):
+        pass
+
+    def f1(self):
+        pass
+
+    def f2(self, f):
+        pass
+
+
+FOO_OBJ = Foo()
+
+
+def isfunc(f):
+    return isinstance(f, type(func_def))
+
+
+def isclassmethod(m):
+    return isinstance(m, type(FOO_OBJ.f1))
+
+
+def lenstr(x):
+    return len(str(x))
+
+
+def minmax(a, b):
+    if a <= b:
+        return a, b
+    return b, a
+
+
+def maxmin(a, b):
+    if a < b:
+        return b, a
+    return a, b
+
+
+def avg(lst):
+    try:
+        return sum(lst) / max(1, len(lst))
+    except TypeError:
+        return 0
+
+
+def median(lst):
+    if not isinstance(lst, list) and not isinstance(lst, str):
+        raise TypeError("Cannot find median of \"{}\" of type: \"{}\".".format(lst, type(lst)))
+    if not lst:
+        return None
+
+    lt = lst.copy()
+    lt.sort()
+    l = len(lt)
+    if l == 1:
+        return lt
+    else:
+        h = l // 2
+        o = (l % 2) == 1
+        f = [] if o else lt[h - 1: h]
+        return f + lt[h: h + 1]
+
+
+def mode(lst):
+    if not isinstance(lst, list) and not isinstance(lst, str):
+        raise TypeError("Cannot find mode of \"{}\" of type: \"{}\".".format(lst, type(lst)))
+    d = {}
+    mv = float("-inf")
+    for el in lst:
+        if el in d:
+            v = d[el] + 1
+        else:
+            v = 1
+
+        d[el] = v
+        if v > mv:
+            mv = v
+
+    print("mv", mv, "d", d)
+    return [k for k, v in d.items() if v == mv]
+
+
+def pad_centre(text, l, pad_str=" "):
+    if l > 0:
+        h = (l - len(text)) // 2
+        odd = (((2 * h) + len(text)) == l)
+        text = text.rjust(h + len(text), pad_str)
+        h += 1 if not odd else 0
+        text = text.ljust(h + len(text), pad_str)
+        return text
+    else:
+        return ""
+
+
+def text_size(txt):
+    spl = txt.split("\n")
+    return len(spl), max([len(line) for line in spl])
+
+
+# Function returns a formatted string containing the contents of a dict object.
+# Special lines and line count for values that are lists.
+# Supports dictionaries with special value types.
+# Lists are printed line by line, but the counting index is constant for all elements. - Useful for ties.
+# Dicts are represented by a table which will dynamically generate a header and appropriately format cell values.
+# Strings, floats, ints, bools are simply converted to their string representations.
+# d					-	dict object.
+# n					-	Name of the dict, printed above the contents.
+# number			-	Decide whether to number the content lines.
+# l					-	Minimum number of chars in the content line.
+# 						Spaces between keys and values are populated by marker.
+# sep				-	Additional separation between keys and values.
+# marker			-	Char that separates the key and value of a content line.
+# sort_header		-	Will alphabetically sort the header line if any value is a
+#						dictionary. Only one level of nesting supported.
+# min_encapsulation	-	If a table is necessary because of a value that is a
+#						dictionary, then opt to keep all column widths as small as
+#						possible. This will most likely produce varying widths.
+# table_title		-	If a table is created, then display the title in the first
+#						column directly above the row names.
+def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_header=False, min_encapsulation=True,
+               table_title="", TAB="    ", SEPARATOR="  -  ", TABLE_DIVIDER="|"):
+    if not d or not n or type(d) != dict:
+        return "None"
+    m = "\n{}--  ".format(TAB[:len(TAB) // 2]) + str(n).title() + "  --\n\n"
+    fill = 0
+
+    # max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
+    # max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
+    # fill += sum([len(v) for v in d.values() if type(v) == (list or tuple)])
+    # l = max(l, (max_key + max_val)) + sep
+    # has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
+    # has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
+
+    max_key = float("-inf")
+    max_val = float("-inf")
+    fill = float("-inf")
+    l = float("-inf")
+    has_dict = False
+    has_list = False
+
+    for k, v in d.items():
+        max_key = max((len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0)), max_key)
+        max_val = max((max([len(str(v_elem)) for v_elem in v] if v else [0]) if (
+                (type(v) == list) or (type(v) == tuple)) else len(
+            str(v)) if type(v) != dict else 0), max_val)
+
+    l = max(len(table_title), max(l, (max_key + max_val))) + sep
+    has_dict = [(k, v) for k, v in d.items() if type(v) == dict or (type(v) == list and v and type(v[0]) == dict)]
+    has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
+
+    header = []
+    max_cell = 0
+    max_cell_widths = []
+
+    # print("has_dict: {hd}".format(hd=has_dict))
+    if has_list:
+        number = True
+    for k1, v in has_dict:
+        for k2 in v:
+            key = str(k2)
+            # print("key: {k}".format(k=key))
+            if key not in header:
+                if type(v) == dict:
+                    # print("\t\tNew key: {k}".format(k=key))
+                    header.append(key)
+                    max_cell = max(max_cell, max(len(key), max([lenstr(value) for value in v.values()])))
+                # print("max_cell: {mc}".format(mc=max_cell))
+                elif type(k2) == dict:
+                    strkeys = list(map(str, list(k2.keys())))
+                    strvals = list(map(str, list(k2.values())))
+                    header += [strkey for strkey in strkeys if strkey not in header]
+                    max_cell = max(max_cell, max(list(map(len, strkeys))), max(list(map(len, strvals))))
+                else:
+                    for lst in v:
+                        a = max(list(map(lenstr, list(map(str, lst.keys())))))
+                        b = max(list(map(lenstr, list(map(str, lst.values())))))
+                        # print("a: {a}, b: {b}, values: {v}".format(a=a, b=b, v=lst.values()))
+                        max_cell = max(max_cell, max(a, b))
+
+    max_cell += 2
+
+    # print("max_cell: {mc}".format(mc=max_cell))
+    if sort_header:
+        header.sort(key=lambda x: x.rjust(max_cell))
+
+    if min_encapsulation:
+        for h in header:
+            max_col_width = len(h) + 2
+            # print("h: {h}, type(h): {th}".format(h=h, th=type(h)))
+            for k, d_val in has_dict:
+                d_val = {str(d_val_k): str(d_val_v) for d_val_k, d_val_v in d_val.items()} if type(
+                    d_val) == dict else d_val
+                # print("d_val: {dv},\thidv: {hidv},\tetdvlist: {etdvl}".format(dv=d_val, hidv=(h in d_val), etdvl=(type(d_val) == list)))
+                # print("k: {k}\nt(k): {tk}\nd: {d}\nt(d): {td}".format(k=k, tk=type(k), d=d_val, td=type(d_val)))
+                if h in d_val:
+                    max_col_width = max(max_col_width, lenstr(d_val[h]) + 2)
+                elif type(d_val) == list:
+                    max_col_width = max(max_col_width, max([max(
+                        max(list(map(lenstr, [ek for ek in elem.keys() if ek == h]))),
+                        max(list(map(lenstr, [ev for ek, ev in elem.items() if ek == h]))) + 2) for elem in d_val]))
+            max_cell_widths.append(max_col_width)
+
+    # print("max_cell_widths: {mcw}".format(mcw=max_cell_widths))
+    table_header = TABLE_DIVIDER + TABLE_DIVIDER.join(
+        map(lambda x: pad_centre(str(x), max_cell), header)) + TABLE_DIVIDER
+    empty_line = TABLE_DIVIDER + TABLE_DIVIDER.join(
+        [pad_centre(" ", max_cell) for i in range(len(header))]) + TABLE_DIVIDER
+
+    if min_encapsulation:
+        table_header = TABLE_DIVIDER + TABLE_DIVIDER.join(
+            [pad_centre(str(h), max_cell_widths[i]) for i, h in enumerate(header)]) + TABLE_DIVIDER
+        empty_line = TABLE_DIVIDER + TABLE_DIVIDER.join(
+            [pad_centre(" ", max_cell_widths[i]) for i in range(len(header))]) + TABLE_DIVIDER
+    else:
+        max_cell_widths = [max_cell for i in range(len(header))]
+
+    # print("Header: {h}\nTable Header: {th}".format(h=header, th=table_header))
+    fill = "".join([" " for i in range(len(str(fill + len(d))))])
+    table_width = l + len(fill) + len(SEPARATOR) + len(TAB) + len(table_header) - (4 * len(TABLE_DIVIDER))
+    table_tab = "".join([marker for i in range(len(TAB))])
+    if has_dict:
+        table_header_title = pad_centre(table_title, l + len(SEPARATOR) - 1)
+        m += TAB
+        m += "" if not number else fill + SEPARATOR
+        m += table_header_title + table_header.rjust(
+            table_width - len(table_header_title) - len(fill) - len(SEPARATOR)) + "\n"
+    i = 0
+    # print("FINAL L: {l}\nFill: {n}<{f}>".format(l=l, n=len(fill), f=fill))
+    for k, v in d.items():
+        if type(v) not in [list, tuple]:
+            v = [v]
+        for j, v_elem in enumerate(v):
+            ml = str(k).strip()
+            orig_ml = ml
+            num = str(i + 1)
+            if number:
+                ml = fill + SEPARATOR + ml
+                if j == 0:
+                    ml = num.ljust(len(fill)) + ml[len(fill):]
+            v_val = v_elem
+            if has_dict and type(v_elem) == dict:
+                v_val = ""
+            ml += str(v_val).rjust(l - len(orig_ml), marker)
+            if has_dict:
+                ml += table_tab
+                if type(v_elem) == dict:
+                    keys = {str(k).strip(): v for k, v in v_elem.items()}
+                    vals = [keys[key] if key in keys else "" for key in header]
+                    ml += TABLE_DIVIDER + TABLE_DIVIDER.join(
+                        pad_centre(str(cell), max_cell_widths[i]) for i, cell in enumerate(vals)) + TABLE_DIVIDER
+                else:
+                    ml += empty_line
+            ml += "\n"
+            m += TAB + ml
+            i += 1
+    return m
+
+
+def money(v, int_only=False):
+    # return "$ %.2f" % v
+    setlocale(LC_ALL, "")
+    m = currency(v, grouping=True)
+    i = m.index("$") + 1
+    if int_only:
+        return (m[:i] + " " + m[i:]).split(".")[0]
+    return m[:i] + " " + m[i:]
+
+
+def money_value(m):
+    return float("".join(m[1:].split(",")))
+
+
+def percent(v):
+    return ("%.2f" % (v * 100)) + " %"
+
+
+def compute_min_edit_distance(a, b, show=False):
+    len_a = len(a)
+    len_b = len(b)
+    x = max(len_a, len_b)
+    s = b if x == len_a else a
+    m, instructions = min_edit_distance(a, b, show_table=show)
+    # print(instructions)
+    return m
+
+
+def min_edit_distance(a, b, show_table=False):
+    a = a.upper()
+    b = b.upper()
+    n = len(a) + 2
+    m = len(b) + 2
+    table = [[0 for j in range(n)] for i in range(m)]
+    for i in range(2, max(n, m)):
+        if i < n:
+            table[0][i] = a[i - 2]
+            table[1][i] = i - 1
+        if i < m:
+            table[i][0] = b[i - 2]
+            table[i][1] = i - 1
+
+    for i in range(2, m):
+        for j in range(2, n):
+            x = table[i][j - 1]
+            y = table[i - 1][j - 1]
+            z = table[i - 1][j]
+            mini = min(x, min(y, z))
+            u = table[0][j]
+            v = table[i][0]
+            if u == v:
+                table[i][j] = table[i - 1][j - 1]
+            else:
+                # System.out.println("x: " + x + ", y: " + y + ", z: " + z + ", min(x, min(y, z): " + mini);
+                table[i][j] = mini + 1
+
+    if show_table:
+        show(table)
+        print("Minimum edit Distance to convert \"" + a + "\" to \"" + b + "\": " + str(table[m - 1][n - 1]))
+    return table[m - 1][n - 1], table
+
+
+def show(arr):
+    res = "{"
+    for i in range(len(arr)):
+        res += "{"
+        if i > 0:
+            res += " "
+        for j in range(len(arr[i])):
+            if j < len(arr[i]) - 1:
+                if i == 0 or j == 0:
+                    res += str(arr[i][j]) + ", "
+                else:
+                    res += str(arr[i][j]) + ", "
+            else:
+                if i == 0 or j == 0:
+                    res += str(arr[i][j])
+                else:
+                    res += str(arr[i][j])
+        if i < len(arr) - 1:
+            res += "},\n"
+        else:
+            res += "}"
+    res += "}\n"
+    print(res)
+
+
+def add_business_days(d, bd, holidays=None):
+    if holidays is None:
+        holidays = []
+    i = 0
+    t = dt.datetime(d.year, d.month, d.day)
+    # print("holidays: " + str(holidays))
+    while i < bd:
+        t = t + dt.timedelta(days=1)
+        # print("t: " + str(t) + ", (t not in holidays): " + str(t not in holidays))
+        if t.weekday() < 5 and t not in holidays:
+            i += 1
+    return t
+
+
+def business_days_between(d1, d2, holidays=None):
+    business_days = 0
+    if holidays is None:
+        holidays = []
+    date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
+    date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
+
+    date_1, date_2 = minmax(date_1, date_2)
+
+    diff = (date_2 - date_1).days
+    temp = date_1
+    for i in range(diff):
+        temp = date_1 + dt.timedelta(days=i + 1)
+        if temp.weekday() < 5 and temp not in holidays:  # Monday == 0, Sunday == 6
+            business_days += 1
+    i = 0
+    while temp.weekday() >= 5 or temp in holidays:
+        temp = temp + dt.timedelta(days=1)
+        if temp not in holidays:
+            business_days += 1
+            break
+    # print("temp: {temp}\ndate_2: {date_2}\ntemp < date_2: {td2}".format(temp=temp, date_2=date_2, td2=(temp < date_2)))
+    # print("business_days: " + str(business_days))
+    return business_days
+
+
+def intersection(a, b):
+    res = []
+    l = a if len(a) >= len(b) else b
+    m = b if len(a) >= len(b) else a
+    for i in l:
+        if i in m:
+            res.append(i)
+    return res
+
+
+def disjoint(a, b):
+    overlap = intersection(a, b)
+    res = []
+    for el in a + b:
+        if el not in overlap:
+            res.append(el)
+    return res
+
+
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
+def isnumber(value):
+    if isinstance(value, int) or isinstance(value, float):
+        return True
+    if isinstance(value, str):
+        if value.count("-") < 2:
+            if value.replace("-", "").isnumeric():
+                return True
+    return False
+
+
+def same_calendar_day(d1, d2):
+    if type(d1) != type(d2) and type(d1) != dt.datetime:
+        raise ValueError(
+            "Check types of d1: <{d1}> and d2: <{d2}>.\nBoth values must be datetime.datetime objects.".format(d1=d1,
+                                                                                                               d2=d2))
+    return all([
+        d1.year == d2.year,
+        d1.month == d2.month,
+        d1.day == d2.day
+    ])
+
+
+def pyth(a=None, b=None, c=None):
+    if all([a is None, b is None, c is None]):
+        return None
+    if c is None:
+        if a is not None and b is not None:
+            return {"a": a, "b": b, "c": (a ** 2 + b ** 2) ** 0.5}
+    elif a is None:
+        if b is not None and c is not None:
+            return {"a": (c ** 2 - b ** 2) ** 0.5, "b": b, "c": c}
+    elif b is None:
+        if a is not None and c is not None:
+            return {"a": a, "b": (c ** 2 - a ** 2) ** 0.5, "c": c}
+    return {"a": a, "b": b, "c": c}
+
+
+def sigmoid(x):
+    return 1 / (1 + (e ** -x))
+
+
+def random_in_range(a, b):
+    return ((max(a, b) - min(a, b)) * random()) + min(a, b)
+
+
+def max_idx(lst):
+    max_val = None, float("-inf")
+    for i, el in enumerate(lst):
+        if el > max_val[1]:
+            max_val = i, el
+    return max_val
+
+
+def min_idx(lst):
+    min_val = None, float("inf")
+    for i, el in enumerate(lst):
+        if el < min_val:
+            min_val = i, el
+    return min_val
+
+
+# Usage:
+# (val, weight) where weight is a float or integer.
+# float weights must sum to 1 or less, indicatiing a percentage of 100.
+# A whole integer will be considered as a ratio value.
+# l1 = [(1, 0.7), (2, 0.3)]  # '1' 70% of the time, '2' 30% of the time
+# l2 = [(0, 0.05), (1, 0.05), (2, 0.05), (3, 0.1), (4, 0.2), (5, 0.05), (6, 10), (7, 2), (8, 3)]
+# 5% of the time: '0', '1', '2', '5', '3' 10% of the time, '4' 20% of the time, and 10 individual counts of 6, 2 and 7 and 3 counts of 8.
+# l3 = [("Avery", 5), ("Jordan", 15), ("Briggs", 2)]
+# List of 5 counts of 'Avery', 15 counts of 'Jordan', and 2 counts of 'Briggs'
+# weighted_choice(l1)
+# Returns a radnom choice from a generated weighted list.
+def weighted_choice(weighted_lst):
+    item_scalar = 10
+    lst_len = 1000
+    res = []
+    whole = []
+    fract = []
+    fract_sum = 0
+    sum_count = 0
+    for el in weighted_lst:
+        if isinstance(el, list) or isinstance(el, tuple):
+            if len(el) == 2:
+                val, weight = el
+                if str(weight).startswith("0."):
+                    fract.append(el)
+                    fract_sum += weight
+                    sum_count += weight * lst_len
+                else:
+                    whole.append(el)
+    # print("Whole:", whole)
+    # print("Fract:", fract)
+    if fract_sum > 1:
+        print("Fract:", fract)
+        raise ValueError("Fractional weights sum to 1 or less.")
+
+    remaining = lst_len - sum_count
+    remaining = remaining if remaining != 0 else 1
+    sum_whole = sum([weight for val, weight in whole])
+    sum_whole = sum_whole if sum_whole != 0 else 1
+    p = sum_whole / remaining
+
+    for val, weight in fract:
+        # print("item_scalar:", item_scalar, "p:", p, "weight:", weight, "lst_len:", lst_len)
+        s = ceil(item_scalar * p * weight * lst_len)
+        # print("\ts:", s)
+        res += [val for i in range(s)]
+
+    for val, weight in whole:
+        # print("{} x {}".format(weight, val))
+        res += [val for i in range(ceil(weight))]
+
+    # print("\tres", res)
+    if res:
+        # print("Choice from:\n\t{}".format(res))
+        return choice(res)
+    if isinstance(weighted_lst, list) or isinstance(weighted_lst, tuple):
+        # print("Choice from:\n\t{}".format(weighted_lst))
+        return choice(weighted_lst)
+    return None
+
+
+# TODO - Broken test:
+#	weighted_choice([(1, 9), 2])
+
+
+def lbs_kg(lbs):
+    """
+	lbs_kg(args) -> int() or float()
+	Convert N pounds to Kilograms.
+	1 Lbs = 0.453592 Kg
+	:param lbs: int or float value in pounds.
+	:return: float value in kilograms.
+	"""
+    if not isinstance(lbs, int) or isinstance(lbs, float):
+        raise ValueError("Cannot convert \"{}\" of type: \"{}\" to kilograms.".format(lbs, type(lbs)))
+    return 0.453592 * lbs
+
+
+def kg_lbs(kg):
+    """
+	kg_lbs(args) -> int() or float()
+	Convert N Kilograms to pounds.
+	1 Lbs = 0.453592 Kg
+	:param kg: int or float value in kilograms.
+	:return: float value in pounds.
+	"""
+    if not isinstance(kg, int) or isinstance(kg, float):
+        raise ValueError("Cannot convert \"{}\" of type: \"{}\" to pounds.".format(kg, type(kg)))
+    if kg == 0:
+        return 0.0
+    return 1 / lbs_kg(kg)
+
+
+def miles_km(miles):
+    """
+	miles_km(args) -> int() or float()
+	Convert N Miles to Kilometers.
+	1 Mi = 1.60934 Km
+	:param miles: int or float value in miles.
+	:return: float value in kilometers.
+	"""
+    if not isinstance(miles, int) or isinstance(miles, float):
+        raise ValueError("Cannot convert \"{}\" of type: \"{}\" to miles.".format(miles, type(miles)))
+    return 1.60934 * miles
+
+
+def km_miles(km):
+    """
+	km_miles(args) -> int() or float()
+	Convert N Kilometers to Miles.
+	1 Mi = 1.60934 Km.
+	:param km: int or float value in kilometers.
+	:return: float value in miles.
+	"""
+    if not isinstance(km, int) or isinstance(km, float):
+        raise ValueError("Cannot convert \"{}\" of type: \"{}\" to kilometers.".format(km, type(km)))
+    if km == 0:
+        return 0.0
+    return 1 / miles_km(km)
+
+
+def flatten(lst):
+    """
+	flatten(args) -> list()
+	Flatten a multi-dimensional list into a single dimension.
+	Non-list objects are returned in a list.
+	:param lst: list object with one or more dimensions.
+	:return: list object with one dimension.
+	"""
+    if not isinstance(lst, list):
+        return [lst]
+    if not lst:
+        return lst
+    return [*flatten(lst[0]), *flatten(lst[1:])]
+
+
+# Clamp an number between small and large values.
+# Inclusive start, exclusive end.
+def clamp(s, v, l):
+    return max(s, min(v, l))
+
+
+# Darken an RGB color using a proportion p (0-1)
+def darken(c, p):
+    r, g, b = c
+    r = clamp(0, round(r - (255 * p)), 255)
+    g = clamp(0, round(g - (255 * p)), 255)
+    b = clamp(0, round(b - (255 * p)), 255)
+    return r, g, b
+
+
+# Brighten an RGB color using a proportion p (0-1)
+def brighten(c, p):
+    r, g, b = c
+    r = clamp(0, round(r + (255 * p)), 255)
+    g = clamp(0, round(g + (255 * p)), 255)
+    b = clamp(0, round(b + (255 * p)), 255)
+    return r, g, b
+
+
+# return random RGB color
+def random_color():
+    return (
+        randint(10, 245),
+        randint(10, 245),
+        randint(10, 245)
+    )
+
+
+# Rotate a 2D point about the origin, a given amount of degrees. Counterclockwise
+def rotate_on_origin(px, py, theta):
+    t = radians(theta)
+    x = (px * cos(t)) - (py * sin(t))
+    y = (px * sin(t)) + (py * cos(t))
+    return x, y
+
+
+# Rotate a 2D point around any central point, a given amount of degrees. Counterclockwise
+def rotate_point(cx, cy, px, py, theta):
+    xd = 0 - cx
+    yd = 0 - cy
+    rx, ry = rotate_on_origin(px + xd, py + yd, theta)
+    return rx - xd, ry - yd
+
+
+def bar(a, b, c=10):
+    if not isinstance(c, int) or c < 1:
+        c = 10
+    return "{} |".format(percent(a / b)) + "".join(["#" if i < int((c * a) / b) else " " for i in range(c)]) + "|"
+
+
+def lstindex(lst, target):
+    for i, val in enumerate(lst):
+        if val == target:
+            return i
+    return -1
+
+
+def cos_x(degrees, amplitude=1, period=1, phase_shift=0, vertical_shift=0):
+    return (amplitude * (cos(period * (degrees + phase_shift)))) + vertical_shift
+
+
+def sin_x(degrees, amplitude=1, period=1, phase_shift=0, vertical_shift=0):
+    return (amplitude * (sin(period * (degrees + phase_shift)))) + vertical_shift
+
+
+def get_terminal_columns():
+    return shutil.get_terminal_size().columns
+
+
+def is_imported(module_name):
+    return module_name in sys.modules
+
+
+def distance(start, end):
+    return ((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2) ** 0.5
+
+
+def dot_product(a, b):
+    return (a[0] * b[0]) + (b[0] * b[1])
+
+
+def reduce(lst, p, how="left"):
+    if not isinstance(how, str):
+        how = str(how)
+    how = how.lower()
+    if how not in ["left", "center", "right", "distributed"]:
+        how = "distributed"
+
+    l = len(lst)
+    n_items = round(l * p)
+    if n_items <= 0:
+        return []
+
+    if how == "left":
+        return lst[:n_items]
+    elif how == "center":
+        a = (l - n_items) // 2
+        b = (l + n_items) // 2
+        if l % 2 == 1:
+            b += 1
+        return lst[a:b]
+    elif how == "right":
+        return lst[l - n_items:]
+    else:
+        return lst[0: l: l // n_items]
+
+
+class Line:
+    def __init__(self, x1, y1, x2, y2):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.is_init = False
+        self.tupl = None
+        self.p1 = None
+        self.p2 = None
+        self.m = None
+        self.b = None
+        self.abc = None
+        self.init(x1, y1, x2, y2)
+
+    def init(self, x1, y1, x2, y2):
+        self.tupl = ((x1, y1), (x2, y2))
+        self.p1 = x1, y1
+        self.p2 = x2, y2
+        div = x2 - x1
+        if div != 0:
+            self.m = (y2 - y1) / div
+        else:
+            self.m = "undefined"
+        if self.m != "undefined":
+            self.b = y1 - (x1 * self.m)
+        else:
+            self.b = "undefined"
+        self.abc = (y2 - y1, x1 - x2, ((y2 - y1) * x1) + ((x1 - x2) * y1))
+        self.is_init = True
+
+    def collide_point(self, x, y, is_segment=True):
+        if self.m == "undefined" or self.b == "undefined":
+            return self.x1 == x and self.x2 == x
+        if not is_segment:
+            return y == (self.m * x) + self.b
+        return y == (self.m * x) + self.b and (self.x1 <= x <= self.x2 or self.x2 <= x <= self.x1) and (
+                self.y1 <= y <= self.y2 or self.y2 <= y <= self.y1)
+
+    def collide_line(self, line):
+        assert isinstance(line, Line)
+        a1, b1, c1 = self.abc
+        a2, b2, c2 = line.abc
+        det = a1 * b2 - a2 * b1
+        if det == 0:
+            # Lines are parallel
+            return None
+        else:
+            x = (b2 * c1 - b1 * c2) / det
+            y = (a1 * c2 - a2 * c1) / det
+            sx1, sy1 = self.p1
+            sx2, sy2 = self.p2
+            sx1, sx2 = minmax(sx1, sx2)
+            sy1, sy2 = minmax(sy1, sy2)
+            lx1, ly1 = line.p1
+            lx2, ly2 = line.p2
+            lx1, lx2 = minmax(lx1, lx2)
+            ly1, ly2 = minmax(ly1, ly2)
+        #         if self.collide_point(x, y) and line.collide_point(x,
+        #                                                            y) and self.x1 <= x <= self.x2 and self.y1 <= y <= self.y2 and line.x1 <= x <= line.x2 and line.y1 <= y <= line.y2:
+
+        if self.collide_point(x, y) and line.collide_point(x,
+                                                           y) and sx1 <= x <= sx2 and sy1 <= y <= sy2 and lx1 <= x <= lx2 and ly1 <= y <= ly2:
+            return x, y
+        else:
+            return None
+
+    def __eq__(self, other):
+        return isinstance(other, Line) and (all([
+            self.x1 == other.x1,
+            self.y1 == other.y1,
+            self.x2 == other.x2,
+            self.y2 == other.y2
+        ]) or all([
+            self.x1 == other.x2,
+            self.y1 == other.y2,
+            self.x2 == other.x1,
+            self.y2 == other.y1
+        ]))
+
+    # comparison object "other" must be a tuple of:
+    #   (x, y, none_result) -> None comparisons return none_result
+    #   (x, y) -> None comparisons throw TypeErrors
+    def __lt__(self, other):
+        if isinstance(other, tuple) or isinstance(other, list):
+            if len(other) == 2:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other]):
+                    ox, oy = other
+                    return oy < self.y_at_x(ox)
+            elif len(other) == 3:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other[:2]]):
+                    if isinstance(other[2], bool) or (isinstance(other[2], int) and other[2] in [0, 1]):
+                        ox, oy, none_result = other
+                        v = self.y_at_x(ox)
+                        # return (oy < v) if v is not None else bool(none_result)
+                        return (oy < v) if v is not None else (ox < self.x_at_y(oy))
+        raise TypeError(
+            "Cannot compare \"{}\" of type with Line.\nRequires tuple / list: (x, y)".format(other, type(other)))
+
+    # comparison object "other" must be a tuple of:
+    #   (x, y, none_result) -> None comparisons return none_result
+    #   (x, y) -> None comparisons throw TypeErrors
+    def __le__(self, other):
+        if isinstance(other, tuple) or isinstance(other, list):
+            if len(other) == 2:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other]):
+                    ox, oy = other
+                    return oy <= self.y_at_x(ox)
+            elif len(other) == 3:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other[:2]]):
+                    if isinstance(other[2], bool) or (isinstance(other[2], int) and other[2] in [0, 1]):
+                        ox, oy, none_result = other
+                        v = self.y_at_x(ox)
+                        # return (oy <= v) if v is not None else bool(none_result)
+                        return (oy <= v) if v is not None else (ox <= self.x_at_y(oy))
+        raise TypeError(
+            "Cannot compare \"{}\" of type with Line.\nRequires tuple / list: (x, y)".format(other, type(other)))
+
+    # comparison object "other" must be a tuple of:
+    #   (x, y, none_result) -> None comparisons return none_result
+    #   (x, y) -> None comparisons throw TypeErrors
+    def __gt__(self, other):
+        if isinstance(other, tuple) or isinstance(other, list):
+            if len(other) == 2:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other]):
+                    ox, oy = other
+                    return oy > self.y_at_x(ox)
+            elif len(other) == 3:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other[:2]]):
+                    if isinstance(other[2], bool) or (isinstance(other[2], int) and other[2] in [0, 1]):
+                        ox, oy, none_result = other
+                        v = self.y_at_x(ox)
+                        # return (oy > v) if v is not None else bool(none_result)
+                        return (oy > v) if v is not None else (ox > self.x_at_y(oy))
+        raise TypeError(
+            "Cannot compare \"{}\" of type with Line.\nRequires tuple / list: (x, y)".format(other, type(other)))
+
+    # comparison object "other" must be a tuple of:
+    #   (x, y, none_result) -> None comparisons return none_result
+    #   (x, y) -> None comparisons throw TypeErrors
+    def __ge__(self, other):
+        if isinstance(other, tuple) or isinstance(other, list):
+            if len(other) == 2:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other]):
+                    ox, oy = other
+                    return oy >= self.y_at_x(ox)
+            elif len(other) == 3:
+                if all([isinstance(x, int) or isinstance(x, float) for x in other[:2]]):
+                    if isinstance(other[2], bool) or (isinstance(other[2], int) and other[2] in [0, 1]):
+                        ox, oy, none_result = other
+                        v = self.y_at_x(ox)
+                        # return (oy >= v) if v is not None else bool(none_result)
+                        return (oy >= v) if v is not None else (ox >= self.x_at_y(oy))
+        raise TypeError(
+            "Cannot compare \"{}\" of type with Line.\nRequires tuple / list: (x, y)".format(other, type(other)))
+
+    def y_at_x(self, x):
+        if self.m == "undefined":
+            # return None
+            return None
+        if self.m == 0:
+            return self.y1
+        return (self.m * x) + self.b
+
+    def x_at_y(self, y):
+        if self.m == "undefined":
+            return self.x1
+        if self.m == 0:
+            return None
+        return (y - self.b) / self.m
+
+    def translate(self, x, y):
+        self.x1 += x
+        self.x2 += x
+        self.y1 += y
+        self.y2 += y
+        self.init(self.x1, self.y1, self.x2, self.y2)
+
+    def translated(self, x, y):
+        r = Line(self.x1, self.y1, self.x2, self.y2)
+        r.translate(x, y)
+        return r
+
+    def __iter__(self):
+        lst = [self.p1, self.p2]
+        for val in lst:
+            yield val
+
+    def __repr__(self):
+        if self.m == "undefined":
+            return "x = {}".format(self.x1)
+        if self.m == 0:
+            return "y = {}".format(self.b)
+        return "y = {}x + {}".format("%.2f" % self.m, self.b)
+
+
+# class Rect:
+#     def __init__(self, x, y=None, w=None, h=None):
+#         self.x = x
+#         self.y = y
+#         self.width = w
+#         self.height = h
+#         if any([y is None, w is None, h is None]):
+#             if is_imported("pygame"):
+#                 if isinstance(x, pygame.Rect):
+#                     x = x.left
+#                     y = x.y
+#                     w = x.width
+#                     y = x.height
+#                 else:
+#                     raise ValueError("Cannot create a Rect object with <{}>.\nExpected a pygame.Rect object.".format(x))
+#             else:
+#                 ValueError("Cannot create a rect object with <{}>.\npygame module is not imported.".format(x))
+#         self.is_init = False
+#         self.tupl = None
+#         self.top = None
+#         self.left = None
+#         self.bottom = None
+#         self.right = None
+#         self.center = None
+#         self.top_left = None
+#         self.top_right = None
+#         self.bottom_left = None
+#         self.bottom_right = None
+#         self.top_line = None
+#         self.left_line = None
+#         self.right_line = None
+#         self.bottom_line = None
+#         self.center_top = None
+#         self.center_left = None
+#         self.center_right = None
+#         self.center_bottom = None
+#         self.area = None
+#         self.perimetre = None
+#         self.init(x, y, w, h)
+#
+#     def init(self, x, y, w, h):
+#         self.x = x
+#         self.y = y
+#         self.width = w
+#         self.height = h
+#         self.tupl = (x, y, w, h)
+#         self.top = y
+#         self.left = x
+#         self.bottom = y + h
+#         self.right = x + w
+#         self.center = x + (w / 2), y + (h / 2)
+#         self.top_left = x, y
+#         self.top_right = x + w, y
+#         self.bottom_left = x, y + h
+#         self.bottom_right = x + w, y + h
+#         self.center_top = self.center[0], y
+#         self.center_left = x, self.center[1]
+#         self.center_right = x + w, self.center[1]
+#         self.center_bottom = self.center[0], y + h
+#         self.area = w * h
+#         self.perimetre = 2 * (w + h)
+#         self.top_line = Line(*self.top_left, *self.top_right)
+#         self.left_line = Line(*self.top_left, *self.bottom_left)
+#         self.right_line = Line(*self.top_right, *self.bottom_right)
+#         self.bottom_line = Line(*self.bottom_left, *self.bottom_right)
+#         self.is_init = True
+#
+#     def __iter__(self):
+#         lst = [self.x, self. y, self.width, self.height]
+#         for val in lst:
+#             yield val
+#
+#     def collide_rect(self, rect, strictly_inside=True):
+#         if strictly_inside:
+#             return all([
+#                 self.left < rect.left,
+#                 self.right > rect.right,
+#                 self.top < rect.top,
+#                 self.bottom > rect.bottom
+#             ])
+#         else:
+#             return any([
+#                 self.collide_point(*rect.top_left),
+#                 self.collide_point(*rect.top_right),
+#                 self.collide_point(*rect.bottom_left),
+#                 self.collide_point(*rect.bottom_right)
+#             ])
+#
+#     def collide_line(self, line):
+#         assert isinstance(line, Line)
+#         if self.collide_point(*line.p1) or self.collide_point(*line.p1):
+#             return True
+#         else:
+#             top = Line(self.left, self.top, self.right, self.top)
+#             bottom = Line(self.left, self.bottom, self.right, self.bottom)
+#             left = Line(self.left, self.top, self.left, self.bottom)
+#             right = Line(self.right, self.top, self.right, self.bottom)
+#             return any([
+#                 line.collide_line(top),
+#                 line.collide_line(bottom),
+#                 line.collide_line(left),
+#                 line.collide_line(right)
+#             ])
+#
+#     def collide_point(self, x, y):
+#         return all([
+#             self.x <= x <= self.right,
+#             self.y <= y <= self.bottom
+#         ])
+#
+#     def translate(self, x, y):
+#         if not self.is_init:
+#             self.init(self.x, self.y, self.width, self.height)
+#         self.x += x
+#         self.y += y
+#         self.init(self.x, self.y, self.width, self.height)
+#
+#     def translated(self, x, y):
+#         r = Rect(self.x, self.y, self.width, self.height)
+#         r.translate(x, y)
+#         return r
+#
+#     def scale(self, w_factor, h_factor):
+#         self.init(self.x, self.y, self.width * w_factor, self.height * h_factor)
+#
+#     def scaled(self, w_factor, h_factor):
+#         r = Rect(self.x, self.y, self.width, self.height)
+#         r.scale(w_factor, h_factor)
+#         return r
+#
+#     def move(self, rect):
+#         self.init(rect.x, rect.y, rect.width, rect.height)
+#
+#     def resize(self, rect):
+#         self.init(rect.x, rect.y, rect.width, rect.height)
+#
+#     def __repr__(self):
+#         return "<rect(" + ", ".join(list(map(str, [self.x, self.y, self.width, self.height]))) + ")>"
+
+
+#            x2,y2              x1,y1 ---- x2,y2
+#  x1,y1  /    |                  |          |
+#    |       x3,y3              x4,y4 ---- x3,y3
+#  x4,y4  /
+
+class Rect2:
+    def __init__(self, x, y=None, w=None, h=None, a=0):
+        self.x = None
+        self.y = None
+        self.w = None
+        self.h = None
+        self.width = None
+        self.height = None
+        self.angle = None
+
+        self.x1, self.y1 = None, None
+        self.x2, self.y2 = None, None
+        self.x3, self.y3 = None, None
+        self.x4, self.y4 = None, None
+        self.p1 = None
+        self.p2 = None
+        self.p3 = None
+        self.p4 = None
+        self.l1 = None
+        self.l2 = None
+        self.l3 = None
+        self.l4 = None
+        self.a = a % 360
+        self.angle = a % 360
+        self.tupl = None
+        self.max_encapsulating_rect = None
+        self.min_encapsulating_rect = None
+        self.top = None
+        self.left = None
+        self.bottom = None
+        self.right = None
+        self.center = None
+        self.top_left = None
+        self.top_right = None
+        self.bottom_left = None
+        self.bottom_right = None
+        self.center_top = None
+        self.center_left = None
+        self.center_right = None
+        self.center_bottom = None
+        self.area = None
+        self.perimeter = None
+        self.top_line = None
+        self.right_line = None
+        self.bottom_line = None
+        self.left_line = None
+
+        self.diagonal_p1_p3 = None
+        self.diagonal_p3_p1 = None
+        self.diagonal_p2_p4 = None
+        self.diagonal_p4_p2 = None
+
+        self.init(x, y, w, h, a)
+
+    def init(self, x, y, w, h, a):
+        if w < 0:
+            raise ValueError("width value: \"{}\" must not be less than 0.".format(w))
+        if h < 0:
+            raise ValueError("height value: \"{}\" must not be less than 0.".format(h))
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.width = w
+        self.height = h
+        self.angle = a
+
+        self.x1, self.y1 = x, y
+        self.x2, self.y2 = rotate_point(x, y, x + w, y, a)
+        self.x3, self.y3 = rotate_point(x, y, x + w, y + h, a)
+        self.x4, self.y4 = rotate_point(x, y, x, y + h, a)
+        self.p1 = self.x1, self.y1
+        self.p2 = self.x2, self.y2
+        self.p3 = self.x3, self.y3
+        self.p4 = self.x4, self.y4
+        self.l1 = Line(self.x1, self.y1, self.x2, self.y2)
+        self.l2 = Line(self.x2, self.y2, self.x3, self.y3)
+        self.l3 = Line(self.x3, self.y3, self.x4, self.y4)
+        self.l4 = Line(self.x4, self.y4, self.x1, self.y1)
+        self.top_line = self.l1
+        self.right_line = self.l2
+        self.bottom_line = self.l3
+        self.left_line = self.l4
+
+        # self.tupl = (self.p1, self.p2, self.p3, self.p4)
+        self.tupl = (self.x, self.y, self.w, self.h)
+        if a == 0:
+            self.max_encapsulating_rect = self
+            self.min_encapsulating_rect = self
+        else:
+            xs = [self.x1, self.x2, self.x3, self.x4]
+            ys = [self.y1, self.y2, self.y3, self.y4]
+            xs.sort()
+            ys.sort()
+            self.max_encapsulating_rect = Rect2(xs[0], ys[0], xs[3] - xs[0], ys[3] - ys[0], 0)
+            self.min_encapsulating_rect = Rect2(xs[1], ys[1], xs[2] - xs[1], ys[2] - ys[1], 0)
+
+        # Using max_encapsulating_rect for calculations
+        self.top = self.max_encapsulating_rect.y
+        self.left = self.max_encapsulating_rect.x
+        self.bottom = self.max_encapsulating_rect.y + self.max_encapsulating_rect.height
+        self.right = self.max_encapsulating_rect.x + self.max_encapsulating_rect.width
+        self.center = self.left + (self.max_encapsulating_rect.width / 2), self.top + (
+                self.max_encapsulating_rect.height / 2)
+        self.top_left = self.left, self.top
+        self.top_right = self.right, self.top
+        self.bottom_left = self.left, self.bottom
+        self.bottom_right = self.bottom, self.right
+        self.center_top = self.center[0], self.top
+        self.center_left = self.left, self.center[1]
+        self.center_right = self.right, self.center[1]
+        self.center_bottom = self.center[0], self.bottom
+
+        self.diagonal_p1_p3 = Line(*self.p1, *self.p3)
+        self.diagonal_p3_p1 = Line(*self.p3, *self.p2)
+        self.diagonal_p2_p4 = Line(*self.p2, *self.p4)
+        self.diagonal_p4_p2 = Line(*self.p4, *self.p2)
+
+        # Calculations done on the main rect object
+        self.area = w * h
+        self.perimeter = 2 * (w + h)
+
+    def __iter__(self):
+        lst = [self.x, self.y, self.width, self.height, self.angle]
+        for val in lst:
+            yield val
+
+    def collide_point(self, x, y, strictly_inside=False):
+        if not all([
+            any([
+                isinstance(x, int),
+                isinstance(x, float)
+            ]),
+            any([
+                isinstance(y, int),
+                isinstance(y, float)
+            ])
+        ]):
+            raise TypeError(
+                "Cannot determine if x=\"{}\" of type: \"{}\" y=\"{}\" of type: \"{}\" collides with Rect object. Requires int and / or float objects.".format(
+                    x, type(x), y, type(y)))
+        if strictly_inside:
+            return all([
+                (x, y, 1) < self.l1,
+                (x, y, 1) > self.l2,
+                (x, y, 1) > self.l3,
+                (x, y, 1) < self.l4
+            ])
+        else:
+            return all([
+                (x, y, 1) <= self.l1,
+                (x, y, 1) >= self.l2,
+                (x, y, 1) >= self.l3,
+                (x, y, 1) <= self.l4
+            ])
+
+    def collide_line(self, line, strictly_inside=False):
+        if not isinstance(line, Line):
+            raise TypeError(
+                "Cannot determine if line=\"{}\" of type: \"{}\" collides with Rect object. Requires Line object.".format(
+                    line, type(line)))
+        if strictly_inside:
+            return all([
+                self.collide_point(*line.p1),
+                self.collide_point(*line.p2)
+            ])
+        else:
+            return any([
+                self.collide_point(*line.p1),
+                self.collide_point(*line.p2)
+            ])
+
+    def collide_rect(self, rect, strictly_inside=False):
+        if not isinstance(rect, Rect2):
+            raise TypeError(
+                "Cannot determine if rect=\"{}\" of type: \"{}\" collides with Rect object. Requires Rect object.".format(
+                    rect, type(rect)))
+        if strictly_inside:
+            return all([
+                self.collide_point(*rect.p1),
+                self.collide_point(*rect.p2),
+                self.collide_point(*rect.p3),
+                self.collide_point(*rect.p4)
+            ])
+        else:
+            return any([
+                self.collide_point(*rect.p1),
+                self.collide_point(*rect.p2),
+                self.collide_point(*rect.p3),
+                self.collide_point(*rect.p4)
+            ])
+
+    def translate(self, x, y):
+        self.init(self.x + x, self.y + y, self.width, self.height, self.angle)
+
+    def translated(self, x, y):
+        return Rect2(self.x + x, self.y + y, self.width, self.height, self.angle)
+
+    def scale(self, w, h):
+        w = abs(w)
+        h = abs(h)
+        self.init(self.x, self.y, self.width * w, self.height * h, self.angle)
+
+    def scaled(self, x, y):
+        r = Rect2(*self)
+        r.scale(x, y)
+        return r
+
+    def rotate(self, a):
+        self.init(self.x, self.y, self.width, self.height, self.angle + a)
+
+    def rotated(self, a):
+        r = Rect2(*self)
+        r.rotate(a)
+        return r
+
+    #     if any([y is None, w is None, h is None]):
+    #         if is_imported("pygame"):
+    #             if isinstance(x, pygame.Rect):
+    #                 x = x.left
+    #                 y = x.y
+    #                 w = x.width
+    #                 y = x.height
+    #             else:
+    #                 raise ValueError("Cannot create a Rect object with <{}>.\nExpected a pygame.Rect object.".format(x))
+    #         else:
+    #             ValueError("Cannot create a rect object with <{}>.\npygame module is not imported.".format(x))
+    #     self.is_init = False
+    #     self.tupl = None
+    #     self.top = None
+    #     self.left = None
+    #     self.bottom = None
+    #     self.right = None
+    #     self.center = None
+    #     self.top_left = None
+    #     self.top_right = None
+    #     self.bottom_left = None
+    #     self.bottom_right = None
+    #     self.top_line = None
+    #     self.left_line = None
+    #     self.right_line = None
+    #     self.bottom_line = None
+    #     self.center_top = None
+    #     self.center_left = None
+    #     self.center_right = None
+    #     self.center_bottom = None
+    #     self.area = None
+    #     self.perimetre = None
+    #     self.init(x, y, w, h)
+    #
+    # def init(self, x, y, w, h):
+    #     self.x = x
+    #     self.y = y
+    #     self.width = w
+    #     self.height = h
+    #     self.tupl = (x, y, w, h)
+    #     self.top = y
+    #     self.left = x
+    #     self.bottom = y + h
+    #     self.right = x + w
+    #     self.center = x + (w / 2), y + (h / 2)
+    #     self.top_left = x, y
+    #     self.top_right = x + w, y
+    #     self.bottom_left = x, y + h
+    #     self.bottom_right = x + w, y + h
+    #     self.center_top = self.center[0], y
+    #     self.center_left = x, self.center[1]
+    #     self.center_right = x + w, self.center[1]
+    #     self.center_bottom = self.center[0], y + h
+    #     self.area = w * h
+    #     self.perimetre = 2 * (w + h)
+    #     self.top_line = Line(*self.top_left, *self.top_right)
+    #     self.left_line = Line(*self.top_left, *self.bottom_left)
+    #     self.right_line = Line(*self.top_right, *self.bottom_right)
+    #     self.bottom_line = Line(*self.bottom_left, *self.bottom_right)
+    #     self.is_init = True
+    #
+    # def __iter__(self):
+    #     lst = [self.x, self. y, self.width, self.height]
+    #     for val in lst:
+    #         yield val
+    #
+    # def collide_rect(self, rect, strictly_inside=True):
+    #     if strictly_inside:
+    #         return all([
+    #             self.left < rect.left,
+    #             self.right > rect.right,
+    #             self.top < rect.top,
+    #             self.bottom > rect.bottom
+    #         ])
+    #     else:
+    #         return any([
+    #             self.collide_point(*rect.top_left),
+    #             self.collide_point(*rect.top_right),
+    #             self.collide_point(*rect.bottom_left),
+    #             self.collide_point(*rect.bottom_right)
+    #         ])
+    #
+    # def collide_line(self, line):
+    #     assert isinstance(line, Line)
+    #     if self.collide_point(*line.p1) or self.collide_point(*line.p1):
+    #         return True
+    #     else:
+    #         top = Line(self.left, self.top, self.right, self.top)
+    #         bottom = Line(self.left, self.bottom, self.right, self.bottom)
+    #         left = Line(self.left, self.top, self.left, self.bottom)
+    #         right = Line(self.right, self.top, self.right, self.bottom)
+    #         return any([
+    #             line.collide_line(top),
+    #             line.collide_line(bottom),
+    #             line.collide_line(left),
+    #             line.collide_line(right)
+    #         ])
+    #
+    # def collide_point(self, x, y):
+    #     return all([
+    #         self.x <= x <= self.right,
+    #         self.y <= y <= self.bottom
+    #     ])
+    #
+    # def translate(self, x, y):
+    #     if not self.is_init:
+    #         self.init(self.x, self.y, self.width, self.height)
+    #     self.x += x
+    #     self.y += y
+    #     self.init(self.x, self.y, self.width, self.height)
+    #
+    # def translated(self, x, y):
+    #     r = Rect(self.x, self.y, self.width, self.height)
+    #     r.translate(x, y)
+    #     return r
+    #
+    # def scale(self, w_factor, h_factor):
+    #     self.init(self.x, self.y, self.width * w_factor, self.height * h_factor)
+    #
+    # def scaled(self, w_factor, h_factor):
+    #     r = Rect(self.x, self.y, self.width, self.height)
+    #     r.scale(w_factor, h_factor)
+    #     return r
+    #
+    # def move(self, rect):
+    #     self.init(rect.x, rect.y, rect.width, rect.height)
+    #
+    # def resize(self, rect):
+    #     self.init(rect.x, rect.y, rect.width, rect.height)
+
+    def __repr__(self):
+        return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
+
+
+def date_suffix(day):
+    s_day = str(day)
+    if s_day[-1] == "1":
+        res = "st"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    elif s_day[-1] == "2":
+        res = "nd"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    elif s_day[-1] == "3":
+        res = "rd"
+        if len(s_day) > 1:
+            if s_day[-2] == "1":
+                res = "th"
+    else:
+        res = "th"
+    return res
+
+
+# Takes "2021-08-03" -> August 3rd, 2021
+def date_str_format(date_str):
+    date_obj = dt.datetime.fromisoformat(date_str)
+    suffix = date_suffix(date_obj.day)
+    res = dt.datetime.strftime(date_obj, "%B %d###, %Y").replace("###", suffix)
+    s_res = res.split(" ")
+    x = s_res[1] if s_res[1][0] != "0" else s_res[1][1:]
+    res = " ".join([s_res[0], x, s_res[2]])
+    return res
+
+
+# Appends a counter '(1)' to a given file path to avoid overwriting.
+def next_available_file_name(path):
+    counter = 0
+    path.replace("\\", "/")
+    og_path = path
+    while os.path.exists(path):
+        counter += 1
+        spl = og_path.split(".")
+        path = ".".join(spl[:-1]) + " ({}).".format(counter) + spl[-1]
+    path.replace("/", "\\")
+    return path
+
+
+# leap year calculation: https://www.timeanddate.com/date/leapyear.html
+def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
+    start_year, end_year = minmax(start_year, end_year)
+    start_year = clamp(1, start_year, end_year)
+    end_year = clamp(start_year + 1, end_year + 1, 10000)
+
+    r_y = list(range(start_year, end_year))
+    r_m = list(range(1, 13))
+    r_d = list(range(1, 32))
+    r_dsm = list(range(1, 31))
+    r_df = list(range(1, 29))
+    r_dfl = list(range(1, 30))
+    r_sm = [2, 4, 6, 9, 11]
+    y = choice(r_y)
+    m = choice(r_m)
+    if start_m in r_m:
+        m = start_m
+    if m in r_sm:
+        d = choice(r_dsm)
+        if start_d in r_dsm:
+            d = start_d
+    else:
+        d = choice(r_d)
+        if start_d in r_d:
+            d = start_d
+
+    if m == 2:
+        d = choice(r_df)
+        if start_d in r_df:
+            d = start_d
+        if y % 4 == 0 and (y % 100 != 0 or y % 400 == 0):
+            d = choice(r_dfl)
+            if start_d in r_dfl:
+                d = start_d
+
+    return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
+
+
+def is_date(date_in, fmt="%Y-%m-%d"):
+    if isinstance(date_in, datetime.datetime) or isinstance(date_in, datetime.date):
+        return True
+    try:
+        d = datetime.datetime.strptime(date_in, fmt)
+        return True
+    except TypeError:
+        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+    except ValueError:
+        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+    return False
+
+
+BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "
+BLK_TWO = "2", "22222\n    2\n22222\n2    \n22222"
+BLK_THREE = "3", "33333\n    3\n  333\n    3\n33333"
+BLK_FOUR = "4", "    4\n4   4\n44444\n    4\n    4"
+BLK_FIVE = "5", "55555\n5     \n55555\n    5\n55555"
+BLK_SIX = "6", "66666\n6    \n66666\n6   6\n66666"
+BLK_SEVEN = "7", "77777\n    7\n    7\n    7\n    7"
+BLK_EIGHT = "8", "88888\n8   8\n88888\n8   8\n88888"
+BLK_NINE = "9", "99999\n9   9\n99999\n    9\n    9"
+BLK_ZERO = "0", "00000\n00  0\n0 0 0\n0  00\n00000"
+BLK_A = "A", "  A  \n A A \nAA AA\nAAAAA\nA   A"
+BLK_B = "B", "BBBB \nB  BB\nBBBB \nB   B\nBBBBB"
+BLK_C = "C", " CCCC\nC    \nC    \nC    \n CCCC"
+BLK_D = "D", "DDDD \nD   D\nD   D\nD   D\nDDDD "
+BLK_E = "E", "EEEEE\nE    \nEEE  \nE    \nEEEEE"
+BLK_F = "F", "FFFFF\nF    \nFFF  \nF    \nF    "
+BLK_G = "G", "GGGGG\nG    \nG  GG\nG   G\nGGGGG"
+BLK_H = "H", "H   H\nH   H\nHHHHH\nH   H\nH   H"
+BLK_I = "I", "IIIII\n  I  \n  I  \n  I  \nIIIII"
+BLK_J = "J", "JJJJJ\n  J  \n  J  \nJ J  \nJJJ  "
+BLK_K = "K", "K   K\nK  K \nKKK  \nK  K \nK   K"
+BLK_L = "L", "L    \nL    \nL    \nL    \nLLLLL"
+BLK_M = "M", " M M \nMMMMM\nM M M\nM M M\nM M M"
+BLK_N = "N", "N   N\nNN  N\nN N N\nN  NN\nN   N"
+BLK_O = "O", " OOO \nO   O\nO   O\nO   O\n OOO "
+BLK_P = "P", "PPPP \nP   P\nPPPP \nP    \nP    "
+BLK_Q = "Q", " QQQ \nQ   Q\nQ   Q\nQ  QQ\n QQQQ"
+BLK_R = "R", "RRRR \nR   R\nRRRR \nR  R \nR   R"
+BLK_S = "S", " SSS \nS    \n SSS \n    S\n SSS "
+BLK_T = "T", "TTTTT\n  T  \n  T  \n  T  \n  T  "
+BLK_U = "U", "U   U\nU   U\nU   U\nU   U\n UUU "
+BLK_V = "V", "V   V\nV   V\nV   V\n V V \n  V  "
+BLK_W = "W", "W W W\nW W W\nW W W\nWWWWW\n W W "
+BLK_X = "X", "X   X\n X X \n  X  \n X X \nX   X"
+BLK_Y = "Y", "Y   Y\n Y Y \n  Y  \n  Y  \n  Y  "
+BLK_Z = "Z", "ZZZZZ\n   Z \n  Z  \n Z   \nZZZZZ"
+BLK_ADDITION = "+", "     \n  +  \n +++ \n  +  \n     "
+BLK_SUBTRACTION = "-", "     \n     \n --- \n     \n     "
+BLK_MULTIPLICATION = "X", "     \n X X \n  X  \n X X \n     "
+BLK_DIVISON = "/", "     \n   / \n  /  \n /   \n     "
+BLK_PERCENTAGE = "%", "%   %\n   % \n  %  \n %   \n%   %"
+
+###########################################################################################################################
+###########################################################################################################################
+import math
+
+from fpdf import FPDF
+import webbrowser
+
+"""
+	General PDF Creation Class
+	Version................1.1
+	Date............2021-09-29
+	Author........Avery Briggs
+"""
+
+# MAX_Y = 297
+# MAX_X = 210
+MARGIN_LINES_WIDTH = 3
+MARGIN_LINES_MARGIN = 5
+TITLE_HEIGHT = 12
+TITLE_MARGIN = 15
+TABLE_MARGIN = 10
+FOOTER_MARGIN = 10
+TXT_MARGIN = 10
+FILE_NAME = "test.pdf"
+
+
+class PDF(FPDF):
+
+    def __init__(self, file_name, *args):
+        super().__init__(*args)
+        self.file_name = file_name
+
+        # if self.cur_orientation == "L":
+        #     self.w = 750
+        #     self.h = 600
+        # else:
+        #     self.w = 600
+        #     self.h = 750
+        self.page_heights = [0]
+
+    def titles(self, title, x, y, w, h, colour, align="C", border=0, font=('Arial', 'B', 16)):
+        # self.set_fill_color(*BWS_GREY)
+        # self.rect(0, 0, 210, 20, "FD")
+        self.set_font(*font)
+        self.set_xy(x, y)
+        self.set_text_color(*colour)
+        self.cell(w=w, h=h, align=align, txt=title, border=border)
+
+    def texts(self, x, y, w, h, name, font=('Arial', '', 12), font_colour=BLACK):
+        before = self.get_x(), self.get_y()
+        if name in os.listdir():
+            with open(name, 'rb') as xy:
+                txt = xy.read().decode('latin-1')
+        else:
+            txt = name
+        print("description:", txt[:15])
+        print("before: ({}, {})".format(*before))
+        self.set_xy(x, y)
+        self.set_text_color(*font_colour)
+        self.set_font(*font)
+        self.multi_cell(w, h, txt, align='J')
+        after = self.get_x(), self.get_y()
+        print("after: ({}, {})".format(*after))
+        print("diff: ({}, {})".format(after[0] - before[0], after[1] - before[1]))
+        return after[0] - before[0], after[1] - before[1]
+
+    def add_image(self, name, x, y, w, h, type='', link=''):
+        self.image(name, x, y, w, h, type, link)
+
+    def open_in_browser(self):
+        webbrowser.open(self.file_name)
+
+    def margin_border(self, border_colour, content_colour, border_width=MARGIN_LINES_WIDTH):
+        self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, self.w - (2 * MARGIN_LINES_MARGIN),
+                          self.h - (2 * MARGIN_LINES_MARGIN), border_colour, content_colour, border_width)
+
+    def margin_lines(self, x, y, w, h, border_colour, content_colour, border_width=MARGIN_LINES_WIDTH):
+        self.set_fill_color(*border_colour)  # color for outer rectangle
+        self.rect(x, y, w, h, 'DF')
+        self.set_fill_color(*content_colour)  # color for inner rectangle
+        self.rect(x + border_width, y + border_width, w - (2 * border_width), h - (2 * border_width), 'FD')
+
+        # self.rect(5.0, 5.0, 200.0, 287.0)
+
+        # self.set_line_width(0.0)
+        # self.line(5.0, 5.0, 205.0, 5.0)  # top one
+        # self.line(5.0, 292.0, 205.0, 292.0)  # bottom one
+        # self.line(5.0, 5.0, 5.0, 292.0)  # left one
+        # self.line(205.0, 5.0, 205.0, 292.0)  # right one
+
+    def footer(self):
+        old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.text_color.split(" ")[: -1]))
+        self.set_text_color(*BLACK)
+        # Go to 1.5 cm from bottom
+        self.set_y(-15)
+        # Select Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        # Print centered page number
+        self.cell(0, 10, 'Page %s' % self.page_no(), 0, 0, 'C')
+        self.set_text_color(*old_colour)
+
+    def preprocess_contents(self, contents):
+        print("IN\n", contents)
+        if not isinstance(contents, dict) or not dict:
+            raise ValueError("Parameter \"contents\" must be a populated dict object.")
+        res = {}
+        for k, v in contents.items():
+            is_list = False
+            if not isinstance(v, dict):
+                if isinstance(v, list):
+                    i = 0
+                    for i, col in enumerate(v):
+                        if not isinstance(col, dict):
+                            break
+                        res.update({str(k) + "".join([" " for j in range(i)]): col})
+                    if i == len(v) - 1:
+                        is_list = True
+                        continue
+                raise ValueError(
+                    "Parameter \"contents\" is not of the correct format.\nNeeds to be a dict of dictionaries")
+            if not is_list:
+                res.update({k: v})
+
+        print("OUT\n", res)
+        return res
+
+    def time_stamp(self):
+        date = datetime.datetime.now()
+        old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.text_color.split(" ")[: -1]))
+        self.set_text_color(*BLACK)
+        # Go to 1.5 cm from bottom
+        self.set_xy(self.w - 60, -15)
+        # Select Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        # Print centered page number
+        txt = "Prepared: {} at {}".format(
+            datetime.datetime.strftime(date, "%Y-%m-%d"),
+            datetime.datetime.strftime(date, "%I:%M:%S %p")
+        )
+        self.cell(0, 10, txt, 0, 0, 'C')
+        self.set_text_color(*old_colour)
+
+    def table(
+            self,
+            title,
+            x,
+            y,
+            w,
+            contents,
+            desc_txt="",
+            header_colours=(BLACK, WHITE),
+            colours=(WHITE, BLACK),
+            header_height=10,
+            cell_height=5,
+            title_v_margin=5,
+            title_h_margin=5,
+            title_height=10,
+            title_colour=BWS_RED,
+            top_margin=5,
+            bottom_margin=5,
+            left_margin=5,
+            right_margin=5,
+            line_width=0,
+            top_link_colours=(WHITE, TEAL),
+            footer_colours=(BLACK, WHITE),
+            new_page_for_table=False,
+            # new_page_for_table=True,
+            show_row_names=False,
+            include_top_chart_link=True,
+            include_top_doc_link=False,
+            start_with_header=True,
+            row_name_col_lbl="",
+            border_colour=BWS_RED,
+            content_colour=WHITE,
+            cell_border_style=1,
+            null_entry="",
+            col_align=None,
+            header_font=('Arial', 'B', 14),
+            cell_font=('Arial', '', 8)
+            # time_stamp=False
+    ):
+        contents = self.preprocess_contents(contents)
+
+        def add_new_page():
+            old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.fill_color.split(" ")[: -1]))
+            self.add_page()
+            # self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
+            #                   MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
+            self.margin_border(border_colour, content_colour)
+            self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+            self.set_fill_color(*footer_colours[0])
+            # self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
+            self.set_fill_color(*old_colour)
+
+        if new_page_for_table:
+            include_top_doc_link = True
+
+        cx = cy = 0
+
+        header = []
+        content_lst = [[]]
+        title_page = self.page_no()
+
+        otx = x + left_margin
+        oty = y + top_margin
+        ocx = otx
+        ocy = oty + line_width + title_v_margin
+
+        for i, itms in enumerate(contents):
+            row = itms
+            col_vals = contents[row]
+            if not isinstance(col_vals, list):
+                col_vals = [col_vals]
+            print("row:", row, "col_vals:", col_vals)
+            content_lst.append([])
+            for col in col_vals:
+                for head, value in col.items():
+                    h_names = [h[0] if h else "" for h in header]
+                    j = lstindex(h_names, head)
+                    mhv = max(len(str(head)), len(str(value)))
+                    if j == -1:
+                        header.append((head, mhv))
+                        content_lst[0].append(head)
+                    else:
+                        header[j] = (head, max(header[j][1], mhv))
+
+                    h_names = [h[0] if h else "" for h in header]
+                    j = lstindex(h_names, head)
+                    c = len(content_lst[i + 1])
+                    if 0 < i:
+                        d = c - j
+                        # print("i: ", i, "c:", c, "d:", d, "j:", j, "value:", value, "content_list[i]:", content_lst[i + 1])
+                        if d <= 0:
+                            content_lst[i + 1] += [None for k in range(abs(d))]
+                    if j < c:
+                        content_lst[i + 1][j] = value
+                    else:
+                        content_lst[i + 1].append(value)
+
+        n_rows = len(contents)
+        n_cols = len(header)
+        # table_height = (2 * title_v_margin) + title_height + top_margin + bottom_margin + (
+        #             n_rows * cell_height) + header_height
+
+        # self.set_fill_color(*GREEN_2)
+        # self.rect(x + table_count, y, w, table_height, "FD")
+        # table_count += 5
+
+        # self.set_fill_color(*BWS_BLACK)
+
+        print("before")
+        print(content_lst)
+        if show_row_names:
+            n_cols += 1
+            header.insert(0, (row_name_col_lbl, 1))
+            keys = [header[0]] + list(contents.keys())
+            for i in range(n_rows + 1):
+                if i == 0:
+                    content_lst[0].insert(0, header[0][0])
+                else:
+                    k = keys[i]
+                    content_lst[i].insert(0, k)
+        print("after")
+        print(content_lst)
+
+        for row in content_lst:
+            row += [None for i in range(max(0, n_cols - len(row)))]
+
+        width = w - (2 * left_margin)
+        cell_width = width / n_cols
+
+        # self.set_fill_color(*BWS_GREY)
+        # cch = cell_height + (line_width / 2)
+        pages = 0
+        i_off = 0
+        space_used = 0
+        page_space_used = 0
+        # print("ocy:", ocy, "height:", height, "self.h:", self.h)
+
+        dth = 0 if desc_txt is None else 40
+        print("\t\tTITLE", title)
+        print("self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin):",
+              (self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)))
+        if new_page_for_table or (
+                self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)) >= self.h:
+            print("\tNew page to start the chart. new_page_for_table={}".format(new_page_for_table))
+            add_new_page()
+            page_left = self.h
+            pages += 1
+            # i_off += i
+            page_space_used += space_used
+            space_used = 0
+            ocy = 0
+            oty = 0
+            title_page = self.page_no()
+
+        # Begin Writing to page
+
+        self.line(otx - left_margin, oty + (title_v_margin / 2) + top_margin - 2, otx - left_margin + w,
+                  oty + (title_v_margin / 2) + top_margin - 2)
+        self.titles(title, otx - left_margin, oty + (title_v_margin / 2) + top_margin, w,
+                    title_height, title_colour)
+
+        ocy += title_height + title_v_margin
+
+        x_txt = y_txt = 0
+        if desc_txt:
+            y_txt = oty + (title_v_margin / 2) + top_margin + title_height + title_v_margin
+            x_txt, y_txt = self.texts(otx, y_txt, 0, 5, desc_txt)
+            ocy += y_txt
+        print("y_txt:", y_txt, "oty + (title_v_margin / 2) + top_margin:", (oty + (title_v_margin / 2) + top_margin),
+              "title_height:", title_height, "oty + (title_v_margin / 2) + top_margin + title_height",
+              oty + (title_v_margin / 2) + top_margin + title_height)
+
+        off = 0
+        i = 0
+        rh = 0
+        self.set_xy(ocx, ocy)
+        while i in range(n_rows + 1):
+
+            if i == 0:
+                self.set_font(*header_font)
+                self.set_fill_color(*header_colours[0])
+                self.set_text_color(*header_colours[1])
+                ch = header_height
+            else:
+                self.set_font(*cell_font)
+                fill_colour = colours[0][(i - 1) % len(colours[0])]
+                font_colour = colours[1][(i - 1) % len(colours[1])]
+                self.set_fill_color(*fill_colour)
+                self.set_text_color(*font_colour)
+                ch = cell_height
+
+            def row_height():
+                self.set_font(*cell_font)
+                """
+                # print("self.get_string_width(str(content_lst[i][4]).strip():", self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
+                # print("max([]):", (max(
+                #     [self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]
+                # )))
+                # print("max([]) / cell_width:", (max([self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in range(n_cols)]) / cell_width))
+                # print("[math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)]\n\t", [math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
+                # print("max([ceil(string_w(str(c_lst[i={i}][q]).strip() if c_lst[i={i}][q] is not None else null_entry) / cell_width) for q in range(n_cols={nc})]): {r}".format(i=i, nc=n_cols, r=(max([math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)]))))
+                # return max([math.ceil(self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q in range(n_cols)])
+                """
+                """
+                res = 0
+                for q in range(n_cols):
+                    ct = str(content_lst[i][q])#.strip()
+                    sct = math.ceil(self.get_string_width(ct))
+                    cww = math.floor(cell_width - 4.55)
+                    sctd = self.get_string_width(str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cww
+                    csctd = math.ceil(sctd)
+
+                    sp_splt = ct.split(" ")
+                    line = ""
+                    line_c = 1
+                    for ij, word in enumerate(sp_splt):
+                        spf = "" if ij == 0 else " "
+                        spe = "" if ij == n_cols - 1 else " "
+                        line += spf + word.strip()
+                        ln = line + spe
+                        print("line ({}) ({}): <{}> math.ceil(math.ceil(self.get_string_width(ln)) / cww): {}".format(len(ln), math.ceil(self.get_string_width(ln)), ln, (math.ceil(math.ceil(self.get_string_width(ln)) / cww))))
+                        if math.ceil(math.ceil(self.get_string_width(ln)) / cww) > 1:
+                            print("\tBREAK line ({}) ({}): <{}>".format(len(ln), self.get_string_width(ln), ln))
+                            line_c += 1
+                            line = ""
+
+                    res = max(res, line_c - csctd)
+
+                    res = max(res, csctd)
+                    print(dict_print({"ct": ct, "ch": ch, "sct": sct, "cww": cww, "sctd": sctd, "csctd": csctd, "line_C": line_c, "res": res}, "Calculated values"))
+                return res
+                """
+
+                res = 0
+                for q in range(n_cols):
+                    ct = str(content_lst[i][q])  # .strip()
+                    sct = math.ceil(self.get_string_width(ct))
+                    cww = math.floor(cell_width - 5)
+                    sctd = self.get_string_width(
+                        str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cww
+                    csctd = math.ceil(sctd)
+
+                    sp_splt = ct.split(" ")
+                    line = ""
+                    line_c = 1
+                    for ij, word in enumerate(sp_splt):
+                        spf = "" if ij == 0 else " "
+                        spe = "" if ij == n_cols - 1 else " "
+                        line += spf + word.strip()
+                        ln = line + spe
+                        if ij < len(sp_splt) - 1:
+                            next_word = sp_splt[ij + 1]
+                            if self.get_string_width(ln + next_word) >= cww:
+                                print("\tBREAK line ({}) ({}): <{}>".format(len(ln), self.get_string_width(ln), ln))
+                                line_c += 1
+                                line = ""
+                                ln = ""
+                    res = max(res, line_c)
+                    # if res:
+                    # print()
+                res = max(1, res - 1)
+                # if res > 1:
+                #     res -= 1
+                return res
+
+            trh = row_height()
+            rh += trh - 1
+            print("trh:", trh)
+            och = ch
+            ch = max(ch, ch * (trh - 1))
+
+            # cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+            #         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+            # print("\tself.get_y():", self.get_y(), "ch:", ch, "self.h:", self.h, "(self.get_y() + ch):", (self.get_y() + ch), "(self.get_y() + ch) >= self.h:", (self.get_y() + ch) >= self.h)
+            # print("\tcy:", cy, "ch:", ch, "self.h:", self.h, "(cy + ch):", (cy + ch), "(cy + ch) >= self.h:", ((cy + ch) >= self.h))
+            # print("\t\t(self.get_y() + max(cell_height, header_height)):", (self.get_y() + max(cell_height, header_height)), "\n\t\tself.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height), "\n\t\t(self.get_y() + max(cell_height, header_height)) >= self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.get_y() + max(cell_height, header_height)) >= (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height))
+            np = False
+            if i == 0:
+                if (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
+                        2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
+                    np = True
+            elif (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
+                    2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)):
+                np = True
+
+            if np:
+                add_new_page()
+                page_left = self.h
+                pages += 1
+                print("\tpage break on line i={}, start next page with header: {}".format(i, start_with_header))
+                i_off += i
+                page_space_used += space_used
+                space_used = 0
+                ocy = 0
+
+            space_used += ch + (max(0, (trh - 2)) * och)
+            j = 0
+            cy = self.get_y()  # - (max(0, trh - 2) * och)
+            wo_10015162 = False
+            m_c_y = cy
+            while j in range(n_cols):
+                if start_with_header and np:
+                    cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
+                    print("cv:", cell_value)
+                    self.set_font('Arial', 'B', 14)
+                    self.set_fill_color(*header_colours[0])
+                    self.set_text_color(*header_colours[1])
+                    ch = header_height
+                else:
+                    cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
+                cw = cell_width + (line_width / 2)
+                cx = ocx + (j * cw)
+                # cy = ocy + (((i - i_off) * ch) + max(0, ((1 if i else 0) * cch) - 5)) - (pages * height)
+                # cy = self.get_y()#ocy + (((i + rh - pages) * cell_height) + (((1 if (start_with_header and np) else 1) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+                #   1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+                # if rh:
+                #     cy -= cell_height
+                # print(
+                #     "pages: {} i: {} j: {} cx: {} cy: {}, self.get_y: {} cv: {} su: {} psu: {}".format(pages, i, j, cx,
+                #                                                                                        cy,
+                #                                                                                        self.get_y(),
+                #                                                                                        cell_value,
+                #                                                                                        space_used,
+                #                                                                                        page_space_used))
+                # self.rect(cx, cy, cell_width, ch, 'DF')
+                # self.texts(cx + (cw / 2), cy + (ch / 2), cell_value)
+                # self.texts(cx, cy, cell_value)
+                if cy >= self.h:
+                    raise ValueError("cy {} is too high".format(cy))
+                align = "C"
+                if isinstance(col_align, list):
+                    if j < len(col_align):
+                        align = col_align[j]
+                elif isinstance(col_align, dict):
+                    col_name = header[j][0]
+                    # print("\t\tcol_name:", col_name)
+                    if col_name in col_align:
+                        align = col_align[col_name]
+
+                self.set_xy(cx, cy)
+                # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
+                if trh - 1:
+                    bs = "F" + ("" if not cell_border_style else "D")
+                    # old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
+                    # print("old_colo:", old_colo)
+                    # self.set_fill_color(*TURQUOISE)
+                    w_off = 1
+                    # self.rect(cx - w_off, cy, cell_width + (2 * w_off), (max(0, (trh)) * och), bs)
+                    # self.set_fill_color(*old_colo)
+                bef = self.get_y()
+                self.multi_cell(w=cell_width, h=och, txt=cell_value[:300], border=cell_border_style, align=align,
+                                fill=1)
+                aft = self.get_y()
+                m_c_y = max(m_c_y, self.get_y(), max(0, (trh if trh > 1 else 0)) * och)
+                # x, y, name, font=('Arial', '', 12), font_colour=BLACK
+                j += 1
+                print(
+                    "page: {}\n\t(i, j): ({}, {})\n\t(cx, cy): ({}, {})\n\tself.get_y: {}\n\tcv: {} su: {} psu: {}\n\t(aft, bef): ({}, {})\n\ttrh: {}\n\tm_c_y: {}".format(
+                        pages, i, j, cx,
+                        cy,
+                        self.get_y(),
+                        cell_value,
+                        space_used,
+                        page_space_used, aft, bef, trh, m_c_y))
+
+                if cell_value == "10015162":
+                    wo_10015162 = True
+
+            if start_with_header and np:
+                i -= 1
+                off += 1
+            i += 1
+            print("\t\tcy:", cy, "\n\t\tself.get_y()", self.get_y())
+            # self.set_y(cy + och + (max(0, (trh if trh > 1 else 0)) * och))
+            self.set_y(m_c_y)
+            # if wo_10015162:
+            #     raise ValueError("Hey ")
+
+        # self.rect(x, y, w, height, 'FD')
+
+        y_link = self.get_y() + title_v_margin
+        if include_top_chart_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 30, y_link)
+            self.cell(30, 5, "Top of Chart", 1, 1, 'C', fill=1,
+                      link=("{}/{}#page={}".format(os.getcwd(), self.file_name, title_page)))
+
+        if include_top_doc_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 65, y_link)
+            self.cell(30, 5, "Top of Document", 1, 1, 'C', fill=1,
+                      link=("{}/{}#page={}".format(os.getcwd(), self.file_name, 1)))
+
+        # if time_stamp:
+        #     self.time_stamp()
+
+        # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
+        # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
+        print("self.w:", self.w, "width:", width)
+        print("header:", header)
+        # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
+        print("(N x M): ({} x {})".format(n_rows, n_cols))
+        # print("(H x W): ({} x {})".format(height, width))
+        print("(CH x CW): ({} x {})".format(cell_height, cell_width))
+
+        return cx, cy
+
+    def table(
+            self,
+            title,
+            x,
+            y,
+            w,
+            contents,
+            desc_txt="",
+            header_colours=(BLACK, WHITE),
+            colours=(WHITE, BLACK),
+            header_height=10,
+            cell_height=5,
+            title_v_margin=5,
+            title_h_margin=5,
+            title_height=10,
+            title_colour=BWS_RED,
+            top_margin=8,
+            bottom_margin=8,
+            left_margin=8,
+            right_margin=8,
+            line_width=0,
+            top_link_colours=(WHITE, TEAL),
+            footer_colours=(BLACK, WHITE),
+            new_page_for_table=False,
+            # new_page_for_table=True,
+            show_row_names=False,
+            include_top_chart_link=True,
+            include_top_doc_link=False,
+            start_with_header=True,
+            row_name_col_lbl="",
+            border_colour=BWS_RED,
+            content_colour=WHITE,
+            cell_border_style=1,
+            null_entry="",
+            col_align=None,
+            header_font=('Arial', 'B', 14),
+            cell_font=('Arial', '', 10)
+            # time_stamp=False
+    ):
+        contents = self.preprocess_contents(contents)
+
+        def add_new_page():
+            old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.fill_color.split(" ")[: -1]))
+            self.add_page()
+            # self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
+            #                   MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
+            self.margin_border(border_colour, content_colour)
+            self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+            self.set_fill_color(*footer_colours[0])
+            # self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
+            self.set_fill_color(*old_colour)
+
+        if new_page_for_table:
+            include_top_doc_link = True
+
+        cx = cy = 0
+
+        header = []
+        content_lst = [[]]
+        title_page = self.page_no()
+
+        otx = x + left_margin
+        oty = y + top_margin
+        ocx = otx
+        ocy = oty + line_width + title_v_margin
+
+        for i, itms in enumerate(contents):
+            row = itms
+            col_vals = contents[row]
+            if not isinstance(col_vals, list):
+                col_vals = [col_vals]
+            print("row:", row, "col_vals:", col_vals)
+            content_lst.append([])
+            for col in col_vals:
+                for head, value in col.items():
+                    h_names = [h[0] if h else "" for h in header]
+                    j = lstindex(h_names, head)
+                    mhv = max(len(str(head)), len(str(value)))
+                    if j == -1:
+                        header.append((head, mhv))
+                        content_lst[0].append(head)
+                    else:
+                        header[j] = (head, max(header[j][1], mhv))
+
+                    h_names = [h[0] if h else "" for h in header]
+                    j = lstindex(h_names, head)
+                    c = len(content_lst[i + 1])
+                    if 0 < i:
+                        d = c - j
+                        # print("i: ", i, "c:", c, "d:", d, "j:", j, "value:", value, "content_list[i]:", content_lst[i + 1])
+                        if d <= 0:
+                            content_lst[i + 1] += [None for k in range(abs(d))]
+                    if j < c:
+                        content_lst[i + 1][j] = value
+                    else:
+                        content_lst[i + 1].append(value)
+
+        n_rows = len(contents)
+        n_cols = len(header)
+        # table_height = (2 * title_v_margin) + title_height + top_margin + bottom_margin + (
+        #             n_rows * cell_height) + header_height
+
+        # self.set_fill_color(*GREEN_2)
+        # self.rect(x + table_count, y, w, table_height, "FD")
+        # table_count += 5
+
+        # self.set_fill_color(*BWS_BLACK)
+
+        print("before")
+        print(content_lst)
+        if show_row_names:
+            n_cols += 1
+            header.insert(0, (row_name_col_lbl, 1))
+            keys = [header[0]] + list(contents.keys())
+            for i in range(n_rows + 1):
+                if i == 0:
+                    content_lst[0].insert(0, header[0][0])
+                else:
+                    k = keys[i]
+                    content_lst[i].insert(0, k)
+        print("after")
+        print(content_lst)
+
+        for row in content_lst:
+            row += [None for i in range(max(0, n_cols - len(row)))]
+
+        width = w - (2 * left_margin)
+        cell_width = width / n_cols
+
+        # self.set_fill_color(*BWS_GREY)
+        # cch = cell_height + (line_width / 2)
+        pages = 0
+        i_off = 0
+        space_used = 0
+        page_space_used = 0
+        # print("ocy:", ocy, "height:", height, "self.h:", self.h)
+
+        dth = 0 if desc_txt is None else 40
+        print("\t\tTITLE", title)
+        print("self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin):",
+              (self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)))
+        if new_page_for_table or (
+                self.get_y() + title_height + (5 * title_v_margin) + dth + (2 * top_margin)) >= self.h:
+            print("\tNew page to start the chart. new_page_for_table={}".format(new_page_for_table))
+            add_new_page()
+            page_left = self.h
+            pages += 1
+            # i_off += i
+            page_space_used += space_used
+            space_used = 0
+            ocy = 0
+            oty = 0
+            title_page = self.page_no()
+
+        # Begin Writing to page
+
+        self.line(otx - left_margin, oty + (title_v_margin / 2) + top_margin - 2, otx - left_margin + w,
+                  oty + (title_v_margin / 2) + top_margin - 2)
+        self.titles(title, otx - left_margin, oty + (title_v_margin / 2) + top_margin, w,
+                    title_height, title_colour)
+
+        x_txt = y_txt = 0
+        if desc_txt:
+            y_txt = oty + (title_v_margin / 2) + top_margin + title_height + title_v_margin
+            x_txt, y_txt = self.texts(otx, y_txt, 0, 5, desc_txt)
+            ocy += y_txt
+        print("y_txt:", y_txt, "oty + (title_v_margin / 2) + top_margin:", (oty + (title_v_margin / 2) + top_margin),
+              "title_height:", title_height, "oty + (title_v_margin / 2) + top_margin + title_height",
+              oty + (title_v_margin / 2) + top_margin + title_height)
+
+        off = 0
+        i = 0
+        rh = 0
+        while i in range(n_rows + 1):
+
+            if i == 0:
+                self.set_font(*header_font)
+                self.set_fill_color(*header_colours[0])
+                self.set_text_color(*header_colours[1])
+                ch = header_height
+            else:
+                self.set_font(*cell_font)
+                fill_colour = colours[0][(i - 1) % len(colours[0])]
+                font_colour = colours[1][(i - 1) % len(colours[1])]
+                self.set_fill_color(*fill_colour)
+                self.set_text_color(*font_colour)
+                ch = cell_height
+
+            def row_height():
+                self.set_font(*cell_font)
+                # if i == 0:
+                #     cv = max([self.get_string_width(str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry)])
+                # else:
+                #     cv = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
+                # print("content_lst[i]:", content_lst[i])
+                # print("self.get_string_width(str(content_lst[i][4]).strip():",
+                #       self.get_string_width(str(content_lst[i][4]).strip()), "content_lst[i][4]):", content_lst[i][4])
+                print("max([]):", (max(
+                    [self.get_string_width(
+                        str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in
+                        range(n_cols)]
+                )))
+                print("max([]) / cell_width:", (max([self.get_string_width(
+                    str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in
+                    range(n_cols)]) / cell_width))
+                return max([math.ceil(self.get_string_width(
+                    str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) / cell_width) for q
+                            in range(n_cols)])
+                # if i == 0:
+                #     return math.ceil(max([self.get_string_width(str(content_lst[0][q]).strip() if content_lst[0][q] is not None else null_entry) for q in range(n_cols)]) / cell_width)
+                # else:
+                #     return math.ceil(max([self.get_string_width(
+                #         str(content_lst[i][q]).strip() if content_lst[i][q] is not None else null_entry) for q in
+                #                           range(n_cols)]) / cell_width)
+
+            trh = row_height()
+            rh += trh - 1
+            print("trh:", trh)
+            och = ch
+            ch = max(ch, ch * (trh - 1))
+
+            # cy = ocy + (((i + rh - pages) * cell_height) + (((1 if pages else 0) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+            #         1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+            # print("\tself.get_y():", self.get_y(), "ch:", ch, "self.h:", self.h, "(self.get_y() + ch):", (self.get_y() + ch), "(self.get_y() + ch) >= self.h:", (self.get_y() + ch) >= self.h)
+            # print("\tcy:", cy, "ch:", ch, "self.h:", self.h, "(cy + ch):", (cy + ch), "(cy + ch) >= self.h:", ((cy + ch) >= self.h))
+            # print("\t\t(self.get_y() + max(cell_height, header_height)):", (self.get_y() + max(cell_height, header_height)), "\n\t\tself.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height), "\n\t\t(self.get_y() + max(cell_height, header_height)) >= self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height:", (self.get_y() + max(cell_height, header_height)) >= (self.h - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height))
+            np = False
+            if i == 0:
+                if (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
+                        2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
+                    np = True
+            elif (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
+                    2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)):
+                np = True
+
+            if np:
+                add_new_page()
+                page_left = self.h
+                pages += 1
+                print("\tpage break on line i={}, start next page with header: {}".format(i, start_with_header))
+                i_off += i
+                page_space_used += space_used
+                space_used = 0
+                ocy = 0
+
+            space_used += ch + (max(0, (trh - 2)) * och)
+            j = 0
+            cy = self.get_y()  # - (max(0, trh - 2) * och)
+            wo_10015162 = False
+            m_c_y = cy
+            while j in range(n_cols):
+                if start_with_header and np:
+                    cell_value = str(content_lst[0][j]).strip() if content_lst[0][j] is not None else null_entry
+                    print("cv:", cell_value)
+                    self.set_font('Arial', 'B', 14)
+                    self.set_fill_color(*header_colours[0])
+                    self.set_text_color(*header_colours[1])
+                    ch = header_height
+                else:
+                    cell_value = str(content_lst[i][j]).strip() if content_lst[i][j] is not None else null_entry
+                cw = cell_width + (line_width / 2)
+                cx = ocx + (j * cw)
+                # cy = ocy + (((i - i_off) * ch) + max(0, ((1 if i else 0) * cch) - 5)) - (pages * height)
+                # cy = self.get_y()#ocy + (((i + rh - pages) * cell_height) + (((1 if (start_with_header and np) else 1) + off) * header_height) + max(0, ((1 if i else 0) * header_height) - 5)) - (
+                #   1 * page_space_used) + FOOTER_MARGIN + top_margin + title_v_margin
+                # if rh:
+                #     cy -= cell_height
+                # print(
+                #     "pages: {} i: {} j: {} cx: {} cy: {}, self.get_y: {} cv: {} su: {} psu: {}".format(pages, i, j, cx,
+                #                                                                                        cy,
+                #                                                                                        self.get_y(),
+                #                                                                                        cell_value,
+                #                                                                                        space_used,
+                #                                                                                        page_space_used))
+                # self.rect(cx, cy, cell_width, ch, 'DF')
+                # self.texts(cx + (cw / 2), cy + (ch / 2), cell_value)
+                # self.texts(cx, cy, cell_value)
+                if cy >= self.h:
+                    raise ValueError("cy {} is too high".format(cy))
+                align = "C"
+                if isinstance(col_align, list):
+                    if j < len(col_align):
+                        align = col_align[j]
+                elif isinstance(col_align, dict):
+                    col_name = header[j][0]
+                    # print("\t\tcol_name:", col_name)
+                    if col_name in col_align:
+                        align = col_align[col_name]
+
+                self.set_xy(cx, cy)
+                # self.cell(cell_width, ch, cell_value, cell_border_style, 1, align, fill=1)
+                if trh - 1:
+                    bs = "F" + ("" if not cell_border_style else "D")
+                    # old_colo = list(map(lambda abc: int(255 * float(abc.strip())), self.fill_color.split(" ")[:3]))
+                    # print("old_colo:", old_colo)
+                    # self.set_fill_color(*TURQUOISE)
+                    w_off = 1
+                    # self.rect(cx - w_off, cy, cell_width + (2 * w_off), (max(0, (trh)) * och), bs)
+                    # self.set_fill_color(*old_colo)
+                bef = self.get_y()
+                self.multi_cell(w=cell_width, h=och, txt=cell_value[:300], border=cell_border_style, align=align,
+                                fill=1)
+                aft = self.get_y()
+                m_c_y = max(m_c_y, self.get_y(), max(0, (trh if trh > 1 else 0)) * och)
+                # x, y, name, font=('Arial', '', 12), font_colour=BLACK
+                j += 1
+                print(
+                    "page: {}\n\t(i, j): ({}, {})\n\t(cx, cy): ({}, {})\n\tself.get_y: {}\n\tcv: {} su: {} psu: {}\n\t(aft, bef): ({}, {})\n\ttrh: {}\n\tm_c_y: {}".format(
+                        pages, i, j, cx,
+                        cy,
+                        self.get_y(),
+                        cell_value,
+                        space_used,
+                        page_space_used, aft, bef, trh, m_c_y))
+
+                if cell_value == "10015162":
+                    wo_10015162 = True
+
+            if start_with_header and np:
+                i -= 1
+                off += 1
+            i += 1
+            print("\t\tcy:", cy, "\n\t\tself.get_y()", self.get_y())
+            # self.set_y(cy + och + (max(0, (trh if trh > 1 else 0)) * och))
+            self.set_y(m_c_y)
+            # if wo_10015162:
+            #     raise ValueError("Hey ")
+
+        # self.rect(x, y, w, height, 'FD')
+
+        y_link = self.get_y() + title_v_margin
+        if include_top_chart_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 30, y_link)
+            self.cell(30, 5, "Top of Chart", 1, 1, 'C', fill=1,
+                      link=("{}/{}#page={}".format(os.getcwd(), self.file_name, title_page)))
+
+        if include_top_doc_link:
+            self.set_fill_color(*top_link_colours[0])
+            self.set_text_color(*top_link_colours[1])
+            self.set_xy(ocx + width - 65, y_link)
+            self.cell(30, 5, "Top of Document", 1, 1, 'C', fill=1,
+                      link=("{}/{}#page={}".format(os.getcwd(), self.file_name, 1)))
+
+        # if time_stamp:
+        #     self.time_stamp()
+
+        # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
+        # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
+        print("self.w:", self.w, "width:", width)
+        print("header:", header)
+        # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
+        print("(N x M): ({} x {})".format(n_rows, n_cols))
+        # print("(H x W): ({} x {})".format(height, width))
+        print("(CH x CW): ({} x {})".format(cell_height, cell_width))
+
+        return cx, cy
+
+
+def random_test_set(n, start=0, end=None, step=1):
+    step = max(1, step)
+    if end is None:
+        end = start + (n * step)
+    if end < start:
+        start, end = end, start
+    if start + (n * step) != end:
+        end = start + (n * step)
+    r_keys = ["a", "b", "c", "d", "e"]
+
+    def random_test_entry(m):
+        return {choice(r_keys): int(round(random_in_range(1, 101))) for i in range(m)}
+
+    return {i: random_test_entry(choice(list(range(5)))) for i in range(start, end, step)}
+
+
+if __name__ == "__main__":
+    pdf = PDF(FILE_NAME, 'L', 'mm', (600, 750))
+    pdf.set_auto_page_break(True, margin=5)
+    pdf.set_title("Dealer Delivery Reports")
+    pdf.set_author('Avery Briggs')
+    pdf.add_page()
+    pdf.margin_border(BWS_RED, WHITE)
+    pdf.time_stamp()
+    pdf.output(FILE_NAME, 'F')
+    pdf.open_in_browser()
+
+    # pdf.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
+    #                  MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
+    # pdf.titles("Dealer Delivery Reports", MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN,
+    #            TITLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN,
+    #            MAX_X - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)), TITLE_HEIGHT, BWS_BLACK)
+    #
+    # date = datetime.datetime.now()
+    # pdf.texts(
+    #     MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + TXT_MARGIN,
+    #     TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN,
+    #     0,
+    #     10,
+    #     "Prepared at {} on {}".format(
+    #         datetime.datetime.strftime(date, "%I:%M:%S %p"),
+    #         datetime.datetime.strftime(date, "%Y-%m-%d")
+    #     ),
+    #     font=('Arial', '', 10)
+    # )
+    #
+    # # TABLE_X = 5 + MARGIN_LINES_WIDTH + TABLE_MARGIN
+    # # TABLE_Y = 10 + MARGIN_LINES_WIDTH + TABLE_MARGIN
+    # TABLE_W = (MAX_X - (2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)) - (2 * TABLE_MARGIN))
+    # # TABLE_H = 200 - (2 * (MARGIN_LINES_WIDTH + TABLE_MARGIN))
+    #
+    # contents_1 = {
+    #     1: {"a": 1, "b": 2, "c": 1},
+    #     2: {"a": 2, "b": 563, "c": 2, "d": 15},
+    #     3: {"a": 3, "b": 3, "c": 3, "d": 5},
+    #     4: {"a": 4, "b": 4, "c": 4, "d": 5},
+    #     5: {"c": 44, "d": 6},
+    #     8: {"b": "Really lo", "d": 54566678898, "a": "This stri"},
+    #     6: {"e": 2},
+    #     9: {"e": 22},
+    #     10: {"d": 24},
+    #     11: {"b": 16},
+    #     7: {"e": 21, "d": 5, "a": 13},
+    #     12: {'d': 55, 'c': 90, 'a': 84},
+    #     13: {'c': 92, 'b': 86},
+    #     14: {'a': 36},
+    #     15: {'b': 54},
+    #     16: {'b': 57},
+    #     17: {'b': 31, 'a': 83, 'd': 23, 'c': 55},
+    #     18: {'d': 63, 'a': 31, 'c': 72},
+    #     19: {'c': 85},
+    #     20: {'b': 96, 'a': 12, 'e': 30},
+    #     21: {'b': 25, 'e': 55},
+    #     22: {'d': 77, 'c': 24, 'a': 28},
+    #     23: {'d': 40, 'c': 82},
+    #     24: {'e': 84, 'd': 57},
+    #     25: {'e': 89},
+    #     26: {'a': 90},
+    #     27: {'a': 93, 'c': 30, 'e': 22},
+    #     28: {'c': 80},
+    #     29: {'b': 5, 'c': 64, 'e': 35},
+    #     30: {'e': 76, 'c': 88},
+    #     31: {'e': 68, 'b': 49, 'a': 24, 'c': 78},
+    #     32: {'a': 0, 'e': 34, 'c': 44, 'd': 25},
+    #     33: {'d': 68, 'a': 19, 'b': 63},
+    #     34: {'e': 74, 'c': 2},
+    #     35: {'b': 24, 'e': 92, 'c': 98},
+    #     36: {'d': 82, 'e': 23, 'c': 46},
+    #     37: {'e': 62, 'a': 94},
+    #     38: {'d': 59, 'c': 32},
+    #     39: {'e': 48},
+    #     40: {'b': 79, 'a': 93, 'd': 61, 'e': 12}
+    # }
+    # contents_2 = {
+    #     1: {"a": 1, "b": 2, "c": 1},
+    #     2: {"a": 2, "b": 563, "c": 2, "d": 15},
+    #     3: {"a": 3, "b": 3, "c": 3, "d": 5},
+    #     4: {"a": 4, "b": 4, "c": 4, "d": 5},
+    #     8: {"b": "Really lo", "d": 54566678898, "a": "This stri"},
+    #     6: {"e": 2},
+    #     9: {"e": 22},
+    #     10: {"d": 24},
+    #     7: {"e": 21, "d": 5, "a": 13},
+    #     12: {'d': 55, 'c': 90, 'a': 84},
+    #     13: {'c': 92, 'b': 86},
+    #     15: {'b': 54},
+    #     17: {'b': 31, 'a': 83, 'd': 23, 'c': 55},
+    #     18: {'d': 63, 'a': 31, 'c': 72},
+    #     22: {'d': 77, 'c': 24, 'a': 28},
+    #     23: {'d': 40, 'c': 82},
+    #     26: {'a': 90},
+    #     27: {'a': 93, 'c': 30, 'e': 22},
+    #     30: {'e': 76, 'c': 88},
+    #     31: {'e': 68, 'b': 49, 'a': 24, 'c': 78},
+    #     32: {'a': 0, 'e': 34, 'c': 44, 'd': 25},
+    #     33: {'d': 68, 'a': 19, 'b': 63},
+    #     34: {'e': 74, 'c': 2},
+    #     38: {'d': 59, 'c': 32},
+    #     39: {'e': 48},
+    #     40: {'b': 79, 'a': 93, 'd': 61, 'e': 12}
+    # }
+    # contents_3 = {
+    #     1: {"a": 1, "b": 2, "c": 154654654457112245748},
+    #     2: {"a": 2, "b": 563, "c": 2, "d": 15},
+    #     3: {"a": 3, "b": 3, "c": 3, "d": 5},
+    #     4: {"a": 4, "b": 4, "c": 4, "d": 5},
+    #     8: {"b": "Really lo", "d": 54566678898, "a": "This stri"},
+    #     6: {"e": 2},
+    #     17: {'b': 31, 'a': 83, 'd': 23, 'c': 55},
+    #     18: {'d': 63, 'a': 31, 'c': 72},
+    #     30: {'e': 76, 'c': 88},
+    #     31: {'e': 68, 'b': 49, 'a': 24, 'c': 78},
+    #     40: {'b': 79, 'a': 93, 'd': 61, 'e': 12}
+    # }
+    # contents_4 = {
+    #     41: {'b': 87},
+    #     42: {'b': 17, 'd': 21, 'a': 95},
+    #     43: {'d': 19, 'e': 99, 'c': 26},
+    #     44: {'c': 42, 'e': 43},
+    #     45: {'b': 13},
+    #     46: {'a': 12, 'd': 80},
+    #     47: {'a': 97, 'e': 82},
+    #     48: {'b': 85, 'c': 38},
+    #     49: {'e': 4},
+    #     50: {'e': 3, 'c': 93},
+    #     51: {'d': 61, 'b': 8, 'a': 88},
+    #     52: {'d': 37, 'b': 86, 'c': 70},
+    #     53: {'b': 40},
+    #     54: {'b': 49, 'a': 80, 'd': 58},
+    #     55: {'a': 48},
+    #     56: {'b': 70},
+    #     57: {'a': 51, 'c': 24},
+    #     58: {'e': 59, 'b': 100, 'a': 50},
+    #     59: {'c': 2, 'a': 80, 'b': 41},
+    #     60: {'c': 32, 'e': 37},
+    #     61: {'a': 29, 'd': 30, 'e': 25},
+    #     62: {'a': 74, 'c': 63},
+    #     63: {'e': 10, 'c': 25},
+    #     64: {'e': 23},
+    #     65: {'b': 14, 'c': 49},
+    #     66: {'e': 72, 'c': 72, 'd': 73},
+    #     67: {'d': 13, 'b': 48, 'a': 66, 'c': 10},
+    #     68: {'a': 42},
+    #     69: {'d': 80, 'b': 70},
+    #     70: {'c': 82, 'd': 49, 'b': 3},
+    #     71: {'b': 30, 'c': 98, 'a': 54},
+    #     72: {'b': 90, 'c': 15, 'e': 6, 'd': 94},
+    #     73: {'c': 75, 'b': 40, 'a': 82},
+    #     74: {'c': 22, 'e': 87},
+    #     75: {'d': 55, 'e': 8, 'a': 8},
+    #     76: {'b': 18, 'e': 7, 'd': 65},
+    #     77: {'d': 14, 'a': 56},
+    #     78: {'b': 68},
+    #     79: {'c': 17, 'a': 16, 'd': 59},
+    #     80: {'e': 34, 'a': 50, 'b': 20},
+    #     81: {'b': 54, 'e': 24, 'd': 52, 'a': 6},
+    #     82: {'c': 27, 'd': 50, 'a': 15},
+    #     83: {'b': 77},
+    #     84: {'e': 21, 'b': 37},
+    #     85: {'d': 41, 'c': 26, 'b': 18},
+    #     86: {'d': 54, 'b': 19},
+    #     87: {'a': 86, 'd': 24, 'c': 49},
+    #     88: {'a': 60, 'c': 48},
+    #     89: {'d': 20, 'c': 9},
+    #     90: {'e': 53, 'b': 27},
+    #     91: {'e': 28, 'd': 57, 'c': 18, 'a': 8},
+    #     92: {'c': 37, 'b': 47}, 93: {'e': 40, 'c': 35},
+    #     94: {'d': 24},
+    #     95: {'b': 40},
+    #     96: {'d': 79, 'e': 41},
+    #     97: {'c': 36, 'a': 74, 'e': 47},
+    #     98: {'b': 89, 'a': 73},
+    #     99: {'b': 56, 'c': 55, 'a': 5, 'e': 72},
+    #     100: {'b': 38},
+    #     101: {'a': 86, 'b': 40, 'e': 37, 'c': 41},
+    #     102: {'d': 54, 'a': 32, 'b': 37},
+    #     103: {'d': 63, 'a': 9, 'e': 58},
+    #     104: {'a': 65, 'b': 69},
+    #     105: {'c': 15},
+    #     106: {'c': 38, 'e': 4, 'a': 16, 'b': 71},
+    #     107: {'e': 65, 'b': 31},
+    #     108: {'b': 19, 'e': 80},
+    #     109: {'c': 62},
+    #     110: {'d': 49},
+    #     111: {'c': 45, 'e': 65, 'b': 66, 'd': 95},
+    #     112: {'a': 93, 'e': 89, 'd': 60, 'c': 36},
+    #     113: {'c': 68, 'b': 78},
+    #     114: {'a': 16, 'c': 88},
+    #     115: {'e': 33, 'b': 26},
+    #     116: {'b': 36, 'e': 47, 'a': 98},
+    #     117: {'e': 92, 'b': 68, 'd': 53, 'a': 3},
+    #     118: {'e': 58, 'a': 84, 'b': 43},
+    #     119: {'a': 71, 'c': 67, 'd': 42},
+    #     120: {'a': 12},
+    #     121: {'b': 13, 'c': 93, 'e': 88, 'd': 1},
+    #     122: {'e': 49, 'c': 67, 'b': 73},
+    #     123: {'a': 40, 'd': 90, 'b': 84, 'c': 18},
+    #     124: {'e': 72},
+    #     125: {'b': 91, 'd': 100},
+    #     126: {'d': 75, 'c': 72},
+    #     127: {'c': 90, 'e': 38, 'a': 18, 'd': 21},
+    #     128: {'a': 57, 'b': 84, 'e': 73},
+    #     129: {'c': 93, 'e': 51, 'b': 77},
+    #     130: {'b': 19, 'a': 86, 'c': 26},
+    #     131: {'e': 51, 'a': 33, 'd': 8},
+    #     132: {'b': 83, 'a': 73, 'e': 20},
+    #     133: {'d': 81, 'b': 2},
+    #     134: {'b': 41, 'c': 52, 'a': 95},
+    #     135: {'b': 23, 'd': 43, 'c': 17},
+    #     136: {'b': 71, 'e': 88, 'd': 49},
+    #     137: {'a': 96, 'e': 96, 'd': 42, 'b': 85},
+    #     138: {'a': 1, 'c': 55},
+    #     139: {'b': 12, 'e': 88, 'c': 18},
+    #     140: {'e': 68},
+    #     141: {'a': 95, 'd': 65, 'e': 21, 'c': 91},
+    #     142: {'e': 74, 'a': 75},
+    #     143: {'b': 61},
+    #     144: {'a': 49, 'e': 80, 'd': 86},
+    #     145: {'e': 92, 'd': 72},
+    #     146: {'c': 26},
+    #     147: {'e': 7, 'b': 91, 'd': 41, 'a': 17},
+    #     148: {'a': 25, 'd': 100, 'e': 17},
+    #     149: {'c': 81, 'a': 43, 'b': 59},
+    #     150: {'a': 70, 'e': 51, 'b': 7},
+    #     151: {'a': 86, 'b': 99},
+    #     152: {'e': 30, 'c': 71, 'd': 10},
+    #     153: {'c': 38},
+    #     154: {'b': 85},
+    #     155: {'b': 89, 'e': 77, 'd': 13},
+    #     156: {'d': 43, 'a': 23},
+    #     157: {'e': 85},
+    #     158: {'c': 8},
+    #     159: {'b': 73, 'a': 72},
+    #     160: {'e': 48},
+    #     161: {'a': 57, 'b': 49, 'e': 88},
+    #     162: {'d': 83, 'c': 50},
+    #     163: {'a': 88, 'b': 33, 'e': 51, 'c': 3},
+    #     164: {'d': 63, 'c': 97},
+    #     165: {'e': 75, 'a': 20, 'c': 95},
+    #     166: {'b': 77},
+    #     167: {'e': 4, 'a': 64},
+    #     168: {'d': 48, 'a': 50, 'b': 12, 'c': 41},
+    #     169: {'b': 96}, 170: {'e': 87},
+    #     171: {'b': 8, 'a': 62, 'e': 26},
+    #     172: {'c': 61, 'b': 45, 'a': 11},
+    #     173: {'a': 61},
+    #     174: {'a': 48, 'b': 28, 'e': 30},
+    #     175: {'a': 12},
+    #     176: {'a': 57, 'c': 48, 'd': 41, 'b': 32},
+    #     177: {'a': 97, 'c': 48, 'b': 20},
+    #     178: {'a': 60, 'e': 54, 'd': 33},
+    #     179: {'a': 44, 'b': 17},
+    #     180: {'d': 60},
+    #     181: {'a': 8, 'b': 46, 'd': 24},
+    #     182: {'e': 14, 'a': 28},
+    #     183: {'a': 40, 'c': 6},
+    #     184: {'e': 9, 'c': 80, 'b': 48},
+    #     185: {'d': 48},
+    #     186: {'d': 9, 'c': 52, 'b': 84},
+    #     187: {'a': 93, 'b': 52, 'd': 3},
+    #     188: {'b': 24},
+    #     189: {'d': 3, 'c': 27},
+    #     190: {'c': 37, 'e': 8},
+    #     191: {'a': 52, 'e': 34},
+    #     192: {'e': 14, 'd': 90, 'c': 38},
+    #     193: {'e': 39, 'a': 98, 'c': 79},
+    #     194: {'d': 34},
+    #     195: {'e': 74},
+    #     196: {'d': 51, 'a': 78, 'c': 57},
+    #     197: {'e': 43, 'b': 75},
+    #     198: {'a': 71, 'c': 27},
+    #     199: {'e': 52},
+    #     200: {'c': 80, 'e': 60},
+    #     201: {'c': 27, 'd': 97, 'b': 64},
+    #     202: {'e': 70, 'c': 66},
+    #     203: {'e': 5},
+    #     204: {'b': 49},
+    #     205: {'d': 29, 'c': 15},
+    #     206: {'a': 10, 'c': 59},
+    #     207: {'e': 22, 'd': 36, 'b': 99},
+    #     208: {'a': 38, 'c': 8},
+    #     209: {'d': 20, 'a': 26, 'e': 14},
+    #     210: {'c': 20, 'b': 46},
+    #     211: {'d': 21, 'a': 14},
+    #     212: {'e': 25, 'd': 34, 'c': 18},
+    #     213: {'a': 74},
+    #     214: {'a': 14, 'b': 1},
+    #     215: {'a': 64, 'e': 53, 'c': 72},
+    #     216: {'d': 66, 'e': 87, 'a': 80},
+    #     217: {'e': 77, 'd': 75},
+    #     218: {'e': 81, 'd': 61},
+    #     219: {'d': 17},
+    #     220: {'d': 69, 'e': 90},
+    #     221: {'a': 34},
+    #     222: {'e': 21, 'c': 72, 'd': 6},
+    #     223: {'e': 31, 'd': 64},
+    #     224: {'d': 77, 'a': 1},
+    #     225: {'a': 67, 'd': 74},
+    #     226: {'b': 97, 'c': 55, 'd': 41},
+    #     227: {'a': 69, 'b': 93, 'd': 89},
+    #     228: {'d': 67, 'e': 18, 'b': 37, 'a': 32},
+    #     229: {'e': 97, 'c': 21},
+    #     230: {'e': 70, 'c': 69},
+    #     231: {'a': 98, 'e': 31},
+    #     232: {'e': 69},
+    #     233: {'b': 47, 'e': 86},
+    #     234: {'e': 67},
+    #     235: {'b': 63, 'e': 56, 'a': 63, 'd': 51},
+    #     236: {'d': 49, 'a': 8},
+    #     237: {'a': 90, 'b': 11, 'c': 7},
+    #     238: {'a': 3},
+    #     239: {'e': 37, 'd': 57},
+    #     240: {'d': 40, 'e': 36},
+    #     241: {'b': 59, 'd': 35, 'e': 81},
+    #     242: {'b': 46},
+    #     243: {'a': 65, 'c': 35},
+    #     244: {'c': 80, 'a': 16},
+    #     245: {'a': 37, 'c': 81, 'b': 34},
+    #     246: {'d': 56, 'a': 98},
+    #     247: {'c': 53, 'a': 46, 'd': 84},
+    #     248: {'a': 45, 'e': 21},
+    #     249: {'b': 17, 'a': 26, 'c': 54, 'e': 64},
+    #     250: {'c': 50, 'b': 14, 'e': 12},
+    #     251: {'a': 33, 'b': 95},
+    #     252: {'a': 31, 'e': 8, 'c': 51},
+    #     253: {'b': 48, 'd': 44},
+    #     254: {'b': 75, 'e': 66},
+    #     255: {'b': 96, 'd': 77},
+    #     256: {'b': 65, 'd': 27},
+    #     257: {'b': 47, 'a': 9},
+    #     258: {'b': 18, 'e': 33},
+    #     259: {'e': 77, 'c': 16, 'd': 43},
+    #     260: {'a': 1, 'b': 38, 'c': 27},
+    #     261: {'c': 83},
+    #     262: {'e': 66, 'd': 55, 'b': 86},
+    #     263: {'b': 94, 'c': 78, 'e': 65},
+    #     264: {'b': 59},
+    #     265: {'e': 12, 'a': 43},
+    #     266: {'c': 84},
+    #     267: {'c': 69, 'a': 86, 'e': 56, 'd': 71},
+    #     268: {'c': 36, 'b': 16},
+    #     269: {'e': 77, 'c': 97},
+    #     270: {'a': 86, 'e': 72},
+    #     271: {'c': 18},
+    #     272: {'a': 14},
+    #     273: {'c': 26, 'd': 12, 'a': 59, 'e': 98},
+    #     274: {'e': 70},
+    #     275: {'b': 55, 'e': 70, 'c': 22},
+    #     276: {'a': 40, 'c': 18, 'd': 9},
+    #     277: {'c': 33, 'a': 87, 'b': 74},
+    #     278: {'e': 6, 'd': 13, 'a': 98},
+    #     279: {'b': 64, 'd': 37},
+    #     280: {'c': 55},
+    #     281: {'b': 46},
+    #     282: {'c': 77, 'a': 54},
+    #     283: {'e': 74, 'c': 98, 'd': 46},
+    #     284: {'c': 54, 'e': 76, 'a': 8},
+    #     285: {'e': 14, 'd': 21},
+    #     286: {'c': 72},
+    #     287: {'c': 89},
+    #     288: {'c': 43, 'e': 66},
+    #     289: {'a': 29, 'b': 49, 'e': 85, 'c': 46},
+    #     290: {'b': 43, 'c': 61},
+    #     291: {'e': 41, 'd': 42},
+    #     292: {'c': 15, 'b': 13},
+    #     293: {'b': 67},
+    #     294: {'c': 18, 'e': 71, 'd': 9, 'b': 1, 'a': 17},
+    #     295: {'a': 29, 'b': 7, 'c': 69},
+    #     296: {'d': 49},
+    #     297: {'b': 61, 'd': 71, 'a': 36, 'e': 91},
+    #     298: {'e': 28, 'c': 51, 'b': 18},
+    #     299: {'a': 70, 'd': 95, 'e': 94},
+    #     300: {'a': 63, 'c': 57},
+    #     301: {'b': 8},
+    #     302: {'b': 8},
+    #     303: {'b': 81, 'd': 15, 'e': 100},
+    #     304: {'e': 54, 'd': 75, 'c': 15, 'b': 2},
+    #     305: {'d': 95, 'e': 95, 'b': 58},
+    #     306: {'d': 15, 'c': 76, 'b': 97},
+    #     307: {'d': 6, 'c': 89},
+    #     308: {'d': 46, 'b': 90},
+    #     309: {'d': 53},
+    #     310: {'e': 40, 'b': 27},
+    #     311: {'a': 13, 'e': 20, 'b': 53},
+    #     312: {'c': 10, 'e': 66},
+    #     313: {'b': 32, 'e': 62, 'a': 70},
+    #     314: {'d': 75, 'e': 61},
+    #     315: {'d': 80},
+    #     316: {'c': 68},
+    #     317: {'b': 33, 'e': 41},
+    #     318: {'a': 98, 'c': 54},
+    #     319: {'d': 27},
+    #     320: {'c': 84, 'a': 66},
+    #     321: {'b': 36, 'd': 47},
+    #     322: {'a': 92, 'c': 26, 'e': 8, 'd': 92},
+    #     323: {'e': 63, 'b': 77, 'd': 17},
+    #     324: {'d': 99},
+    #     325: {'e': 7, 'a': 19, 'c': 100, 'b': 65},
+    #     326: {'c': 30, 'b': 6, 'a': 54},
+    #     327: {'d': 32},
+    #     328: {'d': 57, 'e': 98},
+    #     329: {'b': 92, 'c': 77, 'e': 75},
+    #     330: {'d': 54}, 331: {'a': 7},
+    #     332: {'c': 68, 'b': 79},
+    #     333: {'d': 12, 'b': 75, 'c': 41},
+    #     334: {'a': 27, 'e': 16},
+    #     335: {'c': 75, 'e': 37},
+    #     336: {'b': 8},
+    #     337: {'e': 62, 'a': 11, 'b': 30},
+    #     338: {'c': 33, 'd': 14, 'a': 23},
+    #     339: {'a': 34, 'b': 8, 'c': 85, 'e': 55},
+    #     340: {'e': 31, 'c': 47},
+    #     341: {'c': 20, 'e': 74, 'a': 18},
+    #     342: {'c': 28},
+    #     343: {'c': 46, 'a': 8, 'd': 18},
+    #     344: {'d': 20, 'b': 73, 'e': 98},
+    #     345: {'e': 14, 'b': 10},
+    #     346: {'e': 72, 'd': 49},
+    #     347: {'e': 81},
+    #     348: {'d': 61, 'c': 57},
+    #     349: {'a': 21},
+    #     350: {'b': 48, 'a': 58},
+    #     351: {'b': 58, 'c': 21},
+    #     352: {'d': 27, 'a': 16, 'c': 31},
+    #     353: {'d': 49, 'c': 36, 'a': 46},
+    #     354: {'a': 76, 'b': 49, 'e': 89},
+    #     355: {'c': 28},
+    #     356: {'e': 36, 'c': 49, 'a': 85},
+    #     357: {'c': 43, 'e': 39, 'a': 45},
+    #     358: {'b': 51, 'c': 45},
+    #     359: {'d': 22},
+    #     360: {'a': 98, 'b': 63, 'c': 68},
+    #     361: {'e': 80, 'c': 50, 'd': 65, 'b': 70},
+    #     362: {'c': 73, 'd': 60},
+    #     363: {'c': 25, 'a': 52},
+    #     364: {'d': 89, 'e': 66, 'a': 39},
+    #     365: {'c': 96, 'b': 49, 'a': 98, 'e': 3},
+    #     366: {'d': 67},
+    #     367: {'b': 15, 'a': 41, 'e': 82},
+    #     368: {'e': 55, 'a': 78, 'd': 94, 'c': 92},
+    #     369: {'b': 46}, 370: {'b': 38, 'a': 43},
+    #     371: {'c': 75, 'b': 30},
+    #     372: {'d': 61, 'b': 75},
+    #     373: {'b': 95, 'e': 80, 'c': 40},
+    #     374: {'b': 46, 'd': 12},
+    #     375: {'e': 64, 'd': 15, 'b': 29, 'a': 57},
+    #     376: {'e': 71},
+    #     377: {'d': 80},
+    #     378: {'e': 8, 'c': 6},
+    #     379: {'c': 91, 'e': 79, 'b': 36},
+    #     380: {'b': 66, 'e': 10, 'd': 89},
+    #     381: {'b': 30},
+    #     382: {'a': 89, 'd': 95},
+    #     383: {'e': 98, 'a': 92},
+    #     384: {'c': 63, 'e': 45, 'd': 19},
+    #     385: {'e': 87},
+    #     386: {'b': 89, 'a': 3, 'c': 58, 'e': 79},
+    #     387: {'e': 89, 'c': 33, 'b': 89, 'd': 61},
+    #     388: {'e': 35},
+    #     389: {'a': 66},
+    #     390: {'d': 23, 'c': 86, 'e': 46, 'a': 95},
+    #     391: {'d': 26}
+    # }
+    # contents_5 = {'Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0},
+    #               'Total': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0},
+    #               'Off': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0},
+    #               'Percentage Worked': {'monday': 0, 'tuesday': 0, 'wednesday': 0, 'thursday': 0, 'friday': 0}}
+    #
+    # TABLE_X = TABLE_MARGIN + MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN
+    # TABLE_Y = TABLE_MARGIN + MARGIN_LINES_WIDTH + TITLE_HEIGHT + TITLE_MARGIN
+    #
+    # TABLE_LEFT_MARGIN = 8
+    # TITLE_V_MARGIN = 5
+    #
+    # table1 = pdf.table(
+    #     title="Remorques Lewis",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=contents_3,
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BWS_RED, BWS_GREY, BWS_BLACK], [BWS_BLACK, BWS_RED, BWS_RED]]
+    # )
+    #
+    # print("1. (TABLE_X, TABLE_Y): ({}, {})".format(TABLE_X, TABLE_Y))
+    # TABLE_Y = table1[1] + (2 * TABLE_MARGIN)
+    # print("2. (TABLE_X, TABLE_Y): ({}, {})".format(TABLE_X, TABLE_Y))
+    #
+    # table2 = pdf.table(
+    #     title="NorthEast",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=contents_1,
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BWS_RED, BWS_GREY, BWS_BLACK], [BWS_BLACK, BWS_RED, BWS_RED]]
+    # )
+    #
+    # TABLE_Y = table2[1] + (2 * TABLE_MARGIN)
+    #
+    # table3 = pdf.table(
+    #     title="Fort Garry International Ltd.",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=contents_2,
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BWS_RED, BWS_GREY, BWS_BLACK], [BWS_BLACK, BWS_RED, BWS_RED]]
+    # )
+    #
+    # TABLE_Y = table3[1] + (2 * TABLE_MARGIN)
+    #
+    # table4 = pdf.table(
+    #     title="Diamond International",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=contents_4,
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BLUEVIOLET, GREEN_2, YELLOW_4, BLUE, RED, ORANGE],
+    #              [WHITE, BLACK, BLACK, ORANGE, BLUE, WHITE]],
+    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?",
+    #     new_page_for_table=True,
+    #     show_row_names=True,
+    #     start_with_header=False
+    # )
+    #
+    # TABLE_Y = table4[1] + (2 * TABLE_MARGIN)
+    #
+    # table5 = pdf.table(
+    #     title="Weekdays",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=contents_5,
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BLACK],
+    #              [WHITE]],
+    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?"
+    # )
+    #
+    # TABLE_Y = table5[1] + (2 * TABLE_MARGIN)
+    #
+    # table6 = pdf.table(
+    #     title="Random Test Set",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     contents=random_test_set(30, start=60, step=101),
+    #     header_colours=[BLACK, BWS_RED],
+    #     colours=[[BLACK],
+    #              [WHITE]],
+    #     desc_txt="This is a random test set",
+    #     show_row_names=True
+    # )
+    #
+    # TABLE_Y = table6[1] + (2 * TABLE_MARGIN)
+    #
+    # table7 = pdf.table(
+    #     title="Clean Table",
+    #     x=TABLE_X,
+    #     y=TABLE_Y,
+    #     w=TABLE_W,
+    #     left_margin=TABLE_LEFT_MARGIN,
+    #     title_v_margin=TITLE_V_MARGIN,
+    #     contents=random_test_set(43),
+    #     header_colours=[GRAY_30, BLACK],
+    #     colours=[[WHITE, GRAY_69],
+    #              [BLACK]],
+    #     desc_txt="Plain black, white and grey table, more professional looking.\nWith bits of extra text\nHere\nAnd Here\n\tAnd over here.",
+    #     show_row_names=True,
+    #     include_top_doc_link=True,
+    #     new_page_for_table=False,
+    #     row_name_col_lbl="Number"
+    # )
+    #
+    # # pdf.line(15, 25, 15, 26)
+    # # pdf.line(25, 25, 25, 27)
+    # # pdf.line(35, 25, 35, 28)
+    # # pdf.line(45, 25, 45, 29)
+    # # pdf.line(55, 25, 55, 30)
+    # # pdf.line(0, 35, 5, 35)
+    # # pdf.line(0, 35, 8, 35)
+    #
+    # pdf.output(FILE_NAME, 'F')
+    #
+    # print("table1:", table1)
+    # print("table2:", table2)
+    # print("table3:", table3)
+    # print("table4:", table4)
+    # webbrowser.open(FILE_NAME)
+    #
+    # print(dict_print({
+    #     "TABLE_MARGIN": TABLE_MARGIN,
+    #     "MARGIN_LINES_MARGIN": MARGIN_LINES_MARGIN,
+    #     "MARGIN_LINES_WIDTH": MARGIN_LINES_WIDTH,
+    #     "TABLE_W": TABLE_W
+    # }, "Values"))
+
+###########################################################################################################################
+###########################################################################################################################
+
+class CalendarTile:
+
+    def __init__(self, tile_rect, border_width, row, col, line, date, colour, text=None):
+        self.param_rect = Rect2(*tile_rect)
+        self.rect = tile_rect
+        self.border_width = border_width
+        self.row = row
+        self.col = col
+        self.line = line
+        self.date = date
+        self.colour = colour
+        self.text = text
+        self.top_level_wo_idx = None
+
+        self.wo_num = None
+        self.model_name = None
+        self.dealer = None
+        self.status = None
+        self.beam = None
+        self.job_start = None
+
+        # if self.line[0] == "B":
+        #     # Beam Line
+        #     self.top_level_wo_idx =
+        # if self.line[:3] == "GNK":
+        #     # GNK Line
+
+        assert isinstance(self.rect, Rect2)
+
+        self.rect = self.rect.translated((col * self.rect.width), (row * self.rect.height))
+        self.rect = (
+        self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width,
+        self.rect.bottom - self.border_width)
+
+    def set_data(self, wo, model_name, dealer, status, beam, job_start):
+        self.wo_num = wo
+        self.model_name = model_name
+        self.dealer = dealer
+        self.status = status
+        self.beam = beam
+        self.job_start = job_start
+        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+
+    def get_data(self):
+        return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start
+
+    def is_beam(self):
+        return self.line[0] == "B"
+
+    def is_gnk(self):
+        return self.line[:3] == "GNK"
+
+    def is_top_level_wo(self):
+        return str(self.wo_num)[:4] == "1001"
+
+    def get_pdf_text(self):
+        return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(self.line, self.date)
+
+    def info_dict(self):
+        return dict(zip([
+            "row",
+            "col",
+            "line",
+            "date",
+            "colour",
+            "text",
+            "top_level_wo_idx",
+            "wo_num",
+            "model_name",
+            "dealer",
+            "status",
+            "beam",
+            "job_start"
+        ],
+        [
+            self.row,
+            self.col,
+            self.line,
+            self.date,
+            self.colour,
+            self.text,
+            self.top_level_wo_idx,
+            self.wo_num,
+            self.model_name,
+            self.dealer,
+            self.status,
+            self.beam,
+            self.job_start
+        ]))
+
+    def __copy__(self):
+        ct = CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
+                            self.text)
+        ct.set_data(*self.get_data())
+        return ct
+
+    def __repr__(self):\
+        # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
+        #                                                                self.date)
+        return "date: {}, line: {}".format(self.date.strftime("%Y-%m-%d"), self.line)
+
+
+class PSCalendar:
+
+    def __init__(self, canvas, canvas_header_col, canvas_header_row, pop_up_canvas, w, h, start_date, end_date, data, lines, dates, border_width):
+        assert isinstance(start_date,
+                          dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+            start_date)
+        assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(
+            end_date)
+        assert isinstance(start_date,
+                          dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+            start_date)
+        assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
+
+        self.version_num = 1
+        self.start_date = start_date
+        self.end_date = end_date
+        self.width = w
+        self.height = h
+        self.canvas = canvas
+        self.canvas_header_col = canvas_header_col
+        self.canvas_header_row = canvas_header_row
+        self.canvas_pop_up = pop_up_canvas
+        self.lines = lines
+        self.switch_use_hover = True
+        self.border_width = border_width
+        self.readable_width = 100
+        self.readable_height = 75
+        self.readable_width = 250
+        self.readable_height = 250
+        self.hiding_non_selected_tiles = True
+        self.export_pdf_mode = "TABLOID"
+        self.pdf_min_encapsulation = True
+
+        self.rows = len(lines)
+        self.cols = len(dates)
+        self.dates = dates
+
+        # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
+        self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
+                               (h - self.border_width) / max(1, len(self.lines)))
+        # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+        #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17, text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for
+                               j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+
+        for i, tile in enumerate(self.tiles):
+            idxrc = (i // self.rows), (i % self.rows)
+            # print("idxrc:", idxrc)
+            idx = (idxrc[1] * self.rows) + idxrc[0] #          self.r_c_to_i(idxrc[1], idxrc[0])
+            # idxrc = i // self.rows , (i % self.cols)
+            # idx = (self.cols * (i // self.rows)) + (i % self.cols)
+            idx = i
+            # print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+            data_row = data.iloc[idx:idx+1, :]
+            if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
+                # print("data_row:", data_row)
+                if math.isnan(data_row['WO#'].tolist()[0]):
+                    continue
+                wo = int(data_row['WO#'].tolist()[0])
+                model_name = data_row['InputField1'].tolist()[0]
+                dealer = data_row['InputField2'].tolist()[0]
+                status = data_row["Stock/Sold"].tolist()[0]
+                beam = data_row["Beam WO#"].tolist()[0]
+                job_start = data_row["JobStartDate"].tolist()[0]
+                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start)
+
+        # self.tiles = [CalendarTile(self.tile_rect, self.border_width, 0, i, "Dates", date, BLACK, text=date.strftime("%Y-%m-%d")) for i, date in enumerate(self.dates)] + self.tiles
+        # self.rows += 1
+        # tiles = []
+        # for i, tile in range(len(self.rows):
+        #
+        #
+        # self.cols += 1
+
+        self.og_tiles = [tile.__copy__() for tile in self.tiles]
+
+        print("{}\n{}".format(len(self.tiles), self.tiles))
+
+        self.dragging = None
+        self.selected = None
+        self.hovered = None
+        self.hover_select = None
+        self.current_hover = None
+        self.dbl_clicked = None
+        # self.showing_pop_up = False
+        self.draw_canvas()
+        self.bind_canvas()
+
+    # def __init__(self, canvas, w, h, start_date, end_date, data, lines, dates):
+    #     assert isinstance(start_date,
+    #                       dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+    #         start_date)
+    #     assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(
+    #         end_date)
+    #     assert isinstance(start_date,
+    #                       dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+    #         start_date)
+    #     assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
+    #
+    #     lines = ["NONE"] + lines
+    #     dates = ["NONE"] + dates
+    #
+    #     self.start_date = start_date
+    #     self.end_date = end_date
+    #     self.width = w
+    #     self.height = h
+    #     self.canvas = canvas
+    #     self.lines = lines
+    #     self.switch_use_hover = True
+    #     self.border_width = 3
+    #     self.readable_width = 100
+    #     self.readable_height = 75
+    #     self.readable_width = 250
+    #     self.readable_height = 250
+    #     self.hiding_non_selected_tiles = True
+    #     self.export_pdf_mode = "TABLOID"
+    #
+    #     # # Capping max days at 60
+    #     # # TODO this needs to omit non-production days (weekends)
+    #     # date_diff = (end_date - start_date).days
+    #     # if date_diff > 60:
+    #     #     end_date = start_date + dt.timedelta(days=60)
+    #     # date_diff = int(ceil((end_date - start_date).days))
+    #     # self.rows = len(self.lines)
+    #     # self.cols = date_diff
+    #     # self.dates = [start_date + dt.timedelta(days=1 + i) for i in range(date_diff)]
+    #     self.rows = len(lines)
+    #     self.cols = len(dates)
+    #     self.dates = dates
+    #
+    #     # self.tile_rect = Rect2(0, 0, (w - ((len(self.dates) + 1) * self.border_width)) / max(1, len(self.dates)), (h - ((len(self.lines) + 1) * self.border_width)) / max(1, len(self.lines)))
+    #     self.tile_rect = Rect2(self.border_width, self.border_width, (w - self.border_width) / max(1, len(self.dates)),
+    #                            (h - self.border_width) / max(1, len(self.lines)))
+    #     # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
+    #     #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+    #     self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17 if i != 0 and j != 0 else BLACK,
+    #                                         text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d") if isinstance(date, datetime.datetime) else date)) for
+    #                            j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+    #
+    #     for i, tile in enumerate(self.tiles):
+    #         idxrc = (i // self.rows), (i % self.rows)
+    #         print("idxrc:", idxrc)
+    #         idx = (idxrc[1] * self.rows) + idxrc[0]  # self.r_c_to_i(idxrc[1], idxrc[0])
+    #         # idxrc = i // self.rows , (i % self.cols)
+    #         # idx = (self.cols * (i // self.rows)) + (i % self.cols)
+    #         idx = i
+    #         print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+    #         data_row = data.iloc[idx:idx + 1, :]
+    #         if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
+    #             # print("data_row:", data_row)
+    #             # if idxrc[0] == 0 or idxrc[1] == 0:
+    #             if i < self.cols or i % self.cols == 0:
+    #                 continue
+    #             if not data_row['WO#'].tolist():
+    #                 continue
+    #             if math.isnan(data_row['WO#'].tolist()[0]):
+    #                 continue
+    #             wo = int(data_row['WO#'].tolist()[0])
+    #             model_name = data_row['InputField1'].tolist()[0]
+    #             dealer = data_row['InputField2'].tolist()[0]
+    #             status = data_row["Stock/Sold"].tolist()[0]
+    #             beam = data_row["Beam WO#"].tolist()[0]
+    #             job_start = data_row["JobStartDate"].tolist()[0]
+    #             self.tiles[i].text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+    #
+    #     # self.tiles = [CalendarTile(self.tile_rect, self.border_width, 0, i, "Dates", date, BLACK, text=date.strftime("%Y-%m-%d")) for i, date in enumerate(self.dates)] + self.tiles
+    #     # self.rows += 1
+    #     # tiles = []
+    #     # for i, tile in range(len(self.rows):
+    #     #
+    #     #
+    #     # self.cols += 1
+    #
+    #     self.og_tiles = [tile.__copy__() for tile in self.tiles]
+    #
+    #     print("{}\n{}".format(len(self.tiles), self.tiles))
+    #
+    #     self.dragging = None
+    #     self.selected = None
+    #     self.hovered = None
+    #     self.hover_select = None
+    #     self.current_hover = None
+    #     self.draw_canvas()
+    #     self.bind_canvas()
+
+    # Exports to a one-page tabloid pdf.
+    # Beware small texts
+    def export_to_pdf_full(self):
+        print("exporting...")
+        if self.export_pdf_mode == "TABLOID":
+            w_pdf = 625
+            h_pdf = 750
+            w_pdf = 500
+            h_pdf = 750
+            w_pdf = 470
+            h_pdf = 750
+            # w_pdf = 279
+            # h_pdf = 432
+            # w_pdf = 432
+            # h_pdf = 279
+
+            w_pdf = 590
+            h_pdf = 750
+            w_pdf, h_pdf = h_pdf, w_pdf
+
+        else:
+            print("Requested PDF export size not supported yet.")
+            return
+
+        # Init FPDF object
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        f_name = title + "_full.pdf"
+        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        pdf.set_auto_page_break(True, margin=5)
+        pdf.set_title(title)
+        pdf.set_author('Avery Briggs')
+        pdf.add_page()
+        pdf.margin_border(BWS_RED, WHITE)
+        pdf.time_stamp()
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+
+        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
+        print(dict_print(contents, "Contents"))
+        pdf.table(
+            "",
+            10,
+            20,
+            pdf.w - 20,
+            contents,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
+
+        # Save and Open
+        pdf.output(f_name, 'F')
+        pdf.open_in_browser()
+
+    # Exports to a two-page tabloid pdf.
+    # Splits the 11 lines into 2 pages.
+    def export_to_pdf(self):
+        print("exporting...")
+        if self.export_pdf_mode == "TABLOID":
+            w_pdf = 625
+            h_pdf = 750
+            w_pdf = 500
+            h_pdf = 750
+            w_pdf = 470
+            h_pdf = 750
+            # w_pdf = 279
+            # h_pdf = 432
+            # w_pdf = 432
+            # h_pdf = 279
+
+            w_pdf = 590
+            h_pdf = 750
+            w_pdf, h_pdf = h_pdf, w_pdf
+
+        else:
+            print("Requested PDF export size not supported yet.")
+            return
+
+        # Init FPDF object
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        f_name = title + ".pdf"
+        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        pdf.set_auto_page_break(True, margin=5)
+        pdf.set_title(title)
+        pdf.set_author('Avery Briggs')
+        pdf.add_page()
+        pdf.margin_border(BWS_RED, WHITE)
+        pdf.time_stamp()
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+
+        contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[:len(self.lines)])}
+        contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[len(self.lines):])}
+        print(dict_print(contents_first, "Contents First"))
+        print(dict_print(contents_last, "Contents Last"))
+        # contents_first = contents[:len(contents) // 2]
+        # contents_last = contents[len(contents) // 2:]
+        pdf.table(
+            "",
+            10,
+            20,
+            pdf.w - 20,
+            contents_first,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date / Line",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
+        pdf.add_page()
+        pdf.table(
+            "",
+            10,
+            20,
+            pdf.w - 20,
+            contents_last,
+            header_colours=[GRAY_36, WHITE],
+            colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+            show_row_names=True,
+            row_name_col_lbl="Date / Line",
+            cell_height=3.85,
+            cell_font=('Arial', '', 9),
+            top_margin=0,
+            left_margin=0
+            # , new_page_for_table=True
+            # ,
+            # header_font=('Arial', 'B', 20)
+        )
+
+        # Save and Open
+        pdf.output(f_name, 'F')
+        pdf.open_in_browser()
+
+    def toggle_use_hover(self):
+        self.set_user_hover_mode(not self.switch_use_hover)
+
+    def is_tile_normal_height(self, tile_num):
+        """T if tile height matches default tile height."""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        return int(tile[3] - tile[1]) == int(og_tile[3] - og_tile[1])
+
+    def is_tile_normal_width(self, tile_num):
+        """T if tile width matches default tile width"""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        return int(tile[2] - tile[0]) == int(og_tile[2] - og_tile[0])
+
+    def is_tile_enlarged(self, tile_num):
+        """Must have larger height AND width (used for hover select)"""
+        tile = self.tiles[tile_num].rect
+        og_tile = self.og_tiles[tile_num].rect
+        tw = tile[2] - tile[0]
+        th = tile[3] - tile[1]
+        ow = og_tile[2] - og_tile[0]
+        oh = og_tile[3] - og_tile[1]
+        # print("tile_num: {} is{} enlarged".format(tile_num, "" if (not self.is_tile_normal_height(tile_num) and not self.is_tile_normal_width(tile_num)) else " not"))
+        return tw > ow and th > oh
+
+    def is_tile_normal_size(self, tile_num):
+        """Must have matching width and height"""
+        return self.is_tile_normal_height(tile_num) and self.is_tile_normal_width(tile_num)
+
+    def populate_pop_up_menu(self):
+        self.canvas_pop_up.add_command(label="Add 1 Day", command=self.add_day)
+        self.canvas_pop_up.add_command(label="Subtract 1 Day", command=self.subtract_day)
+        self.canvas_pop_up.add_separator()
+        self.canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
+        self.canvas_pop_up.add_radiobutton(label="A")
+        self.canvas_pop_up.add_radiobutton(label="B")
+
+    def wipe_pop_up_menu(self):
+        self.canvas_pop_up.delete(0, 6)
+
+    def set_user_hover_mode(self, use_hover):
+        self.switch_use_hover = use_hover
+
+    def bind_canvas(self):
+        self.canvas.bind("<Motion>", self.hovering)
+        self.canvas.bind("<Leave>", self.leaving)
+        self.canvas.bind("<Enter>", self.hover_entering)
+        self.canvas.bind("<Button-1>", self.click_print)
+        self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
+        self.canvas.bind("<Button-3>", self.dbl_click_tile)
+        self.canvas.bind("<B1-Motion>", self.drag_print)
+        self.canvas.bind("<ButtonRelease-1>", self.release_drag)
+
+    def unbind_canvas(self):
+        self.canvas.unbind("<Button-1>")
+        self.canvas.unbind("<B1-Motion>")
+
+    def unbind_for_pop_up(self):
+        self.canvas.unbind("<Motion>")
+        self.canvas.unbind("<Leave>")
+        self.unbind_canvas()
+
+    def dbl_click_tile(self, *args):
+        # if self.showing_pop_up:
+        #     self.showing_pop_up = not self.showing_pop_up
+        #     return
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        r, c = self.x_y_to_r_c(mouse_x, mouse_y)
+        i = self.r_c_to_i(r, c)
+        if i in range(len(self.tiles)):
+            self.wipe_pop_up_menu()
+            # self.showing_pop_up = True
+            self.dbl_clicked = i
+            tile = self.tiles[i]
+            rect = tile.rect
+            tw = rect[2] - rect[0]
+            th = rect[3] - rect[1]
+            # tile.colour = brighten(tile.colour, 0.25)
+            h, w = 12, 25
+            # try:
+            if 1:
+
+                self.dbl_clicked = self.r_c_to_i(r, c)
+                print("double clicked:", self.dbl_clicked)
+                tw = self.tile_rect.width
+                th = self.tile_rect.height
+                rw = max(tw, self.readable_width)
+                rh = max(th, self.readable_height)
+                ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
+                nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
+                if 1:
+                    for i, row in enumerate(range(self.rows)):
+                        for j, col in enumerate(range(self.cols)):
+                            idx = self.r_c_to_i(row, col)
+                            x1, y1, x2, y2 = self.tiles[idx].rect
+                            bw = self.tiles[idx].border_width
+                            nx1 = j * ntw
+                            nx1 += rw - ntw if j > c else 0
+                            nx2 = nx1 + (rw if j == c else ntw)
+                            ny1 = i * nth
+                            ny1 += rh - nth if i > r else 0
+                            ny2 = ny1 + (rh if i == r else nth)
+                            if nx1 == 0:
+                                nx1 = bw
+                            if ny1 == 0:
+                                ny1 = bw
+                            self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
+
+                self.draw_canvas()
+                self.populate_pop_up_menu()
+                print("TRY", self.dbl_clicked)
+                self.unbind_for_pop_up()
+                x = int(event.x_root) + tw
+                y = int(event.y_root)
+                self.canvas_pop_up.tk_popup(event.x_root,
+                                            event.y_root)
+
+            # finally:
+            if 1:
+                print("FINALLY", self.dbl_clicked)
+                # self.canvas_pop_up.grab_release()
+                self.bind_canvas()
+            # cpu = self.canvas_pop_up
+            # cpu.delete("all")
+            # cpu.config(height=h, width=w)
+            # cpu.config(x1=30, y1=12)
+            # self.draw_canvas()
+        self.selected = None
+        self.hovered = None
+        self.hover_select = None
+        self.dragging = None
+        self.current_hover = None
+
+        if not self.switch_use_hover:
+            self.re_init_tile_rects()
+            self.draw_canvas()
+
+    def re_init_tile_rects(self):
+        for i, tile in enumerate(self.og_tiles):
+            self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
+
+    def leaving(self, *args):
+        print("Left")
+        # self.tiles = [tile.__copy__() for tile in self.og_tiles]
+        self.re_init_tile_rects()
+        self.hovered = None
+        self.current_hover = None
+        self.draw_canvas()
+
+    def hover_entering(self, *args):
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        self.current_hover = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
+        # print("entering:", self.hovered)
+        # self.draw_canvas()
+
+    def hovering(self, *args):
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        rc = self.x_y_to_r_c(mouse_x, mouse_y)
+        if rc is None:
+            print("rc is None")
+            return
+        r, c = rc
+        self.current_hover = self.r_c_to_i(*rc)
+        tw = self.tile_rect.width
+        th = self.tile_rect.height
+        rw = max(tw, self.readable_width)
+        rh = max(th, self.readable_height)
+        ntw = (self.width - (rw - tw) - (3 * self.border_width)) / max(1, self.cols)
+        nth = (self.height - (rh - th) - (3 * self.border_width)) / max(1, self.rows)
+
+        if not self.switch_use_hover:
+            if self.hovered != self.r_c_to_i(r, c) or self.hovered is None:
+                self.hovered = self.r_c_to_i(r, c)
+            self.draw_canvas()
+            return
+
+        if self.hovered != self.r_c_to_i(r, c) or self.hovered is None:
+            for i, row in enumerate(range(self.rows)):
+                for j, col in enumerate(range(self.cols)):
+                    idx = self.r_c_to_i(row, col)
+                    x1, y1, x2, y2 = self.tiles[idx].rect
+                    bw = self.tiles[idx].border_width
+                    nx1 = j * ntw
+                    nx1 += rw - ntw if j > c else 0
+                    nx2 = nx1 + (rw if j == c else ntw)
+                    ny1 = i * nth
+                    ny1 += rh - nth if i > r else 0
+                    ny2 = ny1 + (rh if i == r else nth)
+                    if nx1 == 0:
+                        nx1 = bw
+                    if ny1 == 0:
+                        ny1 = bw
+                    self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
+            self.hovered = self.r_c_to_i(r, c)
+        # for i, tile in enumerate(self.tiles):
+        #     tr, tc = self.i_to_r_c(i)
+        #     x1, y1, x2, y2 = self.tiles[i].rect
+        #     # handled = False
+        #         if self.readable_height > self.tile_rect.height:
+        #             if tr == r:
+        #                 self.tiles[i].rect = (x1, y1, x2, y1 + self.readable_height)
+        #                 # handled = True
+        #             else:
+        #                 s_height = (self.height - self.readable_height) / max(1, (self.rows - 1))
+        #                 # self.tiles[i].rect = (x1, y1 + (self.readable_height - (y2 - y1)), x2, y1 + s_height)
+        #                 self.tiles[i].rect = (x1, y1, x2, y1 + s_height)
+        #
+        #         if self.readable_width > self.tile_rect.width:
+        #             if tc == c:
+        #                 hw = self.readable_width / 2
+        #                 # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
+        #                 self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
+        #                 # handled = True
+        #             else:
+        #                 # t_width = self.width / max(1, self.cols)
+        #                 t_width = self.tile_rect.width
+        #                 n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+        #                 d_width = t_width - n_width
+        #                 sd_width = tc * d_width
+        #                 print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:",
+        #                       t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
+        #                 # s_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+        #                 # p_width = (x2 - x1) / s_width
+        #                 # self.tiles[i].rect = (x1 + (self.readable_height - (x2 - x1)), y1, x1 + s_width, y2)
+        #                 if tc < c:
+        #                     # self.tiles[i].rect = (x1 + (max(0, tc - 1) * d_width), y1, (x1 + (max(0, tc - 1) * d_width) + n_width), y2)
+        #                     self.tiles[i].rect = (x1 - sd_width, y1, (x1 + n_width - sd_width), y2)
+        #                 else:
+        #                     # self.tiles[i].rect = (x1 - (max(0, tc - 1) * d_width) + self.readable_width, y1, (x1 - (max(0, tc - 1) * d_width) + n_width + self.readable_width), y2)
+        #                     self.tiles[i].rect = (x1 + sd_width, y1, (x1 + sd_width + n_width), y2)
+
+        # if not handled:
+        #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
+
+            self.draw_canvas()
+
+    def hovering_old(self, *args):
+        print("hovering")
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        r, c = self.x_y_to_r_c(mouse_x, mouse_y)
+        for i, tile in enumerate(self.tiles):
+            tr, tc = self.i_to_r_c(i)
+            x1, y1, x2, y2 = self.tiles[i].rect
+            # handled = False
+            if self.hovered or 1:
+                if self.readable_height > self.tile_rect.height:
+                    if tr == r:
+                        self.tiles[i].rect = (x1, y1, x2, y1 + self.readable_height)
+                        # handled = True
+                    else:
+                        s_height = (self.height - self.readable_height) / max(1, (self.rows - 1))
+                        # self.tiles[i].rect = (x1, y1 + (self.readable_height - (y2 - y1)), x2, y1 + s_height)
+                        self.tiles[i].rect = (x1, y1, x2, y1 + s_height)
+
+                if self.readable_width > self.tile_rect.width:
+                    if tc == c:
+                        hw = self.readable_width / 2
+                        # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
+                        self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
+                        # handled = True
+                    else:
+                        # t_width = self.width / max(1, self.cols)
+                        t_width = self.tile_rect.width
+                        n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+                        d_width = t_width - n_width
+                        sd_width = tc * d_width
+                        print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:",
+                              t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
+                        # s_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+                        # p_width = (x2 - x1) / s_width
+                        # self.tiles[i].rect = (x1 + (self.readable_height - (x2 - x1)), y1, x1 + s_width, y2)
+                        if tc < c:
+                            # self.tiles[i].rect = (x1 + (max(0, tc - 1) * d_width), y1, (x1 + (max(0, tc - 1) * d_width) + n_width), y2)
+                            self.tiles[i].rect = (x1 - sd_width, y1, (x1 + n_width - sd_width), y2)
+                        else:
+                            # self.tiles[i].rect = (x1 - (max(0, tc - 1) * d_width) + self.readable_width, y1, (x1 - (max(0, tc - 1) * d_width) + n_width + self.readable_width), y2)
+                            self.tiles[i].rect = (x1 + sd_width, y1, (x1 + sd_width + n_width), y2)
+
+            # if not handled:
+            #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
+
+        self.draw_canvas()
+
+    def draw_canvas(self):
+        self.canvas.delete("all")
+
+        print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        # if self.current_hover is not None:
+        #     print(self.tiles_to_the_right(self.current_hover))
+        #     print(self.tiles_to_the_left(self.current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
+
+        for tile in self.tiles:
+            show_txt = not self.hiding_non_selected_tiles
+            # print("tile.rect.tupl:", tile.rect)
+            bgc = tile.colour
+            r, c = tile.row, tile.col
+            tile_num = self.r_c_to_i(r, c)
+            if sum(bgc) < 300:
+                fgc = WHITE
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
+                    outline = WHITE
+                    if tile_num == self.current_hover:
+                        show_txt = True
+                else:
+                    outline = bgc
+            else:
+                fgc = BLACK
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
+                    outline = GRAY_15
+                    if tile_num == self.current_hover:
+                        show_txt = True
+                else:
+                    outline = bgc
+            tile_txt = tile.text if tile.text is not None else tile_num
+            self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
+                                         width=self.border_width)
+            # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
+            if show_txt:
+                if not self.is_tile_enlarged(tile_num):
+                    wo_num = tile.wo_num if tile.wo_num is not None else ""
+                    tile_txt = "<{}>".format(wo_num)
+                if tile_txt:
+                    can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                        font="Times 12 italic bold", text=str(tile_txt))
+                    bounds = self.canvas.bbox(can_txt)
+                    can_t_w = bounds[2] - bounds[0]
+                    if can_t_w > (tile.rect[2] - tile.rect[0]):
+                        self.canvas.delete(can_txt)
+                        wo_num = tile.wo_num if tile.wo_num is not None else ""
+                        tile_txt = "<{}>".format(str(wo_num)[-4:])
+                        can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                            tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                            font="Times 12 italic bold", text=str(tile_txt))
+
+            else:
+                # raise ValueError("HEY")
+                tile_num = "" if tile.wo_num is None else tile.wo_num
+                can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
+                                        font="Times 12 italic bold", text=str(tile_num))
+                bounds = self.canvas.bbox(can_txt)
+                can_t_w = bounds[2] - bounds[0]
+                if can_t_w > (tile.rect[2] - tile.rect[0]):
+                    self.canvas.delete(can_txt)
+                    wo_num = tile.wo_num if tile.wo_num is not None else ""
+                    tile_num = str(wo_num)[-4:]
+                    can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
+                                                      tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
+                                                      fill=rgb_to_hex(fgc),
+                                                      font="Times 12 italic bold", text=str(tile_num))
+        self.redraw_legend()
+
+    def redraw_legend(self):
+        self.canvas_header_row.delete("all")
+        self.canvas_header_col.delete("all")
+
+        for i, tile in enumerate(self.tiles):
+            r, c = self.i_to_r_c(i)
+            rect = tile.rect
+            if r == 0 or c == 0:
+                # print("i: {}, r: {}, c: {}".format(i, r, c))
+                tw = (rect[2] - rect[0]) + self.border_width
+                th = (rect[3] - rect[1]) + self.border_width
+                coo = 0
+                roo = 0
+                te = self.is_tile_enlarged(self.r_c_to_i(r, c))
+                if r == 0:
+                    th = 25
+                    # if c == 0 and te:
+                    #     coo = tw / 2
+                    #     print("coo:", coo)
+                if c == 0:
+                    tw = 60
+                    # if r == 0 and te:
+                    #     roo = th / 2
+                    #     print("roo:", roo)
+                if r == 0:
+                    # self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                    self.canvas_header_row.create_text(coo + 60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                if c == 0:
+                    # self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+                    self.canvas_header_col.create_text(tw / 2, roo + rect[1] + (th / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
+
+
+        # th = self.tile_rect.h
+        # # cw, ch = canvas_header_col.size()
+        # cw, ch = 60, self.height
+        # tw = cw
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, line in enumerate(self.lines):
+        #     print("line:", line)
+        #     l_rect = (0, i * th, tw, (i + 1) * th)
+        #     # l_rect = l_rect[2] - l_rect[0], l_rect[3] - l_rect[1]
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2), l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_col.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=line)
+        #
+        # tw = self.tile_rect.w
+        # # cw, ch = canvas_header_row.size()
+        # cw, ch = self.width, 25
+        # th = ch
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, date in enumerate(self.dates):
+        #     print("date:", date)
+        #     l_rect = ((i * tw), 0, ((i + 1) * tw), th)
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2) + 60, l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_row.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold",
+        #                                        text=date.strftime("%Y-%m-%d"))
+        #
+        #
+
+
+
+
+
+        # self.canvas_header_row.delete("all")
+        # self.canvas_header_col.delete("all")
+        #
+        # th = self.tile_rect.h
+        # # cw, ch = canvas_header_col.size()
+        # cw, ch = 60, self.height
+        # tw = cw
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, line in enumerate(self.lines):
+        #     print("line:", line)
+        #     l_rect = (0, i * th, tw, (i + 1) * th)
+        #     # l_rect = l_rect[2] - l_rect[0], l_rect[3] - l_rect[1]
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2), l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_col.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=line)
+        #
+        # tw = self.tile_rect.w
+        # # cw, ch = canvas_header_row.size()
+        # cw, ch = self.width, 25
+        # th = ch
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
+        # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
+        # for i, date in enumerate(self.dates):
+        #     print("date:", date)
+        #     l_rect = ((i * tw), 0, ((i + 1) * tw), th)
+        #     l_rect = l_rect[0] + ((l_rect[2] - l_rect[0]) / 2) + 60, l_rect[1] + ((l_rect[3] - l_rect[1]) / 2)
+        #     # l_rect = l_rect[0], l_rect[1]
+        #     self.canvas_header_row.create_text(*l_rect, fill=rgb_to_hex(WHITE), font="Times 12 italic bold",
+        #                                   text=date.strftime("%Y-%m-%d"))
+
+    def r_c_to_i(self, r, c):
+        return (r * self.cols) + c
+
+    def i_to_r_c(self, i):
+        return (i // self.cols), (i % self.cols)
+
+    def x_y_to_r_c(self, x, y):
+        # tw = self.tile_rect.width
+        # th = self.tile_rect.height
+        # r = int(y // th)
+        # c = int(x // tw)
+        # return r, c
+        for i, tile in enumerate(self.tiles):
+            x1, y1, x2, y2 = tile.rect
+            r, c = self.i_to_r_c(i)
+            bw = tile.border_width
+            if x1 - (2 * bw) <= x <= x2 + (2 * bw) and y1 - (2 * bw) <= y <= y2 + (2 * bw):
+                return r, c
+
+        print("Could not map x and y: ({}, {})".format(x, y))
+
+    def release_drag(self, *args):
+        self.dragging = None
+
+    def click_print(self, *args):
+        print("BEGIN: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
+        event = args[0]
+        mouse_x, mouse_y = event.x, event.y
+        new_select = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
+        if self.selected is not None:
+            print("self.selected is not None")
+            if self.selected != new_select:
+                print("self.selected {}, new_select: {}".format(self.selected, new_select))
+                self.hover_select = new_select
+                self.draw_canvas()
+                self.swap_tiles(self.selected, new_select)
+            self.hover_select = None
+            self.selected = None
+            self.draw_canvas()
+            print("END A: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
+            return
+        self.dragging = new_select
+        self.selected = new_select
+        self.hover_select = new_select
+        self.dbl_clicked = None
+        self.draw_canvas()
+        print("END B: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
+
+    def drag_print(self, *args):
+        drag_event = args[0]
+        assert isinstance(drag_event, tkinter.Event)
+        mouse_x, mouse_y = drag_event.x, drag_event.y
+        # print("drag_event:", drag_event.)
+        # print("x:", mouse_x, "y:", mouse_y)
+        i = 0
+        while i < len(self.tiles):
+            tile = self.tiles[i]
+            x1, y1, x2, y2 = tile.rect
+            if x1 <= mouse_x <= x2 and y1 <= mouse_y <= y2:
+                hover_tile = self.r_c_to_i(tile.row, tile.col)
+
+                if self.dragging is None:
+                    self.dragging = self.r_c_to_i(tile.row, tile.col)
+                elif hover_tile != self.dragging:
+                    print("Swapping self.dragging: {} with hovering tile: {}".format(self.dragging, hover_tile))
+                    self.hover_select = hover_tile
+                    self.unbind_canvas()
+                    self.draw_canvas()
+                    self.swap_tiles(self.dragging, hover_tile)
+                    self.dragging = None
+                    self.selected = None
+                    self.hover_select = None
+                    self.draw_canvas()
+                    self.bind_canvas()
+            i += 1
+
+            # print("type(drag_event):", type(drag_event))
+
+    def swap_tiles(self, dragging_tile, hover_tile):
+        ans = easygui.ynbox(msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile),
+                            title="Swap Confirm", default_choice="No", )
+        print("ans:", ans)
+        if not ans:
+            print("Swap declined")
+            return
+        old_tile = self.tiles[dragging_tile].text, self.tiles[dragging_tile].colour
+        new_tile = self.tiles[hover_tile].text, self.tiles[hover_tile].colour
+        # self.tiles[dragging_tile].text = new_tile[0] if new_tile[0] is not None else str(hover_tile)
+        t_data = self.tiles[dragging_tile].__copy__()
+        self.tiles[dragging_tile].set_data(*self.tiles[hover_tile].get_data())
+        self.tiles[dragging_tile].colour = new_tile[1]
+        # self.tiles[hover_tile].text = old_tile[0] if old_tile[0] is not None else str(dragging_tile)
+        self.tiles[hover_tile].set_data(*t_data.get_data())
+        self.tiles[hover_tile].colour = old_tile[1]
+
+    def tiles_to_the_right(self, tile_num, start_date=None, end_date=None):
+        r, c = self.i_to_r_c(tile_num)
+        tiles = list(range(tile_num + 1, ((r + 1) * self.cols)))
+        if start_date is not None or end_date is not None:
+            for i in range(self.r_c_to_i(r, 0), self.r_c_to_i(r, self.cols)):
+                # comparing <class 'pandas._libs.tslibs.timestamps.Timestamp'> to Datetime.Datetime
+                date = dt.datetime.combine(self.dates[i % self.cols].date(), dt.time(0, 0))
+                if i in tiles:
+                    if start_date is not None and start_date > date:
+                        tiles.remove(i)
+                    if end_date is not None and end_date < date:
+                        tiles.remove(i)
+        return tiles
+
+    def tiles_to_the_left(self, tile_num, start_date=None, end_date=None):
+        r, c = self.i_to_r_c(tile_num)
+        tiles = list(range(self.r_c_to_i(r, 0), tile_num))
+        if start_date or end_date:
+            for i in range(self.r_c_to_i(r, 0), self.r_c_to_i(r, self.cols)):
+                # comparing <class 'pandas._libs.tslibs.timestamps.Timestamp'> to Datetime.Datetime
+                date = dt.datetime.combine(self.dates[i % self.cols].date(), dt.time(0, 0))
+                if i in tiles:
+                    if start_date is not None and start_date > date:
+                        tiles.remove(i)
+                    if end_date is not None and end_date < date:
+                        tiles.remove(i)
+        return tiles
+
+    def add_day(self):
+        print("add_day clicked:", self.dbl_clicked)
+        tile = self.tiles[self.dbl_clicked]
+        print("tile:", tile)
+
+        for t in [self.dbl_clicked] + self.tiles_to_the_right(self.dbl_clicked):
+            tile = self.tiles[t]
+            tile.colour = brighten(tile.colour, 0.1)
+        self.dbl_clicked = None
+        self.draw_canvas()
+
+    def subtract_day(self):
+        print("add_day clicked:", self.dbl_clicked)
+        tile = self.tiles[self.dbl_clicked]
+        print("tile:", tile)
+
+        for t in [self.dbl_clicked] + self.tiles_to_the_left(self.dbl_clicked):
+            tile = self.tiles[t]
+            tile.colour = brighten(tile.colour, 0.1)
+        self.dbl_clicked = None
+        self.draw_canvas()
+
+
+
+
+
+
+
+import tkinter
+from tkinter import ttk
+import pyodbc
+import pandas as pd
+
+
+def get_production_data(start_date, end_date):
+    assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
+    assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
+    assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
+    try:
+        query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
+        cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
+        table_result = pd.read_sql(query, cnxn)
+        df1 = pd.DataFrame(table_result)
+        df2 = pd.DataFrame(table_result)
+        df3 = pd.DataFrame(table_result)
+        pd.to_datetime(df1['Prod Date'], unit='s')
+        pd.to_datetime(df2['Prod Date'], unit='s')
+        pd.to_datetime(df3['Prod Date'], unit='s')
+        ordered_df = df2.sort_values(by="GroupID")
+        lines = ordered_df.drop_duplicates('GroupID')
+        # lines = lines.iloc[:, :1].tolist()
+        lines = lines['Prod Line'].tolist()
+        ordered_df = df3.sort_values(by="Prod Date")
+        dates = ordered_df.drop_duplicates('Prod Date')
+        # dates = dates.iloc[:, 3:4].tolist()
+        dates = dates['Prod Date'].tolist()
+        print("columns:", df1.columns)
+        ordered_df = df1.sort_values(by=["GroupID", "Prod Date"])
+        cnxn.close()
+    except pyodbc.OperationalError as e:
+        lines = [
+            "GNK1",
+            "GNK2",
+            "TBF",
+            "PBF",
+            "B1",
+            "B2",
+            "B3",
+            "B4",
+            "TS1",
+            "TS2",
+            "TS3",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6",
+            "T7",
+            "T8",
+            "T9",
+            "T10",
+            "T11"
+        ]
+        dates = []
+        ordered_df = pd.DataFrame()
+        print("e: ", e)
+    return lines, dates, ordered_df
+    # return df
+
+
+if __name__ == '__main__':
+
+    def get_data(start_date, end_date):
+        lines, dates, data = get_production_data(start_date, end_date)
+
+        print("lines:\n\n", lines)
+        print("dates:\n\n", dates)
+        print("data:\n\n", data)
+        print("length:", data.size)
+        return lines, dates, data
+
+    def create_calendar(start_date, end_date, lines, dates, data):
+        canvas.delete("all")
+        return PSCalendar(canvas, canvas_header_col, canvas_header_row, canvas_pop_up, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+
+    def create_calendar_p(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width):
+        canvas_a.delete("all")
+        return PSCalendar(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+
+
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##                                                   Constants                                                    ##
+    ##                                                                                                                ##
+    ####################################################################################################################
+
+    # w = 700
+    # h = 500
+    # Inclusive start and end dates
+
+    start_date_1 = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
+    end_date_1 = dt.datetime(2021, 10, 31)
+    lines, dates, data = get_data(start_date_1, end_date_1)
+
+    switch_calendar_use_hover = True
+
+    print("I should see {} rows by {} cols".format(len(lines), len(dates)))
+
+    border_width = 3
+    win_w, win_h = 1900, 950
+    can_w, can_h = win_w * 0.96, win_h * 0.8
+
+    window = tkinter.Tk()
+    window.geometry("{}x{}".format(win_w, win_h))
+    win_w, win_h = window.winfo_screenwidth(), window.winfo_screenheight()
+    can_w, can_h = win_w * 0.96, win_h * 0.76
+    window.geometry("%dx%d+0+0" % (win_w, win_h))
+    window.state('zoomed')
+    window.title("Production Schedule")
+
+    def on_tab_change(event):
+        tab_name = event.widget.tab('current')['text']
+        idx = tab_names.index(tab_name)
+        cal = tab_cals[idx]
+
+        btn_calendar_use_hover.config(command=cal.toggle_use_hover)
+        btn_calendar_export_pdf_full.config(command=cal.export_to_pdf_full)
+        btn_calendar_export_pdf.config(command=cal.export_to_pdf)
+
+    tab_control = ttk.Notebook(window)
+    tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
+
+    tab_1 = ttk.Frame(tab_control)
+    frame_calendar = tkinter.Frame(tab_1)
+    canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+    canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + border_width, bg=rgb_to_hex(BLACK))
+    canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + border_width, width=60, bg=rgb_to_hex(BLACK))
+    canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
+    cal = create_calendar(start_date_1, end_date_1, lines, dates, data)
+    tab_cals = []
+    tab_2 = ttk.Frame(tab_control)
+    tab_3 = ttk.Frame(tab_control)
+    tab_4 = ttk.Frame(tab_control)
+    tab_5 = ttk.Frame(tab_control)
+    tab_6 = ttk.Frame(tab_control)
+    tab_7 = ttk.Frame(tab_control)
+    tabs = [tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
+    tab_names = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
+    last_date = cal.end_date
+    for i, tab in enumerate(tabs):
+        c_frame_calendar = tkinter.Frame(tab)
+        can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+        can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + border_width, width=60, bg=rgb_to_hex(BLACK))
+        can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + border_width, bg=rgb_to_hex(BLACK))
+        can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
+        last_date = last_date + dt.timedelta(days=1)
+        c_end_date = last_date + dt.timedelta(days=31)
+        c_lines, c_dates, dat = get_data(last_date, c_end_date)
+        print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
+        print("c_dates", c_dates)
+        psc = create_calendar_p(can, can_h_c, can_h_r, can_p_u, can_w, can_h, last_date, c_end_date, dat, lines, c_dates, border_width)
+        c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
+            dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
+        c_label_title.pack()
+        can_h_r.pack()
+        can_h_c.pack(side=tkinter.LEFT)
+        can.pack()
+        c_frame_calendar.pack()
+        tab_cals.append(psc)
+        last_date += dt.timedelta(days=31)
+
+    label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
+
+    for tab, tab_name in zip(tabs, tab_names):
+        tab_control.add(tab, text=tab_name)
+
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+
+    def switch_calendar_use_hover_gsm(*args):
+        global switch_calendar_use_hover
+        switch_calendar_use_hover = not switch_calendar_use_hover
+        cal.set_user_hover_mode(switch_calendar_use_hover)
+        print("USING HOVER: <{}>".format(switch_calendar_use_hover))
+
+    def submit_calendar_search(*args):
+        global canvas, cal, lines, dates, data
+        sd = stringvar_calendar_search_start_date.get()
+        ed = stringvar_calendar_search_end_date.get()
+        if sd and ed:
+            if is_date(sd) and is_date(ed):
+                sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
+                ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+                if sd <= ed:
+                    entry_calendar_search_start_date.config(fg=rgb_to_hex(BLACK))
+                    entry_calendar_search_end_date.config(fg=rgb_to_hex(BLACK))
+                    ed = ed if (ed - sd).days <= 60 else sd + dt.timedelta(days=60)
+                    stringvar_calendar_search_start_date.set(sd.strftime("%Y-%m-%d"))
+                    stringvar_calendar_search_end_date.set(ed.strftime("%Y-%m-%d"))
+                    lines, dates, data = get_data(sd, ed)
+                    cal = create_calendar(sd, ed, lines, dates, data)
+                    label_title.config(text="Production Schedule\n{} - {}".format(dt.datetime.strftime(sd, "%Y-%m-%d"), dt.datetime.strftime(ed, "%Y-%m-%d")))
+                    btn_calendar_export_pdf.config(command=cal.export_to_pdf)
+                    cal.redraw_legend()
+                else:
+                    entry_calendar_search_start_date.config(fg=rgb_to_hex(RED))
+                    entry_calendar_search_end_date.config(fg=rgb_to_hex(RED))
+
+    frame_calendar_control = tkinter.Frame(window)
+    frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
+    frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
+    frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
+    frame_calendar_search_control_a = tkinter.Frame(frame_calendar_search_entries)
+    frame_calendar_search_control_b = tkinter.Frame(frame_calendar_search_entries)
+    frame_calendar_search_control_c = tkinter.Frame(frame_calendar_search_control)
+    btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns, text="Use Hover", command=switch_calendar_use_hover_gsm)
+    btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns, text="Export pdf (Full)", command=cal.export_to_pdf_full)
+    btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns, text="Export pdf", command=cal.export_to_pdf)
+
+    stringvar_calendar_search_start_date = tkinter.StringVar(value=start_date_1.strftime("%Y-%m-%d"))
+    stringvar_calendar_search_end_date = tkinter.StringVar(value=end_date_1.strftime("%Y-%m-%d"))
+    label_calendar_search_start_date = tkinter.Label(frame_calendar_search_control_a, text="Start Date:")
+    entry_calendar_search_start_date = tkinter.Entry(frame_calendar_search_control_a, textvariable=stringvar_calendar_search_start_date)
+    label_calendar_search_end_date = tkinter.Label(frame_calendar_search_control_b, text="End Date:")
+    entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
+    btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
+
+    label_calendar_search_start_date.pack(side=tkinter.LEFT)
+    entry_calendar_search_start_date.pack(side=tkinter.LEFT)
+    label_calendar_search_end_date.pack(side=tkinter.LEFT)
+    entry_calendar_search_end_date.pack(side=tkinter.LEFT)
+    btn_calendar_search_submit.pack()
+
+    label_title.pack()
+    canvas_header_row.pack()
+    canvas_header_col.pack(side=tkinter.LEFT)
+    canvas.pack()
+    frame_calendar_search_control_a.pack()
+    frame_calendar_search_control_b.pack()
+    frame_calendar_search_entries.pack(side=tkinter.LEFT)
+    # frame_calendar_search_entries.pack()
+    frame_calendar_search_control_c.pack(side=tkinter.LEFT)
+    # frame_calendar_search_control_c.pack()
+    frame_calendar_search_control.pack(side=tkinter.LEFT)
+    # frame_calendar_control.pack(side=tkinter.LEFT)
+    frame_calendar_control.pack()
+    btn_calendar_use_hover.pack()
+    btn_calendar_export_pdf_full.pack()
+    btn_calendar_export_pdf.pack()
+    frame_calendar_control_btns.pack(side=tkinter.LEFT)
+    # frame_calendar_control_btns.pack()
+    frame_calendar.pack()
+    submit_calendar_search()
+    tab_control.pack(expand=1, fill="both")
+    window.mainloop()
+
+    # for i, t in enumerate(cal.tiles):
+    #     print(dict_print(t.info_dict(), "Tile: #{}".format(i)))

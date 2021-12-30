@@ -76,11 +76,11 @@ if __name__ == '__main__':
 
     def create_calendar(start_date, end_date, lines, dates, data):
         canvas.delete("all")
-        return PSCalendar(canvas, canvas_header_col, canvas_header_row, canvas_pop_up, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+        return PSCalendar(canvas, canvas_header_col, canvas_header_row, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
 
-    def create_calendar_p(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width):
+    def create_calendar_p(canvas_a, canvas_b, canvas_c, can_w, can_h, start_date, end_date, data, lines, dates, border_width):
         canvas_a.delete("all")
-        return PSCalendar(canvas_a, canvas_b, canvas_c, canvas_d, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
+        return PSCalendar(canvas_a, canvas_b, canvas_c, can_w, can_h, start_date, end_date, data, lines, dates, border_width)
 
 
     ####################################################################################################################
@@ -112,6 +112,19 @@ if __name__ == '__main__':
     window.geometry("%dx%d+0+0" % (win_w, win_h))
     window.state('zoomed')
     window.title("Production Schedule")
+    # CAL_IDX = tkinter.IntVar()
+
+    def dbl_click_tile(event):
+        cal.unbind_for_pop_up()
+        cal.dbl_click_tile(event)
+        canvas_pop_up.tk_popup(event.x_root, event.y_root)
+        cal.bind_canvas()
+
+        cal.selected = None
+        cal.hovered = None
+        cal.hover_select = None
+        cal.dragging = None
+        cal.current_hover = None
 
     def on_tab_change(event):
         tab_name = event.widget.tab('current')['text']
@@ -121,6 +134,9 @@ if __name__ == '__main__':
         btn_calendar_use_hover.config(command=cal.toggle_use_hover)
         btn_calendar_export_pdf_full.config(command=cal.export_to_pdf_full)
         btn_calendar_export_pdf.config(command=cal.export_to_pdf)
+
+        cal.canvas.bind("<Double-Button-1>", dbl_click_tile)
+        cal.canvas.bind("<Button-3>", dbl_click_tile)
 
     tab_control = ttk.Notebook(window)
     tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
@@ -153,7 +169,7 @@ if __name__ == '__main__':
         c_lines, c_dates, dat = get_data(last_date, c_end_date)
         print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
         print("c_dates", c_dates)
-        psc = create_calendar_p(can, can_h_c, can_h_r, can_p_u, can_w, can_h, last_date, c_end_date, dat, lines, c_dates, border_width)
+        psc = create_calendar_p(can, can_h_c, can_h_r, can_w, can_h, last_date, c_end_date, dat, lines, c_dates, border_width)
         c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
             dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
         c_label_title.pack()
@@ -204,6 +220,27 @@ if __name__ == '__main__':
                     entry_calendar_search_start_date.config(fg=rgb_to_hex(RED))
                     entry_calendar_search_end_date.config(fg=rgb_to_hex(RED))
 
+    def populate_pop_up_menu():
+        canvas_pop_up.add_command(label="Add 1 Day", command=add_day)
+        canvas_pop_up.add_command(label="Subtract 1 Day", command=subtract_day)
+        canvas_pop_up.add_separator()
+        canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
+        canvas_pop_up.add_radiobutton(label="A")
+        canvas_pop_up.add_radiobutton(label="B")
+
+    def wipe_pop_up_menu():
+        canvas_pop_up.delete(0, 6)
+
+    def add_day():
+        # tab_name = event.widget.tab('current')['text']
+        # idx = tab_names.index(tab_name)
+        # cal = tab_cals[idx]
+        idx = 9
+        print("cal index: {}".format(idx))
+
+    def subtract_day():
+        pass
+
     frame_calendar_control = tkinter.Frame(window)
     frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
     frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
@@ -250,6 +287,7 @@ if __name__ == '__main__':
     frame_calendar.pack()
     submit_calendar_search()
     tab_control.pack(expand=1, fill="both")
+    populate_pop_up_menu()
     window.mainloop()
 
     # for i, t in enumerate(cal.tiles):
