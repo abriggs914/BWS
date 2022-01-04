@@ -138,6 +138,26 @@ def work_weeks(first_day, public_holdays, personal_holidays):
 	days_worked = idx - 1
 		
 	months = dict(zip([calendar.month_name[i] + " 2021" for i in range(1, 13)], ["" for i in range(12)]))
+	first_month = first_day.month
+	first_year = first_day.year
+	
+	date1 = first_day
+	date2 = today
+	m_date = datetime.date.fromisoformat(max(holidays))
+	date2 = max(date2, m_date)
+	date1 = date1.replace(day=1)
+	date2 = date2.replace(day=1)
+	months_str = calendar.month_name
+	months = {}
+	while date1 <= date2:
+		month = date1.month
+		year  = date1.year
+		month_str = months_str[month]
+		months["{} {}".format(month_str, year)] = ""
+		next_month = month + 1 if month != 12 else 1
+		next_year = year + 1 if next_month == 1 else year
+		date1 = date1.replace(month=next_month, year=next_year)
+	print(months)	
 	next_holiday = None
 	last_holiday = None
 	# when_holiday_next = None
@@ -148,8 +168,9 @@ def work_weeks(first_day, public_holdays, personal_holidays):
 	for d, holiday in zip(holidays_nums, holidays):
 		holiday = datetime.date.fromisoformat(holiday)
 		month = holiday.month
+		year = holiday.year
 		sday = day_string(holiday)
-		months[calendar.month_name[month] + " 2021"] += sday + ", "
+		months[calendar.month_name[month] + " {}".format(year)] += sday + ", "
 		print("holiday ({th}): {holiday}, d: {d}, day+1: {d1}, d>d1: {dd1}, hm: {hm}".format(th=type(holiday), d=d, holiday=holiday, hm=month, d1=(day), dd1=(d>day)))
 		if d > day:
 			if next_holiday is None:
@@ -885,7 +906,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 
 	# plot best-fit line
 	plt.plot(xx, w[0]*xx + w[1], '-k')
-	plt.show()
+	#plt.show()
 	
 '''
 # Viewing change in time off ratio starting 2021-05-28 to 200 days into the future.
