@@ -6,5 +6,5 @@ set timestamp=%YYYY%-%MM%-%DD%
 
 git add .
 git commit -m "%timestamp% End of day file push"
-git push origin main
+git push origin master
 pause
