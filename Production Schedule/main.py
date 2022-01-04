@@ -117,14 +117,22 @@ if __name__ == '__main__':
     def dbl_click_tile(event):
         cal.unbind_for_pop_up()
         cal.dbl_click_tile(event)
-        canvas_pop_up.tk_popup(event.x_root, event.y_root)
+        try:
+            print("PRE POP UP")
+            canvas_pop_up.tk_popup(event.x_root, event.y_root)
+            print("POST POP UP")
+        finally:
+            print("PRE GRAB RELEASE")
+            canvas_pop_up.grab_release()
+        print("PRE BIND")
         cal.bind_canvas()
 
-        cal.selected = None
-        cal.hovered = None
-        cal.hover_select = None
-        cal.dragging = None
-        cal.current_hover = None
+        # cal.selected = None
+        # cal.hovered = None
+        # cal.hover_select = None
+        # cal.dragging = None
+        # cal.current_hover = None
+        cal.dbl_clicked = None
 
     def on_tab_change(event):
         tab_name = event.widget.tab('current')['text']
