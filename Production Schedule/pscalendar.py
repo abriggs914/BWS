@@ -194,7 +194,7 @@ class PSCalendar:
         self.dbl_clicked = None
         # self.showing_pop_up = False
         self.draw_canvas()
-        self.bind_canvas()
+        # self.bind_canvas()
 
     # def __init__(self, canvas, w, h, start_date, end_date, data, lines, dates):
     #     assert isinstance(start_date,
@@ -292,6 +292,10 @@ class PSCalendar:
     #     self.current_hover = None
     #     self.draw_canvas()
     #     self.bind_canvas()
+
+    def __repr__(self):
+        # return "PSO<" + str(id(self)) + ">"
+        return "PSO<{} - {}>".format(self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
 
     # Exports to a one-page tabloid pdf.
     # Beware small texts
@@ -483,7 +487,7 @@ class PSCalendar:
         self.switch_use_hover = use_hover
 
     def bind_canvas(self):
-        print("bind")
+        # print("bind canvas")
         self.canvas.bind("<Motion>", self.hovering)
         self.canvas.bind("<Leave>", self.leaving)
         self.canvas.bind("<Enter>", self.hover_entering)
@@ -498,13 +502,14 @@ class PSCalendar:
         self.canvas.unbind("<B1-Motion>")
 
     def unbind_for_pop_up(self):
-        print("unbound")
+        print("unbind_for_pop_up")
         # self.canvas.unbind("<Motion>")
         self.canvas.unbind("<Leave>")
         self.unbind_canvas()
 
     def dbl_click_tile(self, *args):
-        print("BINDINGS:", self.canvas.bind())
+        # print("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV")
+        # print("BINDINGS: (TILE)", self.canvas.bind())
         # if self.showing_pop_up:
         #     self.showing_pop_up = not self.showing_pop_up
         #     return
@@ -527,6 +532,7 @@ class PSCalendar:
 
                 self.dbl_clicked = self.r_c_to_i(r, c)
                 print("double clicked:", self.dbl_clicked)
+                assert self.dbl_clicked is not None, "self.dbl_clicked == None"
                 tw = self.tile_rect.width
                 th = self.tile_rect.height
                 rw = max(tw, self.readable_width)
@@ -570,19 +576,21 @@ class PSCalendar:
             # cpu.config(x1=30, y1=12)
             # self.draw_canvas()
 
-        print("BINDINGS (dbl_click)", self.canvas.bind())
+        # print("BINDINGS (dbl_click)", self.canvas.bind())
 
         if not self.switch_use_hover:
             print("not self.switch_use_hover:", (not self.switch_use_hover))
             self.re_init_tile_rects()
             self.draw_canvas()
+        # print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 
     def re_init_tile_rects(self):
         for i, tile in enumerate(self.og_tiles):
             self.tiles[i].rect = tuple([v for v in self.og_tiles[i].rect])
 
     def leaving(self, *args):
-        print("Left")
+        # print("LEFT\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        print("LEAVING <{}> BINDINGS:".format(self), self.canvas.bind())
         # self.tiles = [tile.__copy__() for tile in self.og_tiles]
         self.re_init_tile_rects()
         self.hovered = None
@@ -729,7 +737,7 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        print("DC\t\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
 
         # if self.current_hover is not None:
         #     print(self.tiles_to_the_right(self.current_hover))
@@ -919,7 +927,7 @@ class PSCalendar:
         self.dragging = None
 
     def click_print(self, *args):
-        print("BEGIN: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
+        print("BEGIN: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging, self.dbl_clicked))
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         new_select = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
@@ -940,7 +948,7 @@ class PSCalendar:
         self.hover_select = new_select
         self.dbl_clicked = None
         self.draw_canvas()
-        print("END B: sel: {}, hsl: {}, drg: {}".format(self.selected, self.hover_select, self.dragging))
+        print("END B: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging, self.dbl_clicked))
 
     def drag_print(self, *args):
         drag_event = args[0]
@@ -1027,6 +1035,7 @@ class PSCalendar:
             tile.colour = brighten(tile.colour, 0.1)
         # self.dbl_clicked = None
         self.draw_canvas()
+        raise ValueError("EXIT!!!")
 
     def subtract_day(self):
         print("add_day clicked:", self.dbl_clicked)

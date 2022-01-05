@@ -5990,7 +5990,7 @@ if __name__ == '__main__':
     end_date_1 = dt.datetime(2021, 10, 31)
     lines, dates, data = get_data(start_date_1, end_date_1)
 
-    switch_calendar_use_hover = True
+    SWITCH_CALENDAR_USE_HOVER = True
 
     print("I should see {} rows by {} cols".format(len(lines), len(dates)))
 
@@ -6069,7 +6069,7 @@ if __name__ == '__main__':
     ####################################################################################################################
 
     def switch_calendar_use_hover_gsm(*args):
-        global switch_calendar_use_hover
+        global SWITCH_CALENDAR_USE_HOVER
         switch_calendar_use_hover = not switch_calendar_use_hover
         cal.set_user_hover_mode(switch_calendar_use_hover)
         print("USING HOVER: <{}>".format(switch_calendar_use_hover))
