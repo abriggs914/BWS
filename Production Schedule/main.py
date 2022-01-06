@@ -1,4 +1,4 @@
-
+import asyncio
 import tkinter
 from tkinter import ttk
 import pyodbc
@@ -6,14 +6,19 @@ from pscalendar import *
 import pandas as pd
 
 
-def get_production_data(start_date, end_date):
+async def read_sql_async(stmt, con):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, pd.read_sql, stmt, con)
+
+
+async def get_production_data(start_date, end_date):
     assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
     assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
     assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
     try:
         query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
         cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
-        table_result = pd.read_sql(query, cnxn)
+        table_result = await read_sql_async(query, cnxn)
         df1 = pd.DataFrame(table_result)
         df2 = pd.DataFrame(table_result)
         df3 = pd.DataFrame(table_result)
@@ -65,8 +70,8 @@ def get_production_data(start_date, end_date):
 
 if __name__ == '__main__':
 
-    def get_data(start_date, end_date):
-        lines, dates, data = get_production_data(start_date, end_date)
+    async def get_data(start_date, end_date):
+        lines, dates, data = await get_production_data(start_date, end_date)
 
         print("lines:\n\n", lines)
         print("dates:\n\n", dates)
@@ -89,10 +94,13 @@ if __name__ == '__main__':
     ##                                                                                                                ##
     ####################################################################################################################
 
-    N_TEST_CALS = 2
+    N_TEST_CALS = None
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
+    TABS = None
+    TAB_NAMES = None
+    TAB_DATA = None
     # lines, dates, data = get_data(START_DATE, END_DATE)
 
     # Use to keep all calendars using the same controls
@@ -100,6 +108,7 @@ if __name__ == '__main__':
 
     BORDER_WIDTH = 3
     WIN_W, WIN_H = 1900, 950
+    splash_length = 300
     # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
 
     window = tkinter.Tk()
@@ -109,10 +118,14 @@ if __name__ == '__main__':
     window.geometry("%dx%d+0+0" % (WIN_W, WIN_H))
     window.state('zoomed')
     window.title("Production Schedule")
+    LOADED = tkinter.BooleanVar(value=False)
+
+    btn_calendar_export_pdf_full = None
+    btn_calendar_export_pdf = None
 
     def dbl_click_tile(event):
-        cal = tab_data[CAL_IDX]["Cal"]
-        canvas_pop_up = tab_data[CAL_IDX]["PopUp"]
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         cal.unbind_for_pop_up()
         cal.dbl_click_tile(event)
         print("Double clicked Cal: {}, and tile: {}".format(cal, cal.dbl_clicked))
@@ -133,20 +146,21 @@ if __name__ == '__main__':
         cal.hover_select = None
         # cal.dragging = None
         # cal.current_hover = None
-        cal.dbl_clicked = None
+        # print("RESETTING cal.dbl_clicked")
+        # cal.dbl_clicked = None
 
     def on_tab_change(event):
-        global SWITCH_CALENDAR_USE_HOVER, CAL_IDX
+        global SWITCH_CALENDAR_USE_HOVER, CAL_IDX, btn_calendar_export_pdf_full, btn_calendar_export_pdf
         tab_name = event.widget.tab('current')['text']
-        idx = tab_names.index(tab_name)
+        idx = TAB_NAMES.index(tab_name)
         # cal = tab_cals[idx]
-        cal = tab_data[idx]["Cal"]
+        cal = TAB_DATA[idx]["Cal"]
         CAL_IDX = idx
         print("idx:", idx, "using hover:", SWITCH_CALENDAR_USE_HOVER)
-        for t in tab_data:
+        for t in TAB_DATA:
             if t != idx:
-                if tab_data[t]["Cal"] is not None:
-                    tab_data[t]["Cal"].unbind_canvas()
+                if TAB_DATA[t]["Cal"] is not None:
+                    TAB_DATA[t]["Cal"].unbind_canvas()
 
         # btn_calendar_use_hover.config(command=cal.toggle_use_hover)
         btn_calendar_export_pdf_full.config(command=cal.export_to_pdf_full)
@@ -157,114 +171,23 @@ if __name__ == '__main__':
         cal.bind_canvas()
         print("binding: {} on tab change".format(cal))
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
+        populate_pop_up_menu()
+        cal.draw_canvas()
 
     tab_control = ttk.Notebook(window)
     tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
 
-    # frame_calendar = tkinter.Frame(tab_1)
-    # canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
-    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
-    # canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
-    # canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
-    # cal = create_calendar(START_DATE, END_DATE, lines, dates, data)
-    # tab_cals = []
-    # tab_1 = ttk.Frame(tab_control)
-    # tab_2 = ttk.Frame(tab_control)
-    # tab_3 = ttk.Frame(tab_control)
-    # tab_4 = ttk.Frame(tab_control)
-    # tab_5 = ttk.Frame(tab_control)
-    # tab_6 = ttk.Frame(tab_control)
-    # tab_7 = ttk.Frame(tab_control)
-    # tabs = [tab_1, tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
-    tabs = [
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control),
-        ttk.Frame(tab_control)
-    ]
-    tab_names = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
-    empty_data = {
-        "Name": None,
-        "Tab": None,
-        "Lines": None,
-        "Dates": None,
-        "Data": None,
-        "HeaderRow": None,
-        "HeaderCol": None,
-        "PopUp": None,
-        "Cal": None
-    }
-    tab_data = dict(zip([i for i in range(len(tabs))], [dict(empty_data) for _ in range(len(tab_names))]))
-    # last_date = cal.end_date
-    last_date = START_DATE
-    for i, tab in enumerate(tabs):
-        if CAL_IDX is None:
-            CAL_IDX = i
-        c_frame_calendar = tkinter.Frame(tab)
-        can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
-        can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
-        can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
-        can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
-        last_date = last_date + dt.timedelta(days=1)
-        c_end_date = last_date + dt.timedelta(days=31)
-        c_lines, c_dates, dat = get_data(last_date, c_end_date)
-        print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
-        print("c_dates", c_dates)
-        psc = create_calendar_p(can, can_h_c, can_h_r, can_w, can_h, last_date, c_end_date, dat, c_lines, c_dates, BORDER_WIDTH)
-        c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
-            dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
-        c_label_title.pack()
-        can_h_r.pack()
-        can_h_c.pack(side=tkinter.LEFT)
-        can.pack()
-        c_frame_calendar.pack()
-        # tab_cals.append(psc)
-
-        t_dat = tab_data[i]
-        t_dat.update({
-            "Name": tab_names[i],
-            "Tab": tab,
-            "Lines": c_lines,
-            "Dates": c_dates,
-            "Data": dat,
-            "HeaderRow": can_h_c,
-            "HeaderCol": can_h_r,
-            "PopUp": can_p_u,
-            "Cal": psc
-        })
-
-        last_date += dt.timedelta(days=31)
-        if i >= N_TEST_CALS:
-            break
-
-    tabs = tabs if len(tabs) <= N_TEST_CALS else tabs[:N_TEST_CALS]
-    tab_names = tab_names if len(tab_names) <= N_TEST_CALS else tab_names[:N_TEST_CALS]
-
-    # label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(START_DATE, "%Y-%m-%d"), dt.datetime.strftime(END_DATE, "%Y-%m-%d")))
-
-    for tab, tab_name in zip(tabs, tab_names):
-        tab_control.add(tab, text=tab_name)
-
-    # print(dict_print(tab_data, "Tab Data"))
-    print("CALS:\n\t" + "\n\t".join([str(v["Cal"]) for k, v in tab_data.items()]))
-
-    ####################################################################################################################
-    ####################################################################################################################
-    ####################################################################################################################
-    ####################################################################################################################
-    ####################################################################################################################
-
-    def switch_calendar_use_hover_gsm(*args):
-        # print("HEY!!!!!")
-        global SWITCH_CALENDAR_USE_HOVER
-        # raise ValueError("WUT IS GOING ON HERE?!?")
-        SWITCH_CALENDAR_USE_HOVER = not SWITCH_CALENDAR_USE_HOVER
-        print("USING HOVER: <{}>".format(SWITCH_CALENDAR_USE_HOVER))
-        cal = tab_data[CAL_IDX]["Cal"]
-        cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
+    splash_label = tkinter.Label(window, text="Splash!")
+    splash_status = tkinter.Label(window, text="0 % Complete")
+    splash_label.pack()
+    splash_pb = ttk.Progressbar(
+        window,
+        orient='horizontal',
+        mode='determinate',
+        length=splash_length
+    )
+    splash_pb.pack()
+    splash_status.pack()
 
     def submit_calendar_search(*args):
         print("submit!")
@@ -290,80 +213,279 @@ if __name__ == '__main__':
         #             entry_calendar_search_start_date.config(fg=rgb_to_hex(RED))
         #             entry_calendar_search_end_date.config(fg=rgb_to_hex(RED))
 
-    def populate_pop_up_menu():
+    def switch_calendar_use_hover_gsm(*args):
+        # print("HEY!!!!!")
+        global SWITCH_CALENDAR_USE_HOVER
+        # raise ValueError("WUT IS GOING ON HERE?!?")
+        SWITCH_CALENDAR_USE_HOVER = not SWITCH_CALENDAR_USE_HOVER
+        print("USING HOVER: <{}>".format(SWITCH_CALENDAR_USE_HOVER))
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
 
-        canvas_pop_up = tab_data[CAL_IDX]["PopUp"]
-        canvas_pop_up.add_command(label="Add 1 Day", command=add_day)
-        canvas_pop_up.add_command(label="Subtract 1 Day", command=subtract_day)
-        canvas_pop_up.add_separator()
-        canvas_pop_up.add_checkbutton(label="Apply to Entire Line")
-        canvas_pop_up.add_radiobutton(label="A")
-        canvas_pop_up.add_radiobutton(label="B")
+    # frame_calendar = tkinter.Frame(tab_1)
+    # canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
+    # canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
+    # canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
+    # cal = create_calendar(START_DATE, END_DATE, lines, dates, data)
+    # tab_cals = []
+    # tab_1 = ttk.Frame(tab_control)
+    # tab_2 = ttk.Frame(tab_control)
+    # tab_3 = ttk.Frame(tab_control)
+    # tab_4 = ttk.Frame(tab_control)
+    # tab_5 = ttk.Frame(tab_control)
+    # tab_6 = ttk.Frame(tab_control)
+    # tab_7 = ttk.Frame(tab_control)
+    # TABS = [tab_1, tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
+
+
+    async def populate_tab_data():
+        global TABS, TAB_NAMES, TAB_DATA, LOADED
+        TABS = [
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control),
+            ttk.Frame(tab_control)
+        ]
+        TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
+
+        # Capping # TABS and queries based on N_TEST_CALS
+        if N_TEST_CALS is not None:
+            TABS = TABS if len(TABS) <= N_TEST_CALS else TABS[:N_TEST_CALS]
+            TAB_NAMES = TAB_NAMES if len(TAB_NAMES) <= N_TEST_CALS else TAB_NAMES[:N_TEST_CALS]
+
+        empty_data = {
+            "Name": None,
+            "Tab": None,
+            "Lines": None,
+            "Dates": None,
+            "Data": None,
+            "HeaderRow": None,
+            "HeaderCol": None,
+            "PopUp": None,
+            "PopUpDat": None,
+            "Cal": None
+        }
+        TAB_DATA = dict(zip([i for i in range(len(TABS))], [dict(empty_data) for _ in range(len(TAB_NAMES))]))
+
+        # last_date = cal.end_date
+        last_date = START_DATE
+        n = len(TABS)
+        for i, tab in enumerate(TABS):
+            c_frame_calendar = tkinter.Frame(tab)
+            can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
+            can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
+            can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
+            can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
+            last_date = last_date + dt.timedelta(days=1)
+            c_end_date = last_date + dt.timedelta(days=31)
+            c_lines, c_dates, dat = await get_data(last_date, c_end_date)
+            print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
+            print("c_dates", c_dates)
+            psc = create_calendar_p(can, can_h_c, can_h_r, can_w, can_h, last_date, c_end_date, dat, c_lines, c_dates, BORDER_WIDTH)
+            c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
+                dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
+            c_label_title.pack()
+            can_h_r.pack()
+            can_h_c.pack(side=tkinter.LEFT)
+            can.pack()
+            c_frame_calendar.pack()
+            # tab_cals.append(psc)
+
+            t_dat = TAB_DATA[i]
+            t_dat.update({
+                "Name": TAB_NAMES[i],
+                "Tab": tab,
+                "Lines": c_lines,
+                "Dates": c_dates,
+                "Data": dat,
+                "HeaderRow": can_h_c,
+                "HeaderCol": can_h_r,
+                "PopUp": can_p_u,
+                "Cal": psc
+            })
+
+            last_date += dt.timedelta(days=31)
+            p = 1 / n
+            print("p: {}, i: {}, n: {}, x: {}".format(p, i, n, p * 100))
+            splash_pb.step(p * 100)
+            splash_status.config(text="{} % Complete".format(round(splash_pb["value"], 2)))
+            window.update()
+            # if i >= N_TEST_CALS:
+            #     break
+
+        # TABS = TABS if len(TABS) <= N_TEST_CALS else TABS[:N_TEST_CALS]
+        # TAB_NAMES = TAB_NAMES if len(TAB_NAMES) <= N_TEST_CALS else TAB_NAMES[:N_TEST_CALS]
+
+        # label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(START_DATE, "%Y-%m-%d"), dt.datetime.strftime(END_DATE, "%Y-%m-%d")))
+
+        for tab, tab_name in zip(TABS, TAB_NAMES):
+            tab_control.add(tab, text=tab_name)
+        LOADED.set(True)
+
+
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+    ####################################################################################################################
+
+    def ignore_pop_up():
+        canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
+        canvas_pop_up.unpost()
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.dbl_clicked = None
+        cal.draw_canvas()
+
+    def populate_pop_up_menu(pop_up_dat=None, override=False):
+
+        canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
+        t_dat = TAB_DATA[CAL_IDX]["PopUpDat"]
+        if t_dat and not override:
+            # already populated
+            return
+        if override:
+            canvas_pop_up.delete(0, len(t_dat))
+        print("Populating calendar #{}'s menu".format(CAL_IDX))
+        pop_up_dat = [
+            ("CMD", "Add 1 Day", add_day),
+            ("CMD", "Subtract 1 Day", subtract_day),
+            ("SEP", None, None),
+            ("CBN", "Apply to Entire Line", None),
+            ("RBN", "A", None),
+            ("RBN", "B", None)
+        ] if pop_up_dat is None else pop_up_dat
+        for code, lbl, cmd in pop_up_dat:
+            if code == "SEP":
+                canvas_pop_up.add_separator()
+            elif code == "CBN":
+                canvas_pop_up.add_checkbutton(label=lbl)
+            elif code == "RBN":
+                canvas_pop_up.add_radiobutton(label=lbl)
+            else:
+                canvas_pop_up.add_command(label=lbl, command=cmd)
+        TAB_DATA[CAL_IDX]["PopUpDat"] = pop_up_dat
+        canvas_pop_up.bind("<FocusOut>", ignore_pop_up)
 
     def wipe_pop_up_menu():
-        canvas_pop_up = tab_data[CAL_IDX]["PopUp"]
+        canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         canvas_pop_up.delete(0, 6)
 
     def add_day():
-        # tab_name = event.widget.tab('current')['text']
-        # idx = tab_names.index(tab_name)
-        # cal = tab_cals[idx]
-        idx = 9
-        print("cal index: {}".format(idx))
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        line = cal.tiles[cal.dbl_clicked].line
+        for i in range(CAL_IDX, len(TAB_DATA)):
+            cal = TAB_DATA[i]["Cal"]
+
+            assert isinstance(cal, PSCalendar)
+
+            print("Adjusting cal: {}".format(cal))
+            row_idx = cal.lines.index(line)
+            r, c = cal.rows, cal.cols
+            left_most = row_idx * c
+            cal.dbl_clicked = cal.dbl_clicked if i == CAL_IDX else left_most
+            cal.add_day()
 
     def subtract_day():
         pass
 
+    def draw_application():
+        global btn_calendar_export_pdf_full, btn_calendar_export_pdf, CAL_IDX
 
-    cal = tab_data[CAL_IDX]["Cal"]
-    frame_calendar_control = tkinter.Frame(window)
-    frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
-    frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
-    frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
-    frame_calendar_search_control_a = tkinter.Frame(frame_calendar_search_entries)
-    frame_calendar_search_control_b = tkinter.Frame(frame_calendar_search_entries)
-    frame_calendar_search_control_c = tkinter.Frame(frame_calendar_search_control)
-    btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns, text="Use Hover", command=switch_calendar_use_hover_gsm)
-    btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns, text="Export pdf (Full)", command=cal.export_to_pdf_full)
-    btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns, text="Export pdf", command=cal.export_to_pdf)
+        frame_calendar_control = tkinter.Frame(window)
+        frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
+        frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
+        frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
+        frame_calendar_search_control_a = tkinter.Frame(frame_calendar_search_entries)
+        frame_calendar_search_control_b = tkinter.Frame(frame_calendar_search_entries)
+        frame_calendar_search_control_c = tkinter.Frame(frame_calendar_search_control)
+        btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns, text="Use Hover", command=switch_calendar_use_hover_gsm)
+        btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns, text="Export pdf (Full)")
+        btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns, text="Export pdf")
 
-    stringvar_calendar_search_start_date = tkinter.StringVar(value=START_DATE.strftime("%Y-%m-%d"))
-    stringvar_calendar_search_end_date = tkinter.StringVar(value=END_DATE.strftime("%Y-%m-%d"))
-    label_calendar_search_start_date = tkinter.Label(frame_calendar_search_control_a, text="Start Date:")
-    entry_calendar_search_start_date = tkinter.Entry(frame_calendar_search_control_a, textvariable=stringvar_calendar_search_start_date)
-    label_calendar_search_end_date = tkinter.Label(frame_calendar_search_control_b, text="End Date:")
-    entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
-    btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
+        stringvar_calendar_search_start_date = tkinter.StringVar(value=START_DATE.strftime("%Y-%m-%d"))
+        stringvar_calendar_search_end_date = tkinter.StringVar(value=END_DATE.strftime("%Y-%m-%d"))
+        label_calendar_search_start_date = tkinter.Label(frame_calendar_search_control_a, text="Start Date:")
+        entry_calendar_search_start_date = tkinter.Entry(frame_calendar_search_control_a, textvariable=stringvar_calendar_search_start_date)
+        label_calendar_search_end_date = tkinter.Label(frame_calendar_search_control_b, text="End Date:")
+        entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
+        btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
 
-    label_calendar_search_start_date.pack(side=tkinter.LEFT)
-    entry_calendar_search_start_date.pack(side=tkinter.LEFT)
-    label_calendar_search_end_date.pack(side=tkinter.LEFT)
-    entry_calendar_search_end_date.pack(side=tkinter.LEFT)
-    btn_calendar_search_submit.pack()
+        label_calendar_search_start_date.pack(side=tkinter.LEFT)
+        entry_calendar_search_start_date.pack(side=tkinter.LEFT)
+        label_calendar_search_end_date.pack(side=tkinter.LEFT)
+        entry_calendar_search_end_date.pack(side=tkinter.LEFT)
+        btn_calendar_search_submit.pack()
 
-    # label_title.pack()
-    # canvas_header_row.pack()
-    # canvas_header_col.pack(side=tkinter.LEFT)
-    # canvas.pack()
-    frame_calendar_search_control_a.pack()
-    frame_calendar_search_control_b.pack()
-    frame_calendar_search_entries.pack(side=tkinter.LEFT)
-    # frame_calendar_search_entries.pack()
-    frame_calendar_search_control_c.pack(side=tkinter.LEFT)
-    # frame_calendar_search_control_c.pack()
-    frame_calendar_search_control.pack(side=tkinter.LEFT)
-    # frame_calendar_control.pack(side=tkinter.LEFT)
-    frame_calendar_control.pack()
-    btn_calendar_use_hover.pack()
-    btn_calendar_export_pdf_full.pack()
-    btn_calendar_export_pdf.pack()
-    frame_calendar_control_btns.pack(side=tkinter.LEFT)
-    # frame_calendar_control_btns.pack()
-    # frame_calendar.pack()
-    submit_calendar_search()
-    tab_control.pack(expand=1, fill="both")
-    populate_pop_up_menu()
-    window.mainloop()
+        # label_title.pack()
+        # canvas_header_row.pack()
+        # canvas_header_col.pack(side=tkinter.LEFT)
+        # canvas.pack()
+        frame_calendar_search_control_a.pack()
+        frame_calendar_search_control_b.pack()
+        frame_calendar_search_entries.pack(side=tkinter.LEFT)
+        # frame_calendar_search_entries.pack()
+        frame_calendar_search_control_c.pack(side=tkinter.LEFT)
+        # frame_calendar_search_control_c.pack()
+        frame_calendar_search_control.pack(side=tkinter.LEFT)
+        # frame_calendar_control.pack(side=tkinter.LEFT)
+        frame_calendar_control.pack()
+        btn_calendar_use_hover.pack()
+        btn_calendar_export_pdf_full.pack()
+        btn_calendar_export_pdf.pack()
+        frame_calendar_control_btns.pack(side=tkinter.LEFT)
+        # frame_calendar_control_btns.pack()
+        # frame_calendar.pack()
+        submit_calendar_search()
+        tab_control.pack(expand=1, fill="both")
+
+        # populate_tab_data()
+        if not TAB_DATA:
+            print("Error No data to display.\nExiting the Program.")
+            window.destroy()
+            exit()
+        # print(dict_print(TAB_DATA, "Tab Data"))
+        print("CALS:\n\t" + "\n\t".join([str(v["Cal"]) for k, v in TAB_DATA.items()]))
+
+        # Call once to initialize the first Calendar
+        CAL_IDX = 0
+        populate_pop_up_menu()
+        TAB_DATA[CAL_IDX]["PopUpPop"] = True
+
+        cal = TAB_DATA[CAL_IDX]["Cal"]
 
     # for i, t in enumerate(cal.tiles):
     #     print(dict_print(t.info_dict(), "Tile: #{}".format(i)))
+
+
+    # Do Splash Here
+
+    def window_load(*args):
+        window.unbind("<Visibility>")
+        print("Window Load: {}".format(splash_pb["value"]))
+        # splash_pb.start()
+        if not LOADED.get():
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(populate_tab_data())
+            loop.close()
+
+        # Wipe window and draw application
+        splash_label.pack_forget()
+        splash_pb.pack_forget()
+        draw_application()
+
+    # if pb['value'] & lt; 100:
+    #     pb['value'] += 20
+    #     value_label['text'] = update_progress_label()
+    # else:
+    #     showinfo(message='The progress completed!')
+
+    window.bind("<Visibility>", window_load)
+    window.mainloop()
+
+    # print("EARLY EXIT!!!")
+    # window.destroy()
+    # exit()

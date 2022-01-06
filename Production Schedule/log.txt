@@ -1,0 +1,1 @@
+-   Add vertical bars to separate weeks on the canvas view of a PSCalendar.

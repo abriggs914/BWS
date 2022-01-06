@@ -3,6 +3,8 @@ import math
 import easygui
 import tkinter
 from pdf_writer import *
+
+
 # import mouse
 
 
@@ -37,8 +39,8 @@ class CalendarTile:
 
         self.rect = self.rect.translated((col * self.rect.width), (row * self.rect.height))
         self.rect = (
-        self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width,
-        self.rect.bottom - self.border_width)
+            self.rect.left + self.border_width, self.rect.top + self.border_width, self.rect.right - self.border_width,
+            self.rect.bottom - self.border_width)
 
     def set_data(self, wo, model_name, dealer, status, beam, job_start):
         self.wo_num = wo
@@ -62,7 +64,8 @@ class CalendarTile:
         return str(self.wo_num)[:4] == "1001"
 
     def get_pdf_text(self):
-        return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(self.line, self.date)
+        return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(
+            self.line, self.date)
 
     def info_dict(self):
         return dict(zip([
@@ -80,37 +83,38 @@ class CalendarTile:
             "beam",
             "job_start"
         ],
-        [
-            self.row,
-            self.col,
-            self.line,
-            self.date,
-            self.colour,
-            self.text,
-            self.top_level_wo_idx,
-            self.wo_num,
-            self.model_name,
-            self.dealer,
-            self.status,
-            self.beam,
-            self.job_start
-        ]))
+            [
+                self.row,
+                self.col,
+                self.line,
+                self.date,
+                self.colour,
+                self.text,
+                self.top_level_wo_idx,
+                self.wo_num,
+                self.model_name,
+                self.dealer,
+                self.status,
+                self.beam,
+                self.job_start
+            ]))
 
     def __copy__(self):
         ct = CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
-                            self.text)
+                          self.text)
         ct.set_data(*self.get_data())
         return ct
 
-    def __repr__(self):\
-        # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
+    def __repr__(self): \
+            # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
         #                                                                self.date)
         return "date: {}, line: {}".format(self.date.strftime("%Y-%m-%d"), self.line)
 
 
 class PSCalendar:
 
-    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates, border_width):
+    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates,
+                 border_width):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -150,18 +154,19 @@ class PSCalendar:
                                (h - self.border_width) / max(1, len(self.lines)))
         # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
         #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
-        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17, text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for
+        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17,
+                                            text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for
                                j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
 
         for i, tile in enumerate(self.tiles):
             idxrc = (i // self.rows), (i % self.rows)
             # print("idxrc:", idxrc)
-            idx = (idxrc[1] * self.rows) + idxrc[0] #          self.r_c_to_i(idxrc[1], idxrc[0])
+            idx = (idxrc[1] * self.rows) + idxrc[0]  # self.r_c_to_i(idxrc[1], idxrc[0])
             # idxrc = i // self.rows , (i % self.cols)
             # idx = (self.cols * (i // self.rows)) + (i % self.cols)
             idx = i
             # print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
-            data_row = data.iloc[idx:idx+1, :]
+            data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
                 # print("data_row:", data_row)
                 if math.isnan(data_row['WO#'].tolist()[0]):
@@ -322,7 +327,8 @@ class PSCalendar:
             return
 
         # Init FPDF object
-        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
+                                               self.end_date.strftime("%Y-%m-%d"))
         f_name = title + "_full.pdf"
         pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
         pdf.set_auto_page_break(True, margin=5)
@@ -331,9 +337,12 @@ class PSCalendar:
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
         pdf.time_stamp()
-        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
+                                                         dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
+                   (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
 
-        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
+        contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+                           enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
         print(dict_print(contents, "Contents"))
         pdf.table(
             "",
@@ -382,7 +391,8 @@ class PSCalendar:
             return
 
         # Init FPDF object
-        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
+        title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
+                                               self.end_date.strftime("%Y-%m-%d"))
         f_name = title + ".pdf"
         pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
         pdf.set_auto_page_break(True, margin=5)
@@ -391,10 +401,16 @@ class PSCalendar:
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
         pdf.time_stamp()
-        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"), dt.datetime.strftime(self.end_date, "%Y-%m-%d")), (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+        pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
+                                                         dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
+                   (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
 
-        contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[:len(self.lines)])}
-        contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines[len(self.lines):])}
+        contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+                                 enumerate(self.tiles) if tile.line == line} for i, line in
+                          enumerate(self.lines[:len(self.lines)])}
+        contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+                                enumerate(self.tiles) if tile.line == line} for i, line in
+                         enumerate(self.lines[len(self.lines):])}
         print(dict_print(contents_first, "Contents First"))
         print(dict_print(contents_last, "Contents Last"))
         # contents_first = contents[:len(contents) // 2]
@@ -491,10 +507,10 @@ class PSCalendar:
         self.canvas.bind("<Motion>", self.hovering)
         self.canvas.bind("<Leave>", self.leaving)
         self.canvas.bind("<Enter>", self.hover_entering)
-        self.canvas.bind("<Button-1>", self.click_print)
+        self.canvas.bind("<Button-1>", self.click_canvas)
         # self.canvas.bind("<Double-Button-1>", self.dbl_click_tile)
         # self.canvas.bind("<Button-3>", self.dbl_click_tile)
-        self.canvas.bind("<B1-Motion>", self.drag_print)
+        self.canvas.bind("<B1-Motion>", self.click_drag_canvas)
         self.canvas.bind("<ButtonRelease-1>", self.release_drag)
 
     def unbind_canvas(self):
@@ -644,45 +660,45 @@ class PSCalendar:
                         ny1 = bw
                     self.tiles[idx].rect = (nx1 + bw, ny1 + bw, nx2 - bw, ny2 - bw)
             self.hovered = self.r_c_to_i(r, c)
-        # for i, tile in enumerate(self.tiles):
-        #     tr, tc = self.i_to_r_c(i)
-        #     x1, y1, x2, y2 = self.tiles[i].rect
-        #     # handled = False
-        #         if self.readable_height > self.tile_rect.height:
-        #             if tr == r:
-        #                 self.tiles[i].rect = (x1, y1, x2, y1 + self.readable_height)
-        #                 # handled = True
-        #             else:
-        #                 s_height = (self.height - self.readable_height) / max(1, (self.rows - 1))
-        #                 # self.tiles[i].rect = (x1, y1 + (self.readable_height - (y2 - y1)), x2, y1 + s_height)
-        #                 self.tiles[i].rect = (x1, y1, x2, y1 + s_height)
-        #
-        #         if self.readable_width > self.tile_rect.width:
-        #             if tc == c:
-        #                 hw = self.readable_width / 2
-        #                 # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
-        #                 self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
-        #                 # handled = True
-        #             else:
-        #                 # t_width = self.width / max(1, self.cols)
-        #                 t_width = self.tile_rect.width
-        #                 n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
-        #                 d_width = t_width - n_width
-        #                 sd_width = tc * d_width
-        #                 print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:",
-        #                       t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
-        #                 # s_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
-        #                 # p_width = (x2 - x1) / s_width
-        #                 # self.tiles[i].rect = (x1 + (self.readable_height - (x2 - x1)), y1, x1 + s_width, y2)
-        #                 if tc < c:
-        #                     # self.tiles[i].rect = (x1 + (max(0, tc - 1) * d_width), y1, (x1 + (max(0, tc - 1) * d_width) + n_width), y2)
-        #                     self.tiles[i].rect = (x1 - sd_width, y1, (x1 + n_width - sd_width), y2)
-        #                 else:
-        #                     # self.tiles[i].rect = (x1 - (max(0, tc - 1) * d_width) + self.readable_width, y1, (x1 - (max(0, tc - 1) * d_width) + n_width + self.readable_width), y2)
-        #                     self.tiles[i].rect = (x1 + sd_width, y1, (x1 + sd_width + n_width), y2)
+            # for i, tile in enumerate(self.tiles):
+            #     tr, tc = self.i_to_r_c(i)
+            #     x1, y1, x2, y2 = self.tiles[i].rect
+            #     # handled = False
+            #         if self.readable_height > self.tile_rect.height:
+            #             if tr == r:
+            #                 self.tiles[i].rect = (x1, y1, x2, y1 + self.readable_height)
+            #                 # handled = True
+            #             else:
+            #                 s_height = (self.height - self.readable_height) / max(1, (self.rows - 1))
+            #                 # self.tiles[i].rect = (x1, y1 + (self.readable_height - (y2 - y1)), x2, y1 + s_height)
+            #                 self.tiles[i].rect = (x1, y1, x2, y1 + s_height)
+            #
+            #         if self.readable_width > self.tile_rect.width:
+            #             if tc == c:
+            #                 hw = self.readable_width / 2
+            #                 # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
+            #                 self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
+            #                 # handled = True
+            #             else:
+            #                 # t_width = self.width / max(1, self.cols)
+            #                 t_width = self.tile_rect.width
+            #                 n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+            #                 d_width = t_width - n_width
+            #                 sd_width = tc * d_width
+            #                 print("self.width:", self.width, "self.readable_width:", self.readable_width, "t_width:",
+            #                       t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
+            #                 # s_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
+            #                 # p_width = (x2 - x1) / s_width
+            #                 # self.tiles[i].rect = (x1 + (self.readable_height - (x2 - x1)), y1, x1 + s_width, y2)
+            #                 if tc < c:
+            #                     # self.tiles[i].rect = (x1 + (max(0, tc - 1) * d_width), y1, (x1 + (max(0, tc - 1) * d_width) + n_width), y2)
+            #                     self.tiles[i].rect = (x1 - sd_width, y1, (x1 + n_width - sd_width), y2)
+            #                 else:
+            #                     # self.tiles[i].rect = (x1 - (max(0, tc - 1) * d_width) + self.readable_width, y1, (x1 - (max(0, tc - 1) * d_width) + n_width + self.readable_width), y2)
+            #                     self.tiles[i].rect = (x1 + sd_width, y1, (x1 + sd_width + n_width), y2)
 
-        # if not handled:
-        #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
+            # if not handled:
+            #     self.tiles[i].rect = (x1, y1, x1 + self.readable_width, y2)
 
             self.draw_canvas()
 
@@ -737,7 +753,8 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        print("DC\t\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        print("DC\t\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(
+            self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
 
         # if self.current_hover is not None:
         #     print(self.tiles_to_the_right(self.current_hover))
@@ -775,8 +792,9 @@ class PSCalendar:
                     tile_txt = "<{}>".format(wo_num)
                 if tile_txt:
                     can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
-                                        font="Times 12 italic bold", text=str(tile_txt))
+                                                      tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
+                                                      fill=rgb_to_hex(fgc),
+                                                      font="Times 12 italic bold", text=str(tile_txt))
                     bounds = self.canvas.bbox(can_txt)
                     can_t_w = bounds[2] - bounds[0]
                     if can_t_w > (tile.rect[2] - tile.rect[0]):
@@ -784,15 +802,17 @@ class PSCalendar:
                         wo_num = tile.wo_num if tile.wo_num is not None else ""
                         tile_txt = "<{}>".format(str(wo_num)[-4:])
                         can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                            tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
-                                            font="Times 12 italic bold", text=str(tile_txt))
+                                                          tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
+                                                          fill=rgb_to_hex(fgc),
+                                                          font="Times 12 italic bold", text=str(tile_txt))
 
             else:
                 # raise ValueError("HEY")
                 tile_num = "" if tile.wo_num is None else tile.wo_num
                 can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                        tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2), fill=rgb_to_hex(fgc),
-                                        font="Times 12 italic bold", text=str(tile_num))
+                                                  tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
+                                                  fill=rgb_to_hex(fgc),
+                                                  font="Times 12 italic bold", text=str(tile_num))
                 bounds = self.canvas.bbox(can_txt)
                 can_t_w = bounds[2] - bounds[0]
                 if can_t_w > (tile.rect[2] - tile.rect[0]):
@@ -831,11 +851,12 @@ class PSCalendar:
                     #     print("roo:", roo)
                 if r == 0:
                     # self.canvas_header_row.create_text((c * tw) + 60 + (tw / 2) + self.border_width, th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
-                    self.canvas_header_row.create_text(coo + 60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
+                    self.canvas_header_row.create_text(coo + 60 + rect[0] + (tw / 2), th / 2, fill=rgb_to_hex(WHITE),
+                                                       font="Times 12 italic bold", text=tile.date.strftime("%Y-%m-%d"))
                 if c == 0:
                     # self.canvas_header_col.create_text(tw / 2, (r * th) + 25 + (th / 2) + self.border_width, fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
-                    self.canvas_header_col.create_text(tw / 2, roo + rect[1] + (th / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=tile.line)
-
+                    self.canvas_header_col.create_text(tw / 2, roo + rect[1] + (th / 2), fill=rgb_to_hex(WHITE),
+                                                       font="Times 12 italic bold", text=tile.line)
 
         # th = self.tile_rect.h
         # # cw, ch = canvas_header_col.size()
@@ -866,10 +887,6 @@ class PSCalendar:
         #                                        text=date.strftime("%Y-%m-%d"))
         #
         #
-
-
-
-
 
         # self.canvas_header_row.delete("all")
         # self.canvas_header_col.delete("all")
@@ -926,8 +943,9 @@ class PSCalendar:
     def release_drag(self, *args):
         self.dragging = None
 
-    def click_print(self, *args):
-        print("BEGIN: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging, self.dbl_clicked))
+    def click_canvas(self, *args):
+        print("BEGIN: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging,
+                                                                  self.dbl_clicked))
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         new_select = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
@@ -948,9 +966,10 @@ class PSCalendar:
         self.hover_select = new_select
         self.dbl_clicked = None
         self.draw_canvas()
-        print("END B: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging, self.dbl_clicked))
+        print("END B: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging,
+                                                                  self.dbl_clicked))
 
-    def drag_print(self, *args):
+    def click_drag_canvas(self, *args):
         drag_event = args[0]
         assert isinstance(drag_event, tkinter.Event)
         mouse_x, mouse_y = drag_event.x, drag_event.y
@@ -1025,7 +1044,7 @@ class PSCalendar:
                         tiles.remove(i)
         return tiles
 
-    def add_day(self, event):
+    def add_day(self):
         print("add_day clicked:", self.dbl_clicked)
         tile = self.tiles[self.dbl_clicked]
         print("tile:", tile)
@@ -1033,9 +1052,8 @@ class PSCalendar:
         for t in [self.dbl_clicked] + self.tiles_to_the_right(self.dbl_clicked):
             tile = self.tiles[t]
             tile.colour = brighten(tile.colour, 0.1)
-        # self.dbl_clicked = None
+        self.dbl_clicked = None
         self.draw_canvas()
-        raise ValueError("EXIT!!!")
 
     def subtract_day(self):
         print("add_day clicked:", self.dbl_clicked)
@@ -1045,5 +1063,5 @@ class PSCalendar:
         for t in [self.dbl_clicked] + self.tiles_to_the_left(self.dbl_clicked):
             tile = self.tiles[t]
             tile.colour = brighten(tile.colour, 0.1)
-        # self.dbl_clicked = None
+        self.dbl_clicked = None
         self.draw_canvas()

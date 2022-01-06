@@ -1453,7 +1453,7 @@ if __name__ == "__main__":
     #     header_colours=[BLACK, BWS_RED],
     #     colours=[[BLUEVIOLET, GREEN_2, YELLOW_4, BLUE, RED, ORANGE],
     #              [WHITE, BLACK, BLACK, ORANGE, BLUE, WHITE]],
-    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?",
+    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these TABS?",
     #     new_page_for_table=True,
     #     show_row_names=True,
     #     start_with_header=False
@@ -1470,7 +1470,7 @@ if __name__ == "__main__":
     #     header_colours=[BLACK, BWS_RED],
     #     colours=[[BLACK],
     #              [WHITE]],
-    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these tabs?"
+    #     desc_txt="This is Diamond's dealer delivery report for this period.\nHow about those new lines?\t\tWhat about these TABS?"
     # )
     #
     # TABLE_Y = table5[1] + (2 * TABLE_MARGIN)

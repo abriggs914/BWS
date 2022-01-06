@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     def on_tab_change(event):
         tab_name = event.widget.tab('current')['text']
-        idx = tab_names.index(tab_name)
+        idx = TAB_NAMES.index(tab_name)
         cal = tab_cals[idx]
 
         btn_calendar_use_hover.config(command=cal.toggle_use_hover)
@@ -139,10 +139,10 @@ if __name__ == '__main__':
     tab_5 = ttk.Frame(tab_control)
     tab_6 = ttk.Frame(tab_control)
     tab_7 = ttk.Frame(tab_control)
-    tabs = [tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
-    tab_names = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
+    TABS = [tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
+    TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
     last_date = cal.end_date
-    for i, tab in enumerate(tabs):
+    for i, tab in enumerate(TABS):
         c_frame_calendar = tkinter.Frame(tab)
         can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
         can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + border_width, width=60, bg=rgb_to_hex(BLACK))
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(start_date_1, "%Y-%m-%d"), dt.datetime.strftime(end_date_1, "%Y-%m-%d")))
 
-    for tab, tab_name in zip(tabs, tab_names):
+    for tab, tab_name in zip(TABS, TAB_NAMES):
         tab_control.add(tab, text=tab_name)
 
     ####################################################################################################################
