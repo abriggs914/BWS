@@ -17,14 +17,6 @@ import webbrowser
 
 # MAX_Y = 297
 # MAX_X = 210
-MARGIN_LINES_WIDTH = 3
-MARGIN_LINES_MARGIN = 5
-TITLE_HEIGHT = 12
-TITLE_MARGIN = 15
-TABLE_MARGIN = 10
-FOOTER_MARGIN = 10
-TXT_MARGIN = 10
-FILE_NAME = "test.pdf"
 
 
 class PDF(FPDF):
@@ -32,6 +24,15 @@ class PDF(FPDF):
     def __init__(self, file_name, *args):
         super().__init__(*args)
         self.file_name = file_name
+
+        self.MARGIN_LINES_WIDTH = 3
+        self.MARGIN_LINES_MARGIN = 5
+        self.TITLE_HEIGHT = 12
+        self.TITLE_MARGIN = 15
+        self.TABLE_MARGIN = 10
+        self.FOOTER_MARGIN = 10
+        self.TXT_MARGIN = 10
+        self.FILE_NAME = "test.pdf"
 
         # if self.cur_orientation == "L":
         #     self.w = 750
@@ -73,11 +74,15 @@ class PDF(FPDF):
     def open_in_browser(self):
         webbrowser.open(self.file_name)
 
-    def margin_border(self, border_colour, content_colour, border_width=MARGIN_LINES_WIDTH):
-        self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, self.w - (2 * MARGIN_LINES_MARGIN),
-                          self.h - (2 * MARGIN_LINES_MARGIN), border_colour, content_colour, border_width)
+    def margin_border(self, border_colour, content_colour, border_width=None):
+        if border_width is None:
+            border_width = self.MARGIN_LINES_WIDTH
+        self.margin_lines(self.MARGIN_LINES_MARGIN, self.MARGIN_LINES_MARGIN, self.w - (2 * self.MARGIN_LINES_MARGIN),
+                          self.h - (2 * self.MARGIN_LINES_MARGIN), border_colour, content_colour, border_width)
 
-    def margin_lines(self, x, y, w, h, border_colour, content_colour, border_width=MARGIN_LINES_WIDTH):
+    def margin_lines(self, x, y, w, h, border_colour, content_colour, border_width=None):
+        if border_width is None:
+            border_width = self.MARGIN_LINES_WIDTH
         self.set_fill_color(*border_colour)  # color for outer rectangle
         self.rect(x, y, w, h, 'DF')
         self.set_fill_color(*content_colour)  # color for inner rectangle
@@ -190,7 +195,7 @@ class PDF(FPDF):
             # self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
             #                   MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
             self.margin_border(border_colour, content_colour)
-            self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+            self.set_xy(cx, self.MARGIN_LINES_MARGIN + self.MARGIN_LINES_WIDTH + top_margin)
             self.set_fill_color(*footer_colours[0])
             # self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
             self.set_fill_color(*old_colour)
@@ -422,10 +427,10 @@ class PDF(FPDF):
             np = False
             if i == 0:
                 if (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
-                        2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
+                        2 * (self.MARGIN_LINES_WIDTH + self.MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
                     np = True
             elif (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
-                    2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)):
+                    2 * (self.MARGIN_LINES_WIDTH + self.MARGIN_LINES_MARGIN)):
                 np = True
 
             if np:
@@ -599,7 +604,7 @@ class PDF(FPDF):
             # self.margin_lines(MARGIN_LINES_MARGIN, MARGIN_LINES_MARGIN, MAX_X - (2 * MARGIN_LINES_MARGIN),
             #                   MAX_Y - (2 * MARGIN_LINES_MARGIN), BWS_RED, WHITE)
             self.margin_border(border_colour, content_colour)
-            self.set_xy(cx, MARGIN_LINES_MARGIN + MARGIN_LINES_WIDTH + top_margin)
+            self.set_xy(cx, self.MARGIN_LINES_MARGIN + self.MARGIN_LINES_WIDTH + top_margin)
             self.set_fill_color(*footer_colours[0])
             # self.rect(0, self.h - FOOTER_MARGIN, self.w, FOOTER_MARGIN, 'FD')
             self.set_fill_color(*old_colour)
@@ -781,10 +786,10 @@ class PDF(FPDF):
             np = False
             if i == 0:
                 if (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
-                        2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
+                        2 * (self.MARGIN_LINES_WIDTH + self.MARGIN_LINES_MARGIN + title_v_margin)) - title_height - y_txt:
                     np = True
             elif (self.get_y() + max(cell_height, header_height, (max(0, (trh)) * och))) >= self.h - (
-                    2 * (MARGIN_LINES_WIDTH + MARGIN_LINES_MARGIN)):
+                    2 * (self.MARGIN_LINES_WIDTH + self.MARGIN_LINES_MARGIN)):
                 np = True
 
             if np:
@@ -929,6 +934,7 @@ def random_test_set(n, start=0, end=None, step=1):
 
 
 if __name__ == "__main__":
+    FILE_NAME = "test.pdf"
     pdf = PDF(FILE_NAME, 'L', 'mm', (600, 750))
     pdf.set_auto_page_break(True, margin=5)
     pdf.set_title("Dealer Delivery Reports")

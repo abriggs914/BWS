@@ -4,6 +4,7 @@ from tkinter import ttk
 import pyodbc
 from pscalendar import *
 import pandas as pd
+from PIL import ImageTk, Image
 
 
 async def read_sql_async(stmt, con):
@@ -94,7 +95,12 @@ if __name__ == '__main__':
     ##                                                                                                                ##
     ####################################################################################################################
 
+    TITLE = "Production Schedule Editor"
+    VERSION_NAME = "Version 1.0"
+    BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
+    STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
     N_TEST_CALS = None
+    N_TEST_CALS = 2
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
@@ -107,16 +113,25 @@ if __name__ == '__main__':
     SWITCH_CALENDAR_USE_HOVER = True
 
     BORDER_WIDTH = 3
-    WIN_W, WIN_H = 1900, 950
-    splash_length = 300
+    # WIN_W, WIN_H = int(1900 * 0.6), int(950 * 0.6)
+    WIN_W, WIN_H = 800, 500
+    SPLASH_LENGTH = 300
+    SPLASH_BG = rgb_to_hex(GRAY_17)
+    SPLASH_FG = rgb_to_hex(WHITE)
+    LOGO_WIDTH = int((WIN_W * 0.8) / 2)
+    LOGO_HEIGHT = int(WIN_H * 0.3)
     # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
 
     window = tkinter.Tk()
-    window.geometry("{}x{}".format(WIN_W, WIN_H))
-    WIN_W, WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
-    can_w, can_h = WIN_W * 0.96, WIN_H * 0.76
-    window.geometry("%dx%d+0+0" % (WIN_W, WIN_H))
-    window.state('zoomed')
+    F_WIN_W, F_WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
+    can_w, can_h = F_WIN_W * 0.96, F_WIN_H * 0.76
+
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x_cordinate = int((screen_width / 2) - (WIN_W / 2))
+    y_cordinate = int((screen_height / 2) - (WIN_H / 2))
+    window.geometry("{}x{}+{}+{}".format(WIN_W, WIN_H, x_cordinate, y_cordinate))
+
     window.title("Production Schedule")
     LOADED = tkinter.BooleanVar(value=False)
 
@@ -177,17 +192,43 @@ if __name__ == '__main__':
     tab_control = ttk.Notebook(window)
     tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
 
-    splash_label = tkinter.Label(window, text="Splash!")
-    splash_status = tkinter.Label(window, text="0 % Complete")
-    splash_label.pack()
+    splash_frame = tkinter.Frame(window, bg=SPLASH_BG)
+    splash_frame_logos = tkinter.Frame(splash_frame, bg=SPLASH_BG)
+    bws_logo = ImageTk.PhotoImage(Image.open(BWS_LOGO_FILE_PATH).resize((LOGO_WIDTH, LOGO_HEIGHT)))
+    splash_logo_bws = tkinter.Label(splash_frame_logos, image=bws_logo)
+    stargate_logo = ImageTk.PhotoImage(Image.open(STARGATE_LOGO_FILE_PATH).resize((LOGO_WIDTH, LOGO_HEIGHT)))
+    splash_logo_stargate = tkinter.Label(splash_frame_logos, image=stargate_logo)
+
+    splash_frame_pbs = tkinter.Frame(splash_frame, bg=SPLASH_BG)
+    splash_label = tkinter.Label(splash_frame_pbs, text=TITLE, bg=SPLASH_BG, fg=SPLASH_FG, font=("Arial", 16, "bold"))
+    splash_status_top = tkinter.Label(splash_frame_pbs, text="Generating Schedule From {start} To {end}", bg=SPLASH_BG, fg=SPLASH_FG)
+    splash_status_bottom = tkinter.Label(splash_frame_pbs, text="0 % Complete", bg=SPLASH_BG, fg=SPLASH_FG)
     splash_pb = ttk.Progressbar(
-        window,
+        splash_frame_pbs,
         orient='horizontal',
         mode='determinate',
-        length=splash_length
+        length=SPLASH_LENGTH
     )
-    splash_pb.pack()
-    splash_status.pack()
+    splash_query_pb = ttk.Progressbar(
+        splash_frame_pbs,
+        orient="horizontal",
+        mode="determinate",
+        length=SPLASH_LENGTH
+    )
+    splash_version = tkinter.Label(splash_frame, text=VERSION_NAME, bg=SPLASH_BG, fg=SPLASH_FG)
+
+    splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
+    splash_logo_stargate.pack(side=tkinter.RIGHT, padx=10, pady=20)
+    splash_frame_logos.pack(side=tkinter.TOP)
+
+    splash_label.pack(pady=5)  # title
+    splash_status_top.pack(anchor=tkinter.W)  # individual schedule progress text
+    splash_query_pb.pack(pady=5)  # individual schedule progress bar
+    splash_status_bottom.pack(anchor=tkinter.W)  # overall loading progress text
+    splash_pb.pack(pady=5)  # overall loading progress bar
+    splash_version.pack(side=tkinter.BOTTOM, anchor=tkinter.SW)
+    splash_frame_pbs.pack(side=tkinter.BOTTOM, pady=60)  # progress texts and bars go below logos
+    splash_frame.pack(expand=True, fill=tkinter.BOTH)
 
     def submit_calendar_search(*args):
         print("submit!")
@@ -275,14 +316,24 @@ if __name__ == '__main__':
         last_date = START_DATE
         n = len(TABS)
         for i, tab in enumerate(TABS):
+            splash_query_pb["value"] = 0
+            splash_query_pb.update()
             c_frame_calendar = tkinter.Frame(tab)
+            splash_query_pb["value"] = 25
+            splash_query_pb.update()
             can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
             can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
             can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
             can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
             last_date = last_date + dt.timedelta(days=1)
             c_end_date = last_date + dt.timedelta(days=31)
+            fmt = "%Y-%m-%d"
+            splash_status_top.config(text="Generating Schedule From {start} To {end}".format(start=last_date.strftime(fmt), end=c_end_date.strftime(fmt)))
+            splash_query_pb["value"] = 50
+            splash_query_pb.update()
             c_lines, c_dates, dat = await get_data(last_date, c_end_date)
+            splash_query_pb["value"] = 75
+            splash_query_pb.update()
             print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
             print("c_dates", c_dates)
             psc = create_calendar_p(can, can_h_c, can_h_r, can_w, can_h, last_date, c_end_date, dat, c_lines, c_dates, BORDER_WIDTH)
@@ -312,7 +363,9 @@ if __name__ == '__main__':
             p = 1 / n
             print("p: {}, i: {}, n: {}, x: {}".format(p, i, n, p * 100))
             splash_pb.step(p * 100)
-            splash_status.config(text="{} % Complete".format(round(splash_pb["value"], 2)))
+            splash_status_bottom.config(text="{} % Complete".format(round(splash_pb["value"], 2)))
+            splash_query_pb["value"] = 100
+            splash_query_pb.update()
             window.update()
             # if i >= N_TEST_CALS:
             #     break
@@ -464,6 +517,7 @@ if __name__ == '__main__':
     # Do Splash Here
 
     def window_load(*args):
+        global WIN_W, WIN_H
         window.unbind("<Visibility>")
         print("Window Load: {}".format(splash_pb["value"]))
         # splash_pb.start()
@@ -475,6 +529,19 @@ if __name__ == '__main__':
         # Wipe window and draw application
         splash_label.pack_forget()
         splash_pb.pack_forget()
+        splash_query_pb.pack_forget()
+        splash_status_top.pack_forget()
+        splash_status_bottom.pack_forget()
+        splash_frame.pack_forget()
+        splash_logo_bws.pack_forget()
+        splash_logo_stargate.pack_forget()
+        splash_frame_logos.pack_forget()
+        splash_version.pack_forget()
+
+        WIN_W, WIN_H = F_WIN_W, F_WIN_H
+        window.geometry("{}x{}".format(WIN_W, WIN_H))
+        window.state('zoomed')
+
         draw_application()
 
     # if pb['value'] & lt; 100:
@@ -485,7 +552,4 @@ if __name__ == '__main__':
 
     window.bind("<Visibility>", window_load)
     window.mainloop()
-
-    # print("EARLY EXIT!!!")
-    # window.destroy()
-    # exit()
+    print("Goodbye!")

@@ -1,1 +1,6 @@
--   Add vertical bars to separate weeks on the canvas view of a PSCalendar.
+-   2022-01-04  ;;              ;;  Add vertical bars to separate weeks on the canvas view of a PSCalendar.
+-   2022-01-04  ;;              ;;  Add keyboard controls when navigating PSCalendar.
+-   2022-01-04  ;;              ;;  Add splash screen at beginning.
+-   2021-12-22  ;;              ;;  Add Add and subtract days functions.
+-   2021-12-20  ;;  2022-01-06  ;;  Refactor some individual object attributes to a common parent state.
+                                    Ensures hover maintains accross tabs.

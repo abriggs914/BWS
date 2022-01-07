@@ -302,6 +302,70 @@ class PSCalendar:
         # return "PSO<" + str(id(self)) + ">"
         return "PSO<{} - {}>".format(self.start_date.strftime("%Y-%m-%d"), self.end_date.strftime("%Y-%m-%d"))
 
+    # # Exports to a one-page tabloid pdf.
+    # # Beware small texts
+    # def export_to_pdf_full(self):
+    #     print("exporting...")
+    #     if self.export_pdf_mode == "TABLOID":
+    #         w_pdf = 625
+    #         h_pdf = 750
+    #         w_pdf = 500
+    #         h_pdf = 750
+    #         w_pdf = 470
+    #         h_pdf = 750
+    #         # w_pdf = 279
+    #         # h_pdf = 432
+    #         # w_pdf = 432
+    #         # h_pdf = 279
+    #
+    #         w_pdf = 590
+    #         h_pdf = 750
+    #         w_pdf, h_pdf = h_pdf, w_pdf
+    #
+    #     else:
+    #         print("Requested PDF export size not supported yet.")
+    #         return
+    #
+    #     # Init FPDF object
+    #     title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
+    #                                            self.end_date.strftime("%Y-%m-%d"))
+    #     f_name = title + "_full.pdf"
+    #     pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+    #     pdf.set_auto_page_break(True, margin=5)
+    #     pdf.set_title(title)
+    #     pdf.set_author('Avery Briggs')
+    #     pdf.add_page()
+    #     pdf.margin_border(BWS_RED, WHITE)
+    #     pdf.time_stamp()
+    #     pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
+    #                                                      dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
+    #                (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+    #
+    #     contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+    #                        enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
+    #     print(dict_print(contents, "Contents"))
+    #     pdf.table(
+    #         "",
+    #         10,
+    #         20,
+    #         pdf.w - 20,
+    #         contents,
+    #         header_colours=[GRAY_36, WHITE],
+    #         colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+    #         show_row_names=True,
+    #         row_name_col_lbl="Date",
+    #         cell_height=3.85,
+    #         cell_font=('Arial', '', 9),
+    #         top_margin=0,
+    #         left_margin=0
+    #         # ,
+    #         # header_font=('Arial', 'B', 20)
+    #     )
+    #
+    #     # Save and Open
+    #     pdf.output(f_name, 'F')
+    #     pdf.open_in_browser()
+
     # Exports to a one-page tabloid pdf.
     # Beware small texts
     def export_to_pdf_full(self):
@@ -369,7 +433,7 @@ class PSCalendar:
     # Exports to a two-page tabloid pdf.
     # Splits the 11 lines into 2 pages.
     def export_to_pdf(self):
-        print("exporting...")
+        print("exporting double sided...")
         if self.export_pdf_mode == "TABLOID":
             w_pdf = 625
             h_pdf = 750
@@ -384,6 +448,9 @@ class PSCalendar:
 
             w_pdf = 590
             h_pdf = 750
+
+            # w_pdf = 590
+            # h_pdf = 1400
             w_pdf, h_pdf = h_pdf, w_pdf
 
         else:
@@ -407,10 +474,10 @@ class PSCalendar:
 
         contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
                                  enumerate(self.tiles) if tile.line == line} for i, line in
-                          enumerate(self.lines[:len(self.lines)])}
+                          enumerate(self.lines[:len(self.lines) // 2])}
         contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
                                 enumerate(self.tiles) if tile.line == line} for i, line in
-                         enumerate(self.lines[len(self.lines):])}
+                         enumerate(self.lines[len(self.lines) // 2:])}
         print(dict_print(contents_first, "Contents First"))
         print(dict_print(contents_last, "Contents Last"))
         # contents_first = contents[:len(contents) // 2]
@@ -425,14 +492,16 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date / Line",
-            cell_height=3.85,
-            cell_font=('Arial', '', 9),
+            cell_height=6.85,
+            cell_font=('Arial', '', 12),
             top_margin=0,
             left_margin=0
             # ,
             # header_font=('Arial', 'B', 20)
         )
         pdf.add_page()
+        pdf.margin_border(BWS_RED, WHITE)
+        pdf.time_stamp()
         pdf.table(
             "",
             10,
@@ -443,8 +512,8 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date / Line",
-            cell_height=3.85,
-            cell_font=('Arial', '', 9),
+            cell_height=6.35,
+            cell_font=('Arial', '', 10),
             top_margin=0,
             left_margin=0
             # , new_page_for_table=True
@@ -455,6 +524,94 @@ class PSCalendar:
         # Save and Open
         pdf.output(f_name, 'F')
         pdf.open_in_browser()
+
+    # def export_to_pdf(self):
+    #     print("exporting...")
+    #     if self.export_pdf_mode == "TABLOID":
+    #         w_pdf = 625
+    #         h_pdf = 750
+    #         w_pdf = 500
+    #         h_pdf = 750
+    #         w_pdf = 470
+    #         h_pdf = 750
+    #         # w_pdf = 279
+    #         # h_pdf = 432
+    #         # w_pdf = 432
+    #         # h_pdf = 279
+    #
+    #         w_pdf = 590
+    #         h_pdf = 750
+    #         w_pdf, h_pdf = h_pdf, w_pdf
+    #
+    #     else:
+    #         print("Requested PDF export size not supported yet.")
+    #         return
+    #
+    #     # Init FPDF object
+    #     title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
+    #                                            self.end_date.strftime("%Y-%m-%d"))
+    #     f_name = title + ".pdf"
+    #     pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+    #     pdf.set_auto_page_break(True, margin=5)
+    #     pdf.set_title(title)
+    #     pdf.set_author('Avery Briggs')
+    #     pdf.add_page()
+    #     pdf.margin_border(BWS_RED, WHITE)
+    #     pdf.time_stamp()
+    #     pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
+    #                                                      dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
+    #                (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+    #
+    #     contents_first = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+    #                              enumerate(self.tiles) if tile.line == line} for i, line in
+    #                       enumerate(self.lines[:len(self.lines)])}
+    #     contents_last = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
+    #                             enumerate(self.tiles) if tile.line == line} for i, line in
+    #                      enumerate(self.lines[len(self.lines):])}
+    #     print(dict_print(contents_first, "Contents First"))
+    #     print(dict_print(contents_last, "Contents Last"))
+    #     # contents_first = contents[:len(contents) // 2]
+    #     # contents_last = contents[len(contents) // 2:]
+    #     pdf.table(
+    #         "",
+    #         10,
+    #         20,
+    #         pdf.w - 20,
+    #         contents_first,
+    #         header_colours=[GRAY_36, WHITE],
+    #         colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+    #         show_row_names=True,
+    #         row_name_col_lbl="Date / Line",
+    #         cell_height=3.85,
+    #         cell_font=('Arial', '', 9),
+    #         top_margin=0,
+    #         left_margin=0
+    #         # ,
+    #         # header_font=('Arial', 'B', 20)
+    #     )
+    #     pdf.add_page()
+    #     pdf.table(
+    #         "",
+    #         10,
+    #         20,
+    #         pdf.w - 20,
+    #         contents_last,
+    #         header_colours=[GRAY_36, WHITE],
+    #         colours=[[WHITE, GRAY_69], [BWS_BLACK]],
+    #         show_row_names=True,
+    #         row_name_col_lbl="Date / Line",
+    #         cell_height=3.85,
+    #         cell_font=('Arial', '', 9),
+    #         top_margin=0,
+    #         left_margin=0
+    #         # , new_page_for_table=True
+    #         # ,
+    #         # header_font=('Arial', 'B', 20)
+    #     )
+    #
+    #     # Save and Open
+    #     pdf.output(f_name, 'F')
+    #     pdf.open_in_browser()
 
     def toggle_use_hover(self):
         self.set_user_hover_mode(not self.switch_use_hover)
@@ -711,7 +868,7 @@ class PSCalendar:
             tr, tc = self.i_to_r_c(i)
             x1, y1, x2, y2 = self.tiles[i].rect
             # handled = False
-            if self.hovered or 1:
+            if self.hovered is not None or 1:
                 if self.readable_height > self.tile_rect.height:
                     if tr == r:
                         self.tiles[i].rect = (x1, y1, x2, y1 + self.readable_height)
@@ -760,6 +917,17 @@ class PSCalendar:
         #     print(self.tiles_to_the_right(self.current_hover))
         #     print(self.tiles_to_the_left(self.current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
 
+        # TODO here
+        # if a tile is selected then highlight any tiles with matching WO
+        same_top_level_wos = []
+        if self.selected is not None:
+            for tile in self.tiles:
+                tile_num = self.r_c_to_i(tile.row, tile.col)
+                wo_1 = tile.wo
+                if tile_num == self.selected:
+                    same_top_level_wos.append(tile_num)
+            print("same_top_level_wos as <{}>".format(self.selected), same_top_level_wos)
+
         for tile in self.tiles:
             show_txt = not self.hiding_non_selected_tiles
             # print("tile.rect.tupl:", tile.rect)
@@ -768,7 +936,7 @@ class PSCalendar:
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked] + same_top_level_wos:
                     outline = WHITE
                     if tile_num == self.current_hover:
                         show_txt = True
@@ -776,7 +944,7 @@ class PSCalendar:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked] + same_top_level_wos:
                     outline = GRAY_15
                     if tile_num == self.current_hover:
                         show_txt = True
@@ -788,9 +956,11 @@ class PSCalendar:
             # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
             if show_txt:
                 if not self.is_tile_enlarged(tile_num):
+                    # Not using hover zoom, can only display the WO text while hovering.
                     wo_num = tile.wo_num if tile.wo_num is not None else ""
                     tile_txt = "<{}>".format(wo_num)
                 if tile_txt:
+                    #
                     can_txt = self.canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
                                                       tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
                                                       fill=rgb_to_hex(fgc),
