@@ -49,7 +49,7 @@ class CalendarTile:
         self.status = status
         self.beam = beam
         self.job_start = job_start
-        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer[:50] if isinstance(dealer, str) else None, status, beam, job_start)
 
     def get_data(self):
         return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start
@@ -197,6 +197,7 @@ class PSCalendar:
         self.hover_select = None
         self.current_hover = None
         self.dbl_clicked = None
+        self.swap_pair = None
         # self.showing_pop_up = False
         self.draw_canvas()
         # self.bind_canvas()
@@ -399,11 +400,13 @@ class PSCalendar:
         pdf.set_title(title)
         pdf.set_author('Avery Briggs')
         pdf.add_page()
+        pdf.MARGIN_LINES_MARGIN = 2
+        pdf.MARGIN_LINES_WIDTH = 2
         pdf.margin_border(BWS_RED, WHITE)
         pdf.time_stamp()
         pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
                                                          dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
-                   (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
+                   (pdf.w - 50) / 2, 5, 50, 6, BLUE_4__DARKBLUE_)
 
         contents = {line: {self.dates[j % self.cols].strftime("%Y-%m-%d"): tile.get_pdf_text() for j, tile in
                            enumerate(self.tiles) if tile.line == line} for i, line in enumerate(self.lines)}
@@ -411,17 +414,20 @@ class PSCalendar:
         pdf.table(
             "",
             10,
-            20,
+            10,
             pdf.w - 20,
             contents,
             header_colours=[GRAY_36, WHITE],
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date",
-            cell_height=3.85,
-            cell_font=('Arial', '', 9),
+            cell_height=3.75,
+            cell_font=('Arial', '', 8),
             top_margin=0,
-            left_margin=0
+            bottom_margin=0,
+            left_margin=0,
+            title_height=5,
+            header_height=7
             # ,
             # header_font=('Arial', 'B', 20)
         )
@@ -492,13 +498,14 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date / Line",
-            cell_height=6.85,
-            cell_font=('Arial', '', 12),
+            cell_height=6.35,
+            cell_font=('Arial', '', 10),
             top_margin=0,
             left_margin=0
             # ,
             # header_font=('Arial', 'B', 20)
         )
+        print("DONE WRITING FIRST CHART")
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
         pdf.time_stamp()
@@ -679,6 +686,58 @@ class PSCalendar:
         # self.canvas.unbind("<Motion>")
         self.canvas.unbind("<Leave>")
         self.unbind_canvas()
+
+    def kbd_arrow_left(self, event):
+        print("kbd_arrow_left")
+        if self.selected is None and self.tiles:
+            r, c = 0, 0
+        else:
+            r, c = self.i_to_r_c(self.selected)
+            rows, cols = self.rows, self.cols
+            if c > 0:
+                c -= 1
+        self.selected = self.r_c_to_i(r, c)
+        self.hover_select = self.r_c_to_i(r, c)
+        self.draw_canvas()
+
+    def kbd_arrow_up(self, event):
+        print("kbd_arrow_up")
+        if self.selected is None and self.tiles:
+            r, c = 0, 0
+        else:
+            r, c = self.i_to_r_c(self.selected)
+            rows, cols = self.rows, self.cols
+            if r > 0:
+                r -= 1
+        self.selected = self.r_c_to_i(r, c)
+        self.hover_select = self.r_c_to_i(r, c)
+        self.draw_canvas()
+
+    def kbd_arrow_down(self, event):
+        print("kbd_arrow_down")
+        if self.selected is None and self.tiles:
+            r, c = 0, 0
+        else:
+            r, c = self.i_to_r_c(self.selected)
+            rows, cols = self.rows, self.cols
+            if r < rows - 1:
+                r += 1
+        self.selected = self.r_c_to_i(r, c)
+        self.hover_select = self.r_c_to_i(r, c)
+        self.draw_canvas()
+
+    def kbd_arrow_right(self, event):
+        print("kbd_arrow_right")
+        if self.selected is None and self.tiles:
+            r, c = 0, 0
+        else:
+            r, c = self.i_to_r_c(self.selected)
+            rows, cols = self.rows, self.cols
+            if c < cols - 1:
+                c += 1
+        self.selected = self.r_c_to_i(r, c)
+        self.hover_select = self.r_c_to_i(r, c)
+        self.draw_canvas()
 
     def dbl_click_tile(self, *args):
         # print("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV")
@@ -921,10 +980,11 @@ class PSCalendar:
         # if a tile is selected then highlight any tiles with matching WO
         same_top_level_wos = []
         if self.selected is not None:
+            wo_1 = self.tiles[self.selected].wo_num
             for tile in self.tiles:
                 tile_num = self.r_c_to_i(tile.row, tile.col)
-                wo_1 = tile.wo
-                if tile_num == self.selected:
+                wo_2 = tile.wo_num
+                if wo_1 is not None and wo_1 == wo_2:
                     same_top_level_wos.append(tile_num)
             print("same_top_level_wos as <{}>".format(self.selected), same_top_level_wos)
 
@@ -936,7 +996,7 @@ class PSCalendar:
             tile_num = self.r_c_to_i(r, c)
             if sum(bgc) < 300:
                 fgc = WHITE
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked] + same_top_level_wos:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = WHITE
                     if tile_num == self.current_hover:
                         show_txt = True
@@ -944,13 +1004,31 @@ class PSCalendar:
                     outline = bgc
             else:
                 fgc = BLACK
-                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked] + same_top_level_wos:
+                if tile_num in [self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked]:
                     outline = GRAY_15
                     if tile_num == self.current_hover:
                         show_txt = True
                 else:
                     outline = bgc
+
+            # Custom colour behaviour
+
+            # Highlight all other tiles that have a WO matching the selected tile
+            if same_top_level_wos:
+                if tile_num in same_top_level_wos and tile_num != self.selected:
+                    outline = BWS_RED
+
+            # Outline for selected tiles while the cursor hovers should be darker than the original outline
+            if (self.selected and self.current_hover) and (self.selected != self.current_hover) and tile_num == self.selected:
+                print("Darkening")
+                outline = darken(outline, 0.4)
+            # When Swapping tiles colour them differently
+            if self.swap_pair and tile_num in self.swap_pair:
+                bgc = BWS_RED
+                outline = GRAY_26
+
             tile_txt = tile.text if tile.text is not None else tile_num
+            # drawing tile rectangle here
             self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
                                          width=self.border_width)
             # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
@@ -1096,11 +1174,6 @@ class PSCalendar:
         return (i // self.cols), (i % self.cols)
 
     def x_y_to_r_c(self, x, y):
-        # tw = self.tile_rect.width
-        # th = self.tile_rect.height
-        # r = int(y // th)
-        # c = int(x // tw)
-        # return r, c
         for i, tile in enumerate(self.tiles):
             x1, y1, x2, y2 = tile.rect
             r, c = self.i_to_r_c(i)
@@ -1109,6 +1182,7 @@ class PSCalendar:
                 return r, c
 
         print("Could not map x and y: ({}, {})".format(x, y))
+        # returning None here, could cause errors if not checked when used.
 
     def release_drag(self, *args):
         self.dragging = None
@@ -1124,6 +1198,7 @@ class PSCalendar:
             if self.selected != new_select:
                 print("self.selected {}, new_select: {}".format(self.selected, new_select))
                 self.hover_select = new_select
+                self.swap_pair = self.selected, new_select
                 self.draw_canvas()
                 self.swap_tiles(self.selected, new_select)
             self.hover_select = None
@@ -1173,6 +1248,7 @@ class PSCalendar:
         ans = easygui.ynbox(msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile),
                             title="Swap Confirm", default_choice="No", )
         print("ans:", ans)
+        self.swap_pair = None
         if not ans:
             print("Swap declined")
             return

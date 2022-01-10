@@ -12,7 +12,7 @@ async def read_sql_async(stmt, con):
     return await loop.run_in_executor(None, pd.read_sql, stmt, con)
 
 
-async def get_production_data(start_date, end_date):
+async def get_production_data(start_date, end_date, first=True):
     assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
     assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
     assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
@@ -37,6 +37,13 @@ async def get_production_data(start_date, end_date):
         print("columns:", df1.columns)
         ordered_df = df1.sort_values(by=["GroupID", "Prod Date"])
         cnxn.close()
+    except pd.io.sql.DatabaseError:
+        # try again ONCE:
+        if first:
+            lines, dates, ordered_df = get_production_data(start_date, end_date, first=False)
+        else:
+            print("Deadlock error. Please try again later.")
+
     except pyodbc.OperationalError as e:
         lines = [
             "GNK1",
@@ -100,7 +107,6 @@ if __name__ == '__main__':
     BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
     STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
     N_TEST_CALS = None
-    N_TEST_CALS = 2
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
@@ -187,6 +193,18 @@ if __name__ == '__main__':
         print("binding: {} on tab change".format(cal))
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
         populate_pop_up_menu()
+
+        window.bind("<a>", cal.kbd_arrow_left)
+        window.bind("<w>", cal.kbd_arrow_up)
+        window.bind("<s>", cal.kbd_arrow_down)
+        window.bind("<d>", cal.kbd_arrow_right)
+
+        window.bind("<Left>", cal.kbd_arrow_left)
+        window.bind("<Up>", cal.kbd_arrow_up)
+        window.bind("<Down>", cal.kbd_arrow_down)
+        window.bind("<Right>", cal.kbd_arrow_right)
+
+        cal.canvas.focus_set()
         cal.draw_canvas()
 
     tab_control = ttk.Notebook(window)
@@ -443,7 +461,20 @@ if __name__ == '__main__':
             cal.add_day()
 
     def subtract_day():
-        pass
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        line = cal.tiles[cal.dbl_clicked].line
+        for i in range(CAL_IDX, -1, -1):
+            cal = TAB_DATA[i]["Cal"]
+
+            assert isinstance(cal, PSCalendar)
+
+            print("Adjusting cal: {}".format(cal))
+            row_idx = cal.lines.index(line)
+            r, c = cal.rows, cal.cols
+            right_most = ((row_idx + 1) * c) - 1
+            print("right_most:", right_most, "rows:", cal.rows, "cols:", cal.cols)
+            cal.dbl_clicked = cal.dbl_clicked if i == CAL_IDX else right_most
+            cal.subtract_day()
 
     def draw_application():
         global btn_calendar_export_pdf_full, btn_calendar_export_pdf, CAL_IDX

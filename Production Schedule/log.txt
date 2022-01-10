@@ -1,6 +1,13 @@
+
+-   2022-01-04  ;;              ;;  Fix spacing and new page issue while exporting (2 page version)
+-   2022-01-04  ;;              ;;  Fix spacing and new page issue while exporting (1 page version)
 -   2022-01-04  ;;              ;;  Add vertical bars to separate weeks on the canvas view of a PSCalendar.
--   2022-01-04  ;;              ;;  Add keyboard controls when navigating PSCalendar.
--   2022-01-04  ;;              ;;  Add splash screen at beginning.
--   2021-12-22  ;;              ;;  Add Add and subtract days functions.
+-   2022-01-04  ;;  2022-01-10  ;;  Add keyboard controls when navigating PSCalendar.
+-   2022-01-04  ;;  2022-01-10  ;;  Add splash screen at beginning.
+-   2021-12-22  ;;  2022-01-10  ;;  Add Add and subtract days functions.
 -   2021-12-20  ;;  2022-01-06  ;;  Refactor some individual object attributes to a common parent state.
                                     Ensures hover maintains accross tabs.
+-   2022-01-10  ;;  2022-01-10  ;;  Add some colouring to tiles when selecting a Tile that has a matching WO
+-   2022-01-10  ;;  2022-01-10  ;;  Add indicator to selected and hover_select.
+-   2022-01-10  ;;  2022-01-10  ;;  Colour swapping tiles.
+-   2022-01-10  ;;              ;;  Fix drag and swapping logic. Should only swap on release after dragging.
