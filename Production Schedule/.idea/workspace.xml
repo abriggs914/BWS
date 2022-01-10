@@ -2,15 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4dcfae89-f9a6-4a52-8656-356fb05a5e97" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change afterPath="$PROJECT_DIR$/ProdSched_V1_2021-11-03--2021-12-04_full.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ProdSched_V1_2021-10-02--2021-11-02.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/ProdSched_V1_2021-10-02--2021-11-02.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ProdSched_V1_2021-10-02--2021-11-02_full.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/ProdSched_V1_2021-10-02--2021-11-02_full.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ProdSched_V1_2021-11-03--2021-12-04.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/ProdSched_V1_2021-11-03--2021-12-04.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/log.txt" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/Production Schedule.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Production Schedule.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+>>>>>>> c65038be628549fa0ad9fba74bb80885d5265d96
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdf_writer.py" beforeDir="false" afterPath="$PROJECT_DIR$/pdf_writer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pscalendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/pscalendar.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,9 +70,9 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\abrig\anaconda3\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
@@ -149,6 +153,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />

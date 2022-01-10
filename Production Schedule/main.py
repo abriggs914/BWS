@@ -5,6 +5,7 @@ import pyodbc
 from pscalendar import *
 import pandas as pd
 from PIL import ImageTk, Image
+from pathlib import Path
 
 
 async def read_sql_async(stmt, con):
@@ -76,6 +77,11 @@ async def get_production_data(start_date, end_date, first=True):
     # return df
 
 
+def exit_program():
+    print("Goodbye!")
+    exit()
+
+
 if __name__ == '__main__':
 
     async def get_data(start_date, end_date):
@@ -106,6 +112,11 @@ if __name__ == '__main__':
     VERSION_NAME = "Version 1.0"
     BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
     STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
+
+    # iff T, both logo file paths must be in the C:\Access folder
+    # else F, using the copies in the app folder
+    assert_is_employee = False
+
     N_TEST_CALS = None
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
@@ -127,6 +138,20 @@ if __name__ == '__main__':
     LOGO_WIDTH = int((WIN_W * 0.8) / 2)
     LOGO_HEIGHT = int(WIN_H * 0.3)
     # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
+
+    if not Path(BWS_LOGO_FILE_PATH).exists():
+        if not assert_is_employee:
+            BWS_LOGO_FILE_PATH = r"""./BWS Chrome Final_hr.jpg"""
+        else:
+            print("You must be an employee to use this program.")
+            exit_program()
+
+    if not Path(STARGATE_LOGO_FILE_PATH).exists():
+        if not assert_is_employee:
+            STARGATE_LOGO_FILE_PATH = r"""./Stargate Logo 50%.jpg"""
+        else:
+            print("You must be an employee to use this program.")
+            exit_program()
 
     window = tkinter.Tk()
     F_WIN_W, F_WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
@@ -583,4 +608,4 @@ if __name__ == '__main__':
 
     window.bind("<Visibility>", window_load)
     window.mainloop()
-    print("Goodbye!")
+    exit_program()
