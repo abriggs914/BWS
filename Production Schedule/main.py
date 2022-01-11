@@ -44,6 +44,7 @@ async def get_production_data(start_date, end_date, first=True):
             lines, dates, ordered_df = get_production_data(start_date, end_date, first=False)
         else:
             print("Deadlock error. Please try again later.")
+            raise pyodbc.OperationalError
 
     except pyodbc.OperationalError as e:
         lines = [
@@ -138,6 +139,13 @@ if __name__ == '__main__':
     LOGO_WIDTH = int((WIN_W * 0.8) / 2)
     LOGO_HEIGHT = int(WIN_H * 0.3)
     # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
+
+
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##                                                     BEGIN                                                      ##
+    ##                                                                                                                ##
+    ####################################################################################################################
 
     if not Path(BWS_LOGO_FILE_PATH).exists():
         if not assert_is_employee:
@@ -523,6 +531,10 @@ if __name__ == '__main__':
         entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
         btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
 
+        frame_dealer_colour_select = tkinter.Frame(frame_calendar_control)
+        
+
+        # Add widgets
         label_calendar_search_start_date.pack(side=tkinter.LEFT)
         entry_calendar_search_start_date.pack(side=tkinter.LEFT)
         label_calendar_search_end_date.pack(side=tkinter.LEFT)
@@ -569,9 +581,7 @@ if __name__ == '__main__':
     # for i, t in enumerate(cal.tiles):
     #     print(dict_print(t.info_dict(), "Tile: #{}".format(i)))
 
-
     # Do Splash Here
-
     def window_load(*args):
         global WIN_W, WIN_H
         window.unbind("<Visibility>")
@@ -594,6 +604,7 @@ if __name__ == '__main__':
         splash_frame_logos.pack_forget()
         splash_version.pack_forget()
 
+        # resize window coming from splash screen
         WIN_W, WIN_H = F_WIN_W, F_WIN_H
         window.geometry("{}x{}".format(WIN_W, WIN_H))
         window.state('zoomed')
