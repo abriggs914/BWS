@@ -188,9 +188,12 @@ class PSCalendar:
         # self.cols += 1
 
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
+        self.dealers = list(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))
+        self.dealer_highlights = [None, None, None]
 
         print("{}\n{}".format(len(self.tiles), self.tiles))
 
+        self.always_highlight_dealers = True
         self.dragging = None
         self.selected = None
         self.hovered = None
@@ -620,6 +623,24 @@ class PSCalendar:
     #     pdf.output(f_name, 'F')
     #     pdf.open_in_browser()
 
+    def set_always_highlight_dealer(self, val):
+        self.always_highlight_dealers = True if val else False
+
+    def unhighlight_dealer(self, idx=None):
+        if idx is None:
+            self.dealer_highlights = [None, None, None]
+            return
+        self.dealer_highlights[idx] = None
+
+    def highlight_dealer(self, d_name, colour_code, idx=None):
+        if idx is not None:
+            self.dealer_highlights[idx] = (d_name, colour_code)
+        else:
+            if None in self.dealer_highlights:
+                self.dealer_highlights[self.dealer_highlights.index(None)] = (d_name, colour_code)
+            else:
+                self.dealer_highlights = [(d_name, colour_code)] + self.dealer_highlights[1:]
+
     def toggle_use_hover(self):
         self.set_user_hover_mode(not self.switch_use_hover)
 
@@ -979,6 +1000,8 @@ class PSCalendar:
         # TODO here
         # if a tile is selected then highlight any tiles with matching WO
         same_top_level_wos = []
+        same_dealers = []
+        same_dealers_n = []
         if self.selected is not None:
             wo_1 = self.tiles[self.selected].wo_num
             for tile in self.tiles:
@@ -986,7 +1009,20 @@ class PSCalendar:
                 wo_2 = tile.wo_num
                 if wo_1 is not None and wo_1 == wo_2:
                     same_top_level_wos.append(tile_num)
+
+        if self.always_highlight_dealers or self.selected is not None:
+            for tile in self.tiles:
+                tile_num = self.r_c_to_i(tile.row, tile.col)
+                for dcc in self.dealer_highlights:
+                    if dcc is not None:
+                        d_name, colour_code = dcc
+                        if tile.dealer == d_name:
+                            print("\t\td_name:", d_name, "colour_code:", colour_code)
+                            same_dealers.append(colour_code)
+                            same_dealers_n.append(tile_num)
             print("same_top_level_wos as <{}>".format(self.selected), same_top_level_wos)
+            print("same_dealers as <{}>".format(self.selected), same_dealers)
+            print("same_dealers_n as <{}>".format(self.selected), same_dealers_n)
 
         for tile in self.tiles:
             show_txt = not self.hiding_non_selected_tiles
@@ -1017,6 +1053,12 @@ class PSCalendar:
             if same_top_level_wos:
                 if tile_num in same_top_level_wos and tile_num != self.selected:
                     outline = BWS_RED
+
+            # Highlight all other tiles that have the same dealer as the selected.
+            if same_dealers:
+                if tile_num in same_dealers_n and tile_num != self.selected:
+                    i = same_dealers_n.index(tile_num)
+                    outline = hex_to_rgb(same_dealers[i])
 
             # Outline for selected tiles while the cursor hovers should be darker than the original outline
             if (self.selected and self.current_hover) and (self.selected != self.current_hover) and tile_num == self.selected:

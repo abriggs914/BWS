@@ -1,6 +1,7 @@
 import asyncio
 import tkinter
 from tkinter import ttk
+from tkinter import colorchooser
 import pyodbc
 from pscalendar import *
 import pandas as pd
@@ -17,6 +18,32 @@ async def get_production_data(start_date, end_date, first=True):
     assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
     assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
     assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
+    lines = [
+        "GNK1",
+        "GNK2",
+        "TBF",
+        "PBF",
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "TS1",
+        "TS2",
+        "TS3",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8",
+        "T9",
+        "T10",
+        "T11"
+    ]
+    dates = []
+    ordered_df = pd.DataFrame()
     try:
         query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
         cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
@@ -41,39 +68,11 @@ async def get_production_data(start_date, end_date, first=True):
     except pd.io.sql.DatabaseError:
         # try again ONCE:
         if first:
-            lines, dates, ordered_df = get_production_data(start_date, end_date, first=False)
+            print("Trying again...")
+            lines, dates, ordered_df = await get_production_data(start_date, end_date, first=False)
         else:
             print("Deadlock error. Please try again later.")
-            raise pyodbc.OperationalError
 
-    except pyodbc.OperationalError as e:
-        lines = [
-            "GNK1",
-            "GNK2",
-            "TBF",
-            "PBF",
-            "B1",
-            "B2",
-            "B3",
-            "B4",
-            "TS1",
-            "TS2",
-            "TS3",
-            "T1",
-            "T2",
-            "T3",
-            "T4",
-            "T5",
-            "T6",
-            "T7",
-            "T8",
-            "T9",
-            "T10",
-            "T11"
-        ]
-        dates = []
-        ordered_df = pd.DataFrame()
-        print("e: ", e)
     return lines, dates, ordered_df
     # return df
 
@@ -119,6 +118,7 @@ if __name__ == '__main__':
     assert_is_employee = False
 
     N_TEST_CALS = None
+    N_TEST_CALS = 2
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
@@ -139,6 +139,7 @@ if __name__ == '__main__':
     LOGO_WIDTH = int((WIN_W * 0.8) / 2)
     LOGO_HEIGHT = int(WIN_H * 0.3)
     # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
+    dealer_colour_data = None
 
 
     ####################################################################################################################
@@ -173,6 +174,9 @@ if __name__ == '__main__':
 
     window.title("Production Schedule")
     LOADED = tkinter.BooleanVar(value=False)
+    lb_dealer_1 = tkinter.StringVar()
+    lb_dealer_2 = tkinter.StringVar()
+    lb_dealer_3 = tkinter.StringVar()
 
     btn_calendar_export_pdf_full = None
     btn_calendar_export_pdf = None
@@ -203,8 +207,69 @@ if __name__ == '__main__':
         # print("RESETTING cal.dbl_clicked")
         # cal.dbl_clicked = None
 
+    def colour_chooser_1(event):
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.unhighlight_dealer(0)
+        rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
+        print("colour_code:", colour_code)
+        if colour_code is None:
+            return
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        print("btn_1:", btn_1)
+        btn_1.config(bg=colour_code, activebackground=colour_code)
+        btn_1.config(text=colour_code)
+        btn_1.update()
+        window.update()
+        d_name = lb_dealer_1.get()
+        if d_name is not None and d_name:
+            cal.highlight_dealer(d_name, colour_code)
+        cal.canvas.focus_set()
+
+    def colour_chooser_2(event):
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.unhighlight_dealer(1)
+        rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
+        print("colour_code:", colour_code)
+        if colour_code is None:
+            return
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        btn_2.config(bg=colour_code, activebackground=colour_code)
+        btn_2.config(text=colour_code)
+        btn_2.update()
+        window.update()
+        d_name = lb_dealer_2.get()
+        if d_name is not None and d_name:
+            cal.highlight_dealer(d_name, colour_code)
+        cal.canvas.focus_set()
+
+    def colour_chooser_3(event):
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.unhighlight_dealer(2)
+        rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
+        print("colour_code:", colour_code)
+        if colour_code is None:
+            return
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        btn_3.config(bg=colour_code, activebackground=colour_code)
+        btn_3.config(text=colour_code)
+        btn_3.update()
+        window.update()
+        d_name = lb_dealer_3.get()
+        if d_name is not None and d_name:
+            cal.highlight_dealer(d_name, colour_code)
+        cal.canvas.focus_set()
+
+    def update_dealer_1(*args):
+        print("updating dealer_1")
+
+    def update_dealer_2(*args):
+        print("updating dealer_2")
+
+    def update_dealer_3(*args):
+        print("updating dealer_3")
+
     def on_tab_change(event):
-        global SWITCH_CALENDAR_USE_HOVER, CAL_IDX, btn_calendar_export_pdf_full, btn_calendar_export_pdf
+        global SWITCH_CALENDAR_USE_HOVER, CAL_IDX, btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data
         tab_name = event.widget.tab('current')['text']
         idx = TAB_NAMES.index(tab_name)
         # cal = tab_cals[idx]
@@ -236,6 +301,34 @@ if __name__ == '__main__':
         window.bind("<Up>", cal.kbd_arrow_up)
         window.bind("<Down>", cal.kbd_arrow_down)
         window.bind("<Right>", cal.kbd_arrow_right)
+
+        if LOADED.get() and dealer_colour_data is not None:
+            dealers = cal.dealers
+            highlights = cal.dealer_highlights
+
+            print("dealers (" + str(len(dealers)) + "):", dealers)
+            print("lb1:", lb_dealer_1.get())
+            print("lb2:", lb_dealer_2.get())
+            print("lb3:", lb_dealer_3.get())
+            btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+            lb_dealer_1.set("")
+            lb_dealer_2.set("")
+            lb_dealer_3.set("")
+            cb_dealer_1["values"] = dealers
+            cb_dealer_2["values"] = dealers
+            cb_dealer_3["values"] = dealers
+
+            btn_1.bind("<Double-Button-1>", colour_chooser_1)
+            btn_2.bind("<Double-Button-1>", colour_chooser_2)
+            btn_3.bind("<Double-Button-1>", colour_chooser_3)
+            lb_dealer_1.trace("w", update_dealer_1)
+            lb_dealer_2.trace("w", update_dealer_2)
+            lb_dealer_3.trace("w", update_dealer_3)
+        # dealers
+        # for d in dealer
+        # if highlights:
+        #     for i in range(3):
+        #         pass
 
         cal.canvas.focus_set()
         cal.draw_canvas()
@@ -510,7 +603,7 @@ if __name__ == '__main__':
             cal.subtract_day()
 
     def draw_application():
-        global btn_calendar_export_pdf_full, btn_calendar_export_pdf, CAL_IDX
+        global btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data, CAL_IDX
 
         frame_calendar_control = tkinter.Frame(window)
         frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
@@ -532,7 +625,15 @@ if __name__ == '__main__':
         btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
 
         frame_dealer_colour_select = tkinter.Frame(frame_calendar_control)
-        
+        frame_dealer_colour_select_c1 = tkinter.Frame(frame_dealer_colour_select)
+        frame_dealer_colour_select_c2 = tkinter.Frame(frame_dealer_colour_select)
+        frame_dealer_colour_select_c3 = tkinter.Frame(frame_dealer_colour_select)
+        btn_dealer_colour_1 = tkinter.Button(frame_dealer_colour_select_c1)
+        combo_dealer_1 = ttk.Combobox(frame_dealer_colour_select_c1, textvariable=lb_dealer_1)
+        btn_dealer_colour_2 = tkinter.Button(frame_dealer_colour_select_c2)
+        combo_dealer_2 = ttk.Combobox(frame_dealer_colour_select_c2, textvariable=lb_dealer_2)
+        btn_dealer_colour_3 = tkinter.Button(frame_dealer_colour_select_c3)
+        combo_dealer_3 = ttk.Combobox(frame_dealer_colour_select_c3, textvariable=lb_dealer_3)
 
         # Add widgets
         label_calendar_search_start_date.pack(side=tkinter.LEFT)
@@ -541,6 +642,23 @@ if __name__ == '__main__':
         entry_calendar_search_end_date.pack(side=tkinter.LEFT)
         btn_calendar_search_submit.pack()
 
+        frame_dealer_colour_select.pack()
+
+        btn_dealer_colour_1.pack(fill="x")
+        combo_dealer_1.pack()
+        frame_dealer_colour_select_c1.pack(side=tkinter.LEFT)
+
+        btn_dealer_colour_2.pack(fill="x")
+        combo_dealer_2.pack()
+        frame_dealer_colour_select_c2.pack(side=tkinter.LEFT)
+
+        btn_dealer_colour_3.pack(fill="x")
+        combo_dealer_3.pack()
+        frame_dealer_colour_select_c3.pack(side=tkinter.LEFT)
+
+        frame_dealer_colour_select_c1.pack()
+        frame_dealer_colour_select_c2.pack()
+        frame_dealer_colour_select_c3.pack()
         # label_title.pack()
         # canvas_header_row.pack()
         # canvas_header_col.pack(side=tkinter.LEFT)
@@ -575,6 +693,14 @@ if __name__ == '__main__':
         CAL_IDX = 0
         populate_pop_up_menu()
         TAB_DATA[CAL_IDX]["PopUpPop"] = True
+        tab_name = TAB_NAMES[CAL_IDX]
+        dealer_colour_data = [
+            btn_dealer_colour_1,
+            combo_dealer_1,
+            btn_dealer_colour_2,
+            combo_dealer_2,
+            btn_dealer_colour_3,
+            combo_dealer_3]
 
         cal = TAB_DATA[CAL_IDX]["Cal"]
 
