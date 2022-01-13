@@ -63,6 +63,12 @@ async def get_production_data(start_date, end_date, first=True):
         # dates = dates.iloc[:, 3:4].tolist()
         dates = dates['Prod Date'].tolist()
         print("columns:", df1.columns)
+
+        # TODO can use this as a testing entry
+        # print("df1:", df1)
+        # print(str(df1.to_json()))
+        # df1 = pd.read_json(df1.to_json())
+
         ordered_df = df1.sort_values(by=["GroupID", "Prod Date"])
         cnxn.close()
     except pd.io.sql.DatabaseError:
@@ -129,6 +135,7 @@ if __name__ == '__main__':
 
     # Use to keep all calendars using the same controls
     SWITCH_CALENDAR_USE_HOVER = True
+    SWITCH_CALENDAR_DRAW_WEEK_DIVS = True
 
     BORDER_WIDTH = 3
     # WIN_W, WIN_H = int(1900 * 0.6), int(950 * 0.6)
@@ -163,6 +170,9 @@ if __name__ == '__main__':
             exit_program()
 
     window = tkinter.Tk()
+    # DEFAULT_BG = window.cget('bg')
+    DEFAULT_BG = rgb_to_hex(GRAY_93)
+    print("DEFAULT_BG:", DEFAULT_BG)
     F_WIN_W, F_WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
     can_w, can_h = F_WIN_W * 0.96, F_WIN_H * 0.76
 
@@ -180,6 +190,7 @@ if __name__ == '__main__':
 
     btn_calendar_export_pdf_full = None
     btn_calendar_export_pdf = None
+
 
     def dbl_click_tile(event):
         cal = TAB_DATA[CAL_IDX]["Cal"]
@@ -207,27 +218,34 @@ if __name__ == '__main__':
         # print("RESETTING cal.dbl_clicked")
         # cal.dbl_clicked = None
 
+
     def colour_chooser_1(event):
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        cal.unhighlight_dealer(0)
+        cal.unhighlight_dealer(2)
         rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
         print("colour_code:", colour_code)
         if colour_code is None:
             return
         btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
-        print("btn_1:", btn_1)
         btn_1.config(bg=colour_code, activebackground=colour_code)
         btn_1.config(text=colour_code)
         btn_1.update()
         window.update()
         d_name = lb_dealer_1.get()
+        print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
-            cal.highlight_dealer(d_name, colour_code)
+            print("\t\tHIERE", TAB_DATA.keys())
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 0)
         cal.canvas.focus_set()
+        cal.draw_canvas()
+
 
     def colour_chooser_2(event):
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        cal.unhighlight_dealer(1)
+        cal.unhighlight_dealer(2)
         rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
         print("colour_code:", colour_code)
         if colour_code is None:
@@ -238,9 +256,16 @@ if __name__ == '__main__':
         btn_2.update()
         window.update()
         d_name = lb_dealer_2.get()
+        print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
-            cal.highlight_dealer(d_name, colour_code)
+            print("\t\tHIERE", TAB_DATA.keys())
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 1)
         cal.canvas.focus_set()
+        cal.draw_canvas()
+
 
     def colour_chooser_3(event):
         cal = TAB_DATA[CAL_IDX]["Cal"]
@@ -255,21 +280,92 @@ if __name__ == '__main__':
         btn_3.update()
         window.update()
         d_name = lb_dealer_3.get()
+        print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
-            cal.highlight_dealer(d_name, colour_code)
+            print("\t\tHIERE", TAB_DATA.keys())
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 2)
         cal.canvas.focus_set()
+        cal.draw_canvas()
+
 
     def update_dealer_1(*args):
         print("updating dealer_1")
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        colour_code = btn_1["bg"]
+        d_name = lb_dealer_1.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 0)
+        cal.draw_canvas()
+
 
     def update_dealer_2(*args):
         print("updating dealer_2")
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        colour_code = btn_2["bg"]
+        d_name = lb_dealer_2.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 1)
+        cal.draw_canvas()
+
 
     def update_dealer_3(*args):
         print("updating dealer_3")
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        colour_code = btn_3["bg"]
+        d_name = lb_dealer_3.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(TAB_NAMES):
+                c = TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 2)
+        cal.draw_canvas()
+
+
+    def reset_dealer_1():
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        lb_dealer_1.set("")
+        btn_1.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
+        btn_1.update()
+        window.update()
+        print("resetting dealer_1")
+
+
+    def reset_dealer_2():
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        lb_dealer_2.set("")
+        btn_2.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
+        btn_2.update()
+        window.update()
+        print("resetting dealer_2")
+
+
+    def reset_dealer_3():
+        btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
+        lb_dealer_3.set("")
+        btn_3.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
+        btn_3.update()
+        window.update()
+        print("resetting dealer_3")
+
 
     def on_tab_change(event):
         global SWITCH_CALENDAR_USE_HOVER, CAL_IDX, btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data
+        print("dealer_colour_data:", dealer_colour_data)
+        print("lb_dealer_1", lb_dealer_1.get())
+        print("lb_dealer_2", lb_dealer_2.get())
+        print("lb_dealer_3", lb_dealer_3.get())
         tab_name = event.widget.tab('current')['text']
         idx = TAB_NAMES.index(tab_name)
         # cal = tab_cals[idx]
@@ -290,6 +386,7 @@ if __name__ == '__main__':
         cal.bind_canvas()
         print("binding: {} on tab change".format(cal))
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
+        cal.set_drawing_week_divs(SWITCH_CALENDAR_DRAW_WEEK_DIVS)
         populate_pop_up_menu()
 
         window.bind("<a>", cal.kbd_arrow_left)
@@ -301,6 +398,7 @@ if __name__ == '__main__':
         window.bind("<Up>", cal.kbd_arrow_up)
         window.bind("<Down>", cal.kbd_arrow_down)
         window.bind("<Right>", cal.kbd_arrow_right)
+        dealers = []
 
         if LOADED.get() and dealer_colour_data is not None:
             dealers = cal.dealers
@@ -311,9 +409,9 @@ if __name__ == '__main__':
             print("lb2:", lb_dealer_2.get())
             print("lb3:", lb_dealer_3.get())
             btn_1, cb_dealer_1, btn_2, cb_dealer_2, btn_3, cb_dealer_3 = dealer_colour_data
-            lb_dealer_1.set("")
-            lb_dealer_2.set("")
-            lb_dealer_3.set("")
+            # lb_dealer_1.set("")
+            # lb_dealer_2.set("")
+            # lb_dealer_3.set("")
             cb_dealer_1["values"] = dealers
             cb_dealer_2["values"] = dealers
             cb_dealer_3["values"] = dealers
@@ -324,6 +422,16 @@ if __name__ == '__main__':
             lb_dealer_1.trace("w", update_dealer_1)
             lb_dealer_2.trace("w", update_dealer_2)
             lb_dealer_3.trace("w", update_dealer_3)
+
+        print("**lb_dealer_1.get():", lb_dealer_1.get())
+        print("**lb_dealer_1.get() in dealers:", lb_dealer_1.get() in dealers)
+        if lb_dealer_1.get() and lb_dealer_1.get() in dealers:
+            # cb_dealer_1.current(dealers.index(lb_dealer_1.get()))
+            cb_dealer_1["value"] = lb_dealer_1.get()
+        if lb_dealer_2.get() and lb_dealer_2.get() in dealers:
+            cb_dealer_2.current(dealers.index(lb_dealer_2.get()))
+        if lb_dealer_3.get() and lb_dealer_3.get() in dealers:
+            cb_dealer_3.current(dealers.index(lb_dealer_3.get()))
         # dealers
         # for d in dealer
         # if highlights:
@@ -397,6 +505,13 @@ if __name__ == '__main__':
         #         else:
         #             entry_calendar_search_start_date.config(fg=rgb_to_hex(RED))
         #             entry_calendar_search_end_date.config(fg=rgb_to_hex(RED))
+
+    def switch_calendar_week_divs_gsm(*args):
+        global SWITCH_CALENDAR_DRAW_WEEK_DIVS
+        SWITCH_CALENDAR_DRAW_WEEK_DIVS = not SWITCH_CALENDAR_DRAW_WEEK_DIVS
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.set_drawing_week_divs(SWITCH_CALENDAR_DRAW_WEEK_DIVS)
+        cal.draw_canvas()
 
     def switch_calendar_use_hover_gsm(*args):
         # print("HEY!!!!!")
@@ -551,9 +666,10 @@ if __name__ == '__main__':
             ("CMD", "Add 1 Day", add_day),
             ("CMD", "Subtract 1 Day", subtract_day),
             ("SEP", None, None),
-            ("CBN", "Apply to Entire Line", None),
-            ("RBN", "A", None),
-            ("RBN", "B", None)
+            # ("CMD", "Expand", enlarge_tile),
+            # ("CBN", "Apply to Entire Line", None),
+            # ("RBN", "A", None),
+            # ("RBN", "B", None)
         ] if pop_up_dat is None else pop_up_dat
         for code, lbl, cmd in pop_up_dat:
             if code == "SEP":
@@ -602,6 +718,13 @@ if __name__ == '__main__':
             cal.dbl_clicked = cal.dbl_clicked if i == CAL_IDX else right_most
             cal.subtract_day()
 
+    def enlarge_tile():
+        cal = TAB_DATA[CAL_IDX]["Cal"]
+        cal.enlarge_tile(cal.dbl_clicked)
+    #     cal.hover()
+        cal.draw_canvas()
+
+
     def draw_application():
         global btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data, CAL_IDX
 
@@ -609,12 +732,15 @@ if __name__ == '__main__':
         frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
         frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
         frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
+        frame_calendar_control_btns_a = tkinter.Frame(frame_calendar_control_btns)
+        frame_calendar_control_btns_b = tkinter.Frame(frame_calendar_control_btns)
         frame_calendar_search_control_a = tkinter.Frame(frame_calendar_search_entries)
         frame_calendar_search_control_b = tkinter.Frame(frame_calendar_search_entries)
         frame_calendar_search_control_c = tkinter.Frame(frame_calendar_search_control)
-        btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns, text="Use Hover", command=switch_calendar_use_hover_gsm)
-        btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns, text="Export pdf (Full)")
-        btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns, text="Export pdf")
+        btn_calendar_use_hover = tkinter.Button(frame_calendar_control_btns_a, text="Use Hover", command=switch_calendar_use_hover_gsm)
+        btn_calendar_export_pdf_full = tkinter.Button(frame_calendar_control_btns_a, text="Export pdf (Full)")
+        btn_calendar_export_pdf = tkinter.Button(frame_calendar_control_btns_a, text="Export pdf")
+        btn_draw_week_dividers = tkinter.Button(frame_calendar_control_btns_b, text="Draw Week Dividers", command=switch_calendar_week_divs_gsm)
 
         stringvar_calendar_search_start_date = tkinter.StringVar(value=START_DATE.strftime("%Y-%m-%d"))
         stringvar_calendar_search_end_date = tkinter.StringVar(value=END_DATE.strftime("%Y-%m-%d"))
@@ -628,32 +754,41 @@ if __name__ == '__main__':
         frame_dealer_colour_select_c1 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c2 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c3 = tkinter.Frame(frame_dealer_colour_select)
+        label_dealer_colour_select = tkinter.Label(frame_dealer_colour_select, text="Highlight Dealers Below")
         btn_dealer_colour_1 = tkinter.Button(frame_dealer_colour_select_c1)
         combo_dealer_1 = ttk.Combobox(frame_dealer_colour_select_c1, textvariable=lb_dealer_1)
+        btn_reset_dealer_1 = tkinter.Button(frame_dealer_colour_select_c1, text="Reset", command=reset_dealer_1)
         btn_dealer_colour_2 = tkinter.Button(frame_dealer_colour_select_c2)
         combo_dealer_2 = ttk.Combobox(frame_dealer_colour_select_c2, textvariable=lb_dealer_2)
+        btn_reset_dealer_2 = tkinter.Button(frame_dealer_colour_select_c2, text="Reset", command=reset_dealer_2)
         btn_dealer_colour_3 = tkinter.Button(frame_dealer_colour_select_c3)
         combo_dealer_3 = ttk.Combobox(frame_dealer_colour_select_c3, textvariable=lb_dealer_3)
+        btn_reset_dealer_3 = tkinter.Button(frame_dealer_colour_select_c3, text="Reset", command=reset_dealer_3)
 
         # Add widgets
+        label_dealer_colour_select.pack()
         label_calendar_search_start_date.pack(side=tkinter.LEFT)
         entry_calendar_search_start_date.pack(side=tkinter.LEFT)
         label_calendar_search_end_date.pack(side=tkinter.LEFT)
         entry_calendar_search_end_date.pack(side=tkinter.LEFT)
         btn_calendar_search_submit.pack()
+        btn_draw_week_dividers.pack()
 
-        frame_dealer_colour_select.pack()
+        frame_dealer_colour_select.pack(side=tkinter.RIGHT)
 
         btn_dealer_colour_1.pack(fill="x")
         combo_dealer_1.pack()
+        btn_reset_dealer_1.pack()
         frame_dealer_colour_select_c1.pack(side=tkinter.LEFT)
 
         btn_dealer_colour_2.pack(fill="x")
         combo_dealer_2.pack()
+        btn_reset_dealer_2.pack()
         frame_dealer_colour_select_c2.pack(side=tkinter.LEFT)
 
         btn_dealer_colour_3.pack(fill="x")
         combo_dealer_3.pack()
+        btn_reset_dealer_3.pack()
         frame_dealer_colour_select_c3.pack(side=tkinter.LEFT)
 
         frame_dealer_colour_select_c1.pack()
@@ -676,6 +811,8 @@ if __name__ == '__main__':
         btn_calendar_export_pdf_full.pack()
         btn_calendar_export_pdf.pack()
         frame_calendar_control_btns.pack(side=tkinter.LEFT)
+        frame_calendar_control_btns_a.pack(side=tkinter.LEFT)
+        frame_calendar_control_btns_b.pack(side=tkinter.LEFT)
         # frame_calendar_control_btns.pack()
         # frame_calendar.pack()
         submit_calendar_search()
