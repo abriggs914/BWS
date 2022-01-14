@@ -45,9 +45,27 @@ async def get_production_data(start_date, end_date, first=True):
     dates = []
     ordered_df = pd.DataFrame()
     try:
+        with open("df1.json", "r") as f:
+            ordered_df = pd.read_json(f)
+            dates = ordered_df.drop_duplicates('Prod Date')
+            # dates = dates.iloc[:, 3:4].tolist()
+            print("LIST:", dates['Prod Date'].tolist())
+            print("LIST[0]:", dates['Prod Date'].tolist()[0])
+            print("type(LIST[0]:)", type(dates['Prod Date'].tolist()[0]))
+            dates = [pd.to_datetime(str(dtm), unit='ms') for dtm in dates['Prod Date'].tolist()]
+            dates.sort()
+    except FileNotFoundError:
+        print("File not found.")
+    try:
         query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
-        cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456')
+        splash_query_pb["value"] = 55
+        splash_query_pb.update()
+        cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456', timeout=10)
+        splash_query_pb["value"] = 60
+        splash_query_pb.update()
         table_result = await read_sql_async(query, cnxn)
+        splash_query_pb["value"] = 65
+        splash_query_pb.update()
         df1 = pd.DataFrame(table_result)
         df2 = pd.DataFrame(table_result)
         df3 = pd.DataFrame(table_result)
@@ -78,6 +96,9 @@ async def get_production_data(start_date, end_date, first=True):
             lines, dates, ordered_df = await get_production_data(start_date, end_date, first=False)
         else:
             print("Deadlock error. Please try again later.")
+    except pyodbc.OperationalError:
+        print("[08001] [Microsoft][ODBC SQL Server Driver][DBNETLIB]SQL Server does not exist or access denied.")
+        print("Using default values")
 
     return lines, dates, ordered_df
     # return df
@@ -124,7 +145,7 @@ if __name__ == '__main__':
     assert_is_employee = False
 
     N_TEST_CALS = None
-    N_TEST_CALS = 2
+    N_TEST_CALS = 1
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
