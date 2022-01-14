@@ -1,7 +1,7 @@
-import datetime
 from locale import currency, setlocale, LC_ALL
 from math import e, ceil, sin, cos, radians
 from random import random, choice, randint
+from plyer import notification
 import datetime as dt
 import shutil
 import sys
@@ -9,8 +9,8 @@ import os
 
 """
 	General Utility Functions
-	Version..............1.33
-	Date...........2021-12-17
+	Version..............1.37
+	Date...........2022-01-14
 	Author.......Avery Briggs
 """
 
@@ -1522,10 +1522,36 @@ def is_date(date_in, fmt="%Y-%m-%d"):
         d = datetime.datetime.strptime(date_in, fmt)
         return True
     except TypeError:
-        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+        print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
     except ValueError:
-        print("Can not determine id date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+        print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
     return False
+
+
+def alert_colour(x, n):
+    assert isnumber(x), "Parameter \"x\": ({}) needs to be a number".format(x)
+    assert isnumber(n), "Parameter \"n\": ({}) needs to be a number".format(n)
+    assert x <= n, "Parameter \"x\": ({}) needs to be less than or equal to parameter \"n\": ({})".format(x, n)
+    assert 0 < n, "Parameter \"n\": ({}) must be non-zero and positive".format(n)
+    t_diff = 255
+    x = abs(x / n) * t_diff
+    return x, 255 - x, 0
+
+
+def notify(message, title="", app_icon=None, timeout=5):
+    if app_icon is not None:
+        notification.notify(
+            title=title,
+            message=message,
+            app_icon=(app_icon),
+            timeout=timeout  # seconds
+        )
+    else:
+        notification.notify(
+            title=title,
+            message=message,
+            timeout=timeout  # seconds
+        )
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "

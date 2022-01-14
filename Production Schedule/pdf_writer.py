@@ -21,8 +21,8 @@ import webbrowser
 
 class PDF(FPDF):
 
-    def __init__(self, file_name, *args):
-        super().__init__(*args)
+    def __init__(self, file_name, **kwrgs):
+        super().__init__(**kwrgs)
         self.file_name = file_name
 
         self.MARGIN_LINES_WIDTH = 3
@@ -34,7 +34,7 @@ class PDF(FPDF):
         self.TXT_MARGIN = 10
         self.FILE_NAME = "test.pdf"
 
-        self.time_stamp_rect = (self.w - 60, -15, 0, 10)
+        self.time_stamp_rect = (self.w - 100, -15, 0, 10)
 
         # if self.cur_orientation == "L":
         #     self.w = 750
@@ -134,14 +134,14 @@ class PDF(FPDF):
         print("OUT\n", res)
         return res
 
-    def time_stamp(self):
+    def time_stamp(self, tf=8):
         date = datetime.datetime.now()
         old_colour = list(map(lambda colo: int(255 * float(colo.strip())), self.text_color.split(" ")[: -1]))
         self.set_text_color(*BLACK)
         # Go to 1.5 cm from bottom
         self.set_xy(self.time_stamp_rect[0], self.time_stamp_rect[1])
         # Select Arial italic 8
-        self.set_font('Arial', 'I', 8)
+        self.set_font('Arial', 'I', tf)
         # Print centered page number
         txt = "Prepared: {} at {}".format(
             datetime.datetime.strftime(date, "%Y-%m-%d"),

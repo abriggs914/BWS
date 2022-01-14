@@ -3,6 +3,7 @@ import tkinter
 from tkinter import ttk
 from tkinter import colorchooser
 import pyodbc
+import platform
 from pscalendar import *
 import pandas as pd
 from PIL import ImageTk, Image
@@ -58,13 +59,13 @@ async def get_production_data(start_date, end_date, first=True):
         print("File not found.")
     try:
         query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
-        splash_query_pb["value"] = 55
+        splash_query_pb["value"] = 46
         splash_query_pb.update()
         cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456', timeout=10)
-        splash_query_pb["value"] = 60
+        splash_query_pb["value"] = 56
         splash_query_pb.update()
         table_result = await read_sql_async(query, cnxn)
-        splash_query_pb["value"] = 65
+        splash_query_pb["value"] = 77
         splash_query_pb.update()
         df1 = pd.DataFrame(table_result)
         df2 = pd.DataFrame(table_result)
@@ -111,6 +112,12 @@ def exit_program():
 
 if __name__ == '__main__':
 
+    operating_system = platform.system()
+    windows_version = int(platform.release())
+    if operating_system != "Windows" or windows_version < 8:
+        print("This program can only be used on a computer that has a Windows operating system and who's version number is greater than Windows 7.")
+        exit_program()
+
     async def get_data(start_date, end_date):
         lines, dates, data = await get_production_data(start_date, end_date)
 
@@ -119,10 +126,6 @@ if __name__ == '__main__':
         print("data:\n\n", data)
         print("length:", data.size)
         return lines, dates, data
-
-    # def create_calendar(start_date, end_date, lines, dates, data):
-    #     canvas.delete("all")
-    #     return PSCalendar(canvas, canvas_header_col, canvas_header_row, can_w, can_h, start_date, end_date, data, lines, dates, BORDER_WIDTH)
 
     def create_calendar_p(canvas_a, canvas_b, canvas_c, can_w, can_h, start_date, end_date, data, lines, dates, BORDER_WIDTH):
         canvas_a.delete("all")
@@ -145,7 +148,7 @@ if __name__ == '__main__':
     assert_is_employee = False
 
     N_TEST_CALS = None
-    N_TEST_CALS = 1
+    # N_TEST_CALS = 1
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
@@ -155,7 +158,7 @@ if __name__ == '__main__':
     # lines, dates, data = get_data(START_DATE, END_DATE)
 
     # Use to keep all calendars using the same controls
-    SWITCH_CALENDAR_USE_HOVER = True
+    SWITCH_CALENDAR_USE_HOVER = False
     SWITCH_CALENDAR_DRAW_WEEK_DIVS = True
 
     BORDER_WIDTH = 3
@@ -195,7 +198,7 @@ if __name__ == '__main__':
     DEFAULT_BG = rgb_to_hex(GRAY_93)
     print("DEFAULT_BG:", DEFAULT_BG)
     F_WIN_W, F_WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
-    can_w, can_h = F_WIN_W * 0.96, F_WIN_H * 0.76
+    can_w, can_h = F_WIN_W * 0.96, F_WIN_H * 0.72
 
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
@@ -609,10 +612,10 @@ if __name__ == '__main__':
             c_end_date = last_date + dt.timedelta(days=31)
             fmt = "%Y-%m-%d"
             splash_status_top.config(text="Generating Schedule From {start} To {end}".format(start=last_date.strftime(fmt), end=c_end_date.strftime(fmt)))
-            splash_query_pb["value"] = 50
+            splash_query_pb["value"] = 35
             splash_query_pb.update()
             c_lines, c_dates, dat = await get_data(last_date, c_end_date)
-            splash_query_pb["value"] = 75
+            splash_query_pb["value"] = 85
             splash_query_pb.update()
             print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
             print("c_dates", c_dates)
@@ -670,7 +673,8 @@ if __name__ == '__main__':
         canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         canvas_pop_up.unpost()
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        cal.dbl_clicked = None
+        # cal.dbl_clicked = None
+        cal.clear_dbl_click()
         cal.draw_canvas()
 
     def populate_pop_up_menu(pop_up_dat=None, override=False):
@@ -838,6 +842,7 @@ if __name__ == '__main__':
         # frame_calendar.pack()
         submit_calendar_search()
         tab_control.pack(expand=1, fill="both")
+        t_h = frame_calendar_control.winfo_screenheight()
 
         # populate_tab_data()
         if not TAB_DATA:

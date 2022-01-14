@@ -2,6 +2,7 @@ import math
 
 import easygui
 import tkinter
+from utility import *
 from pdf_writer import *
 
 
@@ -10,7 +11,7 @@ from pdf_writer import *
 
 class CalendarTile:
 
-    def __init__(self, tile_rect, border_width, row, col, line, date, colour, text=None):
+    def __init__(self, tile_rect, border_width, row, col, line, date, colour, outline=None, text=None):
         self.param_rect = Rect2(*tile_rect)
         self.rect = tile_rect
         self.border_width = border_width
@@ -19,8 +20,12 @@ class CalendarTile:
         self.line = line
         self.date = date
         self.colour = colour
+        if outline is None:
+            outline = colour
+        self.outline = outline
         self.text = text
         self.top_level_wo_idx = None
+        self.max_chars = 20
 
         self.wo_num = None
         self.model_name = None
@@ -49,7 +54,8 @@ class CalendarTile:
         self.status = status
         self.beam = beam
         self.job_start = job_start
-        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer[:50] if isinstance(dealer, str) else None, status, beam, job_start)
+        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer[:self.max_chars] if isinstance(dealer, str) else None,
+                                                    status, beam, job_start)
 
     def get_data(self):
         return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start
@@ -64,7 +70,7 @@ class CalendarTile:
         return str(self.wo_num)[:4] == "1001"
 
     def get_pdf_text(self):
-        return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(
+        return self.text if len("".join([s.strip()[:self.max_chars].strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(
             self.line, self.date)
 
     def info_dict(self):
@@ -101,7 +107,7 @@ class CalendarTile:
 
     def __copy__(self):
         ct = CalendarTile(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
-                          self.text)
+                          self.outline, self.text)
         ct.set_data(*self.get_data())
         return ct
 
@@ -145,6 +151,7 @@ class PSCalendar:
         self.hiding_non_selected_tiles = True
         self.export_pdf_mode = "TABLOID"
         self.pdf_min_encapsulation = True
+        self.default_tile_colour = GRAY_17
 
         self.rows = len(lines)
         self.cols = len(dates)
@@ -155,14 +162,16 @@ class PSCalendar:
                                (h - self.border_width) / max(1, len(self.lines)))
         # self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, random_colour()) for
         #                        j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
-        self.tiles = flatten([[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, GRAY_17,
-                                            text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for
-                               j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+        self.tiles = flatten(
+            [[CalendarTile(self.tile_rect, self.border_width, i, j, line, date, self.default_tile_colour,
+                           outline=self.default_tile_colour,
+                           text="Line: {}\nDate: {}".format(line, date.strftime("%Y-%m-%d"))) for j, date in
+              enumerate(self.dates)] for i, line in enumerate(self.lines)])
 
         for i, tile in enumerate(self.tiles):
-            idxrc = (i // self.rows), (i % self.rows)
+            # idxrc = (i // self.rows), (i % self.rows)
             # print("idxrc:", idxrc)
-            idx = (idxrc[1] * self.rows) + idxrc[0]  # self.r_c_to_i(idxrc[1], idxrc[0])
+            # idx = (idxrc[1] * self.rows) + idxrc[0]  # self.r_c_to_i(idxrc[1], idxrc[0])
             # idxrc = i // self.rows , (i % self.cols)
             # idx = (self.cols * (i // self.rows)) + (i % self.cols)
             idx = i
@@ -205,7 +214,7 @@ class PSCalendar:
         self.current_hover = None
         self.dbl_clicked = None
         self.swap_pair = None
-        self.last_swap = None
+        self.last_swap = []
         # self.showing_pop_up = False
         self.draw_canvas()
         # self.bind_canvas()
@@ -391,8 +400,21 @@ class PSCalendar:
             # w_pdf = 432
             # h_pdf = 279
 
+            # w_pdf = 590
+            # h_pdf = 750
+
+            # 2022-01-14 12:35 These values are close.
             w_pdf = 590
             h_pdf = 750
+
+            # mm
+            w_pdf = 279
+            h_pdf = 431
+
+            # points
+            w_pdf = 792
+            h_pdf = 1224
+
             w_pdf, h_pdf = h_pdf, w_pdf
 
         else:
@@ -403,7 +425,8 @@ class PSCalendar:
         title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
                                                self.end_date.strftime("%Y-%m-%d"))
         f_name = title + "_full.pdf"
-        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        # pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        pdf = PDF(f_name, orientation='L', unit='mm', format=(h_pdf, w_pdf))
         pdf.set_auto_page_break(True, margin=5)
         pdf.set_title(title)
         pdf.set_author('Avery Briggs')
@@ -411,7 +434,7 @@ class PSCalendar:
         pdf.MARGIN_LINES_MARGIN = 2
         pdf.MARGIN_LINES_WIDTH = 2
         pdf.margin_border(BWS_RED, WHITE)
-        pdf.time_stamp()
+        pdf.time_stamp(12)
         pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
                                                          dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
                    (pdf.w - 50) / 2, 5, 50, 6, BLUE_4__DARKBLUE_)
@@ -429,19 +452,22 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date",
-            cell_height=3.75,
-            cell_font=('Arial', '', 8),
+            cell_height=5.75,
+            cell_font=('Arial', '', 10.5),
             top_margin=0,
             bottom_margin=0,
             left_margin=0,
             title_height=5,
-            header_height=7
+            header_height=7,
+            include_top_doc_link=False,
+            include_top_chart_link=False
             # ,
             # header_font=('Arial', 'B', 20)
         )
 
         # Save and Open
         pdf.output(f_name, 'F')
+        notify("\"{}\" created successfully.".format(f_name), title="Production Schedule Editor")
         pdf.open_in_browser()
 
     # Exports to a two-page tabloid pdf.
@@ -460,8 +486,17 @@ class PSCalendar:
             # w_pdf = 432
             # h_pdf = 279
 
+            # 2022-01-14 12:35 These values are close.
             w_pdf = 590
             h_pdf = 750
+
+            # mm
+            w_pdf = 279
+            h_pdf = 431
+
+            # points
+            w_pdf = 792
+            h_pdf = 1224
 
             # w_pdf = 590
             # h_pdf = 1400
@@ -475,13 +510,13 @@ class PSCalendar:
         title = r"ProdSched_V{}_{}--{}".format(self.version_num, self.start_date.strftime("%Y-%m-%d"),
                                                self.end_date.strftime("%Y-%m-%d"))
         f_name = title + ".pdf"
-        pdf = PDF(f_name, 'L', 'mm', (h_pdf, w_pdf))
+        pdf = PDF(f_name, orientation='L', unit='mm', format=(h_pdf, w_pdf))
         pdf.set_auto_page_break(True, margin=5)
         pdf.set_title(title)
         pdf.set_author('Avery Briggs')
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
-        pdf.time_stamp()
+        pdf.time_stamp(12)
         pdf.titles("Production Schedule\n{} - {}".format(dt.datetime.strftime(self.start_date, "%Y-%m-%d"),
                                                          dt.datetime.strftime(self.end_date, "%Y-%m-%d")),
                    (pdf.w - 50) / 2, 10, 50, 10, BLUE_4__DARKBLUE_)
@@ -506,17 +541,19 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date / Line",
-            cell_height=6.35,
-            cell_font=('Arial', '', 10),
+            cell_height=9.25,
+            cell_font=('Arial', '', 14),
             top_margin=0,
-            left_margin=0
+            left_margin=0,
+            include_top_doc_link=False,
+            include_top_chart_link=False
             # ,
             # header_font=('Arial', 'B', 20)
         )
         print("DONE WRITING FIRST CHART")
         pdf.add_page()
         pdf.margin_border(BWS_RED, WHITE)
-        pdf.time_stamp()
+        pdf.time_stamp(12)
         pdf.table(
             "",
             10,
@@ -527,10 +564,12 @@ class PSCalendar:
             colours=[[WHITE, GRAY_69], [BWS_BLACK]],
             show_row_names=True,
             row_name_col_lbl="Date / Line",
-            cell_height=6.35,
-            cell_font=('Arial', '', 10),
+            cell_height=9.25,
+            cell_font=('Arial', '', 14),
             top_margin=0,
-            left_margin=0
+            left_margin=0,
+            include_top_doc_link=False,
+            include_top_chart_link=False
             # , new_page_for_table=True
             # ,
             # header_font=('Arial', 'B', 20)
@@ -538,6 +577,7 @@ class PSCalendar:
 
         # Save and Open
         pdf.output(f_name, 'F')
+        notify("\"{}\" created successfully.".format(f_name), title="Production Schedule Editor")
         pdf.open_in_browser()
 
     # def export_to_pdf(self):
@@ -697,12 +737,30 @@ class PSCalendar:
         self.switch_week_divs = draw_week_divs
 
     def key_press(self, event):
-        print("event:", event)
-        print("event.state:", event.state)
+        # print("event:", event)
+        # print("event.state:", event.state)
         if event.state == 12:
             print("ctrl + z")
-        else:
-            print("not that... {}".format(event))
+            if self.last_swap:
+                vs = self.last_swap.pop(-1)
+                self.swap_tiles(*vs, ask=False, undo=True)
+                self.draw_canvas()
+            else:
+                easygui.msgbox("Nothing to undo", title="Undoing")
+        # else:
+        #     print("not that... {}".format(event))
+
+    def clear_dbl_click(self):
+        if self.dbl_clicked is not None:
+            tile = self.tiles[self.dbl_clicked]
+            tile.colour = self.default_tile_colour
+            self.dbl_clicked = None
+
+    def clear_selected(self):
+        if self.selected is not None:
+            tile = self.tiles[self.selected]
+            tile.colour = self.default_tile_colour
+            self.selected = None
 
     def bind_canvas(self):
         # print("bind canvas")
@@ -1092,8 +1150,8 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        print("DC\t\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(
-            self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        # print("DC\t\t\tdragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(
+        #     self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
 
         # if self.current_hover is not None:
         #     print(self.tiles_to_the_right(self.current_hover))
@@ -1104,6 +1162,8 @@ class PSCalendar:
         same_top_level_wos = []
         same_dealers = []
         same_dealers_n = []
+        colour_override = False
+        outline_override = False
         if self.selected is not None:
             wo_1 = self.tiles[self.selected].wo_num
             for tile in self.tiles:
@@ -1139,6 +1199,7 @@ class PSCalendar:
                     outline = WHITE
                     if tile_num == self.current_hover:
                         show_txt = True
+                    outline_override = True
                 else:
                     outline = bgc
             else:
@@ -1147,6 +1208,7 @@ class PSCalendar:
                     outline = GRAY_15
                     if tile_num == self.current_hover:
                         show_txt = True
+                    outline_override = True
                 else:
                     outline = bgc
 
@@ -1156,26 +1218,40 @@ class PSCalendar:
             if same_top_level_wos:
                 if tile_num in same_top_level_wos and tile_num != self.selected:
                     outline = BWS_RED
+                    outline_override = True
 
             # Highlight all other tiles that have the same dealer as the selected.
             if same_dealers:
                 if tile_num in same_dealers_n and tile_num != self.selected:
                     idx = same_dealers_n.index(tile_num)
                     outline = hex_to_rgb(same_dealers[idx])
+                    outline_override = True
 
             # Outline for selected tiles while the cursor hovers should be darker than the original outline
-            if (self.selected and self.current_hover) and (self.selected != self.current_hover) and tile_num == self.selected:
+            if (self.selected and self.current_hover) and (
+                    self.selected != self.current_hover) and tile_num == self.selected:
                 bgc = BWS_RED
                 outline = darken(outline, 0.4)
+                colour_override = True
+                outline_override = True
+
             # When Swapping tiles colour them differently
             if self.swap_pair and tile_num in self.swap_pair:
                 bgc = BWS_RED
                 outline = GRAY_26
+                colour_override = True
+                outline_override = True
+
+            if not colour_override:
+                bgc = self.default_tile_colour
+            if not outline_override:
+                outline = self.default_tile_colour
 
             tile_txt = tile.text if tile.text is not None else tile_num
             # drawing tile rectangle here
             self.canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
                                          width=self.border_width)
+            tile.colour = bgc
             # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
             if show_txt:
                 if not self.is_tile_enlarged(tile_num):
@@ -1217,7 +1293,7 @@ class PSCalendar:
                                                       fill=rgb_to_hex(fgc),
                                                       font="Times 12 italic bold", text=str(tile_num))
 
-            # By default plot weekend divider to the left
+            # By default plot weekend divider to the Right
             if self.switch_week_divs:
                 date = tile.date
                 tomorrow = None if i == len(self.tiles) - 1 else self.tiles[i + 1].date
@@ -1372,7 +1448,8 @@ class PSCalendar:
         self.dragging = new_select
         self.selected = new_select
         self.hover_select = new_select
-        self.dbl_clicked = None
+        # self.dbl_clicked = None
+        self.clear_dbl_click()
         self.draw_canvas()
         print("END B: sel: {}, hsl: {}, drg: {}, dcsd: {}".format(self.selected, self.hover_select, self.dragging,
                                                                   self.dbl_clicked))
@@ -1410,10 +1487,11 @@ class PSCalendar:
 
             # print("type(drag_event):", type(drag_event))
 
-    def swap_tiles(self, dragging_tile, hover_tile, ask=True):
+    def swap_tiles(self, dragging_tile, hover_tile, ask=True, undo=False):
         if ask:
-            ans = easygui.ynbox(msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile),
-                            title="Swap Confirm", default_choice="No")
+            ans = easygui.ynbox(
+                msg="Are you sure you wamt to swap tile#{} with  tile#{}".format(dragging_tile, hover_tile),
+                title="Swap Confirm", default_choice="No")
         else:
             ans = "yes"
         print("ans:", ans)
@@ -1430,7 +1508,8 @@ class PSCalendar:
         # self.tiles[hover_tile].text = old_tile[0] if old_tile[0] is not None else str(dragging_tile)
         self.tiles[hover_tile].set_data(*t_data.get_data())
         self.tiles[hover_tile].colour = old_tile[1]
-        self.last_swap = dragging_tile, hover_tile
+        if not undo:
+            self.last_swap.append((dragging_tile, hover_tile))
 
     def tiles_to_the_right(self, tile_num, start_date=None, end_date=None):
         r, c = self.i_to_r_c(tile_num)
@@ -1468,7 +1547,8 @@ class PSCalendar:
         for t in [self.dbl_clicked] + self.tiles_to_the_right(self.dbl_clicked):
             tile = self.tiles[t]
             tile.colour = brighten(tile.colour, 0.1)
-        self.dbl_clicked = None
+        # self.dbl_clicked = None
+        self.clear_dbl_click()
         self.draw_canvas()
 
     def subtract_day(self):
@@ -1479,7 +1559,8 @@ class PSCalendar:
         for t in [self.dbl_clicked] + self.tiles_to_the_left(self.dbl_clicked):
             tile = self.tiles[t]
             tile.colour = brighten(tile.colour, 0.1)
-        self.dbl_clicked = None
+        # self.dbl_clicked = None
+        self.clear_dbl_click()
         self.draw_canvas()
 
     def enlarge_tile(self, tile_num):
