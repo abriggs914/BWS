@@ -11,3 +11,5 @@
 -   2022-01-10  ;;  2022-01-10  ;;  Add indicator to selected and hover_select.
 -   2022-01-10  ;;  2022-01-10  ;;  Colour swapping tiles.
 -   2022-01-10  ;;              ;;  Fix drag and swapping logic. Should only swap on release after dragging.
+-   2022-01-17  ;;              ;;  Add a 'Stargate Version' - Could be another copy of this program
+                                    targeted directly at Stargate

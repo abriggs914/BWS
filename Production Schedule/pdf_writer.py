@@ -10,8 +10,8 @@ import webbrowser
 
 """
 	General PDF Creation Class
-	Version................1.2
-	Date............2022-01-10
+	Version................1.3
+	Date............2022-01-17
 	Author........Avery Briggs
 """
 
