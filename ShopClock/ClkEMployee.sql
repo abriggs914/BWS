@@ -1,9 +1,39 @@
 --INSERT INTO [ClkShiftRoundRules] ([Name]) VALUES ('New Shift 1')
+USE SysproCompanyA
+GO
 
-SELECT * FROM [ClkShiftRoundRules]
-SELECT * FROM [ClkEmployee]
-SELECT [Employee] FROM [ClkEmployee] GROUP BY [Employee] HAVING COUNT(*) > 1
 
+--SELECT * FROM [ClkShiftRoundRules]
+--SELECT * FROM [ClkEmployee]
+--SELECT [Employee] FROM [ClkEmployee] GROUP BY [Employee] HAVING COUNT(*) > 1
+
+SELECT MAX([Employee]), [Name] FROM [ClkEmployee] GROUP BY [Name] ORDER BY [Name]
+SELECT [ShiftID], [Name] FROM [ClkShiftRoundRules]
+
+
+SELECT
+	MAX([Employee]) AS [Emp#],
+	[ClkEmployee].[Name],
+	(CASE WHEN [ClkShiftRoundRules].[Name] IS NULL THEN (SELECT TOP 1 [Name] FROM [ClkShiftRoundRules]) ELSE [ClkShiftRoundRules].[Name] END) AS [ShiftName]
+FROM
+	[ClkEmployee]
+LEFT JOIN
+	[ClkShiftEmpAssign]
+ON
+	[ClkEmployee].[Employee] = [ClkShiftEmpAssign].[EmployeeNumber]
+LEFT JOIN	
+	[ClkShiftRoundRules]
+ON
+	[ClkShiftEmpAssign].[ShiftID] = [ClkShiftRoundRules].[ShiftID]
+GROUP BY
+	[ClkEmployee].[Name],
+	[ClkShiftRoundRules].[Name]
+ORDER BY
+	[ClkEmployee].[Name]
+	
+SELECT TOP 1 * FROM [ClkEmployee]
+SELECT TOP 1 * FROM [ClkShiftEmpAssign]
+SELECT TOP 1 * FROM [ClkShiftRoundRules]
 
 
 --BEGIN TRAN;

@@ -1,19 +1,23 @@
 use SysproCompanyA
 go
 
-declare @parentpart varchar(30) = 'WO8082',
-		@update int = 0, -- ******************************** CHANGE THIS IF YOU WANT THE UPDATE TO RUN (0 = no, 1 = yes) ********************************
-		@delete int = 0 -- ******************************** CHANGE THIS IF YOU WANT THE DELETE STATEMENT TO RUN (0 = no, 1 = yes) ********************************
+declare @parentpart varchar(30) = '48HF4X-102-26867',
+--declare @parentpart varchar(30) = '48HF4X-102-26967',
+--declare @parentpart varchar(30) = 'WO8082',
+		@update int = 1, -- ******************************** CHANGE THIS IF YOU WANT THE UPDATE TO RUN (0 = no, 1 = yes) ********************************
+		@delete int = 1 -- ******************************** CHANGE THIS IF YOU WANT THE DELETE STATEMENT TO RUN (0 = no, 1 = yes) ********************************
 
 select * from InvMaster with (nolock)
 where StockCode = @parentpart
 
+print 'here 1'
 
 if @delete = 1
 	begin
 		delete from BomStructure where ParentPart = @parentpart
 	end 
-
+	
+print 'here 2'
 if @update = 1
 	begin
 		insert into BomStructure  (ParentPart, Version, Release, Route, SequenceNum, Component, ComVersion, ComRelease, EccConsumption, StructureOnDate, StructureOffDate,
@@ -26,13 +30,15 @@ if @update = 1
 		'', '01', '', '', 'S', Qty, 0, 0
 		from BWSdb.dbo.[BWSWOBOM_6867] with (nolock)
 	end
-
+	
+print 'here 3'
 select * from BomStructure with (nolock)
 where ParentPart = @parentpart
 
 use BWSdb
 go
 
+print 'here 4'
 select count(*) as [26867 BOM] from [BWSWOBOM_6867] with (nolock)
 
 /*
