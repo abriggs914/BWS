@@ -60,10 +60,12 @@ GO
 		IF @et IS NULL BEGIN
 			SET @et = @today
 		END
+
+		-- THis operation assumes that all shifts start and end on the same calendar day. (NOT TRUE for night shifts)
 		SET @shift_start_date = CAST((CAST((CAST(DATEPART(YEAR, @transactionDate) AS VARCHAR(4)) + '-' + CAST(DATEPART(MONTH, @transactionDate) AS VARCHAR(2)) + '-' + CAST(DATEPART(DAY, @transactionDate) AS VARCHAR(2))) AS VARCHAR(30)) + ' ' + CAST(DATEPART(HOUR, @st) AS VARCHAR(30)) + ':' + CAST(DATEPART(MINUTE, @st) AS VARCHAR(30))) AS DATETIME)
 		SET @shift_end_date = CAST((CAST((CAST(DATEPART(YEAR, @transactionDate) AS VARCHAR(4)) + '-' + CAST(DATEPART(MONTH, @transactionDate) AS VARCHAR(2)) + '-' + CAST(DATEPART(DAY, @transactionDate) AS VARCHAR(2))) AS VARCHAR(30)) + ' ' + CAST(DATEPART(HOUR, @et) AS VARCHAR(30)) + ':' + CAST(DATEPART(MINUTE, @et) AS VARCHAR(30))) AS DATETIME)
 
-		DECLARE @signed_in_today AS Bit;
+		DECLARE @signed_in_today AS BIT;
 		--SET @signed_in_today = (CASE WHEN 
 		--	((	SELECT 
 		--			[SignedInToday]
@@ -119,7 +121,9 @@ GO
 		IF @outTime IS NULL BEGIN
 			-- Sign-In
 			PRINT 'Sign-in'
-			INSERT INTO @rounded EXEC [dbo].[sp_RoundTime] @time = @inTime, @interval = @interval, @in_out = 1, @threshold = @threshold, @start_date = @shift_start_date, @end_date = @shift_end_date
+			IF @signed_in_today = 0 BEGIN
+				INSERT INTO @rounded EXEC [dbo].[sp_RoundTime] @time = @inTime, @interval = @interval, @in_out = 1, @threshold = @threshold, @start_date = @shift_start_date, @end_date = @shift_end_date
+			END
 		
 			--UPDATE
 			--	[ClkTransaction]

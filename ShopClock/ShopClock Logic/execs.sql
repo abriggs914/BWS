@@ -3,11 +3,11 @@ GO
 
 DECLARE @test_range AS BIT, @test_select AS BIT, @test_stargate_shift_1 AS BIT, @test_stargate_shift_2 AS BIT, @test_stargate_shift_3 AS BIT, @test_stargate_shift_4 AS BIT;
 SET @test_range = 0;
-SET @test_select = 0;
+SET @test_select = 1;
 SET @test_stargate_shift_1 = 0;
-SET @test_stargate_shift_2 = 1;
+SET @test_stargate_shift_2 = 0;
 SET @test_stargate_shift_3 = 0;
-SET @test_stargate_shift_4 = 1;
+SET @test_stargate_shift_4 = 0;
 
 DECLARE @shift_1_start_time AS DATETIME;
 DECLARE @shift_1_end_time AS DATETIME;

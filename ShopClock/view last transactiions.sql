@@ -1,3 +1,6 @@
+USE SysproCompanyA
+GO
+
 SELECT Top 5 * FROM [ClkTransaction] ORDER BY [TransactionID] DESC
 
 SELECT * FROM [ClkShiftRoundRules]
