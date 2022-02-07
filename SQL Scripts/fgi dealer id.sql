@@ -1,0 +1,43 @@
+--USE BWSdb
+--GO
+
+
+-- Ashlie and Shelley's missing FGI dealer
+
+
+
+--SELECT * FROM [Dealers] WHERE [ID] = 350 ORDER BY [COMPANY NAME]
+--SELECT * FROM [Orders] WHERE [DealerID] = 350 ORDER BY [DealerID], [Order Date]
+
+
+USE BWSdb_20211205
+GO
+
+SELECT * FROM [Dealers] WHERE [ID] = 350 ORDER BY [COMPANY NAME]
+--SELECT * FROM [Orders] WHERE [DealerID] = 350 ORDER BY [DealerID], [Order Date]
+
+USE BWSdb
+GO
+
+SELECT * FROM [Dealers] WHERE [ID] = 350 ORDER BY [COMPANY NAME]
+
+BEGIN TRAN
+
+UPDATE
+	[Dealers]
+SET
+	[COMPANY NAME] = (SELECT [COMPANY NAME] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[ADDRESS] = (SELECT [ADDRESS] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[CITY] = (SELECT [CITY] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[PROVINCE] = (SELECT [PROVINCE] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[POSTAL CODE] = (SELECT [POSTAL CODE] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[PHONE] = (SELECT [PHONE] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350),
+	[CONTACT] = (SELECT [CONTACT] FROM [BWSdb_20211205].[dbo].[Dealers] WHERE [ID] = 350)
+WHERE
+	[ID] = 350
+	
+SELECT * FROM [Dealers] WHERE [ID] = 350 ORDER BY [COMPANY NAME]
+SELECT * FROM [Dealers] ORDER BY [COMPANY NAME]
+
+ROLLBACK;
+COMMIT;
