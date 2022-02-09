@@ -12,5 +12,11 @@ USE SysproCompanyA
 GO
 
 --Parts Sales Summary report (SysproCompanyA -> Admin Menu -> Parts Sales Summary & Detail)
+USE SysproCompanyA
+GO
 exec [sp_PartsSalesSummary] '1-1-2022', '1-31-2022', '2-1-2022', '2-28-2022'
-exec [sp_PartsSalesDetail] '1-1-2022', '1-31-2022', '2-1-2022', '2-28-2022'
+exec [sp_PartsSalesDetail] '1-1-2020', '12-31-2020', '1-1-2021', '12-31-2021'
+USE BWSdb
+GO
+exec [sp_PartsSalesSummary] '1-1-2022', '1-31-2022', '2-1-2022', '2-28-2022'
+exec [sp_PartsSalesDetail] '1-1-2020', '12-31-2020', '1-1-2021', '12-31-2021'

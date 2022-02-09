@@ -5,16 +5,26 @@
 	USE [SysproCompanyA]
 GO
 
---CREATE PROCEDURE [dbo].[sp_DealerPartsSalesSummary]
-DECLARE @sd datetime, @ed datetime, @sd1 datetime, @ed1 datetime
---AS BEGIN
+ALTER PROCEDURE [dbo].[sp_DealerPartsSalesSummary]
+	@sd datetime, @ed datetime, @sd1 datetime, @ed1 datetime
+AS BEGIN
+--USE [BWSdb]
+--GO
+
+
+--	USE [SysproCompanyA]
+--GO
+
+----CREATE PROCEDURE [dbo].[sp_DealerPartsSalesSummary]
+--DECLARE @sd datetime, @ed datetime, @sd1 datetime, @ed1 datetime
+----AS BEGIN
 
  
 	
-SET @sd = '2018-11-01';
-SET @ed = '2022-02-28';
-SET @sd1 = '2018-11-01';
-SET @ed1 = '2022-02-28';
+--SET @sd = '2018-11-01';
+--SET @ed = '2022-02-28';
+--SET @sd1 = '2018-11-01';
+--SET @ed1 = '2022-02-28';
 
 --SET @sd = '1990-01-01';
 --SET @ed = '2030-12-31';
@@ -919,134 +929,134 @@ SET @ed1 = '2022-02-28';
 
 
 
-	--Final select statement ALL COLUMNS
-	SELECT 
-		[InvoiceMonth],
-		[InvoiceYear],
-		[SumOfUnitsSoldPrior],
-		[SumOfSumOfSelling PricePrior],
-		[PFSellingPrice],
-		[Change%Prior],
-		[SumOfSumOfActual MarginPrior],
-		[Margin % Prior],
-		[Avg Rev Prior],
-		[SumOfSumOfActual Hours Prior],
-		[Con Prior],
-		[On Order Prior],
-		[Initials],
-		[Grouping],
-		[Label],
-		[LabelTtl],
-		[Section],
-		[LabelSection],
-		[US],
-		[LabelUS],
-		[CountryID],
-		[SumOfUnitsSold],
-		[SumOfSumOfSelling Price],
-		[SrcA].[Change%] AS [Change%A],
-		[SumOfSumOfActual Margin],
-		[SumOfSumOfActual Hours],
-		[On Order],
-		[Margin %],
-		[Avg Rev],
-		[Con],
-		[SrcA].[COGS] AS [COGS_Trailer],
-		(CASE WHEN [Dealer] IS NULL THEN '' ELSE [Dealer] END) AS [Dealer],
-		(CASE WHEN [PriorGrossPrice] IS NULL THEN 0 ELSE [PriorGrossPrice] END) AS [PriorGrossPrice],
-		(CASE WHEN [PriorSellingPrice] IS NULL THEN 0 ELSE [PriorSellingPrice] END) AS [PriorSellingPrice],
-		(CASE WHEN [PriorCOGS] IS NULL THEN 0 ELSE [PriorCOGS] END) AS [PriorCOGS],
-		(CASE WHEN [PriorMargin] IS NULL THEN 0 ELSE [PriorMargin] END) AS [PriorMargin],
-		(CASE WHEN [GlCode] IS NULL THEN 0 ELSE [GlCode] END) AS [GlCode],
-		(CASE WHEN [LblGroup] IS NULL THEN '' ELSE [LblGroup] END) AS [LblGroup],
-		(CASE WHEN [CurrentGrossPrice] IS NULL THEN 0 ELSE [CurrentGrossPrice] END) AS [CurrentGrossPrice],
-		(CASE WHEN [CurrentDiscount] IS NULL THEN 0 ELSE [CurrentDiscount] END) AS [CurrentDiscount],
-		(CASE WHEN [CurrentSellingPrice] IS NULL THEN 0 ELSE [CurrentSellingPrice] END) AS [CurrentSellingPrice],
-		(CASE WHEN [CurrentCOGS] IS NULL THEN 0 ELSE [CurrentCOGS] END) AS [CurrentCOGS],
-		(CASE WHEN [CurrentMargin] IS NULL THEN 0 ELSE [CurrentMargin] END) AS [CurrentMargin],
-		(CASE WHEN [CurrentMargin%] IS NULL THEN 0 ELSE [CurrentMargin%] END) AS [CurrentMargin%],
-		(CASE WHEN [SrcB].[Change%] IS NULL THEN 0 ELSE [SrcB].[Change%] END) AS [Change%B]
-	FROM
+	----Final select statement ALL COLUMNS
+	--SELECT 
+	--	[InvoiceMonth],
+	--	[InvoiceYear],
+	--	[SumOfUnitsSoldPrior],
+	--	[SumOfSumOfSelling PricePrior],
+	--	[PFSellingPrice],
+	--	[Change%Prior],
+	--	[SumOfSumOfActual MarginPrior],
+	--	[Margin % Prior],
+	--	[Avg Rev Prior],
+	--	[SumOfSumOfActual Hours Prior],
+	--	[Con Prior],
+	--	[On Order Prior],
+	--	[Initials],
+	--	[Grouping],
+	--	[Label],
+	--	[LabelTtl],
+	--	[Section],
+	--	[LabelSection],
+	--	[US],
+	--	[LabelUS],
+	--	[CountryID],
+	--	[SumOfUnitsSold],
+	--	[SumOfSumOfSelling Price],
+	--	[SrcA].[Change%] AS [Change%A],
+	--	[SumOfSumOfActual Margin],
+	--	[SumOfSumOfActual Hours],
+	--	[On Order],
+	--	[Margin %],
+	--	[Avg Rev],
+	--	[Con],
+	--	[SrcA].[COGS] AS [COGS_Trailer],
+	--	(CASE WHEN [Dealer] IS NULL THEN '' ELSE [Dealer] END) AS [Dealer],
+	--	(CASE WHEN [PriorGrossPrice] IS NULL THEN 0 ELSE [PriorGrossPrice] END) AS [PriorGrossPrice],
+	--	(CASE WHEN [PriorSellingPrice] IS NULL THEN 0 ELSE [PriorSellingPrice] END) AS [PriorSellingPrice],
+	--	(CASE WHEN [PriorCOGS] IS NULL THEN 0 ELSE [PriorCOGS] END) AS [PriorCOGS],
+	--	(CASE WHEN [PriorMargin] IS NULL THEN 0 ELSE [PriorMargin] END) AS [PriorMargin],
+	--	(CASE WHEN [GlCode] IS NULL THEN 0 ELSE [GlCode] END) AS [GlCode],
+	--	(CASE WHEN [LblGroup] IS NULL THEN '' ELSE [LblGroup] END) AS [LblGroup],
+	--	(CASE WHEN [CurrentGrossPrice] IS NULL THEN 0 ELSE [CurrentGrossPrice] END) AS [CurrentGrossPrice],
+	--	(CASE WHEN [CurrentDiscount] IS NULL THEN 0 ELSE [CurrentDiscount] END) AS [CurrentDiscount],
+	--	(CASE WHEN [CurrentSellingPrice] IS NULL THEN 0 ELSE [CurrentSellingPrice] END) AS [CurrentSellingPrice],
+	--	(CASE WHEN [CurrentCOGS] IS NULL THEN 0 ELSE [CurrentCOGS] END) AS [CurrentCOGS],
+	--	(CASE WHEN [CurrentMargin] IS NULL THEN 0 ELSE [CurrentMargin] END) AS [CurrentMargin],
+	--	(CASE WHEN [CurrentMargin%] IS NULL THEN 0 ELSE [CurrentMargin%] END) AS [CurrentMargin%],
+	--	(CASE WHEN [SrcB].[Change%] IS NULL THEN 0 ELSE [SrcB].[Change%] END) AS [Change%B]
+	--FROM
 	
-	(
-	select 
-	a.[InvoiceMonth],
-	a.[InvoiceYear],
-	a.[Units Sold Prior] as SumOfUnitsSoldPrior,
-	a.[Selling Price Prior] as [SumOfSumOfSelling PricePrior],
-	b.[Selling Price] as PFSellingPrice,
-	case when b.[Selling Price] = 0 then 0 else (a.[Selling Price Prior] - b.[Selling Price])/b.[Selling Price] end as [Change%Prior],
-	a.[Actual Margin Prior] as [SumOfSumOfActual MarginPrior],
-	case when a.[Selling Price Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Selling Price Prior] end as [Margin % Prior],
-	case when a.[Units Sold Prior] = 0 then 0 else (a.[Selling Price Prior]/a.[Units Sold Prior]) end as [Avg Rev Prior],
-	a.[Actual Hours Prior] as [SumOfSumOfActual Hours Prior],
-	case when a.[Actual Hours Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Actual Hours Prior] end as [Con Prior],
-	case when c.[On Order Prior] is null then 0 else c.[On Order Prior] end as [On Order Prior],
-	a.Initials, a.Grouping, a.Label, a.LabelTtl, a.Section, a.LabelSection, a.US, a.LabelUS, 
-	case when a.Initials = 'DCI-R' then 1 when a.Initials = 'TMC' then 0 else d.CountryID end as CountryID,
-	a.[Units Sold] as SumOfUnitsSold,
-	a.[Selling Price] as [SumOfSumOfSelling Price],
-	case when a.[Selling Price Prior] = 0 then 0 else (a.[Selling Price] - a.[Selling Price Prior])/a.[Selling Price Prior] end as [Change%],
-	a.[Actual Margin] as [SumOfSumOfActual Margin],
-	a.[Actual Hours] as [SumOfSumOfActual Hours],
-	case when c.[On Order] is null then 0 else c.[On Order] end as [On Order],
-	case when a.[Selling Price] = 0 then 0 else a.[Actual Margin]/a.[Selling Price] end as [Margin %],
-	case when a.[Units Sold] = 0 then 0 else (a.[Selling Price]/a.[Units Sold]) end as [Avg Rev],
-	case when a.[Actual Hours] = 0 then 0 else a.[Actual Margin]/a.[Actual Hours] end as Con
-	, a.[COGS]
+	--(
+	--select 
+	--a.[InvoiceMonth],
+	--a.[InvoiceYear],
+	--a.[Units Sold Prior] as SumOfUnitsSoldPrior,
+	--a.[Selling Price Prior] as [SumOfSumOfSelling PricePrior],
+	--b.[Selling Price] as PFSellingPrice,
+	--case when b.[Selling Price] = 0 then 0 else (a.[Selling Price Prior] - b.[Selling Price])/b.[Selling Price] end as [Change%Prior],
+	--a.[Actual Margin Prior] as [SumOfSumOfActual MarginPrior],
+	--case when a.[Selling Price Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Selling Price Prior] end as [Margin % Prior],
+	--case when a.[Units Sold Prior] = 0 then 0 else (a.[Selling Price Prior]/a.[Units Sold Prior]) end as [Avg Rev Prior],
+	--a.[Actual Hours Prior] as [SumOfSumOfActual Hours Prior],
+	--case when a.[Actual Hours Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Actual Hours Prior] end as [Con Prior],
+	--case when c.[On Order Prior] is null then 0 else c.[On Order Prior] end as [On Order Prior],
+	--a.Initials, a.Grouping, a.Label, a.LabelTtl, a.Section, a.LabelSection, a.US, a.LabelUS, 
+	--case when a.Initials = 'DCI-R' then 1 when a.Initials = 'TMC' then 0 else d.CountryID end as CountryID,
+	--a.[Units Sold] as SumOfUnitsSold,
+	--a.[Selling Price] as [SumOfSumOfSelling Price],
+	--case when a.[Selling Price Prior] = 0 then 0 else (a.[Selling Price] - a.[Selling Price Prior])/a.[Selling Price Prior] end as [Change%],
+	--a.[Actual Margin] as [SumOfSumOfActual Margin],
+	--a.[Actual Hours] as [SumOfSumOfActual Hours],
+	--case when c.[On Order] is null then 0 else c.[On Order] end as [On Order],
+	--case when a.[Selling Price] = 0 then 0 else a.[Actual Margin]/a.[Selling Price] end as [Margin %],
+	--case when a.[Units Sold] = 0 then 0 else (a.[Selling Price]/a.[Units Sold]) end as [Avg Rev],
+	--case when a.[Actual Hours] = 0 then 0 else a.[Actual Margin]/a.[Actual Hours] end as Con
+	--, a.[COGS]
 
-	from #tmptable as a
-	inner join #tmptablePF as b on a.Initials = b.Initials AND (a.[InvoiceMonth] = b.[InvoiceMonth] AND a.[InvoiceYear] = b.[InvoiceYear])
-	left outer join #tmptableUOO as c on a.Initials = c.Initials
-	left outer join (select Initials, 
-					 case when [CURRENT DEALER CDN] = 1 then 0
-						  when [CURRENT DEALER US] = 1 then 1
-						  else null end as CountryID 
-					 from [BWSdb].[dbo].Dealers
-					 where (cast([CURRENT DEALER] as int) + cast([CURRENT DEALER CDN] as int) + cast([CURRENT DEALER US] as int)) > 0
-					 group by Initials, [CURRENT DEALER CDN], [CURRENT DEALER US]) as d on a.Initials = d.Initials
-	where ((case when isnull(c.[On Order], 0) = 0 then 0 when c.[On Order] < 0 then c.[On Order] * -1 else c.[On Order] end) + 
-	(case when isnull(c.[On Order Prior], 0) = 0 then 0 when c.[On Order Prior] < 0 then c.[On Order Prior] * -1 else c.[On Order Prior] end) +
-	(case when isnull(a.[Units Sold], 0) = 0 then 0 when a.[Units Sold] < 0 then a.[Units Sold] * -1 else a.[Units Sold] end) +
-	(case when isnull(a.[Units Sold Prior], 0) = 0 then 0 when a.[Units Sold Prior] < 0 then a.[Units Sold Prior] * -1 else a.[Units Sold Prior] end) +
-	(case when a.Initials in ('DCI-R', 'TMC') then 1 else 0 end) /*+
-	(case when isnull(b.[Units Sold], 0) = 0 then 0 else b.[Units Sold] end)*/) <> 0	
-	) AS [SrcA]
+	--from #tmptable as a
+	--inner join #tmptablePF as b on a.Initials = b.Initials AND (a.[InvoiceMonth] = b.[InvoiceMonth] AND a.[InvoiceYear] = b.[InvoiceYear])
+	--left outer join #tmptableUOO as c on a.Initials = c.Initials
+	--left outer join (select Initials, 
+	--				 case when [CURRENT DEALER CDN] = 1 then 0
+	--					  when [CURRENT DEALER US] = 1 then 1
+	--					  else null end as CountryID 
+	--				 from [BWSdb].[dbo].Dealers
+	--				 where (cast([CURRENT DEALER] as int) + cast([CURRENT DEALER CDN] as int) + cast([CURRENT DEALER US] as int)) > 0
+	--				 group by Initials, [CURRENT DEALER CDN], [CURRENT DEALER US]) as d on a.Initials = d.Initials
+	--where ((case when isnull(c.[On Order], 0) = 0 then 0 when c.[On Order] < 0 then c.[On Order] * -1 else c.[On Order] end) + 
+	--(case when isnull(c.[On Order Prior], 0) = 0 then 0 when c.[On Order Prior] < 0 then c.[On Order Prior] * -1 else c.[On Order Prior] end) +
+	--(case when isnull(a.[Units Sold], 0) = 0 then 0 when a.[Units Sold] < 0 then a.[Units Sold] * -1 else a.[Units Sold] end) +
+	--(case when isnull(a.[Units Sold Prior], 0) = 0 then 0 when a.[Units Sold Prior] < 0 then a.[Units Sold Prior] * -1 else a.[Units Sold Prior] end) +
+	--(case when a.Initials in ('DCI-R', 'TMC') then 1 else 0 end) /*+
+	--(case when isnull(b.[Units Sold], 0) = 0 then 0 else b.[Units Sold] end)*/) <> 0	
+	--) AS [SrcA]
 
-	LEFT JOIN (
+	--LEFT JOIN (
 
-	select 
-	convert(float, sum(PriorGrossPrice)) as PriorGrossPrice,
-	convert(float, sum(PriorDiscount)) as PriorDiscount,
-	convert(float, sum(PriorGrossPrice - PriorDiscount)) as PriorSellingPrice, 
-	convert(float, sum(PriorCOGS)) as PriorCOGS,
-	convert(float, sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) as PriorMargin,
-	case when GlCode = 5095 then 0 
-		 when convert(float, sum(PriorGrossPrice - PriorDiscount)) = 0 then 0
-		 else convert(float, (sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) / (sum(PriorGrossPrice - PriorDiscount))) end as [PriorMargin%],
-	GlCode,
-	case GlCode when 4505 then 'CDN'
-				when 4510 then 'US'
-				when 5095 then 'Misc.'
-				else '' end as LblGroup,
-	Dealer,
-	convert(float, sum(CurrentGrossPrice)) as CurrentGrossPrice,
-	convert(float, sum(CurrentDiscount)) as CurrentDiscount,
-	convert(float, sum(CurrentGrossPrice - CurrentDiscount)) as CurrentSellingPrice, 
-	convert(float, sum(CurrentCOGS)) as CurrentCOGS,
-	convert(float, sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) as CurrentMargin,
-	case when GlCode = 5095 then 0 
-		 when convert(float, sum(CurrentGrossPrice - CurrentDiscount)) = 0 then 0
-		 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) / (sum(CurrentGrossPrice - CurrentDiscount))) end as [CurrentMargin%],
-	case when convert(float, (sum(PriorGrossPrice - PriorDiscount))) = 0 then 0 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(PriorGrossPrice - PriorDiscount)) / sum(PriorGrossPrice - PriorDiscount)) end as [Change%],
-	[GlMonth], [GlYear]
-	from #maintbl
-	group by GlCode, Dealer, [GlMonth], [GlYear]
+	--select 
+	--convert(float, sum(PriorGrossPrice)) as PriorGrossPrice,
+	--convert(float, sum(PriorDiscount)) as PriorDiscount,
+	--convert(float, sum(PriorGrossPrice - PriorDiscount)) as PriorSellingPrice, 
+	--convert(float, sum(PriorCOGS)) as PriorCOGS,
+	--convert(float, sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) as PriorMargin,
+	--case when GlCode = 5095 then 0 
+	--	 when convert(float, sum(PriorGrossPrice - PriorDiscount)) = 0 then 0
+	--	 else convert(float, (sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) / (sum(PriorGrossPrice - PriorDiscount))) end as [PriorMargin%],
+	--GlCode,
+	--case GlCode when 4505 then 'CDN'
+	--			when 4510 then 'US'
+	--			when 5095 then 'Misc.'
+	--			else '' end as LblGroup,
+	--Dealer,
+	--convert(float, sum(CurrentGrossPrice)) as CurrentGrossPrice,
+	--convert(float, sum(CurrentDiscount)) as CurrentDiscount,
+	--convert(float, sum(CurrentGrossPrice - CurrentDiscount)) as CurrentSellingPrice, 
+	--convert(float, sum(CurrentCOGS)) as CurrentCOGS,
+	--convert(float, sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) as CurrentMargin,
+	--case when GlCode = 5095 then 0 
+	--	 when convert(float, sum(CurrentGrossPrice - CurrentDiscount)) = 0 then 0
+	--	 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) / (sum(CurrentGrossPrice - CurrentDiscount))) end as [CurrentMargin%],
+	--case when convert(float, (sum(PriorGrossPrice - PriorDiscount))) = 0 then 0 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(PriorGrossPrice - PriorDiscount)) / sum(PriorGrossPrice - PriorDiscount)) end as [Change%],
+	--[GlMonth], [GlYear]
+	--from #maintbl
+	--group by GlCode, Dealer, [GlMonth], [GlYear]
 
-	) AS [SrcB]
-	ON
-		[SrcA].[Initials] = [SrcB].[Dealer]
-		AND ([SrcA].[InvoiceMonth] = [SrcB].[GlMonth] AND [SrcA].[InvoiceYear] = [SrcB].[GlYear])
+	--) AS [SrcB]
+	--ON
+	--	[SrcA].[Initials] = [SrcB].[Dealer]
+	--	AND ([SrcA].[InvoiceMonth] = [SrcB].[GlMonth] AND [SrcA].[InvoiceYear] = [SrcB].[GlYear])
 
 
 
@@ -1152,4 +1162,5 @@ SET @ed1 = '2022-02-28';
 		AND ([SrcA].[InvoiceMonth] = [SrcB].[GlMonth] AND [SrcA].[InvoiceYear] = [SrcB].[GlYear])
 	ORDER BY
 		[InvoiceYear], [InvoiceMonth]
---END
+
+END
