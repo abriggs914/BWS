@@ -25,11 +25,11 @@ FROM            dbo.dtSalesPerformance WITH (nolock) INNER JOIN
                          [BWSdb].dbo.ProductsV2 WITH (nolock) ON [BWSdb].dbo.OrdersV2.[Model No] = [BWSdb].dbo.ProductsV2.[Model No] LEFT OUTER JOIN
                          dbo.[v_Dealer Totals Breakdown By Quote] AS a ON (CASE WHEN dtSalesPerformance.[COMPANY NAME] LIKE '%Ltd%' THEN LEFT(dbo.fnFirsties(dtSalesPerformance.[COMPANY NAME]), 2) 
                          ELSE LEFT(dbo.fnFirsties(dtSalesPerformance.[COMPANY NAME]), 3) END) = LEFT(a.Initials, 3) AND [BWSdb].dbo.OrdersV2.SGQuote = a.SGQuote LEFT OUTER JOIN
-                         dbo.Dealers WITH (nolock) ON [BWSdb].dbo.OrdersV2.DealerID = dbo.Dealers.ID LEFT OUTER JOIN
+                         [BWSdb].dbo.DealersV2 WITH (nolock) ON [BWSdb].dbo.OrdersV2.DealerID = [BWSdb].dbo.DealersV2.ID LEFT OUTER JOIN
                          dbo.[v_Dealer Totals Breakdown By Quote] AS b ON [BWSdb].dbo.OrdersV2.SGQuote = b.SGQuote LEFT OUTER JOIN
-                         SysproCompanyA.dbo.SorMaster WITH (nolock) ON dbo.dtSalesPerformance.SalesOrder COLLATE Latin1_General_BIN = SysproCompanyA.dbo.SorMaster.SalesOrder LEFT OUTER JOIN
-                         dbo.dtSYSPROCustomerInitials WITH (nolock) ON SysproCompanyA.dbo.SorMaster.Customer = dbo.dtSYSPROCustomerInitials.SYSPROCustomer COLLATE Latin1_General_BIN LEFT OUTER JOIN
-                         dbo.[v_Dealer Totals Breakdown] ON dbo.dtSYSPROCustomerInitials.Initials = dbo.[v_Dealer Totals Breakdown].Initials
+                         SysproCompanyS.dbo.SorMaster WITH (nolock) ON dbo.dtSalesPerformance.SalesOrder COLLATE Latin1_General_BIN = SysproCompanyS.dbo.SorMaster.SalesOrder LEFT OUTER JOIN
+                         [BWSdb].dbo.dtSYSPROCustomerInitals WITH (nolock) ON SysproCompanyS.dbo.SorMaster.Customer = dtSYSPROCustomerInitals.SYSPROCustomer COLLATE Latin1_General_BIN LEFT OUTER JOIN
+                         dbo.[v_Dealer Totals Breakdown] ON dtSYSPROCustomerInitals.Initials = dbo.[v_Dealer Totals Breakdown].Initials
 GROUP BY dbo.dtSalesPerformance.[COMPANY NAME], dbo.dtSalesPerformance.[Invoice #], dbo.dtSalesPerformance.WO#, [BWSdb].dbo.OrdersV2.[Date Declined], dbo.[v_Dealer Totals Breakdown].Initials, a.Initials, 
                          dbo.[v_Dealer Totals Breakdown].GROUPING, [BWSdb].dbo.ProductsV2.Grouping, dbo.[v_Dealer Totals Breakdown].Label, a.Label, dbo.[v_Dealer Totals Breakdown].LabelTtl, a.LabelTtl, dbo.[v_Dealer Totals Breakdown].Section, a.Section, 
                          dbo.[v_Dealer Totals Breakdown].LabelSection, a.LabelSection, dbo.[v_Dealer Totals Breakdown].LabelUS, a.LabelUS, dbo.[v_Dealer Totals Breakdown].US, a.US, a.GROUPING, b.Initials, b.Label, b.LabelTtl, b.Section, 

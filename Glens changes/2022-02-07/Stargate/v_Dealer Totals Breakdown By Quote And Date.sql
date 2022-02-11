@@ -8,7 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE VIEW [dbo].[v_Dealer Totals Breakdown By Quote And Date]
+ALTER VIEW [dbo].[v_Dealer Totals Breakdown By Quote And Date]
 AS
 SELECT        OrderMonth, OrderYear, SGQuote, Initials, 
                          CASE [v_Dealer Listing By Quote And Date].Grouping WHEN '5' THEN 'Proprietary, Direct & Other' WHEN '4' THEN 'American Dealers' WHEN '2' THEN 'Eastern Canadian Dealers' WHEN '1' THEN 'American Dealers' WHEN '3' THEN

@@ -1,7 +1,7 @@
 USE Stargatedb
 GO
 
-CREATE VIEW [dbo].[v_Dealer Totals Breakdown] AS
+ALTER VIEW [dbo].[v_Dealer Totals Breakdown] AS
 
 SELECT        Initials, 
                          CASE [v_Dealer Listing].Grouping WHEN '5' THEN 'Proprietary, Direct & Other' WHEN '4' THEN 'American Dealers' WHEN '2' THEN 'Eastern Canadian Dealers' WHEN '1' THEN 'American Dealers' WHEN '3' THEN 'Western Canadian Dealers'

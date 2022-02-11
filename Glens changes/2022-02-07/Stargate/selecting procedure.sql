@@ -33,8 +33,7 @@ SET @ed1 = '2022-02-01';
 --SET @sd1 = '1990-01-01';
 --SET @ed1 = '2030-12-31';
 
-    -- Insert statements for procedure here
-	--Dealer Sales Summary - Prelim
+
 
 	declare @sd2 datetime, @ed2 datetime
 
@@ -731,7 +730,7 @@ SET @ed1 = '2022-02-01';
 																			+ right('00000' + cast(DetailLine as varchar(5)), 5)
 	inner join #PeriodEndDates on GenTransaction.GlYear = #PeriodEndDates.GlYear
 								  and GenTransaction.GlPeriod = #PeriodEndDates.GlPeriod
-	left outer join [Stargatedb].dbo.dtSYSPROCustomerInitials with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitials.SYSPROCustomer collate Latin1_General_BIN
+	left outer join [BWSdb].dbo.dtSYSPROCustomerInitals with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitals.SYSPROCustomer collate Latin1_General_BIN
 	left outer join #CostGLPF as subA on GenTransaction.Journal = subA.Journal AND (subA.[JnlMonth] = MONTH([JnlDate]) AND subA.[JnlYear] = YEAR([JnlDate]))
 					 and (case when ArTrnDetail.Customer is null then '1' else ArTrnDetail.Customer end) = subA.Customer collate Latin1_General_BIN
 					 and GenTransaction.OriginZoomKey = subA.OriginZoomKey collate Latin1_General_BIN
@@ -772,7 +771,7 @@ SET @ed1 = '2022-02-01';
 																			+ right('0000000000' + cast(DetailLine as varchar(10)), 10)
 	inner join #PeriodEndDates on GenTransaction.GlYear = #PeriodEndDates.GlYear
 								  and GenTransaction.GlPeriod = #PeriodEndDates.GlPeriod
-	left outer join [Stargatedb].dbo.dtSYSPROCustomerInitials with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitials.SYSPROCustomer collate Latin1_General_BIN
+	left outer join [BWSdb].dbo.dtSYSPROCustomerInitals with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitals.SYSPROCustomer collate Latin1_General_BIN
 	left outer join #CostGLPF as subA on GenTransaction.Journal = subA.Journal AND (subA.[JnlMonth] = MONTH([JnlDate]) AND subA.[JnlYear] = YEAR([JnlDate]))
 					 and (case when ArTrnDetail.Customer is null then '1' else ArTrnDetail.Customer end) = subA.Customer collate Latin1_General_BIN
 					 and GenTransaction.OriginZoomKey = subA.OriginZoomKey collate Latin1_General_BIN
@@ -847,7 +846,7 @@ SET @ed1 = '2022-02-01';
 																			+ right('00000' + cast(DetailLine as varchar(5)), 5)
 	inner join #PeriodEndDates on GenTransaction.GlYear = #PeriodEndDates.GlYear
 								  and GenTransaction.GlPeriod = #PeriodEndDates.GlPeriod
-	left outer join [Stargatedb].dbo.dtSYSPROCustomerInitials with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitials.SYSPROCustomer collate Latin1_General_BIN
+	left outer join [BWSdb].dbo.dtSYSPROCustomerInitals with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitals.SYSPROCustomer collate Latin1_General_BIN
 	left outer join #CostGLCF as subA on GenTransaction.Journal = subA.Journal  AND (subA.[JnlMonth] = MONTH([JnlDate]) AND subA.[JnlYear] = YEAR([JnlDate]))
 					 and (case when ArTrnDetail.Customer is null then '1' else ArTrnDetail.Customer end) = subA.Customer collate Latin1_General_BIN
 					 and GenTransaction.OriginZoomKey = subA.OriginZoomKey collate Latin1_General_BIN
@@ -888,7 +887,7 @@ SET @ed1 = '2022-02-01';
 																			+ right('0000000000' + cast(DetailLine as varchar(10)), 10)
 	inner join #PeriodEndDates on GenTransaction.GlYear = #PeriodEndDates.GlYear
 								  and GenTransaction.GlPeriod = #PeriodEndDates.GlPeriod
-	left outer join [Stargatedb].dbo.dtSYSPROCustomerInitials with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitials.SYSPROCustomer collate Latin1_General_BIN
+	left outer join [BWSdb].dbo.dtSYSPROCustomerInitals with (nolock) on ArTrnDetail.Customer = dtSYSPROCustomerInitals.SYSPROCustomer collate Latin1_General_BIN
 	left outer join #CostGLCF as subA on GenTransaction.Journal = subA.Journal  AND (subA.[JnlMonth] = MONTH([JnlDate]) AND subA.[JnlYear] = YEAR([JnlDate]))
 					 and (case when ArTrnDetail.Customer is null then '1' else ArTrnDetail.Customer end) = subA.Customer collate Latin1_General_BIN
 					 and GenTransaction.OriginZoomKey = subA.OriginZoomKey collate Latin1_General_BIN
@@ -1239,6 +1238,7 @@ SET @ed1 = '2022-02-01';
 	[InvoiceYear], [InvoiceMonth], [Initials]
 	ORDER BY
 		[InvoiceYear], [InvoiceMonth], [Initials]
+
 
 --END
 

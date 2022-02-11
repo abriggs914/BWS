@@ -10,7 +10,7 @@ GO
 
 
 
-CREATE VIEW [dbo].[v_Class Totals Breakdown]
+ALTER VIEW [dbo].[v_Class Totals Breakdown]
 AS
 SELECT     Grouping, 
                       CASE [v_Class Listing].Grouping WHEN 'Sander Bodies' THEN 'Proprietary' WHEN 'Nuclear' THEN 'Proprietary' WHEN 'Container Chassis' THEN 'Proprietary' WHEN 'Cable Reels'

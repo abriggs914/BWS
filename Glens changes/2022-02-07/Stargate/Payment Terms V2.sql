@@ -8,6 +8,8 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+DROP TABLE [dbo].[Payment Terms V2]
+
 CREATE TABLE [dbo].[Payment Terms V2](
 	[PayID] [int] IDENTITY(1,1) NOT NULL,
 	[Payment Terms] [nvarchar](255) NULL,
