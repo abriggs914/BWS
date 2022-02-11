@@ -1,0 +1,21 @@
+USE [Stargatedb]
+GO
+
+/****** Object:  Table [dbo].[Payment Terms V2]    Script Date: 2022-02-10 2:28:55 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[Payment Terms V2](
+	[PayID] [int] IDENTITY(1,1) NOT NULL,
+	[Payment Terms] [nvarchar](255) NULL,
+ CONSTRAINT [aaaaaPayment Terms V2_PK] PRIMARY KEY NONCLUSTERED 
+(
+	[PayID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
