@@ -289,7 +289,7 @@ SET @ed1 = '2022-02-01';
 	select @loopglyear = GlYear,
 		   @loopglperiod = GlPeriod
 	from GenControl with (nolock) -- <- HERE, YOU WOULD USE WHICHEVER "Control" SQL TABLE BASED ON SYSPRO MODULE YOU WERE WORKING WITHIN! (i.e. Inventory = InvControl)
-	where Company = 'A'
+	where Company = 'S'
 
 	--grab current period end date (if it's there)
 	select @SQLselect = 'insert into #PeriodEndDates (GlYear, GLPeriod, PeriodEndDate)
@@ -317,17 +317,17 @@ SET @ed1 = '2022-02-01';
 		end
 	
 	--Loop through current and prior year month end date columns 
-	while @loopglyear >= (select GlYear - 1 from GenControl with (nolock) where Company = 'A')
+	while @loopglyear >= (select GlYear - 1 from GenControl with (nolock) where Company = 'S')
 		begin
-			if @loopglyear = (select GlYear from GenControl with (nolock) where Company = 'A')
+			if @loopglyear = (select GlYear from GenControl with (nolock) where Company = 'S')
 				begin
 					select @SQLselect = 'insert into #PeriodEndDates (GlYear, GLPeriod, PeriodEndDate)
-										 select ' + cast(@loopglyear as nvarchar) + ', ' + cast(@loopglperiod as nvarchar) +', CurYrPrdEnd' + cast(@loopglperiod as nvarchar) + ' from GenControl with (nolock) where Company = ''A'''
+										 select ' + cast(@loopglyear as nvarchar) + ', ' + cast(@loopglperiod as nvarchar) +', CurYrPrdEnd' + cast(@loopglperiod as nvarchar) + ' from GenControl with (nolock) where Company = ''S'''
 				end
 			else
 				begin
 					select @SQLselect = 'insert into #PeriodEndDates (GlYear, GLPeriod, PeriodEndDate)
-										 select ' + cast(@loopglyear as nvarchar) + ', ' + cast(@loopglperiod as nvarchar) +', PrvYrPrdEnd' + cast(@loopglperiod as nvarchar) + ' from GenControl with (nolock) where Company = ''A'''
+										 select ' + cast(@loopglyear as nvarchar) + ', ' + cast(@loopglperiod as nvarchar) +', PrvYrPrdEnd' + cast(@loopglperiod as nvarchar) + ' from GenControl with (nolock) where Company = ''S'''
 				end
 
 			exec sp_executesql @SQLselect
@@ -461,7 +461,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	group by Journal, Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
 	union all select Journal,
@@ -480,7 +480,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	group by Journal, Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
 	union all select Journal, 'Other' as Customer, OriginZoomKey,
@@ -492,7 +492,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	and Source <> 'SA'
 	group by Journal, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
@@ -527,7 +527,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 
 	union all select Journal,
 	case when Customer is null then '1' else Customer end as Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
@@ -545,7 +545,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 
 	union all select Journal, 'Other' as Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 	from GenTransaction with (nolock)
@@ -556,7 +556,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	and Source <> 'SA'
 
 	--Drop and create temp table in tmpdb SQL database for faster processing
@@ -590,7 +590,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	group by Journal, Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
 	union all select Journal,
@@ -609,7 +609,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	group by Journal, Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
 	union all select Journal, 'Other' as Customer, OriginZoomKey,
@@ -621,7 +621,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode = 5095
+	and GlCode = 5001
 	and Source <> 'SA'
 	group by Journal, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 
@@ -655,7 +655,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 
 	union all select Journal,
 	case when Customer is null then '1' else Customer end as Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
@@ -673,7 +673,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 
 	union all select Journal, 'Other' as Customer, OriginZoomKey,  MONTH([JnlDate]), YEAR([JnlDate])
 	from GenTransaction with (nolock)
@@ -684,7 +684,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	and Source <> 'SA'
 
 	--Drop and create temp table in tmpdb SQL database for faster processing
@@ -739,7 +739,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	group by GlCode, GenTransaction.Journal, Initials, ArTrnDetail.Customer, subA.CostValue
 	,MONTH([PeriodEndDate])
 	,YEAR([PeriodEndDate])
@@ -780,7 +780,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	group by GlCode, GenTransaction.Journal, Initials, ArTrnDetail.Customer, subA.CostValue
 	,MONTH([PeriodEndDate])
 	,YEAR([PeriodEndDate])
@@ -812,7 +812,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd1 and @Localed1 then 1
 			  when year(PeriodEndDate) = year(@Localsd1) and month(PeriodEndDate) = month(@Localsd1) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	and Source <> 'SA'
 	group by GlCode, GenTransaction.Journal, subA.Customer, subA.CostValue
 	,MONTH([PeriodEndDate])
@@ -855,7 +855,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	group by GlCode, GenTransaction.Journal, Initials, ArTrnDetail.Customer, subA.CostValue
 	,MONTH([PeriodEndDate])
 	,YEAR([PeriodEndDate])
@@ -896,7 +896,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	group by GlCode, GenTransaction.Journal, Initials, ArTrnDetail.Customer, subA.CostValue, GenTransaction.[GlPeriod], GenTransaction.[GlYear]
 	,MONTH([PeriodEndDate])
 	,YEAR([PeriodEndDate])
@@ -928,7 +928,7 @@ SET @ed1 = '2022-02-01';
 			  when PeriodEndDate between @Localsd and @Localed then 1
 			  when year(PeriodEndDate) = year(@Localsd) and month(PeriodEndDate) = month(@Localsd) then 1
 			  else 0 end) = 1
-	and GlCode in (4505, 4510)
+	and GlCode in (4013, 4022)
 	and Source <> 'SA'
 	group by GlCode, GenTransaction.Journal, subA.Customer, subA.CostValue
 	,MONTH([PeriodEndDate])
@@ -942,7 +942,7 @@ SET @ed1 = '2022-02-01';
 
 
 	insert into #maintbl (GlCode, Journal, Dealer, PriorGrossPrice, PriorDiscount, PriorCOGS, CurrentGrossPrice, CurrentDiscount, CurrentCOGS, [GlMonth], [GlYear])
-	select '5095', 0, 'Misc.', 0, 0, SUM([PriorNetCOGS]) - SUM([PriorGLCOGS]), 0, 0, sum(b.CurrentNetCOGS) - sum(c.CurrentGLCOGS)
+	select '5001', 0, 'Misc.', 0, 0, SUM([PriorNetCOGS]) - SUM([PriorGLCOGS]), 0, 0, sum(b.CurrentNetCOGS) - sum(c.CurrentGLCOGS)
 	, c.[GlMonth], c.[GlYear]
 	from (select [JnlMonth], [JnlYear], sum(CostValue) as PriorNetCOGS from #CostGLPF GROUP BY [JnlMonth], [JnlYear]) as a
 	cross join (select [JnlMonth], [JnlYear], sum(CostValue) as CurrentNetCOGS from #CostGLCF GROUP BY [JnlMonth], [JnlYear]) as b
@@ -954,141 +954,6 @@ SET @ed1 = '2022-02-01';
 
 
 
-
-
-	--SELECT * FROM #maintbl
-
-
-
-
-	----Final select statement ALL COLUMNS
-	--SELECT 
-	--	[InvoiceMonth],
-	--	[InvoiceYear],
-	--	[SumOfUnitsSoldPrior],
-	--	[SumOfSumOfSelling PricePrior],
-	--	[PFSellingPrice],
-	--	[Change%Prior],
-	--	[SumOfSumOfActual MarginPrior],
-	--	[Margin % Prior],
-	--	[Avg Rev Prior],
-	--	[SumOfSumOfActual Hours Prior],
-	--	[Con Prior],
-	--	[On Order Prior],
-	--	[Initials],
-	--	[Grouping],
-	--	[Label],
-	--	[LabelTtl],
-	--	[Section],
-	--	[LabelSection],
-	--	[US],
-	--	[LabelUS],
-	--	[CountryID],
-	--	[SumOfUnitsSold],
-	--	[SumOfSumOfSelling Price],
-	--	[SrcA].[Change%] AS [Change%A],
-	--	[SumOfSumOfActual Margin],
-	--	[SumOfSumOfActual Hours],
-	--	[On Order],
-	--	[Margin %],
-	--	[Avg Rev],
-	--	[Con],
-	--	[SrcA].[COGS] AS [COGS_Trailer],
-	--	(CASE WHEN [Dealer] IS NULL THEN '' ELSE [Dealer] END) AS [Dealer],
-	--	(CASE WHEN [PriorGrossPrice] IS NULL THEN 0 ELSE [PriorGrossPrice] END) AS [PriorGrossPrice],
-	--	(CASE WHEN [PriorSellingPrice] IS NULL THEN 0 ELSE [PriorSellingPrice] END) AS [PriorSellingPrice],
-	--	(CASE WHEN [PriorCOGS] IS NULL THEN 0 ELSE [PriorCOGS] END) AS [PriorCOGS],
-	--	(CASE WHEN [PriorMargin] IS NULL THEN 0 ELSE [PriorMargin] END) AS [PriorMargin],
-	--	(CASE WHEN [GlCode] IS NULL THEN 0 ELSE [GlCode] END) AS [GlCode],
-	--	(CASE WHEN [LblGroup] IS NULL THEN '' ELSE [LblGroup] END) AS [LblGroup],
-	--	(CASE WHEN [CurrentGrossPrice] IS NULL THEN 0 ELSE [CurrentGrossPrice] END) AS [CurrentGrossPrice],
-	--	(CASE WHEN [CurrentDiscount] IS NULL THEN 0 ELSE [CurrentDiscount] END) AS [CurrentDiscount],
-	--	(CASE WHEN [CurrentSellingPrice] IS NULL THEN 0 ELSE [CurrentSellingPrice] END) AS [CurrentSellingPrice],
-	--	(CASE WHEN [CurrentCOGS] IS NULL THEN 0 ELSE [CurrentCOGS] END) AS [CurrentCOGS],
-	--	(CASE WHEN [CurrentMargin] IS NULL THEN 0 ELSE [CurrentMargin] END) AS [CurrentMargin],
-	--	(CASE WHEN [CurrentMargin%] IS NULL THEN 0 ELSE [CurrentMargin%] END) AS [CurrentMargin%],
-	--	(CASE WHEN [SrcB].[Change%] IS NULL THEN 0 ELSE [SrcB].[Change%] END) AS [Change%B]
-	--FROM
-	
-	--(
-	--select 
-	--a.[InvoiceMonth],
-	--a.[InvoiceYear],
-	--a.[Units Sold Prior] as SumOfUnitsSoldPrior,
-	--a.[Selling Price Prior] as [SumOfSumOfSelling PricePrior],
-	--b.[Selling Price] as PFSellingPrice,
-	--case when b.[Selling Price] = 0 then 0 else (a.[Selling Price Prior] - b.[Selling Price])/b.[Selling Price] end as [Change%Prior],
-	--a.[Actual Margin Prior] as [SumOfSumOfActual MarginPrior],
-	--case when a.[Selling Price Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Selling Price Prior] end as [Margin % Prior],
-	--case when a.[Units Sold Prior] = 0 then 0 else (a.[Selling Price Prior]/a.[Units Sold Prior]) end as [Avg Rev Prior],
-	--a.[Actual Hours Prior] as [SumOfSumOfActual Hours Prior],
-	--case when a.[Actual Hours Prior] = 0 then 0 else a.[Actual Margin Prior]/a.[Actual Hours Prior] end as [Con Prior],
-	--case when c.[On Order Prior] is null then 0 else c.[On Order Prior] end as [On Order Prior],
-	--a.Initials, a.Grouping, a.Label, a.LabelTtl, a.Section, a.LabelSection, a.US, a.LabelUS, 
-	--case when a.Initials = 'DCI-R' then 1 when a.Initials = 'TMC' then 0 else d.CountryID end as CountryID,
-	--a.[Units Sold] as SumOfUnitsSold,
-	--a.[Selling Price] as [SumOfSumOfSelling Price],
-	--case when a.[Selling Price Prior] = 0 then 0 else (a.[Selling Price] - a.[Selling Price Prior])/a.[Selling Price Prior] end as [Change%],
-	--a.[Actual Margin] as [SumOfSumOfActual Margin],
-	--a.[Actual Hours] as [SumOfSumOfActual Hours],
-	--case when c.[On Order] is null then 0 else c.[On Order] end as [On Order],
-	--case when a.[Selling Price] = 0 then 0 else a.[Actual Margin]/a.[Selling Price] end as [Margin %],
-	--case when a.[Units Sold] = 0 then 0 else (a.[Selling Price]/a.[Units Sold]) end as [Avg Rev],
-	--case when a.[Actual Hours] = 0 then 0 else a.[Actual Margin]/a.[Actual Hours] end as Con
-	--, a.[COGS]
-
-	--from #tmptable as a
-	--inner join #tmptablePF as b on a.Initials = b.Initials AND (a.[InvoiceMonth] = b.[InvoiceMonth] AND a.[InvoiceYear] = b.[InvoiceYear])
-	--left outer join #tmptableUOO as c on a.Initials = c.Initials
-	--left outer join (select Initials, 
-	--				 case when [CURRENT DEALER CDN] = 1 then 0
-	--					  when [CURRENT DEALER US] = 1 then 1
-	--					  else null end as CountryID 
-	--				 from [BWSdb].[dbo].Dealers
-	--				 where (cast([CURRENT DEALER] as int) + cast([CURRENT DEALER CDN] as int) + cast([CURRENT DEALER US] as int)) > 0
-	--				 group by Initials, [CURRENT DEALER CDN], [CURRENT DEALER US]) as d on a.Initials = d.Initials
-	--where ((case when isnull(c.[On Order], 0) = 0 then 0 when c.[On Order] < 0 then c.[On Order] * -1 else c.[On Order] end) + 
-	--(case when isnull(c.[On Order Prior], 0) = 0 then 0 when c.[On Order Prior] < 0 then c.[On Order Prior] * -1 else c.[On Order Prior] end) +
-	--(case when isnull(a.[Units Sold], 0) = 0 then 0 when a.[Units Sold] < 0 then a.[Units Sold] * -1 else a.[Units Sold] end) +
-	--(case when isnull(a.[Units Sold Prior], 0) = 0 then 0 when a.[Units Sold Prior] < 0 then a.[Units Sold Prior] * -1 else a.[Units Sold Prior] end) +
-	--(case when a.Initials in ('DCI-R', 'TMC') then 1 else 0 end) /*+
-	--(case when isnull(b.[Units Sold], 0) = 0 then 0 else b.[Units Sold] end)*/) <> 0	
-	--) AS [SrcA]
-
-	--LEFT JOIN (
-
-	--select 
-	--convert(float, sum(PriorGrossPrice)) as PriorGrossPrice,
-	--convert(float, sum(PriorDiscount)) as PriorDiscount,
-	--convert(float, sum(PriorGrossPrice - PriorDiscount)) as PriorSellingPrice, 
-	--convert(float, sum(PriorCOGS)) as PriorCOGS,
-	--convert(float, sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) as PriorMargin,
-	--case when GlCode = 5095 then 0 
-	--	 when convert(float, sum(PriorGrossPrice - PriorDiscount)) = 0 then 0
-	--	 else convert(float, (sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) / (sum(PriorGrossPrice - PriorDiscount))) end as [PriorMargin%],
-	--GlCode,
-	--case GlCode when 4505 then 'CDN'
-	--			when 4510 then 'US'
-	--			when 5095 then 'Misc.'
-	--			else '' end as LblGroup,
-	--Dealer,
-	--convert(float, sum(CurrentGrossPrice)) as CurrentGrossPrice,
-	--convert(float, sum(CurrentDiscount)) as CurrentDiscount,
-	--convert(float, sum(CurrentGrossPrice - CurrentDiscount)) as CurrentSellingPrice, 
-	--convert(float, sum(CurrentCOGS)) as CurrentCOGS,
-	--convert(float, sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) as CurrentMargin,
-	--case when GlCode = 5095 then 0 
-	--	 when convert(float, sum(CurrentGrossPrice - CurrentDiscount)) = 0 then 0
-	--	 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) / (sum(CurrentGrossPrice - CurrentDiscount))) end as [CurrentMargin%],
-	--case when convert(float, (sum(PriorGrossPrice - PriorDiscount))) = 0 then 0 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(PriorGrossPrice - PriorDiscount)) / sum(PriorGrossPrice - PriorDiscount)) end as [Change%],
-	--[GlMonth], [GlYear]
-	--from #maintbl
-	--group by GlCode, Dealer, [GlMonth], [GlYear]
-
-	--) AS [SrcB]
-	--ON
-	--	[SrcA].[Initials] = [SrcB].[Dealer]
-	--	AND ([SrcA].[InvoiceMonth] = [SrcB].[GlMonth] AND [SrcA].[InvoiceYear] = [SrcB].[GlYear])
 
 
 
@@ -1204,13 +1069,13 @@ SET @ed1 = '2022-02-01';
 		convert(float, sum(PriorGrossPrice - PriorDiscount)) as [PriorSellingPrice], 
 		convert(float, sum(PriorCOGS)) as [PriorCOGS],
 		convert(float, sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) as PriorMargin,
-		case when GlCode = 5095 then 0 
+		case when GlCode = 5001 then 0 
 			 when convert(float, sum(PriorGrossPrice - PriorDiscount)) = 0 then 0
 			 else convert(float, (sum(PriorGrossPrice - PriorDiscount) - sum(PriorCOGS)) / (sum(PriorGrossPrice - PriorDiscount))) end as [PriorMargin%],
 		GlCode,
-		case GlCode when 4505 then 'CDN'
-					when 4510 then 'US'
-					when 5095 then 'Misc.'
+		case GlCode when 4013 then 'CDN'
+					when 4022 then 'US'
+					when 5001 then 'Misc.'
 					else '' end as LblGroup,
 		Dealer,
 		convert(float, sum(CurrentGrossPrice)) as CurrentGrossPrice,
@@ -1218,7 +1083,7 @@ SET @ed1 = '2022-02-01';
 		convert(float, sum(CurrentGrossPrice - CurrentDiscount)) as CurrentSellingPrice, 
 		convert(float, sum(CurrentCOGS)) as CurrentCOGS,
 		convert(float, sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) as CurrentMargin,
-		case when GlCode = 5095 then 0 
+		case when GlCode = 5001 then 0 
 			 when convert(float, sum(CurrentGrossPrice - CurrentDiscount)) = 0 then 0
 			 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(CurrentCOGS)) / (sum(CurrentGrossPrice - CurrentDiscount))) end as [CurrentMargin%],
 		case when convert(float, (sum(PriorGrossPrice - PriorDiscount))) = 0 then 0 else convert(float, (sum(CurrentGrossPrice - CurrentDiscount) - sum(PriorGrossPrice - PriorDiscount)) / sum(PriorGrossPrice - PriorDiscount)) end as [Change%],
@@ -1250,4 +1115,9 @@ SET @ed1 = '2022-02-01';
 SELECT * FROM #tmptable
 SELECT * FROM #tmptablePF
 SELECT * FROM #tmptableUOO
+SELECT * FROM #PeriodEndDates
+SELECT * FROM #CostGLCF
+SELECT * FROM #CostGLPF
+SELECT * FROM #CostJnlCF
+SELECT * FROM #CostJnlPF
 SELECT * FROM #maintbl
