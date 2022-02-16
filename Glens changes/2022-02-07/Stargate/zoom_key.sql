@@ -197,7 +197,7 @@ select Journal,
 	and GlCode in (4013, 4022)
 
 	
-	SELECT TOP 200 * FROM ArTrnDetail
-	SELECT * FROM GenTransaction
+	SELECT TOP 200 * FROM [SysproCompanyS].[dbo].ArTrnDetail
+	SELECT * FROM [SysproCompanyS].[dbo].GenTransaction
 
 	-- !!! THE ZOOM KEY inner join is wrong!

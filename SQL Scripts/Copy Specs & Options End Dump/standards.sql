@@ -1,7 +1,7 @@
 USE BWSdb
 GO
 
-DECLARE @print_1 AS BIT = 1;
+DECLARE @print_1 AS BIT = 0;
 DECLARE @print_2 AS BIT = 0;
 DECLARE @print_3 AS BIT = 0;
 
@@ -60,7 +60,7 @@ END
 
 --IF @do_update = 1 BEGIN
 	
-	BEGIN TRAN;
+	--BEGIN TRAN;
 
 	SELECT
 		'A' AS [Place],
@@ -69,11 +69,13 @@ END
 		[StandardsV2]
 	WHERE
 		[Model No] = 'End Dump 4X'
+	;
 
 	DELETE FROM 
 		[StandardsV2]
 	WHERE
 		[Model No] = 'End Dump 4X'
+	;
 
 	SELECT
 		'B' AS [Place],
@@ -82,6 +84,7 @@ END
 		[StandardsV2]
 	WHERE
 		[Model No] = 'End Dump 4X'
+	;
 
 	DECLARE @T AS TABLE (
 		[Model No] NVARCHAR(MAX),
@@ -121,6 +124,8 @@ END
 	WHERE
 		[Model No] = 'End Dump 3X'
 
+	SELECT * FROM @T ORDER BY [Group], [Section]
+
 	--(
 	--	[Model No],
 	--	[Standard No],
@@ -138,10 +143,10 @@ END
 	--	[CompanyID]
 	--)
 
-	INSERT INTO
-		[StandardsV2]
-	SELECT * FROM @T
-	
+SELECT * FROM @T WHERE [Section] = 'Grain Chute'
+
+
+
 	SELECT
 		'C' AS [Place],
 		*
@@ -149,8 +154,48 @@ END
 		[StandardsV2]
 	WHERE
 		[Model No] = 'End Dump 4X'
+	;
 
---END
+	SELECT
+		'D' AS [Place],
+		*
+	FROM
+		@T
+	WHERE
+		[Model No] = 'End Dump 4X'
+	;
 
-	ROLLBACK;
-	COMMIT;
+
+BEGIN TRAN;
+
+	INSERT INTO [StandardsV2]
+	SELECT 
+		[Model No],
+		[Standard No],
+		[Group],
+		[Section],
+		[Description],
+		[StartDate],
+		[EndDate],
+		[SortG],
+		[SortSe],
+		[Selection],
+		[SortGv2],
+		[SortSev2],
+		[New Spec Wording],
+		[CompanyID]
+	FROM
+		@T
+		
+	SELECT
+		'E' AS [Place],
+		*
+	FROM
+		[StandardsV2]
+	WHERE
+		[Model No] = 'End Dump 4X'
+	;
+
+
+ROLLBACK;
+COMMIT;
