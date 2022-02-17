@@ -52,7 +52,9 @@ DECLARE @emp_dat AS TABLE (
 	[RRSP] FLOAT,
 	[DSalary] FLOAT,
 	[DAnnual] FLOAT,
-	[DDate] FLOAT
+	[DDate] FLOAT,
+	[Salary / 8760 Hrs] FLOAT,
+	[Annnual / 8760 Hrs] FLOAT
 )
 
 DECLARE @sub_emp_dat AS TABLE (
@@ -67,7 +69,9 @@ DECLARE @sub_emp_dat AS TABLE (
 	[RRSP] FLOAT,
 	[DSalary] FLOAT,
 	[DAnnual] FLOAT,
-	[DDate] FLOAT
+	[DDate] FLOAT,
+	[Salary / 8760 Hrs] FLOAT,
+	[Annnual / 8760 Hrs] FLOAT
 )
 
 DECLARE @c AS INT;
@@ -100,7 +104,9 @@ WHILE @i < @c BEGIN
 		[RRSP%],
 		NULL,
 		NULL,
-		NULL
+		NULL,
+		[Salary] / 8760,
+		[Annual] / 8760
 	FROM
 		@og_data
 	WHERE
@@ -138,3 +144,4 @@ SELECT * FROM @emp_dat WHERE [1st Name] LIKE '%avery%'
 -- View raises in 2022
 SELECT * FROM @emp_dat WHERE YEAR([Date]) = 2022 ORDER BY [DAnnual]
 SELECT * FROM @emp_dat WHERE YEAR([Date]) = 2021 ORDER BY [DAnnual]
+SELECT * FROM @emp_dat ORDER BY [Salary / 8760 Hrs], [Annnual / 8760 Hrs]
