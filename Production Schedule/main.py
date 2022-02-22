@@ -9,13 +9,31 @@ import pandas as pd
 from PIL import ImageTk, Image
 from pathlib import Path
 
+WINDOW = None
 
 async def read_sql_async(stmt, con):
+    '''
+    Helper function to wrap pd.read_sql in an asynchronous call.
+    :param stmt: SQL statement to be passed
+    :param con: connection string
+    :return: The query results in a Pandas Dataframe
+    '''
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, pd.read_sql, stmt, con)
 
 
 async def get_production_data(start_date, end_date, first=True):
+    '''
+    Function is called to query BWSdb for production schedule data.
+    Called asynchronously while the splash menu is shown.
+    :param start_date: beginning of date range
+    :param end_date: ending of date range
+    :param first: Allows for 1 single re-try due to an unknown / unpredicted errors. If function fails twice, program exits.
+    :return:
+        lines: list of lines on this schedule (y-axis)
+        dates: list of dates over this schedule (x-axis)
+        ordered_df: A Pandas dataframe sorted by Line and Date. Each cell of the table represents a Line on the given Date.
+    '''
     assert isinstance(start_date, datetime.datetime), "Start date param: \"{}\" must be a datetime.datetime object.".format(start_date)
     assert isinstance(end_date, datetime.datetime), "End date param: \"{}\" must be a datetime.datetime object.".format(end_date)
     assert start_date <= end_date, "Start date param: \"{}\" must be before End date param \"{}\".".format(start_date, end_date)
@@ -106,15 +124,22 @@ async def get_production_data(start_date, end_date, first=True):
 
 
 def exit_program():
+    '''
+    Function called to quit the application.
+    :return: None
+    '''
+    if WINDOW is not None and isinstance(WINDOW, tkinter.Tk):
+        # TODO THIS FAILS IF YOU CLICK 'X' FIRST.
+        WINDOW.destroy()
     print("Goodbye!")
     exit()
 
 
 if __name__ == '__main__':
 
-    operating_system = platform.system()
-    windows_version = int(platform.release())
-    if operating_system != "Windows" or windows_version < 8:
+    OPERATING_SYSTEM = platform.system()
+    WINDOWS_VERSION = int(platform.release())
+    if OPERATING_SYSTEM != "Windows" or WINDOWS_VERSION < 8:
         print("This program can only be used on a computer that has a Windows operating system and who's version number is greater than Windows 7.")
         exit_program()
 
@@ -147,8 +172,8 @@ if __name__ == '__main__':
     # else F, using the copies in the app folder
     assert_is_employee = False
 
-    N_TEST_CALS = None
-    # N_TEST_CALS = 1
+    # N_TEST_CALS = None
+    N_TEST_CALS = 1
     START_DATE = dt.datetime(2021, 10, 1)  # + dt.timedelta(days=-1)
     END_DATE = dt.datetime(2021, 10, 31)
     CAL_IDX = None
@@ -169,7 +194,7 @@ if __name__ == '__main__':
     SPLASH_FG = rgb_to_hex(WHITE)
     LOGO_WIDTH = int((WIN_W * 0.8) / 2)
     LOGO_HEIGHT = int(WIN_H * 0.3)
-    # can_w, can_h = WIN_W * 0.96, WIN_H * 0.8
+    # CAN_W, CAN_H = WIN_W * 0.96, WIN_H * 0.8
     dealer_colour_data = None
 
 
@@ -193,20 +218,18 @@ if __name__ == '__main__':
             print("You must be an employee to use this program.")
             exit_program()
 
-    window = tkinter.Tk()
-    # DEFAULT_BG = window.cget('bg')
+    WINDOW = tkinter.Tk()
     DEFAULT_BG = rgb_to_hex(GRAY_93)
-    print("DEFAULT_BG:", DEFAULT_BG)
-    F_WIN_W, F_WIN_H = window.winfo_screenwidth(), window.winfo_screenheight()
-    can_w, can_h = F_WIN_W * 0.96, F_WIN_H * 0.72
+    F_WIN_W, F_WIN_H = WINDOW.winfo_screenwidth(), WINDOW.winfo_screenheight()
+    CAN_W, CAN_H = F_WIN_W * 0.96, F_WIN_H * 0.72
 
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    x_cordinate = int((screen_width / 2) - (WIN_W / 2))
-    y_cordinate = int((screen_height / 2) - (WIN_H / 2))
-    window.geometry("{}x{}+{}+{}".format(WIN_W, WIN_H, x_cordinate, y_cordinate))
+    SCREEN_WIDTH = WINDOW.winfo_screenwidth()
+    SCREEN_HEIGHT = WINDOW.winfo_screenheight()
+    x_cordinate = int((SCREEN_WIDTH / 2) - (WIN_W / 2))
+    y_cordinate = int((SCREEN_HEIGHT / 2) - (WIN_H / 2))
+    WINDOW.geometry("{}x{}+{}+{}".format(WIN_W, WIN_H, x_cordinate, y_cordinate))
 
-    window.title("Production Schedule")
+    WINDOW.title("Production Schedule")
     LOADED = tkinter.BooleanVar(value=False)
     lb_dealer_1 = tkinter.StringVar()
     lb_dealer_2 = tkinter.StringVar()
@@ -215,8 +238,13 @@ if __name__ == '__main__':
     btn_calendar_export_pdf_full = None
     btn_calendar_export_pdf = None
 
+    def dbl_click_tile_click(event):
+        dbl_click_tile(event, True)
 
-    def dbl_click_tile(event):
+    def dbl_click_tile_left(event):
+        dbl_click_tile(event)
+
+    def dbl_click_tile(event, resize_click=False):
         cal = TAB_DATA[CAL_IDX]["Cal"]
         canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         cal.unbind_for_pop_up()
@@ -254,7 +282,7 @@ if __name__ == '__main__':
         btn_1.config(bg=colour_code, activebackground=colour_code)
         btn_1.config(text=colour_code)
         btn_1.update()
-        window.update()
+        WINDOW.update()
         d_name = lb_dealer_1.get()
         print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
@@ -278,7 +306,7 @@ if __name__ == '__main__':
         btn_2.config(bg=colour_code, activebackground=colour_code)
         btn_2.config(text=colour_code)
         btn_2.update()
-        window.update()
+        WINDOW.update()
         d_name = lb_dealer_2.get()
         print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
@@ -302,7 +330,7 @@ if __name__ == '__main__':
         btn_3.config(bg=colour_code, activebackground=colour_code)
         btn_3.config(text=colour_code)
         btn_3.update()
-        window.update()
+        WINDOW.update()
         d_name = lb_dealer_3.get()
         print("HIERE 1 TN", TAB_NAMES)
         if d_name is not None and d_name:
@@ -362,7 +390,7 @@ if __name__ == '__main__':
         lb_dealer_1.set("")
         btn_1.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
         btn_1.update()
-        window.update()
+        WINDOW.update()
         print("resetting dealer_1")
 
 
@@ -371,7 +399,7 @@ if __name__ == '__main__':
         lb_dealer_2.set("")
         btn_2.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
         btn_2.update()
-        window.update()
+        WINDOW.update()
         print("resetting dealer_2")
 
 
@@ -380,7 +408,7 @@ if __name__ == '__main__':
         lb_dealer_3.set("")
         btn_3.config(bg=DEFAULT_BG, activebackground=DEFAULT_BG, text="")
         btn_3.update()
-        window.update()
+        WINDOW.update()
         print("resetting dealer_3")
 
 
@@ -405,23 +433,23 @@ if __name__ == '__main__':
         btn_calendar_export_pdf_full.config(command=cal.export_to_pdf_full)
         btn_calendar_export_pdf.config(command=cal.export_to_pdf)
 
-        cal.canvas.bind("<Double-Button-1>", dbl_click_tile)
-        cal.canvas.bind("<Button-3>", dbl_click_tile)
+        cal.canvas.bind("<Double-Button-1>", dbl_click_tile_click)
+        cal.canvas.bind("<Button-3>", dbl_click_tile_left)
         cal.bind_canvas()
         print("binding: {} on tab change".format(cal))
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
         cal.set_drawing_week_divs(SWITCH_CALENDAR_DRAW_WEEK_DIVS)
-        populate_pop_up_menu()
+        # populate_pop_up_menu() # Dont need? 2022-02-22
 
-        window.bind("<a>", cal.kbd_arrow_left)
-        window.bind("<w>", cal.kbd_arrow_up)
-        window.bind("<s>", cal.kbd_arrow_down)
-        window.bind("<d>", cal.kbd_arrow_right)
+        WINDOW.bind("<a>", cal.kbd_arrow_left)
+        WINDOW.bind("<w>", cal.kbd_arrow_up)
+        WINDOW.bind("<s>", cal.kbd_arrow_down)
+        WINDOW.bind("<d>", cal.kbd_arrow_right)
 
-        window.bind("<Left>", cal.kbd_arrow_left)
-        window.bind("<Up>", cal.kbd_arrow_up)
-        window.bind("<Down>", cal.kbd_arrow_down)
-        window.bind("<Right>", cal.kbd_arrow_right)
+        WINDOW.bind("<Left>", cal.kbd_arrow_left)
+        WINDOW.bind("<Up>", cal.kbd_arrow_up)
+        WINDOW.bind("<Down>", cal.kbd_arrow_down)
+        WINDOW.bind("<Right>", cal.kbd_arrow_right)
         dealers = []
 
         if LOADED.get() and dealer_colour_data is not None:
@@ -465,10 +493,10 @@ if __name__ == '__main__':
         cal.canvas.focus_set()
         cal.draw_canvas()
 
-    tab_control = ttk.Notebook(window)
+    tab_control = ttk.Notebook(WINDOW)
     tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
 
-    splash_frame = tkinter.Frame(window, bg=SPLASH_BG)
+    splash_frame = tkinter.Frame(WINDOW, bg=SPLASH_BG)
     splash_frame_logos = tkinter.Frame(splash_frame, bg=SPLASH_BG)
     bws_logo = ImageTk.PhotoImage(Image.open(BWS_LOGO_FILE_PATH).resize((LOGO_WIDTH, LOGO_HEIGHT)))
     splash_logo_bws = tkinter.Label(splash_frame_logos, image=bws_logo)
@@ -491,6 +519,7 @@ if __name__ == '__main__':
         mode="determinate",
         length=SPLASH_LENGTH
     )
+    splash_test_indicator = tkinter.Label(splash_frame, text="Testing {} calendar{}".format(N_TEST_CALS, "s" if N_TEST_CALS != 1 else ""), bg=rgb_to_hex(brighten(hex_to_rgb(SPLASH_BG), 0.25)), fg=rgb_to_hex(RED_3), font=("Arial", 16))
     splash_version = tkinter.Label(splash_frame, text=VERSION_NAME, bg=SPLASH_BG, fg=SPLASH_FG)
 
     splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
@@ -504,6 +533,8 @@ if __name__ == '__main__':
     splash_pb.pack(pady=5)  # overall loading progress bar
     splash_version.pack(side=tkinter.BOTTOM, anchor=tkinter.SW)
     splash_frame_pbs.pack(side=tkinter.BOTTOM, pady=60)  # progress texts and bars go below logos
+    if N_TEST_CALS is not None:
+        splash_test_indicator.pack()
     splash_frame.pack(expand=True, fill=tkinter.BOTH)
 
     def submit_calendar_search(*args):
@@ -547,9 +578,9 @@ if __name__ == '__main__':
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
 
     # frame_calendar = tkinter.Frame(tab_1)
-    # canvas = tkinter.Canvas(frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
-    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
-    # canvas_header_col = tkinter.Canvas(frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
+    # canvas = tkinter.Canvas(frame_calendar, height=CAN_H, width=CAN_W, bg=rgb_to_hex(GRAY_12))
+    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=CAN_W + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
+    # canvas_header_col = tkinter.Canvas(frame_calendar, height=CAN_H + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
     # canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     # cal = create_calendar(START_DATE, END_DATE, lines, dates, data)
     # tab_cals = []
@@ -565,6 +596,8 @@ if __name__ == '__main__':
 
     async def populate_tab_data():
         global TABS, TAB_NAMES, TAB_DATA, LOADED
+
+        # List of tabs as tkinter frames
         TABS = [
             ttk.Frame(tab_control),
             ttk.Frame(tab_control),
@@ -576,6 +609,7 @@ if __name__ == '__main__':
         ]
         TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
 
+        # Zipping Tab frames and names. Prepping for Navigation Tabs
         # Capping # TABS and queries based on N_TEST_CALS
         if N_TEST_CALS is not None:
             TABS = TABS if len(TABS) <= N_TEST_CALS else TABS[:N_TEST_CALS]
@@ -604,9 +638,9 @@ if __name__ == '__main__':
             c_frame_calendar = tkinter.Frame(tab)
             splash_query_pb["value"] = 25
             splash_query_pb.update()
-            can = tkinter.Canvas(c_frame_calendar, height=can_h, width=can_w, bg=rgb_to_hex(GRAY_12))
-            can_h_c = tkinter.Canvas(c_frame_calendar, height=can_h + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
-            can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=can_w + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
+            can = tkinter.Canvas(c_frame_calendar, height=CAN_H, width=CAN_W, bg=rgb_to_hex(GRAY_12))
+            can_h_c = tkinter.Canvas(c_frame_calendar, height=CAN_H + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
+            can_h_r = tkinter.Canvas(c_frame_calendar, height=25, width=CAN_W + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
             can_p_u = tkinter.Menu(c_frame_calendar, tearoff=0)
             last_date = last_date + dt.timedelta(days=1)
             c_end_date = last_date + dt.timedelta(days=31)
@@ -619,7 +653,7 @@ if __name__ == '__main__':
             splash_query_pb.update()
             print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
             print("c_dates", c_dates)
-            psc = create_calendar_p(can, can_h_c, can_h_r, can_w, can_h, last_date, c_end_date, dat, c_lines, c_dates, BORDER_WIDTH)
+            psc = create_calendar_p(can, can_h_c, can_h_r, CAN_W, CAN_H, last_date, c_end_date, dat, c_lines, c_dates, BORDER_WIDTH)
             c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
                 dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
             c_label_title.pack()
@@ -649,7 +683,7 @@ if __name__ == '__main__':
             splash_status_bottom.config(text="{} % Complete".format(round(splash_pb["value"], 2)))
             splash_query_pb["value"] = 100
             splash_query_pb.update()
-            window.update()
+            WINDOW.update()
             # if i >= N_TEST_CALS:
             #     break
 
@@ -753,7 +787,7 @@ if __name__ == '__main__':
     def draw_application():
         global btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data, CAL_IDX
 
-        frame_calendar_control = tkinter.Frame(window)
+        frame_calendar_control = tkinter.Frame(WINDOW, border=1, borderwidth=2)
         frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
         frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
         frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
@@ -775,7 +809,7 @@ if __name__ == '__main__':
         entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
         btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
 
-        frame_dealer_colour_select = tkinter.Frame(frame_calendar_control)
+        frame_dealer_colour_select = tkinter.Frame(frame_calendar_control, border=1, borderwidth=2)
         frame_dealer_colour_select_c1 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c2 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c3 = tkinter.Frame(frame_dealer_colour_select)
@@ -840,15 +874,14 @@ if __name__ == '__main__':
         frame_calendar_control_btns_b.pack(side=tkinter.LEFT)
         # frame_calendar_control_btns.pack()
         # frame_calendar.pack()
-        submit_calendar_search()
+        # submit_calendar_search()
         tab_control.pack(expand=1, fill="both")
         t_h = frame_calendar_control.winfo_screenheight()
 
         # populate_tab_data()
         if not TAB_DATA:
             print("Error No data to display.\nExiting the Program.")
-            window.destroy()
-            exit()
+            exit_program()
         # print(dict_print(TAB_DATA, "Tab Data"))
         print("CALS:\n\t" + "\n\t".join([str(v["Cal"]) for k, v in TAB_DATA.items()]))
 
@@ -873,7 +906,7 @@ if __name__ == '__main__':
     # Do Splash Here
     def window_load(*args):
         global WIN_W, WIN_H
-        window.unbind("<Visibility>")
+        WINDOW.unbind("<Visibility>")
         print("Window Load: {}".format(splash_pb["value"]))
         # splash_pb.start()
         if not LOADED.get():
@@ -881,7 +914,7 @@ if __name__ == '__main__':
             loop.run_until_complete(populate_tab_data())
             loop.close()
 
-        # Wipe window and draw application
+        # Wipe WINDOW and draw application
         splash_label.pack_forget()
         splash_pb.pack_forget()
         splash_query_pb.pack_forget()
@@ -892,11 +925,13 @@ if __name__ == '__main__':
         splash_logo_stargate.pack_forget()
         splash_frame_logos.pack_forget()
         splash_version.pack_forget()
+        if N_TEST_CALS is not None:
+            splash_test_indicator.forget()
 
-        # resize window coming from splash screen
+        # resize WINDOW coming from splash screen
         WIN_W, WIN_H = F_WIN_W, F_WIN_H
-        window.geometry("{}x{}".format(WIN_W, WIN_H))
-        window.state('zoomed')
+        WINDOW.geometry("{}x{}".format(WIN_W, WIN_H))
+        WINDOW.state('zoomed')
 
         draw_application()
 
@@ -906,6 +941,6 @@ if __name__ == '__main__':
     # else:
     #     showinfo(message='The progress completed!')
 
-    window.bind("<Visibility>", window_load)
-    window.mainloop()
+    WINDOW.bind("<Visibility>", window_load)
+    WINDOW.mainloop()
     exit_program()

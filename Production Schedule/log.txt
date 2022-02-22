@@ -13,3 +13,7 @@
 -   2022-01-10  ;;              ;;  Fix drag and swapping logic. Should only swap on release after dragging.
 -   2022-01-17  ;;              ;;  Add a 'Stargate Version' - Could be another copy of this program
                                     targeted directly at Stargate
+-   2022-02-22  ;;              ;;  When double-clicking a tile and not hovering, set the current tile as zoomed, but
+                                ;;  go back to no zoom upon exit.
+-   2022-02-22  ;;              ;;  Re-factor the tile-sizing algorithm to allow for MAX 3 selected rows / cols at once
+                                ;;  go back to no zoom upon exit.
