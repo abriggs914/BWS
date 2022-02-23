@@ -64,6 +64,7 @@ async def get_production_data(start_date, end_date, first=True):
     dates = []
     ordered_df = pd.DataFrame()
     try:
+        # Use this as an entry point for test sets
         with open("df1.json", "r") as f:
             ordered_df = pd.read_json(f)
             dates = ordered_df.drop_duplicates('Prod Date')
@@ -128,9 +129,9 @@ def exit_program():
     Function called to quit the application.
     :return: None
     '''
-    if WINDOW is not None and isinstance(WINDOW, tkinter.Tk):
+    # if WINDOW is not None and isinstance(WINDOW, tkinter.Tk):
         # TODO THIS FAILS IF YOU CLICK 'X' FIRST.
-        WINDOW.destroy()
+        # WINDOW.destroy()
     print("Goodbye!")
     exit()
 
@@ -164,7 +165,7 @@ if __name__ == '__main__':
     ####################################################################################################################
 
     TITLE = "Production Schedule Editor"
-    VERSION_NAME = "Version 1.0"
+    VERSION_NAME = "Version 1.1.0222"
     BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
     STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
 
@@ -249,7 +250,7 @@ if __name__ == '__main__':
         canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         cal.unbind_for_pop_up()
         cal.dbl_click_tile(event)
-        print("Double clicked Cal: {}, and tile: {}".format(cal, cal.dbl_clicked))
+        print("Double clicked Cal: {}, and tile: {}".format(cal, cal._dbl_clicked))
         print("PRE BINDINGS {}".format(cal), cal.canvas.bind())
         try:
             print("PRE POP UP")
@@ -262,13 +263,13 @@ if __name__ == '__main__':
         print("PRE BIND")
         cal.bind_canvas()
 
-        cal.selected = None
-        # cal.hovered = None
-        cal.hover_select = None
-        # cal.dragging = None
-        # cal.current_hover = None
-        # print("RESETTING cal.dbl_clicked")
-        # cal.dbl_clicked = None
+        cal._selected = None
+        # cal._hovered = None
+        cal._hover_select = None
+        # cal._dragging = None
+        # cal._current_hover = None
+        # print("RESETTING cal._dbl_clicked")
+        # cal._dbl_clicked = None
 
 
     def colour_chooser_1(event):
@@ -452,6 +453,9 @@ if __name__ == '__main__':
         WINDOW.bind("<Right>", cal.kbd_arrow_right)
         dealers = []
 
+        print("LOADED:", LOADED.get(), ", dealers:", dealers, "dealer_colour_data", dealer_colour_data)
+        assert dealer_colour_data is not None, "dealer_colour_data is None"
+
         if LOADED.get() and dealer_colour_data is not None:
             dealers = cal.dealers
             highlights = cal.dealer_highlights
@@ -467,6 +471,8 @@ if __name__ == '__main__':
             cb_dealer_1["values"] = dealers
             cb_dealer_2["values"] = dealers
             cb_dealer_3["values"] = dealers
+            print("SETTING DEALERS")
+            raise ValueError(str(dealers))
 
             btn_1.bind("<Double-Button-1>", colour_chooser_1)
             btn_2.bind("<Double-Button-1>", colour_chooser_2)
@@ -493,8 +499,8 @@ if __name__ == '__main__':
         cal.canvas.focus_set()
         cal.draw_canvas()
 
-    tab_control = ttk.Notebook(WINDOW)
-    tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
+    notebook_tab_control = ttk.Notebook(WINDOW)
+    notebook_tab_control.bind("<<NotebookTabChanged>>", on_tab_change)
 
     splash_frame = tkinter.Frame(WINDOW, bg=SPLASH_BG)
     splash_frame_logos = tkinter.Frame(splash_frame, bg=SPLASH_BG)
@@ -584,13 +590,13 @@ if __name__ == '__main__':
     # canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     # cal = create_calendar(START_DATE, END_DATE, lines, dates, data)
     # tab_cals = []
-    # tab_1 = ttk.Frame(tab_control)
-    # tab_2 = ttk.Frame(tab_control)
-    # tab_3 = ttk.Frame(tab_control)
-    # tab_4 = ttk.Frame(tab_control)
-    # tab_5 = ttk.Frame(tab_control)
-    # tab_6 = ttk.Frame(tab_control)
-    # tab_7 = ttk.Frame(tab_control)
+    # tab_1 = ttk.Frame(notebook_tab_control)
+    # tab_2 = ttk.Frame(notebook_tab_control)
+    # tab_3 = ttk.Frame(notebook_tab_control)
+    # tab_4 = ttk.Frame(notebook_tab_control)
+    # tab_5 = ttk.Frame(notebook_tab_control)
+    # tab_6 = ttk.Frame(notebook_tab_control)
+    # tab_7 = ttk.Frame(notebook_tab_control)
     # TABS = [tab_1, tab_2, tab_3, tab_4, tab_5, tab_6, tab_7]
 
 
@@ -599,13 +605,13 @@ if __name__ == '__main__':
 
         # List of tabs as tkinter frames
         TABS = [
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control),
-            ttk.Frame(tab_control)
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control),
+            ttk.Frame(notebook_tab_control)
         ]
         TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
 
@@ -673,7 +679,8 @@ if __name__ == '__main__':
                 "HeaderRow": can_h_c,
                 "HeaderCol": can_h_r,
                 "PopUp": can_p_u,
-                "Cal": psc
+                "Cal": psc,
+                "c_label_title": c_label_title
             })
 
             last_date += dt.timedelta(days=31)
@@ -693,7 +700,7 @@ if __name__ == '__main__':
         # label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(START_DATE, "%Y-%m-%d"), dt.datetime.strftime(END_DATE, "%Y-%m-%d")))
 
         for tab, tab_name in zip(TABS, TAB_NAMES):
-            tab_control.add(tab, text=tab_name)
+            notebook_tab_control.add(tab, text=tab_name)
         LOADED.set(True)
 
 
@@ -707,7 +714,7 @@ if __name__ == '__main__':
         canvas_pop_up = TAB_DATA[CAL_IDX]["PopUp"]
         canvas_pop_up.unpost()
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        # cal.dbl_clicked = None
+        # cal._dbl_clicked = None
         cal.clear_dbl_click()
         cal.draw_canvas()
 
@@ -748,7 +755,7 @@ if __name__ == '__main__':
 
     def add_day():
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        line = cal.tiles[cal.dbl_clicked].line
+        line = cal.tiles[cal._dbl_clicked].line
         for i in range(CAL_IDX, len(TAB_DATA)):
             cal = TAB_DATA[i]["Cal"]
 
@@ -758,12 +765,12 @@ if __name__ == '__main__':
             row_idx = cal.lines.index(line)
             r, c = cal.rows, cal.cols
             left_most = row_idx * c
-            cal.dbl_clicked = cal.dbl_clicked if i == CAL_IDX else left_most
+            cal._dbl_clicked = cal._dbl_clicked if i == CAL_IDX else left_most
             cal.add_day()
 
     def subtract_day():
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        line = cal.tiles[cal.dbl_clicked].line
+        line = cal.tiles[cal._dbl_clicked].line
         for i in range(CAL_IDX, -1, -1):
             cal = TAB_DATA[i]["Cal"]
 
@@ -774,12 +781,12 @@ if __name__ == '__main__':
             r, c = cal.rows, cal.cols
             right_most = ((row_idx + 1) * c) - 1
             print("right_most:", right_most, "rows:", cal.rows, "cols:", cal.cols)
-            cal.dbl_clicked = cal.dbl_clicked if i == CAL_IDX else right_most
+            cal._dbl_clicked = cal._dbl_clicked if i == CAL_IDX else right_most
             cal.subtract_day()
 
     def enlarge_tile():
         cal = TAB_DATA[CAL_IDX]["Cal"]
-        cal.enlarge_tile(cal.dbl_clicked)
+        cal.enlarge_tile(cal._dbl_clicked)
     #     cal.hover()
         cal.draw_canvas()
 
@@ -787,7 +794,7 @@ if __name__ == '__main__':
     def draw_application():
         global btn_calendar_export_pdf_full, btn_calendar_export_pdf, dealer_colour_data, CAL_IDX
 
-        frame_calendar_control = tkinter.Frame(WINDOW, border=1, borderwidth=2)
+        frame_calendar_control = tkinter.Frame(WINDOW, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
         frame_calendar_search_control = tkinter.Frame(frame_calendar_control)
         frame_calendar_search_entries = tkinter.Frame(frame_calendar_control)
         frame_calendar_control_btns = tkinter.Frame(frame_calendar_control)
@@ -809,7 +816,7 @@ if __name__ == '__main__':
         entry_calendar_search_end_date = tkinter.Entry(frame_calendar_search_control_b, textvariable=stringvar_calendar_search_end_date)
         btn_calendar_search_submit = tkinter.Button(frame_calendar_search_control_c, text="Submit", command=submit_calendar_search)
 
-        frame_dealer_colour_select = tkinter.Frame(frame_calendar_control, border=1, borderwidth=2)
+        frame_dealer_colour_select = tkinter.Frame(frame_calendar_control)
         frame_dealer_colour_select_c1 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c2 = tkinter.Frame(frame_dealer_colour_select)
         frame_dealer_colour_select_c3 = tkinter.Frame(frame_dealer_colour_select)
@@ -872,11 +879,54 @@ if __name__ == '__main__':
         frame_calendar_control_btns.pack(side=tkinter.LEFT)
         frame_calendar_control_btns_a.pack(side=tkinter.LEFT)
         frame_calendar_control_btns_b.pack(side=tkinter.LEFT)
+
         # frame_calendar_control_btns.pack()
         # frame_calendar.pack()
         # submit_calendar_search()
-        tab_control.pack(expand=1, fill="both")
+        notebook_tab_control.pack(expand=1, fill="x")
         t_h = frame_calendar_control.winfo_screenheight()
+
+        raise ValueError("dealer_colour_data needs to be initalized before calling WINDOW.update() in order for the tab_on_change listener to work properly. THis is the first update to the display since creating the objects.")
+
+        WINDOW.update()
+        print(f"1 HOW TALL IS \"frame_calendar_control\": {frame_calendar_control.winfo_height()} px")
+        print(f"1 HOW TALL IS \"WINDOW\": {WINDOW.winfo_height()} px")
+        print(f"1 HOW TALL IS \"TAB_CONTROL\": {notebook_tab_control.winfo_height()} px")
+        print(f"2 HOW TALL IS \"frame_calendar_control\": {frame_calendar_control.winfo_reqheight()} px")
+        print(f"2 HOW TALL IS \"WINDOW\": {WINDOW.winfo_reqheight()} px")
+        print(f"2 HOW TALL IS \"TAB_CONTROL\": {notebook_tab_control.winfo_reqheight()} px")
+        print(f"2 HOW WIDE IS \"TAB_CONTROL\": {notebook_tab_control.winfo_reqwidth()} px")
+        print(f"Screen: {WINDOW.winfo_screenwidth()} x {WINDOW.winfo_screenheight()}")
+        print(f"Screen: {F_WIN_W} x {F_WIN_H}")
+        WINDOW.update()
+        legend_height = TAB_DATA[CAL_IDX]["HeaderRow"].winfo_reqheight()
+        height_diff = frame_calendar_control.winfo_reqheight() + notebook_tab_control.winfo_reqheight() - (F_WIN_H - 25)
+        width_diff = notebook_tab_control.winfo_reqwidth() - (F_WIN_W - 0)
+
+        if height_diff > 0 or width_diff > 0:
+            if height_diff > 0:
+                print(f"This application is too tall!! Needs to shrink by {height_diff}")
+            if width_diff > 0:
+                print(f"This application is too wide!! Needs to shrink by {width_diff}")
+            # fract = 1 - (height_diff / notebook_tab_control.winfo_reqheight())
+            for tab_name, tab in TAB_DATA.items():
+                cal = tab["Cal"]
+                title_lbl = tab["c_label_title"]
+                lbl_height = title_lbl.winfo_reqheight()
+                # legend canvases
+                print("\t\tcal.canvas_header_col.height:", cal.canvas_header_col.winfo_reqheight())
+                print("\t\tcal.canvas_header_col.height * fract:", cal.canvas_header_col.winfo_reqheight() - height_diff)
+                cal.height = cal.canvas.winfo_reqheight() - (height_diff + lbl_height)
+                cal.width = cal.canvas.winfo_reqwidth() - (width_diff)
+                # cal.canvas.config(height=cal.canvas.winfo_reqheight() - (height_diff + lbl_height))
+                # cal.canvas_header_col.config(height=cal.canvas_header_col.winfo_reqheight() - (height_diff + lbl_height))
+                # cal.canvas_header_row.config(height=cal.canvas_header_row.winfo_reqheight() - height_diff)
+
+
+        WINDOW.update()
+
+
+        # raise ValueError("Stop here!")
 
         # populate_tab_data()
         if not TAB_DATA:

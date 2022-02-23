@@ -285,11 +285,11 @@ class PSCalendar:
     #
     #     print("{}\n{}".format(len(self.tiles), self.tiles))
     #
-    #     self.dragging = None
-    #     self.selected = None
-    #     self.hovered = None
-    #     self.hover_select = None
-    #     self.current_hover = None
+    #     self._dragging = None
+    #     self._selected = None
+    #     self._hovered = None
+    #     self._hover_select = None
+    #     self._current_hover = None
     #     self.draw_canvas()
     #     self.bind_canvas()
 
@@ -593,7 +593,7 @@ class PSCalendar:
         event = args[0]
         mouse_x, mouse_y = event.x, event.y
         self.current_hover = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
-        # print("entering:", self.hovered)
+        # print("entering:", self._hovered)
         # self.draw_canvas()
 
     def hovering(self, *args):
@@ -729,10 +729,10 @@ class PSCalendar:
     def draw_canvas(self):
         self.canvas.delete("all")
 
-        print("dragging: {}, selected: {}, hover_select: {}, current_hover: {}, dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
-        # if self.current_hover is not None:
-        #     print(self.tiles_to_the_right(self.current_hover))
-        #     print(self.tiles_to_the_left(self.current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
+        print("_dragging: {}, _selected: {}, _hover_select: {}, _current_hover: {}, _dbl_clicked: {}".format(self.dragging, self.selected, self.hover_select, self.current_hover, self.dbl_clicked))
+        # if self._current_hover is not None:
+        #     print(self.tiles_to_the_right(self._current_hover))
+        #     print(self.tiles_to_the_left(self._current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
 
         for tile in self.tiles:
             show_txt = not self.hiding_non_selected_tiles
@@ -923,9 +923,9 @@ class PSCalendar:
         mouse_x, mouse_y = event.x, event.y
         new_select = self.r_c_to_i(*self.x_y_to_r_c(mouse_x, mouse_y))
         if self.selected is not None:
-            print("self.selected is not None")
+            print("self._selected is not None")
             if self.selected != new_select:
-                print("self.selected {}, new_select: {}".format(self.selected, new_select))
+                print("self._selected {}, new_select: {}".format(self.selected, new_select))
                 self.hover_select = new_select
                 self.draw_canvas()
                 self.swap_tiles(self.selected, new_select)
@@ -957,7 +957,7 @@ class PSCalendar:
                 if self.dragging is None:
                     self.dragging = self.r_c_to_i(tile.row, tile.col)
                 elif hover_tile != self.dragging:
-                    print("Swapping self.dragging: {} with hovering tile: {}".format(self.dragging, hover_tile))
+                    print("Swapping self._dragging: {} with hovering tile: {}".format(self.dragging, hover_tile))
                     self.hover_select = hover_tile
                     self.unbind_canvas()
                     self.draw_canvas()
