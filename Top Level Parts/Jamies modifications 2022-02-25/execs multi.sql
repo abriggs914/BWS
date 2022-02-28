@@ -1,0 +1,4 @@
+EXEC [SysproCompanyA].[dbo].[sp_TopLevelWOReportJamie] @WO='10014747', @INCOMPLETEONLY=0, @PARTCATEGORY='M;B;S', @OPERATION='1;4;5', @WAREHOUSE='4;6';
+EXEC [SysproCompanyA].[dbo].[sp_TopLevelWOReportJamie] @WO='10014748', @INCOMPLETEONLY=0, @PARTCATEGORY='M;B;S', @OPERATION='1;4;5', @WAREHOUSE='4;6';
+
+EXEC [SysproCompanyA].[dbo].[sp_TopLevelWOReportJamieMulti] @WO='10014747;10014748', @INCOMPLETEONLY=0, @PARTCATEGORY='M;B;S', @OPERATION='01;04;05', @WAREHOUSE='04;06';
