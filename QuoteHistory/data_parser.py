@@ -65,6 +65,7 @@ def work_weeks(first_day, public_holdays, personal_holidays):
 	# today = datetime.date.fromisoformat("2021-07-04")
 	# today = datetime.date.fromisoformat("2021-05-25")
 	# today = datetime.date.fromisoformat("2021-12-31")
+	# today = datetime.date.fromisoformat("2022-04-20")
 	day = (today - first_day).days + 1
 	dw = lambda d, h=0: d - (2*((d-(max(0, ((d - 1) % 7) - 4)))//7)) - (max(0, ((d - 1) % 7) - 4))
 
