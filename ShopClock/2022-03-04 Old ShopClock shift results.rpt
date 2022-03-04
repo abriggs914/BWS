@@ -1,0 +1,729 @@
+﻿Employee             Name                                               WorkCentre           GroupID     ShiftID     IsEnabled TimeStamp
+-------------------- -------------------------------------------------- -------------------- ----------- ----------- --------- ------------------
+0                    Labour Adjustments                                                      0           0           1         0x00000001347F552E
+000001               MONTH END USE ONLY                                                      6           0           1         0x0000000011A8701E
+000337               NICHOLSON, RYAN                                                         4           0           0         0x000000007FD4FA78
+1                    MONTH END USE ONLY                                                      0           0           1         0x000000000F8AB250
+100001               THOMAS, GARY                                                            12          8           1         0x000000000F8AB515
+100003               SMITH, GARRY                                       WI                   5           31          0         0x0000000100DDE061
+100004               MACPHERSON, GEORGE                                                      4           0           0         0x000000007FD4FA79
+100005               PIPER, SHEILA                                                           12          8           1         0x00000000FEA51B17
+100007               SHAW, RONNIE                                                            12          8           0         0x000000012BFCD4C6
+100008               GRAY, NORMAN                                                            4           0           0         0x000000007FD4FA7A
+100009               COWPERTHWAITE, IVAN                                                     12          8           1         0x000000000F8AB51B
+100010               GOREY, JOE                                                              4           0           0         0x000000007FD4FA7B
+100012               O'LEARY, JOHN                                                           4           0           0         0x000000007FD4FA7C
+100013               SMITH, LARRY                                                            4           0           0         0x000000007FD4FA7D
+100014               DYER, ANDREW                                                            4           0           0         0x000000007FD4FA7E
+100015               FOSTER, ROXANNE                                                         4           0           0         0x000000007FD4FA7F
+100017               MACRAE, SCOTT                                                           12          8           1         0x000000013277038A
+100019               HOVEY, BRIAN                                       P                    4           0           0         0x000000007FD4FA81
+100021               HOVEY, WAYNE                                                            4           0           0         0x000000007FD4FA82
+100022               MANUEL, BRENT                                                           4           0           0         0x000000007FD4FA83
+100024               WALTON, SHANE                                                           4           0           0         0x000000007FD4FA84
+100026               PARKER, KENT                                                            4           0           0         0x000000007FD4FA85
+100027               SMITH, CLARENCE                                    P                    4           0           0         0x000000007FD4FA86
+100028               STONE, DUSTIN                                      F                    4           0           0         0x000000007FD4FA87
+100029               FAULKNER, AARON                                                         12          8           1         0x00000000FEA51B18
+100030               BILLINGS, BRIAN                                    F                    4           0           0         0x000000007FD4FA88
+100031               HOLMES, SHELLEY                                                         4           0           0         0x000000007FD4FA89
+100033               WINOSKI, RAY                                                            4           0           0         0x000000007FD4FA8A
+100034               FINDLATER, GLENDON                                                      12          8           1         0x000000000F8AB52D
+100035               ORSER, LLOYD                                                            12          8           1         0x00000000FEA51B19
+100036               NICHOLSON, TYLER                                   S                    12          8           0         0x00000000D1BD9A21
+100037               SKAARUP,JENNIFER                                                        12          8           1         0x000000000F8AB530
+100038               GUEST, CHARLIE                                                          12          8           1         0x000000014819117A
+100039               FISH, BRIAN                                                             4           0           0         0x000000007FD4FA8B
+100040               KING TED                                           S                    4           0           0         0x000000007FD4FA8C
+100041               CRAWFORD, JAMES                                                         12          8           1         0x00000000FEA51B1B
+100042               BANKS, FAY                                         S                    4           0           0         0x000000007FD4FA8D
+100043               BOULET, TIM                                        S                    4           0           0         0x000000007FD4FA8E
+100044               SHERWOOD, JEFFREY                                  S                    12          8           0         0x0000000100DDE018
+100045               MACDOUGALL, IRIS                                                        12          8           0         0x00000000D1BD99E5
+100046               MACDOUGALL, RANDY                                                       12          8           0         0x0000000100DDDE50
+100047               BLANEY, BARRY                                                           12          8           1         0x000000012C0196A4
+100048               MCDOUGALL, IRIS                                                         12          8           0         0x000000005331EB51
+100049               DYER, ANDREW                                                            4           0           0         0x000000007FD4FA8F
+100050               MacELWAIN, STU                                                          4           0           0         0x000000007FD4FA90
+100051               HOLMES, SHELLEY                                                         12          8           1         0x000000000F8AB53E
+100052               SAUNDER, TODD                                                           12          8           1         0x000000000F8AB53F
+100053               ORSER, JANET                                                            12          8           0         0x000000011EEB624F
+100054               SHEAR                                              M                    10          0           1         0x000000007FD4FBCB
+100055               HORIZONTAL SAW                                     M                    7           0           1         0x000000007FD4FBCC
+100056               HYDRAULIC IRON WORKER                              M                    8           9           1         0x000000007FE546B6
+100057               DRILL 1                                            M                    9           0           1         0x000000007FD4FBCE
+100058               LATHE                                              M                    9           0           1         0x000000007FD4FBCF
+100059               TAPPING TABLE                                      M                    9           0           1         0x000000007FD4FBD0
+100060               PRESS BRAKE 1                                      M                    10          0           1         0x000000007FD4FBD1
+100061               FLAME CUTTER                                       M                    9           0           1         0x000000007FD4FBD2
+100062               BUFF                                               M                    9           0           1         0x000000007FD4FBD3
+100063               VERTICAL SAW                                       M                    7           0           1         0x000000007FD4FBD4
+100064               MANUAL SAW                                         M                    7           9           1         0x000000008B6C469D
+100065               MECHANICAL IRON WORKER                             M                    8           9           1         0x000000007FE54826
+100066               DRILL 2                                            M                    9           0           1         0x000000007FD4FBD7
+100067               DRILL 3                                            M                    9           0           1         0x000000007FD4FBD8
+100068               DRILL 4                                            M                    9           0           1         0x000000007FD4FBD9
+100069               PRESS BRAKE 2                                      M                    10          0           1         0x000000007FD4FBDA
+100070               PRESS BRAKE 3                                      M                    10          0           1         0x000000007FD4FBDB
+100071               MILLING MACHINE                                    M                    1           9           1         0x000000007FE548A2
+100072               DENNY, JODY                                                             12          8           0         0x000000007FE545D2
+100073               UNDERHILL, JORDAN                                                       12          8           0         0x00000000D1BD9AC6
+100074               CAMPBELL, FRANCIS                                                       12          8           1         0x000000001D63F5F0
+100075               BOBARNAC, VICTOR                                                        12          8           1         0x000000013D878C17
+100076               MESSERVEY,SHARI                                                         4           0           0         0x000000007FD4FA91
+100077               GARDAM, SARAH                                                           11          0           0         0x000000007FD4FA92
+100078               LORD, SARAH                                                             12          8           1         0x000000012BFCE9D6
+100079               POLISHER                                           O                    0           0           1         0x000000012A4D4C82
+100080               DUNCAN,HAMISH                                                           12          8           0         0x000000005331EA35
+100085               DERRAH, ABBY                                                            0           0           0         0x000000007722EB9D
+100086               PORTER, MATTHEW                                                         12          8           0         0x000000013D46B99F
+100087               MERRITHEW, JAMIE                                                        12          8           1         0x000000012BFCEBB8
+100089               LYMAN, MIKE                                                             12          8           1         0x000000008A230C0C
+100090               BOYD, STEPHEN                                                           12          8           1         0x00000000A7B12128
+100093               FISHER, GINNY                                                           0           0           0         0x00000000D1BD996D
+100094               FOURNIER, TERRY                                                         0           0           0         0x00000000D1BD9976
+100095               DERRAH, OWEN                                                            12          8           1         0x0000000100DDDA7F
+100096               JOHNSON, JACK                                                           12          8           1         0x0000000100DDDD94
+100097               GADDAS, MURRAY                                                          12          8           0         0x000000012BFCE12C
+100098               PIPER, LORI                                                             0           0           1         0x000000010DE39FAA
+100099               GILLAS, MATTHEW                                                         12          8           1         0x000000012BFCE207
+100100               BRIGGS, AVERY                                                           0           0           1         0x0000000110FB73C4
+100101               DARZAID, MOHAMMAD                                                       0           0           1         0x0000000114FB8FA2
+100103               SOMERVILLE, JASON                                                       12          8           1         0x000000013D8798BD
+100104               NASSAR, YASSIN                                                          12          8           1         0x000000012BFCEF55
+100105               HAWLINGS, ROLAND                                                        12          8           1         0x000000012BFCE7A8
+100106               MERTHERELL, JOANNA                                                      12          8           1         0x000000012BFCEC99
+100107               CLARK, HEATHER                                                          12          8           1         0x000000012BFCDCC7
+100108               DE MERCHANT, RHONDA                                                     12          8           1         0x000000012BFCDD4C
+10095                DERRAH,OWEN                                                             0           0           0         0x0000000100DDD9F0
+200001               WORTMAN, ALVIN                                     M                    4           0           0         0x000000007FD4FA93
+200002               BROOKER, LESTER                                    T                    12          8           1         0x000000000F8AB6D1
+200005               WESTON, BURNS                                      D                    4           0           0         0x000000007FD4FA94
+200006               CULLINS, SIDNEY                                    T                    1           9           1         0x000000013EABA1CC
+200007               TAVERNE, AUGUSTINE                                 M                    4           0           0         0x000000007FD4FA95
+200008               SIROIS, JACQUES                                    M                    4           0           0         0x000000007FD4FA96
+200009               LAROCHE, STEPHANE                                  D                    4           0           0         0x000000007FD4FA97
+200011               GRAHAM, RANDY                                      M                    4           0           0         0x000000007FD4FA98
+200014               HARTLEY, MARK                                      F                    4           0           0         0x000000007FD4FA99
+200015               RITCHIE, DENNIS                                    T                    4           0           0         0x000000007FD4FA9A
+200016               PAGE, KENNETH                                      M                    4           0           0         0x000000007FD4FA9B
+200017               LUNN, STEPHEN                                      T                    4           0           0         0x000000007FD4FA9C
+200018               PIPER, AUBREY                                      S                    13          9           1         0x00000001436621A8
+200019               MCMANN, DAVID                                      D                    4           0           0         0x000000007FD4FA9D
+200020               KOZIEL, FRANCIS                                    S                    20          9           0         0x0000000148191404
+200021               MCLEAN, WINSTON                                    M                    4           0           0         0x000000007FD4FA9E
+200023               BERRY, LARRY                                       WI                   13          22          1         0x000000013D22C843
+200025               SMITH GAYLON                                       T                    12          8           1         0x000000010867B53A
+200026               BULMER, MICHAEL                                    T                    4           0           0         0x000000007FD4FA9F
+200028               BROOKS, JOHN H.                                    T                    4           0           0         0x000000007FD4FAA0
+200029               CORMIER, ALONZO                                    T                    4           0           0         0x000000007FD4FAA1
+200031               SMITH, EMERY                                       F                    4           0           0         0x000000007FD4FAA2
+200032               KILCOLLINS, GLENDON                                                     4           0           0         0x000000007FD4FAA3
+200036               CONNORS, DARRELL                                                        4           0           0         0x000000007FD4FAA4
+200039               KILCOLLINS, LEROY                                  F                    4           0           0         0x000000007FD4FAA5
+200040               CLARK, DEREK                                       M                    4           0           0         0x000000007FD4FAA6
+200041               PAUL, ALFRED                                       P                    4           0           0         0x000000007FD4FAA7
+200042               WILLIAMS, DALE                                     F                    4           0           0         0x000000007FD4FAA8
+200044               COWPERTHWAITE, CURTIS                              F                    4           0           0         0x000000007FD4FAA9
+200045               LUNN, LANCE                                        F                    12          8           1         0x000000000F8AB6EB
+200047               DONOVAN, GUY                                       M                    4           0           0         0x000000007FD4FAAA
+200048               DEMERCHANT, WESLEY                                 F                    4           0           0         0x000000007FD4FAAB
+200052               WALTON, DALE                                       D                    4           0           0         0x000000007FD4FAAC
+200056               BARD, CHAD                                         P                    4           0           0         0x000000007FD4FAAD
+200057               REID, MARK                                         WI                   14          11          0         0x000000012BFCD1AA
+200061               WALLACE, ROBB                                      P                    4           0           0         0x000000007FD4FAAE
+200065               LEVESQUE, JASON                                    F                    4           0           0         0x000000007FD4FAAF
+200069               KILLAM, RANDY                                      P                    17          16          1         0x00000001355AD72B
+200072               WATSON, TODD                                       F                    4           0           0         0x000000007FD4FAB0
+200073               LUNN, LEE                                          D                    4           0           0         0x000000007FD4FAB1
+200074               PAGE, MATTHEW                                      D                    4           0           0         0x000000007FD4FAB2
+200077               KILCOLLINS, BRIAN                                  WI                   17          31          0         0x0000000100DDDDC3
+200079               BOWMASTER, MICHAEL                                 F                    5           19          0         0x00000000A7B1210D
+200081               MCLEAN, MICHAEL                                    T                    4           0           0         0x000000007FD4FAB3
+200082               BOWMASTER, SCOTT                                   F                    17          0           0         0x000000007FD4FAB4
+200084               MCMANN, ROBERT                                     T                    4           0           0         0x000000007FD4FAB5
+200085               DEE, SHANNON                                       F                    4           0           0         0x000000007FD4FAB6
+200086               SMITH, JAMIE                                       D                    4           0           0         0x000000007FD4FAB7
+200087               BELL, WADE                                         D                    4           0           0         0x000000007FD4FAB8
+200088               WILKINSON, TREVOR                                  D                    4           0           0         0x000000007FD4FAB9
+200089               CLARK, MICHAEL                                     T                    4           0           0         0x000000007FD4FABA
+200090               PRIOR, TRAVIS                                      D                    4           0           0         0x000000007FD4FABB
+200091               BROWSE, JIM                                        F                    4           0           0         0x000000007FD4FABC
+200092               KILCOLLINS, NEIL                                   WI                   5           22          1         0x00000001261BD0CF
+200093               NAGLER, ROGER                                      T                    4           0           0         0x000000007FD4FABD
+200094               LONDON, ANDY                                       D                    4           0           0         0x000000007FD4FABE
+200095               DEMERCHANT, COREY                                  D                    4           0           0         0x000000007FD4FABF
+200096               SUTTON, CRAIG                                      D                    4           0           0         0x000000007FD4FAC0
+200097               MANUEL, SHAWN                                      D                    4           0           0         0x000000007FD4FAC1
+200098               SCHMITT, ANDREW                                    M                    4           0           0         0x000000007FD4FAC2
+200099               MCQUADE, SCOTT                                     D                    4           0           0         0x000000007FD4FAC3
+200100               NICHOLSON, ADAM                                    T                    4           3           0         0x000000013D46B84A
+200101               TILL, ERNEST                                       F                    4           0           0         0x000000007FD4FAC4
+200102               NICHOLSON, NATHAN                                  S                    13          9           1         0x0000000132E0F25D
+200103               KOZIEL, EVAN                                       M                    4           0           0         0x000000007FD4FAC5
+200104               DIAMOND, RONALD                                    T                    4           0           0         0x000000007FD4FAC6
+200105               COLE, TOBY                                         D                    4           0           0         0x000000007FD4FAC7
+200106               PHILLIPS, LOREN                                    T                    4           0           0         0x000000007FD4FAC8
+200107               BROAD, CHRIS                                       F                    4           0           0         0x000000007FD4FAC9
+200108               BALSER, DAVIS                                      F                    4           0           0         0x000000007FD4FACA
+200109               ROY, JOEY                                          F                    4           0           0         0x000000007FD4FACB
+200110               PENNEY, PERRY                                      F                    4           0           0         0x000000007FD4FACC
+200111               LLOYD, THOMPSON                                    T                    4           0           0         0x000000007FD4FACD
+200112               HARDING CHESLEY                                    M                    4           0           0         0x000000007FD4FACE
+200113               TRACEY ZAC                                         D                    4           0           0         0x000000007FD4FACF
+200114               HARTLEY, JAMES                                     P                    17          0           1         0x00000000968E36C3
+200115               BARRETT, DANIEL                                    M                    4           0           0         0x000000007FD4FAD0
+200116               OAKES, JASON                                       F                    4           0           0         0x000000007FD4FAD1
+200117               MCINTOSH, PATRICK                                  M                    4           0           0         0x000000007FD4FAD2
+200118               LYON, DEREK                                        F                    4           0           0         0x000000007FD4FAD3
+200119               MORIN, FRANCIS                                     F                    4           0           0         0x000000007FD4FAD4
+200120               SMITH, DELETE                                                           1           9           0         0x0000000018DC00FB
+200121               TILL, JOEL                                         F                    4           0           0         0x000000007FD4FAD5
+200122               CORMIER, EDWIN                                     D                    4           0           0         0x000000007FD4FAD6
+200123               CAVE, MATTHEW                                      P                    4           0           0         0x000000007FD4FAD7
+200124               MCALLISTER, TOM                                    D                    4           0           0         0x000000007FD4FAD8
+200125               GRANT, PETER                                       D                    4           0           0         0x000000007FD4FAD9
+200126               DOUGHERTY, GREG                                    F                    4           0           0         0x000000007FD4FADA
+200127               HANSON, BEN                                        T                    4           0           0         0x000000007FD4FADB
+200128               HOLMES, COREY                                      F                    5           19          0         0x0000000089258AE6
+200129               SHAW, CLAY                                         T                    4           0           0         0x000000007FD4FADC
+200130               DOWNING, SETH                                      F                    4           0           0         0x000000007FD4FADD
+200131               HOW, STEPHEN                                       D                    4           0           0         0x000000007FD4FADE
+200132               SHAW, STERLING                                     M                    4           0           0         0x000000007FD4FADF
+200133               WORTMAN, PAUL                                      M                    4           0           0         0x000000007FD4FAE0
+200134               PAGET, NOAH                                        M                    4           0           0         0x000000007FD4FAE1
+200135               LUNN, NATHAN                                       F                    4           0           0         0x000000007FD4FAE2
+200136               LEE, ROBERT                                        M                    4           0           0         0x000000007FD4FAE3
+200137               DEWITT, CHAD                                       T                    4           0           0         0x000000007FD4FAE4
+200138               BOWMASTER, DAVE                                    M                    4           0           0         0x000000007FD4FAE5
+200139               FITZHERBERT, EDDIE                                 M                    4           0           0         0x000000007FD4FAE6
+200140               KINNEY, LEIGH                                      D                    4           0           0         0x000000007FD4FAE7
+200141               BROOKER, CHAD                                      S                    19          9           1         0x000000013D22F877
+200142               MARTIN, FIDELLE                                    T                    4           0           0         0x000000007FD4FAE9
+200143               SULLIVAN, KANE                                     T                    4           0           0         0x000000007FD4FAEA
+200144               MACDONALD, BRENT                                   T                    4           0           0         0x000000007FD4FAEB
+200145               WATSON, KENNY                                      M                    4           0           0         0x000000007FD4FAEC
+200146               HATHEWAY, STEPHEN                                  P                    4           0           0         0x000000007FD4FAED
+200147               DEMERCHANT, TIM                                    T                    4           0           0         0x000000007FD4FAEE
+200148               WHEELER, CHRIS                                     M                    4           0           0         0x000000007FD4FAEF
+200149               BROOKER, WILLIAM                                   M                    4           0           0         0x000000007FD4FAF0
+200150               DEMERCHANT, JEFF                                   M                    4           0           0         0x000000007FD4FAF1
+200151               DOHERTY, TERRY                                     M                    4           0           0         0x000000007FD4FAF2
+200152               WHYNOT, DAVID                                      M                    4           0           0         0x000000007FD4FAF3
+200153               WORTMAN, JUSTIN                                    M                    4           0           0         0x000000007FD4FAF4
+200154               GUTHRIE, TYSON                                     M                    4           0           0         0x000000007FD4FAF5
+200155               MORGAN, DAVID                                      M                    4           0           0         0x000000007FD4FAF6
+200156               UNDERHILL, MITCHELL                                M                    4           0           0         0x000000007FD4FAF7
+200157               PAGE, MURRAY                                       P                    4           0           0         0x000000007FD4FAF8
+200158               LAWRENCE, JEREMY                                   M                    4           0           0         0x000000007FD4FAF9
+200159               SMITH, TROY                                        T                    1           30          0         0x000000013D879859
+200160               HANSON, TYSON                                      M                    4           0           0         0x000000007FD4FAFA
+200161               MILBURY, HAL                                       D                    4           0           0         0x000000007FD4FAFB
+200162               FERGUSON, JAMESON                                  M                    4           0           0         0x000000007FD4FAFC
+200163               BILLINGS, ROSS                                     T                    4           0           0         0x000000007FD4FAFD
+200164               JONES, SHAWN                                       D                    4           0           0         0x000000007FD4FAFE
+200165               KENT, JASON                                        F                    4           0           0         0x000000007FD4FAFF
+200166               DAVENPORT, CORY                                    P                    4           0           0         0x000000007FD4FB01
+200167               RUFF, ADAM                                         D                    4           0           0         0x000000007FD4FB02
+200168               FORSYTHE, STEPHEN                                  T                    4           0           0         0x000000007FD4FB03
+200169               ELSINGA, GERRIT                                    T                    4           0           0         0x000000007FD4FB04
+200170               TURNER, GREG                                       T                    4           0           0         0x000000007FD4FB05
+200171               IVEY, MIKE                                         T                    4           0           0         0x000000007FD4FB06
+200172               WYMAN, CLAY                                        P                    4           0           0         0x000000007FD4FB07
+200173               WHITE, TIMOTHY                                     T                    4           0           0         0x000000007FD4FB08
+200174               WHITE, JASON                                       T                    4           0           0         0x000000007FD4FB09
+200175               DOWNEY, WARREN                                     T                    4           0           0         0x000000007FD4FB0A
+200176               KOZIEL, JAMIE                                      F                    1           22          0         0x000000013D878F8D
+200177               BOYCE, TERRY                                       P                    4           0           0         0x000000007FD4FB0C
+200178               LUNN, PAUL                                         P                    17          19          0         0x000000012BFCEA2C
+200179               PARISH, JOEL                                       T                    4           0           0         0x000000007FD4FB0D
+200180               KINNEY, KEVIN                                      S                    4           0           0         0x000000007FD4FB0E
+200181               GOGAN, RYAN                                        S                    1           9           0         0x000000006062809B
+200182               WHITE, CHANCE                                      T                    4           18          0         0x0000000087107F7E
+200183               DUMONT, JASON                                      T                    4           0           0         0x000000007FD4FB10
+200184               HICKEY, KEITH                                      T                    4           0           0         0x000000007FD4FB11
+200185               BRAYSON, JOE                                       T                    1           9           1         0x0000000148A270C6
+200186               TAYLOR, ARTHUR                                     T                    4           0           0         0x000000007FD4FB12
+200187               WOOD, AL                                           T                    4           0           0         0x000000007FD4FB13
+200188               HATHEWAY, CLAY                                     T                    13          37          0         0x0000000131E4E82E
+200189               RATTRAY, CHARLES                                   F                    5           0           0         0x000000007FD4F999
+200190               WHITE, COREY                                       T                    4           0           0         0x000000007FD4FB15
+200191               HARTLEY, RICK                                      B                    4           0           0         0x000000007FD4FB16
+200192               DELONG, ALLISON                                    Y                    4           0           0         0x000000007FD4FB17
+200193               REED, BEN                                          T                    4           0           0         0x000000007FD4FB18
+200194               DROST, ALEX                                        M                    4           0           0         0x000000007FD4FB19
+200195               MILHERON, GERALD                                   M                    4           0           0         0x000000007FD4FB1A
+200196               KELLEY, RANDY                                      P                    4           0           0         0x000000007FD4FB1B
+200197               DONOVAN, GRANT                                     M                    4           0           0         0x000000007FD4FB1C
+200198               THOMAS, LAWRENCE                                   T                    1           9           1         0x000000013B0295DD
+200199               MILBURY, GORDON                                    M                    4           0           0         0x000000007FD4FB1D
+200200               BAKER, RODNEY                                      B                    5           0           0         0x000000005D7ED495
+200201               CANAM, JEREMY                                      T                    4           0           0         0x000000007FD4FB1E
+200202               CLARK, WAYNE                                       T                    4           0           0         0x000000007FD4FB1F
+200203               CRAIN, WILLIAM                                     A                    4           9           0         0x000000013D22D48F
+200204               MACDONALD, BRENT                                   T                    4           0           0         0x000000007FD4FB20
+200205               BYRAM, ANDREW                                      T                    4           0           0         0x000000007FD4FB21
+200206               SHATTLER, EDWARD                                   P                    4           0           0         0x000000012579E6BA
+200207               IVEY, MIKE                                         T                    4           0           0         0x000000007FD4FB23
+200208               THOMAS, JAMIE                                      T                    4           0           0         0x000000007FD4FB24
+200209               NICHOLSON, SHANE                                   WI                   11          27          0         0x00000000F2EC82D2
+200210               BILLINGS, LARRY                                    D                    4           0           0         0x000000007FD4FB25
+200211               PLANT, TREVOR                                      S                    4           0           0         0x000000007FD4FB26
+200212               WOODARD, JOHN                                      T                    4           0           0         0x000000007FD4FB27
+200213               WHITE, JEREMY                                      T                    4           0           0         0x000000007FD4FB28
+200214               SMITH, JESSE                                       F                    4           0           0         0x000000007FD4FB29
+200215               BROOKER, KYLE                                      M                    4           0           0         0x000000007FD4FB2A
+200216               CRAIN, TREVOR                                      T                    4           0           0         0x000000007FD4FB2B
+200217               DELONG, RUSSELL                                    T                    13          9           0         0x00000000612C2BD3
+200218               TOMPKINS, TRAVIS                                   M                    4           0           0         0x000000007FD4FB2C
+200219               DAVENPORT, KEITH                                   T                    4           0           0         0x000000007FD4FB2D
+200220               NICHOLSON, TYLER                                   T                    4           0           0         0x00000000AE060266
+200221               TUCKER, SHANE                                      F                    4           0           0         0x000000007FD4FB2E
+200222               BERRY, ROBERT                                      M                    4           0           0         0x000000007FD4FB2F
+200223               PELKEY, KYLE                                       T                    4           0           0         0x000000007FD4FB30
+200224               TAYLOR, BRENT                                      S                    20          22          1         0x000000013D22E4F2
+200225               HAYDEN, MICHAEL                                    T                    4           0           0         0x000000007FD4FB31
+200226               BERRY, JORDAN                                      S                    4           0           0         0x000000007FD4FB32
+200227               KEENAN, BRIAN                                      P                    17          19          0         0x00000000A7B11D9F
+200228               BARKER, LEE                                        D                    4           0           0         0x000000007FD4FB33
+200229               SMITH, COLIN                                       P                    4           0           0         0x000000007FD4FB34
+200230               NEILSON, KENNETH                                   T                    4           0           0         0x000000007FD4FB35
+200231               BOONE, ALTON                                       T                    4           0           0         0x000000007FD4FB36
+200232               KILCOLLINS, GARY                                   T                    4           0           0         0x000000007FD4FB37
+200233               REID, LUKE                                         F                    4           0           0         0x000000007FD4FB38
+200234               CORMIER, PAUL                                      S                    4           0           0         0x000000007FD4FB39
+200235               CRAIG, CHRIS                                       Y                    4           0           0         0x000000007FD4FB3A
+200236               SNOW, PETER                                        D                    4           0           0         0x000000007FD4FB3B
+200237               LASKEY, DERRICK                                    T                    4           0           0         0x000000007FD4FB3C
+200238               SMITH, JAMIE                                       WI                   1           9           1         0x0000000148A26620
+200239               SMITH, KYLE                                        WI                   1           39          1         0x0000000136BEF9EA
+200240               DEMERCHANT, JOE                                    D                    4           0           0         0x000000007FD4FB3D
+200241               PATERSON, ALLISON                                  S                    13          37          1         0x0000000131E4E830
+200242               TRECARTEN, WILLIAM                                 F                    4           0           0         0x000000007FD4FB3E
+200243               HARRINGTON, CHRISTOPHER                            T                    13          30          0         0x0000000100DDDC4B
+200244               BROAD, ASHLEY                                      P                    4           0           0         0x000000007FD4FB3F
+200245               DUNBAR, BRIAN                                      P                    4           0           0         0x000000007FD4FB40
+200246               DELONG, JEFF                                       D                    4           0           0         0x000000007FD4FB41
+200247               SARCHFIELD, COREY                                  M                    4           0           0         0x000000007FD4FB42
+200248               PROSSER, MICHAEL                                   M                    4           0           0         0x000000007FD4FB43
+200249               MCHATTEN, MICHAEL                                  T                    1           9           1         0x0000000132E0F11E
+200250               PROSSER, KEVIN                                     P                    6           5           0         0x0000000018CBED48
+200251               NICHOLSON, SCOTT                                   P                    4           0           0         0x000000007FD4FB44
+200252               NYE, STEPHEN                                       D                    4           0           0         0x000000007FD4FB45
+200253               WILLIAMS, KYLE                                     T                    1           37          0         0x000000013D46BE51
+200254               PHELPS, JOSH                                       P                    4           0           0         0x000000007FD4FB46
+200255               STEWART, MARK                                      D                    4           0           0         0x000000007FD4FB47
+200256               O'DONNELL, RYAN                                    F                    5           19          0         0x00000000A7B11F21
+200257               LUCAS, JASON                                       P                    4           0           0         0x000000007FD4FB48
+200258               WILLIAMS, REUBIN                                   T                    4           0           0         0x000000007FD4FB49
+200259               LANTO, RICHARD                                     M                    4           0           0         0x000000007FD4FB4A
+200260               HAMILTON, SHAWN                                    D                    5           19          0         0x00000000817E07AD
+200261               CARVELL, MATTHEW                                   F                    4           0           0         0x000000007FD4FB4C
+200262               FENTON, IAN                                        F                    4           0           0         0x000000007FD4FB4D
+200263               DAVENPORT, COLBY                                   F                    4           0           0         0x000000007FD4FB4E
+200264               WORTMAN, KYLE                                      F                    4           0           0         0x000000007FD4FB4F
+200265               MUELLER, MATTHIAS                                  T                    4           0           0         0x000000007FD4FB50
+200266               REMPEL, JOHN                                       M                    4           0           0         0x000000007FD4FB51
+200267               KEENAN, JAKE JR.                                   P                    17          16          0         0x00000000A7B11DA0
+200268               MCLEAN, CONNELL                                    WI                   4           0           0         0x000000007FD4FB52
+200269               MCDOUGALL, WYATT                                   F                    4           0           0         0x000000007FD4FB53
+200270               DICKINSON, ADRIAN                                  T                    4           0           0         0x000000007FD4FB54
+200271               HOYT, BEN                                          F                    4           0           0         0x000000007FD4FB55
+200272               GOREY, JOE                                         WI                   4           0           0         0x000000007FD4FB56
+200273               FOSTER, RON                                        MI                   6           5           1         0x0000000132E2004A
+200274               BROAD, DUSTIN                                      F                    4           0           0         0x000000007FD4FB57
+200275               KEENAN, BRADLEY                                    F                    4           0           0         0x000000007FD4FB58
+200276               CANAM, JEREMY                                      S                    4           0           0         0x000000007FD4FB59
+200277               LYON, NORMAN                                       T                    4           0           0         0x000000007FD4FB5A
+200278               PROSSER, KEVIN                                     MI                   6           25          0         0x0000000100DDDEBE
+200279               FOSTER, DAVID                                      T                    4           0           0         0x000000007FD4FB5B
+200280               REES, MARK                                         F                    4           0           0         0x000000007FD4FB5C
+200281               NEVERS, RICHARD                                    B                    4           0           0         0x000000007FD4FB5D
+200282               FOSTER, DANNY                                      P                    4           0           0         0x000000007FD4FB5E
+200283               DEMERCHANT, GLEN                                   T                    4           0           0         0x000000007FD4FB5F
+200284               MOORCRAFT, ROY                                     S                    4           0           0         0x000000007FD4FB60
+200285               MELVIN, JOSH                                       T                    4           0           0         0x000000007FD4FB61
+200286               GRANT, ROBERT                                      D                    4           0           0         0x000000007FD4FB62
+200287               BROWN, TODD                                        D                    4           0           0         0x000000007FD4FB63
+200288               BROAD, SCOTT                                       F                    5           9           1         0x0000000139A9C917
+200289               MACLEOD, DEVIN                                     P                    4           0           0         0x000000007FD4FB64
+200290               BUCHHOLTZ, BRADLEY                                 T                    4           0           0         0x000000007FD4FB65
+200291               MCCONNELL, LUKE                                    T                    4           0           0         0x000000007FD4FB66
+200292               CLARK, GREGORY                                     D                    4           0           0         0x000000007FD4FB67
+200293               DEMERCHANT, MATT                                   T                    4           0           0         0x000000007FD4FB68
+200294               DEMERCHANT, TROY                                   T                    4           0           0         0x000000007FD4FB69
+200295               TOMPKINS, NICK                                     F                    4           0           0         0x000000007FD4FB6A
+200296               GRANT, QUENTIN                                     T                    4           0           0         0x000000007FD4FB6B
+200297               TUCKER, ROCKY                                      P                    4           0           0         0x000000007FD4FB6C
+200298               DROST, JODY                                        T                    4           0           0         0x000000007FD4FB6D
+200299               NICHOLSON, SHAWN                                   T                    1           9           1         0x0000000132E0F1AF
+200300               TIMMERMAN, NEILSON                                 S                    4           0           0         0x000000007FD4FB6E
+200301               PAGET, JEREMY                                      F                    4           0           0         0x000000007FD4FB6F
+200302               ROSS, BARRY                                        T                    4           0           0         0x000000007FD4FB70
+200303               EVERETT, ADAM                                      T                    4           0           0         0x000000007FD4FB71
+200304               SHAW, LUKE                                         T                    4           0           0         0x000000007FD4FB72
+200305               KILCOLLINS, JESSE                                  T                    1           9           1         0x0000000132E0EED1
+200306               TIBBITS, LANCE                                     T                    4           0           0         0x000000007FD4FB73
+200307               RIDEOUT, BRIAN                                     S                    4           0           0         0x000000007FD4FB74
+200308               CLARK, BRIAN                                       S                    13          30          0         0x0000000100DDD8C9
+200309               WESTON, TONY                                       MI                   6           9           1         0x0000000148A26FEF
+200310               CHASE, MURRAY                                      F                    4           0           0         0x000000007FD4FB75
+200311               WILLIAMS, KODDIE                                   T                    4           0           0         0x000000007FD4FB76
+200312               WHITE, AARON                                       S                    13          22          0         0x00000000D1BD9B07
+200313               BUXTON, CHARLES                                    MI                   4           0           0         0x000000007FD4FB78
+200314               DEMERCHANT, CHANCE                                 T                    4           0           0         0x000000007FD4FB79
+200315               COMEAU, LAWRENCE                                   F                    4           0           0         0x000000007FD4FB7A
+200316               LANGILLE, STEVEN                                   S                    4           0           0         0x000000007FD4FB7B
+200317               MCCORMACK, MALCOLM                                 T                    4           0           0         0x000000007FD4FB7C
+200318               BISHOP, TONY                                       F                    5           20          1         0x000000012643757A
+200319               HALLETT, JODIE                                     S                    4           0           0         0x000000007FD4FB7D
+200320               DELONG, TRAVIS                                     M                    4           0           0         0x000000007FD4FB7E
+200321               RAYNER, LAWRENCE                                   S                    1           9           1         0x0000000139A9CAFE
+200322               WATSON, STEPHEN                                                         4           0           0         0x000000007FD4FB80
+200323               MACDONALD, TREVOR                                  MI                   4           0           0         0x000000007FD4FB81
+200324               DIXON, JASON                                       T                    1           9           0         0x000000005331EA27
+200325               HUTCHINSON, SKYLAR                                 M                    4           0           0         0x000000007FD4FB82
+200326               DILL, ARNOLD                                       WI                   14          21          1         0x000000013D22DD2C
+200327               McLEAN, CODY                                       M                    4           0           0         0x000000007FD4FB83
+200328               CARLISLE, COLE                                     WI                   14          11          1         0x000000010867A565
+200329               HARGROVE, PAUL                                     F                    4           0           0         0x000000007FD4FB84
+200330               COTE, JOSH                                         T                    1           9           1         0x000000013CDAF2C7
+200331               WHITE, MATTHEW                                     T                    4           0           0         0x000000007FD4FB85
+200332               MORGAN, JASON                                      WI                   12          8           1         0x00000000A7B11EDB
+200333               MCCMORMICK, BRANDON                                T                    4           0           0         0x000000007FD4FB86
+200334               THORNTON, TERRY                                    T                    1           9           0         0x000000005331ED41
+200335               LONDON, IRVIN                                      M                    4           0           0         0x000000007FD4FB87
+200336               HARTLEY, THOMAS                                    P                    17          0           1         0x000000009C7020AF
+200337               NICHOLSON, RYAN                                    F                    4           0           0         0x000000007FD4FB88
+200338               MCFARLANE, ROBERT                                  T                    4           0           0         0x000000007FD4FB89
+200339               HATHAWAY, JOSH                                     F                    5           9           1         0x000000013B02A111
+200340               SKAARUP, KARSTEN                                   F                    5           24          0         0x00000000A7B11B3E
+200341               MARTIN, PETER                                      S                    4           0           0         0x000000007FD4FB8C
+200342               SPARKS, THOMAS                                                          4           0           0         0x000000007FD4FB8D
+200343               WILKINSON, TREVOR                                  S                    4           0           0         0x000000007FD4FB8E
+200344               DELONG, JEFFREY                                    D                    4           0           0         0x000000007FD4FB8F
+200345               SMITH, KEVIN                                       S                    4           0           0         0x000000007FD4FB90
+200346               PLAYFOOT, PAUL                                     F                    4           0           0         0x000000007FD4FB91
+200347               THOMAS, SIMON                                      T                    4           0           0         0x000000007FD4FB92
+200348               BROOKER, JAMES                                     WI                   4           5           0         0x000000007FE54514
+200349               KILCOLLINS, KADE                                   F                    5           0           0         0x000000007FE546DF
+200350               McADAM, JOE                                        WI                   14          9           1         0x0000000148190CD7
+200351               TILL, ERNEST                                       WI                   5           0           0         0x000000007FE549D6
+200352               DOWNEY, DOUGLAS                                    S                    4           0           0         0x000000007FD4FB94
+200353               YOUNG, HUNTER                                      Y                    4           0           0         0x000000007FD4FB95
+200354               NICHOLSON, WADE                                    NP                   4           0           0         0x000000007FD4FB96
+200355               HAWTHORNE, FRED                                    S                    4           0           0         0x000000007FD4FB97
+200356               DYER, MARK                                         T                    1           22          0         0x00000000D1BD995F
+200357               Thomas, Jordan                                     F                    4           0           0         0x000000007FD4FB98
+200358               WATSON J. DUANE                                    T                    4           0           0         0x000000007FD4FB99
+200359               Tyrer, Stan                                        S                    4           0           0         0x000000007FD4FB9A
+200360               Miller, Darryl                                     M                    4           0           0         0x000000007FD4FB9B
+200361               HAMILTON, DYLAN                                    F                    4           0           0         0x000000007FD4FB9C
+200362               DAVENPORT, JASON                                   S                    4           0           0         0x000000007FD4FB9D
+200363               DEMERCHANT, JEFF                                   P                    4           0           0         0x000000007FD4FB9E
+200364               MILLER, WILL A                                     MI                   6           25          0         0x000000010867B1F9
+200365               DONOVAN, TYLER                                     B                    4           0           0         0x000000007FD4FBA0
+200366               CASS, ALFRED                                       WI                   12          8           1         0x00000000A7B1218A
+200367               Green, Patrick                                                          4           0           0         0x000000007FD4FBA1
+200368               SMITH, MICAH                                       WI                   14          11          0         0x000000007FE549C5
+200369               PELKEY, BLAINE                                     P                    4           0           0         0x000000007FD4FBA2
+200370               McPHAIL, ADAM                                      S                    4           0           0         0x000000007FD4FBA3
+200371               Nevers, Arthur                                     S                    4           0           0         0x000000007FD4FBA4
+200372               Johnston, Chris                                    S                    4           0           0         0x000000007FD4FBA5
+200373               JACOBSON, ROGER                                    B                    4           0           0         0x000000007FD4FBA6
+200374               LUNN, DARRELL                                      NP                   16          11          0         0x00000000D4A3D769
+200375               REID, DYLAN                                        P                    4           0           0         0x000000007FD4FBA7
+200376               SMITH, BRANDON                                     F                    4           0           0         0x000000007FD4FBA8
+200377               BRIDEAU, LUCAS                                     S                    1           9           1         0x000000013D468CFD
+200378               SAUNDERS, ADAM                                     P                    4           0           0         0x000000007FD4FBAA
+200379               CASS, NICK                                         F                    4           0           0         0x000000007FD4FBAB
+200380               JOHNSTON, KATE                                     WI                   4           0           0         0x000000007FD4FBAC
+200381               McDAUGALL, WYATT                                                        4           0           0         0x000000007FD4FBAD
+200382               HUNTER, LEIGH                                                           4           0           0         0x000000007FD4FBAE
+200383               LORD, SARA                                                              4           0           0         0x000000007FD4FBAF
+200384               HANNAH McDOUGALL                                                        4           0           0         0x000000007FD4FBB0
+200385               DERRAH, ABBY                                       WI                   14          11          0         0x000000007710C0DF
+200386               DEMERCHANT, JARED                                  S                    4           0           0         0x000000007FD4FBB1
+200387               SAUNDERS, SCOTT                                                         4           0           0         0x000000007FD4FBB2
+200389               EBBETT, LAUREN                                                          4           0           0         0x000000007FD4FBB3
+200390               BELL, BRIAN                                        MI                   6           16          1         0x0000000132E1F170
+200391               LUNN, JARRETT                                      WI                   4           0           0         0x000000007FD4FBB4
+200392               GOLDING, THOMAS                                    S                    13          9           0         0x000000007FE5464F
+200393               GREEN, PATRICK ROBERT                              S                    4           0           0         0x000000007FD4FBB5
+200394               VAIL, ALLEN                                                             16          9           0         0x000000005331ED5E
+200395               GOODINE, ROBIN                                     WI                   11          9           0         0x000000007FE5464E
+200396               RICHARD, JACK                                      MI                   4           0           0         0x000000007FD4FBB6
+200397               SMITH, STEPHEN                                     A                    1           22          1         0x000000010A2AD022
+200398               CARR, CHRIS                                        F                    5           9           0         0x000000007FE5458B
+200399               LAMOREAU, PARIS                                                         4           0           0         0x000000007FD4FBB7
+200400               CRAIN, MARK                                        T                    4           0           0         0x000000007FD4FBB8
+200401               DERRAH, DEXTER                                     F                    4           0           0         0x000000007FD4FBB9
+200402               BOLSTER, JOSHUA                                    P                    5           0           0         0x000000007FE5447B
+200403               DELISLE, FORREST                                   P                    17          19          0         0x00000000A7B121ED
+200404               NICHOLSON, ALLISON                                 WI                   4           0           0         0x000000007FD4FBBA
+200405               Gray, Issac                                                             4           0           0         0x000000007FD4FBBB
+200406               RIDGELEY, JASON                                    F                    5           31          0         0x00000000D4A3D86B
+200407               HOLMES, CRYSTAL                                    WI                   14          21          0         0x000000012BFCE7E8
+200408               CARLISLE, LUKE                                     WI                   4           0           0         0x000000007FD4FBBC
+200409               PELKEY,NICHOLAS                                    WI                   4           0           0         0x000000007FD4FBBD
+200410               WEBB, CHRIS                                        S                    4           0           0         0x000000007FD4FBBE
+200411               WHITE-PICKARD, ALEX                                B                    4           0           0         0x000000007FD4FBBF
+200412               GIGGIE, LAURA                                      A                    4           0           0         0x000000007FD4FBC0
+200413               REID, MARK                                                              12          8           0         0x00000000A7B11FFD
+200414               Downey, Tristan                                                         4           0           0         0x000000007FD4FBC1
+200415               CLARK, BARB                                        P                    4           0           0         0x000000007FD4FBC2
+200416               VERMONT, AGABUS                                    MI                   6           5           0         0x000000005331ED61
+200418               UNDERHILL, STEWART                                 WI                   5           0           0         0x000000007FE54A03
+200419               SMITH, ERIC                                        P                    17          7           0         0x000000007FE54994
+200420               MCCARTHY, ISAAC                                    WI                   4           0           0         0x000000007FD4FBC3
+200421               PERLEY, CANDICE                                    S                    13          30          0         0x0000000100DDDE7D
+200422               PORTER, MATTHEW                                    MI                   6           11          0         0x00000000778239F1
+200423               CLARK, BRANDON                                     S                    13          9           0         0x0000000114A330A3
+200424               COTE, LOGAN                                        ST                   0           0           0         0x000000007FE545AF
+200425               DUGAN, JACOB                                       ST                   0           0           0         0x000000007FE545F6
+200426               LANGLAIS, JULIEN                                   ST                   0           0           0         0x000000007FE5476C
+200427               PROSSER, KYLE                                      ST                   0           0           0         0x00000000D1BD9A57
+200428               RUFF, ISAIAH                                       ST                   0           0           0         0x000000007FE54991
+200429               SCHWANEWEDE, JEAN LUC                              P                    4           0           0         0x000000007FD4FBC5
+200430               LAING, JARED                                       F                    5           9           1         0x000000013B02A288
+200431               STEPHENSON, MATTHEW                                ST                   0           0           0         0x000000007FE549D0
+200433               ARMOUR, JACOB                                      S                    13          19          0         0x000000008A2371E4
+200434               DOWNEY, NATHAN                                     T                    18          9           1         0x000000013D22E8FD
+200435               DEMERCHANT, DANNY                                  T                    1           9           1         0x00000001339B89D6
+200436               OUELLETTE, RYAN                                    WI                   5           20          0         0x00000000A7B11F51
+200437               MASKELL, LOGAN                                     T                    1           37          1         0x000000013D230B76
+200438               TIBBETS, DEXTER                                    S                    4           0           0         0x000000007FD4FBC6
+200439               LeBAIL, LOUIS                                      S                    13          9           0         0x000000007FE54775
+200440               LORD, MITCHELL                                     P                    17          19          1         0x000000010867AE56
+200441               BROAD, KEVIN                                       P                    17          16          1         0x000000010867A2AA
+200442               HOLMES, WESELY                                     WI                   14          9           0         0x00000000D1BD99A3
+200443               SMITH, RYAN                                        WI                   14          11          1         0x0000000133E7954B
+200444               LINT, BRANDON                                      F                    4           0           0         0x000000007FD4FBC7
+200445               HAMILTON, CHELSEY                                  WI                   14          11          1         0x000000010867AB1D
+200446               GRANT,STEVEN                                       T                    1           22          0         0x00000000A7B12290
+200447               DEMERCHANT, MASON                                  WI                   14          33          1         0x00000001355987BD
+200448               RAIRDON, JOHN P                                    S                    18          9           1         0x000000013D22EEC7
+200449               BILLINGS, ZACHARY                                  P                    17          37          1         0x000000012507D269
+200450               BEAL, PERLEY                                       F                    4           17          0         0x000000013D878C0B
+200451               BRYMER, JUSTIN                                     WI                   17          19          0         0x00000000D4A3D48F
+200452               GODIN, NATHAN                                      S                    13          30          0         0x0000000100DDDBA3
+200453               McDOUGALL, ANDREW                                  MI                   6           9           0         0x00000000D1BD99F2
+200454               MCHATTEN, JONATHAN                                 T                    1           30          0         0x0000000100DDDE54
+200455               Mc GARVIE, BEN                                     S                    13          37          0         0x0000000131E4E83E
+200456               SEARS, ROCKLAND                                    WI                   12          8           0         0x00000000D1BD9A7D
+200457               SEARS, TANNER                                      B                    13          9           0         0x00000000A7B11CC6
+200458               HAMILTON, SHAWN                                    F                    5           37          0         0x000000012BFCE5F6
+200459               WATSON, MICHAEL                                    F                    5           37          1         0x0000000131E4E83F
+200460               GREEN, RUBEN                                       MC                   17          16          0         0x00000000A7B12298
+200461               GRAY, KIRK                                         T                    1           22          0         0x00000000A7B12292
+200462               SHAW, DANIEL                                       F                    5           37          1         0x00000001257929FB
+200463               OAKES, ISAIAH                                      WI                   14          21          0         0x00000000D1BD9A2A
+200464               SULLIVAN, GARRETT                                  MI                   6           5           0         0x00000000D1BD9AB0
+200465               RIDEOUT, STACY                                     S                    13          37          0         0x0000000131E4E840
+200466               SMITH, COLE                                        F                    5           19          0         0x0000000087107B5A
+200467               GOREY, ANDREW                                      P                    5           19          0         0x00000000A7B1225F
+200468               McDOUGALL, CALVIN                                  T                    1           30          0         0x0000000100DDDE51
+200469               OWENS, PETER                                       MC                   17          24          0         0x0000000100DDDE71
+200470               HATHAWAY, ETHAN                                    F                    5           31          0         0x0000000100DDDC7C
+200471               LOVELY, JESSE                                      S                    1           37          1         0x000000013D230AAA
+200472               PRIOR, BLAIRE                                      S                    13          9           1         0x0000000148A26FF1
+200473               POZSGAI, MARIA                                     P                    17          9           0         0x000000008A230F95
+200474               CARTER, MITCHELL                                   S                    19          9           1         0x000000013D22F1EB
+200475               SEWELL, PETER                                      F                    5           24          0         0x00000000ABFB2395
+200476               JOHNSTON, NATHAN                                   F                    5           19          0         0x00000000A7B11D95
+200477               RIDEOUT, MARK                                      WI                   5           37          1         0x000000012507C10D
+200478               MURPHY, BRIAN                                      S                    1           9           0         0x00000000D1BD9A14
+200479               GAILLARDETZ, FREDERIC                              S                    1           9           1         0x000000013D231057
+200480               SOMERVILLE, ETHAN                                  WI                   14          11          0         0x00000000D1BD9AA1
+200481               HARDING, SEAN                                      F                    5           9           1         0x000000013B029CB9
+200482               MILLER, WILLIAM                                    F                    5           37          1         0x000000012507BFB5
+200483               PHILLIPS, CODY                                     F                    5           24          0         0x00000000A7B11FB5
+200484               PANGBURN, MARTY                                    WI                   14          11          0         0x00000000A7B11FA3
+200485               ALWARD, JOEY                                       F                    5           16          1         0x0000000132E1DFCD
+200486               CHRISTOPHER, AIDAN                                 S                    13          9           0         0x00000000A7B1218B
+200487               OUELETTE, GILBERT                                  WI                   11          27          0         0x0000000100DDDE65
+200488               CARTER, MICHAEL                                    WI                   14          27          0         0x0000000100DDD89A
+200489               TUCKER, BILLY                                      P                    17          19          0         0x00000000A7B11BCB
+200491               RIEMER, MARK                                       WI                   14          21          0         0x00000000F2EC8330
+200492               SEWELL, RANDY                                      F                    5           19          0         0x00000000D1BD9A7E
+200493               SARCHFIELD, WESLEY                                 F                    5           31          0         0x0000000100DDE26E
+200494               McDOUGALL, JAKOB                                   S                    13          9           0         0x00000000A7B11E54
+200495               GAUDETT, GARRY                                     P                    17          16          1         0x000000010867A9DC
+200496               JONES, TRISTAN                                     WI                   14          22          0         0x00000000A7B11D9A
+200497               HAMILTON, COLBY                                    F                    5           9           1         0x00000001355AC2BF
+200498               BROAD, DUSTIN                                      T                    1           33          1         0x000000013D46AFD8
+200499               DELONG, JOSHUA                                     MI                   6           5           0         0x00000000A7B121F2
+200500               SOUTHAN, NICK                                      WI                   14          11          0         0x00000000D1BD9AA6
+200501               MC QUADE, NIGEL                                    F                    5           37          0         0x000000012BFCEAA5
+200502               O'BRIEN, MATTHEW                                   S                    13          16          0         0x00000000D1BD9A2C
+200503               EGGERT, ELIAS                                      MI                   6           16          0         0x00000000D1BD9964
+200504               OUELLETTE, PATRICK                                 S                    13          16          0         0x00000000D1BD9A3A
+200505               BRADBURY, BRANDON                                  S                    13          16          0         0x00000000D1BD981A
+200506               LINT, JASON                                        P                    17          16          0         0x00000000D1BD99D0
+200507               TETRAULT, NICOLAS                                  WI                   14          11          0         0x000000012BFCD6CF
+200508               HUNTER, JOHN                                       WI                   14          11          0         0x00000000D1BD99A8
+200509               RIDEOUT, BENJAMIN                                  MI                   6           25          0         0x0000000100DDDF19
+200510               TIBBETS, PIERCE                                    MC                   17          0           0         0x0000000100DDE0FC
+200511               BISHOP, SCOTT                                      WI                   14          27          0         0x0000000100DDD7E0
+200512               GIBERSON, DAVID                                    MC                   17          31          0         0x0000000100DDDB84
+200513               GUERRETTE, JOSHUA                                  S                    1           9           1         0x0000000132E0EE2C
+200514               LIDGATE, RAYMOND                                   WI                   0           0           0         0x00000000D1BD99CF
+200515               FOURNIER, HUNTER                                   T                    13          37          0         0x000000013D878D8F
+200516               MONTEITH, TRAVIS                                   T                    1           9           1         0x000000013D230F76
+200517               O'DONNELL, JARRED                                  S                    13          30          0         0x0000000100DDDE64
+200518               ST. PETER, GAGE                                    S                    13          9           0         0x00000000D1BD9AAB
+200519               QUINN, MATTHEW                                     T                    1           9           0         0x0000000148191B55
+200520               EKPE, KALU                                         S                    13          9           1         0x0000000132BC3462
+200521               HAWKSLEY, PAUL                                     T                    13          37          0         0x0000000131E4E84B
+200522               DROST, SPENCER                                     S                    13          30          0         0x0000000100DDDAF5
+200523               BOWMASTER, DAWSON                                  S                    14          9           1         0x000000014451E3C1
+200524               DERRAH, CLARK                                      S                    13          7           1         0x000000014BE95F15
+200525               SMITH, ANTON                                       S                    1           9           1         0x000000013D230D1A
+200526               DAVENPORT,SKYLAR                                   S                    13          30          0         0x0000000100DDD94B
+200527               WRIGHT, JOHN                                       WI                   14          33          1         0x00000001355B08A2
+200528               DEMERCHANT, DAMIEN                                 S                    1           7           1         0x000000014BE95FD2
+200529               WALLER, ROBERT                                     S                    20          22          1         0x000000013D22E6C7
+200530               GUEST, MICHAEL                                     MI                   6           7           1         0x000000014BE97B26
+200531               GREEN, ZACHARY                                     S                    18          37          1         0x000000013D22E890
+200532               DEMERCHANT, CRAIG                                  MI                   6           5           0         0x000000013D878CB8
+200533               DEMERCHANT, TRISTAN                                S                    13          30          0         0x0000000100DDD997
+200535               JAMER, BARRETT                                     S                    19          37          0         0x000000013D878F27
+200536               DAYE, DERICK                                       S                    1           37          1         0x000000013D22D9C8
+200537               ROY, JUSTIN                                        S                    18          9           1         0x000000013D22EF8A
+200538               PEARSON,BEN                                        F                    5           37          0         0x0000000148191AD5
+200539               SARCHFIELD, ALEX                                   MI                   6           9           1         0x00000001355AD2DE
+200540               LEBLANC, EVAN                                      F                    5           16          1         0x0000000132E1F242
+200541               CHAPMAN, DAWSON                                    S                    1           37          1         0x000000013D22D1D9
+200542               SWIM, CATHY                                        WI                   14          11          0         0x000000010A2AD0F1
+200543               CAMPBELL, RICHIE                                   WI                   11          9           1         0x000000013ADA237A
+200544               RIDEOUT, WAYNE                                     T                    13          37          0         0x0000000131E4E858
+200545               BOND, JARED                                        S                    13          37          0         0x0000000131E4E859
+200546               DENNY, MATTHEW                                     B                    1           9           1         0x000000013D22DC76
+200547               WILLIAMS, TYSON                                    S                    1           37          0         0x0000000131E4E85B
+200548               LAVIN, ISAAC                                       MI                   6           9           1         0x000000013ADA08D5
+200549               LEBEL, RENE                                        S                    13          37          0         0x0000000131E4E85D
+200550               SOMERVILLE, DEVAN                                  F                    5           37          0         0x000000012BFCD62C
+200551               GIBERSON, BRADLEY                                  S                    13          37          0         0x000000013D878D98
+200552               WHETMORE, TRAVIS                                   S                    13          37          0         0x000000014819204A
+200553               BRUBACHER, JAMES                                   S                    13          9           1         0x00000001339C1722
+200554               DAVENPORT ,RICHARD                                 WI                   14          37          1         0x0000000131E4E861
+200555               DeMERCHANT, CODEY                                  S                    13          37          0         0x000000013D878CB7
+200556               BROOKER, BRYDEN                                    F                    5           9           1         0x000000013B0299FF
+200557               CLARK, BRANDON                                     S                    1           37          1         0x000000013D22D2B8
+200558               McKIMM, JOE                                        WI                   14          9           0         0x0000000148190B0C
+200559               KILFOIL, THOMAS                                    MI                   6           37          1         0x0000000131E4E865
+200560               CRAIG, MARSHALL                                    MI                   6           37          0         0x0000000131E4E866
+200561               HAWTHORN, MARK                                     WI                   14          21          0         0x0000000148190DA0
+200562               LAGACY, MATTHEW                                    P                    17          37          0         0x000000014819169C
+200563               CULLINS, SAVANNAH                                                       10          37          0         0x0000000148190F14
+200564               BROAD, RILEY                                       S                    10          9           1         0x000000013D98E94E
+200565               WALDEMAR, SCHWARZ                                  S                    13          37          0         0x0000000131E4E869
+200566               STEVENS, RODNEY                                    S                    13          37          0         0x0000000131E4E86A
+200567               LINGLEY, MARC                                      WI                   14          11          0         0x000000012507D057
+200568               HOW, TYLER                                         A                    4           37          0         0x000000013D878F12
+200569               FITZHERBERT, ANDREW                                T                    18          9           1         0x000000013D22ECBF
+200570               TRECARTIN, JEFFREY                                 S                    18          9           1         0x000000013D22EDFF
+200571               GROFF, CALEB                                       WI                   14          22          1         0x00000001355B011A
+200572               KILFOIL, LIAM                                      S                    18          39          1         0x000000013D22F12C
+200573               SAMAYOA, JONATHAN                                  S                    13          9           1         0x0000000148A26E60
+200574               WEEKS, JORDAN                                      S                    13          37          0         0x0000000131E4E870
+200575               LAMMERS, CONNER                                    S                    4           37          0         0x000000013D878F98
+200576               LAMMERS, COLTON                                    S                    4           37          0         0x000000013D878F97
+200577               RICHARDSON, COLIN                                                       0           0           0         0x0000000148191C87
+200578               ORSER, JANET                                       WI                   14          9           0         0x0000000148191A72
+200579               MYLES, TONY                                        F                    5           20          1         0x00000001355AC6CF
+200580               CURTIS, ETHAN                                      S                    13          37          1         0x0000000131E4E874
+200581               DeMERCHANT, TRAVIS                                 MI                   6           37          0         0x000000013D878CD5
+200582               JOHNSTON, TYSON                                    WI                   14          9           1         0x000000013ADA9839
+200583               VEYSEY, ARNOLD                                     MI                   6           37          0         0x0000000131E4E877
+200584               SHATTLER, ED                                       P                    17          37          1         0x0000000125784CDB
+200585               SMITH, BRANDON                                     WI                   14          37          0         0x000000013D879775
+200586               ROBINSON, CALEB                                                         10          37          0         0x0000000148191D0A
+200587               NICHOLSON, DUSTON                                  MI                   4           9           0         0x000000013D46B82B
+200588               JAMER, REILLY                                      F                    5           37          0         0x000000013D878F28
+200589               GUEST, LANDEN                                      WI                   14          37          0         0x00000001481911C2
+200590               BROAD, AUSTIN                                      P                    17          37          0         0x000000013D878C46
+200591               MOORE, PETER                                       S                    13          37          0         0x0000000148191A20
+200592               GREEN, REBECCA                                     S                    4           37          0         0x000000013D878DA3
+200593               GUERRETTE, CALEB                                   S                    1           9           1         0x000000013D2302D3
+200594               FOSTER, PAUL                                       S                    19          33          1         0x000000013D22F701
+200595               CRAIN, BRADY                                       MI                   4           37          0         0x000000013D878C82
+200596               CRABBE, CLAY                                       MI                   6           36          0         0x000000013D878C83
+200597               THEBEAU, MATTHEW                                   S                    4           37          0         0x000000013D46BBEF
+200598               TOFFLEMIRE, KYLER                                  S                    4           37          0         0x000000013D46BC73
+200599               BIGGAR,MICHAEL                                     MI                   6           7           1         0x000000014BE95D9F
+200600               SMITH, ERIC                                        S                    1           7           1         0x000000014BE97AF9
+200601               MESSERVEY, SCOTT                                   S                    19          41          1         0x0000000146A7804B
+200602               WAKARCHUK, ETHAN                                   S                    4           37          0         0x000000013D46BD3B
+200603               ONIONS, SIMON                                      T                    1           37          1         0x000000013D230E42
+200604               GUEST, KARLIE                                                           0           0           0         0x0000000148191184
+200605               DODIA D. SIDDHRAJ                                  B                    19          37          1         0x000000013D22F675
+200606               ROBICHAUD, DANIEL                                  WI                   1           33          1         0x000000014C909F4D
+200607               DELEAVEY, RYAN                                     T                    18          9           1         0x000000013D22EBA7
+200608               McCONNELL, LUCAS                                   T                    18          9           0         0x000000014819183C
+200609               SCHRIVER,GILLIAN                                   T                    13          9           1         0x000000013D46ABDE
+200610               BANKS, BRADY                                       T                    1           9           1         0x0000000136FA49BB
+200611               WASSON, ZANE                                       T                    1           9           1         0x0000000136FA490F
+200612               JOHNSTON, DECLAN                                   S                    1           9           1         0x000000013D2303E9
+200613               OUELLETTE, NICHOLAS                                T                    18          9           1         0x000000013D8796E8
+200614               FRUMASA, NICK                                      F                    5           9           1         0x000000013FA7CFE4
+200615               SPRINGER, KYLE                                     T                    13          9           1         0x0000000148A26B4C
+200616               RITCHIE, MICHAEL                                   T                    1           9           1         0x0000000144A61A63
+200617               BARKER, JOSHUA                                     T                    19          9           1         0x0000000148A26BCE
+200618               SAMAYOA, JOSIAH                                    T                    1           9           1         0x00000001451C2CDD
+200619               LEVESQUE, ZACHARY                                  T                    1           9           1         0x00000001451E2698
+200620               AMAECHI, ONYINYE                                   T                    13          9           1         0x00000001458540C8
+200621               BROOKER, KYLE                                      WI                   14          9           1         0x0000000145D0A220
+200622               LEVESQUE, ANDREW                                   S                    13          9           1         0x0000000148C5CC1B
+200623               MORLEY, JULIAN                                     F                    5           9           1         0x00000001489DD780
+200624               BULL, JOSHUA                                       F                    5           9           1         0x00000001489DD286
+200625               BROAD, DYLAN                                       F                    5           9           1         0x0000000149428BD3
+200626               MASON, HUNTER                                      T                    18          9           1         0x000000014B092A6E
+200627               BRIDEAU, BRYAN                                     S                    13          9           1         0x000000014BEB5812
+200628               HOCKIN, DAVE                                       F                    0           0           1         0x000000014D300139
+200629               RIDEOUT, JONAH                                     F                    0           0           1         0x000000014D30013A
+20515                FOURNIER, HUNTER                                   S                    0           0           0         0x00000000C0B7A46A
+337                  NICHOLSON, RYAN                                    M                    4           0           0         0x000000007FD4FBC8
+493                  SARCHFIELD, WESLEY                                 F                    0           0           0         0x00000000A7B1205A
+600622                                                                                       13          9           1         0x00000001489DD019
+85                   Derrah, Abby                                                            12          8           0         0x00000000A7B12205
+
+(687 rows affected)
+
+ShiftName                                          Num
+-------------------------------------------------- -----------
+7:00 to 4:30 Finsh off L12                         13
+Day Shift Shift 6:00am                             5
+Day Shift Shift 7:00am                             58
+Day shift 40H 4D                                   11
+Every 15 Minutes                                   2
+FF/Paint 40H 4D                                    6
+Finish off (Let us be crazy...)                    1
+Finsh off Night                                    4
+Finshoff 6 am to 3 L1145                           3
+Finshoff 6:30, 7:00 - 4:30 L1145                   15
+MACHINE                                            1
+Machine shop indirect 40H 4d                       3
+Machine shop indirect 44h 5d                       7
+Machineshop Night shift                            1
+Night shift                                        6
+SALARY                                             48
+Warehouse indirect 40H 4D                          4
+Warehouse indirect 44h 5d                          15
+Warehouse indirect alin 6:30                       5
+day shift 1 allin                                  95
+day shift 1 allin - NO SIGN OUT AT 4:30            1
+day shift 6:30                                     12
+testing                                            1
+
+(23 rows affected)
+
+ShiftID     ShiftName                                          StartDateUTC            Days        DefaultRate NPDefaultRate DailyHours                              DailyOverTimeRate WeeklyHours                             WeeklyOverTimeRate AllowLogon IsEnabled IsDeleted UseOperationWCRate TimeStamp
+----------- -------------------------------------------------- ----------------------- ----------- ----------- ------------- --------------------------------------- ----------------- --------------------------------------- ------------------ ---------- --------- --------- ------------------ ------------------
+42          Catch-all Day                                      2014-10-26 00:00:00.000 7           1           1             0.00                                    1                 0.00                                    1                  1          1         0         NULL               0x000000014D5419AF
+43          Catch-all Night                                    2014-10-26 00:00:00.000 7           1           1             0.00                                    1                 0.00                                    1                  1          1         0         NULL               0x000000014D542092
+
+(2 rows affected)
+
+
+Completion time: 2022-03-04T16:36:52.9831773-04:00
