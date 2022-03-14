@@ -9,8 +9,8 @@ GO
 --ALTER PROCEDURE [dbo].[sp_ClkLabourOverride]
 DECLARE
 	@sd DATETIME, @ed DATETIME
-SET @sd = '2022-02-15'
-SET @ed = '2022-02-15 23:59:59'
+SET @sd = '2022-03-11'
+SET @ed = '2022-03-11 23:59:59'
 --AS
 --BEGIN
 
@@ -22,7 +22,96 @@ DECLARE @T TABLE ([EmployeeNumber] REAL,
 				[StartDate] DATETIME,
 				[EndDate] DATETIME);
 
+
 INSERT INTO @T EXEC [sp_ClkTallyHours] @sd=@sd, @ed=@ed, @by_transaction=0
+
+SELECT * FROM @T;
+
+
+
+
+
+
+
+
+
+
+SELECT 
+	[ClkFrmConfirmID#],
+	[@T].[EmployeeNumber],
+	[@T].[EmployeeName],
+	ISNULL([EntryDate], @sd) AS [EntryDate],
+	--(CASE WHEN [IncludeLunch] = 1 THEN (CASE WHEN [OverrideFlag] = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN [OverrideFlag] = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END) AS [HrsWorked],
+	--(CASE WHEN [OverrideFlag] = 0 THEN [HrsWorked] ELSE [OverrideHoursWorked] END) AS [HrsWorkedNOLUNCH],
+	(CASE
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 1 THEN (CASE WHEN [IncludeLunchSun] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 2 THEN (CASE WHEN [IncludeLunchMon] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 3 THEN (CASE WHEN [IncludeLunchTue] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 4 THEN (CASE WHEN [IncludeLunchWed] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 5 THEN (CASE WHEN [IncludeLunchThu] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		WHEN DATEPART(WEEKDAY, ISNULL([EntryDate], @sd)) = 6 THEN (CASE WHEN [IncludeLunchFri] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+		ELSE (CASE WHEN [IncludeLunchSat] = 1 THEN (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) ELSE (CASE WHEN ISNULL([OverrideFlag], 0) = 0 THEN [HrsWorked] - 0.5 ELSE [OverrideHoursWorked] END) END)
+	END) AS [HrsWorked],
+	(CASE WHEN [OverrideFlag] = 0 THEN [HrsWorked] ELSE [OverrideHoursWorked] END) AS [HrsWorkedNOLUNCH],
+	[ConfirmedFlag],
+	[OverrideFlag] AS [OverrideFlag_],
+	[OverrideHoursWorked],
+	[SubmitFlag],
+	[SubmittedBy]
+	--,MIN([InTimeFromShopClk]) AS [First Sign-in]
+	--,MAX([OutTimeFromShopClk]) AS [Last Sign-out]
+FROM
+	@T
+LEFT JOIN
+	[ClkShiftEmpAssign]
+ON
+	[@T].[EmployeeNumber] = [ClkShiftEmpAssign].[Emp#]
+LEFT JOIN
+	[ClkShiftRoundRules V2]
+ON
+	[ClkShiftEmpAssign].[ShiftID] = [ClkShiftRoundRules V2].[ShiftID]
+LEFT JOIN (
+	SELECT
+		*
+	FROM
+		[ClkFrmConfirm]
+	WHERE
+		[EntryDate] BETWEEN @sd AND @ed
+) AS [Src]
+ON
+	[Src].[EmployeeNumber] = [@T].[EmployeeNumber]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 SELECT 
 	[ClkFrmConfirmID#],

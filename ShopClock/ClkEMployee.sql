@@ -20,7 +20,7 @@ FROM
 LEFT JOIN
 	[ClkShiftEmpAssign]
 ON
-	[ClkEmployee].[Employee] = [ClkShiftEmpAssign].[EmployeeNumber]
+	[ClkEmployee].[Employee] = [ClkShiftEmpAssign].[Emp#]
 LEFT JOIN	
 	[ClkShiftRoundRules]
 ON
