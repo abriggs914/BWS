@@ -1,16 +1,16 @@
 USE BWSdb
 GO
 
-	SELECT * FROM [ProductsV2] WHERE [Model No] = 'End Dump 4X'
-	SELECT * FROM [OptionsV2] WHERE [Model No] = 'End Dump 4X'
-	SELECT * FROM [Standards] WHERE [Model No] = 'End Dump 4X'
+	SELECT * FROM [ProductsV2] WHERE [Model No] = 'End Dump 2X'
+	SELECT * FROM [OptionsV2] WHERE [Model No] = 'End Dump 2X'
+	SELECT * FROM [Standards] WHERE [Model No] = 'End Dump 2X'
 
 
 
 
 
 	
-	SELECT * FROM [StandardsV2] WHERE [Model No] = 'End Dump 4X'
+	SELECT * FROM [StandardsV2] WHERE [Model No] = 'End Dump 2X'
 
 
 
@@ -36,8 +36,8 @@ GO
 
 	INSERT INTO @T
 	SELECT 
-		'End Dump 4X',
-		REPLACE([Standard No], '3X', '4X'),
+		'End Dump 2X',
+		REPLACE([Standard No], '3X', '2X'),
 		[Group],
 		[Section],
 		[Description],

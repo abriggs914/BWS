@@ -3,7 +3,7 @@ GO
 
 
 
-	SELECT * FROM [Budget Options V2] WHERE [Model No] = 'End Dump 4X'
+	SELECT * FROM [Budget Options V2] WHERE [Model No] = 'End Dump 5X'
 
 DECLARE @print_1 AS BIT = 0;
 DECLARE @print_2 AS BIT = 0;
@@ -16,8 +16,8 @@ DECLARE @tid2 AS INT;
 DECLARE @mn1 AS NVARCHAR(MAX);
 DECLARE @mn2 AS NVARCHAR(MAX);
 
-SET @tid1 = 541; -- End Dump 3X
 SET @tid1 = 490; -- End Dump 4X
+SET @tid2 = 506; -- End Dump 5X
 SELECT @mn1 = [Model No] FROM [ProductsV2] WHERE [IDTrailer] = @tid1
 SELECT @mn2 = [Model No] FROM [ProductsV2] WHERE [IDTrailer] = @tid2
 
@@ -31,8 +31,8 @@ IF @print_1 = 1 BEGIN
 	SELECT * FROM [OptionsV2] WHERE [Model No] = @mn2
 	SELECT * FROM [StandardsV2] WHERE [Model No] = @mn2
 
-	SELECT * FROM [OptionsV2] WHERE LOWER([Model No]) = 'End Dump 3X'
-	SELECT * FROM [StandardsV2] WHERE LOWER([Model No]) = 'End Dump 4X'
+	SELECT * FROM [OptionsV2] WHERE LOWER([Model No]) = 'End Dump 4X'
+	SELECT * FROM [StandardsV2] WHERE LOWER([Model No]) = 'End Dump 5X'
 
 	--SELECT * FROM [ProductsV2] ORDER BY [Model No]
 END
@@ -58,8 +58,8 @@ IF @print_2 = 1 BEGIN
 END
 
 IF @print_3 = 1 BEGIN
-	SELECT * FROM [Options] WHERE LOWER([Model No]) LIKE '%end dump 4x%'
-	SELECT * FROM [Products] WHERE LOWER([Model No]) LIKE '%end dump 4x%'
+	SELECT * FROM [Options] WHERE LOWER([Model No]) LIKE '%end dump 5X%'
+	SELECT * FROM [Products] WHERE LOWER([Model No]) LIKE '%end dump 5X%'
 END
 
 --IF @do_update = 1 BEGIN
@@ -72,12 +72,12 @@ END
 	FROM
 		[Budget Options V2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 
 	--DELETE FROM 
 	--	[Budget Options V2]
 	--WHERE
-	--	[Model No] = 'End Dump 4X'
+	--	[Model No] = 'End Dump 5X'
 
 	SELECT
 		'B' AS [Place],
@@ -85,7 +85,7 @@ END
 	FROM
 		[Budget Options V2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 
 	DECLARE @T AS TABLE (
 		[Bud_Date_Opt] DATETIME
@@ -122,8 +122,8 @@ END
 	INSERT INTO @T
 	SELECT 
 		[Bud_Date_Opt],
-		'End Dump 4X',
-		REPLACE([Option No], '3X', '4X')
+		'End Dump 5X',
+		REPLACE([Option No], '4X', '5X')
            ,[Description]
            ,[Cost]
            ,[Labour Cost]
@@ -153,19 +153,19 @@ END
 	FROM
 		[Budget Options V2] 
 	WHERE
-		[Model No] = 'End Dump 3X'
+		[Model No] = 'End Dump 4X'
 
 		
 	SELECT *
 	FROM
 		[Budget Options V2] 
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	SELECT *
 	FROM
 		[Budget Options V2] 
 	WHERE
-		[Model No] = 'End Dump 3X'
+		[Model No] = 'End Dump 4X'
 	SELECT * FROM @T
 
 	--(
@@ -185,7 +185,7 @@ END
 	--	[CompanyID]
 	--)
 
-	DELETE FROM [Budget Options V2] WHERE [Model No] = 'End Dump 4X'
+	DELETE FROM [Budget Options V2] WHERE [Model No] = 'End Dump 5X'
 
 
 	INSERT INTO
@@ -257,7 +257,7 @@ END
 	FROM
 		[Budget Options V2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 
 --END
 

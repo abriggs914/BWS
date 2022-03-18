@@ -12,8 +12,8 @@ DECLARE @tid2 AS INT;
 DECLARE @mn1 AS NVARCHAR(MAX);
 DECLARE @mn2 AS NVARCHAR(MAX);
 
-SET @tid1 = 541; -- End Dump 3X
 SET @tid1 = 490; -- End Dump 4X
+SET @tid2 = 506; -- End Dump 5X
 SELECT @mn1 = [Model No] FROM [ProductsV2] WHERE [IDTrailer] = @tid1
 SELECT @mn2 = [Model No] FROM [ProductsV2] WHERE [IDTrailer] = @tid2
 
@@ -27,8 +27,8 @@ IF @print_1 = 1 BEGIN
 	SELECT * FROM [OptionsV2] WHERE [Model No] = @mn2
 	SELECT * FROM [StandardsV2] WHERE [Model No] = @mn2
 
-	SELECT * FROM [OptionsV2] WHERE LOWER([Model No]) = 'End Dump 3X'
-	SELECT * FROM [StandardsV2] WHERE LOWER([Model No]) = 'End Dump 4X'
+	SELECT * FROM [OptionsV2] WHERE LOWER([Model No]) = 'End Dump 4X'
+	SELECT * FROM [StandardsV2] WHERE LOWER([Model No]) = 'End Dump 5X'
 
 	--SELECT * FROM [ProductsV2] ORDER BY [Model No]
 END
@@ -54,8 +54,8 @@ IF @print_2 = 1 BEGIN
 END
 
 IF @print_3 = 1 BEGIN
-	SELECT * FROM [Options] WHERE LOWER([Model No]) LIKE '%end dump 4x%'
-	SELECT * FROM [Products] WHERE LOWER([Model No]) LIKE '%end dump 4x%'
+	SELECT * FROM [Options] WHERE LOWER([Model No]) LIKE '%end dump 5X%'
+	SELECT * FROM [Products] WHERE LOWER([Model No]) LIKE '%end dump 5X%'
 END
 
 --IF @do_update = 1 BEGIN
@@ -68,13 +68,13 @@ END
 	FROM
 		[StandardsV2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 	DELETE FROM 
 		[StandardsV2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 	SELECT
@@ -83,7 +83,7 @@ END
 	FROM
 		[StandardsV2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 	DECLARE @T AS TABLE (
@@ -105,8 +105,8 @@ END
 
 	INSERT INTO @T
 	SELECT 
-		'End Dump 4X',
-		REPLACE([Standard No], '3X', '4X'),
+		'End Dump 5X',
+		REPLACE([Standard No], '4X', '5X'),
 		[Group],
 		[Section],
 		[Description],
@@ -122,7 +122,7 @@ END
 	FROM
 		[StandardsV2] 
 	WHERE
-		[Model No] = 'End Dump 3X'
+		[Model No] = 'End Dump 4X'
 
 	SELECT * FROM @T ORDER BY [Group], [Section]
 
@@ -153,7 +153,7 @@ SELECT * FROM @T WHERE [Section] = 'Grain Chute'
 	FROM
 		[StandardsV2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 	SELECT
@@ -162,7 +162,7 @@ SELECT * FROM @T WHERE [Section] = 'Grain Chute'
 	FROM
 		@T
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 
@@ -193,7 +193,7 @@ BEGIN TRAN;
 	FROM
 		[StandardsV2]
 	WHERE
-		[Model No] = 'End Dump 4X'
+		[Model No] = 'End Dump 5X'
 	;
 
 
