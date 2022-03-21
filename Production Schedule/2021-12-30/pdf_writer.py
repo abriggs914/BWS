@@ -543,11 +543,11 @@ class PDF(FPDF):
 
         # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
         # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
-        print("self.w:", self.w, "width:", width)
+        print("self.w:", self.w, "width_p:", width)
         print("header:", header)
         # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
         print("(N x M): ({} x {})".format(n_rows, n_cols))
-        # print("(H x W): ({} x {})".format(height, width))
+        # print("(H x W): ({} x {})".format(height, width_p))
         print("(CH x CW): ({} x {})".format(cell_height, cell_width))
 
         return cx, cy
@@ -902,11 +902,11 @@ class PDF(FPDF):
 
         # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
         # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
-        print("self.w:", self.w, "width:", width)
+        print("self.w:", self.w, "width_p:", width)
         print("header:", header)
         # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
         print("(N x M): ({} x {})".format(n_rows, n_cols))
-        # print("(H x W): ({} x {})".format(height, width))
+        # print("(H x W): ({} x {})".format(height, width_p))
         print("(CH x CW): ({} x {})".format(cell_height, cell_width))
 
         return cx, cy

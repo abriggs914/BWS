@@ -277,8 +277,8 @@ class PDF(FPDF):
     #     for row in content_lst:
     #         row += [None for i in range(max(0, n_cols - len(row)))]
     #
-    #     width = w - (2 * left_margin)
-    #     cell_width = width / n_cols
+    #     width_p = w - (2 * left_margin)
+    #     cell_width = width_p / n_cols
     #
     #     # self.set_fill_color(*BWS_GREY)
     #     # cch = cell_height + (line_width / 2)
@@ -535,14 +535,14 @@ class PDF(FPDF):
     #     if include_top_chart_link:
     #         self.set_fill_color(*top_link_colours[0])
     #         self.set_text_color(*top_link_colours[1])
-    #         self.set_xy(ocx + width - 30, y_link)
+    #         self.set_xy(ocx + width_p - 30, y_link)
     #         self.cell(30, 5, "Top of Chart", 1, 1, 'C', fill=1,
     #                   link=("{}/{}#page={}".format(os.getcwd(), self.file_name, title_page)))
     #
     #     if include_top_doc_link:
     #         self.set_fill_color(*top_link_colours[0])
     #         self.set_text_color(*top_link_colours[1])
-    #         self.set_xy(ocx + width - 65, y_link)
+    #         self.set_xy(ocx + width_p - 65, y_link)
     #         self.cell(30, 5, "Top of Document", 1, 1, 'C', fill=1,
     #                   link=("{}/{}#page={}".format(os.getcwd(), self.file_name, 1)))
     #
@@ -551,11 +551,11 @@ class PDF(FPDF):
     #
     #     # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
     #     # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
-    #     print("self.w:", self.w, "width:", width)
+    #     print("self.w:", self.w, "width_p:", width_p)
     #     print("header:", header)
     #     # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
     #     print("(N x M): ({} x {})".format(n_rows, n_cols))
-    #     # print("(H x W): ({} x {})".format(height, width))
+    #     # print("(H x W): ({} x {})".format(height, width_p))
     #     print("(CH x CW): ({} x {})".format(cell_height, cell_width))
     #
     #     return cx, cy
@@ -903,7 +903,7 @@ class PDF(FPDF):
             self.set_text_color(*top_link_colours[1])
             self.set_xy(ocx + width - 60, y_link)
             rect_ts = Rect2(*self.time_stamp_rect)
-            # rect_ts initially has width 0
+            # rect_ts initially has width_p 0
             rect_ts.init(rect_ts.x, self.h + rect_ts.y, 30, rect_ts.h, rect_ts.a)
             rect_tl = Rect2(self.get_x(), self.get_y(), 30, 10)
             print("rect_ts", rect_ts)
@@ -928,11 +928,11 @@ class PDF(FPDF):
 
         # self.line(otx - left_margin, self.get_y() + title_v_margin + 2, otx - left_margin + w, self.get_y() + title_v_margin + 2)
         # self.link(ocx, self.get_y() + title_v_margin, 30, 30, FILE_NAME + "#page={}".format(title_page))
-        print("self.w:", self.w, "width:", width)
+        print("self.w:", self.w, "width_p:", width)
         print("header:", header)
         # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
         print("(N x M): ({} x {})".format(n_rows, n_cols))
-        # print("(H x W): ({} x {})".format(height, width))
+        # print("(H x W): ({} x {})".format(height, width_p))
         print("(CH x CW): ({} x {})".format(cell_height, cell_width))
 
         return cx, cy

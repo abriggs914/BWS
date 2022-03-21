@@ -212,7 +212,7 @@ class PSCalendar:
     #
     #     self.start_date = start_date
     #     self.end_date = end_date
-    #     self.width = w
+    #     self.width_p = w
     #     self.height = h
     #     self.canvas = canvas
     #     self.lines = lines
@@ -443,18 +443,18 @@ class PSCalendar:
         """T if tile height matches default tile height."""
         tile = self.tiles[tile_num].rect
         og_tile = self.og_tiles[tile_num].rect
-        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width_p: {}, rect.height: {}, th == rect.height: {}, tw == rect.width_p and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width_p, rect.height, (th == rect.height), (tw==rect.width_p)))
         return int(tile[3] - tile[1]) == int(og_tile[3] - og_tile[1])
 
     def is_tile_normal_width(self, tile_num):
-        """T if tile width matches default tile width"""
+        """T if tile width_p matches default tile width_p"""
         tile = self.tiles[tile_num].rect
         og_tile = self.og_tiles[tile_num].rect
-        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width: {}, rect.height: {}, th == rect.height: {}, tw == rect.width and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width, rect.height, (th == rect.height), (tw==rect.width)))
+        # print("tile: {}, rect: {}, tw: {}, th: {}, rect.width_p: {}, rect.height: {}, th == rect.height: {}, tw == rect.width_p and th == rect.height: {}".format(tile_num, rect, tw, th, rect.width_p, rect.height, (th == rect.height), (tw==rect.width_p)))
         return int(tile[2] - tile[0]) == int(og_tile[2] - og_tile[0])
 
     def is_tile_enlarged(self, tile_num):
-        """Must have larger height AND width (used for hover select)"""
+        """Must have larger height AND width_p (used for hover select)"""
         tile = self.tiles[tile_num].rect
         og_tile = self.og_tiles[tile_num].rect
         tw = tile[2] - tile[0]
@@ -465,7 +465,7 @@ class PSCalendar:
         return tw > ow and th > oh
 
     def is_tile_normal_size(self, tile_num):
-        """Must have matching width and height"""
+        """Must have matching width_p and height"""
         return self.is_tile_normal_height(tile_num) and self.is_tile_normal_width(tile_num)
 
     def populate_pop_up_menu(self):
@@ -564,7 +564,7 @@ class PSCalendar:
                 self.bind_canvas()
             # cpu = self.canvas_pop_up
             # cpu.delete("all")
-            # cpu.config(height=h, width=w)
+            # cpu.config(height=h, width_p=w)
             # cpu.config(x1=30, y1=12)
             # self.draw_canvas()
         self.selected = None
@@ -649,21 +649,21 @@ class PSCalendar:
         #                 # self.tiles[i].rect = (x1, y1 + (self.READABLE_HEIGHT - (y2 - y1)), x2, y1 + s_height)
         #                 self.tiles[i].rect = (x1, y1, x2, y1 + s_height)
         #
-        #         if self.READABLE_WIDTH > self.tile_rect.width:
+        #         if self.READABLE_WIDTH > self.tile_rect.width_p:
         #             if tc == c:
         #                 hw = self.READABLE_WIDTH / 2
         #                 # self.tiles[i].rect = (x1 - hw, y1, x1 + hw, y2)
         #                 self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
         #                 # handled = True
         #             else:
-        #                 # t_width = self.width / max(1, self.cols)
-        #                 t_width = self.tile_rect.width
-        #                 n_width = (self.width - self.READABLE_WIDTH) / max(1, (self.cols - 1))
+        #                 # t_width = self.width_p / max(1, self.cols)
+        #                 t_width = self.tile_rect.width_p
+        #                 n_width = (self.width_p - self.READABLE_WIDTH) / max(1, (self.cols - 1))
         #                 d_width = t_width - n_width
         #                 sd_width = tc * d_width
-        #                 print("self.width:", self.width, "self.READABLE_WIDTH:", self.READABLE_WIDTH, "t_width:",
+        #                 print("self.width_p:", self.width_p, "self.READABLE_WIDTH:", self.READABLE_WIDTH, "t_width:",
         #                       t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
-        #                 # s_width = (self.width - self.READABLE_WIDTH) / max(1, (self.cols - 1))
+        #                 # s_width = (self.width_p - self.READABLE_WIDTH) / max(1, (self.cols - 1))
         #                 # p_width = (x2 - x1) / s_width
         #                 # self.tiles[i].rect = (x1 + (self.READABLE_HEIGHT - (x2 - x1)), y1, x1 + s_width, y2)
         #                 if tc < c:
@@ -704,14 +704,14 @@ class PSCalendar:
                         self.tiles[i].rect = (x1 - (2 * hw), y1, x1 + (2 * hw), y2)
                         # handled = True
                     else:
-                        # t_width = self.width / max(1, self.cols)
+                        # t_width = self.width_p / max(1, self.cols)
                         t_width = self.tile_rect.width
                         n_width = (self.width - self.readable_width) / max(1, (self.cols - 1))
                         d_width = t_width - n_width
                         sd_width = tc * d_width
-                        print("self.width:", self.width, "self.READABLE_WIDTH:", self.readable_width, "t_width:",
+                        print("self.width_p:", self.width, "self.READABLE_WIDTH:", self.readable_width, "t_width:",
                               t_width, "n_width:", n_width, ", d_width:", d_width, "tc:", tc, "sd_width:", sd_width)
-                        # s_width = (self.width - self.READABLE_WIDTH) / max(1, (self.cols - 1))
+                        # s_width = (self.width_p - self.READABLE_WIDTH) / max(1, (self.cols - 1))
                         # p_width = (x2 - x1) / s_width
                         # self.tiles[i].rect = (x1 + (self.READABLE_HEIGHT - (x2 - x1)), y1, x1 + s_width, y2)
                         if tc < c:
@@ -844,7 +844,7 @@ class PSCalendar:
         #
         # tw = self.tile_rect.w
         # # cw, ch = canvas_header_row.size()
-        # cw, ch = self.width, 25
+        # cw, ch = self.width_p, 25
         # th = ch
         # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
         # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
@@ -881,7 +881,7 @@ class PSCalendar:
         #
         # tw = self.tile_rect.w
         # # cw, ch = canvas_header_row.size()
-        # cw, ch = self.width, 25
+        # cw, ch = self.width_p, 25
         # th = ch
         # print("tw: {}, th: {}, cw: {}, ch: {}".format(tw, th, cw, ch))
         # print("tw: {}, th: {}, cw: {}, ch: {}".format(type(tw), type(th), type(cw), type(ch)))
@@ -900,7 +900,7 @@ class PSCalendar:
         return (i // self.cols), (i % self.cols)
 
     def x_y_to_r_c(self, x, y):
-        # tw = self.tile_rect.width
+        # tw = self.tile_rect.width_p
         # th = self.tile_rect.height
         # r = int(y // th)
         # c = int(x // tw)

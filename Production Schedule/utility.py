@@ -9,8 +9,8 @@ import os
 
 """
 	General Utility Functions
-	Version..............1.37
-	Date...........2022-01-14
+	Version..............1.39
+	Date...........2022-01-26
 	Author.......Avery Briggs
 """
 
@@ -409,7 +409,7 @@ def intersection(a, b):
     l = a if len(a) >= len(b) else b
     m = b if len(a) >= len(b) else a
     for i in l:
-        if j in m:
+        if i in m:
             res.append(i)
     return res
 
@@ -435,8 +435,8 @@ def isnumber(value):
     if isinstance(value, int) or isinstance(value, float):
         return True
     if isinstance(value, str):
-        if value.count("-") < 2:
-            if value.replace("-", "").isnumeric():
+        if value.count("-") < 2 and value.count(".") < 2:
+            if value.replace("-", "").replace(".", "").isnumeric():
                 return True
     return False
 
@@ -1516,16 +1516,36 @@ def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
 
 
 def is_date(date_in, fmt="%Y-%m-%d"):
-    if isinstance(date_in, datetime.datetime) or isinstance(date_in, datetime.date):
+    if isinstance(date_in, dt.datetime) or isinstance(date_in, dt.date):
         return True
     try:
-        d = datetime.datetime.strptime(date_in, fmt)
+        d = dt.datetime.strptime(date_in, fmt)
         return True
     except TypeError:
         print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
     except ValueError:
         print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
     return False
+
+
+def first_of_day(date_in):
+    assert isinstance(date_in, dt.datetime)
+    return dt.datetime(date_in.year, date_in.month, date_in.day)
+
+
+def first_of_week(date_in):
+    assert isinstance(date_in, dt.datetime)
+    print("date_in:", date_in)
+    # return dt.datetime.fromisoformat("2022-02-02")
+    wd = 0 if date_in.isocalendar()[2] == 7 else date_in.isocalendar()[2]
+    return date_in + dt.timedelta(days=-wd)
+    # return dt.datetime.fromisocalendar(date_in.isocalendar()[0], date_in.isocalendar()[1], 1) + dt.timedelta(hours=date_in.hour, minutes=date_in.minute, seconds=date_in.second)
+    # return dt.datetime(date_in.year, date_in.month, 1, date_in.hour, date_in.minute, date_in.second)
+
+
+def first_of_month(date_in):
+    assert isinstance(date_in, dt.datetime)
+    return dt.datetime(date_in.year, date_in.month, 1, date_in.hour, date_in.minute, date_in.second)
 
 
 def alert_colour(x, n):

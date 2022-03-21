@@ -584,9 +584,9 @@ if __name__ == '__main__':
         cal.set_user_hover_mode(SWITCH_CALENDAR_USE_HOVER)
 
     # frame_calendar = tkinter.Frame(tab_1)
-    # canvas = tkinter.Canvas(frame_calendar, height=CAN_H, width=CAN_W, bg=rgb_to_hex(GRAY_12))
-    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width=CAN_W + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
-    # canvas_header_col = tkinter.Canvas(frame_calendar, height=CAN_H + BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))
+    # canvas = tkinter.Canvas(frame_calendar, height=CAN_H, width_p=CAN_W, bg=rgb_to_hex(GRAY_12))
+    # canvas_header_row = tkinter.Canvas(frame_calendar, height=25, width_p=CAN_W + 60 + BORDER_WIDTH, bg=rgb_to_hex(BLACK))
+    # canvas_header_col = tkinter.Canvas(frame_calendar, height=CAN_H + BORDER_WIDTH, width_p=60, bg=rgb_to_hex(BLACK))
     # canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
     # cal = create_calendar(START_DATE, END_DATE, lines, dates, data)
     # tab_cals = []
@@ -784,11 +784,11 @@ if __name__ == '__main__':
             cal._dbl_clicked = cal._dbl_clicked if i == CAL_IDX else right_most
             cal.subtract_day()
 
-    def enlarge_tile():
-        cal = TAB_DATA[CAL_IDX]["Cal"]
-        cal.enlarge_tile(cal._dbl_clicked)
-    #     cal.hover()
-        cal.draw_canvas()
+    # def enlarge_tile():
+    #     cal = TAB_DATA[CAL_IDX]["Cal"]
+    #     cal.enlarge_tile(cal._dbl_clicked)
+    # #     cal.hover()
+    #     cal.draw_canvas()
 
 
     def draw_application():

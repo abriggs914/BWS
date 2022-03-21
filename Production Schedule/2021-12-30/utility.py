@@ -940,14 +940,14 @@ class Line:
 #     def __init__(self, x, y=None, w=None, h=None):
 #         self.x = x
 #         self.y = y
-#         self.width = w
+#         self.width_p = w
 #         self.height = h
 #         if any([y is None, w is None, h is None]):
 #             if is_imported("pygame"):
 #                 if isinstance(x, pygame.Rect):
 #                     x = x.left
 #                     y = x.y
-#                     w = x.width
+#                     w = x.width_p
 #                     y = x.height
 #                 else:
 #                     raise ValueError("Cannot create a Rect object with <{}>.\nExpected a pygame.Rect object.".format(x))
@@ -979,7 +979,7 @@ class Line:
 #     def init(self, x, y, w, h):
 #         self.x = x
 #         self.y = y
-#         self.width = w
+#         self.width_p = w
 #         self.height = h
 #         self.tupl = (x, y, w, h)
 #         self.top = y
@@ -1004,7 +1004,7 @@ class Line:
 #         self.is_init = True
 #
 #     def __iter__(self):
-#         lst = [self.x, self. y, self.width, self.height]
+#         lst = [self.x, self. y, self.width_p, self.height]
 #         for val in lst:
 #             yield val
 #
@@ -1048,32 +1048,32 @@ class Line:
 #
 #     def translate(self, x, y):
 #         if not self.is_init:
-#             self.init(self.x, self.y, self.width, self.height)
+#             self.init(self.x, self.y, self.width_p, self.height)
 #         self.x += x
 #         self.y += y
-#         self.init(self.x, self.y, self.width, self.height)
+#         self.init(self.x, self.y, self.width_p, self.height)
 #
 #     def translated(self, x, y):
-#         r = Rect(self.x, self.y, self.width, self.height)
+#         r = Rect(self.x, self.y, self.width_p, self.height)
 #         r.translate(x, y)
 #         return r
 #
 #     def scale(self, w_factor, h_factor):
-#         self.init(self.x, self.y, self.width * w_factor, self.height * h_factor)
+#         self.init(self.x, self.y, self.width_p * w_factor, self.height * h_factor)
 #
 #     def scaled(self, w_factor, h_factor):
-#         r = Rect(self.x, self.y, self.width, self.height)
+#         r = Rect(self.x, self.y, self.width_p, self.height)
 #         r.scale(w_factor, h_factor)
 #         return r
 #
 #     def move(self, rect):
-#         self.init(rect.x, rect.y, rect.width, rect.height)
+#         self.init(rect.x, rect.y, rect.width_p, rect.height)
 #
 #     def resize(self, rect):
-#         self.init(rect.x, rect.y, rect.width, rect.height)
+#         self.init(rect.x, rect.y, rect.width_p, rect.height)
 #
 #     def __repr__(self):
-#         return "<rect(" + ", ".join(list(map(str, [self.x, self.y, self.width, self.height]))) + ")>"
+#         return "<rect(" + ", ".join(list(map(str, [self.x, self.y, self.width_p, self.height]))) + ")>"
 
 
 #            x2,y2              x1,y1 ---- x2,y2
@@ -1137,7 +1137,7 @@ class Rect2:
 
     def init(self, x, y, w, h, a):
         if w < 0:
-            raise ValueError("width value: \"{}\" must not be less than 0.".format(w))
+            raise ValueError("width_p value: \"{}\" must not be less than 0.".format(w))
         if h < 0:
             raise ValueError("height value: \"{}\" must not be less than 0.".format(h))
         self.x = x
@@ -1302,7 +1302,7 @@ class Rect2:
     #             if isinstance(x, pygame.Rect):
     #                 x = x.left
     #                 y = x.y
-    #                 w = x.width
+    #                 w = x.width_p
     #                 y = x.height
     #             else:
     #                 raise ValueError("Cannot create a Rect object with <{}>.\nExpected a pygame.Rect object.".format(x))
@@ -1334,7 +1334,7 @@ class Rect2:
     # def init(self, x, y, w, h):
     #     self.x = x
     #     self.y = y
-    #     self.width = w
+    #     self.width_p = w
     #     self.height = h
     #     self.tupl = (x, y, w, h)
     #     self.top = y
@@ -1359,7 +1359,7 @@ class Rect2:
     #     self.is_init = True
     #
     # def __iter__(self):
-    #     lst = [self.x, self. y, self.width, self.height]
+    #     lst = [self.x, self. y, self.width_p, self.height]
     #     for val in lst:
     #         yield val
     #
@@ -1403,29 +1403,29 @@ class Rect2:
     #
     # def translate(self, x, y):
     #     if not self.is_init:
-    #         self.init(self.x, self.y, self.width, self.height)
+    #         self.init(self.x, self.y, self.width_p, self.height)
     #     self.x += x
     #     self.y += y
-    #     self.init(self.x, self.y, self.width, self.height)
+    #     self.init(self.x, self.y, self.width_p, self.height)
     #
     # def translated(self, x, y):
-    #     r = Rect(self.x, self.y, self.width, self.height)
+    #     r = Rect(self.x, self.y, self.width_p, self.height)
     #     r.translate(x, y)
     #     return r
     #
     # def scale(self, w_factor, h_factor):
-    #     self.init(self.x, self.y, self.width * w_factor, self.height * h_factor)
+    #     self.init(self.x, self.y, self.width_p * w_factor, self.height * h_factor)
     #
     # def scaled(self, w_factor, h_factor):
-    #     r = Rect(self.x, self.y, self.width, self.height)
+    #     r = Rect(self.x, self.y, self.width_p, self.height)
     #     r.scale(w_factor, h_factor)
     #     return r
     #
     # def move(self, rect):
-    #     self.init(rect.x, rect.y, rect.width, rect.height)
+    #     self.init(rect.x, rect.y, rect.width_p, rect.height)
     #
     # def resize(self, rect):
-    #     self.init(rect.x, rect.y, rect.width, rect.height)
+    #     self.init(rect.x, rect.y, rect.width_p, rect.height)
 
     def __repr__(self):
         return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
