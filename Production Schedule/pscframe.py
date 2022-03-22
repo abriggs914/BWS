@@ -1,12 +1,15 @@
+import itertools
+
 import pyodbc
 import tkinter
 import asyncio
-import datetime
 import pandas as pd
 from tkinter import ttk
 from pathlib import Path
 from PIL import ImageTk, Image
-from utility import Rect2, brighten, first_of_month
+from datetime_utility import *
+from pscalendar import PSCalendar2, CalendarTile2
+from utility import Rect2, brighten, first_of_month, end_of_month
 from colour_utility import *
 
 
@@ -46,6 +49,11 @@ class PSCCalendarFrame(tkinter.Tk):
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
 
+        self.LOADED = tkinter.BooleanVar(value=False)
+        self.lb_dealer_1 = tkinter.StringVar()
+        self.lb_dealer_2 = tkinter.StringVar()
+        self.lb_dealer_3 = tkinter.StringVar()
+
         # Splash menu vars:
         self.assert_is_employee = False
         self.splash_frame = None
@@ -74,6 +82,34 @@ class PSCCalendarFrame(tkinter.Tk):
         self.VERSION_NAME = None
         self.LOGO_WIDTH = int((self._width * 0.8) / 2)
         self.LOGO_HEIGHT = int(self._height * 0.3)
+        self.TILE_BORDER_WIDTH = 3
+
+        self.STYLES = {
+            "DEFAULT_TILE_BACKGROUND_STAT_1": GRAY_17,
+            "DEFAULT_TILE_FOREGROUND_STAT_1": WHITE,
+            "DEFAULT_TILE_OUTLINE_STAT_1": GRAY_17,
+            "DEFAULT_TILE_FONT_STAT_1": ("Arial", 15),
+
+            "DEFAULT_TILE_BACKGROUND_DRAG_1": BWS_RED,
+            "DEFAULT_TILE_FOREGROUND_DRAG_1": WHITE,
+            "DEFAULT_TILE_OUTLINE_DRAG_1": WHITE,
+            "DEFAULT_TILE_FONT_DRAG_1": ("Arial", 17),
+
+            "DEFAULT_TILE_BACKGROUND_HOVER_1": GRAY_23,
+            "DEFAULT_TILE_FOREGROUND_HOVER_1": WHITE,
+            "DEFAULT_TILE_OUTLINE_HOVER_1": GRAY_23,
+            "DEFAULT_TILE_FONT_HOVER_1": ("Arial", 15),
+
+            "DEFAULT_TILE_BACKGROUND_SELECT_1": BWS_RED,
+            "DEFAULT_TILE_FOREGROUND_SELECT_1": BLACK,
+            "DEFAULT_TILE_OUTLINE_SELECT_1": BWS_RED,
+            "DEFAULT_TILE_FONT_SELECT_1": ("Arial", 17),
+
+            "DEFAULT_TILE_BACKGROUND_DBLC_1": BLACK,
+            "DEFAULT_TILE_FOREGROUND_DBLC_1": WHITE,
+            "DEFAULT_TILE_OUTLINE_DBLC_1": WHITE,
+            "DEFAULT_TILE_FONT_DBLC_1": ("Arial", 17)
+        }
 
         if not Path(self.BWS_LOGO_FILE_PATH).exists():
             if not self.assert_is_employee:
@@ -89,20 +125,71 @@ class PSCCalendarFrame(tkinter.Tk):
                 print("You must be an employee to use this program.")
                 self.exit_program()
 
-        self.init_splash_menu()
-
         # Vars specific to Production Scheduling:
         # TODO, these should be real values
+        self.TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
         self._calendar_index = 0
-        self.tab_data = []
+
         # Tab_data - stores the loaded calendars
 
         # print(f"DIMS: w: <{self.width}>, h: <{self.height}>, TM: <{self.top_margin}>, BM: <{self.bottom_margin}>, LM: <{self.left_margin}>, RM: <{self.right_margin}>")
         # calculated values:
-        self.update_title()
-        self.update_geometry()
+        self.notebook_tab_control = None
+        self.label_cal_title = None
+        self.frame_calendar = None
+        self.canvas_cal = None  # main drawing canvas
+        self.canvas_header_left = None  # left legend
+        self.can_header_top = None  # top legend
+        self.canvas_pop_up = None  # pop-up
+
+        self.frame_calendar_control = None
+        self.frame_calendar_search_control = None
+        self.frame_calendar_search_entries = None
+        self.frame_calendar_control_btns = None
+        self.frame_calendar_control_btns_a = None
+        self.frame_calendar_control_btns_b = None
+        self.frame_calendar_search_control_a = None
+        self.frame_calendar_search_control_b = None
+        self.frame_calendar_search_control_c = None
+        self.btn_calendar_use_hover = None
+        self.btn_calendar_export_pdf_full = None
+        self.btn_calendar_export_pdf = None
+        self.btn_draw_week_dividers = None
+
+        self.stringvar_calendar_search_start_date = None
+        self.stringvar_calendar_search_end_date = None
+        self.label_calendar_search_start_date = None
+        self.entry_calendar_search_start_date = None
+        self.label_calendar_search_end_date = None
+        self.entry_calendar_search_end_date = None
+        self.btn_calendar_search_submit = None
+
+        self.frame_dealer_colour_select = None
+        self.frame_dealer_colour_select_c1 = None
+        self.frame_dealer_colour_select_c2 = None
+        self.frame_dealer_colour_select_c3 = None
+        self.label_dealer_colour_select = None
+        self.btn_dealer_colour_1 = None
+        self.combo_dealer_1 = None
+        self.btn_reset_dealer_1 = None
+        self.btn_dealer_colour_2 = None
+        self.combo_dealer_2 = None
+        self.btn_reset_dealer_2 = None
+        self.btn_dealer_colour_3 = None
+        self.combo_dealer_3 = None
+        self.btn_reset_dealer_3 = None
+
+        self.tab_data = []
+        self.TAB_DATA = []
+        self.TABS = []
+
         self._drawing_bounds = self.calc_drawing_bounds()  # All drawings are bounded by this Rect.
         self._tile_bounds = self.calc_tile_bounds()
+        self.init_tabs()
+        self.init_splash_menu()
+        self.init_calendar_menu()
+        self.update_title()
+        self.update_geometry()
 
     def get_width(self):
         return self._width
@@ -251,7 +338,12 @@ class PSCCalendarFrame(tkinter.Tk):
         r = self._drawing_bounds
         return Rect2(r.left + self.left_cal_margin, r.top + self.top_cal_margin, r.width - self.left_cal_margin - self.right_cal_margin, r.height - self.top_cal_margin - self.bottom_cal_margin)
 
-    def run(self) -> None:
+    def open(self, start_date, n_cals):
+        self.TABS = self.TABS[:n_cals]
+        self.do_splash(start_date, n_cals)
+        self.set_full_screen()
+        self.hide_splash()
+        self.pack_calendar()
         self.mainloop()
 
     def set_full_screen(self):
@@ -274,6 +366,27 @@ class PSCCalendarFrame(tkinter.Tk):
     left_cal_margin = property(get_left_cal_margin, set_left_cal_margin, del_left_cal_margin, "Left margin to calendar")
     right_cal_margin = property(get_right_cal_margin, set_right_cal_margin, del_right_cal_margin, "Right margin to calendar")
     font = property(get_font, set_font, del_font, "Default font")
+
+    def on_tab_change(self, *events):
+        print(f"On Tab Change! <{events}>")
+
+    def switch_calendar_use_hover_gsm(self, *events):
+        print("Change use hover")
+
+    def switch_calendar_week_divs_gsm(self, *events):
+        print("show week dividers")
+
+    def submit_calendar_search(self, *events):
+        print("submit search")
+
+    def reset_dealer_1(self, *events):
+        print("reset_dealer_1")
+
+    def reset_dealer_2(self, *events):
+        print("reset_dealer_2")
+
+    def reset_dealer_3(self, *events):
+        print("reset_dealer_3")
 
     async def read_sql_async(self, stmt, con):
         '''
@@ -392,6 +505,82 @@ class PSCCalendarFrame(tkinter.Tk):
         return lines, dates, ordered_df
         # return df
 
+    async def populate_tab_data(self, month_ranges):
+        # global TABS, TAB_NAMES, TAB_DATA, LOADED
+
+        # last_date = cal.end_date
+        # last_date = START_DATE
+        n = max(len(self.TABS), self.N_TEST_CALS if self.N_TEST_CALS is not None else len(self.TABS))
+        print(f"LT: {len(self.TABS)}, self.N_TEST_CALS: {self.N_TEST_CALS}")
+        print(f"len(MR): {len(month_ranges)}")
+        for i, tab in enumerate(self.TABS):
+            last_date, c_end_date = month_ranges[i]
+            self.splash_query_pb["value"] = 0
+            self.splash_query_pb.update()
+            c_frame_calendar = tkinter.Frame(tab)
+            self.splash_query_pb["value"] = 25
+            self.splash_query_pb.update()
+
+            # last_date = last_date + datetime.timedelta(days=1)
+            # c_end_date = last_date + datetime.timedelta(days=31)
+            fmt = "%Y-%m-%d"
+            self.splash_status_top.config(text="Generating Schedule From {start} To {end}".format(start=last_date.strftime(fmt), end=c_end_date.strftime(fmt)))
+            self.splash_query_pb["value"] = 35
+            self.splash_query_pb.update()
+            c_lines, c_dates, dat = await self.get_data(last_date, c_end_date)
+            self.splash_query_pb["value"] = 85
+            self.splash_query_pb.update()
+            print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
+            print("c_dates", c_dates)
+            psc = self.create_calendar_p(last_date, c_end_date, dat, c_lines, c_dates)
+            c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
+                datetime.datetime.strftime(last_date, "%Y-%m-%d"), datetime.datetime.strftime(c_end_date, "%Y-%m-%d")))
+            # tab_cals.append(psc)
+
+            t_dat = self.TAB_DATA[i]
+            t_dat.update({
+                "Name": self.TAB_NAMES[i],
+                "Tab": tab,
+                "Lines": c_lines,
+                "Dates": c_dates,
+                "Data": dat,
+                "Cal": psc,
+                "c_label_title": c_label_title
+            })
+
+            # last_date += relativedelta(month=1)
+            p = 1 / n
+            print("p: {}, i: {}, n: {}, x: {}".format(p, i, n, p * 100))
+            self.splash_pb.step(p * 100)
+            self.splash_status_bottom.config(text="{} % Complete".format(round(self.splash_pb["value"], 2)))
+            self.splash_query_pb["value"] = 100
+            self.splash_query_pb.update()
+            self.update()
+            # if i >= N_TEST_CALS:
+            #     break
+
+        # TABS = TABS if len(TABS) <= N_TEST_CALS else TABS[:N_TEST_CALS]
+        # TAB_NAMES = TAB_NAMES if len(TAB_NAMES) <= N_TEST_CALS else TAB_NAMES[:N_TEST_CALS]
+
+        # label_title = tkinter.Label(tab_1, text="Production Schedule\n{} - {}".format(dt.datetime.strftime(START_DATE, "%Y-%m-%d"), dt.datetime.strftime(END_DATE, "%Y-%m-%d")))
+
+        for tab, tab_name in zip(self.TABS, self.TAB_NAMES):
+            self.notebook_tab_control.add(tab, text=tab_name)
+        self.LOADED.set(True)
+
+    def create_calendar_p(self, start_date, end_date, data, lines, dates):
+        # canvas_a.delete("all")
+        return PSCalendar2(start_date, end_date, data, lines, dates)
+
+    async def get_data(self, start_date, end_date):
+        lines, dates, data = await self.get_production_data(start_date, end_date)
+
+        print("lines:\n\n", lines)
+        print("dates:\n\n", dates)
+        print("data:\n\n", data)
+        print("length:", data.size)
+        return lines, dates, data
+
     def exit_program(self):
         '''
         Function called to quit the application.
@@ -402,6 +591,38 @@ class PSCCalendarFrame(tkinter.Tk):
         # WINDOW.destroy()
         print("Goodbye!")
         exit()
+
+    def init_tabs(self):
+        # List of tabs as tkinter frames
+        self.TABS = [
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control),
+            ttk.Frame(self.notebook_tab_control)
+        ]
+
+        # Zipping Tab frames and names. Prepping for Navigation Tabs
+        # Capping # TABS and queries based on N_TEST_CALS
+        if self.N_TEST_CALS is not None:
+            self.TABS = self.TABS if len(self.TABS) <= self.N_TEST_CALS else self.TABS[:self.N_TEST_CALS]
+            self.TAB_NAMES = self.TAB_NAMES if len(self.TAB_NAMES) <= self.N_TEST_CALS else self.TAB_NAMES[
+                                                                                            :self.N_TEST_CALS]
+        empty_data = {
+            "Name": None,
+            "Tab": None,
+            "Lines": None,
+            "Dates": None,
+            "Data": None,
+            "HeaderRow": None,
+            "HeaderCol": None,
+            "PopUp": None,
+            "PopUpDat": None,
+            "Cal": None
+        }
+        self.TAB_DATA = dict(zip([i for i in range(len(self.TABS))], [dict(empty_data) for _ in range(len(self.TAB_NAMES))]))
 
     def init_splash_menu(self):
         self.splash_frame = tkinter.Frame(self, bg=self.SPLASH_BG)
@@ -436,6 +657,60 @@ class PSCCalendarFrame(tkinter.Tk):
         self.splash_version = tkinter.Label(self.splash_frame, text=self.VERSION_NAME, bg=self.SPLASH_BG, fg=self.SPLASH_FG)
         self.pack_splash()
 
+    def init_calendar_menu(self):
+        self.notebook_tab_control = ttk.Notebook(self)
+        for i, tab in enumerate(self.TABS):
+            self.label_cal_title = tkinter.Label(tab, text="Production Schedule\n{} - {}")
+            #.format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
+            self.frame_calendar = tkinter.Frame(tab)
+            self.canvas_cal = tkinter.Canvas(self.frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
+            self.canvas_header_left = tkinter.Canvas(self.frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))  # left legend
+            self.can_header_top = tkinter.Canvas(self.frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            self.canvas_pop_up = tkinter.Menu(self.frame_calendar, tearoff=0)
+        self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
+
+        self.frame_calendar_control = tkinter.Frame(self, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
+        self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
+        self.frame_calendar_search_entries = tkinter.Frame(self.frame_calendar_control)
+        self.frame_calendar_control_btns = tkinter.Frame(self.frame_calendar_control)
+        self.frame_calendar_control_btns_a = tkinter.Frame(self.frame_calendar_control_btns)
+        self.frame_calendar_control_btns_b = tkinter.Frame(self.frame_calendar_control_btns)
+        self.frame_calendar_search_control_a = tkinter.Frame(self.frame_calendar_search_entries)
+        self.frame_calendar_search_control_b = tkinter.Frame(self.frame_calendar_search_entries)
+        self.frame_calendar_search_control_c = tkinter.Frame(self.frame_calendar_search_control)
+        self.btn_calendar_use_hover = tkinter.Button(self.frame_calendar_control_btns_a, text="Use Hover",
+                                                command=self.switch_calendar_use_hover_gsm)
+        self.btn_calendar_export_pdf_full = tkinter.Button(self.frame_calendar_control_btns_a, text="Export pdf (Full)")
+        self.btn_calendar_export_pdf = tkinter.Button(self.frame_calendar_control_btns_a, text="Export pdf")
+        self.btn_draw_week_dividers = tkinter.Button(self.frame_calendar_control_btns_b, text="Draw Week Dividers",
+                                                command=self.switch_calendar_week_divs_gsm)
+
+        self.stringvar_calendar_search_start_date = tkinter.StringVar(value="START_DATE.strftime(\"%Y-%m-%d\")")
+        self.stringvar_calendar_search_end_date = tkinter.StringVar(value="END_DATE.strftime(\"%Y-%m-%d\")")
+        self.label_calendar_search_start_date = tkinter.Label(self.frame_calendar_search_control_a, text="Start Date:")
+        self.entry_calendar_search_start_date = tkinter.Entry(self.frame_calendar_search_control_a,
+                                                         textvariable=self.stringvar_calendar_search_start_date)
+        self.label_calendar_search_end_date = tkinter.Label(self.frame_calendar_search_control_b, text="End Date:")
+        self.entry_calendar_search_end_date = tkinter.Entry(self.frame_calendar_search_control_b,
+                                                       textvariable=self.stringvar_calendar_search_end_date)
+        self.btn_calendar_search_submit = tkinter.Button(self.frame_calendar_search_control_c, text="Submit",
+                                                    command=self.submit_calendar_search)
+
+        self.frame_dealer_colour_select = tkinter.Frame(self.frame_calendar_control)
+        self.frame_dealer_colour_select_c1 = tkinter.Frame(self.frame_dealer_colour_select)
+        self.frame_dealer_colour_select_c2 = tkinter.Frame(self.frame_dealer_colour_select)
+        self.frame_dealer_colour_select_c3 = tkinter.Frame(self.frame_dealer_colour_select)
+        self.label_dealer_colour_select = tkinter.Label(self.frame_dealer_colour_select, text="Highlight Dealers Below")
+        self.btn_dealer_colour_1 = tkinter.Button(self.frame_dealer_colour_select_c1)
+        self.combo_dealer_1 = ttk.Combobox(self.frame_dealer_colour_select_c1, textvariable=self.lb_dealer_1)
+        self.btn_reset_dealer_1 = tkinter.Button(self.frame_dealer_colour_select_c1, text="Reset", command=self.reset_dealer_1)
+        self.btn_dealer_colour_2 = tkinter.Button(self.frame_dealer_colour_select_c2)
+        self.combo_dealer_2 = ttk.Combobox(self.frame_dealer_colour_select_c2, textvariable=self.lb_dealer_2)
+        self.btn_reset_dealer_2 = tkinter.Button(self.frame_dealer_colour_select_c2, text="Reset", command=self.reset_dealer_2)
+        self.btn_dealer_colour_3 = tkinter.Button(self.frame_dealer_colour_select_c3)
+        self.combo_dealer_3 = ttk.Combobox(self.frame_dealer_colour_select_c3, textvariable=self.lb_dealer_3)
+        self.btn_reset_dealer_3 = tkinter.Button(self.frame_dealer_colour_select_c3, text="Reset", command=self.reset_dealer_3)
+
     def pack_splash(self):
         self.splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
         self.splash_logo_stargate.pack(side=tkinter.RIGHT, padx=10, pady=20)
@@ -452,11 +727,95 @@ class PSCCalendarFrame(tkinter.Tk):
             self.splash_test_indicator.pack()
         self.splash_frame.pack(expand=True, fill=tkinter.BOTH)
 
-    def do_splash(self, start_date=first_of_month(datetime.datetime.now()), months_ahead=6):
+    def pack_calendar(self):
+        self.label_cal_title.pack()
+        self.can_header_top.pack()
+        self.canvas_header_left.pack(side=tkinter.LEFT)
+        self.canvas_cal.pack()
+        self.frame_calendar.pack()
+
+        # Add widgets
+        self.label_dealer_colour_select.pack()
+        self.label_calendar_search_start_date.pack(side=tkinter.LEFT)
+        self.entry_calendar_search_start_date.pack(side=tkinter.LEFT)
+        self.label_calendar_search_end_date.pack(side=tkinter.LEFT)
+        self.entry_calendar_search_end_date.pack(side=tkinter.LEFT)
+        self.btn_calendar_search_submit.pack()
+        self.btn_draw_week_dividers.pack()
+
+        self.frame_dealer_colour_select.pack(side=tkinter.RIGHT)
+
+        self.btn_dealer_colour_1.pack(fill="x")
+        self.combo_dealer_1.pack()
+        self.btn_reset_dealer_1.pack()
+        self.frame_dealer_colour_select_c1.pack(side=tkinter.LEFT)
+
+        self.btn_dealer_colour_2.pack(fill="x")
+        self.combo_dealer_2.pack()
+        self.btn_reset_dealer_2.pack()
+        self.frame_dealer_colour_select_c2.pack(side=tkinter.LEFT)
+
+        self.btn_dealer_colour_3.pack(fill="x")
+        self.combo_dealer_3.pack()
+        self.btn_reset_dealer_3.pack()
+        self.frame_dealer_colour_select_c3.pack(side=tkinter.LEFT)
+
+        self.frame_dealer_colour_select_c1.pack()
+        self.frame_dealer_colour_select_c2.pack()
+        self.frame_dealer_colour_select_c3.pack()
+        # label_title.pack()
+        # canvas_header_row.pack()
+        # canvas_header_col.pack(side=tkinter.LEFT)
+        # canvas.pack()
+        self.frame_calendar_search_control_a.pack()
+        self.frame_calendar_search_control_b.pack()
+        self.frame_calendar_search_entries.pack(side=tkinter.LEFT)
+        # frame_calendar_search_entries.pack()
+        self.frame_calendar_search_control_c.pack(side=tkinter.LEFT)
+        # frame_calendar_search_control_c.pack()
+        self.frame_calendar_search_control.pack(side=tkinter.LEFT)
+        # frame_calendar_control.pack(side=tkinter.LEFT)
+        self.frame_calendar_control.pack()
+        self.btn_calendar_use_hover.pack()
+        self.btn_calendar_export_pdf_full.pack()
+        self.btn_calendar_export_pdf.pack()
+        self.frame_calendar_control_btns.pack(side=tkinter.LEFT)
+        self.frame_calendar_control_btns_a.pack(side=tkinter.LEFT)
+        self.frame_calendar_control_btns_b.pack(side=tkinter.LEFT)
+
+        # frame_calendar_control_btns.pack()
+        # frame_calendar.pack()
+        # submit_calendar_search()
+        self.notebook_tab_control.pack(expand=1, fill="x")
+
+    def hide_splash(self):
+        self.splash_label.pack_forget()
+        self.splash_pb.pack_forget()
+        self.splash_query_pb.pack_forget()
+        self.splash_status_top.pack_forget()
+        self.splash_status_bottom.pack_forget()
+        self.splash_frame.pack_forget()
+        self.splash_logo_bws.pack_forget()
+        self.splash_logo_stargate.pack_forget()
+        self.splash_frame_logos.pack_forget()
+        self.splash_version.pack_forget()
+        if self.N_TEST_CALS is not None:
+            self.splash_test_indicator.forget()
+
+    def do_splash(self, start_date=first_of_month(datetime.datetime.now()), months_ahead=8):
         if self.N_TEST_CALS is not None:
             print(f"Overriding months_ahead ({months_ahead}) with N_TEST_CALS: ({self.N_TEST_CALS})")
             months_ahead = self.N_TEST_CALS
-
+        month_ranges = []
+        print("MONTHS:", months_ahead)
+        td = datetime2(start_date.year, start_date.month, start_date.day, start_date.hour, start_date.minute, start_date.second)
+        for mi in range(months_ahead):
+            month_ranges.append((first_of_month(td), end_of_month(td)))
+            td = td.add_month()
+        print("LENGTH MR:", len(month_ranges))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.gather(*(self.populate_tab_data(month_ranges) for i in range(1))))
+        loop.close()
 
 #  PSCalendar
 #     - selected

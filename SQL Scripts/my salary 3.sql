@@ -1,3 +1,4 @@
+--USE Stargatedb
 USE BWSdb
 GO
 
@@ -31,7 +32,28 @@ INSERT INTO @current_wage
 		ROW_NUMBER() OVER (
 			PARTITION BY [2nd Name], [1st Name]
 			ORDER BY [Date] DESC
-		) AS row_num, *
+		) AS row_num,
+		[RaiseID],
+	[Emp#],
+	[Date],
+	[STS],
+	[Salary],
+	[Annual],
+	[Bonus%],
+	[Dep Life],
+	[Health],
+	[Dental],
+	[Vacation%],
+	[RRSP%],
+	[Absent],
+	[Late],
+	[Leave Early],
+	[NQ],
+	[Reason],
+	[2nd Name],
+	[1st Name],
+	[Hourly/Salary],
+	[Comments]
 	FROM 
 		[Payroll]
 

@@ -6,6 +6,37 @@ from utility import *
 from pdf_writer import *
 
 
+class CalendarTile2:
+
+    def __init__(self, ser, i, j, line, date):
+        self.ser = ser
+        self.i = i
+        self.j = j
+        self.line = line
+        self.date = date
+
+
+class PSCalendar2:
+
+    def __init__(self, start_date, end_date, data, lines, dates):
+        assert isinstance(start_date,
+                          dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
+            start_date)
+        assert isinstance(end_date, dt.datetime), "End_date object \"{}\" must be a datetime.datetime object.".format(
+            end_date)
+        assert end_date >= start_date, "End_date \"{}\" must be after start_date \"{}\".".format(end_date, start_date)
+        self.version_num = 1
+        self.start_date = start_date
+        self.end_date = end_date
+        self.data = data
+        self.lines = lines
+        self.dates = dates
+        self.rows = len(lines)
+        self.cols = len(dates)
+        self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date)
+              for j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
+
+
 # import mouse
 
 
@@ -119,7 +150,7 @@ class CalendarTile:
 
 class PSCalendar:
 
-    def __init__(self, canvas, canvas_header_col, canvas_header_row, w, h, start_date, end_date, data, lines, dates,
+    def __init__(self, start_date, end_date, data, lines, dates,
                  border_width):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
@@ -134,11 +165,11 @@ class PSCalendar:
         self.version_num = 1
         self.start_date = start_date
         self.end_date = end_date
-        self._width = w
-        self._height = h
-        self.canvas = canvas
-        self.canvas_header_col = canvas_header_col
-        self.canvas_header_row = canvas_header_row
+        # self._width = w
+        # self._height = h
+        # self.canvas = canvas
+        # self.canvas_header_col = canvas_header_col
+        # self.canvas_header_row = canvas_header_row
         # self.canvas_pop_up = pop_up_canvas
         self.lines = lines
         self.switch_use_hover = True
