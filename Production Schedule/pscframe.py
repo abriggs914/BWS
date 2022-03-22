@@ -4,8 +4,9 @@ import asyncio
 import datetime
 import pandas as pd
 from tkinter import ttk
+from pathlib import Path
 from PIL import ImageTk, Image
-from utility import Rect2, brighten
+from utility import Rect2, brighten, first_of_month
 from colour_utility import *
 
 
@@ -26,7 +27,8 @@ class PSCCalendarFrame(tkinter.Tk):
             bottom_cal_margin_p=0,
             left_cal_margin_p=0,
             right_cal_margin_p=0,
-            font_p=None
+            font_p=None,
+            n_test_cals=None
     ):
         super().__init__()
         self._width = width_p
@@ -45,16 +47,15 @@ class PSCCalendarFrame(tkinter.Tk):
         self._font = font_p
 
         # Splash menu vars:
+        self.assert_is_employee = False
         self.splash_frame = None
         self.splash_frame_logos = None
         self.bws_logo = None
-        self.BWS_LOGO_FILE_PATH = None
         self.splash_logo_bws = None
         self.stargate_logo = None
         self.LOGO_WIDTH = None
         self.LOGO_HEIGHT = None
         self.splash_logo_stargate = None
-
         self.splash_frame_pbs = None
         self.splash_label = None
         self.splash_status_top = None
@@ -62,11 +63,32 @@ class PSCCalendarFrame(tkinter.Tk):
         self.splash_pb = None
         self.splash_query_pb = None
         self.splash_test_indicator = None
-        self.N_TEST_CALS = None
         self.splash_version = None
-        self.SPLASH_BG = None
-        self.SPLASH_FG = None
+
+        self.N_TEST_CALS = n_test_cals
+        self.BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
+        self.STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
+        self.SPLASH_BG = rgb_to_hex(GRAY_17)
+        self.SPLASH_FG = rgb_to_hex(WHITE)
+        self.SPLASH_LENGTH = 300
         self.VERSION_NAME = None
+        self.LOGO_WIDTH = int((self._width * 0.8) / 2)
+        self.LOGO_HEIGHT = int(self._height * 0.3)
+
+        if not Path(self.BWS_LOGO_FILE_PATH).exists():
+            if not self.assert_is_employee:
+                self.BWS_LOGO_FILE_PATH = r"""./BWS Chrome Final_hr.jpg"""
+            else:
+                print("You must be an employee to use this program.")
+                self.exit_program()
+
+        if not Path(self.STARGATE_LOGO_FILE_PATH).exists():
+            if not self.assert_is_employee:
+                self.STARGATE_LOGO_FILE_PATH = r"""./Stargate Logo 50%.jpg"""
+            else:
+                print("You must be an employee to use this program.")
+                self.exit_program()
+
         self.init_splash_menu()
 
         # Vars specific to Production Scheduling:
@@ -384,7 +406,6 @@ class PSCCalendarFrame(tkinter.Tk):
     def init_splash_menu(self):
         self.splash_frame = tkinter.Frame(self, bg=self.SPLASH_BG)
         self.splash_frame_logos = tkinter.Frame(self.splash_frame, bg=self.SPLASH_BG)
-        # TODO INIT these file paths.
         self.bws_logo = ImageTk.PhotoImage(Image.open(self.BWS_LOGO_FILE_PATH).resize((self.LOGO_WIDTH, self.LOGO_HEIGHT)))
         self.splash_logo_bws = tkinter.Label(self.splash_frame_logos, image=self.bws_logo)
         self.stargate_logo = ImageTk.PhotoImage(Image.open(self.STARGATE_LOGO_FILE_PATH).resize((self.LOGO_WIDTH, self.LOGO_HEIGHT)))
@@ -413,7 +434,9 @@ class PSCCalendarFrame(tkinter.Tk):
                                               bg=rgb_to_hex(brighten(hex_to_rgb(self.SPLASH_BG), 0.25)),
                                               fg=rgb_to_hex(RED_3), font=("Arial", 16))
         self.splash_version = tkinter.Label(self.splash_frame, text=self.VERSION_NAME, bg=self.SPLASH_BG, fg=self.SPLASH_FG)
+        self.pack_splash()
 
+    def pack_splash(self):
         self.splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
         self.splash_logo_stargate.pack(side=tkinter.RIGHT, padx=10, pady=20)
         self.splash_frame_logos.pack(side=tkinter.TOP)
@@ -428,6 +451,12 @@ class PSCCalendarFrame(tkinter.Tk):
         if self.N_TEST_CALS is not None:
             self.splash_test_indicator.pack()
         self.splash_frame.pack(expand=True, fill=tkinter.BOTH)
+
+    def do_splash(self, start_date=first_of_month(datetime.datetime.now()), months_ahead=6):
+        if self.N_TEST_CALS is not None:
+            print(f"Overriding months_ahead ({months_ahead}) with N_TEST_CALS: ({self.N_TEST_CALS})")
+            months_ahead = self.N_TEST_CALS
+
 
 #  PSCalendar
 #     - selected
