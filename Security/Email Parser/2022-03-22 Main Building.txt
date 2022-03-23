@@ -1,0 +1,67 @@
+
+________________________________________
+From: CENTRAL STATION
+Sent: Tuesday, March 22, 2022 3:49:43 PM (UTC-04:00) Atlantic Time (Canada)
+To: Avery Briggs
+Subject: (80-01-0938) Account History Detail
+
+LARSEN SECURITY -(SECURAL HOLDINGS)                   Report Run Date: 03/22/22
+141 HOULTON STREET                                    Report Run Time: 15:49
+WOODSTOCK                 NB  E7M 1Y4                 80-01-0938   Cl:
+
+  ************ Report Message ************            ***** Report Legend *****
+  WEEK MARCH 14 TO 21 2022 REPORT                     Date  : Month/Day mm/dd
+                                                      Recvd : Received Time
+                                                      Day   : Day of The Week
+                                                      Cmplt : Completed Time
+                                                      Code  : Event Code
+                                                      Msg   : Event Type
+  BWS MAIN BUILDING                                   Desc  : Description
+                                                      User  : User Info
+  29 HAWKINS ROAD                                     Begin : 03/14/22 at 00:00
+  CENTREVILLE               NB  E?? ????              Until : 03/21/22 at 23:59
+
+
+
+
+---------------------------------  Fold Here  ----------------------------------
+
+                               All Events Detail
+
+                                 BWS MAIN BUILDING
+                            29 HAWKINS ROAD
+  -----------------------------------------------------------------------------
+  DATE  DAY RECVD  CODE    MSG DESCRIPTION            (USER INFORMATION)
+  -----------------------------------------------------------------------------
+ 03/14 Mon 02:56:52am E602000 TST Test Signal
+           05:47:30am E401011eOPN Opening              (Employee/User #011   )
+ 03/15 Tue 02:56:52am E602000 TST Test Signal
+           03:04:48am R401004eCLO Closing              (Employee/User #004   )
+           05:50:31am E401011eOPN Opening              (Employee/User #011   )
+ 03/16 Wed 02:56:52am E602000 TST Test Signal
+           03:01:23am R401004eCLO Closing              (Employee/User #004   )
+           05:47:18am E401046eOPN Opening              (Employee/User #046   )
+ 03/17 Thu 02:56:51am E602000 TST Test Signal
+           03:01:36am R401004eCLO Closing              (Employee/User #004   )
+           05:48:53am E401046eOPN Opening              (Employee/User #046   )
+ 03/18 Fri 02:56:49am E602000 TST Test Signal
+           03:01:24am R401004eCLO Closing              (Employee/User #004   )
+           05:49:52am E401046eOPN Opening              (Employee/User #046   )
+           06:59:03pm R401037eCLO Closing              (Employee/User #037   )
+ 03/19 Sat 02:56:49am E602000 TST Test Signal
+           05:52:37am E401011eOPN Opening              (Employee/User #011   )
+           12:16:41pm R401007eCLO Closing              (Employee/User #007   )
+           12:16:42pm E401007eOPN Opening              (Employee/User #007   )
+           12:16:58pm R401007eCLO Closing              (Employee/User #007   )
+           05:16:16pm E401048eOPN Opening              (Employee/User #048   )
+           05:58:05pm R401048eCLO Closing              (Employee/User #048   )
+ 03/20 Sun 02:56:49am E602000 TST Test Signal
+           08:46:22am E401029eOPN Opening              (Employee/User #029   )
+           05:04:26pm R401029eCLO Closing              (Employee/User #029   )
+ 03/21 Mon 02:56:48am E602000 TST Test Signal
+           05:50:04am E401046eOPN Opening              (Employee/User #046   )
+
+End of Report...
+
+
+

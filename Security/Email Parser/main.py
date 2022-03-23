@@ -1,6 +1,8 @@
+import datetime
+
 import easygui
 from utility import *
-import tkinterdnd2
+# import tkinterdnd2
 from tkinter import *
 import tkinter.filedialog as filedialog
 
@@ -135,6 +137,40 @@ class App(Frame):
         self.mainloop()
 
 
+class ArmstrongEmail:
+
+    def __init__(self, file_name):
+        self.file_name = file_name
+
+    def parse(self):
+        with open(self.file_name, 'r') as f:
+            lines = f.read()
+            section_spliter = "-----------------------------------------------------------------------------"
+            section_split = lines.split(section_spliter)
+            print(section_split)
+            print(len(section_split))
+            transactions_section = section_split[-1]
+            print("last section:", transactions_section)
+            transaction_lines = transactions_section.split("\n")
+            transaction_dates = {}
+            curr_date = None
+            for i, line in enumerate(transaction_lines):
+                print("line:", line.strip()[:20].strip())
+                try:
+                    date = datetime.datetime.strptime(line.strip()[:20].strip(), "%m/%d %a %H:%M:%S%p")
+                    curr_date = date
+                    transaction_dates[date] = [i]
+                except ValueError:
+                    if curr_date is None:
+                        if "None" not in transaction_dates:
+                            transaction_dates["None"] = []
+                        transaction_dates["None"].append(i)
+                    else:
+                        transaction_dates[curr_date].append(i)
+
+            print(dict_print(transaction_dates))
+
+
 if __name__ == "__main__":
 
     # root = tkinterdnd2.Tk()
@@ -145,3 +181,6 @@ if __name__ == "__main__":
     # root.config(bg='#fcb103')
     # app = App(root)
     # app.run()
+
+    ae_1 = ArmstrongEmail(r"""C:\Users\abrig\Documents\BWS\BWS\Security\Email Parser\2022-03-22 Main Building.txt""")
+    ae_1.parse()
