@@ -234,6 +234,7 @@ if __name__ == "__main__":
         return email_items
 
 
+    MAX_EMAILS = 100
     EMAIL_TABLE_COLOURS = [(rgb_to_hex((175, 175, 175)), rgb_to_hex((0, 0, 0))), (rgb_to_hex((255, 255, 255)), rgb_to_hex((0, 0, 0)))]
     BG_SELECTED_ROW = rgb_to_hex(LIGHTBLUE_2)
     WINDOW = tkinter.Tk()
@@ -266,7 +267,7 @@ if __name__ == "__main__":
         mouse = event.x_root, event.y_root
         # print(f"clicked table! mouse: {mouse}", dir(event))
         row_idx = get_row(mouse)
-        for r in range(len(EMAIL_DATA)):
+        for r in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
             if r == row_idx:
                 EMAIL_DATA[row_idx]['col1'].config(readonlybackground=BG_SELECTED_ROW)
                 EMAIL_DATA[row_idx]['col2'].config(readonlybackground=BG_SELECTED_ROW)
@@ -279,7 +280,7 @@ if __name__ == "__main__":
                 EMAIL_DATA[row_idx]['col3'].config(readonlybackground=bg)
 
     # list of alternating row EMAIL_TABLE_COLOURS (bg, fg)
-    for i in range(clamp(0, len(EMAIL_DATA), 10)):
+    for i in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
         # only showing date, subject, and body[:25] -> 3 columns
         var1 = EMAIL_DATA[i]['var1']
         var2 = EMAIL_DATA[i]['var2']
