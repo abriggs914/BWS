@@ -234,9 +234,10 @@ if __name__ == "__main__":
         return email_items
 
 
-    MAX_EMAILS = 100
+    MAX_EMAILS = 5
     EMAIL_TABLE_COLOURS = [(rgb_to_hex((175, 175, 175)), rgb_to_hex((0, 0, 0))), (rgb_to_hex((255, 255, 255)), rgb_to_hex((0, 0, 0)))]
     BG_SELECTED_ROW = rgb_to_hex(LIGHTBLUE_2)
+    BG_SELECTED_COL = rgb_to_hex(ORANGE)
     WINDOW = tkinter.Tk()
     EMAIL_DATA = load_armstrong_emails()
     WIDTH, HEIGHT = 900, 600
@@ -244,6 +245,11 @@ if __name__ == "__main__":
     START_DATE = tkinter.StringVar()
     END_DATE = tkinter.StringVar()
     EMAIL_TABLE_HEADER = tkinter.StringVar(value="Emails:")
+    SELECTED = {
+        "row": None,
+        "col": None,
+        "mouse": None
+    }
 
     F_date_widget = tkinter.Frame(WINDOW)
     F_date_buttons = tkinter.Frame(F_date_widget)
@@ -259,43 +265,50 @@ if __name__ == "__main__":
     def get_row(mouse):
         bounds = Rect2(F_email_table.winfo_rootx(), F_email_table.winfo_rooty(), F_email_table.winfo_width(), F_email_table.winfo_height())
         p = (mouse[1] - bounds.y) / bounds.h
-        rows = len(EMAIL_DATA)
-        # print(f"mouse: {mouse}, bounds: ({bounds.x}, {bounds.y}), X ({bounds.w}x{bounds.h}), p: {p}, rows: {rows}, res: {int(p * rows)}")
+        rows = clamp(0, len(EMAIL_DATA), MAX_EMAILS)
+        print(f"mouse: {mouse}, bounds: ({bounds.x}, {bounds.y}), X ({bounds.w}x{bounds.h}), p: {p}, rows: {rows}, res: {int(p * rows)}")
         return int(p * rows)
 
+    def get_col(mouse):
+        bounds = Rect2(F_email_table.winfo_rootx(), F_email_table.winfo_rooty(), F_email_table.winfo_width(), F_email_table.winfo_height())
+        p = (mouse[0] - bounds.x) / bounds.w
+        cols = 3
+        print(f"mouse: {mouse}, bounds: ({bounds.x}, {bounds.y}), X ({bounds.w}x{bounds.h}), p: {p}, cols: {cols}, res: {int(p * cols)}")
+        return int(p * cols)
+
     def click_email_table(event):
+        global SELECTED
         mouse = event.x_root, event.y_root
         # print(f"clicked table! mouse: {mouse}", dir(event))
         row_idx = get_row(mouse)
+        col_idx = get_col(mouse)
+        SELECTED.update({"row": row_idx, "col": col_idx, "mouse": mouse})
         for r in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
             if r == row_idx:
-                EMAIL_DATA[row_idx]['col1'].config(readonlybackground=BG_SELECTED_ROW)
-                EMAIL_DATA[row_idx]['col2'].config(readonlybackground=BG_SELECTED_ROW)
-                EMAIL_DATA[row_idx]['col3'].config(readonlybackground=BG_SELECTED_ROW)
+                # print(f"colouring: row: {r}, col: {BG_SELECTED_ROW}")
+                for i in range(3):
+                    EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=BG_SELECTED_ROW)
             else:
-                bg = EMAIL_TABLE_COLOURS[(r + 1) % len(EMAIL_TABLE_COLOURS)][0]
-                fg = EMAIL_TABLE_COLOURS[(r + 1) % len(EMAIL_TABLE_COLOURS)][1]
-                EMAIL_DATA[row_idx]['col1'].config(readonlybackground=bg)
-                EMAIL_DATA[row_idx]['col2'].config(readonlybackground=bg)
-                EMAIL_DATA[row_idx]['col3'].config(readonlybackground=bg)
+                bg = EMAIL_TABLE_COLOURS[r % len(EMAIL_TABLE_COLOURS)][0]
+                fg = EMAIL_TABLE_COLOURS[r % len(EMAIL_TABLE_COLOURS)][1]
+                # print(f"colouring: row: {r}: bg: {bg}")
+                for i in range(3):
+                    EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=bg)
+            EMAIL_DATA[row_idx][f"col{col_idx+1}"].config(readonlybackground=BG_SELECTED_COL)
+            for i in range(3):
+                EMAIL_DATA[r][f"col{i+1}"].update()
 
     # list of alternating row EMAIL_TABLE_COLOURS (bg, fg)
     for i in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
         # only showing date, subject, and body[:25] -> 3 columns
-        var1 = EMAIL_DATA[i]['var1']
-        var2 = EMAIL_DATA[i]['var2']
-        var3 = EMAIL_DATA[i]['var3']
         bg = EMAIL_TABLE_COLOURS[i % len(EMAIL_TABLE_COLOURS)][0]
         fg = EMAIL_TABLE_COLOURS[i % len(EMAIL_TABLE_COLOURS)][1]
-        EMAIL_DATA[i]['col1'] = tkinter.Entry(F_email_table, textvariable=var1, bg=bg, fg=fg, width=50, state="readonly", readonlybackground=bg)
-        EMAIL_DATA[i]['col2'] = tkinter.Entry(F_email_table, textvariable=var2, bg=bg, fg=fg, width=50, state="readonly", readonlybackground=bg)
-        EMAIL_DATA[i]['col3'] = tkinter.Entry(F_email_table, textvariable=var3, bg=bg, fg=fg, width=50, state="readonly", readonlybackground=bg)
-        EMAIL_DATA[i]['col1'].grid(row=i+1, column=1)
-        EMAIL_DATA[i]['col2'].grid(row=i+1, column=2)
-        EMAIL_DATA[i]['col3'].grid(row=i+1, column=3)
-        EMAIL_DATA[i]['col1'].bind("<Button-1>", click_email_table)
-        EMAIL_DATA[i]['col2'].bind("<Button-1>", click_email_table)
-        EMAIL_DATA[i]['col3'].bind("<Button-1>", click_email_table)
+        for j in range(3):
+            var = EMAIL_DATA[i][f'var{j+1}']
+            EMAIL_DATA[i][f'col{j+1}'] = tkinter.Entry(F_email_table, textvariable=var, bg=bg, fg=fg, width=50,
+                                                  state="readonly", readonlybackground=bg)
+            EMAIL_DATA[i][f'col{j+1}'].grid(row=i + 1, column=j + 1)
+            EMAIL_DATA[i][f'col{j+1}'].bind("<Button-1>", click_email_table)
 
 
     L_start_date.pack()
