@@ -6,4 +6,4 @@ GO
 select * from WipJobAmendJnl with (nolock)
 where TableName = 'WipMaster'
 and ChangeFlag = 'A'
-and Job = '20050362'
+and Job = '20049583'

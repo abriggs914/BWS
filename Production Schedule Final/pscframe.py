@@ -8,7 +8,7 @@ from tkinter import ttk
 from pathlib import Path
 from PIL import ImageTk, Image
 from datetime_utility import *
-from pscalendar import PSCalendar, CalendarTile2
+from pscalendar import PSCalendar2, CalendarTile2
 from utility import Rect2, brighten, first_of_month, end_of_month, dict_print
 from colour_utility import *
 
@@ -345,12 +345,15 @@ class PSCCalendarFrame(tkinter.Tk):
         self.do_splash(start_date, n_cals)
         self.set_full_screen()
         self.hide_splash()
-        self.pack_calendar()
         psc = self.TAB_DATA[self.CAL_IDX]["Cal"]
-        canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
-        canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]  #{"canvas_pop_up": canvas_pop_up})
-        can_header_top = self.TAB_DATA[self.CAL_IDX]["can_header_top"]
-        psc.draw_canvas(canvas, canvas_header_left, can_header_top)
+        self.canvas_cal =  self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+        self.canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]  #{"canvas_pop_up": canvas_pop_up})
+        self.can_header_top = self.TAB_DATA[self.CAL_IDX]["can_header_top"]
+        self.frame_calendar = self.TAB_DATA[self.CAL_IDX]["frame_calendar"]
+        # psc.draw_canvas(canvas, canvas_header_left, can_header_top)
+
+        self.pack_calendar()
+        self.draw_calendar()
         self.mainloop()
 
     def set_full_screen(self):
@@ -374,8 +377,19 @@ class PSCCalendarFrame(tkinter.Tk):
     right_cal_margin = property(get_right_cal_margin, set_right_cal_margin, del_right_cal_margin, "Right margin to calendar")
     font = property(get_font, set_font, del_font, "Default font")
 
-    def on_tab_change(self, *events):
-        print(f"On Tab Change! <{events}>")
+    def on_tab_change(self, event):
+        print(f"On Tab Change! <{event}>")
+        tab_name = event.widget.tab('current')['text']
+        idx = self.TAB_NAMES.index(tab_name)
+        # cal = tab_cals[idx]
+        cal = self.TAB_DATA[idx]["Cal"]
+        self.CAL_IDX = idx
+        print(f"changed to tab {self.CAL_IDX}")
+        self.canvas_cal =  self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+        self.canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]  #{"canvas_pop_up": canvas_pop_up})
+        self.can_header_top = self.TAB_DATA[self.CAL_IDX]["can_header_top"]
+        self.frame_calendar = self.TAB_DATA[self.CAL_IDX]["frame_calendar"]
+        self.draw_calendar()
 
     def switch_calendar_use_hover_gsm(self, *events):
         print("Change use hover")
@@ -456,10 +470,9 @@ class PSCCalendarFrame(tkinter.Tk):
             with open("df1.json", "r") as f:
                 ordered_df = pd.read_json(f)
                 dates = ordered_df.drop_duplicates('Prod Date')
-                # dates = dates.iloc[:, 3:4].tolist()
-                print("LIST:", dates['Prod Date'].tolist())
-                print("LIST[0]:", dates['Prod Date'].tolist()[0])
-                print("type(LIST[0]:)", type(dates['Prod Date'].tolist()[0]))
+                # print("LIST:", dates['Prod Date'].tolist())
+                # print("LIST[0]:", dates['Prod Date'].tolist()[0])
+                # print("type(LIST[0]:)", type(dates['Prod Date'].tolist()[0]))
                 dates = [pd.to_datetime(str(dtm), unit='ms') for dtm in dates['Prod Date'].tolist()]
                 dates.sort()
         except FileNotFoundError:
@@ -489,7 +502,7 @@ class PSCCalendarFrame(tkinter.Tk):
             dates = ordered_df.drop_duplicates('Prod Date')
             # dates = dates.iloc[:, 3:4].tolist()
             dates = dates['Prod Date'].tolist()
-            print("columns:", df1.columns)
+            # print("columns:", df1.columns)
 
             # TODO can use this as a testing entry
             # print("df1:", df1)
@@ -518,8 +531,8 @@ class PSCCalendarFrame(tkinter.Tk):
         # last_date = cal.end_date
         # last_date = START_DATE
         n = max(len(self.TABS), self.N_TEST_CALS if self.N_TEST_CALS is not None else len(self.TABS))
-        print(f"LT: {len(self.TABS)}, self.N_TEST_CALS: {self.N_TEST_CALS}")
-        print(f"len(MR): {len(month_ranges)}")
+        # print(f"LT: {len(self.TABS)}, self.N_TEST_CALS: {self.N_TEST_CALS}")
+        # print(f"len(MR): {len(month_ranges)}")
         for i, tab in enumerate(self.TABS):
             last_date, c_end_date = month_ranges[i]
             self.splash_query_pb["value"] = 0
@@ -537,8 +550,8 @@ class PSCCalendarFrame(tkinter.Tk):
             c_lines, c_dates, dat = await self.get_data(last_date, c_end_date)
             self.splash_query_pb["value"] = 85
             self.splash_query_pb.update()
-            print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
-            print("c_dates", c_dates)
+            # print("last_date: {}: {}, c_end_date: {}: {}".format(type(last_date), last_date, type(c_end_date), c_end_date))
+            # print("c_dates", c_dates)
             psc = self.create_calendar_p(last_date, c_end_date, dat, c_lines, c_dates)
             c_label_title = tkinter.Label(tab, text="Production Schedule\n{} - {}".format(
                 datetime.datetime.strftime(last_date, "%Y-%m-%d"), datetime.datetime.strftime(c_end_date, "%Y-%m-%d")))
@@ -557,7 +570,7 @@ class PSCCalendarFrame(tkinter.Tk):
 
             # last_date += relativedelta(month=1)
             p = 1 / n
-            print("p: {}, i: {}, n: {}, x: {}".format(p, i, n, p * 100))
+            # print("p: {}, i: {}, n: {}, x: {}".format(p, i, n, p * 100))
             self.splash_pb.step(p * 100)
             self.splash_status_bottom.config(text="{} % Complete".format(round(self.splash_pb["value"], 2)))
             self.splash_query_pb["value"] = 100
@@ -578,15 +591,15 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def create_calendar_p(self, start_date, end_date, data, lines, dates):
         # canvas_a.delete("all")
-        return PSCalendar(start_date, end_date, data, lines, dates, 2)
+        return PSCalendar2(start_date, end_date, data, lines, dates)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
-
-        print("lines:\n\n", lines)
-        print("dates:\n\n", dates)
-        print("data:\n\n", data)
-        print("length:", data.size)
+        #
+        # print("lines:\n\n", lines)
+        # print("dates:\n\n", dates)
+        # print("data:\n\n", data)
+        # print("length:", data.size)
         return lines, dates, data
 
     def exit_program(self):
@@ -678,9 +691,7 @@ class PSCCalendarFrame(tkinter.Tk):
             canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))  # left legend
             can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
             canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
-            self.TAB_DATA[i].update({"canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "can_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
-            tab.pack()
-            frame_calendar.pack()
+            self.TAB_DATA[i].update({"frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "can_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
 
         self.frame_calendar_control = tkinter.Frame(self, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
@@ -743,10 +754,10 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def pack_calendar(self):
         self.label_cal_title.pack()
-        # self.can_header_top.pack()
-        # self.canvas_header_left.pack(side=tkinter.LEFT)
-        # self.canvas_cal.pack()
-        # self.frame_calendar.pack()
+        self.can_header_top.pack()
+        self.canvas_header_left.pack(side=tkinter.LEFT)
+        self.canvas_cal.pack()
+        self.frame_calendar.pack()
 
         # Add widgets
         self.label_dealer_colour_select.pack()
@@ -800,6 +811,11 @@ class PSCCalendarFrame(tkinter.Tk):
         # frame_calendar_control_btns.pack()
         # frame_calendar.pack()
         # submit_calendar_search()
+        for i in range(len(self.TAB_DATA)):
+            self.TAB_DATA[i]["canvas_cal"].pack()
+            self.TAB_DATA[self.CAL_IDX]["canvas_header_left"].pack()  # {"canvas_pop_up": canvas_pop_up})
+            self.TAB_DATA[self.CAL_IDX]["can_header_top"].pack()
+            self.TAB_DATA[self.CAL_IDX]["frame_calendar"].pack()
         self.notebook_tab_control.pack(expand=1, fill="x")
 
     def hide_splash(self):
@@ -830,6 +846,9 @@ class PSCCalendarFrame(tkinter.Tk):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(asyncio.gather(*(self.populate_tab_data(month_ranges) for i in range(1))))
         loop.close()
+
+    def draw_calendar(self):
+        print(f"drawing calendar at tab {self.CAL_IDX}, CAL: {self.TAB_DATA[self.CAL_IDX]['Cal']}")
 
 #  PSCalendar
 #     - selected

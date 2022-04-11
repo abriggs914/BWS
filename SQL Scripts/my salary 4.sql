@@ -142,6 +142,6 @@ SELECT * FROM @emp_dat ORDER BY [2nd Name], [1st Name]
 SELECT * FROM @emp_dat WHERE [1st Name] LIKE '%avery%'
 
 -- View raises in 2022
-SELECT * FROM @emp_dat WHERE YEAR([Date]) = 2022 ORDER BY [DAnnual]
-SELECT * FROM @emp_dat WHERE YEAR([Date]) = 2021 ORDER BY [DAnnual]
+SELECT 2022 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2022 ORDER BY [DAnnual]
+SELECT 2021 AS [RaiseYear],  * FROM @emp_dat WHERE YEAR([Date]) = 2021 ORDER BY [DAnnual]
 SELECT * FROM @emp_dat ORDER BY [Salary / 8760 Hrs], [Annnual / 8760 Hrs]

@@ -8,8 +8,8 @@ from tkinter import ttk
 from pathlib import Path
 from PIL import ImageTk, Image
 from datetime_utility import *
-from pscalendar import PSCalendar, CalendarTile2
-from utility import Rect2, brighten, first_of_month, end_of_month, dict_print
+from pscalendar import PSCalendar2, CalendarTile2
+from utility import Rect2, brighten, first_of_month, end_of_month
 from colour_utility import *
 
 
@@ -182,12 +182,10 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tab_data = []
         self.TAB_DATA = []
         self.TABS = []
-        self.CAL_IDX = None
 
         self._drawing_bounds = self.calc_drawing_bounds()  # All drawings are bounded by this Rect.
         self._tile_bounds = self.calc_tile_bounds()
         self.init_tabs()
-        # self.populate_tab_data()
         self.init_splash_menu()
         self.init_calendar_menu()
         self.update_title()
@@ -346,11 +344,6 @@ class PSCCalendarFrame(tkinter.Tk):
         self.set_full_screen()
         self.hide_splash()
         self.pack_calendar()
-        psc = self.TAB_DATA[self.CAL_IDX]["Cal"]
-        canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
-        canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]  #{"canvas_pop_up": canvas_pop_up})
-        can_header_top = self.TAB_DATA[self.CAL_IDX]["can_header_top"]
-        psc.draw_canvas(canvas, canvas_header_left, can_header_top)
         self.mainloop()
 
     def set_full_screen(self):
@@ -574,11 +567,10 @@ class PSCCalendarFrame(tkinter.Tk):
         for tab, tab_name in zip(self.TABS, self.TAB_NAMES):
             self.notebook_tab_control.add(tab, text=tab_name)
         self.LOADED.set(True)
-        print(dict_print(self.TAB_DATA, "TAB_DATA POPULATED"))
 
     def create_calendar_p(self, start_date, end_date, data, lines, dates):
         # canvas_a.delete("all")
-        return PSCalendar(start_date, end_date, data, lines, dates, 2)
+        return PSCalendar2(start_date, end_date, data, lines, dates)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -600,10 +592,8 @@ class PSCCalendarFrame(tkinter.Tk):
         print("Goodbye!")
         exit()
 
-    # Called at beginning to instantiate the Tab frames
     def init_tabs(self):
         # List of tabs as tkinter frames
-        self.notebook_tab_control = ttk.Notebook(self)
         self.TABS = [
             ttk.Frame(self.notebook_tab_control),
             ttk.Frame(self.notebook_tab_control),
@@ -613,7 +603,6 @@ class PSCCalendarFrame(tkinter.Tk):
             ttk.Frame(self.notebook_tab_control),
             ttk.Frame(self.notebook_tab_control)
         ]
-        self.CAL_IDX = 0
 
         # Zipping Tab frames and names. Prepping for Navigation Tabs
         # Capping # TABS and queries based on N_TEST_CALS
@@ -634,7 +623,6 @@ class PSCCalendarFrame(tkinter.Tk):
             "Cal": None
         }
         self.TAB_DATA = dict(zip([i for i in range(len(self.TABS))], [dict(empty_data) for _ in range(len(self.TAB_NAMES))]))
-        print(dict_print(self.TAB_DATA, "TAB_DATA"))
 
     def init_splash_menu(self):
         self.splash_frame = tkinter.Frame(self, bg=self.SPLASH_BG)
@@ -670,17 +658,15 @@ class PSCCalendarFrame(tkinter.Tk):
         self.pack_splash()
 
     def init_calendar_menu(self):
+        self.notebook_tab_control = ttk.Notebook(self)
         for i, tab in enumerate(self.TABS):
             self.label_cal_title = tkinter.Label(tab, text="Production Schedule\n{} - {}")
             #.format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
-            frame_calendar = tkinter.Frame(tab)
-            canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
-            canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))  # left legend
-            can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
-            canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
-            self.TAB_DATA[i].update({"canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "can_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
-            tab.pack()
-            frame_calendar.pack()
+            self.frame_calendar = tkinter.Frame(tab)
+            self.canvas_cal = tkinter.Canvas(self.frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
+            self.canvas_header_left = tkinter.Canvas(self.frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(BLACK))  # left legend
+            self.can_header_top = tkinter.Canvas(self.frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            self.canvas_pop_up = tkinter.Menu(self.frame_calendar, tearoff=0)
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
 
         self.frame_calendar_control = tkinter.Frame(self, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
@@ -743,10 +729,10 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def pack_calendar(self):
         self.label_cal_title.pack()
-        # self.can_header_top.pack()
-        # self.canvas_header_left.pack(side=tkinter.LEFT)
-        # self.canvas_cal.pack()
-        # self.frame_calendar.pack()
+        self.can_header_top.pack()
+        self.canvas_header_left.pack(side=tkinter.LEFT)
+        self.canvas_cal.pack()
+        self.frame_calendar.pack()
 
         # Add widgets
         self.label_dealer_colour_select.pack()
