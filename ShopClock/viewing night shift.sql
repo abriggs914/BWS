@@ -3,8 +3,8 @@ GO
 
 DECLARE
 	@sd DATETIME, @ed DATETIME, @empNum NVARCHAR(MAX) = NULL, @by_transaction BIT = 1, @by_date BIT = 0
-SET @sd = '2022-03-03';
-SET @ed = '2022-03-21 23:59:59';
+SET @sd = '2022-04-11';
+SET @ed = '2022-04-13 23:59:59';
 SET @by_transaction = 0;
 SET @by_date = 1;
 --AS 
