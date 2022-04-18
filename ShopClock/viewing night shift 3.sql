@@ -8,8 +8,8 @@ GO
 
 DECLARE @sd AS DATETIME;
 DECLARE @ed AS DATETIME;
-SET @sd = '2022-01-26';
-SET @ed = '2022-01-31 23:59:59';
+SET @sd = '2022-04-11';
+SET @ed = '2022-04-13 23:59:59';
 EXEC [dbo].[sp_ClkTallyWeeklyReport] @sd=@sd, @ed=@ed, @empNum=NULL
 EXEC [SysproCompanyS].[dbo].[sp_ClkTallyHours] @sd=@sd, @ed=@ed, @by_transaction=0, @by_date=1
 
