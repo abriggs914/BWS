@@ -1,0 +1,120 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT TOP (1000) [tmpSGWARLKID]
+      ,[WO#]
+      ,[Model No]
+      ,[Width]
+      ,[Spread]
+      ,[Serial Number]
+      ,[Dealer]
+      ,[Customer]
+      ,[In Service Date]
+      ,[Customer Address]
+      ,[Customer City]
+      ,[Customer Prov/State]
+      ,[Customer Postal Code/ZIP]
+      ,[Customer Phone]
+      ,[Customer Cell]
+      ,[Customer Email]
+      ,[Customer Contact]
+      ,[Axle #1]
+      ,[Axle #2]
+      ,[Axle #3]
+      ,[Axle #4]
+      ,[Hoist]
+      ,[Suspension #1]
+      ,[Suspension #2]
+      ,[Suspension #3]
+      ,[Suspension #4]
+      ,[Invoice Date]
+      ,[Shipped Date]
+      ,[Customer Notes]
+      ,[Dealer Address]
+      ,[Dealer City]
+      ,[Dealer Prov/State]
+      ,[Dealer Postal Code/ZIP]
+      ,[Dealer Phone]
+      ,[Dealer Cell]
+      ,[Dealer Email]
+      ,[Dealer Contact]
+      ,[Axle #5]
+      ,[Suspension #5]
+      ,[Initials]
+      ,[Build Date]
+      ,[Hoist Make]
+      ,[Hoist Model]
+      ,[Hoist Serial Number]
+      ,[Axle #6]
+      ,[Suspension #6]
+  FROM [Stargatedb].[dbo].[tmpStargateWarLookup]
+  ORDER BY 
+  [WO#]
+
+  
+  BEGIN TRAN
+
+	UPDATE
+		[tmpStargateWarLookup]
+	SET
+		[Customer] = 'Fortress Foundations LLC',
+		[Customer Address] = '3103 W. Thompson Rd. Ste 435, Fenton, MI, 48430',
+		[Customer City] = 'FENTON',
+		[Customer Prov/State] = 'MI',
+		[Customer Postal Code/ZIP] = '48430',
+		--[Dealer] = 'Wieland Truck Center',
+		[Serial Number] = '2S9DS457XNM118762'
+		--,
+		--[S/N V2] = '2S9DS457XNM118762'
+	WHERE
+		[WO#] = 8762
+SELECT TOP (1000) [tmpSGWARLKID]
+      ,[WO#]
+      ,[Model No]
+      ,[Width]
+      ,[Spread]
+      ,[Serial Number]
+      ,[Dealer]
+      ,[Customer]
+      ,[In Service Date]
+      ,[Customer Address]
+      ,[Customer City]
+      ,[Customer Prov/State]
+      ,[Customer Postal Code/ZIP]
+      ,[Customer Phone]
+      ,[Customer Cell]
+      ,[Customer Email]
+      ,[Customer Contact]
+      ,[Axle #1]
+      ,[Axle #2]
+      ,[Axle #3]
+      ,[Axle #4]
+      ,[Hoist]
+      ,[Suspension #1]
+      ,[Suspension #2]
+      ,[Suspension #3]
+      ,[Suspension #4]
+      ,[Invoice Date]
+      ,[Shipped Date]
+      ,[Customer Notes]
+      ,[Dealer Address]
+      ,[Dealer City]
+      ,[Dealer Prov/State]
+      ,[Dealer Postal Code/ZIP]
+      ,[Dealer Phone]
+      ,[Dealer Cell]
+      ,[Dealer Email]
+      ,[Dealer Contact]
+      ,[Axle #5]
+      ,[Suspension #5]
+      ,[Initials]
+      ,[Build Date]
+      ,[Hoist Make]
+      ,[Hoist Model]
+      ,[Hoist Serial Number]
+      ,[Axle #6]
+      ,[Suspension #6]
+  FROM [Stargatedb].[dbo].[tmpStargateWarLookup]
+  ORDER BY 
+  [WO#]
+
+ROLLBACK;
+COMMIT;

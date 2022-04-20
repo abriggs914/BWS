@@ -85,7 +85,17 @@ SELECT
 
 
 
-
+USE SysproCompanyS
+GO
+DECLARE @sd AS DATETIME;
+DECLARE @ed AS DATETIME;
+DECLARE @en AS NVARCHAR(200);
+DECLARE @bt AS BIT;
+DECLARE @empNum NVARCHAR(MAX) = NULL, @by_transaction BIT = 1, @by_date BIT = 0
+SET @sd = '2022-03-11';
+SET @ed = '2022-03-17 23:59:59';
+SET @by_transaction = 0;
+SET @by_date = 1;
 --EXEC [dbo].[sp_ClkLabourOverride] @sd=@sd, @ed=@ed
 
 -- All calls are prioritized by P = (sd=ed) > empNum > transaction > date
