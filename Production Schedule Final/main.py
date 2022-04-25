@@ -4,4 +4,4 @@ import datetime
 
 if __name__ == "__main__":
     pscf = PSCCalendarFrame(800, 550, "This is a title")
-    pscf.open(datetime.datetime.strptime("2022-03-01", "%Y-%m-%d"), 6)
+    pscf.open(datetime.datetime.strptime("2022-03-01", "%Y-%m-%d"), n_cals=1)

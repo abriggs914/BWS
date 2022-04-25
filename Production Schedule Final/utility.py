@@ -10,8 +10,8 @@ import os
 
 """
 	General Utility Functions
-	Version..............1.43
-	Date...........2022-04-06
+	Version..............1.45
+	Date...........2022-04-25
 	Author.......Avery Briggs
 """
 
@@ -633,33 +633,6 @@ def flatten(lst):
 # Inclusive start, exclusive end.
 def clamp(s, v, l):
     return max(s, min(v, l))
-
-
-# Darken an RGB color using a proportion p (0-1)
-def darken(c, p):
-    r, g, b = c
-    r = clamp(0, round(r - (255 * p)), 255)
-    g = clamp(0, round(g - (255 * p)), 255)
-    b = clamp(0, round(b - (255 * p)), 255)
-    return r, g, b
-
-
-# Brighten an RGB color using a proportion p (0-1)
-def brighten(c, p):
-    r, g, b = c
-    r = clamp(0, round(r + (255 * p)), 255)
-    g = clamp(0, round(g + (255 * p)), 255)
-    b = clamp(0, round(b + (255 * p)), 255)
-    return r, g, b
-
-
-# return random RGB color
-def random_color():
-    return (
-        randint(10, 245),
-        randint(10, 245),
-        randint(10, 245)
-    )
 
 
 # Rotate a 2D point about the origin, a given amount of degrees. Counterclockwise
@@ -1438,8 +1411,15 @@ class Rect2:
     # def resize(self, rect):
     #     self.init(rect.x, rect.y, rect.width, rect.height)
 
+    def sq_rect(self):
+        return self.x, self.y, self.w, self.h
+
+    def tkinter_rect(self):
+        return Rect2(*self.top_left, *self.bottom_right)
+
     def __repr__(self):
-        return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
+        # return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
+        return f"<rect: {self.x=}, {self.y=}, {self.w=}, {self.h}>"
 
 
 def date_suffix(day):
@@ -1600,9 +1580,10 @@ def print_by_line(value, do_print=True):
 
 
 def hours_diff(d1, d2):
-	assert isinstance(d1, dt.datetime), f"Parameter d1: \"{d1}\" needs to be a datetime.datetime instance."
-	assert isinstance(d2, dt.datetime), f"Parameter d2: \"{d2}\" needs to be a datetime.datetime instance."
-	return ((d2 - d1).days * 24) + ((d2 - d1).seconds / (60 * 60))
+    assert isinstance(d1, dt.datetime), f"Parameter d1: \"{d1}\" needs to be a datetime.datetime instance."
+    assert isinstance(d2, dt.datetime), f"Parameter d2: \"{d2}\" needs to be a datetime.datetime instance."
+    return ((d2 - d1).days * 24) + ((d2 - d1).seconds / (60 * 60))
+
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "
 BLK_TWO = "2", "22222\n    2\n22222\n2    \n22222"

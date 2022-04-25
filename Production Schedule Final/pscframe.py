@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import ImageTk, Image
 from datetime_utility import *
 from pscalendar import PSCalendar2, CalendarTile2
-from utility import Rect2, brighten, first_of_month, end_of_month, dict_print
+from utility import Rect2, first_of_month, end_of_month, dict_print
 from colour_utility import *
 
 
@@ -85,30 +85,34 @@ class PSCCalendarFrame(tkinter.Tk):
         self.TILE_BORDER_WIDTH = 3
 
         self.STYLES = {
-            "DEFAULT_TILE_BACKGROUND_STAT_1": GRAY_17,
-            "DEFAULT_TILE_FOREGROUND_STAT_1": WHITE,
-            "DEFAULT_TILE_OUTLINE_STAT_1": GRAY_17,
-            "DEFAULT_TILE_FONT_STAT_1": ("Arial", 15),
+            "DEFAULT": {
+                "TILE_BACKGROUND_STAT": GRAY_17,
+                "TILE_FOREGROUND_STAT": WHITE,
+                "TILE_OUTLINE_STAT": WHITE,
+                "TILE_FONT_STAT": ("Arial", 15),
 
-            "DEFAULT_TILE_BACKGROUND_DRAG_1": BWS_RED,
-            "DEFAULT_TILE_FOREGROUND_DRAG_1": WHITE,
-            "DEFAULT_TILE_OUTLINE_DRAG_1": WHITE,
-            "DEFAULT_TILE_FONT_DRAG_1": ("Arial", 17),
+                "TILE_BACKGROUND_DRAG": BWS_RED,
+                "TILE_FOREGROUND_DRAG": WHITE,
+                "TILE_OUTLINE_DRAG": WHITE,
+                "TILE_FONT_DRAG": ("Arial", 17),
 
-            "DEFAULT_TILE_BACKGROUND_HOVER_1": GRAY_23,
-            "DEFAULT_TILE_FOREGROUND_HOVER_1": WHITE,
-            "DEFAULT_TILE_OUTLINE_HOVER_1": GRAY_23,
-            "DEFAULT_TILE_FONT_HOVER_1": ("Arial", 15),
+                "TILE_BACKGROUND_HOVER": GRAY_23,
+                "TILE_FOREGROUND_HOVER": WHITE,
+                "TILE_OUTLINE_HOVER": GRAY_23,
+                "TILE_FONT_HOVER": ("Arial", 15),
 
-            "DEFAULT_TILE_BACKGROUND_SELECT_1": BWS_RED,
-            "DEFAULT_TILE_FOREGROUND_SELECT_1": BLACK,
-            "DEFAULT_TILE_OUTLINE_SELECT_1": BWS_RED,
-            "DEFAULT_TILE_FONT_SELECT_1": ("Arial", 17),
+                "TILE_BACKGROUND_SELECT": BWS_RED,
+                "TILE_FOREGROUND_SELECT": BLACK,
+                "TILE_OUTLINE_SELECT": BWS_RED,
+                "TILE_FONT_SELECT": ("Arial", 17),
 
-            "DEFAULT_TILE_BACKGROUND_DBLC_1": BLACK,
-            "DEFAULT_TILE_FOREGROUND_DBLC_1": WHITE,
-            "DEFAULT_TILE_OUTLINE_DBLC_1": WHITE,
-            "DEFAULT_TILE_FONT_DBLC_1": ("Arial", 17)
+                "TILE_BACKGROUND_DBLC": BLACK,
+                "TILE_FOREGROUND_DBLC": WHITE,
+                "TILE_OUTLINE_DBLC": WHITE,
+                "TILE_FONT_DBLC": ("Arial", 17),
+
+                "WEEKEND_DIV": ORANGE_2
+            }
         }
 
         if not Path(self.BWS_LOGO_FILE_PATH).exists():
@@ -597,9 +601,21 @@ class PSCCalendarFrame(tkinter.Tk):
         self.LOADED.set(True)
         print(dict_print(self.TAB_DATA, "TAB_DATA POPULATED"))
 
-    def create_calendar_p(self, start_date, end_date, data, lines, dates):
+    def create_calendar_p(self, start_date, end_date, data, lines, dates, style_in=None):
         # canvas_a.delete("all")
-        return PSCalendar2(start_date, end_date, data, lines, dates)
+        if style_in is None:
+            style = self.STYLES["DEFAULT"]
+        else:
+            style = style_in
+        colour_tile = style["TILE_BACKGROUND_STAT"]
+        colour_border = style["TILE_OUTLINE_STAT"]
+        colour_font = style["TILE_FOREGROUND_STAT"]
+        colour_selected = style["TILE_BACKGROUND_SELECT"]
+        colour_hovered = style["TILE_BACKGROUND_HOVER"]
+        colour_dragging = style["TILE_BACKGROUND_DRAG"]
+        colour_weekend_div = style["WEEKEND_DIV"]
+        switch_week_divs = True
+        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -698,10 +714,12 @@ class PSCCalendarFrame(tkinter.Tk):
             #.format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
             frame_calendar = tkinter.Frame(tab)
             canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
-            canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(INDIGO))  # left legend
-            can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            # canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(INDIGO))  # left legend
+            # can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            canvas_header_left = tkinter.Canvas(frame_calendar, height=self.height + self.TILE_BORDER_WIDTH + 25, width=60, bg=rgb_to_hex(BLACK))  # left legend
+            can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self.width, bg=rgb_to_hex(BLACK))  # top legend
             canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
-            self.TAB_DATA[i].update({"Name": self.TAB_NAMES[i], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "can_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
+            self.TAB_DATA[i].update({"Name": self.TAB_NAMES[i], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "canvas_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
 
         self.frame_calendar_control = tkinter.Frame(self, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
         self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
@@ -824,7 +842,7 @@ class PSCCalendarFrame(tkinter.Tk):
         #     # self.TAB_DATA[i]["Tab"].pack()
             self.TAB_DATA[i]["frame_calendar"].pack()
             self.TAB_DATA[i]["canvas_header_left"].pack(side=tkinter.LEFT)  # {"canvas_pop_up": canvas_pop_up})
-            self.TAB_DATA[i]["can_header_top"].pack()
+            self.TAB_DATA[i]["canvas_header_top"].pack()
             self.TAB_DATA[i]["canvas_cal"].pack()
         self.notebook_tab_control.pack(expand=1, fill="x")
 
@@ -860,178 +878,216 @@ class PSCCalendarFrame(tkinter.Tk):
     def draw_calendar(self):
         print(f"drawing calendar at tab {self.CAL_IDX}, CAL: {self.TAB_DATA[self.CAL_IDX]['Cal']}")
 
-        def draw_canvas(self, canvas, canvas_header_row, canvas_header_col):
-            canvas.delete("all")
+        # def draw_canvas(calendar, canvas, canvas_header_row, canvas_header_col):
+        #     canvas.delete("all")
+        #
+        #     # print("DC\t\t\tdragging: {}, _selected: {}, _hover_select: {}, _current_hover: {}, _dbl_clicked: {}".format(
+        #     #     self._dragging, self._selected, self._hover_select, self._current_hover, self._dbl_clicked))
+        #
+        #     # if self._current_hover is not None:
+        #     #     print(self.tiles_to_the_right(self._current_hover))
+        #     #     print(self.tiles_to_the_left(self._current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
+        #
+        #     # TODO here
+        #     # if a tile is _selected then highlight any tiles with matching WO
+        #     same_top_level_wos = []
+        #     same_dealers = []
+        #     same_dealers_n = []
+        #     same_dealers_stock = []
+        #     colour_override = False
+        #     outline_override = False
+        #     # if self._selected is not None:
+        #     #     wo_1 = self.tiles[self._selected].wo_num
+        #     #     for tile in self.tiles:
+        #     #         tile_num = self.r_c_to_i(tile.row, tile.col)
+        #     #         wo_2 = tile.wo_num
+        #     #         if wo_1 is not None and wo_1 == wo_2:
+        #     #             same_top_level_wos.append(tile_num)
+        #     #
+        #     # if self.always_highlight_dealers or self._selected is not None:
+        #     #     for tile in self.tiles:
+        #     #         tile_num = self.r_c_to_i(tile.row, tile.col)
+        #     #         for dcc in self.dealer_highlights:
+        #     #             if dcc is not None:
+        #     #                 d_name, colour_code, stock_colour = dcc
+        #     #                 if tile.dealer == d_name:
+        #     #                     # print("\t\td_name:", d_name, "colour_code:", colour_code)
+        #     #                     same_dealers.append(colour_code)
+        #     #                     same_dealers_stock.append(stock_colour)
+        #     #                     same_dealers_n.append(tile_num)
+        #     #     # print("same_top_level_wos as <{}>".format(self._selected), same_top_level_wos)
+        #     #     # print("same_dealers as <{}>".format(self._selected), same_dealers)
+        #     #     # print("same_dealers_n as <{}>".format(self._selected), same_dealers_n)
+        #
+        #     # loop and draw tiles list
+        #     for i, tile in enumerate(calendar.tiles):
+        #         # show_txt = not self.hiding_non_selected_tiles # TODO
+        #         show_txt = False
+        #         # print("tile.rect.tupl:", tile.rect)
+        #         # bgc = tile.colour # TODO
+        #         bgc = GRAY_15
+        #         # r, c = tile.row, tile.col # TODO
+        #         r, c = tile.i, tile.j
+        #         tile_num = calendar.r_c_to_i(r, c)
+        #         if sum(bgc) < 300:
+        #             fgc = WHITE
+        #             if tile_num in [calendar._dragging, calendar._selected, calendar._hover_select,
+        #                             calendar._dbl_clicked]:
+        #                 outline = WHITE
+        #                 if tile_num == calendar._current_hover:
+        #                     show_txt = True
+        #                 outline_override = True
+        #             else:
+        #                 outline = bgc
+        #         else:
+        #             fgc = BLACK
+        #             if tile_num in [calendar._dragging, calendar._selected, calendar._hover_select,
+        #                             calendar._dbl_clicked]:
+        #                 outline = GRAY_15
+        #                 if tile_num == calendar._hover_select:
+        #                     show_txt = True
+        #                 outline_override = True
+        #             else:
+        #                 outline = bgc
+        #
+        #         # Custom colour behaviour
+        #
+        #         # Highlight all other tiles that have a WO matching the _selected tile
+        #         if same_top_level_wos:
+        #             if tile_num in same_top_level_wos and tile_num != calendar._selected:
+        #                 outline = BWS_RED
+        #                 outline_override = True
+        #
+        #         # Highlight all other tiles that have the same dealer as the _selected.
+        #         if same_dealers:
+        #             if tile_num in same_dealers_n and tile_num != calendar._selected:
+        #                 idx = same_dealers_n.index(tile_num)
+        #                 outline = hex_to_rgb(same_dealers[idx])
+        #                 bgc = hex_to_rgb(same_dealers_stock[idx])
+        #                 outline_override = True
+        #
+        #         # Outline for _selected tiles while the cursor hovers should be darker than the original outline
+        #         if (calendar._selected and calendar._current_hover) and (
+        #                 calendar._selected != calendar._current_hover) and tile_num == calendar._selected:
+        #             bgc = BWS_RED
+        #             outline = darken(outline, 0.4)
+        #             colour_override = True
+        #             outline_override = True
+        #
+        #         # When Swapping tiles colour them differently
+        #         if calendar._swap_pair and tile_num in calendar._swap_pair:
+        #             bgc = BWS_RED
+        #             outline = GRAY_26
+        #             colour_override = True
+        #             outline_override = True
+        #
+        #         # if not colour_override:
+        #         #     bgc = calendar.DEFAULT_TILE_COLOUR_1
+        #         # if not outline_override:
+        #         #     outline = calendar.DEFAULT_TILE_COLOUR_1
+        #         bgc = calendar.tiles[i].colour
+        #         bgc = random_colour()
+        #         outline = calendar.tiles[i].colour_border
+        #
+        #         tile_txt = tile.text if tile.text is not None else tile_num
+        #         # drawing tile rectangle here
+        #         rect = Rect2(0, 0, self.width, self.height)
+        #         tile_rect = calendar.get_rect(i, rect)
+        #         # tile_rect = tile_rect.tkinter_rect()
+        #         print(f"TileRect: <{tile_rect}>")
+        #         canvas.create_rectangle(list(tile_rect.tkinter_rect())[:4], fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
+        #                                 width=calendar.border_width)
+        #         tile.colour = bgc
+        #         # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
+        #         if show_txt:
+        #             if not calendar.is_tile_enlarged(tile_num):
+        #                 # Not using hover zoom, can only display the WO text while hovering.
+        #                 wo_num = tile.wo_num if tile.wo_num is not None else ""
+        #                 tile_txt = "<{}>".format(wo_num)
+        #             if tile_txt:
+        #                 #
+        #                 can_txt = canvas.create_text(tile_rect.x + ((tile_rect.w - tile_rect.x) / 2),
+        #                                              tile_rect.y + ((tile_rect.h - tile_rect.y) / 2),
+        #                                              fill=rgb_to_hex(fgc),
+        #                                              font="Times 12 italic bold", text=str(tile_txt))
+        #                 bounds = canvas.bbox(can_txt)
+        #                 can_t_w = bounds[2] - bounds[0]
+        #                 if can_t_w > (tile.rect[2] - tile.rect[0]):
+        #                     canvas.delete(can_txt)
+        #                     wo_num = tile.wo_num if tile.wo_num is not None else ""
+        #                     tile_txt = "<{}>".format(str(wo_num)[-4:])
+        #                     can_txt = canvas.create_text(tile_rect.x + ((tile_rect.w - tile_rect.x) / 2),
+        #                                                 tile_rect.y + ((tile_rect.h - tile_rect.y) / 2),
+        #                                                  fill=rgb_to_hex(fgc),
+        #                                                  font="Times 12 italic bold", text=str(tile_txt))
+        #
+        #         else:
+        #             # raise ValueError("HEY")
+        #             tile_num = "" if tile.wo_num is None else tile.wo_num
+        #             can_txt = canvas.create_text(tile_rect.x + ((tile_rect.w - tile_rect.x) / 2),
+        #                                              tile_rect.y + ((tile_rect.h - tile_rect.y) / 2),
+        #                                          fill=rgb_to_hex(fgc),
+        #                                          font="Times 12 italic bold", text=str(tile_num))
+        #             bounds = canvas.bbox(can_txt)
+        #             can_t_w = bounds[2] - bounds[0]
+        #             if can_t_w > (tile_rect.w - tile_rect.x):
+        #                 canvas.delete(can_txt)
+        #                 wo_num = tile.wo_num if tile.wo_num is not None else ""
+        #                 tile_num = str(wo_num)[-4:]
+        #                 can_txt = canvas.create_text(tile_rect.x + ((tile_rect.w - tile_rect.x) / 2),
+        #                                              tile_rect.y + ((tile_rect.h - tile_rect.y) / 2),
+        #                                              fill=rgb_to_hex(fgc),
+        #                                              font="Times 12 italic bold", text=str(tile_num))
+        #
+        #         # By default plot weekend divider to the Right
+        #         if calendar.switch_week_divs:
+        #             date = tile.date
+        #             tomorrow = None if i == len(calendar.tiles) - 1 else calendar.tiles[i + 1].date
+        #             diff = None if tomorrow is None else tomorrow - date
+        #             # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
+        #             weekend_rect = None
+        #             is_monday = date.weekday() == 0  # Monday is 0
+        #             if i == 0 and is_monday:
+        #                 weekend_rect = (0, 0, calendar.border_width, calendar.height)
+        #             elif tomorrow is not None and diff.days > 2:
+        #                 weekend_rect = (tile_rect.w, tile_rect.y, tile_rect.w + calendar.border_width, tile_rect.h)
+        #
+        #             if weekend_rect is not None:
+        #                 colour = rgb_to_hex(calendar.weekend_div_colour)
+        #                 canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=calendar.border_width)
+        #
+        #     # self.redraw_legend(canvas_header_row, canvas_header_col)
 
-            # print("DC\t\t\tdragging: {}, _selected: {}, _hover_select: {}, _current_hover: {}, _dbl_clicked: {}".format(
-            #     self._dragging, self._selected, self._hover_select, self._current_hover, self._dbl_clicked))
+        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+        canvas_header_top = self.TAB_DATA[self.CAL_IDX]["canvas_header_top"]
+        canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
+        canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
+        canvas_rect = Rect2(cal.border_width, cal.border_width, self.width, self.height)
+        # canvas_rect = Rect2(0, 0, self._tile_bounds.height, self._tile_bounds.width)
 
-            # if self._current_hover is not None:
-            #     print(self.tiles_to_the_right(self._current_hover))
-            #     print(self.tiles_to_the_left(self._current_hover, start_date=datetime.datetime(2021, 10, 8), end_date=datetime.datetime(2021, 10, 12)))
+        canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cal.border_width)
+        print("canvas_rect: ", canvas_rect)
+        for i, tile in enumerate(cal.tiles):
+            assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
+            tile_rect = cal.get_rect(i, canvas_rect)
+            tile_rect = [tile_rect.x, tile_rect.y, tile_rect.w + tile_rect.x, tile_rect.h + tile_rect.y]
+            print(f"TR: {tile_rect}")
+            bgc = rgb_to_hex(cal.tiles[i].colour)
+            # bgc = rgb_to_hex(darken(random_colour(), 0.25))
+            outline = rgb_to_hex(cal.tiles[i].colour_border)
+            canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cal.border_width)
 
-            # TODO here
-            # if a tile is _selected then highlight any tiles with matching WO
-            same_top_level_wos = []
-            same_dealers = []
-            same_dealers_n = []
-            same_dealers_stock = []
-            colour_override = False
-            outline_override = False
-            if self._selected is not None:
-                wo_1 = self.tiles[self._selected].wo_num
-                for tile in self.tiles:
-                    tile_num = self.r_c_to_i(tile.row, tile.col)
-                    wo_2 = tile.wo_num
-                    if wo_1 is not None and wo_1 == wo_2:
-                        same_top_level_wos.append(tile_num)
-
-            if self.always_highlight_dealers or self._selected is not None:
-                for tile in self.tiles:
-                    tile_num = self.r_c_to_i(tile.row, tile.col)
-                    for dcc in self.dealer_highlights:
-                        if dcc is not None:
-                            d_name, colour_code, stock_colour = dcc
-                            if tile.dealer == d_name:
-                                # print("\t\td_name:", d_name, "colour_code:", colour_code)
-                                same_dealers.append(colour_code)
-                                same_dealers_stock.append(stock_colour)
-                                same_dealers_n.append(tile_num)
-                # print("same_top_level_wos as <{}>".format(self._selected), same_top_level_wos)
-                # print("same_dealers as <{}>".format(self._selected), same_dealers)
-                # print("same_dealers_n as <{}>".format(self._selected), same_dealers_n)
-
-            # loop and draw tiles list
-            for i, tile in enumerate(self.tiles):
-                show_txt = not self.hiding_non_selected_tiles
-                # print("tile.rect.tupl:", tile.rect)
-                bgc = tile.colour
-                r, c = tile.row, tile.col
-                tile_num = self.r_c_to_i(r, c)
-                if sum(bgc) < 300:
-                    fgc = WHITE
-                    if tile_num in [self._dragging, self._selected, self._hover_select, self._current_hover,
-                                    self._dbl_clicked]:
-                        outline = WHITE
-                        if tile_num == self._current_hover:
-                            show_txt = True
-                        outline_override = True
-                    else:
-                        outline = bgc
-                else:
-                    fgc = BLACK
-                    if tile_num in [self._dragging, self._selected, self._hover_select, self._current_hover,
-                                    self._dbl_clicked]:
-                        outline = GRAY_15
-                        if tile_num == self._current_hover:
-                            show_txt = True
-                        outline_override = True
-                    else:
-                        outline = bgc
-
-                # Custom colour behaviour
-
-                # Highlight all other tiles that have a WO matching the _selected tile
-                if same_top_level_wos:
-                    if tile_num in same_top_level_wos and tile_num != self._selected:
-                        outline = BWS_RED
-                        outline_override = True
-
-                # Highlight all other tiles that have the same dealer as the _selected.
-                if same_dealers:
-                    if tile_num in same_dealers_n and tile_num != self._selected:
-                        idx = same_dealers_n.index(tile_num)
-                        outline = hex_to_rgb(same_dealers[idx])
-                        bgc = hex_to_rgb(same_dealers_stock[idx])
-                        outline_override = True
-
-                # Outline for _selected tiles while the cursor hovers should be darker than the original outline
-                if (self._selected and self._current_hover) and (
-                        self._selected != self._current_hover) and tile_num == self._selected:
-                    bgc = BWS_RED
-                    outline = darken(outline, 0.4)
-                    colour_override = True
-                    outline_override = True
-
-                # When Swapping tiles colour them differently
-                if self._swap_pair and tile_num in self._swap_pair:
-                    bgc = BWS_RED
-                    outline = GRAY_26
-                    colour_override = True
-                    outline_override = True
-
-                if not colour_override:
-                    bgc = self.DEFAULT_TILE_COLOUR_1
-                if not outline_override:
-                    outline = self.DEFAULT_TILE_COLOUR_1
-
-                tile_txt = tile.text if tile.text is not None else tile_num
-                # drawing tile rectangle here
-                canvas.create_rectangle(*tile.rect, fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline),
-                                        width=self.border_width)
-                tile.colour = bgc
-                # print("tile_num: {}\ntile_txt: {}".format(tile_num, tile_txt))
-                if show_txt:
-                    if not self.is_tile_enlarged(tile_num):
-                        # Not using hover zoom, can only display the WO text while hovering.
-                        wo_num = tile.wo_num if tile.wo_num is not None else ""
-                        tile_txt = "<{}>".format(wo_num)
-                    if tile_txt:
-                        #
-                        can_txt = canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                                     tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
-                                                     fill=rgb_to_hex(fgc),
-                                                     font="Times 12 italic bold", text=str(tile_txt))
-                        bounds = canvas.bbox(can_txt)
-                        can_t_w = bounds[2] - bounds[0]
-                        if can_t_w > (tile.rect[2] - tile.rect[0]):
-                            canvas.delete(can_txt)
-                            wo_num = tile.wo_num if tile.wo_num is not None else ""
-                            tile_txt = "<{}>".format(str(wo_num)[-4:])
-                            can_txt = canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                                         tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
-                                                         fill=rgb_to_hex(fgc),
-                                                         font="Times 12 italic bold", text=str(tile_txt))
-
-                else:
-                    # raise ValueError("HEY")
-                    tile_num = "" if tile.wo_num is None else tile.wo_num
-                    can_txt = canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                                 tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
-                                                 fill=rgb_to_hex(fgc),
-                                                 font="Times 12 italic bold", text=str(tile_num))
-                    bounds = canvas.bbox(can_txt)
-                    can_t_w = bounds[2] - bounds[0]
-                    if can_t_w > (tile.rect[2] - tile.rect[0]):
-                        canvas.delete(can_txt)
-                        wo_num = tile.wo_num if tile.wo_num is not None else ""
-                        tile_num = str(wo_num)[-4:]
-                        can_txt = canvas.create_text(tile.rect[0] + ((tile.rect[2] - tile.rect[0]) / 2),
-                                                     tile.rect[1] + ((tile.rect[3] - tile.rect[1]) / 2),
-                                                     fill=rgb_to_hex(fgc),
-                                                     font="Times 12 italic bold", text=str(tile_num))
-
-                # By default plot weekend divider to the Right
-                if self.switch_week_divs:
-                    date = tile.date
-                    tomorrow = None if i == len(self.tiles) - 1 else self.tiles[i + 1].date
-                    diff = None if tomorrow is None else tomorrow - date
-                    # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
-                    weekend_rect = None
-                    is_monday = date.weekday() == 0  # Monday is 0
-                    if i == 0 and is_monday:
-                        weekend_rect = (0, 0, self.border_width, self.height)
-                    elif tomorrow is not None and diff.days > 2:
-                        weekend_rect = (tile.rect[2], tile.rect[1], tile.rect[2] + self.border_width, tile.rect[3])
-
-                    if weekend_rect is not None:
-                        colour = rgb_to_hex(self.weekend_div_colour)
-                        canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=self.border_width)
-
-            self.redraw_legend(canvas_header_row, canvas_header_col)
+        for i in range(cal.rows)
+        # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
+
+
+def rect2_to_tkinter(rect):
+    assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
+    return [rect.x, rect.y, rect.w + rect.x, rect.h + rect.y]
 
 #  PSCalendar
 #     - selected
