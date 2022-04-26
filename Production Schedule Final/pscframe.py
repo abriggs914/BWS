@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import ImageTk, Image
 from datetime_utility import *
 from pscalendar import PSCalendar2, CalendarTile2
-from utility import Rect2, first_of_month, end_of_month, dict_print
+from utility import Rect2, first_of_month, end_of_month, dict_print, random_date
 from colour_utility import *
 
 
@@ -83,6 +83,11 @@ class PSCCalendarFrame(tkinter.Tk):
         self.LOGO_WIDTH = int((self._width * 0.8) / 2)
         self.LOGO_HEIGHT = int(self._height * 0.3)
         self.TILE_BORDER_WIDTH = 3
+
+        self.HEADER_LEFT_WIDTH = 60
+        self.HEADER_LEFT_HEIGHT = self.height + self.TILE_BORDER_WIDTH + 25
+        self.HEADER_TOP_WIDTH = 10
+        self.HEADER_TOP_HEIGHT = 25
 
         self.STYLES = {
             "DEFAULT": {
@@ -475,7 +480,8 @@ class PSCCalendarFrame(tkinter.Tk):
             "T10",
             "T11"
         ]
-        dates = []
+        today = datetime.datetime.now()
+        dates = [random_date(start_year=today.year, end_year=today.year + 1, start_m=today.month, start_d=today.day) for i in range(15)]
         ordered_df = pd.DataFrame()
         try:
             # Use this as an entry point for test sets
@@ -599,7 +605,10 @@ class PSCCalendarFrame(tkinter.Tk):
         for tab, tab_name in zip(self.TABS, self.TAB_NAMES):
             self.notebook_tab_control.add(tab, text=tab_name)
         self.LOADED.set(True)
-        print(dict_print(self.TAB_DATA, "TAB_DATA POPULATED"))
+        try:
+            print(dict_print(self.TAB_DATA, "TAB_DATA POPULATED"))
+        except IndexError:
+            print("for running at home")
 
     def create_calendar_p(self, start_date, end_date, data, lines, dates, style_in=None):
         # canvas_a.delete("all")
@@ -709,6 +718,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.pack_splash()
 
     def init_calendar_menu(self):
+        self.HEADER_TOP_WIDTH = self.width
         for i, tab in enumerate(self.TABS):
             label_cal_title = tkinter.Label(tab, text="Production Schedule" + str(i) + "\n{} - {}")
             #.format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
@@ -716,8 +726,8 @@ class PSCCalendarFrame(tkinter.Tk):
             canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
             # canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(INDIGO))  # left legend
             # can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
-            canvas_header_left = tkinter.Canvas(frame_calendar, height=self.height + self.TILE_BORDER_WIDTH + 25, width=60, bg=rgb_to_hex(BLACK))  # left legend
-            can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self.width, bg=rgb_to_hex(BLACK))  # top legend
+            canvas_header_left = tkinter.Canvas(frame_calendar, height=self.HEADER_LEFT_HEIGHT, width=self.HEADER_LEFT_WIDTH, bg=rgb_to_hex(BLACK))  # left legend
+            can_header_top = tkinter.Canvas(frame_calendar, height=self.HEADER_TOP_HEIGHT, width=self.HEADER_TOP_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
             canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
             self.TAB_DATA[i].update({"Name": self.TAB_NAMES[i], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "canvas_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
 
@@ -1078,7 +1088,11 @@ class PSCCalendarFrame(tkinter.Tk):
             outline = rgb_to_hex(cal.tiles[i].colour_border)
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cal.border_width)
 
-        for i in range(cal.rows)
+        top_row_y = cal.get_recti, canvas_rect
+        for i in range(cal.rows):
+
+            canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cal.border_width)
+
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
 
     def bind_calendar(self):
