@@ -3,6 +3,7 @@ import math
 
 
 class CalendarTile2:
+    """Class representing a slot in production. Associated to a trailer line and a date"""
 
     def __init__(self, ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging):
         self.ser = ser
@@ -30,6 +31,7 @@ class CalendarTile2:
         self.selected = False
         self.hovered = False
         self.dbl_clicked = False
+        self.zoomed = False
 
     def set_data(self, wo, model_name, dealer, status, beam, job_start):
         self.wo_num = wo
@@ -216,6 +218,12 @@ class PSCalendar2:
         r, c = self.i_to_r_c(tile_idx)
         print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
         return Rect2(x + (c * tw), y + (r * th), tw, th)
+
+    def zoomed_rows(self):
+        return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]
+
+    def zoomed_cols(self):
+        return [col for col in range(self.cols) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for row in range(self.rows)])]
 
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,

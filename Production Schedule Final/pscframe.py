@@ -1069,14 +1069,15 @@ class PSCCalendarFrame(tkinter.Tk):
         #     # self.redraw_legend(canvas_header_row, canvas_header_col)
 
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cbw = cal.border_width
         canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
         canvas_header_top = self.TAB_DATA[self.CAL_IDX]["canvas_header_top"]
         canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
         canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
-        canvas_rect = Rect2(cal.border_width, cal.border_width, self.width, self.height)
+        canvas_rect = Rect2(cbw, cbw, self.width, self.height)
         # canvas_rect = Rect2(0, 0, self._tile_bounds.height, self._tile_bounds.width)
 
-        canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cal.border_width)
+        canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
         print("canvas_rect: ", canvas_rect)
         for i, tile in enumerate(cal.tiles):
             assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
@@ -1086,12 +1087,29 @@ class PSCCalendarFrame(tkinter.Tk):
             bgc = rgb_to_hex(cal.tiles[i].colour)
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
-            canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cal.border_width)
+            canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
 
-        top_row_y = cal.get_recti, canvas_rect
+        top_row_y = cal.get_rect(0, canvas_rect)
+        left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
+        top_legend_rect = Rect2(cbw, cbw, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
+        canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(YELLOW_2), outline=rgb_to_hex(DARKORANGE), width=cbw)
+        canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(EMERALDGREEN), outline=rgb_to_hex(PLUM), width=cbw)
         for i in range(cal.rows):
+            line_rect = Rect2(left_legend_rect.x, top_row_y.y + ((i + 1) * top_row_y.h + (1.5 * cbw)), left_legend_rect.w, top_row_y.h)
+            line_rect = rect2_to_tkinter(line_rect)
+            # canvas_header_left.create_rectangle(*line_rect, fill=rgb_to_hex(BLACK), outline=rgb_to_hex(WHITE), width=cbw)
+            lrx, lry, lrw, lrh = line_rect
+            txt = canvas_header_left.create_text(lrx + (lrw.w / 2), lry + (top_row_y.h / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            print(f"line: {cal.lines[i]}")
+            # p / 0
 
-            canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cal.border_width)
+        cal.tiles[0].zoomed = True
+        cal.tiles[8].zoomed = True
+        cal.tiles[23].zoomed = True
+        cal.tiles[24].zoomed = True
+        cal.tiles[26].zoomed = True
+        print(f"Zoomed rows: {cal.zoomed_rows()}")
+        print(f"Zoomed cols: {cal.zoomed_cols()}")
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
 
