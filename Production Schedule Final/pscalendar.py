@@ -1,4 +1,5 @@
 from utility import flatten, dt, print_by_line, Rect2, clamp, tkinter_to_rect2, rect2_to_tkinter
+from colour_utility import *
 import math
 
 
@@ -20,6 +21,7 @@ class CalendarTile2:
         self.job_start = None
         self.text = ""
 
+        # use RGB values and tuples. will be converted to hex via rgb_to_hex()
         self.colour = colour
         self.colour_border = colour_border
         self.colour_font = colour_font
@@ -93,7 +95,11 @@ class CalendarTile2:
 
 class PSCalendar2:
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2):
+    class CalendarException(Exception):
+        def __init__(self, message):
+            pass
+
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -113,6 +119,11 @@ class PSCalendar2:
         self.weekend_div_colour = colour_weekend_div
         self.max_n_zoomed_rows = max_n_zoomed_rows
         self.max_n_zoomed_cols = max_n_zoomed_cols
+
+        self.min_tile_w = min_tile_w
+        self.min_tile_h = min_tile_h
+        self.max_tile_w = max_tile_w
+        self.max_tile_h = max_tile_h
 
         self._dragging = None
         self._selected = None
@@ -229,24 +240,60 @@ class PSCalendar2:
         y += self.border_width
         rows = self.rows
         cols = self.cols
-        tw = w / cols
-        th = h / rows
+        cw = tw = w / cols
+        ch = th = h / rows
         r, c = self.i_to_r_c(tile_idx)
         # print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
 
         tile = self.tiles[tile_idx]
         zoomed_rows = self.zoomed_rows()
         zoomed_cols = self.zoomed_cols()
-        nzr = clamp(0, len(zoomed_rows), self.max_n_zoomed_rows), 0
-        nzc = clamp(0, len(zoomed_cols), self.max_n_zoomed_cols), 0
+
+        mntw = self.min_tile_w
+        mnth = self.min_tile_h
+        mxtw = self.max_tile_w
+        mxth = self.max_tile_h
 
         # if zoomed_rows:
-        #     if tile.zoomed:
+        rinzr = r in zoomed_rows
+        cinzc = c in zoomed_cols
+        if rinzr:
+            th = mxth
+        if cinzc:
+            tw = mxtw
+        if not (rinzr or cinzc):
+            tw = max(cw, mntw)
+            th = max(ch, mnth)
+
+        if tile.zoomed:
+            tile.colour = RED
+
+        nzr = clamp(0, len(zoomed_rows), self.max_n_zoomed_rows)
+        nzc = clamp(0, len(zoomed_cols), self.max_n_zoomed_cols)
+        unc = len([i for i in range(self.cols) if i in zoomed_cols and i < c])
+        unr = len([i for i in range(self.rows) if i in zoomed_rows and i < r])
+        cnr = clamp(0, r - unr, self.rows)
+        cnc = clamp(0, c - unc, self.cols)
+        # cnc = len([i for i in range(self.cols) if i not in zoomed_cols and i < c])
+        # cnr = len([i for i in range(self.rows) if i not in zoomed_rows and i < r])
+        print(f"N: {tile.ser}, ZOOMED: {tile.zoomed}, zr: {zoomed_rows}, zc: {zoomed_cols}, nzr: {nzr}, nzc: {nzc}, unc: {unc}, unr: {unr}, cnc: {cnc}, cnr: {cnr}, r: {r}, c:{c}")
+
+        # used_width = (unc * clamp(mntw, tw, mxtw)) + ((c - unc) * tw)
+        # used_height = (unr * clamp(mnth, th, mxth)) + ((r - unr) * th)
+
+        # used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - (((unc + nzc) - cnc) * (mxtw - tw))
+        used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - ((unc - nzc) * (mxtw - tw))
+        used_height = ((unr - 0) * mxth) + ((r - unr) * th) - ((unr - nzr) * (mxth - th))
 
         if tkinter_rect:
-            return Rect2(x + (c * tw), y + (r * th), tw, th)
-        # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
-        return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
+            return Rect2(x + used_width, y + used_height, tw, th)
+        return tkinter_to_rect2(list(Rect2(x + used_width, y + used_height, tw, th))[:4])
+
+
+        # if tkinter_rect:
+        #     return Rect2(x + (c * tw), y + (r * th), tw, th)
+        # # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
+        # return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
 
     def zoomed_rows(self):
         return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]

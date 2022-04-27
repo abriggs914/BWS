@@ -362,6 +362,25 @@ class PSCCalendarFrame(tkinter.Tk):
         # psc.draw_canvas(canvas, canvas_header_left, can_header_top)
 
         self.pack_calendar()
+
+        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        # cal.tiles[0].zoomed = True
+        # cal.tiles[8].zoomed = True
+        # cal.tiles[23].zoomed = True
+        # cal.tiles[24].zoomed = True
+        # cal.tiles[26].zoomed = True
+        # cal.tiles[322].zoomed = True
+        cal.tiles[2].zoomed = True
+        cal.tiles[3].zoomed = True
+        cal.tiles[6].zoomed = True
+        cal.tiles[9].zoomed = True
+        cal.tiles[13].zoomed = True
+        cal.tiles[14].zoomed = True
+        cal.tiles[17].zoomed = True
+        cal.tiles[20].zoomed = True
+        print(f"Zoomed rows: {cal.zoomed_rows()}")
+        print(f"Zoomed cols: {cal.zoomed_cols()}")
+
         self.draw_calendar()
         self.bind_calendar()
         self.mainloop()
@@ -482,7 +501,10 @@ class PSCCalendarFrame(tkinter.Tk):
             "T8",
             "T9",
             "T10",
-            "T11"
+            "T11",
+            "T12",
+            "T14",
+            "T15"
         ]
         today = datetime.datetime.now()
         dates = [random_date(start_year=today.year, end_year=today.year + 1, start_m=today.month, start_d=today.day) for i in range(15)]
@@ -1085,13 +1107,14 @@ class PSCCalendarFrame(tkinter.Tk):
         print("canvas_rect: ", canvas_rect)
         for i, tile in enumerate(cal.tiles):
             assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
-            tile_rect = cal.get_rect(i, canvas_rect)
-            tile_rect = [tile_rect.x, tile_rect.y, tile_rect.w + tile_rect.x, tile_rect.h + tile_rect.y]
+            og_rect = cal.get_rect(i, canvas_rect)
+            tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             print(f"TR: {tile_rect}")
             bgc = rgb_to_hex(cal.tiles[i].colour)
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
+            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{i}")
 
         top_row_y = cal.get_rect(0, canvas_rect)
         left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
@@ -1106,14 +1129,6 @@ class PSCCalendarFrame(tkinter.Tk):
             txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (top_row_y.h / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
             print(f"line: {cal.lines[i]}")
             # p / 0
-
-        cal.tiles[0].zoomed = True
-        cal.tiles[8].zoomed = True
-        cal.tiles[23].zoomed = True
-        cal.tiles[24].zoomed = True
-        cal.tiles[26].zoomed = True
-        print(f"Zoomed rows: {cal.zoomed_rows()}")
-        print(f"Zoomed cols: {cal.zoomed_cols()}")
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
 
