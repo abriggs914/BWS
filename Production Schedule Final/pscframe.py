@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import ImageTk, Image
 from datetime_utility import *
 from pscalendar import PSCalendar2, CalendarTile2
-from utility import Rect2, first_of_month, end_of_month, dict_print, random_date
+from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter
 from colour_utility import *
 
 
@@ -407,6 +407,10 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.can_header_top = self.TAB_DATA[self.CAL_IDX]["can_header_top"]
         # self.frame_calendar = self.TAB_DATA[self.CAL_IDX]["frame_calendar"]
         self.draw_calendar()
+
+        # TODO bind the new cal canvas
+        self.bind_calendar()
+        # TODO unbind the others
 
     def switch_calendar_use_hover_gsm(self, *events):
         print("Change use hover")
@@ -1099,7 +1103,7 @@ class PSCCalendarFrame(tkinter.Tk):
             line_rect = rect2_to_tkinter(line_rect)
             # canvas_header_left.create_rectangle(*line_rect, fill=rgb_to_hex(BLACK), outline=rgb_to_hex(WHITE), width=cbw)
             lrx, lry, lrw, lrh = line_rect
-            txt = canvas_header_left.create_text(lrx + (lrw.w / 2), lry + (top_row_y.h / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (top_row_y.h / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
             print(f"line: {cal.lines[i]}")
             # p / 0
 
@@ -1113,13 +1117,23 @@ class PSCCalendarFrame(tkinter.Tk):
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
 
+    def hover(self, event):
+        x, y = event.x, event.y
+        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cbw = cal.border_width
+        canvas_rect = Rect2(cbw, cbw, self.width, self.height)
+        print(f"x, y : {x}, {y}, tile_N: {cal.r_c_to_i(*cal.x_y_to_r_c(x, y, canvas_rect))}")
+
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
+        for i, tab in enumerate(self.TABS):
+            if i == self.CAL_IDX:
+                canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+                canvas.bind("<Motion>", self.hover)
 
-
-def rect2_to_tkinter(rect):
-    assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
-    return [rect.x, rect.y, rect.w + rect.x, rect.h + rect.y]
+# def rect2_to_tkinter(rect):
+#     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
+#     return [rect.x, rect.y, rect.w + rect.x, rect.h + rect.y]
 
 #  PSCalendar
 #     - selected

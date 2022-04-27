@@ -1,4 +1,4 @@
-from utility import flatten, dt, print_by_line, Rect2
+from utility import flatten, dt, print_by_line, Rect2, clamp, tkinter_to_rect2, rect2_to_tkinter
 import math
 
 
@@ -93,7 +93,7 @@ class CalendarTile2:
 
 class PSCalendar2:
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div):
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -111,6 +111,8 @@ class PSCalendar2:
         self.border_width = border_width
         self.switch_week_divs = switch_week_divs
         self.weekend_div_colour = colour_weekend_div
+        self.max_n_zoomed_rows = max_n_zoomed_rows
+        self.max_n_zoomed_cols = max_n_zoomed_cols
 
         self._dragging = None
         self._selected = None
@@ -160,6 +162,20 @@ class PSCalendar2:
     def i_to_r_c(self, i):
         return (i // self.cols), (i % self.cols)
 
+    def x_y_to_r_c(self, x, y, rect):
+        for i, tile in enumerate(self.tiles):
+            r, c = self.i_to_r_c(i)
+            rect_calc = self.get_rect(i, rect)
+            # print(f"Arc: <{rect_calc}>, type({type(rect_calc)})")
+            # rect_calc = list(rect_calc)[:4]
+            # print(f"Brc: <{rect_calc}>, type({type(rect_calc)})")
+            x1, y1, x2, y2 = rect2_to_tkinter(rect_calc)
+            bw = self.border_width
+            if x1 - (2 * bw) <= x <= x2 + (2 * bw) and y1 - (2 * bw) <= y <= y2 + (2 * bw):
+                return r, c
+
+        print("Could not map x and y: ({}, {})".format(x, y))
+
     def get_dragging(self):
         return [t for t in self.tiles if t.dragging]
 
@@ -205,7 +221,7 @@ class PSCalendar2:
     def del_swap_pair(self):
         del self._swap_pair
 
-    def get_rect(self, tile_idx, rect):
+    def get_rect(self, tile_idx, rect, tkinter_rect=True):
         x, y, w, h, a = rect
         w -= 2 * self.border_width
         h -= 2 * self.border_width
@@ -216,8 +232,21 @@ class PSCalendar2:
         tw = w / cols
         th = h / rows
         r, c = self.i_to_r_c(tile_idx)
-        print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
-        return Rect2(x + (c * tw), y + (r * th), tw, th)
+        # print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
+
+        tile = self.tiles[tile_idx]
+        zoomed_rows = self.zoomed_rows()
+        zoomed_cols = self.zoomed_cols()
+        nzr = clamp(0, len(zoomed_rows), self.max_n_zoomed_rows), 0
+        nzc = clamp(0, len(zoomed_cols), self.max_n_zoomed_cols), 0
+
+        # if zoomed_rows:
+        #     if tile.zoomed:
+
+        if tkinter_rect:
+            return Rect2(x + (c * tw), y + (r * th), tw, th)
+        # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
+        return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
 
     def zoomed_rows(self):
         return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]
