@@ -364,6 +364,11 @@ class PSCCalendarFrame(tkinter.Tk):
         self.pack_calendar()
 
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+
+        # cal.set_zoom(0)
+        # cal.tiles[0].zoomed = True
+        # cal.tiles[24].zoomed = True
+
         # cal.tiles[0].zoomed = True
         # cal.tiles[8].zoomed = True
         # cal.tiles[23].zoomed = True
@@ -381,6 +386,8 @@ class PSCCalendarFrame(tkinter.Tk):
         # cal.tiles[20].zoomed = True
         # cal.tiles[246].zoomed = True
         # cal.tiles[192].zoomed = True
+        # cal.tiles[462].zoomed = True
+        # cal.tiles[485].zoomed = True
 
         print(f"Zoomed rows: {cal.zoomed_rows()}")
         print(f"Zoomed cols: {cal.zoomed_cols()}")
@@ -1102,10 +1109,14 @@ class PSCCalendarFrame(tkinter.Tk):
         cbw = cal.border_width
         canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
         canvas_header_top = self.TAB_DATA[self.CAL_IDX]["canvas_header_top"]
-        canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
+        # canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
         canvas_header_left = self.TAB_DATA[self.CAL_IDX]["canvas_header_left"]
         canvas_rect = Rect2(cbw, cbw, self.width, self.height)
         # canvas_rect = Rect2(0, 0, self._tile_bounds.height, self._tile_bounds.width)
+
+        canvas.delete("all")
+        canvas_header_left.delete("all")
+        canvas_header_top.delete("all")
 
         canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
         print("canvas_rect: ", canvas_rect)
@@ -1113,7 +1124,7 @@ class PSCCalendarFrame(tkinter.Tk):
             assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
             og_rect = cal.get_rect(i, canvas_rect, False)
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
-            print(f"TR: {tile_rect}")
+            # print(f"TR: {tile_rect}")
             bgc = rgb_to_hex(cal.tiles[i].colour)
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
@@ -1139,17 +1150,24 @@ class PSCCalendarFrame(tkinter.Tk):
             # canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
             canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), text=str(cal.lines[i]))
             # txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
-            print(f"line: {cal.lines[i]}, lr: {line_rect}")
+            # print(f"line: {cal.lines[i]}, lr: {line_rect}")
             # p / 0
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
+        canvas.update()
+        canvas_header_top.update()
+        canvas_header_left.update()
 
     def hover(self, event):
         x, y = event.x, event.y
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
         cbw = cal.border_width
         canvas_rect = Rect2(cbw, cbw, self.width, self.height)
-        print(f"x, y : {x}, {y}, tile_N: {cal.r_c_to_i(*cal.x_y_to_r_c(x, y, canvas_rect))}")
+        r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+        tile_n = cal.r_c_to_i(r, c)
+        cal.set_zoom(tile_n)
+        print(f"x, y : {x}, {y}, tile_N: {tile_n}")
+        self.draw_calendar()
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
