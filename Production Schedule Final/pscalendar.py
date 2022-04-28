@@ -232,68 +232,158 @@ class PSCalendar2:
     def del_swap_pair(self):
         del self._swap_pair
 
-    def get_rect(self, tile_idx, rect, tkinter_rect=True):
+    def y_at_row(self, row, rect):
+        return sum([self.row_height(r, rect) for r in range(row)])
+
+    def x_at_col(self, col, rect):
+        return sum([self.col_width(c, rect) for c in range(col)])
+
+    def row_height(self, row, rect):
+        x, y, w, h, a = rect
+        # w -= 2 * self.border_width
+        # h -= 2 * self.border_width
+        # x += self.border_width
+        # y += self.border_width
+        rows = self.rows
+        # cols = self.cols
+        # cw = tw = w / cols
+        ch = th = h / rows
+        r, c = row, 0
+        # tile_idx = self.r_c_to_i(r, c)
+        # print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
+
+        # tile = self.tiles[tile_idx]
+        zoomed_rows = self.zoomed_rows()
+        # zoomed_cols = self.zoomed_cols()
+
+        # mntw = self.min_tile_w
+        mnth = self.min_tile_h
+        # mxtw = self.max_tile_w
+        mxth = self.max_tile_h
+
+        if zoomed_rows:
+            nh = h - (len(zoomed_rows) * (mxth - th)) - (rows * self.border_width)
+            th = nh / rows
+        # rinzr =
+        # cinzc = c in zoomed_cols
+        if r in zoomed_rows:
+            th = mxth
+
+        # if cinzc:
+            # tw = mxtw
+        # if not (rinzr or cinzc):
+        # if not rinzr:
+        #     # tw = max(cw, mntw)
+        #     th = max(ch, mnth)
+        #     th = ch
+        return th
+
+    def col_width(self, col, rect):
         x, y, w, h, a = rect
         w -= 2 * self.border_width
         h -= 2 * self.border_width
         x += self.border_width
         y += self.border_width
-        rows = self.rows
+        # rows = self.rows
         cols = self.cols
         cw = tw = w / cols
-        ch = th = h / rows
-        r, c = self.i_to_r_c(tile_idx)
+        # ch = th = h / rows
+        r, c = 0, col
+        # tile_idx = self.r_c_to_i(r, c)
         # print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
 
-        tile = self.tiles[tile_idx]
-        zoomed_rows = self.zoomed_rows()
+        # tile = self.tiles[tile_idx]
+        # zoomed_rows = self.zoomed_rows()
         zoomed_cols = self.zoomed_cols()
 
         mntw = self.min_tile_w
-        mnth = self.min_tile_h
+        # mnth = self.min_tile_h
         mxtw = self.max_tile_w
-        mxth = self.max_tile_h
+        # mxth = self.max_tile_h
 
         # if zoomed_rows:
-        rinzr = r in zoomed_rows
+        # rinzr = r in zoomed_rows
         cinzc = c in zoomed_cols
-        if rinzr:
-            th = mxth
+        # if rinzr:
+        #     th = mxth
         if cinzc:
             tw = mxtw
-        if not (rinzr or cinzc):
+        # if not (rinzr or cinzc):
+        if not cinzc:
             tw = max(cw, mntw)
-            th = max(ch, mnth)
+            # th = max(ch, mnth)
+        return tw
 
-        if tile.zoomed:
-            tile.colour = RED
-
-        nzr = clamp(0, len(zoomed_rows), self.max_n_zoomed_rows)
-        nzc = clamp(0, len(zoomed_cols), self.max_n_zoomed_cols)
-        unc = len([i for i in range(self.cols) if i in zoomed_cols and i < c])
-        unr = len([i for i in range(self.rows) if i in zoomed_rows and i < r])
-        cnr = clamp(0, r - unr, self.rows)
-        cnc = clamp(0, c - unc, self.cols)
-        # cnc = len([i for i in range(self.cols) if i not in zoomed_cols and i < c])
-        # cnr = len([i for i in range(self.rows) if i not in zoomed_rows and i < r])
-        print(f"N: {tile.ser}, ZOOMED: {tile.zoomed}, zr: {zoomed_rows}, zc: {zoomed_cols}, nzr: {nzr}, nzc: {nzc}, unc: {unc}, unr: {unr}, cnc: {cnc}, cnr: {cnr}, r: {r}, c:{c}")
-
-        # used_width = (unc * clamp(mntw, tw, mxtw)) + ((c - unc) * tw)
-        # used_height = (unr * clamp(mnth, th, mxth)) + ((r - unr) * th)
-
-        # used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - (((unc + nzc) - cnc) * (mxtw - tw))
-        used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - ((unc - nzc) * (mxtw - tw))
-        used_height = ((unr - 0) * mxth) + ((r - unr) * th) - ((unr - nzr) * (mxth - th))
-
+    def get_rect(self, tile_idx, rect, tkinter_rect=True):
+        r, c = self.i_to_r_c(tile_idx)
+        calc_rect = Rect2(self.x_at_col(c, rect), self.y_at_row(r, rect), self.col_width(c, rect), self.row_height(r, rect))
+        print(f"cr: {calc_rect}")
         if tkinter_rect:
-            return Rect2(x + used_width, y + used_height, tw, th)
-        return tkinter_to_rect2(list(Rect2(x + used_width, y + used_height, tw, th))[:4])
-
-
+            return rect2_to_tkinter(calc_rect)
+        return calc_rect
+        # x, y, w, h, a = rect
+        # w -= 2 * self.border_width
+        # h -= 2 * self.border_width
+        # x += self.border_width
+        # y += self.border_width
+        # rows = self.rows
+        # cols = self.cols
+        # # cw = tw = w / cols
+        # # ch = th = h / rows
+        # r, c = self.i_to_r_c(tile_idx)
+        # tw = self.col_width(c, rect)
+        # th = self.row_height(r, rect)
+        # # print(f"tile_idx: {tile_idx}, rc: ({r}, {c}), xy: ({x}, {y}), th: {th}, tw: {tw}")
+        #
+        # tile = self.tiles[tile_idx]
+        # zoomed_rows = self.zoomed_rows()
+        # zoomed_cols = self.zoomed_cols()
+        #
+        # # mntw = self.min_tile_w
+        # # mnth = self.min_tile_h
+        # mxtw = self.max_tile_w
+        # mxth = self.max_tile_h
+        #
+        # # if zoomed_rows:
+        # # rinzr = r in zoomed_rows
+        # # cinzc = c in zoomed_cols
+        # # if rinzr:
+        # #     th = mxth
+        # # if cinzc:
+        # #     tw = mxtw
+        # # if not (rinzr or cinzc):
+        # #     tw = max(cw, mntw)
+        # #     th = max(ch, mnth)
+        #
+        # if tile.zoomed:
+        #     tile.colour = RED
+        #
+        # nzr = clamp(0, len(zoomed_rows), self.max_n_zoomed_rows)
+        # nzc = clamp(0, len(zoomed_cols), self.max_n_zoomed_cols)
+        # unc = len([i for i in range(self.cols) if i in zoomed_cols and i < c])
+        # unr = len([i for i in range(self.rows) if i in zoomed_rows and i < r])
+        # cnr = clamp(0, r - unr, self.rows)
+        # cnc = clamp(0, c - unc, self.cols)
+        # # cnc = len([i for i in range(self.cols) if i not in zoomed_cols and i < c])
+        # # cnr = len([i for i in range(self.rows) if i not in zoomed_rows and i < r])
+        # print(f"N: {tile.ser}, ZOOMED: {tile.zoomed}, zr: {zoomed_rows}, zc: {zoomed_cols}, nzr: {nzr}, nzc: {nzc}, unc: {unc}, unr: {unr}, cnc: {cnc}, cnr: {cnr}, r: {r}, c:{c}")
+        #
+        # # used_width = (unc * clamp(mntw, tw, mxtw)) + ((c - unc) * tw)
+        # # used_height = (unr * clamp(mnth, th, mxth)) + ((r - unr) * th)
+        #
+        # # used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - (((unc + nzc) - cnc) * (mxtw - tw))
+        # used_width = ((unc - 0) * mxtw) + ((c - unc) * tw) - ((unc - nzc) * (mxtw - tw))
+        # used_height = ((unr - 0) * mxth) + ((r - unr) * th) - ((unr - nzr) * (mxth - th))
+        #
         # if tkinter_rect:
-        #     return Rect2(x + (c * tw), y + (r * th), tw, th)
-        # # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
-        # return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
+        #     return Rect2(x + used_width, y + used_height, tw, th)
+        # return tkinter_to_rect2(list(Rect2(x + used_width, y + used_height, tw, th))[:4])
+        #
+        #
+        # # if tkinter_rect:
+        # #     return Rect2(x + (c * tw), y + (r * th), tw, th)
+        # # # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
+        # # return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
 
     def zoomed_rows(self):
         return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]

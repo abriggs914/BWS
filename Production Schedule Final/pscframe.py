@@ -370,14 +370,18 @@ class PSCCalendarFrame(tkinter.Tk):
         # cal.tiles[24].zoomed = True
         # cal.tiles[26].zoomed = True
         # cal.tiles[322].zoomed = True
-        cal.tiles[2].zoomed = True
-        cal.tiles[3].zoomed = True
-        cal.tiles[6].zoomed = True
-        cal.tiles[9].zoomed = True
-        cal.tiles[13].zoomed = True
-        cal.tiles[14].zoomed = True
-        cal.tiles[17].zoomed = True
-        cal.tiles[20].zoomed = True
+
+        # cal.tiles[2].zoomed = True
+        # cal.tiles[3].zoomed = True
+        # cal.tiles[6].zoomed = True
+        # cal.tiles[9].zoomed = True
+        # cal.tiles[13].zoomed = True
+        # cal.tiles[14].zoomed = True
+        # cal.tiles[17].zoomed = True
+        # cal.tiles[20].zoomed = True
+        # cal.tiles[246].zoomed = True
+        # cal.tiles[192].zoomed = True
+
         print(f"Zoomed rows: {cal.zoomed_rows()}")
         print(f"Zoomed cols: {cal.zoomed_cols()}")
 
@@ -1107,7 +1111,7 @@ class PSCCalendarFrame(tkinter.Tk):
         print("canvas_rect: ", canvas_rect)
         for i, tile in enumerate(cal.tiles):
             assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
-            og_rect = cal.get_rect(i, canvas_rect)
+            og_rect = cal.get_rect(i, canvas_rect, False)
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             print(f"TR: {tile_rect}")
             bgc = rgb_to_hex(cal.tiles[i].colour)
@@ -1116,18 +1120,26 @@ class PSCCalendarFrame(tkinter.Tk):
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
             canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{i}")
 
-        top_row_y = cal.get_rect(0, canvas_rect)
+        # top_row_y = cal.get_rect(0, canvas_rect)
+        top_y = self.HEADER_TOP_HEIGHT + (3 * cbw)
+        # raise ValueError(f"TOP Y: {top_y}")
         left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
         top_legend_rect = Rect2(cbw, cbw, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
         canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(YELLOW_2), outline=rgb_to_hex(DARKORANGE), width=cbw)
         canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(EMERALDGREEN), outline=rgb_to_hex(PLUM), width=cbw)
         for i in range(cal.rows):
-            line_rect = Rect2(left_legend_rect.x, top_row_y.y + ((i + 1) * top_row_y.h + (1.5 * cbw)), left_legend_rect.w, top_row_y.h)
-            line_rect = rect2_to_tkinter(line_rect)
+            row_height = cal.row_height(i, canvas_rect)
+            # line_rect = Rect2(left_legend_rect.x, top_row_y.y + ((1 + i) * ((top_row_y.h / 2) + (1 * cbw))), left_legend_rect.w, row_height)
+            line_rect = Rect2(left_legend_rect.x, cal.y_at_row(i, canvas_rect), left_legend_rect.w, row_height)
+            line_rect.y += top_y
+            # line_rect = rect2_to_tkinter(line_rect)
             # canvas_header_left.create_rectangle(*line_rect, fill=rgb_to_hex(BLACK), outline=rgb_to_hex(WHITE), width=cbw)
-            lrx, lry, lrw, lrh = line_rect
-            txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (top_row_y.h / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
-            print(f"line: {cal.lines[i]}")
+            # canvas_header_left.create_rectangle(*list(line_rect)[:4], fill=rgb_to_hex(random_color() if i != 0 else ORANGE), outline=rgb_to_hex(WHITE), width=cbw)
+            lrx, lry, lrw, lrh = line_rect.sq_rect()
+            # canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), text=str(cal.lines[i]))
+            # txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            print(f"line: {cal.lines[i]}, lr: {line_rect}")
             # p / 0
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
