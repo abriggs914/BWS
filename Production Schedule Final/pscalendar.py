@@ -181,7 +181,8 @@ class PSCalendar2:
             # print(f"Arc: <{rect_calc}>, type({type(rect_calc)})")
             # rect_calc = list(rect_calc)[:4]
             # print(f"Brc: <{rect_calc}>, type({type(rect_calc)})")
-            x1, y1, x2, y2 = rect2_to_tkinter(rect_calc)
+            # x1, y1, x2, y2 = rect2_to_tkinter(rect_calc)
+            x1, y1, x2, y2 = rect_calc
             bw = self.border_width
             if x1 - (2 * bw) <= x <= x2 + (2 * bw) and y1 - (2 * bw) <= y <= y2 + (2 * bw):
                 return r, c
@@ -233,14 +234,17 @@ class PSCalendar2:
     def del_swap_pair(self):
         del self._swap_pair
 
+    def clear_zoom(self):
+        self.set_zoom(tile_idx=None)
+
     def set_zoom(self, tile_idx):
         """Add tile to zoomed tiles list. Remove the max_n + 1th element (FIFO Queue) if already max_n rows or cols are zoomed."""
         # Use sets to determine if a col or row is already zoomed
         # Use lists to determine the order of zooming.
-        if tile_idx not in self.zoomed_tile_status["row"]["set"]:
+        if tile_idx and tile_idx not in self.zoomed_tile_status["row"]["set"]:
             self.zoomed_tile_status["row"]["set"].add(tile_idx)
             self.zoomed_tile_status["row"]["ord"].append(tile_idx)
-        if tile_idx not in self.zoomed_tile_status["col"]["set"]:
+        if tile_idx and tile_idx not in self.zoomed_tile_status["col"]["set"]:
             self.zoomed_tile_status["col"]["set"].add(tile_idx)
             self.zoomed_tile_status["col"]["ord"].append(tile_idx)
         for i in range(max(self.max_n_zoomed_cols, self.max_n_zoomed_rows)):
@@ -275,21 +279,42 @@ class PSCalendar2:
         # print(dict_print(self.zoomed_tile_status, "B"))
 
     def y_at_row(self, row, rect):
+
         x, y, w, h, a = rect
         rows = self.rows
-        zr = self.zoomed_rows()
+        # zc = self.zoomed_cols()
+        zr = self.zoomed_tile_status["row"]["ord"]
         lzr = len(zr)
-        zoomed_rows = [rw for rw in zr if rw < row]
+        zoomed_rows = [ti for ti in zr if self.i_to_r_c(ti)[0] < row]
+        # zoomed_cols = self.zoomed_tile_status["col"]["ord"]
         lzmr = len(zoomed_rows)
-        ch = th = h / rows
+        rh = th = w / rows
         hd = self.max_tile_h - th
         # ch = th = (h - (lzr * hd)) / (rows - lzr)
         # used = (row * th) + (lzr * hd)
-        ch = th = (h - (lzr * self.max_tile_h) - (2 * (rows - 1) * self.border_width)) / (rows - lzr)
+        # cw = tw = (w - (lzc * self.max_tile_w) - (2 * (cols - 1) * self.border_width)) / (cols - lzc)
+        rh = th = (h - (lzmr * self.max_tile_h)) / (rows - lzr)
         # used = ((row - lzmr) * th) + (lzmr * self.max_tile_h)
-        used = (self.max_tile_h * lzmr) + (row * th) #+ (row * self.border_width)
-        # print(f"used: {used}, row: {row}")
-        return y + used + (self.border_width / 2)
+        used = (self.max_tile_h * lzmr) + ((row - lzmr) * th) #+ (row * self.border_width)
+        # print(f"used: {used}, row: {col}")
+        # print(dict_print({1: {"x":x, "y":y, "w":w, "h":h, "a":a, "col:": col, "cols:": cols, "zc:": zc, "zoomed": zoomed_cols, "lzc:": lzc, "lzmc:": lzmc, "tw": tw, "used:": used}}, "x_at_col"))
+        return y + used  # + (self.border_width / 2)
+
+        # x, y, w, h, a = rect
+        # rows = self.rows
+        # zr = self.zoomed_rows()
+        # lzr = len(zr)
+        # zoomed_rows = [rw for rw in zr if rw < row]
+        # lzmr = len(zoomed_rows)
+        # ch = th = h / rows
+        # hd = self.max_tile_h - th
+        # # ch = th = (h - (lzr * hd)) / (rows - lzr)
+        # # used = (row * th) + (lzr * hd)
+        # ch = th = (h - (lzr * self.max_tile_h) - (2 * (rows - 1) * self.border_width)) / (rows - lzr)
+        # # used = ((row - lzmr) * th) + (lzmr * self.max_tile_h)
+        # used = (self.max_tile_h * lzmr) + (row * th) #+ (row * self.border_width)
+        # # print(f"used: {used}, row: {row}")
+        # return y + used + (self.border_width / 2)
         # # return sum([self.row_height(r, rect) for r in range(row)])
         # x, y, w, h, a = rect
         # rows = self.rows
@@ -319,19 +344,23 @@ class PSCalendar2:
     def x_at_col(self, col, rect):
         x, y, w, h, a = rect
         cols = self.cols
-        zc = self.zoomed_cols()
+        # zc = self.zoomed_cols()
+        zc = self.zoomed_tile_status["col"]["ord"]
         lzc = len(zc)
-        zoomed_cols = [cl for cl in zc if cl < col]
+        zoomed_cols = [ti for ti in zc if self.i_to_r_c(ti)[1] < col]
+        # zoomed_cols = self.zoomed_tile_status["col"]["ord"]
         lzmc = len(zoomed_cols)
         cw = tw = w / cols
         wd = self.max_tile_w - tw
         # ch = th = (h - (lzr * hd)) / (rows - lzr)
         # used = (row * th) + (lzr * hd)
-        cw = tw = (w - (lzc * self.max_tile_w) - (2 * (cols - 1) * self.border_width)) / (cols - lzc)
+        # cw = tw = (w - (lzc * self.max_tile_w) - (2 * (cols - 1) * self.border_width)) / (cols - lzc)
+        cw = tw = (w - (lzmc * self.max_tile_w)) / (cols - lzc)
         # used = ((row - lzmr) * th) + (lzmr * self.max_tile_h)
-        used = (self.max_tile_w * lzmc) + (col * tw) #+ (row * self.border_width)
+        used = (self.max_tile_w * lzmc) + ((col - lzmc) * tw) #+ (row * self.border_width)
         # print(f"used: {used}, row: {col}")
-        return x + used + (self.border_width / 2)
+        # print(dict_print({1: {"x":x, "y":y, "w":w, "h":h, "a":a, "col:": col, "cols:": cols, "zc:": zc, "zoomed": zoomed_cols, "lzc:": lzc, "lzmc:": lzmc, "tw": tw, "used:": used}}, "x_at_col"))
+        return x + used  # + (self.border_width / 2)
         # x, y, w, h, a = rect
         # cols = self.cols
         # print(f"Azc: {self.zoomed_cols()}, c: {col}")
@@ -347,6 +376,30 @@ class PSCalendar2:
 
     def row_height(self, row, rect):
         return self.y_at_row(row + 1, rect) - self.y_at_row(row, rect)
+
+        # x, y, w, h, a = rect
+        # rows = self.rows
+        # # zc = self.zoomed_cols()
+        # zr = self.zoomed_tile_status["row"]["ord"]
+        # lzr = len(zr)
+        # zoomed_rows = [ti for ti in zr if self.i_to_r_c(ti)[0] < row]
+        # # zoomed_cols = self.zoomed_tile_status["col"]["ord"]
+        # lzmr = len(zoomed_rows)
+        # rh = th = w / rows
+        # hd = self.max_tile_h - th
+        # # ch = th = (h - (lzr * hd)) / (rows - lzr)
+        # # used = (row * th) + (lzr * hd)
+        # # cw = tw = (w - (lzc * self.max_tile_w) - (2 * (cols - 1) * self.border_width)) / (cols - lzc)
+        # rh = th = (h - (lzr * self.max_tile_h)) / (rows - lzr)
+        # # used = ((row - lzmr) * th) + (lzmr * self.max_tile_h)
+        #
+        # # used = (self.max_tile_h * lzmr) + ((row - lzmr) * th) #+ (row * self.border_width)
+        # # print(f"used: {used}, row: {col}")
+        # # print(dict_print({1: {"x":x, "y":y, "w":w, "h":h, "a":a, "col:": col, "cols:": cols, "zc:": zc, "zoomed": zoomed_cols, "lzc:": lzc, "lzmc:": lzmc, "tw": tw, "used:": used}}, "x_at_col"))
+        # # return y + used  # + (self.border_width / 2)
+        # return self.max_tile_h if row in zr else th
+
+        # return self.y_at_row(row + 1, rect) - self.y_at_row(row, rect)
         # x, y, w, h, a = rect
         # # w -= 2 * self.border_width
         # # h -= 2 * self.border_width
@@ -495,6 +548,20 @@ class PSCalendar2:
         # #     return Rect2(x + (c * tw), y + (r * th), tw, th)
         # # # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
         # # return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
+
+    def date(self, date_idx, inc_y=True, inc_m=True, inc_d=True):
+        fmt = ""
+        if inc_y:
+            fmt += "%Y"
+        if inc_m:
+            if fmt:
+                fmt += "-"
+            fmt += "%m"
+        if inc_d:
+            if fmt:
+                fmt += "-"
+            fmt += "%d"
+        return self.dates[date_idx].strftime(fmt)
 
     def zoomed_rows(self):
         return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]

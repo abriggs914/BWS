@@ -31,7 +31,13 @@ class PSCCalendarFrame(tkinter.Tk):
             left_cal_margin_p=0,
             right_cal_margin_p=0,
             font_p=None,
-            n_test_cals=None
+            n_test_cals=None,
+            max_n_zoomed_rows=2,
+            max_n_zoomed_cols=2,
+            min_tile_w=30,
+            min_tile_h=15,
+            max_tile_w=100,
+            max_tile_h=50
     ):
         super().__init__()
         self._width = width_p
@@ -131,13 +137,14 @@ class PSCCalendarFrame(tkinter.Tk):
             if not self.assert_is_employee:
                 self.STARGATE_LOGO_FILE_PATH = r"""./Stargate Logo 50%.jpg"""
             else:
-                print("You must be an employee to use this program.")
+                print("You must be an employee at BWS or Stargate to use this program.")
                 self.exit_program()
 
         # Vars specific to Production Scheduling:
         # TODO, these should be real values
         self.TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
-        self._calendar_index = 0
+        self.USE_HOVER = False
+        # self._calendar_index = 0
 
         # Tab_data - stores the loaded calendars
 
@@ -192,6 +199,13 @@ class PSCCalendarFrame(tkinter.Tk):
         self.TAB_DATA = []
         self.TABS = []
         self.CAL_IDX = None
+
+        self.max_n_zoomed_rows = max_n_zoomed_rows
+        self.max_n_zoomed_cols = max_n_zoomed_cols
+        self.min_tile_w = min_tile_w
+        self.min_tile_h = min_tile_h
+        self.max_tile_w = max_tile_w
+        self.max_tile_h = max_tile_h
 
         self._drawing_bounds = self.calc_drawing_bounds()  # All drawings are bounded by this Rect.
         self._tile_bounds = self.calc_tile_bounds()
@@ -661,7 +675,7 @@ class PSCCalendarFrame(tkinter.Tk):
         colour_dragging = style["TILE_BACKGROUND_DRAG"]
         colour_weekend_div = style["WEEKEND_DIV"]
         switch_week_divs = True
-        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div)
+        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -923,7 +937,7 @@ class PSCCalendarFrame(tkinter.Tk):
         loop.close()
 
     def draw_calendar(self):
-        print(f"drawing calendar at tab {self.CAL_IDX}, CAL: {self.TAB_DATA[self.CAL_IDX]['Cal']}")
+        # print(f"drawing calendar at tab {self.CAL_IDX}, CAL: {self.TAB_DATA[self.CAL_IDX]['Cal']}")
 
         # def draw_canvas(calendar, canvas, canvas_header_row, canvas_header_col):
         #     canvas.delete("all")
@@ -1119,9 +1133,11 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas_header_top.delete("all")
 
         canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
-        print("canvas_rect: ", canvas_rect)
+        # print("canvas_rect: ", canvas_rect)
         for i, tile in enumerate(cal.tiles):
-            assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
+            # if i % 24 != 0:
+            #     continue
+            # assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
             og_rect = cal.get_rect(i, canvas_rect, False)
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             # print(f"TR: {tile_rect}")
@@ -1129,14 +1145,15 @@ class PSCCalendarFrame(tkinter.Tk):
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
-            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{i}")
+            tt = tile.wo_num if tile.wo_num is not None else ""
+            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{tt}")
 
         # top_row_y = cal.get_rect(0, canvas_rect)
         top_y = self.HEADER_TOP_HEIGHT + (3 * cbw)
         # raise ValueError(f"TOP Y: {top_y}")
         left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
         top_legend_rect = Rect2(cbw, cbw, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
-        canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(YELLOW_2), outline=rgb_to_hex(DARKORANGE), width=cbw)
+        canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(VIOLET), outline=rgb_to_hex(DARKORANGE), width=cbw)
         canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(EMERALDGREEN), outline=rgb_to_hex(PLUM), width=cbw)
         for i in range(cal.rows):
             row_height = cal.row_height(i, canvas_rect)
@@ -1153,6 +1170,24 @@ class PSCCalendarFrame(tkinter.Tk):
             # print(f"line: {cal.lines[i]}, lr: {line_rect}")
             # p / 0
 
+        for i in range(cal.cols):
+            # if i > 0:
+            #     break
+            col_width = cal.col_width(i, canvas_rect)
+            # line_rect = Rect2(left_legend_rect.x, top_row_y.y + ((1 + i) * ((top_row_y.h / 2) + (1 * cbw))), left_legend_rect.w, row_height)
+            line_rect = Rect2(cal.x_at_col(i, canvas_rect), top_legend_rect.y, col_width, top_legend_rect.h)
+            # line_rect.y += top_y
+            # line_rect = rect2_to_tkinter(line_rect)
+            # canvas_header_left.create_rectangle(*line_rect, fill=rgb_to_hex(BLACK), outline=rgb_to_hex(WHITE), width=cbw)
+            # canvas_header_left.create_rectangle(*list(line_rect)[:4], fill=rgb_to_hex(random_color() if i != 0 else ORANGE), outline=rgb_to_hex(WHITE), width=cbw)
+            lrx, lry, lrw, lrh = line_rect.sq_rect()
+            # canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            canvas_header_top.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), text=str(cal.date(i, inc_y=False)))
+            # print("date:", cal.dates[i], "lr:", line_rect, "sq:", line_rect.sq_rect(), "lrw:" ,lrw)
+            # txt = canvas_header_left.create_text(lrx + (lrw / 2), lry + (lrh / 2), fill=rgb_to_hex(WHITE), font="Times 12 italic bold", text=str(cal.lines[i]))
+            # print(f"line: {cal.lines[i]}, lr: {line_rect}")
+            # p / 0
+
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
         canvas.update()
         canvas_header_top.update()
@@ -1165,9 +1200,26 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas_rect = Rect2(cbw, cbw, self.width, self.height)
         r, c = cal.x_y_to_r_c(x, y, canvas_rect)
         tile_n = cal.r_c_to_i(r, c)
-        cal.set_zoom(tile_n)
-        print(f"x, y : {x}, {y}, tile_N: {tile_n}")
+        print(f"x, y : {x}, {y}, r,c: ({r}, {c}), w,h: ({cal.col_width(c, canvas_rect)}, {cal.row_height(r, canvas_rect)}), tile_N: {tile_n}")
+        do_draw = False
+        if self.USE_HOVER:
+            cal.set_zoom(tile_n)
+            do_draw = True
+        if do_draw:
+            self.draw_calendar()
+
+        # canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+        # canvas.create_oval(cal.get_rect(tile_n, canvas_rect), fill=rgb_to_hex(DODGERBLUE_2))
+        # canvas.create_oval((x - 5, y - 5, x + 5, y + 5), fill=rgb_to_hex(DODGERBLUE_2))
+
+    def leave(self, event):
+        x, y = event.x, event.y
+        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cal.clear_zoom()
         self.draw_calendar()
+        
+    def drag(self, event):
+        pass
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
@@ -1175,6 +1227,8 @@ class PSCCalendarFrame(tkinter.Tk):
             if i == self.CAL_IDX:
                 canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
                 canvas.bind("<Motion>", self.hover)
+                canvas.bind("<Leave>", self.leave)
+                canvas.bind("<B1-Motion>", self.drag)
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
