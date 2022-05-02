@@ -1219,7 +1219,10 @@ class PSCCalendarFrame(tkinter.Tk):
         self.draw_calendar()
         
     def drag(self, event):
-        pass
+        print(f"dragging: e: {event}")
+
+    def click(self, event):
+        print(f"click: e: {event}")
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
@@ -1229,6 +1232,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 canvas.bind("<Motion>", self.hover)
                 canvas.bind("<Leave>", self.leave)
                 canvas.bind("<B1-Motion>", self.drag)
+                canvas.bind("<Button-1>", self.click)
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
