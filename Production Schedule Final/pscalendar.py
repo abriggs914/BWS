@@ -31,6 +31,7 @@ class CalendarTile2:
         self.colour_dragging = colour_dragging
 
         self.selected = False
+        self.dragging = False
         self.hovered = False
         self.dbl_clicked = False
         self.zoomed = False
@@ -99,7 +100,7 @@ class PSCalendar2:
         def __init__(self, message):
             pass
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50):
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -117,6 +118,7 @@ class PSCalendar2:
         self.border_width = border_width
         self.switch_week_divs = switch_week_divs
         self.weekend_div_colour = colour_weekend_div
+        self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
         self.max_n_zoomed_cols = max_n_zoomed_cols
         self.zoomed_tile_status = {"row": {"set": set(), "ord": []}, "col": {"set": set(), "ord": []}}
@@ -126,11 +128,11 @@ class PSCalendar2:
         self.max_tile_w = max_tile_w
         self.max_tile_h = max_tile_h
 
-        self._dragging = None
-        self._selected = None
-        self._hover_select = None
-        self._dbl_clicked = None
-        self._swap_pair = None
+        self._dragging = []
+        self._selected = []
+        self._hover_select = []
+        self._dbl_clicked = []
+        self._swap_pair = []
 
         # Create tiles
         colour = colour_tile
@@ -193,6 +195,7 @@ class PSCalendar2:
         return [t for t in self.tiles if t.dragging]
 
     def set_dragging(self, drag_idx):
+        self._dragging.append(drag_idx)
         self.tiles[drag_idx].dragging = True
 
     def del_dragging(self):
@@ -202,7 +205,18 @@ class PSCalendar2:
         return [t for t in self.tiles if t.selected]
 
     def set_selected(self, drag_idx):
-        self.tiles[drag_idx].selected = True
+        if drag_idx not in self._selected:
+            self._selected.append(drag_idx)
+            self._selected = self._selected[-(self.max_n_selected):]
+            for i in range(len(self.tiles)):
+                if i in self._selected:
+                    self.tiles[i].selected = True
+                else:
+                    self.tiles[i].selected = False
+        else:
+            self._selected.remove(drag_idx)
+            self.tiles[drag_idx].selected = not self.tiles[drag_idx].selected
+
 
     def del_selected(self):
         del self._selected
@@ -211,6 +225,7 @@ class PSCalendar2:
         return [t for t in self.tiles if t.hovered]
 
     def set_hover_select(self, drag_idx):
+        self._hover_select.append(drag_idx)
         self.tiles[drag_idx].hovered = True
 
     def del_hover_select(self):
@@ -220,6 +235,7 @@ class PSCalendar2:
         return [t for t in self.tiles if t.dbl_clicked]
 
     def set_dbl_select(self, drag_idx):
+        self._dbl_clicked.append(drag_idx)
         self.tiles[drag_idx].dbl_clicked = True
 
     def del_dbl_select(self):
@@ -229,6 +245,7 @@ class PSCalendar2:
         return [t for t in self.tiles if t.dbl_clicked]
 
     def set_swap_pair(self, pair):
+        self._swap_pair.append(pair)
         self._swap_pair = pair
 
     def del_swap_pair(self):

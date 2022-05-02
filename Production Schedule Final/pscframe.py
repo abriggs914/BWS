@@ -32,6 +32,7 @@ class PSCCalendarFrame(tkinter.Tk):
             right_cal_margin_p=0,
             font_p=None,
             n_test_cals=None,
+            max_n_selected=1,
             max_n_zoomed_rows=2,
             max_n_zoomed_cols=2,
             min_tile_w=30,
@@ -122,7 +123,8 @@ class PSCCalendarFrame(tkinter.Tk):
                 "TILE_OUTLINE_DBLC": WHITE,
                 "TILE_FONT_DBLC": ("Arial", 17),
 
-                "WEEKEND_DIV": ORANGE_2
+                "WEEKEND_DIV": ORANGE_2,
+                "FRAME_TOP_CAL_BG": BROWN_4
             }
         }
 
@@ -151,6 +153,7 @@ class PSCCalendarFrame(tkinter.Tk):
         # print(f"DIMS: w: <{self.width}>, h: <{self.height}>, TM: <{self.top_margin}>, BM: <{self.bottom_margin}>, LM: <{self.left_margin}>, RM: <{self.right_margin}>")
         # calculated values:
         self.notebook_tab_control = None
+        self.notebook_tile_control = None
         # self.label_cal_title = None
         # self.frame_calendar = None
         # self.canvas_cal = None  # main drawing canvas
@@ -158,6 +161,8 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.can_header_top = None  # top legend
         # self.canvas_pop_up = None  # pop-up
 
+        self.frame_top_calendar = None
+        self.frame_tile_action = None
         self.frame_calendar_control = None
         self.frame_calendar_search_control = None
         self.frame_calendar_search_entries = None
@@ -198,8 +203,10 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tab_data = []
         self.TAB_DATA = []
         self.TABS = []
+        self.TABS_tile_control = []
         self.CAL_IDX = None
 
+        self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
         self.max_n_zoomed_cols = max_n_zoomed_cols
         self.min_tile_w = min_tile_w
@@ -376,8 +383,10 @@ class PSCCalendarFrame(tkinter.Tk):
         # psc.draw_canvas(canvas, canvas_header_left, can_header_top)
 
         self.pack_calendar()
+        self.pack_tile_action()
 
-        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        # cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cal = self.get_current_calendar()
 
         # cal.set_zoom(0)
         # cal.tiles[0].zoomed = True
@@ -675,7 +684,7 @@ class PSCCalendarFrame(tkinter.Tk):
         colour_dragging = style["TILE_BACKGROUND_DRAG"]
         colour_weekend_div = style["WEEKEND_DIV"]
         switch_week_divs = True
-        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h)
+        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h, max_n_selected=self.max_n_selected)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -768,6 +777,26 @@ class PSCCalendarFrame(tkinter.Tk):
         self.splash_version = tkinter.Label(self.splash_frame, text=self.VERSION_NAME, bg=self.SPLASH_BG, fg=self.SPLASH_FG)
         self.pack_splash()
 
+    def init_tile_control(self):
+        self.TABS_tile_control = [
+            {
+                "frame": ttk.Frame(self.notebook_tile_control),
+                "name": "+ / -"
+            },
+            {
+                "frame": ttk.Frame(self.notebook_tile_control),
+                "name": "Add"
+            },
+            {
+                "frame": ttk.Frame(self.notebook_tile_control),
+                "name": "Delete"
+            }
+        ]
+        for i, tab_dat in enumerate(self.TABS_tile_control):
+            tab = tab_dat["frame"]
+            tab_name = tab_dat["name"]
+            self.notebook_tile_control.add(tab, text=tab_name)
+
     def init_calendar_menu(self):
         self.HEADER_TOP_WIDTH = self.width
         for i, tab in enumerate(self.TABS):
@@ -782,7 +811,11 @@ class PSCCalendarFrame(tkinter.Tk):
             canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
             self.TAB_DATA[i].update({"Name": self.TAB_NAMES[i], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "canvas_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
 
-        self.frame_calendar_control = tkinter.Frame(self, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
+        style = self.STYLES["DEFAULT"]
+        self.frame_top_calendar = tkinter.Frame(self, height=200, bg=rgb_to_hex(style["FRAME_TOP_CAL_BG"]))
+        self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar)
+
+        self.frame_calendar_control = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
         self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
         self.frame_calendar_search_entries = tkinter.Frame(self.frame_calendar_control)
         self.frame_calendar_control_btns = tkinter.Frame(self.frame_calendar_control)
@@ -824,6 +857,9 @@ class PSCCalendarFrame(tkinter.Tk):
         self.combo_dealer_3 = ttk.Combobox(self.frame_dealer_colour_select_c3, textvariable=self.lb_dealer_3)
         self.btn_reset_dealer_3 = tkinter.Button(self.frame_dealer_colour_select_c3, text="Reset", command=self.reset_dealer_3)
 
+        self.frame_tile_action = tkinter.Frame(self.frame_top_calendar)
+        self.init_tile_control()
+
     def pack_splash(self):
         self.splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
         self.splash_logo_stargate.pack(side=tkinter.RIGHT, padx=10, pady=20)
@@ -846,6 +882,9 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.canvas_header_left.pack(side=tkinter.LEFT)
         # self.canvas_cal.pack()
         # self.frame_calendar.pack()
+
+        # pack top widgets space
+        self.frame_top_calendar.pack()
 
         # Add widgets
         self.label_dealer_colour_select.pack()
@@ -888,7 +927,7 @@ class PSCCalendarFrame(tkinter.Tk):
         # frame_calendar_search_control_c.pack()
         self.frame_calendar_search_control.pack(side=tkinter.LEFT)
         # frame_calendar_control.pack(side=tkinter.LEFT)
-        self.frame_calendar_control.pack()
+        self.frame_calendar_control.pack(side=tkinter.RIGHT)
         self.btn_calendar_use_hover.pack()
         self.btn_calendar_export_pdf_full.pack()
         self.btn_calendar_export_pdf.pack()
@@ -906,6 +945,10 @@ class PSCCalendarFrame(tkinter.Tk):
             self.TAB_DATA[i]["canvas_header_top"].pack()
             self.TAB_DATA[i]["canvas_cal"].pack()
         self.notebook_tab_control.pack(expand=1, fill="x")
+
+    def pack_tile_action(self):
+        self.notebook_tile_control.pack()
+        self.frame_tile_action.pack(side=tkinter.LEFT)
 
     def hide_splash(self):
         self.splash_label.pack_forget()
@@ -1119,7 +1162,7 @@ class PSCCalendarFrame(tkinter.Tk):
         #
         #     # self.redraw_legend(canvas_header_row, canvas_header_col)
 
-        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cal = self.get_current_calendar()
         cbw = cal.border_width
         canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
         canvas_header_top = self.TAB_DATA[self.CAL_IDX]["canvas_header_top"]
@@ -1141,7 +1184,10 @@ class PSCCalendarFrame(tkinter.Tk):
             og_rect = cal.get_rect(i, canvas_rect, False)
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             # print(f"TR: {tile_rect}")
-            bgc = rgb_to_hex(cal.tiles[i].colour)
+            bgc = cal.tiles[i].colour
+            if tile.selected:
+                bgc = tile.colour_selected
+            bgc = rgb_to_hex(bgc)
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
@@ -1193,11 +1239,22 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas_header_top.update()
         canvas_header_left.update()
 
-    def hover(self, event):
-        x, y = event.x, event.y
+    def get_current_calendar(self):
+        assert isinstance(self.TAB_DATA[self.CAL_IDX]["Cal"], PSCalendar2), "Error \'self.TAB_DATA[self.CAL_IDX]['Cal']\' needs to be a PSCalendar2 object"
+        return self.TAB_DATA[self.CAL_IDX]["Cal"]
+
+    def get_current_cal_canvas(self):
+        return self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
+
+    def get_current_cal_canvas_rect(self):
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
         cbw = cal.border_width
-        canvas_rect = Rect2(cbw, cbw, self.width, self.height)
+        return Rect2(cbw, cbw, self.width, self.height)
+
+    def hover(self, event):
+        x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        canvas_rect = self.get_current_cal_canvas_rect()
         r, c = cal.x_y_to_r_c(x, y, canvas_rect)
         tile_n = cal.r_c_to_i(r, c)
         print(f"x, y : {x}, {y}, r,c: ({r}, {c}), w,h: ({cal.col_width(c, canvas_rect)}, {cal.row_height(r, canvas_rect)}), tile_N: {tile_n}")
@@ -1214,25 +1271,67 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def leave(self, event):
         x, y = event.x, event.y
-        cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
+        cal = self.get_current_calendar()
         cal.clear_zoom()
         self.draw_calendar()
         
     def drag(self, event):
         print(f"dragging: e: {event}")
+        cal = self.get_current_calendar()
+        canvas = self.get_current_cal_canvas()
+        canvas_rect = self.get_current_cal_canvas_rect()
+        dragging = cal.get_dragging()
+        x2, y2 = event.x, event.y
+        if dragging:
+            for ti in dragging:
+
+                tile = cal.tiles[ti]
+                rh = cal.row_height(ti)
+                cw = cal.col_width(ti)
+                rect = cal.get_rect(ti, canvas_rect)
+                rect[0] += x2
+                rect[1] += y2
+                canvas.create_rectangle(rect, fill=rgb_to_hex(tile.colour_dragging))
 
     def click(self, event):
-        print(f"click: e: {event}")
+        x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        canvas_rect = self.get_current_cal_canvas_rect()
+        r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+        cbw = cal.border_width
+        canvas_rect = Rect2(cbw, cbw, self.width, self.height)
+        tile_n = cal.r_c_to_i(r, c)
+        tile = cal.tiles[tile_n]
+        cal.selected = tile_n
+        print(f"Aclick: e: {event}, tile.selected: {tile.selected}")
+        # tile.selected = not tile.selected
+        # cal.colour = cal.colour_selected
+        self.draw_calendar()
+        print(f"Bclick: e: {event}, tile.selected: {tile.selected}")
+        self.update_tile_control()
+
+    def update_tile_control(self):
+        cal = self.get_current_calendar()
+        selected = cal.get_selected()
+        if selected:
+            # TODO here
+            pass
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         for i, tab in enumerate(self.TABS):
+            canvas = self.TAB_DATA[i]["canvas_cal"]
             if i == self.CAL_IDX:
-                canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
                 canvas.bind("<Motion>", self.hover)
                 canvas.bind("<Leave>", self.leave)
                 canvas.bind("<B1-Motion>", self.drag)
                 canvas.bind("<Button-1>", self.click)
+            else:
+                canvas.unbind("<Motion>")
+                canvas.unbind("<Leave>")
+                canvas.unbind("<B1-Motion>")
+                canvas.unbind("<Button-1>")
+
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
