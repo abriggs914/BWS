@@ -70,6 +70,8 @@ class CalendarTile2:
             "line",
             "date",
             "colour",
+            "colour_border",
+            "colour_font",
             "text",
             "wo_num",
             "model_name",
@@ -77,6 +79,19 @@ class CalendarTile2:
             "status",
             "beam",
             "job_start"
+
+        # self.colour_selected = colour_selected
+        # self.colour_hovered = colour_hovered
+        # self.colour_dragging = colour_dragging
+        #
+        # self.drag_x = 0
+        # self.drag_y = 0
+        #
+        # self.selected = False
+        # self.dragging = False
+        # self.hovered = False
+        # self.dbl_clicked = False
+        # self.zoomed = False
         ],
         [
             self.i,
@@ -84,6 +99,8 @@ class CalendarTile2:
             self.line,
             self.date,
             self.colour,
+            self.colour_border,
+            self.colour_font,
             self.text,
             self.wo_num,
             self.model_name,
@@ -92,6 +109,9 @@ class CalendarTile2:
             self.beam,
             self.job_start
         ]))
+
+    def is_empty(self):
+        return self.wo_num is None
 
     def __repr__(self):
         return f"<CT line: {self.line}, date: {self.date}, ({self.i}, {self.j}), ser: {self.ser}>"
@@ -173,6 +193,8 @@ class PSCalendar2:
         print(f"data: {self.data}")
         print_by_line(self.data)
 
+        self.LOG = {}
+
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
 
@@ -202,15 +224,33 @@ class PSCalendar2:
         if r is not None:
             return self.tiles[self.r_c_to_i(r, c)]
 
+    def swap_tiles(self, tile_a, tile_b):
+        old_ser = tile_a.ser
+        new_ser = tile_b.ser
+
+        tile_a.ser, tile_b.ser = tile_b.ser, tile_a.ser
+        tile_a.line, tile_b.line = tile_b.line, tile_a.line
+        tile_a.date, tile_b.date = tile_b.date, tile_a.date
+
+        # tile_a.selected, tile_b.selected = tile_b.selected, tile_a.selected
+        # tile_a.dragging, tile_a.dragging = tile_a.dragging, tile_a.dragging
+        # tile_a.hovered, tile_a.hovered = tile_a.hovered, tile_a.hovered
+        # tile_a.dbl_clicked, tile_a.dbl_clicked = tile_a.dbl_clicked, tile_a.dbl_clicked
+        # tile_a.zoomed, tile_a.zoomed = tile_a.zoomed, tile_a.zoomed
+        self.tiles[old_ser], self.tiles[new_ser] = self.tiles[new_ser], self.tiles[old_ser]
+
     def get_dragging(self):
-        return [t for t in self.tiles if t.dragging]
+        # return [t for t in self.tiles if t.dragging]
+        return [self.tiles[ti] for ti in self._dragging]
 
     def set_dragging(self, drag_idx):
+        print(f"ADDING {drag_idx}, self._dragging: {self._dragging}")
         if isinstance(drag_idx, list) and not drag_idx:
             self._dragging = []
             return
-        self._dragging.append(drag_idx)
-        self.tiles[drag_idx].dragging = True
+        if drag_idx not in self._dragging:
+            self._dragging.append(drag_idx)
+        # self.tiles[drag_idx].dragging = True
         for i in range(len(self.tiles)):
             if i in self._dragging:
                 self.tiles[i].dragging = True
@@ -218,8 +258,8 @@ class PSCalendar2:
                 self.tiles[i].dragging = False
 
     def clear_dragging(self):
-        for ti in self._dragging:
-            tile = self.tiles[ti]
+        print(f"CLEARING: self.dragging: {self.dragging}, self._dragging: {self._dragging}")
+        for tile in self.tiles:
             tile.dragging = False
         self._dragging = []
 
@@ -618,6 +658,10 @@ class PSCalendar2:
 
     def zoomed_cols(self):
         return [col for col in range(self.cols) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for row in range(self.rows)])]
+
+    def log(self, log_dat_in):
+        now = dt.datetime.now()
+        self.LOG[now] = log_dat_in
 
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,

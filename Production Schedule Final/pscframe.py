@@ -1,5 +1,6 @@
 import itertools
 
+import easygui
 import pyodbc
 import tkinter
 import asyncio
@@ -38,7 +39,8 @@ class PSCCalendarFrame(tkinter.Tk):
             min_tile_w=30,
             min_tile_h=15,
             max_tile_w=100,
-            max_tile_h=50
+            max_tile_h=50,
+            ASSERT_SAME_LINE_SWAP=True
     ):
         super().__init__()
         self._width = width_p
@@ -55,6 +57,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._left_cal_margin = left_cal_margin_p
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
+        self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
 
         self.LOADED = tkinter.BooleanVar(value=False)
         self.lb_dealer_1 = tkinter.StringVar()
@@ -80,6 +83,8 @@ class PSCCalendarFrame(tkinter.Tk):
         self.splash_test_indicator = None
         self.splash_version = None
 
+        self.ERMSG_NO_CROSS_LINE_SWAP = "Error cannot swap units between lines in this mode."
+
         self.N_TEST_CALS = n_test_cals
         self.BWS_LOGO_FILE_PATH = r"""C:\Access\BWS Chrome Final WO Manufacturing.jpg"""
         self.STARGATE_LOGO_FILE_PATH = r"""C:\Access\Stargate Logo 50%.jpg"""
@@ -95,6 +100,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.HEADER_LEFT_HEIGHT = self.height + self.TILE_BORDER_WIDTH + 25
         self.HEADER_TOP_WIDTH = 10
         self.HEADER_TOP_HEIGHT = 25
+        self.DPM_ARROW_WIDTH = 5
 
         self.STYLES = {
             "DEFAULT": {
@@ -124,7 +130,12 @@ class PSCCalendarFrame(tkinter.Tk):
                 "TILE_FONT_DBLC": ("Arial", 17),
 
                 "WEEKEND_DIV": ORANGE_2,
-                "FRAME_TOP_CAL_BG": BROWN_4
+                "FRAME_TOP_CAL_BG": BROWN_4,
+                "DRAG_PLACEMENT_MARKER_ARROW": GREEN,
+                "TOP_HEADER_FILL": BLACK,
+                "LEFT_HEADER_FILL": BLACK,
+                "TOP_HEADER_OUTLINE": WHITE,
+                "LEFT_HEADER_OUTLINE": WHITE,
             }
         }
 
@@ -200,11 +211,41 @@ class PSCCalendarFrame(tkinter.Tk):
         self.combo_dealer_3 = None
         self.btn_reset_dealer_3 = None
 
+        self.tctl_label_wo_num = None
+        self.tctl_entry_wo_num = None
+        self.tctl_tv_wo_num = tkinter.StringVar()
+
+        self.tctl_label_model = None
+        self.tctl_entry_model = None
+        self.tctl_tv_model = tkinter.StringVar()
+
+        self.tctl_label_dealer = None
+        self.tctl_entry_dealer = None
+        self.tctl_tv_dealer = tkinter.StringVar()
+
+        self.tctl_label_status = None
+        self.tctl_entry_status = None
+        self.tctl_tv_status = tkinter.StringVar()
+
+        self.tctl_label_beam = None
+        self.tctl_entry_beam = None
+        self.tctl_tv_beam = tkinter.StringVar()
+
+        self.tctl_label_start_date = None
+        self.tctl_entry_start_date = None
+        self.tctl_tv_start_date = tkinter.StringVar()
+
+        self.tctl_btn_save = None
+        self.tctl_btn_undo = None
+
         self.tab_data = []
         self.TAB_DATA = []
         self.TABS = []
         self.TABS_tile_control = []
+        self.TCTL_IDX = None
         self.CAL_IDX = None
+        self.DRAG_PLACEMENT_MARKER_1 = None  # marks the sides of a tile to indicate that the tiles on either side should be moved to make room
+        self.DRAG_PLACEMENT_MARKER_2 = None  # marks the middle of the hovered tile to indicate a replacement should happen
 
         self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
@@ -440,6 +481,16 @@ class PSCCalendarFrame(tkinter.Tk):
     right_cal_margin = property(get_right_cal_margin, set_right_cal_margin, del_right_cal_margin, "Right margin to calendar")
     font = property(get_font, set_font, del_font, "Default font")
 
+    def on_tctl_tab_change(self, event):
+        selection = self.notebook_tile_control.select()
+        # print(f"SELECTION A: <{selection}>")
+        # print(f"SELECTION B: <{event.widget.select()}>")
+        # print(f"WIDGET: {self.notebook_tab_control}")
+        tab_name = self.notebook_tile_control.tab(selection, "text")
+        # raise ValueError(f"WUT {tab_name}")
+        idx = [tab["name"] for tab in self.TABS_tile_control].index(tab_name)
+        self.TCTL_IDX = idx
+
     def on_tab_change(self, event):
         print(f"On Tab Change! <{event}>")
         # tab_name = event.widget.tab('current')['text']
@@ -673,7 +724,7 @@ class PSCCalendarFrame(tkinter.Tk):
     def create_calendar_p(self, start_date, end_date, data, lines, dates, style_in=None):
         # canvas_a.delete("all")
         if style_in is None:
-            style = self.STYLES["DEFAULT"]
+            style = self.get_current_style()
         else:
             style = style_in
         colour_tile = style["TILE_BACKGROUND_STAT"]
@@ -792,6 +843,77 @@ class PSCCalendarFrame(tkinter.Tk):
                 "name": "Delete"
             }
         ]
+
+        root_tab_1 = self.TABS_tile_control[0]["frame"]
+        self.tctl_label_wo_num = tkinter.Label(root_tab_1, text="WO#:")
+        self.tctl_entry_wo_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_wo_num)
+
+        self.tctl_label_model = tkinter.Label(root_tab_1, text="Model:")
+        self.tctl_entry_model = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_model)
+
+        self.tctl_label_dealer = tkinter.Label(root_tab_1, text="Dealer:")
+        self.tctl_entry_dealer = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_dealer)
+
+        self.tctl_label_status = tkinter.Label(root_tab_1, text="Status:")
+        self.tctl_entry_status = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_status)
+
+        self.tctl_label_beam = tkinter.Label(root_tab_1, text="Beam:")
+        self.tctl_entry_beam = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_beam)
+
+        self.tctl_label_start_date = tkinter.Label(root_tab_1, text="Start Date:")
+        self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date)
+
+        self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save")
+        self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo")
+
+        self.TABS_tile_control[0].update({
+            "widgets": [
+                self.tctl_label_wo_num,
+                self.tctl_entry_wo_num,
+                self.tctl_label_model,
+                self.tctl_entry_model,
+                self.tctl_label_dealer,
+                self.tctl_entry_dealer,
+                self.tctl_label_status,
+                self.tctl_entry_status,
+                self.tctl_label_beam,
+                self.tctl_entry_beam,
+                self.tctl_label_start_date,
+                self.tctl_entry_start_date,
+                self.tctl_btn_save,
+                self.tctl_btn_undo
+            ],
+            "arguments": [
+                {"row": 0, "column": 0},
+                {"row": 0, "column": 1},
+                {"row": 1, "column": 0},
+                {"row": 1, "column": 1},
+                {"row": 2, "column": 0},
+                {"row": 2, "column": 1},
+                {"row": 3, "column": 0},
+                {"row": 3, "column": 1},
+                {"row": 4, "column": 0},
+                {"row": 4, "column": 1},
+                {"row": 5, "column": 0},
+                {"row": 5, "column": 1},
+                {"row": 6, "column": 0},
+                {"row": 6, "column": 1},
+            ]
+        })
+
+        root_tab_2 = self.TABS_tile_control[1]["frame"]
+        self.TABS_tile_control[1].update({
+            "widgets": [],
+            "arguments": []
+        })
+
+        root_tab_3 = self.TABS_tile_control[2]["frame"]
+        self.TABS_tile_control[2].update({
+            "widgets": [],
+            "arguments": []
+        })
+
+        self.TCTL_IDX = 0
         for i, tab_dat in enumerate(self.TABS_tile_control):
             tab = tab_dat["frame"]
             tab_name = tab_dat["name"]
@@ -811,9 +933,9 @@ class PSCCalendarFrame(tkinter.Tk):
             canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
             self.TAB_DATA[i].update({"Name": self.TAB_NAMES[i], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal, "canvas_header_left": canvas_header_left, "canvas_header_top": can_header_top, "canvas_pop_up": canvas_pop_up})
 
-        style = self.STYLES["DEFAULT"]
-        self.frame_top_calendar = tkinter.Frame(self, height=200, bg=rgb_to_hex(style["FRAME_TOP_CAL_BG"]))
-        self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar)
+        style = self.get_current_style()
+        self.frame_top_calendar = tkinter.Frame(self, height=500, bg=rgb_to_hex(style["FRAME_TOP_CAL_BG"]))
+        self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar, width=200)
 
         self.frame_calendar_control = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
         self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
@@ -949,6 +1071,13 @@ class PSCCalendarFrame(tkinter.Tk):
     def pack_tile_action(self):
         self.notebook_tile_control.pack()
         self.frame_tile_action.pack(side=tkinter.LEFT)
+
+        for i, tab_data in enumerate(self.TABS_tile_control):
+            # frame = tab_data["frame"]
+            widgets = tab_data["widgets"]
+            arguments = tab_data["arguments"]
+            for widget, args in zip(widgets, arguments):
+                widget.grid(**args)
 
     def hide_splash(self):
         self.splash_label.pack_forget()
@@ -1162,6 +1291,8 @@ class PSCCalendarFrame(tkinter.Tk):
         #
         #     # self.redraw_legend(canvas_header_row, canvas_header_col)
 
+        # style = self.STYLES["DEFAULT"]
+        style = self.get_current_style()
         cal = self.get_current_calendar()
         cbw = cal.border_width
         canvas = self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
@@ -1175,8 +1306,10 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas_header_left.delete("all")
         canvas_header_top.delete("all")
 
-        canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
+        # canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
         # print("canvas_rect: ", canvas_rect)
+
+        # draw tiles
         for i, tile in enumerate(cal.tiles):
             # if i % 24 != 0:
             #     continue
@@ -1199,8 +1332,10 @@ class PSCCalendarFrame(tkinter.Tk):
         # raise ValueError(f"TOP Y: {top_y}")
         left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
         top_legend_rect = Rect2(cbw, cbw, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
-        canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(VIOLET), outline=rgb_to_hex(DARKORANGE), width=cbw)
-        canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(EMERALDGREEN), outline=rgb_to_hex(PLUM), width=cbw)
+        canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(style["TOP_HEADER_FILL"]), outline=rgb_to_hex(style["TOP_HEADER_OUTLINE"]), width=cbw)
+        canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(style["LEFT_HEADER_FILL"]), outline=rgb_to_hex(style["LEFT_HEADER_OUTLINE"]), width=cbw)
+
+        # draw left legend
         for i in range(cal.rows):
             row_height = cal.row_height(i, canvas_rect)
             # line_rect = Rect2(left_legend_rect.x, top_row_y.y + ((1 + i) * ((top_row_y.h / 2) + (1 * cbw))), left_legend_rect.w, row_height)
@@ -1216,6 +1351,7 @@ class PSCCalendarFrame(tkinter.Tk):
             # print(f"line: {cal.lines[i]}, lr: {line_rect}")
             # p / 0
 
+        # draw top legend
         for i in range(cal.cols):
             # if i > 0:
             #     break
@@ -1235,7 +1371,8 @@ class PSCCalendarFrame(tkinter.Tk):
             # p / 0
 
         dragging = cal.get_dragging()
-        if dragging:
+        if dragging or self.DRAG_PLACEMENT_MARKER_1 or self.DRAG_PLACEMENT_MARKER_2:
+            print(f"dragging: {dragging}, self.DRAG_PLACEMENT_MARKER_1: {self.DRAG_PLACEMENT_MARKER_1}, self.DRAG_PLACEMENT_MARKER_2: {self.DRAG_PLACEMENT_MARKER_2}")
             for tile in dragging:
                 ti = tile.ser
                 tile = cal.tiles[ti]
@@ -1247,23 +1384,56 @@ class PSCCalendarFrame(tkinter.Tk):
                 rect[1] += tile.drag_y - (rect2.h / 2)
                 rect[2] = rect[0] + rect2.w
                 rect[3] = rect[1] + rect2.h
+                rect3 = tkinter_to_rect2(rect)
                 tile.drag_x = 0
                 tile.drag_y = 0
                 canvas.create_rectangle(rect, fill=rgb_to_hex(tile.colour_dragging))
+                tt = tile.wo_num if tile.wo_num is not None else ""
+                if tt:
+                    ttx, tty = rect3.x + (rect3.w / 2), rect3.y + (rect3.h / 2)
+                    # print(f"ttx, tty: {ttx}, {tty}, rect: {rect}, tt: {tt}")
+                    font_colour = font_foreground(tile.colour_dragging)
+                    canvas.create_text((ttx, tty), fill=rgb_to_hex(font_colour), text=f"{tt}")
+
+            dpm = None
+            if self.DRAG_PLACEMENT_MARKER_1:
+                # mark the edges of the tile to indicate that the tiles to the right and left should make room
+                dpm = self.DRAG_PLACEMENT_MARKER_1
+            elif self.DRAG_PLACEMENT_MARKER_2:
+                # mark the middle of the tile to indicate that the dragged tile should replace the current hovered tile.
+                dpm = self.DRAG_PLACEMENT_MARKER_2
+            if dpm:
+                dpmr = tkinter_to_rect2(dpm)
+                pts1 = [dpmr.center[0], dpmr.top, dpmr.left - self.DPM_ARROW_WIDTH, dpmr.top - dpmr.h, dpmr.right + self.DPM_ARROW_WIDTH, dpmr.top - dpmr.h]  # down arrow
+                pts2 = [dpmr.center[0], dpmr.bottom, dpmr.left - self.DPM_ARROW_WIDTH, dpmr.bottom + dpmr.h, dpmr.right + self.DPM_ARROW_WIDTH, dpmr.bottom + dpmr.h]  # up arrow
+                # canvas.create_rectangle(*dpm, fill=rgb_to_hex(style["WEEKEND_DIV"]))
+                canvas.create_polygon(*pts1, fill=rgb_to_hex(style["DRAG_PLACEMENT_MARKER_ARROW"]))
+                canvas.create_polygon(*pts2, fill=rgb_to_hex(style["DRAG_PLACEMENT_MARKER_ARROW"]))
+
+            self.DRAG_PLACEMENT_MARKER_1 = None
+            self.DRAG_PLACEMENT_MARKER_2 = None
 
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
         canvas.update()
         canvas_header_top.update()
         canvas_header_left.update()
 
+    def get_current_style(self):
+        """Get the style dict."""
+        # TODO hardcoded default style here
+        return self.STYLES["DEFAULT"]
+
     def get_current_calendar(self):
+        """Return the PSCalendar object located at the current tab using 'CAL_IDX'."""
         assert isinstance(self.TAB_DATA[self.CAL_IDX]["Cal"], PSCalendar2), "Error \'self.TAB_DATA[self.CAL_IDX]['Cal']\' needs to be a PSCalendar2 object"
         return self.TAB_DATA[self.CAL_IDX]["Cal"]
 
     def get_current_cal_canvas(self):
+        """Return the Tkinter.Canvas object located at the current tab using 'CAL_IDX'."""
         return self.TAB_DATA[self.CAL_IDX]["canvas_cal"]
 
     def get_current_cal_canvas_rect(self):
+        """Return the Canvas bounds as a Rect2 object, at the current tab using 'CAL_IDX'."""
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
         cbw = cal.border_width
         return Rect2(cbw, cbw, self.width, self.height)
@@ -1299,6 +1469,25 @@ class PSCCalendarFrame(tkinter.Tk):
         dragging = cal.get_dragging()
         selected = cal.get_selected()
         x2, y2 = event.x, event.y
+        hovering_tile = cal.tile_at_x_y(x2, y2, canvas_rect)
+        hovering_rect = cal.get_rect(hovering_tile.ser, canvas_rect, tkinter_rect=False)
+        go_left = False
+        on_edge = True
+        if (x2 < hovering_rect.center[0] and hovering_tile.j != cal.cols - 1) or hovering_tile.j == cal.cols:
+            go_left = True
+        if go_left:
+            rect = hovering_rect.x - cal.border_width, hovering_rect.top, hovering_rect.x, hovering_rect.bottom
+        else:
+            rect = hovering_rect.right, hovering_rect.top, hovering_rect.right + cal.border_width, hovering_rect.bottom
+        if hovering_rect.x + (0.3 * hovering_rect.w) <= x2 <= hovering_rect.right - (0.3 * hovering_rect.w):
+            on_edge = False
+        print(f"on_edge: {on_edge}")
+        if on_edge:
+            self.DRAG_PLACEMENT_MARKER_1 = rect
+        else:
+            rect = [hovering_rect.center[0] - (cal.border_width / 2), hovering_rect.top, hovering_rect.center[0] + (cal.border_width / 2), hovering_rect.bottom]
+            self.DRAG_PLACEMENT_MARKER_2 = rect
+
         if selected:
             for tile in selected:
                 cal.dragging = tile.ser
@@ -1351,20 +1540,53 @@ class PSCCalendarFrame(tkinter.Tk):
         dragging = cal.get_dragging()
         if dragging and tile:
             # TODO release a dragging tile over an existing tile.
-            pass
+            is_empty = tile.is_empty()
+            drag_tile, *drag_rest = dragging
+            print(f"releasing over tile: {tile.ser}")
+            if is_empty:
+                print(f"inserting drag_tile: {drag_tile.ser}, into tile space {tile.ser}")
+            else:
+                print(f"NEED TO SWAP")
+            do_swap = True
+            if self.ASSERT_SAME_LINE_SWAP:
+                if drag_tile.line != tile.line:
+                    do_swap = False
+                    easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
+            if do_swap:
+                cal.swap_tiles(drag_tile, tile)
+
+        self.DRAG_PLACEMENT_MARKER_1 = None
+        self.DRAG_PLACEMENT_MARKER_2 = None
         cal.clear_dragging()
-        cal.clear_selected()
+        # cal.clear_selected()
         self.draw_calendar()
 
     def update_tile_control(self):
+        """When a tile is selected, update the usage of the mini tile control notebook widget."""
         cal = self.get_current_calendar()
         selected = cal.get_selected()
         if selected:
-            # TODO here
-            pass
+            selected, *rest_selected = selected
+            if selected:
+                curr_tab = self.TABS_tile_control[self.TCTL_IDX]
+                if not selected.is_empty():
+                    self.tctl_tv_wo_num.set(f"{selected.wo_num}")
+                    self.tctl_tv_model.set(f"{selected.model_name}")
+                    self.tctl_tv_dealer.set(f"{selected.dealer}")
+                    self.tctl_tv_status.set(f"{selected.status}")
+                    self.tctl_tv_beam.set(f"{selected.beam}")
+                    self.tctl_tv_start_date.set(f"{selected.job_start}")
+                # if self.TCTL_IDX == 0:
+                #     # + / -
+                #
+                # if self.TCTL_IDX == 1:
+                #     # Add
+                # if self.TCTL_IDX == 2:
+                #     # Delete
 
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
+        self.notebook_tile_control.bind("<<NotebookTabChanged>>", self.on_tctl_tab_change)
         for i, tab in enumerate(self.TABS):
             canvas = self.TAB_DATA[i]["canvas_cal"]
             bindings = {
@@ -1379,6 +1601,77 @@ class PSCCalendarFrame(tkinter.Tk):
                     canvas.bind(bnd, fnc)
                 else:
                     canvas.unbind(bnd)
+
+    def tctl_save_click(self):
+        cal = self.get_current_calendar()
+        selected = cal.get_selected()
+        if selected:
+            selected, *rest_selected = selected
+            wo_num_new = self.tctl_tv_wo_num.get()
+            model_name_new = self.tctl_tv_model.get()
+            dealer_new = self.tctl_tv_dealer.get()
+            status_new = self.tctl_tv_status.get()
+            beam_new = self.tctl_tv_beam.get()
+            start_date_new = self.tctl_tv_start_date.get()
+
+            wo_num_old = selected.wo_num
+            model_name_old = selected.model_name
+            dealer_old = selected.dealer
+            status_old = selected.status
+            beam_old = selected.beam
+            start_date_old = selected.job_start
+
+            # TODO need to scrub input here
+            if wo_num_old != wo_num_new:
+                selected.wo_num = wo_num_new
+                cal.log({"Update WO": {
+                    "tidx": selected.ser,
+                    "old": wo_num_old,
+                    "new": wo_num_new
+                }})
+
+            if model_name_old != model_name_new:
+                selected.model_name = model_name_new
+                cal.log({"Update ModelName": {
+                    "tidx": selected.ser,
+                    "old": model_name_old,
+                    "new": model_name_new
+                }})
+
+            if dealer_old != dealer_new:
+                selected.dealer = dealer_new
+                cal.log({"Update Dealer": {
+                    "tidx": selected.ser,
+                    "old": dealer_old,
+                    "new": dealer_new
+                }})
+
+            if status_old != status_new:
+                selected.status = status_new
+                cal.log({"Update Status": {
+                    "tidx": selected.ser,
+                    "old": status_old,
+                    "new": status_new
+                }})
+
+            if beam_old != beam_new:
+                selected.beam = beam_new
+                cal.log({"Update Beam": {
+                    "tidx": selected.ser,
+                    "old": beam_old,
+                    "new": beam_new
+                }})
+
+            if start_date_old != start_date_new:
+                selected.job_start = start_date_new
+                cal.log({"Update Beam": {
+                    "tidx": selected.ser,
+                    "old": start_date_old,
+                    "new": start_date_new
+                }})
+
+    def tctl_undo_click(self):
+        pass
 
 
 # def rect2_to_tkinter(rect):
