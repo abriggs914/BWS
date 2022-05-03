@@ -30,6 +30,9 @@ class CalendarTile2:
         self.colour_hovered = colour_hovered
         self.colour_dragging = colour_dragging
 
+        self.drag_x = 0
+        self.drag_y = 0
+
         self.selected = False
         self.dragging = False
         self.hovered = False
@@ -177,6 +180,7 @@ class PSCalendar2:
         return (i // self.cols), (i % self.cols)
 
     def x_y_to_r_c(self, x, y, rect):
+        """Get the row and column indices for the tile located at x, y inside the binding rect. None, None if x, y cannot be mapped."""
         for i, tile in enumerate(self.tiles):
             r, c = self.i_to_r_c(i)
             rect_calc = self.get_rect(i, rect)
@@ -190,13 +194,34 @@ class PSCalendar2:
                 return r, c
 
         print("Could not map x and y: ({}, {})".format(x, y))
+        return None, None
+
+    def tile_at_x_y(self, x, y, rect):
+        """Get the tile object located at x, y inside the binding rect. None if x, y cannot be mapped."""
+        r, c = self.x_y_to_r_c(x, y, rect)
+        if r is not None:
+            return self.tiles[self.r_c_to_i(r, c)]
 
     def get_dragging(self):
         return [t for t in self.tiles if t.dragging]
 
     def set_dragging(self, drag_idx):
+        if isinstance(drag_idx, list) and not drag_idx:
+            self._dragging = []
+            return
         self._dragging.append(drag_idx)
         self.tiles[drag_idx].dragging = True
+        for i in range(len(self.tiles)):
+            if i in self._dragging:
+                self.tiles[i].dragging = True
+            else:
+                self.tiles[i].dragging = False
+
+    def clear_dragging(self):
+        for ti in self._dragging:
+            tile = self.tiles[ti]
+            tile.dragging = False
+        self._dragging = []
 
     def del_dragging(self):
         del self._dragging
@@ -205,6 +230,9 @@ class PSCalendar2:
         return [t for t in self.tiles if t.selected]
 
     def set_selected(self, drag_idx):
+        if isinstance(drag_idx, list) and not drag_idx:
+            self._selected = []
+            return
         if drag_idx not in self._selected:
             self._selected.append(drag_idx)
             self._selected = self._selected[-(self.max_n_selected):]
@@ -217,6 +245,11 @@ class PSCalendar2:
             self._selected.remove(drag_idx)
             self.tiles[drag_idx].selected = not self.tiles[drag_idx].selected
 
+    def clear_selected(self):
+        for ti in self._selected:
+            tile = self.tiles[ti]
+            tile.selected = False
+        self._selected = []
 
     def del_selected(self):
         del self._selected

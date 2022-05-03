@@ -1234,6 +1234,23 @@ class PSCCalendarFrame(tkinter.Tk):
             # print(f"line: {cal.lines[i]}, lr: {line_rect}")
             # p / 0
 
+        dragging = cal.get_dragging()
+        if dragging:
+            for tile in dragging:
+                ti = tile.ser
+                tile = cal.tiles[ti]
+                # rh = cal.row_height(ti, canvas_rect)
+                # cw = cal.col_width(ti, canvas_rect)
+                rect = cal.get_rect(ti, canvas_rect)
+                rect2 = tkinter_to_rect2(rect)
+                rect[0] += tile.drag_x - (rect2.w / 2)
+                rect[1] += tile.drag_y - (rect2.h / 2)
+                rect[2] = rect[0] + rect2.w
+                rect[3] = rect[1] + rect2.h
+                tile.drag_x = 0
+                tile.drag_y = 0
+                canvas.create_rectangle(rect, fill=rgb_to_hex(tile.colour_dragging))
+
         # draw_canvas(cal, canvas, canvas_header_top, canvas_header_left)
         canvas.update()
         canvas_header_top.update()
@@ -1257,7 +1274,7 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas_rect = self.get_current_cal_canvas_rect()
         r, c = cal.x_y_to_r_c(x, y, canvas_rect)
         tile_n = cal.r_c_to_i(r, c)
-        print(f"x, y : {x}, {y}, r,c: ({r}, {c}), w,h: ({cal.col_width(c, canvas_rect)}, {cal.row_height(r, canvas_rect)}), tile_N: {tile_n}")
+        # print(f"x, y : {x}, {y}, r,c: ({r}, {c}), w,h: ({cal.col_width(c, canvas_rect)}, {cal.row_height(r, canvas_rect)}), tile_N: {tile_n}")
         do_draw = False
         if self.USE_HOVER:
             cal.set_zoom(tile_n)
@@ -1276,22 +1293,38 @@ class PSCCalendarFrame(tkinter.Tk):
         self.draw_calendar()
         
     def drag(self, event):
-        print(f"dragging: e: {event}")
         cal = self.get_current_calendar()
         canvas = self.get_current_cal_canvas()
         canvas_rect = self.get_current_cal_canvas_rect()
         dragging = cal.get_dragging()
+        selected = cal.get_selected()
         x2, y2 = event.x, event.y
-        if dragging:
-            for ti in dragging:
-
-                tile = cal.tiles[ti]
-                rh = cal.row_height(ti)
-                cw = cal.col_width(ti)
-                rect = cal.get_rect(ti, canvas_rect)
-                rect[0] += x2
-                rect[1] += y2
-                canvas.create_rectangle(rect, fill=rgb_to_hex(tile.colour_dragging))
+        if selected:
+            for tile in selected:
+                cal.dragging = tile.ser
+                x1, y1, w, h = cal.get_rect(tile.ser, canvas_rect)
+                xd = 1
+                yd = 1
+                if x2 < x1:
+                    xd *= -1
+                if y2 < y1:
+                    yd *= -1
+                tile.drag_x = x2 - x1
+                tile.drag_y = y2 - y1
+        dragging = cal.get_dragging()
+        print(f"dragging: e: {event}, drag: {dragging}")
+        self.draw_calendar()
+        # dragging = cal.get_dragging()
+        # if dragging:
+        #     for tile in dragging:
+        #         ti = tile.ser
+        #         tile = cal.tiles[ti]
+        #         # rh = cal.row_height(ti, canvas_rect)
+        #         # cw = cal.col_width(ti, canvas_rect)
+        #         rect = cal.get_rect(ti, canvas_rect)
+        #         rect[0] += x2
+        #         rect[1] += y2
+        #         canvas.create_rectangle(rect, fill=rgb_to_hex(tile.colour_dragging))
 
     def click(self, event):
         x, y = event.x, event.y
@@ -1310,6 +1343,19 @@ class PSCCalendarFrame(tkinter.Tk):
         print(f"Bclick: e: {event}, tile.selected: {tile.selected}")
         self.update_tile_control()
 
+    def release(self, event):
+        cal = self.get_current_calendar()
+        canvas_rect = self.get_current_cal_canvas_rect()
+        x, y = event.x, event.y
+        tile = cal.tile_at_x_y(x, y, canvas_rect)
+        dragging = cal.get_dragging()
+        if dragging and tile:
+            # TODO release a dragging tile over an existing tile.
+            pass
+        cal.clear_dragging()
+        cal.clear_selected()
+        self.draw_calendar()
+
     def update_tile_control(self):
         cal = self.get_current_calendar()
         selected = cal.get_selected()
@@ -1321,16 +1367,18 @@ class PSCCalendarFrame(tkinter.Tk):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         for i, tab in enumerate(self.TABS):
             canvas = self.TAB_DATA[i]["canvas_cal"]
-            if i == self.CAL_IDX:
-                canvas.bind("<Motion>", self.hover)
-                canvas.bind("<Leave>", self.leave)
-                canvas.bind("<B1-Motion>", self.drag)
-                canvas.bind("<Button-1>", self.click)
-            else:
-                canvas.unbind("<Motion>")
-                canvas.unbind("<Leave>")
-                canvas.unbind("<B1-Motion>")
-                canvas.unbind("<Button-1>")
+            bindings = {
+                "<Motion>": self.hover,
+                "<Leave>": self.leave,
+                "<B1-Motion>": self.drag,
+                "<Button-1>": self.click,
+                "<ButtonRelease-1>": self.release
+            }
+            for bnd, fnc in bindings.items():
+                if i == self.CAL_IDX:
+                    canvas.bind(bnd, fnc)
+                else:
+                    canvas.unbind(bnd)
 
 
 # def rect2_to_tkinter(rect):
