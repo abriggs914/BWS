@@ -24,6 +24,7 @@ class CalendarTile2:
         # use RGB values and tuples. will be converted to hex via rgb_to_hex()
         self.colour = colour
         self.colour_border = colour_border
+        self.og_colour_border = colour_border
         self.colour_font = colour_font
 
         self.colour_selected = colour_selected
@@ -58,7 +59,7 @@ class CalendarTile2:
         return self.line[:3] == "GNK"
 
     def is_t(self):
-        return self.line[:3] == "T"
+        return self.line[0] == "T"
 
     def is_top_level_wo(self):
         return str(self.wo_num)[:4] == "1001"
@@ -250,10 +251,13 @@ class PSCalendar2:
             return self.tiles[self.r_c_to_i(r, c)]
 
     def swap_tiles(self, tile_a, tile_b):
+        """Used to swap exactly 2 tiles in the tiles list."""
         old_ser = tile_a.ser
         new_ser = tile_b.ser
 
         tile_a.ser, tile_b.ser = tile_b.ser, tile_a.ser
+        tile_a.i, tile_b.i = tile_b.i, tile_a.i
+        tile_a.j, tile_b.j = tile_b.j, tile_a.j
         tile_a.line, tile_b.line = tile_b.line, tile_a.line
         tile_a.date, tile_b.date = tile_b.date, tile_a.date
 
@@ -673,16 +677,16 @@ class PSCalendar2:
             return
         self.dealer_highlights[idx] = None
 
-    def highlight_dealer(self, d_name, colour_code, stock_colour=None, idx=None):
-        stock_colour = stock_colour if stock_colour is not None else colour_code
-        if idx is not None:
-            self.dealer_highlights[idx] = (d_name, colour_code, stock_colour)
-        else:
-            if None in self.dealer_highlights:
-                self.dealer_highlights[self.dealer_highlights.index(None)] = (d_name, colour_code, stock_colour)
-            else:
-                self.dealer_highlights = [(d_name, colour_code, stock_colour)] + self.dealer_highlights[1:]
-        print("post highlights:", self.dealer_highlights)
+    def highlight_dealer(self, d_name, colour_code, idx, stock_colour=None):
+        self.dealer_highlights[idx] = (d_name, colour_code, stock_colour)
+        highlighted_dealers = [dh[0] for dh in self.dealer_highlights if dh]
+        for i, tile in enumerate(self.tiles):
+            dealer = tile.dealer
+            if dealer == d_name:
+                print(f"highlight tile: {i} from {tile.colour_border} to {colour_code}")
+                tile.colour_border = colour_code
+            elif dealer not in highlighted_dealers:
+                tile.colour_border = tile.og_colour_border
 
     def date(self, date_idx, inc_y=True, inc_m=True, inc_d=True):
         fmt = ""

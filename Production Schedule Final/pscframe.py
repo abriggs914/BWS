@@ -41,7 +41,8 @@ class PSCCalendarFrame(tkinter.Tk):
             min_tile_h=15,
             max_tile_w=100,
             max_tile_h=50,
-            ASSERT_SAME_LINE_SWAP=True
+            ASSERT_SAME_LINE_SWAP=True,
+            border_width=2
     ):
         super().__init__()
         self._width = width_p
@@ -59,6 +60,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
+        self.border_width = border_width
 
         self.LOADED = tkinter.BooleanVar(value=False)
         self.lb_dealer_1 = tkinter.StringVar()
@@ -134,6 +136,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 "TILE_OUTLINE_DBLC": WHITE,
                 "TILE_FONT_DBLC": ("Arial", 17),
 
+                "DEFAULT_BACKGROUND": WHITE,
                 "WEEKEND_DIV": ORANGE_2,
                 "FRAME_TOP_CAL_BG": BROWN_4,
                 "DRAG_PLACEMENT_MARKER_ARROW_1": EMERALDGREEN,
@@ -181,6 +184,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.frame_top_calendar = None
         self.frame_tile_action = None
         self.frame_calendar_control = None
+        self.frame_menu_controls = None
         self.frame_calendar_search_control = None
         self.frame_calendar_search_entries = None
         self.frame_calendar_control_btns = None
@@ -242,7 +246,14 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_tv_start_date = tkinter.StringVar()
 
         self.tctl_btn_save = None
-        self.tctl_btn_undo = None
+        # self.tctl_btn_undo = None
+
+        self.combo_available_units_for_date = None
+        self.lb_chosen_new_unit = tkinter.StringVar()
+        self.tctl_add_new_tile = None
+
+        self.mctl_btn_update_server = None
+        self.mctl_btn_undo = None
 
         self.tab_data = []
         self.TAB_DATA = []
@@ -267,6 +278,8 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.populate_tab_data()
         self.init_splash_menu()
         self.init_calendar_menu()
+        self.init_tile_control()
+        self.init_menu_control()
         self.update_title()
         self.update_geometry()
 
@@ -431,6 +444,7 @@ class PSCCalendarFrame(tkinter.Tk):
 
         self.pack_calendar()
         self.pack_tile_action()
+        self.pack_menu_controls()
 
         # cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
         cal = self.get_current_calendar()
@@ -461,6 +475,10 @@ class PSCCalendarFrame(tkinter.Tk):
 
         print(f"Zoomed rows: {cal.zoomed_rows()}")
         print(f"Zoomed cols: {cal.zoomed_cols()}")
+
+        # ensure that only n_cals are being used. Post processing... :(
+        self.TABS = self.TABS[:n_cals]
+        self.TABS = self.TAB_NAMES[:n_cals]
 
         self.draw_calendar()
         self.bind_calendar()
@@ -537,6 +555,11 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def reset_dealer_1(self, *events):
         print("reset_dealer_1")
+        self.lb_dealer_1.set("")
+        style = self.STYLES["DEFAULT"]
+        btn_1 = self.btn_dealer_colour_1
+        btn_1.config(bg=rgb_to_hex(style["DEFAULT_BACKGROUND"]), activebackground=rgb_to_hex(style["DEFAULT_BACKGROUND"]), text="")
+        btn_1.update()
 
     def reset_dealer_2(self, *events):
         print("reset_dealer_2")
@@ -560,9 +583,8 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def colour_chooser_1(self, event):
         cal = self.get_current_calendar()
-        cal.unhighlight_dealer(2)
+        cal.unhighlight_dealer(0)
         rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
-        print("colour_code:", colour_code)
         if colour_code is None:
             return
 
@@ -573,9 +595,9 @@ class PSCCalendarFrame(tkinter.Tk):
 
         d_name = self.lb_dealer_1.get()
         if d_name is not None and d_name:
-            for i, tab_dat in enumerate(self.TAB_DATA):
+            for i, tab_dat in enumerate(self.TABS):
                 c = self.TAB_DATA[i]["Cal"]
-                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
                 c.highlight_dealer(d_name, colour_code, 0)
         # cal.canvas.focus_set()
         # cal.draw_canvas()
@@ -588,7 +610,17 @@ class PSCCalendarFrame(tkinter.Tk):
         pass
 
     def update_dealer_1(self, *args):
-        pass
+        print("updating dealer_1")
+        cal = self.get_current_calendar()
+        btn_1 = self.btn_dealer_colour_1
+        colour_code = btn_1["bg"]
+        d_name = self.lb_dealer_1.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(self.TABS):
+                c = self.TAB_DATA[i]["Cal"]
+                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 0)
+        self.draw_calendar()
 
     def update_dealer_2(self, *args):
         pass
@@ -800,7 +832,7 @@ class PSCCalendarFrame(tkinter.Tk):
         colour_t_line_tile = style["T_LINE"]
         colour_gnk_line_tile = style["GNK_LINE"]
         switch_week_divs = True
-        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=2, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h, max_n_selected=self.max_n_selected, colour_beam_line_tile=colour_beam_line_tile, colour_t_line_tile=colour_t_line_tile, colour_gnk_line_tile=colour_gnk_line_tile)
+        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=self.border_width, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h, max_n_selected=self.max_n_selected, colour_beam_line_tile=colour_beam_line_tile, colour_t_line_tile=colour_t_line_tile, colour_gnk_line_tile=colour_gnk_line_tile)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -931,7 +963,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width)
 
         self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save", name="save_btn")
-        self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
+        # self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
 
         self.TABS_tile_control[0].update({
             "widgets": [
@@ -948,7 +980,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 self.tctl_label_start_date,
                 self.tctl_entry_start_date,
                 self.tctl_btn_save,
-                self.tctl_btn_undo
+                # self.tctl_btn_undo
             ],
             "arguments": [
                 {"row": 1, "column": 1},
@@ -965,14 +997,26 @@ class PSCCalendarFrame(tkinter.Tk):
                 {"row": 6, "column": 2},
                 {"row": 7, "column": 1},
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
-                {"row": 7, "column": 2},
+                # {"row": 8, "column": 2},  # Omitting for now
             ]
         })
 
         root_tab_2 = self.TABS_tile_control[1]["frame"]
+        self.combo_available_units_for_date = ttk.Combobox(root_tab_2, textvariable=self.lb_chosen_new_unit)
+        self.tctl_add_new_tile = tkinter.Button(root_tab_2, command=self.date_new_unit)
+
+        # TODO HARDCODED
+        self.combo_available_units_for_date["values"] = ["A", "B", "C"]
+
         self.TABS_tile_control[1].update({
-            "widgets": [],
-            "arguments": []
+            "widgets": [
+                self.combo_available_units_for_date,
+                self.tctl_add_new_tile
+            ],
+            "arguments": [
+                {"row": 1, "column": 1, "columnspan": 2},
+                {"row": 2, "column": 1}
+            ]
         })
 
         root_tab_3 = self.TABS_tile_control[2]["frame"]
@@ -986,6 +1030,11 @@ class PSCCalendarFrame(tkinter.Tk):
             tab = tab_dat["frame"]
             tab_name = tab_dat["name"]
             self.notebook_tile_control.add(tab, text=tab_name)
+
+    def init_menu_control(self):
+        self.frame_menu_controls = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
+        self.mctl_btn_update_server = tkinter.Button(self.frame_menu_controls, command=self.save_changes_update_server, text="save changes and update server")
+        self.mctl_btn_undo = tkinter.Button(self.frame_menu_controls, command=self.menu_control_undo_click, text="undo")
 
     def init_calendar_menu(self):
         self.HEADER_TOP_WIDTH = self.width
@@ -1005,7 +1054,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.frame_top_calendar = tkinter.Frame(self, height=500, bg=rgb_to_hex(style["FRAME_TOP_CAL_BG"]))
         self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar, width=325)
 
-        self.frame_calendar_control = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
+        self.frame_calendar_control = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(NAVY))
         self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
         self.frame_calendar_search_entries = tkinter.Frame(self.frame_calendar_control)
         self.frame_calendar_control_btns = tkinter.Frame(self.frame_calendar_control)
@@ -1048,7 +1097,6 @@ class PSCCalendarFrame(tkinter.Tk):
         self.btn_reset_dealer_3 = tkinter.Button(self.frame_dealer_colour_select_c3, text="Reset", command=self.reset_dealer_3)
 
         self.frame_tile_action = tkinter.Frame(self.frame_top_calendar)
-        self.init_tile_control()
 
     def pack_splash(self):
         self.splash_logo_bws.pack(side=tkinter.LEFT, padx=10, pady=20)
@@ -1118,6 +1166,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.frame_calendar_search_control.pack(side=tkinter.LEFT)
         # frame_calendar_control.pack(side=tkinter.LEFT)
         self.frame_calendar_control.pack(side=tkinter.RIGHT)
+        self.frame_menu_controls.pack(side=tkinter.RIGHT)
         self.btn_calendar_use_hover.pack()
         self.btn_calendar_export_pdf_full.pack()
         self.btn_calendar_export_pdf.pack()
@@ -1135,6 +1184,11 @@ class PSCCalendarFrame(tkinter.Tk):
             self.TAB_DATA[i]["canvas_header_top"].pack()
             self.TAB_DATA[i]["canvas_cal"].pack()
         self.notebook_tab_control.pack(expand=1, fill="x")
+
+    def pack_menu_controls(self):
+        self.frame_menu_controls.pack()
+        self.mctl_btn_update_server.pack()
+        self.mctl_btn_undo.pack()
 
     def pack_tile_action(self):
         self.notebook_tile_control.pack()
@@ -1394,9 +1448,11 @@ class PSCCalendarFrame(tkinter.Tk):
             # bgc = rgb_to_hex(darken(random_colour(), 0.25))
             outline = rgb_to_hex(cal.tiles[i].colour_border)
 
-            for d_name, colour_code, stock_colour in dealer_highlights:
-                if tile.dealer == d_name:
-                    tile.outline = colour_code
+            # for d_name_colour_code_stock_colour in dealer_highlights:
+            #     if d_name_colour_code_stock_colour:
+            #         d_name, colour_code, stock_colour = d_name_colour_code_stock_colour
+            #         if tile.dealer == d_name:
+            #             tile.outline = colour_code
 
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
             tt = tile.wo_num if tile.wo_num is not None else ""
@@ -1634,6 +1690,7 @@ class PSCCalendarFrame(tkinter.Tk):
         x, y = event.x, event.y
         tile = cal.tile_at_x_y(x, y, canvas_rect)
         dragging = cal.get_dragging()
+        do_swap = False
         if dragging and tile:
             # TODO release a dragging tile over an existing tile.
             is_empty = tile.is_empty()
@@ -1641,20 +1698,26 @@ class PSCCalendarFrame(tkinter.Tk):
             print(f"releasing over tile: {tile.ser}")
             if is_empty:
                 print(f"inserting drag_tile: {drag_tile.ser}, into tile space {tile.ser}")
+                do_swap = True
             else:
                 print(f"NEED TO SWAP")
-            do_swap = True
-            if self.ASSERT_SAME_LINE_SWAP:
-                if drag_tile.line != tile.line:
-                    do_swap = False
-                    easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
+                self.shift_line_units(tile, 1)
+                cal.clear_selected()
+
             if do_swap:
+                if self.ASSERT_SAME_LINE_SWAP:
+                    if drag_tile.line != tile.line:
+                        do_swap = False
+                        easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
+
                 cal.swap_tiles(drag_tile, tile)
+                cal.clear_selected()
+            # else:
+
 
         self.DRAG_PLACEMENT_MARKER_1 = None
         self.DRAG_PLACEMENT_MARKER_2 = None
         cal.clear_dragging()
-        cal.clear_selected()
         self.draw_calendar()
 
     def update_tile_control(self):
@@ -1778,6 +1841,42 @@ class PSCCalendarFrame(tkinter.Tk):
     def tctl_undo_click(self):
         print("undo!!")
 
+    def save_changes_update_server(self):
+        print("save_changes_update_server")
+
+    def menu_control_undo_click(self):
+        print("menu_control_undo_click")
+
+    def shift_line_units(self, start_tile, n_days=1):
+        n_days = 1  # TODO HARDCODED THIS CAP
+        line = start_tile.line
+        curr_cal = self.get_current_calendar()
+        start_row, start_col = start_tile.i, start_tile.j
+
+        stop_col = start_tile.j
+        for i in range(len(self.TABS) - 1, self.CAL_IDX - 1, -1):
+            cal = self.TAB_DATA[i]["Cal"]
+            print(f"i: {i}, cal: {cal}")
+            line_idx = cal.lines.index(line)
+            if i > self.CAL_IDX:
+                stop_col = 0
+            for j in range(cal.cols - 1, stop_col, -1):
+                k1 = cal.r_c_to_i(line_idx, j)
+                k2 = cal.r_c_to_i(line_idx, j - 1)
+                tile_a = cal.tiles[k1]
+                tile_b = cal.tiles[k2]
+                print(f"SWAP a: {tile_a.ser}, b: {tile_b.ser}")
+                if tile_a.ser == cal.cols - 1:
+                    # TODO this just cycles the entire line
+                    print("swapping to next calendar")
+                # if abs(tile_a.ser - tile_b.ser) != 1:
+                #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
+                cal.swap_tiles(tile_a, tile_b)
+
+        # drawing the calendar on return to calling function
+
+    def date_new_unit(self):
+        print("DATING NEW UNIT")
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
