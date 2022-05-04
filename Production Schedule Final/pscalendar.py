@@ -57,6 +57,9 @@ class CalendarTile2:
     def is_gnk(self):
         return self.line[:3] == "GNK"
 
+    def is_t(self):
+        return self.line[:3] == "T"
+
     def is_top_level_wo(self):
         return str(self.wo_num)[:4] == "1001"
 
@@ -113,6 +116,13 @@ class CalendarTile2:
     def is_empty(self):
         return self.wo_num is None
 
+    def __copy__(self):
+        # ct = CalendarTile2(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
+        #                   self.outline, self.text)
+        ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging)
+        ct.set_data(*self.get_data())
+        return ct
+
     def __repr__(self):
         return f"<CT line: {self.line}, date: {self.date}, ({self.i}, {self.j}), ser: {self.ser}>"
 
@@ -123,7 +133,7 @@ class PSCalendar2:
         def __init__(self, message):
             pass
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1):
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, colour_beam_line_tile, colour_t_line_tile, colour_gnk_line_tile, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -141,6 +151,9 @@ class PSCalendar2:
         self.border_width = border_width
         self.switch_week_divs = switch_week_divs
         self.weekend_div_colour = colour_weekend_div
+        self.colour_beam_line_tile = colour_beam_line_tile
+        self.colour_t_line_tile = colour_t_line_tile
+        self.colour_gnk_line_tile = colour_gnk_line_tile
         self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
         self.max_n_zoomed_cols = max_n_zoomed_cols
@@ -175,6 +188,15 @@ class PSCalendar2:
             # idx = (self.cols * (i // self.rows)) + (i % self.cols)
             idx = i
             # print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
+
+            # recolour
+            if tile.is_beam():
+                tile.colour = self.colour_beam_line_tile
+            elif tile.is_gnk():
+                tile.colour = self.colour_gnk_line_tile
+            elif tile.is_t():
+                tile.colour = self.colour_t_line_tile
+
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
                 # print("data_row:", data_row)
@@ -188,6 +210,9 @@ class PSCalendar2:
                 job_start = data_row["JobStartDate"].tolist()[0]
                 self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start)
 
+        self.og_tiles = [tile.__copy__() for tile in self.tiles]
+        self.dealers = tuple(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))
+        self.dealer_highlights = [None, None, None]
         print("tiles: ")
         print_by_line([t.info_dict() for t in self.tiles])
         print(f"data: {self.data}")
@@ -639,6 +664,26 @@ class PSCalendar2:
         # # # print(f"XXXX: {Rect2(x + (c * tw), y + (r * th), tw, th).sq_rect()}")
         # # return tkinter_to_rect2(list(Rect2(x + (c * tw), y + (r * th), tw, th))[:4])
 
+    # def set_always_highlight_dealer(self, val):
+    #     self.always_highlight_dealers = True if val else False
+
+    def unhighlight_dealer(self, idx=None):
+        if idx is None:
+            self.dealer_highlights = [None, None, None]
+            return
+        self.dealer_highlights[idx] = None
+
+    def highlight_dealer(self, d_name, colour_code, stock_colour=None, idx=None):
+        stock_colour = stock_colour if stock_colour is not None else colour_code
+        if idx is not None:
+            self.dealer_highlights[idx] = (d_name, colour_code, stock_colour)
+        else:
+            if None in self.dealer_highlights:
+                self.dealer_highlights[self.dealer_highlights.index(None)] = (d_name, colour_code, stock_colour)
+            else:
+                self.dealer_highlights = [(d_name, colour_code, stock_colour)] + self.dealer_highlights[1:]
+        print("post highlights:", self.dealer_highlights)
+
     def date(self, date_idx, inc_y=True, inc_m=True, inc_d=True):
         fmt = ""
         if inc_y:
@@ -662,6 +707,7 @@ class PSCalendar2:
     def log(self, log_dat_in):
         now = dt.datetime.now()
         self.LOG[now] = log_dat_in
+        print(f"new log: n: {len(self.LOG)}")
 
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
