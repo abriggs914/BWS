@@ -3,7 +3,7 @@ GO
 
 SELECT * FROM [WipMaster] WHERE [Job] <= '50000494' ORDER BY [Job]
 SELECT * FROM [WipMaster] WHERE [Job] >= '50000494' ORDER BY [Job]
-SELECT * FROM [BWSdb].[dbo].[Restorations] WHERE [Restorations].ResJob = '50000494'
+--SELECT * FROM [BWSdb].[dbo].[Restorations] WHERE [Restorations].ResJob = '50000494'
 
 
 SELECT * FROM [WipMaster] WHERE [Job] = '50000494' OR [Job] = '5000494'
@@ -11,6 +11,8 @@ SELECT * FROM [BWSdb].[dbo].[Restorations] WHERE [Restorations].[ResJob] = '5000
 
 SELECT * FROM [WipJobAllLab] WHERE [Job] = '50000494'
 SELECT * FROM [WipJobAllMat] WHERE [Job] = '50000494'
+SELECT * FROM [SorMaster] WHERE [Job] = '50000494'
+SELECT * FROM [SorDetail] WHERE [SorDetail].[MStockDes] LIKE '%319%' AND [MStockDes] LIKE '%QUOTE%'
 
 SELECT 
 	Restorations.ResQuote,

@@ -1,11 +1,16 @@
 USE SysproCompanyS
 GO
 
-SELECT * FROM [ClkTransaction] WHERE [InTimeFromShopClk] IS NULL
-SELECT * FROM [ClkTransaction] WHERE [EmployeeNumber] = 300019 ORDER BY [LoggedOn]
+SELECT * FROM [ClkTransaction] WHERE [EmployeeNumber] = 300019 OR [EmployeeNumber] = 300090 ORDER BY [EmployeeNumber], [LoggedOn]
 
-EXEC [sp_ClkLabourOverride] @sd='2022-05-02', @ed='2022-05-03 23:59:59'
-EXEC [sp_ClkTallyHours] @sd='2022-05-02', @ed='2022-05-03 23:59:59', @by_transaction=0
+DECLARE @sd AS DATETIME;
+DECLARE @ed AS DATETIME;
+SET @sd = '2022-05-02';
+SET @ed = '2022-05-02 23:59:59';
+
+EXEC [sp_ClkLabourOverride] @sd=@sd, @ed=@ed
+EXEC [Stargatedb].[dbo].[sp_ClkTallyWeeklyReport] @sd=@sd, @ed=@ed
+EXEC [sp_ClkTallyHours] @sd=@sd, @ed=@ed, @by_transaction=0
 
 
 SELECT

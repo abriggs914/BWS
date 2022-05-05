@@ -41,7 +41,7 @@ class PSCCalendarFrame(tkinter.Tk):
             min_tile_h=15,
             max_tile_w=100,
             max_tile_h=50,
-            ASSERT_SAME_LINE_SWAP=True,
+            ASSERT_SAME_LINE_SWAP=False,
             border_width=2
     ):
         super().__init__()
@@ -139,8 +139,8 @@ class PSCCalendarFrame(tkinter.Tk):
                 "DEFAULT_BACKGROUND": WHITE,
                 "WEEKEND_DIV": ORANGE_2,
                 "FRAME_TOP_CAL_BG": BROWN_4,
-                "DRAG_PLACEMENT_MARKER_ARROW_1": EMERALDGREEN,
-                "DRAG_PLACEMENT_MARKER_ARROW_2": YELLOW_2,
+                "DRAG_PLACEMENT_MARKER_ARROW_1": YELLOW_2,
+                "DRAG_PLACEMENT_MARKER_ARROW_2": EMERALDGREEN,
                 "TOP_HEADER_FILL": BLACK,
                 "LEFT_HEADER_FILL": BLACK,
                 "TOP_HEADER_OUTLINE": WHITE,
@@ -545,8 +545,8 @@ class PSCCalendarFrame(tkinter.Tk):
         print("Change use hover")
 
     def switch_calendar_week_divs_gsm(self, *events):
-        print("show week dividers")
         cal = self.get_current_calendar()
+        print(f"{'show' if not cal.switch_week_divs else 'hide'} week dividers")
         cal.switch_week_divs = not cal.switch_week_divs
         self.draw_calendar()
 
@@ -569,7 +569,8 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def populate_dealers_selectors(self):
         cal = self.get_current_calendar()
-        dealers = cal.dealers
+        dealers = [dealer for dealer in cal.dealers]
+        dealers.sort()
         highlights = cal.dealer_highlights
         self.btn_dealer_colour_1.bind("<Double-Button-1>", self.colour_chooser_1)
         self.btn_dealer_colour_2.bind("<Double-Button-1>", self.colour_chooser_2)
@@ -1439,6 +1440,7 @@ class PSCCalendarFrame(tkinter.Tk):
             #     continue
             # assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
             og_rect = cal.get_rect(i, canvas_rect, False)
+            cbw = cal.border_width
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             # print(f"TR: {tile_rect}")
             bgc = cal.tiles[i].colour
@@ -1458,8 +1460,28 @@ class PSCCalendarFrame(tkinter.Tk):
             tt = tile.wo_num if tile.wo_num is not None else ""
             canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{tt}")
 
-            if cal.switch_week_divs:
-                date = tile.date
+            # if cal.switch_week_divs:
+            #     date = tile.date
+            #     tomorrow = None if i == len(cal.tiles) - 1 else cal.tiles[i + 1].date
+            #     diff = None if tomorrow is None else tomorrow - date
+            #     # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
+            #     weekend_rect = None
+            #     is_monday = date.weekday() == 0  # Monday is 0
+            #     if i == 0 and is_monday:
+            #         # weekend_rect = (0, 0, cal.border_width, self.height)
+            #         weekend_rect = (0, 0, cal.border_width, self.height)
+            #     elif tomorrow is not None and diff.days > 2:
+            #         # weekend_rect = (tile_rect[2], tile_rect[1], tile_rect[2] + cal.border_width, tile_rect[3])
+            #         weekend_rect = [tile_rect[2], 0, tile_rect[2] + (cbw / 2), self.height]
+            #     if weekend_rect is not None:
+            #         colour = rgb_to_hex(cal.weekend_div_colour)
+            #         canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=cal.border_width)
+            # canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(YELLOW_2))
+
+        if cal.switch_week_divs:
+            for i, date in enumerate(cal.dates):
+                idx = cal.r_c_to_i(0, i)
+                tile_rect = cal.get_rect(idx, canvas_rect)
                 tomorrow = None if i == len(cal.tiles) - 1 else cal.tiles[i + 1].date
                 diff = None if tomorrow is None else tomorrow - date
                 # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
@@ -1470,17 +1492,16 @@ class PSCCalendarFrame(tkinter.Tk):
                     weekend_rect = (0, 0, cal.border_width, self.height)
                 elif tomorrow is not None and diff.days > 2:
                     # weekend_rect = (tile_rect[2], tile_rect[1], tile_rect[2] + cal.border_width, tile_rect[3])
-                    weekend_rect = [tile_rect[2], 0, tile_rect[2] + cbw, self.height]
+                    weekend_rect = [tile_rect[2], 0, tile_rect[2] + (cbw / 2), self.height]
                 if weekend_rect is not None:
                     colour = rgb_to_hex(cal.weekend_div_colour)
                     canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=cal.border_width)
-            # canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(YELLOW_2))
 
         # top_row_y = cal.get_rect(0, canvas_rect)
-        top_y = self.HEADER_TOP_HEIGHT + (3 * cbw)
+        top_y = self.HEADER_TOP_HEIGHT + (cbw / 2)  # + (3 * cbw)
         # raise ValueError(f"TOP Y: {top_y}")
-        left_legend_rect = Rect2(cbw, cbw, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
-        top_legend_rect = Rect2(cbw, cbw, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
+        left_legend_rect = Rect2(cbw / 2, cbw / 2, self.HEADER_LEFT_WIDTH, self.HEADER_LEFT_HEIGHT)
+        top_legend_rect = Rect2(cbw / 2, cbw / 2, self.HEADER_TOP_WIDTH, self.HEADER_TOP_HEIGHT)
         canvas_header_top.create_rectangle(*rect2_to_tkinter(top_legend_rect), fill=rgb_to_hex(style["TOP_HEADER_FILL"]), outline=rgb_to_hex(style["TOP_HEADER_OUTLINE"]), width=cbw)
         canvas_header_left.create_rectangle(*rect2_to_tkinter(left_legend_rect), fill=rgb_to_hex(style["LEFT_HEADER_FILL"]), outline=rgb_to_hex(style["LEFT_HEADER_OUTLINE"]), width=cbw)
 
@@ -1549,11 +1570,11 @@ class PSCCalendarFrame(tkinter.Tk):
             if self.DRAG_PLACEMENT_MARKER_1:
                 # mark the edges of the tile to indicate that the tiles to the right and left should make room
                 dpm = self.DRAG_PLACEMENT_MARKER_1
-                colour = style["DRAG_PLACEMENT_MARKER_ARROW_2"]
+                colour = style["DRAG_PLACEMENT_MARKER_ARROW_1"]
             elif self.DRAG_PLACEMENT_MARKER_2:
                 # mark the middle of the tile to indicate that the dragged tile should replace the current hovered tile.
                 dpm = self.DRAG_PLACEMENT_MARKER_2
-                colour = style["DRAG_PLACEMENT_MARKER_ARROW_1"]
+                colour = style["DRAG_PLACEMENT_MARKER_ARROW_2"]
             if dpm:
                 dpmr = tkinter_to_rect2(dpm)
                 pts1 = [dpmr.center[0], dpmr.top, dpmr.left - self.DPM_ARROW_WIDTH, dpmr.top - dpmr.h, dpmr.right + self.DPM_ARROW_WIDTH, dpmr.top - dpmr.h]  # down arrow
@@ -1590,6 +1611,35 @@ class PSCCalendarFrame(tkinter.Tk):
         cbw = cal.border_width
         return Rect2(cbw, cbw, self.width, self.height)
 
+    def calculate_dpms(self, event):
+        cal = self.get_current_calendar()
+        canvas = self.get_current_cal_canvas()
+        canvas_rect = self.get_current_cal_canvas_rect()
+        dragging = cal.get_dragging()
+        selected = cal.get_selected()
+        x2, y2 = event.x, event.y
+        hovering_tile = cal.tile_at_x_y(x2, y2, canvas_rect)
+        hovering_rect = cal.get_rect(hovering_tile.ser, canvas_rect, tkinter_rect=False)
+        go_left = False
+        on_edge = True
+        if (x2 < hovering_rect.center[0] and hovering_tile.j != cal.cols - 1) or hovering_tile.j == cal.cols:
+            go_left = True
+        if go_left:
+            rect = hovering_rect.x - cal.border_width, hovering_rect.top, hovering_rect.x, hovering_rect.bottom
+        else:
+            rect = hovering_rect.right, hovering_rect.top, hovering_rect.right + cal.border_width, hovering_rect.bottom
+        if hovering_rect.x + (0.3 * hovering_rect.w) <= x2 <= hovering_rect.right - (0.3 * hovering_rect.w):
+            on_edge = False
+        print(f"on_edge: {on_edge}")
+        if on_edge:
+            self.DRAG_PLACEMENT_MARKER_1 = rect
+        else:
+            rect = [hovering_rect.center[0] - (cal.border_width / 2), hovering_rect.top,
+                    hovering_rect.center[0] + (cal.border_width / 2), hovering_rect.bottom]
+            self.DRAG_PLACEMENT_MARKER_2 = rect
+
+        return selected, cal, canvas_rect, x2, y2
+
     def hover(self, event):
         x, y = event.x, event.y
         cal = self.get_current_calendar()
@@ -1615,30 +1665,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.draw_calendar()
         
     def drag(self, event):
-        cal = self.get_current_calendar()
-        canvas = self.get_current_cal_canvas()
-        canvas_rect = self.get_current_cal_canvas_rect()
-        dragging = cal.get_dragging()
-        selected = cal.get_selected()
-        x2, y2 = event.x, event.y
-        hovering_tile = cal.tile_at_x_y(x2, y2, canvas_rect)
-        hovering_rect = cal.get_rect(hovering_tile.ser, canvas_rect, tkinter_rect=False)
-        go_left = False
-        on_edge = True
-        if (x2 < hovering_rect.center[0] and hovering_tile.j != cal.cols - 1) or hovering_tile.j == cal.cols:
-            go_left = True
-        if go_left:
-            rect = hovering_rect.x - cal.border_width, hovering_rect.top, hovering_rect.x, hovering_rect.bottom
-        else:
-            rect = hovering_rect.right, hovering_rect.top, hovering_rect.right + cal.border_width, hovering_rect.bottom
-        if hovering_rect.x + (0.3 * hovering_rect.w) <= x2 <= hovering_rect.right - (0.3 * hovering_rect.w):
-            on_edge = False
-        print(f"on_edge: {on_edge}")
-        if on_edge:
-            self.DRAG_PLACEMENT_MARKER_1 = rect
-        else:
-            rect = [hovering_rect.center[0] - (cal.border_width / 2), hovering_rect.top, hovering_rect.center[0] + (cal.border_width / 2), hovering_rect.bottom]
-            self.DRAG_PLACEMENT_MARKER_2 = rect
+        selected, cal, canvas_rect, x2, y2 = self.calculate_dpms(event)
 
         if selected:
             for tile in selected:
@@ -1691,30 +1718,40 @@ class PSCCalendarFrame(tkinter.Tk):
         tile = cal.tile_at_x_y(x, y, canvas_rect)
         dragging = cal.get_dragging()
         do_swap = False
-        if dragging and tile:
+        selected, cal, canvas_rect, x2, y2 = self.calculate_dpms(event)
+        if dragging and tile and dragging != tile:
             # TODO release a dragging tile over an existing tile.
             is_empty = tile.is_empty()
             drag_tile, *drag_rest = dragging
             print(f"releasing over tile: {tile.ser}")
             if is_empty:
-                print(f"inserting drag_tile: {drag_tile.ser}, into tile space {tile.ser}")
+                print(f"inserting drag_tile: {drag_tile.ser}, into empty tile space {tile.ser}")
                 do_swap = True
             else:
-                print(f"NEED TO SWAP")
-                self.shift_line_units(tile, 1)
+                print(f"NEED TO SWAP, dpm1: {self.DRAG_PLACEMENT_MARKER_1}, dpm2: {self.DRAG_PLACEMENT_MARKER_2}")
+                if self.DRAG_PLACEMENT_MARKER_1:
+                    print("dropping on the edge")
+                elif self.DRAG_PLACEMENT_MARKER_2:
+                    print("dropping in the middle")
+                    do_swap = True
+                else:
+                    if drag_tile.line == tile.line:
+                        # same line swap
+                        self.shift_line_units(tile, 1)
+                    else:
+                        self.shift_line_units(tile, 1)
                 cal.clear_selected()
 
             if do_swap:
                 if self.ASSERT_SAME_LINE_SWAP:
                     if drag_tile.line != tile.line:
-                        do_swap = False
                         easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
 
                 cal.swap_tiles(drag_tile, tile)
                 cal.clear_selected()
             # else:
 
-
+        # ensure to delete these after calling calculate_dps
         self.DRAG_PLACEMENT_MARKER_1 = None
         self.DRAG_PLACEMENT_MARKER_2 = None
         cal.clear_dragging()
@@ -1847,13 +1884,28 @@ class PSCCalendarFrame(tkinter.Tk):
     def menu_control_undo_click(self):
         print("menu_control_undo_click")
 
+    def move_next_period(self, tile, cal_idx=None):
+        """Move a given tile from the given cal_idx to the next calendar in the same line"""
+        cal_idx = self.CAL_IDX if cal_idx is None else cal_idx
+        if cal_idx >= len(self.TABS) - 1:
+            raise ValueError(f"Error no nore calendars to move this unit forward to. {tile}")
+        line = tile.line
+        curr_cal = self.TAB_DATA[cal_idx]["Cal"]
+        next_cal = self.TAB_DATA[cal_idx + 1]["Cal"]
+        if line not in next_cal.lines:
+            raise ValueError(f"Error cannot move {tile} forward because there is no matching line in the next period.")
+        first_date = next_cal.dates[0]
+        next_cal.insert(tile)
+
     def shift_line_units(self, start_tile, n_days=1):
+        print(f"START TILE: {start_tile}")
         n_days = 1  # TODO HARDCODED THIS CAP
         line = start_tile.line
         curr_cal = self.get_current_calendar()
         start_row, start_col = start_tile.i, start_tile.j
 
         stop_col = start_tile.j
+        bring_to_end = False
         for i in range(len(self.TABS) - 1, self.CAL_IDX - 1, -1):
             cal = self.TAB_DATA[i]["Cal"]
             print(f"i: {i}, cal: {cal}")
@@ -1865,14 +1917,23 @@ class PSCCalendarFrame(tkinter.Tk):
                 k2 = cal.r_c_to_i(line_idx, j - 1)
                 tile_a = cal.tiles[k1]
                 tile_b = cal.tiles[k2]
-                print(f"SWAP a: {tile_a.ser}, b: {tile_b.ser}")
-                if tile_a.ser == cal.cols - 1:
+                # print(f"SWAP a: {tile_a.ser}, b: {tile_b.ser}")
+                if not tile_a.is_empty() and tile_a.j == cal.cols - 1:
                     # TODO this just cycles the entire line
                     print("swapping to next calendar")
-                # if abs(tile_a.ser - tile_b.ser) != 1:
-                #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
-                cal.swap_tiles(tile_a, tile_b)
+                    if not tile_b.is_empty() and tile_b.j == cal.cols - 2:
+                        bring_to_end = True
+                    self.move_next_period(tile_a)
+                    cal.delete(tile_a)
+                else:
+                    # if abs(tile_a.ser - tile_b.ser) != 1:
+                    #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
+                    cal.swap_tiles(tile_a, tile_b)
 
+            if bring_to_end:
+                print("BRINGING TO END")
+                idx = cal.r_c_to_i(start_tile.i, cal.cols - 1)
+                cal.swap_tiles(start_tile, cal.tiles[idx])
         # drawing the calendar on return to calling function
 
     def date_new_unit(self):

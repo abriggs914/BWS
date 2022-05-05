@@ -124,8 +124,11 @@ class CalendarTile2:
         ct.set_data(*self.get_data())
         return ct
 
+    def __eq__(self, other):
+        return isinstance(other, CalendarTile2) and self.wo_num == other.wo_num
+
     def __repr__(self):
-        return f"<CT line: {self.line}, date: {self.date}, ({self.i}, {self.j}), ser: {self.ser}>"
+        return f"<CT WO={'' if self.is_empty() else self.wo_num}, line: {self.line}, date: {self.date}, ({self.i}, {self.j}), ser: {self.ser}>"
 
 
 class PSCalendar2:
@@ -221,6 +224,24 @@ class PSCalendar2:
 
         self.LOG = {}
 
+    def delete(self, tile_in):
+        ser = tile_in.ser
+        i = tile_in.i
+        j = tile_in.j
+        line = tile_in.line
+        date = tile_in.date
+        colour = tile_in.colour
+        colour_border = tile_in.colour_border
+        colour_font = tile_in.colour_font
+        colour_selected = tile_in.colour_selected
+        colour_hovered = tile_in.colour_hovered
+        colour_dragging = tile_in.dragging
+        # self.swap_tiles(tile_in, CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging))
+        self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging)
+
+    def insert(self, tile_in):
+        print(f"inserting tile_in {tile_in}")
+
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
 
@@ -252,6 +273,12 @@ class PSCalendar2:
 
     def swap_tiles(self, tile_a, tile_b):
         """Used to swap exactly 2 tiles in the tiles list."""
+
+        self.log({"Swap CalendarTile": {
+            "tile_a": str(tile_a),
+            "tile_b": str(tile_a)
+        }})
+
         old_ser = tile_a.ser
         new_ser = tile_b.ser
 
@@ -712,6 +739,7 @@ class PSCalendar2:
         now = dt.datetime.now()
         self.LOG[now] = log_dat_in
         print(f"new log: n: {len(self.LOG)}")
+        print(dict_print(self.LOG, "Log"))
 
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
