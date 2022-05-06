@@ -117,6 +117,13 @@ class CalendarTile2:
     def is_empty(self):
         return self.wo_num is None
 
+    def same_tile(self, other):
+        """Return whether a tile has the same wo_num but is not the same exact tile."""
+        return isinstance(other, CalendarTile2) and all([
+            self == other,
+            self.ser != other.ser
+        ])
+
     def __copy__(self):
         # ct = CalendarTile2(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
         #                   self.outline, self.text)
@@ -137,7 +144,7 @@ class PSCalendar2:
         def __init__(self, message):
             pass
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, colour_beam_line_tile, colour_t_line_tile, colour_gnk_line_tile, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1):
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, colour_beam_line_tile, colour_t_line_tile, colour_gnk_line_tile, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1, max_log_size=1000000, highlight_last_swapped=True):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -161,6 +168,8 @@ class PSCalendar2:
         self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
         self.max_n_zoomed_cols = max_n_zoomed_cols
+        self.max_log_size = max_log_size
+        self.highlight_last_swapped = highlight_last_swapped
         self.zoomed_tile_status = {"row": {"set": set(), "ord": []}, "col": {"set": set(), "ord": []}}
 
         self.min_tile_w = min_tile_w
@@ -223,24 +232,7 @@ class PSCalendar2:
         print_by_line(self.data)
 
         self.LOG = {}
-
-    def delete(self, tile_in):
-        ser = tile_in.ser
-        i = tile_in.i
-        j = tile_in.j
-        line = tile_in.line
-        date = tile_in.date
-        colour = tile_in.colour
-        colour_border = tile_in.colour_border
-        colour_font = tile_in.colour_font
-        colour_selected = tile_in.colour_selected
-        colour_hovered = tile_in.colour_hovered
-        colour_dragging = tile_in.dragging
-        # self.swap_tiles(tile_in, CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging))
-        self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging)
-
-    def insert(self, tile_in):
-        print(f"inserting tile_in {tile_in}")
+        self.log_ids = self.init_log_ids()
 
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
@@ -271,6 +263,50 @@ class PSCalendar2:
         if r is not None:
             return self.tiles[self.r_c_to_i(r, c)]
 
+    def delete(self, tile_in):
+        self.log({
+            "Deleting CalendarTile": {
+                "tile": str(tile_in)
+            }
+        })
+        ser = tile_in.ser
+        i = tile_in.i
+        j = tile_in.j
+        line = tile_in.line
+        date = tile_in.date
+        colour = tile_in.colour
+        colour_border = tile_in.colour_border
+        colour_font = tile_in.colour_font
+        colour_selected = tile_in.colour_selected
+        colour_hovered = tile_in.colour_hovered
+        colour_dragging = tile_in.dragging
+        # self.swap_tiles(tile_in, CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging))
+        self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging)
+
+    def insert(self, tile_in):
+        print(f"inserting tile_in {tile_in} into: {self}")
+        self.log({
+            "Inserting CalendarTile": {
+                "tile": str(tile_in)
+            }
+        })
+        # line = tile_in.line
+        # j = tile_in.j
+        # i = self.lines.index(line)
+        i = tile_in.i
+        j = 0
+        idx = self.r_c_to_i(i, j)
+        tile = self.tiles[idx]
+        if tile.is_empty():
+            # place this tile here
+            self.swap_tiles(tile, tile_in)
+        else:
+            print(f"returning a tile!!! {tile}")
+            return tile
+            # pass
+            # shift this line
+            # self.swap_tiles(tile, tile_in)
+
     def swap_tiles(self, tile_a, tile_b):
         """Used to swap exactly 2 tiles in the tiles list."""
 
@@ -278,6 +314,7 @@ class PSCalendar2:
             "tile_a": str(tile_a),
             "tile_b": str(tile_a)
         }})
+        self.swap_pair = (tile_a.__copy__(), tile_b.__copy__())
 
         old_ser = tile_a.ser
         new_ser = tile_b.ser
@@ -371,10 +408,10 @@ class PSCalendar2:
         del self._dbl_clicked
 
     def get_swap_pair(self):
-        return [t for t in self.tiles if t.dbl_clicked]
+        # return [t for t in self.tiles if t.dbl_clicked]
+        return self._swap_pair
 
     def set_swap_pair(self, pair):
-        self._swap_pair.append(pair)
         self._swap_pair = pair
 
     def del_swap_pair(self):
@@ -736,15 +773,21 @@ class PSCalendar2:
         return [col for col in range(self.cols) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for row in range(self.rows)])]
 
     def log(self, log_dat_in):
-        now = dt.datetime.now()
-        self.LOG[now] = log_dat_in
-        print(f"new log: n: {len(self.LOG)}")
-        print(dict_print(self.LOG, "Log"))
+        self.LOG[self.new_log_id()] = log_dat_in
+
+    def new_log_id(self):
+        return self.log_ids.__next__()
+
+    def init_log_ids(self):
+        """Returns a generator to iterate hashable ids, ensuring no duplicates and ordering."""
+        valid_ids = range(self.max_log_size)
+        for i in valid_ids:
+            yield f"{i}||{dt.datetime.now()}"
 
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
         #                                                                self.date)
-        return "date: {}, line: {}".format(self.dates[0].strftime("%Y-%m-%d"), self.lines)
+        return "date: {} -> {}, line: {}".format(self.dates[0].strftime("%Y-%m-%d"), self.dates[-1].strftime("%Y-%m-%d"), self.lines)
 
     dragging = property(get_dragging, set_dragging, del_dragging)
     selected = property(get_selected, set_selected, del_selected)

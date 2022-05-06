@@ -1,6 +1,8 @@
+import datetime
 import itertools
 
 import easygui
+import pandas
 import pyodbc
 import tkinter
 import asyncio
@@ -42,7 +44,8 @@ class PSCCalendarFrame(tkinter.Tk):
             max_tile_w=100,
             max_tile_h=50,
             ASSERT_SAME_LINE_SWAP=False,
-            border_width=2
+            border_width=2,
+            middle_drag_placement_factor=0.3
     ):
         super().__init__()
         self._width = width_p
@@ -61,6 +64,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
         self.border_width = border_width
+        self.middle_drag_placement_factor = middle_drag_placement_factor
 
         self.LOADED = tkinter.BooleanVar(value=False)
         self.lb_dealer_1 = tkinter.StringVar()
@@ -1430,6 +1434,7 @@ class PSCCalendarFrame(tkinter.Tk):
         canvas.delete("all")
         canvas_header_left.delete("all")
         canvas_header_top.delete("all")
+        last_swap_pair = cal.swap_pair
 
         # canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(DARKGREEN), outline=rgb_to_hex(BROWN_3), width=cbw)
         # print("canvas_rect: ", canvas_rect)
@@ -1444,40 +1449,30 @@ class PSCCalendarFrame(tkinter.Tk):
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             # print(f"TR: {tile_rect}")
             bgc = cal.tiles[i].colour
+            outline = cal.tiles[i].colour_border
+            tt = tile.wo_num if tile.wo_num is not None else ""
+
+            # highlight selected tile
             if tile.selected:
                 bgc = tile.colour_selected
+
+            # highlight last swapped pair
+            if cal.highlight_last_swapped:
+                if last_swap_pair:
+                    a, b = last_swap_pair
+                    if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
+                        bgc = brighten(bgc, 0.15)
+                        outline = darken(outline, 0.15)
+
+            # convert to hex
             bgc = rgb_to_hex(bgc)
-            # bgc = rgb_to_hex(darken(random_colour(), 0.25))
-            outline = rgb_to_hex(cal.tiles[i].colour_border)
+            outline = rgb_to_hex(outline)
 
-            # for d_name_colour_code_stock_colour in dealer_highlights:
-            #     if d_name_colour_code_stock_colour:
-            #         d_name, colour_code, stock_colour = d_name_colour_code_stock_colour
-            #         if tile.dealer == d_name:
-            #             tile.outline = colour_code
-
+            # draw objects
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
-            tt = tile.wo_num if tile.wo_num is not None else ""
             canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{tt}")
 
-            # if cal.switch_week_divs:
-            #     date = tile.date
-            #     tomorrow = None if i == len(cal.tiles) - 1 else cal.tiles[i + 1].date
-            #     diff = None if tomorrow is None else tomorrow - date
-            #     # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
-            #     weekend_rect = None
-            #     is_monday = date.weekday() == 0  # Monday is 0
-            #     if i == 0 and is_monday:
-            #         # weekend_rect = (0, 0, cal.border_width, self.height)
-            #         weekend_rect = (0, 0, cal.border_width, self.height)
-            #     elif tomorrow is not None and diff.days > 2:
-            #         # weekend_rect = (tile_rect[2], tile_rect[1], tile_rect[2] + cal.border_width, tile_rect[3])
-            #         weekend_rect = [tile_rect[2], 0, tile_rect[2] + (cbw / 2), self.height]
-            #     if weekend_rect is not None:
-            #         colour = rgb_to_hex(cal.weekend_div_colour)
-            #         canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=cal.border_width)
-            # canvas.create_rectangle(*rect2_to_tkinter(canvas_rect), fill=rgb_to_hex(YELLOW_2))
-
+        # draw week dividers
         if cal.switch_week_divs:
             for i, date in enumerate(cal.dates):
                 idx = cal.r_c_to_i(0, i)
@@ -1612,10 +1607,11 @@ class PSCCalendarFrame(tkinter.Tk):
         return Rect2(cbw, cbw, self.width, self.height)
 
     def calculate_dpms(self, event):
+        """While dragging a tile, calculate the rects to draw placement arrows around the destination tile.
+            self.DRAG_PLACEMENT_MARKER_1 denotes the marker at the edge of the tile. When placed the tiles around it will shift.
+            self.DRAG_PLACEMENT_MARKER_2 denotes the marker int the middle of a tile. When placed the tile will swap with destination tile."""
         cal = self.get_current_calendar()
-        canvas = self.get_current_cal_canvas()
         canvas_rect = self.get_current_cal_canvas_rect()
-        dragging = cal.get_dragging()
         selected = cal.get_selected()
         x2, y2 = event.x, event.y
         hovering_tile = cal.tile_at_x_y(x2, y2, canvas_rect)
@@ -1628,7 +1624,7 @@ class PSCCalendarFrame(tkinter.Tk):
             rect = hovering_rect.x - cal.border_width, hovering_rect.top, hovering_rect.x, hovering_rect.bottom
         else:
             rect = hovering_rect.right, hovering_rect.top, hovering_rect.right + cal.border_width, hovering_rect.bottom
-        if hovering_rect.x + (0.3 * hovering_rect.w) <= x2 <= hovering_rect.right - (0.3 * hovering_rect.w):
+        if hovering_rect.x + (self.middle_drag_placement_factor * hovering_rect.w) <= x2 <= hovering_rect.right - (self.middle_drag_placement_factor * hovering_rect.w):
             on_edge = False
         print(f"on_edge: {on_edge}")
         if on_edge:
@@ -1729,9 +1725,10 @@ class PSCCalendarFrame(tkinter.Tk):
                 do_swap = True
             else:
                 print(f"NEED TO SWAP, dpm1: {self.DRAG_PLACEMENT_MARKER_1}, dpm2: {self.DRAG_PLACEMENT_MARKER_2}")
-                if self.DRAG_PLACEMENT_MARKER_1:
-                    print("dropping on the edge")
-                elif self.DRAG_PLACEMENT_MARKER_2:
+                # if self.DRAG_PLACEMENT_MARKER_1:
+                #     print("dropping on the edge")
+                # elif self.DRAG_PLACEMENT_MARKER_2:
+                if self.DRAG_PLACEMENT_MARKER_2:
                     print("dropping in the middle")
                     do_swap = True
                 else:
@@ -1743,6 +1740,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 cal.clear_selected()
 
             if do_swap:
+                print("PERFORMING SWAP")
                 if self.ASSERT_SAME_LINE_SWAP:
                     if drag_tile.line != tile.line:
                         easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
@@ -1750,6 +1748,8 @@ class PSCCalendarFrame(tkinter.Tk):
                 cal.swap_tiles(drag_tile, tile)
                 cal.clear_selected()
             # else:
+        elif tile == dragging:
+           print("can't replace a tile with the same tile")
 
         # ensure to delete these after calling calculate_dps
         self.DRAG_PLACEMENT_MARKER_1 = None
@@ -1887,15 +1887,52 @@ class PSCCalendarFrame(tkinter.Tk):
     def move_next_period(self, tile, cal_idx=None):
         """Move a given tile from the given cal_idx to the next calendar in the same line"""
         cal_idx = self.CAL_IDX if cal_idx is None else cal_idx
+        curr_cal = self.TAB_DATA[cal_idx]["Cal"]
+        print(f"MOVING {tile} to next period ({cal_idx} -> {cal_idx + 1})")
         if cal_idx >= len(self.TABS) - 1:
-            raise ValueError(f"Error no nore calendars to move this unit forward to. {tile}")
+
+            curr_cal.log({
+                "Moving CalendarTileNextPeriod": {
+                    "tile": str(tile),
+                    "cal_idx": cal_idx
+                }
+            })
+            raise PSCalendar2.CalendarException(f"Error no nore calendars to move this unit forward to. \n'{tile}'")
+            # lines = curr_cal.lines
+            # month_ranges = []
+            # months_ahead = 1
+            # start_date = end_of_month(curr_cal.dates[-1]) + datetime.timedelta(days=1)
+            # td = datetime2(start_date.year, start_date.month, start_date.day, start_date.hour, start_date.minute,
+            #                start_date.second)
+            # for mi in range(months_ahead):
+            #     month_ranges.append((first_of_month(td), end_of_month(td)))
+            #     td = td.add_month()
+            # start_date, end_date = month_ranges[0]
+            # # lines, dates, data = await self.get_data(start_date, end_date)
+            # data = pandas.DataFrame()
+            # dates = []
+            # td = start_date
+            # while td <= end_date:
+            #     dates.append(td)
+            #     td = td + datetime.timedelta(days=1)
+            # new_cal = self.create_calendar_p(start_date, end_date, data, lines, dates, style_in=None)
+            #
+            # # from here I have to recreate all calendar objects, add them to the pscFrame Tabs lists and redraw everything.
+            # # TODO not doing this for V1
+            # self.TABS[len(self.TABS)] =
+            # self.TAB_DATA[len(self.TABS)] =
+            # self.TAB_NAMES[len(self.TABS)] =
+
         line = tile.line
         curr_cal = self.TAB_DATA[cal_idx]["Cal"]
         next_cal = self.TAB_DATA[cal_idx + 1]["Cal"]
         if line not in next_cal.lines:
             raise ValueError(f"Error cannot move {tile} forward because there is no matching line in the next period.")
-        first_date = next_cal.dates[0]
-        next_cal.insert(tile)
+        insert_result = next_cal.insert(tile)
+        if insert_result is not None:
+            print(f"inner_result: {insert_result}")
+            # at this point, trying to insert a brand new unit on the first day of the next calendar. Need to shift line first though.
+            self.shift_line_units(insert_result)
 
     def shift_line_units(self, start_tile, n_days=1):
         print(f"START TILE: {start_tile}")
@@ -1917,24 +1954,28 @@ class PSCCalendarFrame(tkinter.Tk):
                 k2 = cal.r_c_to_i(line_idx, j - 1)
                 tile_a = cal.tiles[k1]
                 tile_b = cal.tiles[k2]
-                # print(f"SWAP a: {tile_a.ser}, b: {tile_b.ser}")
+                # print(f"SWAP i,j: ({i}, {j}) a: {tile_a.ser}, b: {tile_b.ser}")
                 if not tile_a.is_empty() and tile_a.j == cal.cols - 1:
                     # TODO this just cycles the entire line
                     print("swapping to next calendar")
                     if not tile_b.is_empty() and tile_b.j == cal.cols - 2:
                         bring_to_end = True
-                    self.move_next_period(tile_a)
                     cal.delete(tile_a)
+                    self.move_next_period(tile_a, cal_idx=i)
                 else:
                     # if abs(tile_a.ser - tile_b.ser) != 1:
                     #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
                     cal.swap_tiles(tile_a, tile_b)
 
             if bring_to_end:
+                # TODO this still dosesnt work as advertised
                 print("BRINGING TO END")
                 idx = cal.r_c_to_i(start_tile.i, cal.cols - 1)
                 cal.swap_tiles(start_tile, cal.tiles[idx])
         # drawing the calendar on return to calling function
+
+    def get_calendars(self):
+        return [self.TAB_DATA[i]["Cal"] for i in range(len(self.TABS))]
 
     def date_new_unit(self):
         print("DATING NEW UNIT")
