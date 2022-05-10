@@ -6,7 +6,7 @@ import math
 class CalendarTile2:
     """Class representing a slot in production. Associated to a trailer line and a date"""
 
-    def __init__(self, ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging):
+    def __init__(self, ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=False):
         self.ser = ser
         self.i = i
         self.j = j
@@ -39,6 +39,11 @@ class CalendarTile2:
         self.hovered = False
         self.dbl_clicked = False
         self.zoomed = False
+
+        if DO_COPY:
+            self.OG = self.__copy__()
+        else:
+            self.OG = None
 
     def set_data(self, wo, model_name, dealer, status, beam, job_start):
         self.wo_num = wo
@@ -117,6 +122,10 @@ class CalendarTile2:
     def is_empty(self):
         return self.wo_num is None
 
+    def is_edited(self):
+        print(f"COMP {self} vs {self.OG}")
+        return self != self.OG
+
     def same_tile(self, other):
         """Return whether a tile has the same wo_num but is not the same exact tile."""
         return isinstance(other, CalendarTile2) and all([
@@ -127,8 +136,9 @@ class CalendarTile2:
     def __copy__(self):
         # ct = CalendarTile2(self.param_rect, self.border_width, self.row, self.col, self.line, self.date, self.colour,
         #                   self.outline, self.text)
-        ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging)
+        ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=False)
         ct.set_data(*self.get_data())
+        print(f"\t\t{ct}")
         return ct
 
     def __eq__(self, other):
@@ -162,6 +172,7 @@ class PSCalendar2:
         self.border_width = border_width
         self.switch_week_divs = switch_week_divs
         self.weekend_div_colour = colour_weekend_div
+        self.colour_tile_general = colour_tile
         self.colour_beam_line_tile = colour_beam_line_tile
         self.colour_t_line_tile = colour_t_line_tile
         self.colour_gnk_line_tile = colour_gnk_line_tile
@@ -184,13 +195,13 @@ class PSCalendar2:
         self._swap_pair = []
 
         # Create tiles
-        colour = colour_tile
+        colour = self.colour_tile_general
         colour_border = colour_border
         colour_font = colour_font
         colour_selected = colour_selected
         colour_hovered = colour_hovered
         colour_dragging = colour_dragging
-        self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging)
+        self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
               for j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
 
         for i, tile in enumerate(self.tiles):
@@ -203,12 +214,7 @@ class PSCalendar2:
             # print("from i: {} to idx: {}, idxrc: {}".format(i, idx, idxrc))
 
             # recolour
-            if tile.is_beam():
-                tile.colour = self.colour_beam_line_tile
-            elif tile.is_gnk():
-                tile.colour = self.colour_gnk_line_tile
-            elif tile.is_t():
-                tile.colour = self.colour_t_line_tile
+            tile.colour = self.get_calendar_line_tile_colour(tile)
 
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
@@ -281,7 +287,7 @@ class PSCalendar2:
         colour_hovered = tile_in.colour_hovered
         colour_dragging = tile_in.dragging
         # self.swap_tiles(tile_in, CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging))
-        self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging)
+        self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
 
     def insert(self, tile_in):
         print(f"inserting tile_in {tile_in} into: {self}")
@@ -316,6 +322,14 @@ class PSCalendar2:
         }})
         self.swap_pair = (tile_a.__copy__(), tile_b.__copy__())
 
+        assert isinstance(tile_a, CalendarTile2)
+        assert isinstance(tile_b, CalendarTile2)
+        options = {
+            "T": lambda t: t.is_t(),
+            "B": lambda t: t.is_beam(),
+            "GNK": lambda t: t.is_gnk()
+        }
+
         old_ser = tile_a.ser
         new_ser = tile_b.ser
 
@@ -331,6 +345,26 @@ class PSCalendar2:
         # tile_a.dbl_clicked, tile_a.dbl_clicked = tile_a.dbl_clicked, tile_a.dbl_clicked
         # tile_a.zoomed, tile_a.zoomed = tile_a.zoomed, tile_a.zoomed
         self.tiles[old_ser], self.tiles[new_ser] = self.tiles[new_ser], self.tiles[old_ser]
+
+        # recolour
+        state_a = [k for k, v in options.items() if v(tile_a)][0]
+        state_b = [k for k, v in options.items() if v(tile_b)][0]
+        if state_a != state_b:
+            # if the lines change, and BOTH of the tiles are empty, change the colours back.
+            if tile_a.is_empty() and tile_b.is_empty():
+                tile_a.colour = self.get_calendar_line_tile_colour(tile_a)
+                tile_b.colour = self.get_calendar_line_tile_colour(tile_b)
+
+    def get_calendar_line_tile_colour(self, tile):
+        if tile.is_beam():
+            bgc = self.colour_beam_line_tile
+        elif tile.is_gnk():
+            bgc = self.colour_gnk_line_tile
+        elif tile.is_t():
+            bgc = self.colour_t_line_tile
+        else:
+            bgc = self.colour_tile_general
+        return bgc
 
     def get_dragging(self):
         # return [t for t in self.tiles if t.dragging]

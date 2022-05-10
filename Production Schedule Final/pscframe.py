@@ -45,7 +45,8 @@ class PSCCalendarFrame(tkinter.Tk):
             max_tile_h=50,
             ASSERT_SAME_LINE_SWAP=False,
             border_width=2,
-            middle_drag_placement_factor=0.3
+            middle_drag_placement_factor=0.3,
+            HIGHLIGHT_EDITED_TILES=True
     ):
         super().__init__()
         self._width = width_p
@@ -63,6 +64,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
+        self.HIGHLIGHTED_EDITED_TILES = HIGHLIGHT_EDITED_TILES
         self.border_width = border_width
         self.middle_drag_placement_factor = middle_drag_placement_factor
 
@@ -1463,6 +1465,11 @@ class PSCCalendarFrame(tkinter.Tk):
                     if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
                         bgc = brighten(bgc, 0.15)
                         outline = darken(outline, 0.15)
+
+            if self.HIGHLIGHTED_EDITED_TILES:
+                if tile.is_edited():
+                    print(f"tile: {tile} is edited")
+                    bgc = brighten(bgc, 0.1)
 
             # convert to hex
             bgc = rgb_to_hex(bgc)
