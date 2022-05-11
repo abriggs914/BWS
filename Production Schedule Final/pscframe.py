@@ -1468,7 +1468,7 @@ class PSCCalendarFrame(tkinter.Tk):
 
             if self.HIGHLIGHTED_EDITED_TILES:
                 if tile.is_edited():
-                    print(f"tile: {tile} is edited")
+                    print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
                     bgc = brighten(bgc, 0.1)
 
             # convert to hex

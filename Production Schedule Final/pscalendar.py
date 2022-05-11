@@ -7,13 +7,13 @@ class CalendarTile2:
     """Class representing a slot in production. Associated to a trailer line and a date"""
 
     def __init__(self, ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=False):
-        self.ser = ser
-        self.i = i
-        self.j = j
-        self.line = line
-        self.date = date
+        self._ser = ser
+        self._i = i
+        self._j = j
+        self._line = line
+        self._date = date
 
-        self.wo_num = None
+        self._wo_num = None
         self.model_name = None
         self.dealer = None
         self.status = None
@@ -39,11 +39,17 @@ class CalendarTile2:
         self.hovered = False
         self.dbl_clicked = False
         self.zoomed = False
+        self._edited = False
 
         if DO_COPY:
             self.OG = self.__copy__()
+            self.OG.set_data(*self.get_data())
+            assert not self.is_edited(), f"self should not be edited: {self}"
         else:
             self.OG = None
+
+        # Finally set edited back to False to begin recording
+        self.edited = False
 
     def set_data(self, wo, model_name, dealer, status, beam, job_start):
         self.wo_num = wo
@@ -123,8 +129,9 @@ class CalendarTile2:
         return self.wo_num is None
 
     def is_edited(self):
-        print(f"COMP {self} vs {self.OG}")
-        return self != self.OG
+        # print(f"COMP {self} vs {self.OG}")
+        assert self.OG is not None, f"self.OG is None, tile: {self}"
+        return self != self.OG or self.edited
 
     def same_tile(self, other):
         """Return whether a tile has the same wo_num but is not the same exact tile."""
@@ -138,6 +145,7 @@ class CalendarTile2:
         #                   self.outline, self.text)
         ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=False)
         ct.set_data(*self.get_data())
+        ct.edited = False
         print(f"\t\t{ct}")
         return ct
 
@@ -146,6 +154,84 @@ class CalendarTile2:
 
     def __repr__(self):
         return f"<CT WO={'' if self.is_empty() else self.wo_num}, line: {self.line}, date: {self.date}, ({self.i}, {self.j}), ser: {self.ser}>"
+
+    def get_wo_num(self):
+        return self._wo_num
+
+    def set_wo_num(self, value):
+        self._wo_num = value
+        self.edited = True
+
+    def del_wo_num(self):
+        del self._wo_num
+
+    def get_ser(self):
+        return self._ser
+
+    def set_ser(self, value):
+        self._ser = value
+        self.edited = True
+
+    def del_ser(self):
+        del self._ser
+
+    def get_i(self):
+        return self._i
+
+    def set_i(self, value):
+        self._i = value
+        self.edited = True
+
+    def del_i(self):
+        del self._i
+
+    def get_j(self):
+        return self._j
+
+    def set_j(self, value):
+        self._j = value
+        self.edited = True
+
+    def del_j(self):
+        del self._j
+
+    def get_line(self):
+        return self._line
+
+    def set_line(self, value):
+        self._line = value
+        self.edited = True
+
+    def del_line(self):
+        del self._line
+
+    def get_date(self):
+        return self._date
+
+    def set_date(self, value):
+        self._date = value
+
+    def del_date(self):
+        del self._date
+
+    def get_edited(self):
+        return self._edited
+
+    def set_edited(self, value):
+        self._edited = value
+        # if value:
+        #     raise ValueError(f"SETTING EDITED=TRUE, {self}")
+
+    def del_edited(self):
+        del self._edited
+
+    wo_num = property(get_wo_num, set_wo_num, del_wo_num)
+    ser = property(get_ser, set_ser, del_ser)
+    i = property(get_i, set_i, del_i)
+    j = property(get_j, set_j, del_j)
+    line = property(get_line, set_line, del_line)
+    date = property(get_date, set_date, del_date)
+    edited = property(get_edited, set_edited, del_edited)
 
 
 class PSCalendar2:
@@ -228,6 +314,7 @@ class PSCalendar2:
                 beam = data_row["Beam WO#"].tolist()[0]
                 job_start = data_row["JobStartDate"].tolist()[0]
                 self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start)
+                self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start)
 
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
         self.dealers = tuple(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))
