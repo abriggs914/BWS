@@ -46,7 +46,8 @@ class PSCCalendarFrame(tkinter.Tk):
             ASSERT_SAME_LINE_SWAP=False,
             border_width=2,
             middle_drag_placement_factor=0.3,
-            HIGHLIGHT_EDITED_TILES=True
+            HIGHLIGHT_EDITED_TILES=True,
+            MAX_TABS=20
     ):
         super().__init__()
         self._width = width_p
@@ -111,6 +112,9 @@ class PSCCalendarFrame(tkinter.Tk):
         self.HEADER_TOP_HEIGHT = 25
         self.DPM_ARROW_WIDTH = 5
 
+        self.tctl_preview_height = 40
+        self.tctl_preview_width = 80
+
         self.STYLES = {
             "DEFAULT": {
                 "BEAM_LINE": SLATEGRAY_4,
@@ -170,7 +174,8 @@ class PSCCalendarFrame(tkinter.Tk):
 
         # Vars specific to Production Scheduling:
         # TODO, these should be real values
-        self.TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months"]
+        self.MAX_TABS = MAX_TABS
+        self.TAB_NAMES = ["Current Period", "+1 Month", "+2 Months", "+3 Months", "+4 Months", "+5 Months", "+6 Months", "+7 Month", "+8 Months", "+9 Months", "+10 Months", "+11 Months", "+12 Months", "+13 Months", "+14 Months", "+15 Months", "+16 Months", "+17 Months", "+18 Months", "+19 Months", "+20 Months", "+21 Months"]
         self.USE_HOVER = False
         # self._calendar_index = 0
 
@@ -255,14 +260,25 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.tctl_btn_undo = None
 
         self.combo_available_units_for_date = None
+        self.combo_available_cols_for_date = None
+        self.combo_available_rows_for_date = None
+        self.label_tc_wo = None
+        self.label_tc_row = None
+        self.label_tc_col = None
         self.lb_chosen_new_unit = tkinter.StringVar()
-        self.tctl_add_new_tile = None
+        self.lb_chosen_new_row = tkinter.StringVar()
+        self.lb_chosen_new_col = tkinter.StringVar()
+        self.label_tctl_view_tile = None
+        self.canvas_tctl_view_tile = None
+        self.btn_tctl_add_new_tile = None
+        self.btn_tctl_clear_tile_combos = None
+        self.tctl_new_unit_obj = None
 
         self.mctl_btn_update_server = None
         self.mctl_btn_undo = None
 
         self.tab_data = []
-        self.TAB_DATA = []
+        self.TAB_DATA = {}
         self.TABS = []
         self.TABS_tile_control = []
         self.TCTL_IDX = None
@@ -281,10 +297,10 @@ class PSCCalendarFrame(tkinter.Tk):
         self._drawing_bounds = self.calc_drawing_bounds()  # All drawings are bounded by this Rect.
         self._tile_bounds = self.calc_tile_bounds()
         self.init_tabs()
+
         # self.populate_tab_data()
         self.init_splash_menu()
         self.init_calendar_menu()
-        self.init_tile_control()
         self.init_menu_control()
         self.update_title()
         self.update_geometry()
@@ -437,8 +453,10 @@ class PSCCalendarFrame(tkinter.Tk):
         return Rect2(r.left + self.left_cal_margin, r.top + self.top_cal_margin, r.width - self.left_cal_margin - self.right_cal_margin, r.height - self.top_cal_margin - self.bottom_cal_margin)
 
     def open(self, start_date, n_cals):
+        n_cals = min(n_cals, self.MAX_TABS)
         self.TABS = self.TABS[:n_cals]
         self.do_splash(start_date, n_cals)
+        self.init_tile_control()
         self.set_full_screen()
         self.hide_splash()
         # psc = self.TAB_DATA[self.CAL_IDX]["Cal"]
@@ -569,9 +587,19 @@ class PSCCalendarFrame(tkinter.Tk):
 
     def reset_dealer_2(self, *events):
         print("reset_dealer_2")
+        self.lb_dealer_2.set("")
+        style = self.STYLES["DEFAULT"]
+        btn_2 = self.btn_dealer_colour_2
+        btn_2.config(bg=rgb_to_hex(style["DEFAULT_BACKGROUND"]), activebackground=rgb_to_hex(style["DEFAULT_BACKGROUND"]), text="")
+        btn_2.update()
 
     def reset_dealer_3(self, *events):
         print("reset_dealer_3")
+        self.lb_dealer_3.set("")
+        style = self.STYLES["DEFAULT"]
+        btn_3 = self.btn_dealer_colour_3
+        btn_3.config(bg=rgb_to_hex(style["DEFAULT_BACKGROUND"]), activebackground=rgb_to_hex(style["DEFAULT_BACKGROUND"]), text="")
+        btn_3.update()
 
     def populate_dealers_selectors(self):
         cal = self.get_current_calendar()
@@ -611,13 +639,51 @@ class PSCCalendarFrame(tkinter.Tk):
         self.draw_calendar()
 
     def colour_chooser_2(self, event):
-        pass
+        cal = self.get_current_calendar()
+        cal.unhighlight_dealer(1)
+        rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
+        if colour_code is None:
+            return
+
+        btn_2 = self.btn_dealer_colour_2
+        btn_2.config(bg=colour_code, activebackground=colour_code)
+        btn_2.config(text=colour_code)
+        btn_2.update()
+
+        d_name = self.lb_dealer_2.get()
+        if d_name is not None and d_name:
+            for i, tab_dat in enumerate(self.TABS):
+                c = self.TAB_DATA[i]["Cal"]
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 1)
+        # cal.canvas.focus_set()
+        # cal.draw_canvas()
+        self.draw_calendar()
 
     def colour_chooser_3(self, event):
-        pass
+        cal = self.get_current_calendar()
+        cal.unhighlight_dealer(2)
+        rgb_code, colour_code = colorchooser.askcolor(title="Choose color")
+        if colour_code is None:
+            return
+
+        btn_3 = self.btn_dealer_colour_3
+        btn_3.config(bg=colour_code, activebackground=colour_code)
+        btn_3.config(text=colour_code)
+        btn_3.update()
+
+        d_name = self.lb_dealer_3.get()
+        if d_name is not None and d_name:
+            for i, tab_dat in enumerate(self.TABS):
+                c = self.TAB_DATA[i]["Cal"]
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 2)
+        # cal.canvas.focus_set()
+        # cal.draw_canvas()
+        self.draw_calendar()
 
     def update_dealer_1(self, *args):
-        print("updating dealer_1")
+        # print("updating dealer_1")
         cal = self.get_current_calendar()
         btn_1 = self.btn_dealer_colour_1
         colour_code = btn_1["bg"]
@@ -625,15 +691,35 @@ class PSCCalendarFrame(tkinter.Tk):
         if iscolour(colour_code) and d_name:
             for i, t_name in enumerate(self.TABS):
                 c = self.TAB_DATA[i]["Cal"]
-                print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
                 c.highlight_dealer(d_name, colour_code, 0)
         self.draw_calendar()
 
     def update_dealer_2(self, *args):
-        pass
+        # print("updating dealer_2")
+        cal = self.get_current_calendar()
+        btn_2 = self.btn_dealer_colour_2
+        colour_code = btn_2["bg"]
+        d_name = self.lb_dealer_2.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(self.TABS):
+                c = self.TAB_DATA[i]["Cal"]
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 1)
+        self.draw_calendar()
 
     def update_dealer_3(self, *args):
-        pass
+        # print("updating dealer_3")
+        cal = self.get_current_calendar()
+        btn_3 = self.btn_dealer_colour_3
+        colour_code = btn_3["bg"]
+        d_name = self.lb_dealer_3.get()
+        if iscolour(colour_code) and d_name:
+            for i, t_name in enumerate(self.TABS):
+                c = self.TAB_DATA[i]["Cal"]
+                # print("Highlighting c: <{}>: {}, {}".format(c, d_name, colour_code))
+                c.highlight_dealer(d_name, colour_code, 2)
+        self.draw_calendar()
 
     async def read_sql_async(self, stmt, con):
         '''
@@ -865,15 +951,8 @@ class PSCCalendarFrame(tkinter.Tk):
     def init_tabs(self):
         # List of tabs as tkinter frames
         self.notebook_tab_control = ttk.Notebook(self)
-        self.TABS = [
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control),
-            ttk.Frame(self.notebook_tab_control)
-        ]
+        self.TABS = [ttk.Frame(self.notebook_tab_control) for _ in range(self.MAX_TABS)]
+        print(f"self.TABS: len:{len(self.TABS)}")
         self.CAL_IDX = 0
 
         # Zipping Tab frames and names. Prepping for Navigation Tabs
@@ -931,6 +1010,52 @@ class PSCCalendarFrame(tkinter.Tk):
                                               fg=rgb_to_hex(RED_3), font=("Arial", 16))
         self.splash_version = tkinter.Label(self.splash_frame, text=self.VERSION_NAME, bg=self.SPLASH_BG, fg=self.SPLASH_FG)
         self.pack_splash()
+
+    async def get_available_units(self):
+        query = """SELECT
+	--(CASE WHEN [WO#] IS NULL THEN ELSE END)
+	--ISNULL([dtProductionSchedule].[WO#], [dtProductionSchedule].[Quote#]) AS [WO],
+	--[dtProductionSchedule].[WO#],
+	[dtProductionSchedule].[Quote#]
+	--[Prod Date 1],
+	--[Prod Date 2],
+	--[Date Declined]
+FROM
+	[dtProductionSchedule]
+LEFT JOIN
+	[Orders]
+ON
+	[dtProductionSchedule].[Quote#] = [Orders].[Quote#]
+WHERE
+	[Prod Date 1] IS NULL
+	AND [Prod Date 2] IS NULL
+	--AND [dtProductionSchedule].[WO#] IS NULL
+	AND [Orders].[Date Declined] IS NULL
+	--AND [Orders].[Decline/Rejected] IS NULL
+	AND [dtProductionSchedule].[Quote#] IS NOT NULL
+ORDER BY
+	[Quote#]"""
+        quotes = []
+        try:
+            cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456',
+                                  timeout=10)
+            table_result = await self.read_sql_async(query, cnxn)
+            df1 = pd.DataFrame(table_result)
+            ordered_df = df1.sort_values(by="Quote#")
+            print(f"ordered_df: {ordered_df}")
+            quotes = ordered_df["Quote#"].tolist()
+            print(f"QUOTES: {quotes}")
+            cnxn.close()
+        except pd.io.sql.DatabaseError:
+            print("Deadlock error. Please try again later.")
+        except pyodbc.OperationalError:
+            print("[08001] [Microsoft][ODBC SQL Server Driver][DBNETLIB]SQL Server does not exist or access denied.")
+            print("Using default values")
+        else:
+            print(f"QUOTES: {quotes}")
+        finally:
+            print(f"QUOTES: {quotes}")
+        return quotes
 
     def init_tile_control(self):
         self.TABS_tile_control = [
@@ -1009,20 +1134,235 @@ class PSCCalendarFrame(tkinter.Tk):
         })
 
         root_tab_2 = self.TABS_tile_control[1]["frame"]
-        self.combo_available_units_for_date = ttk.Combobox(root_tab_2, textvariable=self.lb_chosen_new_unit)
-        self.tctl_add_new_tile = tkinter.Button(root_tab_2, command=self.date_new_unit)
+        self.label_tc_wo = tkinter.Label(root_tab_2, text="WO")
+        self.label_tc_row = tkinter.Label(root_tab_2, text="Row:")
+        self.label_tc_col = tkinter.Label(root_tab_2, text="Column:")
+        self.combo_available_units_for_date = ttk.Combobox(root_tab_2, textvariable=self.lb_chosen_new_unit, state="readonly")
+        self.combo_available_rows_for_date = ttk.Combobox(root_tab_2, textvariable=self.lb_chosen_new_row, state="readonly")
+        self.combo_available_cols_for_date = ttk.Combobox(root_tab_2, textvariable=self.lb_chosen_new_col, state="readonly")
+        self.lb_chosen_new_unit.trace("w", self.new_unit_change)
+        self.lb_chosen_new_row.trace("w", self.new_row_change)
+        self.lb_chosen_new_col.trace("w", self.new_col_change)
+        self.btn_tctl_add_new_tile = tkinter.Button(root_tab_2, text="create", command=self.date_new_unit)
+
+        self.label_tctl_view_tile = tkinter.Label(root_tab_2, text="Preview")
+        self.canvas_tctl_view_tile = tkinter.Canvas(root_tab_2, width=self.tctl_preview_width, height=self.tctl_preview_height, bg=rgb_to_hex(WHITE))
+        self.btn_tctl_clear_tile_combos = tkinter.Button(root_tab_2, text="clear", command=self.clear_unit_fields)
 
         # TODO HARDCODED
-        self.combo_available_units_for_date["values"] = ["A", "B", "C"]
+        # self.combo_available_units_for_date["values"] = ["A", "B", "C"]
+        result = [
+            "50",
+            "1108",
+            "1111",
+            "1112",
+            "1118",
+            "1121",
+            "1122",
+            "1123",
+            "1124",
+            "1125",
+            "1126",
+            "1127",
+            "1128",
+            "1129",
+            "1130",
+            "1131",
+            "1132",
+            "1133",
+            "1134",
+            "1135",
+            "1136",
+            "1137",
+            "1138",
+            "1139",
+            "1140",
+            "1141",
+            "1142",
+            "1143",
+            "1144",
+            "1145",
+            "1146",
+            "1147",
+            "1148",
+            "1149",
+            "1150",
+            "1151",
+            "1152",
+            "1153",
+            "1154",
+            "1155",
+            "1156",
+            "1157",
+            "1158",
+            "1159",
+            "1160",
+            "1161",
+            "1162",
+            "1163",
+            "1164",
+            "1165",
+            "1166",
+            "1167",
+            "1168",
+            "1169",
+            "1170",
+            "1172",
+            "1173",
+            "1175",
+            "1176",
+            "1177",
+            "1178",
+            "1179",
+            "1180",
+            "1181",
+            "1182",
+            "1183",
+            "1184",
+            "1185",
+            "1186",
+            "1187",
+            "1189",
+            "1190",
+            "1191",
+            "1192",
+            "1193",
+            "1194",
+            "1195",
+            "1196",
+            "1197",
+            "1198",
+            "1199",
+            "1200",
+            "1201",
+            "1202",
+            "1203",
+            "1204",
+            "1205",
+            "1206",
+            "1207",
+            "1208",
+            "1209",
+            "1210",
+            "1211",
+            "1212",
+            "1213",
+            "1214",
+            "1215",
+            "1216",
+            "1217",
+            "1218",
+            "1219",
+            "1220",
+            "1221",
+            "1222",
+            "1223",
+            "1224",
+            "1225",
+            "1226",
+            "1227",
+            "1228",
+            "1229",
+            "1230",
+            "1231",
+            "1232",
+            "1233",
+            "1235",
+            "1236",
+            "5232",
+            "5504",
+            "11701",
+            "12736",
+            "14660",
+            "14667",
+            "14668",
+            "14669",
+            "15569",
+            "20271",
+            "26098",
+            "26099",
+            "26282",
+            "26352",
+            "26354",
+            "26357",
+            "26361",
+            "26420",
+            "26421",
+            "26460",
+            "26483",
+            "26484",
+            "26485",
+            "26486",
+            "26487",
+            "26488",
+            "26489",
+            "26491",
+            "26492",
+            "26496",
+            "26519",
+            "26524",
+            "26566",
+            "26595",
+            "26597",
+            "26598",
+            "26599",
+            "26675",
+            "26676",
+            "26792",
+            "26793",
+            "26794",
+            "26795",
+            "26799",
+            "26800",
+            "26801",
+            "27107",
+            "27108",
+            "27301",
+            "27355",
+            "27363",
+            "27369",
+            "27370",
+            "27371",
+            "27420",
+            "27453",
+            "27469",
+            "27484",
+            "27564",
+            "27619",
+            "27637"
+        ]
+        # result = await self.get_available_units()
+        # result = run_coroutine_threadsafe(_get(url), bot.loop)
+        # print(f"result: {result}")
+        cal = self.get_current_calendar()
+        self.combo_available_units_for_date["values"] = result
+        self.combo_available_rows_for_date["values"] = cal.lines #  list(range(1, cal.rows + 1))
+        self.combo_available_cols_for_date["values"] = cal.dates #  list(range(1, cal.cols + 1))
 
         self.TABS_tile_control[1].update({
             "widgets": [
+                self.label_tc_wo,
                 self.combo_available_units_for_date,
-                self.tctl_add_new_tile
+                self.label_tc_row,
+                self.combo_available_rows_for_date,
+                self.label_tc_col,
+                self.combo_available_cols_for_date,
+                self.btn_tctl_clear_tile_combos,
+                self.btn_tctl_add_new_tile,
+                self.label_tctl_view_tile,
+                self.canvas_tctl_view_tile
             ],
             "arguments": [
-                {"row": 1, "column": 1, "columnspan": 2},
-                {"row": 2, "column": 1}
+                {"row": 1, "column": 1},
+                {"row": 1, "column": 2, "columnspan": 2},
+                {"row": 3, "column": 1},
+                {"row": 4, "column": 1},
+                {"row": 3, "column": 2},
+                {"row": 4, "column": 2},
+                {"row": 5, "column": 1},
+                {"row": 5, "column": 2},
+                {"row": 6, "column": 1, "columnspan": 2},
+                {"row": 7, "column": 1, "columnspan": 2}
             ]
         })
 
@@ -1094,13 +1434,13 @@ class PSCCalendarFrame(tkinter.Tk):
         self.frame_dealer_colour_select_c3 = tkinter.Frame(self.frame_dealer_colour_select)
         self.label_dealer_colour_select = tkinter.Label(self.frame_dealer_colour_select, text="Highlight Dealers Below")
         self.btn_dealer_colour_1 = tkinter.Button(self.frame_dealer_colour_select_c1)
-        self.combo_dealer_1 = ttk.Combobox(self.frame_dealer_colour_select_c1, textvariable=self.lb_dealer_1)
+        self.combo_dealer_1 = ttk.Combobox(self.frame_dealer_colour_select_c1, textvariable=self.lb_dealer_1, state="readonly")
         self.btn_reset_dealer_1 = tkinter.Button(self.frame_dealer_colour_select_c1, text="Reset", command=self.reset_dealer_1)
         self.btn_dealer_colour_2 = tkinter.Button(self.frame_dealer_colour_select_c2)
-        self.combo_dealer_2 = ttk.Combobox(self.frame_dealer_colour_select_c2, textvariable=self.lb_dealer_2)
+        self.combo_dealer_2 = ttk.Combobox(self.frame_dealer_colour_select_c2, textvariable=self.lb_dealer_2, state="readonly")
         self.btn_reset_dealer_2 = tkinter.Button(self.frame_dealer_colour_select_c2, text="Reset", command=self.reset_dealer_2)
         self.btn_dealer_colour_3 = tkinter.Button(self.frame_dealer_colour_select_c3)
-        self.combo_dealer_3 = ttk.Combobox(self.frame_dealer_colour_select_c3, textvariable=self.lb_dealer_3)
+        self.combo_dealer_3 = ttk.Combobox(self.frame_dealer_colour_select_c3, textvariable=self.lb_dealer_3, state="readonly")
         self.btn_reset_dealer_3 = tkinter.Button(self.frame_dealer_colour_select_c3, text="Reset", command=self.reset_dealer_3)
 
         self.frame_tile_action = tkinter.Frame(self.frame_top_calendar)
@@ -1208,6 +1548,9 @@ class PSCCalendarFrame(tkinter.Tk):
             for widget, args in zip(widgets, arguments):
                 print(f"widget: {widget}, args: {args}")
                 widget.grid(**args)
+
+        # do not allow the creat button to be pushed until choices are made
+        self.btn_tctl_add_new_tile.config(state="disabled")
 
     def hide_splash(self):
         self.splash_label.pack_forget()
@@ -1450,26 +1793,32 @@ class PSCCalendarFrame(tkinter.Tk):
             cbw = cal.border_width
             tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
             # print(f"TR: {tile_rect}")
-            bgc = cal.tiles[i].colour
-            outline = cal.tiles[i].colour_border
-            tt = tile.wo_num if tile.wo_num is not None else ""
 
-            # highlight selected tile
-            if tile.selected:
-                bgc = tile.colour_selected
 
-            # highlight last swapped pair
-            if cal.highlight_last_swapped:
-                if last_swap_pair:
-                    a, b = last_swap_pair
-                    if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
-                        bgc = brighten(bgc, 0.15)
-                        outline = darken(outline, 0.15)
 
-            if self.HIGHLIGHTED_EDITED_TILES:
-                if tile.is_edited():
-                    print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
-                    bgc = brighten(bgc, 0.1)
+
+            # bgc = cal.tiles[i].colour
+            # outline = cal.tiles[i].colour_border
+            # tt = tile.wo_num if tile.wo_num is not None else ""
+
+            # # highlight selected tile
+            # if tile.selected:
+            #     bgc = tile.colour_selected
+            #
+            # # highlight last swapped pair
+            # if cal.highlight_last_swapped:
+            #     if last_swap_pair:
+            #         a, b = last_swap_pair
+            #         if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
+            #             bgc = brighten(bgc, 0.15)
+            #             outline = darken(outline, 0.15)
+            #
+            # if self.HIGHLIGHTED_EDITED_TILES:
+            #     if tile.is_edited():
+            #         print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
+            #         bgc = brighten(bgc, 0.1)
+
+            bgc, outline, tt = self.get_tile_colour(cal, tile)
 
             # convert to hex
             bgc = rgb_to_hex(bgc)
@@ -1612,6 +1961,40 @@ class PSCCalendarFrame(tkinter.Tk):
         cal = self.TAB_DATA[self.CAL_IDX]["Cal"]
         cbw = cal.border_width
         return Rect2(cbw, cbw, self.width, self.height)
+
+    def get_tile_colour(self, cal, tile, new_background=False):
+
+        bgc = tile.colour
+        if new_background or (not tile.is_empty and bgc in [cal.colour_tile_general, cal.colour_beam_line_tile, cal.colour_gnk_line_tile]):
+            if tile.is_beam():
+                bgc = cal.colour_beam_line_tile
+            elif tile.is_gnk():
+                bgc = cal.colour_gnk_line_tile
+            elif tile.is_t():
+                bgc = cal.colour_tile_general
+
+        last_swap_pair = cal.swap_pair
+        outline = tile.colour_border
+        tt = tile.wo_num if tile.wo_num is not None else ""
+
+        # highlight selected tile
+        if tile.selected:
+            bgc = tile.colour_selected
+
+        # highlight last swapped pair
+        if cal.highlight_last_swapped:
+            if last_swap_pair:
+                a, b = last_swap_pair
+                if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
+                    bgc = brighten(bgc, 0.15)
+                    print(f"OUTLINE: {outline}")
+                    outline = darken(outline, 0.15)
+
+        if self.HIGHLIGHTED_EDITED_TILES:
+            if tile.is_edited():
+                print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
+                bgc = brighten(bgc, 0.1)
+        return bgc, outline, tt
 
     def calculate_dpms(self, event):
         """While dragging a tile, calculate the rects to draw placement arrows around the destination tile.
@@ -1985,7 +2368,67 @@ class PSCCalendarFrame(tkinter.Tk):
         return [self.TAB_DATA[i]["Cal"] for i in range(len(self.TABS))]
 
     def date_new_unit(self):
+        # at this point safeties have been checked, just add the tile - even if something is already there.
         print("DATING NEW UNIT")
+        cal = self.get_current_calendar()
+        ct = self.tctl_new_unit_obj
+        cal.tiles[ct.ser] = ct
+        self.tctl_new_unit_obj = None
+        self.draw_calendar()
+
+    def clear_unit_fields(self):
+        self.lb_chosen_new_row.set("")
+        self.lb_chosen_new_col.set("")
+        self.lb_chosen_new_unit.set("")
+        self.canvas_tctl_view_tile.delete("all")
+
+    def update_new_view_window(self):
+        print(f"updating unit view")
+        cal = self.get_current_calendar()
+        lines = cal.lines
+        dates = cal.dates
+        r, c = lines.index(self.lb_chosen_new_row.get()), dates.index(datetime.datetime.strptime(self.lb_chosen_new_col.get(), "%Y-%m-%d %H:%M:%S"))
+        ser = cal.r_c_to_i(r, c)
+        if not cal.tiles[ser].is_empty():
+            self.canvas_tctl_view_tile.delete("all")
+            print("clear!")
+            self.btn_tctl_add_new_tile.config(state="disabled")
+            self.tctl_new_unit_obj = None
+        else:
+            self.btn_tctl_add_new_tile.config(state="normal")
+            wo = self.lb_chosen_new_unit.get()
+            line = cal.lines[r]
+            date = cal.dates[c]
+            colour = cal.colour_tile_general
+            colour_border = cal.colour_border
+            colour_font = cal.colour_font
+            colour_selected = cal.colour_selected
+            colour_hovered = cal.colour_hovered
+            colour_dragging = cal.colour_dragging
+            ct = CalendarTile2(ser, r, c, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
+            bounds = [0, 0, self.tctl_preview_width, self.tctl_preview_height]
+            rect = Rect2(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1])
+            print(f"NEW TILE: {ct}, rect: {rect}, bounds: {bounds}")
+            self.tctl_new_unit_obj = ct
+            ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START")
+            bgc, outline, tt = self.get_tile_colour(cal, ct, new_background=True)
+            self.canvas_tctl_view_tile.create_rectangle(*rect2_to_tkinter(rect), fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline))
+            self.canvas_tctl_view_tile.create_text(rect.x + (rect.w / 2), rect.y + (rect.h / 2), text=tt, fill=rgb_to_hex(font_foreground(bgc)), font=self.font)
+
+    def new_unit_change(self, *args):
+        wo, i, j = self.lb_chosen_new_unit.get(), self.lb_chosen_new_col.get(), self.lb_chosen_new_row.get()
+        if all([wo, i, j]):
+            self.update_new_view_window()
+
+    def new_row_change(self, *args):
+        wo, i, j = self.lb_chosen_new_unit.get(), self.lb_chosen_new_col.get(), self.lb_chosen_new_row.get()
+        if all([wo, i, j]):
+            self.update_new_view_window()
+
+    def new_col_change(self, *args):
+        wo, i, j = self.lb_chosen_new_unit.get(), self.lb_chosen_new_col.get(), self.lb_chosen_new_row.get()
+        if all([wo, i, j]):
+            self.update_new_view_window()
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."

@@ -281,13 +281,13 @@ class PSCalendar2:
         self._swap_pair = []
 
         # Create tiles
-        colour = self.colour_tile_general
-        colour_border = colour_border
-        colour_font = colour_font
-        colour_selected = colour_selected
-        colour_hovered = colour_hovered
-        colour_dragging = colour_dragging
-        self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
+        self.colour = self.colour_tile_general
+        self.colour_border = colour_border
+        self.colour_font = colour_font
+        self.colour_selected = colour_selected
+        self.colour_hovered = colour_hovered
+        self.colour_dragging = colour_dragging
+        self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=True)
               for j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
 
         for i, tile in enumerate(self.tiles):
@@ -304,8 +304,9 @@ class PSCalendar2:
 
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
-                # print("data_row:", data_row)
-                if math.isnan(data_row['WO#'].tolist()[0]):
+                print("data_row:", data_row)
+                wo = data_row['WO#'].tolist()[0]
+                if wo and math.isnan(wo):
                     continue
                 wo = int(data_row['WO#'].tolist()[0])
                 model_name = data_row['InputField1'].tolist()[0]
