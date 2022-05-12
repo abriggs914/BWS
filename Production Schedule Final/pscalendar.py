@@ -304,11 +304,11 @@ class PSCalendar2:
 
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
-                print("data_row:", data_row)
                 wo = data_row['WO#'].tolist()[0]
-                if wo and math.isnan(wo):
+                print("data_row:", data_row, f"WO:{wo}")
+                if not wo or math.isnan(wo):
                     continue
-                wo = int(data_row['WO#'].tolist()[0])
+                wo = int(wo)
                 model_name = data_row['InputField1'].tolist()[0]
                 dealer = data_row['InputField2'].tolist()[0]
                 status = data_row["Stock/Sold"].tolist()[0]
