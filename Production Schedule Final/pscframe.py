@@ -158,6 +158,19 @@ class PSCCalendarFrame(tkinter.Tk):
             }
         }
 
+        self.empty_data = {
+            "Name": None,
+            "Tab": None,
+            "Lines": None,
+            "Dates": None,
+            "Data": None,
+            "HeaderRow": None,
+            "HeaderCol": None,
+            "PopUp": None,
+            "PopUpDat": None,
+            "Cal": None
+        }
+
         if not Path(self.BWS_LOGO_FILE_PATH).exists():
             if not self.assert_is_employee:
                 self.BWS_LOGO_FILE_PATH = r"""./BWS Chrome Final_hr.jpg"""
@@ -452,9 +465,11 @@ class PSCCalendarFrame(tkinter.Tk):
         r = self._drawing_bounds
         return Rect2(r.left + self.left_cal_margin, r.top + self.top_cal_margin, r.width - self.left_cal_margin - self.right_cal_margin, r.height - self.top_cal_margin - self.bottom_cal_margin)
 
-    def open(self, start_date, n_cals):
+    def open(self, start_date, n_cals=10):
         n_cals = min(n_cals, self.MAX_TABS)
         self.TABS = self.TABS[:n_cals]
+        self.TAB_NAMES = self.TAB_NAMES[:n_cals]
+        self.TAB_DATA = {k: v for k, v in self.TAB_DATA.items() if k < n_cals}
         self.do_splash(start_date, n_cals)
         self.init_tile_control()
         self.set_full_screen()
@@ -502,7 +517,7 @@ class PSCCalendarFrame(tkinter.Tk):
 
         # ensure that only n_cals are being used. Post processing... :(
         self.TABS = self.TABS[:n_cals]
-        self.TABS = self.TAB_NAMES[:n_cals]
+        self.TABS = self.TAB_NAMES[:n_cals]  #TODO not sure this looks right - seems to work 2022-05-12
 
         self.draw_calendar()
         self.bind_calendar()
@@ -947,11 +962,18 @@ class PSCCalendarFrame(tkinter.Tk):
         print("Goodbye!")
         exit()
 
+    def new_tab_obj(self):
+        return ttk.Frame(self.notebook_tab_control)
+
+    def new_tab_dat_obj(self):
+        k = len(self.TABS) + 1
+        return {k: dict(self.empty_data)}
+
     # Called at beginning to instantiate the Tab frames
     def init_tabs(self):
         # List of tabs as tkinter frames
         self.notebook_tab_control = ttk.Notebook(self)
-        self.TABS = [ttk.Frame(self.notebook_tab_control) for _ in range(self.MAX_TABS)]
+        self.TABS = [self.new_tab_obj() for _ in range(self.MAX_TABS)]
         print(f"self.TABS: len:{len(self.TABS)}")
         self.CAL_IDX = 0
 
@@ -961,19 +983,7 @@ class PSCCalendarFrame(tkinter.Tk):
             self.TABS = self.TABS if len(self.TABS) <= self.N_TEST_CALS else self.TABS[:self.N_TEST_CALS]
             self.TAB_NAMES = self.TAB_NAMES if len(self.TAB_NAMES) <= self.N_TEST_CALS else self.TAB_NAMES[
                                                                                             :self.N_TEST_CALS]
-        empty_data = {
-            "Name": None,
-            "Tab": None,
-            "Lines": None,
-            "Dates": None,
-            "Data": None,
-            "HeaderRow": None,
-            "HeaderCol": None,
-            "PopUp": None,
-            "PopUpDat": None,
-            "Cal": None
-        }
-        self.TAB_DATA = dict(zip([i for i in range(len(self.TABS))], [dict(empty_data) for _ in range(len(self.TAB_NAMES))]))
+        self.TAB_DATA = dict(zip([i for i in range(len(self.TABS))], [dict(self.empty_data) for _ in range(len(self.TAB_NAMES))]))
         for i in range(len(self.TAB_DATA)):
             self.TAB_DATA[i]["Tab"] = self.TABS[i]
         print(dict_print(self.TAB_DATA, "TAB_DATA"))
@@ -1566,7 +1576,7 @@ ORDER BY
         if self.N_TEST_CALS is not None:
             self.splash_test_indicator.forget()
 
-    def do_splash(self, start_date=first_of_month(datetime.datetime.now()), months_ahead=8):
+    def do_splash(self, start_date=first_of_month(datetime.datetime.now()), months_ahead=10):
         if self.N_TEST_CALS is not None:
             print(f"Overriding months_ahead ({months_ahead}) with N_TEST_CALS: ({self.N_TEST_CALS})")
             months_ahead = self.N_TEST_CALS
@@ -2280,14 +2290,80 @@ ORDER BY
         curr_cal = self.TAB_DATA[cal_idx]["Cal"]
         print(f"MOVING {tile} to next period ({cal_idx} -> {cal_idx + 1})")
         if cal_idx >= len(self.TABS) - 1:
-
             curr_cal.log({
                 "Moving CalendarTileNextPeriod": {
                     "tile": str(tile),
                     "cal_idx": cal_idx
                 }
             })
-            raise PSCalendar2.CalendarException(f"Error no nore calendars to move this unit forward to. \n'{tile}'")
+
+            # self.TABS[len(self.TABS)] = None
+            self.TABS.append(None)
+            self.TAB_DATA[len(self.TABS)] = None
+            self.TAB_NAMES.append(self.new_tab_name())
+
+            new_tab_obj = self.new_tab_obj()
+            new_tab_dat_obj = self.new_tab_dat_obj()
+            new_tab_dat_obj["Tab"] = new_tab_obj
+
+            print(f"new_tab_dat_obj: {new_tab_dat_obj}")
+            # print(f"A VIEW: {self.TAB_DATA[len(self.TAB_DATA) - 1]}")
+            key = len(self.TAB_DATA) - 1
+            self.TAB_DATA[key] = new_tab_dat_obj
+            print(f"B VIEW: {self.TAB_DATA[key]}")
+
+            label_cal_title = tkinter.Label(new_tab_obj, text="Production Schedule" + str(len(self.TAB_DATA) - 1) + "\n{} - {}")
+            # .format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
+            frame_calendar = tkinter.Frame(new_tab_obj)
+            canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height,
+                                            width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
+            # canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(INDIGO))  # left legend
+            # can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            canvas_header_left = tkinter.Canvas(frame_calendar, height=self.HEADER_LEFT_HEIGHT,
+                                                    width=self.HEADER_LEFT_WIDTH, bg=rgb_to_hex(BLACK))  # left legend
+            can_header_top = tkinter.Canvas(frame_calendar, height=self.HEADER_TOP_HEIGHT,
+                                                width=self.HEADER_TOP_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
+            canvas_pop_up = tkinter.Menu(frame_calendar, tearoff=0)
+            self.TAB_DATA[key].update(
+                    {"Name": self.TAB_NAMES[-1], "frame_calendar": frame_calendar, "canvas_cal": canvas_cal,
+                     "canvas_header_left": canvas_header_left, "canvas_header_top": can_header_top,
+                     "canvas_pop_up": canvas_pop_up})
+
+            # canvas_pop_up.pack()
+            frame_calendar.pack()
+            canvas_header_left.pack(side=tkinter.LEFT)
+            can_header_top.pack()
+            canvas_cal.pack()
+
+            start_date = end_of_month(curr_cal.dates[-1]) + datetime.timedelta(days=1)
+            end_date = end_of_month(start_date)
+            data = pandas.DataFrame(data={
+                "WO#": [tile.wo_num],
+                "InputField1": [tile.model_name],
+                "InputField2": [tile.dealer],
+                "Stock/Sold": [tile.status],
+                "Beam WO#": [tile.beam],
+                "JobStartDate": [tile.job_start]
+            })
+            lines = curr_cal.lines
+            dates = []
+            td = start_date
+            while td <= end_date:
+                dates.append(td)
+                td = td + datetime.timedelta(days=1)
+            psc = self.create_calendar_p(start_date, end_date, data, lines, dates)
+            print(f"PSC: {psc}, type: {type(psc)}")
+            print(f"UPDATING calIDX: {len(self.TAB_DATA) - 1}")
+            assert psc is not None, "PSC IS NONE !!!"
+            tab_name = self.TAB_NAMES[-1]
+            new_tab_dat_obj.update({"Cal": psc})
+            self.TAB_DATA[key].update({"Cal": psc})
+            print(f"new_tab_obj: {new_tab_obj}, type: {type(new_tab_obj)}")
+            print(f"self.notebook_tab_control: {self.notebook_tab_control}, type: {type(self.notebook_tab_control)}")
+            print(f"new Tab name <{tab_name}>")
+            self.notebook_tab_control.add(new_tab_obj, text=tab_name)
+
+            # raise PSCalendar2.CalendarException(f"Error no nore calendars to move this unit forward to. \n'{tile}'")
             # lines = curr_cal.lines
             # month_ranges = []
             # months_ahead = 1
@@ -2316,6 +2392,12 @@ ORDER BY
         line = tile.line
         curr_cal = self.TAB_DATA[cal_idx]["Cal"]
         next_cal = self.TAB_DATA[cal_idx + 1]["Cal"]
+        print(dict_print(self.TAB_DATA[cal_idx], "A"))
+        print(dict_print(self.TAB_DATA[cal_idx + 1], "B"))
+        print(f"TAB_DATA: {len(self.TAB_DATA)}: {self.TAB_DATA.keys()}")
+        print(f"TAB_DATA: {len(self.TAB_DATA)}: {self.TAB_DATA}")
+        print(f"CURRCAL CAL_IDX: {self.CAL_IDX}: {curr_cal}")
+        print(f"NEXTCAL CAL_IDX: {self.CAL_IDX}: {next_cal}")
         if line not in next_cal.lines:
             raise ValueError(f"Error cannot move {tile} forward because there is no matching line in the next period.")
         insert_result = next_cal.insert(tile)
@@ -2323,6 +2405,11 @@ ORDER BY
             print(f"inner_result: {insert_result}")
             # at this point, trying to insert a brand new unit on the first day of the next calendar. Need to shift line first though.
             self.shift_line_units(insert_result)
+
+        old = self.CAL_IDX
+        self.CAL_IDX = len(self.TABS) - 1
+        self.draw_calendar()
+        self.CAL_IDX = old
 
     def shift_line_units(self, start_tile, n_days=1):
         print(f"START TILE: {start_tile}")
@@ -2429,6 +2516,15 @@ ORDER BY
         wo, i, j = self.lb_chosen_new_unit.get(), self.lb_chosen_new_col.get(), self.lb_chosen_new_row.get()
         if all([wo, i, j]):
             self.update_new_view_window()
+
+    def new_tab_name(self):
+        tab_names = self.TAB_NAMES
+        tab_ns = [int(name.split("+")[1].split(" ")[0]) for name in tab_names if "+" in name]
+        print(f"TAB_NS: {tab_ns}")
+        if tab_ns:
+            last_name = tab_ns[-1]
+            return f"+{last_name + 1} Months"
+        return f"NEW TAB {len(self.TAB_NAMES) + 1}"
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."

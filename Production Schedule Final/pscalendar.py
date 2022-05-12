@@ -146,7 +146,7 @@ class CalendarTile2:
         ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=False)
         ct.set_data(*self.get_data())
         ct.edited = False
-        print(f"\t\t{ct}")
+        # print(f"\t\t{ct}")
         return ct
 
     def __eq__(self, other):
@@ -304,8 +304,12 @@ class PSCalendar2:
 
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
-                wo = data_row['WO#'].tolist()[0]
-                print("data_row:", data_row, f"WO:{wo}")
+                lst = data_row['WO#'].tolist()
+                if not lst:
+                    continue
+                wo = lst[0]
+                # Uncommenting this print line causes the loading process to take ~ 10x longer - too many dataframe prints
+                # print("data_row:", data_row, f"WO:<{wo}>")
                 if not wo or math.isnan(wo):
                     continue
                 wo = int(wo)
@@ -406,7 +410,7 @@ class PSCalendar2:
 
         self.log({"Swap CalendarTile": {
             "tile_a": str(tile_a),
-            "tile_b": str(tile_a)
+            "tile_b": str(tile_b)
         }})
         self.swap_pair = (tile_a.__copy__(), tile_b.__copy__())
 
