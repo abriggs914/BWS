@@ -234,9 +234,9 @@ SELECT * FROM @r WHERE [Job] IN (SELECT [J] FROM @jobs)
     f_name = None
     if writable:
         if do_BWS:
-            f_name = "BWS output ten WOs.xls"
+            f_name = "Spreadsheets/BWS output ten WOs (2).xls"
         else:
-            f_name = "STG output ten WOs.xls"
+            f_name = "Spreadsheets/STG output ten WOs (2).xls"
         wb.save(f_name)
 
     conn.close()

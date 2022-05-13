@@ -19,6 +19,8 @@ class CalendarTile2:
         self.status = None
         self.beam = None
         self.job_start = None
+        self.serial = None
+        self.quote = None
         self.text = ""
 
         # use RGB values and tuples. will be converted to hex via rgb_to_hex()
@@ -44,6 +46,7 @@ class CalendarTile2:
         if DO_COPY:
             self.OG = self.__copy__()
             self.OG.set_data(*self.get_data())
+            self.OG.edited = False
             assert not self.is_edited(), f"self should not be edited: {self}"
         else:
             self.OG = None
@@ -51,17 +54,19 @@ class CalendarTile2:
         # Finally set edited back to False to begin recording
         self.edited = False
 
-    def set_data(self, wo, model_name, dealer, status, beam, job_start):
+    def set_data(self, wo, model_name, dealer, status, beam, job_start, serial, quote):
         self.wo_num = wo
         self.model_name = model_name
         self.dealer = dealer
         self.status = status
         self.beam = beam
         self.job_start = job_start
-        self.text = "{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start)
+        self.serial = serial
+        self.quote = quote
+        self.text = "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start, serial, quote)
 
     def get_data(self):
-        return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start
+        return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start, self.serial, self.quote
 
     def is_beam(self):
         return self.line[0] == "B"
@@ -93,7 +98,9 @@ class CalendarTile2:
             "dealer",
             "status",
             "beam",
-            "job_start"
+            "job_start",
+            "serial",
+            "quote"
 
         # self.colour_selected = colour_selected
         # self.colour_hovered = colour_hovered
@@ -122,14 +129,16 @@ class CalendarTile2:
             self.dealer,
             self.status,
             self.beam,
-            self.job_start
+            self.job_start,
+            self.serial,
+            self.quote
         ]))
 
     def is_empty(self):
         return self.wo_num is None
 
     def is_edited(self):
-        # print(f"COMP {self} vs {self.OG}")
+        print(f"COMP {self} vs {self.OG}")
         assert self.OG is not None, f"self.OG is None, tile: {self}"
         return self != self.OG or self.edited
 
@@ -146,6 +155,9 @@ class CalendarTile2:
         ct = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=False)
         ct.set_data(*self.get_data())
         ct.edited = False
+        ct.OG = CalendarTile2(self.ser, self.i, self.j, self.line, self.date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=False)
+        ct.OG.set_data(*self.get_data())
+        ct.OG.edited = False
         # print(f"\t\t{ct}")
         return ct
 
@@ -318,8 +330,11 @@ class PSCalendar2:
                 status = data_row["Stock/Sold"].tolist()[0]
                 beam = data_row["Beam WO#"].tolist()[0]
                 job_start = data_row["JobStartDate"].tolist()[0]
-                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start)
-                self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start)
+                # TODO HARDCODED HERE
+                serial = data_row["Serial"].tolist()[0]
+                quote = int(data_row["Quote#"].tolist()[0])
+                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start, serial, quote)
+                self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start, serial, quote)
 
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
         self.dealers = tuple(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))

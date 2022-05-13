@@ -47,6 +47,7 @@ class PSCCalendarFrame(tkinter.Tk):
             border_width=2,
             middle_drag_placement_factor=0.3,
             HIGHLIGHT_EDITED_TILES=True,
+            EDITED_HIGHLIGHT_PROPORTION=0.15,
             MAX_TABS=20
     ):
         super().__init__()
@@ -66,6 +67,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
         self.HIGHLIGHTED_EDITED_TILES = HIGHLIGHT_EDITED_TILES
+        self.EDITED_HIGHLIGHT_PROPORTION = EDITED_HIGHLIGHT_PROPORTION
         self.border_width = border_width
         self.middle_drag_placement_factor = middle_drag_placement_factor
 
@@ -248,6 +250,14 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_label_wo_num = None
         self.tctl_entry_wo_num = None
         self.tctl_tv_wo_num = tkinter.StringVar()
+
+        self.tctl_label_serial_num = None
+        self.tctl_entry_serial_num = None
+        self.tctl_tv_serial = tkinter.StringVar()
+
+        self.tctl_label_quote = None
+        self.tctl_entry_quote = None
+        self.tctl_tv_quote = tkinter.StringVar()
 
         self.tctl_label_model = None
         self.tctl_entry_model = None
@@ -809,7 +819,7 @@ class PSCCalendarFrame(tkinter.Tk):
         except FileNotFoundError:
             print("File not found.")
         try:
-            query = "EXEC [sp_ProductionSchedule V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
+            query = "EXEC [sp_ProductionScheduleEdit V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
             self.splash_query_pb["value"] = 46
             self.splash_query_pb.update()
             cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456',
@@ -1089,6 +1099,12 @@ ORDER BY
         self.tctl_label_wo_num = tkinter.Label(root_tab_1, text="WO#:")
         self.tctl_entry_wo_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_wo_num, width=entry_width)
 
+        self.tctl_label_serial_num = tkinter.Label(root_tab_1, text="Serial#:")
+        self.tctl_entry_serial_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_serial, width=entry_width)
+
+        self.tctl_label_quote = tkinter.Label(root_tab_1, text="Quote#:")
+        self.tctl_entry_quote = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_quote, width=entry_width)
+
         self.tctl_label_model = tkinter.Label(root_tab_1, text="Model:")
         self.tctl_entry_model = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_model, width=entry_width)
 
@@ -1111,6 +1127,12 @@ ORDER BY
             "widgets": [
                 self.tctl_label_wo_num,
                 self.tctl_entry_wo_num,
+
+                self.tctl_label_serial_num,
+                self.tctl_entry_serial_num,
+                self.tctl_label_quote,
+                self.tctl_entry_quote,
+
                 self.tctl_label_model,
                 self.tctl_entry_model,
                 self.tctl_label_dealer,
@@ -1138,6 +1160,10 @@ ORDER BY
                 {"row": 6, "column": 1},
                 {"row": 6, "column": 2},
                 {"row": 7, "column": 1},
+                {"row": 7, "column": 2},
+                {"row": 8, "column": 1},
+                {"row": 8, "column": 2},
+                {"row": 9, "column": 1},
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
                 # {"row": 8, "column": 2},  # Omitting for now
             ]
@@ -1997,13 +2023,14 @@ ORDER BY
                 a, b = last_swap_pair
                 if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
                     bgc = brighten(bgc, 0.15)
-                    print(f"OUTLINE: {outline}")
+                    # print(f"OUTLINE: {outline}")
                     outline = darken(outline, 0.15)
 
         if self.HIGHLIGHTED_EDITED_TILES:
             if tile.is_edited():
                 print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
-                bgc = brighten(bgc, 0.1)
+                bgc = brighten(bgc, self.EDITED_HIGHLIGHT_PROPORTION)
+                # outline = font_foreground(bgc)  # don't do this for now 2022-05-13
         return bgc, outline, tt
 
     def calculate_dpms(self, event):
@@ -2173,6 +2200,8 @@ ORDER BY
                     self.tctl_tv_status.set(f"{selected.status}")
                     self.tctl_tv_beam.set(f"{selected.beam}")
                     self.tctl_tv_start_date.set(f"{selected.job_start}")
+                    self.tctl_tv_serial.set(f"{selected.serial}")
+                    self.tctl_tv_quote.set(f"{selected.quote}")
                 # if self.TCTL_IDX == 0:
                 #     # + / -
                 #
@@ -2206,6 +2235,8 @@ ORDER BY
         self.tctl_tv_status.set("")
         self.tctl_tv_beam.set("")
         self.tctl_tv_start_date.set("")
+        self.tctl_tv_serial.set("")
+        self.tctl_tv_quote.set("")
 
     def tctl_save_click(self):
         cal = self.get_current_calendar()
@@ -2218,6 +2249,8 @@ ORDER BY
             status_new = self.tctl_tv_status.get()
             beam_new = self.tctl_tv_beam.get()
             start_date_new = self.tctl_tv_start_date.get()
+            serial_new = self.tctl_tv_serial.get()
+            quote_new = self.tctl_tv_quote.get()
 
             wo_num_old = selected.wo_num
             model_name_old = selected.model_name
@@ -2225,6 +2258,8 @@ ORDER BY
             status_old = selected.status
             beam_old = selected.beam
             start_date_old = selected.job_start
+            serial_old = selected.serial
+            quote_old = selected.quote
 
             # TODO need to scrub input here
             if wo_num_old != wo_num_new:
@@ -2269,10 +2304,26 @@ ORDER BY
 
             if start_date_old != start_date_new:
                 selected.job_start = start_date_new
-                cal.log({"Update Beam": {
+                cal.log({"Update StartDate": {
                     "tidx": selected.ser,
                     "old": start_date_old,
                     "new": start_date_new
+                }})
+
+            if serial_old != serial_new:
+                selected.serial = serial_new
+                cal.log({"Update Serial": {
+                    "tidx": selected.ser,
+                    "old": serial_old,
+                    "new": serial_new
+                }})
+
+            if quote_old != quote_new:
+                selected.quote = quote_new
+                cal.log({"Update Quote": {
+                    "tidx": selected.ser,
+                    "old": quote_old,
+                    "new": quote_new
                 }})
 
     def tctl_undo_click(self):
@@ -2349,7 +2400,8 @@ ORDER BY
             dates = []
             td = start_date
             while td <= end_date:
-                dates.append(td)
+                if td.isoweekday() < 6:
+                    dates.append(td)
                 td = td + datetime.timedelta(days=1)
             psc = self.create_calendar_p(start_date, end_date, data, lines, dates)
             print(f"PSC: {psc}, type: {type(psc)}")
@@ -2418,9 +2470,9 @@ ORDER BY
         curr_cal = self.get_current_calendar()
         start_row, start_col = start_tile.i, start_tile.j
 
-        stop_col = start_tile.j
         bring_to_end = False
         for i in range(len(self.TABS) - 1, self.CAL_IDX - 1, -1):
+            stop_col = start_tile.j
             cal = self.TAB_DATA[i]["Cal"]
             print(f"i: {i}, cal: {cal}")
             line_idx = cal.lines.index(line)
@@ -2497,7 +2549,9 @@ ORDER BY
             rect = Rect2(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1])
             print(f"NEW TILE: {ct}, rect: {rect}, bounds: {bounds}")
             self.tctl_new_unit_obj = ct
-            ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START")
+            # TODO HARDCODED HERE
+            ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START", "SERIAL", "QUOTE")
+            ct.edited = False
             bgc, outline, tt = self.get_tile_colour(cal, ct, new_background=True)
             self.canvas_tctl_view_tile.create_rectangle(*rect2_to_tkinter(rect), fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline))
             self.canvas_tctl_view_tile.create_text(rect.x + (rect.w / 2), rect.y + (rect.h / 2), text=tt, fill=rgb_to_hex(font_foreground(bgc)), font=self.font)
