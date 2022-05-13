@@ -1,8 +1,10 @@
 from pscframe import *
 import datetime
 
-# TODO 2022-05-12 Add Quote# and serial number to tilecontrol notebook tabs
-# TODO 2022-05-12 param HIGHLIGHT_EDITED_TILES does not currently work
+# TODO 2022-05-10 Fix dealer colour highlighter only on top and left of tiles.
+# TODO 2022-05-10 Fix dealer colour highlighter 2 & 3.
+# TODO 2022-05-12 Add Quote# and serial number to tilecontrol notebook tabs.
+# TODO 2022-05-12 param HIGHLIGHT_EDITED_TILES does not currently work.
 
 import calendar
 
