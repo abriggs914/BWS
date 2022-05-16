@@ -44,6 +44,7 @@ class PSCCalendarFrame(tkinter.Tk):
             max_tile_w=100,
             max_tile_h=50,
             ASSERT_SAME_LINE_SWAP=False,
+            ALLOW_RECORD_MODIFICATION=False,
             border_width=2,
             middle_drag_placement_factor=0.3,
             HIGHLIGHT_EDITED_TILES=True,
@@ -66,6 +67,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
+        self.ALLOW_RECORD_MODIFICATION = ALLOW_RECORD_MODIFICATION
         self.HIGHLIGHTED_EDITED_TILES = HIGHLIGHT_EDITED_TILES
         self.EDITED_HIGHLIGHT_PROPORTION = EDITED_HIGHLIGHT_PROPORTION
         self.border_width = border_width
@@ -820,6 +822,7 @@ class PSCCalendarFrame(tkinter.Tk):
             print("File not found.")
         try:
             query = "EXEC [sp_ProductionScheduleEdit V4_Slots] \'{sd}\', \'{ed}\';".format(sd=start_date, ed=end_date)
+            print(f"EXECUTING: <{query}>")
             self.splash_query_pb["value"] = 46
             self.splash_query_pb.update()
             cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456',
@@ -1093,32 +1096,37 @@ ORDER BY
             }
         ]
 
+        if self.ALLOW_RECORD_MODIFICATION:
+            entry_state = "normal"
+        else:
+            entry_state = "readonly"
+
         root_tab_1 = self.TABS_tile_control[0]["frame"]
         root_tab_1.grid()
         entry_width = 125
         self.tctl_label_wo_num = tkinter.Label(root_tab_1, text="WO#:")
-        self.tctl_entry_wo_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_wo_num, width=entry_width)
+        self.tctl_entry_wo_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_wo_num, width=entry_width, state=entry_state)
 
         self.tctl_label_serial_num = tkinter.Label(root_tab_1, text="Serial#:")
-        self.tctl_entry_serial_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_serial, width=entry_width)
+        self.tctl_entry_serial_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_serial, width=entry_width, state=entry_state)
 
         self.tctl_label_quote = tkinter.Label(root_tab_1, text="Quote#:")
-        self.tctl_entry_quote = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_quote, width=entry_width)
+        self.tctl_entry_quote = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_quote, width=entry_width, state=entry_state)
 
         self.tctl_label_model = tkinter.Label(root_tab_1, text="Model:")
-        self.tctl_entry_model = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_model, width=entry_width)
+        self.tctl_entry_model = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_model, width=entry_width, state=entry_state)
 
         self.tctl_label_dealer = tkinter.Label(root_tab_1, text="Dealer:")
-        self.tctl_entry_dealer = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_dealer, width=entry_width)
+        self.tctl_entry_dealer = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_dealer, width=entry_width, state=entry_state)
 
         self.tctl_label_status = tkinter.Label(root_tab_1, text="Status:")
-        self.tctl_entry_status = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_status, width=entry_width)
+        self.tctl_entry_status = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_status, width=entry_width, state=entry_state)
 
         self.tctl_label_beam = tkinter.Label(root_tab_1, text="Beam:")
-        self.tctl_entry_beam = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_beam, width=entry_width)
+        self.tctl_entry_beam = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_beam, width=entry_width, state=entry_state)
 
         self.tctl_label_start_date = tkinter.Label(root_tab_1, text="Start Date:")
-        self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width)
+        self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width, state=entry_state)
 
         self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save", name="save_btn")
         # self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
@@ -1862,7 +1870,7 @@ ORDER BY
 
             # draw objects
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
-            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(WHITE), text=f"{tt}")
+            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(outline), text=f"{tt}")
 
         # draw week dividers
         if cal.switch_week_divs:
@@ -1985,7 +1993,8 @@ ORDER BY
 
     def get_current_calendar(self):
         """Return the PSCalendar object located at the current tab using 'CAL_IDX'."""
-        assert isinstance(self.TAB_DATA[self.CAL_IDX]["Cal"], PSCalendar2), "Error \'self.TAB_DATA[self.CAL_IDX]['Cal']\' needs to be a PSCalendar2 object"
+        # print(f"self.CAL_IDX: {self.CAL_IDX}, len: {len(self.TAB_DATA)}")
+        assert isinstance(self.TAB_DATA[self.CAL_IDX]["Cal"], PSCalendar2), f"Error \'self.TAB_DATA[self.CAL_IDX({self.CAL_IDX})]['Cal']\' needs to be a PSCalendar2 object"
         return self.TAB_DATA[self.CAL_IDX]["Cal"]
 
     def get_current_cal_canvas(self):
@@ -2028,15 +2037,18 @@ ORDER BY
 
         if self.HIGHLIGHTED_EDITED_TILES:
             if tile.is_edited():
-                print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
+                # print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
+                # print(dict_print(tile._edited_lst, f"Edited List {tile}"))
                 bgc = brighten(bgc, self.EDITED_HIGHLIGHT_PROPORTION)
-                # outline = font_foreground(bgc)  # don't do this for now 2022-05-13
+                if self.EDITED_HIGHLIGHT_PROPORTION > 0.45:
+                    outline = font_foreground(bgc)  # don't do this for now 2022-05-13
+                    print(f"bgc: {bgc}, outline: {outline}")
         return bgc, outline, tt
 
     def calculate_dpms(self, event):
         """While dragging a tile, calculate the rects to draw placement arrows around the destination tile.
             self.DRAG_PLACEMENT_MARKER_1 denotes the marker at the edge of the tile. When placed the tiles around it will shift.
-            self.DRAG_PLACEMENT_MARKER_2 denotes the marker int the middle of a tile. When placed the tile will swap with destination tile."""
+            self.DRAG_PLACEMENT_MARKER_2 denotes the marker in the middle of a tile. When placed the tile will swap with destination tile."""
         cal = self.get_current_calendar()
         canvas_rect = self.get_current_cal_canvas_rect()
         selected = cal.get_selected()
@@ -2159,11 +2171,12 @@ ORDER BY
                     print("dropping in the middle")
                     do_swap = True
                 else:
-                    if drag_tile.line == tile.line:
-                        # same line swap
-                        self.shift_line_units(tile, 1)
-                    else:
-                        self.shift_line_units(tile, 1)
+                    self.shift_line_units(tile, 1)
+                    # if drag_tile.line == tile.line:
+                    #     # same line swap
+                    #     self.shift_line_units(tile, 1)
+                    # else:
+                    #     self.shift_line_units(tile, 1)
                 cal.clear_selected()
 
             if do_swap:
@@ -2349,17 +2362,17 @@ ORDER BY
             })
 
             # self.TABS[len(self.TABS)] = None
-            self.TABS.append(None)
-            self.TAB_DATA[len(self.TABS)] = None
             self.TAB_NAMES.append(self.new_tab_name())
 
             new_tab_obj = self.new_tab_obj()
             new_tab_dat_obj = self.new_tab_dat_obj()
             new_tab_dat_obj["Tab"] = new_tab_obj
+            self.TABS.append(new_tab_obj)
 
             print(f"new_tab_dat_obj: {new_tab_dat_obj}")
             # print(f"A VIEW: {self.TAB_DATA[len(self.TAB_DATA) - 1]}")
-            key = len(self.TAB_DATA) - 1
+            key = len(self.TAB_DATA)
+            print(f"POST new PSC CREATION: working on : {self.CAL_IDX}, key: {key}")
             self.TAB_DATA[key] = new_tab_dat_obj
             print(f"B VIEW: {self.TAB_DATA[key]}")
 
@@ -2389,12 +2402,14 @@ ORDER BY
             start_date = end_of_month(curr_cal.dates[-1]) + datetime.timedelta(days=1)
             end_date = end_of_month(start_date)
             data = pandas.DataFrame(data={
-                "WO#": [tile.wo_num],
+                "WO#": [""],
                 "InputField1": [tile.model_name],
                 "InputField2": [tile.dealer],
                 "Stock/Sold": [tile.status],
                 "Beam WO#": [tile.beam],
-                "JobStartDate": [tile.job_start]
+                "JobStartDate": [tile.job_start],
+                "Serial": [tile.serial],
+                "Quote#": [tile.quote]
             })
             lines = curr_cal.lines
             dates = []
@@ -2452,56 +2467,122 @@ ORDER BY
         print(f"NEXTCAL CAL_IDX: {self.CAL_IDX}: {next_cal}")
         if line not in next_cal.lines:
             raise ValueError(f"Error cannot move {tile} forward because there is no matching line in the next period.")
-        insert_result = next_cal.insert(tile)
-        if insert_result is not None:
-            print(f"inner_result: {insert_result}")
-            # at this point, trying to insert a brand new unit on the first day of the next calendar. Need to shift line first though.
-            self.shift_line_units(insert_result)
+        next_cal.insert(tile)
+        # if insert_result is not None:
+        #     print(f"inner_result: {insert_result}")
+        #     # at this point, trying to insert a brand new unit on the first day of the next calendar. Need to shift line first though.
+        #     self.shift_line_units(insert_result)
 
         old = self.CAL_IDX
         self.CAL_IDX = len(self.TABS) - 1
         self.draw_calendar()
         self.CAL_IDX = old
 
-    def shift_line_units(self, start_tile, n_days=1):
-        print(f"START TILE: {start_tile}")
-        n_days = 1  # TODO HARDCODED THIS CAP
+    def shift_line_units(self, start_tile, n_days=1, is_rec=False):
+        curr_idx = self.CAL_IDX
+        og = start_tile.__copy__()
+
+        cal = self.get_current_calendar()
         line = start_tile.line
-        curr_cal = self.get_current_calendar()
-        start_row, start_col = start_tile.i, start_tile.j
+        rows, cols = cal.rows, cal.cols
+        i_idx, j_idx = start_tile.i, start_tile.j
 
-        bring_to_end = False
-        for i in range(len(self.TABS) - 1, self.CAL_IDX - 1, -1):
-            stop_col = start_tile.j
-            cal = self.TAB_DATA[i]["Cal"]
-            print(f"i: {i}, cal: {cal}")
-            line_idx = cal.lines.index(line)
-            if i > self.CAL_IDX:
-                stop_col = 0
-            for j in range(cal.cols - 1, stop_col, -1):
-                k1 = cal.r_c_to_i(line_idx, j)
-                k2 = cal.r_c_to_i(line_idx, j - 1)
-                tile_a = cal.tiles[k1]
-                tile_b = cal.tiles[k2]
-                # print(f"SWAP i,j: ({i}, {j}) a: {tile_a.ser}, b: {tile_b.ser}")
-                if not tile_a.is_empty() and tile_a.j == cal.cols - 1:
-                    # TODO this just cycles the entire line
-                    print("swapping to next calendar")
-                    if not tile_b.is_empty() and tile_b.j == cal.cols - 2:
-                        bring_to_end = True
-                    cal.delete(tile_a)
-                    self.move_next_period(tile_a, cal_idx=i)
-                else:
-                    # if abs(tile_a.ser - tile_b.ser) != 1:
-                    #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
-                    cal.swap_tiles(tile_a, tile_b)
+        if is_rec:
+            j_idx = 0
 
-            if bring_to_end:
-                # TODO this still dosesnt work as advertised
-                print("BRINGING TO END")
-                idx = cal.r_c_to_i(start_tile.i, cal.cols - 1)
-                cal.swap_tiles(start_tile, cal.tiles[idx])
-        # drawing the calendar on return to calling function
+        start_idx = cal.r_c_to_i(i_idx, j_idx)
+        stop_idx = cal.r_c_to_i(i_idx, cols - 1)
+        last_tile = cal.tiles[stop_idx]
+        first_tile = cal.tiles[start_idx]
+
+        print(f"Start: {start_idx} => {stop_idx}, rxc: ({rows}x{cols}), FIRST: {first_tile}")
+        dates = cal.dates[start_idx % cols: (stop_idx % cols) + 1]
+        tiles = cal.tiles[start_idx: stop_idx]
+        dates.reverse()
+        tiles.reverse()
+        print(f"DATES: {dates}\nTILES: {tiles}")
+        for i, dat in enumerate(zip(dates, tiles)):
+            new_date, tile = dat
+            tile.j += 1
+            new_idx = cal.r_c_to_i(tile.i, tile.j)
+            tile.ser = new_idx
+            tile.date = new_date
+            # cal.insert(tile)
+            cal.tiles[new_idx] = tile
+        # if not is_rec:
+        print(f"DELETING OG: {og}")
+        cal.delete(og)
+        # else:
+        #     print(f"CANT DELETE OG: {og}")
+        # elif start_tile.is_empty():
+        #     print(f"DELETING {og}")
+        #     cal.delete(og)
+
+        # cal.delete(first_tile)
+        # if not last_tile.is_empty():
+        #     print("need to insert next calendar")
+        #     # TODO this tile get moved forward
+
+        self.CAL_IDX += 1
+        if self.CAL_IDX < len(self.TAB_DATA):
+            new_cal = self.get_current_calendar()
+            new_idx = new_cal.r_c_to_i(i_idx, 0)
+            tile = new_cal.tiles[new_idx]
+            self.shift_line_units(tile, is_rec=True)
+            # if tile == last_tile:
+            #     print(f"NEXT PERIOD: {tile}")
+            #     self.move_next_period(tile, cal_idx=self.CAL_IDX-1)
+
+        if not last_tile.is_empty():
+            print("OVERFLOW")
+            self.move_next_period(last_tile, cal_idx=self.CAL_IDX-1)
+        self.CAL_IDX = curr_idx
+
+        # new_cal = self.get_current_calendar()
+        # new_idx = new_cal.r_c_to_i(i_idx, 0)
+        # new_cal[new_idx] = last_tile
+        # last_tile.j = 0
+        # last_tile.date = new_cal.dates[0]
+
+        # 2022-05-16 10:22
+        # print(f"START TILE: {start_tile}")
+        # n_days = 1  # TODO HARDCODED THIS CAP
+        # line = start_tile.line
+        # curr_cal = self.get_current_calendar()
+        # start_row, start_col = start_tile.i, start_tile.j
+        #
+        # bring_to_end = False
+        # for i in range(len(self.TABS) - 1, self.CAL_IDX - 1, -1):
+        #     stop_col = start_tile.j
+        #     cal = self.TAB_DATA[i]["Cal"]
+        #     print(f"i: {i}, cal: {cal}")
+        #     line_idx = cal.lines.index(line)
+        #     if i > self.CAL_IDX:
+        #         stop_col = 0
+        #     for j in range(cal.cols - 1, stop_col, -1):
+        #         k1 = cal.r_c_to_i(line_idx, j)
+        #         k2 = cal.r_c_to_i(line_idx, j - 1)
+        #         tile_a = cal.tiles[k1]
+        #         tile_b = cal.tiles[k2]
+        #         # print(f"SWAP i,j: ({i}, {j}) a: {tile_a.ser}, b: {tile_b.ser}")
+        #         if not tile_a.is_empty() and tile_a.j == cal.cols - 1:
+        #             # TODO this just cycles the entire line
+        #             print("swapping to next calendar")
+        #             if not tile_b.is_empty() and tile_b.j == cal.cols - 2:
+        #                 bring_to_end = True
+        #             self.move_next_period(tile_a, cal_idx=i)
+        #             cal.delete(tile_a)
+        #         else:
+        #             # if abs(tile_a.ser - tile_b.ser) != 1:
+        #             #     print(f"abs(tile_a.ser - tile_b.ser) != 1: a: {tile_a.ser}, b: {tile_b.ser}, cal: {i}")
+        #             cal.swap_tiles(tile_a, tile_b)
+        #
+        #     if bring_to_end:
+        #         # TODO this still doesn't work as advertised
+        #         print("BRINGING TO END")
+        #         idx = cal.r_c_to_i(start_tile.i, cal.cols - 1)
+        #         cal.swap_tiles(start_tile, cal.tiles[idx])
+        # # drawing the calendar on return to calling function
 
     def get_calendars(self):
         return [self.TAB_DATA[i]["Cal"] for i in range(len(self.TABS))]

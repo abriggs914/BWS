@@ -43,6 +43,15 @@ class CalendarTile2:
         self.zoomed = False
         self._edited = False
 
+        self._edited_lst = {
+            "wo_num": False,
+            "ser": False,
+            "i": False,
+            "j": False,
+            "line": False,
+            "date": False
+        }
+
         if DO_COPY:
             self.OG = self.__copy__()
             self.OG.set_data(*self.get_data())
@@ -54,7 +63,7 @@ class CalendarTile2:
         # Finally set edited back to False to begin recording
         self.edited = False
 
-    def set_data(self, wo, model_name, dealer, status, beam, job_start, serial, quote):
+    def set_data(self, wo, model_name, dealer, status, beam, job_start, serial, quote, edit=True):
         self.wo_num = wo
         self.model_name = model_name
         self.dealer = dealer
@@ -64,6 +73,8 @@ class CalendarTile2:
         self.serial = serial
         self.quote = quote
         self.text = "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}".format(wo, model_name, dealer, status, beam, job_start, serial, quote)
+        if not edit:
+            self.edited = False
 
     def get_data(self):
         return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start, self.serial, self.quote
@@ -138,7 +149,7 @@ class CalendarTile2:
         return self.wo_num is None
 
     def is_edited(self):
-        print(f"COMP {self} vs {self.OG}")
+        # print(f"COMP {self} vs {self.OG}")
         assert self.OG is not None, f"self.OG is None, tile: {self}"
         return self != self.OG or self.edited
 
@@ -173,6 +184,7 @@ class CalendarTile2:
     def set_wo_num(self, value):
         self._wo_num = value
         self.edited = True
+        self._edited_lst["wo_num"] = True
 
     def del_wo_num(self):
         del self._wo_num
@@ -183,6 +195,7 @@ class CalendarTile2:
     def set_ser(self, value):
         self._ser = value
         self.edited = True
+        self._edited_lst["ser"] = True
 
     def del_ser(self):
         del self._ser
@@ -193,6 +206,7 @@ class CalendarTile2:
     def set_i(self, value):
         self._i = value
         self.edited = True
+        self._edited_lst["i"] = True
 
     def del_i(self):
         del self._i
@@ -203,6 +217,7 @@ class CalendarTile2:
     def set_j(self, value):
         self._j = value
         self.edited = True
+        self._edited_lst["j"] = True
 
     def del_j(self):
         del self._j
@@ -213,6 +228,7 @@ class CalendarTile2:
     def set_line(self, value):
         self._line = value
         self.edited = True
+        self._edited_lst["line"] = True
 
     def del_line(self):
         del self._line
@@ -222,15 +238,26 @@ class CalendarTile2:
 
     def set_date(self, value):
         self._date = value
+        self._edited = True
+        self._edited_lst["date"] = True
 
     def del_date(self):
         del self._date
 
     def get_edited(self):
-        return self._edited
+        return any(self._edited_lst.values())
 
     def set_edited(self, value):
         self._edited = value
+        if not value:
+            self._edited_lst = {
+            "wo_num": False,
+            "ser": False,
+            "i": False,
+            "j": False,
+            "line": False,
+            "date": False
+        }
         # if value:
         #     raise ValueError(f"SETTING EDITED=TRUE, {self}")
 
@@ -333,8 +360,10 @@ class PSCalendar2:
                 # TODO HARDCODED HERE
                 serial = data_row["Serial"].tolist()[0]
                 quote = int(data_row["Quote#"].tolist()[0])
-                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start, serial, quote)
-                self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start, serial, quote)
+                self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start, serial, quote, edit=False)
+                self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start, serial, quote, edit=False)
+                # self.tiles[i].edited = False
+                # self.tiles[i].OG.edited = False
 
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
         self.dealers = tuple(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))
@@ -346,6 +375,11 @@ class PSCalendar2:
 
         self.LOG = {}
         self.log_ids = self.init_log_ids()
+
+        # for tile in self.tiles:
+        #     if tile.is_edited():
+        #         print(dict_print(tile._edited_lst, f"Edited List {tile}"))
+        #     assert not tile.is_edited(), f"ERROR tile: {tile} is edited after initialization!!"
 
     def r_c_to_i(self, r, c):
         return (r * self.cols) + c
@@ -397,7 +431,7 @@ class PSCalendar2:
         self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
 
     def insert(self, tile_in):
-        print(f"inserting tile_in {tile_in} into: {self}")
+        print(f"insetting tile: {tile_in}")
         self.log({
             "Inserting CalendarTile": {
                 "tile": str(tile_in)
@@ -409,13 +443,19 @@ class PSCalendar2:
         i = tile_in.i
         j = 0
         idx = self.r_c_to_i(i, j)
-        tile = self.tiles[idx]
-        if tile.is_empty():
-            # place this tile here
-            self.swap_tiles(tile, tile_in)
-        else:
-            print(f"returning a tile!!! {tile}")
-            return tile
+        self.tiles[idx] = tile_in
+        tile_in.j = 0
+        tile_in.ser = idx
+        tile_in.date = self.dates[0]
+        # tile = self.tiles[idx]
+        # print(f"inserting tile_in\n\t{tile_in}\n=>\n\t{tile}\ninto:\n\t{self}\n@\n\t({i}, {j}) => {idx}")
+        # return tile
+        # if tile.is_empty():
+        #     # place this tile here
+        #     self.swap_tiles(tile, tile_in)
+        # else:
+        #     print(f"returning a tile!!! {tile}")
+        #     return tile
             # pass
             # shift this line
             # self.swap_tiles(tile, tile_in)
@@ -928,7 +968,10 @@ class PSCalendar2:
     def __repr__(self):
             # return "rect: {}, (r, c): ({}, {}), line: {}, date: {}".format(self.rect, self.row, self.col, self.line,
         #                                                                self.date)
-        return "date: {} -> {}, line: {}".format(self.dates[0].strftime("%Y-%m-%d"), self.dates[-1].strftime("%Y-%m-%d"), self.lines)
+        return "date: {} -> {}, line: {}".format(*self.date_range(), self.lines)
+
+    def date_range(self):
+        return self.dates[0].strftime("%Y-%m-%d"), self.dates[-1].strftime("%Y-%m-%d")
 
     dragging = property(get_dragging, set_dragging, del_dragging)
     selected = property(get_selected, set_selected, del_selected)
