@@ -9,6 +9,8 @@ import asyncio
 import pandas as pd
 from tkinter import ttk
 from pathlib import Path
+
+import tkcalendar
 from PIL import ImageTk, Image
 from datetime_utility import *
 from tkinter import colorchooser
@@ -226,13 +228,17 @@ class PSCCalendarFrame(tkinter.Tk):
         self.btn_calendar_export_pdf = None
         self.btn_draw_week_dividers = None
 
-        self.stringvar_calendar_search_start_date = None
-        self.stringvar_calendar_search_end_date = None
-        self.label_calendar_search_start_date = None
-        self.entry_calendar_search_start_date = None
-        self.label_calendar_search_end_date = None
-        self.entry_calendar_search_end_date = None
-        self.btn_calendar_search_submit = None
+        self.stringvar_calendar_search_date = None
+        self.stringvar_calendar_search_unit = None
+        self.label_calendar_search_date = None
+        self.entry_calendar_search_date = None
+        self.label_calendar_search_unit = None
+        self.entry_calendar_search_unit = None
+        self.btn_calendar_search_date_submit = None
+        self.btn_calendar_search_date_picker = None
+        self.gsm_showing_calendar_picker = False
+        self.calendar_search_date_picker = None
+        self.btn_calendar_search_unit_submit = None
 
         self.frame_dealer_colour_select = None
         self.frame_dealer_colour_select_c1 = None
@@ -302,6 +308,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.mctl_btn_update_server = None
         self.mctl_btn_undo = None
 
+        self.quotes_list = []
         self.tab_data = []
         self.TAB_DATA = {}
         self.TABS = []
@@ -601,8 +608,97 @@ class PSCCalendarFrame(tkinter.Tk):
         cal.switch_week_divs = not cal.switch_week_divs
         self.draw_calendar()
 
-    def submit_calendar_search(self, *events):
-        print("submit search")
+    def show_calendar_picker(self, *events):
+        self.gsm_showing_calendar_picker = not self.gsm_showing_calendar_picker
+        if self.gsm_showing_calendar_picker:
+            self.calendar_search_date_picker.pack()
+            self.btn_calendar_search_date_submit.pack_forget()
+            self.btn_calendar_search_unit_submit.pack_forget()
+        else:
+            self.calendar_search_date_picker.pack_forget()
+            calendar_choice = self.calendar_search_date_picker.selection_get().strftime("%Y-%m-%d")
+            print(f"Calendar choice: \'{calendar_choice}\', ({type(calendar_choice)})")
+            self.stringvar_calendar_search_date.set(calendar_choice)
+            self.btn_calendar_search_date_submit.pack()
+            self.btn_calendar_search_unit_submit.pack()
+
+    def submit_calendar_date_search(self, *events):
+        print("submit date search")
+        date_in = self.stringvar_calendar_search_date.get()
+        try:
+            if date_in:
+                found = False
+                date_d = datetime.datetime.strptime(date_in, "%Y-%m-%d")
+                i = self.CAL_IDX
+                for i, t_data in self.TAB_DATA.items():
+                    # low, high = t_data["Cal"].date_range()
+                    dates = t_data["Cal"].dates
+                    low, high = dates[0], dates[-1]
+                    if low <= date_d <= high:
+                        found = True
+                        break
+                if not found:
+                    easygui.msgbox(f"Date \'{date_in}\' not Found")
+                else:
+                    print(f"Found date: \'{date_in}\' on calendar {i}")
+                    if i != self.CAL_IDX:
+                        self.CAL_IDX = i
+                        # self.notebook_tab_control.select(self.TAB_NAMES[self.CAL_IDX])
+                        self.notebook_tab_control.select(self.CAL_IDX)
+                        self.on_tab_change(None)
+        except ValueError as ve:
+            print(f"ValueError, {ve}")
+        except IndexError as ie:
+            print(f"IndexError, {ie}")
+        except KeyError as ke:
+            print(f"KeyError, {ke}")
+        except TypeError as te:
+            print(f"TypeError, {te}")
+
+    def submit_calendar_unit_search(self, *events):
+        print("submit unit search")
+        wo_in = self.stringvar_calendar_search_unit.get()
+        try:
+            if wo_in:
+                found = False
+                wo_i = int(wo_in)
+                short = int(wo_in[-4:])
+                i = self.CAL_IDX
+                cal = None
+                tile = None
+                for i, t_data in self.TAB_DATA.items():
+                    cal = t_data["Cal"]
+                    units = cal.get_units()
+                    for tile in units:
+                        # print(f"COMP wo={tile.wo_num} (t={type(tile.wo_num)}) vs. {wo_i} (t={type(wo_i)})")
+                        tile_wo = int(tile.wo_num)
+                        if wo_i == tile_wo or short == (tile_wo % 10000):
+                            found = True
+                            break
+                    if found:
+                        break
+                if not found:
+                    easygui.msgbox(f"Unit \'{wo_in}\' not Found")
+                else:
+                    print(f"Found unit: \'{wo_in}\' on calendar {i}")
+                    self.CAL_IDX = i
+                    self.notebook_tab_control.select(self.CAL_IDX)
+                    self.on_tab_change(None)
+                    selected = cal.selected
+                    if selected:
+                        for t in selected:
+                            t.selected = False
+                    tile.selected = True
+                    self.draw_calendar()
+
+        except ValueError as ve:
+            print(f"ValueError, {ve}")
+        except IndexError as ie:
+            print(f"IndexError, {ie}")
+        except KeyError as ke:
+            print(f"KeyError, {ke}")
+        except TypeError as te:
+            print(f"TypeError, {te}")
 
     def reset_dealer_1(self, *events):
         print("reset_dealer_1")
@@ -1039,9 +1135,23 @@ class PSCCalendarFrame(tkinter.Tk):
 	--(CASE WHEN [WO#] IS NULL THEN ELSE END)
 	--ISNULL([dtProductionSchedule].[WO#], [dtProductionSchedule].[Quote#]) AS [WO],
 	--[dtProductionSchedule].[WO#],
-	[dtProductionSchedule].[Quote#]
-	--[Prod Date 1],
-	--[Prod Date 2],
+	[dtProductionSchedule].[WO#]
+	, [Serial Number]
+	, [dtProductionSchedule].[Quote#]
+	, [Model No]
+	, [DealerID]
+	, (CASE WHEN [Customer WO#] IS NULL THEN 'STOCK' ELSE 'SOLD' END) AS [Status]
+	, [Beam Date]
+	, (CASE 
+		WHEN [Prod Date 1] IS NULL AND [Prod Date 2] IS NOT NULL THEN [Prod Date 2]
+		WHEN [Prod Date 1] IS NOT NULL AND [Prod Date 2] IS NULL THEN [Prod Date 1]
+		WHEN [Prod Date 1] IS NULL AND [Prod Date 2] IS NULL THEN NULL 
+		ELSE (
+			CASE 
+				WHEN [Prod Date 1] < [Prod Date 2] THEN [Prod Date 1] 
+				ELSE [Prod Date 2] 
+			END)
+		END) AS [JobStartDate]
 	--[Date Declined]
 FROM
 	[dtProductionSchedule]
@@ -1058,7 +1168,7 @@ WHERE
 	AND [dtProductionSchedule].[Quote#] IS NOT NULL
 ORDER BY
 	[Quote#]"""
-        quotes = []
+        ordered_df = []
         try:
             cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=user5;PWD=M@gic456',
                                   timeout=10)
@@ -1066,19 +1176,20 @@ ORDER BY
             df1 = pd.DataFrame(table_result)
             ordered_df = df1.sort_values(by="Quote#")
             print(f"ordered_df: {ordered_df}")
-            quotes = ordered_df["Quote#"].tolist()
-            print(f"QUOTES: {quotes}")
+            # quotes = ordered_df["Quote#"].tolist()
+            # print(f"QUOTES: {quotes}")
             cnxn.close()
         except pd.io.sql.DatabaseError:
             print("Deadlock error. Please try again later.")
         except pyodbc.OperationalError:
             print("[08001] [Microsoft][ODBC SQL Server Driver][DBNETLIB]SQL Server does not exist or access denied.")
             print("Using default values")
-        else:
-            print(f"QUOTES: {quotes}")
-        finally:
-            print(f"QUOTES: {quotes}")
-        return quotes
+        # else:
+        #     print(f"QUOTES: {quotes}")
+        # finally:
+        #     print(f"QUOTES: {quotes}")
+        self.quotes_list = ordered_df
+        # return quotes
 
     def init_tile_control(self):
         self.TABS_tile_control = [
@@ -1195,191 +1306,192 @@ ORDER BY
 
         # TODO HARDCODED
         # self.combo_available_units_for_date["values"] = ["A", "B", "C"]
-        result = [
-            "50",
-            "1108",
-            "1111",
-            "1112",
-            "1118",
-            "1121",
-            "1122",
-            "1123",
-            "1124",
-            "1125",
-            "1126",
-            "1127",
-            "1128",
-            "1129",
-            "1130",
-            "1131",
-            "1132",
-            "1133",
-            "1134",
-            "1135",
-            "1136",
-            "1137",
-            "1138",
-            "1139",
-            "1140",
-            "1141",
-            "1142",
-            "1143",
-            "1144",
-            "1145",
-            "1146",
-            "1147",
-            "1148",
-            "1149",
-            "1150",
-            "1151",
-            "1152",
-            "1153",
-            "1154",
-            "1155",
-            "1156",
-            "1157",
-            "1158",
-            "1159",
-            "1160",
-            "1161",
-            "1162",
-            "1163",
-            "1164",
-            "1165",
-            "1166",
-            "1167",
-            "1168",
-            "1169",
-            "1170",
-            "1172",
-            "1173",
-            "1175",
-            "1176",
-            "1177",
-            "1178",
-            "1179",
-            "1180",
-            "1181",
-            "1182",
-            "1183",
-            "1184",
-            "1185",
-            "1186",
-            "1187",
-            "1189",
-            "1190",
-            "1191",
-            "1192",
-            "1193",
-            "1194",
-            "1195",
-            "1196",
-            "1197",
-            "1198",
-            "1199",
-            "1200",
-            "1201",
-            "1202",
-            "1203",
-            "1204",
-            "1205",
-            "1206",
-            "1207",
-            "1208",
-            "1209",
-            "1210",
-            "1211",
-            "1212",
-            "1213",
-            "1214",
-            "1215",
-            "1216",
-            "1217",
-            "1218",
-            "1219",
-            "1220",
-            "1221",
-            "1222",
-            "1223",
-            "1224",
-            "1225",
-            "1226",
-            "1227",
-            "1228",
-            "1229",
-            "1230",
-            "1231",
-            "1232",
-            "1233",
-            "1235",
-            "1236",
-            "5232",
-            "5504",
-            "11701",
-            "12736",
-            "14660",
-            "14667",
-            "14668",
-            "14669",
-            "15569",
-            "20271",
-            "26098",
-            "26099",
-            "26282",
-            "26352",
-            "26354",
-            "26357",
-            "26361",
-            "26420",
-            "26421",
-            "26460",
-            "26483",
-            "26484",
-            "26485",
-            "26486",
-            "26487",
-            "26488",
-            "26489",
-            "26491",
-            "26492",
-            "26496",
-            "26519",
-            "26524",
-            "26566",
-            "26595",
-            "26597",
-            "26598",
-            "26599",
-            "26675",
-            "26676",
-            "26792",
-            "26793",
-            "26794",
-            "26795",
-            "26799",
-            "26800",
-            "26801",
-            "27107",
-            "27108",
-            "27301",
-            "27355",
-            "27363",
-            "27369",
-            "27370",
-            "27371",
-            "27420",
-            "27453",
-            "27469",
-            "27484",
-            "27564",
-            "27619",
-            "27637"
-        ]
+        # result = [
+        #     "50",
+        #     "1108",
+        #     "1111",
+        #     "1112",
+        #     "1118",
+        #     "1121",
+        #     "1122",
+        #     "1123",
+        #     "1124",
+        #     "1125",
+        #     "1126",
+        #     "1127",
+        #     "1128",
+        #     "1129",
+        #     "1130",
+        #     "1131",
+        #     "1132",
+        #     "1133",
+        #     "1134",
+        #     "1135",
+        #     "1136",
+        #     "1137",
+        #     "1138",
+        #     "1139",
+        #     "1140",
+        #     "1141",
+        #     "1142",
+        #     "1143",
+        #     "1144",
+        #     "1145",
+        #     "1146",
+        #     "1147",
+        #     "1148",
+        #     "1149",
+        #     "1150",
+        #     "1151",
+        #     "1152",
+        #     "1153",
+        #     "1154",
+        #     "1155",
+        #     "1156",
+        #     "1157",
+        #     "1158",
+        #     "1159",
+        #     "1160",
+        #     "1161",
+        #     "1162",
+        #     "1163",
+        #     "1164",
+        #     "1165",
+        #     "1166",
+        #     "1167",
+        #     "1168",
+        #     "1169",
+        #     "1170",
+        #     "1172",
+        #     "1173",
+        #     "1175",
+        #     "1176",
+        #     "1177",
+        #     "1178",
+        #     "1179",
+        #     "1180",
+        #     "1181",
+        #     "1182",
+        #     "1183",
+        #     "1184",
+        #     "1185",
+        #     "1186",
+        #     "1187",
+        #     "1189",
+        #     "1190",
+        #     "1191",
+        #     "1192",
+        #     "1193",
+        #     "1194",
+        #     "1195",
+        #     "1196",
+        #     "1197",
+        #     "1198",
+        #     "1199",
+        #     "1200",
+        #     "1201",
+        #     "1202",
+        #     "1203",
+        #     "1204",
+        #     "1205",
+        #     "1206",
+        #     "1207",
+        #     "1208",
+        #     "1209",
+        #     "1210",
+        #     "1211",
+        #     "1212",
+        #     "1213",
+        #     "1214",
+        #     "1215",
+        #     "1216",
+        #     "1217",
+        #     "1218",
+        #     "1219",
+        #     "1220",
+        #     "1221",
+        #     "1222",
+        #     "1223",
+        #     "1224",
+        #     "1225",
+        #     "1226",
+        #     "1227",
+        #     "1228",
+        #     "1229",
+        #     "1230",
+        #     "1231",
+        #     "1232",
+        #     "1233",
+        #     "1235",
+        #     "1236",
+        #     "5232",
+        #     "5504",
+        #     "11701",
+        #     "12736",
+        #     "14660",
+        #     "14667",
+        #     "14668",
+        #     "14669",
+        #     "15569",
+        #     "20271",
+        #     "26098",
+        #     "26099",
+        #     "26282",
+        #     "26352",
+        #     "26354",
+        #     "26357",
+        #     "26361",
+        #     "26420",
+        #     "26421",
+        #     "26460",
+        #     "26483",
+        #     "26484",
+        #     "26485",
+        #     "26486",
+        #     "26487",
+        #     "26488",
+        #     "26489",
+        #     "26491",
+        #     "26492",
+        #     "26496",
+        #     "26519",
+        #     "26524",
+        #     "26566",
+        #     "26595",
+        #     "26597",
+        #     "26598",
+        #     "26599",
+        #     "26675",
+        #     "26676",
+        #     "26792",
+        #     "26793",
+        #     "26794",
+        #     "26795",
+        #     "26799",
+        #     "26800",
+        #     "26801",
+        #     "27107",
+        #     "27108",
+        #     "27301",
+        #     "27355",
+        #     "27363",
+        #     "27369",
+        #     "27370",
+        #     "27371",
+        #     "27420",
+        #     "27453",
+        #     "27469",
+        #     "27484",
+        #     "27564",
+        #     "27619",
+        #     "27637"
+        # ]
         # result = await self.get_available_units()
         # result = run_coroutine_threadsafe(_get(url), bot.loop)
         # print(f"result: {result}")
         cal = self.get_current_calendar()
-        self.combo_available_units_for_date["values"] = result
+        # self.combo_available_units_for_date["values"] = result
+        self.combo_available_units_for_date["values"] = self.quotes_list["Quote#"].tolist()
         self.combo_available_rows_for_date["values"] = cal.lines #  list(range(1, cal.rows + 1))
         self.combo_available_cols_for_date["values"] = cal.dates #  list(range(1, cal.cols + 1))
 
@@ -1433,7 +1545,7 @@ ORDER BY
             label_cal_title = tkinter.Label(tab, text="Production Schedule" + str(i) + "\n{} - {}")
             #.format(dt.datetime.strftime(last_date, "%Y-%m-%d"), dt.datetime.strftime(c_end_date, "%Y-%m-%d")))
             frame_calendar = tkinter.Frame(tab)
-            canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12))
+            canvas_cal = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height, width=self._tile_bounds.width, bg=rgb_to_hex(GRAY_12), name=f"cal{i}")
             # canvas_header_left = tkinter.Canvas(frame_calendar, height=self._tile_bounds.height + self.TILE_BORDER_WIDTH, width=60, bg=rgb_to_hex(INDIGO))  # left legend
             # can_header_top = tkinter.Canvas(frame_calendar, height=25, width=self._tile_bounds.height + 60 + self.TILE_BORDER_WIDTH, bg=rgb_to_hex(BLACK))  # top legend
             canvas_header_left = tkinter.Canvas(frame_calendar, height=self.HEADER_LEFT_HEIGHT, width=self.HEADER_LEFT_WIDTH, bg=rgb_to_hex(BLACK))  # left legend
@@ -1461,16 +1573,22 @@ ORDER BY
         self.btn_draw_week_dividers = tkinter.Button(self.frame_calendar_control_btns_b, text="Draw Week Dividers",
                                                 command=self.switch_calendar_week_divs_gsm)
 
-        self.stringvar_calendar_search_start_date = tkinter.StringVar(value="START_DATE.strftime(\"%Y-%m-%d\")")
-        self.stringvar_calendar_search_end_date = tkinter.StringVar(value="END_DATE.strftime(\"%Y-%m-%d\")")
-        self.label_calendar_search_start_date = tkinter.Label(self.frame_calendar_search_control_a, text="Start Date:")
-        self.entry_calendar_search_start_date = tkinter.Entry(self.frame_calendar_search_control_a,
-                                                         textvariable=self.stringvar_calendar_search_start_date)
-        self.label_calendar_search_end_date = tkinter.Label(self.frame_calendar_search_control_b, text="End Date:")
-        self.entry_calendar_search_end_date = tkinter.Entry(self.frame_calendar_search_control_b,
-                                                       textvariable=self.stringvar_calendar_search_end_date)
-        self.btn_calendar_search_submit = tkinter.Button(self.frame_calendar_search_control_c, text="Submit",
-                                                    command=self.submit_calendar_search)
+        self.stringvar_calendar_search_date = tkinter.StringVar(value="")
+        self.stringvar_calendar_search_unit = tkinter.StringVar(value="")
+        self.label_calendar_search_date = tkinter.Label(self.frame_calendar_search_control_a, text="Date:")
+        self.entry_calendar_search_date = tkinter.Entry(self.frame_calendar_search_control_a,
+                                                        textvariable=self.stringvar_calendar_search_date)
+        self.label_calendar_search_unit = tkinter.Label(self.frame_calendar_search_control_b, text="WO:")
+        self.entry_calendar_search_unit = tkinter.Entry(self.frame_calendar_search_control_b,
+                                                        textvariable=self.stringvar_calendar_search_unit)
+        self.btn_calendar_search_date_submit = tkinter.Button(self.frame_calendar_search_control_c, text="GO",
+                                                              command=self.submit_calendar_date_search)
+        today = datetime.datetime.today()
+        self.btn_calendar_search_date_picker = tkinter.Button(self.frame_calendar_search_control_c, text="Date",
+                                                              command=self.show_calendar_picker)
+        self.calendar_search_date_picker = tkcalendar.Calendar(self.frame_calendar_search_control_c, selectmode="day", cursor="hand1", year=today.year, month=today.month, day=today.day)
+        self.btn_calendar_search_unit_submit = tkinter.Button(self.frame_calendar_search_control_c, text="GO",
+                                                              command=self.submit_calendar_unit_search)
 
         self.frame_dealer_colour_select = tkinter.Frame(self.frame_calendar_control)
         self.frame_dealer_colour_select_c1 = tkinter.Frame(self.frame_dealer_colour_select)
@@ -1517,11 +1635,15 @@ ORDER BY
 
         # Add widgets
         self.label_dealer_colour_select.pack()
-        self.label_calendar_search_start_date.pack(side=tkinter.LEFT)
-        self.entry_calendar_search_start_date.pack(side=tkinter.LEFT)
-        self.label_calendar_search_end_date.pack(side=tkinter.LEFT)
-        self.entry_calendar_search_end_date.pack(side=tkinter.LEFT)
-        self.btn_calendar_search_submit.pack()
+        self.label_calendar_search_date.pack(side=tkinter.LEFT)
+        self.entry_calendar_search_date.pack(side=tkinter.LEFT)
+        self.label_calendar_search_unit.pack(side=tkinter.LEFT)
+        self.entry_calendar_search_unit.pack(side=tkinter.LEFT)
+        self.btn_calendar_search_date_picker.pack()
+        if self.gsm_showing_calendar_picker:
+            self.calendar_search_date_picker.pack()
+        self.btn_calendar_search_date_submit.pack()
+        self.btn_calendar_search_unit_submit.pack()
         self.btn_draw_week_dividers.pack()
 
         self.frame_dealer_colour_select.pack(side=tkinter.RIGHT)
@@ -1622,7 +1744,7 @@ ORDER BY
             td = td.add_month()
         print("LENGTH MR:", len(month_ranges))
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(*(self.populate_tab_data(month_ranges) for i in range(1))))
+        loop.run_until_complete(asyncio.gather(*([self.populate_tab_data(month_ranges) for i in range(1)] + [self.get_available_units()])))
         loop.close()
 
     def draw_calendar(self):
@@ -2008,7 +2130,7 @@ ORDER BY
         return Rect2(cbw, cbw, self.width, self.height)
 
     def get_tile_colour(self, cal, tile, new_background=False):
-
+        """Return the calculated background, outline and tile text for a given tile on a calendar. new_background ensures calculations do not start with tiles currently saved colour."""
         bgc = tile.colour
         if new_background or (not tile.is_empty and bgc in [cal.colour_tile_general, cal.colour_beam_line_tile, cal.colour_gnk_line_tile]):
             if tile.is_beam():
@@ -2030,13 +2152,13 @@ ORDER BY
         if cal.highlight_last_swapped:
             if last_swap_pair:
                 a, b = last_swap_pair
-                if tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
+                if not tile.is_empty() and tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
                     bgc = brighten(bgc, 0.15)
                     # print(f"OUTLINE: {outline}")
                     outline = darken(outline, 0.15)
 
         if self.HIGHLIGHTED_EDITED_TILES:
-            if tile.is_edited():
+            if tile.is_edited() and not tile.is_empty():
                 # print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
                 # print(dict_print(tile._edited_lst, f"Edited List {tile}"))
                 bgc = brighten(bgc, self.EDITED_HIGHLIGHT_PROPORTION)
@@ -2197,6 +2319,41 @@ ORDER BY
         cal.clear_dragging()
         self.draw_calendar()
 
+    def kbd_arrow_left(self, event):
+        print(f"KEYBOARD TO THE LEFT")
+        x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        selected = cal.get_selected()
+        canvas_rect = self.get_current_cal_canvas_rect()
+        if selected:
+            selected, *rest_selected = selected
+            if selected:
+                rows, cols = cal.rows, cal.cols
+                i, j = selected.i, selected.j
+                curr_tab = self.TABS_tile_control[self.TCTL_IDX]
+                r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+                if 0 < c < cols:
+                    c -= 1
+
+                selected.selected = False
+                cal.set_selected(cal.tiles[cal.r_c_to_i(r, c)])
+                # if not selected.is_empty():
+                    # self.tctl_tv_wo_num.set(f"{selected.wo_num}")
+                    # self.tctl_tv_model.set(f"{selected.model_name}")
+                    # self.tctl_tv_dealer.set(f"{selected.dealer}")
+                    # self.tctl_tv_status.set(f"{selected.status}")
+                    # self.tctl_tv_beam.set(f"{selected.beam}")
+                    # self.tctl_tv_start_date.set(f"{selected.job_start}")
+                    # self.tctl_tv_serial.set(f"{selected.serial}")
+                    # self.tctl_tv_quote.set(f"{selected.quote}")
+
+    def kbd_arrow_right(self, event):
+        pass
+    def kbd_arrow_up(self, event):
+        pass
+    def kbd_arrow_down(self, event):
+        pass
+
     def update_tile_control(self):
         """When a tile is selected, update the usage of the mini tile control notebook widget."""
         cal = self.get_current_calendar()
@@ -2226,6 +2383,17 @@ ORDER BY
     def bind_calendar(self):
         self.notebook_tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         self.notebook_tile_control.bind("<<NotebookTabChanged>>", self.on_tctl_tab_change)
+
+        # TODO 2022-05-17 Want to bind arrow keys to canvas calendar to allow faster traversal.
+        # self.notebook_tab_control.bind("<a>", self.kbd_arrow_left)
+        # self.notebook_tab_control.bind("<w>", self.kbd_arrow_up)
+        # self.notebook_tab_control.bind("<d>", self.kbd_arrow_right)
+        # self.notebook_tab_control.bind("<s>", self.kbd_arrow_down)
+        # self.notebook_tab_control.bind("<Left>", self.kbd_arrow_left)
+        # self.notebook_tab_control.bind("<Up>", self.kbd_arrow_up)
+        # self.notebook_tab_control.bind("<Right>", self.kbd_arrow_right)
+        # self.notebook_tab_control.bind("<Down>", self.kbd_arrow_down)
+
         for i, tab in enumerate(self.TABS):
             canvas = self.TAB_DATA[i]["canvas_cal"]
             bindings = {
@@ -2233,13 +2401,22 @@ ORDER BY
                 "<Leave>": self.leave,
                 "<B1-Motion>": self.drag,
                 "<Button-1>": self.click,
-                "<ButtonRelease-1>": self.release
+                "<ButtonRelease-1>": self.release,
+                # "<a>": self.kbd_arrow_left,
+                # "<w>": self.kbd_arrow_up,
+                # "<s>": self.kbd_arrow_down,
+                # "<d>": self.kbd_arrow_right,
+                # "<Left>": self.kbd_arrow_left,
+                # "<Up>": self.kbd_arrow_up,
+                # "<Down>": self.kbd_arrow_down,
+                # "<Right>": self.kbd_arrow_right
             }
             for bnd, fnc in bindings.items():
                 if i == self.CAL_IDX:
                     canvas.bind(bnd, fnc)
                 else:
                     canvas.unbind(bnd)
+            print(f"BINDINGS canvas: {canvas} => {canvas.bind()}")
 
     def clear_tile_control_fields(self):
         self.tctl_tv_wo_num.set("")
@@ -2632,6 +2809,17 @@ ORDER BY
             self.tctl_new_unit_obj = ct
             # TODO HARDCODED HERE
             ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START", "SERIAL", "QUOTE")
+
+            idx_list = self.quotes_list.index[self.quotes_list["Quote#"]==wo].tolist()
+            print(f"idx_list: {idx_list}")
+            # model_name =
+            # dealer =
+            # status =
+            # job =
+            # beam =
+            # serial =
+            # quote =
+            # ct.set_data(wo, model_name, dealer, status, job, beam, serial, quote)
             ct.edited = False
             bgc, outline, tt = self.get_tile_colour(cal, ct, new_background=True)
             self.canvas_tctl_view_tile.create_rectangle(*rect2_to_tkinter(rect), fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline))

@@ -953,6 +953,9 @@ class PSCalendar2:
     def zoomed_cols(self):
         return [col for col in range(self.cols) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for row in range(self.rows)])]
 
+    def get_units(self):
+        return [tile for tile in self.tiles if not tile.is_empty()]
+
     def log(self, log_dat_in):
         self.LOG[self.new_log_id()] = log_dat_in
 
