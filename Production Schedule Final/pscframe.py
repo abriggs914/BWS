@@ -51,7 +51,8 @@ class PSCCalendarFrame(tkinter.Tk):
             middle_drag_placement_factor=0.3,
             HIGHLIGHT_EDITED_TILES=True,
             EDITED_HIGHLIGHT_PROPORTION=0.15,
-            MAX_TABS=20
+            MAX_TABS=20,
+            MARK_SAME_WOS=True
     ):
         super().__init__()
         self._width = width_p
@@ -72,6 +73,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.ALLOW_RECORD_MODIFICATION = ALLOW_RECORD_MODIFICATION
         self.HIGHLIGHTED_EDITED_TILES = HIGHLIGHT_EDITED_TILES
         self.EDITED_HIGHLIGHT_PROPORTION = EDITED_HIGHLIGHT_PROPORTION
+        self.MARK_SAME_WOS = MARK_SAME_WOS
         self.border_width = border_width
         self.middle_drag_placement_factor = middle_drag_placement_factor
 
@@ -161,6 +163,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 "LEFT_HEADER_FILL": BLACK,
                 "TOP_HEADER_OUTLINE": WHITE,
                 "LEFT_HEADER_OUTLINE": WHITE,
+                "SAME_WO_MARKER_COLOUR": LIMEGREEN
             }
         }
 
@@ -282,6 +285,10 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_label_beam = None
         self.tctl_entry_beam = None
         self.tctl_tv_beam = tkinter.StringVar()
+
+        self.tctl_label_gnk = None
+        self.tctl_entry_gnk = None
+        self.tctl_tv_gnk = tkinter.StringVar()
 
         self.tctl_label_start_date = None
         self.tctl_entry_start_date = None
@@ -663,9 +670,9 @@ class PSCCalendarFrame(tkinter.Tk):
                 found = False
                 wo_i = int(wo_in)
                 short = int(wo_in[-4:])
-                i = self.CAL_IDX
+                ci = self.CAL_IDX
                 cal = None
-                tile = None
+                tiles = []
                 for i, t_data in self.TAB_DATA.items():
                     cal = t_data["Cal"]
                     units = cal.get_units()
@@ -673,22 +680,23 @@ class PSCCalendarFrame(tkinter.Tk):
                         # print(f"COMP wo={tile.wo_num} (t={type(tile.wo_num)}) vs. {wo_i} (t={type(wo_i)})")
                         tile_wo = int(tile.wo_num)
                         if wo_i == tile_wo or short == (tile_wo % 10000):
+                            ci = i
                             found = True
-                            break
-                    if found:
-                        break
+                            tiles.append(tile)
                 if not found:
                     easygui.msgbox(f"Unit \'{wo_in}\' not Found")
                 else:
-                    print(f"Found unit: \'{wo_in}\' on calendar {i}")
-                    self.CAL_IDX = i
+                    print(f"Found unit: \'{wo_in}\' on calendar {ci}")
+                    self.CAL_IDX = ci
                     self.notebook_tab_control.select(self.CAL_IDX)
                     self.on_tab_change(None)
-                    selected = cal.selected
+                    selected = self.get_current_calendar().selected
+                    # print(f"About to deselect: {selected}")
                     if selected:
                         for t in selected:
                             t.selected = False
-                    tile.selected = True
+                    for tile in tiles:
+                        tile.selected = True
                     self.draw_calendar()
 
         except ValueError as ve:
@@ -942,6 +950,8 @@ class PSCCalendarFrame(tkinter.Tk):
             dates = ordered_df.drop_duplicates('Prod Date')
             # dates = dates.iloc[:, 3:4].tolist()
             dates = dates['Prod Date'].tolist()
+            dates = [dat.to_pydatetime() for dat in dates]
+            print(f"dates: {dates}, type(dates[0]): {type(dates[0])}")
             # print("columns:", df1.columns)
 
             # TODO can use this as a testing entry
@@ -1139,7 +1149,7 @@ class PSCCalendarFrame(tkinter.Tk):
 	, [Serial Number]
 	, [dtProductionSchedule].[Quote#]
 	, [Model No]
-	, [DealerID]
+	, [COMPANY NAME] AS [Dealer]
 	, (CASE WHEN [Customer WO#] IS NULL THEN 'STOCK' ELSE 'SOLD' END) AS [Status]
 	, [Beam Date]
 	, (CASE 
@@ -1159,6 +1169,10 @@ LEFT JOIN
 	[Orders]
 ON
 	[dtProductionSchedule].[Quote#] = [Orders].[Quote#]
+LEFT JOIN
+	[Dealers]
+ON
+	[Orders].[DealerID] = [Dealers].[ID]
 WHERE
 	[Prod Date 1] IS NULL
 	AND [Prod Date 2] IS NULL
@@ -1236,6 +1250,9 @@ ORDER BY
         self.tctl_label_beam = tkinter.Label(root_tab_1, text="Beam:")
         self.tctl_entry_beam = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_beam, width=entry_width, state=entry_state)
 
+        self.tctl_label_gnk = tkinter.Label(root_tab_1, text="GNK:")
+        self.tctl_entry_gnk = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_gnk, width=entry_width, state=entry_state)
+
         self.tctl_label_start_date = tkinter.Label(root_tab_1, text="Start Date:")
         self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width, state=entry_state)
 
@@ -1260,6 +1277,8 @@ ORDER BY
                 self.tctl_entry_status,
                 self.tctl_label_beam,
                 self.tctl_entry_beam,
+                self.tctl_label_gnk,
+                self.tctl_entry_gnk,
                 self.tctl_label_start_date,
                 self.tctl_entry_start_date,
                 self.tctl_btn_save,
@@ -1283,6 +1302,8 @@ ORDER BY
                 {"row": 8, "column": 1},
                 {"row": 8, "column": 2},
                 {"row": 9, "column": 1},
+                {"row": 9, "column": 2},
+                {"row": 10, "column": 1},
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
                 # {"row": 8, "column": 2},  # Omitting for now
             ]
@@ -1492,7 +1513,7 @@ ORDER BY
         cal = self.get_current_calendar()
         # self.combo_available_units_for_date["values"] = result
         self.combo_available_units_for_date["values"] = self.quotes_list["Quote#"].tolist()
-        self.combo_available_rows_for_date["values"] = cal.lines #  list(range(1, cal.rows + 1))
+        self.combo_available_rows_for_date["values"] = [line for line in cal.lines if line.startswith("T")] #  cal.lines #  list(range(1, cal.rows + 1))
         self.combo_available_cols_for_date["values"] = cal.dates #  list(range(1, cal.cols + 1))
 
         self.TABS_tile_control[1].update({
@@ -1957,7 +1978,7 @@ ORDER BY
             # assert isinstance(tile, CalendarTile2), "Error value is not a valid CalendarTile."
             og_rect = cal.get_rect(i, canvas_rect, False)
             cbw = cal.border_width
-            tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x, og_rect.h + og_rect.y]
+            tile_rect = [og_rect.x, og_rect.y, og_rect.w + og_rect.x - cbw, og_rect.h + og_rect.y - cbw]
             # print(f"TR: {tile_rect}")
 
 
@@ -1984,7 +2005,7 @@ ORDER BY
             #         print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
             #         bgc = brighten(bgc, 0.1)
 
-            bgc, outline, tt = self.get_tile_colour(cal, tile)
+            bgc, outline, tt, do_mark = self.get_tile_colour(cal, tile)
 
             # convert to hex
             bgc = rgb_to_hex(bgc)
@@ -1992,14 +2013,25 @@ ORDER BY
 
             # draw objects
             canvas.create_rectangle(*tile_rect, fill=bgc, outline=outline, width=cbw)
-            canvas.create_text(tile_rect[0] + (og_rect.w / 2), tile_rect[1] + (og_rect.h / 2), fill=rgb_to_hex(outline), text=f"{tt}")
+            canvas.create_text(tile_rect[0] + ((og_rect.w - cbw) / 2), tile_rect[1] + ((og_rect.h - cbw) / 2), fill=rgb_to_hex(outline), text=f"{tt}")
+
+            if do_mark:
+                canvas.create_oval(
+                    tile_rect[0] + (0.1 * og_rect.w) - cbw,
+                    tile_rect[1] + (0.1 * og_rect.h) - cbw,
+                    tile_rect[0] + (0.9 * og_rect.w) - cbw,
+                    tile_rect[1] + (0.9 * og_rect.h) - cbw,
+                    outline=rgb_to_hex(style["SAME_WO_MARKER_COLOUR"]),
+                    width=2
+                )
 
         # draw week dividers
         if cal.switch_week_divs:
             for i, date in enumerate(cal.dates):
                 idx = cal.r_c_to_i(0, i)
                 tile_rect = cal.get_rect(idx, canvas_rect)
-                tomorrow = None if i == len(cal.tiles) - 1 else cal.tiles[i + 1].date
+                # tomorrow = None if i == len(cal.tiles) - 1 else cal.tiles[i + 1].date
+                tomorrow = None if i == len(cal.dates) - 1 else cal.dates[i + 1]
                 diff = None if tomorrow is None else tomorrow - date
                 # print("date: {}, tomorrow: {}, diff: {}".format(date, tomorrow, diff))
                 weekend_rect = None
@@ -2009,7 +2041,7 @@ ORDER BY
                     weekend_rect = (0, 0, cal.border_width, self.height)
                 elif tomorrow is not None and diff.days > 2:
                     # weekend_rect = (tile_rect[2], tile_rect[1], tile_rect[2] + cal.border_width, tile_rect[3])
-                    weekend_rect = [tile_rect[2], 0, tile_rect[2] + (cbw / 2), self.height]
+                    weekend_rect = [tile_rect[2] - cbw, 0, tile_rect[2] + (cbw / 2), self.height]
                 if weekend_rect is not None:
                     colour = rgb_to_hex(cal.weekend_div_colour)
                     canvas.create_rectangle(*weekend_rect, fill=colour, outline=colour, width=cal.border_width)
@@ -2146,6 +2178,7 @@ ORDER BY
 
         # highlight selected tile
         if tile.selected:
+            print(f"tile: {tile} is selected")
             bgc = tile.colour_selected
 
         # highlight last swapped pair
@@ -2165,7 +2198,12 @@ ORDER BY
                 if self.EDITED_HIGHLIGHT_PROPORTION > 0.45:
                     outline = font_foreground(bgc)  # don't do this for now 2022-05-13
                     print(f"bgc: {bgc}, outline: {outline}")
-        return bgc, outline, tt
+
+        do_mark = False
+        if not tile.is_empty() and self.MARK_SAME_WOS:
+            if tile.wo_num in [t.wo_num for t in cal.selected]:
+                do_mark = True
+        return bgc, outline, tt, do_mark
 
     def calculate_dpms(self, event):
         """While dragging a tile, calculate the rects to draw placement arrows around the destination tile.
@@ -2368,8 +2406,11 @@ ORDER BY
                     self.tctl_tv_model.set(f"{selected.model_name}")
                     self.tctl_tv_dealer.set(f"{selected.dealer}")
                     self.tctl_tv_status.set(f"{selected.status}")
-                    self.tctl_tv_beam.set(f"{selected.beam}")
-                    self.tctl_tv_start_date.set(f"{selected.job_start}")
+
+                    print(f"job_start: <{selected.job_start}> ({type(selected.job_start)})")
+                    self.tctl_tv_beam.set(f"{selected.beam_date.strftime('%Y-%m-%d') if selected.beam_date is not None else ''}")
+                    self.tctl_tv_gnk.set(f"{selected.gnk_date.strftime('%Y-%m-%d') if selected.gnk_date is not None else ''}")
+                    self.tctl_tv_start_date.set(f"{selected.job_start.strftime('%Y-%m-%d') if selected.job_start is not None else ''}")
                     self.tctl_tv_serial.set(f"{selected.serial}")
                     self.tctl_tv_quote.set(f"{selected.quote}")
                 # if self.TCTL_IDX == 0:
@@ -2424,6 +2465,7 @@ ORDER BY
         self.tctl_tv_dealer.set("")
         self.tctl_tv_status.set("")
         self.tctl_tv_beam.set("")
+        self.tctl_tv_gnk.set("")
         self.tctl_tv_start_date.set("")
         self.tctl_tv_serial.set("")
         self.tctl_tv_quote.set("")
@@ -2438,7 +2480,7 @@ ORDER BY
             dealer_new = self.tctl_tv_dealer.get()
             status_new = self.tctl_tv_status.get()
             beam_new = self.tctl_tv_beam.get()
-            start_date_new = self.tctl_tv_start_date.get()
+            start_date_new = datetime.datetime.strptime(self.tctl_tv_start_date.get(), "%Y-%m-%d")
             serial_new = self.tctl_tv_serial.get()
             quote_new = self.tctl_tv_quote.get()
 
@@ -2808,20 +2850,47 @@ ORDER BY
             print(f"NEW TILE: {ct}, rect: {rect}, bounds: {bounds}")
             self.tctl_new_unit_obj = ct
             # TODO HARDCODED HERE
-            ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START", "SERIAL", "QUOTE")
+            # ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START", "SERIAL", "QUOTE")
 
-            idx_list = self.quotes_list.index[self.quotes_list["Quote#"]==wo].tolist()
+            # print(f"self.quotes_list: {self.quotes_list}")
+            # print(f"self.quotes_list: {self.quotes_list['Quote#'].tolist()}")
+            # print(f"wo: {wo} ({type(wo)})")
+            # print(f"self.quotes_list[-1]: {self.quotes_list['Quote#'].tolist()[-1]} ({type(self.quotes_list['Quote#'].tolist()[-1])})")
+            idx_list = self.quotes_list.index[self.quotes_list["Quote#"]==int(wo)].tolist()
             print(f"idx_list: {idx_list}")
-            # model_name =
-            # dealer =
-            # status =
-            # job =
-            # beam =
-            # serial =
-            # quote =
-            # ct.set_data(wo, model_name, dealer, status, job, beam, serial, quote)
-            ct.edited = False
-            bgc, outline, tt = self.get_tile_colour(cal, ct, new_background=True)
+            if idx_list:
+                idx = idx_list[0]
+                record = self.quotes_list.iloc[[idx]]
+                print(f"record: {record}")
+                model_name = record["Model No"][idx]
+                dealer = record["Dealer"][idx]
+                status = record["Status"][idx]
+                job = record["JobStartDate"][idx]
+                beam = record["Beam Date"][idx]
+                serial = record["Serial Number"][idx]
+                quote = record["Quote#"][idx]
+                invalid = {"None", "NaT"}
+                if model_name is None or not model_name or model_name in invalid:
+                    model_name = ""
+                if dealer is None or not dealer or dealer in invalid:
+                    dealer = ""
+                if status is None or not status or status in invalid:
+                    status = ""
+                if job is None or not job or job in invalid:
+                    job = ""
+                if beam is None or not beam or beam in invalid:
+                    beam = ""
+                if serial is None or not serial or serial in invalid:
+                    serial = ""
+                if quote is None or not quote or quote in invalid:
+                    quote = ""
+                if ct.is_beam():
+                    beam = cal.date(c)
+                else:
+                    job = cal.date(c)
+                ct.set_data(wo, model_name, dealer, status, job, beam, serial, quote)
+                ct.edited = False
+            bgc, outline, tt, do_mark = self.get_tile_colour(cal, ct, new_background=True)
             self.canvas_tctl_view_tile.create_rectangle(*rect2_to_tkinter(rect), fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline))
             self.canvas_tctl_view_tile.create_text(rect.x + (rect.w / 2), rect.y + (rect.h / 2), text=tt, fill=rgb_to_hex(font_foreground(bgc)), font=self.font)
 

@@ -7,10 +7,17 @@ import datetime
 # TODO 2022-05-12 param HIGHLIGHT_EDITED_TILES does not currently work.
 # TODO 2022-05-16 Available quotes list is Hardcoded
 
+# TODO 2022-05-16 Fixed Shifting units to the right.
+# TODO 2022-05-18 Highlight the other units that match WOs in circles
+# TODO 2022-05-18 Created a loop to ensure units with matching WOs show the correct dates. (GNK missing from this funtionality)
+# TODO 2022-05-18 Fix the cell spacing to get borders on all 4 sides rather than top and left only
+# TODO 2022-05-18 Need to fix the undo functions.
+# TODO 2022-05-18 Added GNK Date to tile control notebook
+
 import calendar
 
 if __name__ == "__main__":
-    pscf = PSCCalendarFrame(width_p=1500, height_p=600, title_p="Production Schedule Editor", max_tile_w=200, max_tile_h=200, max_n_zoomed_cols=1, max_n_zoomed_rows=1, max_n_selected=1, border_width=3, HIGHLIGHT_EDITED_TILES=True, EDITED_HIGHLIGHT_PROPORTION=0.18)
+    pscf = PSCCalendarFrame(width_p=1500, height_p=600, title_p="Production Schedule Editor", max_tile_w=200, max_tile_h=200, max_n_zoomed_cols=1, max_n_zoomed_rows=1, max_n_selected=1, border_width=1.5, HIGHLIGHT_EDITED_TILES=True, EDITED_HIGHLIGHT_PROPORTION=0.18)
     # pscf = PSCCalendarFrame(width_p=1200, height_p=450, title_p="Production Schedule Editor", max_tile_w=200, max_tile_h=200, max_n_zoomed_cols=1, max_n_zoomed_rows=1, max_n_selected=1, border_width=3, HIGHLIGHT_EDITED_TILES=True)
 
     try:

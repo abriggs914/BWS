@@ -18,7 +18,7 @@ class CalendarTile2:
         self.dealer = None
         self.status = None
         self.beam = None
-        self.job_start = None
+        self._job_start = None
         self.serial = None
         self.quote = None
         self.text = ""
@@ -35,6 +35,11 @@ class CalendarTile2:
 
         self.drag_x = 0
         self.drag_y = 0
+
+        self.date_data = None
+        self.gnk_date = None
+        self.beam_date = None
+        self.prod_date = None
 
         self.selected = False
         self.dragging = False
@@ -78,6 +83,19 @@ class CalendarTile2:
 
     def get_data(self):
         return self.wo_num, self.model_name, self.dealer, self.status, self.beam, self.job_start, self.serial, self.quote
+
+    def set_date_data(self, date_data):
+        self.date_data = date_data
+        # print(dict_print(date_data, "Date Data"))
+        # if self.is_gnk():
+        self.gnk_date = date_data["gnk"]
+        # elif self.is_beam():
+        self.beam_date = date_data["beam"]
+        # else:
+        self.prod_date = date_data["t"]
+
+        self.job_start = date_data["t"] if date_data["t"] is not None else self.job_start
+        self.beam = date_data["beam"] if date_data["beam"] is not None else self.beam
 
     def is_beam(self):
         return self.line[0] == "B"
@@ -238,11 +256,22 @@ class CalendarTile2:
 
     def set_date(self, value):
         self._date = value
+        self._job_start = value
         self._edited = True
         self._edited_lst["date"] = True
 
     def del_date(self):
         del self._date
+
+    def get_job_start(self):
+        return self._job_start
+
+    def set_job_start(self, value):
+        self._job_start = value
+        self._date = value
+
+    def del_job_start(self):
+        del self._job_start
 
     def get_edited(self):
         return any(self._edited_lst.values())
@@ -270,6 +299,7 @@ class CalendarTile2:
     j = property(get_j, set_j, del_j)
     line = property(get_line, set_line, del_line)
     date = property(get_date, set_date, del_date)
+    job_start = property(get_job_start, set_job_start, del_job_start)
     edited = property(get_edited, set_edited, del_edited)
 
 
@@ -329,6 +359,7 @@ class PSCalendar2:
         self.tiles = flatten([[CalendarTile2((i * self.cols) + j, i, j, line, date, self.colour, self.colour_border, self.colour_font, self.colour_selected, self.colour_hovered, self.colour_dragging, DO_COPY=True)
               for j, date in enumerate(self.dates)] for i, line in enumerate(self.lines)])
 
+        found_units = dict()
         for i, tile in enumerate(self.tiles):
             idxrc = (i // self.rows), (i % self.rows)
             # print("idxrc:", idxrc)
@@ -343,6 +374,8 @@ class PSCalendar2:
 
             data_row = data.iloc[idx:idx + 1, :]
             if data_row['InputField1'] is not None and data_row['InputField2'] is not None:
+                print(f"data_row['JobStartDate'].tolist(): {data_row['JobStartDate'].tolist()}")
+                print(f"type(data_row['JobStartDate'].tolist()[0]): {type(data_row['JobStartDate'].tolist()[0])}")
                 lst = data_row['WO#'].tolist()
                 if not lst:
                     continue
@@ -352,19 +385,61 @@ class PSCalendar2:
                 if not wo or math.isnan(wo):
                     continue
                 wo = int(wo)
+                if wo not in found_units:
+                    found_units[wo] = {
+                        "idxs": [],
+                        "beam": None,
+                        "gnk": None,
+                        "t":None
+                    }
                 model_name = data_row['InputField1'].tolist()[0]
                 dealer = data_row['InputField2'].tolist()[0]
                 status = data_row["Stock/Sold"].tolist()[0]
-                beam = data_row["Beam WO#"].tolist()[0]
-                job_start = data_row["JobStartDate"].tolist()[0]
-                # TODO HARDCODED HERE
+                beam = data_row["Beam Date"].tolist()[0].to_pydatetime()
+                job_start = data_row["Prod Date"].tolist()[0]
                 serial = data_row["Serial"].tolist()[0]
                 quote = int(data_row["Quote#"].tolist()[0])
+
+                invalid = {"None", "NaT"}
+                if model_name is None or not model_name or str(model_name) in invalid:
+                    model_name = ""
+                if dealer is None or not dealer or str(dealer) in invalid:
+                    dealer = ""
+                if status is None or not status or str(status) in invalid:
+                    status = ""
+                if job_start is None or not job_start or str(job_start) in invalid:
+                    job_start = ""
+                if beam is None or not beam or str(beam) in invalid:
+                    beam = ""
+                if serial is None or not serial or str(serial) in invalid:
+                    serial = ""
+                if quote is None or not quote or str(quote) in invalid:
+                    quote = ""
+                print(f"beam: {beam}, ({type(beam)}), job: {job_start}, ({type(job_start)})")
+
+                if self.tiles[i].is_gnk():
+                    found_units[wo]["gnk"] = job_start
+                elif self.tiles[i].is_beam():
+                    found_units[wo]["beam"] = job_start
+                else:
+                    # print(f"THIS IS NOT A TILE: {self.tiles[i]}")
+                    found_units[wo]["t"] = job_start
+                found_units[wo]["idxs"].append(i)
+
                 self.tiles[i].set_data(wo, model_name, dealer, status, beam, job_start, serial, quote, edit=False)
                 self.tiles[i].OG.set_data(wo, model_name, dealer, status, beam, job_start, serial, quote, edit=False)
                 # self.tiles[i].edited = False
                 # self.tiles[i].OG.edited = False
 
+        for wo in found_units:
+            idx_dat = found_units[wo]
+            idxs = idx_dat["idxs"]
+            # print(f"idxs: {idxs}, wo: {wo}")
+            for i in idxs:
+                self.tiles[i].set_date_data(found_units[wo])
+                self.tiles[i].OG.set_date_data(found_units[wo])
+
+        print(dict_print(found_units, "Found Units"))
         self.og_tiles = [tile.__copy__() for tile in self.tiles]
         self.dealers = tuple(set([tile.dealer for tile in self.tiles if tile.dealer is not None]))
         self.dealer_highlights = [None, None, None]
@@ -945,7 +1020,10 @@ class PSCalendar2:
             if fmt:
                 fmt += "-"
             fmt += "%d"
-        return self.dates[date_idx].strftime(fmt)
+        return self.date_obj(date_idx).strftime(fmt)
+
+    def date_obj(self, date_idx):
+        return self.dates[date_idx]
 
     def zoomed_rows(self):
         return [row for row in range(self.rows) if any([self.tiles[self.r_c_to_i(row, col)].zoomed for col in range(self.cols)])]
