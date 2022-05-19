@@ -390,7 +390,7 @@ class PSCalendar2:
                         "idxs": [],
                         "beam": None,
                         "gnk": None,
-                        "t":None
+                        "t": None
                     }
                 model_name = data_row['InputField1'].tolist()[0]
                 dealer = data_row['InputField2'].tolist()[0]
@@ -506,7 +506,7 @@ class PSCalendar2:
         self.tiles[ser] = CalendarTile2(ser, i, j, line, date, colour, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, DO_COPY=True)
 
     def insert(self, tile_in):
-        print(f"insetting tile: {tile_in}")
+        print(f"inserting tile: {tile_in}")
         self.log({
             "Inserting CalendarTile": {
                 "tile": str(tile_in)
@@ -1035,6 +1035,7 @@ class PSCalendar2:
         return [tile for tile in self.tiles if not tile.is_empty()]
 
     def log(self, log_dat_in):
+        # TODO add this log_data to the undo list. this will allow for quick access to operations to undo
         self.LOG[self.new_log_id()] = log_dat_in
 
     def new_log_id(self):

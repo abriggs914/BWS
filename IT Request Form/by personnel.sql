@@ -57,7 +57,7 @@ DECLARE @ttl_requests AS INTEGER;
 SELECT @ttl_requests = COUNT(*), @ttl_hours_act = SUM([LabourActual]), @ttl_hours_bud = SUM([LabourEstimate]) FROM [IT Requests];
 
 SELECT
-	[RequestType]
+	[Name]
 	, COUNT(*) AS [# Requests]
 	, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Requests]
 	, ROUND(SUM(ISNULL([LabourActual], 0)), 2) AS [Actual]
@@ -76,13 +76,21 @@ SELECT
 	, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 FROM
 	[IT Requests]
+LEFT JOIN
+	[IT Personnel]
+ON
+	[IT Requests].ITPersonAssignedID = [IT Personnel].[ITPersonID#]
 GROUP BY
-	[RequestType]
+	[Name]
 
 SELECT
 	COUNT(*) AS [Count]
-	, [RequestType]
+	, [Name]
 FROM
 	[IT Requests]
+LEFT JOIN
+	[IT Personnel]
+ON
+	[IT Requests].ITPersonAssignedID = [IT Personnel].[ITPersonID#]
 GROUP BY
-	[RequestType]
+	[Name]

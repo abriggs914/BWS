@@ -1,0 +1,6 @@
+
+DECLARE @t AS TABLE ([Id] INTEGER IDENTITY(1, 1), [Val] INTEGER);
+INSERT INTO @t ([Val]) VALUES
+(1),(1),(1),(1),(1),(NULL),(1),(1)
+
+SELECT * FROM @t  ORDER BY ISNULL([Val], 0)

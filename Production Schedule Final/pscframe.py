@@ -15,7 +15,7 @@ from PIL import ImageTk, Image
 from datetime_utility import *
 from tkinter import colorchooser
 from pscalendar import PSCalendar2, CalendarTile2
-from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter
+from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter, flatten
 from colour_utility import *
 
 
@@ -492,7 +492,7 @@ class PSCCalendarFrame(tkinter.Tk):
         return Rect2(r.left + self.left_cal_margin, r.top + self.top_cal_margin, r.width - self.left_cal_margin - self.right_cal_margin, r.height - self.top_cal_margin - self.bottom_cal_margin)
 
     def open(self, start_date, n_cals=10):
-        n_cals = min(n_cals, self.MAX_TABS)
+        n_cals = min(n_cals if n_cals is not None else 10, self.MAX_TABS)
         self.TABS = self.TABS[:n_cals]
         self.TAB_NAMES = self.TAB_NAMES[:n_cals]
         self.TAB_DATA = {k: v for k, v in self.TAB_DATA.items() if k < n_cals}
@@ -581,6 +581,12 @@ class PSCCalendarFrame(tkinter.Tk):
         idx = [tab["name"] for tab in self.TABS_tile_control].index(tab_name)
         self.TCTL_IDX = idx
 
+    def change_tab(self, tab_idx):
+        self.CAL_IDX = tab_idx
+        # self.notebook_tab_control.select(self.TAB_NAMES[self.CAL_IDX])
+        self.notebook_tab_control.select(self.CAL_IDX)
+        self.on_tab_change(None)
+
     def on_tab_change(self, event):
         print(f"On Tab Change! <{event}>")
         # tab_name = event.widget.tab('current')['text']
@@ -649,10 +655,7 @@ class PSCCalendarFrame(tkinter.Tk):
                 else:
                     print(f"Found date: \'{date_in}\' on calendar {i}")
                     if i != self.CAL_IDX:
-                        self.CAL_IDX = i
-                        # self.notebook_tab_control.select(self.TAB_NAMES[self.CAL_IDX])
-                        self.notebook_tab_control.select(self.CAL_IDX)
-                        self.on_tab_change(None)
+                        self.change_tab(i)
         except ValueError as ve:
             print(f"ValueError, {ve}")
         except IndexError as ie:
@@ -687,9 +690,10 @@ class PSCCalendarFrame(tkinter.Tk):
                     easygui.msgbox(f"Unit \'{wo_in}\' not Found")
                 else:
                     print(f"Found unit: \'{wo_in}\' on calendar {ci}")
-                    self.CAL_IDX = ci
-                    self.notebook_tab_control.select(self.CAL_IDX)
-                    self.on_tab_change(None)
+                    self.change_tab(ci)
+                    # self.CAL_IDX = ci
+                    # self.notebook_tab_control.select(self.CAL_IDX)
+                    # self.on_tab_change(None)
                     selected = self.get_current_calendar().selected
                     # print(f"About to deselect: {selected}")
                     if selected:
@@ -1514,7 +1518,7 @@ ORDER BY
         # self.combo_available_units_for_date["values"] = result
         self.combo_available_units_for_date["values"] = self.quotes_list["Quote#"].tolist()
         self.combo_available_rows_for_date["values"] = [line for line in cal.lines if line.startswith("T")] #  cal.lines #  list(range(1, cal.rows + 1))
-        self.combo_available_cols_for_date["values"] = cal.dates #  list(range(1, cal.cols + 1))
+        self.combo_available_cols_for_date["values"] = flatten([[date.strftime("%Y-%m-%d") for date in self.TAB_DATA[i]["Cal"].dates] for i in range(len(self.TAB_DATA))]) #  list(range(1, cal.cols + 1))
 
         self.TABS_tile_control[1].update({
             "widgets": [
@@ -2814,6 +2818,11 @@ ORDER BY
         cal.tiles[ct.ser] = ct
         self.tctl_new_unit_obj = None
         self.draw_calendar()
+        cal.log({
+            "Date NewCalendarTile": {
+                "tile": ct
+            }
+        })
 
     def clear_unit_fields(self):
         self.lb_chosen_new_row.set("")
@@ -2823,10 +2832,29 @@ ORDER BY
 
     def update_new_view_window(self):
         print(f"updating unit view")
+        date_in = datetime.datetime.strptime(self.lb_chosen_new_col.get(), "%Y-%m-%d")
         cal = self.get_current_calendar()
         lines = cal.lines
         dates = cal.dates
-        r, c = lines.index(self.lb_chosen_new_row.get()), dates.index(datetime.datetime.strptime(self.lb_chosen_new_col.get(), "%Y-%m-%d %H:%M:%S"))
+        old_idx = self.CAL_IDX
+        found = False
+        if date_in not in dates:
+            for i in range(len(self.TAB_DATA)):
+                if i != old_idx:
+                    self.CAL_IDX = i
+                    cal = self.get_current_calendar()
+                    lines = cal.lines
+                    dates = cal.dates
+                    if date_in in dates:
+                        found = True
+                        break
+        else:
+            found = True
+
+        if not found:
+            raise ValueError(f"Error \'{date_in}\' not found in calendar dates lists.")
+        # r, c = lines.index(self.lb_chosen_new_row.get()), dates.index(datetime.datetime.strptime(self.lb_chosen_new_col.get(), "%Y-%m-%d %H:%M:%S"))
+        r, c = lines.index(self.lb_chosen_new_row.get()), dates.index(date_in)
         ser = cal.r_c_to_i(r, c)
         if not cal.tiles[ser].is_empty():
             self.canvas_tctl_view_tile.delete("all")
@@ -2893,6 +2921,12 @@ ORDER BY
             bgc, outline, tt, do_mark = self.get_tile_colour(cal, ct, new_background=True)
             self.canvas_tctl_view_tile.create_rectangle(*rect2_to_tkinter(rect), fill=rgb_to_hex(bgc), outline=rgb_to_hex(outline))
             self.canvas_tctl_view_tile.create_text(rect.x + (rect.w / 2), rect.y + (rect.h / 2), text=tt, fill=rgb_to_hex(font_foreground(bgc)), font=self.font)
+
+        if self.CAL_IDX != old_idx:
+            # the new tiles date is on another calendar. switch views to show
+            self.change_tab(self.CAL_IDX)
+            self.draw_calendar()
+        # self.CAL_IDX = old_idx
 
     def new_unit_change(self, *args):
         wo, i, j = self.lb_chosen_new_unit.get(), self.lb_chosen_new_col.get(), self.lb_chosen_new_row.get()
