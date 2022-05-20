@@ -1,4 +1,6 @@
-from utility import flatten, dt, print_by_line, Rect2, clamp, tkinter_to_rect2, rect2_to_tkinter, dict_print
+import easygui
+
+from utility import flatten, dt, print_by_line, Rect2, clamp, tkinter_to_rect2, rect2_to_tkinter, dict_print, disjoint
 from colour_utility import *
 import math
 
@@ -305,6 +307,22 @@ class CalendarTile2:
 
 class PSCalendar2:
 
+    LOG_KEYS = {
+        "Swap CalendarTile": {"params": ["tile_a", "tile_b"], "func": "swap_tiles"},
+        "Deleting CalendarTile": {"params": [], "func": None},
+        "Inserting CalendarTile": {"params": [], "func": None},
+        "Moving CalendarTileNextPeriod": {"params": [], "func": None},
+        "Update WO": {"params": [], "func": None},
+        "Update ModelName": {"params": [], "func": None},
+        "Update Dealer": {"params": [], "func": None},
+        "Update Status": {"params": [], "func": None},
+        "Update Beam": {"params": [], "func": None},
+        "Update StartDate": {"params": [], "func": None},
+        "Update Serial": {"params": [], "func": None},
+        "Update Quote": {"params": [], "func": None},
+        "Update Gnk": {"params": [], "func": None}
+    }
+
     class CalendarException(Exception):
         def __init__(self, message):
             pass
@@ -450,6 +468,7 @@ class PSCalendar2:
 
         self.LOG = {}
         self.log_ids = self.init_log_ids()
+        self.undo_data = []
 
         # for tile in self.tiles:
         #     if tile.is_edited():
@@ -1034,9 +1053,28 @@ class PSCalendar2:
     def get_units(self):
         return [tile for tile in self.tiles if not tile.is_empty()]
 
+    def add_undo_data(self, log_dat_in):
+        self.undo_data.append(log_dat_in)
+
+    def undo(self):
+        if not self.undo_data:
+            easygui.msgbox("Nothing to undo.")
+            return
+        pop_data = self.undo_data.pop(0).items()
+        for log_key, action_data in pop_data:
+            log_key_dat = PSCalendar2.LOG_KEYS[log_key]
+            params = log_key_dat["params"]
+            func = log_key_dat["func"]
+            print(f"log_key: {log_key}, action_data: {action_data}, log_key_dat: {log_key_dat}, params: {params}, func: {func}")
+
     def log(self, log_dat_in):
         # TODO add this log_data to the undo list. this will allow for quick access to operations to undo
+        log_keys = list(log_dat_in.keys())
+        keys = list(PSCalendar2.LOG_KEYS)
+        if any([key not in keys for key in log_keys]):
+            raise KeyError(f"Error invalid log keys: \'{log_keys}\' ({type(log_keys)}).")
         self.LOG[self.new_log_id()] = log_dat_in
+        self.add_undo_data(log_dat_in)
 
     def new_log_id(self):
         return self.log_ids.__next__()

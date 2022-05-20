@@ -586,6 +586,7 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.notebook_tab_control.select(self.TAB_NAMES[self.CAL_IDX])
         self.notebook_tab_control.select(self.CAL_IDX)
         self.on_tab_change(None)
+        self.focus_set()
 
     def on_tab_change(self, event):
         print(f"On Tab Change! <{event}>")
@@ -2362,14 +2363,18 @@ ORDER BY
         self.draw_calendar()
 
     def kbd_arrow_left(self, event):
-        print(f"KEYBOARD TO THE LEFT")
-        x, y = event.x, event.y
+        print(f"KEYBOARD TO THE LEFT, event: {event}")
+        # x, y = event.x, event.y
         cal = self.get_current_calendar()
-        selected = cal.get_selected()
+        selected = cal.selected
         canvas_rect = self.get_current_cal_canvas_rect()
         if selected:
+            # print(f"selected tiles: {selected}")
             selected, *rest_selected = selected
             if selected:
+                # print(f"\tselected tile: {selected}")
+                tile_rect = cal.get_rect(selected.ser, canvas_rect, tkinter_rect=False)
+                x, y = tile_rect.center
                 rows, cols = cal.rows, cal.cols
                 i, j = selected.i, selected.j
                 curr_tab = self.TABS_tile_control[self.TCTL_IDX]
@@ -2378,7 +2383,9 @@ ORDER BY
                     c -= 1
 
                 selected.selected = False
-                cal.set_selected(cal.tiles[cal.r_c_to_i(r, c)])
+                new_select = cal.tiles[cal.r_c_to_i(r, c)]
+                # print(f"\tNew selected: {new_select}")
+                cal.set_selected(new_select.ser)
                 # if not selected.is_empty():
                     # self.tctl_tv_wo_num.set(f"{selected.wo_num}")
                     # self.tctl_tv_model.set(f"{selected.model_name}")
@@ -2388,13 +2395,116 @@ ORDER BY
                     # self.tctl_tv_start_date.set(f"{selected.job_start}")
                     # self.tctl_tv_serial.set(f"{selected.serial}")
                     # self.tctl_tv_quote.set(f"{selected.quote}")
+                self.update_tile_control()
+                self.draw_calendar()
 
     def kbd_arrow_right(self, event):
-        pass
+        print(f"KEYBOARD TO THE RIGHT, event: {event}")
+        # x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        canvas_rect = self.get_current_cal_canvas_rect()
+        if selected:
+            # print(f"selected tiles: {selected}")
+            selected, *rest_selected = selected
+            if selected:
+                # print(f"\tselected tile: {selected}")
+                tile_rect = cal.get_rect(selected.ser, canvas_rect, tkinter_rect=False)
+                x, y = tile_rect.center
+                rows, cols = cal.rows, cal.cols
+                i, j = selected.i, selected.j
+                curr_tab = self.TABS_tile_control[self.TCTL_IDX]
+                r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+                if -1 < c < cols - 1:
+                    c += 1
+
+                selected.selected = False
+                new_select = cal.tiles[cal.r_c_to_i(r, c)]
+                # print(f"\tNew selected: {new_select}")
+                cal.set_selected(new_select.ser)
+                # if not selected.is_empty():
+                    # self.tctl_tv_wo_num.set(f"{selected.wo_num}")
+                    # self.tctl_tv_model.set(f"{selected.model_name}")
+                    # self.tctl_tv_dealer.set(f"{selected.dealer}")
+                    # self.tctl_tv_status.set(f"{selected.status}")
+                    # self.tctl_tv_beam.set(f"{selected.beam}")
+                    # self.tctl_tv_start_date.set(f"{selected.job_start}")
+                    # self.tctl_tv_serial.set(f"{selected.serial}")
+                    # self.tctl_tv_quote.set(f"{selected.quote}")
+                self.update_tile_control()
+                self.draw_calendar()
+
     def kbd_arrow_up(self, event):
-        pass
+        print(f"KEYBOARD TO THE LEFT, event: {event}")
+        # x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        canvas_rect = self.get_current_cal_canvas_rect()
+        if selected:
+            # print(f"selected tiles: {selected}")
+            selected, *rest_selected = selected
+            if selected:
+                # print(f"\tselected tile: {selected}")
+                tile_rect = cal.get_rect(selected.ser, canvas_rect, tkinter_rect=False)
+                x, y = tile_rect.center
+                rows, cols = cal.rows, cal.cols
+                i, j = selected.i, selected.j
+                curr_tab = self.TABS_tile_control[self.TCTL_IDX]
+                r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+                if 0 < r < rows:
+                    r -= 1
+
+                selected.selected = False
+                new_select = cal.tiles[cal.r_c_to_i(r, c)]
+                # print(f"\tNew selected: {new_select}")
+                cal.set_selected(new_select.ser)
+                # if not selected.is_empty():
+                    # self.tctl_tv_wo_num.set(f"{selected.wo_num}")
+                    # self.tctl_tv_model.set(f"{selected.model_name}")
+                    # self.tctl_tv_dealer.set(f"{selected.dealer}")
+                    # self.tctl_tv_status.set(f"{selected.status}")
+                    # self.tctl_tv_beam.set(f"{selected.beam}")
+                    # self.tctl_tv_start_date.set(f"{selected.job_start}")
+                    # self.tctl_tv_serial.set(f"{selected.serial}")
+                    # self.tctl_tv_quote.set(f"{selected.quote}")
+                self.update_tile_control()
+                self.draw_calendar()
+
     def kbd_arrow_down(self, event):
-        pass
+        print(f"KEYBOARD TO THE RIGHT, event: {event}")
+        # x, y = event.x, event.y
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        canvas_rect = self.get_current_cal_canvas_rect()
+        if selected:
+            # print(f"selected tiles: {selected}")
+            selected, *rest_selected = selected
+            if selected:
+                # print(f"\tselected tile: {selected}")
+                tile_rect = cal.get_rect(selected.ser, canvas_rect, tkinter_rect=False)
+                x, y = tile_rect.center
+                rows, cols = cal.rows, cal.cols
+                i, j = selected.i, selected.j
+                curr_tab = self.TABS_tile_control[self.TCTL_IDX]
+                r, c = cal.x_y_to_r_c(x, y, canvas_rect)
+                if -1 < r < rows - 1:
+                    r += 1
+
+                selected.selected = False
+                new_select = cal.tiles[cal.r_c_to_i(r, c)]
+                # print(f"\tNew selected: {new_select}")
+                cal.set_selected(new_select.ser)
+                # if not selected.is_empty():
+                    # self.tctl_tv_wo_num.set(f"{selected.wo_num}")
+                    # self.tctl_tv_model.set(f"{selected.model_name}")
+                    # self.tctl_tv_dealer.set(f"{selected.dealer}")
+                    # self.tctl_tv_status.set(f"{selected.status}")
+                    # self.tctl_tv_beam.set(f"{selected.beam}")
+                    # self.tctl_tv_start_date.set(f"{selected.job_start}")
+                    # self.tctl_tv_serial.set(f"{selected.serial}")
+                    # self.tctl_tv_quote.set(f"{selected.quote}")
+                self.update_tile_control()
+                self.draw_calendar()
 
     def update_tile_control(self):
         """When a tile is selected, update the usage of the mini tile control notebook widget."""
@@ -2446,15 +2556,7 @@ ORDER BY
                 "<Leave>": self.leave,
                 "<B1-Motion>": self.drag,
                 "<Button-1>": self.click,
-                "<ButtonRelease-1>": self.release,
-                # "<a>": self.kbd_arrow_left,
-                # "<w>": self.kbd_arrow_up,
-                # "<s>": self.kbd_arrow_down,
-                # "<d>": self.kbd_arrow_right,
-                # "<Left>": self.kbd_arrow_left,
-                # "<Up>": self.kbd_arrow_up,
-                # "<Down>": self.kbd_arrow_down,
-                # "<Right>": self.kbd_arrow_right
+                "<ButtonRelease-1>": self.release
             }
             for bnd, fnc in bindings.items():
                 if i == self.CAL_IDX:
@@ -2462,6 +2564,14 @@ ORDER BY
                 else:
                     canvas.unbind(bnd)
             print(f"BINDINGS canvas: {canvas} => {canvas.bind()}")
+        self.bind("<a>", self.kbd_arrow_left)
+        self.bind("<w>", self.kbd_arrow_up)
+        self.bind("<s>", self.kbd_arrow_down)
+        self.bind("<d>", self.kbd_arrow_right)
+        self.bind("<Left>", self.kbd_arrow_left)
+        self.bind("<Up>", self.kbd_arrow_up)
+        self.bind("<Down>", self.kbd_arrow_down)
+        self.bind("<Right>", self.kbd_arrow_right)
 
     def clear_tile_control_fields(self):
         self.tctl_tv_wo_num.set("")
@@ -2566,10 +2676,14 @@ ORDER BY
         print("undo!!")
 
     def save_changes_update_server(self):
+        # TODO
         print("save_changes_update_server")
 
     def menu_control_undo_click(self):
+        # TODO
         print("menu_control_undo_click")
+        cal = self.get_current_calendar()
+        cal.undo()
 
     def move_next_period(self, tile, cal_idx=None):
         """Move a given tile from the given cal_idx to the next calendar in the same line"""
