@@ -13,6 +13,9 @@ import datetime
 # TODO 2022-05-18 Fix the cell spacing to get borders on all 4 sides rather than top and left only
 # TODO 2022-05-18 Need to fix the undo functions.
 # TODO 2022-05-18 Added GNK Date to tile control notebook
+# TODO 2022-05-24 Working on PSCalendar2.undo
+# TODO 2022-05-24 Delete tiles
+# TODO 2022-05-24 General line shifting options. Need to support moving backwards
 
 import calendar
 
@@ -28,5 +31,8 @@ if __name__ == "__main__":
 
     print("Calendar Logs:")
     calendars = pscf.get_calendars()
-    for i, cal in enumerate(calendars):
-        print(dict_print(cal.LOG, f"Calendar Log #{i}  " + "({} -> {})".format(*cal.date_range())))
+    with open("psc_session_log.txt", "a") as f:
+        f.write(f"\n-- {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} --")
+        for i, cal in enumerate(calendars):
+            print(dict_print(cal.LOG, f"Calendar Log #{i}  " + "({} -> {})".format(*cal.date_range())))
+            f.write(dict_print(cal.LOG, f"Calendar Log #{i}  " + "({} -> {})".format(*cal.date_range())))

@@ -15,7 +15,8 @@ from PIL import ImageTk, Image
 from datetime_utility import *
 from tkinter import colorchooser
 from pscalendar import PSCalendar2, CalendarTile2
-from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter, flatten
+from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter, \
+    flatten, print_by_line
 from colour_utility import *
 
 
@@ -296,6 +297,12 @@ class PSCCalendarFrame(tkinter.Tk):
 
         self.tctl_btn_save = None
         # self.tctl_btn_undo = None
+
+        self.frame_tile_nav_btns = None
+        self.btn_tile_nav_up = None
+        self.btn_tile_nav_right = None
+        self.btn_tile_nav_down = None
+        self.btn_tile_nav_left = None
 
         self.combo_available_units_for_date = None
         self.combo_available_cols_for_date = None
@@ -586,7 +593,6 @@ class PSCCalendarFrame(tkinter.Tk):
         # self.notebook_tab_control.select(self.TAB_NAMES[self.CAL_IDX])
         self.notebook_tab_control.select(self.CAL_IDX)
         self.on_tab_change(None)
-        self.focus_set()
 
     def on_tab_change(self, event):
         print(f"On Tab Change! <{event}>")
@@ -612,6 +618,7 @@ class PSCCalendarFrame(tkinter.Tk):
         # TODO bind the new cal canvas
         self.bind_calendar()
         # TODO unbind the others
+        self.focus_set()
 
     def switch_calendar_use_hover_gsm(self, *events):
         print("Change use hover")
@@ -1214,7 +1221,7 @@ ORDER BY
         self.TABS_tile_control = [
             {
                 "frame": ttk.Frame(self.notebook_tile_control),
-                "name": "+ / -"
+                "name": "Selected Tile"
             },
             {
                 "frame": ttk.Frame(self.notebook_tile_control),
@@ -1264,6 +1271,17 @@ ORDER BY
         self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save", name="save_btn")
         # self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
 
+        self.frame_tile_nav_btns = tkinter.Frame(root_tab_1)
+        self.btn_tile_nav_up = tkinter.Button(self.frame_tile_nav_btns, text="up", command=self.nav_tile_up)
+        self.btn_tile_nav_right = tkinter.Button(self.frame_tile_nav_btns, text="right", command=self.nav_tile_right)
+        self.btn_tile_nav_down = tkinter.Button(self.frame_tile_nav_btns, text="down", command=self.nav_tile_down)
+        self.btn_tile_nav_left = tkinter.Button(self.frame_tile_nav_btns, text="left", command=self.nav_tile_left)
+
+        self.btn_tile_nav_up.grid(row=1, column=2)
+        self.btn_tile_nav_right.grid(row=2, column=3)
+        self.btn_tile_nav_down.grid(row=3, column=2)
+        self.btn_tile_nav_left.grid(row=2, column=1)
+
         self.TABS_tile_control[0].update({
             "widgets": [
                 self.tctl_label_wo_num,
@@ -1287,6 +1305,8 @@ ORDER BY
                 self.tctl_label_start_date,
                 self.tctl_entry_start_date,
                 self.tctl_btn_save,
+
+                self.frame_tile_nav_btns
                 # self.tctl_btn_undo
             ],
             "arguments": [
@@ -1309,6 +1329,7 @@ ORDER BY
                 {"row": 9, "column": 1},
                 {"row": 9, "column": 2},
                 {"row": 10, "column": 1},
+                {"row": 1, "column": 3, "rowspan": 10}
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
                 # {"row": 8, "column": 2},  # Omitting for now
             ]
@@ -1581,7 +1602,7 @@ ORDER BY
 
         style = self.get_current_style()
         self.frame_top_calendar = tkinter.Frame(self, height=500, bg=rgb_to_hex(style["FRAME_TOP_CAL_BG"]))
-        self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar, width=325)
+        self.notebook_tile_control = ttk.Notebook(self.frame_top_calendar, width=525)
 
         self.frame_calendar_control = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(NAVY))
         self.frame_calendar_search_control = tkinter.Frame(self.frame_calendar_control)
@@ -2361,6 +2382,7 @@ ORDER BY
         self.DRAG_PLACEMENT_MARKER_2 = None
         cal.clear_dragging()
         self.draw_calendar()
+        self.update_tile_control()
 
     def kbd_arrow_left(self, event):
         print(f"KEYBOARD TO THE LEFT, event: {event}")
@@ -2397,6 +2419,9 @@ ORDER BY
                     # self.tctl_tv_quote.set(f"{selected.quote}")
                 self.update_tile_control()
                 self.draw_calendar()
+        else:
+            cal.set_selected(0)
+            self.kbd_arrow_left(None)
 
     def kbd_arrow_right(self, event):
         print(f"KEYBOARD TO THE RIGHT, event: {event}")
@@ -2433,6 +2458,9 @@ ORDER BY
                     # self.tctl_tv_quote.set(f"{selected.quote}")
                 self.update_tile_control()
                 self.draw_calendar()
+        else:
+            cal.set_selected(0)
+            self.kbd_arrow_left(None)
 
     def kbd_arrow_up(self, event):
         print(f"KEYBOARD TO THE LEFT, event: {event}")
@@ -2469,6 +2497,9 @@ ORDER BY
                     # self.tctl_tv_quote.set(f"{selected.quote}")
                 self.update_tile_control()
                 self.draw_calendar()
+        else:
+            cal.set_selected(0)
+            self.kbd_arrow_left(None)
 
     def kbd_arrow_down(self, event):
         print(f"KEYBOARD TO THE RIGHT, event: {event}")
@@ -2505,6 +2536,9 @@ ORDER BY
                     # self.tctl_tv_quote.set(f"{selected.quote}")
                 self.update_tile_control()
                 self.draw_calendar()
+        else:
+            cal.set_selected(0)
+            self.kbd_arrow_left(None)
 
     def update_tile_control(self):
         """When a tile is selected, update the usage of the mini tile control notebook widget."""
@@ -2676,14 +2710,82 @@ ORDER BY
         print("undo!!")
 
     def save_changes_update_server(self):
-        # TODO
         print("save_changes_update_server")
+        # TODO
+        user_name = "AVERY BRIGGS"
+        query = "BEGIN TRAN;"
+        do_query = False
+        for tab_idx in range(len(self.TAB_DATA)):
+            cal = self.TAB_DATA[tab_idx]["Cal"]
+
+            assert isinstance(cal, PSCalendar2)
+
+
+            edited_tiles = cal.get_edited()
+            deleted_tiles = cal.deleted_tiles
+            for tile in edited_tiles:
+                wip_query = ""
+
+                assert isinstance(tile, CalendarTile2)
+
+                if not tile.is_empty() and tile.is_edited():
+
+                    wip_query = """\nUPDATE [dtProductionSchedule] SET """
+                    criteria = ""
+                    x1 = len(wip_query)
+
+                    wo_num = tile.wo_num
+                    prod_date = tile.prod_date
+                    beam_date = tile.beam_date
+                    gnk_date = tile.gnk_date
+
+                    edited_values = tile._edited_lst
+                    if edited_values["i"] or edited_values["j"]:
+                        # new line OR new date (beam, gnk or trailer)
+                        criteria = """[Prod Date 1] = '{prod_date}', [Beam Date] = '{beam_date}', [GN Date] = '{gnk_date}'""".format(prod_date=prod_date, beam_date=beam_date, gnk_date=gnk_date)
+                        # criteria = """, [Prod Date 1] = '{prod_date}'""".format(prod_date=prod_date)
+                    if edited_values["wo_num"]:
+                        # this is a new tile
+                        # TODO insert statement here
+                        pass
+
+                    wip_query += criteria
+                    x2 = len(wip_query)
+                    if x1 != x2:
+                        wip_query += """, [ApplyUpdate] = 1, [ApplyUpdateUser] = '{name}' WHERE [WO#] = {wo}""".format(name=user_name, wo=wo_num)
+                if wip_query:
+                    query += wip_query
+                    do_query = True
+                # print(f"QUERY <{wip_query}>")
+            for tile in deleted_tiles:
+                pass
+            # print_by_line(edited_tiles)
+            # print_by_line(deleted_tiles)
+        if do_query:
+            query += "\nCOMMIT;\nEXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'""".format(name=user_name)
+            query = query.replace("'None'", "NULL")
+            print(f"QUERY <{query}>")
+            easygui.msgbox("Updates completed successfully!")
+        else:
+            easygui.msgbox("No changes to update!")
+        """UPDATE 
+	[dtProductionSchedule]
+SET
+	[Prod Date 1] = '{prod_date}',
+	[ApplyUpdate] = 1,
+	[ApplyUpdateUser] = '{name}'
+WHERE
+	[WO#] IN ({wo_1}...)
+	
+EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
 
     def menu_control_undo_click(self):
         # TODO
         print("menu_control_undo_click")
         cal = self.get_current_calendar()
         cal.undo()
+        self.draw_calendar()
+        self.update_tile_control()
 
     def move_next_period(self, tile, cal_idx=None):
         """Move a given tile from the given cal_idx to the next calendar in the same line"""
@@ -2838,6 +2940,12 @@ ORDER BY
         dates.reverse()
         tiles.reverse()
         print(f"DATES: {dates}\nTILES: {tiles}")
+        cal.log({
+            "Shifting CalendarTiles": {
+                "shifted": tiles,
+                "dates": dates
+            }
+        })
         for i, dat in enumerate(zip(dates, tiles)):
             new_date, tile = dat
             tile.j += 1
@@ -2923,6 +3031,28 @@ ORDER BY
 
     def get_calendars(self):
         return [self.TAB_DATA[i]["Cal"] for i in range(len(self.TABS))]
+
+    def nav_tile_up(self):
+        print("nav_tile_up")
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        if selected:
+            selected, *rest_selected = selected
+            if selected and not selected.is_empty():
+                r, c = selected.i, selected.j
+                if r > 0:
+                    new_i = cal.r_c_to_i(r - 1, c)
+                    swap_tile = cal.tiles[new_i]
+                    cal.swap_tiles(selected, swap_tile)
+
+    def nav_tile_right(self):
+        print("nav_tile_right")
+
+    def nav_tile_down(self):
+        print("nav_tile_down")
+
+    def nav_tile_left(self):
+        print("nav_tile_left")
 
     def date_new_unit(self):
         # at this point safeties have been checked, just add the tile - even if something is already there.
