@@ -1,9 +1,11 @@
-import easygui
+# import easygui
 
+import tkinter
+from tkinter import messagebox
 from utility import flatten, dt, print_by_line, Rect2, clamp, tkinter_to_rect2, rect2_to_tkinter, dict_print, disjoint
 from colour_utility import *
 import math
-from calendartile import CalendarTile2
+from calendartile import CalendarTile2, calendar_tile_from_repr
 
 
 class PSCalendar2:
@@ -291,6 +293,13 @@ class PSCalendar2:
         tile_a.j, tile_b.j = tile_b.j, tile_a.j
         tile_a.line, tile_b.line = tile_b.line, tile_a.line
         tile_a.date, tile_b.date = tile_b.date, tile_a.date
+
+        if tile_a.is_gnk() and tile_b.is_gnk():
+            tile_a.gnk_date, tile_b.gnk_date = tile_b.gnk_date, tile_a.gnk_date
+        elif tile_a.is_beam() and tile_b.is_beam():
+            tile_a.beam_date, tile_b.beam_date = tile_b.beam_date, tile_a.beam_date
+        elif tile_a.is_t() and tile_b.is_t():
+            tile_a.prod_date, tile_b.prod_date = tile_b.prod_date, tile_a.prod_date
 
         # tile_a.selected, tile_b.selected = tile_b.selected, tile_a.selected
         # tile_a.dragging, tile_a.dragging = tile_a.dragging, tile_a.dragging
@@ -773,22 +782,28 @@ class PSCalendar2:
 
     def undo(self):
         if not self.undo_data:
-            easygui.msgbox("Nothing to undo.")
+            # easygui.msgbox("Nothing to undo.")
+            tkinter.messagebox.showinfo("Editor", "Nothing to undo.")
             return
         pop_data = self.undo_data.pop(-1).items()
         # should be a list of actions to undo this will allow grouping for actions like shifting calendar_tiles.
         print(f"pop_data: {pop_data}, t=({type(pop_data)}), l=({len(pop_data)})")
         # print(dict_print(pop_data[1], "Pop Data 2"))
         for log_key, action_data in pop_data:
+            handled = False
             log_key_dat = PSCalendar2.LOG_KEYS[log_key]
             params = log_key_dat["params"]
-            func = eval("self." + log_key_dat["func"])
-            print(f"log_key: {log_key}, action_data: {action_data}, log_key_dat: {log_key_dat}, params: {params}, func: {func}")
-            if func:
-                print(f"PASSING: {list(dict(zip(params, action_data.values())).values())}")
-                func(*list(dict(zip(params, action_data.values())).values()))
-            else:
-                easygui.msgbox("func is None, skipping undo.")
+            func = log_key_dat["func"]
+            if func is not None:
+                func = eval("self." + log_key_dat["func"])
+                print(f"log_key: {log_key}, action_data: {action_data}, log_key_dat: {log_key_dat}, params: {params}, func: {func}")
+                if func:
+                    print(f"PASSING: {list(dict(zip(params, action_data.values())).values())}")
+                    func(*list(dict(zip(params, action_data.values())).values()))
+                    handled = True
+            if not handled:
+                # easygui.msgbox("func is None, unable to undo.")
+                tkinter.messagebox.showinfo("Editor", "func is None, unable to undo.")
 
     def log(self, log_dat_in):
         # TODO add this log_data to the undo list. this will allow for quick access to operations to undo

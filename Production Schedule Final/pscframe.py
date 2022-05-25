@@ -1,7 +1,7 @@
 import datetime
 import itertools
 
-import easygui
+# import easygui
 import pandas
 import pyodbc
 import tkinter
@@ -13,7 +13,7 @@ from pathlib import Path
 import tkcalendar
 from PIL import ImageTk, Image
 from datetime_utility import *
-from tkinter import colorchooser
+from tkinter import colorchooser, messagebox
 from pscalendar import PSCalendar2, CalendarTile2
 from utility import Rect2, first_of_month, end_of_month, dict_print, random_date, tkinter_to_rect2, rect2_to_tkinter, \
     flatten, print_by_line
@@ -241,6 +241,14 @@ class PSCCalendarFrame(tkinter.Tk):
         self.btn_calendar_search_date_submit = None
         self.btn_calendar_search_date_picker = None
         self.gsm_showing_calendar_picker = False
+        self.gsm_showing_top_level = False
+        self.top_level_window = None
+        self.calendar_top_level = None
+        self.top_level_caller = None
+        self.frame_top_level = None
+        self.frame_top_level_btns = None
+        self.btn_top_level_cancel = None
+        self.btn_top_level_submit = None
         self.calendar_search_date_picker = None
         self.btn_calendar_search_unit_submit = None
 
@@ -286,14 +294,17 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_label_beam = None
         self.tctl_entry_beam = None
         self.tctl_tv_beam = tkinter.StringVar()
+        self.btn_add_beam_date = None
 
         self.tctl_label_gnk = None
         self.tctl_entry_gnk = None
         self.tctl_tv_gnk = tkinter.StringVar()
+        self.btn_add_gnk_date = None
 
         self.tctl_label_start_date = None
         self.tctl_entry_start_date = None
         self.tctl_tv_start_date = tkinter.StringVar()
+        self.btn_add_prod_date = None
 
         self.tctl_btn_save = None
         # self.tctl_btn_undo = None
@@ -348,6 +359,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.init_splash_menu()
         self.init_calendar_menu()
         self.init_menu_control()
+        self.init_top_level()
         self.update_title()
         self.update_geometry()
 
@@ -552,7 +564,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self.TABS = self.TABS[:n_cals]
         self.TABS = self.TAB_NAMES[:n_cals]  #TODO not sure this looks right - seems to work 2022-05-12
 
-        self.draw_calendar()
+        self.draw_calendar(update_tc=True)
         self.bind_calendar()
         self.populate_dealers_selectors()
         self.mainloop()
@@ -646,6 +658,7 @@ class PSCCalendarFrame(tkinter.Tk):
     def submit_calendar_date_search(self, *events):
         print("submit date search")
         date_in = self.stringvar_calendar_search_date.get()
+        illegal = False
         try:
             if date_in:
                 found = False
@@ -659,23 +672,32 @@ class PSCCalendarFrame(tkinter.Tk):
                         found = True
                         break
                 if not found:
-                    easygui.msgbox(f"Date \'{date_in}\' not Found")
+                    # easygui.msgbox(f"Date \'{date_in}\' not Found")
+                    tkinter.messagebox.showinfo("Editor", f"Date \'{date_in}\' not Found")
                 else:
                     print(f"Found date: \'{date_in}\' on calendar {i}")
                     if i != self.CAL_IDX:
                         self.change_tab(i)
         except ValueError as ve:
             print(f"ValueError, {ve}")
+            illegal = True
         except IndexError as ie:
             print(f"IndexError, {ie}")
+            illegal = True
         except KeyError as ke:
             print(f"KeyError, {ke}")
+            illegal = True
         except TypeError as te:
             print(f"TypeError, {te}")
+            illegal = True
+
+        if illegal:
+            tkinter.messagebox.showinfo("Editor", "Invalid Date used for search.")
 
     def submit_calendar_unit_search(self, *events):
         print("submit unit search")
         wo_in = self.stringvar_calendar_search_unit.get()
+        illegal = False
         try:
             if wo_in:
                 found = False
@@ -695,7 +717,8 @@ class PSCCalendarFrame(tkinter.Tk):
                             found = True
                             tiles.append(tile)
                 if not found:
-                    easygui.msgbox(f"Unit \'{wo_in}\' not Found")
+                    # easygui.msgbox(f"Unit \'{wo_in}\' not Found")
+                    tkinter.messagebox.showinfo("Editor", f"Unit \'{wo_in}\' not Found")
                 else:
                     print(f"Found unit: \'{wo_in}\' on calendar {ci}")
                     self.change_tab(ci)
@@ -713,12 +736,19 @@ class PSCCalendarFrame(tkinter.Tk):
 
         except ValueError as ve:
             print(f"ValueError, {ve}")
+            illegal = True
         except IndexError as ie:
             print(f"IndexError, {ie}")
+            illegal = True
         except KeyError as ke:
             print(f"KeyError, {ke}")
+            illegal = True
         except TypeError as te:
             print(f"TypeError, {te}")
+            illegal = True
+
+        if illegal:
+            tkinter.messagebox.showinfo("Editor", "Invalid Date used for search.")
 
     def reset_dealer_1(self, *events):
         print("reset_dealer_1")
@@ -1240,7 +1270,8 @@ ORDER BY
 
         root_tab_1 = self.TABS_tile_control[0]["frame"]
         root_tab_1.grid()
-        entry_width = 125
+        entry_width = 40
+        nav_btn_width = 6
         self.tctl_label_wo_num = tkinter.Label(root_tab_1, text="WO#:")
         self.tctl_entry_wo_num = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_wo_num, width=entry_width, state=entry_state)
 
@@ -1261,26 +1292,24 @@ ORDER BY
 
         self.tctl_label_beam = tkinter.Label(root_tab_1, text="Beam:")
         self.tctl_entry_beam = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_beam, width=entry_width, state=entry_state)
+        self.btn_add_beam_date = tkinter.Button(root_tab_1, text="+", command=self.add_beam_date)
 
         self.tctl_label_gnk = tkinter.Label(root_tab_1, text="GNK:")
         self.tctl_entry_gnk = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_gnk, width=entry_width, state=entry_state)
+        self.btn_add_gnk_date = tkinter.Button(root_tab_1, text="+", command=self.add_gnk_date)
 
         self.tctl_label_start_date = tkinter.Label(root_tab_1, text="Start Date:")
         self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width, state=entry_state)
+        self.btn_add_prod_date = tkinter.Button(root_tab_1, text="+", command=self.add_prod_date)
 
         self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save", name="save_btn")
         # self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
 
-        self.frame_tile_nav_btns = tkinter.Frame(root_tab_1)
-        self.btn_tile_nav_up = tkinter.Button(self.frame_tile_nav_btns, text="up", command=self.nav_tile_up)
-        self.btn_tile_nav_right = tkinter.Button(self.frame_tile_nav_btns, text="right", command=self.nav_tile_right)
-        self.btn_tile_nav_down = tkinter.Button(self.frame_tile_nav_btns, text="down", command=self.nav_tile_down)
-        self.btn_tile_nav_left = tkinter.Button(self.frame_tile_nav_btns, text="left", command=self.nav_tile_left)
-
-        self.btn_tile_nav_up.grid(row=1, column=2)
-        self.btn_tile_nav_right.grid(row=2, column=3)
-        self.btn_tile_nav_down.grid(row=3, column=2)
-        self.btn_tile_nav_left.grid(row=2, column=1)
+        self.frame_tile_nav_btns = tkinter.Frame(root_tab_1, bg=rgb_to_hex(GRAY_58))
+        self.btn_tile_nav_up = tkinter.Button(self.frame_tile_nav_btns, text="up", command=self.nav_tile_up, width=nav_btn_width)
+        self.btn_tile_nav_right = tkinter.Button(self.frame_tile_nav_btns, text="right", command=self.nav_tile_right, width=nav_btn_width)
+        self.btn_tile_nav_down = tkinter.Button(self.frame_tile_nav_btns, text="down", command=self.nav_tile_down, width=nav_btn_width)
+        self.btn_tile_nav_left = tkinter.Button(self.frame_tile_nav_btns, text="left", command=self.nav_tile_left, width=nav_btn_width)
 
         self.TABS_tile_control[0].update({
             "widgets": [
@@ -1300,36 +1329,42 @@ ORDER BY
                 self.tctl_entry_status,
                 self.tctl_label_beam,
                 self.tctl_entry_beam,
+                self.btn_add_beam_date,
                 self.tctl_label_gnk,
                 self.tctl_entry_gnk,
+                self.btn_add_gnk_date,
                 self.tctl_label_start_date,
                 self.tctl_entry_start_date,
-                self.tctl_btn_save,
+                self.btn_add_prod_date,
+                self.tctl_btn_save
 
-                self.frame_tile_nav_btns
+                # self.frame_tile_nav_btns
                 # self.tctl_btn_undo
             ],
             "arguments": [
                 {"row": 1, "column": 1},
-                {"row": 1, "column": 2},
+                {"row": 1, "column": 2, "columnspan": 2},
                 {"row": 2, "column": 1},
-                {"row": 2, "column": 2},
+                {"row": 2, "column": 2, "columnspan": 2},
                 {"row": 3, "column": 1},
-                {"row": 3, "column": 2},
+                {"row": 3, "column": 2, "columnspan": 2},
                 {"row": 4, "column": 1},
-                {"row": 4, "column": 2},
+                {"row": 4, "column": 2, "columnspan": 2},
                 {"row": 5, "column": 1},
-                {"row": 5, "column": 2},
+                {"row": 5, "column": 2, "columnspan": 2},
                 {"row": 6, "column": 1},
-                {"row": 6, "column": 2},
+                {"row": 6, "column": 2, "columnspan": 2},
                 {"row": 7, "column": 1},
-                {"row": 7, "column": 2},
+                {"row": 7, "column": 2, "columnspan": 1},
+                {"row": 7, "column": 3, "columnspan": 1},
                 {"row": 8, "column": 1},
-                {"row": 8, "column": 2},
+                {"row": 8, "column": 2, "columnspan": 1},
+                {"row": 8, "column": 3, "columnspan": 1},
                 {"row": 9, "column": 1},
-                {"row": 9, "column": 2},
+                {"row": 9, "column": 2, "columnspan": 1},
+                {"row": 9, "column": 3, "columnspan": 1},
                 {"row": 10, "column": 1},
-                {"row": 1, "column": 3, "rowspan": 10}
+                # {"row": 1, "column": 3, "rowspan": 10}
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
                 # {"row": 8, "column": 2},  # Omitting for now
             ]
@@ -1581,6 +1616,33 @@ ORDER BY
             tab_name = tab_dat["name"]
             self.notebook_tile_control.add(tab, text=tab_name)
 
+    def init_top_level(self):
+        # self.gsm_showing_top_level
+        print(f"VVV INITTL VVV")
+        self.top_level_window = tkinter.Toplevel(self)
+        self.top_level_window.geometry("750x250")
+        self.frame_top_level = tkinter.Frame(self.top_level_window)
+        self.top_level_window.title("Select a date:")
+
+        today = datetime.datetime.today()
+        # self.btn_calendar_search_date_picker = tkinter.Button(self.frame_calendar_search_control_c, text="Date",
+        #                                                       command=self.show_calendar_picker)
+        self.calendar_top_level = tkcalendar.Calendar(self.frame_top_level, selectmode="day", cursor="hand1", year=today.year, month=today.month, day=today.day)
+        self.frame_top_level_btns = tkinter.Frame(self.frame_top_level)
+        self.btn_top_level_cancel = tkinter.Button(self.frame_top_level, text="cancel", command=self.cancel_top_level_date)
+        self.btn_top_level_submit = tkinter.Button(self.frame_top_level, text="submit", command=self.submit_top_level_date)
+        self.btn_top_level_cancel.grid(row=1, column=1)
+        self.btn_top_level_submit.grid(row=1, column=2)
+        self.calendar_top_level.grid()
+        self.frame_top_level.pack()
+        self.top_level_window.protocol("WM_DELETE_WINDOW", self.consume_top_level_close)
+        self.top_level_window.withdraw()
+        print(f"^^^ INITTL ^^^")
+
+        # Label(top, text= "Hello World!", font=('Mistral 18 bold')).place(x=150,y=80)
+        # btn.config(state="disabled")
+
+
     def init_menu_control(self):
         self.frame_menu_controls = tkinter.Frame(self.frame_top_calendar, height=200, border=1, borderwidth=2, bg=rgb_to_hex(TAN_1))
         self.mctl_btn_update_server = tkinter.Button(self.frame_menu_controls, command=self.save_changes_update_server, text="save changes and update server")
@@ -1754,6 +1816,15 @@ ORDER BY
         self.notebook_tile_control.pack()
         self.frame_tile_action.pack(side=tkinter.LEFT)
 
+        # add tile nav buttons
+        # self.frame_tile_nav_btns.grid(row=1, column=3, rowspan=10)
+        # self.frame_tile_nav_btns.grid()
+        self.frame_tile_nav_btns.grid(row=1, column=4, rowspan=10, columnspan=2)
+        self.btn_tile_nav_up.grid(row=1, column=2)
+        self.btn_tile_nav_right.grid(row=2, column=3)
+        self.btn_tile_nav_down.grid(row=3, column=2)
+        self.btn_tile_nav_left.grid(row=2, column=1)
+
         for i, tab_data in enumerate(self.TABS_tile_control):
             # frame = tab_data["frame"]
             widgets = tab_data["widgets"]
@@ -1761,6 +1832,7 @@ ORDER BY
             for widget, args in zip(widgets, arguments):
                 print(f"widget: {widget}, args: {args}")
                 widget.grid(**args)
+
 
         # do not allow the creat button to be pushed until choices are made
         self.btn_tctl_add_new_tile.config(state="disabled")
@@ -1794,7 +1866,7 @@ ORDER BY
         loop.run_until_complete(asyncio.gather(*([self.populate_tab_data(month_ranges) for i in range(1)] + [self.get_available_units()])))
         loop.close()
 
-    def draw_calendar(self):
+    def draw_calendar(self, update_tc=False):
         # print(f"drawing calendar at tab {self.CAL_IDX}, CAL: {self.TAB_DATA[self.CAL_IDX]['Cal']}")
 
         # def draw_canvas(calendar, canvas, canvas_header_row, canvas_header_col):
@@ -2166,6 +2238,9 @@ ORDER BY
         canvas_header_top.update()
         canvas_header_left.update()
 
+        if update_tc:
+            self.update_tile_control()
+
     def get_current_style(self):
         """Get the style dict."""
         # TODO hardcoded default style here
@@ -2328,9 +2403,8 @@ ORDER BY
         print(f"Aclick: e: {event}, tile.selected: {tile.selected}")
         # tile.selected = not tile.selected
         # cal.colour = cal.colour_selected
-        self.draw_calendar()
+        self.draw_calendar(update_tc=True)
         print(f"Bclick: e: {event}, tile.selected: {tile.selected}")
-        self.update_tile_control()
 
     def release(self, event):
         cal = self.get_current_calendar()
@@ -2369,7 +2443,8 @@ ORDER BY
                 print("PERFORMING SWAP")
                 if self.ASSERT_SAME_LINE_SWAP:
                     if drag_tile.line != tile.line:
-                        easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
+                        # easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
+                        tkinter.messagebox.showinfo("Editor", self.ERMSG_NO_CROSS_LINE_SWAP)
 
                 cal.swap_tiles(drag_tile, tile)
                 cal.clear_selected()
@@ -2381,8 +2456,7 @@ ORDER BY
         self.DRAG_PLACEMENT_MARKER_1 = None
         self.DRAG_PLACEMENT_MARKER_2 = None
         cal.clear_dragging()
-        self.draw_calendar()
-        self.update_tile_control()
+        self.draw_calendar(update_tc=True)
 
     def kbd_arrow_left(self, event):
         print(f"KEYBOARD TO THE LEFT, event: {event}")
@@ -2417,8 +2491,7 @@ ORDER BY
                     # self.tctl_tv_start_date.set(f"{selected.job_start}")
                     # self.tctl_tv_serial.set(f"{selected.serial}")
                     # self.tctl_tv_quote.set(f"{selected.quote}")
-                self.update_tile_control()
-                self.draw_calendar()
+                self.draw_calendar(update_tc=True)
         else:
             cal.set_selected(0)
             self.kbd_arrow_left(None)
@@ -2456,8 +2529,7 @@ ORDER BY
                     # self.tctl_tv_start_date.set(f"{selected.job_start}")
                     # self.tctl_tv_serial.set(f"{selected.serial}")
                     # self.tctl_tv_quote.set(f"{selected.quote}")
-                self.update_tile_control()
-                self.draw_calendar()
+                self.draw_calendar(update_tc=True)
         else:
             cal.set_selected(0)
             self.kbd_arrow_left(None)
@@ -2495,8 +2567,7 @@ ORDER BY
                     # self.tctl_tv_start_date.set(f"{selected.job_start}")
                     # self.tctl_tv_serial.set(f"{selected.serial}")
                     # self.tctl_tv_quote.set(f"{selected.quote}")
-                self.update_tile_control()
-                self.draw_calendar()
+                self.draw_calendar(update_tc=True)
         else:
             cal.set_selected(0)
             self.kbd_arrow_left(None)
@@ -2534,8 +2605,7 @@ ORDER BY
                     # self.tctl_tv_start_date.set(f"{selected.job_start}")
                     # self.tctl_tv_serial.set(f"{selected.serial}")
                     # self.tctl_tv_quote.set(f"{selected.quote}")
-                self.update_tile_control()
-                self.draw_calendar()
+                self.draw_calendar(update_tc=True)
         else:
             cal.set_selected(0)
             self.kbd_arrow_left(None)
@@ -2711,7 +2781,7 @@ ORDER BY
 
     def save_changes_update_server(self):
         print("save_changes_update_server")
-        # TODO
+        # TODO HARDCODED NAME HERE
         user_name = "AVERY BRIGGS"
         query = "BEGIN TRAN;"
         do_query = False
@@ -2719,7 +2789,6 @@ ORDER BY
             cal = self.TAB_DATA[tab_idx]["Cal"]
 
             assert isinstance(cal, PSCalendar2)
-
 
             edited_tiles = cal.get_edited()
             deleted_tiles = cal.deleted_tiles
@@ -2765,9 +2834,11 @@ ORDER BY
             query += "\nCOMMIT;\nEXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'""".format(name=user_name)
             query = query.replace("'None'", "NULL")
             print(f"QUERY <{query}>")
-            easygui.msgbox("Updates completed successfully!")
+            # easygui.msgbox("Updates completed successfully!")
+            tkinter.messagebox.showinfo("Editor", "Updates completed successfully!")
         else:
-            easygui.msgbox("No changes to update!")
+            # easygui.msgbox("No changes to update!")
+            tkinter.messagebox.showinfo("Editor", "No changes to update!")
         """UPDATE 
 	[dtProductionSchedule]
 SET
@@ -2784,8 +2855,7 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
         print("menu_control_undo_click")
         cal = self.get_current_calendar()
         cal.undo()
-        self.draw_calendar()
-        self.update_tile_control()
+        self.draw_calendar(update_tc=True)
 
     def move_next_period(self, tile, cal_idx=None):
         """Move a given tile from the given cal_idx to the next calendar in the same line"""
@@ -2951,7 +3021,7 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
             tile.j += 1
             new_idx = cal.r_c_to_i(tile.i, tile.j)
             tile.ser = new_idx
-            tile.date = new_date
+            tile.date = new_date # TODO this doesnt seem safe because the none of the "Big 3" dates are altered
             # cal.insert(tile)
             cal.tiles[new_idx] = tile
         # if not is_rec:
@@ -3044,15 +3114,49 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
                     new_i = cal.r_c_to_i(r - 1, c)
                     swap_tile = cal.tiles[new_i]
                     cal.swap_tiles(selected, swap_tile)
+                    self.draw_calendar(update_tc=True)
 
     def nav_tile_right(self):
         print("nav_tile_right")
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        if selected:
+            selected, *rest_selected = selected
+            if selected and not selected.is_empty():
+                r, c = selected.i, selected.j
+                if c < cal.cols - 1:
+                    new_i = cal.r_c_to_i(r, c + 1)
+                    swap_tile = cal.tiles[new_i]
+                    cal.swap_tiles(selected, swap_tile)
+                    self.draw_calendar(update_tc=True)
 
     def nav_tile_down(self):
         print("nav_tile_down")
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        if selected:
+            selected, *rest_selected = selected
+            if selected and not selected.is_empty():
+                r, c = selected.i, selected.j
+                if r < cal.rows - 1:
+                    new_i = cal.r_c_to_i(r + 1, c)
+                    swap_tile = cal.tiles[new_i]
+                    cal.swap_tiles(selected, swap_tile)
+                    self.draw_calendar(update_tc=True)
 
     def nav_tile_left(self):
         print("nav_tile_left")
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        if selected:
+            selected, *rest_selected = selected
+            if selected and not selected.is_empty():
+                r, c = selected.i, selected.j
+                if c > 0:
+                    new_i = cal.r_c_to_i(r, c - 1)
+                    swap_tile = cal.tiles[new_i]
+                    cal.swap_tiles(selected, swap_tile)
+                    self.draw_calendar(update_tc=True)
 
     def date_new_unit(self):
         # at this point safeties have been checked, just add the tile - even if something is already there.
@@ -3061,7 +3165,7 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
         ct = self.tctl_new_unit_obj
         cal.tiles[ct.ser] = ct
         self.tctl_new_unit_obj = None
-        self.draw_calendar()
+        self.draw_calendar(update_tc=True)
         cal.log({
             "Date NewCalendarTile": {
                 "tile": ct
@@ -3195,6 +3299,67 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
             last_name = tab_ns[-1]
             return f"+{last_name + 1} Months"
         return f"NEW TAB {len(self.TAB_NAMES) + 1}"
+
+    def add_beam_date(self, *args):
+        print("add_beam_date")
+        cal = self.get_current_calendar()
+        if not cal.selected:
+            tkinter.messagebox.showinfo("Editor", "You must select a unit before it can be assigned a beam date.")
+            return
+        self.top_level_window.deiconify()
+        self.top_level_caller = "beam"
+
+    def add_gnk_date(self, *args):
+        print("add_gnk_date")
+        cal = self.get_current_calendar()
+        if not cal.selected:
+            tkinter.messagebox.showinfo("Editor", "You must select a unit before it can be assigned a GNK date.")
+            return
+        self.top_level_window.deiconify()
+        self.top_level_caller = "gnk"
+
+    def add_prod_date(self, *args):
+        print("add_prod_date")
+        cal = self.get_current_calendar()
+        if not cal.selected:
+            tkinter.messagebox.showinfo("Editor", "You must select a unit before it can be assigned a production date.")
+            return
+        self.top_level_window.deiconify()
+        self.top_level_caller = "t"
+
+    def consume_top_level_close(self):
+        # Consume the 'x' button click for the top level window. Other-wise it is destroyed
+        self.top_level_window.withdraw()
+        self.top_level_caller = None
+
+    def cancel_top_level_date(self, *args):
+        self.top_level_window.withdraw()
+        self.top_level_caller = None
+
+    def submit_top_level_date(self, *args):
+        self.top_level_window.withdraw()
+        cal = self.get_current_calendar()
+        selected = cal.selected
+        if self.top_level_caller and selected:
+            selected, *rest_selected = selected
+            calendar_choice = self.calendar_top_level.selection_get().strftime("%Y-%m-%d")
+            print(f"Calendar choice: \'{calendar_choice}\', ({type(calendar_choice)})")
+
+            options = {
+                "beam": (self.tctl_tv_beam, ),
+                "gnk": (self.tctl_tv_gnk,),
+                "t": (self.tctl_tv_start_date,),
+                None: (None, None)
+            }
+            var = options[self.top_level_caller][0]
+            if var is not None:
+                var.set(calendar_choice)
+
+        self.top_level_caller = None
+        #TODO need to set the current selected tile's dppropriate date to the date_choice
+        tkinter.messagebox.showinfo("Editor", "Date added successfully!")
+        self.consume_top_level_close()
+        self.draw_calendar(update_tc=True)
 
 # def rect2_to_tkinter(rect):
 #     assert isinstance(rect, Rect2), "Error value is not a valid Rect2 object."
