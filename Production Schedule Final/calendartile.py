@@ -22,6 +22,9 @@ class CalendarTile2:
         self._line = line
         self._date = date
 
+        # TODO HARDCODED THIS VALUE
+        self.is_other_tile = False
+
         self._wo_num = None
         self.model_name = None
         self.dealer = None
@@ -49,6 +52,7 @@ class CalendarTile2:
         self.gnk_date = None
         self.beam_date = None
         self.prod_date = None
+        self.other_date = None
 
         self.selected = False
         self.dragging = False
@@ -102,6 +106,7 @@ class CalendarTile2:
         self.beam_date = date_data["beam"]
         # else:
         self.prod_date = date_data["t"]
+        self.other_date = date_data["o"]
 
         self.job_start = date_data["t"] if date_data["t"] is not None else self.job_start
         self.beam = date_data["beam"] if date_data["beam"] is not None else self.beam
@@ -115,8 +120,11 @@ class CalendarTile2:
     def is_t(self):
         return self.line[0] == "T"
 
-    def is_top_level_wo(self):
-        return str(self.wo_num)[:4] == "1001"
+    def is_other(self):
+        return self.is_other_tile
+
+    # def is_top_level_wo(self):
+    #     return str(self.wo_num)[:4] == "1001"
 
     def get_pdf_text(self):
         return self.text if len("".join([s.strip() for s in self.text.split("None")])) else "Line: {}\nDate: {}".format(self.line, self.date)

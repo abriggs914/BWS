@@ -47,6 +47,7 @@ class PSCCalendarFrame(tkinter.Tk):
             max_tile_w=100,
             max_tile_h=50,
             ASSERT_SAME_LINE_SWAP=False,
+            ASSERT_SAME_GROUP_SWAP=True,
             ALLOW_RECORD_MODIFICATION=False,
             border_width=2,
             middle_drag_placement_factor=0.3,
@@ -71,6 +72,7 @@ class PSCCalendarFrame(tkinter.Tk):
         self._right_cal_margin = right_cal_margin_p
         self._font = font_p
         self.ASSERT_SAME_LINE_SWAP = ASSERT_SAME_LINE_SWAP  # prevents units from swapping between units if T
+        self.ASSERT_SAME_GROUP_SWAP = ASSERT_SAME_GROUP_SWAP  # prevents units from swapping between groups (t, b, gnk) if T
         self.ALLOW_RECORD_MODIFICATION = ALLOW_RECORD_MODIFICATION
         self.HIGHLIGHTED_EDITED_TILES = HIGHLIGHT_EDITED_TILES
         self.EDITED_HIGHLIGHT_PROPORTION = EDITED_HIGHLIGHT_PROPORTION
@@ -135,6 +137,8 @@ class PSCCalendarFrame(tkinter.Tk):
                 "TILE_OUTLINE_STAT": WHITE,
                 "TILE_FONT_STAT": ("Arial", 15),
 
+                "TILE_BACKGROUND_OTHER": PINK_1,
+
                 "TILE_BACKGROUND_DRAG": BWS_RED,
                 "TILE_FOREGROUND_DRAG": WHITE,
                 "TILE_OUTLINE_DRAG": WHITE,
@@ -164,7 +168,9 @@ class PSCCalendarFrame(tkinter.Tk):
                 "LEFT_HEADER_FILL": BLACK,
                 "TOP_HEADER_OUTLINE": WHITE,
                 "LEFT_HEADER_OUTLINE": WHITE,
-                "SAME_WO_MARKER_COLOUR": LIMEGREEN
+                "SAME_WO_MARKER_COLOUR": LIMEGREEN,
+                "EDITED_TILE_GRADIENT_COLOUR": None,  # GRAY_55,
+                "EDITED_TILE_GRADIENT_OUTLINE": None  # GRAY_13
             }
         }
 
@@ -305,6 +311,11 @@ class PSCCalendarFrame(tkinter.Tk):
         self.tctl_entry_start_date = None
         self.tctl_tv_start_date = tkinter.StringVar()
         self.btn_add_prod_date = None
+
+        self.tctl_label_other_date = None
+        self.tctl_entry_other_date = None
+        self.tctl_tv_other_date = tkinter.StringVar()
+        self.btn_add_other_date = None
 
         self.tctl_btn_save = None
         # self.tctl_btn_undo = None
@@ -1091,6 +1102,7 @@ class PSCCalendarFrame(tkinter.Tk):
         else:
             style = style_in
         colour_tile = style["TILE_BACKGROUND_STAT"]
+        colour_other = style["TILE_BACKGROUND_OTHER"]
         colour_border = style["TILE_OUTLINE_STAT"]
         colour_font = style["TILE_FOREGROUND_STAT"]
         colour_selected = style["TILE_BACKGROUND_SELECT"]
@@ -1101,7 +1113,7 @@ class PSCCalendarFrame(tkinter.Tk):
         colour_t_line_tile = style["T_LINE"]
         colour_gnk_line_tile = style["GNK_LINE"]
         switch_week_divs = True
-        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=self.border_width, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h, max_n_selected=self.max_n_selected, colour_beam_line_tile=colour_beam_line_tile, colour_t_line_tile=colour_t_line_tile, colour_gnk_line_tile=colour_gnk_line_tile)
+        return PSCalendar2(start_date, end_date, data, lines, dates, colour_tile=colour_tile, colour_border=colour_border, colour_font=colour_font, colour_selected=colour_selected, colour_hovered=colour_hovered, colour_dragging=colour_dragging, border_width=self.border_width, switch_week_divs=switch_week_divs, colour_weekend_div=colour_weekend_div, max_n_zoomed_rows=self.max_n_zoomed_rows, max_n_zoomed_cols=self.max_n_zoomed_cols, min_tile_w=self.min_tile_w, min_tile_h=self.min_tile_h, max_tile_w=self.max_tile_w, max_tile_h=self.max_tile_h, max_n_selected=self.max_n_selected, colour_beam_line_tile=colour_beam_line_tile, colour_t_line_tile=colour_t_line_tile, colour_gnk_line_tile=colour_gnk_line_tile, colour_other_line_tile=colour_other)
 
     async def get_data(self, start_date, end_date):
         lines, dates, data = await self.get_production_data(start_date, end_date)
@@ -1302,6 +1314,10 @@ ORDER BY
         self.tctl_entry_start_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_start_date, width=entry_width, state=entry_state)
         self.btn_add_prod_date = tkinter.Button(root_tab_1, text="+", command=self.add_prod_date)
 
+        self.tctl_label_other_date = tkinter.Label(root_tab_1, text="Other Date:")
+        self.tctl_entry_other_date = tkinter.Entry(root_tab_1, textvariable=self.tctl_tv_other_date, width=entry_width, state=entry_state)
+        self.btn_add_other_date = tkinter.Button(root_tab_1, text="+", command=self.add_other_date)
+
         self.tctl_btn_save = tkinter.Button(root_tab_1, command=self.tctl_save_click, text="save", name="save_btn")
         # self.tctl_btn_undo = tkinter.Button(root_tab_1, command=self.tctl_undo_click, text="undo", name="undo_btn")
 
@@ -1336,6 +1352,9 @@ ORDER BY
                 self.tctl_label_start_date,
                 self.tctl_entry_start_date,
                 self.btn_add_prod_date,
+                self.tctl_label_other_date,
+                self.tctl_entry_other_date,
+                self.btn_add_other_date,
                 self.tctl_btn_save
 
                 # self.frame_tile_nav_btns
@@ -1364,6 +1383,9 @@ ORDER BY
                 {"row": 9, "column": 2, "columnspan": 1},
                 {"row": 9, "column": 3, "columnspan": 1},
                 {"row": 10, "column": 1},
+                {"row": 10, "column": 2, "columnspan": 1},
+                {"row": 10, "column": 3, "columnspan": 1},
+                {"row": 11, "column": 1},
                 # {"row": 1, "column": 3, "rowspan": 10}
                 # {"row": 7, "column": 2},  # TODO IDK why but it cant go on the same row??
                 # {"row": 8, "column": 2},  # Omitting for now
@@ -1635,6 +1657,13 @@ ORDER BY
         self.btn_top_level_submit.grid(row=1, column=2)
         self.calendar_top_level.grid()
         self.frame_top_level.pack()
+
+        # self.btn_top_level_cancel.grid(row=1, column=1)
+        # self.btn_top_level_submit.grid(row=1, column=2)
+        # self.frame_top_level_btns.grid(row=1, column=3)
+        # self.calendar_top_level.grid(row=1, column=1, rowspan=2, columnspan=2)
+        # self.frame_top_level.pack()
+
         self.top_level_window.protocol("WM_DELETE_WINDOW", self.consume_top_level_close)
         self.top_level_window.withdraw()
         print(f"^^^ INITTL ^^^")
@@ -2264,6 +2293,7 @@ ORDER BY
 
     def get_tile_colour(self, cal, tile, new_background=False):
         """Return the calculated background, outline and tile text for a given tile on a calendar. new_background ensures calculations do not start with tiles currently saved colour."""
+        style = self.get_current_style()
         bgc = tile.colour
         if new_background or (not tile.is_empty and bgc in [cal.colour_tile_general, cal.colour_beam_line_tile, cal.colour_gnk_line_tile]):
             if tile.is_beam():
@@ -2287,18 +2317,24 @@ ORDER BY
             if last_swap_pair:
                 a, b = last_swap_pair
                 if not tile.is_empty() and tile in last_swap_pair and tile.ser in {a.ser, b.ser}:
-                    bgc = brighten(bgc, 0.15)
+                    # bgc = brighten(bgc, 0.15)
+                    bgc = gradient(1, 2, bgc, BLACK)
                     # print(f"OUTLINE: {outline}")
-                    outline = darken(outline, 0.15)
+                    outline = brighten(outline, 0.15)
 
         if self.HIGHLIGHTED_EDITED_TILES:
             if tile.is_edited() and not tile.is_empty():
-                # print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
-                # print(dict_print(tile._edited_lst, f"Edited List {tile}"))
-                bgc = brighten(bgc, self.EDITED_HIGHLIGHT_PROPORTION)
-                if self.EDITED_HIGHLIGHT_PROPORTION > 0.45:
-                    outline = font_foreground(bgc)  # don't do this for now 2022-05-13
-                    print(f"bgc: {bgc}, outline: {outline}")
+
+                if style["EDITED_TILE_GRADIENT_COLOUR"] is None:
+                    # print(f"tile: {tile} is edited, tile.OG: {tile.OG}")
+                    # print(dict_print(tile._edited_lst, f"Edited List {tile}"))
+                    bgc = brighten(bgc, self.EDITED_HIGHLIGHT_PROPORTION)
+                    if self.EDITED_HIGHLIGHT_PROPORTION > 0.45:
+                        outline = font_foreground(bgc)  # don't do this for now 2022-05-13
+                        print(f"bgc: {bgc}, outline: {outline}")
+                else:
+                    bgc = style["EDITED_TILE_GRADIENT_COLOUR"]
+                    outline = style["EDITED_TILE_GRADIENT_OUTLINE"]
 
         do_mark = False
         if not tile.is_empty() and self.MARK_SAME_WOS:
@@ -2439,13 +2475,20 @@ ORDER BY
                     #     self.shift_line_units(tile, 1)
                 cal.clear_selected()
 
+            options = {
+                "T": lambda t: t.is_t(),
+                "B": lambda t: t.is_beam(),
+                "GNK": lambda t: t.is_gnk()
+            }
+            state_a = [k for k, v in options.items() if v(drag_tile)][0]
+            state_b = [k for k, v in options.items() if v(tile)][0]
+            do_swap = do_swap and (not self.ASSERT_SAME_GROUP_SWAP or (self.ASSERT_SAME_GROUP_SWAP and state_a == state_b))
             if do_swap:
                 print("PERFORMING SWAP")
                 if self.ASSERT_SAME_LINE_SWAP:
                     if drag_tile.line != tile.line:
                         # easygui.msgbox(self.ERMSG_NO_CROSS_LINE_SWAP)
                         tkinter.messagebox.showinfo("Editor", self.ERMSG_NO_CROSS_LINE_SWAP)
-
                 cal.swap_tiles(drag_tile, tile)
                 cal.clear_selected()
             # else:
@@ -2685,6 +2728,7 @@ ORDER BY
         self.tctl_tv_beam.set("")
         self.tctl_tv_gnk.set("")
         self.tctl_tv_start_date.set("")
+        self.tctl_tv_other_date.set("")
         self.tctl_tv_serial.set("")
         self.tctl_tv_quote.set("")
 
@@ -2698,6 +2742,7 @@ ORDER BY
             dealer_new = self.tctl_tv_dealer.get()
             status_new = self.tctl_tv_status.get()
             beam_new = self.tctl_tv_beam.get()
+            other_new = self.tctl_tv_other_date.get()
             start_date_new = datetime.datetime.strptime(self.tctl_tv_start_date.get(), "%Y-%m-%d")
             serial_new = self.tctl_tv_serial.get()
             quote_new = self.tctl_tv_quote.get()
@@ -2707,6 +2752,7 @@ ORDER BY
             dealer_old = selected.dealer
             status_old = selected.status
             beam_old = selected.beam
+            other_old = selected.other_date
             start_date_old = selected.job_start
             serial_old = selected.serial
             quote_old = selected.quote
@@ -2750,6 +2796,14 @@ ORDER BY
                     "tidx": selected.ser,
                     "old": beam_old,
                     "new": beam_new
+                }})
+
+            if other_old != other_new:
+                selected.other_date = other_new
+                cal.log({"Update Other": {
+                    "tidx": selected.ser,
+                    "old": other_old,
+                    "new": other_new
                 }})
 
             if start_date_old != start_date_new:
@@ -2821,7 +2875,7 @@ ORDER BY
                     wip_query += criteria
                     x2 = len(wip_query)
                     if x1 != x2:
-                        wip_query += """, [ApplyUpdate] = 1, [ApplyUpdateUser] = '{name}' WHERE [WO#] = {wo}""".format(name=user_name, wo=wo_num)
+                        wip_query += """, [ApplyUpdate] = 1, [ApplyUpdateUser] = '{name}' WHERE [WO#] = {wo};""".format(name=user_name, wo=wo_num)
                 if wip_query:
                     query += wip_query
                     do_query = True
@@ -3225,7 +3279,6 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
             rect = Rect2(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1])
             print(f"NEW TILE: {ct}, rect: {rect}, bounds: {bounds}")
             self.tctl_new_unit_obj = ct
-            # TODO HARDCODED HERE
             # ct.set_data(wo, "MODEL_NAME", "DEALER", "STATUS", "JOB", "BEAM_START", "SERIAL", "QUOTE")
 
             # print(f"self.quotes_list: {self.quotes_list}")
@@ -3327,6 +3380,15 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
         self.top_level_window.deiconify()
         self.top_level_caller = "t"
 
+    def add_other_date(self, *args):
+        print("add_other_date")
+        cal = self.get_current_calendar()
+        if not cal.selected:
+            tkinter.messagebox.showinfo("Editor", "You must select a unit before it can be assigned an other date.")
+            return
+        self.top_level_window.deiconify()
+        self.top_level_caller = "o"
+
     def consume_top_level_close(self):
         # Consume the 'x' button click for the top level window. Other-wise it is destroyed
         self.top_level_window.withdraw()
@@ -3340,20 +3402,32 @@ EXEC sp_ProductionSchedule_V4_UpdateLiveTablesV2 @apupdateuser = '{name}'"""
         self.top_level_window.withdraw()
         cal = self.get_current_calendar()
         selected = cal.selected
+        valid_dates = cal.valid_tiles()
         if self.top_level_caller and selected:
             selected, *rest_selected = selected
-            calendar_choice = self.calendar_top_level.selection_get().strftime("%Y-%m-%d")
+            date_choice = self.calendar_top_level.selection_get()
+            calendar_choice = date_choice.strftime("%Y-%m-%d")
             print(f"Calendar choice: \'{calendar_choice}\', ({type(calendar_choice)})")
 
             options = {
-                "beam": (self.tctl_tv_beam, ),
-                "gnk": (self.tctl_tv_gnk,),
-                "t": (self.tctl_tv_start_date,),
+                "beam": (self.tctl_tv_beam, "beam_date"),
+                "gnk": (self.tctl_tv_gnk, "gnk_date"),
+                "t": (self.tctl_tv_start_date, "prod_date"),
+                "o": (self.tctl_tv_other_date, "other_date"),
                 None: (None, None)
             }
-            var = options[self.top_level_caller][0]
-            if var is not None:
-                var.set(calendar_choice)
+            var, attribute = options[self.top_level_caller]
+            if (self.top_level_caller, date_choice) in valid_dates:
+
+                if var is not None:
+                    var.set(calendar_choice)
+                    setattr(selected, attribute, date_choice)
+                    # eval("selected." + attribute + " = " )
+                    # self.gnk_date = date_data["gnk"]
+                    # # elif self.is_beam():
+                    # self.beam_date = date_data["beam"]
+                    # # else:
+                    # self.prod_date = date_data["t"]
 
         self.top_level_caller = None
         #TODO need to set the current selected tile's dppropriate date to the date_choice

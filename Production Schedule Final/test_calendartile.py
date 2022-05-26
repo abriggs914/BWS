@@ -1,3 +1,5 @@
+import datetime
+
 from pscalendar import *
 
 ct = CalendarTile2(0, 0, 0, "Line1", dt.datetime(2022, 5, 10, 15, 13, 0), (0, 255, 0), (0, 0, 0), (255, 20, 20),

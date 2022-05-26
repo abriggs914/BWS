@@ -31,7 +31,7 @@ class PSCalendar2:
         def __init__(self, message):
             pass
 
-    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, colour_beam_line_tile, colour_t_line_tile, colour_gnk_line_tile, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1, max_log_size=1000000, highlight_last_swapped=True):
+    def __init__(self, start_date, end_date, data, lines, dates, colour_tile, colour_border, colour_font, colour_selected, colour_hovered, colour_dragging, border_width, switch_week_divs, colour_weekend_div, colour_beam_line_tile, colour_t_line_tile, colour_other_line_tile, colour_gnk_line_tile, max_n_zoomed_rows=2, max_n_zoomed_cols=2, min_tile_w=30, min_tile_h=15, max_tile_w=100, max_tile_h=50, max_n_selected=1, max_log_size=1000000, highlight_last_swapped=True):
         assert isinstance(start_date,
                           dt.datetime), "Start_date object \"{}\" must be a datetime.datetime object.".format(
             start_date)
@@ -52,6 +52,7 @@ class PSCalendar2:
         self.colour_tile_general = colour_tile
         self.colour_beam_line_tile = colour_beam_line_tile
         self.colour_t_line_tile = colour_t_line_tile
+        self.colour_other_line_tile = colour_other_line_tile
         self.colour_gnk_line_tile = colour_gnk_line_tile
         self.max_n_selected = max_n_selected
         self.max_n_zoomed_rows = max_n_zoomed_rows
@@ -113,7 +114,8 @@ class PSCalendar2:
                         "idxs": [],
                         "beam": None,
                         "gnk": None,
-                        "t": None
+                        "t": None,
+                        "o": None
                     }
                 model_name = data_row['InputField1'].tolist()[0]
                 dealer = data_row['InputField2'].tolist()[0]
@@ -144,6 +146,8 @@ class PSCalendar2:
                     found_units[wo]["gnk"] = job_start
                 elif self.tiles[i].is_beam():
                     found_units[wo]["beam"] = job_start
+                elif self.tiles[i].is_other():
+                    found_units[wo]["o"] = job_start
                 else:
                     # print(f"THIS IS NOT A TILE: {self.tiles[i]}")
                     found_units[wo]["t"] = job_start
@@ -282,7 +286,8 @@ class PSCalendar2:
         options = {
             "T": lambda t: t.is_t(),
             "B": lambda t: t.is_beam(),
-            "GNK": lambda t: t.is_gnk()
+            "GNK": lambda t: t.is_gnk(),
+            "O": lambda t: t.is_other()
         }
 
         old_ser = tile_a.ser
@@ -300,6 +305,8 @@ class PSCalendar2:
             tile_a.beam_date, tile_b.beam_date = tile_b.beam_date, tile_a.beam_date
         elif tile_a.is_t() and tile_b.is_t():
             tile_a.prod_date, tile_b.prod_date = tile_b.prod_date, tile_a.prod_date
+        elif tile_a.is_other() and tile_b.is_other():
+            tile_a.other_date, tile_b.other_date = tile_b.other_date, tile_a.other_date
 
         # tile_a.selected, tile_b.selected = tile_b.selected, tile_a.selected
         # tile_a.dragging, tile_a.dragging = tile_a.dragging, tile_a.dragging
@@ -312,9 +319,15 @@ class PSCalendar2:
         state_a = [k for k, v in options.items() if v(tile_a)][0]
         state_b = [k for k, v in options.items() if v(tile_b)][0]
         if state_a != state_b:
+            # # if the lines change, and BOTH of the tiles are empty, change the colours back.
+            # if tile_a.is_empty() and tile_b.is_empty():
+            #     tile_a.colour = self.get_calendar_line_tile_colour(tile_a)
+            #     tile_b.colour = self.get_calendar_line_tile_colour(tile_b)
+
             # if the lines change, and BOTH of the tiles are empty, change the colours back.
-            if tile_a.is_empty() and tile_b.is_empty():
+            if tile_a.is_empty():
                 tile_a.colour = self.get_calendar_line_tile_colour(tile_a)
+            if tile_b.is_empty():
                 tile_b.colour = self.get_calendar_line_tile_colour(tile_b)
 
     def get_calendar_line_tile_colour(self, tile):
@@ -324,6 +337,8 @@ class PSCalendar2:
             bgc = self.colour_gnk_line_tile
         elif tile.is_t():
             bgc = self.colour_t_line_tile
+        elif tile.is_other():
+            bgc = self.colour_other_line_tile
         else:
             bgc = self.colour_tile_general
         return bgc
@@ -830,6 +845,9 @@ class PSCalendar2:
 
     def date_range(self):
         return self.dates[0].strftime("%Y-%m-%d"), self.dates[-1].strftime("%Y-%m-%d")
+
+    def valid_tiles(self):
+        return set(flatten([[() for i, line in enumerate(self.lines) if self.tiles[self.r_c_to_i(i, j)].is_empty()] for j, date in enumerate(self.dates)]))
 
     dragging = property(get_dragging, set_dragging, del_dragging)
     selected = property(get_selected, set_selected, del_selected)
