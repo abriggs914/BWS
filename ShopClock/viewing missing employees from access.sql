@@ -49,7 +49,7 @@ ON
 WHERE
 	[ClkShiftEmpAssign].[Emp#] IS NULL
 ;
-SELECT * FROM [ClkShiftEmpAssign] ORDER BY [Emp#] DESC;
+--SELECT * FROM [ClkShiftEmpAssign] ORDER BY [Emp#] DESC;
 
 ROLLBACK;
 COMMIT;
