@@ -1,0 +1,4 @@
+EXEC sp_ITRAnalysisByDepartment
+EXEC sp_ITRAnalysisByHardware
+EXEC sp_ITRAnalysisBySoftware
+EXEC sp_ITRAnalysisBytraining
