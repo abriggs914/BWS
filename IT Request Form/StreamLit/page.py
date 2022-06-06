@@ -1,0 +1,90 @@
+import sys
+
+import streamlit as st
+#import plotly.express as px
+import streamlit as st
+import pandas as pd
+import subprocess
+import os
+
+# Warning: to view this Streamlit app on a browser, run it with the following
+#   command:
+#
+#     streamlit run C:/Users/ABriggs/Documents/BWS/IT Request Form/StreamLit/main.py [ARGUMENTS]
+#     streamlit run main.py
+
+# emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
+
+
+def load_page():
+
+    st.set_page_config(
+        page_title="ITR Dashboard Example",
+        page_icon=":bar_chart:",
+        layout="wide"
+    )
+
+    args = sys.argv
+    if args:
+        if len(args) == 1 or (len(args) > 1 and args[1] == "1"):
+
+            df = pd.read_excel(
+                io=r"Raw.xlsx",
+                engine="openpyxl",
+                sheet_name="Sheet1",
+                skiprows=0,
+                usecols="A:E",
+                nrows=12
+            )
+
+
+            st.sidebar.header("Please Filter Here:")
+            filter_age = st.sidebar.multiselect(
+                "Select an Age:",
+                options=df["Age"].unique(),
+                default=df["Age"].unique()
+            )
+            filter_height = st.sidebar.multiselect(
+                "Select a Height:",
+                options=df["Height(cm)"].unique(),
+                default=df["Height(cm)"].unique()
+            )
+            filter_weight = st.sidebar.multiselect(
+                "Select a Weight:",
+                options=df["Weight(kg)"].unique(),
+                default=df["Weight(kg)"].unique()
+            )
+
+            df_selection = df.query(
+                "Age == @filter_age | 'Height(cm)' == @filter_height | 'Weight(kg)' == @filter_weight"
+            )
+
+            # print(sys.argv)
+
+            # print(df)
+
+            st.dataframe(df_selection)
+
+            st.title(":bar_chart: ITR Streamlit demo")
+            st.markdown("##")
+
+            average_age = round(df_selection["Age"].mean(), 1)
+            average_weight = round(df_selection["Weight(kg)"].mean(), 1)
+            average_height = round(df_selection["Height(cm)"].mean(), 1)
+
+            col_left, col_mid, col_right = st.columns(3)
+            with col_left:
+                st.subheader("Average Age:")
+                st.subheader(f"{average_age}")
+            with col_mid:
+                st.subheader("Average Height(cm):")
+                st.subheader(f"{average_height}")
+            with col_right:
+                st.subheader("Average Weight(kg):")
+                st.subheader(f"{average_weight}")
+            
+            st.markdown("---")
+
+            # print("RESULT: " + os.popen(r"streamlit run main.py 1").read())
+            # success = subprocess.run([r"C:\Users\ABriggs\AppData\Local\Microsoft\WindowsApps\python3.9.exe 'C:/Users/ABriggs/Documents/BWS/IT Request Form/StreamLit/main.py'"], stdout=subprocess.PIPE)
+            # print(success.stdout)

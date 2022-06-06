@@ -2839,6 +2839,7 @@ ORDER BY
         # TODO HARDCODED NAME HERE
         user_name = "AVERY BRIGGS"
         query = "BEGIN TRAN;"
+        i_query = ""
         do_query = False
         for tab_idx in range(len(self.TAB_DATA)):
             cal = self.TAB_DATA[tab_idx]["Cal"]
@@ -2871,7 +2872,8 @@ ORDER BY
                     if edited_values["wo_num"]:
                         # this is a new tile
                         # TODO insert statement here
-                        pass
+                        # INSERT INTO [dtProductionSchedule]
+                        i_query += ""
 
                     wip_query += criteria
                     x2 = len(wip_query)
