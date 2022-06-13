@@ -1,11 +1,12 @@
 import sys
 
-import streamlit as st
-#import plotly.express as px
+from colour_utility import *
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import subprocess
 import os
+
 
 # Warning: to view this Streamlit app on a browser, run it with the following
 #   command:
@@ -13,6 +14,7 @@ import os
 #     streamlit run C:/Users/ABriggs/Documents/BWS/IT Request Form/StreamLit/main.py [ARGUMENTS]
 #     streamlit run main.py
 
+# tutorial: https://www.youtube.com/watch?v=Sb0A9i6d320
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 
 
@@ -28,15 +30,18 @@ def load_page():
     if args:
         if len(args) == 1 or (len(args) > 1 and args[1] == "1"):
 
-            df = pd.read_excel(
-                io=r"Raw.xlsx",
-                engine="openpyxl",
-                sheet_name="Sheet1",
-                skiprows=0,
-                usecols="A:E",
-                nrows=12
-            )
+            @st.cache
+            def read_excel():
+                return pd.read_excel(
+                    io=r"Raw.xlsx",
+                    engine="openpyxl",
+                    sheet_name="Sheet1",
+                    skiprows=0,
+                    usecols="A:E",
+                    nrows=12
+                )
 
+            df = read_excel()
 
             st.sidebar.header("Please Filter Here:")
             filter_age = st.sidebar.multiselect(
@@ -44,16 +49,20 @@ def load_page():
                 options=df["Age"].unique(),
                 default=df["Age"].unique()
             )
+            # st.sidebar.markdown("OR")
             filter_height = st.sidebar.multiselect(
                 "Select a Height:",
                 options=df["Height(cm)"].unique(),
                 default=df["Height(cm)"].unique()
             )
+            # st.sidebar.markdown("OR")
             filter_weight = st.sidebar.multiselect(
                 "Select a Weight:",
                 options=df["Weight(kg)"].unique(),
                 default=df["Weight(kg)"].unique()
             )
+            print("filter_department:", filter_age)
+            # low_age
 
             df_selection = df.query(
                 "Age == @filter_age | 'Height(cm)' == @filter_height | 'Weight(kg)' == @filter_weight"
@@ -62,8 +71,6 @@ def load_page():
             # print(sys.argv)
 
             # print(df)
-
-            st.dataframe(df_selection)
 
             st.title(":bar_chart: ITR Streamlit demo")
             st.markdown("##")
@@ -84,6 +91,55 @@ def load_page():
                 st.subheader(f"{average_weight}")
             
             st.markdown("---")
+
+            # height and weight by age - scatter
+            # heights_by_age = (
+            #     df_selection.groupby(by=["Age"]).mean()[["Total"]].sort_values(by="Total")
+            # )
+            # fig_heights_by_age = px.scatter(
+            #     heights_by_age,
+            #     x="Age",
+            #     y=heights_by_age.index,
+            #     orientation="h",
+            #     title="<b>Heights by Age</b>",
+            #     template="plotly_white"
+            # )
+
+            fig_heights_by_age = px.scatter(
+                df_selection,
+                x="Age",
+                y="Height(cm)",
+                template="plotly_white"
+            )
+
+            fig_heights_by_age.update_layout(
+                plot_bgcolor=rgb_to_hex(BWS_RED),
+                xaxis=(dict(showgrid=False))
+            )
+
+            fig_weights_by_age = px.scatter(
+                df_selection,
+                x="Age",
+                y="Weight(kg)",
+                template="plotly_white"
+            )
+
+            fig_weights_by_age.update_layout(
+                plot_bgcolor=rgb_to_hex(BWS_RED),
+                xaxis=(dict(showgrid=False))
+            )
+
+            # st.plotly_chart(fig_heights_by_age)
+            # st.plotly_chart(fig_weights_by_age)
+
+            col_left, col_right = st.columns(2)
+            col_left.plotly_chart(fig_heights_by_age, use_container_width=True)
+            col_right.plotly_chart(fig_heights_by_age, use_container_width=True)
+
+            hide_st_style = """<style>#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}</style>"""
+            st.markdown(hide_st_style, unsafe_allow_html=True)
+
+            # st.dataframe(df_selection)
 
             # print("RESULT: " + os.popen(r"streamlit run main.py 1").read())
             # success = subprocess.run([r"C:\Users\ABriggs\AppData\Local\Microsoft\WindowsApps\python3.9.exe 'C:/Users/ABriggs/Documents/BWS/IT Request Form/StreamLit/main.py'"], stdout=subprocess.PIPE)
