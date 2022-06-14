@@ -61,12 +61,45 @@ if __name__ == "__main__":
         options=df["RequestType"].unique(),
         default=df["RequestType"].unique()
     )
+<<<<<<< HEAD
+=======
+    # return connect()
+
+
+if __name__ == "__main__":
+
+    st.set_page_config(
+            page_title="ITR Dashboard Example",
+            page_icon=":bar_chart:",
+            layout="wide"
+        )
+
+
+
+
+    df = read_excel()
+    print("df\n", df)
+
+    st.sidebar.header("Please Filter Here:")
+    filter_department = st.sidebar.multiselect(
+        "Select an Department:",
+        options=df["DeptName"].unique(),
+        default=df["DeptName"].unique()
+    )
+    # st.sidebar.markdown("OR")
+    filter_type = st.sidebar.multiselect(
+        "Select a Request Type:",
+        options=df["RequestType"].unique(),
+        default=df["RequestType"].unique()
+    )
+>>>>>>> f817ba1994538ab2f38ec84d4267f59e7f7470e7
     # st.sidebar.markdown("OR")
     filter_subtype = st.sidebar.multiselect(
         "Select a Request Sub-Type:",
         options=df["RequestSubType"].unique(),
         default=df["RequestSubType"].unique()
     )
+<<<<<<< HEAD
 
     # # filter_start_date = st.select_slider('Pick a Date', df["StartDate"].unique())
     # print(f"x: <{df['StartDate'].unique()}")
@@ -77,6 +110,8 @@ if __name__ == "__main__":
     #     on_change=check_2_dates
     # )
 
+=======
+>>>>>>> f817ba1994538ab2f38ec84d4267f59e7f7470e7
     print("filter_department:", filter_department)
     print("filter_type:", filter_type)
     print("filter_subtype:", filter_subtype)
@@ -84,7 +119,11 @@ if __name__ == "__main__":
     # low_age
 
     # mask = df.index == 0
+<<<<<<< HEAD
     df['mask'] = True
+=======
+    # df['mask'] = True
+>>>>>>> f817ba1994538ab2f38ec84d4267f59e7f7470e7
     # print(" VV MASK VV ")
     # print(df)
     # print(" ^^ MASK ^^ ")
@@ -203,6 +242,7 @@ if __name__ == "__main__":
 
     # st.dataframe(df_selection)
     print("selection")
+<<<<<<< HEAD
     # print(df_selection)
     st.dataframe(df_selection)
     # st.write(df_selection)
@@ -216,6 +256,10 @@ if __name__ == "__main__":
     #         prog += 10
     #         balloons_progress_bar.progress(prog)
     #         st.balloons()
+=======
+    print(df_selection)
+    # st.dataframe(df)
+>>>>>>> f817ba1994538ab2f38ec84d4267f59e7f7470e7
 
     # print("RESULT: " + os.popen(r"streamlit run main.py 1").read())
     # success = subprocess.run([r"C:\Users\ABriggs\AppData\Local\Microsoft\WindowsApps\python3.9.exe 'C:/Users/ABriggs/Documents/BWS/IT Request Form/StreamLit/main.py'"], stdout=subprocess.PIPE)
