@@ -14,3 +14,6 @@ SELECT * FROM [Defects_Snags] WHERE [Input Date] BETWEEN DATEADD(YEAR, -1, GETDA
 --SELECT * FROM [Defects_Print_Problems]
 --SELECT * FROM [Defects_Snags_Location]
 --SELECT * FROM [Defects_Snags_NoWOsInspected]
+
+
+exec [sp_ReworkReviewReport v2_StartEndDates] '2021-06-08', '2022-06-08'
