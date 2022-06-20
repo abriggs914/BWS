@@ -812,9 +812,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2021-10-29",
 		"2021-12-23",
 		"2021-12-28",
-		"2021-12-29",
-		"2022-02-04",
-		"2022-05-09"
+		"2021-12-29"
 		
 		,"2022-12-28"
 		,"2022-12-29"
@@ -823,6 +821,10 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		,"2023-01-03"
 		,"2023-01-04"
 		,"2023-01-05"
+		,"2022-02-04"
+		,"2022-05-09"
+		,"2022-06-24"
+		,"2022-06-27"
 	]
 	
 	holidays = public_holidays + personal_holidays
