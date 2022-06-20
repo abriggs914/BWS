@@ -11,6 +11,7 @@ from tkcalendar import Calendar
 from tkinter.scrolledtext import ScrolledText
 from models_writer import current, non_current
 
+
 # import tksheet
 
 admin = easygui.ynbox(msg="Run in ADMIN mode?", title="Admin Privileges",
