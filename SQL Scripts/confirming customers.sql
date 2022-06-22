@@ -39,3 +39,14 @@ ORDER BY
 
 SELECT * FROM [OrdersV2] WHERE RIGHT([WO#], 3) IN (SELECT [WO] FROM @set3)
 
+
+
+SELECT [OrdersV2].[WO#]
+	FROM
+	[CustomersV2]
+INNER JOIN
+	[OrdersV2]
+ON
+	[CustomersV2].[WO#] = [OrdersV2].[WO#]
+WHERE
+	RIGHT([OrdersV2].[WO#], 3) IN (SELECT [WO] FROM @set3)
