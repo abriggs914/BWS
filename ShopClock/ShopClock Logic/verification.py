@@ -1,6 +1,7 @@
 import csv
 from utility import *
 
+
 with open("sample.csv", "r") as f:
 	total_time = dt.timedelta(seconds=0)
 	dicts = csv.DictReader(f)
