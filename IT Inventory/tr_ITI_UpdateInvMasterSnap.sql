@@ -1,3 +1,5 @@
+USE BWSdb
+GO
 -- ================================================
 -- Template generated from Template Explorer using:
 -- Create Trigger (New Menu).SQL

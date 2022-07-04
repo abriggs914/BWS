@@ -1,3 +1,6 @@
+USE BWSdb
+GO
+
 -- ================================================
 -- Template generated from Template Explorer using:
 -- Create Trigger (New Menu).SQL
@@ -23,7 +26,7 @@ GO
 -- =============================================
 CREATE TRIGGER [dbo].[tr_ITI_EnsureSingleEntry]
    ON  [dbo].[ITI InvMaster]
-   AFTER INSERT,DELETE,UPDATE
+   INSTEAD OF INSERT,DELETE,UPDATE
 AS 
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -36,6 +39,7 @@ BEGIN
 		DECLARE @user NVARCHAR(20);
 		DECLARE @activity NVARCHAR(20);
 	
+		DECLARE @itemId AS BIGINT;
 		DECLARE @quantityA AS INT;
 		DECLARE @quantityB AS INT;
 
@@ -44,9 +48,14 @@ BEGIN
 				SET @activity = 'UPDATE';
 				SET @user = SYSTEM_USER;
 			
+				SELECT @itemId =	[ID] FROM inserted i
 				SELECT @quantityA = [Quantity] FROM inserted i;
 				SELECT @quantityB = [Quantity] FROM deleted d;
 
+				UPDATE
+					[ITI InvMaster]
+				SET
+					[Quantity] = 
 
 			END
 		IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
