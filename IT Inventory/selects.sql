@@ -73,6 +73,8 @@ ON
 ;
 
 EXEC sp_ITI_ListSimilarItems
-EXEC sp_ITI_ListSimilarItems @name='17" Monitor'
 
 SELECT * FROM [dbo].[v_ITI_Items] 
+
+EXEC sp_ITI_ListSimilarItems @name='17" Monitor'
+EXEC [sp_ITI_ListSimilarItemsWithType] @name='17" Monitor'
