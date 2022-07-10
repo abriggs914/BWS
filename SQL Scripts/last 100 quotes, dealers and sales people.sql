@@ -1,7 +1,7 @@
 USE BWSdb
 GO
 
-SELECT TOP 100
+SELECT TOP 2500
 	*
 FROM
 	[Orders]
@@ -12,7 +12,7 @@ ORDER BY
 
 SELECT * FROM [Sales Staff]
 
-SELECT TOP 100
+SELECT TOP 2500
 	[Sales Person], [Dealers].[COMPANY NAME], [Orders].*
 FROM
 	[ORDERS]
