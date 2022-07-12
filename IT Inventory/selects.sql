@@ -78,5 +78,7 @@ EXEC sp_ITI_ListSimilarItems
 
 SELECT 'v_ITI_Items' AS [Table], * FROM [dbo].[v_ITI_Items] 
 
-EXEC sp_ITI_ListSimilarItems @name='17" Monitor'
+EXEC [sp_ITI_ListSimilarItems] @name='17" Monitor'
 EXEC [sp_ITI_ListSimilarItemsWithType] @name='17" Monitor'
+EXEC [sp_ITI_ListSimilarItems] @name='VGA Cable'
+EXEC [sp_ITI_ListSimilarItemsWithType] @name='VGA Cable'
