@@ -5,7 +5,7 @@ GO
 -- Use the results to prepare a list of items for a service call to Bob.
 -- Designed to save from calling for each individual task.
 
-ALTER PROCEDURE [dbo].[sp_ITRConcerningPhones]
+CREATE PROCEDURE [dbo].[sp_ITRConcerningNetwork]
 	@sd AS DATETIME = NULL,
 	@ed AS DATETIME = NULL
 AS
@@ -25,11 +25,11 @@ BEGIN
 		[IT Requests]
 	WHERE
 		(
-			[RequestSubType] LIKE '%phone%'
-			OR [Comments] LIKE '%phone%'
-			OR [Request] LIKE '%phone%'
-			OR [Comments] LIKE '%bob craig%'
-			OR [Request] LIKE '%bob craig%'
+			[RequestSubType] LIKE '%Wi-Fi (Network)%'
+			OR [Comments] LIKE '%Wi-Fi (Network)%'
+			OR [Request] LIKE '%Wi-Fi (Network)%'
+			OR [Comments] LIKE '%dale craig%'
+			OR [Request] LIKE '%dale craig%'
 		) AND [Status] <> 'Complete'
 		AND (([RequestDate] BETWEEN @sd AND @ed) OR ([RequestDateOriginal] BETWEEN @sd AND @ed))
 
