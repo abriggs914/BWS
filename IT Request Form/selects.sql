@@ -42,3 +42,6 @@ EXEC [sp_ITRToDoList]
 EXEC [sp_ITRTopNRequests] @topN=@topN
 EXEC [sp_ITRTopNTimeIssued] @topN=@topN
 EXEC [sp_ITRTopNTimePerRequest] @topN=@topN
+
+EXEC [sp_ITRConcerningPhones]
+EXEC [sp_ITRConcerningNetwork]
