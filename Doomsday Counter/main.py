@@ -1,19 +1,41 @@
-import tkinter as tk
+# import tkinter as tk
+from tkinter import Button, Label, Frame, StringVar
 from time import sleep
 from overlay import Window
 
 from colour_utility import RED, rgb_to_hex
 from orbiting_date_picker import OrbitingDatePicker
+from game_state_machine import BooleanGSM
 
 #  https://github.com/davidmaamoaix/overlay/issues/3
 
 
 def test_2():
     # win = Window(fill=rgb_to_hex(RED), colour=rgb_to_hex(RED), background=rgb_to_hex(RED), outline=rgb_to_hex(RED))
-    win = Window()
-    label = tk.Label(win.root, text="Window_0")
+    WIDTH, HEIGHT = 500, 500
+    win_overlay = Window(size=(WIDTH, HEIGHT))
+    win = Frame(win_overlay.root, width=WIDTH, height=HEIGHT)
+    win.pack()
+    label = Label(win, text="Window_0")
     label.pack()
-    odp = OrbitingDatePicker(win.root)
+
+    tv_btn = StringVar(value="stop dragging")
+    gsm_win_draggable = BooleanGSM()
+
+    def set_new_pos():
+        state = gsm_win_draggable.state()
+        win.draggable = state
+        if state:
+            tv_btn.set("start dragging")
+        else:
+            tv_btn.set("stop dragging")
+        gsm_win_draggable.__next__()
+        win_overlay.draggable = gsm_win_draggable.state()
+
+
+    button = Button(win, textvariable=tv_btn, command=set_new_pos)
+    button.pack()
+    odp = OrbitingDatePicker(win)
     odp.pack()
     Window.launch()
 
@@ -53,5 +75,5 @@ def test_3():
     Window.launch()
 
 if __name__ == "__main__":
-    # test_2()
-    test_3()
+    test_2()
+    # test_3()

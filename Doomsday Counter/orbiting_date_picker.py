@@ -1,7 +1,7 @@
 import datetime
 import math
-import tkinter
-from tkinter import Frame
+# import tkinter
+from tkinter import Tk, Frame, IntVar, Checkbutton, Canvas
 from tkcalendar import DateEntry
 from colour_utility import *
 from utility import Rect2
@@ -154,13 +154,13 @@ class OrbitingDatePicker(Frame):
         self.w_canvas_background = width
         self.h_canvas_background = height
 
-        self.canvas_background = tkinter.Canvas(self, background=rgb_to_hex(BLACK), width=self.w_canvas_background, height=self.h_canvas_background)
+        self.canvas_background = Canvas(self, background=rgb_to_hex(BLACK), width=self.w_canvas_background, height=self.h_canvas_background)
 
         # self.tv_showing_orbiter = tkinter.StringVar(value="Show Orbiter")
         # self.showing_orbiter = BooleanGSM(name="showing_orbiter", t_first=False)
         # self.showing_orbiter.bind_callback(self.switch_showing_orbiter)
-        self.iv_showing_orbiter = tkinter.IntVar()
-        self.checkbox_showing_orbiter = tkinter.Checkbutton(self, text="Show Orbiter", command=self.switch_showing_orbiter, onvalue=1, offvalue=0, variable=self.iv_showing_orbiter)
+        self.iv_showing_orbiter = IntVar()
+        self.checkbox_showing_orbiter = Checkbutton(self, text="Show Orbiter", command=self.switch_showing_orbiter, onvalue=1, offvalue=0, variable=self.iv_showing_orbiter)
         self.checkbox_showing_orbiter.grid(row=4, column=3)
 
         self.sun_width = sun_width
@@ -379,7 +379,7 @@ class OrbitingDatePicker(Frame):
 if __name__ == "__main__":
 
     WIDTH, HEIGHT = 600, 400
-    WINDOW = tkinter.Tk()
+    WINDOW = Tk()
     WINDOW.geometry(f"{WIDTH}x{HEIGHT}")
     # ss = OrbitingDatePicker(WINDOW)
     ss = OrbitingDatePicker(WINDOW, start_date=datetime.datetime(2022, 6, 6))
