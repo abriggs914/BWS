@@ -1,6 +1,7 @@
 USE BWSdb
 GO
 
+SELECT 'Dept' AS [Table], * FROM [Dept];
 SELECT 'IT Requests' AS [Table], * FROM [IT Requests];
 SELECT 'IT Personnel' AS [Table], * FROM [IT Personnel];
 SELECT 'ITR Customers' AS [Table], * FROM [ITR Customers];
@@ -8,6 +9,7 @@ SELECT 'ITR Hardware' AS [Table], * FROM [ITR Hardware];
 SELECT 'ITR Software' AS [Table], * FROM [ITR Software];
 SELECT 'ITR Training' AS [Table], * FROM [ITR Training];
 SELECT 'ITR Status' AS [Table], * FROM [ITR Status];
+SELECT 'ITR Pushes' AS [Table], * FROM [ITR Pushes];
 
 SELECT 'v_IT Requests_RawData' AS [Table], * FROM [v_IT Requests_RawData];
 
@@ -45,3 +47,5 @@ EXEC [sp_ITRTopNTimePerRequest] @topN=@topN
 
 EXEC [sp_ITRConcerningPhones]
 EXEC [sp_ITRConcerningNetwork]
+EXEC [sp_ITRConcerningEngineering]
+EXEC [sp_ITRConcerningSales]
