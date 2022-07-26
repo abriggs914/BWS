@@ -1,4 +1,6 @@
 # import tkinter as tk
+import json
+import os.path
 import tkinter
 
 import datetime
@@ -9,10 +11,12 @@ from PIL import ImageTk, Image
 from tkinter import ttk
 from time import sleep
 
-from PIL.Image import Resampling
+# from PIL.Image import Resampling
+# import Resampling as Resampling
 from overlay import Window
 
 from colour_utility import *
+from json_writer import JSONWriter
 from orbiting_date_picker import OrbitingDatePicker
 from game_state_machine import BooleanGSM
 
@@ -92,8 +96,10 @@ class Timer(Tk):
 
     def __init__(self):
         super().__init__()
+
         WIDTH, HEIGHT = 900, 600
         self.geometry(f"{WIDTH}x{HEIGHT}")
+        self.title("Timer")
 
         # self.image_button_play = Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png")
         # self.image_button_play = ImageTk.PhotoImage(self.image_button_play)
@@ -104,28 +110,29 @@ class Timer(Tk):
         # pim = ImageTk.PhotoImage(im)
         # self.image_button_play = pim
 
-        # Home urls
         # self.image_button_play = tkinter.PhotoImage(master=self, file=r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png")
-        self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\pause.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\left.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\right.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\search.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\exit.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\last.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\stop.png").resize((25, 25), Resampling.LANCZOS))
-        self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\add.png").resize((25, 25), Resampling.LANCZOS))
+
+        # Home urls
+        # self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\pause.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\left.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\right.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\search.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\exit.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\last.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\stop.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\add.png").resize((25, 25), Resampling.LANCZOS))
 
         # BWS urls
-        # self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\play.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\left.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\right.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\search.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\exit.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\last.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\stop.png").resize((25, 25), Resampling.LANCZOS))
-        # self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\add.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\play.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\left.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\right.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\search.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\exit.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\last.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\stop.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\add.png").resize((25, 25), Image.ANTIALIAS))
 
         self.timer_units = ["Years", "Months", "Fortnights", "Weeks", "Days", "Hours", "Minutes", "Seconds"]
 
@@ -228,6 +235,32 @@ class Timer(Tk):
         self.button_stop.grid(row=1, column=8, columnspan=1, rowspan=1)
         self.button_add.grid(row=1, column=9, columnspan=1, rowspan=1)
 
+        self.output_file = r"./timer_save.json"
+        self.records = {}
+
+        self.tree_view = ttk.Treeview(self)
+        self.style_tree_view = ttk.Style()
+        self.style_tree_view.theme_use("default")
+        self.style_tree_view.map("Treeview")
+
+        if os.path.exists(self.output_file):
+            # read save file contents before initaliziing records
+            try:
+                with open(self.output_file, 'r') as f:
+                    raw_json = json.loads(f.read())
+                    # print(f"{raw_json=}")
+                    # for key_a, val_a in raw_json.items():
+                    #     print(f"{key_a=}")
+
+                    record_data = raw_json['data']
+                    self.insert_records(record_data)
+                    # for wo, wo_data in record_data.items():
+
+            except KeyError as ke:
+                raise KeyError(ke)
+        else:
+            print(f"No previous history to work with.")
+
     # def resizeImage(self, img, newWidth, newHeight):
     #     oldWidth = img.width()
     #     oldHeight = img.height()
@@ -239,6 +272,12 @@ class Timer(Tk):
     #             rgb = '#%02x%02x%02x' % img.get(xOld, yOld)
     #             newPhotoImage.put(rgb, (x, y))
     #     return newPhotoImage
+
+    def insert_records(self, records_in):
+        assert isinstance(records_in, dict), "Error param 'records_in' must be a dictionary."
+        self.records.update(records_in)
+        for wo, wo_data in records_in.items():
+            
 
     def btn_play_clicked(self):
         print(f"btn_play_clicked")
