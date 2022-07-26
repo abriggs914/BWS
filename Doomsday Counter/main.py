@@ -1,9 +1,15 @@
 # import tkinter as tk
 import tkinter
+
+import datetime
 from tkinter import Button, Label, Frame, StringVar, Tk, Entry
+
+import PIL
 from PIL import ImageTk, Image
 from tkinter import ttk
 from time import sleep
+
+from PIL.Image import Resampling
 from overlay import Window
 
 from colour_utility import *
@@ -91,7 +97,35 @@ class Timer(Tk):
 
         # self.image_button_play = Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png")
         # self.image_button_play = ImageTk.PhotoImage(self.image_button_play)
-        self.image_button_play = tkinter.PhotoImage(file=r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\Screenshot 2022-07-21 144200.png")
+
+        # self.image_button_play = tkinter.PhotoImage(file=r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\Screenshot 2022-07-21 144200.png")
+
+        # im = PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png")
+        # pim = ImageTk.PhotoImage(im)
+        # self.image_button_play = pim
+
+        # Home urls
+        # self.image_button_play = tkinter.PhotoImage(master=self, file=r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png")
+        self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\pause.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\left.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\right.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\search.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\exit.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\last.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\stop.png").resize((25, 25), Resampling.LANCZOS))
+        self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\add.png").resize((25, 25), Resampling.LANCZOS))
+
+        # BWS urls
+        # self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\play.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\left.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\right.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\search.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\exit.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\last.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\stop.png").resize((25, 25), Resampling.LANCZOS))
+        # self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\add.png").resize((25, 25), Resampling.LANCZOS))
 
         self.timer_units = ["Years", "Months", "Fortnights", "Weeks", "Days", "Hours", "Minutes", "Seconds"]
 
@@ -120,6 +154,14 @@ class Timer(Tk):
         self.sv_entry_timer_unit = StringVar(self, value="")
 
         self.sv_btn_play = StringVar(self, value="play")
+        self.sv_btn_pause = StringVar(self, value="pause")
+        self.sv_btn_left = StringVar(self, value="left")
+        self.sv_btn_right = StringVar(self, value="right")
+        self.sv_btn_search = StringVar(self, value="search")
+        self.sv_btn_exit = StringVar(self, value="exit")
+        self.sv_btn_last = StringVar(self, value="last")
+        self.sv_btn_stop = StringVar(self, value="stop")
+        self.sv_btn_add = StringVar(self, value="add")
 
         self.label_desc_desc = Label(self.frame_desc, textvariable=self.sv_label_desc_desc)
 
@@ -142,8 +184,15 @@ class Timer(Tk):
 
         self.combo_timer_unit = ttk.Combobox(self.frame_timer, textvariable=self.sv_entry_timer_unit, values=self.timer_units)
 
-        self.button_play = Button(self.frame_controls, textvariable=self.sv_btn_play, image=self.image_button_play,
-                                  command=self.btn_play_clicked)
+        self.button_play = Button(self.frame_controls, textvariable=self.sv_btn_play, image=self.image_button_play, command=self.btn_play_clicked)
+        self.button_pause = Button(self.frame_controls, textvariable=self.sv_btn_pause, image=self.image_button_pause, command=self.btn_pause_clicked)
+        self.button_left = Button(self.frame_controls, textvariable=self.sv_btn_left, image=self.image_button_left, command=self.btn_left_clicked)
+        self.button_right = Button(self.frame_controls, textvariable=self.sv_btn_right, image=self.image_button_right, command=self.btn_right_clicked)
+        self.button_search = Button(self.frame_controls, textvariable=self.sv_btn_search, image=self.image_button_search, command=self.btn_search_clicked)
+        self.button_exit = Button(self.frame_controls, textvariable=self.sv_btn_exit, image=self.image_button_exit, command=self.btn_exit_clicked)
+        self.button_last = Button(self.frame_controls, textvariable=self.sv_btn_last, image=self.image_button_last, command=self.btn_last_clicked)
+        self.button_stop = Button(self.frame_controls, textvariable=self.sv_btn_stop, image=self.image_button_stop, command=self.btn_stop_clicked)
+        self.button_add = Button(self.frame_controls, textvariable=self.sv_btn_add, image=self.image_button_add, command=self.btn_add_clicked)
 
         self.frame_back.grid()
         self.frame_desc.grid(row=1, column=1, columnspan=1, rowspan=2)
@@ -170,15 +219,59 @@ class Timer(Tk):
         self.combo_timer_unit.grid(row=3, column=1, columnspan=1, rowspan=1)
 
         self.button_play.grid(row=1, column=1, columnspan=1, rowspan=1)
+        self.button_pause.grid(row=1, column=2, columnspan=1, rowspan=1)
+        self.button_left.grid(row=1, column=3, columnspan=1, rowspan=1)
+        self.button_right.grid(row=1, column=4, columnspan=1, rowspan=1)
+        self.button_search.grid(row=1, column=5, columnspan=1, rowspan=1)
+        self.button_exit.grid(row=1, column=6, columnspan=1, rowspan=1)
+        self.button_last.grid(row=1, column=7, columnspan=1, rowspan=1)
+        self.button_stop.grid(row=1, column=8, columnspan=1, rowspan=1)
+        self.button_add.grid(row=1, column=9, columnspan=1, rowspan=1)
+
+    # def resizeImage(self, img, newWidth, newHeight):
+    #     oldWidth = img.width()
+    #     oldHeight = img.height()
+    #     newPhotoImage = tkinter.PhotoImage(master=self, width=newWidth, height=newHeight)
+    #     for x in range(newWidth):
+    #         for y in range(newHeight):
+    #             xOld = int(x * oldWidth / newWidth)
+    #             yOld = int(y * oldHeight / newHeight)
+    #             rgb = '#%02x%02x%02x' % img.get(xOld, yOld)
+    #             newPhotoImage.put(rgb, (x, y))
+    #     return newPhotoImage
 
     def btn_play_clicked(self):
         print(f"btn_play_clicked")
+
+    def btn_pause_clicked(self):
+        print(f"btn_pause_clicked")
+
+    def btn_left_clicked(self):
+        print(f"btn_left_clicked")
+
+    def btn_right_clicked(self):
+        print(f"btn_right_clicked")
+
+    def btn_search_clicked(self):
+        print(f"btn_search_clicked")
+
+    def btn_exit_clicked(self):
+        print(f"btn_exit_clicked")
+
+    def btn_last_clicked(self):
+        print(f"btn_last_clicked")
+
+    def btn_stop_clicked(self):
+        print(f"btn_stop_clicked")
+
+    def btn_add_clicked(self):
+        print(f"btn_add_clicked")
+
 
 if __name__ == "__main__":
     # test_2()
     # test_3()
 
-    t = Timer()
-    t.mainloop()
+    Timer().mainloop()
 
     # test_4()
