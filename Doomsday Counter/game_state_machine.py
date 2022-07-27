@@ -160,7 +160,7 @@ class GSM:
     def bind_callback(self, func, *args, state=None, **kwargs):
         """Add a callback to a given state """
         # print(f"func: {func}")
-        # print(f"args: {args}")
+        # print(f"event: {event}")
         # print(f"kwargs: {kwargs}")
         state = state if state is not None else self.state()
         if state not in self.options:

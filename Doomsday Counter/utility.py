@@ -575,7 +575,7 @@ def weighted_choice(weighted_lst):
 
 def lbs_kg(lbs):
     """
-	lbs_kg(args) -> int() or float()
+	lbs_kg(event) -> int() or float()
 	Convert N pounds to Kilograms.
 	1 Lbs = 0.453592 Kg
 	:param lbs: int or float value in pounds.
@@ -588,7 +588,7 @@ def lbs_kg(lbs):
 
 def kg_lbs(kg):
     """
-	kg_lbs(args) -> int() or float()
+	kg_lbs(event) -> int() or float()
 	Convert N Kilograms to pounds.
 	1 Lbs = 0.453592 Kg
 	:param kg: int or float value in kilograms.
@@ -603,7 +603,7 @@ def kg_lbs(kg):
 
 def miles_km(miles):
     """
-	miles_km(args) -> int() or float()
+	miles_km(event) -> int() or float()
 	Convert N Miles to Kilometers.
 	1 Mi = 1.60934 Km
 	:param miles: int or float value in miles.
@@ -616,7 +616,7 @@ def miles_km(miles):
 
 def km_miles(km):
     """
-	km_miles(args) -> int() or float()
+	km_miles(event) -> int() or float()
 	Convert N Kilometers to Miles.
 	1 Mi = 1.60934 Km.
 	:param km: int or float value in kilometers.
@@ -631,7 +631,7 @@ def km_miles(km):
 
 def flatten(lst):
     """
-	flatten(args) -> list()
+	flatten(event) -> list()
 	Flatten a multi-dimensional list into a single dimension.
 	Non-list objects are returned in a list.
 	:param lst: list object with one or more dimensions.

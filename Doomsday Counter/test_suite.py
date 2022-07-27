@@ -105,7 +105,7 @@ def run_tests(func, test_set):
         print(div + work_above + div)
         is_desired_result = (result == desired_answer)
 
-        args_str = pad_centre("args:\t\t" + str(args).rjust(longest_test, " "), w) + "\n"
+        args_str = pad_centre("event:\t\t" + str(args).rjust(longest_test, " "), w) + "\n"
         desired_str = pad_centre("desired:\t" + str(desired_answer).rjust(longest_test, " "), w) + "\n"
         result_str = pad_centre("got:\t\t" + str(result).rjust(longest_test, " "), w) + "\n"
 
