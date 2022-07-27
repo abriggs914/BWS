@@ -113,35 +113,35 @@ class Timer(Tk):
 
         # Home urls
         # Resampling.LANCZOS
-        self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\pause.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\left.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\right.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\search.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\exit.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\last.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\stop.png").resize((25, 25), Image.ANTIALIAS))
-        self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
-            r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\add.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\play.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\pause.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\left.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\right.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\search.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\exit.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\last.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\stop.png").resize((25, 25), Image.ANTIALIAS))
+        # self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(
+        #     r"C:\Users\abrig\Documents\BWS\BWS\Doomsday Counter\add.png").resize((25, 25), Image.ANTIALIAS))
 
         # BWS urls
-        # self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\play.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\left.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\right.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\search.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\exit.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\last.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\stop.png").resize((25, 25), Image.ANTIALIAS))
-        # self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\add.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_play = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\play.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_pause = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\pause.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_left = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\left.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_right = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\right.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_search = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\search.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_exit = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\exit.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_last = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\last.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_stop = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\stop.png").resize((25, 25), Image.ANTIALIAS))
+        self.image_button_add = ImageTk.PhotoImage(master=self, image=PIL.Image.open(r"C:\Users\ABriggs\Documents\BWS\Doomsday Counter\add.png").resize((25, 25), Image.ANTIALIAS))
 
         self.timer_units = ["Years", "Months", "Fortnights", "Weeks", "Days", "Hours", "Minutes", "Seconds"]
 
@@ -541,10 +541,7 @@ class Timer(Tk):
         # for wo, wo_dat in self.records.items():
             wo_dat = self.records[wo]
             if wo_dat["start_date"] is not None:
-                if wo_dat["stop_date"] is None:
-                    # do nothing
-                    pass
-                else:
+                if wo_dat["stop_date"] is not None:
                     self.records[wo]["start_date"] += datetime.timedelta(seconds=1)
                     self.records[wo]["stop_date"] += datetime.timedelta(seconds=1)
                     self.update_record(i, wo)
