@@ -23,6 +23,7 @@ from game_state_machine import BooleanGSM, GSM
 
 
 #  https://github.com/davidmaamoaix/overlay/issues/3
+from utility import print_by_line
 
 
 def test_2():
@@ -196,8 +197,8 @@ class Timer(Tk):
         self.entry_detail_priority = Entry(self.frame_details, textvariable=self.sv_entry_detail_priority)
         self.entry_detail_completion_date = Entry(self.frame_details, textvariable=self.sv_entry_detail_completion_date)
 
-        self.entry_timer_all = Entry(self.frame_timer, textvariable=self.sv_entry_timer_all)
-        self.entry_timer_current = Entry(self.frame_timer, textvariable=self.sv_entry_timer_current)
+        self.entry_timer_all = Entry(self.frame_timer, textvariable=self.sv_entry_timer_all, width=60)
+        self.entry_timer_current = Entry(self.frame_timer, textvariable=self.sv_entry_timer_current, width=60)
 
         self.combo_timer_unit = ttk.Combobox(self.frame_timer, textvariable=self.sv_entry_timer_unit,
                                              values=self.timer_units)
@@ -402,16 +403,25 @@ class Timer(Tk):
         print(f"{l=}")
         # l.sort(reverse=reverse, key=lambda tup: tup[idx])
 
+        gsm_sort.__next__()
         sort_idxs = []
+        directions = []
         for i, column in enumerate(self.tv_columns):
             state = self.tv_column_gsms[i][0].state()
+            print(f"\t\t\t{column=}, {state=}")
             match state:
                 case "ASC":
                     sort_idxs.append(i)
+                    directions.append(1)
                 case "DESC":
                     sort_idxs.append(i)
-        
-        l.sort(reverse=reverse, key=lambda tup: tup[idx])
+                    directions.append(-1)
+
+        print(f" {sort_idxs=}")
+        print(f"{directions=}")
+        print_by_line([l[0][ix] * direct for ix, direct in zip(sort_idxs, directions)])
+
+        l.sort(reverse=reverse, key=lambda tup: [tup[ix] for ix, direct in zip(sort_idxs, directions)])
 
 
 
@@ -435,7 +445,7 @@ class Timer(Tk):
             new_reverse = state == "ASC"
             print(f"{col=}, {column=}")
             if column == col:
-                gsm_sort.__next__()
+                # gsm_sort.__next__()
                 state = gsm_sort.state()
                 new_reverse = state == "ASC"
                 print(f"\tSelected gsm: {state}")
@@ -474,6 +484,9 @@ class Timer(Tk):
             d2 = datetime.datetime.strptime(d2, self.format_history_date)
         return (d2 - d1).seconds
 
+    def multiple_suffix(self, n):
+        return "s" if n != 1 else ""
+
     def gen_all_time(self, d1, d2):
         diff = self.calc_diff(d1, d2)
         spy_f = 60 * 60 * 24 * 365.25
@@ -488,8 +501,7 @@ class Timer(Tk):
         seconds = rem
         result = f"ALL: {years=}, {months=}, {fortnights=}, {weeks=}, {days=}, {hours=}, {minutes=}, {seconds=}"
 
-        suffix = lambda n: "s" if n != 1 else ""
-        result = f"{years} year{suffix(years)} + {months} month{suffix(months)} + {fortnights} fortnight{suffix(fortnights)} + {weeks} week{suffix(weeks)}, {days=}, {hours=}, {minutes=}, {seconds=}"
+        result = f"{years} year{self.multiple_suffix(years)} + {months} month{self.multiple_suffix(months)} + {fortnights} fortnight{self.multiple_suffix(fortnights)} + {weeks} week{self.multiple_suffix(weeks)} + {days} day{self.multiple_suffix(days)} + {hours} hour{self.multiple_suffix(hours)} + {minutes} minute{self.multiple_suffix(minutes)} + {seconds} second{self.multiple_suffix(seconds)}"
         print(result)
         return result
 
@@ -500,23 +512,32 @@ class Timer(Tk):
         years, months, fortnights, weeks, days, hours, minutes, seconds = 0, 0, 0, 0, 0, 0, 0, 0
         match self.sv_entry_timer_unit.get():
             case "Years":
-                years, rem = divmod(diff, spy_i)
+                n, rem = divmod(diff, spy_i)
+                result = f"{n} year{self.multiple_suffix(n)}"
             case "Months":
-                months, rem = divmod(diff, int(spy_f / 12))
+                n, rem = divmod(diff, int(spy_f / 12))
+                result = f"{n} month{self.multiple_suffix(n)}"
             case "Fortnights":
-                fortnights, rem = divmod(diff, int(spy_f / 26))
+                n, rem = divmod(diff, int(spy_f / 26))
+                result = f"{n} fortnight{self.multiple_suffix(n)}"
             case "Weeks":
-                weeks, rem = divmod(diff, int(spy_f / 52))
+                n, rem = divmod(diff, int(spy_f / 52))
+                result = f"{n} week{self.multiple_suffix(n)}"
             case "Days":
-                hours, rem = divmod(diff, 60 * 60 * 24)
+                n, rem = divmod(diff, 60 * 60 * 24)
+                result = f"{n} day{self.multiple_suffix(n)}"
             case "Hours":
-                hours, rem = divmod(diff, 60 * 60)
+                n, rem = divmod(diff, 60 * 60)
+                result = f"{n} hour{self.multiple_suffix(n)}"
             case "Minutes":
-                minutes, rem = divmod(diff, 60)
+                n, rem = divmod(diff, 60)
+                result = f"{n} minute{self.multiple_suffix(n)}"
             case _:
-                seconds = diff
+                n = diff
+                result = f"{n} second{self.multiple_suffix(n)}"
 
-        result = f"CURRENT: {years=}, {months=}, {fortnights=}, {weeks=}, {days=}, {hours=}, {minutes=}, {seconds=}"
+        # result = f"CURRENT: {years=}, {months=}, {fortnights=}, {weeks=}, {days=}, {hours=}, {minutes=}, {seconds=}"
+        # result =
         print(result)
         return result
 
