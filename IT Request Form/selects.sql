@@ -1,8 +1,8 @@
 USE BWSdb
 GO
 
-SELECT 'Dept' AS [Table], * FROM [Dept];
 SELECT 'IT Requests' AS [Table], * FROM [IT Requests];
+SELECT 'Dept' AS [Table], * FROM [Dept];
 SELECT 'IT Personnel' AS [Table], * FROM [IT Personnel];
 SELECT 'ITR Customers' AS [Table], * FROM [ITR Customers];
 SELECT 'ITR Hardware' AS [Table], * FROM [ITR Hardware];
