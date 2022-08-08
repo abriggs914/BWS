@@ -49,3 +49,5 @@ EXEC [sp_ITRConcerningPhones]
 EXEC [sp_ITRConcerningNetwork]
 EXEC [sp_ITRConcerningEngineering]
 EXEC [sp_ITRConcerningSales]
+
+EXEC [sp_ITRCheckMerit] @names='a', @gt_1=1

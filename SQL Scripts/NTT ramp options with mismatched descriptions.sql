@@ -23,6 +23,13 @@ SELECT
 	, [Options].[Option No] AS [Opt No]
 	, [Budget Options].[Description] AS [Bud Desc]
 	, [Options].[Description] AS [Opt Desc]
+	--, [Budget Options].[Bud_Date_Opt] AS [BudgetDate]
+	--, [Options].[Start Date] AS [OptionStartDate]
+	--, [Options].[End Date] AS [OptionEndDate]
+	--, [Budget Options].[budopt_timestamp] AS [BudTS]
+	--, [Options].[Option_timestamp] AS [OptTS]
+	, (CASE WHEN [Budget Options].[budopt_timestamp] <= [Options].[Option_timestamp] THEN 'BUD' ELSE 'OPT' END) AS [Newer]
+	, (CASE WHEN [Budget Options].[budopt_timestamp] <= [Options].[Option_timestamp] THEN [Budget Options].[Description] ELSE [Options].[Description] END) AS [Use Description]
 FROM [Budget Options]
 FULL OUTER JOIN
 	[Options]
