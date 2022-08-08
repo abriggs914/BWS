@@ -4,6 +4,7 @@ import os.path
 import tkinter
 
 import datetime
+from collections import OrderedDict
 from tkinter import Button, Label, Frame, StringVar, Tk, Entry
 
 import PIL
@@ -321,7 +322,7 @@ class Timer(Tk):
 
         self.format_history_date = "%Y-%m-%d %H:%M:%S.%f"
         self.format_tree_view = "%Y-%m-%d %H:%M:%S"
-        self.tv_columns = ("WO", "Description", "Start Date", "Completion Date", "Stop Date", "Priority")
+        self.tv_columns = ("WO", "Description", "Start Date", "Completion Date", "Stop Date", "Priority", "Time Elapsed")
         self.tv_column_gsms = [(
             GSM(name=f"GSM_sort_{column}", options=[None, "ASC", "DESC"]),
             GSM(name=f"GSM_order_{column}", options=list(range(len(self.tv_columns)
@@ -332,6 +333,7 @@ class Timer(Tk):
             {"anchor": tkinter.CENTER, "width": 120},
             {"anchor": tkinter.CENTER, "width": 120},
             {"anchor": tkinter.CENTER, "width": 120},
+            {"anchor": tkinter.CENTER, "width": 60},
             {"anchor": tkinter.CENTER, "width": 60}
         )
         self.tree_view = ttk.Treeview(self.frame_records, selectmode="extended")
@@ -354,7 +356,7 @@ class Timer(Tk):
 
         self.output_file = r"./timer_save.json"
         self.record_id = self.new_record_generator()
-        self.records = {}
+        self.records = OrderedDict()
         self.text5 = None
         self.text7 = None
         self.text8 = None
@@ -466,19 +468,42 @@ class Timer(Tk):
             wo_stop = datetime.datetime.strptime(wo_data["stop_date"], self.format_history_date)
             wo_complete = datetime.datetime.strptime(wo_data["completion_date"], self.format_history_date)
             wo_priority = wo_data["priority"]
+            time_elapsed = (wo_stop - wo_start).seconds
             self.records[wo] = {
                 "description": wo_desc,
                 "start_date": wo_start,
                 "stop_date": wo_stop,
                 "completion_date": wo_complete,
-                "priority": wo_priority
+                "priority": wo_priority,
+                "time_elapsed": time_elapsed,
+                "gsm": GSM(options=["queue", "play", "pause", "complete"])
             }
+
+            self.set_task_gsm(wo)
 
             wo_start = wo_start.strftime(self.format_tree_view)
             wo_stop = wo_stop.strftime(self.format_tree_view)
             wo_complete = wo_complete.strftime(self.format_tree_view)
             self.tree_view.insert(parent="", index=iid, iid=iid, text="",
-                                  values=(wo, wo_desc, wo_start, wo_stop, wo_complete, wo_priority))
+                                  values=(wo, wo_desc, wo_start, wo_stop, wo_complete, wo_priority, time_elapsed))
+
+    def set_task_gsm(self, wo, wo_start=None, wo_stop=None, wo_complete=None):
+        gsm = self.records[wo]["gsm"]
+        wo_start = wo_start if wo_start is not None else self.records[wo]["start_date"]
+        wo_stop = wo_stop if wo_stop is not None else self.records[wo]["stop_date"]
+        wo_complete = wo_complete if wo_complete is not None else self.records[wo]["completion_date"]
+        if wo_start is not None:
+            if wo_stop is not None:
+                if wo_complete is not None:
+                    assert wo_start <= wo_stop <= wo_complete, f"Error in date logic, {wo_start=}, {wo_stop=}, {wo_complete=}"
+                    gsm.set_state("complete")
+                else:
+                    gsm.set_state("pause")
+            else:
+                gsm.set_state("play")
+        else:
+            gsm.set_state("queue")
+        "queue", "play", "pause", "complete"
 
     def update_record(self, row, wo):
         # copy changes from self.records to treeview.
@@ -488,7 +513,8 @@ class Timer(Tk):
             self.records[wo]["start_date"],
             self.records[wo]["stop_date"],
             self.records[wo]["completion_date"],
-            self.records[wo]["priority"]
+            self.records[wo]["priority"],
+            self.records[wo]["time_elapsed"]
         ))
 
     def treeview_sort_column(self, col, reverse):
@@ -577,7 +603,7 @@ class Timer(Tk):
             # temp = self.tree_view.item(selected, 'values')
         task = self.get_selected_task()
         if task:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = task
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = task
             self.set_detail(wo)
 
     def calc_diff(self, d1, d2):
@@ -656,7 +682,7 @@ class Timer(Tk):
         self.sv_label_state.set("playing")
         result = self.get_selected_task()
         if result:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = result
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = result
             print(f"{wo=}")
             if wo_completion_date is not None:
                 answer = self.ask_y_n_c(message="This task is already marked complete. Are you sure you want to record more time on this task?")
@@ -715,7 +741,7 @@ class Timer(Tk):
         print(f"btn_pause_clicked")
         result = self.get_selected_task()
         if result:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = result
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = result
 
             self.text8 = datetime.datetime.now()
             self.records[wo]["stop_date"] = datetime.datetime.now()
@@ -746,7 +772,7 @@ class Timer(Tk):
 
         result = self.get_selected_task()
         if result:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = result
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = result
 
             self.text8 = datetime.datetime.now()
             self.records[wo]["stop_date"] = self.text8
@@ -781,7 +807,7 @@ class Timer(Tk):
 
         result = self.get_selected_task()
         if result:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = result
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = result
 
             self.text7 = datetime.datetime.now()
             self.records[wo]["start_date"] = self.text7
@@ -844,12 +870,12 @@ class Timer(Tk):
         print(f"{answer=}")
         return answer
 
-    def get_selected_task(self, i_wo=False, i_wo_desc=False, i_wo_start_date=False, i_wo_stop_date=False, i_wo_completion_date=False, i_wo_priority=False):
+    def get_selected_task(self, i_wo=False, i_wo_desc=False, i_wo_start_date=False, i_wo_stop_date=False, i_wo_completion_date=False, i_wo_priority=False, i_wo_time_elapsed=False):
         selected = self.tree_view.focus()
         result = self.tree_view.item(selected, 'values')
         if result:
             temp = tuple()
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = result
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = result
             if i_wo:
                 temp = (wo)
             if i_wo_desc:
@@ -862,6 +888,8 @@ class Timer(Tk):
                 temp = (*temp, wo_completion_date)
             if i_wo_priority:
                 temp = (*temp, wo_priority)
+            if i_wo_time_elapsed:
+                temp = (*temp, wo_time_elapsed)
             if not temp:
                 temp = result
             return temp
@@ -876,7 +904,7 @@ class Timer(Tk):
         temp = self.get_selected_task()
         print(f"BEFORE FROM {old_wo} to {temp}")
         if temp:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = temp
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = temp
             print(f"GOING FROM {old_wo} to {wo}")
             # if old_wo != wo:
             #     self.text7 = None
@@ -897,8 +925,16 @@ class Timer(Tk):
             tkinter.messagebox.showerror(title="Nothing Selected", message="Error, no selection has been made on the treeview.")
 
     def set_tree_view_selection(self, iid):
-        self.tree_view.focus_set()
-        self.tree_view.selection_set(iid)
+        # self.tree_view.focus_set()
+        # print(f"A {self.get_selected_task() =}, {selected =}")
+        self.tree_view.selection_add(iid)
+        selected = self.tree_view.focus(str(0))  # without this call, the binding of on selection change for this widget breaks.
+        # selected = self.tree_view.focus()
+        # wo = list(self.records.keys())[0]
+        wo = self.get_selected_task(i_wo=True)
+        self.set_detail(wo)
+        self.update_record(0, wo)
+        print(f"B {self.get_selected_task() =}, {selected =}")
 
     def tick(self):
         print(f"{self.text7=}, {self.text8=}")
@@ -918,10 +954,13 @@ class Timer(Tk):
             next(self.button_gsms["play"])
 
         selected = self.get_selected_task()
-        if lenstr(self.text8) != 0 and selected:
-            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority = selected
+        if self.text8 is not None and lenstr(self.text8) != 0 and selected:
+            if self.text7 is None:
+                self.text7 = datetime.datetime.now()
+            wo, wo_desc, wo_start_date, wo_stop_date, wo_completion_date, wo_priority, wo_time_elapsed = selected
             self.text7 = self.text7 + datetime.timedelta(seconds=1)
             self.records[wo]["start_date"] = self.text7
+            print(f"{self.text8 =}")
             self.text8 = self.text8 + datetime.timedelta(seconds=1)
             self.records[wo]["stop_date"] = self.text8
             self.set_detail(wo)
