@@ -30,4 +30,3 @@ def connect(sql, cstr="DRIVER={SQL Server};SERVER=server3;DATABASE=BWSdb;UID=use
 
 if __name__ == "__main__":
 	print(connect("SELECT * FROM [IT Requests]"))
-
