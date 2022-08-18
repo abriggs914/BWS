@@ -10,6 +10,8 @@ SELECT 'ITR Software' AS [Table], * FROM [ITR Software];
 SELECT 'ITR Training' AS [Table], * FROM [ITR Training];
 SELECT 'ITR Status' AS [Table], * FROM [ITR Status];
 SELECT 'ITR Pushes' AS [Table], * FROM [ITR Pushes];
+SELECT 'ITR Merit' AS [Table], * FROM [ITR Merit];
+SELECT 'ITR ColourSchemes' AS [Table], * FROM [ITR ColourSchemes];
 
 SELECT 'v_IT Requests_RawData' AS [Table], * FROM [v_IT Requests_RawData];
 

@@ -47,3 +47,49 @@ EXECUTE @RC = [dbo].[sp_ITRCheckMerit]
 GO
 
 SELECT [RequestedBy], COUNT(*) AS [#] FROM [IT Requests] WHERE [RequestedBy] LIKE '%avery%' AND [RequestType] LIKE '%software%' GROUP BY [RequestedBy] HAVING COUNT(*) >= 1018
+
+SELECT * FROM [IT Requests]
+
+
+BEGIN TRAN;
+
+SELECT * FROM [IT Requests]
+LEFT JOIN
+	[IT Personnel]
+ON
+	[IT Requests].[RequestedBy] = [IT Personnel].[Name]
+WHERE
+	[IT Personnel].[Name] IS NULL;
+
+
+UPDATE
+	[IT Requests]
+SET
+	[RequesterLocked] = 1
+	, [RequesterLockedDate] = ISNULL([RequesterLockedDate], GETDATE())
+FROM
+	[IT Requests]
+LEFT JOIN
+	[IT Personnel]
+ON
+	[IT Requests].[RequestedBy] = [IT Personnel].[Name]
+WHERE
+	[IT Personnel].[Name] IS NULL
+;
+
+
+
+
+--WHERE
+--	[RequestDateOriginal] IS NULL
+
+SELECT * FROM [IT Requests]
+LEFT JOIN
+	[IT Personnel]
+ON
+	[IT Requests].[RequestedBy] = [IT Personnel].[Name]
+WHERE
+	[IT Personnel].[Name] IS NULL
+
+ROLLBACK;
+COMMIT;

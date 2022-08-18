@@ -35,7 +35,7 @@ def gen_inserts(mode="ET"):
             op_no_name = "Options"
             stop_idx = -3
         case _:
-            raise ValueError(f"Error param 'mode' must be either 'TAG' OR 'ET'. Got {mode}")
+            raise ValueError(f"Error param 'mode' must be either 'TAG' OR 'ET'. Got '{mode}'")
     df = pd.read_excel(f"./{file_name}", sheet_name=sheet_name)
     # this df marks the correct option number from a 'completed' option,
     # and whether to map it or not to the rest of the models listed as columns.
@@ -57,11 +57,11 @@ def gen_inserts(mode="ET"):
         else:
             sql = f"SELECT * FROM [Options] WHERE [Model No] LIKE '%{model_in}%'"
             if sql in query_results:
-                n = query_results[sql]
                 query_results[sql] += 1
+                n = query_results[sql]
                 # df.loc[len(df.index)] = [None for col in df.columns]
             else:
-                query_results[sql] = connect(sql).shape[0]
+                query_results[sql] = connect(sql).shape[0] + 1
                 n = query_results[sql]
             return f"{model_in}-{f'00000{n + 1}'[-5:]}"
 
@@ -71,11 +71,11 @@ def gen_inserts(mode="ET"):
         else:
             sql = f"SELECT * FROM [Budget Options] WHERE [Model No] LIKE '%{model_in}%'"
             if sql in query_results:
-                n = query_results[sql]
                 query_results[sql] += 1
+                n = query_results[sql]
                 # df.loc[len(df.index)] = [None for col in df.columns]
             else:
-                query_results[sql] = connect(sql).shape[0]
+                query_results[sql] = connect(sql).shape[0] + 1
                 n = query_results[sql]
             return f"{model_in}-{f'00000{n + 1}'[-5:]}"
 
@@ -163,13 +163,13 @@ def gen_inserts(mode="ET"):
             query_opt = f"""\tINSERT INTO [Options] ([Model No], [Option No], [Start Date], [End Date], [Price],
                 [Sections], [Description], [Weight], [Width], [Deck Length], [Spread], [SortSe], [Draw/Part#],
                 [Std Hours], [Obsolete], [Selection], [New Option Wording], [OptionInfo], [OptionPromptFlag],
-                [OptionPrompt], [OptionConfigInfo], [US Price]) VALUES ({", ".join([str(rec) if not isinstance(rec, str) or rec == "NULL" else f"'{rec}'" for rec in record_opt])})"""
+                [OptionPrompt], [OptionConfigInfo], [US Price]) VALUES ({", ".join([str(rec) if not isinstance(rec, str) or rec == "NULL" else f"'{rec}'" for rec in record_opt])});"""
             print(query_opt)
             query_bud = f"""\tINSERT INTO [Budget Options] ([Bud_Date_Opt], [Model No], [Option No], [Description],
                 [Cost], [Labour Cost], [Made In Material], [Bought Out Material], [Machine Shop], [Steel Kit], [Axles],
                 [Stakes/Bunks], [Beam], [GNK], [Parts], [Line], [Step 1], [Step 2], [Blast], [Paint], [Finish],
                 [Finish - GNK], [Final Assembly], [Tire Assembly], [Shipping], [Sections],[SortSe],[Obsolete])
-                VALUES ({", ".join([str(rec) if not isinstance(rec, str) or rec == "NULL" else f"'{rec}'" for rec in record_bud])})"""
+                VALUES ({", ".join([str(rec) if not isinstance(rec, str) or rec == "NULL" else f"'{rec}'" for rec in record_bud])});"""
             print(query_bud)
             results_by_table["Options"].append(query_opt)
             results_by_table["Budget Options"].append(query_bud)
@@ -191,28 +191,44 @@ def gen_inserts(mode="ET"):
                 query_results[sql_bud] = connect(sql_bud)
                 df = query_results[sql_bud]
 
+    obsolete_template = "\nUPDATE\n\t[XXXXX]\nSET\n\t[Obsolete] = 1\nWHERE\n\t[Model No] IN (YYYYY\n\t);\n"
+    model_names = list(results_by_model.keys())
+    table_names = list(results_by_table.keys())
+    # raise ValueError(f"models: {results_by_model.keys()}")
     with open(output_file, "w") as f:
         block = "-" * 120
-        m1 = f"{block}\nUSE BWSdb\nGO\n\nBEGIN TRAN;\n"
+        m1 = f"{block}\nUSE BWSdb\nGO\n\nBEGIN TRAN;"
         print(m1)
-        f.write(m1)
-        for model, m_values in results_by_model.items():
-            m2 = f"--MODEL={model}"
+        f.write(m1 + "\n\n")
+        for table in results_by_table.keys():
+            m2 = obsolete_template.replace("YYYYY", "\n\t\t'" + "'\n\t\t, '".join(model_names) + "'").replace("XXXXX", table)
             print(m2)
             f.write(m2 + "\n")
+        for model, m_values in results_by_model.items():
+            m3 = f"--MODEL={model}"
+            print(m3)
+            f.write("\n" + m3 + "\n")
             for table, t_values in m_values.items():
-                m3 = f"\t--TABLE=[{table}]"
-                print(m3)
-                f.write(m3 + "\n")
+                m4 = f"\t--TABLE=[{table}]"
+                print(m4)
+                f.write(m4 + "\n")
                 for query in t_values:
-                    m4 = f"\t\t{query}"
-                    print(m4)
-                    f.write(m4 + "\n")
-        m5 = f"\nROLLBACK;\nCOMMIT;\n{block}"
-        print(m5)
-        f.write(m5 + "\n")
+                    m5 = f"\t\t{query}"
+                    print(m5)
+                    f.write(m5 + "\n")
+        m6 = f"\nROLLBACK;\nCOMMIT;\n{block}"
+        print(m6)
+        f.write(m6 + "\n")
 
 
 if __name__ == '__main__':
+
+    # generate SQL statements to update option wordings for ET models
+    # source -- "ET Option Comparison.xlsx"
     gen_inserts("ET")
+
+    # generate SQL statements to update option wordings for TAG models
+    # source -- "TAG Option Comparison.xlsx"
     gen_inserts("TAG")
+
+
