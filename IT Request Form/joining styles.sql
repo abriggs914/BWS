@@ -14,4 +14,4 @@ INNER JOIN
 ON
 	[ITR Settings].[Theme] = [ITR ColourSchemes].[ID]
 
-SELECT * WHERE
+--SELECT * WHERE

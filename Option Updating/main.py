@@ -25,7 +25,7 @@ def gen_inserts(mode="ET"):
         case "ET":
             file_name = "ET Option Comparison.xlsx"
             output_file = "ET Option Comparison.sql"
-            sheet_name = "Test"
+            sheet_name = "Condensed Options"
             op_no_name = "Option No"
             stop_idx = -1
         case "TAG":
