@@ -3,14 +3,15 @@ import pandas
 from pyodbc_connection import connect
 import tkinter
 
+
 if __name__ == "__main__":
-    ans = '2S9DATBOX5M115535'
-    nvis = lambda cvma1, tt, bt, l, ac, gw, cd, my, mc, cvma2, pp: ("".join(
-        list(map(lambda x: str(x)[:4], [cvma1[0:4], tt, bt, l, ac, gw, cd, my, mc, cvma2, pp])))).upper().strip()
-    print("nvis:", nvis('2s9', 'dump', 'aluminum', '53', '3', '5432', '0', '2015', 'Mississauga', '11', '5535'))
-    print("ans: ", ans)
-    print("nvis == ans:",
-          nvis('2s9', 'dump', 'aluminum', '53', '3', '5432', '0', '2015', 'Mississauga', '11', '5535') == ans)
+    # ans = '2S9DATBOX5M115535'
+    # nvis = lambda cvma1, tt, bt, l, ac, gw, cd, my, mc, cvma2, pp: ("".join(
+    #     list(map(lambda x: str(x)[:4], [cvma1[0:4], tt, bt, l, ac, gw, cd, my, mc, cvma2, pp])))).upper().strip()
+    # print("nvis:", nvis('2s9', 'dump', 'aluminum', '53', '3', '5432', '0', '2015', 'Mississauga', '11', '5535'))
+    # print("ans: ", ans)
+    # print("nvis == ans:",
+    #       nvis('2s9', 'dump', 'aluminum', '53', '3', '5432', '0', '2015', 'Mississauga', '11', '5535') == ans)
 
     # Details
     details = {
@@ -100,6 +101,14 @@ if __name__ == "__main__":
 
 class NVIS:
 
+    class QuoteNotFoundError(Exception):
+        def __init__(self, message):
+            print(message)
+
+    class NoRecordsForQuote(Exception):
+        def __init__(self, message):
+            print(message)
+
     def __init__(self, quote_number, production_year, sequential_start=None):
         # Details
         self.details = {
@@ -122,32 +131,51 @@ class NVIS:
         self._model_year = None
         self._units_to_date = None
         self._check_digit = None
+        self._found_serial = None
+        self._quote_date = None
+        self._order_date = None
+        self._delivery_date = None
 
     def calculate(self):
         self.details["orders"] = connect(f"SELECT * FROM [Orders] WHERE [Quote#] = {self.details['quote']}")
+
+        if self.details["orders"] is None or self.details["orders"].empty:
+            raise NVIS.QuoteNotFoundError(f"Quote# '{self.details['quote']}' not found in BWS system.")
+
         self.details["snc_year"] = connect(f"SELECT * FROM [SNC Year] WHERE [Year] = {self.details['year']}")
         model_name = self.details['orders']['Model No'].tolist()[0]
         self.details["snc_type"] = connect(
-            f"SELECT * FROM [SN Type] WHERE [Model No] = '{model_name}'")
+            f"SELECT * FROM [SN Type] WHERE [Model No] = '{model_name}'", do_show=1)
 
         # print(f"details['orders']\n:{self.details['orders']}")
         # print(f"details['snc_year']\n:{self.details['snc_year']}")
 
         if not self.details["orders"].empty:
 
+            self.details["orders"]["Quote Date"] = self.details["orders"]["Quote Date"].apply(lambda x: x.date() if x else x)
+            self.details["orders"]["Order Date"] = self.details["orders"]["Order Date"].apply(lambda x: x.date() if x else x)
+            self.details["orders"]["Delivery Date"] = self.details["orders"]["Delivery Date"].apply(lambda x: x.date() if x else x)
+
             serial = [" " for _ in range(17)]
 
             digits = list(map(str, range(0, 10)))
-            alphabet = list(map(chr, range(97, 122))) + ['_']
-            alphabet_values = list(range(9)) + list(range(6)) + [7, 9] + list(range(2, 10)) + [-1000000]
+            alphabet = list(map(chr, range(97, 123))) + ['_']
+            alphabet.remove("i")
+            alphabet.remove("o")
+            alphabet.remove("q")
+            alphabet_values = list(range(1, 9)) + list(range(1, 6)) + [7, 9] + list(range(2, 10)) + [-1000000]
             weights = [8, 7, 6, 5, 4, 3, 2, 10, None, 9, 8, 7, 6, 5, 4, 3, 2]
+
+            alphabet += list(map(str, range(10)))
+            alphabet_values += list(range(10))
 
             def calc_check_digit():
                 weight = 0
+
                 for i, ser_wei in enumerate(zip(serial, weights)):
                     ser, wei = ser_wei
                     if wei is not None:
-                        print(f"{ser=}, {wei=}")
+                        print(f"{i=}, {ser=}, {wei=}, {alphabet.index(str(ser).lower())=}")
                         value = int(ser if str(ser) in digits else alphabet_values[alphabet.index(str(ser).lower())])
                         # print(f"{ser=}, {wei=}, {value=}")
                         weight += value * wei
@@ -175,7 +203,7 @@ class NVIS:
             if self.details["sequential"] is not None:
                 units_to_date = int(self.details["sequential"]) + 1
 
-            sequential = ("000000" + str(units_to_date))[-6:]
+            sequential = ("0" * 6 + str(units_to_date))[-6:]
 
             serial[0] = "2"  # Assigned by CVMA
             serial[1] = "X"  # Assigned by CVMA
@@ -191,6 +219,13 @@ class NVIS:
             serial[10] = "A"  # Plant of Manufacture
 
             serial[11:17] = sequential
+
+            print("\t\t\tHERE A")
+
+            # Assert that all unknown chars are '_' before calculating check digit.
+            for i, letter in enumerate(serial):
+                if letter is None:
+                    serial[i] = "_"
 
             serial[8] = calc_check_digit()  # Check digit
 
@@ -208,13 +243,37 @@ class NVIS:
             serial = [str(letter) if letter is not None else "_" for letter in serial]
 
             self.serial = ''.join(serial)
-            ss = connect(f"EXEC [sp_SerialNumberCalc] @quote={self.details['quote']}, @year={self.details['year']}")
-            if ss is not None and (isinstance(ss, pandas.DataFrame) and ss.size > 0):
+
+            print("\t\t\tHERE B")
+
+            ss = connect(f"SELECT [Serial Number] FROM [Orders] WHERE [Quote#] = {self.details['quote']}")
+            cols = ss.columns
+            print("SS:")
+            print(ss)
+
+            if ss[cols[0]].tolist()[0] is None:
+                self.found_serial = None
+                ss = connect(f"EXEC [sp_SerialNumberCalc] @quote={self.details['quote']}, @year={self.details['year']}")
                 cols = ss.columns
-                self.server_serial = ss[cols[0]].tolist()[0]
+                if ss is not None and (isinstance(ss, pandas.DataFrame) and ss.size > 0):
+                    print("ERROR")
+            else:
+                self.found_serial = True
+
+            print(f"{ss[cols[0]].tolist()=}")
+            self.server_serial = ss[cols[0]].tolist()[0]
+            if self.found_serial:
+                self.found_serial = self.server_serial
+
+            self.quote_date = self.details["orders"]["Quote Date"].tolist()[0]
+            self.order_date = self.details["orders"]["Order Date"].tolist()[0]
+            self.delivery_date = self.details["orders"]["Delivery Date"].tolist()[0]
+
+            print(f"{self.quote_date=}, {self.order_date}, {self.delivery_date=}")
 
         else:
-            print(f"Error, no records returned for quote: {self.details['quote']} for year: {self.details['year']}")
+            # print(f"Error, no records returned for quote: {self.details['quote']} for year: {self.details['year']}")
+            raise NVIS.NoRecordsForQuote(f"Error, no records returned for quote: {self.details['quote']} for year: {self.details['year']}")
 
     def get_server_serial(self):
         return self._server_serial
@@ -317,6 +376,42 @@ class NVIS:
     def del_check_digit(self):
         del self._check_digit
 
+    def get_found_serial(self):
+        return self._found_serial
+
+    def set_found_serial(self, found_serial_in):
+        self._found_serial = found_serial_in
+
+    def del_found_serial(self):
+        del self._found_serial
+
+    def get_quote_date(self):
+        return self._quote_date
+
+    def set_quote_date(self, quote_date_in):
+        self._quote_date = quote_date_in
+
+    def del_quote_date(self):
+        del self._quote_date
+
+    def get_order_date(self):
+        return self._order_date
+
+    def set_order_date(self, order_date_in):
+        self._order_date = order_date_in
+
+    def del_order_date(self):
+        del self._order_date
+
+    def get_delivery_date(self):
+        return self._delivery_date
+
+    def set_delivery_date(self, delivery_date_in):
+        self._delivery_date = delivery_date_in
+
+    def del_delivery_date(self):
+        del self._delivery_date
+
     def __repr__(self):
         return str(self.serial)
 
@@ -331,3 +426,7 @@ class NVIS:
     model_year = property(get_model_year, set_model_year, del_model_year)
     units_to_date = property(get_units_to_date, set_units_to_date, del_units_to_date)
     check_digit = property(get_check_digit, set_check_digit, del_check_digit)
+    found_serial = property(get_found_serial, set_found_serial, del_found_serial)
+    quote_date = property(get_quote_date, set_quote_date, del_quote_date)
+    order_date = property(get_order_date, set_order_date, del_order_date)
+    delivery_date = property(get_delivery_date, set_delivery_date, del_delivery_date)

@@ -8,14 +8,13 @@ import shutil
 import sys
 import os
 
-
 VERSION = \
-"""	
-	General Utility Functions
-	Version..............1.51
-	Date...........2022-08-17
-	Author.......Avery Briggs
-"""
+    """	
+        General Utility Functions
+        Version..............1.52
+        Date...........2022-08-26
+        Author.......Avery Briggs
+    """
 
 
 def VERSION_NUMBER():
@@ -61,7 +60,6 @@ def lenstr(x):
 
 
 def minmax(a, b):
-    
     if a <= b:
         return a, b
     return b, a
@@ -1616,14 +1614,15 @@ def rect2_to_tkinter(rect):
 
 def tkinter_to_rect2(rect):
     """Tlinter (left, top, right, bottom) -> Rect2 (left, top, w, h)"""
-    assert isinstance(rect, list) or isinstance(rect, tuple), f"Error value is not a valid list or tuple representing a tkinter rect., got <{type(rect)}>, v=<{rect}>"
+    assert isinstance(rect, list) or isinstance(rect,
+                                                tuple), f"Error value is not a valid list or tuple representing a tkinter rect., got <{type(rect)}>, v=<{rect}>"
     assert len(rect) == 4, "This list is too long"
     x1, y1, x2, y2 = rect
     return Rect2(x1, y1, x2 - x1, y2 - y1)
 
 
 def kb_as_percent(kb, gb=2):
-    return ("%.3f" % (((100 * kb / (1024**2)) / gb))) + " %"
+    return ("%.3f" % (((100 * kb / (1024 ** 2)) / gb))) + " %"
 
 
 def calc_bounds(center, width, height=None):
@@ -1640,6 +1639,12 @@ def calc_bounds(center, width, height=None):
         center[0] + w,
         center[1] + h
     )
+
+
+def left_join(a_, b_):
+    assert isinstance(a_, set), "Error, param 'a_' must be a set."
+    assert isinstance(b_, set), "Error, param 'a_' must be a set."
+    return a_.symmetric_difference(b_).union(a_).symmetric_difference(b_).union(a_)
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "
