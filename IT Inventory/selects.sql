@@ -1,5 +1,9 @@
 USE BWSdb
 GO
+SELECT 'ITI InvMaster' AS [Table], * FROM [ITI InvMaster];
+SELECT 'ITI InvMaster Snap' AS [Table], * FROM [ITI InvMaster Snap];
+SELECT 'ITI Item' AS [Table], * FROM [ITI Item];
+SELECT 'v_ITI Item' AS [Table], * FROM [dbo].[v_ITI_Items] 
 
 SELECT 'ITI Computer' AS [Table], * FROM [ITI Computer];
 SELECT 'ITI Condition' AS [Table], * FROM [ITI Condition];
@@ -10,10 +14,6 @@ SELECT 'ITI Type' AS [Table], * FROM [ITI Type];
 SELECT 'ITI UOM' AS [Table], * FROM [ITI UOM];
 SELECT 'ITI Wire' AS [Table], * FROM [ITI Wire];
 
-SELECT 'v_ITI Item' AS [Table], * FROM [dbo].[v_ITI_Items] 
-SELECT 'ITI Item' AS [Table], * FROM [ITI Item];
-SELECT 'ITI InvMaster' AS [Table], * FROM [ITI InvMaster];
-SELECT 'ITI InvMaster Snap' AS [Table], * FROM [ITI InvMaster Snap];
 
 
 SELECT

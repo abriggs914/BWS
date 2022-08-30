@@ -53,7 +53,7 @@ def calc_taxes(vals):
 
 if __name__ == "__main__":
 
-	salaries = [40000, 42000, 50000, 86000, 365000]
+	salaries = [40000, 42000, 44100, 50000, 86000, 365000]
 	for salary in salaries:
 		values = {
 			"salary": salary,
