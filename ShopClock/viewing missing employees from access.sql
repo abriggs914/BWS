@@ -11,9 +11,9 @@ BEGIN TRAN;
 SELECT
 	*
 FROM
-	[ClkTransaction]
+	[SysproCompanyA].[dbo].[ClkTransaction]
 LEFT JOIN
-	[ClkShiftEmpAssign]
+	[SysproCompanyA].[dbo].[ClkShiftEmpAssign]
 ON
 	[ClkTransaction].[EmployeeNumber] = [ClkShiftEmpAssign].Emp#
 WHERE
