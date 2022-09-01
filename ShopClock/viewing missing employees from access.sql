@@ -19,7 +19,7 @@ ON
 WHERE
 	[ClkShiftEmpAssign].[Emp#] IS NULL
 ;
-SELECT * FROM [ClkShiftEmpAssign] ORDER BY [Emp#] DESC;
+SELECT * FROM [SysproCompanyA].[dbo].[ClkShiftEmpAssign] ORDER BY [Emp#] DESC;
 
 INSERT INTO
 	[ClkShiftEmpAssign]
