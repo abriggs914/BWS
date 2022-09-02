@@ -28,14 +28,18 @@ class CalendarSurface(tkinter.Canvas):
         self.visible_cols = range(25)
         self.tile_background_colour = tile_background_colour
 
+        self.tile_space = 3
+        self.tile_width = None
+        self.tile_height = None
         self.texts = []
         self.tiles = self.init_tiles()
 
-
     def init_tiles(self):
-        ts = 3  # space between tiles
+        ts = self.tile_space  # space between tiles
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
+        self.tile_width = tw
+        self.tile_height = th
 
         print(f"{self.rows=}, {self.cols=}")
 
@@ -54,47 +58,35 @@ class CalendarSurface(tkinter.Canvas):
                 xd = x2 - x1
                 yd = y2 - y1
                 tile_colour = rgb_to_hex(next(grad))
-                tile_colour = self.tile_background_colour
                 font_colour = rgb_to_hex(font_foreground(tile_colour))
+                # tile_colour = self.tile_background_colour
+                # font_colour = "white"
                 row.append(self.create_rectangle(
                     x1, y1, x2, y2,
-                    fill=self.tile_background_colour
-                    # fill=tile_colour
+                    fill=tile_colour
                 ))
-                if r > 0 and c > 0:
-                    row_2.append(self.create_text(
-                        x1 + (xd / 2),
-                        y1 + (yd / 4),
-                        text=f"{r-1=}",
-                        # fill="white"
-                        fill=font_colour,
-                        width=tw
-                    ))
-                    row_2.append(self.create_text(
-                        x1 + (xd / 2),
-                        y1 + (3 * yd / 4),
-                        text=f"{c-1=}",
-                        # fill="white"
-                        fill=font_colour,
-                        width=tw
-                    ))
-                else:
-                    row_2.append(self.create_text(
-                        x1 + (xd / 2),
-                        y1 + (yd / 4),
-                        text=f"{r-1=}",
-                        # fill="white"
-                        fill=font_colour,
-                        width=tw
-                    ))
-                    row_2.append(self.create_text(
-                        x1 + (xd / 2),
-                        y1 + (3 * yd / 4),
-                        text=f"{c-1=}",
-                        # fill="white"
-                        fill=font_colour,
-                        width=tw
-                    ))
+                text_1 = f"{r-1=}"
+                text_2 = f"{c-1=}"
+                if r == 0:
+                    text_1 = f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}"
+                    text_2 = ""
+                if c == 0 and r > 0:
+                    text_1 = ""
+                    text_2 = f"{self.lines[r - 1]}"
+                row_2.append(self.create_text(
+                    x1 + (xd / 2),
+                    y1 + (yd / 4),
+                    text=text_1,
+                    fill=font_colour,
+                    width=tw
+                ))
+                row_2.append(self.create_text(
+                    x1 + (xd / 2),
+                    y1 + (3 * yd / 4),
+                    text=text_2,
+                    fill=font_colour,
+                    width=tw
+                ))
 
             tiles.append(row)
             self.texts.append(row_2)
@@ -146,9 +138,9 @@ class CalendarSurface(tkinter.Canvas):
         # return tiles
 
     def scroll_left(self):
-        ts = 3  # space between tiles
-        tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / self.n_visible_cols  # tile width
-        th = (self.canvas_height - ((self.rows + 1) * ts)) / self.rows  # tile height
+        ts = self.tile_spaces
+        tw = self.tile_width
+        th = self.tile_height
         r = self.visible_cols
         m = self.cols - self.n_visible_cols
         do_shift = self.visible_cols.start > 0
@@ -158,23 +150,23 @@ class CalendarSurface(tkinter.Canvas):
         if do_shift:
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
-                    self.move(tile, tw + ts, 0)
-                    self.move(self.texts[r][2 * c], tw + ts, 0)
-                    self.move(self.texts[r][(2 * c) + 1], tw + ts, 0)
+                    self.move(tile, tw + (ts / 2), 0)
+                    self.move(self.texts[r][2 * c], tw + (ts / 2), 0)
+                    self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
 
     def scroll_right(self):
-        ts = 3  # space between tiles
-        tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / self.n_visible_cols  # tile width
-        th = (self.canvas_height - ((self.rows + 1) * ts)) / self.rows  # tile height
+        ts = self.tile_spaces
+        tw = self.tile_width
+        th = self.tile_height
         r = self.visible_cols
         m = self.cols - self.n_visible_cols
-        do_shift = self.visible_cols.stop < self.max_tiles - 1
+        do_shift = self.visible_cols.stop < (self.cols - 1)
         self.visible_cols = range(clamp(0, r.start + 1, m), clamp(self.n_visible_cols, r.stop + 1, self.cols))
         print(f"{self.visible_cols=}")
         # self.shift_tiles()
         if do_shift:
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
-                    self.move(tile, -(tw + ts), 0)
-                    self.move(self.texts[r][2 * c], tw + ts, 0)
-                    self.move(self.texts[r][(2 * c) + 1], tw + ts, 0)
+                    self.move(tile, -(tw + (ts / 2)), 0)
+                    self.move(self.texts[r][2 * c], -(tw + (ts / 2)), 0)
+                    self.move(self.texts[r][(2 * c) + 1], -(tw + (ts / 2)), 0)
