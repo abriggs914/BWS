@@ -15,10 +15,15 @@ class App(tkinter.Tk):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.state("zoomed")
         self.title(self.TITLE)
+        self.update()
+        self.window_width = self.winfo_width()
+        self.window_height = self.winfo_height()
+
+        can_w, can_h = self.window_width * 0.75, self.window_height * 0.65
 
         self.calendar_frame_a = tkinter.Frame(self)
         self.calendar_frame_b = tkinter.Frame(self.calendar_frame_a)
-        self.calendar_surface = CalendarSurface(self.calendar_frame_b, 1500, 800, datetime.datetime.now())
+        self.calendar_surface = CalendarSurface(self.calendar_frame_b, can_w, can_h, datetime.datetime.now())
         self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.calendar_frame_a, tv_btn="left")
         self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.calendar_frame_a, tv_btn="right")
 
