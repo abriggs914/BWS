@@ -12,7 +12,11 @@ class CalendarSurface(tkinter.Canvas):
             width: int,
             height: int,
             start_date: datetime.datetime,
-            tile_background_colour=rgb_to_hex(GRAY_17)
+            tile_background_colour: str = rgb_to_hex(GRAY_17),
+            tile_outline_colour: str = rgb_to_hex(BLACK),
+            active_fill_colour: str = rgb_to_hex(GRAY_66),
+            active_outline_colour: str = rgb_to_hex(YELLOW_3),
+            n_visible_cols: int = 14
     ):
         super().__init__(master, width=width, height=height)
         self.canvas_width = width
@@ -24,9 +28,12 @@ class CalendarSurface(tkinter.Canvas):
         self.cols = (self.end_date - self.start_date).days
         self.max_tiles = self.rows * self.cols
 
-        self.n_visible_cols = 25
-        self.visible_cols = range(25)
+        self.n_visible_cols = n_visible_cols
+        self.visible_cols = range(self.n_visible_cols)
         self.tile_background_colour = tile_background_colour
+        self.tile_outline_colour = tile_outline_colour
+        self.active_fill_colour = active_fill_colour
+        self.active_outline_colour = active_outline_colour
 
         self.tile_space = 3
         self.tile_width = None
@@ -59,11 +66,17 @@ class CalendarSurface(tkinter.Canvas):
                 yd = y2 - y1
                 tile_colour = rgb_to_hex(next(grad))
                 font_colour = rgb_to_hex(font_foreground(tile_colour))
+                outline_colour = self.tile_outline_colour
+                active_fill_colour = self.active_fill_colour
+                active_outline_colour = self.active_outline_colour
                 # tile_colour = self.tile_background_colour
                 # font_colour = "white"
                 row.append(self.create_rectangle(
                     x1, y1, x2, y2,
-                    fill=tile_colour
+                    fill=tile_colour,
+                    outline=outline_colour,
+                    activeoutline=active_outline_colour,
+                    activefill=active_fill_colour
                 ))
                 text_1 = f"{r-1=}"
                 text_2 = f"{c-1=}"
@@ -78,14 +91,15 @@ class CalendarSurface(tkinter.Canvas):
                     y1 + (yd / 4),
                     text=text_1,
                     fill=font_colour,
-                    width=tw
+                    width=tw,
+                    activefill=active_fill_colour
                 ))
                 row_2.append(self.create_text(
                     x1 + (xd / 2),
                     y1 + (3 * yd / 4),
                     text=text_2,
                     fill=font_colour,
-                    width=tw
+                    width=tw,
                 ))
 
             tiles.append(row)
@@ -138,7 +152,7 @@ class CalendarSurface(tkinter.Canvas):
         # return tiles
 
     def scroll_left(self):
-        ts = self.tile_spaces
+        ts = self.tile_space
         tw = self.tile_width
         th = self.tile_height
         r = self.visible_cols
@@ -155,7 +169,7 @@ class CalendarSurface(tkinter.Canvas):
                     self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
 
     def scroll_right(self):
-        ts = self.tile_spaces
+        ts = self.tile_space
         tw = self.tile_width
         th = self.tile_height
         r = self.visible_cols
@@ -170,3 +184,6 @@ class CalendarSurface(tkinter.Canvas):
                     self.move(tile, -(tw + (ts / 2)), 0)
                     self.move(self.texts[r][2 * c], -(tw + (ts / 2)), 0)
                     self.move(self.texts[r][(2 * c) + 1], -(tw + (ts / 2)), 0)
+
+    def dbl_click_tile(self, event):
+        print(f"{event}")
