@@ -1,7 +1,10 @@
 import datetime
 import tkinter
+
+import pandas
 from dateutil.relativedelta import relativedelta
 from colour_utility import *
+from unit import Unit
 
 
 class CalendarSurface(tkinter.Canvas):
@@ -38,8 +41,22 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_space = 3
         self.tile_width = None
         self.tile_height = None
-        self.texts = []
+        # self.texts = []
+        self.tile_properties = []
         self.tiles = self.init_tiles()
+        self.units = {}
+
+        print(f"{self.start_date=}, {self.end_date=}")
+
+    def quote_rc(self, quote_in):
+        if quote_in in self.units:
+            for r, tile_row in enumerate(self.tiles):
+                for c, tile in enumerate(tile_row):
+                    unit = self.tile_properties[r][c]["unit"]
+                    if unit.SGQuote == quote_in:
+                        return r, c
+        print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
+        return None
 
     def init_tiles(self):
         ts = self.tile_space  # space between tiles
@@ -57,6 +74,7 @@ class CalendarSurface(tkinter.Canvas):
         for r in range(self.rows + 1):
             row = []
             row_2 = []
+            tile_detail_row = []
             for c in range(self.cols + 1):
                 x1 = (c * tw) + ((c + 1) * ts) + (ts / 2)
                 y1 = (r * th) + ((r + 1) * ts) + (ts / 2)
@@ -64,13 +82,12 @@ class CalendarSurface(tkinter.Canvas):
                 y2 = ((r + 1) * th) + ((r + 1) * ts) + (ts / 2)
                 xd = x2 - x1
                 yd = y2 - y1
-                tile_colour = rgb_to_hex(next(grad))
+                # tile_colour = rgb_to_hex(next(grad))
+                tile_colour = self.tile_background_colour
                 font_colour = rgb_to_hex(font_foreground(tile_colour))
                 outline_colour = self.tile_outline_colour
                 active_fill_colour = self.active_fill_colour
                 active_outline_colour = self.active_outline_colour
-                # tile_colour = self.tile_background_colour
-                # font_colour = "white"
                 row.append(self.create_rectangle(
                     x1, y1, x2, y2,
                     fill=tile_colour,
@@ -78,32 +95,93 @@ class CalendarSurface(tkinter.Canvas):
                     activeoutline=active_outline_colour,
                     activefill=active_fill_colour
                 ))
-                text_1 = f"{r-1=}"
-                text_2 = f"{c-1=}"
-                if r == 0:
-                    text_1 = f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}"
-                    text_2 = ""
+                text_1 = tkinter.StringVar(self, value=f"{r-1=}")
+                text_2 = tkinter.StringVar(self, value=f"{c-1=}")
+                if r == 0 and c > 0:
+                    text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
+                    text_2.set("")
                 if c == 0 and r > 0:
-                    text_1 = ""
-                    text_2 = f"{self.lines[r - 1]}"
-                row_2.append(self.create_text(
-                    x1 + (xd / 2),
-                    y1 + (yd / 4),
-                    text=text_1,
-                    fill=font_colour,
-                    width=tw,
-                    activefill=active_fill_colour
-                ))
-                row_2.append(self.create_text(
-                    x1 + (xd / 2),
-                    y1 + (3 * yd / 4),
-                    text=text_2,
-                    fill=font_colour,
-                    width=tw,
-                ))
+                    text_1.set("")
+                    text_2.set(f"{self.lines[r - 1]}")
 
+                offset = (1 * yd / 10)
+                text_3, text_4, text_5 = tkinter.StringVar(self, value="3"), tkinter.StringVar(self, value="4"), tkinter.StringVar(self, value="5")
+                t1_x1, t1_y1 = x1 + (xd / 2), y1 + offset
+                t2_x1, t2_y1 = x1 + (xd / 2), y1 + (1 * yd / 5) + offset
+                t3_x1, t3_y1 = x1 + (xd / 2), y1 + (2 * yd / 5) + offset
+                t4_x1, t4_y1 = x1 + (xd / 2), y1 + (3 * yd / 5) + offset
+                t5_x1, t5_y1 = x1 + (xd / 2), y1 + (4 * yd / 5) + offset
+
+                for i in range(1, 6):
+                    wip_x = eval(f"t{i}_x1")
+                    wip_y = eval(f"t{i}_y1")
+                    wip_t = eval(f"text_{i}")
+                    row_2.append(
+                        self.create_text(
+                            wip_x,
+                            wip_y,
+                            text=wip_t.get(),
+                            fill=font_colour,
+                            width=tw,
+                            activefill=active_fill_colour
+                        )
+                    )
+
+                # row_2.append(self.create_text(
+                #     t1_x1,
+                #     t1y1,
+                #     text=text_1,
+                #     fill=font_colour,
+                #     width=tw,
+                #     activefill=active_fill_colour
+                # ))
+                # row_2.append(self.create_text(
+                #     x1 + (xd / 2),
+                #     y1 + (3 * yd / 4),
+                #     text=text_2,
+                #     fill=font_colour,
+                #     width=tw,
+                # ))
+                tile_details = {
+                    "tag_rect": row[-1],
+                    "x1": x1,
+                    "y1": y1,
+                    "x2": x2,
+                    "y2": y2,
+
+                    "t1_tag": row_2[-5],
+                    "t1_x1": t1_x1,
+                    "t1_y1": t1_y1,
+                    "text_1": text_1,
+
+                    "t2_tag": row_2[-4],
+                    "t2_x1": t2_x1,
+                    "t2_y1": t2_y1,
+                    "text_2": text_2,
+
+                    "t3_tag": row_2[-3],
+                    "t3_x1": t3_x1,
+                    "t3_y1": t3_y1,
+                    "text_3": text_3,
+
+                    "t4_tag": row_2[-2],
+                    "t4_x1": t4_x1,
+                    "t4_y1": t4_y1,
+                    "text_4": text_4,
+
+                    "t5_tag": row_2[-1],
+                    "t5_x1": t5_x1,
+                    "t5_y1": t5_y1,
+                    "text_5": text_5,
+
+                    "unit":None
+                }
+
+                tile_detail_row.append(tile_details)
             tiles.append(row)
-            self.texts.append(row_2)
+            # self.texts.append(row_2)
+            self.tile_properties.append(tile_detail_row)
+
         return tiles
 
     def shift_tiles(self):
@@ -165,8 +243,18 @@ class CalendarSurface(tkinter.Canvas):
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
                     self.move(tile, tw + (ts / 2), 0)
-                    self.move(self.texts[r][2 * c], tw + (ts / 2), 0)
-                    self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
+                    tag_t1 = self.tile_properties[r][c]["t1_tag"]
+                    tag_t2 = self.tile_properties[r][c]["t2_tag"]
+                    tag_t3 = self.tile_properties[r][c]["t3_tag"]
+                    tag_t4 = self.tile_properties[r][c]["t4_tag"]
+                    tag_t5 = self.tile_properties[r][c]["t5_tag"]
+                    self.move(tag_t1, (tw + (ts / 2)), 0)
+                    self.move(tag_t2, (tw + (ts / 2)), 0)
+                    self.move(tag_t3, (tw + (ts / 2)), 0)
+                    self.move(tag_t4, (tw + (ts / 2)), 0)
+                    self.move(tag_t5, (tw + (ts / 2)), 0)
+                    # self.move(self.texts[r][2 * c], tw + (ts / 2), 0)
+                    # self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
 
     def scroll_right(self):
         ts = self.tile_space
@@ -182,8 +270,44 @@ class CalendarSurface(tkinter.Canvas):
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
                     self.move(tile, -(tw + (ts / 2)), 0)
-                    self.move(self.texts[r][2 * c], -(tw + (ts / 2)), 0)
-                    self.move(self.texts[r][(2 * c) + 1], -(tw + (ts / 2)), 0)
+                    tag_t1 = self.tile_properties[r][c]["t1_tag"]
+                    tag_t2 = self.tile_properties[r][c]["t2_tag"]
+                    tag_t3 = self.tile_properties[r][c]["t3_tag"]
+                    tag_t4 = self.tile_properties[r][c]["t4_tag"]
+                    tag_t5 = self.tile_properties[r][c]["t5_tag"]
+                    self.move(tag_t1, -(tw + (ts / 2)), 0)
+                    self.move(tag_t2, -(tw + (ts / 2)), 0)
+                    self.move(tag_t3, -(tw + (ts / 2)), 0)
+                    self.move(tag_t4, -(tw + (ts / 2)), 0)
+                    self.move(tag_t5, -(tw + (ts / 2)), 0)
+                    # self.move(self.texts[r][2 * c], -(tw + (ts / 2)), 0)
+                    # self.move(self.texts[r][(2 * c) + 1], -(tw + (ts / 2)), 0)
 
     def dbl_click_tile(self, event):
         print(f"{event}")
+
+    def tile_at_xy(self, xy: tuple[int, int]):
+        x, y = xy
+        for tile_row in self.tiles:
+            for col_idx in self.visible_cols:
+                tile = tile_row[col_idx]
+                bbox = self.bbox(tile)
+                if bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3]:
+                    return tile
+        return None
+
+    def populate_units(self, df):
+        assert isinstance(df, pandas.DataFrame)
+        for row in df.iterrows():
+            values = row[1].tolist()
+            # print(f"{len(values)=}, {values=}")
+            unit = Unit(*values)
+            sgquote = unit.SGQuote
+            self.units[sgquote] = unit
+            avail_date = unit.Available_Date
+            print(f"LINES: {unit.WO_Line_1=}, {unit.WO_Line_2=}, {unit.GN_Line=}, {unit.Beam_Line=}, {unit.Other_Line=}")
+            if self.start_date <= avail_date <= self.end_date:
+                print(f"VALID DATE!!")
+            else:
+                print(f"available_date: <{avail_date}> not found.")
+            # print(f"{unit}")

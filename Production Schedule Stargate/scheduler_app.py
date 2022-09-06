@@ -14,14 +14,20 @@ class App(tkinter.Tk):
     def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500):
         super().__init__()
 
+
         self.df_production = None
+        self.df_work_days = None
         self.populate_data()
 
+        # State variables
         self.valid_app_states = ["IDLE", "DRAGGING", "SELECTED"]
         self.app_state = "IDLE"
         self.drag_tile = None
         self.drag_text = None
         self.dragging_details = None
+        self.select_tile = None
+        self.select_text = None
+        self.select_details = None
 
         self.TITLE = TITLE
         self.WIDTH = WIDTH
@@ -38,6 +44,7 @@ class App(tkinter.Tk):
         self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(), textvariable=self.tv_combo_unit_selection)
         self.tv_btn_insert_combo_choice, self.button_insert_combo_choice = button_factory(self.frame_top_bar, tv_btn="+")
         self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
+        self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_save_changes})
 
         # canvas and calendar objects
         can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
@@ -45,22 +52,22 @@ class App(tkinter.Tk):
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)
 
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, can_w, can_h, datetime.datetime.now())
-        self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left")
-        self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right")
-        for tile_row in self.calendar_surface:
+        self.calendar_surface.populate_units(self.df_production)
+        self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
+        self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
+        for tile_row in self.calendar_surface.tiles:
             for tile in tile_row:
                 self.calendar_surface.tag_bind(tile, "<Double-Button-1>", self.dbl_click_tile)
 
         # bind event handlers
         self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
         self.calendar_surface.bind("<Motion>", self.motion_calendar_surface)
-        self.button_scroll_left.config(command=self.click_left_scroll)
-        self.button_scroll_right.config(command=self.click_right_scroll)
 
         # pack widgets
         self.frame_top_bar.pack()
         self.combo_unit_selection.pack()
         self.button_insert_combo_choice.pack()
+        self.button_save_changes.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.pack()
@@ -69,21 +76,27 @@ class App(tkinter.Tk):
         self.button_scroll_right.pack(side=tkinter.RIGHT)
 
     def populate_data(self):
-        self.df_production = connect(
-            """SELECT
-                [OrdersV2].*,
-                [ProductionV2].*
-            FROM
-            	[OrdersV2]
-            LEFT JOIN
-            	[ProductionV2]
-            ON
-            	[OrdersV2].[SGQuote] = [ProductionV2].[SGQuote]
-            WHERE
-            	[Prod Date] IS NULL
-            	AND [Prod Date2] IS NULL
-            	AND [OrdersV2].[Order Date] IS NOT NULL"""
-        )
+        """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
+        # Order and production data pertaining to Stargate units
+        self.df_production = connect("""
+
+SELECT
+	*
+FROM
+	[dtProductionSchedule]
+LEFT JOIN
+	[BWSdb].[dbo].[OrdersV2]
+ON
+	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
+WHERE
+	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2]) IS NOT NULL
+ORDER BY
+	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2])
+;
+
+        """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
+
+        self.df_work_days = connect("""SELECT * FROM [v_CalendarWorkDays] ORDER BY [CalendarDate] DESC""", database="SysproCompanyS", uid="SCSRS", pwd="")
 
     def dat_list_of_units(self):
         return [tup[0] for tup in self.df_production["SGQuote"].values.tolist()]
@@ -91,20 +104,17 @@ class App(tkinter.Tk):
     def click_calendar_surface(self, event):
         print(f"click {event=}")
         x, y = event.x, event.y
-        for tile_row in self.calendar_surface.tiles:
-            for col_idx in self.calendar_surface.visible_cols:
-                tile = tile_row[col_idx]
-                bbox = self.calendar_surface.bbox(tile)
-                if bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3]:
-                    if self.app_state == "IDLE":
-                        self.app_state = "SELECTED"
-                        self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
-                    elif self.app_state == "DRAGGING":
-                        self.app_state = "IDLE"
-                        # self.calendar_surface.it
-                        self.drag_tile = None
-                        self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
-
+        tile = self.calendar_surface.tile_at_xy((x, y))
+        if tile is not None:
+            if self.app_state == "IDLE":
+                self.app_state = "SELECTED"
+                self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
+            elif self.app_state == "DRAGGING":
+                self.app_state = "IDLE"
+                # self.calendar_surface.it
+                # TODO take the dragging tile data and insert it into the tile where the click was set.
+                self.drag_tile = None
+                self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
 
     def motion_calendar_surface(self, event):
         print(f"motion {event=}")
@@ -144,6 +154,9 @@ class App(tkinter.Tk):
             # ye = clamp(0, ye, my)
             # self.calendar_surface.moveto(dt, xe, ye)
 
+    def click_save_changes(self):
+        print(f"SAVING")
+
     def click_left_scroll(self):
         print(f"click_left")
         self.calendar_surface.scroll_left()
@@ -156,12 +169,20 @@ class App(tkinter.Tk):
         print(f"insert combo choice")
         self.app_state = "DRAGGING"
         self.dragging_details = {
-            "quote": self.tv_combo_unit_selection.get()
+            "quote": self.tv_combo_unit_selection.get(),
+            "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
         }
         self.update()
 
     def dbl_click_tile(self, event):
-        self.calendar_surface.dbl_click_tile(event)
+        # self.calendar_surface.dbl_click_tile(event)
+        x, y = event.x, event.y
+        tile = self.calendar_surface.tile_at_xy((x, y))
+        print(f"Double click!, tile chosen: {tile}")
+        if tile is not None:
+            self.drag_tile = tile
+            self.app_state = "DRAGGING"
+            self.update()
 
     def update(self) -> None:
         if self.app_state == "DRAGGING":
