@@ -5,6 +5,20 @@ from dataclasses import dataclass
 @dataclass
 class Unit:
 
+    # [Stargatedb].[dbo].[dtProductionScheduleV2]
+    prod_sched_v2_id: int
+    quote_v2: str
+    wo_num_v2: str
+    job_start_date_v2: datetime.datetime
+    job_finish_date_v2: datetime.datetime
+    dtprodschedv2ts: str
+    job_start_line_v2: str
+    hide_from_prod_input_v2: bool
+    InputField1_v2: str  # Model No
+    InputField2_v2: str  # Customer Name
+    ApplyUpdate_v2: int
+    ApplyUpdateUser_v2: str
+
     # [Stargatedb].[dbo].[dtProductionSchedule]
     prod_sched_id: int
     quote: str
