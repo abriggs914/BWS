@@ -49,6 +49,7 @@ class CalendarSurface(tkinter.Canvas):
         print(f"{self.start_date=}, {self.end_date=}")
 
     def quote_rc(self, quote_in):
+        """Retrieve the row and column for the specified quote number."""
         if quote_in in self.units:
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
@@ -71,6 +72,8 @@ class CalendarSurface(tkinter.Canvas):
         n_slices = (self.rows + 1) * (self.cols + 1)
         print(f"{n_slices=}")
         grad = rainbow_gradient(n_slices)
+        # TODO recalculate these positions so that the left most column is unaffected by the 'timeline' shifting
+        #  Currently this tile is treated the same as all of the others
         for r in range(self.rows + 1):
             row = []
             row_2 = []
@@ -307,7 +310,7 @@ class CalendarSurface(tkinter.Canvas):
             avail_date = unit.Available_Date
             print(f"LINES: {unit.WO_Line_1=}, {unit.WO_Line_2=}, {unit.GN_Line=}, {unit.Beam_Line=}, {unit.Other_Line=}")
             if self.start_date <= avail_date <= self.end_date:
-                print(f"VALID DATE!!")
+                print(f"\t\tVALID DATE!!")
             else:
                 print(f"available_date: <{avail_date}> not found.")
             # print(f"{unit}")

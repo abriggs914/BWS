@@ -21,7 +21,7 @@ class App(tkinter.Tk):
 
         # State variables
         self.valid_app_states = ["IDLE", "DRAGGING", "SELECTED"]
-        self.app_state = "IDLE"
+        self._app_state = "IDLE"
         self.drag_tile = None
         self.drag_text = None
         self.dragging_details = None
@@ -45,6 +45,7 @@ class App(tkinter.Tk):
         self.tv_btn_insert_combo_choice, self.button_insert_combo_choice = button_factory(self.frame_top_bar, tv_btn="+")
         self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
         self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_save_changes})
+        self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
 
         # canvas and calendar objects
         can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
@@ -68,6 +69,8 @@ class App(tkinter.Tk):
         self.combo_unit_selection.pack()
         self.button_insert_combo_choice.pack()
         self.button_save_changes.pack()
+        self.debug_label_entry_app_state.pack()
+        self.debug_entry_app_state.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.pack()
@@ -107,14 +110,33 @@ ORDER BY
         tile = self.calendar_surface.tile_at_xy((x, y))
         if tile is not None:
             if self.app_state == "IDLE":
+
                 self.app_state = "SELECTED"
                 self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
+                self.select_tile = tile
+                self.select_details = {
+                    # "quote": self.tv_combo_unit_selection.get(),
+                    # "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+                }
+
             elif self.app_state == "DRAGGING":
+
                 self.app_state = "IDLE"
                 # self.calendar_surface.it
                 # TODO take the dragging tile data and insert it into the tile where the click was set.
                 self.drag_tile = None
                 self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
+
+            else:
+
+                # self.app_state == "SELECTED"
+                self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
+                self.select_tile = tile
+                self.select_details = {
+                    # "quote": self.tv_combo_unit_selection.get(),
+                    # "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+                }
+
 
     def motion_calendar_surface(self, event):
         print(f"motion {event=}")
@@ -203,3 +225,17 @@ ORDER BY
                 # self.drag_coordinates =
                 dt = self.drag_tile
         super(App, self).update()
+
+    def get_app_state(self):
+        return self._app_state
+
+    def set_app_state(self, app_state_in):
+        if app_state_in not in self.valid_app_states:
+            raise ValueError(f"Error param 'app_state_in' is not a valid app state.\nMust be one of {self.valid_app_states}\nGot: {app_state_in}")
+        self._app_state = app_state_in
+        self.tv_debug_app_state.set(self.app_state)
+
+    def del_app_state(self):
+        del self._app_state
+
+    app_state = property(get_app_state, set_app_state, del_app_state)
