@@ -1,0 +1,19 @@
+BEGIN TRAN;
+
+SELECT [Prod Date], * FROM [BWS DRAWING # CROSS REFERENCE]
+
+UPDATE
+	[BWS DRAWING # CROSS REFERENCE]
+SET
+	[Prod Date] = ISNULL([Prod Date 1], [Prod Date 2])
+FROM
+	[BWS DRAWING # CROSS REFERENCE]
+INNER JOIN
+	[BWSdb].[dbo].[dtProductionSchedule]
+ON
+	[BWS DRAWING # CROSS REFERENCE].[WO#:] = [dtProductionSchedule].[WO#]
+	
+SELECT [Prod Date], * FROM [BWS DRAWING # CROSS REFERENCE]
+
+ROLLBACK;
+COMMIT;
