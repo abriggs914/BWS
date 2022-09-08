@@ -48,7 +48,7 @@ class CalendarSurface(tkinter.Canvas):
 
         print(f"{self.start_date=}, {self.end_date=}")
 
-    def quote_rc(self, quote_in):
+    def quote_rc(self, quote_in) -> tuple | None:
         """Retrieve the row and column for the specified quote number."""
         if quote_in in self.units:
             for r, tile_row in enumerate(self.tiles):
@@ -59,7 +59,7 @@ class CalendarSurface(tkinter.Canvas):
         print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
         return None
 
-    def init_tiles(self):
+    def init_tiles(self) -> list:
         ts = self.tile_space  # space between tiles
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
@@ -108,7 +108,7 @@ class CalendarSurface(tkinter.Canvas):
                     text_2.set(f"{self.lines[r - 1]}")
 
                 offset = (1 * yd / 10)
-                text_3, text_4, text_5 = tkinter.StringVar(self, value="3"), tkinter.StringVar(self, value="4"), tkinter.StringVar(self, value="5")
+                text_3, text_4, text_5 = tkinter.StringVar(self, value=f"{row[-1]}"), tkinter.StringVar(self, value="4"), tkinter.StringVar(self, value="5")
                 t1_x1, t1_y1 = x1 + (xd / 2), y1 + offset
                 t2_x1, t2_y1 = x1 + (xd / 2), y1 + (1 * yd / 5) + offset
                 t3_x1, t3_y1 = x1 + (xd / 2), y1 + (2 * yd / 5) + offset
@@ -232,7 +232,7 @@ class CalendarSurface(tkinter.Canvas):
             # tiles.append(row)
         # return tiles
 
-    def scroll_left(self):
+    def scroll_left(self) -> None:
         ts = self.tile_space
         tw = self.tile_width
         th = self.tile_height
@@ -259,7 +259,7 @@ class CalendarSurface(tkinter.Canvas):
                     # self.move(self.texts[r][2 * c], tw + (ts / 2), 0)
                     # self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
 
-    def scroll_right(self):
+    def scroll_right(self) -> None:
         ts = self.tile_space
         tw = self.tile_width
         th = self.tile_height
@@ -289,28 +289,40 @@ class CalendarSurface(tkinter.Canvas):
     def dbl_click_tile(self, event):
         print(f"{event}")
 
-    def tile_at_xy(self, xy: tuple[int, int]):
+    def tile_at_xy(self, xy: tuple[int, int]) -> int | None:
+        # print(f"{self.tiles=}")
+        # x, y = self.winfo_pointerxy()
+        # print(f"{self.canvasx(x)=}, {self.canvasy(y)}")
         x, y = xy
         for tile_row in self.tiles:
-            for col_idx in self.visible_cols:
+            for col_idx in range(self.visible_cols.start, self.visible_cols.stop + 1):
                 tile = tile_row[col_idx]
                 bbox = self.bbox(tile)
+                # print(f"\t\t{tile=}, {x=}, {y=}, {bbox=}")
                 if bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3]:
                     return tile
         return None
 
-    def populate_units(self, df):
+    def populate_units(self, df: pandas.DataFrame) -> None:
         assert isinstance(df, pandas.DataFrame)
         for row in df.iterrows():
             values = row[1].tolist()
-            # print(f"{len(values)=}, {values=}")
+            print(f"{len(values)=}, {values=}")
             unit = Unit(*values)
+            print(f"{unit=}, {list(unit)=}")
             sgquote = unit.SGQuote
             self.units[sgquote] = unit
             avail_date = unit.Available_Date
-            print(f"LINES: {unit.WO_Line_1=}, {unit.WO_Line_2=}, {unit.GN_Line=}, {unit.Beam_Line=}, {unit.Other_Line=}")
-            if self.start_date <= avail_date <= self.end_date:
-                print(f"\t\tVALID DATE!!")
+            finish_date_1 = unit.job_finish_date_v2
+            finish_date_2 = unit.Finish_Date
+            print(f"LINES: {unit.job_start_date_v2=}, {unit.job_finish_date_v2=}, {unit.Available_Date=}, {unit.Delivery_Date=}, {unit.Finish_Date=}")
+            print(f"\t\t{avail_date=}, {finish_date_1=}, {finish_date_2=}")
+            if avail_date and (self.start_date <= avail_date <= self.end_date):
+                print(f"\t\tVALID avail_date!!")
+            elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
+                print(f"\t\tVALID finish_date_1!!")
+            elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
+                print(f"\t\tVALID finish_date_2!!")
             else:
-                print(f"available_date: <{avail_date}> not found.")
+                print(f"{avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
             # print(f"{unit}")

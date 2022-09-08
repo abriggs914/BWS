@@ -7,6 +7,7 @@ from tkinter_utility import entry_factory, button_factory
 from calendar_surface import CalendarSurface
 from pyodbc_connection import connect
 from utility import clamp
+from stg_queries import *
 
 
 class App(tkinter.Tk):
@@ -54,15 +55,20 @@ class App(tkinter.Tk):
 
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, can_w, can_h, datetime.datetime.now())
         self.calendar_surface.populate_units(self.df_production)
-        self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
-        self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
-        for tile_row in self.calendar_surface.tiles:
-            for tile in tile_row:
+        # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
+        # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
+        for r, tile_row in enumerate(self.calendar_surface.tiles):
+            for c, tile in enumerate(tile_row):
                 self.calendar_surface.tag_bind(tile, "<Double-Button-1>", self.dbl_click_tile)
+
+        self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal", command=self.calendar_surface.xview,)
+        self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
 
         # bind event handlers
         self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
         self.calendar_surface.bind("<Motion>", self.motion_calendar_surface)
+        self.frame_calendar_b.bind('<Configure>', self.onFrameConfigure)
+        self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
 
         # pack widgets
         self.frame_top_bar.pack()
@@ -73,41 +79,25 @@ class App(tkinter.Tk):
         self.debug_entry_app_state.pack()
 
         self.frame_calendar_a.pack()
-        self.frame_calendar_b.pack()
-        self.calendar_surface.pack(side=tkinter.TOP)
-        self.button_scroll_left.pack(side=tkinter.LEFT)
-        self.button_scroll_right.pack(side=tkinter.RIGHT)
+        self.frame_calendar_b.grid()
+        self.calendar_surface.grid(row=1, column=1)
+        self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew")
+        # self.button_scroll_left.pack(side=tkinter.LEFT)
+        # self.button_scroll_right.pack(side=tkinter.RIGHT)
 
     def populate_data(self):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
-        # Order and production data pertaining to Stargate units
-        self.df_production = connect("""
-
-SELECT
-	*
-FROM
-	[dtProductionSchedule]
-LEFT JOIN
-	[BWSdb].[dbo].[OrdersV2]
-ON
-	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
-WHERE
-	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2]) IS NOT NULL
-ORDER BY
-	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2])
-;
-
-        """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
-
-        self.df_work_days = connect("""SELECT * FROM [v_CalendarWorkDays] ORDER BY [CalendarDate] DESC""", database="SysproCompanyS", uid="SCSRS", pwd="")
+        self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
+        self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
 
     def dat_list_of_units(self):
-        return [tup[0] for tup in self.df_production["SGQuote"].values.tolist()]
+        return [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]
 
     def click_calendar_surface(self, event):
         print(f"click {event=}")
         x, y = event.x, event.y
         tile = self.calendar_surface.tile_at_xy((x, y))
+        print(f"\t{x=}, {y=}, {tile=}")
         if tile is not None:
             if self.app_state == "IDLE":
 
@@ -176,16 +166,32 @@ ORDER BY
             # ye = clamp(0, ye, my)
             # self.calendar_surface.moveto(dt, xe, ye)
 
+    def scroll_calendar_surface(self, event):
+        print(f"Scrolling: {event}")
+        first = self.calendar_surface.bbox(self.calendar_surface.tiles[0][0])
+        last = self.calendar_surface.bbox(self.calendar_surface.tiles[-1][-1])
+        print(f"{first=}, {last=}")
+        self.calendar_surface.xview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def xview(self, *args):
+        # https://stackoverflow.com/questions/63629407/tkinter-how-to-stop-scrolling-above-canvas-window
+        if self.calendar_surface.xview() == (0.0, 1.0):
+            return
+        self.calendar_surface.xview(*args)
+
+    def onFrameConfigure(self, event):
+        self.calendar_surface.configure(scrollregion=self.calendar_surface.bbox('all'))
+
     def click_save_changes(self):
         print(f"SAVING")
 
-    def click_left_scroll(self):
-        print(f"click_left")
-        self.calendar_surface.scroll_left()
-
-    def click_right_scroll(self):
-        print(f"click_right")
-        self.calendar_surface.scroll_right()
+    # def click_left_scroll(self):
+    #     print(f"click_left")
+    #     self.calendar_surface.scroll_left()
+    #
+    # def click_right_scroll(self):
+    #     print(f"click_right")
+    #     self.calendar_surface.scroll_right()
 
     def click_insert_combo_choice(self):
         print(f"insert combo choice")
