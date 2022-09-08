@@ -87,8 +87,58 @@ class App(tkinter.Tk):
 
     def populate_data(self):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
+<<<<<<< HEAD
         self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
+=======
+        # Order and production data pertaining to Stargate units
+        self.df_production = connect("""
+
+
+
+-- Final Select Query for all STG Prod dates
+
+SELECT
+	[dtProductionSchedule].*
+	, [dtProductionScheduleV2].*
+	, [OrdersV2].*
+FROM
+	[BWSdb].[dbo].[OrdersV2]
+LEFT JOIN 
+	[dtProductionSchedule]
+ON
+	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
+LEFT JOIN 
+	[dtProductionScheduleV2]
+ON
+	[dtProductionScheduleV2].[SGQuote] = [OrdersV2].[SGQuote]
+WHERE
+	[dtProductionScheduleV2].[JobFinishDate] IS NOT NULL
+ORDER BY
+	[dtProductionScheduleV2].[JobFinishDate]
+;
+
+        """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
+#         self.df_production = connect("""
+#
+# SELECT
+# 	*
+# FROM
+# 	[dtProductionSchedule]
+# LEFT JOIN
+# 	[BWSdb].[dbo].[OrdersV2]
+# ON
+# 	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
+# WHERE
+# 	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2]) IS NOT NULL
+# ORDER BY
+# 	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2])
+# ;
+#
+#         """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
+
+        self.df_work_days = connect("""SELECT * FROM [v_CalendarWorkDays] ORDER BY [CalendarDate] DESC""", database="SysproCompanyS", uid="SCSRS", pwd="")
+>>>>>>> 90bd2cb0d3c765e928f0b94219d2447e372a0981
 
     def dat_list_of_units(self):
         return [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]
