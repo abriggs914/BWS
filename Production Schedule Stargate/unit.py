@@ -341,7 +341,7 @@ class Unit:
             yield el
 
     def __repr__(self):
-        return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={self.Available_Date}>"
+        return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={self.Available_Date}, {self.job_start_line_v2=}>"
 
 
 if __name__ == "__main__":

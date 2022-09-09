@@ -12,10 +12,10 @@ from stg_queries import *
 
 class App(tkinter.Tk):
 
-    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500):
+    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now()):
         super().__init__()
 
-
+        self.start_date = start_date_in
         self.df_production = None
         self.df_work_days = None
         self.populate_data()
@@ -53,7 +53,7 @@ class App(tkinter.Tk):
         self.frame_calendar_a = tkinter.Frame(self)
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)
 
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, can_w, can_h, datetime.datetime.now())
+        self.calendar_surface = CalendarSurface(self.frame_calendar_b, can_w, can_h, self.start_date)
         self.calendar_surface.populate_units(self.df_production)
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
@@ -87,58 +87,8 @@ class App(tkinter.Tk):
 
     def populate_data(self):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
-<<<<<<< HEAD
         self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
-=======
-        # Order and production data pertaining to Stargate units
-        self.df_production = connect("""
-
-
-
--- Final Select Query for all STG Prod dates
-
-SELECT
-	[dtProductionSchedule].*
-	, [dtProductionScheduleV2].*
-	, [OrdersV2].*
-FROM
-	[BWSdb].[dbo].[OrdersV2]
-LEFT JOIN 
-	[dtProductionSchedule]
-ON
-	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
-LEFT JOIN 
-	[dtProductionScheduleV2]
-ON
-	[dtProductionScheduleV2].[SGQuote] = [OrdersV2].[SGQuote]
-WHERE
-	[dtProductionScheduleV2].[JobFinishDate] IS NOT NULL
-ORDER BY
-	[dtProductionScheduleV2].[JobFinishDate]
-;
-
-        """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
-#         self.df_production = connect("""
-#
-# SELECT
-# 	*
-# FROM
-# 	[dtProductionSchedule]
-# LEFT JOIN
-# 	[BWSdb].[dbo].[OrdersV2]
-# ON
-# 	[dtProductionSchedule].[SGQuote] = [OrdersV2].[SGQuote]
-# WHERE
-# 	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2]) IS NOT NULL
-# ORDER BY
-# 	ISNULL([dtProductionSchedule].[Prod Date 1], [dtProductionSchedule].[Prod Date 2])
-# ;
-#
-#         """, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
-
-        self.df_work_days = connect("""SELECT * FROM [v_CalendarWorkDays] ORDER BY [CalendarDate] DESC""", database="SysproCompanyS", uid="SCSRS", pwd="")
->>>>>>> 90bd2cb0d3c765e928f0b94219d2447e372a0981
 
     def dat_list_of_units(self):
         return [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]

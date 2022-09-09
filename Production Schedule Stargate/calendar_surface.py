@@ -27,6 +27,7 @@ class CalendarSurface(tkinter.Canvas):
         self.lines = [f"T{i}" for i in range(1, 7)]
         self.start_date = start_date
         self.end_date = self.start_date + relativedelta(months=6)
+        self.dates_list = [self.start_date + datetime.timedelta(days=i) for i in range((self.end_date - self.start_date).days)]
         self.rows = len(self.lines)
         self.cols = (self.end_date - self.start_date).days
         self.max_tiles = self.rows * self.cols
@@ -307,22 +308,36 @@ class CalendarSurface(tkinter.Canvas):
         assert isinstance(df, pandas.DataFrame)
         for row in df.iterrows():
             values = row[1].tolist()
-            print(f"{len(values)=}, {values=}")
+            # print(f"{len(values)=}, {values=}")
             unit = Unit(*values)
-            print(f"{unit=}, {list(unit)=}")
+            # print(f"{unit=}, {list(unit)=}")
             sgquote = unit.SGQuote
             self.units[sgquote] = unit
             avail_date = unit.Available_Date
             finish_date_1 = unit.job_finish_date_v2
             finish_date_2 = unit.Finish_Date
-            print(f"LINES: {unit.job_start_date_v2=}, {unit.job_finish_date_v2=}, {unit.Available_Date=}, {unit.Delivery_Date=}, {unit.Finish_Date=}")
-            print(f"\t\t{avail_date=}, {finish_date_1=}, {finish_date_2=}")
+            # print(f"LINES: {unit.job_start_date_v2=}, {unit.job_finish_date_v2=}, {unit.Available_Date=}, {unit.Delivery_Date=}, {unit.Finish_Date=}")
+            print(f"\t\t{unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
+            date_idx = None
             if avail_date and (self.start_date <= avail_date <= self.end_date):
                 print(f"\t\tVALID avail_date!!")
+                date_idx = self.dates_list.index(avail_date)
             elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
                 print(f"\t\tVALID finish_date_1!!")
+                date_idx = self.dates_list.index(finish_date_1)
             elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
                 print(f"\t\tVALID finish_date_2!!")
+                date_idx = self.dates_list.index(finish_date_2)
             else:
                 print(f"{avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
+
+            line_idx = None
+            if unit.WO_Line_1:
+                line_idx = self.lines.index(unit.WO_Line_1)
+            elif unit.WO_Line_2:
+                line_idx = self.lines.index(unit.WO_Line_2)
             # print(f"{unit}")
+
+            print(f"{line_idx=}, {date_idx=}")
+            if date_idx and line_idx:
+                print(f"placing tile!")
