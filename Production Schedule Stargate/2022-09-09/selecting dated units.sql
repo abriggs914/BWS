@@ -14,9 +14,9 @@ SELECT
 	, [dtProductionSchedule].[WO Line 2]
 	, [dtProductionScheduleV2].[JobStartLine]
 
-	, [dtProductionSchedule].*
-	, [dtProductionScheduleV2].*
-	, [OrdersV2].*
+	--, [dtProductionSchedule].*
+	--, [dtProductionScheduleV2].*
+	--, [OrdersV2].*
 FROM
 	[BWSdb].[dbo].[OrdersV2]
 LEFT JOIN 

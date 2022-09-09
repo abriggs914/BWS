@@ -43,9 +43,9 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_width = None
         self.tile_height = None
         # self.texts = []
-        self.tile_properties = []
-        self.tiles = self.init_tiles()
-        self.units = {}
+        self.tile_properties = []  # list of dictionaries containing the rest of the required tile data (text id and tvs)
+        self.tiles = self.init_tiles()  # list of canvas tags for the cells len = n_rows * n_cols
+        self.units = {None: None, "": None}  # dictionary of Stargate quote numbers.
 
         print(f"{self.start_date=}, {self.end_date=}")
 
@@ -99,6 +99,7 @@ class CalendarSurface(tkinter.Canvas):
                     activeoutline=active_outline_colour,
                     activefill=active_fill_colour
                 ))
+                # text_1 = tkinter.StringVar(self, name=self.cal, value=f"{r-1=}")
                 text_1 = tkinter.StringVar(self, value=f"{r-1=}")
                 text_2 = tkinter.StringVar(self, value=f"{c-1=}")
                 if r == 0 and c > 0:
@@ -109,12 +110,20 @@ class CalendarSurface(tkinter.Canvas):
                     text_2.set(f"{self.lines[r - 1]}")
 
                 offset = (1 * yd / 10)
-                text_3, text_4, text_5 = tkinter.StringVar(self, value=f"{row[-1]}"), tkinter.StringVar(self, value="4"), tkinter.StringVar(self, value="5")
+                text_3 = tkinter.StringVar(self, f"{row[-1]}")
+                text_4 = tkinter.StringVar(self, value=f"{r=}")
+                text_5 = tkinter.StringVar(self, value=f"{c=}")
                 t1_x1, t1_y1 = x1 + (xd / 2), y1 + offset
                 t2_x1, t2_y1 = x1 + (xd / 2), y1 + (1 * yd / 5) + offset
                 t3_x1, t3_y1 = x1 + (xd / 2), y1 + (2 * yd / 5) + offset
                 t4_x1, t4_y1 = x1 + (xd / 2), y1 + (3 * yd / 5) + offset
                 t5_x1, t5_y1 = x1 + (xd / 2), y1 + (4 * yd / 5) + offset
+
+                text_1.trace_variable("w", self.update_canvas_text)
+                text_2.trace_variable("w", self.update_canvas_text)
+                text_3.trace_variable("w", self.update_canvas_text)
+                text_4.trace_variable("w", self.update_canvas_text)
+                text_5.trace_variable("w", self.update_canvas_text)
 
                 for i in range(1, 6):
                     wip_x = eval(f"t{i}_x1")
@@ -187,6 +196,10 @@ class CalendarSurface(tkinter.Canvas):
             self.tile_properties.append(tile_detail_row)
 
         return tiles
+
+    def update_canvas_text(self, var_name, index, mode):
+        print(f"{var_name=}, {index=}, {mode=}")
+        # self.itemconfigure()
 
     def shift_tiles(self):
         ts = 3  # space between tiles
@@ -290,34 +303,76 @@ class CalendarSurface(tkinter.Canvas):
     def dbl_click_tile(self, event):
         print(f"{event}")
 
+    def rc_at_xy(self, xy: tuple[int, int]) -> tuple[int, int] | None:
+        """Retrieve the row and column indices for the tile located at grid coordinates x, y."""
+        x, y = xy
+        cx, cy = self.canvasx(x), self.canvasy(y)
+        for r, tile_row in enumerate(self.tiles):
+            for c, tile in enumerate(tile_row):
+                bbox = self.bbox(tile)
+                if bbox[0] <= cx <= bbox[2] and bbox[1] <= cy <= bbox[3]:
+                    return r, c
+        return None
+
     def tile_at_xy(self, xy: tuple[int, int]) -> int | None:
+        """Retrieve the tile tag at grid coordinates x, y."""
+        rc = self.rc_at_xy(xy)
+        if rc:
+            return self.tiles[rc[0]][rc[1]]
+        return None
+
+    def tile_to_rc(self, tag_in: int, extend=False) -> tuple[int, int] | None:
+        """Reverse look-up on self.tiles using canvas tag ids. Use extend to also search the text tags."""
+        for r, tile_row in enumerate(self.tiles):
+            for c, tile in enumerate(tile_row):
+                if tile == tag_in:
+                    return r, c
+                if extend:
+                    details = self.tile_properties[r][c]
+                    tags = [
+                        tag_rect := details["tag_rect"],
+                        tag_t1 := details["t1_tag"],
+                        tag_t2 := details["t2_tag"],
+                        tag_t3 := details["t3_tag"],
+                        tag_t4 := details["t4_tag"],
+                        tag_t5 := details["t5_tag"]
+                    ]
+                    if any(list(map(lambda t: t == tag_in, tags))):
+                        return r, c
+        return None
+
+    def rc_bbox(self, rc):
+        """Retrieve the bbox for the tile located at row r and column c."""
+        return self.bbox(self.tiles[rc[0]][rc[1]])
         # print(f"{self.tiles=}")
         # x, y = self.winfo_pointerxy()
         # print(f"{self.canvasx(x)=}, {self.canvasy(y)}")
-        x, y = xy
-        for tile_row in self.tiles:
-            for col_idx in range(self.visible_cols.start, self.visible_cols.stop + 1):
-                tile = tile_row[col_idx]
-                bbox = self.bbox(tile)
-                # print(f"\t\t{tile=}, {x=}, {y=}, {bbox=}")
-                if bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3]:
-                    return tile
-        return None
+        # x, y = xy
+        # print(f"{self.bbox('all')=}, {x=}, {y=}, {self.canvasx(x)=}, {self.canvasy(y)=}")
+        # for tile_row in self.tiles:
+        #     # for col_idx in range(self.visible_cols.start, self.visible_cols.stop + 1):
+        #     #     tile = tile_row[col_idx]
+        #     for tile in tile_row:
+        #         bbox = self.bbox(tile)
+        #         print(f"\t\t{tile=}, {x=}, {y=}, {bbox=}, {self.canvasx(x)=}, {self.canvasy(y)=}")
+        #         if bbox[0] <= self.canvasx(x) <= bbox[2] and bbox[1] <= self.canvasy(y) <= bbox[3]:
+        #             return tile
+        # return None
 
     def populate_units(self, df: pandas.DataFrame) -> None:
         assert isinstance(df, pandas.DataFrame)
         for row in df.iterrows():
             values = row[1].tolist()
             # print(f"{len(values)=}, {values=}")
-            unit = Unit(*values)
+            new_unit = Unit(*values)
             # print(f"{unit=}, {list(unit)=}")
-            sgquote = unit.SGQuote
-            self.units[sgquote] = unit
-            avail_date = unit.Available_Date
-            finish_date_1 = unit.job_finish_date_v2
-            finish_date_2 = unit.Finish_Date
+            sgquote = new_unit.SGQuote
+            self.units[sgquote] = new_unit
+            avail_date = new_unit.Available_Date
+            finish_date_1 = new_unit.job_finish_date_v2
+            finish_date_2 = new_unit.Finish_Date
             # print(f"LINES: {unit.job_start_date_v2=}, {unit.job_finish_date_v2=}, {unit.Available_Date=}, {unit.Delivery_Date=}, {unit.Finish_Date=}")
-            print(f"\t\t{unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
+            print(f"\t\t{new_unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
             date_idx = None
             if avail_date and (self.start_date <= avail_date <= self.end_date):
                 print(f"\t\tVALID avail_date!!")
@@ -332,12 +387,43 @@ class CalendarSurface(tkinter.Canvas):
                 print(f"{avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
 
             line_idx = None
-            if unit.WO_Line_1:
-                line_idx = self.lines.index(unit.WO_Line_1)
-            elif unit.WO_Line_2:
-                line_idx = self.lines.index(unit.WO_Line_2)
+            if new_unit.WO_Line_1:
+                line_idx = self.lines.index(new_unit.WO_Line_1)
+            elif new_unit.WO_Line_2:
+                line_idx = self.lines.index(new_unit.WO_Line_2)
             # print(f"{unit}")
 
             print(f"{line_idx=}, {date_idx=}")
             if date_idx and line_idx:
-                print(f"placing tile!")
+                print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}")
+                self.set_rc_with_unit((line_idx, date_idx), new_unit)
+
+    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit) -> None:
+        self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
+
+    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit) -> None:
+        assert isinstance(unit_in, Unit)
+        rc = self.tile_to_rc(tag_in)
+        if rc:
+            r, c = rc
+            # SGQuote# | Model No | Dealer Name | WO | Galv
+            text_order = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "GALV?"]
+            details = [
+                self.tile_properties[r][c]["text_1"],
+                self.tile_properties[r][c]["text_2"],
+                self.tile_properties[r][c]["text_3"],
+                self.tile_properties[r][c]["text_4"],
+                self.tile_properties[r][c]["text_5"]
+            ]
+            keys = unit_in.__dict__.keys()
+            for i, text_tv in enumerate(zip(text_order, details)):
+                text, tv = text_tv
+                value = text
+                if text in keys:
+                    value = getattr(unit_in, text, "N/A")
+                print(f"\t\t{i=}, {text=} = {value=}, {tv.get()=}")
+                tv.set(value)
+                print(f"\t\t\t{tv.get()=}")
+        else:
+            raise ValueError(f"Error can't assign this tile with this unit. {tag_in=}, {unit_in=}")
+
