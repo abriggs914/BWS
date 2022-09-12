@@ -1,12 +1,12 @@
 import datetime
 import tkinter
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from colour_utility import rgb_to_hex, random_colour
 from tkinter_utility import entry_factory, button_factory
 from calendar_surface import CalendarSurface
 from pyodbc_connection import connect
-from utility import clamp
+from utility import clamp, clamp_rect
 from stg_queries import *
 from unit import Unit
 
@@ -42,12 +42,14 @@ class App(tkinter.Tk):
         self.window_height = self.winfo_height()
 
         self.frame_top_bar = tkinter.Frame(self)
+        self.removed_quotes = []  # us this to track quotes removed from the combo list.
         self.tv_combo_unit_selection = tkinter.StringVar(self)
-        self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(), textvariable=self.tv_combo_unit_selection)
+        self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(), textvariable=self.tv_combo_unit_selection, state="readonly")
         self.tv_btn_insert_combo_choice, self.button_insert_combo_choice = button_factory(self.frame_top_bar, tv_btn="+")
         self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
-        self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_save_changes})
+        self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_export_sql})
         self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
+        self.tv_btn_export_sql, self.button_export_sql = button_factory(self.frame_top_bar, tv_btn="<", kwargs_btn={"command": self.click_undo})
 
         # canvas and calendar objects
         can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
@@ -67,6 +69,8 @@ class App(tkinter.Tk):
 
         # bind event handlers
         self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
+        self.calendar_surface.bind("<Button-3>", self.click_calendar_surface_left)
+        self.calendar_surface.bind("<ButtonRelease-1>", self.release_calendar_surface)
         self.calendar_surface.bind("<Motion>", self.motion_calendar_surface)
         self.frame_calendar_b.bind('<Configure>', self.onFrameConfigure)
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
@@ -79,6 +83,7 @@ class App(tkinter.Tk):
         self.button_save_changes.pack()
         self.debug_label_entry_app_state.pack()
         self.debug_entry_app_state.pack()
+        self.button_export_sql.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.grid()
@@ -93,7 +98,60 @@ class App(tkinter.Tk):
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
 
     def dat_list_of_units(self):
-        return [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]
+        lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]
+        lst.sort()
+        return lst
+
+    def release_calendar_surface(self, event):
+        print(f"release {event=}")
+        x, y = event.x, event.y
+        dt = self.drag_tile
+        ddt = self.dragging_details
+        ht = self.calendar_surface.tile_at_xy((x, y))
+        dt_rc = self.calendar_surface.tile_to_rc(dt)
+        ht_rc = self.calendar_surface.tile_to_rc(ht)
+        print(f"{dt=}, {ht=}, {dt_rc=}, {ht_rc=}")
+        if ht_rc[0] != 0 and ht_rc[1] != 0:
+            print(f"HERE A")
+            if self.app_state == "DRAGGING":
+                print(f"HERE B")
+                if dt != ht:
+                    print(f"HERE C")
+                    # releasing a dragged tile over a new position
+                    print(f"DDT: <{ddt=}>")
+                    unit_in = ddt["unit_in"]
+                    ft = ddt["from_tag"]
+                    if unit_in:
+                        print(f"HERE D")
+                        if self.move_tile(ht, ft, unit_in):
+                            self.app_state = "IDLE"
+                            self.drag_tile = None
+                            self.calendar_surface.itemconfigure(dt, state="hidden")
+                            self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
+                else:
+                    # releasing a dragged tile on the same position.
+                    self.app_state = "SELECTED"
+                    self.select_details = {
+                        "quote": ddt["quote"],
+                        "unit_in": ddt["unit_in"],
+                        "from_tag": ht
+                    }
+                    self.select_tile = dt
+                    self.drag_tile = None
+                    self.calendar_surface.itemconfigure(dt, state="hidden")
+                    self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
+            else:
+                print(f"INVALID STATE")
+
+    def click_calendar_surface_left(self, event):
+        print(f"{event=}")
+        x, y = event.x, event.y
+        rc = self.calendar_surface.rc_at_xy((x, y))
+        if rc:
+            r, c = rc
+            if r > 0 and c > 0:
+                unit_in = self.calendar_surface.tile_properties[r][c]["unit_in"]
+                self.delete_tile(r, c, unit_in)
 
     def click_calendar_surface(self, event):
         print(f"click {event=}")
@@ -103,23 +161,25 @@ class App(tkinter.Tk):
 
         # drag tile, hover tile canvas tags and row columns
         dt = self.drag_tile
+        ddt = self.dragging_details
         ht = self.calendar_surface.tile_at_xy((x, y))
         dt_rc = self.calendar_surface.tile_to_rc(dt)
         ht_rc = self.calendar_surface.tile_to_rc(ht)
         print(f"{dt=}, {ht=}, {dt_rc=}, {ht_rc=}")
         if tile is not None:
             if self.app_state == "IDLE":
+                if ht_rc[0] != 0 and ht_rc[1] != 0:
 
-                self.app_state = "SELECTED"
-                self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
-                self.select_tile = tile
-                self.select_details = {
-                    "quote": self.tv_combo_unit_selection.get(),
-                    "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()],
-                    "from_tag": ht
-                }
-                self.calendar_surface.itemconfigure(self.drag_tile, state="normal")
-                self.calendar_surface.itemconfigure(self.drag_text, state="normal")
+                    self.app_state = "SELECTED"
+                    self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
+                    self.select_tile = tile
+                    self.select_details = {
+                        "quote": self.tv_combo_unit_selection.get(),
+                        "unit_in": self.calendar_surface.units[self.tv_combo_unit_selection.get()],
+                        "from_tag": ht
+                    }
+                    self.calendar_surface.itemconfigure(self.drag_tile, state="normal")
+                    self.calendar_surface.itemconfigure(self.drag_text, state="normal")
 
             elif self.app_state == "DRAGGING":
 
@@ -127,38 +187,58 @@ class App(tkinter.Tk):
                 # self.calendar_surface.it
                 # TODO take the dragging tile data and insert it into the tile where the click was set.
 
-                print(f"dt is overridden by {self.dragging_details['from_tag']}")
+                from_combo = self.dragging_details['from_tag'] is None
+                drag_unit = ddt["unit_in"]
+                ft = ddt["from_tag"]
+                print(f"dt is overridden by {ft}")
+                if from_combo:
+                    if ht_rc[0] != 0 and ht_rc[1] != 0:
+                        values = list(self.combo_unit_selection["values"])
+                        values.remove(self.tv_combo_unit_selection.get())
+                        self.removed_quotes.append(self.tv_combo_unit_selection.get())
+                        self.combo_unit_selection.configure(values=values)
+                        self.tv_combo_unit_selection.set("")
+                        success = self.overwrite_tile(ht, drag_unit)
+                        if not success:
+                            print(f"NOT SUCCESS")
+                        self.calendar_surface.itemconfigure(tile, fill=random_colour(rgb=False))
+                else:
+                    if ht_rc[0] != 0 and ht_rc[1] != 0:
+                        if drag_unit:
+                            self.move_tile(ht, ft, drag_unit)
+
                 self.calendar_surface.itemconfigure(self.drag_tile, state="hidden")
                 self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
                 self.drag_tile = None
-                self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
             else:
 
                 # self.app_state == "SELECTED"
                 self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
                 self.select_tile = tile
+                unit_in = self.calendar_surface.quote_at_xy((x, y))
                 self.select_details = {
-                    # "quote": self.tv_combo_unit_selection.get(),
-                    # "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+                    "quote": unit_in.SGQuote,
+                    "unit_in": unit_in,
+                    "from_tag": ht
                 }
 
     def motion_calendar_surface(self, event):
         # print(f"motion {event=}")
         if self.app_state == "DRAGGING":
             dt = self.drag_tile
-            bbox = self.calendar_surface.bbox(dt)
-            cx, cy, cw, ch = self.calendar_surface.winfo_rootx(), self.calendar_surface.winfo_rooty(), self.calendar_surface.winfo_width(), self.calendar_surface.winfo_height()
-            # xe, ye = event
-
-            # xe = event.x - (self.calendar_surface.tile_width / 2)
-            # ye = event.y - (self.calendar_surface.tile_height / 2)
-            # # mx = self.winfo_width() - (2 * self.calendar_surface.tile_width) - cx - (self.calendar_surface.tile_width / 1.5)
-            # # my = self.winfo_height() - (2 * self.calendar_surface.tile_height) - cy - (self.calendar_surface.tile_height / 1.5)
-            # mx = cx + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width / 1)
-            # my = cy + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height / 1)
-            # print(f"{bbox=}, {cx=}, {cy=}, {cw=}, {ch=}, {mx=}, {my=}, {xe=}, {ye=}")
-            # xe = clamp(0, xe, mx)
-            # ye = clamp(0, ye, my)
+            # bbox = self.calendar_surface.bbox(dt)
+            # cx, cy, cw, ch = self.calendar_surface.winfo_rootx(), self.calendar_surface.winfo_rooty(), self.calendar_surface.winfo_width(), self.calendar_surface.winfo_height()
+            # # xe, ye = event
+            #
+            # # xe = event.x - (self.calendar_surface.tile_width / 2)
+            # # ye = event.y - (self.calendar_surface.tile_height / 2)
+            # # # mx = self.winfo_width() - (2 * self.calendar_surface.tile_width) - cx - (self.calendar_surface.tile_width / 1.5)
+            # # # my = self.winfo_height() - (2 * self.calendar_surface.tile_height) - cy - (self.calendar_surface.tile_height / 1.5)
+            # # mx = cx + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width / 1)
+            # # my = cy + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height / 1)
+            # # print(f"{bbox=}, {cx=}, {cy=}, {cw=}, {ch=}, {mx=}, {my=}, {xe=}, {ye=}")
+            # # xe = clamp(0, xe, mx)
+            # # ye = clamp(0, ye, my)
 
             x = self.calendar_surface.canvasx(event.x) - (self.calendar_surface.tile_width / 2)
             y = self.calendar_surface.canvasy(event.y) - (self.calendar_surface.tile_height / 2)
@@ -168,12 +248,19 @@ class App(tkinter.Tk):
             #     self.calendar_surface.winfo_x() + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width / 2),
             #     self.calendar_surface.winfo_y() + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height / 2)
             # ]
+
             bbox = self.calendar_surface.bbox("all")
             xe = clamp(bbox[0], x, bbox[2])
             ye = clamp(bbox[1], y, bbox[3])
             self.calendar_surface.moveto(dt, xe, ye)
             self.calendar_surface.moveto(self.drag_text, xe, ye)
-
+            #
+            # x, y = event.x, event.y
+            # bbox = self.calendar_surface.bbox("all")
+            # new_rect = clamp_rect([x, y, self.calendar_surface.tile_width, self.calendar_surface.tile_height], bbox, maintain_inner_dims=True)
+            # self.calendar_surface.moveto(self.drag_tile, new_rect[0], new_rect[1])
+            #
+            #
             # xe, ye = event.x - (self.calendar_surface.tile_width / 2), event.y - (self.calendar_surface.tile_height / 2)
             # mx, my = self.winfo_width() - (2 * self.calendar_surface.tile_width) - cx - (self.calendar_surface.tile_width / 1.5), self.winfo_height() - (2 * self.calendar_surface.tile_height) - cy - (self.calendar_surface.tile_height / 1.5)
             # print(f"{bbox=}, {cx=}, {cy=}, {cw=}, {ch=}, {mx=}, {my=}, {xe=}, {ye=}")
@@ -182,12 +269,17 @@ class App(tkinter.Tk):
             # self.calendar_surface.moveto(dt, xe, ye)
         elif self.app_state == "SELECTED":
             self.app_state = "DRAGGING"
-            self.dragging_details = {
-                "quote": "NEED TO LOOKUP",
-                "unit": None,
-                "from_tag": self.select_details["from_tag"]
-            }
-            self.update()
+            r_c = self.calendar_surface.rc_at_xy((self.calendar_surface.canvasx(event.x), self.calendar_surface.canvasy(event.y)))
+            r_c = self.calendar_surface.rc_at_xy((event.x, event.y))
+            if r_c:
+                r, c = r_c
+                unit_in = self.calendar_surface.tile_properties[r][c]["unit_in"]
+                self.dragging_details = {
+                    "quote": unit_in.SGQuote if unit_in else None,
+                    "unit_in": unit_in,
+                    "from_tag": self.select_details["from_tag"]
+                }
+                self.update()
 
     def scroll_calendar_surface(self, event):
         print(f"Scrolling: {event}")
@@ -218,13 +310,24 @@ class App(tkinter.Tk):
 
     def click_insert_combo_choice(self):
         print(f"insert combo choice")
-        self.app_state = "DRAGGING"
-        self.dragging_details = {
-            "quote": self.tv_combo_unit_selection.get(),
-            "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()],
-            "from_tag": None
-        }
-        self.update()
+        if self.tv_combo_unit_selection.get():
+            self.app_state = "DRAGGING"
+            self.dragging_details = {
+                "quote": self.tv_combo_unit_selection.get(),
+                "unit_in": self.calendar_surface.units[self.tv_combo_unit_selection.get()],
+                "from_tag": None
+            }
+            self.update()
+        else:
+            r_message = "You need to select a unit from the dropdown before you can place it."
+            tkinter.messagebox.showerror(title="Selection Needed", message=r_message)
+            self.combo_unit_selection.focus()
+
+    def click_export_sql(self):
+        print(f"SQL\n\n<{self.calendar_surface.export_tile_sql()}>")
+
+    def click_undo(self):
+        self.calendar_surface.undo()
 
     def dbl_click_tile(self, event):
         # self.calendar_surface.dbl_click_tile(event)
@@ -256,20 +359,50 @@ class App(tkinter.Tk):
                 dt = self.drag_tile
         super(App, self).update()
 
-    def overwrite_tile(self, tag_in: int | str, unit: Unit) -> bool:
+    def move_tile(self, tag_to: int | str, tag_from: int | str, unit_in: Unit) -> bool:
+        to_rc = self.calendar_surface.tile_to_rc(tag_to)
+        from_rc = self.calendar_surface.tile_to_rc(tag_from)
+        s1, s2 = False, False
+        if to_rc:
+            r, c = from_rc
+            s1 = self.overwrite_tile(tag_to, unit_in)
+            s2 = self.delete_tile(r, c, unit_in)
+        return s1 and s2
+
+    def delete_tile(self, r, c, unit_in) -> bool:
+        details = self.calendar_surface.tile_properties[r][c]
+        string_vars = [
+            tv_text_1 := details["text_1"],
+            tv_text_2 := details["text_2"],
+            tv_text_3 := details["text_3"],
+            tv_text_4 := details["text_4"],
+            tv_text_5 := details["text_5"]
+        ]
+        for sv in string_vars:
+            sv.set("")
+        self.calendar_surface.tile_properties[r][c]["unit_in"] = None
+        if unit_in.SGQuote in self.removed_quotes:
+            new_list = list(self.combo_unit_selection["values"])
+            new_list.append(unit_in.SGQuote)
+            new_list.sort()
+            self.combo_unit_selection.configure(values=new_list)
+        return True
+
+    def overwrite_tile(self, tag_in: int | str, unit_in: Unit) -> bool:
         rc = self.calendar_surface.tile_to_rc(tag_in)
         if rc is not None:
+            print(f"HERE E")
             # this tag was found, and it is a tile tag
             # self.calendar_surface.itemconfigure(tag_in, **details)
             details = self.calendar_surface.tile_properties[rc[0]][rc[1]]
-            tags = [
-                tag_rect := details["tag_rect"],
-                tag_t1 := details["t1_tag"],
-                tag_t2 := details["t2_tag"],
-                tag_t3 := details["t3_tag"],
-                tag_t4 := details["t4_tag"],
-                tag_t5 := details["t5_tag"]
-            ]
+            # tags = [
+            #     tag_rect := details["tag_rect"],
+            #     tag_t1 := details["t1_tag"],
+            #     tag_t2 := details["t2_tag"],
+            #     tag_t3 := details["t3_tag"],
+            #     tag_t4 := details["t4_tag"],
+            #     tag_t5 := details["t5_tag"]
+            # ]
             string_vars = [
                 tv_text_1 := details["text_1"],
                 tv_text_2 := details["text_2"],
@@ -278,7 +411,22 @@ class App(tkinter.Tk):
                 tv_text_5 := details["text_5"]
             ]
             # update the tile text variables on the main screen
-            # set the new unit to be recognized in self.calendar_surface
+            # set the new unit_in to be recognized in self.calendar_surface
+            text_order = self.calendar_surface.text_order
+            keys = unit_in.__dict__.keys()
+            for i, text_tv in enumerate(zip(text_order, string_vars)):
+                text, tv = text_tv
+                text = "_" + text
+                value = text
+                print(f"HERE\t{text=}, {keys=}")
+                if text in keys:
+                    value = getattr(unit_in, text, "N/A")
+                print(f"\t\t{i=}, {text=} = {value=}, {tv.get()=}")
+                tv.set(value)
+                print(f"\t\t\t{tv.get()=}")
+            self.calendar_surface.set_rc_with_unit(rc, unit_in)
+            # tv_text_1.set()
+
 
             return True
         return False

@@ -107,7 +107,7 @@ class App(tkinter.Tk):
                 self.select_tile = tile
                 self.select_details = {
                     # "quote": self.tv_combo_unit_selection.get(),
-                    # "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+                    # "unit_in": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
                 }
 
             elif self.app_state == "DRAGGING":
@@ -125,7 +125,7 @@ class App(tkinter.Tk):
                 self.select_tile = tile
                 self.select_details = {
                     # "quote": self.tv_combo_unit_selection.get(),
-                    # "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+                    # "unit_in": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
                 }
 
 
@@ -210,7 +210,7 @@ class App(tkinter.Tk):
         self.app_state = "DRAGGING"
         self.dragging_details = {
             "quote": self.tv_combo_unit_selection.get(),
-            "unit": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
+            "unit_in": self.calendar_surface.units[self.tv_combo_unit_selection.get()]
         }
         self.update()
 

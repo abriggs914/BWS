@@ -64,7 +64,7 @@ class CalendarSurface(tkinter.Canvas):
         if quote_in in self.units:
             for r, tile_row in enumerate(self.tiles):
                 for c, tile in enumerate(tile_row):
-                    unit = self.tile_properties[r][c]["unit"]
+                    unit = self.tile_properties[r][c]["unit_in"]
                     if unit.SGQuote == quote_in:
                         return r, c
         print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
@@ -188,7 +188,7 @@ class CalendarSurface(tkinter.Canvas):
                     "t5_y1": t5_y1,
                     "text_5": text_5,
 
-                    "unit":None
+                    "unit_in":None
                 }
 
                 tile_detail_row.append(tile_details)
@@ -317,7 +317,7 @@ class CalendarSurface(tkinter.Canvas):
                     "t5_y1": t5_y1,
                     "text_5": text_5,
 
-                    "unit":None
+                    "unit_in":None
                 }
 
                 tile_detail_row.append(tile_details)
@@ -449,13 +449,13 @@ class CalendarSurface(tkinter.Canvas):
             values = row[1].tolist()
             # print(f"{len(values)=}, {values=}")
             unit = Unit(*values)
-            # print(f"{unit=}, {list(unit)=}")
+            # print(f"{unit_in=}, {list(unit_in)=}")
             sgquote = unit.SGQuote
             self.units[sgquote] = unit
             avail_date = unit.Available_Date
             finish_date_1 = unit.job_finish_date_v2
             finish_date_2 = unit.Finish_Date
-            # print(f"LINES: {unit.job_start_date_v2=}, {unit.job_finish_date_v2=}, {unit.Available_Date=}, {unit.Delivery_Date=}, {unit.Finish_Date=}")
+            # print(f"LINES: {unit_in.job_start_date_v2=}, {unit_in.job_finish_date_v2=}, {unit_in.Available_Date=}, {unit_in.Delivery_Date=}, {unit_in.Finish_Date=}")
             print(f"\t\t{unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
             date_idx = None
             if avail_date and (self.start_date <= avail_date <= self.end_date):
@@ -475,7 +475,7 @@ class CalendarSurface(tkinter.Canvas):
                 line_idx = self.lines.index(unit.WO_Line_1)
             elif unit.WO_Line_2:
                 line_idx = self.lines.index(unit.WO_Line_2)
-            # print(f"{unit}")
+            # print(f"{unit_in}")
 
             print(f"{line_idx=}, {date_idx=}")
             if date_idx and line_idx:
