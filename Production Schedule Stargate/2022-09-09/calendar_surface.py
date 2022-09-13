@@ -19,18 +19,31 @@ class CalendarSurface(tkinter.Canvas):
             width: int,
             height: int,
             start_date: datetime.datetime,
+
+            # colours for date axis legend (Y)
             row_legend_background_colour: str = rgb_to_hex(GRAY_8),
             row_legend_outline_colour: str = rgb_to_hex(BLACK),
             row_legend_active_background_colour: str = rgb_to_hex(GRAY_42),
             row_legend_active_outline_colour: str = rgb_to_hex(BLACK),
+
+            # colours for trailer line axis legend (X)
             col_legend_background_colour: str = rgb_to_hex(GRAY_8),
             col_legend_outline_colour: str = rgb_to_hex(BLACK),
             col_legend_active_background_colour: str = rgb_to_hex(GRAY_42),
             col_legend_active_outline_colour: str = rgb_to_hex(BLACK),
+
+            # regular tile coulour
             tile_background_colour: str = rgb_to_hex(GRAY_17),
             tile_outline_colour: str = rgb_to_hex(BLACK),
             active_fill_colour: str = rgb_to_hex(GRAY_66),
             active_outline_colour: str = rgb_to_hex(YELLOW_3),
+
+            # weekend tile coulour
+            tile_wkd_background_colour: str = rgb_to_hex(GRAY_8),
+            tile_wkd_outline_colour: str = rgb_to_hex(GRAY_8),
+            active_wkd_fill_colour: str = rgb_to_hex(GRAY_8),
+            active_wkd_outline_colour: str = rgb_to_hex(GRAY_8),
+
             n_visible_cols: int = 14,
             sql_output_file_name: str = "./{ts}_sql_output.sql",
             text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "GALV?"]
@@ -53,6 +66,11 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_outline_colour = tile_outline_colour
         self.active_fill_colour = active_fill_colour
         self.active_outline_colour = active_outline_colour
+
+        self.tile_wkd_background_colour = tile_wkd_background_colour
+        self.tile_wkd_outline_colour = tile_wkd_outline_colour
+        self.active_wkd_fill_colour = active_wkd_fill_colour
+        self.active_wkd_outline_colour = active_wkd_outline_colour
 
         self.row_legend_background_colour = row_legend_background_colour
         self.row_legend_outline_colour = row_legend_outline_colour
@@ -134,6 +152,14 @@ class CalendarSurface(tkinter.Canvas):
                     outline_colour = rgb_to_hex(WHITE)
                     active_fill_colour = rgb_to_hex(WHITE)
                     active_outline_colour = rgb_to_hex(BLACK)
+
+                if c > 0:
+                    dat = self.dates_list[c - 1]
+                    if dat.weekday() > 4:
+                        tile_colour = self.tile_wkd_background_colour
+                        outline_colour = self.tile_wkd_outline_colour
+                        active_fill_colour = self.active_wkd_fill_colour
+                        active_outline_colour = self.active_wkd_outline_colour
 
                 font_colour = rgb_to_hex(font_foreground(tile_colour))
                 row.append(self.create_rectangle(
@@ -403,8 +429,9 @@ class CalendarSurface(tkinter.Canvas):
         for r, tile_row in enumerate(self.tiles):
             for c, tile in enumerate(tile_row):
                 bbox = self.bbox(tile)
-                if bbox[0] <= cx <= bbox[2] and bbox[1] <= cy <= bbox[3]:
-                    return r, c
+                if bbox:
+                    if bbox[0] <= cx <= bbox[2] and bbox[1] <= cy <= bbox[3]:
+                        return r, c
         return None
 
     def tile_at_xy(self, xy: tuple[int, int]) -> int | None:
@@ -483,9 +510,9 @@ class CalendarSurface(tkinter.Canvas):
             elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
                 print(f"\t\tVALID finish_date_1!!")
                 date_idx = self.dates_list.index(finish_date_1) + 1
-            elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
-                print(f"\t\tVALID finish_date_2!!")
-                date_idx = self.dates_list.index(finish_date_2) + 1
+            # elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
+            #     print(f"\t\tVALID finish_date_2!!")
+            #     date_idx = self.dates_list.index(finish_date_2) + 1
             else:
                 print(f"{avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
 
@@ -538,7 +565,7 @@ class CalendarSurface(tkinter.Canvas):
             raise ValueError(f"Error can't assign this tile with this unit_in. {tag_in=}, {unit_in=}")
 
     def export_tile_sql(self):
-        fn = self.sql_output_file_name.format(ts=datetime.datetime.now().strftime("%Y-%m-%d"))
+        fn = self.sql_output_file_name.format(ts=datetime.datetime.now().strftime("%Y-%m-%d %H%M"))
         template = "UPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}'"
         template_2 = "UPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = '{j}', [JobStartLine] = '{l}' WHERE [SGQuote] = '{q}'"
         result = ""

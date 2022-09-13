@@ -9,6 +9,7 @@ from pyodbc_connection import connect
 from utility import clamp, clamp_rect
 from stg_queries import *
 from unit import Unit
+from colour_demo import ColourWidget
 
 
 class App(tkinter.Tk):
@@ -60,6 +61,11 @@ class App(tkinter.Tk):
         self.calendar_surface.populate_units(self.df_production)
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
+
+        self.frame_colour_coder = ColourWidget(self.frame_top_bar)
+
+        self.frame_colour_coder.status_code.trace_variable("w", self.colour_coder_update)
+
         for r, tile_row in enumerate(self.calendar_surface.tiles):
             for c, tile in enumerate(tile_row):
                 self.calendar_surface.tag_bind(tile, "<Double-Button-1>", self.dbl_click_tile)
@@ -84,6 +90,7 @@ class App(tkinter.Tk):
         self.debug_label_entry_app_state.pack()
         self.debug_entry_app_state.pack()
         self.button_export_sql.pack()
+        self.frame_colour_coder.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.grid()
@@ -122,6 +129,7 @@ class App(tkinter.Tk):
                     unit_in = ddt["unit_in"]
                     ft = ddt["from_tag"]
                     if unit_in:
+                        # TODO double check that this day is not a weekend
                         print(f"HERE D")
                         if self.move_tile(ht, ft, unit_in):
                             self.app_state = "IDLE"
@@ -169,6 +177,7 @@ class App(tkinter.Tk):
         if tile is not None:
             if self.app_state == "IDLE":
                 if ht_rc[0] != 0 and ht_rc[1] != 0:
+                    # TODO double check that this day is not a weekend
 
                     self.app_state = "SELECTED"
                     self.calendar_surface.itemconfigure(tile, fill=rgb_to_hex(random_colour()))
@@ -193,6 +202,7 @@ class App(tkinter.Tk):
                 print(f"dt is overridden by {ft}")
                 if from_combo:
                     if ht_rc[0] != 0 and ht_rc[1] != 0:
+                        # TODO double check that this day is not a weekend
                         values = list(self.combo_unit_selection["values"])
                         values.remove(self.tv_combo_unit_selection.get())
                         self.removed_quotes.append(self.tv_combo_unit_selection.get())
@@ -205,6 +215,7 @@ class App(tkinter.Tk):
                 else:
                     if ht_rc[0] != 0 and ht_rc[1] != 0:
                         if drag_unit:
+                            # TODO double check that this day is not a weekend
                             self.move_tile(ht, ft, drag_unit)
 
                 self.calendar_surface.itemconfigure(self.drag_tile, state="hidden")
@@ -430,6 +441,9 @@ class App(tkinter.Tk):
 
             return True
         return False
+
+    def colour_coder_update(self, var_name, index, mode):
+        print(f"{var_name=}, {index=}, {mode=}, value={getattr(self.frame_colour_coder, 'status_code').get()}")
 
     def get_app_state(self):
         return self._app_state
