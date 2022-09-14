@@ -1,20 +1,34 @@
-select *
-						from (
-								select distinct SGQuote
-								from [Order OptionsV2_SpecLines] with (nolock)
-								where SpecGroup = 'GENERAL SPECIFICATIONS'
-								and SpecSection = 'Color'
-								and SpecSortSeLine = 0
-								and lower([SpecDescription]) like '%galv%'
+USE BWSdb
+GO
 
-								union all select distinct SGQuote
-								from [Custom WorkV2_SpecLines] with (nolock)
-								where SpecGroup = 'GENERAL SPECIFICATIONS'
-								and SpecSection = 'Color'
-								and SpecSortSeLine = 0
-								and lower([SpecDescription]) like '%galv%'
-							) as galvoptionsandnpos
+CREATE VIEW [dbo].[v_GalvanizedStargateOrders] AS
+
+SELECT 
+	[OrdersV2].[SGQuote]
+FROM (
+	SELECT DISTINCT
+		[SGQuote]
+	FROM 
+		[Order OptionsV2_SpecLines] WITH (NOLOCK)
+	WHERE 
+		[SpecGroup] = 'GENERAL SPECIFICATIONS'
+		AND SpecSection = 'Color'
+		AND SpecSortSeLine = 0
+		AND LOWER([SpecDescription]) LIKE '%galv%'
+	
+	UNION ALL
+
+	SELECT DISTINCT
+		[SGQuote]
+	FROM
+		[Custom WorkV2_SpecLines] WITH (NOLOCK)
+	WHERE
+		[SpecGroup] = 'GENERAL SPECIFICATIONS'
+		AND SpecSection = 'Color'
+		AND SpecSortSeLine = 0
+		AND LOWER([SpecDescription]) LIKE '%galv%'
+) AS [Src]
 LEFT JOIN
 	[BWSdb].[dbo].[OrdersV2]
 ON
-	[galvoptionsandnpos].SGQuote = [OrdersV2].[SGQuote] 
+	[Src].[SGQuote] = [OrdersV2].[SGQuote] 

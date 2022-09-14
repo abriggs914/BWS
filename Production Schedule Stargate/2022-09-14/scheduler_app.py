@@ -144,6 +144,7 @@ class App(tkinter.Tk):
                             self.calendar_surface.itemconfigure(dt, state="hidden")
                             self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
                 else:
+                    #TODO investigate where a dragged tile goes when released over the same spot. ht == dt
                     # releasing a dragged tile on the same position.
                     self.app_state = "SELECTED"
                     self.select_details = {
@@ -159,6 +160,7 @@ class App(tkinter.Tk):
                 print(f"INVALID STATE")
 
     def click_calendar_surface_left(self, event):
+        """Delete a tile when right-clicking the mouse over a valid unit."""
         print(f"{event=}")
         x, y = event.x, event.y
         rc = self.calendar_surface.rc_at_xy((x, y))
@@ -222,9 +224,10 @@ class App(tkinter.Tk):
                         # self.calendar_surface.itemconfigure(tile, fill=random_colour(rgb=False))
                 else:
                     if ht_rc[0] != 0 and ht_rc[1] != 0:
-                        if drag_unit:
-                            # TODO double check that this day is not a weekend
-                            self.move_tile(ht, ft, drag_unit)
+                        if dt != ht:
+                            if drag_unit:
+                                # TODO double check that this day is not a weekend
+                                self.move_tile(ht, ft, drag_unit)
 
                 self.calendar_surface.itemconfigure(self.drag_tile, state="hidden")
                 self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
@@ -319,14 +322,6 @@ class App(tkinter.Tk):
     def click_save_changes(self):
         print(f"SAVING")
 
-    # def click_left_scroll(self):
-    #     print(f"click_left")
-    #     self.calendar_surface.scroll_left()
-    #
-    # def click_right_scroll(self):
-    #     print(f"click_right")
-    #     self.calendar_surface.scroll_right()
-
     def click_insert_combo_choice(self):
         print(f"insert combo choice")
         if self.tv_combo_unit_selection.get():
@@ -343,11 +338,14 @@ class App(tkinter.Tk):
             self.combo_unit_selection.focus()
 
     def click_export_sql(self):
-        print(f"SQL\n\n<{self.calendar_surface.export_tile_sql()}>")
+        sql_res = self.calendar_surface.export_tile_sql()
+        # print(f"SQL\n\n<{sql_res}>")
         tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
 
     def click_undo(self):
-        self.calendar_surface.undo()
+        succes = self.calendar_surface.undo()
+        if not succes:
+            tkinter.messagebox.showinfo(title="Undo", message="Nothing to undo!")
 
     def dbl_click_tile(self, event):
         # self.calendar_surface.dbl_click_tile(event)
@@ -462,7 +460,7 @@ class App(tkinter.Tk):
                 print(f"\t\t\t{tv.get()=}")
             self.calendar_surface.set_rc_with_unit(rc, unit_in)
             print(f"{unit_in=}")
-            self.calendar_surface.tile_properties[r][c]["unit_in"] = unit_in
+            # self.calendar_surface.tile_properties[r][c]["unit_in"] = unit_in
             dealer = unit_in.InputField2_v2
             if dealer:
                 dealer_colour = self.frame_colour_coder.status[dealer]

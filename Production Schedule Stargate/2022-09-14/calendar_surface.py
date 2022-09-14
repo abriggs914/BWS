@@ -50,7 +50,7 @@ class CalendarSurface(tkinter.Canvas):
 
             n_visible_cols: int = 14,
             sql_output_file_name: str = "./{ts}_sql_output.sql",
-            text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "GALV?"]
+            text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "IsGalv"]
     ):
         super().__init__(master, width=width, height=height)
         self.canvas_width = width
@@ -332,108 +332,6 @@ class CalendarSurface(tkinter.Canvas):
         else:
             print(f"B{var_name=}, {index=}, {mode=}, {r_c_num=}")
 
-    def shift_tiles(self):
-        ts = 3  # space between tiles
-        tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
-        th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
-
-        print(f"{self.rows=}, {self.cols=}")
-
-        vis_range = self.visible_cols
-        # col_offset = (vis_range.start * (tw + ts)) + ((tw + ts) / 2) + ts
-        col_offset = (vis_range.start * (tw + ts)) + ts
-
-        # tiles = []
-        for r in range(self.rows + 1):
-            # row = []
-            for c in range(self.cols + 1):
-                x1 = ((c * tw) + ((c + 1) * ts) + (ts / 2)) - col_offset
-                y1 = (r * th) + ((r + 1) * ts) + (ts / 2)
-                x2 = (((c + 1) * tw) + ((c + 1) * ts) + (ts / 2)) - col_offset
-                y2 = ((r + 1) * th) + ((r + 1) * ts) + (ts / 2)
-                xd = x2 - x1
-                yd = y2 - y1
-                text1 = self.find_withtag(self.texts[r][2 * c])
-                text2 = self.find_withtag(self.texts[r][(2 * c) + 1])
-                bb1 = self.bbox(self.texts[r][2 * c])
-                bb2 = self.bbox(self.texts[r][(2 * c) + 1])
-                print(f"{text1=}, {text2=}, {bb1=}, {bb2=}")
-                self.moveto(self.tiles[r][c], x1, y1)
-                # self.moveto(self.texts[r][2 * c], x1 + ((xd + ts) / 2) - ts)
-                # self.moveto(self.texts[r][(2 * c) + 1], x1 + ((xd + ts) / 2) - ts)
-                self.moveto(self.texts[r][2 * c], x1 + ts)
-                self.moveto(self.texts[r][(2 * c) + 1], x1 + ts)
-
-                # row.append(self.create_rectangle(
-                #     x1, y1, x2, y2,
-                #     fill=self.tile_background_colour
-                # ))
-            #     self.create_text(
-            #         x1 + (xd / 2),
-            #         y1 + (yd / 2),
-            #         text=f"{r=}, {c=}",
-            #         fill="white"
-            #     )
-            # tiles.append(row)
-        # return tiles
-
-    def scroll_left(self) -> None:
-        ts = self.tile_space
-        tw = self.tile_width
-        th = self.tile_height
-        r = self.visible_cols
-        m = self.cols - self.n_visible_cols
-        do_shift = self.visible_cols.start > 0
-        self.visible_cols = range(clamp(0, r.start - 1, m), clamp(self.n_visible_cols, r.stop - 1, self.cols))
-        print(f"{self.visible_cols=}")
-        # self.shift_tiles()
-        if do_shift:
-            for r, tile_row in enumerate(self.tiles):
-                for c, tile in enumerate(tile_row):
-                    self.move(tile, tw + (ts / 2), 0)
-                    tag_t1 = self.tile_properties[r][c]["t1_tag"]
-                    tag_t2 = self.tile_properties[r][c]["t2_tag"]
-                    tag_t3 = self.tile_properties[r][c]["t3_tag"]
-                    tag_t4 = self.tile_properties[r][c]["t4_tag"]
-                    tag_t5 = self.tile_properties[r][c]["t5_tag"]
-                    self.move(tag_t1, (tw + (ts / 2)), 0)
-                    self.move(tag_t2, (tw + (ts / 2)), 0)
-                    self.move(tag_t3, (tw + (ts / 2)), 0)
-                    self.move(tag_t4, (tw + (ts / 2)), 0)
-                    self.move(tag_t5, (tw + (ts / 2)), 0)
-                    # self.move(self.texts[r][2 * c], tw + (ts / 2), 0)
-                    # self.move(self.texts[r][(2 * c) + 1], tw + (ts / 2), 0)
-
-    def scroll_right(self) -> None:
-        ts = self.tile_space
-        tw = self.tile_width
-        th = self.tile_height
-        r = self.visible_cols
-        m = self.cols - self.n_visible_cols
-        do_shift = self.visible_cols.stop < (self.cols - 1)
-        self.visible_cols = range(clamp(0, r.start + 1, m), clamp(self.n_visible_cols, r.stop + 1, self.cols))
-        print(f"{self.visible_cols=}")
-        # self.shift_tiles()
-        if do_shift:
-            for r, tile_row in enumerate(self.tiles):
-                for c, tile in enumerate(tile_row):
-                    self.move(tile, -(tw + (ts / 2)), 0)
-                    tag_t1 = self.tile_properties[r][c]["t1_tag"]
-                    tag_t2 = self.tile_properties[r][c]["t2_tag"]
-                    tag_t3 = self.tile_properties[r][c]["t3_tag"]
-                    tag_t4 = self.tile_properties[r][c]["t4_tag"]
-                    tag_t5 = self.tile_properties[r][c]["t5_tag"]
-                    self.move(tag_t1, -(tw + (ts / 2)), 0)
-                    self.move(tag_t2, -(tw + (ts / 2)), 0)
-                    self.move(tag_t3, -(tw + (ts / 2)), 0)
-                    self.move(tag_t4, -(tw + (ts / 2)), 0)
-                    self.move(tag_t5, -(tw + (ts / 2)), 0)
-                    # self.move(self.texts[r][2 * c], -(tw + (ts / 2)), 0)
-                    # self.move(self.texts[r][(2 * c) + 1], -(tw + (ts / 2)), 0)
-
-    def dbl_click_tile(self, event):
-        print(f"{event}")
-
     def rc_at_xy(self, xy: tuple[int, int]) -> tuple[int, int] | None:
         """Retrieve the row and column indices for the tile located at grid coordinates x, y."""
         x, y = xy
@@ -516,12 +414,16 @@ class CalendarSurface(tkinter.Canvas):
             print(f"\t\t{new_unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
             print(f"{self.start_date=}, {self.end_date=}")
             date_idx = None
+            new_date = None
             if avail_date and (self.start_date <= avail_date <= self.end_date):
                 print(f"\t\tVALID avail_date!!")
-                date_idx = self.dates_list.index(avail_date) + 1
+                new_date = avail_date
             elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
                 print(f"\t\tVALID finish_date_1!!")
-                date_idx = self.dates_list.index(finish_date_1) + 1
+                new_date = finish_date_1
+
+            if new_date:
+                date_idx = self.dates_list.index(new_date) + 1
             # elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
             #     print(f"\t\tVALID finish_date_2!!")
             #     date_idx = self.dates_list.index(finish_date_2) + 1
@@ -529,47 +431,102 @@ class CalendarSurface(tkinter.Canvas):
                 print(f"{avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
 
             line_idx = None
+            new_line = None
             if new_unit.WO_Line_1:
-                line_idx = self.lines.index(new_unit.WO_Line_1) + 1
+                new_line = new_unit.WO_Line_1
             elif new_unit.WO_Line_2:
-                line_idx = self.lines.index(new_unit.WO_Line_2) + 1
+                new_line = new_unit.WO_Line_2
+
+            if new_line:
+                line_idx = self.lines.index(new_line) + 1
             # print(f"{unit_in}")
 
             print(f"{line_idx=}, {date_idx=}")
             if date_idx and line_idx:
                 print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}")
                 self.set_rc_with_unit((line_idx, date_idx), new_unit)
+                new_unit.history["_Available_Date"] = [(datetime.datetime.now(), new_date)]
+                new_unit.history["_job_start_line_v2"] = [(datetime.datetime.now(), new_line)]
 
     def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit) -> None:
         self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
 
-    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit) -> None:
-        assert isinstance(unit_in, Unit)
+    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit) -> None:
+        """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles."""
+        self.set_tile_with_unit(to_tag, unit_in, do_assign=False)
+        # old_r, old_c = self.tile_to_rc(from_tag)
+        # new_r, new_c = self.tile_to_rc(to_tag)
+        # old_details = self.tile_properties[old_r][old_c]
+        # new_details = self.tile_properties[new_r][new_c]
+        ot1, ot2, ot3, ot4, ot5 = self.get_text_tags(from_tag)
+        nt1, nt2, nt3, nt4, nt5 = self.get_text_tags(to_tag)
+        for i in range(1, 6):
+            for attribute in ['fill', "activefill"]:
+                val = self.itemcget(ot1, attribute)
+                print(f"\t\tSETTING {eval(f'nt{i}')=}'s {attribute=} = {val=}")
+                self.itemconfigure(eval(f"nt{i}"), {attribute: val})
+
+        print(f"{self.get_text_vars(from_tag)=}")
+        for sv in self.get_text_vars(from_tag):
+            print(f"\t{sv=}")
+            sv.set("")
+
+    def get_text_tags(self, tile_in):
+        r, c = self.tile_to_rc(tile_in)
+        return (
+            self.tile_properties[r][c]["t1_tag"],
+            self.tile_properties[r][c]["t2_tag"],
+            self.tile_properties[r][c]["t3_tag"],
+            self.tile_properties[r][c]["t4_tag"],
+            self.tile_properties[r][c]["t5_tag"]
+        )
+
+    def get_text_vars(self, tile_in):
+        r, c = self.tile_to_rc(tile_in)
+        return (
+            self.tile_properties[r][c]["text_1"],
+            self.tile_properties[r][c]["text_2"],
+            self.tile_properties[r][c]["text_3"],
+            self.tile_properties[r][c]["text_4"],
+            self.tile_properties[r][c]["text_5"]
+        )
+
+    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit, do_assign: bool = True) -> None:
+        """Associate a unit object with a given tile space. Unit data only, no UI changes."""
+        assert isinstance(unit_in, Unit), "Error param 'unit_in' must be an instance of a Unit."
         rc = self.tile_to_rc(tag_in)
         if rc:
             r, c = rc
             # SGQuote# | Model No | Dealer Name | WO | Galv
             text_order = self.text_order
-            details = [
-                self.tile_properties[r][c]["text_1"],
-                self.tile_properties[r][c]["text_2"],
-                self.tile_properties[r][c]["text_3"],
-                self.tile_properties[r][c]["text_4"],
-                self.tile_properties[r][c]["text_5"]
-            ]
+            details = self.get_text_vars(tag_in)
+            # details = [
+            #     self.tile_properties[r][c]["text_1"],
+            #     self.tile_properties[r][c]["text_2"],
+            #     self.tile_properties[r][c]["text_3"],
+            #     self.tile_properties[r][c]["text_4"],
+            #     self.tile_properties[r][c]["text_5"]
+            # ]
             keys = unit_in.__dict__.keys()
+            print(f"LOOK HERE 1 {text_order=}, {details=}")
             for i, text_tv in enumerate(zip(text_order, details)):
                 text, tv = text_tv
                 text = "_" + text
                 value = text
                 if text in keys:
+                    print(f"\t\t\tBEFORE {value=}")
                     value = getattr(unit_in, text, "N/A")
-                print(f"\t\t{i=}, {text=} = {value=}, {tv.get()=}")
+                    if text == "_IsGalv":
+                        value = value if value != 'N' else ''
+                    print(f"\t\t\tAFTER {value=}")
+                print(f"\t\tLOOK HERE 2 {i=}, {text=} = {value=}, {tv.get()=}")
                 tv.set(value)
                 print(f"\t\t\t{tv.get()=}")
 
-            unit_in.Available_Date = self.dates_list[c - 1]
-            unit_in.JobStartLine = self.lines[r - 1]
+            if do_assign:
+                unit_in.Available_Date = self.dates_list[c - 1]
+                unit_in.JobStartLine = self.lines[r - 1]
+                unit_in.job_start_line_v2 = self.lines[r - 1]
             self.tile_properties[r][c]["unit_in"] = unit_in
             self.units[unit_in.SGQuote] = unit_in
             # print(dict_print(self.units, "self.units"))
@@ -599,35 +556,115 @@ class CalendarSurface(tkinter.Canvas):
                 # else:
                 #     result += f"\n-- {unit_k}\n"
                     # raise ValueError(f"{unit_k=} not found!")
-        print(f"<{result}>")
+        print(f"RESULT = <{result}>")
         if result:
             with open(fn, "w") as f:
                 # f.write(result)
                 f.write(result_2)
+        print(f"RESULT2 = <{result_2}>")
 
-        print(f"{self.tile_properties[0]=}")
-        for r, prop in enumerate(self.tile_properties):
-            for c, det in enumerate(prop):
-                print(f"{r=}, {c=}, {det['unit_in']=}")
+        # print(f"{self.tile_properties[0]=}")
+        # for r, prop in enumerate(self.tile_properties):
+        #     for c, det in enumerate(prop):
+        #         print(f"{r=}, {c=}, {det['unit_in']=}")
         return result
 
-    def undo(self):
-        oldest = None
+    def undo(self) -> bool:
+        newest = None
+        newest_new_line = None
+        newest_new_day = None
         for unit_k, unint_o in self.units.items():
             if unit_k not in [None, "None", ""]:
                 history = unint_o.history
                 for k, v in history.items():
+                    # if k in [
+                    #     "JobStartLine",
+                    #     "_JobStartLine",
+                    #     "job_start_line_v2",
+                    #     "_job_start_line_v2"
+                    # ]:
+                    #     print(f"\t\t{k=}, {len(v)=}, {v=}")
                     if len(v) > 1:
-                        print(f"{unit_k}, {k=}, {v=}")
-                        last_record = v[-1]
+                        last_record = v[-2]
                         t, val = last_record
-                        if oldest is None or t < oldest[0]:
-                            oldest = t, val, unit_k, k
-        if oldest:
-            t, val, unit_k, k = oldest
-            print(f"{t=}, {val=}, {unit_k=}, {k=}")
+                        curr = v[-1][-1]
+                        print(f"HERE\t\t{unit_k}, {k=}, {v=}, {t=}, {val=}, {curr=}")
+                        if newest is None or t > newest[0]:
+                            newest = t, val, unit_k, k, curr
+                        if k == "_Available_Date":
+                            if newest_new_day is None or t > newest_new_day[0]:
+                                newest_new_day = t, val, unit_k, k, curr
+                        if k == "_job_start_line_v2":
+                            if newest_new_line is None or t > newest_new_line[0]:
+                                newest_new_line = t, val, unit_k, k, curr
+        print(f"{newest=}\n{newest_new_day=}\n{newest_new_line=}")
+        if newest:
+            t, val, unit_k, k, curr = newest
+            if k not in ["_Available_Date", "_job_start_line_v2"]:
+                print(f"\t\t\tTHIS IS NOT A MOVEMENT")
+                # rc = self.quote_rc(unit_k)
+                # r, c = rc
+                print(f"OLDEST {t=}, {val=}, {unit_k=}, {k=}, {curr=}")
+                unit_in = self.units[unit_k]
+                unit_in.history[k].pop(-1)
+                old_val = unit_in.history[k][-1][1]
+                setattr(unit_in, k, old_val)
+                line = unit_in.JobStartLine
+                date = unit_in.Available_Date
+                r = self.lines.index(line) + 1
+                c = self.dates_list.index(date) + 1
+                print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr}, {self.lines=}")
+                tile = self.tile_properties[r][c]["tag_rect"]
+                self.set_tile_with_unit(tile, unit_in)
+                # last_val = self.units[unit_k].history[k][-1]
+                # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
+            else:
+                print(f"\t\t\tUNDOING A MOVEMENT")
+                t_line, val_line, unit_k_line, k_line, curr_line = newest_new_line
+                unit_in = self.units[unit_k_line]
+                unit_in.history[k_line].pop(-1)
+                # old_val = unit_in.history[k][-1][1]
+                # setattr(unit_in, k, old_val)
+                line = val_line
+                # date = unit_in.Available_Date
+                # r = self.lines.index(line) + 1
+                # c = self.dates_list.index(date) + 1
+                # print(f"FINDING {line=}, {date=}, {r=}, {c=}, {self.lines=}")
+                # tile = self.tile_properties[r][c]["tag_rect"]
+                # self.set_tile_with_unit(tile, unit_in)
+
+                t_day, val_day, unit_k_day, k_day, curr_day = newest_new_day
+                # unit_in = self.units[unit_k]
+                unit_in.history[k_day].pop(-1)
+                # old_val = unit_in.history[k][-1][1]
+                # line = unit_in.JobStartLine
+                date = val_day
+                cr = self.lines.index(curr_line) + 1
+                cc = self.dates_list.index(curr_day) + 1
+                old_tag = self.tile_properties[cr][cc]["tag_rect"]
+                r = self.lines.index(line) + 1
+                c = self.dates_list.index(date) + 1
+                setattr(unit_in, k_line, val_line)
+                setattr(unit_in, k_day, val_day)
+                print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr_line=}, {curr_day=}, {val_day=}, {val_line=}")
+                tile = self.tile_properties[r][c]["tag_rect"]
+                print(f"ABOUT TO SET TAG={tile} WITH STYLE AND DATA FROM TAG={old_tag} WITH UNIT={unit_in}")
+                print(f"RESULTING {unit_in}")
+                # self.set_tile_with_unit(tile, unit_in)
+                self.set_tile_with_unit_from_tile(old_tag, tile, unit_in)
+                # last_val = self.units[unit_k].history[k][-1]
+                # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
+                # self.set_tile_with_unit(tile, unit_in)
+
+            for quote, unit_in in self.units.items():
+                if unit_in is not None:
+                    for k, dat in unit_in.history.items():
+                        if len(dat) > 1:
+                            print(f"{unit_in=}\n\t{k=}, {dat=}")
+            return True
         else:
             print(f"Nothing to undo")
+            return False
 
     def colour_code_dealer(self, dealer, colour):
         d = dealer.upper()

@@ -347,7 +347,7 @@ class Unit:
             yield el
 
     def __repr__(self):
-        return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={self.Available_Date}, {self.job_start_line_v2=}>"
+        return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={self.Available_Date}, {self.job_start_line_v2=}, dealer='{self._InputField2_v2}'>"
 
     # _prod_sched_v2_id
     def get_prod_sched_v2_id(self):
