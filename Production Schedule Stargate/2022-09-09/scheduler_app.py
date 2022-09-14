@@ -62,7 +62,7 @@ class App(tkinter.Tk):
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
-        self.frame_colour_coder = ColourWidget(self.frame_top_bar)
+        self.frame_colour_coder = ColourWidget(self.frame_top_bar, dealers=self.dat_list_of_dealers())
 
         self.frame_colour_coder.status_code.trace_variable("w", self.colour_coder_update)
 
@@ -106,6 +106,11 @@ class App(tkinter.Tk):
 
     def dat_list_of_units(self):
         lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] if not None]
+        lst.sort()
+        return lst
+
+    def dat_list_of_dealers(self):
+        lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if tup[0] if not None})
         lst.sort()
         return lst
 
@@ -444,6 +449,8 @@ class App(tkinter.Tk):
 
     def colour_coder_update(self, var_name, index, mode):
         print(f"{var_name=}, {index=}, {mode=}, value={getattr(self.frame_colour_coder, 'status_code').get()}")
+        info = eval(self.frame_colour_coder.status_code.get())
+        self.calendar_surface.colour_code_dealer(info["dealer"], info["colour"])
 
     def get_app_state(self):
         return self._app_state
