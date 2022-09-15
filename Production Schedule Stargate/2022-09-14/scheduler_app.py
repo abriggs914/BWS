@@ -412,7 +412,8 @@ class App(tkinter.Tk):
         ]
         for sv in string_vars:
             sv.set("")
-        self.calendar_surface.tile_properties[r][c]["unit_in"] = None
+        self.calendar_surface.delete_tile(r, c)
+        # self.calendar_surface.tile_properties[r][c]["unit_in"] = None
         if unit_in.SGQuote in self.removed_quotes:
             new_list = list(self.combo_unit_selection["values"])
             new_list.append(unit_in.SGQuote)

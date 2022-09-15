@@ -444,6 +444,7 @@ class CalendarSurface(tkinter.Canvas):
             print(f"{line_idx=}, {date_idx=}")
             if date_idx and line_idx:
                 print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}")
+                new_unit.placed = True
                 self.set_rc_with_unit((line_idx, date_idx), new_unit)
                 new_unit.history["_Available_Date"] = [(datetime.datetime.now(), new_date)]
                 new_unit.history["_job_start_line_v2"] = [(datetime.datetime.now(), new_line)]
@@ -569,7 +570,16 @@ class CalendarSurface(tkinter.Canvas):
         #         print(f"{r=}, {c=}, {det['unit_in']=}")
         return result
 
+    def delete_tile(self, r, c):
+        details = self.tile_properties[r][c]
+        unit_in = details["unit_in"]
+        if unit_in:
+            quote = unit_in.SGQuote
+            self.units[quote].placed = False
+        details["unit_in"] = None
+
     def undo(self) -> bool:
+        print(f"CLICK UNDO")
         newest = None
         newest_new_line = None
         newest_new_day = None
@@ -661,9 +671,11 @@ class CalendarSurface(tkinter.Canvas):
                     for k, dat in unit_in.history.items():
                         if len(dat) > 1:
                             print(f"{unit_in=}\n\t{k=}, {dat=}")
+            print(f"END UNDO")
             return True
         else:
             print(f"Nothing to undo")
+            print(f"END UNDO")
             return False
 
     def colour_code_dealer(self, dealer, colour):

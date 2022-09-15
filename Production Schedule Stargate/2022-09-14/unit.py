@@ -173,6 +173,7 @@ class Unit:
 	_DateSecured: datetime.datetime
 	_SecuredBy: str
 	_IsGalv: str
+	_placed: bool = False
 	_history: dict = dataclasses.field(default_factory=dict)
 
 	def init(self):
@@ -343,7 +344,9 @@ class Unit:
 			self.Customer_WO,
 			self.PriceSecured,
 			self.DateSecured,
-			self.SecuredBy
+			self.SecuredBy,
+			
+			self.isGalv
 		]
 		for el in lst:
 			yield el
@@ -2122,6 +2125,18 @@ class Unit:
 	def del_IsGalv(self):
 		del self._IsGalv
 
+	# _placed 
+	def get_placed(self):
+		return self._placed
+
+	def set_placed(self, placed_in):
+		self.history["_placed"].append((datetime.datetime.now(), placed_in))
+		self._placed = placed_in
+
+	def del_placed(self):
+		del self._placed
+
+	# _history
 	def get_history(self):
 		return self._history
 
@@ -2296,6 +2311,7 @@ class Unit:
 	DateSecured = property(get_DateSecured, set_DateSecured, del_DateSecured)
 	SecuredBy = property(get_SecuredBy, set_SecuredBy, del_SecuredBy)
 	IsGalv = property(get_IsGalv, set_IsGalv, del_IsGalv)
+	placed = property(get_placed, set_placed, del_placed)
 	history = property(get_history, set_history, del_history)
 
 	def undo(self):
