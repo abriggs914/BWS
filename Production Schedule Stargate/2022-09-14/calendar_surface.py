@@ -443,18 +443,22 @@ class CalendarSurface(tkinter.Canvas):
 
             print(f"{line_idx=}, {date_idx=}")
             if date_idx and line_idx:
-                print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}")
-                new_unit.placed = True
+                # new_unit.placed = True
+                print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}, {new_unit.history['_placed']=}")
                 self.set_rc_with_unit((line_idx, date_idx), new_unit)
                 new_unit.history["_Available_Date"] = [(datetime.datetime.now(), new_date)]
                 new_unit.history["_job_start_line_v2"] = [(datetime.datetime.now(), new_line)]
 
-    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit) -> None:
+    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit, set_style:bool = False) -> None:
         self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
+        if set_style:
+            r, c = rc
+            tile = self.tiles[r][c]
+            self.set_tile_with_unit_from_tile(tile, tile, unit_in)
 
-    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit) -> None:
+    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False) -> None:
         """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles."""
-        self.set_tile_with_unit(to_tag, unit_in, do_assign=False)
+        self.set_tile_with_unit(to_tag, unit_in, do_assign=do_assign)
         # old_r, old_c = self.tile_to_rc(from_tag)
         # new_r, new_c = self.tile_to_rc(to_tag)
         # old_details = self.tile_properties[old_r][old_c]
@@ -524,7 +528,10 @@ class CalendarSurface(tkinter.Canvas):
                 tv.set(value)
                 print(f"\t\t\t{tv.get()=}")
 
+            print(f"{do_assign=}, {unit_in}")
             if do_assign:
+                unit_in.placed = True
+                print(f"{unit_in.history['_placed']=}")
                 unit_in.Available_Date = self.dates_list[c - 1]
                 unit_in.JobStartLine = self.lines[r - 1]
                 unit_in.job_start_line_v2 = self.lines[r - 1]
@@ -534,12 +541,17 @@ class CalendarSurface(tkinter.Canvas):
         else:
             raise ValueError(f"Error can't assign this tile with this unit_in. {tag_in=}, {unit_in=}")
 
-    def export_tile_sql(self):
+    def export_tile_sql(self, removed_quotes):
+        print(f"{removed_quotes=}")
         fn = self.sql_output_file_name.format(ts=datetime.datetime.now().strftime("%Y-%m-%d %H%M"))
-        template = "UPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}'"
-        template_2 = "UPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = '{j}', [JobStartLine] = '{l}' WHERE [SGQuote] = '{q}'"
+        template = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}'"
+        template_2 = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = '{j}', [JobStartLine] = '{l}' WHERE [SGQuote] = '{q}'"
+        template_3 = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = NULL WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = NULL, [JobStartLine] = NULL WHERE [SGQuote] = '{q}'"
         result = ""
         result_2 = ""
+        result_3 = ""
+
+        rq = {quote for quote in set(removed_quotes)}
 
         for unit_k, unit_o in self.units.items():
             if unit_k not in [None, "None", ""]:
@@ -552,17 +564,27 @@ class CalendarSurface(tkinter.Canvas):
                     new_avail_date = unit_o.Available_Date
                     line = unit_o.JobStartLine
                     print(f"{new_avail_date=}")
-                    result += f"\n-- {unit_k}\n" + template.format(d=new_avail_date, q=unit_k)
-                    result_2 += f"\n-- {unit_k}\n" + template_2.format(d=new_avail_date, q=unit_k, j=new_avail_date, l=line)
+                    result += template.format(d=new_avail_date, q=unit_k)
+                    result_2 += template_2.format(d=new_avail_date, q=unit_k, j=new_avail_date, l=line)
+                    if unit_k in rq:
+                        rq.remove(unit_k)
                 # else:
                 #     result += f"\n-- {unit_k}\n"
                     # raise ValueError(f"{unit_k=} not found!")
         print(f"RESULT = <{result}>")
         if result:
             with open(fn, "w") as f:
-                # f.write(result)
                 f.write(result_2)
         print(f"RESULT2 = <{result_2}>")
+
+        print(f"{rq=}")
+        for quote in rq:
+            result_3 += template_3.format(q=quote)
+        if result_3:
+            with open(fn, "a") as f:
+                # f.write(result)
+                f.write(result_3)
+        print(f"RESULT3 = <{result_3}>")
 
         # print(f"{self.tile_properties[0]=}")
         # for r, prop in enumerate(self.tile_properties):
@@ -570,7 +592,15 @@ class CalendarSurface(tkinter.Canvas):
         #         print(f"{r=}, {c=}, {det['unit_in']=}")
         return result
 
+    def remove_tile(self, r, c):
+        # use this one to remove a tile from the UI
+        tile = self.tiles[r][c]
+        vars = self.get_text_vars(tile)
+        for var in vars:
+            var.set("")
+
     def delete_tile(self, r, c):
+        # use this one to delete the data association between the unit and the tile.
         details = self.tile_properties[r][c]
         unit_in = details["unit_in"]
         if unit_in:
@@ -578,14 +608,18 @@ class CalendarSurface(tkinter.Canvas):
             self.units[quote].placed = False
         details["unit_in"] = None
 
-    def undo(self) -> bool:
+    def undo(self) -> tuple[int, dict[str, object]]:
+        # 1 - success
+        # 0 - failure
+        # 2 - success - but need to re-add a removed tile to the combo list.
         print(f"CLICK UNDO")
         newest = None
+        currest = None
         newest_new_line = None
         newest_new_day = None
-        for unit_k, unint_o in self.units.items():
+        for unit_k, unit_o in self.units.items():
             if unit_k not in [None, "None", ""]:
-                history = unint_o.history
+                history = unit_o.history
                 for k, v in history.items():
                     # if k in [
                     #     "JobStartLine",
@@ -598,7 +632,9 @@ class CalendarSurface(tkinter.Canvas):
                         last_record = v[-2]
                         t, val = last_record
                         curr = v[-1][-1]
-                        print(f"HERE\t\t{unit_k}, {k=}, {v=}, {t=}, {val=}, {curr=}")
+                        print(f"HERE\t\t{unit_k}, {k=}, {len(v)=} {v=}, {t=}, {val=}, {curr=}, {newest=}")
+                        if currest is None or v[-1][0] > currest[0]:
+                            currest = *v[-1], unit_k, k, curr
                         if newest is None or t > newest[0]:
                             newest = t, val, unit_k, k, curr
                         if k == "_Available_Date":
@@ -607,27 +643,51 @@ class CalendarSurface(tkinter.Canvas):
                         if k == "_job_start_line_v2":
                             if newest_new_line is None or t > newest_new_line[0]:
                                 newest_new_line = t, val, unit_k, k, curr
-        print(f"{newest=}\n{newest_new_day=}\n{newest_new_line=}")
+        print(f"{newest=}\n{currest=}\n{newest_new_day=}\n{newest_new_line=}")
         if newest:
             t, val, unit_k, k, curr = newest
             if k not in ["_Available_Date", "_job_start_line_v2"]:
                 print(f"\t\t\tTHIS IS NOT A MOVEMENT")
-                # rc = self.quote_rc(unit_k)
-                # r, c = rc
-                print(f"OLDEST {t=}, {val=}, {unit_k=}, {k=}, {curr=}")
-                unit_in = self.units[unit_k]
-                unit_in.history[k].pop(-1)
-                old_val = unit_in.history[k][-1][1]
-                setattr(unit_in, k, old_val)
-                line = unit_in.JobStartLine
-                date = unit_in.Available_Date
-                r = self.lines.index(line) + 1
-                c = self.dates_list.index(date) + 1
-                print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr}, {self.lines=}")
-                tile = self.tile_properties[r][c]["tag_rect"]
-                self.set_tile_with_unit(tile, unit_in)
-                # last_val = self.units[unit_k].history[k][-1]
-                # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
+                if k == "_placed":
+                    t, val, unit_k, k, curr = currest
+                    if val:
+                        print(f"\t\t\tTHIS IS A COMBO PLACEMENT")
+                        unit_in = self.units[unit_k]
+                        unit_in.history[k].pop(-1)
+                        r, c = self.quote_rc(unit_k)
+                        self.remove_tile(r, c)
+                        self.delete_tile(r, c)
+                        print(f"END UNDO")
+                        return (2, {"msg": "Need to replace unit in combo list.", "quote": unit_k})
+                    else:
+                        print(f"\t\t\tTHIS IS A DELETION")
+                        unit_in = self.units[unit_k]
+                        print(f"HERE {unit_in=}")
+                        unit_in.history[k].pop(-1)
+                        date = unit_in.Available_Date
+                        line = unit_in.job_start_line_v2
+                        r = self.lines.index(line) + 1
+                        c = self.dates_list.index(date) + 1
+                        # r, c = self.quote_rc(unit_k)
+                        self.set_rc_with_unit((r, c), unit_in, set_style=True)
+                        return (3, {"msg": "Need to remove quote from combo list.", "quote": unit_k})
+                else:
+                    # rc = self.quote_rc(unit_k)
+                    # r, c = rc
+                    print(f"OLDEST {t=}, {val=}, {unit_k=}, {k=}, {curr=}")
+                    unit_in = self.units[unit_k]
+                    unit_in.history[k].pop(-1)
+                    old_val = unit_in.history[k][-1][1]
+                    setattr(unit_in, k, old_val)
+                    line = unit_in.JobStartLine
+                    date = unit_in.Available_Date
+                    r = self.lines.index(line) + 1
+                    c = self.dates_list.index(date) + 1
+                    print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr}, {self.lines=}")
+                    tile = self.tile_properties[r][c]["tag_rect"]
+                    self.set_tile_with_unit(tile, unit_in)
+                    # last_val = self.units[unit_k].history[k][-1]
+                    # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
             else:
                 print(f"\t\t\tUNDOING A MOVEMENT")
                 t_line, val_line, unit_k_line, k_line, curr_line = newest_new_line
@@ -661,7 +721,7 @@ class CalendarSurface(tkinter.Canvas):
                 print(f"ABOUT TO SET TAG={tile} WITH STYLE AND DATA FROM TAG={old_tag} WITH UNIT={unit_in}")
                 print(f"RESULTING {unit_in}")
                 # self.set_tile_with_unit(tile, unit_in)
-                self.set_tile_with_unit_from_tile(old_tag, tile, unit_in)
+                self.set_tile_with_unit_from_tile(old_tag, tile, unit_in, do_assign=False)
                 # last_val = self.units[unit_k].history[k][-1]
                 # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
                 # self.set_tile_with_unit(tile, unit_in)
@@ -672,11 +732,12 @@ class CalendarSurface(tkinter.Canvas):
                         if len(dat) > 1:
                             print(f"{unit_in=}\n\t{k=}, {dat=}")
             print(f"END UNDO")
-            return True
+            return (1, {"msg": "success"})
         else:
-            print(f"Nothing to undo")
+            msg =f"Nothing to undo"
+            print()
             print(f"END UNDO")
-            return False
+            return (1, {"msg": f"Nothing to undo"})
 
     def colour_code_dealer(self, dealer, colour):
         d = dealer.upper()
