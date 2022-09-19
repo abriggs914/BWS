@@ -18,6 +18,10 @@ DECLARE @mn5 AS NVARCHAR(MAX) = 'Tipper  3X';
 DECLARE @mn6 AS NVARCHAR(MAX) = 'Tipper  4X';
 
 
+SELECT * FROM [OptionsV2] WHERE [Model No] LIKE @mn2
+SELECT * FROM [OptionsV2] WHERE [Model No] LIKE @mn5
+
+
 
 BEGIN TRAN;
 
@@ -34,8 +38,8 @@ BEGIN TRAN;
 	ON
 		[A].[Description] = [B].[Description]
 	WHERE
-		[A].[Model No] LIKE @mn2
-		AND [B].[Model No] LIKE @mn5
+		[A].[Model No] LIKE @mn5
+		AND [B].[Model No] LIKE @mn2
 	;
 
 
@@ -50,8 +54,8 @@ BEGIN TRAN;
 	ON
 		[A].[Description] = [B].[Description]
 	WHERE
-		[A].[Model No] LIKE @mn2
-		AND [B].[Model No] LIKE @mn5
+		[A].[Model No] LIKE @mn5
+		AND [B].[Model No] LIKE @mn2
 	
 	
 	SELECT
@@ -67,27 +71,27 @@ BEGIN TRAN;
 	ON
 		[A].[Description] = [B].[Description]
 	WHERE
-		[A].[Model No] LIKE @mn2
-		AND [B].[Model No] LIKE @mn5
+		[A].[Model No] LIKE @mn5
+		AND [B].[Model No] LIKE @mn2
 	;
 
-	SELECT
-		[A].[Model No]
-		, [A].[Option No] AS [A Opt No]
-		, [B].[Option No] AS [B Opt No]
-		, [A].[US Price] AS [A US Price]
-		, [B].[US Price] AS [B US Price]
-	FROM
-		[OptionsV2] AS [A]
-	INNER JOIN
-		[OptionsV2] AS [B]
-	ON
-		[A].[Description] = [B].[Description]
-	WHERE
-		[A].[Model No] LIKE @mn2
-		AND [B].[Model No] LIKE @mn5
-		AND [A].[US Price] != [B].[US Price]
-	;
+	--SELECT
+	--	[A].[Model No]
+	--	, [A].[Option No] AS [A Opt No]
+	--	, [B].[Option No] AS [B Opt No]
+	--	, [A].[US Price] AS [A US Price]
+	--	, [B].[US Price] AS [B US Price]
+	--FROM
+	--	[OptionsV2] AS [A]
+	--INNER JOIN
+	--	[OptionsV2] AS [B]
+	--ON
+	--	[A].[Description] = [B].[Description]
+	--WHERE
+	--	[A].[Model No] LIKE @mn2
+	--	AND [B].[Model No] LIKE @mn5
+	--	AND [A].[US Price] != [B].[US Price]
+	--;
 
 ROLLBACK;
 COMMIT;

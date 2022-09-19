@@ -1,4 +1,3 @@
-import datetime
 from locale import currency, setlocale, LC_ALL
 from math import e, ceil, sin, cos, radians
 from random import random, choice, randint
@@ -9,34 +8,12 @@ import shutil
 import sys
 import os
 
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
-
-VERSION = \
-    """	
-        General Utility Functions
-        Version..............1.56
-        Date...........2022-09-19
-        Author.......Avery Briggs
-    """
-
-
-def VERSION_NUMBER():
-    return float(VERSION.split("\n")[2].split(".")[-2] + "." + VERSION.split("\n")[2].split(".")[-1])
-
-
-def VERSION_DATE():
-    return VERSION.split("\n")[3].split(".")[-1]
-
-
-def VERSION_AUTHOR():
-    return VERSION.split("\n")[4].split(".")[-1]
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
+"""
+	General Utility Functions
+	Version..............1.41
+	Date...........2022-03-23
+	Author.......Avery Briggs
+"""
 
 
 def func_def():
@@ -70,7 +47,6 @@ def lenstr(x):
 
 
 def minmax(a, b):
-    
     if a <= b:
         return a, b
     return b, a
@@ -653,21 +629,49 @@ def flatten(lst):
     return [*flatten(lst[0]), *flatten(lst[1:])]
 
 
+# Clamp an number between small and large values.
+# Inclusive start, exclusive end.
 def clamp(s, v, l):
-    """Clamp a number between small and large values."""
     return max(s, min(v, l))
 
 
+# Darken an RGB color using a proportion p (0-1)
+def darken(c, p):
+    r, g, b = c
+    r = clamp(0, round(r - (255 * p)), 255)
+    g = clamp(0, round(g - (255 * p)), 255)
+    b = clamp(0, round(b - (255 * p)), 255)
+    return r, g, b
+
+
+# Brighten an RGB color using a proportion p (0-1)
+def brighten(c, p):
+    r, g, b = c
+    r = clamp(0, round(r + (255 * p)), 255)
+    g = clamp(0, round(g + (255 * p)), 255)
+    b = clamp(0, round(b + (255 * p)), 255)
+    return r, g, b
+
+
+# return random RGB color
+def random_color():
+    return (
+        randint(10, 245),
+        randint(10, 245),
+        randint(10, 245)
+    )
+
+
+# Rotate a 2D point about the origin, a given amount of degrees. Counterclockwise
 def rotate_on_origin(px, py, theta):
-    """Rotate a 2D point about the origin, a given amount of degrees. Counterclockwise"""
     t = radians(theta)
     x = (px * cos(t)) - (py * sin(t))
     y = (px * sin(t)) + (py * cos(t))
     return x, y
 
 
+# Rotate a 2D point around any central point, a given amount of degrees. Counterclockwise
 def rotate_point(cx, cy, px, py, theta):
-    """Rotate a 2D point around any central point, a given amount of degrees. Counterclockwise"""
     xd = 0 - cx
     yd = 0 - cy
     rx, ry = rotate_on_origin(px + xd, py + yd, theta)
@@ -675,14 +679,12 @@ def rotate_point(cx, cy, px, py, theta):
 
 
 def bar(a, b, c=10):
-    """String representation of a progress bar."""
     if not isinstance(c, int) or c < 1:
         c = 10
     return "{} |".format(percent(a / b)) + "".join(["#" if i < int((c * a) / b) else " " for i in range(c)]) + "|"
 
 
 def lstindex(lst, target):
-    """Iterate a list and return the index of a target value. Avoids IndexError, but iterates the whole list."""
     for i, val in enumerate(lst):
         if val == target:
             return i
@@ -935,16 +937,6 @@ class Line:
         return "y = {}x + {}".format("%.2f" % self.m, self.b)
 
 
-class LineSeg(Line):
-
-    def __init__(self, x1, y1, x2, y2):
-        super().__init__(x1, y1, x2, y2)
-        self.length = distance(self.p1, self.p2)
-
-    def collide_point(self, x, y):
-        return super().collide_point(x, y)
-
-
 # class Rect:
 #     def __init__(self, x, y=None, w=None, h=None):
 #         self.x = x
@@ -1153,7 +1145,6 @@ class Rect2:
         self.y = y
         self.w = w
         self.h = h
-        self.a = a
         self.width = w
         self.height = h
         self.angle = a
@@ -1285,7 +1276,6 @@ class Rect2:
 
     def translate(self, x, y):
         self.init(self.x + x, self.y + y, self.width, self.height, self.angle)
-        return self
 
     def translated(self, x, y):
         return Rect2(self.x + x, self.y + y, self.width, self.height, self.angle)
@@ -1294,7 +1284,6 @@ class Rect2:
         w = abs(w)
         h = abs(h)
         self.init(self.x, self.y, self.width * w, self.height * h, self.angle)
-        return self
 
     def scaled(self, x, y):
         r = Rect2(*self)
@@ -1303,7 +1292,6 @@ class Rect2:
 
     def rotate(self, a):
         self.init(self.x, self.y, self.width, self.height, self.angle + a)
-        return self
 
     def rotated(self, a):
         r = Rect2(*self)
@@ -1440,16 +1428,8 @@ class Rect2:
     # def resize(self, rect):
     #     self.init(rect.x, rect.y, rect.width, rect.height)
 
-    def sq_rect(self):
-        return self.x, self.y, self.w, self.h
-
-    def tkinter_rect(self):
-        return Rect2(*self.top_left, *self.bottom_right)
-
     def __repr__(self):
-        # return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
-        x, y, w, h, a = self
-        return f"<rect: {x=}, {y=}, {w=}, {h=}, {a=}>"
+        return "<rect(p1:({}), p2:({}), p3:({}), p4:({}))>".format(self.p1, self.p2, self.p3, self.p4)
 
 
 def date_suffix(day):
@@ -1576,13 +1556,6 @@ def end_of_month(date_in):
     return dt.datetime(y, m, num_days)
 
 
-def datetime_is_tz_aware(datetime_in):
-    """Return weather or not a datetime object is aware of timezones or not.
-    https://stackoverflow.com/questions/5802108/how-to-check-if-a-datetime-object-is-localized-with-pytz#:~:text=From%20datetime%20docs%3A%201%20a%20datetime%20object%20d,d.tzinfo%20is%20None%20or%20d.tzinfo.utcoffset%20%28d%29%20is%20None"""
-    assert isinstance(datetime_in, datetime.datetime), "Error param 'datetime_in' must be an instance of a datetime."
-    return datetime_in.tzinfo is not None and datetime_in.tzinfo.utcoffset(datetime_in) is not None
-
-
 def alert_colour(x, n):
     assert isnumber(x), "Parameter \"x\": ({}) needs to be a number".format(x)
     assert isnumber(n), "Parameter \"n\": ({}) needs to be a number".format(n)
@@ -1614,264 +1587,6 @@ def print_by_line(value, do_print=True):
     if not do_print:
         return lines
     print(lines)
-
-
-def hours_diff(d1, d2):
-    assert isinstance(d1, dt.datetime), f"Parameter d1: \"{d1}\" needs to be a datetime.datetime instance."
-    assert isinstance(d2, dt.datetime), f"Parameter d2: \"{d2}\" needs to be a datetime.datetime instance."
-    return ((d2 - d1).days * 24) + ((d2 - d1).seconds / (60 * 60))
-
-
-def rect2_to_tkinter(rect):
-    """Rect2 (left, top, w, h) -> (left, top, right, bottom)"""
-    if (isinstance(rect, tuple) or isinstance(rect, list)) and len(rect) in (4, 5):
-        rect = Rect2(*rect)
-    assert isinstance(rect, Rect2), f"Error value is not a valid Rect2 object. got: <{type(rect)}, v: <{rect}>>"
-    assert rect.a == 0, "This Rect2 object is at a non-zero angle."
-    return [rect.x, rect.y, rect.w + rect.x, rect.h + rect.y]
-
-
-def tkinter_to_rect2(rect):
-    """Tlinter (left, top, right, bottom) -> Rect2 (left, top, w, h)"""
-    assert isinstance(rect, list) or isinstance(rect, tuple), f"Error value is not a valid list or tuple representing a tkinter rect., got <{type(rect)}>, v=<{rect}>"
-    assert len(rect) == 4, "This list is too long"
-    x1, y1, x2, y2 = rect
-    return Rect2(x1, y1, x2 - x1, y2 - y1)
-
-
-def kb_as_percent(kb, gb=2):
-    return ("%.3f" % (((100 * kb / (1024**2)) / gb))) + " %"
-
-
-def calc_bounds(center, width, height=None):
-    assert (isinstance(center, list) or isinstance(center, tuple)) and len(center) == 2 and all([isnumber(x) for x in
-                                                                                                 center]), f"Error param 'center' must be a tuple or list representing center coordinates (x, y). Got: {center}"
-    assert isnumber(width), f"Error param 'width' must be a number. Got: {width}"
-    if height is not None:
-        assert isnumber(height), f"Error param 'height' if not omitted, must be a number. Got: {height}"
-    w = width / 2
-    h = w if height is None else (height / 2)
-    return (
-        center[0] - w,
-        center[1] - h,
-        center[0] + w,
-        center[1] + h
-    )
-
-
-def left_join (a_, b_):
-    assert isinstance(a_, set), "Error, param 'a_' must be a set."
-    assert isinstance(b_, set), "Error, param 'a_' must be a set."
-    return a_.symmetric_difference(b_).union(a_).symmetric_difference(b_).union(a_)
-
-
-NATO_phonetic_alphabet = {
-    "a": "Alpha",
-    "b": "Bravo",
-    "c": "Charlie",
-    "d": "Delta",
-    "e": "Echo",
-    "f": "Foxtrot",
-    "g": "Golf",
-    "h": "Hotel",
-    "i": "India",
-    "j": "Juliett",
-    "k": "Kilo",
-    "l": "Lima",
-    "m": "Mike",
-    "n": "November",
-    "o": "Oscar",
-    "p": "Papa",
-    "q": "Quebec",
-    "r": "Romeo",
-    "s": "Sierra",
-    "t": "Tango",
-    "u": "Uniform",
-    "v": "Victor",
-    "w": "Whiskey",
-    "x": "Xray",
-    "y": "Yankee",
-    "z": "Zulu",
-}
-
-
-def translate_NATO_phonetic_alphabet(phrase, from_english=True, preserve_spaces=True):
-    # print(f"{from_english=}, {preserve_spaces=}")
-    result = ""
-    if phrase:
-        if from_english:
-            for i, letter in enumerate(phrase):
-                if letter.lower() in NATO_phonetic_alphabet:
-                    result += NATO_phonetic_alphabet[letter.lower()]
-                elif letter != " ":
-                    # if result[-2:] != "  ":
-                    #     result = result[:len(result) - 1]
-                    result += letter
-                elif preserve_spaces:
-                    result += letter
-                else:
-                    result = result[:len(result) - 1]
-                    # result += letter if letter != " " else ""
-                result += " "
-        else:
-            reverse = {v: k for k, v in NATO_phonetic_alphabet.items()}
-            result = phrase
-            for k, v in reverse.items():
-                result = result.replace(k, v)
-
-            # print(f"{result=}")
-            result = result.replace("   ", "&$&").replace(" ", "").replace("&$&", "   ")
-            if not preserve_spaces:
-                result = result.replace("   ", " ")
-
-    return result.strip()
-
-
-def grid_cells(
-        t_width: int | float | str,
-        n_cols: int | str,
-        t_height: int | float | str = None,
-        n_rows: int | str = None,
-        x_pad: int | float | str = 1,
-        y_pad: int | float | str = 1,
-        x_0: int | float = 0,
-        y_0: int | float = 0,
-        r_type: list | dict = list,
-        r_int: bool = False
-) -> list | dict:
-    """Calculate grid cell dimensions given W, H, n_rows, n_cols, x and y padding, x and y offset. Choose to return list or dictionary using r_type."""
-    assert isnumber(t_width), f"Error param 't_width' needs to be a number. Got {t_width=}"
-    assert isnumber(n_cols), f"Error param 'n_cols' needs to be a number. Got {n_cols=}"
-    assert isnumber(x_pad), f"Error param 'x_pad' needs to be a number. Got {x_pad=}"
-    assert isnumber(x_0), f"Error, param 'x_0' needs to be a number to offset the x position. Got {x_0}"
-    assert isnumber(y_0), f"Error, param 'y_0' needs to be a number to offset the y position. Got {y_0}"
-    t_width = float(t_width)
-    n_cols = int(n_cols)
-    x_pad = float(x_pad)
-    x_0 = float(x_0)
-    y_0 = float(y_0)
-    assert t_width > 0, f"Error, this grid must have at least 1 pixel of space. Got {t_width=}"
-    assert n_cols > 0, f"Error, this grid must have at least 1 column. Got {n_cols=}"
-    assert x_pad > -1, f"Error, x padding cannot be negative. Got {x_pad=}"
-    t_height = float(t_width if t_height is None else t_height)
-    n_rows = int(n_cols if n_rows is None else n_cols)
-    y_pad = float(x_pad if y_pad is None else y_pad)
-    assert t_height > 0, f"Error, this grid must have at least 1 pixel of space. Got {t_height=}"
-    assert n_rows > 0, f"Error, this grid must have at least 1 row. Got {n_rows=}"
-    assert y_pad > -1, f"Error, y padding cannot be negative. Got {y_pad=}"
-    print(f"{t_width=}, {t_height=}, {n_rows=}, {n_cols=}, {x_pad=}, {y_pad=}, {r_type=}")
-
-    tw = (t_width - ((n_cols + 0) * x_pad)) / (n_cols + 0)  # tile width
-    th = (t_height - ((n_rows + 0) * y_pad)) / (n_rows + 0)  # tile height
-
-    tiles = []
-    if r_type == dict:
-        tiles = {}
-
-    for r in range(n_rows):
-        if r_type == list:
-            row = []
-        else:
-            row = {}
-
-        for c in range(n_cols):
-            x1 = float(x_0 + (c * tw) + ((c + 0) * x_pad) + (x_pad / 2))
-            y1 = float(y_0 + (r * th) + ((r + 0) * y_pad) + (y_pad / 2))
-            x2 = float(x_0 + ((c + 1) * tw) + ((c + 0) * x_pad) + (x_pad / 2))
-            y2 = float(y_0 + ((r + 1) * th) + ((r + 0) * y_pad) + (y_pad / 2))
-            xd = float(x2 - x1)
-            yd = float(y2 - y1)
-
-            if r_int:
-                x1 = int(x1)
-                x2 = int(x2)
-                y1 = int(y1)
-                y2 = int(y2)
-                xd = int(xd)
-                yd = int(yd)
-
-            if r_type == list:
-                row.append([x1, y1, x2, y2])
-            else:
-                row[c] = {
-                    "x_1": x1,
-                    "y_1": y1,
-                    "x_2": x2,
-                    "y_2": y2,
-                    "w": xd,
-                    "h": yd
-                }
-
-        if r_type == list:
-            tiles.append(row)
-        else:
-            tiles[r] = row
-
-    return tiles
-
-
-def clamp_rect(rect_bounds, out_bounds, maintain_inner_dims=False):
-    """Calculate the 'clamped' rectangle within the outer bounds."""
-    assert isinstance(rect_bounds, tuple) or isinstance(rect_bounds, list) or isinstance(rect_bounds, Rect2), f"Error, param 'rect_bounds; needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got{rect_bounds}"
-    assert isinstance(out_bounds, tuple) or isinstance(out_bounds, list) or isinstance(out_bounds, Rect2), f"Error, param 'out_bounds' needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got {out_bounds}"
-
-    if isinstance(rect_bounds, tuple) or isinstance(rect_bounds, list):
-        assert len(rect_bounds) == 4, f"Error, list or tuple needs to be length 4. Got {rect_bounds}"
-    else:
-        # assuming rect was passed in format x, y, w, h, so the call tkinter_rect won't mess thing up.
-        rect_bounds = list(rect_bounds.tkinter_rect())[:4]
-
-    if isinstance(out_bounds, tuple) or isinstance(out_bounds, list):
-        assert len(out_bounds) == 4, f"Error, list or tuple needs to be length 4. Got {out_bounds}"
-    else:
-        # assuming rect was passed in format x, y, w, h, so the call tkinter_rect won't mess thing up.
-        out_bounds = list(out_bounds.tkinter_rect())[:4]
-
-    rx1, ry1, rx2, ry2 = rect_bounds
-    bx1, by1, bx2, by2 = out_bounds
-    w = rx2 - rx1
-    h = ry2 - ry1
-    nx1 = clamp(bx1, rx1, bx2)
-    ny1 = clamp(by1, ry1, by2)
-    nx2 = clamp(bx1, rx2, bx2)
-    ny2 = clamp(by1, ry2, by2)
-    nw = nx2 - nx1
-    nh = ny2 - ny1
-    if not maintain_inner_dims:
-        nx2 = clamp(bx1, nx1 + w, bx2)
-        ny2 = clamp(by1, ny1 + h, by2)
-    else:
-        # print(f"A {nx1=}, {ny1=}, {nx2=}, {ny2=}, {bx1=}, {by1=}, {bx2=}, {by2=}, {w=}, {h=}, {nw=}, {nh=}")
-
-        if nx1 >= bx1:
-            if (nx2 - nx1) < w:
-                nx1 = clamp(bx1, nx2 - w, bx2)
-        else:
-            nx1 = bx1
-        if nx2 <= bx2:
-            if nw < w:
-                nx2 = clamp(bx1, nx1 + w, bx2)
-        else:
-            nx2 = bx2
-
-        if ny1 >= by1:
-            if (ny2 - ny1) < h:
-                ny1 = clamp(by1, ny2 - h, by2)
-        else:
-            ny1 = by1
-        if ny2 <= by2:
-            if nh < h:
-                ny2 = clamp(by1, ny1 + h, by2)
-        else:
-            ny2 = by2
-        # print(f"B {nx1=}, {ny1=}, {nx2=}, {ny2=}, {bx1=}, {by1=}, {bx2=}, {by2=}, {w=}, {h=}, {nw=}, {nh=}")
-
-    return [
-        nx1,
-        ny1,
-        nx2,
-        ny2
-    ]
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "

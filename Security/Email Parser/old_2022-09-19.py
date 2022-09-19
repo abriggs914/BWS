@@ -1,15 +1,13 @@
 import datetime
 import tkinter
 from colour_utility import *
-import pytz
 
 import win32com.client
-import dateutil.parser
 #other libraries to be used in this script
 import os
 
 import easygui
-from utility import *
+from utility_41 import *
 # import tkinterdnd2
 from tkinter import *
 import tkinter.filedialog as filedialog
@@ -180,6 +178,8 @@ class ArmstrongEmail:
             print(dict_print(transaction_dates))
 
 
+if __name__ == "__main__":
+
     # root = tkinterdnd2.Tk()
     # root.title("CSV to PDF")
     # WIDTH = 1100
@@ -189,7 +189,7 @@ class ArmstrongEmail:
     # app = App(root)
     # app.run()
 
-    def load_armstrong_emails(self, count=None):
+    def load_armstrong_emails(count=None):
         outlook = win32com.client.Dispatch('outlook.application')
         mapi = outlook.GetNamespace("MAPI")
         for account in mapi.Accounts:
@@ -234,245 +234,96 @@ class ArmstrongEmail:
         return email_items
 
 
-class EmailParser(tkinter.Tk):
+    MAX_EMAILS = 50000
+    EMAIL_TABLE_COLOURS = [(rgb_to_hex((175, 175, 175)), rgb_to_hex((0, 0, 0))), (rgb_to_hex((255, 255, 255)), rgb_to_hex((0, 0, 0)))]
+    BG_SELECTED_ROW = rgb_to_hex(LIGHTBLUE_2)
+    BG_SELECTED_COL = rgb_to_hex(ORANGE)
+    WINDOW = tkinter.Tk()
+    EMAIL_DATA = load_armstrong_emails()
+    WIDTH, HEIGHT = 900, 600
+    WINDOW.geometry(f"{WIDTH}x{HEIGHT}")
+    START_DATE = tkinter.StringVar()
+    END_DATE = tkinter.StringVar()
+    EMAIL_TABLE_HEADER = tkinter.StringVar(value="Emails:")
+    SELECTED = {
+        "row": None,
+        "col": None,
+        "mouse": None
+    }
 
-    def __init__(
-        self,
-        MAX_EMAILS=50000,
-        WIDTH=900,
-        HEIGHT=600
+    F_date_widget = tkinter.Frame(WINDOW)
+    F_date_buttons = tkinter.Frame(F_date_widget)
+    F_date_labels = tkinter.Frame(F_date_widget)
+    L_start_date = tkinter.Label(F_date_labels, text="Start Date:")
+    L_end_date = tkinter.Label(F_date_labels, text="End Date:")
+    TI_start_date = tkinter.Entry(F_date_buttons, textvariable=START_DATE)
+    TI_end_date = tkinter.Entry(F_date_buttons, textvariable=END_DATE)
 
-    ):
-        super().__init__()
-        self.MAX_EMAILS = MAX_EMAILS
-        self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
-        self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
+    F_email_table = tkinter.Frame(WINDOW)
+    L_email_table_header = tkinter.Entry(F_email_table, textvariable=EMAIL_TABLE_HEADER)
 
-        self.EMAIL_DATA = self.load_armstrong_emails()
-
-        self.EMAIL_TABLE_COLOURS = [(rgb_to_hex((175, 175, 175)), rgb_to_hex((0, 0, 0))), (rgb_to_hex((255, 255, 255)), rgb_to_hex((0, 0, 0)))]
-        self.BG_SELECTED_ROW = rgb_to_hex(LIGHTBLUE_2)
-        self.BG_SELECTED_COL = rgb_to_hex(ORANGE)
-        self.START_DATE = tkinter.StringVar()
-        self.END_DATE = tkinter.StringVar()
-        self.EMAIL_TABLE_HEADER = tkinter.StringVar(value="Emails:")
-        self.SELECTED = {
-            "row": None,
-            "col": None,
-            "mouse": None
-        }
-
-        self.F_date_widget = tkinter.Frame(self)
-        self.F_date_buttons = tkinter.Frame(self.F_date_widget)
-        self.F_date_labels = tkinter.Frame(self.F_date_widget)
-        self.L_start_date = tkinter.Label(self.F_date_labels, text="Start Date:")
-        self.L_end_date = tkinter.Label(self.F_date_labels, text="End Date:")
-        self.TI_start_date = tkinter.Entry(self.F_date_buttons, textvariable=self.START_DATE)
-        self.TI_end_date = tkinter.Entry(self.F_date_buttons, textvariable=self.END_DATE)
-
-        self.F_email_table = tkinter.Frame(self)
-        self.L_email_table_header = tkinter.Entry(self.F_email_table, textvariable=self.EMAIL_TABLE_HEADER)
-
-        # list of alternating row EMAIL_TABLE_COLOURS (bg, fg)
-        for i in range(clamp(0, len(self.EMAIL_DATA), self.MAX_EMAILS)):
-            # only showing date, subject, and body[:25] -> 3 columns
-            bg = self.EMAIL_TABLE_COLOURS[i % len(self.EMAIL_TABLE_COLOURS)][0]
-            fg = self.EMAIL_TABLE_COLOURS[i % len(self.EMAIL_TABLE_COLOURS)][1]
-            for j in range(3):
-                var = self.EMAIL_DATA[i][f'var{j+1}']
-                self.EMAIL_DATA[i][f'col{j+1}'] = tkinter.Entry(self.F_email_table, textvariable=var, bg=bg, fg=fg, width=50,
-                                                      state="readonly", readonlybackground=bg)
-                self.EMAIL_DATA[i][f'col{j+1}'].grid(row=i + 1, column=j + 1)
-                self.EMAIL_DATA[i][f'col{j+1}'].bind("<Button-1>", self.click_email_table)
-
-        self.L_start_date.pack()
-        self.L_end_date.pack()
-        self.TI_start_date.pack()
-        self.TI_end_date.pack()
-        self.F_date_buttons.pack(side=tkinter.RIGHT)
-        self.F_date_labels.pack(side=tkinter.LEFT)
-        self.F_date_widget.pack()
-
-        self.F_email_table.pack()
-
-    def load_armstrong_emails(self, count=None):
-        outlook = win32com.client.Dispatch('outlook.application')
-        mapi = outlook.GetNamespace("MAPI")
-        for account in mapi.Accounts:
-            print(account)
-
-        # verified
-        armstrong_folder = mapi.Folders.Item("Avery Briggs").Folders.Item("Armstrong").Items
-        # email = armstrong_folder.GetFirst()
-        email = armstrong_folder.GetLast()
-        email_items = {}
-        i = 0
-
-        # general updates come from infor@armcom.ca
-        while email:
-            try:
-                print(f"i:{i}, email: {email}")
-                email_data = dict()
-                email_data['sent_on'] = getattr(email, 'SentOn', '<UNKNOWN>')
-                email_data['sender'] = getattr(email, 'SenderEmailAddress', '<UNKNOWN>')
-                email_data['receiver'] = getattr(email, 'to', '<UNKNOWN>')
-                email_data['subject'] = getattr(email, 'subject', '<UNKNOWN>')
-                email_data['cc'] = getattr(email, 'cc', '<UNKNOWN>')
-                email_data['bcc'] = getattr(email, 'bcc', '<UNKNOWN>')
-                email_data['body'] = getattr(email, 'body', '<UNKNOWN>')[:25]
-                email_data["var1"] = tkinter.StringVar(value=email_data['sent_on'])  # date
-                email_data["var2"] = tkinter.StringVar(value=email_data['subject'])  # subject
-                email_data["var3"] = tkinter.StringVar(value=email_data['body'][:25])  # body[:25]
-                email_data["col1"] = None  # date
-                email_data["col2"] = None  # subject
-                email_data["col3"] = None  # body[:25]
-                email_items[i] = email_data
-                print(f"\tdate: {email_data['sent_on']},\n\tfrom:\n\t{email_data['sender']},\n\tsubject:\n\t{email_data['subject']},\nbody: {email_data['body']}")
-            except Exception as ex:
-                print("Error processing mail", ex)
-            i += 1
-            if count is not None and i >= count:
-                break
-            email = armstrong_folder.GetPrevious()
-            # email = armstrong_folder.GetNext()
-
-        print(dict_print(email_items, "Email Items"))
-        return email_items
-
-    def get_row(self, mouse):
-        bounds = Rect2(self.F_email_table.winfo_rootx(), self.F_email_table.winfo_rooty(), self.F_email_table.winfo_width(), self.F_email_table.winfo_height())
+    def get_row(mouse):
+        bounds = Rect2(F_email_table.winfo_rootx(), F_email_table.winfo_rooty(), F_email_table.winfo_width(), F_email_table.winfo_height())
         p = (mouse[1] - bounds.y) / bounds.h
-        rows = clamp(0, len(self.EMAIL_DATA), self.MAX_EMAILS)
+        rows = clamp(0, len(EMAIL_DATA), MAX_EMAILS)
         print(f"mouse: {mouse}, bounds: ({bounds.x}, {bounds.y}), X ({bounds.w}x{bounds.h}), p: {p}, rows: {rows}, res: {int(p * rows)}")
         return int(p * rows)
 
-    def get_col(self, mouse):
-        bounds = Rect2(self.F_email_table.winfo_rootx(), self.F_email_table.winfo_rooty(), self.F_email_table.winfo_width(), self.F_email_table.winfo_height())
+    def get_col(mouse):
+        bounds = Rect2(F_email_table.winfo_rootx(), F_email_table.winfo_rooty(), F_email_table.winfo_width(), F_email_table.winfo_height())
         p = (mouse[0] - bounds.x) / bounds.w
         cols = 3
         print(f"mouse: {mouse}, bounds: ({bounds.x}, {bounds.y}), X ({bounds.w}x{bounds.h}), p: {p}, cols: {cols}, res: {int(p * cols)}")
         return int(p * cols)
 
-    def click_email_table(self, event):
+    def click_email_table(event):
         global SELECTED
         mouse = event.x_root, event.y_root
         # print(f"clicked table! mouse: {mouse}", dir(event))
-        row_idx = self.get_row(mouse)
-        col_idx = self.get_col(mouse)
+        row_idx = get_row(mouse)
+        col_idx = get_col(mouse)
         SELECTED.update({"row": row_idx, "col": col_idx, "mouse": mouse})
-        for r in range(clamp(0, len(self.EMAIL_DATA), self.MAX_EMAILS)):
+        for r in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
             if r == row_idx:
                 # print(f"colouring: row: {r}, col: {BG_SELECTED_ROW}")
                 for i in range(3):
-                    self.EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=self.BG_SELECTED_ROW)
+                    EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=BG_SELECTED_ROW)
             else:
-                bg = self.EMAIL_TABLE_COLOURS[r % len(self.EMAIL_TABLE_COLOURS)][0]
-                fg = self.EMAIL_TABLE_COLOURS[r % len(self.EMAIL_TABLE_COLOURS)][1]
+                bg = EMAIL_TABLE_COLOURS[r % len(EMAIL_TABLE_COLOURS)][0]
+                fg = EMAIL_TABLE_COLOURS[r % len(EMAIL_TABLE_COLOURS)][1]
                 # print(f"colouring: row: {r}: bg: {bg}")
                 for i in range(3):
-                    self.EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=bg)
-            self.EMAIL_DATA[row_idx][f"col{col_idx+1}"].config(readonlybackground=self.BG_SELECTED_COL)
+                    EMAIL_DATA[r][f"col{i+1}"].config(readonlybackground=bg)
+            EMAIL_DATA[row_idx][f"col{col_idx+1}"].config(readonlybackground=BG_SELECTED_COL)
             for i in range(3):
-                self.EMAIL_DATA[r][f"col{i+1}"].update()
+                EMAIL_DATA[r][f"col{i+1}"].update()
+
+    # list of alternating row EMAIL_TABLE_COLOURS (bg, fg)
+    for i in range(clamp(0, len(EMAIL_DATA), MAX_EMAILS)):
+        # only showing date, subject, and body[:25] -> 3 columns
+        bg = EMAIL_TABLE_COLOURS[i % len(EMAIL_TABLE_COLOURS)][0]
+        fg = EMAIL_TABLE_COLOURS[i % len(EMAIL_TABLE_COLOURS)][1]
+        for j in range(3):
+            var = EMAIL_DATA[i][f'var{j+1}']
+            EMAIL_DATA[i][f'col{j+1}'] = tkinter.Entry(F_email_table, textvariable=var, bg=bg, fg=fg, width=50,
+                                                  state="readonly", readonlybackground=bg)
+            EMAIL_DATA[i][f'col{j+1}'].grid(row=i + 1, column=j + 1)
+            EMAIL_DATA[i][f'col{j+1}'].bind("<Button-1>", click_email_table)
 
 
-class ArmstrongEmailBody:
+    L_start_date.pack()
+    L_end_date.pack()
+    TI_start_date.pack()
+    TI_end_date.pack()
+    F_date_buttons.pack(side=tkinter.RIGHT)
+    F_date_labels.pack(side=tkinter.LEFT)
+    F_date_widget.pack()
 
-    def __init__(self, body_in, delim_1="---  Fold Here  ---"):
-        self.delim_1 = delim_1
-        self.body_in = body_in
-
-        self.parse()
-
-    def parse(self):
-        body = self.body_in
-        spl_1 = body.split(self.delim_1)
-        spl_2 = spl_1[-1].split("\n")
-
-
-
-def load_armstrong_emails(count=None):
-    outlook = win32com.client.Dispatch('outlook.application')
-    mapi = outlook.GetNamespace("MAPI")
-    for account in mapi.Accounts:
-        print(account)
-
-    armstrong_folder = mapi.Folders.Item("Avery Briggs").Folders.Item("Armstrong").Items
-    # email = armstrong_folder.GetFirst()
-    email = armstrong_folder.GetLast()
-    email_items = {}
-    i = 0
-
-    # general updates come from infor@armcom.ca
-    while email:
-        try:
-            print(f"i:{i}, email: {email}")
-            email_data = dict()
-            email_data['sent_on'] = dateutil.parser.parse(str(getattr(email, 'SentOn', '<UNKNOWN>')))
-            email_data['T'] = type(email_data["sent_on"])
-            email_data['sender'] = getattr(email, 'SenderEmailAddress', '<UNKNOWN>')
-            email_data['receiver'] = getattr(email, 'to', '<UNKNOWN>')
-            email_data['subject'] = getattr(email, 'subject', '<UNKNOWN>')
-            email_data['cc'] = getattr(email, 'cc', '<UNKNOWN>')
-            email_data['bcc'] = getattr(email, 'bcc', '<UNKNOWN>')
-            email_data['body'] = getattr(email, 'body', '<UNKNOWN>') #[:25]
-            # email_data["var1"] = tkinter.StringVar(value=email_data['sent_on'])  # date
-            # email_data["var2"] = tkinter.StringVar(value=email_data['subject'])  # subject
-            # email_data["var3"] = tkinter.StringVar(value=email_data['body'][:25])  # body[:25]
-            email_data["col1"] = None  # date
-            email_data["col2"] = None  # subject
-            email_data["col3"] = None  # body[:25]
-            email_items[i] = email_data
-            print(f"\tdate: {email_data['sent_on']},\n\tfrom:\n\t{email_data['sender']},\n\tsubject:\n\t{email_data['subject']},\nbody: {email_data['body']}")
-        except Exception as ex:
-            print(f"Error processing mail\n\t{ex=}")
-        i += 1
-        if count is not None and i >= count:
-            break
-        email = armstrong_folder.GetPrevious()
-        # email = armstrong_folder.GetNext()
-
-    print(dict_print(email_items, "Email Items"))
-    return email_items
-
-
-
-if __name__ == "__main__":
-
-    today = datetime.datetime.now()
-    beginning_of_week = first_of_week(today)
-    # today.replace(tzinfo=datetime.timezone.utc)
-    # beginning_of_week.replace(tzinfo=datetime.timezone.utc)
-    today.replace(tzinfo=pytz.utc)
-    date_range = (beginning_of_week, today)
-    emails = load_armstrong_emails()
-    n_emails = len(emails)
-    print(f"{emails=}")
-    first_email_date = emails[0]['sent_on']
-    last_email_date = emails[n_emails - 1]['sent_on']
-    print(f"first= {first_email_date} to {last_email_date}")
-    print(f"{datetime_is_tz_aware(first_email_date)=}\n{datetime_is_tz_aware(last_email_date)=}\n{datetime_is_tz_aware(date_range[0])=}\n{datetime_is_tz_aware(date_range[1])=}")
-
-    print(f"{date_range=}")
-
-    this_weeks = {k: v for k, v in emails.items() if beginning_of_week.timestamp() <= v["sent_on"].timestamp() <= today.timestamp()}
-    this_weeks_keys = this_weeks.keys()
-    print(f"{len(this_weeks)=}, {this_weeks=}")
-
-    for email_key, email_data in this_weeks.items():
-        # for key, data in email_data.items():
-        sent_on = email_data["sent_on"]
-        sender = email_data["sender"]
-        receiver = email_data["receiver"]
-        subject = email_data["subject"]
-        cc = email_data["cc"]
-        bcc = email_data["bcc"]
-        body = email_data["body"]
-        print(f"\t{sent_on=}\n\t{sender=}\n\t{receiver=}\n\t{subject=}\n\t{cc=}\n\t{bcc=}\n\t{body=}")
-
-
+    F_email_table.pack()
 
     # F_email_table
+
+    WINDOW.mainloop()
 
 
     # for i in range(50):
