@@ -138,3 +138,52 @@ WHERE
 	[row_num] = 1
 	AND YEAR([Date]) = 2022
 ORDER BY [Date]
+
+SELECT 
+	[Employees].[2nd Name]
+	, [Employees].[1st Name]
+	, [Date Hired]
+	, [Employees].[Terminated]
+	, [Salary]
+	, [Annual]
+	, *
+FROM
+	[Payroll]
+LEFT JOIN
+	[Employees]
+ON
+	[Payroll].[Emp#] = [Employees].[Emp#]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[ClkEmployee]
+ON
+	[Payroll].[Emp#] = [ClkEmployee].[Employee]
+ORDER BY
+	[Employees].[2nd Name]
+	, [Employees].[1st Name]
+	, [Payroll].[RaiseID]
+;
+
+SELECT 
+	[Employees - Salary].[2nd Name]
+	, [Employees - Salary].[1st Name]
+	, [Date Hired]
+	, [Terminated]
+	, [Salary]
+	, [Annual]
+	, *
+FROM
+	[Payroll]
+LEFT JOIN
+	[Employees - Salary]
+ON
+	[Payroll].[Emp#] = [Employees - Salary].[Emp#]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[BomEmployee]
+ON
+	[Payroll].[Emp#] = [BomEmployee].[Employee]
+ORDER BY
+	[Employees - Salary].[2nd Name]
+	, [Employees - Salary].[1st Name]
+	, [Payroll].[RaiseID]
+
+--SELECT * FROM [Employees]
