@@ -390,7 +390,6 @@ class ArmstrongEmailBody:
         spl_2 = spl_1[-1].split("\n")
 
 
-
 def load_armstrong_emails(count=None):
     outlook = win32com.client.Dispatch('outlook.application')
     mapi = outlook.GetNamespace("MAPI")
