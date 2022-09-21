@@ -241,6 +241,7 @@ class App(tkinter.Tk):
                         self.tv_combo_unit_selection.set("")
                         print("FROM COMBO")
                         success = self.overwrite_tile(ht, drag_unit)
+                        self.calendar_surface.history.append(CalendarSurface.PlacementUndoable())
                         if not success:
                             print(f"NOT SUCCESS")
                         # self.calendar_surface.itemconfigure(tile, fill=random_colour(rgb=False))
