@@ -208,6 +208,11 @@ class NVIS:
             serial[0] = "2"  # Assigned by CVMA
             serial[1] = "X"  # Assigned by CVMA
             serial[2] = "B"  # Assigned by CVMA
+
+            serial[0] = "2"  # Assigned by CVMA
+            serial[1] = "B"  # Assigned by CVMA
+            serial[2] = "9"  # Assigned by CVMA
+
             serial[3] = "B"  # BWS Trailer
             serial[4] = self.details["snc_type"]["Position5"].tolist()[0]  # Type of Trailer
             serial[5] = self.details["snc_type"]["Position6"].tolist()[0]  # Body Type
