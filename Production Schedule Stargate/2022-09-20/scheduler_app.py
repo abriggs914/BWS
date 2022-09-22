@@ -12,6 +12,10 @@ from unit import Unit
 from colour_demo import ColourWidget
 
 
+PROGRAM_MODE = "LIVE"
+# PROGRAM_MODE = "TEST"
+
+
 class App(tkinter.Tk):
 
     def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now()):
@@ -22,7 +26,13 @@ class App(tkinter.Tk):
         self.df_work_days = None
         self.populate_data()
 
+        if self.df_production is None or self.df_work_days is None:
+            tkinter.messagebox.showerror(title="Fatal", message="Error unable to load production data")
+            quit()
+
+        ###############################################################################################################
         # State variables
+        ###############################################################################################################
         self.valid_app_states = ["IDLE", "DRAGGING", "SELECTED"]
         self._app_state = "IDLE"
         self.drag_tile_queue = []
@@ -55,12 +65,15 @@ class App(tkinter.Tk):
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, can_w, can_h, self.start_date)
         self.calendar_surface.populate_units(self.df_production)
 
+        # self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
         self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
         self.tv_btn_insert_combo_choice, self.button_insert_combo_choice = button_factory(self.frame_top_bar, tv_btn="+")
         self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
         self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_export_sql})
         self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
         self.tv_btn_export_sql, self.button_export_sql = button_factory(self.frame_top_bar, tv_btn="<", kwargs_btn={"command": self.click_undo})
+
+        self.debug_tv_show_history, self.debug_show_history = button_factory(self.frame_top_bar, tv_btn="show history", kwargs_btn={"command": self.click_debug_show_history})
 
         # canvas and calendar objects
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
@@ -77,7 +90,9 @@ class App(tkinter.Tk):
         self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal", command=self.calendar_surface.xview,)
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
 
-        # bind event handlers
+        ###############################################################################################################
+        #   bind event handlers
+        ###############################################################################################################
         self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
         self.calendar_surface.bind("<Button-3>", self.click_calendar_surface_left)
         self.calendar_surface.bind("<ButtonRelease-1>", self.release_calendar_surface)
@@ -86,13 +101,17 @@ class App(tkinter.Tk):
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
         self.calendar_surface.bind("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
 
-        # pack widgets
+        ###############################################################################################################
+        #  pack widgets
+        ###############################################################################################################
         self.frame_top_bar.pack()
         self.combo_unit_selection.pack()
         self.button_insert_combo_choice.pack()
         self.button_save_changes.pack()
-        self.debug_label_entry_app_state.pack()
-        self.debug_entry_app_state.pack()
+        if PROGRAM_MODE == "TEST":
+            self.debug_label_entry_app_state.pack()
+            self.debug_entry_app_state.pack()
+            self.debug_show_history.pack()
         self.button_export_sql.pack()
         self.frame_colour_coder.pack()
 
@@ -241,7 +260,6 @@ class App(tkinter.Tk):
                         self.tv_combo_unit_selection.set("")
                         print("FROM COMBO")
                         success = self.overwrite_tile(ht, drag_unit)
-                        self.calendar_surface.history.append(CalendarSurface.PlacementUndoable())
                         if not success:
                             print(f"NOT SUCCESS")
                         # self.calendar_surface.itemconfigure(tile, fill=random_colour(rgb=False))
@@ -365,6 +383,9 @@ class App(tkinter.Tk):
         # print(f"SQL\n\n<{sql_res}>")
         tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
 
+    def click_debug_show_history(self):
+        print(f"self.calendar_surface.history:\n{self.calendar_surface.history}")
+
     def click_undo(self):
         undo_data = self.calendar_surface.undo()
         success, data = undo_data
@@ -393,6 +414,12 @@ class App(tkinter.Tk):
                 values = list(self.combo_unit_selection["values"])
                 values.remove(quote)
                 self.combo_unit_selection.configure(values=values)
+            case 4:
+                # 4 - success - but need to re-colour code
+                unit_to = data["unit_to"]
+                unit_from = data["unit_from"]
+                self.colour_code_dealer(unit_to.InputField2_v2)
+                self.colour_code_dealer(unit_from.InputField2_v2)
             case _:
                 raise ValueError(f"Error undo not successful. Returned {success}\n{msg=}")
         print(f"{success}, {msg=}")
@@ -447,12 +474,28 @@ class App(tkinter.Tk):
         from_rc = self.calendar_surface.tile_to_rc(tag_from)
         s1, s2 = False, False
         if to_rc:
+            # TODO decide if this is a normal placement or a swa.
             r, c = from_rc
-            s1 = self.overwrite_tile(tag_to, unit_in)
-            s2 = self.delete_tile(r, c, unit_in, unplace=False)
+            tr, tc = self.calendar_surface.tile_to_rc(tag_to)
+            unit_from = self.calendar_surface.tile_properties[tr][tc]["unit_in"]
+            already_a_tile = unit_from is not None
+            print(f"Moving a tile {r=}, {c=}, {already_a_tile=}, {unit_in=}, {self.calendar_surface.tile_properties[r][c]['unit_in']=}")
+            if already_a_tile:
+                s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
+                s2 = self.overwrite_tile(tag_from, unit_from, undoable=False)
+                self.calendar_surface.revert_colour(from_rc)
+                self.calendar_surface.revert_colour(to_rc)
+                self.colour_code_dealer(unit_in.InputField2_v2)
+                self.colour_code_dealer(unit_from.InputField2_v2)
+                # s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
+                self.calendar_surface.history.append(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
+            else:
+                s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
+                s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
+                self.calendar_surface.history.append(CalendarSurface.MovementUndoable(r, c, tr, tc, unit_in))
         return s1 and s2
 
-    def delete_tile(self, r, c, unit_in, unplace=True) -> bool:
+    def delete_tile(self, r, c, unit_in, unplace=True, undoable=True) -> bool:
         print(f"delete_tile(self, r, c, unit_in, unplace=True) -> bool:")
         details = self.calendar_surface.tile_properties[r][c]
         string_vars = [
@@ -472,9 +515,11 @@ class App(tkinter.Tk):
             new_list.sort()
             self.combo_unit_selection.configure(values=new_list)
         self.calendar_surface.revert_colour((r, c))
+        if undoable:
+            self.calendar_surface.history.append(CalendarSurface.DeletionUndoable(r, c, unit_in))
         return True
 
-    def overwrite_tile(self, tag_in: int | str, unit_in: Unit) -> bool:
+    def overwrite_tile(self, tag_in: int | str, unit_in: Unit, undoable: bool = True) -> bool:
         print(f"overwrite_tile(self, tag_in: int | str, unit_in: Unit) -> bool:")
         rc = self.calendar_surface.tile_to_rc(tag_in)
         if rc is not None:
@@ -523,6 +568,8 @@ class App(tkinter.Tk):
 
             # tv_text_1.set()
 
+            if undoable:
+                self.calendar_surface.history.append(CalendarSurface.PlacementUndoable(r, c, unit_in))
 
             return True
         return False
@@ -531,6 +578,12 @@ class App(tkinter.Tk):
         print(f"{var_name=}, {index=}, {mode=}, value={getattr(self.frame_colour_coder, 'status_code').get()}")
         info = eval(self.frame_colour_coder.status_code.get())
         self.calendar_surface.colour_code_dealer(info["dealer"], info["colour"])
+
+    def colour_code_dealer(self, dealer_in):
+        if dealer_in:
+            dealer_colour = self.frame_colour_coder.status[dealer_in]
+            if dealer_colour and dealer_colour != "none":
+                self.calendar_surface.colour_code_dealer(dealer_in, dealer_colour)
 
     def get_app_state(self):
         return self._app_state

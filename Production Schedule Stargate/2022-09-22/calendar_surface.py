@@ -1,0 +1,986 @@
+import datetime
+import tkinter
+
+from dateutil.relativedelta import relativedelta
+from colour_utility import *
+from unit import Unit
+from utility import dict_print, date_suffix
+from stg_queries import *
+
+PROGRAM_MODE = "LIVE"
+# PROGRAM_MODE = "TEST"
+
+
+class CalendarSurface(tkinter.Canvas):
+
+    def __init__(
+            self,
+            master,
+            user_name: str,
+            width: int,
+            height: int,
+            start_date: datetime.datetime,
+
+            # colours for date axis legend (Y)
+            row_legend_background_colour: str = rgb_to_hex(GRAY_8),
+            row_legend_outline_colour: str = rgb_to_hex(BLACK),
+            row_legend_active_background_colour: str = rgb_to_hex(GRAY_42),
+            row_legend_active_outline_colour: str = rgb_to_hex(BLACK),
+
+            # colours for trailer line axis legend (X)
+            col_legend_background_colour: str = rgb_to_hex(GRAY_8),
+            col_legend_outline_colour: str = rgb_to_hex(BLACK),
+            col_legend_active_background_colour: str = rgb_to_hex(GRAY_42),
+            col_legend_active_outline_colour: str = rgb_to_hex(BLACK),
+
+            # regular tile colour
+            tile_background_colour: str = rgb_to_hex(GRAY_17),
+            tile_outline_colour: str = rgb_to_hex(BLACK),
+            active_fill_colour: str = rgb_to_hex(GRAY_66),
+            active_outline_colour: str = rgb_to_hex(YELLOW_3),
+
+            # weekend tile colour
+            tile_wkd_background_colour: str = rgb_to_hex(GRAY_8),
+            tile_wkd_outline_colour: str = rgb_to_hex(GRAY_8),
+            active_wkd_fill_colour: str = rgb_to_hex(GRAY_8),
+            active_wkd_outline_colour: str = rgb_to_hex(GRAY_8),
+
+            # other colours
+            selected_colour: str = rgb_to_hex(FIREBRICK_1),
+            drag_colour: str = rgb_to_hex(FIREBRICK_4),
+
+            n_visible_cols: int = 14,
+            sql_output_file_name: str = "./{ts}_sql_output.sql",
+            text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "IsGalv"]
+    ):
+        super().__init__(master, width=width, height=height)
+        self.canvas_width = width
+        self.canvas_height = height
+        self.user_name = user_name
+        self.lines = [f"T{i}" for i in range(1, 7)]
+        self.start_date = start_date
+        self.end_date = self.start_date + relativedelta(months=6)
+        self.dates_list = [self.start_date + datetime.timedelta(days=i) for i in range((self.end_date - self.start_date).days)] + [self.end_date]
+        self.rows = len(self.lines)
+        self.cols = (self.end_date - self.start_date).days
+        self.max_tiles = self.rows * self.cols
+        self.text_order = text_order
+
+        self.n_visible_cols = n_visible_cols
+        self.visible_cols = range(self.n_visible_cols)
+        self.tile_background_colour = tile_background_colour
+        self.tile_outline_colour = tile_outline_colour
+        self.active_fill_colour = active_fill_colour
+        self.active_outline_colour = active_outline_colour
+
+        self.tile_wkd_background_colour = tile_wkd_background_colour
+        self.tile_wkd_outline_colour = tile_wkd_outline_colour
+        self.active_wkd_fill_colour = active_wkd_fill_colour
+        self.active_wkd_outline_colour = active_wkd_outline_colour
+
+        self.row_legend_background_colour = row_legend_background_colour
+        self.row_legend_outline_colour = row_legend_outline_colour
+        self.row_legend_active_background_colour = row_legend_active_background_colour
+        self.row_legend_active_outline_colour = row_legend_active_outline_colour
+        self.col_legend_background_colour = col_legend_background_colour
+        self.col_legend_outline_colour = col_legend_outline_colour
+        self.col_legend_active_background_colour = col_legend_active_background_colour
+        self.col_legend_active_outline_colour =col_legend_active_outline_colour
+        self.selected_colour = selected_colour
+        self.drag_colour = drag_colour
+
+        self.tile_space = 3
+        self.tile_width = None
+        self.tile_height = None
+        # self.texts = []
+        self.tile_properties = []  # list of dictionaries containing the rest of the required tile data (text id and tvs)
+        self.tiles = self.init_tiles()  # list of canvas tags for the cells len = n_rows * n_cols
+        self.units = {None: None, "": None}  # dictionary of Stargate quote numbers.
+        # self.undo_actions = 0
+
+        self.sql_output_file_name = sql_output_file_name
+        self.history = []
+        self.redo_history = []
+
+        print(f"{self.start_date=}, {self.end_date=}")
+
+    def quote_rc(self, quote_in) -> tuple | None:
+        """Retrieve the row and column for the specified quote number."""
+        if quote_in in self.units:
+            for r, tile_row in enumerate(self.tiles):
+                for c, tile in enumerate(tile_row):
+                    unit = self.tile_properties[r][c]["unit_in"]
+                    if unit:
+                        print(f"\t\t checking {unit=}")
+                        if unit.SGQuote == quote_in:
+                            return r, c
+        # print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
+        return None
+
+    def init_tiles(self) -> list:
+        ts = self.tile_space  # space between tiles
+        tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
+        th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
+        self.tile_width = tw
+        self.tile_height = th
+
+        print(f"{self.rows=}, {self.cols=}")
+
+        tiles = []
+        n_slices = (self.rows + 1) * (self.cols + 1)
+        print(f"{n_slices=}")
+        grad = rainbow_gradient(n_slices)
+        # TODO recalculate these positions so that the left most column is unaffected by the 'timeline' shifting
+        #  Currently this tile is treated the same as all of the others
+        for r in range(self.rows + 1):
+            row = []
+            row_2 = []
+            tile_detail_row = []
+            for c in range(self.cols + 1):
+                x1 = (c * tw) + ((c + 1) * ts) + (ts / 2)
+                y1 = (r * th) + ((r + 1) * ts) + (ts / 2)
+                x2 = ((c + 1) * tw) + ((c + 1) * ts) + (ts / 2)
+                y2 = ((r + 1) * th) + ((r + 1) * ts) + (ts / 2)
+                xd = x2 - x1
+                yd = y2 - y1
+
+                tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour = self.calc_colours(r, c)
+
+                row.append(self.create_rectangle(
+                    x1, y1, x2, y2,
+                    fill=tile_colour,
+                    outline=outline_colour,
+                    activeoutline=active_outline_colour,
+                    activefill=active_fill_colour
+                ))
+                # text_1 = tkinter.StringVar(self, name=self.cal, value=f"{r-1=}")
+                text_1 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 1), value=f"{r-1=}")
+                text_2 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 2), value=f"{c-1=}")
+                text_3 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 3), value=f"")
+                text_4 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 4), value=f"")
+                text_5 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 5), value=f"")
+
+                if PROGRAM_MODE == "LIVE":
+                    # if r == 0 and c > 0:
+                    #     # text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
+                    #     text_1.set(f"{self.dates_list[c - 1]:%Y-%m-%d}")
+                    #     text_2.set("")
+                    # elif c == 0 and r > 0:
+                    #     text_1.set("")
+                    #     text_2.set(f"{self.lines[r - 1]}")
+                    # else:
+                    #     text_1.set("")
+                    #     text_2.set("")
+                    if r == 0 and c > 0:
+                        # text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
+                        today = self.dates_list[c - 1]
+                        text_1.set(f"{today:%Y}")
+                        text_2.set(f"{today:%B}")
+                        text_3.set(f"{today:%d}")
+                        text_3.set("{}{}".format(int(text_3.get()), date_suffix(int(text_3.get()))))
+                        text_4.set(f"{today:%A}")
+                    elif c == 0 and r > 0:
+                        text_1.set("")
+                        text_2.set(f"{self.lines[r - 1]}")
+                    else:
+                        text_1.set("")
+                        text_2.set("")
+                else:
+                    if r == 0 and c > 0:
+                        text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
+                        text_2.set("")
+                    if c == 0 and r > 0:
+                        text_1.set("")
+                        text_2.set(f"{self.lines[r - 1]}")
+
+                    text_3.set(f"{row[-1]}")
+                    text_4.set(f"{r=}")
+                    text_5.set(f"{c=}")
+
+                offset = (1 * yd / 10)
+                t1_x1, t1_y1 = x1 + (xd / 2), y1 + offset
+                t2_x1, t2_y1 = x1 + (xd / 2), y1 + (1 * yd / 5) + offset
+                t3_x1, t3_y1 = x1 + (xd / 2), y1 + (2 * yd / 5) + offset
+                t4_x1, t4_y1 = x1 + (xd / 2), y1 + (3 * yd / 5) + offset
+                t5_x1, t5_y1 = x1 + (xd / 2), y1 + (4 * yd / 5) + offset
+
+                text_1.trace_variable("w", self.update_canvas_text)
+                text_2.trace_variable("w", self.update_canvas_text)
+                text_3.trace_variable("w", self.update_canvas_text)
+                text_4.trace_variable("w", self.update_canvas_text)
+                text_5.trace_variable("w", self.update_canvas_text)
+
+                for i in range(1, 6):
+                    wip_x = eval(f"t{i}_x1")
+                    wip_y = eval(f"t{i}_y1")
+                    wip_t = eval(f"text_{i}")
+                    row_2.append(
+                        self.create_text(
+                            wip_x,
+                            wip_y,
+                            text=wip_t.get(),
+                            fill=font_colour,
+                            width=tw,
+                            activefill=active_fill_colour
+                        )
+                    )
+
+                # row_2.append(self.create_text(
+                #     t1_x1,
+                #     t1y1,
+                #     text=text_1,
+                #     fill=font_colour,
+                #     width=tw,
+                #     activefill=active_fill_colour
+                # ))
+                # row_2.append(self.create_text(
+                #     x1 + (xd / 2),
+                #     y1 + (3 * yd / 4),
+                #     text=text_2,
+                #     fill=font_colour,
+                #     width=tw,
+                # ))
+                tile_details = {
+                    "tag_rect": row[-1],
+                    "x1": x1,
+                    "y1": y1,
+                    "x2": x2,
+                    "y2": y2,
+
+                    "t1_tag": row_2[-5],
+                    "t1_x1": t1_x1,
+                    "t1_y1": t1_y1,
+                    "text_1": text_1,
+
+                    "t2_tag": row_2[-4],
+                    "t2_x1": t2_x1,
+                    "t2_y1": t2_y1,
+                    "text_2": text_2,
+
+                    "t3_tag": row_2[-3],
+                    "t3_x1": t3_x1,
+                    "t3_y1": t3_y1,
+                    "text_3": text_3,
+
+                    "t4_tag": row_2[-2],
+                    "t4_x1": t4_x1,
+                    "t4_y1": t4_y1,
+                    "text_4": text_4,
+
+                    "t5_tag": row_2[-1],
+                    "t5_x1": t5_x1,
+                    "t5_y1": t5_y1,
+                    "text_5": text_5,
+
+                    "unit_in": None
+                }
+
+                tile_detail_row.append(tile_details)
+            tiles.append(row)
+            # self.texts.append(row_2)
+            self.tile_properties.append(tile_detail_row)
+
+        return tiles
+
+    def calc_colours(self, r, c):
+        # tile_colour = rgb_to_hex(next(grad))
+        tile_colour = self.tile_background_colour
+        outline_colour = self.tile_outline_colour
+        active_fill_colour = self.active_fill_colour
+        active_outline_colour = self.active_outline_colour
+        if r == 0 and c > 0:
+            tile_colour = self.col_legend_background_colour
+            outline_colour = self.col_legend_outline_colour
+            active_fill_colour = self.col_legend_active_background_colour
+            active_outline_colour = self.col_legend_active_outline_colour
+        if c == 0 and r > 0:
+            tile_colour = self.row_legend_background_colour
+            outline_colour = self.row_legend_outline_colour
+            active_fill_colour = self.row_legend_active_background_colour
+            active_outline_colour = self.row_legend_active_outline_colour
+        if r == 0 and c == 0:
+            tile_colour = rgb_to_hex(BLACK)
+            outline_colour = rgb_to_hex(WHITE)
+            active_fill_colour = rgb_to_hex(WHITE)
+            active_outline_colour = rgb_to_hex(BLACK)
+
+        if c > 0:
+            dat = self.dates_list[c - 1]
+            if dat.weekday() > 4:
+                tile_colour = self.tile_wkd_background_colour
+                outline_colour = self.tile_wkd_outline_colour
+                active_fill_colour = self.active_wkd_fill_colour
+                active_outline_colour = self.active_wkd_outline_colour
+
+        font_colour = rgb_to_hex(font_foreground(tile_colour))
+        return tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour
+
+    def sv_keyify(self, r, c, num):
+        s = "___"
+        return "tv{s}{r}{s}{c}{s}{num}".format(r=f"000{r}"[-3:], c=f"000{c}"[-3:], num=f"000{num}"[-3:], s=s)
+
+    def sv_dekeyify(self, key):
+        s = "___"
+        spl = key.split(s)
+        return list(map(int, spl[1:]))
+
+    def update_canvas_text(self, var_name, index, mode):
+        r_c_num = self.sv_dekeyify(var_name)
+        if r_c_num:
+            r, c, num = r_c_num
+            tag = self.tile_properties[r][c][f"t{num}_tag"]
+            value = self.tile_properties[r][c][f'text_{num}'].get()
+            self.itemconfigure(tag, text=value)
+            # print(f"retrieving: {value=}")
+            print(f"A{var_name=}, {index=}, {mode=}, {value=}, {tag=}")
+        # self.itemconfigure()
+        else:
+            print(f"B{var_name=}, {index=}, {mode=}, {r_c_num=}")
+
+    def rc_at_xy(self, xy: tuple[int, int]) -> tuple[int, int] | None:
+        """Retrieve the row and column indices for the tile located at grid coordinates x, y."""
+        x, y = xy
+        cx, cy = self.canvasx(x), self.canvasy(y)
+        for r, tile_row in enumerate(self.tiles):
+            for c, tile in enumerate(tile_row):
+                bbox = self.bbox(tile)
+                if bbox:
+                    if bbox[0] <= cx <= bbox[2] and bbox[1] <= cy <= bbox[3]:
+                        return r, c
+        return None
+
+    def tile_at_xy(self, xy: tuple[int, int]) -> int | None:
+        """Retrieve the tile tag at grid coordinates x, y."""
+        rc = self.rc_at_xy(xy)
+        if rc:
+            return self.tiles[rc[0]][rc[1]]
+        return None
+
+    def quote_at_xy(self, xy: tuple[int, int]) -> Unit | None:
+        """Retrieve the unit object at grid coordinates x, y."""
+        rc = self.rc_at_xy(xy)
+        if rc:
+            r, c = rc
+            return self.tile_properties[r][c]["unit_in"]
+        return None
+
+    def tile_to_rc(self, tag_in: int, extend=False) -> tuple[int, int] | None:
+        """Reverse look-up on self.tiles using canvas tag ids. Use extend to also search the text tags."""
+        for r, tile_row in enumerate(self.tiles):
+            for c, tile in enumerate(tile_row):
+                if tile == tag_in:
+                    return r, c
+                if extend:
+                    details = self.tile_properties[r][c]
+                    tags = [
+                        tag_rect := details["tag_rect"],
+                        tag_t1 := details["t1_tag"],
+                        tag_t2 := details["t2_tag"],
+                        tag_t3 := details["t3_tag"],
+                        tag_t4 := details["t4_tag"],
+                        tag_t5 := details["t5_tag"]
+                    ]
+                    if any(list(map(lambda t: t == tag_in, tags))):
+                        return r, c
+        return None
+
+    def rc_bbox(self, rc):
+        """Retrieve the bbox for the tile located at row r and column c."""
+        return self.bbox(self.tiles[rc[0]][rc[1]])
+        # print(f"{self.tiles=}")
+        # x, y = self.winfo_pointerxy()
+        # print(f"{self.canvasx(x)=}, {self.canvasy(y)}")
+        # x, y = xy
+        # print(f"{self.bbox('all')=}, {x=}, {y=}, {self.canvasx(x)=}, {self.canvasy(y)=}")
+        # for tile_row in self.tiles:
+        #     # for col_idx in range(self.visible_cols.start, self.visible_cols.stop + 1):
+        #     #     tile = tile_row[col_idx]
+        #     for tile in tile_row:
+        #         bbox = self.bbox(tile)
+        #         print(f"\t\t{tile=}, {x=}, {y=}, {bbox=}, {self.canvasx(x)=}, {self.canvasy(y)=}")
+        #         if bbox[0] <= self.canvasx(x) <= bbox[2] and bbox[1] <= self.canvasy(y) <= bbox[3]:
+        #             return tile
+        # return None
+
+    def populate_units(self, df: pandas.DataFrame) -> None:
+        assert isinstance(df, pandas.DataFrame)
+        for row in df.iterrows():
+            # df["Available Date"] = pandas.to_datetime(df["Available Date"])
+            values = row[1].tolist()
+            # print(f"{len(values)=}, {values=}")
+            new_unit = Unit(*values).init()
+            # print(f"{unit_in=}, {list(unit_in)=}")
+            sgquote = new_unit.SGQuote
+            self.units[sgquote] = new_unit
+            avail_date = new_unit.Available_Date
+            finish_date_1 = new_unit.job_finish_date_v2
+            finish_date_2 = new_unit.Finish_Date
+            # print(f"LINES: {unit_in.job_start_date_v2=}, {unit_in.job_finish_date_v2=}, {unit_in.Available_Date=}, {unit_in.Delivery_Date=}, {unit_in.Finish_Date=}")
+            # print(f"\t\t{new_unit=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}")
+            # print(f"{self.start_date=}, {self.end_date=}")
+            date_idx = None
+            new_date = None
+            if avail_date and (self.start_date <= avail_date <= self.end_date):
+                # print(f"\t\tVALID avail_date!!")
+                new_date = avail_date
+            elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
+                # print(f"\t\tVALID finish_date_1!!")
+                new_date = finish_date_1
+
+            if new_date:
+                date_idx = self.dates_list.index(new_date) + 1
+            # elif finish_date_2 and finish_date_1 != "None" and (self.start_date <= finish_date_2 <= self.end_date):
+            #     print(f"\t\tVALID finish_date_2!!")
+            #     date_idx = self.dates_list.index(finish_date_2) + 1
+            else:
+                print(f"{sgquote=}, {avail_date=}, {finish_date_1=}, {finish_date_2=}  not found.")
+
+            line_idx = None
+            new_line = None
+            if new_unit.WO_Line_1:
+                new_line = new_unit.WO_Line_1
+            elif new_unit.WO_Line_2:
+                new_line = new_unit.WO_Line_2
+
+            if new_line:
+                line_idx = self.lines.index(new_line) + 1
+            # print(f"{unit_in}")
+
+            print(f"{line_idx=}, {date_idx=}, {new_line}, {new_date=}, {new_unit=}")
+            if date_idx and line_idx:
+                # new_unit.placed = True
+                print(f"placing tile! at {new_unit=} {line_idx=}, {date_idx=}, {new_unit.history['_placed']=}")
+                new_unit.init_placed = True
+                self.set_rc_with_unit((line_idx, date_idx), new_unit)
+                new_unit.history["_Available_Date"] = [(datetime.datetime.now(), new_unit.gener_id(), new_date)]
+                new_unit.history["_job_start_line_v2"] = [(datetime.datetime.now(), new_unit.gener_id(), new_line)]
+
+    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit, set_style:bool = False) -> None:
+        print(f"SETTING {rc=} with {unit_in=}, {set_style=}")
+        if set_style:
+            r, c = rc
+            tile = self.tiles[r][c]
+            self.set_tile_with_unit_from_tile(tile, tile, unit_in, do_assign=True)
+            self.revert_colour(rc)
+        else:
+            self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
+
+    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False, do_place: bool = True) -> None:
+        """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles."""
+        print(f"set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False) -> None:")
+        self.set_tile_with_unit(to_tag, unit_in, do_assign=do_assign, do_place=do_place)
+        # old_r, old_c = self.tile_to_rc(from_tag)
+        # new_r, new_c = self.tile_to_rc(to_tag)
+        # old_details = self.tile_properties[old_r][old_c]
+        # new_details = self.tile_properties[new_r][new_c]
+        ot1, ot2, ot3, ot4, ot5 = self.get_text_tags(from_tag)
+        nt1, nt2, nt3, nt4, nt5 = self.get_text_tags(to_tag)
+        t_order = self.text_order
+        for i in range(1, 6):
+            for attribute in ['fill', "activefill"]:
+                val = self.itemcget(ot1, attribute)
+                print(f"\t\tSETTING {eval(f'nt{i}')=}'s {attribute=} = {val=}")
+                self.itemconfigure(eval(f"nt{i}"), {attribute: val})
+
+        print(f"{self.get_text_vars(from_tag)=}")
+        for sv, text in zip(self.get_text_vars(to_tag), t_order):
+            print(f"\t{sv=}, {text=}")
+            sv.set(getattr(unit_in, text, "NONE"))
+            print(f"\t\t{sv.get()=}")
+
+    def get_text_tags(self, tile_in):
+        r, c = self.tile_to_rc(tile_in)
+        return (
+            self.tile_properties[r][c]["t1_tag"],
+            self.tile_properties[r][c]["t2_tag"],
+            self.tile_properties[r][c]["t3_tag"],
+            self.tile_properties[r][c]["t4_tag"],
+            self.tile_properties[r][c]["t5_tag"]
+        )
+
+    def get_text_vars(self, tile_in):
+        r, c = self.tile_to_rc(tile_in)
+        return (
+            self.tile_properties[r][c]["text_1"],
+            self.tile_properties[r][c]["text_2"],
+            self.tile_properties[r][c]["text_3"],
+            self.tile_properties[r][c]["text_4"],
+            self.tile_properties[r][c]["text_5"]
+        )
+
+    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit, do_assign: bool = True, do_place=True) -> None:
+        """Associate a unit object with a given tile space. Unit data only, no UI changes."""
+        assert isinstance(unit_in, Unit), "Error param 'unit_in' must be an instance of a Unit."
+        rc = self.tile_to_rc(tag_in)
+        if rc:
+            r, c = rc
+            # SGQuote# | Model No | Dealer Name | WO | Galv
+            text_order = self.text_order
+            details = self.get_text_vars(tag_in)
+            # details = [
+            #     self.tile_properties[r][c]["text_1"],
+            #     self.tile_properties[r][c]["text_2"],
+            #     self.tile_properties[r][c]["text_3"],
+            #     self.tile_properties[r][c]["text_4"],
+            #     self.tile_properties[r][c]["text_5"]
+            # ]
+            keys = unit_in.__dict__.keys()
+            # print(f"LOOK HERE 1 {text_order=}, {details=}")
+            for i, text_tv in enumerate(zip(text_order, details)):
+                text, tv = text_tv
+                text = "_" + text
+                value = text
+                if text in keys:
+                    # print(f"\t\t\tBEFORE {value=}")
+                    value = getattr(unit_in, text, "N/A")
+                    if text == "_IsGalv":
+                        value = value if value != 'N' else ''
+                    # print(f"\t\t\tAFTER {value=}")
+                # print(f"\t\tLOOK HERE 2 {i=}, {text=} = {value=}, {tv.get()=}")
+                tv.set(value)
+                # print(f"\t\t\t{tv.get()=}")
+
+            # print(f"{do_assign=}, {unit_in}")
+            if do_assign:
+                if do_place:
+                    unit_in.placed = True
+                # print(f"{unit_in.history['_placed']=}")
+                unit_in.Available_Date = self.dates_list[c - 1]
+                unit_in.JobStartLine = self.lines[r - 1]
+                unit_in.job_start_line_v2 = self.lines[r - 1]
+            self.tile_properties[r][c]["unit_in"] = unit_in
+            self.units[unit_in.SGQuote] = unit_in
+            # print(dict_print(self.units, "self.units"))
+        else:
+            raise ValueError(f"Error can't assign this tile with this unit_in. {tag_in=}, {unit_in=}")
+
+    def export_tile_sql(self, removed_quotes):
+        """Create a sql file containing batch statements from this session."""
+        print(f"{removed_quotes=}")
+        fn = self.sql_output_file_name.format(ts=datetime.datetime.now().strftime("%Y-%m-%d %H%M"))
+        template = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}'"
+        # template_2 = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = '{d}' WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = '{j}', [JobStartLine] = '{l}' WHERE [SGQuote] = '{q}'"
+        # template_3 = "\n-- {q}\nUPDATE [BWSdb].[dbo].[OrdersV2] SET [Available Date] = NULL WHERE [SGQuote] = '{q}';\nUPDATE [Stargatedb].[dbo].[dtProductionScheduleV2] SET [JobFinishDate] = NULL, [JobStartLine] = NULL WHERE [SGQuote] = '{q}'"
+        template_2 = "\n-- {q}\nINSERT INTO [PDS Updates] ([SGQuote], [AvailableDate], [Line], [UpdaterName]) VALUES ('{q}', '{d}', '{l}', '{u}')"
+        template_3 = "\n-- {q}\nINSERT INTO [PDS Updates] ([SGQuote], [AvailableDate], [Line], [UpdaterName]) VALUES ('{q}', NULL, NULL, '{u}')"
+        result = ""
+        result_2 = ""
+        result_3 = ""
+
+        rq = {quote for quote in set(removed_quotes)}
+        user_name = self.user_name
+
+        for unit_k, unit_o in self.units.items():
+            if unit_k not in [None, "None", ""]:
+                # print(f"{unit_k=}, {unit_o=}")
+                rc = self.quote_rc(unit_k)
+                # print(f"{rc=}")
+                if rc:
+                    # r, c = rc
+                    # tag = self.tiles[r][c]
+                    new_avail_date = unit_o.Available_Date
+                    line = unit_o.JobStartLine
+                    # print(f"{new_avail_date=}")
+                    result += template.format(d=new_avail_date, q=unit_k)
+                    result_2 += template_2.format(d=new_avail_date, q=unit_k, j=new_avail_date, l=line, u=user_name)
+                    if unit_k in rq:
+                        rq.remove(unit_k)
+                # else:
+                #     result += f"\n-- {unit_k}\n"
+                    # raise ValueError(f"{unit_k=} not found!")
+        # print(f"RESULT = <{result}>")
+        if result:
+            with open(fn, "w") as f:
+                f.write(result_2)
+        # print(f"RESULT2 = <{result_2}>")
+
+        # print(f"{rq=}")
+        for quote in rq:
+            result_3 += template_3.format(q=quote)
+        if result_3:
+            with open(fn, "a") as f:
+                # f.write(result)
+                f.write(result_3)
+        # print(f"RESULT3 = <{result_3}>")
+
+        # print(f"{self.tile_properties[0]=}")
+        # for r, prop in enumerate(self.tile_properties):
+        #     for c, det in enumerate(prop):
+        #         print(f"{r=}, {c=}, {det['unit_in']=}")
+        return "\n".join([result_2, result_3])
+
+    def update_tile_sql(self, removed_quotes):
+        """Create a sql file containing batch statements from this session."""
+        sql = self.export_tile_sql(removed_quotes)
+        print(f"SQL\n<{sql}>")
+        if sql:
+            success = commit_update(sql)
+        else:
+            success = False
+        return success
+
+    def remove_tile(self, r, c):
+        # use this one to remove a tile from the UI
+        tile = self.tiles[r][c]
+        vars = self.get_text_vars(tile)
+        for var in vars:
+            var.set("")
+
+    def delete_tile(self, r, c, unplace=True):
+        # use this one to delete the data association between the unit and the tile.
+        details = self.tile_properties[r][c]
+        unit_in = details["unit_in"]
+        if unit_in:
+            quote = unit_in.SGQuote
+            if unplace:
+                self.units[quote].placed = False
+        details["unit_in"] = None
+
+    def undo(self) -> tuple[int, dict[str, object]]:
+        # 1 - success
+        # 0 - failure
+        # 2 - success - but need to re-add a removed tile to the combo list.
+        print(f"CLICK UNDO")
+        fail = False
+        result = (1, {"msg": "success"})
+        if self.history:
+            last = self.history.pop(-1)
+            match type(last):
+                case CalendarSurface.PlacementUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.remove_tile(r, c)
+                    self.delete_tile(r, c)
+                    print(f"END UNDO")
+                    result = (2, {"msg": "Need to replace unit in combo list.", "quote": unit_in.SGQuote})
+                case CalendarSurface.DeletionUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.set_rc_with_unit((r, c), unit_in, set_style=True)
+                    print(f"END UNDO")
+                    result = (3, {"msg": "Need to remove quote from combo list.", "quote": unit_in.SGQuote})
+                case CalendarSurface.MovementUndoable:
+                    unit_in = last.unit_in
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_from, c_from), unit_in)
+                    self.remove_tile(r_to, c_to)
+                case CalendarSurface.SwapUndoable:
+                    unit_from = last.unit_from
+                    unit_to = last.unit_to
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_from, c_from), unit_to)
+                    self.set_rc_with_unit((r_to, c_to), unit_from)
+                    result = (4, {"msg": "Need to recolour code tiles.", "unit_to": unit_to, "unit_from": unit_from})
+                case _:
+                    fail = True
+
+            if not fail:
+                print(f"END UNDO")
+                self.redo_history.append(last)
+                return result
+            else:
+                self.history.append(last)
+        else:
+            fail = True
+
+        if fail:
+            msg = f"Nothing to undo"
+            print(f"END UNDO")
+            return (0, {"msg": msg})
+        # newest = None
+        # currest = None
+        # newest_new_line = None
+        # newest_new_day = None
+        # for unit_k, unit_o in self.units.items():
+        #     if unit_k not in [None, "None", ""]:
+        #         history = unit_o.history
+        #         for k, v in history.items():
+        #
+        #             # if k in ["_placed", "_init_placed"]:
+        #             #     continue
+        #
+        #             # if k in [
+        #             #     "JobStartLine",
+        #             #     "_JobStartLine",
+        #             #     "job_start_line_v2",
+        #             #     "_job_start_line_v2"
+        #             # ]:
+        #             if len(v) > 1:
+        #                 print(f"\t\t{k=}, {len(v)=}, {v=}")
+        #                 last_record = v[-2]
+        #                 t, num, val = last_record
+        #                 curr = v[-1][-1]
+        #
+        #
+        #                 # vs = [(vi[0].strftime("%X %f"), vi[1]) for vi in v]
+        #                 print(f"HERE\t\t{unit_k}, {k=}, {len(v)=} {v=}, {t=}, {num=}, {val=}, {curr=}, {newest=}, {history['_init_placed'][-1][-1]=}")
+        #                 # # ignore tiles that have been placed by app.
+        #                 # if k == "_placed":
+        #                 #     t2, tv = history["_init_placed"][-1]
+        #                 #     if tv and (max(t, t2) - min(t, t2)).seconds < 1:
+        #                 #         print(f"CONTINUING")
+        #                 #         continue
+        #
+        #                 if k in ["_placed", "_init_placed"] and curr and history["_init_placed"][-1][-1]:
+        #                     print(f"CONTINUING")
+        #                     continue
+        #
+        #                 if currest is None or v[-1][0] > currest[0]:
+        #                     print(f"=A")
+        #                     currest = *v[-1], unit_k, k, curr
+        #                 if newest is None or t > newest[0]:
+        #                     print(f"=B")
+        #                     newest = t, num, val, unit_k, k, curr
+        #
+        #                 if v[-1][0] == currest[0] and v[-1][1] > currest[1]:
+        #                     print(f"=C")
+        #                     currest = *v[-1], unit_k, k, curr
+        #                 if t == newest[0] and num > newest[1]:
+        #                     print(f"=D")
+        #                     newest = t, num, val, unit_k, k, curr
+        #
+        #                 if k == "_Available_Date":
+        #                     print(f"=E")
+        #                     if newest_new_day is None or t > newest_new_day[0]:
+        #                         print(f"=F")
+        #                         newest_new_day = t, num, val, unit_k, k, curr
+        #                 if k == "_job_start_line_v2":
+        #                     print(f"=G")
+        #                     if newest_new_line is None or t > newest_new_line[0]:
+        #                         print(f"=H")
+        #                         newest_new_line = t, num, val, unit_k, k, curr
+        # print(f"{newest=}\n{currest=}\n{newest_new_day=}\n{newest_new_line=}")
+        # if newest:
+        #     t, num, val, unit_k, k, curr = newest
+        #     print(f"\t\tUNPACKED {t=}, {num=}, {val=}, {unit_k=}, {k=}, {curr=}")
+        #     if k not in ["_Available_Date", "_job_start_line_v2"]:
+        #         print(f"\t\t\tTHIS IS NOT A MOVEMENT")
+        #         if k == "_placed":
+        #             t, num, val, unit_k, k, curr = currest
+        #             if val:
+        #                 print(f"\t\t\tTHIS IS A COMBO PLACEMENT")
+        #                 unit_in = self.units[unit_k]
+        #                 unit_in.history[k].pop(-1)
+        #                 r, c = self.quote_rc(unit_k)
+        #                 self.remove_tile(r, c)
+        #                 self.delete_tile(r, c)
+        #                 print(f"END UNDO")
+        #                 return (2, {"msg": "Need to replace unit in combo list.", "quote": unit_k})
+        #             else:
+        #                 print(f"\t\t\tTHIS IS A DELETION")
+        #                 unit_in = self.units[unit_k]
+        #                 # print(f"HERE {unit_in=}")
+        #                 unit_in.history[k].pop(-1)
+        #                 date = unit_in.Available_Date
+        #                 line = unit_in.job_start_line_v2
+        #                 print(f"about to return unit_in={unit_in}\n{unit_o=}, {line=}, {date=}")
+        #                 r = self.lines.index(line) + 1
+        #                 c = self.dates_list.index(date) + 1
+        #                 # r, c = self.quote_rc(unit_k)
+        #                 self.set_rc_with_unit((r, c), unit_in, set_style=True)
+        #                 print(f"END UNDO")
+        #                 return (3, {"msg": "Need to remove quote from combo list.", "quote": unit_k})
+        #         else:
+        #             # rc = self.quote_rc(unit_k)
+        #             # r, c = rc
+        #             print(f"OLDEST {t=}, {val=}, {unit_k=}, {k=}, {curr=}")
+        #             unit_in = self.units[unit_k]
+        #             unit_in.history[k].pop(-1)
+        #             old_val = unit_in.history[k][-1][1]
+        #             setattr(unit_in, k, old_val)
+        #             line = unit_in.JobStartLine
+        #             date = unit_in.Available_Date
+        #             r = self.lines.index(line) + 1
+        #             c = self.dates_list.index(date) + 1
+        #             print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr}, {self.lines=}")
+        #             tile = self.tile_properties[r][c]["tag_rect"]
+        #             self.set_tile_with_unit(tile, unit_in)
+        #             # last_val = self.units[unit_k].history[k][-1]
+        #             # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
+        #     else:
+        #         print(f"\t\t\tUNDOING A MOVEMENT")
+        #         t_line, num_line, val_line, unit_k_line, k_line, curr_line = newest_new_line
+        #         unit_in = self.units[unit_k_line]
+        #         unit_in.history[k_line].pop(-1)
+        #         # old_val = unit_in.history[k][-1][1]
+        #         # setattr(unit_in, k, old_val)
+        #         line = curr_line
+        #         line = val_line
+        #         # date = unit_in.Available_Date
+        #         # r = self.lines.index(line) + 1
+        #         # c = self.dates_list.index(date) + 1
+        #         # print(f"FINDING {line=}, {date=}, {r=}, {c=}, {self.lines=}")
+        #         # tile = self.tile_properties[r][c]["tag_rect"]
+        #         # self.set_tile_with_unit(tile, unit_in)
+        #
+        #         t_day, num_day, val_day, unit_k_day, k_day, curr_day = newest_new_day
+        #         # unit_in = self.units[unit_k]
+        #         unit_in.history[k_day].pop(-1)
+        #         # old_val = unit_in.history[k][-1][1]
+        #         # line = unit_in.JobStartLine
+        #         date = curr_day
+        #         date = val_day
+        #         cr = self.lines.index(curr_line) + 1
+        #         cc = self.dates_list.index(curr_day) + 1
+        #         old_tag = self.tile_properties[cr][cc]["tag_rect"]
+        #
+        #         print(f"FINDING {line=}, {date=}, {cr=}, {cc=}, {curr_line=}, {curr_day=}, {val_day=}, {val_line=}")
+        #         print(f"HISTORY == {history['_job_start_line_v2']}")
+        #         for k__, v__ in history.items():
+        #             if len(v) > 1:
+        #                 print(f"{k__=}, {v__=}")
+        #         r = self.lines.index(line) + 1
+        #         c = self.dates_list.index(date) + 1
+        #         setattr(unit_in, k_line, val_line)
+        #         setattr(unit_in, k_day, val_day)
+        #         print(f"FOUNDED {line=}, {date=}, {r=}, {c=}, {cr=}, {cc=}, {curr_line=}, {curr_day=}, {val_day=}, {val_line=}")
+        #         tile = self.tile_properties[r][c]["tag_rect"]
+        #         print(f"ABOUT TO SET TAG={tile} WITH STYLE AND DATA FROM TAG={old_tag} WITH UNIT={unit_in}")
+        #         print(f"RESULTING {unit_in}")
+        #         # self.set_tile_with_unit(tile, unit_in)
+        #         self.set_tile_with_unit_from_tile(old_tag, tile, unit_in, do_assign=True, do_place=False)
+        #         self.remove_tile(cr, cc)
+        #         # last_val = self.units[unit_k].history[k][-1]
+        #         # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
+        #         # self.set_tile_with_unit(tile, unit_in)
+        #
+        #     for quote, unit_in in self.units.items():
+        #         if unit_in is not None:
+        #             for k, dat in unit_in.history.items():
+        #                 if len(dat) > 1:
+        #                     print(f"{unit_in=}\n\t{k=}, {dat=}")
+        #     print(f"END UNDO")
+        #     return (1, {"msg": "success"})
+        # else:
+        #     msg = f"Nothing to undo"
+        #     print(f"END UNDO")
+        #     return (0, {"msg": msg})
+
+    def colour_code_dealer(self, dealer, colour):
+        d = dealer.upper()
+        colour = Colour(colour)
+        b = rgb_to_hex(brighten(colour.rgb_code, 0.25))
+        hc = colour.hex_code
+        fc = font_foreground(colour.rgb_code, rgb=False)
+        af = rgb_to_hex(brighten(fc, 0.25))
+        print(f"{d=}, {colour=}, {b=}, {hc=}, {fc=}, {af=}")
+        for r, row in enumerate(self.tiles):
+            for c, tile in enumerate(row):
+                details = self.tile_properties[r][c]
+                unit_in = details["unit_in"]
+                # print(f"{unit_in=}")
+                if unit_in:
+                    if unit_in.InputField2_v2.upper() == d:
+                        self.itemconfigure(
+                            tile,
+                            fill=hc,
+                            activefill=b,
+                            outline=hc,
+                            activeoutline=b
+                        )
+
+                        self.itemconfigure(details["t1_tag"], fill=fc, activefill=af)
+                        self.itemconfigure(details["t2_tag"], fill=fc, activefill=af)
+                        self.itemconfigure(details["t3_tag"], fill=fc, activefill=af)
+                        self.itemconfigure(details["t4_tag"], fill=fc, activefill=af)
+                        self.itemconfigure(details["t5_tag"], fill=fc, activefill=af)
+
+    def revert_colour(self, rc):
+        print(f"REVERTING COLOURS {rc=}")
+        r, c = rc
+        tile = self.tile_properties[r][c]["tag_rect"]
+        texts = [self.tile_properties[r][c]["t1_tag"], self.tile_properties[r][c]["t2_tag"], self.tile_properties[r][c]["t3_tag"], self.tile_properties[r][c]["t4_tag"], self.tile_properties[r][c]["t5_tag"]]
+        tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour = self.calc_colours(r, c)
+        self.itemconfigure(tile,
+                    fill=tile_colour,
+                    outline=outline_colour,
+                    activeoutline=active_outline_colour,
+                    activefill=active_fill_colour
+        )
+        for t in texts:
+            self.itemconfigure(t, fill=font_colour, activefill=active_fill_colour)
+
+    # def get_history(self):
+    #     return self._history
+    #
+    # def set_history(self, history_in):
+    #     print(f"SETTING HISTORY\nBEFORE\n{self._history}\nAfter\n{history_in}")
+    #     self._history = history_in
+    #
+    # def del_history(self):
+    #     del self._history
+
+    # history = property(get_history, set_history, del_history)
+
+    class Undoable:
+
+        _number = 0
+
+        def __init__(self):
+            self.id_num = self.number
+            self.ts = datetime.datetime.now()
+
+        def get_number(self):
+            self._number += 1
+            return self._number
+
+        def set_number(self, number_in: int):
+            self._number = number_in
+
+        def del_number(self):
+            del self._number
+
+        number = property(get_number, set_number, del_number)
+
+    class PlacementUndoable(Undoable):
+        def __init__(self, r: int, c: int, unit_in: Unit):
+            super(CalendarSurface.PlacementUndoable, self).__init__()
+            self.r = r
+            self.c = c
+            self.unit_in = unit_in
+
+        def __repr__(self):
+            return f"<PlacementUndoable Unit Q={self.unit_in.SGQuote} | ({self.r}, {self.c})>"
+
+    class DeletionUndoable(Undoable):
+        def __init__(self, r: int, c: int, unit_in: Unit):
+            super(CalendarSurface.DeletionUndoable, self).__init__()
+            self.r = r
+            self.c = c
+            self.unit_in = unit_in
+
+        def __repr__(self):
+            return f"<DeletonUndoable Unit Q={self.unit_in.SGQuote} | ({self.r}, {self.c})>"
+
+    class MovementUndoable(Undoable):
+        def __init__(self, r_from: int, c_from: int, r_to: int, c_to: int, unit_in: Unit):
+            super(CalendarSurface.MovementUndoable, self).__init__()
+            self.r_from = r_from
+            self.c_from = c_from
+            self.r_to = r_to
+            self.c_to = c_to
+            self.unit_in = unit_in
+
+        def __repr__(self):
+            return f"<MovementUndoable Unit Q={self.unit_in.SGQuote} | ({self.r_from}, {self.c_from}) -> ({self.r_to}, {self.c_to})>"
+
+    class SwapUndoable(Undoable):
+        def __init__(self, r_from: int, c_from: int, r_to: int, c_to: int, unit_from: Unit, unit_to: Unit):
+            super(CalendarSurface.SwapUndoable, self).__init__()
+            self.r_from = r_from
+            self.c_from = c_from
+            self.r_to = r_to
+            self.c_to = c_to
+            self.unit_from = unit_from
+            self.unit_to = unit_to
+
+        def __repr__(self):
+            return f"<SwapUndoable Unit Q={self.unit_from.SGQuote} | ({self.r_from}, {self.c_from}) <-> ({self.r_to}, {self.c_to}) | Unit Q={self.unit_to.SGQuote}>"

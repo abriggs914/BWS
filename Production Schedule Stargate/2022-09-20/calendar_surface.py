@@ -98,6 +98,7 @@ class CalendarSurface(tkinter.Canvas):
 
         self.sql_output_file_name = sql_output_file_name
         self.history = []
+        self.redo_history = []
 
         print(f"{self.start_date=}, {self.end_date=}")
 
@@ -625,10 +626,57 @@ class CalendarSurface(tkinter.Canvas):
         # 0 - failure
         # 2 - success - but need to re-add a removed tile to the combo list.
         print(f"CLICK UNDO")
-        if 1:
-            print(f"END UNDO")
-            return (1, {"msg": "success"})
+        fail = False
+        result = (1, {"msg": "success"})
+        if self.history:
+            last = self.history.pop(-1)
+            match type(last):
+                case CalendarSurface.PlacementUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.remove_tile(r, c)
+                    self.delete_tile(r, c)
+                    print(f"END UNDO")
+                    result = (2, {"msg": "Need to replace unit in combo list.", "quote": unit_in.SGQuote})
+                case CalendarSurface.DeletionUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.set_rc_with_unit((r, c), unit_in, set_style=True)
+                    print(f"END UNDO")
+                    result = (3, {"msg": "Need to remove quote from combo list.", "quote": unit_in.SGQuote})
+                case CalendarSurface.MovementUndoable:
+                    unit_in = last.unit_in
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_from, c_from), unit_in)
+                    self.remove_tile(r_to, c_to)
+                case CalendarSurface.SwapUndoable:
+                    unit_from = last.unit_from
+                    unit_to = last.unit_to
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_from, c_from), unit_to)
+                    self.set_rc_with_unit((r_to, c_to), unit_from)
+                    result = (4, {"msg": "Need to recolour code tiles.", "unit_to": unit_to, "unit_from": unit_from})
+                case _:
+                    fail = True
+
+            if not fail:
+                print(f"END UNDO")
+                self.redo_history.append(last)
+                return result
+            else:
+                self.history.append(last)
         else:
+            fail = True
+
+        if fail:
             msg = f"Nothing to undo"
             print(f"END UNDO")
             return (0, {"msg": msg})
@@ -845,6 +893,18 @@ class CalendarSurface(tkinter.Canvas):
         for t in texts:
             self.itemconfigure(t, fill=font_colour, activefill=active_fill_colour)
 
+    # def get_history(self):
+    #     return self._history
+    #
+    # def set_history(self, history_in):
+    #     print(f"SETTING HISTORY\nBEFORE\n{self._history}\nAfter\n{history_in}")
+    #     self._history = history_in
+    #
+    # def del_history(self):
+    #     del self._history
+
+    # history = property(get_history, set_history, del_history)
+
     class Undoable:
 
         _number = 0
@@ -857,7 +917,7 @@ class CalendarSurface(tkinter.Canvas):
             self._number += 1
             return self._number
 
-        def set_number(self, number_in):
+        def set_number(self, number_in: int):
             self._number = number_in
 
         def del_number(self):
@@ -866,21 +926,27 @@ class CalendarSurface(tkinter.Canvas):
         number = property(get_number, set_number, del_number)
 
     class PlacementUndoable(Undoable):
-        def __init__(self, r, c, unit_in):
+        def __init__(self, r: int, c: int, unit_in: Unit):
             super(CalendarSurface.PlacementUndoable, self).__init__()
             self.r = r
             self.c = c
             self.unit_in = unit_in
 
+        def __repr__(self):
+            return f"<PlacementUndoable Unit Q={self.unit_in.SGQuote} | ({self.r}, {self.c})>"
+
     class DeletionUndoable(Undoable):
-        def __init__(self, r, c, unit_in):
+        def __init__(self, r: int, c: int, unit_in: Unit):
             super(CalendarSurface.DeletionUndoable, self).__init__()
             self.r = r
             self.c = c
             self.unit_in = unit_in
 
+        def __repr__(self):
+            return f"<DeletonUndoable Unit Q={self.unit_in.SGQuote} | ({self.r}, {self.c})>"
+
     class MovementUndoable(Undoable):
-        def __init__(self, r_from, c_from, r_to, c_to, unit_in):
+        def __init__(self, r_from: int, c_from: int, r_to: int, c_to: int, unit_in: Unit):
             super(CalendarSurface.MovementUndoable, self).__init__()
             self.r_from = r_from
             self.c_from = c_from
@@ -888,12 +954,18 @@ class CalendarSurface(tkinter.Canvas):
             self.c_to = c_to
             self.unit_in = unit_in
 
+        def __repr__(self):
+            return f"<MovementUndoable Unit Q={self.unit_in.SGQuote} | ({self.r_from}, {self.c_from}) -> ({self.r_to}, {self.c_to})>"
+
     class SwapUndoable(Undoable):
-        def __init__(self, r_from, c_from, r_to, c_to, unit_from, unit_to):
-            super(CalendarSurface.MovementUndoable, self).__init__()
+        def __init__(self, r_from: int, c_from: int, r_to: int, c_to: int, unit_from: Unit, unit_to: Unit):
+            super(CalendarSurface.SwapUndoable, self).__init__()
             self.r_from = r_from
             self.c_from = c_from
             self.r_to = r_to
             self.c_to = c_to
             self.unit_from = unit_from
             self.unit_to = unit_to
+
+        def __repr__(self):
+            return f"<SwapUndoable Unit Q={self.unit_from.SGQuote} | ({self.r_from}, {self.c_from}) <-> ({self.r_to}, {self.c_to}) | Unit Q={self.unit_to.SGQuote}>"
