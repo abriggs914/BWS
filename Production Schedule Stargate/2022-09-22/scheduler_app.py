@@ -2,38 +2,52 @@ import datetime
 import json
 import tkinter
 from tkinter import ttk, messagebox
+import numpy as np
+
+import pandas
 
 from colour_utility import rgb_to_hex, random_colour
 from tkinter_utility import entry_factory, button_factory, combo_factory
 from pyodbc_connection import connect
-from utility import clamp, clamp_rect
+from utility import clamp, clamp_rect, isnumber
 from unit import Unit
 from colour_demo import ColourWidget
 from calendar_surface import *
 
 
-PROGRAM_MODE = "LIVE"
-# PROGRAM_MODE = "TEST"
+# PROGRAM_MODE = "LIVE"
+PROGRAM_MODE = "TEST"
 
 
 class App(tkinter.Tk):
 
-    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now()):
+    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now(), restart_handle=None):
         super().__init__()
 
         self.settings_file_name = "./PDS_User_Setting.json"
         self.start_date = start_date_in
         self.df_production = None
         self.df_work_days = None
+        self.df_valid_users = None
+        self.this_user_is_valid = None
+        self.this_user_publishes = None
         self.user_name = None
         self.populate_data()
 
         if self.user_name is None:
             tkinter.messagebox.showerror(title="Fatal", message="Error, you do not currently have permission to use this application.\nPlease contact IT for further assistance.")
             quit()
-        if self.df_production is None or self.df_work_days is None:
+        if self.df_production is None or self.df_work_days is None or self.df_valid_users is None or self.this_user_is_valid is None or self.this_user_publishes is None:
             tkinter.messagebox.showerror(title="Fatal", message="Error, unable to load production data")
             quit()
+        if not self.this_user_is_valid:
+            tkinter.messagebox.showerror(title="Fatal", message="Error, you are not currently a vailid production schedule updater. Please contact IT for further assistance.")
+            quit()
+
+        print(f"\n\t" + "\n\t".join([f"{n.ljust(30)} - {v}" for n, v in zip(
+            ["self.user_name", "self.start_date", "self.this_user_is_valid", "self.this_user_publishes"],
+            [self.user_name, self.start_date, self.this_user_is_valid, self.this_user_publishes]
+        )]))
 
         ###############################################################################################################
         # State variables
@@ -58,6 +72,7 @@ class App(tkinter.Tk):
         self.update()
         self.window_width = self.winfo_width()
         self.window_height = self.winfo_height()
+        self.restart_handle = restart_handle
 
         self.frame_top_bar = tkinter.Frame(self)
         self.removed_quotes = []  # us this to track quotes removed from the combo list.
@@ -77,6 +92,7 @@ class App(tkinter.Tk):
         self.tv_btn_update_changes, self.button_update_changes = button_factory(self.frame_top_bar, tv_btn="update", kwargs_btn={"command": self.click_update_sql})
         self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
         self.tv_btn_undo, self.button_undo = button_factory(self.frame_top_bar, tv_btn="<", kwargs_btn={"command": self.click_undo})
+        self.tv_btn_refresh, self.button_refresh = button_factory(self.frame_top_bar, tv_btn="Refresh", kwargs_btn={"command": self.click_refresh})
 
         self.debug_tv_show_history, self.debug_show_history = button_factory(self.frame_top_bar, tv_btn="show history", kwargs_btn={"command": self.click_debug_show_history})
 
@@ -121,6 +137,7 @@ class App(tkinter.Tk):
             self.debug_show_history.pack()
         self.button_undo.pack()
         self.frame_colour_coder.pack()
+        self.button_refresh.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.grid()
@@ -151,9 +168,24 @@ class App(tkinter.Tk):
 
     def populate_data(self):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
-        self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
+        # self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
+        self.df_production = connect(**SQL_ALL_STG_UNITS)
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
+        self.df_valid_users = connect(**SQL_VALID_USERS)
         self.user_name = self.get_user_name()
+        self.this_user_is_valid = not self.df_valid_users.query(f"UserName == '{self.user_name}'").empty
+        self.this_user_publishes = self.this_user_is_valid and self.df_valid_users[self.df_valid_users["UserName"] == self.user_name]["AllowPublish"].tolist()[0]
+        if self.df_production.empty:
+            self.df_production = None
+        else:
+            self.df_production["Available Date"] = pandas.to_datetime(self.df_production["Available Date"], errors="coerce").dt.strftime('%Y-%m-%d')
+            # self.df_production["WO#"] = int(self.df_production["WO#"]) if self.df_production["WO#"] else self.df_production["WO#"]
+            # self.df_production.loc[self.df_production["WO#"], "WO#"] = int(self.df_production["WO#"])
+            # self.df_production['WO#'] = np.where(isnumber(self.df_production['WO#']), 0, self.df_production['WO#'])
+            # print(f"{[x for x in self.df_production['JobStartLine'].tolist() if x]=}")
+            # print(f"{[x for x in self.df_production['WO#'].tolist() if x]=}")
+        if self.df_work_days.empty:
+            self.df_work_days = None
 
     def dat_list_of_units(self, remove_placed=False):
         units = self.calendar_surface.units
@@ -164,7 +196,7 @@ class App(tkinter.Tk):
         # # (1 == (1 if not remove_placed else (1 if tup[0] not in units else 0)))
         # print(f"{rem=}")
         # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] is not None and (1 == (1 if not remove_placed else (1 if tup[0] in units else 0)))]
-        lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0][0] is not None]
+        lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None) and (tup[0][0] is not None)]
         print(f"{lst=}")
         if remove_placed:
             for unit_in, unit_o in units.items():
@@ -407,17 +439,27 @@ class App(tkinter.Tk):
             self.combo_unit_selection.focus()
 
     def click_export_sql(self):
-        sql_res = self.calendar_surface.export_tile_sql(self.removed_quotes)
-        # print(f"SQL\n\n<{sql_res}>")
-        tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+        if self.this_user_publishes:
+            sql_res = self.calendar_surface.export_tile_sql(self.removed_quotes)
+            # print(f"SQL\n\n<{sql_res}>")
+            tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+        else:
+            tkinter.messagebox.showinfo(title="SQL Export", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
     def click_update_sql(self):
-        sql_res = self.calendar_surface.update_tile_sql(self.removed_quotes)
-        # print(f"SQL\n\n<{sql_res}>")
-        tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+        if self.this_user_publishes:
+            sql_res = self.calendar_surface.update_tile_sql(self.removed_quotes)
+            # print(f"SQL\n\n<{sql_res}>")
+            tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+        else:
+            tkinter.messagebox.showinfo(title="SQL Export", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
     def click_debug_show_history(self):
         print(f"self.calendar_surface.history:\n{self.calendar_surface.history}")
+
+    def click_refresh(self):
+        print("REFRESHING")
+        self.restart_handle()
 
     def click_undo(self):
         undo_data = self.calendar_surface.undo()
@@ -502,10 +544,11 @@ class App(tkinter.Tk):
         self.drag_text_queue.clear()
 
     def move_tile(self, tag_to: int | str, tag_from: int | str, unit_in: Unit) -> bool:
-        print(f"move_tile(self, tag_to: int | str, tag_from: int | str, unit_in: Unit) -> bool:")
+        print(f"move_tile(self, {tag_to=}, tag_from: int | str, unit_in: Unit) -> bool:")
         to_rc = self.calendar_surface.tile_to_rc(tag_to)
         from_rc = self.calendar_surface.tile_to_rc(tag_from)
         s1, s2 = False, False
+
         if to_rc:
             # TODO decide if this is a normal placement or a swa.
             r, c = from_rc

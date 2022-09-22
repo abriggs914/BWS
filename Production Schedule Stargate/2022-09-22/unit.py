@@ -351,7 +351,7 @@ class Unit:
 			self.DateSecured,
 			self.SecuredBy,
 			
-			self.isGalv,
+			self.IsGalv,
 
 			self.init_placed,
 			self.placed,
@@ -365,7 +365,8 @@ class Unit:
 		return self.gener
 
 	def __repr__(self):
-		return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={self.Available_Date}, {self.job_start_line_v2=}, dealer='{self._InputField2_v2}'>"
+		ad = f"{self.Available_Date: '%Y-%m-%d'}" if isinstance(self.Available_Date, datetime.datetime) else "NaT"
+		return f"<UNIT Q#={self.SGQuote}, WO#={self.WO}, AD={ad}, LN={self.job_start_line_v2}, dealer='{self._InputField2_v2}'>"
 
 	# _prod_sched_v2_id
 	def get_prod_sched_v2_id(self):
@@ -1230,6 +1231,11 @@ class Unit:
 		return self._WO
 
 	def set_WO(self, WO_in):
+		if WO_in.isnumeric():
+			WO_in = int(WO_in)
+			print(f"{WO_in} IS NUMERIC!")
+		else:
+			print(f"{WO_in} IS NOT NUMERIC")
 		self.history["_WO"].append((datetime.datetime.now(), self.gener_id(), WO_in))
 		self._WO = WO_in
 

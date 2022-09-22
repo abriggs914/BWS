@@ -6,6 +6,8 @@ from colour_utility import *
 from unit import Unit
 from utility import dict_print, date_suffix
 from stg_queries import *
+import math
+
 
 PROGRAM_MODE = "LIVE"
 # PROGRAM_MODE = "TEST"
@@ -407,10 +409,12 @@ class CalendarSurface(tkinter.Canvas):
         for row in df.iterrows():
             # df["Available Date"] = pandas.to_datetime(df["Available Date"])
             values = row[1].tolist()
-            # print(f"{len(values)=}, {values=}")
             new_unit = Unit(*values).init()
-            # print(f"{unit_in=}, {list(unit_in)=}")
+            # print(f"{new_unit=}, {list(new_unit)=}, {new_unit.__dict__}")
+            # print(f"{new_unit=}, {list(new_unit)=}")
             sgquote = new_unit.SGQuote
+            # print(f"{len(values)=}, {values[5:8]=}, {values=}")
+            # if sgquote in ["SG100621", "SG100535"]:
             self.units[sgquote] = new_unit
             avail_date = new_unit.Available_Date
             finish_date_1 = new_unit.job_finish_date_v2
@@ -420,7 +424,11 @@ class CalendarSurface(tkinter.Canvas):
             # print(f"{self.start_date=}, {self.end_date=}")
             date_idx = None
             new_date = None
-            if avail_date and (self.start_date <= avail_date <= self.end_date):
+            avail_is_nan = ((isinstance(avail_date, int) or isinstance(avail_date, float)) and math.isnan(avail_date))
+            if not avail_is_nan:
+                avail_date = datetime.datetime.strptime(avail_date, "%Y-%m-%d")
+            print(f"{avail_date=}, {type(avail_date)=}, {avail_is_nan=}, {self.start_date=}, {self.end_date=}")
+            if (not avail_is_nan) and avail_date and (self.start_date <= avail_date <= self.end_date):
                 # print(f"\t\tVALID avail_date!!")
                 new_date = avail_date
             elif finish_date_1 and finish_date_1 != "None" and (self.start_date <= finish_date_1 <= self.end_date):
@@ -441,8 +449,11 @@ class CalendarSurface(tkinter.Canvas):
                 new_line = new_unit.WO_Line_1
             elif new_unit.WO_Line_2:
                 new_line = new_unit.WO_Line_2
+            elif new_unit.job_start_line_v2:
+                new_line = new_unit.job_start_line_v2
 
             if new_line:
+                print(f"{new_unit=}, {new_line=}")
                 line_idx = self.lines.index(new_line) + 1
             # print(f"{unit_in}")
 
@@ -533,8 +544,11 @@ class CalendarSurface(tkinter.Canvas):
                 if text in keys:
                     # print(f"\t\t\tBEFORE {value=}")
                     value = getattr(unit_in, text, "N/A")
+                    # TODO last point for UI formatting
                     if text == "_IsGalv":
                         value = value if value != 'N' else ''
+                    elif text == "WO":
+                        value = int(value)
                     # print(f"\t\t\tAFTER {value=}")
                 # print(f"\t\tLOOK HERE 2 {i=}, {text=} = {value=}, {tv.get()=}")
                 tv.set(value)
@@ -596,7 +610,7 @@ class CalendarSurface(tkinter.Canvas):
 
         # print(f"{rq=}")
         for quote in rq:
-            result_3 += template_3.format(q=quote)
+            result_3 += template_3.format(q=quote, u=user_name)
         if result_3:
             with open(fn, "a") as f:
                 # f.write(result)

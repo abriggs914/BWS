@@ -1833,6 +1833,7 @@ def random_rgb(l_bound=10, h_bound=245):
     )
 
 
+
 # def rgb_to_hex(colour):
 #    return "#" + "".join([hex(x).split("x")[-1] for x in colour]).upper()
 
@@ -1989,8 +1990,7 @@ def brighten(c, p):
 
 def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
     """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font of this colour will be visible on the background."""
-    assert iscolour(
-        colour_in), f"Error cannot infer the correct font fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
+    assert iscolour(colour_in), f"Error cannot infer the correct font fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
     try:
         if isinstance(colour_in, str):
             colour_in = hex_to_rgb(colour_in)
