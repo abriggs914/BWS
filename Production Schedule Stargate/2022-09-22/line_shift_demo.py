@@ -1,5 +1,5 @@
-import tkinter
 
+from tkinter import messagebox
 from tkinter_utility import *
 
 
@@ -8,42 +8,108 @@ class LineShifter(tkinter.Frame):
     def __init__(self, master, lines):
         super().__init__(master)
 
+        self.status = tkinter.Variable(self, value={})
+
+        self.colour_background = Colour(185, 185, 185).hex_code
+        self.colour_button_background = Colour(216, 216, 216).hex_code
+
+        assert lines, "Error, you must pass a valid selection list of lines."
         self.lines = lines
-        self.tv_combo_label, self.combo_label, self.tv_combo, self.combo = combo_factory(self, tv_label="Line:", kwargs_combo={"values": self.lines})
+        self.tv_combo_label, self.combo_label, self.tv_combo, self.combo = combo_factory(
+            self,
+            tv_label="Line:",
+            kwargs_label={
+                "background": self.colour_background
+            },
+            kwargs_combo={
+                "values": self.lines
+            }
+        )
         self.tv_direction = tkinter.IntVar(self, name="direction", value=1)
         self.tv_forward = tkinter.StringVar(self, name="tv_forward", value="Forward")
         self.tv_backward = tkinter.StringVar(self, name="tv_backward", value="Backward")
-        self.radio_button_forward = tkinter.Radiobutton(self, variable=self.tv_direction, value=1, textvariable=self.tv_forward)
-        self.radio_button_backward = tkinter.Radiobutton(self, variable=self.tv_direction, value=2, textvariable=self.tv_backward)
+        self.radio_button_forward = tkinter.Radiobutton(self, variable=self.tv_direction, value=1, textvariable=self.tv_forward, background=self.colour_background)
+        self.radio_button_backward = tkinter.Radiobutton(self, variable=self.tv_direction, value=2, textvariable=self.tv_backward, background=self.colour_background)
         self.tv_label_spinbox = tkinter.StringVar(self, name="label_spinbox", value="Days:")
         self.tv_spinbox = tkinter.IntVar(self, name="tv_spinbox", value=1)
-        self.label_spinbox = tkinter.Label(self, textvariable=self.tv_label_spinbox)
-        self.spinbox = tkinter.Spinbox(self, textvariable=self.tv_spinbox, from_=1, to=7, command=self.days_update)
+        self.label_spinbox = tkinter.Label(self, textvariable=self.tv_label_spinbox, background=self.colour_background)
+        self.spinbox = tkinter.Spinbox(self, textvariable=self.tv_spinbox, command=self.days_update, values=list(range(1, 8)), state="readonly")
+        self.tv_button_shift, self.button_shift = button_factory(
+            self,
+            tv_btn="shift units",
+            kwargs_btn={
+                "background": self.colour_button_background,
+                "command": self.click_shift_units
+            }
+        )
 
         self.tv_combo.trace_variable("w", self.combo_update)
         self.tv_direction.trace_variable("w", self.direction_update)
 
-        self.combo_label.grid(row=1, column=1)
-        self.combo.grid(row=1, column=2)
-        self.radio_button_forward.grid(row=2, column=1)
-        self.radio_button_backward.grid(row=3, column=1)
-        self.label_spinbox.grid(row=2, column=2)
-        self.spinbox.grid(row=3, column=2)
+        self.combo_label.grid(row=1, column=1, padx=5, pady=5)
+        self.combo.grid(row=1, column=2, padx=5, pady=5)
+        self.radio_button_forward.grid(row=2, column=1, padx=5, pady=5)
+        self.radio_button_backward.grid(row=3, column=1, padx=5, pady=5)
+        self.label_spinbox.grid(row=2, column=2, padx=5, pady=5)
+        self.spinbox.grid(row=3, column=2, padx=5, pady=5)
+        self.button_shift.grid(row=4, column=1, columnspan=2, padx=5, pady=5)
+        self.configure(background=self.colour_background)
 
     def combo_update(self, var_name, index, mode):
         print(f"combo_update {var_name=}, {index=}, {mode=}")
+        if self.tv_combo.get() not in self.lines:
+            self.tv_combo.set(self.lines[0])
+        self.status_update()
 
     def direction_update(self, var_name, index, mode):
         print(f"direction_update {var_name=}, {index=}, {mode=}")
+        self.status_update()
 
     def days_update(self):
         print(f"days_update")
+        self.tv_spinbox.set(clamp(1, self.tv_spinbox.get(), 7))
+        self.status_update()
+
+    def status_update(self, *args):
+        print(f"status_update, {args=}")
+        result = {
+            "line": self.tv_combo.get(),
+            "direction": "forward" if self.tv_direction.get() == 1 else "backward",
+            "days": self.tv_spinbox.get(),
+            "submission": False
+        }
+        if result["line"] and args:
+            result["submission"] = True
+        if not result["line"] and args:
+            tkinter.messagebox.showinfo(title="Error", message="Error, you must select a line first.")
+            result["submission"] = False
+            self.combo.focus()
+        self.status.set(result)
+
+        print(f"\tstatus\n{self.status.get()}")
+
+    def click_shift_units(self):
+        print(f"click_shift_units")
+        self.status_update(1)
+
+
+def status_update(*args):
+    print(f"GLOBAL STATUS UPDATE {args=}")
+    print(f"BEFORE: {status.get()}")
+    current = eval(status.get())
+    if current["submission"]:
+        current["submission"] = False
+    status.set(current)
+    print(f"AFTER:  {status.get()}")
+
 
 if __name__ == '__main__':
     WIN = tkinter.Tk()
     WIDTH, HEIGHT = 900, 600
     WIN.geometry(f"{WIDTH}x{HEIGHT}")
-    lines = [f"T_{i + 1}" for i in range(6)]
+    lines = [f"T{i + 1}" for i in range(6)]
     ls = LineShifter(WIN, lines=lines)
+    status = ls.status
+    status.trace_variable("w", status_update)
     ls.pack()
     WIN.mainloop()

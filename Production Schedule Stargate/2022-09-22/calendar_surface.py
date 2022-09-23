@@ -98,6 +98,7 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_properties = []  # list of dictionaries containing the rest of the required tile data (text id and tvs)
         self.tiles = self.init_tiles()  # list of canvas tags for the cells len = n_rows * n_cols
         self.units = {None: None, "": None}  # dictionary of Stargate quote numbers.
+        self.tiles_beyond = {line: {"left": [], "right": []} for line in self.lines}
         # self.undo_actions = 0
 
         self.sql_output_file_name = sql_output_file_name
@@ -113,7 +114,7 @@ class CalendarSurface(tkinter.Canvas):
                 for c, tile in enumerate(tile_row):
                     unit = self.tile_properties[r][c]["unit_in"]
                     if unit:
-                        print(f"\t\t checking {unit=}")
+                        # print(f"\t\t checking {unit=}")
                         if unit.SGQuote == quote_in:
                             return r, c
         # print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
@@ -334,10 +335,10 @@ class CalendarSurface(tkinter.Canvas):
             value = self.tile_properties[r][c][f'text_{num}'].get()
             self.itemconfigure(tag, text=value)
             # print(f"retrieving: {value=}")
-            print(f"A{var_name=}, {index=}, {mode=}, {value=}, {tag=}")
+            # print(f"A{var_name=}, {index=}, {mode=}, {value=}, {tag=}")
         # self.itemconfigure()
-        else:
-            print(f"B{var_name=}, {index=}, {mode=}, {r_c_num=}")
+        # else:
+        #     print(f"B{var_name=}, {index=}, {mode=}, {r_c_num=}")
 
     def rc_at_xy(self, xy: tuple[int, int]) -> tuple[int, int] | None:
         """Retrieve the row and column indices for the tile located at grid coordinates x, y."""
@@ -580,6 +581,7 @@ class CalendarSurface(tkinter.Canvas):
         result = ""
         result_2 = ""
         result_3 = ""
+        result_4 = ""
 
         rq = {quote for quote in set(removed_quotes)}
         user_name = self.user_name
@@ -613,15 +615,29 @@ class CalendarSurface(tkinter.Canvas):
             result_3 += template_3.format(q=quote, u=user_name)
         if result_3:
             with open(fn, "a") as f:
-                # f.write(result)
                 f.write(result_3)
+
+        for line, d1 in self.tiles_beyond.items():
+            for direction, que in d1.items():
+                q = que.copy()
+                if direction == "left":
+                    q.reverse()
+                for i, unit_in in enumerate(q):
+                    if unit_in:
+                        new_avail_date = self.dates_list[0] if direction == "left" else self.dates_list[-1]
+                        new_avail_date += datetime.timedelta(days=((i+1) * (-1 if direction == "left" else 1)))
+                        result_4 += template_2.format(d=new_avail_date, q=unit_in.SGQuote, j=new_avail_date, l=line, u=user_name)
+        if result_4:
+            with open(fn, "a") as f:
+                f.write(result_4)
         # print(f"RESULT3 = <{result_3}>")
+        # print(f"RESULT4 = <{result_4}>")
 
         # print(f"{self.tile_properties[0]=}")
         # for r, prop in enumerate(self.tile_properties):
         #     for c, det in enumerate(prop):
         #         print(f"{r=}, {c=}, {det['unit_in']=}")
-        return "\n".join([result_2, result_3])
+        return "\n".join([result_2, result_3, result_4])
 
     def update_tile_sql(self, removed_quotes):
         """Create a sql file containing batch statements from this session."""
@@ -911,7 +927,8 @@ class CalendarSurface(tkinter.Canvas):
         print(f"REVERTING COLOURS {rc=}")
         r, c = rc
         tile = self.tile_properties[r][c]["tag_rect"]
-        texts = [self.tile_properties[r][c]["t1_tag"], self.tile_properties[r][c]["t2_tag"], self.tile_properties[r][c]["t3_tag"], self.tile_properties[r][c]["t4_tag"], self.tile_properties[r][c]["t5_tag"]]
+        # texts = [self.tile_properties[r][c]["t1_tag"], self.tile_properties[r][c]["t2_tag"], self.tile_properties[r][c]["t3_tag"], self.tile_properties[r][c]["t4_tag"], self.tile_properties[r][c]["t5_tag"]]
+        texts = self.get_text_tags(tile)
         tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour = self.calc_colours(r, c)
         self.itemconfigure(tile,
                     fill=tile_colour,
@@ -921,6 +938,88 @@ class CalendarSurface(tkinter.Canvas):
         )
         for t in texts:
             self.itemconfigure(t, fill=font_colour, activefill=active_fill_colour)
+
+    def shift_line(self, shift_details):
+        print(f"{shift_details=}")
+        line_in = shift_details["line"]
+        direction_in = shift_details["direction"]
+        days_in = shift_details["days"]
+        submission_in = shift_details["submission"]
+        i_row = self.lines.index(line_in) + 1
+        start = 1
+        stop = len(self.tiles[i_row])
+        step = 1
+        if direction_in == "forward":
+            start, stop = stop - 1, start - 2
+            step = -1
+        print(f"BEFORE\t{self.tiles_beyond=}")
+        unit_popped = None
+        for i in range(days_in):
+            print(f"{i=}, {start=}, {stop=}, {step=}, {i_row=}")
+            # print(f"{bool(self.tiles_beyond[line_in]['right'])=}, '{self.tiles_beyond[line_in]['right']}', {direction_in == 'forward'=}, {direction_in == 'forward' and self.tiles_beyond[line_in]['right']=}")
+            # print(f"{bool(self.tiles_beyond[line_in]['left'])=}, '{self.tiles_beyond[line_in]['left']}', {direction_in == 'forward'=}, {direction_in == 'forward' and self.tiles_beyond[line_in]['left']=}")
+            # print(f"{bool(self.tiles_beyond[line_in]['right'])=}, '{self.tiles_beyond[line_in]['right']}', {direction_in == 'backward'=}, {direction_in == 'backward' and self.tiles_beyond[line_in]['right']=}")
+            # print(f"{bool(self.tiles_beyond[line_in]['left'])=}, '{self.tiles_beyond[line_in]['left']}', {direction_in == 'backward'=}, {direction_in == 'backward' and self.tiles_beyond[line_in]['left']=}")
+            if direction_in == "forward" and self.tiles_beyond[line_in]["right"]:
+                self.tiles_beyond[line_in]["right"].insert(0, None)
+                print(f"A")
+            elif direction_in == "forward" and self.tiles_beyond[line_in]["left"]:
+                #TODO shift these tile out of the list
+                # TODO verify that adjacent units arent overwritten at this step
+                # TODO instead of inserting at 1, need to calculate (days - 1) so it will stay in sync with the rest of the calendar
+                unit_popped = self.tiles_beyond[line_in]["left"].pop(-1)
+                if unit_popped:
+                    self.set_rc_with_unit((i_row, 1), unit_popped)
+                print(f"B")
+            elif direction_in == "backward" and self.tiles_beyond[line_in]["right"]:
+                #TODO shift these tile out of the list
+                # TODO verify that adjacent units arent overwritten at this step
+                # TODO instead of inserting at 1, need to calculate (days - 1) so it will stay in sync with the rest of the calendar
+                unit_popped = self.tiles_beyond[line_in]["right"].pop(0)
+                if unit_popped:
+                    self.set_rc_with_unit((i_row, len(self.tiles[i_row]) - 1), unit_popped)
+                print(f"C")
+            elif direction_in == "backward" and self.tiles_beyond[line_in]["left"]:
+                self.tiles_beyond[line_in]["left"].append(None)
+                print(f"D")
+            else:
+                print(f"E")
+            for j in range(start, stop, step):
+                tile = self.tiles[i_row][j]
+                details = self.tile_properties[i_row][j]
+                day = self.dates_list[j]
+                unit_in = details["unit_in"]
+                beyond_left = False
+                beyond_right = False
+                if unit_in not in [None, "none", "", unit_popped]:
+                    print(f"\t\t\t\t\t{j=}, {step=}, {(j==1)=}, {(step==1)=}, {(j==1 and step==1)=}")
+                    if j == 1 and step == 1:
+                        beyond_left = True
+                        print(f"HEREA\t\t{self.tiles_beyond=}")
+                        self.tiles_beyond[line_in]["left"].insert(-1, unit_in)
+                        print(f"HEREB\t\t{self.tiles_beyond=}")
+                    elif j == len(self.tiles[i_row]) - 1 and step == -1:
+                        beyond_right = True
+                        self.tiles_beyond[line_in]["right"].insert(0, unit_in)
+
+                    if not beyond_left and not beyond_right:
+                        print(f"{i=}, {j=}, {tile=}, {day=}, {unit_in=}, BL={beyond_left}, BR={beyond_right}, {details=}")
+                        # TODO verify that a weekday unit does not get pushed to weekend and vice-versa
+                        self.set_rc_with_unit((i_row, j - step), unit_in)
+                    else:
+                        print(f"BEYOND! {i=}, {j=}, {tile=}, {day=}, {unit_in=}, BL={beyond_left}, BR={beyond_right}, {details=}")
+                        print(dict_print(self.tiles_beyond, "Tiles Beyond"))
+                    self.remove_tile(i_row, j)
+                    self.delete_tile(i_row, j)
+                    # if not beyond_left and not beyond_right:
+                    #     self.after(100, self.set_rc_with_unit, (self, (i_row, j + step), unit_in))
+                    # else:
+
+                # else:
+                #     print(f"SKIP: {unit_in=}")
+
+
+
 
     # def get_history(self):
     #     return self._history

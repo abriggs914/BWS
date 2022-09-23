@@ -13,6 +13,7 @@ from utility import clamp, clamp_rect, isnumber
 from unit import Unit
 from colour_demo import ColourWidget
 from calendar_surface import *
+from line_shift_demo import LineShifter
 
 
 # PROGRAM_MODE = "LIVE"
@@ -21,7 +22,7 @@ PROGRAM_MODE = "TEST"
 
 class App(tkinter.Tk):
 
-    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now(), restart_handle=None):
+    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now(), restart_handle=None, can_width_p=0.85, can_height_p=0.65):
         super().__init__()
 
         self.settings_file_name = "./PDS_User_Setting.json"
@@ -62,27 +63,34 @@ class App(tkinter.Tk):
         self.select_tile = None
         self.select_text = None
         self.select_details = None
+        self.removed_quotes = []  # use this to track quotes removed from the combo list.
 
+        ###############################################################################################################
+        #  Tkinter variables and set-up
+        ###############################################################################################################
         self.TITLE = TITLE
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
+        self.width_p = can_width_p
+        self.height_p = can_height_p
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.state("zoomed")
         self.title(self.TITLE)
-        self.update()
+        self.update()  # call here to get valid w_info dimensions below
         self.window_width = self.winfo_width()
         self.window_height = self.winfo_height()
         self.restart_handle = restart_handle
 
         self.frame_top_bar = tkinter.Frame(self)
-        self.removed_quotes = []  # us this to track quotes removed from the combo list.
 
-        can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
+        can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
         self.frame_calendar_a = tkinter.Frame(self)
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)
 
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, self.user_name, can_w, can_h, self.start_date)
         self.calendar_surface.populate_units(self.df_production)
+
+        self.line_shifter = LineShifter(self.frame_top_bar, lines=self.calendar_surface.lines)
 
         # self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
         self.tv_label_combo_unit_selection, self.label_combo_unit_selection, self.tv_combo_unit_selection, self.combo_unit_selection = combo_factory(self.frame_top_bar, tv_label="Select a Quote#", kwargs_combo={"values": self.dat_list_of_units(remove_placed=True), "state": "readonly"})
@@ -121,6 +129,7 @@ class App(tkinter.Tk):
         self.frame_calendar_b.bind('<Configure>', self.onFrameConfigure)
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
         self.calendar_surface.bind("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
+        self.line_shifter.status.trace_variable("w", self.line_shifter_update)
 
         ###############################################################################################################
         #  pack widgets
@@ -138,6 +147,7 @@ class App(tkinter.Tk):
         self.button_undo.pack()
         self.frame_colour_coder.pack()
         self.button_refresh.pack()
+        self.line_shifter.pack()
 
         self.frame_calendar_a.pack()
         self.frame_calendar_b.grid()
@@ -654,6 +664,17 @@ class App(tkinter.Tk):
         print(f"{var_name=}, {index=}, {mode=}, value={getattr(self.frame_colour_coder, 'status_code').get()}")
         info = eval(self.frame_colour_coder.status_code.get())
         self.calendar_surface.colour_code_dealer(info["dealer"], info["colour"])
+
+    def line_shifter_update(self, *args):
+        print(f"line_shifter_update: {args=}")
+        status = self.line_shifter.status
+        print(f"BEFORE: {status.get()}")
+        current = eval(status.get())
+        if current["submission"]:
+            self.calendar_surface.shift_line(current)
+            current["submission"] = False
+        status.set(current)
+        print(f"AFTER:  {status.get()}")
 
     def colour_code_dealer(self, dealer_in):
         if dealer_in:
