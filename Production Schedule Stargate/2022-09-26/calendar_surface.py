@@ -666,6 +666,71 @@ class CalendarSurface(tkinter.Canvas):
                 self.units[quote].placed = False
         details["unit_in"] = None
 
+    def redo(self):
+        print(f"{self.redo_history=}")
+        fail = False
+        if self.redo_history:
+            last = self.redo_history.pop(-1)
+            result = (1, {"msg": "success"})
+            match type(last):
+                case CalendarSurface.PlacementUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.set_rc_with_unit((r, c), unit_in)
+                    print(f"END UNDO")
+                    result = (2, {"msg": "Need to replace unit from combo list.", "quote": unit_in.SGQuote})
+                case CalendarSurface.ShiftUndoable:
+                    line_in = last.line_in
+                    days_in = last.n_days
+                    direction_in = last.direction_in
+                    result = (5, {"msg": "Need to shift in reverse.", "line_in": line_in, "days_in": days_in,
+                                  "direction_in": direction_in})
+                case CalendarSurface.MovementUndoable:
+                    unit_in = last.unit_in
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_from, c_from), unit_in)
+                    self.remove_tile(r_to, c_to)
+                    self.set_rc_with_unit((r_to, c_to), unit_in)
+                    self.remove_tile(r_from, c_from)
+                case CalendarSurface.SwapUndoable:
+                    unit_from = last.unit_from
+                    unit_to = last.unit_to
+                    r_from = last.r_from
+                    c_from = last.c_from
+                    r_to = last.r_to
+                    c_to = last.c_to
+                    self.set_rc_with_unit((r_to, c_to), unit_to)
+                    self.set_rc_with_unit((r_from, c_from), unit_from)
+                    result = (4, {"msg": "Need to recolour code tiles.", "unit_to": unit_to, "unit_from": unit_from})
+                case CalendarSurface.DeletionUndoable:
+                    unit_in = last.unit_in
+                    r = last.r
+                    c = last.c
+                    self.remove_tile(r, c)
+                    self.delete_tile(r, c)
+                    print(f"END UNDO")
+                    result = (3, {"msg": "Need to add quote to combo list.", "quote": unit_in.SGQuote})
+                case _:
+                    fail = True
+        else:
+            fail = True
+
+        if not fail:
+            print(f"END UNDO")
+            # self.redo_history.append(last)
+            return result
+        # else:
+        #     self.history.append(last)
+
+        if fail:
+            msg = f"Nothing to undo"
+            print(f"END UNDO")
+            return (0, {"msg": msg})
+
     def undo(self) -> tuple[int, dict[str, object]]:
         # 1 - success
         # 0 - failure
@@ -709,6 +774,11 @@ class CalendarSurface(tkinter.Canvas):
                     self.set_rc_with_unit((r_from, c_from), unit_to)
                     self.set_rc_with_unit((r_to, c_to), unit_from)
                     result = (4, {"msg": "Need to recolour code tiles.", "unit_to": unit_to, "unit_from": unit_from})
+                case CalendarSurface.ShiftUndoable:
+                    line_in = last.line_in
+                    days_in = last.n_days
+                    direction_in = last.direction_in
+                    result = (5, {"msg": "Need to shift in reverse.", "line_in": line_in, "days_in": days_in, "direction_in": direction_in})
                 case _:
                     fail = True
 
@@ -725,174 +795,6 @@ class CalendarSurface(tkinter.Canvas):
             msg = f"Nothing to undo"
             print(f"END UNDO")
             return (0, {"msg": msg})
-        # newest = None
-        # currest = None
-        # newest_new_line = None
-        # newest_new_day = None
-        # for unit_k, unit_o in self.units.items():
-        #     if unit_k not in [None, "None", ""]:
-        #         history = unit_o.history
-        #         for k, v in history.items():
-        #
-        #             # if k in ["_placed", "_init_placed"]:
-        #             #     continue
-        #
-        #             # if k in [
-        #             #     "JobStartLine",
-        #             #     "_JobStartLine",
-        #             #     "job_start_line_v2",
-        #             #     "_job_start_line_v2"
-        #             # ]:
-        #             if len(v) > 1:
-        #                 print(f"\t\t{k=}, {len(v)=}, {v=}")
-        #                 last_record = v[-2]
-        #                 t, num, val = last_record
-        #                 curr = v[-1][-1]
-        #
-        #
-        #                 # vs = [(vi[0].strftime("%X %f"), vi[1]) for vi in v]
-        #                 print(f"HERE\t\t{unit_k}, {k=}, {len(v)=} {v=}, {t=}, {num=}, {val=}, {curr=}, {newest=}, {history['_init_placed'][-1][-1]=}")
-        #                 # # ignore tiles that have been placed by app.
-        #                 # if k == "_placed":
-        #                 #     t2, tv = history["_init_placed"][-1]
-        #                 #     if tv and (max(t, t2) - min(t, t2)).seconds < 1:
-        #                 #         print(f"CONTINUING")
-        #                 #         continue
-        #
-        #                 if k in ["_placed", "_init_placed"] and curr and history["_init_placed"][-1][-1]:
-        #                     print(f"CONTINUING")
-        #                     continue
-        #
-        #                 if currest is None or v[-1][0] > currest[0]:
-        #                     print(f"=A")
-        #                     currest = *v[-1], unit_k, k, curr
-        #                 if newest is None or t > newest[0]:
-        #                     print(f"=B")
-        #                     newest = t, num, val, unit_k, k, curr
-        #
-        #                 if v[-1][0] == currest[0] and v[-1][1] > currest[1]:
-        #                     print(f"=C")
-        #                     currest = *v[-1], unit_k, k, curr
-        #                 if t == newest[0] and num > newest[1]:
-        #                     print(f"=D")
-        #                     newest = t, num, val, unit_k, k, curr
-        #
-        #                 if k == "_Available_Date":
-        #                     print(f"=E")
-        #                     if newest_new_day is None or t > newest_new_day[0]:
-        #                         print(f"=F")
-        #                         newest_new_day = t, num, val, unit_k, k, curr
-        #                 if k == "_job_start_line_v2":
-        #                     print(f"=G")
-        #                     if newest_new_line is None or t > newest_new_line[0]:
-        #                         print(f"=H")
-        #                         newest_new_line = t, num, val, unit_k, k, curr
-        # print(f"{newest=}\n{currest=}\n{newest_new_day=}\n{newest_new_line=}")
-        # if newest:
-        #     t, num, val, unit_k, k, curr = newest
-        #     print(f"\t\tUNPACKED {t=}, {num=}, {val=}, {unit_k=}, {k=}, {curr=}")
-        #     if k not in ["_Available_Date", "_job_start_line_v2"]:
-        #         print(f"\t\t\tTHIS IS NOT A MOVEMENT")
-        #         if k == "_placed":
-        #             t, num, val, unit_k, k, curr = currest
-        #             if val:
-        #                 print(f"\t\t\tTHIS IS A COMBO PLACEMENT")
-        #                 unit_in = self.units[unit_k]
-        #                 unit_in.history[k].pop(-1)
-        #                 r, c = self.quote_rc(unit_k)
-        #                 self.remove_tile(r, c)
-        #                 self.delete_tile(r, c)
-        #                 print(f"END UNDO")
-        #                 return (2, {"msg": "Need to replace unit in combo list.", "quote": unit_k})
-        #             else:
-        #                 print(f"\t\t\tTHIS IS A DELETION")
-        #                 unit_in = self.units[unit_k]
-        #                 # print(f"HERE {unit_in=}")
-        #                 unit_in.history[k].pop(-1)
-        #                 date = unit_in.Available_Date
-        #                 line = unit_in.job_start_line_v2
-        #                 print(f"about to return unit_in={unit_in}\n{unit_o=}, {line=}, {date=}")
-        #                 r = self.lines.index(line) + 1
-        #                 c = self.dates_list.index(date) + 1
-        #                 # r, c = self.quote_rc(unit_k)
-        #                 self.set_rc_with_unit((r, c), unit_in, set_style=True)
-        #                 print(f"END UNDO")
-        #                 return (3, {"msg": "Need to remove quote from combo list.", "quote": unit_k})
-        #         else:
-        #             # rc = self.quote_rc(unit_k)
-        #             # r, c = rc
-        #             print(f"OLDEST {t=}, {val=}, {unit_k=}, {k=}, {curr=}")
-        #             unit_in = self.units[unit_k]
-        #             unit_in.history[k].pop(-1)
-        #             old_val = unit_in.history[k][-1][1]
-        #             setattr(unit_in, k, old_val)
-        #             line = unit_in.JobStartLine
-        #             date = unit_in.Available_Date
-        #             r = self.lines.index(line) + 1
-        #             c = self.dates_list.index(date) + 1
-        #             print(f"FINDING {line=}, {date=}, {r=}, {c=}, {curr}, {self.lines=}")
-        #             tile = self.tile_properties[r][c]["tag_rect"]
-        #             self.set_tile_with_unit(tile, unit_in)
-        #             # last_val = self.units[unit_k].history[k][-1]
-        #             # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
-        #     else:
-        #         print(f"\t\t\tUNDOING A MOVEMENT")
-        #         t_line, num_line, val_line, unit_k_line, k_line, curr_line = newest_new_line
-        #         unit_in = self.units[unit_k_line]
-        #         unit_in.history[k_line].pop(-1)
-        #         # old_val = unit_in.history[k][-1][1]
-        #         # setattr(unit_in, k, old_val)
-        #         line = curr_line
-        #         line = val_line
-        #         # date = unit_in.Available_Date
-        #         # r = self.lines.index(line) + 1
-        #         # c = self.dates_list.index(date) + 1
-        #         # print(f"FINDING {line=}, {date=}, {r=}, {c=}, {self.lines=}")
-        #         # tile = self.tile_properties[r][c]["tag_rect"]
-        #         # self.set_tile_with_unit(tile, unit_in)
-        #
-        #         t_day, num_day, val_day, unit_k_day, k_day, curr_day = newest_new_day
-        #         # unit_in = self.units[unit_k]
-        #         unit_in.history[k_day].pop(-1)
-        #         # old_val = unit_in.history[k][-1][1]
-        #         # line = unit_in.JobStartLine
-        #         date = curr_day
-        #         date = val_day
-        #         cr = self.lines.index(curr_line) + 1
-        #         cc = self.dates_list.index(curr_day) + 1
-        #         old_tag = self.tile_properties[cr][cc]["tag_rect"]
-        #
-        #         print(f"FINDING {line=}, {date=}, {cr=}, {cc=}, {curr_line=}, {curr_day=}, {val_day=}, {val_line=}")
-        #         print(f"HISTORY == {history['_job_start_line_v2']}")
-        #         for k__, v__ in history.items():
-        #             if len(v) > 1:
-        #                 print(f"{k__=}, {v__=}")
-        #         r = self.lines.index(line) + 1
-        #         c = self.dates_list.index(date) + 1
-        #         setattr(unit_in, k_line, val_line)
-        #         setattr(unit_in, k_day, val_day)
-        #         print(f"FOUNDED {line=}, {date=}, {r=}, {c=}, {cr=}, {cc=}, {curr_line=}, {curr_day=}, {val_day=}, {val_line=}")
-        #         tile = self.tile_properties[r][c]["tag_rect"]
-        #         print(f"ABOUT TO SET TAG={tile} WITH STYLE AND DATA FROM TAG={old_tag} WITH UNIT={unit_in}")
-        #         print(f"RESULTING {unit_in}")
-        #         # self.set_tile_with_unit(tile, unit_in)
-        #         self.set_tile_with_unit_from_tile(old_tag, tile, unit_in, do_assign=True, do_place=False)
-        #         self.remove_tile(cr, cc)
-        #         # last_val = self.units[unit_k].history[k][-1]
-        #         # self.tile_properties[r][c]["unit_in"] = self.units[unit_k]
-        #         # self.set_tile_with_unit(tile, unit_in)
-        #
-        #     for quote, unit_in in self.units.items():
-        #         if unit_in is not None:
-        #             for k, dat in unit_in.history.items():
-        #                 if len(dat) > 1:
-        #                     print(f"{unit_in=}\n\t{k=}, {dat=}")
-        #     print(f"END UNDO")
-        #     return (1, {"msg": "success"})
-        # else:
-        #     msg = f"Nothing to undo"
-        #     print(f"END UNDO")
-        #     return (0, {"msg": msg})
 
     def colour_code_dealer(self, dealer, colour):
         d = dealer.upper()
@@ -907,7 +809,7 @@ class CalendarSurface(tkinter.Canvas):
                 details = self.tile_properties[r][c]
                 unit_in = details["unit_in"]
                 # print(f"{unit_in=}")
-                if unit_in:
+                if unit_in not in [None, "", "none"]:
                     if unit_in.InputField2_v2.upper() == d:
                         self.itemconfigure(
                             tile,
@@ -939,7 +841,7 @@ class CalendarSurface(tkinter.Canvas):
         for t in texts:
             self.itemconfigure(t, fill=font_colour, activefill=active_fill_colour)
 
-    def shift_line(self, shift_details):
+    def shift_line(self, shift_details, undoable=True):
         print(f"{shift_details=}")
         line_in = shift_details["line"]
         direction_in = shift_details["direction"]
@@ -1017,8 +919,12 @@ class CalendarSurface(tkinter.Canvas):
 
                 # else:
                 #     print(f"SKIP: {unit_in=}")
+        if undoable:
+            self.new_history(CalendarSurface.ShiftUndoable(line_in, days_in, direction_in))
 
-
+    def new_history(self, undoable):
+        self.history.append(undoable)
+        self.redo_history.clear()
 
 
     # def get_history(self):
@@ -1084,6 +990,16 @@ class CalendarSurface(tkinter.Canvas):
 
         def __repr__(self):
             return f"<MovementUndoable Unit Q={self.unit_in.SGQuote} | ({self.r_from}, {self.c_from}) -> ({self.r_to}, {self.c_to})>"
+
+    class ShiftUndoable(Undoable):
+        def __init__(self, line: str, n_days: int, direction_in: str):
+            super(CalendarSurface.ShiftUndoable, self).__init__()
+            self.line_in = line
+            self.n_days = n_days
+            self.direction_in = direction_in
+
+        def __repr__(self):
+            return f"<ShiftUndoable Line={self.line_in} direction={self.direction_in}, days={self.n_days}>"
 
     class SwapUndoable(Undoable):
         def __init__(self, r_from: int, c_from: int, r_to: int, c_to: int, unit_from: Unit, unit_to: Unit):

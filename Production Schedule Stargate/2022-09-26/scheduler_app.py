@@ -7,7 +7,7 @@ import numpy as np
 import pandas
 
 from colour_utility import rgb_to_hex, random_colour
-from tkinter_utility import entry_factory, button_factory, combo_factory
+from tkinter_utility import entry_factory, button_factory, combo_factory, EntryWithPlaceholder
 from pyodbc_connection import connect
 from utility import clamp, clamp_rect, isnumber
 from unit import Unit
@@ -23,7 +23,17 @@ PROGRAM_MODE = "TEST"
 
 class App(tkinter.Tk):
 
-    def __init__(self, TITLE="Stargate Production Scheduler", WIDTH=500, HEIGHT=500, start_date_in=datetime.datetime.now(), restart_handle=None, can_width_p=0.85, can_height_p=0.65):
+    def __init__(
+            self,
+            TITLE="Stargate Production Scheduler",
+            WIDTH=500,
+            HEIGHT=500,
+            start_date_in=datetime.datetime.now(),
+            restart_handle=None,
+            can_width_p=0.85,
+            can_height_p=0.65,
+            colour_background_frame_top_bar=Colour(78, 15, 15).hex_code
+    ):
         super().__init__()
 
         self.settings_file_name = "./PDS_User_Setting.json"
@@ -82,11 +92,16 @@ class App(tkinter.Tk):
         self.window_height = self.winfo_height()
         self.restart_handle = restart_handle
 
-        self.frame_top_bar = tkinter.Frame(self)
+        self.colour_background_frame_top_bar = colour_background_frame_top_bar
+
+        self.frame_top_bar = tkinter.Frame(self, name="frame_top_bar", background=self.colour_background_frame_top_bar)
 
         can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
-        self.frame_calendar_a = tkinter.Frame(self)
-        self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)
+        self.frame_calendar_a = tkinter.Frame(self, name="frame_calendar_a")
+        self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a, name="frame_calendar_b")
+        self.frame_top_bar_a = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_a")
+        self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b")
+        self.frame_top_bar_c = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_c")
 
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, self.user_name, can_w, can_h, self.start_date)
         self.calendar_surface.populate_units(self.df_production)
@@ -94,18 +109,132 @@ class App(tkinter.Tk):
         self.line_shifter = LineShifter(self.frame_top_bar, lines=self.calendar_surface.lines)
 
         # self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
-        self.tv_label_combo_unit_selection, self.label_combo_unit_selection, self.tv_combo_unit_selection, self.combo_unit_selection = combo_factory(self.frame_top_bar, tv_label="Select a Quote#", kwargs_combo={"values": self.dat_list_of_units(remove_placed=True), "state": "readonly"})
-        self.tv_btn_insert_combo_choice, self.button_insert_combo_choice = button_factory(self.frame_top_bar, tv_btn="+")
-        self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
-        self.tv_btn_export_changes, self.button_export_changes = button_factory(self.frame_top_bar, tv_btn="export", kwargs_btn={"command": self.click_export_sql})
-        self.tv_btn_update_changes, self.button_update_changes = button_factory(self.frame_top_bar, tv_btn="update", kwargs_btn={"command": self.click_update_sql})
-        self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
-        self.tv_btn_undo, self.button_undo = button_factory(self.frame_top_bar, tv_btn="<", kwargs_btn={"command": self.click_undo})
-        self.tv_btn_refresh, self.button_refresh = button_factory(self.frame_top_bar, tv_btn="Refresh", kwargs_btn={"command": self.click_refresh})
 
-        self.debug_tv_show_history, self.debug_show_history = button_factory(self.frame_top_bar, tv_btn="show history", kwargs_btn={"command": self.click_debug_show_history})
-        self.tv_label_unit_scroll_search, self.label_unit_scroll_search, self.tv_entry_unit_scroll_search, self.entry_unit_scroll_search = entry_factory(self.frame_top_bar, tv_label="Search Calendar:")
-        self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
+        self.tv_label_combo_unit_selection,\
+        self.label_combo_unit_selection,\
+        self.tv_combo_unit_selection,\
+        self.combo_unit_selection\
+            = combo_factory(
+                self.frame_top_bar_b,
+                tv_label="Select a Quote#",
+                kwargs_combo={
+                    "name": "selection_combo",
+                    "values": self.dat_list_of_units(remove_placed=True),
+                    "state": "readonly"
+                }
+        )
+
+        self.tv_btn_insert_combo_choice,\
+        self.button_insert_combo_choice \
+            = button_factory(
+                self.frame_top_bar_b,
+                tv_btn="+"
+        )
+        self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
+
+        self.tv_btn_export_changes,\
+        self.button_export_changes\
+            = button_factory(
+                self.frame_top_bar,
+                tv_btn="export",
+                kwargs_btn={
+                    "name": "button_export",
+                    "command": self.click_export_sql
+                }
+        )
+
+        self.tv_btn_update_changes,\
+        self.button_update_changes \
+            = button_factory(
+                self.frame_top_bar_c,
+                tv_btn="update",
+                kwargs_btn={
+                    "name": "button_update",
+                    "command": self.click_update_sql
+                }
+        )
+
+        self.tv_label_debug_app_state,\
+        self.debug_label_entry_app_state,\
+        self.tv_debug_app_state,\
+        self.debug_entry_app_state\
+            = entry_factory(
+                self.frame_top_bar,
+                tv_label="App State:",
+                tv_entry=self.app_state,
+                kwargs_entry={
+                    "name": "debug_appstate",
+                    "state": "readonly"
+                }
+        )
+
+        self.tv_btn_undo,\
+        self.button_undo \
+            = button_factory(
+                self.frame_top_bar_c,
+                tv_btn="<",
+                kwargs_btn={
+                    "name": "button_undo",
+                    "command": self.click_undo
+                }
+        )
+
+        self.tv_btn_redo,\
+        self.button_redo \
+            = button_factory(
+                self.frame_top_bar_c,
+                tv_btn=">",
+                kwargs_btn={
+                    "name": "button_redo",
+                    "command": self.click_redo
+                }
+        )
+
+        self.tv_btn_refresh,\
+        self.button_refresh \
+            = button_factory(
+                self.frame_top_bar_c,
+                tv_btn="Refresh",
+                kwargs_btn={
+                    "name": "button_refresh",
+                    "command": self.click_refresh
+                }
+        )
+
+        self.debug_tv_show_history,\
+        self.debug_show_history \
+            = button_factory(
+                self.frame_top_bar,
+                tv_btn="show history",
+                kwargs_btn={
+                    "name": "debug_show_history",
+                    "command": self.click_debug_show_history
+                }
+        )
+
+        # self.tv_label_unit_scroll_search,\
+        # self.label_unit_scroll_search,\
+        # self.tv_entry_unit_scroll_search,\
+        # self.entry_unit_scroll_search \
+        #     = entry_factory(
+        #         self.frame_top_bar_a,
+        #         tv_label="Search Calendar:"
+        # )
+
+        self.tv_entry_unit_scroll_search = tkinter.StringVar(self, value="")
+        self.entry_unit_scroll_search = EntryWithPlaceholder(self.frame_top_bar_a, textvariable=self.tv_entry_unit_scroll_search, font=('arial', 10, 'normal'), placeholder="Enter a Quote#:")
+
+        self.tv_label_submit_unit_search,\
+        self.button_submit_unit_search\
+            = button_factory(
+                self.frame_top_bar_a,
+                tv_btn="search calendar",
+                kwargs_btn={
+                    "name": "button_submit_search",
+                    "command": self.click_search_units
+                }
+        )
+        # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
 
         # canvas and calendar objects
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
@@ -133,25 +262,33 @@ class App(tkinter.Tk):
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
         self.calendar_surface.bind("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
         self.line_shifter.status.trace_variable("w", self.line_shifter_update)
+        self.entry_unit_scroll_search.bind("<Return>", self.click_search_units)
 
         ###############################################################################################################
         #  pack widgets
         ###############################################################################################################
         self.grid()
-        self.frame_top_bar.grid()
-        self.grid_manager = GridManager()
-        self.grid_manager.grid_widgets(
+        print(f"{self.children=}")
+        self.grid_manager_1 = GridManager()
+        self.grid_manager_1.grid_widgets(
+            [
+                [
+                    self.frame_top_bar.grid()
+                ]
+            ]
+        )
+        self.grid_manager_2 = GridManager()
+        self.grid_manager_2.grid_widgets(
             [
                 [
                     self.line_shifter,
-                    self.label_combo_unit_selection,
-                    self.combo_unit_selection,
-                    self.button_insert_combo_choice,
-                    self.button_update_changes,
-                    self.button_undo,
-                    self.button_refresh,
-                    self.frame_colour_coder
-                ]
+                    self.frame_top_bar_b,
+                    self.frame_top_bar_c,
+                    {
+                        "widget": self.frame_top_bar_a,
+                        "rowspan": 2
+                    },
+                    self.frame_colour_coder]
             ]
         )
         if PROGRAM_MODE == "TEST":
@@ -160,11 +297,62 @@ class App(tkinter.Tk):
             self.debug_entry_app_state.grid()
             self.debug_show_history.grid()
 
+        self.grid_manager_3 = GridManager()
+        self.grid_manager_3.grid_widgets(
+            [
+                [
+                    self.label_combo_unit_selection,
+                ],
+                [
+                    self.combo_unit_selection,
+                ],
+                [
+                    self.button_insert_combo_choice,
+                ]
+            ]
+        )
 
-        self.frame_calendar_a.grid()
+        self.grid_manager_4 = GridManager()
+        self.grid_manager_4.grid_widgets(
+            [
+                [
+                    {
+                        "widget": self.button_update_changes,
+                        "columnspan": 2
+                    },
+                ],
+                [
+                    {
+                        "widget": self.button_refresh,
+                        "columnspan": 2
+                    }
+                ],
+                [
+                    self.button_undo,
+                    self.button_redo
+                ]
+            ]
+        )
+
+        self.grid_manager_1.grid_widgets(
+            [
+                [
+                    {
+                        "widget": self.frame_calendar_a,
+                        "sticky": "ew"
+                    }
+                ]
+            ]
+        )
+
+        self.entry_unit_scroll_search.grid(row=1, column=1)  #, sticky="ew")
+        self.button_submit_unit_search.grid(row=2, column=1)  #, sticky="ew")
+
         self.frame_calendar_b.grid()
-        self.calendar_surface.grid(row=1, column=1)
+        self.calendar_surface.grid(row=1, column=1, sticky="ew")
         self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew")
+
+
         # self.button_scroll_left.pack(side=tkinter.LEFT)
         # self.button_scroll_right.pack(side=tkinter.RIGHT)
 
@@ -279,6 +467,34 @@ class App(tkinter.Tk):
                     print(f"INVALID STATE")
         else:
             print(f"LET GO OFF CALENDAR")
+
+    def click_search_units(self, *args):
+        text = self.tv_entry_unit_scroll_search.get()
+        bba = self.calendar_surface.bbox("all")
+        bbaw = (bba[2] - bba[0])
+        cw = self.calendar_surface.canvas_width
+        if text:
+            if text in self.calendar_surface.units:
+                unit_in = self.calendar_surface.units[text]
+                if unit_in.placed:
+                    r, c = self.calendar_surface.quote_rc(text)
+                    bbox = self.calendar_surface.rc_bbox((r, c))
+                    x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                    # x, y = int(bbox[0] + ((bbox[2] - bbox[0]) / 2)) - (bbaw / 2), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                    x /= bbaw
+
+                    # self.calendar_surface.scan_dragto(x, y)
+                    self.calendar_surface.xview_moveto(x)
+                    print(f"found! Q={text} at {r=}, {c=}, {x=}, {y=}")
+                else:
+                    tkinter.messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
+                    self.tv_combo_unit_selection.set(text)
+                    self.combo_unit_selection.focus()
+            else:
+                tkinter.messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
+
+        else:
+            tkinter.messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number.")
 
     def click_calendar_surface_left(self, event):
         """Delete a tile when right-clicking the mouse over a valid unit."""
@@ -479,10 +695,62 @@ class App(tkinter.Tk):
 
     def click_debug_show_history(self):
         print(f"self.calendar_surface.history:\n{self.calendar_surface.history}")
+        print(f"self.calendar_surface.redo_history:\n{self.calendar_surface.redo_history}")
 
     def click_refresh(self):
         print("REFRESHING")
         self.restart_handle()
+
+    def click_redo(self):
+        redo_data = self.calendar_surface.redo()
+        success, data = redo_data
+        msg = data["msg"]
+        match success:
+            case 0:
+                # failure
+                tkinter.messagebox.showinfo(title="Redo", message="Nothing to redo!")
+            case 1:
+                pass
+            case 2:
+                # 2 - success - but need to remove from combo list.
+                quote = data["quote"]
+                new_list = list(self.combo_unit_selection["values"])
+                new_list.remove(quote)
+                self.combo_unit_selection.configure(values=new_list)
+            case 3:
+                # 2 - success - but need to add quote to calendar.
+                quote = data["quote"]
+
+                # unit_in = last.unit_in
+                # r_from = last.r_from
+                # c_from = last.c_from
+                # r_to = last.r_to
+                # c_to = last.c_to
+                # self.set_rc_with_unit((r_from, c_from), unit_in)
+                # self.remove_tile(r_to, c_to)
+
+                values = list(self.combo_unit_selection["values"])
+                values.append(quote)
+                values.sort()
+                self.combo_unit_selection.configure(values=values)
+            case 4:
+                pass
+            case 5:
+                # 4 - success - but need to shift in reverse
+                line_in = data["line_in"]
+                days_in = data["days_in"]
+                direction_in = data["direction_in"]
+                self.calendar_surface.shift_line({
+                    "line": line_in,
+                    "direction": direction_in,
+                    "days": days_in,
+                    "submission": True
+                }
+                    , undoable=False
+                )
+            case _:
+                raise ValueError(f"Error redo not successful. Returned {success}\n{msg=}")
+        print(f"REDO {success}, {msg=}")
 
     def click_undo(self):
         undo_data = self.calendar_surface.undo()
@@ -518,9 +786,23 @@ class App(tkinter.Tk):
                 unit_from = data["unit_from"]
                 self.colour_code_dealer(unit_to.InputField2_v2)
                 self.colour_code_dealer(unit_from.InputField2_v2)
+            case 5:
+                # 4 - success - but need to shift in reverse
+                line_in = data["line_in"]
+                days_in = data["days_in"]
+                direction_in = data["direction_in"]
+                direction_in = "forward" if direction_in == "backward" else "forward"
+                self.calendar_surface.shift_line({
+                    "line": line_in,
+                    "direction": direction_in,
+                    "days": days_in,
+                    "submission": True
+                }
+                    , undoable=False
+                )
             case _:
                 raise ValueError(f"Error undo not successful. Returned {success}\n{msg=}")
-        print(f"{success}, {msg=}")
+        print(f"UNDO {success}, {msg=}")
 
     def dbl_click_tile(self, event):
         # self.calendar_surface.dbl_click_tile(event)
@@ -587,11 +869,11 @@ class App(tkinter.Tk):
                 self.colour_code_dealer(unit_in.InputField2_v2)
                 self.colour_code_dealer(unit_from.InputField2_v2)
                 # s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
-                self.calendar_surface.history.append(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
+                self.calendar_surface.new_history(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
             else:
                 s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
                 s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
-                self.calendar_surface.history.append(CalendarSurface.MovementUndoable(r, c, tr, tc, unit_in))
+                self.calendar_surface.new_history(CalendarSurface.MovementUndoable(r, c, tr, tc, unit_in))
         return s1 and s2
 
     def delete_tile(self, r, c, unit_in, unplace=True, undoable=True) -> bool:
@@ -615,7 +897,7 @@ class App(tkinter.Tk):
             self.combo_unit_selection.configure(values=new_list)
         self.calendar_surface.revert_colour((r, c))
         if undoable:
-            self.calendar_surface.history.append(CalendarSurface.DeletionUndoable(r, c, unit_in))
+            self.calendar_surface.new_history(CalendarSurface.DeletionUndoable(r, c, unit_in))
         return True
 
     def overwrite_tile(self, tag_in: int | str, unit_in: Unit, undoable: bool = True) -> bool:
@@ -668,7 +950,7 @@ class App(tkinter.Tk):
             # tv_text_1.set()
 
             if undoable:
-                self.calendar_surface.history.append(CalendarSurface.PlacementUndoable(r, c, unit_in))
+                self.calendar_surface.new_history(CalendarSurface.PlacementUndoable(r, c, unit_in))
 
             return True
         return False

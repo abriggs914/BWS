@@ -155,7 +155,7 @@ class GridManager:
             m = ""
             for c in row:
                 if c:
-                    m += f"| {c._name}".center(10)
+                    m += f"| {c._name}".center(15)
                 else:
                     m += f"|   None  "
             print(f"[{m + '|'}]")
