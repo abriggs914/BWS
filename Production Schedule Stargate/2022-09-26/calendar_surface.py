@@ -1,5 +1,6 @@
 import datetime
-import tkinter
+import tkinter_utility
+from tkinter_utility import tkinter
 
 from dateutil.relativedelta import relativedelta
 from colour_utility import *
@@ -53,9 +54,17 @@ class CalendarSurface(tkinter.Canvas):
 
             n_visible_cols: int = 14,
             sql_output_file_name: str = "./Queries/{ts}_sql_output.sql",
-            text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "IsGalv"]
+            text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "IsGalv"],
+
+            weekend_proportion: float = 0.5,
+            illegal_saturday: bool = True,
+            illegal_sunday: bool = True,
+            holidays: list[datetime.datetime] = dataclasses.field(default_factory=list)
     ):
         super().__init__(master, width=width, height=height)
+
+        print(f"DIRRRRR{dir(tkinter_utility)}")
+
         self.canvas_width = width
         self.canvas_height = height
         self.user_name = user_name
@@ -63,10 +72,16 @@ class CalendarSurface(tkinter.Canvas):
         self.start_date = start_date
         self.end_date = self.start_date + relativedelta(months=6)
         self.dates_list = [self.start_date + datetime.timedelta(days=i) for i in range((self.end_date - self.start_date).days)] + [self.end_date]
+        self.date_status = [d.weekday() for d in self.dates_list]
         self.rows = len(self.lines)
         self.cols = (self.end_date - self.start_date).days
         self.max_tiles = self.rows * self.cols
         self.text_order = text_order
+        self.illegal_saturday = illegal_saturday
+        self.illegal_sunday = illegal_sunday
+
+        self.weekend_proportion = weekend_proportion
+        self.holidays = holidays
 
         self.n_visible_cols = n_visible_cols
         self.visible_cols = range(self.n_visible_cols)
@@ -124,28 +139,56 @@ class CalendarSurface(tkinter.Canvas):
         ts = self.tile_space  # space between tiles
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
+        tw_we = tw * self.weekend_proportion  # tile width weekend
+        th_we = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height weekend
         self.tile_width = tw
         self.tile_height = th
+        self.tile_width_weekend = tw_we
+        self.tile_height_weekend = th_we
+        t_weekend_days = 0
 
+        print(f"t_width={tw}, t_height={th}, t_width_wk={tw_we}, t_height_w={th_we}")
         print(f"{self.rows=}, {self.cols=}")
 
         tiles = []
-        n_slices = (self.rows + 1) * (self.cols + 1)
-        print(f"{n_slices=}")
-        grad = rainbow_gradient(n_slices)
+        # n_slices = (self.rows + 1) * (self.cols + 1)
+        # print(f"{n_slices=}")
+        # grad = rainbow_gradient(n_slices)
         # TODO recalculate these positions so that the left most column is unaffected by the 'timeline' shifting
         #  Currently this tile is treated the same as all of the others
         for r in range(self.rows + 1):
             row = []
             row_2 = []
             tile_detail_row = []
+            weekend_days = 0
             for c in range(self.cols + 1):
+
                 x1 = (c * tw) + ((c + 1) * ts) + (ts / 2)
                 y1 = (r * th) + ((r + 1) * ts) + (ts / 2)
                 x2 = ((c + 1) * tw) + ((c + 1) * ts) + (ts / 2)
                 y2 = ((r + 1) * th) + ((r + 1) * ts) + (ts / 2)
+
+                print(f"\tA {r=}, {c=}, {x1=}, {x2=}, {x2=}, {y2=}, {weekend_days=}, {tw - tw_we=}, {th - th_we=}")
+
+                x1 -= (weekend_days * (tw - tw_we))
+                x2 -= (weekend_days * (tw - tw_we))
+                y1 -= (weekend_days * (th - th_we))
+                y2 -= (weekend_days * (th - th_we))
+
+                print(f"\tB {r=}, {c=}, {x1=}, {x2=}, {x2=}, {y2=}, {weekend_days=}, {tw - tw_we=}, {th - th_we=}")
+
+                if c > 0:
+                    today = self.dates_list[c - 1]
+                    if self.date_status[c - 1] > 4:
+                        print(f"\t{today=}, {self.date_status[c - 1]=}")
+                        weekend_days += 1
+                        x2 -= (tw - tw_we)
+                        y2 -= (th - th_we)
+
                 xd = x2 - x1
                 yd = y2 - y1
+
+                print(f"\tC {r=}, {c=}, {x1=}, {x2=}, {x2=}, {y2=}, {weekend_days=}, {tw - tw_we=}, {th - th_we=}")
 
                 tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour = self.calc_colours(r, c)
 
@@ -223,7 +266,7 @@ class CalendarSurface(tkinter.Canvas):
                             wip_y,
                             text=wip_t.get(),
                             fill=font_colour,
-                            width=tw,
+                            width=tw if self.day_of_week(c - 1) <= 4 else tw_we,
                             activefill=active_fill_colour
                         )
                     )
@@ -467,26 +510,26 @@ class CalendarSurface(tkinter.Canvas):
                 new_unit.history["_Available_Date"] = [(datetime.datetime.now(), new_unit.gener_id(), new_date)]
                 new_unit.history["_job_start_line_v2"] = [(datetime.datetime.now(), new_unit.gener_id(), new_line)]
 
-    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit, set_style:bool = False) -> None:
+    def set_rc_with_unit(self, rc: tuple[int, int], unit_in: Unit, set_style:bool = False, default_answer: int = None) -> None:
         print(f"SETTING {rc=} with {unit_in=}, {set_style=}")
         if set_style:
             r, c = rc
             tile = self.tiles[r][c]
-            self.set_tile_with_unit_from_tile(tile, tile, unit_in, do_assign=True)
+            self.set_tile_with_unit_from_tile(tile, tile, unit_in, do_assign=True, default_answer=default_answer)
             self.revert_colour(rc)
         else:
-            self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
+            self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in, default_answer=default_answer)
 
-    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False, do_place: bool = True) -> None:
+    def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False, do_place: bool = True, default_answer: int = None) -> None:
         """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles."""
         print(f"set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False) -> None:")
-        self.set_tile_with_unit(to_tag, unit_in, do_assign=do_assign, do_place=do_place)
+        self.set_tile_with_unit(to_tag, unit_in, do_assign=do_assign, do_place=do_place, default_answer=default_answer)
         # old_r, old_c = self.tile_to_rc(from_tag)
         # new_r, new_c = self.tile_to_rc(to_tag)
         # old_details = self.tile_properties[old_r][old_c]
         # new_details = self.tile_properties[new_r][new_c]
         ot1, ot2, ot3, ot4, ot5 = self.get_text_tags(from_tag)
-        nt1, nt2, nt3, nt4, nt5 = self.get_text_tags(to_tag)
+        # nt1, nt2, nt3, nt4, nt5 = self.get_text_tags(to_tag)
         t_order = self.text_order
         for i in range(1, 6):
             for attribute in ['fill', "activefill"]:
@@ -520,24 +563,124 @@ class CalendarSurface(tkinter.Canvas):
             self.tile_properties[r][c]["text_5"]
         )
 
-    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit, do_assign: bool = True, do_place=True) -> None:
+    def day_of_week(self, column_in):
+        """Return the calculated date status at column 'c'. 0-4 -> Mon-Fri, 5, 6 = Sat, Sun"""
+        return self.date_status[column_in]
+
+    def next_available_day(self, row_in):
+        print(f"{row_in=}")
+        print(f"{self.quote_rc('SG100025')=}")
+        print(f"{self.quote_rc('SG100291')=}")
+        print(f"{len(self.tile_properties[row_in])=}")
+        for c, col_data in enumerate(self.tile_properties[row_in]):
+            print(f"{c=}. {row_in=}, {col_data['unit_in']=}")
+            if c > 0:
+                if col_data.get("unit_in", None) is None:
+                    return c + 1
+
+    def set_tile_with_unit(self, tag_in: int | str, unit_in: Unit, do_assign: bool = True, do_place=True, default_answer: int = None) -> None:
         """Associate a unit object with a given tile space. Unit data only, no UI changes."""
+        # default_answer = 1 == back, 3 == forward, else == Nothing
         assert isinstance(unit_in, Unit), "Error param 'unit_in' must be an instance of a Unit."
         rc = self.tile_to_rc(tag_in)
         if rc:
             r, c = rc
+
+            already_unit = self.tile_properties[r][c]["unit_in"]
+            if already_unit is not None:
+                print(f"\n\n\tABOUT TO OVERWRITE TILE {already_unit=} WITH {unit_in=}, {r=}, {c=}\n\tNEED TO WALK THE LINE TO DETERMINE IF A UNIT NEEDS TO BE SENT BEYOND.\n\n\n")
+
+                next_col = self.next_available_day(r)
+                print(f"NEXT AVAILABLE COLUMN={next_col} ON {self.dates_list[next_col]}, ON LINE {self.lines[r - 1]}")
+
+            wd = self.day_of_week(c - 1)
+            if wd > 4:
+                date = self.dates_list[c - 1]
+                pn = [-1, -1]
+                tc = c - 1
+                while (tc > 0) and (self.day_of_week(tc - 1) > 4):
+                    tc -= 1
+                if tc < 0:
+                    raise ValueError(f"Error, cannot place tile at column c prev. Out of range: {tc}")
+                prev_day = self.dates_list[tc - 1]
+                if tc == 0:
+                    # need to add to beyond left
+                    print("\tAdding to beyond left")
+                    line_in = unit_in.JobStartLine
+                    self.tiles_beyond[line_in]["left"].insert(-1, unit_in)
+                pn[0] = tc - 0
+                tc = c + 1
+                while (tc < len(self.dates_list)) and (self.day_of_week(tc - 1) > 4):
+                    tc += 1
+                if tc < 0:
+                    raise ValueError(f"Error, cannot place tile at column c next. Out of range: {tc}")
+                if tc == len(self.dates_list):
+                    # need to add to beyond right
+                    print("\tAdding to beyond right")
+                    line_in = unit_in.JobStartLine
+                    self.tiles_beyond[line_in]["right"].insert(0, unit_in)
+                next_day = self.dates_list[tc - 1]
+                pn[1] = tc + 0
+                prev_day_msg = f"<< {prev_day:'%Y-%m-%d'} <<"
+                next_day_msg = f">> {next_day:'%Y-%m-%d'} >>"
+
+                x, y = self.rc_bbox((r, c))[:2]
+                if default_answer is None:
+                    ans = tkinter_utility.CustomMessageBox(
+                        title="Illegal Placement",
+                        msg=f"Error placing Quote {unit_in.SGQuote}.\nCurrent application mode does not allow units to placed on a weekend.\nPlease Choose a valid action:",
+                        x=x,
+                        y=y,
+                        b1=prev_day_msg,
+                        b2="cancel",
+                        b3=next_day_msg
+                    )
+                    ans = ans.choice
+                else:
+                    ans = default_answer
+                self.configure(state="disabled")
+                if ans == "closed":
+                    ans = 0
+                else:
+                    ans = int(ans)
+                print(f"{ans=}")
+                print(f"A {c=}, {pn=}")
+                if ans == 1:
+                    # prev_day_msg
+                    self.remove_tile(r, c)
+                    self.delete_tile(r, c)
+                    c = pn[0]
+                    print(f"B {c=}")
+                elif ans == 3:
+                    # next_day_msg
+                    self.remove_tile(r, c)
+                    self.delete_tile(r, c)
+                    c = pn[1]
+                    print(f"C {c=}")
+                else:
+                    # 2
+                    c = c
+                    print(f"D {c=}")
+
+                if 0 < c < len(self.dates_list):
+                    self.set_rc_with_unit((r, c), unit_in)
+                # modify the history created from the placement action.
+                last = self.history[-1]
+                if isinstance(last, CalendarSurface.MovementUndoable):
+                    # r_from = last.r_from
+                    # c_from = last.c_from
+                    # r_to = last.r_to
+                    # c_to = last.c_to
+                    # print(f"Modifying the history: {last.c_to=}, {c=}")
+                    last.c_to = c
+                    # self.status.set({"msg": "Need to swap the to col.", "c": c})
+                return
+
+            print(f"date: {self.dates_list[c - 1]=}, {c - 1=}")
             # SGQuote# | Model No | Dealer Name | WO | Galv
             text_order = self.text_order
             details = self.get_text_vars(tag_in)
-            # details = [
-            #     self.tile_properties[r][c]["text_1"],
-            #     self.tile_properties[r][c]["text_2"],
-            #     self.tile_properties[r][c]["text_3"],
-            #     self.tile_properties[r][c]["text_4"],
-            #     self.tile_properties[r][c]["text_5"]
-            # ]
             keys = unit_in.__dict__.keys()
-            # print(f"LOOK HERE 1 {text_order=}, {details=}")
             for i, text_tv in enumerate(zip(text_order, details)):
                 text, tv = text_tv
                 text = "_" + text
@@ -548,8 +691,9 @@ class CalendarSurface(tkinter.Canvas):
                     # TODO last point for UI formatting
                     if text == "_IsGalv":
                         value = value if value != 'N' else ''
-                    elif text == "WO":
-                        value = int(value)
+                    elif text == "_WO":
+                        if not math.isnan(value):
+                            value = int(value)
                     # print(f"\t\t\tAFTER {value=}")
                 # print(f"\t\tLOOK HERE 2 {i=}, {text=} = {value=}, {tv.get()=}")
                 tv.set(value)
@@ -607,6 +751,7 @@ class CalendarSurface(tkinter.Canvas):
         # print(f"RESULT = <{result}>")
         if result:
             with open(fn, "w") as f:
+                f.write("\n\n\t-- Insert Updates\n")
                 f.write(result_2)
         # print(f"RESULT2 = <{result_2}>")
 
@@ -615,6 +760,7 @@ class CalendarSurface(tkinter.Canvas):
             result_3 += template_3.format(q=quote, u=user_name)
         if result_3:
             with open(fn, "a") as f:
+                f.write("\n\n\t-- Deletions\n")
                 f.write(result_3)
 
         for line, d1 in self.tiles_beyond.items():
@@ -629,6 +775,7 @@ class CalendarSurface(tkinter.Canvas):
                         result_4 += template_2.format(d=new_avail_date, q=unit_in.SGQuote, j=new_avail_date, l=line, u=user_name)
         if result_4:
             with open(fn, "a") as f:
+                f.write("\n\n\t-- Beyond Units\n")
                 f.write(result_4)
         # print(f"RESULT3 = <{result_3}>")
         # print(f"RESULT4 = <{result_4}>")
@@ -856,7 +1003,13 @@ class CalendarSurface(tkinter.Canvas):
             step = -1
         print(f"BEFORE\t{self.tiles_beyond=}")
         unit_popped = None
-        for i in range(days_in):
+        i = 0
+        weekend_offset = 0
+
+        if undoable:
+            self.new_history(CalendarSurface.ShiftUndoable(line_in, days_in, direction_in))
+
+        while i < days_in:
             print(f"{i=}, {start=}, {stop=}, {step=}, {i_row=}")
             # print(f"{bool(self.tiles_beyond[line_in]['right'])=}, '{self.tiles_beyond[line_in]['right']}', {direction_in == 'forward'=}, {direction_in == 'forward' and self.tiles_beyond[line_in]['right']=}")
             # print(f"{bool(self.tiles_beyond[line_in]['left'])=}, '{self.tiles_beyond[line_in]['left']}', {direction_in == 'forward'=}, {direction_in == 'forward' and self.tiles_beyond[line_in]['left']=}")
@@ -871,7 +1024,8 @@ class CalendarSurface(tkinter.Canvas):
                 # TODO instead of inserting at 1, need to calculate (days - 1) so it will stay in sync with the rest of the calendar
                 unit_popped = self.tiles_beyond[line_in]["left"].pop(-1)
                 if unit_popped:
-                    self.set_rc_with_unit((i_row, 1), unit_popped)
+                    # TODO, check that this insert does not land on a weekend.
+                    self.set_rc_with_unit((i_row, 1), unit_popped, default_answer=(1 if direction_in == "backward" else 3))
                 print(f"B")
             elif direction_in == "backward" and self.tiles_beyond[line_in]["right"]:
                 #TODO shift these tile out of the list
@@ -879,9 +1033,11 @@ class CalendarSurface(tkinter.Canvas):
                 # TODO instead of inserting at 1, need to calculate (days - 1) so it will stay in sync with the rest of the calendar
                 unit_popped = self.tiles_beyond[line_in]["right"].pop(0)
                 if unit_popped:
-                    self.set_rc_with_unit((i_row, len(self.tiles[i_row]) - 1), unit_popped)
+                    # TODO, check that this insert does not land on a weekend.
+                    self.set_rc_with_unit((i_row, len(self.tiles[i_row]) - 1), unit_popped, default_answer=(1 if direction_in == "backward" else 3))
                 print(f"C")
             elif direction_in == "backward" and self.tiles_beyond[line_in]["left"]:
+                # TODO, append nones to save space for weekends.
                 self.tiles_beyond[line_in]["left"].append(None)
                 print(f"D")
             else:
@@ -907,7 +1063,7 @@ class CalendarSurface(tkinter.Canvas):
                     if not beyond_left and not beyond_right:
                         print(f"{i=}, {j=}, {tile=}, {day=}, {unit_in=}, BL={beyond_left}, BR={beyond_right}, {details=}")
                         # TODO verify that a weekday unit does not get pushed to weekend and vice-versa
-                        self.set_rc_with_unit((i_row, j - step), unit_in)
+                        self.set_rc_with_unit((i_row, j - step), unit_in, default_answer=(1 if direction_in == "backward" else 3))
                     else:
                         print(f"BEYOND! {i=}, {j=}, {tile=}, {day=}, {unit_in=}, BL={beyond_left}, BR={beyond_right}, {details=}")
                         print(dict_print(self.tiles_beyond, "Tiles Beyond"))
@@ -919,8 +1075,7 @@ class CalendarSurface(tkinter.Canvas):
 
                 # else:
                 #     print(f"SKIP: {unit_in=}")
-        if undoable:
-            self.new_history(CalendarSurface.ShiftUndoable(line_in, days_in, direction_in))
+            i += 1
 
     def new_history(self, undoable):
         self.history.append(undoable)

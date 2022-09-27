@@ -1,5 +1,17 @@
 USE SysproCompanyS
 GO
+-- Missing list
+SELECT
+	*
+FROM
+	[SysproCompanyS].[dbo].[ClkTransaction]
+LEFT JOIN
+	[SysproCompanyS].[dbo].[ClkShiftEmpAssign]
+ON
+	[ClkTransaction].[EmployeeNumber] = [ClkShiftEmpAssign].Emp#
+WHERE
+	[ClkShiftEmpAssign].[Emp#] IS NULL
+;
 
 
 -- Viewing employees who make transactions, but who hav not been pulled into the access rounding program yet.

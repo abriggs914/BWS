@@ -1,10 +1,9 @@
 import datetime
 
-import tkinter
 from tkinter import colorchooser
 from colour_utility import Colour
 from grid_manager import GridManager
-from tkinter_utility import combo_factory, button_factory
+from tkinter_utility import tkinter, combo_factory, button_factory
 
 
 class ColourWidget(tkinter.Frame):

@@ -17,10 +17,47 @@ INNER JOIN
 	@t
 ON 
 	[Orders].[Quote#] = [@t].[Quote];
+	
+SELECT '@t X @m' AS [Table], * FROM @t CROSS JOIN @m;
+SELECT '[Orders] & @t' AS [Table], * FROM [Orders] INNER JOIN @t ON [Orders].[Quote#] = [@t].[Quote];
+SELECT '[Order Options] & @t' AS [Table], * FROM [Order Options] INNER JOIN @t ON [Order Options].[Quote#] = [@t].[Quote];
+SELECT '[Custom Work] & @t' AS [Table], * FROM [Custom Work] INNER JOIN @t ON [Custom Work].[Quote#] = [@t].[Quote];
+SELECT '[Custom Work_FactoryLines] & @t' AS [Table], * FROM [Custom Work_FactoryLines] INNER JOIN @t ON [Custom Work_FactoryLines].[Quote#] = [@t].[Quote];
+SELECT '[Custom Work_SpecLines] & @t' AS [Table], * FROM [Custom Work_SpecLines] INNER JOIN @t ON [Custom Work_SpecLines].[Quote#] = [@t].[Quote];
+SELECT '[Standards] & @m' AS [Table], * FROM [Standards] INNER JOIN @m ON [Standards].[Model No] = [@m].[ModelName];
 
-SELECT * FROM [Orders] INNER JOIN @t ON [Orders].[Quote#] = [@t].[Quote];
-SELECT * FROM [Order Options] INNER JOIN @t ON [Order Options].[Quote#] = [@t].[Quote];
-SELECT * FROM [Custom Work] INNER JOIN @t ON [Custom Work].[Quote#] = [@t].[Quote];
-SELECT * FROM [Custom Work_FactoryLines] INNER JOIN @t ON [Custom Work_FactoryLines].[Quote#] = [@t].[Quote];
-SELECT * FROM [Custom Work_SpecLines] INNER JOIN @t ON [Custom Work_SpecLines].[Quote#] = [@t].[Quote];
-SELECT * FROM [Standards] INNER JOIN @m ON [Standards].[Model No] = [@m].[ModelName];
+
+
+----------------------------
+
+
+
+
+
+DECLARE @u AS TABLE ([ID] INT IDENTITY(1, 1), [WO] NVARCHAR(MAX));
+INSERT INTO @u ([WO]) VALUES
+('10016045')
+--,
+--('10016046')
+;
+DECLARE @n AS TABLE ([ID] INT IDENTITY(1, 1), [ModelName] NVARCHAR(MAX));
+INSERT INTO @n ([ModelName])
+SELECT DISTINCT
+	[Model No]
+FROM
+	[Orders]
+INNER JOIN
+	@u
+ON 
+	[Orders].[WO#] = [@u].[WO]
+
+SELECT '@u X @c' AS [Table], * FROM @u CROSS JOIN @n;
+SELECT '[Orders] & @u' AS [Table], * FROM [Orders] INNER JOIN @u ON [Orders].[WO#] = [@u].[WO];
+SELECT '[Order Options] & @u' AS [Table], * FROM [Order Options] INNER JOIN @u ON [Order Options].[WO#] = [@u].[WO];
+SELECT '[Custom Work] & @u' AS [Table], * FROM [Custom Work] INNER JOIN @u ON [Custom Work].[WO#] = [@u].[WO];
+SELECT '[Custom Work_FactoryLines] & @u' AS [Table], * FROM [Custom Work_FactoryLines] INNER JOIN @u ON [Custom Work_FactoryLines].[WO#] = [@u].[WO];
+SELECT '[Custom Work_SpecLines] & @u' AS [Table], * FROM [Custom Work_SpecLines] INNER JOIN @u ON [Custom Work_SpecLines].[WO#] = [@u].[WO];
+SELECT '[Standards] & @n' AS [Table], * FROM [Standards] INNER JOIN @n ON [Standards].[Model No] = [@n].[ModelName];
+
+SELECT '[Orders] & @t' AS [Table], * FROM Orders INNER JOIN @t ON [Orders].[Quote#] = [@t].[Quote]
+SELECT '[Orders]' AS [Table], * FROM Orders WHERE [Quote#] = 26491 OR [WO#] = 10016045

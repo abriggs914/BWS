@@ -1,16 +1,11 @@
-import datetime
+
 import json
-import tkinter
-from tkinter import ttk, messagebox
-import numpy as np
+from tkinter_utility import *
 
-import pandas
-
-from colour_utility import rgb_to_hex, random_colour
-from tkinter_utility import entry_factory, button_factory, combo_factory, EntryWithPlaceholder
-from pyodbc_connection import connect
-from utility import clamp, clamp_rect, isnumber
-from unit import Unit
+# from colour_utility import rgb_to_hex, random_colour
+# from pyodbc_connection import connect
+# from utility import clamp, clamp_rect, isnumber
+# from unit import Unit
 from grid_manager import GridManager
 from colour_demo import ColourWidget
 from calendar_surface import *
@@ -32,7 +27,10 @@ class App(tkinter.Tk):
             restart_handle=None,
             can_width_p=0.85,
             can_height_p=0.65,
-            colour_background_frame_top_bar=Colour(78, 15, 15).hex_code
+            colour_background_frame_top_bar=Colour(78, 15, 15).hex_code,
+            warn_weekends: bool = True,
+            illegal_saturday: bool = True,
+            illegal_sunday: bool = True
     ):
         super().__init__()
 
@@ -75,6 +73,9 @@ class App(tkinter.Tk):
         self.select_text = None
         self.select_details = None
         self.removed_quotes = []  # use this to track quotes removed from the combo list.
+        self.warn_weekends = warn_weekends
+        self.illegal_saturday = illegal_saturday
+        self.illegal_sunday = illegal_sunday
 
         ###############################################################################################################
         #  Tkinter variables and set-up
@@ -103,7 +104,7 @@ class App(tkinter.Tk):
         self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b")
         self.frame_top_bar_c = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_c")
 
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, self.user_name, can_w, can_h, self.start_date)
+        self.calendar_surface = CalendarSurface(self.frame_calendar_b, self.user_name, can_w, can_h, self.start_date, weekend_proportion=0.1, illegal_saturday=self.illegal_saturday, illegal_sunday=self.illegal_sunday)
         self.calendar_surface.populate_units(self.df_production)
 
         self.line_shifter = LineShifter(self.frame_top_bar, lines=self.calendar_surface.lines)
@@ -469,7 +470,7 @@ class App(tkinter.Tk):
             print(f"LET GO OFF CALENDAR")
 
     def click_search_units(self, *args):
-        text = self.tv_entry_unit_scroll_search.get()
+        text = self.tv_entry_unit_scroll_search.get().upper()
         bba = self.calendar_surface.bbox("all")
         bbaw = (bba[2] - bba[0])
         cw = self.calendar_surface.canvas_width
@@ -862,6 +863,7 @@ class App(tkinter.Tk):
             already_a_tile = unit_from is not None
             print(f"Moving a tile {r=}, {c=}, {already_a_tile=}, {unit_in=}, {self.calendar_surface.tile_properties[r][c]['unit_in']=}")
             if already_a_tile:
+                self.calendar_surface.new_history(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
                 s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
                 s2 = self.overwrite_tile(tag_from, unit_from, undoable=False)
                 self.calendar_surface.revert_colour(from_rc)
@@ -869,11 +871,10 @@ class App(tkinter.Tk):
                 self.colour_code_dealer(unit_in.InputField2_v2)
                 self.colour_code_dealer(unit_from.InputField2_v2)
                 # s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
-                self.calendar_surface.new_history(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
             else:
+                self.calendar_surface.new_history(CalendarSurface.MovementUndoable(r, c, tr, tc, unit_in))
                 s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
                 s2 = self.delete_tile(r, c, unit_in, unplace=False, undoable=False)
-                self.calendar_surface.new_history(CalendarSurface.MovementUndoable(r, c, tr, tc, unit_in))
         return s1 and s2
 
     def delete_tile(self, r, c, unit_in, unplace=True, undoable=True) -> bool:
@@ -888,7 +889,11 @@ class App(tkinter.Tk):
         ]
         for sv in string_vars:
             sv.set("")
+
+        if undoable:
+            self.calendar_surface.new_history(CalendarSurface.DeletionUndoable(r, c, unit_in))
         self.calendar_surface.delete_tile(r, c, unplace=unplace)
+
         # self.calendar_surface.tile_properties[r][c]["unit_in"] = None
         if unit_in.SGQuote in self.removed_quotes:
             new_list = list(self.combo_unit_selection["values"])
@@ -896,8 +901,6 @@ class App(tkinter.Tk):
             new_list.sort()
             self.combo_unit_selection.configure(values=new_list)
         self.calendar_surface.revert_colour((r, c))
-        if undoable:
-            self.calendar_surface.new_history(CalendarSurface.DeletionUndoable(r, c, unit_in))
         return True
 
     def overwrite_tile(self, tag_in: int | str, unit_in: Unit, undoable: bool = True) -> bool:
@@ -938,6 +941,10 @@ class App(tkinter.Tk):
                 print(f"\t\t{i=}, {text=} = {value=}, {tv.get()=}")
                 tv.set(value)
                 print(f"\t\t\t{tv.get()=}")
+
+            if undoable:
+                self.calendar_surface.new_history(CalendarSurface.PlacementUndoable(r, c, unit_in))
+
             self.calendar_surface.set_rc_with_unit(rc, unit_in)
             # print(f"{unit_in=}")
             # self.calendar_surface.tile_properties[r][c]["unit_in"] = unit_in
@@ -949,8 +956,6 @@ class App(tkinter.Tk):
 
             # tv_text_1.set()
 
-            if undoable:
-                self.calendar_surface.new_history(CalendarSurface.PlacementUndoable(r, c, unit_in))
 
             return True
         return False
