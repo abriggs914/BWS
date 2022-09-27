@@ -547,7 +547,7 @@ class EntryWithPlaceholder(tkinter.Entry):
 
     def foc_in(self, *args):
         if self['fg'] == self.placeholder_color:
-            self['show'] = '*'
+            # self['show'] = '*'
             self.delete('0', 'end')
             self['fg'] = self.default_fg_color
 

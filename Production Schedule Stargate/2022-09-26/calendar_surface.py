@@ -52,7 +52,7 @@ class CalendarSurface(tkinter.Canvas):
             drag_colour: str = rgb_to_hex(FIREBRICK_4),
 
             n_visible_cols: int = 14,
-            sql_output_file_name: str = "./{ts}_sql_output.sql",
+            sql_output_file_name: str = "./Queries/{ts}_sql_output.sql",
             text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "IsGalv"]
     ):
         super().__init__(master, width=width, height=height)
