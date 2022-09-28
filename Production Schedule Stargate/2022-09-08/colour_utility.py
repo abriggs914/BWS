@@ -1901,8 +1901,8 @@ def random_color():
 
 
 def font_foreground(colour_in, threshold=255*3/2):
-    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font of this colour will be visible on the background."""
-    assert iscolour(colour_in), "Error cannot infer the correct font fore-colour from a non colour object."
+    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font_message of this colour will be visible on the background."""
+    assert iscolour(colour_in), "Error cannot infer the correct font_message fore-colour from a non colour object."
     try:
         if isinstance(colour_in, str):
             colour_in = hex_to_rgb(colour_in)

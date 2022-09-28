@@ -1988,9 +1988,9 @@ def brighten(c, p):
 
 
 def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
-    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font of this colour will be visible on the background."""
+    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font_message of this colour will be visible on the background."""
     assert iscolour(
-        colour_in), f"Error cannot infer the correct font fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
+        colour_in), f"Error cannot infer the correct font_message fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
     try:
         if isinstance(colour_in, str):
             colour_in = hex_to_rgb(colour_in)

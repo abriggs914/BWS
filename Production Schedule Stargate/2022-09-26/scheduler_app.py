@@ -241,7 +241,7 @@ class App(tkinter.Tk):
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
-        self.frame_colour_coder = ColourWidget(self.frame_top_bar, dealers=self.dat_list_of_dealers())
+        self.frame_colour_coder = ColourWidget(self.frame_top_bar, dealers=self.dat_list_of_dealers(), default_colour=rgb_to_hex(GRAY_17))
 
         self.frame_colour_coder.status_code.trace_variable("w", self.colour_coder_update)
 
