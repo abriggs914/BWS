@@ -971,33 +971,34 @@ class CalendarSurface(tkinter.Canvas):
             return (0, {"msg": msg})
 
     def colour_code_dealer(self, dealer, colour):
-        d = dealer.upper()
-        colour = Colour(colour)
-        b = rgb_to_hex(brighten(colour.rgb_code, 0.25))
-        hc = colour.hex_code
-        fc = font_foreground(colour.rgb_code, rgb=False)
-        af = rgb_to_hex(brighten(fc, 0.25))
-        print(f"{d=}, {colour=}, {b=}, {hc=}, {fc=}, {af=}")
-        for r, row in enumerate(self.tiles):
-            for c, tile in enumerate(row):
-                details = self.tile_properties[r][c]
-                unit_in = details["unit_in"]
-                # print(f"{unit_in=}")
-                if unit_in not in [None, "", "none"]:
-                    if unit_in.InputField2_v2.upper() == d:
-                        self.itemconfigure(
-                            tile,
-                            fill=hc,
-                            activefill=b,
-                            outline=hc,
-                            activeoutline=b
-                        )
+        if dealer is not None:
+            d = dealer.upper()
+            colour = Colour(colour)
+            b = rgb_to_hex(brighten(colour.rgb_code, 0.25))
+            hc = colour.hex_code
+            fc = font_foreground(colour.rgb_code, rgb=False)
+            af = rgb_to_hex(brighten(fc, 0.25))
+            print(f"{d=}, {colour=}, {b=}, {hc=}, {fc=}, {af=}")
+            for r, row in enumerate(self.tiles):
+                for c, tile in enumerate(row):
+                    details = self.tile_properties[r][c]
+                    unit_in = details["unit_in"]
+                    # print(f"{unit_in=}")
+                    if unit_in not in [None, "", "none"]:
+                        if unit_in.InputField2_v2.upper() == d:
+                            self.itemconfigure(
+                                tile,
+                                fill=hc,
+                                activefill=b,
+                                outline=hc,
+                                activeoutline=b
+                            )
 
-                        self.itemconfigure(details["t1_tag"], fill=fc, activefill=af)
-                        self.itemconfigure(details["t2_tag"], fill=fc, activefill=af)
-                        self.itemconfigure(details["t3_tag"], fill=fc, activefill=af)
-                        self.itemconfigure(details["t4_tag"], fill=fc, activefill=af)
-                        self.itemconfigure(details["t5_tag"], fill=fc, activefill=af)
+                            self.itemconfigure(details["t1_tag"], fill=fc, activefill=af)
+                            self.itemconfigure(details["t2_tag"], fill=fc, activefill=af)
+                            self.itemconfigure(details["t3_tag"], fill=fc, activefill=af)
+                            self.itemconfigure(details["t4_tag"], fill=fc, activefill=af)
+                            self.itemconfigure(details["t5_tag"], fill=fc, activefill=af)
 
     def revert_colour(self, rc):
         print(f"REVERTING COLOURS {rc=}")

@@ -11,8 +11,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.09
-    Date...........2022-09-27
+    Version..............1.10
+    Date...........2022-09-29
     Author.......Avery Briggs
     """
 
