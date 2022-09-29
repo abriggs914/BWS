@@ -1,7 +1,5 @@
 
 import json
-import os.path
-
 from tkinter_utility import *
 
 # from colour_utility import rgb_to_hex, random_colour
@@ -17,8 +15,6 @@ from line_shift_demo import LineShifter
 # PROGRAM_MODE = "LIVE"
 PROGRAM_MODE = "TEST"
 
-SETTINGS_FILE = "./PDS_User_Setting.json"
-
 
 class App(tkinter.Tk):
 
@@ -27,6 +23,7 @@ class App(tkinter.Tk):
             TITLE="Stargate Production Scheduler",
             WIDTH=500,
             HEIGHT=500,
+            start_date_in=datetime.datetime.now(),
             restart_handle=None,
             can_width_p=0.85,
             can_height_p=0.65,
@@ -37,7 +34,8 @@ class App(tkinter.Tk):
     ):
         super().__init__()
 
-        self.start_date = None
+        self.settings_file_name = "./PDS_User_Setting.json"
+        self.start_date = start_date_in
         self.df_production = None
         self.df_work_days = None
         self.df_valid_users = None
@@ -45,7 +43,6 @@ class App(tkinter.Tk):
         self.this_user_publishes = None
         self.user_name = None
         self.populate_data()
-        self.init_queries_directory()
 
         if self.user_name is None:
             tkinter.messagebox.showerror(title="Fatal", message="Error, you do not currently have permission to use this application.\nPlease contact IT for further assistance.")
@@ -79,7 +76,6 @@ class App(tkinter.Tk):
         self.warn_weekends = warn_weekends
         self.illegal_saturday = illegal_saturday
         self.illegal_sunday = illegal_sunday
-        self.dirty = tkinter.BooleanVar(self, value=False)
 
         ###############################################################################################################
         #  Tkinter variables and set-up
@@ -108,11 +104,10 @@ class App(tkinter.Tk):
         self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b")
         self.frame_top_bar_c = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_c")
 
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, user_name=self.user_name, width=can_w, height=can_h, dirty_status_var=self.dirty, start_date=self.start_date, weekend_proportion=0.1, illegal_saturday=self.illegal_saturday, illegal_sunday=self.illegal_sunday)
+        self.calendar_surface = CalendarSurface(self.frame_calendar_b, self.user_name, can_w, can_h, self.start_date, weekend_proportion=0.1, illegal_saturday=self.illegal_saturday, illegal_sunday=self.illegal_sunday)
         self.calendar_surface.populate_units(self.df_production)
-        self.calendar_surface.dirty_status_var.set(False)  # reset to false after tile initialization.
 
-        self.line_shifter = LineShifter(self.frame_top_bar, lines=["All"] + self.calendar_surface.lines)
+        self.line_shifter = LineShifter(self.frame_top_bar, lines=self.calendar_surface.lines)
 
         # self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
 
@@ -125,7 +120,7 @@ class App(tkinter.Tk):
                 tv_label="Select a Quote#",
                 kwargs_combo={
                     "name": "selection_combo",
-                    "values": self.dat_list_of_units(remove_placed=True, remove_beyond=True),
+                    "values": self.dat_list_of_units(remove_placed=True),
                     "state": "readonly"
                 }
         )
@@ -228,12 +223,7 @@ class App(tkinter.Tk):
         # )
 
         self.tv_entry_unit_scroll_search = tkinter.StringVar(self, value="")
-        self.entry_unit_scroll_search = EntryWithPlaceholder(
-            self.frame_top_bar_a,
-            textvariable=self.tv_entry_unit_scroll_search,
-            font=('arial', 10, 'normal'),
-            placeholder="Enter a Quote#:"
-        )
+        self.entry_unit_scroll_search = EntryWithPlaceholder(self.frame_top_bar_a, textvariable=self.tv_entry_unit_scroll_search, font=('arial', 10, 'normal'), placeholder="Enter a Quote#:")
 
         self.tv_label_submit_unit_search,\
         self.button_submit_unit_search\
@@ -265,7 +255,6 @@ class App(tkinter.Tk):
         ###############################################################################################################
         #   bind event handlers
         ###############################################################################################################
-        self.calendar_surface.status.trace_variable("w", self.calendar_surface_status_update)
         self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
         self.calendar_surface.bind("<Button-3>", self.click_calendar_surface_left)
         self.calendar_surface.bind("<ButtonRelease-1>", self.release_calendar_surface)
@@ -364,125 +353,37 @@ class App(tkinter.Tk):
         self.calendar_surface.grid(row=1, column=1, sticky="ew")
         self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew")
 
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
 
         # self.button_scroll_left.pack(side=tkinter.LEFT)
         # self.button_scroll_right.pack(side=tkinter.RIGHT)
-
-    def calendar_surface_status_update(self, *args):
-        status_data = eval(self.calendar_surface.status.get())
-        code = status_data.get("code")
-        msg = status_data.get("msg")
-        print(f"calendar_surface_status_update {code=}, {msg=}")
-        match code:
-            case 1:
-                # bind self.calendar_surface with action events
-                self.bind_calendar_surface()
-                self.bind_top_frame()
-            case 2:
-                # unbind action events from self.calendar_surface for pop-up
-                self.unbind_calendar_surface()
-                self.unbind_top_frame()
-            case _:
-                pass
-
-    def unbind_top_frame(self):
-        self.line_shifter.disable_all_widgets()
-        self.frame_colour_coder.disable_all_widgets()
-
-        self.combo_unit_selection.configure(state="disabled")
-        self.button_insert_combo_choice.configure(state="disabled")
-        self.button_refresh.configure(state="disabled")
-        self.button_undo.configure(state="disabled")
-        self.button_redo.configure(state="disabled")
-        self.button_update_changes.configure(state="disabled")
-        self.button_export_changes.configure(state="disabled")
-        self.entry_unit_scroll_search.configure(state="disabled")
-        self.button_submit_unit_search.configure(state="disabled")
-
-    def bind_top_frame(self):
-        self.line_shifter.enable_all_widgets()
-        self.frame_colour_coder.enable_all_widgets()
-
-        self.combo_unit_selection.configure(state="normal")
-        self.button_insert_combo_choice.configure(state="normal")
-        self.button_refresh.configure(state="normal")
-        self.button_undo.configure(state="normal")
-        self.button_redo.configure(state="normal")
-        self.button_update_changes.configure(state="normal")
-        self.button_export_changes.configure(state="normal")
-        self.entry_unit_scroll_search.configure(state="normal")
-        self.button_submit_unit_search.configure(state="normal")
-
-    def bind_calendar_surface(self):
-        print(f"bind_calendar_surface")
-        self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
-        self.calendar_surface.bind("<Button-1>", self.click_calendar_surface)
-        self.calendar_surface.bind("<Button-3>", self.click_calendar_surface_left)
-        self.calendar_surface.bind("<ButtonRelease-1>", self.release_calendar_surface)
-        self.calendar_surface.bind("<Motion>", self.motion_calendar_surface)
-        self.frame_calendar_b.bind('<Configure>', self.onFrameConfigure)
-        # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
-        self.calendar_surface.bind("<MouseWheel>",
-                                   lambda event: self.xview('scroll', int(-1 * (event.delta / 120)), 'units'))
-
-    def unbind_calendar_surface(self):
-        print(f"unbind_calendar_surface")
-        # self.calendar_surface.unbind_all("all")
-        # self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
-        self.calendar_surface.unbind("<Button-1>")
-        self.calendar_surface.unbind("<Button-3>")
-        self.calendar_surface.unbind("<ButtonRelease-1>")
-        self.calendar_surface.unbind("<Motion>")
-        self.frame_calendar_b.unbind('<Configure>')
-        # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
-        self.calendar_surface.unbind("<MouseWheel>")
-
-    def on_closing(self):
-        if self.dirty.get() and messagebox.askokcancel("Quit?", "Do you want to quit?"):
-            match ans2 := messagebox.askyesnocancel("Save?", "Do you want to commit your session?"):
-                case True:
-                    self.click_update_sql(are_u_sure=True)
-                case _:
-                    pass
-            if ans2 is not None:
-                self.destroy()
-        if not self.dirty.get():
-            self.destroy()
 
     def verify_user(self, user_name):
         if user_name is None:
             return user_name
         return check_user(user_name)
 
-    def read_settings_data(self):
-        data = {}
+    def get_user_name(self):
+        user_name = None
         try:
-            with open(SETTINGS_FILE, "r") as f:
-                data = json.load(f)
-                # data = j
-                # user_name = j.get("user_name", None)
-                # print(f"READ USER {user_name=}, {j=}")
+            with open(self.settings_file_name, "r") as f:
+                j = json.load(f)
+                user_name = j.get("user_name", None)
+                print(f"READ USER {user_name=}, {j=}")
         except FileNotFoundError as fnf:
             print(fnf)
-            messagebox.showerror(title="Settings", message="Error no file named '{./PDS_User_Setting.json}' found.")
+            tkinter.messagebox.showerror(title="Settings", message="Error no file named '{./PDS_User_Setting.json}' found.")
 
-        return data
+        user_name = self.verify_user(user_name)
 
-    def init_queries_directory(self):
-        if not os.path.isdir("./Queries"):
-            os.mkdir("./Queries")
+        return user_name
 
     def populate_data(self):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
         # self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
-        self.settings_data = self.read_settings_data()
-        self.start_date = datetime.datetime.strptime(self.settings_data.get("start_date", datetime.datetime.now().strftime("%Y-%m-%d")), "%Y-%m-%d")
         self.df_production = connect(**SQL_ALL_STG_UNITS)
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
         self.df_valid_users = connect(**SQL_VALID_USERS)
-        self.user_name = self.verify_user(self.settings_data.get("user_name", ""))
+        self.user_name = self.get_user_name()
         self.this_user_is_valid = not self.df_valid_users.query(f"UserName == '{self.user_name}'").empty
         self.this_user_publishes = self.this_user_is_valid and self.df_valid_users[self.df_valid_users["UserName"] == self.user_name]["AllowPublish"].tolist()[0]
         if self.df_production.empty:
@@ -497,35 +398,24 @@ class App(tkinter.Tk):
         if self.df_work_days.empty:
             self.df_work_days = None
 
-    def dat_list_of_units(self, remove_placed=False, remove_beyond=False):
+    def dat_list_of_units(self, remove_placed=False):
         units = self.calendar_surface.units
         # print(f"{units=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()[0]=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()[0][0]=}")
+        print(f"{self.df_production['SGQuote'].values.tolist()[0]=}")
+        print(f"{self.df_production['SGQuote'].values.tolist()[0][0]=}")
+        # rem = (1 == (1 if not remove_placed else (1 if self.df_production["SGQuote"].values.tolist()[0][0] in units else 0)))
         # # (1 == (1 if not remove_placed else (1 if tup[0] not in units else 0)))
         # print(f"{rem=}")
         # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] is not None and (1 == (1 if not remove_placed else (1 if tup[0] in units else 0)))]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None) and (tup[0][0] is not None)]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None)]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup]
-        lst = [tup[0] if tup[0] is not None else tup[1] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None or tup[1] is not None)]
-        # print(f"{lst=}")
+        lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None) and (tup[0][0] is not None)]
+        print(f"{lst=}")
         if remove_placed:
             for unit_in, unit_o in units.items():
                 # print(f"{unit_in=}")
                 if unit_in not in [None, "none", ""]:
                     if unit_o.placed:
                         lst.remove(unit_in)
-        if remove_beyond:
-            for line, line_data in self.calendar_surface.tiles_beyond.items():
-                for direction, units_in in line_data.items():
-                    for unit_in in units_in:
-                        if unit_in is not None:
-                            # print(f"unit_in: {unit_in}\n\t{lst}")
-                            lst.remove(unit_in.SGQuote)
         lst.sort()
-        # print(f"LST: {lst=}")
         return lst
 
     def dat_list_of_dealers(self):
@@ -553,17 +443,14 @@ class App(tkinter.Tk):
                         print(f"DDT: <{ddt=}>")
                         unit_in = ddt["unit_in"]
                         ft = ddt["from_tag"]
-
-                        self.app_state = "IDLE"
-                        self.drag_tile = None
-                        self.calendar_surface.itemconfigure(dt, state="hidden")
-                        self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
-
                         if unit_in:
                             # TODO double check that this day is not a weekend
                             print(f"HERE D")
                             if self.move_tile(ht, ft, unit_in):
-                                print(f"MOVED!")
+                                self.app_state = "IDLE"
+                                self.drag_tile = None
+                                self.calendar_surface.itemconfigure(dt, state="hidden")
+                                self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
                     else:
                         #TODO investigate where a dragged tile goes when released over the same spot. ht == dt
                         # releasing a dragged tile on the same position.
@@ -600,19 +487,15 @@ class App(tkinter.Tk):
                     # self.calendar_surface.scan_dragto(x, y)
                     self.calendar_surface.xview_moveto(x)
                     print(f"found! Q={text} at {r=}, {c=}, {x=}, {y=}")
-                elif unit_in.SGQuote in self.combo_unit_selection["values"]:
-                    messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
+                else:
+                    tkinter.messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
                     self.tv_combo_unit_selection.set(text)
                     self.combo_unit_selection.focus()
-                elif unit_in.SGQuote in self.calendar_surface.get_beyond_quotes():
-                    d = unit_in.Available_Date
-                    l = unit_in.job_start_line_v2
-                    messagebox.showinfo(title="Calendar Search", message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
             else:
-                messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
+                tkinter.messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
 
         else:
-            messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number.")
+            tkinter.messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number.")
 
     def click_calendar_surface_left(self, event):
         """Delete a tile when right-clicking the mouse over a valid unit."""
@@ -802,9 +685,9 @@ class App(tkinter.Tk):
         else:
             tkinter.messagebox.showinfo(title="SQL Export", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
-    def click_update_sql(self, are_u_sure=False):
+    def click_update_sql(self):
         if self.this_user_publishes:
-            if are_u_sure or tkinter.messagebox.askyesnocancel(title="Server Update", message="Are you sure you want to commit your changes to the server?"):
+            if tkinter.messagebox.askyesnocancel(title="Server Update", message="Are you sure you want to commit your changes to the server?"):
                 sql_res = self.calendar_surface.update_tile_sql(self.removed_quotes)
                 # print(f"SQL\n\n<{sql_res}>")
                 tkinter.messagebox.showinfo(title="Server Update", message="Data updated successfully!")
