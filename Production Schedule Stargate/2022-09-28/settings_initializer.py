@@ -12,7 +12,7 @@ class SettingsWriter(tkinter.Tk):
     def __init__(self):
         super().__init__()
 
-        self.output_file = f"C:/Access/PDS_User_Settings.json"
+        self.output_file = f"./PDS_User_Setting.json"
 
         self.geometry(f"500x500")
         self.title("Settings Writer")

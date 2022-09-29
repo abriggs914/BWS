@@ -1,5 +1,6 @@
 import pandas
 import pandas as pd
+from inventory_app import InventoryApp
 
 
 CONDITION = {
@@ -159,24 +160,24 @@ TYPE_SUB_TYPE = [
 
 
 if __name__ == "__main__":
-    df = pandas.read_excel(r"./Server Room Stock - May 27th.xlsx", sheet_name="Sheet1")
-    if not df.empty:
-        print(f"{df=}")
-        print("INSERT INTO [ITI Item] ([Name], [Description], [IsActive], [Condition], [Status], [Type], [SubType]) VALUES")
-        # Name, Description, IsActive, Condition, Status, Type, SubType, DateCreated
-        for i, row in enumerate(df.iterrows()):
-            r_num, row_data = row
-            name = str(row_data["Inventory"]).replace("\n", " ")
-            description = name + "\n" + str(row_data["Notes"])
-            description = description.split("\nnan")[0].replace("\n", " ")
-            is_active = 1
-            condition = CONDITION[row_data["Condition"]]
-            status = 1
-            type_, sub_type = TYPE_SUB_TYPE[i]
-            type_ = TYPE[type_]
-            sub_type = SUBTYPES[sub_type]
-            # print(f"{name.ljust(32)=}, {description.ljust(40)=}, {is_active=}, {condition=}, {status=}, {type_=}, {sub_type=}")
-            print(f"('{name}', '{description}', {is_active}, {condition}, {status}, {type_}, {sub_type}),")
+    # df = pandas.read_excel(r"./Server Room Stock - May 27th.xlsx", sheet_name="Sheet1")
+    # if not df.empty:
+    #     print(f"{df=}")
+    #     print("INSERT INTO [ITI Item] ([Name], [Description], [IsActive], [Condition], [Status], [Type], [SubType]) VALUES")
+    #     # Name, Description, IsActive, Condition, Status, Type, SubType, DateCreated
+    #     for i, row in enumerate(df.iterrows()):
+    #         r_num, row_data = row
+    #         name = str(row_data["Inventory"]).replace("\n", " ")
+    #         description = name + "\n" + str(row_data["Notes"])
+    #         description = description.split("\nnan")[0].replace("\n", " ")
+    #         is_active = 1
+    #         condition = CONDITION[row_data["Condition"]]
+    #         status = 1
+    #         type_, sub_type = TYPE_SUB_TYPE[i]
+    #         type_ = TYPE[type_]
+    #         sub_type = SUBTYPES[sub_type]
+    #         # print(f"{name.ljust(32)=}, {description.ljust(40)=}, {is_active=}, {condition=}, {status=}, {type_=}, {sub_type=}")
+    #         print(f"('{name}', '{description}', {is_active}, {condition}, {status}, {type_}, {sub_type}),")
 
 
-
+    InventoryApp().mainloop()

@@ -971,7 +971,7 @@ class CalendarSurface(tkinter.Canvas):
             return (0, {"msg": msg})
 
     def colour_code_dealer(self, dealer, colour):
-        if dealer is not None and colour is not None:
+        if dealer is not None:
             d = dealer.upper()
             colour = Colour(colour)
             b = rgb_to_hex(brighten(colour.rgb_code, 0.25))
