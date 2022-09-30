@@ -2,22 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/colour_utility.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/grid_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/orbiting_date_picker.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyodbc_connection.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/stg_queries.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tkinter_utility.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utility.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/auto_revision.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/selects.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/calendar_surface.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/calendar_surface.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/scheduler_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/scheduler_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/settings_initializer.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/2022-09-29/settings_initializer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/menus.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stg_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/stg_queries.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,13 +31,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/ABriggs/Documents/BWS/IT Inventory"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ABriggs/Documents/BWS/IT Inventory&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ABriggs\Documents\BWS\IT Inventory" />
