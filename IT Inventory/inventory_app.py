@@ -6,6 +6,7 @@ from grid_manager import GridManager
 from tkinter_utility import *
 from stg_queries import *
 from menus import AddItemMenu
+from utility import alpha_seq
 
 
 class InventoryApp(tkinter.Tk):
@@ -46,11 +47,15 @@ class InventoryApp(tkinter.Tk):
         self.title("BWS Inventory Manager")
         self.state("zoomed")
 
+        self.namer = alpha_seq(1000, prefix="w_IA_")
+
         self.level_add_menu = None
         self.new_item_save_state = tkinter.Variable(self, value={})
 
         # self.tv_l1, self.l1 = label_factory(self, tv_label="Label 1")
-        self.frame_button_bar_1 = tkinter.Frame(self)
+        self.frame_button_bar_1 = tkinter.Frame(self, name=next(self.namer))
+        self.frame_treeview = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
+        self.frame_drillview = tkinter.Frame(self, name=next(self.namer))
 
         self.tv_btn_add_new_item,\
         self.btn_add_new_item\
@@ -58,20 +63,50 @@ class InventoryApp(tkinter.Tk):
                 self.frame_button_bar_1,
                 tv_btn="+",
                 kwargs_btn={
+                    "name": next(self.namer),
                     "command": self.click_add_new_item
                 }
         )
+
+        self.treeview_items_columns = list(self.df_inventory_master.columns)
+        self.treeview_items_display_columns = [self.treeview_items_columns.index(i) for i in ["Equip_Desc", "Class", "Category", "Current_location", "Status", "Availability"]]
+        self.treeview_items = None
+        self.scrollbar_y_items = None
+        self.scrollbar_x_items = None
+        self.set_treeview()
 
         self.gm1 = GridManager()
         self.gm1.grid_widgets([
             [
                 self.frame_button_bar_1
+            ],
+            [
+                self.frame_treeview
+            ],
+            [
+                self.frame_drillview
             ]
         ])
         self.gm2 = GridManager()
         self.gm2.grid_widgets([
             [
                 self.btn_add_new_item
+            ]
+        ])
+        self.gm3 = GridManager()
+        self.gm3.grid_widgets([
+            [
+                {
+                    "widget": self.scrollbar_x_items,
+                    "sticky": "ew"
+                }
+            ],
+            [
+                self.treeview_items,
+                {
+                    "widget": self.scrollbar_y_items,
+                    "sticky": "ns"
+                }
             ]
         ])
 
@@ -202,3 +237,48 @@ class InventoryApp(tkinter.Tk):
         )
         self.level_add_menu.status.trace_variable("w", self.submit_new_item)
         self.level_add_menu.mainloop()
+
+    def select_treeview_items(self, event):
+        tree = event.widget
+        selection = [tree.item(item)["text"] for item in tree.selection()]
+        print("selected items:", selection)
+        # messagebox.showinfo(title='Information', message=','.join(selection))
+
+    def set_treeview(self):
+        print(f"{self.treeview_items_columns=}")
+        self.treeview_items = ttk.Treeview(
+            self.frame_treeview,
+            name=next(self.namer),
+            columns=self.treeview_items_columns
+            , displaycolumns=self.treeview_items_display_columns
+        )
+
+        for i, col in enumerate(self.treeview_items_display_columns):
+            # self.treeview_items.heading(col, f"column_{i}")
+            # self.treeview_items.heading(col, col)
+            # self.treeview_items.heading(f"column_{i}", col)
+            # self.treeview_items.heading(f"column_{i}", f"column_{i}")
+            # self.treeview_items.heading(i, text=f"column_{i}")
+            self.treeview_items.heading(i, text=f"col={col}, {i}")
+            self.treeview_items.column(i, width=10)
+
+        self.treeview_items.bind("<<TreeviewSelect>>", self.select_treeview_items)
+        self.scrollbar_y_items = ttk.Scrollbar(self.frame_treeview, orient=tkinter.VERTICAL, command=self.treeview_items.yview)
+        self.scrollbar_x_items = ttk.Scrollbar(self.frame_treeview, orient=tkinter.HORIZONTAL, command=self.treeview_items.xview)
+        self.treeview_items.configure(yscrollcommand=self.scrollbar_y_items.set, xscrollcommand=self.scrollbar_x_items.set)
+
+        data = []
+        for i in range(100):
+            # data.append([f"A_{i}_{j}" for j in range(len(self.df_inventory_master.columns))])
+            assert isinstance(self.df_inventory_master, pandas.DataFrame)
+            row = []
+            # for j in range(len(self.treeview_items_columns)):
+            for j in self.treeview_items_display_columns:
+                val = self.df_inventory_master.iloc[i][j]
+                # val = self.df_inventory_master[j].tolist()[j]
+                row.append(val)
+            data.append(row)
+            # data.append([f"A_{i}_{j}" for j in range(len(self.df_inventory_master.columns))])
+
+        for i, dat in enumerate(data):
+            self.treeview_items.insert("", tkinter.END, text=f"B_{i}", iid=f"C_{i}", values=dat)
