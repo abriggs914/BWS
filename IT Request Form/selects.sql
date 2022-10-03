@@ -1,6 +1,7 @@
 USE BWSdb
 GO
 
+
 SELECT 'IT Requests' AS [Table], * FROM [IT Requests];
 SELECT 'Dept' AS [Table], * FROM [Dept];
 SELECT 'IT Personnel' AS [Table], * FROM [IT Personnel];
