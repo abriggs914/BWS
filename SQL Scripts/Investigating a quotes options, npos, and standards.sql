@@ -60,4 +60,78 @@ SELECT '[Custom Work_SpecLines] & @u' AS [Table], * FROM [Custom Work_SpecLines]
 SELECT '[Standards] & @n' AS [Table], * FROM [Standards] INNER JOIN @n ON [Standards].[Model No] = [@n].[ModelName];
 
 SELECT '[Orders] & @t' AS [Table], * FROM Orders INNER JOIN @t ON [Orders].[Quote#] = [@t].[Quote]
-SELECT '[Orders]' AS [Table], * FROM Orders WHERE [Quote#] = 26491 OR [WO#] = 10016045
+--SELECT '[Orders]' AS [Table], * FROM Orders WHERE [Quote#] = 26491 OR [WO#] = 10016045
+
+DECLARE @d1 AS TABLE ([ID] INT IDENTITY(1, 1), [DealerID] INT, [DealerName] NVARCHAR(MAX));
+INSERT INTO @d1 ([DealerID], [DealerName])
+SELECT DISTINCT
+	[DealerID],
+	[COMPANY NAME]
+FROM
+	[Orders]
+INNER JOIN
+	[Dealers]
+ON 
+	[Orders].[DealerID] = [Dealers].[ID]
+INNER JOIN
+	@t
+ON
+	[Orders].[Quote#] = [@t].[Quote];
+
+SELECT '@d & [Orders] & @t' AS [Table], * FROM @d1;
+
+
+DECLARE @d2 AS TABLE ([ID] INT IDENTITY(1, 1), [DealerID] INT, [DealerName] NVARCHAR(MAX));
+INSERT INTO @d2 ([DealerID], [DealerName])
+SELECT DISTINCT
+	[DealerID],
+	[COMPANY NAME]
+FROM
+	[Orders]
+INNER JOIN
+	[Dealers]
+ON 
+	[Orders].[DealerID] = [Dealers].[ID]
+INNER JOIN
+	@u
+ON
+	[Orders].[WO#] = [@u].[WO];
+
+SELECT '@d & [Orders] & @u' AS [Table], * FROM @d2;
+
+
+SELECT '26491 & 26492 & 26941 & 26942' AS [Table], * FROM [Orders] WHERE [Quote#] IN (26491, 26492, 26941, 26942);
+
+--BEGIN TRAN;
+
+--UPDATE
+--	[Orders]
+--SET
+--	[DealerID] = 259
+--WHERE
+--	[Quote#] = 26942
+
+
+--DELETE FROM @d2 WHERE 1=1;
+
+
+--INSERT INTO @d2 ([DealerID], [DealerName])
+--SELECT DISTINCT
+--	[DealerID],
+--	[COMPANY NAME]
+--FROM
+--	[Orders]
+--INNER JOIN
+--	[Dealers]
+--ON 
+--	[Orders].[DealerID] = [Dealers].[ID]
+--INNER JOIN
+--	@u
+--ON
+--	[Orders].[WO#] = [@u].[WO];
+
+--SELECT '@d & [Orders] & @u' AS [Table], * FROM @d2;
+
+
+--ROLLBACK;
+--COMMIT;

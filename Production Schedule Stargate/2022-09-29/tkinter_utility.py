@@ -1,8 +1,7 @@
 import tkinter
-from tkinter import ttk
 from utility import grid_cells, clamp_rect, clamp, isnumber
-from colour_utility import rgb_to_hex, font_foreground, Colour
-from tkinter import ttk, messagebox
+from colour_utility import font_foreground, Colour
+from tkinter import ttk
 
 #######################################################################################################################
 #######################################################################################################################

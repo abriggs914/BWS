@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import tkinter.messagebox
 
 from tkinter_utility import *
@@ -26,7 +27,11 @@ class SettingsWriter(tkinter.Tk):
         self.entry_name =\
             entry_factory(
                 self,
-                tv_label="Computer User Name:"
+                tv_label="Computer User Name:",
+                tv_entry=(os.getlogin() if os.getlogin() else ""),
+                kwargs_entry={
+                    "state": "disabled"
+                }
             )
 
         self.tv_btn_submit,\

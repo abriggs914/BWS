@@ -6,7 +6,7 @@ from settings_initializer import SettingsWriter
 from scheduler_app import App
 
 
-SETTINGS_FILE = "./PDS_User_Setting.json"
+SETTINGS_FILE = "./PDS_User_Settings.json"
 
 
 # NOTE - Copy this into the desired script you want to restart.

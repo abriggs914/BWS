@@ -1,6 +1,7 @@
 import os
 import json
 from tkinter_utility import *
+from tkinter import messagebox
 
 # from colour_utility import rgb_to_hex, random_colour
 # from pyodbc_connection import connect
@@ -15,7 +16,7 @@ from line_shift_demo import LineShifter
 # PROGRAM_MODE = "LIVE"
 PROGRAM_MODE = "TEST"
 
-SETTINGS_FILE = "C:/Access/PDS_User_Setting.json"
+SETTINGS_FILE = "C:/Access/PDS_User_Settings.json"
 
 
 class App(tkinter.Tk):

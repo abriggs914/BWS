@@ -5,7 +5,7 @@ from tkinter_utility import tkinter
 from dateutil.relativedelta import relativedelta
 from colour_utility import *
 from unit import Unit
-from utility import dict_print, date_suffix, print_by_line
+from utility import dict_print, date_suffix
 from stg_queries import *
 import math
 
@@ -985,20 +985,21 @@ class CalendarSurface(tkinter.Canvas):
                     unit_in = details["unit_in"]
                     # print(f"{unit_in=}")
                     if unit_in not in [None, "", "none"]:
-                        if unit_in.InputField2_v2.upper() == d:
-                            self.itemconfigure(
-                                tile,
-                                fill=hc,
-                                activefill=b,
-                                outline=hc,
-                                activeoutline=b
-                            )
+                        if unit_in.InputField2_v2 not in [None, "", "none"]:
+                            if unit_in.InputField2_v2.upper() == d:
+                                self.itemconfigure(
+                                    tile,
+                                    fill=hc,
+                                    activefill=b,
+                                    outline=hc,
+                                    activeoutline=b
+                                )
 
-                            self.itemconfigure(details["t1_tag"], fill=fc, activefill=af)
-                            self.itemconfigure(details["t2_tag"], fill=fc, activefill=af)
-                            self.itemconfigure(details["t3_tag"], fill=fc, activefill=af)
-                            self.itemconfigure(details["t4_tag"], fill=fc, activefill=af)
-                            self.itemconfigure(details["t5_tag"], fill=fc, activefill=af)
+                                self.itemconfigure(details["t1_tag"], fill=fc, activefill=af)
+                                self.itemconfigure(details["t2_tag"], fill=fc, activefill=af)
+                                self.itemconfigure(details["t3_tag"], fill=fc, activefill=af)
+                                self.itemconfigure(details["t4_tag"], fill=fc, activefill=af)
+                                self.itemconfigure(details["t5_tag"], fill=fc, activefill=af)
 
     def revert_colour(self, rc):
         print(f"REVERTING COLOURS {rc=}")
