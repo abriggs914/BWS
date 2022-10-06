@@ -1,12 +1,14 @@
 USE [BWSdb]
 GO
 
-/****** Object:  View [dbo].[v_ITP PhoneListData]    Script Date: 2022-10-05 11:53:04 AM ******/
-SET ANSI_NULLS ON
-GO
+--/****** Object:  View [dbo].[v_ITP PhoneListData]    Script Date: 2022-10-06 11:41:34 AM ******/
+--SET ANSI_NULLS ON
+--GO
 
-SET QUOTED_IDENTIFIER ON
-GO
+--SET QUOTED_IDENTIFIER ON
+--GO
+
+
 
 
 ALTER VIEW [dbo].[v_ITP PhoneListData] AS
@@ -17,9 +19,9 @@ SELECT * FROM (
 		[Name] AS [NAME_]
 		,ISNULL([Extension], [WorkExtension]) AS [EXT]
 		,[DisplayName] AS [POSITION]
-		,[WorkPhone] AS [WORK#]
-		,[HomePhone] AS [HOME#]
-		,[CellPhone] AS [CELL#]
+		,[dbo].[NBPhonify]([WorkPhone], DEFAULT) AS [WORK#]
+		,[dbo].[NBPhonify]([HomePhone], DEFAULT) AS [HOME#]
+		,[dbo].[NBPhonify]([CellPhone], DEFAULT) AS [CELL#]
 		,[ITP PhoneLines].[Section]
 		,[ITP PhoneLines].[SectionOrder]
 		--,*
@@ -56,15 +58,15 @@ SELECT * FROM (
 		,0
 	FROM
 		[ITP FormSections]
-	WHERE
-		[Name] NOT IN  ('CEO', 'DATA')
 
 ) AS [Src]
+	WHERE
+		[Name_] NOT IN  ('CEO', 'DATA', 'HEADER')
+		--AND [Name_] IS NOT NULL
 --ORDER BY
 --	[Section]
 --	,[SectionOrder]
 ;
 
 GO
-
 
