@@ -1,0 +1,59 @@
+USE BWSdb
+GO
+
+-- ITRID#001242
+
+DECLARE @t AS TABLE([ID] INT IDENTITY(1, 1), [WO] NVARCHAR(MAX));
+
+SELECT * FROM [dtProductionSchedule];
+
+INSERT INTO @t ([WO]) VALUES 
+('15193'),
+('15325'),
+('15458'),
+('15488'),
+('15638'),
+('15644')
+;
+
+SELECT * FROM @t;
+
+
+SELECT
+	CAST([WO#] AS NVARCHAR(MAX)),
+	* 
+FROM
+	[Orders]
+INNER JOIN
+	@t
+ON
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = [WO]
+ORDER BY
+	[@t].[ID]
+;
+
+SELECT
+	CAST([WO#] AS NVARCHAR(MAX)),
+	* 
+FROM
+	[dtProductionSchedule]
+INNER JOIN
+	@t
+ON
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = [WO]
+ORDER BY
+	[@t].[ID]
+;
+
+SELECT
+	CAST([WO#] AS NVARCHAR(MAX)),
+	* 
+FROM
+	[Production]
+INNER JOIN
+	@t
+ON
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = [WO]
+ORDER BY
+	[@t].[ID]
+;

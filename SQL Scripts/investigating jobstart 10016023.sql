@@ -18,8 +18,8 @@ GO
 	select @job		 = '10016023'
 	SELECT @id = '1512344';
 
-	select @job		 = '10016022'
-	SELECT @id = '1512462';
+	--select @job		 = '10016022'
+	--SELECT @id = '1512462';
 
 
 	select @mc		 = '41'
@@ -87,10 +87,17 @@ SELECT [Orders].[Model No],
 
 					SET @sRecipients = (CASE WHEN @warn = 1 THEN 'EngineeringGroup@bwstrailers.com; avery.briggs@bwstrailers.com' ELSE 'EngineeringGroup@bwstrailers.com' END);
 					--Send email
-					EXEC [msdb].[dbo].[sp_send_dbmail]
-						--@recipients = @sRecipients,
-						@recipients = 'avery.briggs@bwstrailers.com',
-						@profile_name = 'SQL Agent',
-						@subject = @sSubject,
-						@body = @sBody,
-						@body_format='HTML';
+					--EXEC [msdb].[dbo].[sp_send_dbmail]
+					--	--@recipients = @sRecipients,
+					--	@recipients = 'avery.briggs@bwstrailers.com',
+					--	@profile_name = 'SQL Agent',
+					--	@subject = @sSubject,
+					--	@body = @sBody,
+					--	@body_format='HTML';
+
+
+
+SELECT * FROM [SysproCompanyA].[dbo].[WipJobAmendJnl] WHERE [Job] = @job;
+SELECT * FROM [SysproCompanyA].[dbo].[WipJobAmendJnl] WHERE [Job] = @job AND [After] LIKE '%41%' ORDER BY [ColumnName]--AND [ColumnName] LIKE '%mac%';
+
+SELECT * FROM [SysproCompanyA].[dbo].[WipJobAmendJnl] WHERE [Job] = @job ORDER BY [JnlDate];

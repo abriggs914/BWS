@@ -1,3 +1,6 @@
+USE BWSdb
+GO
+
 SELECT        dbo.Dealers.[COMPANY NAME], dbo.Orders.Quote#, dbo.Orders.WO#, dbo.Orders.[Model No], dbo.Orders.[Serial Number], dbo.Orders.[Purchase Order] AS PO, dbo.[v_Order Book Detail_All].[Payment Terms] AS Terms, 
                          dbo.Orders.[PO Date], dbo.Orders.[Order Date], dbo.Orders.[Requested Delivery Date], CASE WHEN v_CompletedJobInfo.ActCompleteDate IS NULL 
                          THEN Production.[Date Completed] ELSE v_CompletedJobInfo.ActCompleteDate END AS [Date Completed], dbo.Orders.[Shipped Date], dbo.Orders.[Date Declined], dbo.Orders.Price AS [Base Price], 

@@ -1,3 +1,6 @@
+USE BWSdb
+GO
+
 
 SELECT * FROM
 	dbo.Orders WITH (nolock)
