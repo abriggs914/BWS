@@ -40,4 +40,8 @@ SELECT TOP (100000) [HistoryID]
       ,[RequesterLockedDate]
       ,[AssignmentEmailDate]
   FROM [BWSdb].[dbo].[IT Requests History]
+  WHERE [UpdatedColumn] <> 'TimerStop' AND [UpdatedColumn] <> 'TimerStart'
   ORDER BY [DateCreated] DESC, [HistoryID] DESC
+
+
+  SELECT COUNT(*) FROM [BWSdb].[dbo].[IT Requests History]

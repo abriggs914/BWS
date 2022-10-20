@@ -3,6 +3,7 @@ GO
 
 
 SELECT 'IT Requests' AS [Table], * FROM [IT Requests];
+SELECT 'IT Requests History' AS [Table], * FROM [IT Requests History];
 SELECT 'Dept' AS [Table], * FROM [Dept];
 SELECT 'IT Personnel' AS [Table], * FROM [IT Personnel];
 SELECT 'ITR Customers' AS [Table], * FROM [ITR Customers];
@@ -55,3 +56,5 @@ EXEC [sp_ITRConcerningEngineering]
 EXEC [sp_ITRConcerningSales]
 
 EXEC [sp_ITRCheckMerit] @names='a', @gt_1=1
+
+EXEC [sp_ITRAllRequestLabourByMonth]

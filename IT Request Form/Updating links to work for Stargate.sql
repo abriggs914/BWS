@@ -3,7 +3,7 @@ SELECT
 
 	LEFT([Directory], 6) + '.bwsdomain.local' + RIGHT([Directory], LEN([Directory]) - 6)
 
-	[ITRequestID#]
+	,[ITRequestID#]
       ,[StartDate]
       ,[RequestDate]
       ,[DueDate]
@@ -37,6 +37,8 @@ SELECT
       ,[AssignmentEmailDate]
 	FROM 
 		[IT Requests]
+	--WHERE
+	--	[ITRequestID#] = 1260
 
 BEGIN TRAN;
 
@@ -44,13 +46,15 @@ UPDATE
 	[IT Requests]
 SET
 	[Directory] = LEFT([Directory], 6) + '.bwsdomain.local' + RIGHT([Directory], LEN([Directory]) - 6)
+	--WHERE
+	--	[ITRequestID#] = 1260
 
 SELECT
 	[Directory],
 
 	LEFT([Directory], 6) + '.bwsdomain.local' + RIGHT([Directory], LEN([Directory]) - 6)
 
-	[ITRequestID#]
+	,[ITRequestID#]
       ,[StartDate]
       ,[RequestDate]
       ,[DueDate]
@@ -84,6 +88,8 @@ SELECT
       ,[AssignmentEmailDate]
 	FROM 
 		[IT Requests]
+	--WHERE
+	--	[ITRequestID#] = 1260
 
 
 ROLLBACK;
