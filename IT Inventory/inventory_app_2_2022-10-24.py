@@ -58,9 +58,8 @@ class InventoryApp(tkinter.Tk):
         self.frame_button_bar_1 = tkinter.Frame(self, name=next(self.namer))
         self.frame_treeview_tools_and_equip = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
         self.frame_treeview_invmaster = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
-        # self.frame_drillview = tkinter.Frame(self, name=next(self.namer))
+        self.frame_drillview = tkinter.Frame(self, name=next(self.namer))
 
-        # button add new
         self.tv_btn_add_new_item,\
         self.btn_add_new_item\
             = button_factory(
@@ -72,40 +71,80 @@ class InventoryApp(tkinter.Tk):
                 }
         )
 
-        # treeview tools and equipment
         self.chosen_columns_tools_and_equip = ["Equip_Desc", "Class", "Category", "Current_location", "Status", "Availability"]
         self.column_display_width_tools_and_equip = [250, 100, 100, 150, 50, 75]
+        self.treeview_tools_and_equip_columns = list(self.df_v_tools_and_equip_unipoint.columns)
+        self.treeview_tools_and_equip_display_columns = [(self.treeview_tools_and_equip_columns.index(i), i) for i in self.chosen_columns_tools_and_equip]
+        self.treeview_v_tool_and_equip = None
+        self.scrollbar_y_tools_and_equip = None
+        self.scrollbar_x_tools_and_equip = None
         self.tv_label_treeview_tools_and_equip = tkinter.StringVar(self, value="v_Tools&Equip")
-        self.set_treeview_v_tools_and_equip()
+        # self.label_treeview_tools_and_equip_name = tkinter.Label(self.frame_treeview_tools_and_equip, textvariable=self.tv_label_treeview_tools_and_equip, anchor=tkinter.CENTER)
 
-        # treeview v_iti_items
         self.chosen_columns_invmaster = ["Quantity", "Item", "Condition", "Status", "Type"]
         self.column_display_width_invmaster = [50, 250, 75, 75, 75]
         self.tv_label_treeview_invmaster = tkinter.StringVar(self, value="v_ITI_Items")
+
+        self.set_treeview_v_tools_and_equip()
         self.set_treeview_v_invmaster()
 
-        # place widgets
         self.frame_button_bar_1.grid(row=0, column=0)
         self.btn_add_new_item.grid(row=0, column=0)
 
-        #   v_ToolsAndEquip
+        # v_ToolsAndEquip
         self.frame_treeview_tools_and_equip.grid(row=1, column=0)
         self.label_treeview_tools_and_equip_name.grid(row=3, column=0)
         self.scrollbar_x_tools_and_equip.grid(row=4, column=0, sticky="ew")
         self.treeview_v_tool_and_equip.grid(row=5, column=0)
         self.scrollbar_y_tools_and_equip.grid(row=5, column=1, sticky="ns")
 
-        #   v_invmaster
+        # v_invmaster
         self.frame_treeview_invmaster.grid(row=6, column=0)
         self.label_treeview_invmaster.grid(row=3, column=0)
         self.scrollbar_x_invmaster.grid(row=4, column=0, sticky="ew")
         self.treeview_v_invmaster.grid(row=5, column=0)
         self.scrollbar_y_invmaster.grid(row=5, column=1, sticky="ns")
 
-        # #   drillview
-        # self.frame_drillview.grid(row=2, column=0)
+        # drillview
+        self.frame_drillview.grid(row=2, column=0)
 
-        # item manager bar
+        # self.gm1 = GridManager()
+        # self.gm1.grid_widgets([
+        #     [
+        #         self.frame_button_bar_1
+        #     ],
+        #     [
+        #         self.frame_treeview_tools_and_equip
+        #     ],
+        #     [
+        #         self.frame_drillview
+        #     ]
+        # ])
+        # self.gm2 = GridManager()
+        # self.gm2.grid_widgets([
+        #     [
+        #         self.btn_add_new_item
+        #     ]
+        # ])
+        # self.gm3 = GridManager()
+        # self.gm3.grid_widgets([
+        #     [
+        #         self.label_treeview_tools_and_equip_name
+        #     ],
+        #     [
+        #         {
+        #             "widget": self.scrollbar_x_tools_and_equip,
+        #             "sticky": "ew"
+        #         }
+        #     ],
+        #     [
+        #         self.treeview_v_tool_and_equip,
+        #         {
+        #             "widget": self.scrollbar_y_tools_and_equip,
+        #             "sticky": "ns"
+        #         }
+        #     ]
+        # ])
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
@@ -276,3 +315,65 @@ class InventoryApp(tkinter.Tk):
 
         self.treeview_v_tool_and_equip.bind("<<TreeviewSelect>>", self.select_treeview_items)
 
+
+        # self.scrollbar_y_tools_and_equip = ttk.Scrollbar(self.frame_treeview_tools_and_equip, orient=tkinter.VERTICAL, command=self.treeview_v_tool_and_equip.yview)
+        # self.scrollbar_x_tools_and_equip = ttk.Scrollbar(self.frame_treeview_tools_and_equip, orient=tkinter.HORIZONTAL, command=self.treeview_v_tool_and_equip.xview)
+        # self.treeview_v_tool_and_equip.configure(yscrollcommand=self.scrollbar_y_tools_and_equip.set, xscrollcommand=self.scrollbar_x_tools_and_equip.set)
+
+
+        # self.treeview_v_tool_and_equip = ttk.Treeview(
+        #     self.frame_treeview_tools_and_equip,
+        #     name=next(self.namer),
+        #     columns=self.chosen_columns_tools_and_equip
+        #     , displaycolumns=[tup[1] for tup in self.treeview_tools_and_equip_display_columns]
+        # )
+        #
+        # print(f"columns {self.treeview_v_tool_and_equip['columns']=}")
+        #
+        # #self.treeview_v_tool_and_equip["columns"] = [tup[1] for tup in self.treeview_tools_and_equip_columns]
+        #
+        # self.treeview_v_tool_and_equip.column("#0", width=0, stretch=tkinter.NO)
+        # self.treeview_v_tool_and_equip.heading("#0", text="", anchor=tkinter.CENTER)
+        #
+        # for i, tup in enumerate(self.treeview_tools_and_equip_display_columns):
+        #     idx, col = tup
+        #     # print(f"A {i=}, {col=}")
+        #     # coln = self.treeview_tools_and_equip_columns[col]
+        #     # self.treeview_v_tool_and_equip.heading(col, f"column_{i}")
+        #     # self.treeview_v_tool_and_equip.heading(col, col)
+        #     # self.treeview_v_tool_and_equip.heading(f"column_{i}", col)
+        #     # self.treeview_v_tool_and_equip.heading(f"column_{i}", f"column_{i}")
+        #     # self.treeview_v_tool_and_equip.heading(i, text=f"column_{i}")
+        #
+        #     # row and columns
+        #     # self.treeview_v_tool_and_equip.heading(i, text=f"col={col}, {i}")
+        #     # self.treeview_v_tool_and_equip.column(i, width=10)
+        #
+        #     # column names
+        #     # print(f"B {i=}, {col=}, {coln=}")
+        #     # col_name = f"col={coln}"
+        #     col_name = col
+        #     c_width = self.column_display_width_tools_and_equip[i]
+        #     self.treeview_v_tool_and_equip.column(col_name, width=c_width, anchor=tkinter.CENTER)
+        #     self.treeview_v_tool_and_equip.heading(col_name, text=col_name, anchor=tkinter.CENTER)
+
+        # data = []
+        # for i in range(100):
+        #     # data.append([f"A_{i}_{j}" for j in range(len(self.df_v_tools_and_equip_unipoint.columns))])
+        #     assert isinstance(self.df_v_tools_and_equip_unipoint, pandas.DataFrame)
+        #     row = []
+        #     # for j in range(len(self.treeview_tools_and_equip_columns)):
+        #     for j, tup in enumerate(self.treeview_tools_and_equip_display_columns):
+        #         idx, col = tup
+        #         val = self.df_v_tools_and_equip_unipoint.iloc[i][idx]
+        #         print(f"{i=}, {j=}, {tup=}, {val=}")
+        #         # val = self.df_v_tools_and_equip_unipoint[j].tolist()[j]
+        #         row.append(val)
+        #     data.append(row)
+        #     # data.append([f"A_{i}_{j}" for j in range(len(self.df_v_tools_and_equip_unipoint.columns))])
+        #
+        # print(f"{data=}")
+        #
+        # for i, dat in enumerate(data):
+        #     print(f"{dat=}")
+        #     self.treeview_v_tool_and_equip.insert("", tkinter.END, text=f"B_{i}", iid=f"C_{i}", values=dat)

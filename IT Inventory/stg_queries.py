@@ -36,6 +36,25 @@ SQL_V_TOOLSANDEQUIP = {
 }
 
 
+SQL_V_INVMASTER = {
+    "sql": """SELECT [ID]
+      ,[Quantity]
+      ,[Item]
+      ,[Condition]
+      ,[Status]
+      ,[Type]
+      ,[Computer]
+      ,[Peripherals]
+      ,[Wire]
+      ,[Network]
+      ,[Unknown]
+  FROM [BWSdb].[dbo].[v_ITI_Items]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
 SQL_UOM = {
     "sql": """SELECT [ID]
       ,[Name]

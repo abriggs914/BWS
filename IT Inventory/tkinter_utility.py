@@ -1,5 +1,8 @@
+import datetime
 import tkinter
-from tkinter import ttk
+
+import pandas
+
 from utility import grid_cells, clamp_rect, clamp, isnumber
 from colour_utility import rgb_to_hex, font_foreground, Colour
 from tkinter import ttk, messagebox
@@ -11,8 +14,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.10
-    Date...........2022-09-29
+    Version..............1.14
+    Date...........2022-10-24
     Author.......Avery Briggs
     """
 
@@ -178,6 +181,129 @@ def list_factory(master, tv_label=None, kwargs_label=None, tv_list=None, kwargs_
     return res_tv_label, res_label, res_tv_list, res_list
 
 
+def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
+    if isinstance(buttons, list) or isinstance(buttons, tuple) and buttons:
+        if default_value is not None:
+            if is_tk_var(default_value):
+                var = default_value
+            else:
+                var = tkinter.StringVar(default_value)
+        else:
+            var = tkinter.StringVar(master, buttons[0])
+
+        # print(f"CREATED {var.get()=}")
+
+        r_buttons = []
+        tv_vars = []
+        for btn in buttons:
+            if is_tk_var(btn):
+                tv_var = btn
+            else:
+                tv_var = tkinter.StringVar(master, value=btn)
+            tv_vars.append(tv_var)
+            if kwargs_buttons is not None:
+                print(f"WARNING kwargs param is applied to each radio button")
+                r_buttons.append(tkinter.Radiobutton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=btn))
+            else:
+                r_buttons.append(tkinter.Radiobutton(master, variable=var, textvariable=tv_var, value=btn,))
+
+        return var, tv_vars, r_buttons
+    else:
+        raise Exception("Error, must pass a list of buttons.")
+
+        # tv_sort_direction = StringVar(WIN, value="descending")
+        # tv_sort_dir_a = StringVar(WIN, value="ascending")
+        # tv_sort_dir_d = StringVar(WIN, value="descending")
+        # rb_sda = Radiobutton(frame_rb_group_3, variable=tv_sort_direction, value="ascending", textvariable=tv_sort_dir_a)
+        # rb_sdd = Radiobutton(frame_rb_group_3, variable=tv_sort_direction, value="descending", textvariable=tv_sort_dir_d)
+
+
+def treeview_factory(
+        master,
+        dataframe,
+        viewable_column_names=None,
+        viewable_column_widths=None,
+        tv_label=None,
+        kwargs_label=None,
+        kwargs_treeview=None,
+        default_col_width=100,
+        include_scroll_x=True,
+        include_scroll_y=True
+):
+    assert isinstance(dataframe, pandas.DataFrame), f"Error, param 'dataframe' must be an instance of a pandas Dataframe, got: '{type(dataframe)}'."
+
+    def treeview_sort_column(tv, col, reverse):
+        l = [(tv.set(k, col), k) for k in tv.get_children('')]
+        l.sort(reverse=reverse)
+
+        # rearrange items in sorted positions
+        for index, (val, k) in enumerate(l):
+            tv.move(k, '', index)
+
+        # reverse sort next time
+        tv.heading(col, command=lambda: \
+            treeview_sort_column(tv, col, not reverse))
+
+    if viewable_column_names is None:
+        viewable_column_names = list(dataframe.columns)
+
+    if not is_tk_var(tv_label):
+        tv_label = tkinter.StringVar(master, value="")
+
+    if kwargs_label is None:
+        kwargs_label = {}
+
+    if kwargs_treeview is None:
+        kwargs_treeview = {}
+
+    if viewable_column_widths is None:
+        viewable_column_widths = [default_col_width for _ in range(len(viewable_column_names))]
+    elif len(viewable_column_widths) < len(viewable_column_names):
+        viewable_column_widths = viewable_column_widths + [default_col_width for _ in range(len(viewable_column_names) - len(viewable_column_widths))]
+
+    # print(f"About to look at column_names: {viewable_column_names=}, with {viewable_column_widths=}")
+
+    label = tkinter.Label(master, textvariable=tv_label, **kwargs_label)
+    treeview = ttk.Treeview(
+        master,
+        columns=viewable_column_names
+        , displaycolumns=viewable_column_names
+        , **kwargs_treeview
+    )
+    treeview.column("#0", width=0, stretch=tkinter.NO)
+    treeview.heading("#0", text="", anchor=tkinter.CENTER)
+
+    for i, col in enumerate(viewable_column_names):
+        c_width = viewable_column_widths[i]
+        # print(f"{c_width=}, {type(c_width)=}")
+        treeview.column(col, width=c_width, anchor=tkinter.CENTER)
+        treeview.heading(col, text=col, anchor=tkinter.CENTER, command=lambda _col=col: \
+                     treeview_sort_column(treeview, _col, False))
+
+    for i, row in enumerate(dataframe.iterrows()):
+        idx, row = row
+        # print(f"{row=}, {type(row)=}")
+        dat = [row[c_name] for c_name in viewable_column_names]
+        treeview.insert("", tkinter.END, text=f"B_{i}", iid=f"C_{i}", values=dat)
+
+    # treeview.bind("<<TreeviewSelect>>", CALLBACK_HERE)
+    scrollbar_x, scrollbar_y = None, None
+    if include_scroll_y:
+        scrollbar_y = ttk.Scrollbar(master, orient=tkinter.VERTICAL,
+                                                     command=treeview.yview)
+    if include_scroll_x:
+        scrollbar_x = ttk.Scrollbar(master, orient=tkinter.HORIZONTAL,
+                                                     command=treeview.xview)
+    if scrollbar_x is not None and scrollbar_y is not None:
+        treeview.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+    elif scrollbar_x is not None:
+        treeview.configure(xscrollcommand=scrollbar_x.set)
+    elif scrollbar_y is not None:
+        treeview.configure(yscrollcommand=scrollbar_y.set)
+
+    return tv_label, label, treeview, scrollbar_x, scrollbar_y
+
+
 def test_entry_factory():
     WIN = tkinter.Tk()
     WIDTH, HEIGHT = 500, 500
@@ -290,6 +416,77 @@ def test_list_factory():
             print(f"\t{d.get(i)=}")
 
     d.bind('<<ListboxSelect>>', update_f)
+    WIN.mainloop()
+
+
+def test_radio_factory():
+    WIN = tkinter.Tk()
+    WIN.geometry(f"500x500")
+
+    def update_radio_choice(*args):
+        print(f"{a.get()=}")
+
+    buttons_list = [
+        "a",
+        "b",
+        "c",
+        "quit"
+    ]
+    a, b, c = radio_factory(WIN, buttons_list)
+
+    for btn in c:
+        btn.pack()
+
+    a.trace_variable("w", update_radio_choice)
+
+    WIN.mainloop()
+
+
+def test_treeview_factory_1():
+    WIN = tkinter.Tk()
+    WIN.geometry(f"500x500")
+
+    df = pandas.DataFrame({
+        "species": ["Cat", "Dog", "Fish", "Parrot"]
+        ,"name": ["Tim", "Tam", "Tom", "Tum"]
+        ,"dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7), datetime.datetime(2005, 8, 31)]
+    })
+
+    print(f"df:\n\n{df}")
+
+    tv_label, label, treeview, scrollbar_x, scrollbar_y = treeview_factory(WIN, df)
+    tv_label.set("I forgot to pass a title! - no worries.")
+    label.pack()
+    treeview.pack()
+
+    WIN.mainloop()
+
+
+def test_treeview_factory_2():
+    WIN = tkinter.Tk()
+    WIN.geometry(f"500x500")
+
+    df = pandas.DataFrame({
+        "species": ["Cat", "Dog", "Fish", "Parrot"]
+        ,"name": ["Tim", "Tam", "Tom", "Tum"]
+        ,"invisible_col": [True, True, True, False]
+        ,"dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7), datetime.datetime(2005, 8, 31)]
+    })
+
+    print(f"df:\n\n{df}")
+
+    tv_label, label, treeview, scrollbar_x, scrollbar_y = treeview_factory(
+        WIN,
+        df,
+        viewable_column_names=["species", "name", "dob"],
+        viewable_column_widths=[300, 125, 200]
+    )
+    tv_label.set("I forgot to pass a title! - no worries.")
+    label.pack(side=tkinter.TOP)
+    scrollbar_y.pack(side=tkinter.RIGHT, anchor="e", fill="y")
+    treeview.pack(side=tkinter.TOP)
+    scrollbar_x.pack(side=tkinter.BOTTOM)
+
     WIN.mainloop()
 
 
@@ -423,34 +620,196 @@ class Slider(tkinter.Frame):
     # def (update_entry
 
 
+# class RGBSlider(tkinter.Frame):
+#
+#     def __init__(self, master):
+#         super().__init__(master)
+#
+#         self.colour = None
+#
+#         self.slider_red = Slider(self, minimum=0, maximum=255)
+#         self.slider_green = Slider(self, minimum=0, maximum=255)
+#         self.slider_blue = Slider(self, minimum=0, maximum=255)
+#
+#         self.tv_label_red, self.label_red, self.tv_entry_red, self.entry_red = entry_factory(self, tv_label="Red:",
+#                                                                                              tv_entry=self.slider_red.value)
+#         self.tv_label_green, self.label_green, self.tv_entry_green, self.entry_green = entry_factory(self,
+#                                                                                                      tv_label="Green:",
+#                                                                                                      tv_entry=self.slider_green.value)
+#         self.tv_label_blue, self.label_blue, self.tv_entry_blue, self.entry_blue = entry_factory(self, tv_label="Blue:",
+#                                                                                                  tv_entry=self.slider_blue.value)
+#         self.tv_label_res, self.label_res, self.tv_entry_res, self.entry_res = entry_factory(self, tv_label="Result:",
+#                                                                                              tv_entry="Sample Text #123.")
+#
+#         self.slider_red.value.trace_variable("w", self.update_colour)
+#         self.slider_green.value.trace_variable("w", self.update_colour)
+#         self.slider_blue.value.trace_variable("w", self.update_colour)
+#
+#         self.tv_entry_red.trace_variable("w", self.update_colour_entry)
+#         self.tv_entry_green.trace_variable("w", self.update_colour_entry)
+#         self.tv_entry_blue.trace_variable("w", self.update_colour_entry)
+#
+#         self.label_red.grid(row=1, column=1)
+#         self.entry_red.grid(row=1, column=2)
+#         self.slider_red.grid(row=1, column=3)
+#         self.label_green.grid(row=2, column=1)
+#         self.entry_green.grid(row=2, column=2)
+#         self.slider_green.grid(row=2, column=3)
+#         self.label_blue.grid(row=3, column=1)
+#         self.entry_blue.grid(row=3, column=2)
+#         self.slider_blue.grid(row=3, column=3)
+#         self.label_res.grid(row=4, column=1)
+#         self.entry_res.grid(row=4, column=2)
+#         self.update_colour(None, None, None)
+#
+#     def update_colour_entry(self, *args):
+#         print(f"update_colour_entry {args=}")
+#         # self.
+#
+#     def update_colour(self, var_name, index, mode):
+#         print(f"update_colour")
+#         try:
+#             r = self.slider_red.value.get()
+#             r_flag = False
+#         except tkinter.TclError as te:
+#             # if self.slider_red.value != "":
+#             #     self.slider_red.value.set(0)
+#             # r = self.slider_red.value.get()
+#             r = 0
+#             r_flag = True
+#             print(f"{te=}")
+#
+#         try:
+#             g = self.slider_green.value.get()
+#             g_flag = False
+#         except tkinter.TclError as te:
+#             # if self.slider_green.value != "":
+#             #     self.slider_green.value.set(0)
+#             # g = self.slider_green.value.get()
+#             g = 0
+#             g_flag = True
+#             print(f"{te=}")
+#
+#         try:
+#             b = self.slider_blue.value.get()
+#             b_flag = False
+#         except tkinter.TclError as te:
+#             # if self.slider_blue.value != "":
+#             #     self.slider_blue.value.set(0)
+#             # b = self.slider_blue.value.get()
+#             b = 0
+#             b_flag = True
+#             print(f"{te=}")
+#
+#         print(f"{r=} {g=}, {b=}")
+#         if not isnumber(r) or r < 0 or r > 255 or r_flag:
+#             self.entry_red.configure(foreground="red")
+#         else:
+#             self.entry_red.configure(foreground="black")
+#         if not isnumber(g) or g < 0 or g > 255 or g_flag:
+#             self.entry_green.configure(foreground="red")
+#         else:
+#             self.entry_green.configure(foreground="black")
+#         if not isnumber(b) or b < 0 or b > 255 or b_flag:
+#             self.entry_blue.configure(foreground="red")
+#         else:
+#             self.entry_blue.configure(foreground="black")
+#
+#         try:
+#             self.colour = Colour(r, g, b)
+#         except TypeError as te:
+#             self.colour = Colour(125, 125, 125)
+#             print(f"{te=}")
+#
+#         h = self.colour.hex_code
+#         self.entry_res.config(background=h, foreground=font_foreground(h, rgb=False))
+
 class RGBSlider(tkinter.Frame):
 
-    def __init__(self, master):
+    def __init__(self, master, show_result=True):
         super().__init__(master)
 
-        self.colour = None
+        self.colour = tkinter.Variable(self, value=None)
 
-        self.slider_red = Slider(self, minimum=0, maximum=255)
-        self.slider_green = Slider(self, minimum=0, maximum=255)
-        self.slider_blue = Slider(self, minimum=0, maximum=255)
+        self.show_result = show_result
 
-        self.tv_label_red, self.label_red, self.tv_entry_red, self.entry_red = entry_factory(self, tv_label="Red:",
-                                                                                             tv_entry=self.slider_red.value)
-        self.tv_label_green, self.label_green, self.tv_entry_green, self.entry_green = entry_factory(self,
-                                                                                                     tv_label="Green:",
-                                                                                                     tv_entry=self.slider_green.value)
-        self.tv_label_blue, self.label_blue, self.tv_entry_blue, self.entry_blue = entry_factory(self, tv_label="Blue:",
-                                                                                                 tv_entry=self.slider_blue.value)
-        self.tv_label_res, self.label_res, self.tv_entry_res, self.entry_res = entry_factory(self, tv_label="Result:",
-                                                                                             tv_entry="Sample Text #123.")
+        self.tv_value_red = tkinter.IntVar(self, value=0)
+        self.tv_value_green = tkinter.IntVar(self, value=0)
+        self.tv_value_blue = tkinter.IntVar(self, value=0)
 
-        self.slider_red.value.trace_variable("w", self.update_colour)
-        self.slider_green.value.trace_variable("w", self.update_colour)
-        self.slider_blue.value.trace_variable("w", self.update_colour)
+        self.slider_red = ttk.Scale(
+            self,
+            from_=0,
+            to=255,
+            orient=tkinter.HORIZONTAL,
+            variable=self.tv_value_red,
+            command=self.update_colour
+        )
+        self.slider_green = ttk.Scale(
+            self,
+            from_=0,
+            to=255,
+            orient=tkinter.HORIZONTAL,
+            variable=self.tv_value_green,
+            command=self.update_colour
+        )
+        self.slider_blue = ttk.Scale(
+            self,
+            from_=0,
+            to=255,
+            orient=tkinter.HORIZONTAL,
+            variable=self.tv_value_blue,
+            command=self.update_colour
+        )
 
-        self.tv_entry_red.trace_variable("w", self.update_colour_entry)
-        self.tv_entry_green.trace_variable("w", self.update_colour_entry)
-        self.tv_entry_blue.trace_variable("w", self.update_colour_entry)
+        self.tv_label_red,\
+        self.label_red,\
+        self.tv_entry_red,\
+        self.entry_red\
+            = entry_factory(
+                self,
+                tv_label="Red:",
+                tv_entry=self.tv_value_red
+        )
+
+        self.tv_label_green,\
+        self.label_green,\
+        self.tv_entry_green,\
+        self.entry_green\
+            = entry_factory(
+                self,
+                tv_label="Green:",
+                tv_entry=self.tv_value_green
+        )
+
+        self.tv_label_blue,\
+        self.label_blue,\
+        self.tv_entry_blue,\
+        self.entry_blue\
+            = entry_factory(
+                self,
+                tv_label="Blue:",
+                tv_entry=self.tv_value_blue
+        )
+
+        if self.show_result:
+            self.tv_label_res,\
+            self.label_res,\
+            self.tv_entry_res,\
+            self.entry_res\
+                = entry_factory(
+                    self,
+                    tv_label="Result:",
+                    tv_entry="Sample Text #123."
+            )
+
+        # self.slider_red.value.trace_variable("w", self.update_colour)
+        # self.slider_green.value.trace_variable("w", self.update_colour)
+        # self.slider_blue.value.trace_variable("w", self.update_colour)
+
+        self.tv_entry_red.trace_variable("w", self.update_colour)
+        self.tv_entry_green.trace_variable("w", self.update_colour)
+        self.tv_entry_blue.trace_variable("w", self.update_colour)
 
         self.label_red.grid(row=1, column=1)
         self.entry_red.grid(row=1, column=2)
@@ -469,10 +828,11 @@ class RGBSlider(tkinter.Frame):
         print(f"update_colour_entry {args=}")
         # self.
 
-    def update_colour(self, var_name, index, mode):
+    def update_colour(self, *args):
         print(f"update_colour")
         try:
-            r = self.slider_red.value.get()
+            # r = self.slider_red.get()
+            r = self.tv_entry_red.get()
             r_flag = False
         except tkinter.TclError as te:
             # if self.slider_red.value != "":
@@ -483,7 +843,8 @@ class RGBSlider(tkinter.Frame):
             print(f"{te=}")
 
         try:
-            g = self.slider_green.value.get()
+            # g = self.slider_green.get()
+            g = self.tv_entry_green.get()
             g_flag = False
         except tkinter.TclError as te:
             # if self.slider_green.value != "":
@@ -494,7 +855,8 @@ class RGBSlider(tkinter.Frame):
             print(f"{te=}")
 
         try:
-            b = self.slider_blue.value.get()
+            # b = self.slider_blue.get()
+            b = self.tv_entry_blue.get()
             b_flag = False
         except tkinter.TclError as te:
             # if self.slider_blue.value != "":
@@ -519,14 +881,14 @@ class RGBSlider(tkinter.Frame):
             self.entry_blue.configure(foreground="black")
 
         try:
-            self.colour = Colour(r, g, b)
+            self.colour.set(Colour(r, g, b).hex_code)
         except TypeError as te:
-            self.colour = Colour(125, 125, 125)
+            self.colour.set(Colour(125, 125, 125).hex_code)
             print(f"{te=}")
 
-        h = self.colour.hex_code
-        self.entry_res.config(background=h, foreground=font_foreground(h, rgb=False))
-
+        if self.show_result:
+            h = Colour(self.colour.get()).hex_code
+            self.entry_res.config(background=h, foreground=font_foreground(h, rgb=False))
 
 # https://stackoverflow.com/questions/70147814/hint-entry-widget-tkinter
 class EntryWithPlaceholder(tkinter.Entry):
@@ -787,4 +1149,7 @@ if __name__ == '__main__':
     # test_combo_1()
     # test_combo_factory()
     # test_list_factory()
-    test_messagebox()
+    # test_messagebox()
+    # test_radio_factory()
+    # test_treeview_factory_1()
+    test_treeview_factory_2()
