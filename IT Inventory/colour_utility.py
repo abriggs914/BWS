@@ -11,8 +11,8 @@ from utility import clamp, flatten, reduce
 VERSION = \
     """	
         General Utility file of RGB colour values
-        Version...........1.19
-        Date........2022-09-13
+        Version...........1.21
+        Date........2022-10-25
         Author....Avery Briggs
     """
 
@@ -1963,7 +1963,7 @@ def gradient(x, n, c1, c2):
 
 
 # Darken an RGB color using a proportion p (0-1)
-def darken(c, p):
+def darken(c, p, rgb=True):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
@@ -1972,11 +1972,11 @@ def darken(c, p):
     r = clamp(0, round(r - (255 * p)), 255)
     g = clamp(0, round(g - (255 * p)), 255)
     b = clamp(0, round(b - (255 * p)), 255)
-    return r, g, b
+    return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 # Brighten an RGB color using a proportion p (0-1)
-def brighten(c, p):
+def brighten(c, p, rgb=True):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
@@ -1985,7 +1985,7 @@ def brighten(c, p):
     r = clamp(0, round(r + (255 * p)), 255)
     g = clamp(0, round(g + (255 * p)), 255)
     b = clamp(0, round(b + (255 * p)), 255)
-    return r, g, b
+    return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
@@ -2009,7 +2009,7 @@ def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
         raise TypeError(f"Error cannot convert \'{colour_in}\' to a valid RGB colour scheme.", te)
 
 
-def rainbow_gradient(n_slices=None, start_colour="red"):
+def rainbow_gradient(n_slices=None, start_colour="red", rgb=True):
     # values = [(255, i, 0) for i in range(256)] + \
     #          [(i, 255, 0) for i in range(255, -1, -1)] + \
     #          [(0, 255, i) for i in range(255)] + \
@@ -2048,4 +2048,7 @@ def rainbow_gradient(n_slices=None, start_colour="red"):
     # print(f"C({len(values)}): <{values}>")
     # print(f"D({len(lst)}): <{lst[idx:] + lst[:idx]}>")
     for val in values:
-        yield val
+        if rgb:
+            yield val
+        else:
+            yield rgb_to_hex(val)

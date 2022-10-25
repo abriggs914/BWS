@@ -148,7 +148,7 @@ class InventoryApp(tkinter.Tk):
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
-        self.df_v_invmaster = connect(**SQL_V_INVMASTER)
+        self.df_v_invmaster = connect(**SQL_V_ITI_ITEMS)
         self.df_uom = connect(**SQL_UOM)
         self.df_type = connect(**SQL_TYPE)
         self.df_status = connect(**SQL_STATUS)

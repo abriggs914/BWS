@@ -7,6 +7,7 @@ from tkinter_utility import *
 from stg_queries import *
 from menus import AddItemMenu
 from utility import alpha_seq
+from dnd_onv_states import DNDItemManager
 
 
 class InventoryApp(tkinter.Tk):
@@ -15,7 +16,7 @@ class InventoryApp(tkinter.Tk):
         super().__init__()
 
         self.df_v_tools_and_equip_unipoint = None
-        self.df_v_invmaster = None
+        self.df_v_iti_items = None
         self.df_uom = None
         self.df_type = None
         self.df_status = None
@@ -31,7 +32,7 @@ class InventoryApp(tkinter.Tk):
         assert all(
             [isinstance(v, pandas.DataFrame) and not v.empty for v in [
                 self.df_v_tools_and_equip_unipoint,
-                self.df_v_invmaster,
+                self.df_v_iti_items,
                 self.df_uom,
                 self.df_type,
                 self.df_status,
@@ -49,16 +50,22 @@ class InventoryApp(tkinter.Tk):
         self.title("BWS Inventory Manager")
         self.state("zoomed")
 
-        self.namer = alpha_seq(1000, prefix="w_IA_")
+        # self.namer = alpha_seq(1000, prefix="w_IA_")
 
         self.level_add_menu = None
         self.new_item_save_state = tkinter.Variable(self, value={})
 
         # self.tv_l1, self.l1 = label_factory(self, tv_label="Label 1")
-        self.frame_button_bar_1 = tkinter.Frame(self, name=next(self.namer))
-        self.frame_treeview_tools_and_equip = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
-        self.frame_treeview_invmaster = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
         # self.frame_drillview = tkinter.Frame(self, name=next(self.namer))
+        # self.frame_button_bar_1 = tkinter.Frame(self, name=next(self.namer))
+        # self.frame_treeview_tools_and_equip = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
+        # self.frame_treeview_invmaster = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
+        # self.frame_treeview_iti_items = tkinter.Frame(self, name=next(self.namer), width=self.WIDTH * 0.95)
+
+        self.frame_button_bar_1 = tkinter.Frame(self, name="frame_button_bar")
+        self.frame_treeview_tools_and_equip = tkinter.Frame(self, name="treeview_tools_and_equip", width=self.WIDTH * 0.95)
+        self.frame_treeview_invmaster = tkinter.Frame(self, name="treeview_invmaster", width=self.WIDTH * 0.95)
+        self.frame_treeview_iti_items = tkinter.Frame(self, name="treeview_iti_items", width=self.WIDTH * 0.95)
 
         # button add new
         self.tv_btn_add_new_item,\
@@ -67,7 +74,7 @@ class InventoryApp(tkinter.Tk):
                 self.frame_button_bar_1,
                 tv_btn="+",
                 kwargs_btn={
-                    "name": next(self.namer),
+                    "name": "button_add_new_item",
                     "command": self.click_add_new_item
                 }
         )
@@ -78,10 +85,16 @@ class InventoryApp(tkinter.Tk):
         self.tv_label_treeview_tools_and_equip = tkinter.StringVar(self, value="v_Tools&Equip")
         self.set_treeview_v_tools_and_equip()
 
-        # treeview v_iti_items
-        self.chosen_columns_invmaster = ["Quantity", "Item", "Condition", "Status", "Type"]
+        # # treeview v_iti_items
+        self.chosen_columns_iti_items = ["Quantity", "Item", "Condition", "Status", "Type", "Computer", "Peripherals", "Wire", "Network", "Unknown", "UOM", "TotalConsumed", "TotalAdded"]
+        self.column_display_width_iti_items = [30, 50, 75, 75, 75, 75, 75, 75, 75, 75, 75, 30, 75, 75]
+        self.tv_label_treeview_iti_items = tkinter.StringVar(self, value="v_ITI_Items")
+        self.set_treeview_v_iti_items()
+
+        # treeview iti_invmaster
+        self.chosen_columns_invmaster = ["Item", "Quantity", "UOM", "TotalConsumed", "Assigned", "Maintenance"]
         self.column_display_width_invmaster = [50, 250, 75, 75, 75]
-        self.tv_label_treeview_invmaster = tkinter.StringVar(self, value="v_ITI_Items")
+        self.tv_label_treeview_invmaster = tkinter.StringVar(self, value="ITI InvMaster")
         self.set_treeview_v_invmaster()
 
         # place widgets
@@ -95,21 +108,52 @@ class InventoryApp(tkinter.Tk):
         self.treeview_v_tool_and_equip.grid(row=5, column=0)
         self.scrollbar_y_tools_and_equip.grid(row=5, column=1, sticky="ns")
 
+        #   v_iti_items
+        self.frame_treeview_iti_items.grid(row=6, column=0)
+        self.label_treeview_iti_items.grid(row=3, column=0)
+        self.scrollbar_x_iti_items.grid(row=4, column=0, sticky="ew")
+        self.treeview_v_iti_items.grid(row=5, column=0)
+        self.scrollbar_y_iti_items.grid(row=5, column=1, sticky="ns")
+
         #   v_invmaster
-        self.frame_treeview_invmaster.grid(row=6, column=0)
-        self.label_treeview_invmaster.grid(row=3, column=0)
-        self.scrollbar_x_invmaster.grid(row=4, column=0, sticky="ew")
-        self.treeview_v_invmaster.grid(row=5, column=0)
-        self.scrollbar_y_invmaster.grid(row=5, column=1, sticky="ns")
+        self.frame_treeview_invmaster.grid(row=6, column=2)
+        self.label_treeview_invmaster.grid(row=3, column=2)
+        self.scrollbar_x_invmaster.grid(row=4, column=2, sticky="ew")
+        self.treeview_v_invmaster.grid(row=5, column=2)
+        self.scrollbar_y_invmaster.grid(row=5, column=3, sticky="ns")
 
         # #   drillview
         # self.frame_drillview.grid(row=2, column=0)
 
         # item manager bar
+        self.frame_item_manager = tkinter.Frame(self)
+        self.frame_item_manager_buttons = tkinter.Frame(self.frame_item_manager)
+        # +
+        # -
+        # in use    ->  server
+        # server    ->  in use
+        # in use    ->  broken
+        # broken    ->  server
+        # broken    ->  in use  ==  broken  ->  server  ->  in use
+        # server    ->  dispose
+        # in use    ->  dispose ==  in use  ->  server  ->  dispose
+        self.dnd_inventory_manager = DNDItemManager(self.frame_item_manager_buttons)
+        self.dnd_inventory_manager.grid()
+        self.frame_item_manager_buttons.grid()
+        self.frame_item_manager.grid(row=7, column=0)
+
+        tv1, l1, tv2, e1 = entry_factory(self, tv_label="ENTRY")
+        l1.grid()
+        e1.grid()
+        tv2.trace_variable("w", self.update_serial_input)
+
+    def update_serial_input(self, *args):
+        print(f"update_serial_input")
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
-        self.df_v_invmaster = connect(**SQL_V_INVMASTER)
+        self.df_v_iti_items = connect(**SQL_V_ITI_ITEMS)
+        self.df_iti_invmaster = connect(**SQL_ITI_INVMASTER)
         self.df_uom = connect(**SQL_UOM)
         self.df_type = connect(**SQL_TYPE)
         self.df_status = connect(**SQL_STATUS)
@@ -239,8 +283,25 @@ class InventoryApp(tkinter.Tk):
     def select_treeview_items(self, event):
         tree = event.widget
         selection = [tree.item(item)["text"] for item in tree.selection()]
-        print("selected items:", selection)
+        print(f"selected items: {selection=}, {tree=}")
         # messagebox.showinfo(title='Information', message=','.join(selection))
+
+    def set_treeview_v_iti_items(self):
+        # print(f"{self.chosen_columns_invmaster=}")
+        self.tv_label_treeview_iti_items,\
+        self.label_treeview_iti_items,\
+        self.treeview_v_iti_items,\
+        self.scrollbar_x_iti_items,\
+        self.scrollbar_y_iti_items\
+            = treeview_factory(
+                self.frame_treeview_iti_items,
+                self.df_v_iti_items,
+                viewable_column_names=self.chosen_columns_iti_items,
+                viewable_column_widths=self.column_display_width_iti_items,
+                tv_label=self.tv_label_treeview_iti_items
+        )
+
+        self.treeview_v_iti_items.bind("<<TreeviewSelect>>", self.select_treeview_items)
 
     def set_treeview_v_invmaster(self):
         print(f"{self.chosen_columns_invmaster=}")
@@ -251,7 +312,7 @@ class InventoryApp(tkinter.Tk):
         self.scrollbar_y_invmaster\
             = treeview_factory(
                 self.frame_treeview_invmaster,
-                self.df_v_invmaster,
+                self.df_iti_invmaster,
                 viewable_column_names=self.chosen_columns_invmaster,
                 viewable_column_widths=self.column_display_width_invmaster,
                 tv_label=self.tv_label_treeview_invmaster

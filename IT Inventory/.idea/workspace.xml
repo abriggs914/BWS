@@ -2,12 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/inventory_app_2022-10-24.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/inventory_app_2_2022-10-24.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dnd_onv_states.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/colour_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/colour_utility.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app_2_2022-10-24.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app_2_2022-10-24.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/selects.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stg_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/stg_queries.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tkinter_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/tkinter_utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

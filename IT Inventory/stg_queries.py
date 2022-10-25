@@ -36,7 +36,7 @@ SQL_V_TOOLSANDEQUIP = {
 }
 
 
-SQL_V_INVMASTER = {
+SQL_V_ITI_ITEMS = {
     "sql": """SELECT [ID]
       ,[Quantity]
       ,[Item]
@@ -48,7 +48,37 @@ SQL_V_INVMASTER = {
       ,[Wire]
       ,[Network]
       ,[Unknown]
+      ,[bID]
+      ,[bItem]
+      ,[bQuantity]
+      ,[UOM]
+      ,[TotalConsumed]
+      ,[TotalAdded]
+      ,[LastDateConsumed]
+      ,[DateAdded]
+      ,[Assigned]
+      ,[Maintenance]
+      ,[UnknownStatus]
   FROM [BWSdb].[dbo].[v_ITI_Items]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
+SQL_ITI_INVMASTER = {
+    "sql": """SELECT TOP (1000) [ID]
+      ,[Item]
+      ,[Quantity]
+      ,[UOM]
+      ,[TotalConsumed]
+      ,[TotalAdded]
+      ,[LastDateConsumed]
+      ,[DateAdded]
+      ,[Assigned]
+      ,[Maintenance]
+      ,[UnknownStatus]
+  FROM [BWSdb].[dbo].[ITI InvMaster]""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"

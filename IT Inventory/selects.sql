@@ -2,9 +2,11 @@ USE BWSdb
 GO
 SELECT 'ITI InvMaster' AS [Table], * FROM [ITI InvMaster];
 SELECT 'ITI InvMaster Snap' AS [Table], * FROM [ITI InvMaster Snap];
-SELECT 'v_Tools&Equip' AS [Table], * FROM [uniPoint_Live].[dbo].[v_Tools&Equip]
+SELECT 'v_Tools&Equip' AS [Table], * FROM [uniPoint_Live].[dbo].[v_Tools&Equip];
 SELECT 'ITI Item' AS [Table], * FROM [ITI Item];
-SELECT 'v_ITI Item' AS [Table], * FROM [dbo].[v_ITI_Items] 
+SELECT 'v_ITI Item' AS [Table], * FROM [dbo].[v_ITI_Items];
+
+EXEC sp_ITI_ListSimilarItems;
 
 SELECT 'ITI Computer' AS [Table], * FROM [ITI Computer];
 SELECT 'ITI Condition' AS [Table], * FROM [ITI Condition];
@@ -75,9 +77,6 @@ ON
 	AND [ITI Item].[SubType] = [ITI Unknown].[ID]
 ;
 
-EXEC sp_ITI_ListSimilarItems
-
-SELECT 'v_ITI_Items' AS [Table], * FROM [dbo].[v_ITI_Items] 
 
 EXEC [sp_ITI_ListSimilarItems] @name='17" Monitor'
 EXEC [sp_ITI_ListSimilarItemsWithType] @name='17" Monitor'

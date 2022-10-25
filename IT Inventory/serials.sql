@@ -1,0 +1,19 @@
+USE BWSdb
+GO
+
+BEGIN TRAN;
+
+SELECT * FROM [ITI Item];
+
+UPDATE
+	[ITI Item]
+SET
+	[Serial] = RIGHT('0000000000' + CAST([ID] AS NVARCHAR(MAX)), 10)
+;
+SELECT * FROM [ITI Item];
+
+ROLLBACK;
+COMMIT;
+
+
+SELECT [Serial] FROM [ITI Item] ORDER BY [Serial];
