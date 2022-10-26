@@ -48,6 +48,7 @@ SQL_V_ITI_ITEMS = {
       ,[Wire]
       ,[Network]
       ,[Unknown]
+      ,[Serial]
       ,[bID]
       ,[bItem]
       ,[bQuantity]

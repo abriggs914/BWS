@@ -86,7 +86,7 @@ class InventoryApp(tkinter.Tk):
         self.set_treeview_v_tools_and_equip()
 
         # # treeview v_iti_items
-        self.chosen_columns_iti_items = ["Quantity", "Item", "Condition", "Status", "Type", "Computer", "Peripherals", "Wire", "Network", "Unknown", "UOM", "TotalConsumed", "TotalAdded"]
+        self.chosen_columns_iti_items = ["Quantity", "Item", "Condition", "Status", "Type", "Computer", "Peripherals", "Wire", "Network", "Unknown", "UOM", "TotalConsumed", "TotalAdded", "Assigned", "Maintenance", "UnknownStatus", "Serial"]
         self.column_display_width_iti_items = [30, 50, 75, 75, 75, 75, 75, 75, 75, 75, 75, 30, 75, 75]
         self.tv_label_treeview_iti_items = tkinter.StringVar(self, value="v_ITI_Items")
         self.set_treeview_v_iti_items()
@@ -127,6 +127,8 @@ class InventoryApp(tkinter.Tk):
 
         # item manager bar
         self.frame_item_manager = tkinter.Frame(self)
+        self.frame_item_manager_master_view = tkinter.Frame(self.frame_item_manager)
+
         self.frame_item_manager_buttons = tkinter.Frame(self.frame_item_manager)
         # +
         # -
@@ -141,14 +143,81 @@ class InventoryApp(tkinter.Tk):
         self.dnd_inventory_manager.grid()
         self.frame_item_manager_buttons.grid()
         self.frame_item_manager.grid(row=7, column=0)
+        self.frame_item_manager_master_view.grid()
 
-        tv1, l1, tv2, e1 = entry_factory(self, tv_label="ENTRY")
-        l1.grid()
-        e1.grid()
-        tv2.trace_variable("w", self.update_serial_input)
+        self.pressed_keys = tkinter.StringVar(self, value="")
+        self.tv1, self.l1, self.tv2, self.e1 = entry_factory(self, tv_label="ENTRY")
+        self.l1.grid()
+        self.e1.grid()
+        self.tv2.trace_variable("w", self.update_serial_input)
+        self.tv2_reset_value = 750
+        self.tv2_counter = tkinter.IntVar(self, value=self.tv2_reset_value)
+
+        self.accept_reset_value = 2500
+        self.accept_counter = tkinter.IntVar(self, value=self.accept_reset_value)
+        self.accepting_bool = tkinter.BooleanVar(self, value=True)
+        # self.tv2_counter.trace_variable("w", self.count_down_serial_input)
+
+        self.bind("<KeyPress>", self.keypress)
+
+    def keypress(self, *args):
+        print(f"key press {args=}")
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.pressed_keys.set(self.pressed_keys.get() + arg.char)
+        # self.tv2.set(self.pressed_keys.get())
+        # self.update_serial_input(args)
+
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.tv2.set(arg.char)
+
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.e1.focus()
+
+        arg, *rest = args
+        if arg.char.isalpha() or arg.char.isdigit():
+            if self.accepting_bool.get():
+                # self.tv2.set(arg.char + self.tv2.get())
+                print(f"I WANT TO ADD MISSING CHAR {arg.char=} to str={self.tv2.get()=}")
+                self.update_counter_in(arg.char, self.tv2_reset_value)
+                # self.tv2.set(self.tv2.get())
+                # self.tv2.set(self.tv2.get())
+                self.accepting_bool.set(False)
+            # self.e1.icursor("end")
+                self.e1.focus()
+
+    def update_counter_in(self, char, t):
+        if t <= 0:
+            self.tv2.set(char + self.tv2.get())
+        else:
+            self.after(1, self.update_counter_in, char, t - 1)
 
     def update_serial_input(self, *args):
-        print(f"update_serial_input")
+        # print(f"update_serial_input, {self.tv2.get()}")
+        self.tv2_counter.set(self.tv2_reset_value)
+        self.count_down_serial_input()
+
+    def submit_serial_entry(self, *args):
+        serial_in = self.tv2.get()
+        print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
+        for idx, row in self.df_v_iti_items.iterrows():
+            # print(f"{row['Serial']=}, {type(row['Serial'])=}")
+            if row["Serial"] == serial_in:
+                print(f"found: {row=}")
+        self.accept_counter.set(self.accept_reset_value)
+
+
+    def count_down_serial_input(self, *args):
+        v = self.tv2_counter.get()
+        # print(f"{v=}")
+        if v > 0:
+            self.tv2_counter.set(v - 1)
+            self.after(1, self.count_down_serial_input)
+        elif v == 0:
+            self.submit_serial_entry()
+            self.tv2_counter.set(-1)
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)

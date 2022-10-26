@@ -1,8 +1,50 @@
-USE BWSdb
+USE [BWSdb]
 GO
+
+/****** Object:  View [dbo].[v_ITI_Items]    Script Date: 2022-10-26 10:50:43 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+/****** Object:  View [dbo].[v_ITI_Items]    Script Date: 2022-07-06 12:46:58 PM ******/
+--SET ANSI_NULLS ON
+--GO
+
+--SET QUOTED_IDENTIFIER ON
+--GO
+
 
 ALTER VIEW [dbo].[v_ITI_Items] AS
 
+SELECT
+	[A].[ID]
+	, [A].[Quantity]
+	, [A].[Item]
+	, [A].[Condition]
+	, [A].[Status]
+	, [A].[Type]
+	, [A].[Computer]
+	, [A].[Peripherals]
+	, [A].[Wire]
+	, [A].[Network]
+	, [A].[Unknown]
+	, [A].[Serial]
+	, [B].[ID] AS [bID]
+	, [B].[Item] AS [bItem]
+	, [B].[Quantity] AS [bQuantity]
+	, [C].[Name] AS [UOM]
+	, [B].[TotalConsumed]
+	, [B].[TotalAdded]
+	, [B].[LastDateConsumed]
+	, [B].[DateAdded]
+	, [B].[Assigned]
+	, [B].[Maintenance]
+	, [B].[UnknownStatus]
+FROM (
 	SELECT
 		[ITI Item].[ID]
 		, [Quantity]
@@ -15,6 +57,7 @@ ALTER VIEW [dbo].[v_ITI_Items] AS
 		, [ITI Wire].[Name] AS [Wire]
 		, [ITI Network].[Name] AS [Network]
 		, [ITI Unknown].[Name] AS [Unknown]
+		, [ITI Item].[Serial] AS [Serial]
 	FROM
 		[ITI InvMaster]
 	LEFT JOIN
@@ -58,5 +101,16 @@ ALTER VIEW [dbo].[v_ITI_Items] AS
 	ON
 		[ITI Item].[Type] = (SELECT [ID] FROM [ITI Type] WHERE [Name] = 'UNKNOWN')
 		AND [ITI Item].[SubType] = [ITI Unknown].[ID]
+	) AS [A]
+INNER JOIN
+	[ITI InvMaster] AS [B]
+ON
+	[A].[ID] = [B].[Item]
+INNER JOIN
+	[ITI UOM] AS [C]
+ON
+	[B].[UOM] = [C].[ID]
 
 GO
+
+
