@@ -11,7 +11,11 @@ class DNDItemManager(tkinter.Canvas):
             master,
             canvas_width=600,
             canvas_height=200,
-            canvas_background=rgb_to_hex(DODGERBLUE_2)
+            canvas_background=rgb_to_hex(DODGERBLUE_2),
+            omit_server=False,
+            omit_in_use=False,
+            omit_broken=False,
+            omit_disposed=False
     ):
         super().__init__(master, width=canvas_width, height=canvas_height, background=canvas_background)
 
@@ -24,85 +28,113 @@ class DNDItemManager(tkinter.Canvas):
         self.iv_broken_number = tkinter.IntVar(self, value=0)
         self.iv_disposed_number = tkinter.IntVar(self, value=0)
 
-        # Server room state
-        c1 = rgb_to_hex(GOLDENROD)
-        c2 = rgb_to_hex(GRAY_1)
-        f1 = ("Arial", 10, "bold")
-        self.rect_server_room_state, \
-        self.tag_server_room_state_rect, \
-        self.tag_server_room_state_text, \
-        self.tag_server_room_state_number \
-            = self.init_drag_state(100, 100, 120, 50, "Server Room", c1, c2, f1, True, 0.35, False, 0.35)
+        if not omit_server:
+            # Server room state
+            c1 = rgb_to_hex(GOLDENROD)
+            c2 = rgb_to_hex(GRAY_1)
+            f1 = ("Arial", 10, "bold")
+            self.rect_server_room_state, \
+            self.tag_server_room_state_rect, \
+            self.tag_server_room_state_text, \
+            self.tag_server_room_state_number \
+                = self.init_drag_state(100, 100, 120, 50, "Server Room", c1, c2, f1, True, 0.35, False, 0.35)
 
-        # In Use state
-        c1 = rgb_to_hex(FORESTGREEN)
-        c2 = rgb_to_hex(FLORALWHITE)
-        f1 = ("Arial", 10, "bold")
-        self.rect_in_use_state, \
-        self.tag_in_use_state_rect, \
-        self.tag_in_use_state_text, \
-        self.tag_in_use_state_number \
-            = self.init_drag_state(290, 100, 120, 50, "In Use", c1, c2, f1, True, 0.35, False, 0.35)
+            self.iv_server_room_number.trace_variable("w", self.update_server_room_number)
+            self.iv_server_room_number.set(0)
 
-        # Broken state
-        c1 = rgb_to_hex(INDIANRED_3)
-        c2 = rgb_to_hex(GRAY_1)
-        f1 = ("Arial", 10, "bold")
-        self.rect_broken_state, \
-        self.tag_broken_state_rect, \
-        self.tag_broken_state_text, \
-        self.tag_broken_state_number \
-            = self.init_drag_state(480, 45, 120, 50, "Broken", c1, c2, f1, True, 0.35, False, 0.35)
+            self.tag_bind(self.tag_server_room_state_rect, "<B1-Motion>", self.event_drag_server_room)
+            self.tag_bind(self.tag_server_room_state_text, "<B1-Motion>", self.event_drag_server_room)
+            self.tag_bind(self.tag_server_room_state_number, "<B1-Motion>", self.event_drag_server_room)
+            self.tag_bind(self.tag_server_room_state_rect, "<ButtonRelease-1>", self.event_release_server_room)
+            self.tag_bind(self.tag_server_room_state_text, "<ButtonRelease-1>", self.event_release_server_room)
+            self.tag_bind(self.tag_server_room_state_number, "<ButtonRelease-1>", self.event_release_server_room)
+        else:
+            self.rect_server_room_state, \
+            self.tag_server_room_state_rect, \
+            self.tag_server_room_state_text, \
+            self.tag_server_room_state_number \
+                = None, None, None, None
 
-        # Disposed state
-        c1 = rgb_to_hex(GRAY_20)
-        c2 = rgb_to_hex(WHITE)
-        f1 = ("Arial", 10, "bold")
-        self.rect_disposed_state, \
-        self.tag_disposed_state_rect, \
-        self.tag_disposed_state_text, \
-        self.tag_disposed_state_number \
-            = self.init_drag_state(480, 145, 120, 50, "Disposed", c1, c2, f1, True, 0.35, False, 0.35)
+        if not omit_in_use:
+            # In Use state
+            c1 = rgb_to_hex(FORESTGREEN)
+            c2 = rgb_to_hex(FLORALWHITE)
+            f1 = ("Arial", 10, "bold")
+            self.rect_in_use_state, \
+            self.tag_in_use_state_rect, \
+            self.tag_in_use_state_text, \
+            self.tag_in_use_state_number \
+                = self.init_drag_state(290, 100, 120, 50, "In Use", c1, c2, f1, True, 0.35, False, 0.35)
 
-        self.iv_server_room_number.trace_variable("w", self.update_server_room_number)
-        self.iv_in_use_number.trace_variable("w", self.update_in_use_number)
-        self.iv_broken_number.trace_variable("w", self.update_broken_number)
-        self.iv_disposed_number.trace_variable("w", self.update_disposed_number)
+            self.iv_in_use_number.trace_variable("w", self.update_in_use_number)
+            self.iv_in_use_number.set(0)
 
-        self.iv_server_room_number.set(0)
-        self.iv_in_use_number.set(0)
-        self.iv_broken_number.set(0)
-        self.iv_disposed_number.set(0)
+            self.tag_bind(self.tag_in_use_state_rect, "<B1-Motion>", self.event_drag_in_use)
+            self.tag_bind(self.tag_in_use_state_text, "<B1-Motion>", self.event_drag_in_use)
+            self.tag_bind(self.tag_in_use_state_number, "<B1-Motion>", self.event_drag_in_use)
+            self.tag_bind(self.tag_in_use_state_rect, "<ButtonRelease-1>", self.event_release_in_use)
+            self.tag_bind(self.tag_in_use_state_text, "<ButtonRelease-1>", self.event_release_in_use)
+            self.tag_bind(self.tag_in_use_state_number, "<ButtonRelease-1>", self.event_release_in_use)
+        else:
+            self.rect_in_use_state, \
+            self.tag_in_use_state_rect, \
+            self.tag_in_use_state_text, \
+            self.tag_in_use_state_number \
+                = None, None, None, None
 
-        self.tag_bind(self.tag_server_room_state_rect, "<B1-Motion>", self.event_drag_server_room)
-        self.tag_bind(self.tag_in_use_state_rect, "<B1-Motion>", self.event_drag_in_use)
-        self.tag_bind(self.tag_broken_state_rect, "<B1-Motion>", self.event_drag_broken)
-        self.tag_bind(self.tag_disposed_state_rect, "<B1-Motion>", self.event_drag_disposed)
+        if not omit_broken:
+            # Broken state
+            c1 = rgb_to_hex(INDIANRED_3)
+            c2 = rgb_to_hex(GRAY_1)
+            f1 = ("Arial", 10, "bold")
+            self.rect_broken_state, \
+            self.tag_broken_state_rect, \
+            self.tag_broken_state_text, \
+            self.tag_broken_state_number \
+                = self.init_drag_state(480, 45, 120, 50, "Broken", c1, c2, f1, True, 0.35, False, 0.35)
 
-        self.tag_bind(self.tag_server_room_state_text, "<B1-Motion>", self.event_drag_server_room)
-        self.tag_bind(self.tag_in_use_state_text, "<B1-Motion>", self.event_drag_in_use)
-        self.tag_bind(self.tag_broken_state_text, "<B1-Motion>", self.event_drag_broken)
-        self.tag_bind(self.tag_disposed_state_text, "<B1-Motion>", self.event_drag_disposed)
+            self.iv_broken_number.trace_variable("w", self.update_broken_number)
+            self.iv_broken_number.set(0)
 
-        self.tag_bind(self.tag_server_room_state_number, "<B1-Motion>", self.event_drag_server_room)
-        self.tag_bind(self.tag_in_use_state_number, "<B1-Motion>", self.event_drag_in_use)
-        self.tag_bind(self.tag_broken_state_number, "<B1-Motion>", self.event_drag_broken)
-        self.tag_bind(self.tag_disposed_state_number, "<B1-Motion>", self.event_drag_disposed)
+            self.tag_bind(self.tag_broken_state_rect, "<B1-Motion>", self.event_drag_broken)
+            self.tag_bind(self.tag_broken_state_text, "<B1-Motion>", self.event_drag_broken)
+            self.tag_bind(self.tag_broken_state_number, "<B1-Motion>", self.event_drag_broken)
+            self.tag_bind(self.tag_broken_state_rect, "<ButtonRelease-1>", self.event_release_broken)
+            self.tag_bind(self.tag_broken_state_text, "<ButtonRelease-1>", self.event_release_broken)
+            self.tag_bind(self.tag_broken_state_number, "<ButtonRelease-1>", self.event_release_broken)
+        else:
+            self.rect_broken_state, \
+            self.tag_broken_state_rect, \
+            self.tag_broken_state_text, \
+            self.tag_broken_state_number \
+                = None, None, None, None
 
-        self.tag_bind(self.tag_server_room_state_rect, "<ButtonRelease-1>", self.event_release_server_room)
-        self.tag_bind(self.tag_in_use_state_rect, "<ButtonRelease-1>", self.event_release_in_use)
-        self.tag_bind(self.tag_broken_state_rect, "<ButtonRelease-1>", self.event_release_broken)
-        self.tag_bind(self.tag_disposed_state_rect, "<ButtonRelease-1>", self.event_release_disposed)
+        if not omit_disposed:
+            # Disposed state
+            c1 = rgb_to_hex(GRAY_20)
+            c2 = rgb_to_hex(WHITE)
+            f1 = ("Arial", 10, "bold")
+            self.rect_disposed_state, \
+            self.tag_disposed_state_rect, \
+            self.tag_disposed_state_text, \
+            self.tag_disposed_state_number \
+                = self.init_drag_state(480, 145, 120, 50, "Disposed", c1, c2, f1, True, 0.35, False, 0.35)
 
-        self.tag_bind(self.tag_server_room_state_text, "<ButtonRelease-1>", self.event_release_server_room)
-        self.tag_bind(self.tag_in_use_state_text, "<ButtonRelease-1>", self.event_release_in_use)
-        self.tag_bind(self.tag_broken_state_text, "<ButtonRelease-1>", self.event_release_broken)
-        self.tag_bind(self.tag_disposed_state_text, "<ButtonRelease-1>", self.event_release_disposed)
+            self.iv_disposed_number.trace_variable("w", self.update_disposed_number)
+            self.iv_disposed_number.set(0)
 
-        self.tag_bind(self.tag_server_room_state_number, "<ButtonRelease-1>", self.event_release_server_room)
-        self.tag_bind(self.tag_in_use_state_number, "<ButtonRelease-1>", self.event_release_in_use)
-        self.tag_bind(self.tag_broken_state_number, "<ButtonRelease-1>", self.event_release_broken)
-        self.tag_bind(self.tag_disposed_state_number, "<ButtonRelease-1>", self.event_release_disposed)
+            self.tag_bind(self.tag_disposed_state_rect, "<B1-Motion>", self.event_drag_disposed)
+            self.tag_bind(self.tag_disposed_state_text, "<B1-Motion>", self.event_drag_disposed)
+            self.tag_bind(self.tag_disposed_state_number, "<B1-Motion>", self.event_drag_disposed)
+            self.tag_bind(self.tag_disposed_state_rect, "<ButtonRelease-1>", self.event_release_disposed)
+            self.tag_bind(self.tag_disposed_state_text, "<ButtonRelease-1>", self.event_release_disposed)
+            self.tag_bind(self.tag_disposed_state_number, "<ButtonRelease-1>", self.event_release_disposed)
+        else:
+            self.rect_disposed_state, \
+            self.tag_disposed_state_rect, \
+            self.tag_disposed_state_text, \
+            self.tag_disposed_state_number \
+                = None, None, None, None
 
     def event_drag(self, event, caller):
         print(f"event_drag")

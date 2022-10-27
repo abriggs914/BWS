@@ -2,7 +2,9 @@ import tkinter
 
 import pandas
 
+from top_level_scan_handler import TopLevelScanHandler
 from grid_manager import GridManager
+from colour_utility import *
 from tkinter_utility import *
 from stg_queries import *
 from menus import AddItemMenu
@@ -17,6 +19,7 @@ class InventoryApp(tkinter.Tk):
 
         self.df_v_tools_and_equip_unipoint = None
         self.df_v_iti_items = None
+        self.df_iti_invmaster = None
         self.df_uom = None
         self.df_type = None
         self.df_status = None
@@ -33,6 +36,7 @@ class InventoryApp(tkinter.Tk):
             [isinstance(v, pandas.DataFrame) and not v.empty for v in [
                 self.df_v_tools_and_equip_unipoint,
                 self.df_v_iti_items,
+                self.df_iti_invmaster,
                 self.df_uom,
                 self.df_type,
                 self.df_status,
@@ -140,13 +144,38 @@ class InventoryApp(tkinter.Tk):
         # server    ->  dispose
         # in use    ->  dispose ==  in use  ->  server  ->  dispose
         self.dnd_inventory_manager = DNDItemManager(self.frame_item_manager_buttons)
-        self.dnd_inventory_manager.grid()
+
+        self.tv_label_selected_item,\
+        self.label_selected_item,\
+        self.tv_entry_selected_item,\
+        self.entry_selected_item,\
+            = entry_factory(
+                self.frame_item_manager_master_view,
+                tv_label="Selected:",
+                kwargs_entry={
+                    "state": "readonly"
+                }
+        )
+
+        # self.dnd_inventory_manager.grid()
         self.frame_item_manager_buttons.grid()
         self.frame_item_manager.grid(row=7, column=0)
         self.frame_item_manager_master_view.grid()
 
-        self.pressed_keys = tkinter.StringVar(self, value="")
-        self.tv1, self.l1, self.tv2, self.e1 = entry_factory(self, tv_label="ENTRY")
+        # self.pressed_keys = tkinter.StringVar(self, value="")
+
+        self.tv1,\
+        self.l1,\
+        self.tv2,\
+        self.e1 \
+            = entry_factory(
+                self,
+                tv_label="ENTRY",
+                kwargs_entry={
+                    "justify": "center"
+                }
+        )
+
         self.l1.grid()
         self.e1.grid()
         self.tv2.trace_variable("w", self.update_serial_input)
@@ -159,6 +188,8 @@ class InventoryApp(tkinter.Tk):
         # self.tv2_counter.trace_variable("w", self.count_down_serial_input)
 
         self.bind("<KeyPress>", self.keypress)
+
+        self.top_level_scan_handler = None
 
     def keypress(self, *args):
         print(f"key press {args=}")
@@ -191,6 +222,7 @@ class InventoryApp(tkinter.Tk):
     def update_counter_in(self, char, t):
         if t <= 0:
             self.tv2.set(char + self.tv2.get())
+            self.e1.icursor("end")
         else:
             self.after(1, self.update_counter_in, char, t - 1)
 
@@ -202,12 +234,22 @@ class InventoryApp(tkinter.Tk):
     def submit_serial_entry(self, *args):
         serial_in = self.tv2.get()
         print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
+        found = -1
         for idx, row in self.df_v_iti_items.iterrows():
             # print(f"{row['Serial']=}, {type(row['Serial'])=}")
             if row["Serial"] == serial_in:
-                print(f"found: {row=}")
+                found = idx
         self.accept_counter.set(self.accept_reset_value)
 
+        if found > 0:
+            foreground = rgb_to_hex(WILDERNESS_MINT)
+            row = self.df_v_iti_items.iloc[found]
+            print(f"found: {row=}")
+            self.handle_scan()
+        else:
+            foreground = rgb_to_hex(FIREBRICK_2)
+
+        self.e1.configure(foreground=foreground)
 
     def count_down_serial_input(self, *args):
         v = self.tv2_counter.get()
@@ -218,6 +260,10 @@ class InventoryApp(tkinter.Tk):
         elif v == 0:
             self.submit_serial_entry()
             self.tv2_counter.set(-1)
+
+    def handle_scan(self):
+        self.top_level_scan_handler = TopLevelScanHandler(self)
+        # tv_entry_selected_item
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
@@ -353,7 +399,20 @@ class InventoryApp(tkinter.Tk):
         tree = event.widget
         selection = [tree.item(item)["text"] for item in tree.selection()]
         print(f"selected items: {selection=}, {tree=}")
+        print(f"{dir(tree)=}")
+        print(f"{str(tree)=}")
+        item = selection[0]
         # messagebox.showinfo(title='Information', message=','.join(selection))
+        if str(tree) == ".treeview_iti_items.!treeview":
+            self.dnd_inventory_manager.grid()
+            row_name = self.treeview_v_iti_items.focus()
+            row_data = self.treeview_v_iti_items.item(row_name)
+            row_dict = dict(zip(self.chosen_columns_iti_items, row_data["values"]))
+            print(f"{row_name=}")
+            print(f"{row_data=}")
+            item_name = row_dict["Item"]
+            item_cond = row_dict["Condition"]
+            print(f"{item_name=}, {item_cond=}")
 
     def set_treeview_v_iti_items(self):
         # print(f"{self.chosen_columns_invmaster=}")
