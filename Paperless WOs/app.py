@@ -30,12 +30,15 @@ class App(tkinter.Tk):
         # Part Number
         self.tv_label_pn,\
         self.label_pn,\
-        self.tv_entry_pn,\
-        self.entry_pn\
-            = entry_factory(
+        self.tv_combo_pn,\
+        self.combo_pn\
+            = combo_factory(
                 self,
                 tv_label="Part # OR Desc:",
-                tv_entry=self.tv_pn
+                tv_combo=self.tv_pn,
+                kwargs_combo={
+                    "values": []
+                }
         )
 
         # Comments
@@ -72,7 +75,7 @@ class App(tkinter.Tk):
         self.label_wo.grid(row=0, column=0)
         self.entry_wo.grid(row=0, column=1)
         self.label_pn.grid(row=1, column=0)
-        self.entry_pn.grid(row=1, column=1)
+        self.combo_pn.grid(row=1, column=1)
         self.label_ct.grid(row=2, column=0)
         self.entry_ct.grid(row=2, column=1)
         self.btn_cancel.grid(row=3, column=0)

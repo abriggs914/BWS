@@ -7,118 +7,119 @@ GO
 
 DECLARE @t AS TABLE ([ID] INT IDENTITY(1, 1), [Quote] INT, [Known] BIT, [WO#] NVARCHAR(MAX), [Stargate WO#] NVARCHAR(MAX), [Model Name] NVARCHAR(MAX), [Dealer Name] NVARCHAR(MAX), [Prod Date] DATETIME, [Serial Number] NVARCHAR(MAX), [CN] NVARCHAR(MAX), [New SN] NVARCHAR(MAX), [New SN2] NVARCHAR(MAX), [CONT] NVARCHAR(17));
 INSERT INTO @t ([Quote], [Known]) VALUES
-(27735, 1),
-(27924, 1),
-(27740, 1),
-(27939, 1),
-(27942, 1),
-(27628, 1),
-(27739, 1),
-(27738, 1),
-(26982, 1),
-(27743, 1),
-(27766, 1),
-(27821, 1),
-(27901, 1),
-(27672, 1),
-(27013, 1),
-(27933, 1),
-(26139, 1),
-(27893, 1),
-(27699, 1),
-(27941, 1),
-(27981, 1),
-(27987, 1),
-(27108, 1),
-(27015, 1),
-(27925, 1),
-(28025, 1),
-(28024, 1),
-(27537, 1),
-(27710, 1),
-(27314, 1),
-(27529, 1),
-(27020, 1),
-(27564, 1),
-(26662, 1),
-(27704, 1),
-(27947, 1),
-(27857, 1),
-(27932, 1),
-(27014, 1),
-(26915, 1),
-(27456, 1),
-(27085, 1),
-(28018, 1),
-(27895, 1),
-(27896, 1),
-(28020, 1),
-(26797, 1),
-(26947, 1),
-(27882, 1),
-(27627, 1),
-(27626, 1),
-(27107, 1),
-(27883, 1),
-(28026, 1),
-(27885, 1),
-(28027, 1),
-(26255, 1),
-(27290, 1),
-(28015, 1),
-(27700, 1),
-(27886, 1),
-(28012, 1),
-(26798, 1),
-(27967, 1),
-(26782, 1),
-(27898, 1),
-(27905, 1),
-(27791, 1),
-(27934, 1),
-(27938, 1),
-(27789, 1),
-(26491, 1),
-(26423, 1),
-(28017, 1),
-(26492, 1),
-(27741, 1),
-(28019, 1),
-(27705, 1),
-(27734, 1),
-(27726, 1),
-(27629, 1),
-(27724, 1),
-(27706, 1),
-(27669, 1),
-(27712, 1),
-(27771, 1),
-(27653, 1),
-(27670, 1),
-(27940, 1),
-(27538, 1),
-(27894, 1),
-(27466, 1),
-(27969, 1),
-(27703, 1),
-(27376, 1),
-(27702, 1),
-(28010, 1),
-(28014, 1),
-(27701, 1),
-(27897, 1),
-(27935, 1),
-(27848, 1),
-(28011, 1),
-(27301, 1),
-(27723, 1),
-(27884, 1),
-(28022, 1),
-(27616, 1),
-(27731, 1),
-(26496, 1),
-(27948, 1),
-(28013, 1)
+--(27735, 1),
+--(27924, 1),
+--(27740, 1),
+--(27939, 1),
+--(27942, 1),
+--(27628, 1),
+--(27739, 1),
+--(27738, 1),
+--(26982, 1),
+--(27743, 1),
+--(27766, 1),
+--(27821, 1),
+--(27901, 1),
+--(27672, 1),
+--(27013, 1),
+--(27933, 1),
+--(26139, 1),
+--(27893, 1),
+--(27699, 1),
+--(27941, 1),
+--(27981, 1),
+--(27987, 1),
+--(27108, 1),
+--(27015, 1),
+--(27925, 1),
+--(28025, 1),
+--(28024, 1),
+--(27537, 1),
+--(27710, 1),
+--(27314, 1),
+--(27529, 1),
+--(27020, 1),
+--(27564, 1),
+--(26662, 1),
+--(27704, 1),
+--(27947, 1),
+--(27857, 1),
+--(27932, 1),
+--(27014, 1),
+--(26915, 1),
+--(27456, 1),
+--(27085, 1),
+--(28018, 1),
+--(27895, 1),
+--(27896, 1),
+--(28020, 1),
+--(26797, 1),
+--(26947, 1),
+--(27882, 1),
+--(27627, 1),
+--(27626, 1),
+--(27107, 1),
+--(27883, 1),
+--(28026, 1),
+--(27885, 1),
+--(28027, 1),
+--(26255, 1),
+--(27290, 1),
+--(28015, 1),
+--(27700, 1),
+--(27886, 1),
+--(28012, 1),
+--(26798, 1),
+--(27967, 1),
+--(26782, 1),
+--(27898, 1),
+--(27905, 1),
+--(27791, 1),
+--(27934, 1),
+--(27938, 1),
+--(27789, 1),
+--(26491, 1),
+--(26423, 1),
+--(28017, 1),
+--(26492, 1),
+--(27741, 1),
+--(28019, 1),
+--(27705, 1),
+--(27734, 1),
+--(27726, 1),
+--(27629, 1),
+--(27724, 1),
+--(27706, 1),
+--(27669, 1),
+--(27712, 1),
+--(27771, 1),
+--(27653, 1),
+--(27670, 1),
+--(27940, 1),
+--(27538, 1),
+--(27894, 1),
+--(27466, 1),
+--(27969, 1),
+--(27703, 1),
+--(27376, 1),
+--(27702, 1),
+--(28010, 1),
+--(28014, 1),
+--(27701, 1),
+--(27897, 1),
+--(27935, 1),
+--(27848, 1),
+--(28011, 1),
+--(27301, 1),
+--(27723, 1),
+--(27884, 1),
+--(28022, 1),
+--(27616, 1),
+--(27731, 1),
+--(26496, 1),
+--(27948, 1),
+--(28013, 1)
+(27667, 1)
 ;
 
 INSERT INTO
@@ -346,6 +347,121 @@ WHILE @i <= @c BEGIN
 		--SELECT @newsn AS [NEWSN], @i AS [@i]
 
 
+		----select @cn = 16 + 14 + 54 + (subCTN.Number * 5) + (Position5 * 4)
+		---- 2XB => Values=(2, 7, 2) Weights=(8, 7, 6)
+		---- 2B9 => Values=(2, 2, 9)
+		--select @cn = (2 * 8) + (7 * 7) + (2 * 6) + (subCTN.Number * 5) + (Position5 * 4)
+		--from [SN Type] with (nolock)
+		--inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+		--inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+		--inner join @chartonum as subCTN on [SN Type].Position4 = subCTN.Character
+		--cross join [SNC Year] with (nolock)
+		--where [Year] = @year
+
+	--	declare @chartonum table
+	--(
+	--	[Character] char(1),
+	--	[Number] int
+	--)
+
+	--insert into @chartonum
+	--values ('A', 1),
+	--		('B', 2),
+	--		('C', 3),
+	--		('D', 4),
+	--		('E', 5),
+	--		('F', 6),
+	--		('G', 7),
+	--		('H', 8),
+	--		('J', 1),
+	--		('K', 2),
+	--		('L', 3),
+	--		('M', 4),
+	--		('N', 5),
+	--		('P', 7),
+	--		('R', 9),
+	--		('S', 2),
+	--		('T', 3),
+	--		('U', 4),
+	--		('V', 5),
+	--		('W', 6),
+	--		('X', 7),
+	--		('Y', 8),
+	--		('Z', 9)
+
+	--Grab last used serial number for selected model year
+	declare @maxsn int
+	select @maxsn = MAX(CAST(RIGHT([Serial Number], 6) AS INT)) + 1
+	--select @maxsn2 = COUNT(*) + 2
+	from Orders with (nolock)
+	cross join [SNC Year] with (nolock)
+	where [Year] = @year
+	and RIGHT([Serial Number], 8) like '%' + [SN Yr] + 'A' + '%'
+	AND LEFT([Serial Number], 3) IN ('2XB', '2B9')
+	AND [Date Declined] IS NULL
+
+	--Geneate new number for serial number
+	--declare @newsn NVARCHAR(6)
+	--select @newsn = case when @maxsn is null then 1001 else @maxsn + 1 end
+	--select @newsn = case when @maxsn is null then 100001 else @maxsn + 1 end
+	select @newsn = RIGHT('000000' + CAST(case when @maxsn is null then 1 else @maxsn + 1 end AS NVARCHAR(6)), 6)
+	
+	--SET @newsn = '098765';
+	--SET @newsn = '100000';
+
+
+
+
+
+	--Generate Check Number calc for Serial Number
+	--declare @cn int
+	--select @cn = 16 + 14 + 54 + (subCTN.Number * 5) + (Position5 * 4)
+	-- 2XB => Values=(2, 7, 2) Weights=(8, 7, 6)
+	select @cn = (2 * 8) + (7 * 7) + (2 * 6) + (subCTN.Number * 5) + (Position5 * 4)
+	from [SN Type] with (nolock)
+	inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+	inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+	inner join @chartonum as subCTN on [SN Type].Position4 = subCTN.Character
+	cross join [SNC Year] with (nolock)
+	where [Year] = @year
+
+	select @cn = @cn + ((case when subCTN.Number is null then Position6 else subCTN.Number end) * 3)
+	from [SN Type] with (nolock)
+	inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+	inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+	left outer join @chartonum as subCTN on [SN Type].Position6 = subCTN.Character
+	cross join [SNC Year] with (nolock)
+	where [Year] = @year
+
+	select @cn = @cn + (case when ISNUMERIC(Position7) = 1 then Position7 else subCTN.Number end * 2) + (Position8 * 10)
+	from [SN Type] with (nolock)
+	inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+	inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+	left outer join @chartonum as subCTN on [SN Type].Position7 = subCTN.Character
+	cross join [SNC Year] with (nolock)
+	where [Year] = @year
+
+	select @cn = @cn + (subCTN.Number * 9) + (1 * 8) + ((left(right(@newsn, 6), 1)) * 7) + ((left(right(@newsn, 5), 1)) * 6) + ((left(right(@newsn, 4), 1)) * 5)
+				 + ((left(right(@newsn, 3), 1)) * 4) + ((left(right(@newsn, 2), 1)) * 3)
+				 + ((right(@newsn, 1)) * 2)
+	from [SN Type] with (nolock)
+	inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+	inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+	cross join [SNC Year] with (nolock)
+	inner join @chartonum as subCTN on [SNC Year].[SN Yr] = subCTN.Character
+	where [Year] = @year
+
+	----Generate Serial Number
+	--select '2XB' + Position4 + Position5 + Position6 + Position7 + cast(Position8 as nvarchar)
+	--	   + case when @cn % 11 = 10 then 'X' else cast(@cn % 11 as nvarchar) end + [SN Yr] + 'A' + right('000000' + cast(@newsn as nvarchar), 6)
+	--from [SN Type] with (nolock)
+	--inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
+	--inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
+	--cross join [SNC Year] with (nolock)
+	--where [Year] = @year
+
+	
+
 		--select @cn = 16 + 14 + 54 + (subCTN.Number * 5) + (Position5 * 4)
 		-- 2XB => Values=(2, 7, 2) Weights=(8, 7, 6)
 		-- 2B9 => Values=(2, 2, 9)
@@ -357,31 +473,9 @@ WHILE @i <= @c BEGIN
 		cross join [SNC Year] with (nolock)
 		where [Year] = @year
 
-		select @cn = @cn + ((case when subCTN.Number is null then Position6 else subCTN.Number end) * 3)
-		from [SN Type] with (nolock)
-		inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
-		inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
-		left outer join @chartonum as subCTN on [SN Type].Position6 = subCTN.Character
-		cross join [SNC Year] with (nolock)
-		where [Year] = @year
 
-		select @cn = @cn + (case when ISNUMERIC(Position7) = 1 then Position7 else subCTN.Number end * 2) + (Position8 * 10)
-		from [SN Type] with (nolock)
-		inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
-		inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
-		left outer join @chartonum as subCTN on [SN Type].Position7 = subCTN.Character
-		cross join [SNC Year] with (nolock)
-		where [Year] = @year
 
-		select @cn = @cn + (subCTN.Number * 9) + (1 * 8) + ((left(right(@newsn, 6), 1)) * 7) + ((left(right(@newsn, 5), 1)) * 6) + ((left(right(@newsn, 4), 1)) * 5)
-						+ ((left(right(@newsn, 3), 1)) * 4) + ((left(right(@newsn, 2), 1)) * 3)
-						+ ((right(@newsn, 1)) * 2)
-		from [SN Type] with (nolock)
-		inner join Products with (nolock) on [SN Type].[Model No] = Products.[Model No]
-		inner join (select distinct [Model No] from Orders with (nolock) where Quote# = @quote) as subA on Products.[Model No] = subA.[Model No]
-		cross join [SNC Year] with (nolock)
-		inner join @chartonum as subCTN on [SNC Year].[SN Yr] = subCTN.Character
-		where [Year] = @year
+
 
 		UPDATE
 			@t
@@ -442,16 +536,16 @@ SET
 -----------------------------------------------------------------------------------------------------------------------
 
 
-SELECT
-	*
-	, LEN([Serial Number]) AS [L1]
-	, LEN([New SN]) AS [L2]
-	, LEN([New SN2]) AS [L3]
-FROM
-	@t
-ORDER BY
-	(CASE WHEN [Quote] = 27830 THEN 0 ELSE 1 END),
-	[Prod Date]
+--SELECT
+--	*
+--	, LEN([Serial Number]) AS [L1]
+--	, LEN([New SN]) AS [L2]
+--	, LEN([New SN2]) AS [L3]
+--FROM
+--	@t
+--ORDER BY
+--	(CASE WHEN [Quote] = 27830 THEN 0 ELSE 1 END),
+--	[Prod Date]
 
 -----------------------------------------------------------------------------------------------------------------------
 
