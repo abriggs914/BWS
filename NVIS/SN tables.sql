@@ -1,0 +1,32 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT TOP (1000) [ID]
+      ,[Model No]
+      ,[MNT1]
+      ,[MNT2]
+      ,[Position4]
+      ,[Position5]
+      ,[Position6]
+      ,[Position7]
+      ,[Position8]
+      ,[CompanyID]
+  FROM [BWSdb].[dbo].[SN Type]
+
+  /****** Script for SelectTopNRows command from SSMS  ******/
+SELECT TOP (1000) [ID]
+      ,[Model No]
+      ,[MNT1]
+      ,[MNT2]
+      ,[Position4]
+      ,[Position5]
+      ,[Position6]
+      ,[Position7]
+      ,[Position8]
+      ,[CompanyID]
+  FROM [BWSdb].[dbo].[SN Type V2]
+
+/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT TOP (1000) [ID]
+      ,[Year]
+      ,[Yr]
+      ,[SN Yr]
+  FROM [BWSdb].[dbo].[SNC Year]
