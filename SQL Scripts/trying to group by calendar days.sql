@@ -82,7 +82,7 @@ LEFT JOIN
 ON
 	--([v_ClkTransaction ShiftsOverNight].[TransactionID] BETWEEN [min(TiD)] AND [max(TiD)])
 	--AND [SrcB].[EmployeeNumber] = [v_ClkTransaction ShiftsOverNight].[EmployeeNumber]
-	[SrcB].[LoggedOn] = [BWSdb].[dbo].[Datif y](YEAR([v_ClkTransaction ShiftsOverNight].[LoggedOn]), MONTH([v_ClkTransaction ShiftsOverNight].[LoggedOn]), DAY([v_ClkTransaction ShiftsOverNight].[LoggedOn]), DEFAULT, DEFAULT, DEFAULT)
+	[SrcB].[LoggedOn] = [BWSdb].[dbo].[Datify](YEAR([v_ClkTransaction ShiftsOverNight].[LoggedOn]), MONTH([v_ClkTransaction ShiftsOverNight].[LoggedOn]), DAY([v_ClkTransaction ShiftsOverNight].[LoggedOn]), DEFAULT, DEFAULT, DEFAULT)
 	AND [SrcB].[EmployeeNumber] = [v_ClkTransaction ShiftsOverNight].[EmployeeNumber]
 WHERE
 	[Hrs] >= 24 
