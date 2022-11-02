@@ -3,7 +3,9 @@ GO
 
 DECLARE @t AS TABLE([Quote] INT, [Model No] NVARCHAR(MAX), [Dealer] INT, [Customer] INT, [WO] NVARCHAR(8));
 INSERT INTO @t ([Quote]) VALUES
-(28070)
+(28070),
+(22783),
+(28062)
 ;
 
 UPDATE

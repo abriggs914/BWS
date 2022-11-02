@@ -1,0 +1,28 @@
+USE BWSdb
+GO
+
+DECLARE @T AS TABLE ([ID] INT IDENTITY(1, 1), [WO] INT)
+
+INSERT INTO @T ([WO]) VALUES
+(10015817),
+(10015819);
+
+SELECT
+	[Serial Number]
+	,[Special Instructions]
+	,[Orders].*
+FROM
+	[Orders]
+INNER JOIN
+	@t
+ON
+	[Orders].[WO#] = [@T].[WO]
+
+SELECT
+	[BWS DRAWING # CROSS REFERENCE].*
+FROM
+	[BWS DRAWING # CROSS REFERENCE]
+INNER JOIN
+	@t
+ON
+	[BWS DRAWING # CROSS REFERENCE].[WO#:] = [@T].[WO]
