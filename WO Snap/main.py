@@ -12,10 +12,17 @@ sql = """SELECT
         , [LoggedOff]
     FROM 
         [ClkTransaction]
+        
+        
+        
     --WHERE
+    --   [EmployeeNumber] = 200613
     --	YEAR([LoggedOn]) = 2021
         --AND 
         --[EmployeeNumber] = 200434
+        
+        
+        
     GROUP BY
         [TransactionID]
         , [EmployeeName]
@@ -50,11 +57,15 @@ if __name__ == '__main__':
         last_log_offs.append(prev_log_off)
 
         new_log_on = row["LoggedOn"]
+        new_log_off = row["LoggedOff"]
 
-        if prev_log_on == prev_log_off:
-            new_log_on, prev_log_off = row["LoggedOff"], new_log_on
+        if new_log_on == new_log_off:
+            # employee did not log onto their job, correction by foreman moves the start and end times to the same time
+            # use the last log-off time from their previous transaction to determine hours since last transaction.
+            # new_log_on, prev_log_off = new_log_on, prev_log_off
+            new_log_on, prev_log_off = prev_log_off, new_log_on
 
-        val = (new_log_on - prev_log_off) / pd.Timedelta(hours=1)
+        val = abs((new_log_on - prev_log_off) / pd.Timedelta(hours=1))
 
         old_num = prev_row["EmployeeNumber"]
         new_num = row["EmployeeNumber"]
@@ -64,13 +75,13 @@ if __name__ == '__main__':
         calc_vals.append(val)
         last_transactions.append(prev_transaction)
 
-    # if str(row["TransactionID"]) == '1011275':
-    #     print(f"{row=}, {calc_vals[-1]=}\n{type(row['LoggedOn'])}\n{type(row['LoggedOff'])}")
+        # if str(row["TransactionID"]) == '1478508':
+        #     print(f"{row=}, {calc_vals[-1]=}\n{type(row['LoggedOn'])}\n{type(row['LoggedOff'])}")
+        #     values = '\n'.join(list(map(str, [new_log_on, new_log_off, prev_log_on, prev_log_off])))
+        #     print(f"VALUES\n{values}")
 
-    # print(f"{calc_vals[:20]=}\n...\n{calc_vals[-20:]=}")
-
-    data["HrsFromLastLogOn"] = calc_vals
     data["LastLogOffs"] = last_log_offs
     data["LastTransaction"] = last_transactions
-    data.to_excel("output.xlsx")
+    data["HrsFromLastLogOn"] = calc_vals
+    data.to_excel("output 200613.xlsx")
     print(data)

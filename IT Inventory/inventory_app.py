@@ -393,6 +393,7 @@ class InventoryApp(tkinter.Tk):
             save_state=save_state
         )
         self.level_add_menu.status.trace_variable("w", self.submit_new_item)
+        self.level_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
         self.level_add_menu.mainloop()
 
     def select_treeview_items(self, event):
@@ -464,4 +465,10 @@ class InventoryApp(tkinter.Tk):
         )
 
         self.treeview_v_tool_and_equip.bind("<<TreeviewSelect>>", self.select_treeview_items)
+
+    def update_serial_scan(self, *args):
+        value = self.level_add_menu.tv_entry_serial.get()
+        if value:
+            if value in self.df_v_iti_items["Serial"].unique():
+                raise ValueError(f"Error, this serial is already in use. {value=}")
 

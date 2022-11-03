@@ -210,6 +210,21 @@ class AddItemMenu(tkinter.Toplevel):
             justify="center"
         )
 
+        self.tv_label_serial,\
+        self.label_serial,\
+        self.tv_entry_serial,\
+        self.entry_serial\
+            = entry_factory(
+            self,
+            tv_label="Scan Serial #",
+            kwargs_label={
+                "name":next(self.namer)
+            },
+            kwargs_entry={
+                "name":next(self.namer)
+            }
+        )
+
         # Grid Manage Widgets
         self.gm1 = GridManager()
         self.gm1.grid_widgets([
@@ -266,6 +281,13 @@ class AddItemMenu(tkinter.Toplevel):
                     "widget": self.entry_desc,
                     "columnspan": 3,
                     "sticky": "nsew"
+                }
+            ],
+            [
+                self.label_serial,
+                {
+                    "widget": self.entry_serial,
+                    "columnspan": 2
                 }
             ],
             [
@@ -407,19 +429,26 @@ class AddItemMenu(tkinter.Toplevel):
         match iid:
             case 2:
                 # ITI Computer
-                self.spin_subtype["values"] = self.spin_values_computer["list_values"]
+                values = self.spin_values_computer["list_values"]
             case 3:
                 # ITI Peripherals
-                self.spin_subtype["values"] = self.spin_values_peripherals["list_values"]
+                values = self.spin_values_peripherals["list_values"]
             case 4:
                 # ITI Network
-                self.spin_subtype["values"] = self.spin_values_network["list_values"]
+                values = self.spin_values_network["list_values"]
             case 5:
                 # ITI Wire
-                self.spin_subtype["values"] = self.spin_values_wire["list_values"]
+                values = self.spin_values_wire["list_values"]
             case _:
                 # ITI Unknown
-                self.spin_subtype["values"] = self.spin_values_unknown["list_values"]
+                values = self.spin_values_unknown["list_values"]
+
+        self.spin_subtype["values"] = values
+
+    # def update_serial(self, *args):
+    #     value = self.tv_entry_serial.get()
+    #     if value:
+
 
     def validate(self):
         print(f"validate")
