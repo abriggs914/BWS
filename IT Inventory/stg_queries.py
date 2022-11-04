@@ -68,7 +68,7 @@ SQL_V_ITI_ITEMS = {
 
 
 SQL_ITI_INVMASTER = {
-    "sql": """SELECT TOP (1000) [ID]
+    "sql": """SELECT [ID]
       ,[Item]
       ,[Quantity]
       ,[UOM]
@@ -185,8 +185,9 @@ SQL_INSERT_NEW_ITI_ITEM = {
            ,[Condition]
            ,[Type]
            ,[SubType]
-           ,[DateCreated])
-     VALUES ('{n}', '{d}', {a}, {c}, {t}, {y}, '{r}');""",
+           ,[DateCreated]
+           ,[Serial])
+     VALUES ('{n}', '{d}', {a}, {c}, {t}, {y}, '{r}', '{s}');""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"
@@ -200,6 +201,7 @@ def insert_new_item(data):
     condition = data["condition"]
     ttype = data["type"]
     stype = data["sub_type"]
+    serial = data["serial"]
     date_created = datetime.datetime.now()
     sql = SQL_INSERT_NEW_ITI_ITEM["sql"].format(
         n=name,
@@ -208,7 +210,8 @@ def insert_new_item(data):
         c=condition,
         t=ttype,
         y=stype,
-        r=date_created.strftime("%Y-%m-%d")
+        r=date_created.strftime("%Y-%m-%d"),
+        s=serial
     )
     database = SQL_INSERT_NEW_ITI_ITEM["database"]
     uid = SQL_INSERT_NEW_ITI_ITEM["uid"]

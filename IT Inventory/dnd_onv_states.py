@@ -1,3 +1,4 @@
+import math
 import tkinter
 from tkinter import messagebox
 from utility import *
@@ -22,6 +23,9 @@ class DNDItemManager(tkinter.Canvas):
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
         self.canvas_background = canvas_background
+
+        self.locked_dnd = tkinter.BooleanVar(self, value=True)
+        self.made_dnd = tkinter.BooleanVar(self, value=False)
 
         self.iv_server_room_number = tkinter.IntVar(self, value=0)
         self.iv_in_use_number = tkinter.IntVar(self, value=0)
@@ -188,6 +192,7 @@ class DNDItemManager(tkinter.Canvas):
                 reciever = order[idx]
                 print(f"Release over index {idx}, {reciever=}")
                 self.handle_dnd(caller, reciever)
+                self.made_dnd.set(True)
                 return
 
         print(f"RELEASED OVER NOTHING")
@@ -213,6 +218,7 @@ class DNDItemManager(tkinter.Canvas):
                         raise Exception("Error, this can't happen B.")
 
                 self.iv_server_room_number.set(from_total - move_total)
+                print(f"{move_total=}, {var.get()=}, {type(move_total)=}, {type(var.get())=}")
                 var.set(var.get() + move_total)
                 return True
             else:
@@ -322,3 +328,22 @@ class DNDItemManager(tkinter.Canvas):
             activefill=c4
         )
         return bounds, rect, t1, t2
+
+    def select_iti_item(self, data):
+
+        self.locked_dnd.set(False)
+        self.made_dnd.set(False)
+
+        print(f"{data=}")
+        print(f"qty: {data['Quantity']=}")
+        print(f"in_use: {data['Assigned']=}")
+        print(f"broken: {data['Maintenance']=}")
+        print(f"disposed: {0}")
+        qty = 0 if math.isnan(float(data["Quantity"])) else float(data["Quantity"])
+        in_use = 0 if math.isnan(float(data["Assigned"])) else float(data["Assigned"])
+        broken = 0 if math.isnan(float(data["Maintenance"])) else float(data["Maintenance"])
+        disposed = 0
+        self.iv_broken_number.set(broken)
+        self.iv_disposed_number.set(disposed)
+        self.iv_in_use_number.set(in_use)
+        self.iv_server_room_number.set(qty)

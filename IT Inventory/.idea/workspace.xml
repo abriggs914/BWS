@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../WO Snap/output 200613.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dnd_onv_states.py" beforeDir="false" afterPath="$PROJECT_DIR$/dnd_onv_states.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/menus.py" beforeDir="false" afterPath="$PROJECT_DIR$/menus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WO Snap/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../WO Snap/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WO Snap/output.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/../WO Snap/output.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stg_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/stg_queries.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

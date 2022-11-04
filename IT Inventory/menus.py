@@ -24,10 +24,11 @@ class AddItemMenu(tkinter.Toplevel):
     ):
         super().__init__(master)
 
-        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition"]
+        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition", "serial"]
         self.valid_status_keys = set(self.valid_status_keys_order)
         self.status = tkinter.Variable(self, value={})  # populate this only on successful exit.
         self.valid = tkinter.Variable(self, value={})  # populate this one in all other instances.
+        self.accept_serial = tkinter.BooleanVar(self, value=False)
 
         self.spin_values_uom = self.validate_values_spin_uom(spin_values_uom)
         self.spin_values_type = self.validate_values_spin_type(spin_values_type)
@@ -460,6 +461,7 @@ class AddItemMenu(tkinter.Toplevel):
         cost = 0
         quantity = int(self.tv_spin_qty.get())
         condition = self.tv_spin_cond.get()
+        serial = self.tv_entry_serial.get()
         keys = self.valid_status_keys
         valid = {"submission": False, "quantity": quantity, "description": description, "is_active": 1}
 
@@ -501,7 +503,10 @@ class AddItemMenu(tkinter.Toplevel):
         # validating cost
         valid.update({"cost": cost})
 
-        # print(f"{valid=}, {(not keys.difference(valid))=}, {list(valid.values())=}")
+        # validating serial
+        valid.update({"serial": serial})
+
+        print(f"{valid=}, {(not keys.difference(valid))=}, {list(valid.values())=}")
         self.valid.set(valid)
         return not keys.difference(valid) and all([len(str(v)) != 0 for k, v in valid.items() if k != "description"])
 
@@ -513,6 +518,7 @@ class AddItemMenu(tkinter.Toplevel):
         self.tv_spin_subtype.set("UNKNOWN")
         self.tv_spin_cond.set("UNKNOWN")
         self.tv_entry_desc.set("")
+        self.tv_entry_serial.set("")
 
     def click_cancel_creation(self):
         print(f"click_cancel_creation")
@@ -537,3 +543,15 @@ class AddItemMenu(tkinter.Toplevel):
                 # messagebox.showinfo(title="Error", message="Please enter a name first.")
         # if not self.valid_status_keys.difference(self.status.get()):
             # all keys validated correctly
+
+    def set_unit_serial(self):
+        valid = eval(self.valid.get())
+        valid.update({"serial": self.tv_entry_serial.get()})
+        self.status.set(valid)
+        self.entry_serial.configure(foreground="black")
+        self.accept_serial.set(True)
+
+    def error_in_serial(self):
+        self.entry_serial.configure(foreground="red")
+        self.accept_serial.set(False)
+
