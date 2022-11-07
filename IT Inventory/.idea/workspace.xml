@@ -2,11 +2,31 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../WO Snap/main 2022-11-07 1324.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 2022-11-07 091830.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_091830.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_101430.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_112130.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_120000.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_120600.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_121700.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_122600.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_125400.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_130500.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_132200.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output 20221107_135000.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output BWS 20221107_141448.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output BWS 20221107_141641.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output BWS 20221107_143011.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output BWS 20221107_145641.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output STG 20221107_141712.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output STG 20221107_143138.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../WO Snap/output STG 20221107_145808.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Discounts/all units.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/../Discounts/all units.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dnd_onv_states.py" beforeDir="false" afterPath="$PROJECT_DIR$/dnd_onv_states.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/menus.py" beforeDir="false" afterPath="$PROJECT_DIR$/menus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stg_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/stg_queries.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WO Snap/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../WO Snap/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

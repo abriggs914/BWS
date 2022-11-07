@@ -243,11 +243,11 @@ class InventoryApp(tkinter.Tk):
                 found = idx
         self.accept_counter.set(self.accept_reset_value)
 
-        if found > 0:
+        if found > -1:
             foreground = rgb_to_hex(WILDERNESS_MINT)
             row = self.df_v_iti_items.iloc[found]
             print(f"found: {row=}")
-            self.handle_scan()
+            self.handle_scan(found)
         else:
             foreground = rgb_to_hex(FIREBRICK_2)
 
@@ -263,8 +263,15 @@ class InventoryApp(tkinter.Tk):
             self.submit_serial_entry()
             self.tv2_counter.set(-1)
 
-    def handle_scan(self):
+    def handle_scan(self, df_index):
         self.top_level_scan_handler = TopLevelScanHandler(self)
+        row = self.df_v_iti_items.iloc[df_index]
+        data = {
+            "Quantity": row["Quantity"],
+            "Assigned": row["Assigned"],
+            "Maintenance": row["Maintenance"]
+        }
+        self.top_level_scan_handler.dnd_states.select_iti_item(data)
         # tv_entry_selected_item
 
     def populate_data(self):

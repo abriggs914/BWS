@@ -16,13 +16,18 @@ class DNDItemManager(tkinter.Canvas):
             omit_server=False,
             omit_in_use=False,
             omit_broken=False,
-            omit_disposed=False
+            omit_disposed=False,
+            omit_shopping_cart=False
     ):
         super().__init__(master, width=canvas_width, height=canvas_height, background=canvas_background)
 
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
         self.canvas_background = canvas_background
+
+        self.btn_width = 90
+        self.btn_height = 50
+        self.w_space = 48
 
         self.locked_dnd = tkinter.BooleanVar(self, value=True)
         self.made_dnd = tkinter.BooleanVar(self, value=False)
@@ -31,17 +36,54 @@ class DNDItemManager(tkinter.Canvas):
         self.iv_in_use_number = tkinter.IntVar(self, value=0)
         self.iv_broken_number = tkinter.IntVar(self, value=0)
         self.iv_disposed_number = tkinter.IntVar(self, value=0)
+        self.iv_shopping_cart_number = tkinter.IntVar(self, value=1)
+
+        def calc_btn_x(col_idx):
+            return ((col_idx + 1) * self.w_space) + ((col_idx) * self.btn_width) + (self.btn_width / 2)
+
+        if not omit_shopping_cart:
+            # Shopping Cart state
+            c1 = rgb_to_hex(MEDIUMSLATEBLUE)
+            c2 = rgb_to_hex(BLACK)
+            f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(0), 100)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"SHOPPING CART: {bounds=}")
+            self.rect_shopping_cart_state, \
+            self.tag_shopping_cart_state_rect, \
+            self.tag_shopping_cart_state_text, \
+            self.tag_shopping_cart_state_number \
+                = self.init_drag_state(*bounds, "Cart", c1, c2, f1, True, 0.35, False, 0.35)
+
+            self.iv_shopping_cart_number.trace_variable("w", self.update_shopping_cart_number)
+            self.iv_shopping_cart_number.set(1)
+
+            self.tag_bind(self.tag_shopping_cart_state_rect, "<B1-Motion>", self.event_drag_shopping_cart)
+            self.tag_bind(self.tag_shopping_cart_state_text, "<B1-Motion>", self.event_drag_shopping_cart)
+            self.tag_bind(self.tag_shopping_cart_state_number, "<B1-Motion>", self.event_drag_shopping_cart)
+            self.tag_bind(self.tag_shopping_cart_state_rect, "<ButtonRelease-1>", self.event_release_shopping_cart)
+            self.tag_bind(self.tag_shopping_cart_state_text, "<ButtonRelease-1>", self.event_release_shopping_cart)
+            self.tag_bind(self.tag_shopping_cart_state_number, "<ButtonRelease-1>", self.event_release_shopping_cart)
+        else:
+            self.rect_shopping_cart_state, \
+            self.tag_shopping_cart_state_rect, \
+            self.tag_shopping_cart_state_text, \
+            self.tag_shopping_cart_state_number \
+                = None, None, None, None
 
         if not omit_server:
             # Server room state
             c1 = rgb_to_hex(GOLDENROD)
             c2 = rgb_to_hex(GRAY_1)
             f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(1), 100)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"SERVER: {bounds=}")
             self.rect_server_room_state, \
             self.tag_server_room_state_rect, \
             self.tag_server_room_state_text, \
             self.tag_server_room_state_number \
-                = self.init_drag_state(100, 100, 120, 50, "Server Room", c1, c2, f1, True, 0.35, False, 0.35)
+                = self.init_drag_state(*bounds, "Server Room", c1, c2, f1, True, 0.35, False, 0.35)
 
             self.iv_server_room_number.trace_variable("w", self.update_server_room_number)
             self.iv_server_room_number.set(0)
@@ -64,11 +106,14 @@ class DNDItemManager(tkinter.Canvas):
             c1 = rgb_to_hex(FORESTGREEN)
             c2 = rgb_to_hex(FLORALWHITE)
             f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(2), 100)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"IN USE: {bounds=}")
             self.rect_in_use_state, \
             self.tag_in_use_state_rect, \
             self.tag_in_use_state_text, \
             self.tag_in_use_state_number \
-                = self.init_drag_state(290, 100, 120, 50, "In Use", c1, c2, f1, True, 0.35, False, 0.35)
+                = self.init_drag_state(*bounds, "In Use", c1, c2, f1, True, 0.35, False, 0.35)
 
             self.iv_in_use_number.trace_variable("w", self.update_in_use_number)
             self.iv_in_use_number.set(0)
@@ -91,11 +136,14 @@ class DNDItemManager(tkinter.Canvas):
             c1 = rgb_to_hex(INDIANRED_3)
             c2 = rgb_to_hex(GRAY_1)
             f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(3), 50)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"BROKEN: {bounds=}")
             self.rect_broken_state, \
             self.tag_broken_state_rect, \
             self.tag_broken_state_text, \
             self.tag_broken_state_number \
-                = self.init_drag_state(480, 45, 120, 50, "Broken", c1, c2, f1, True, 0.35, False, 0.35)
+                = self.init_drag_state(*bounds, "Broken", c1, c2, f1, True, 0.35, False, 0.35)
 
             self.iv_broken_number.trace_variable("w", self.update_broken_number)
             self.iv_broken_number.set(0)
@@ -118,11 +166,14 @@ class DNDItemManager(tkinter.Canvas):
             c1 = rgb_to_hex(GRAY_20)
             c2 = rgb_to_hex(WHITE)
             f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(3), 150)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"DISPOSED: {bounds=}")
             self.rect_disposed_state, \
             self.tag_disposed_state_rect, \
             self.tag_disposed_state_text, \
             self.tag_disposed_state_number \
-                = self.init_drag_state(480, 145, 120, 50, "Disposed", c1, c2, f1, True, 0.35, False, 0.35)
+                = self.init_drag_state(*bounds, "Disposed", c1, c2, f1, True, 0.35, False, 0.35)
 
             self.iv_disposed_number.trace_variable("w", self.update_disposed_number)
             self.iv_disposed_number.set(0)
@@ -149,12 +200,13 @@ class DNDItemManager(tkinter.Canvas):
         print(f"event_release")
         print(f"{event=}, {caller=}")
         print(f"\t{event.widget=}")
-        order = ["server", "in use", "broken", "disposed"]
+        order = ["server", "in use", "broken", "disposed", "cart"]
         bounds_to_check = [
             (0, self.rect_server_room_state),
             (1, self.rect_in_use_state),
             (2, self.rect_broken_state),
-            (3, self.rect_disposed_state)
+            (3, self.rect_disposed_state),
+            (4, self.rect_shopping_cart_state)
         ]
 
         ex, ey = event.x, event.y
@@ -183,15 +235,21 @@ class DNDItemManager(tkinter.Canvas):
                 if x1 <= ex <= x2 and y1 <= ey <= y2:
                     print(f"RELEASE BACK ON CALLER")
                     return
+            case "cart":
+                bounds_to_check.remove((4, self.rect_shopping_cart_state))
+                x1, y1, x2, y2 = self.rect_shopping_cart_state
+                if x1 <= ex <= x2 and y1 <= ey <= y2:
+                    print(f"RELEASE BACK ON CALLER")
+                    return
             case _:
                 raise Exception(f"Error, this caller is not recognized '{caller}'.")
 
         for idx, lst in bounds_to_check:
             x1, y1, x2, y2 = lst
             if x1 <= ex <= x2 and y1 <= ey <= y2:
-                reciever = order[idx]
-                print(f"Release over index {idx}, {reciever=}")
-                self.handle_dnd(caller, reciever)
+                receiver = order[idx]
+                print(f"Release over index {idx}, {receiver=}")
+                self.handle_dnd(caller, receiver)
                 self.made_dnd.set(True)
                 return
 
@@ -214,6 +272,10 @@ class DNDItemManager(tkinter.Canvas):
                         var = self.iv_broken_number
                     case "disposed":
                         var = self.iv_disposed_number
+                    case "cart":
+                        var = self.iv_shopping_cart_number
+                    case "cart":
+                        tkinter.messagebox.showerror(title="Server Room Inventory", message="Error, can't send things back to shopping cart.")
                     case _:
                         raise Exception("Error, this can't happen B.")
 
@@ -238,6 +300,9 @@ class DNDItemManager(tkinter.Canvas):
                 case "disposed":
                     var = self.iv_disposed_number
                     title = "Disposed"
+                case "cart":
+                    var = self.iv_shopping_cart_number
+                    title = "Shopping Cart"
                 case _:
                     raise Exception("Error, this can't happen B.")
 
@@ -245,7 +310,9 @@ class DNDItemManager(tkinter.Canvas):
             from_total = var.get()
             if (from_total - move_total) >= 0:
                 self.iv_server_room_number.set(self.iv_server_room_number.get() + move_total)
-                var.set(var.get() - move_total)
+                if caller != "cart":
+                    # shopping cart always stays in stock
+                    var.set(var.get() - move_total)
                 return True
             else:
                 tkinter.messagebox.showerror(title=f"{title} Inventory", message="Error, not enough to move.")
@@ -271,6 +338,9 @@ class DNDItemManager(tkinter.Canvas):
     def event_drag_disposed(self, event):
         self.event_drag(event, "disposed")
 
+    def event_drag_shopping_cart(self, event):
+        self.event_drag(event, "cart")
+
     def event_release_server_room(self, event):
         self.event_release(event, "server")
 
@@ -283,6 +353,9 @@ class DNDItemManager(tkinter.Canvas):
     def event_release_disposed(self, event):
         self.event_release(event, "disposed")
 
+    def event_release_shopping_cart(self, event):
+        self.event_release(event, "cart")
+
     def update_server_room_number(self, *args):
         self.itemconfigure(self.tag_server_room_state_number, text=f"# {self.iv_server_room_number.get()}")
 
@@ -294,6 +367,9 @@ class DNDItemManager(tkinter.Canvas):
 
     def update_disposed_number(self, *args):
         self.itemconfigure(self.tag_disposed_state_number, text=f"# {self.iv_disposed_number.get()}")
+
+    def update_shopping_cart_number(self, *args):
+        self.itemconfigure(self.tag_shopping_cart_state_number, text=f"# {self.iv_shopping_cart_number.get()}")
 
     def init_drag_state(self, x, y, w, h, name, c1, c2, font, dc1, pc1, dc2, pc2):
         # self.fill_server_room_state = c1
