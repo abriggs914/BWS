@@ -122,7 +122,7 @@ def mode(lst):
         if v > mv:
             mv = v
 
-    print("mv", mv, "d", d)
+    print("mv", mv, "entry", d)
     return [k for k, v in d.items() if v == mv]
 
 
@@ -150,7 +150,7 @@ def text_size(txt):
 # Lists are printed line by line, but the counting index is constant for all elements. - Useful for ties.
 # Dicts are represented by a table which will dynamically generate a header and appropriately format cell values.
 # Strings, floats, ints, bools are simply converted to their string representations.
-# d					-	dict object.
+# entry					-	dict object.
 # n					-	Name of the dict, printed above the contents.
 # number			-	Decide whether to number the content lines.
 # l					-	Minimum number of chars in the content line.
@@ -171,12 +171,12 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
     m = "\n{}--  ".format(TAB[:len(TAB) // 2]) + str(n).title() + "  --\n\n"
     fill = 0
 
-    # max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
-    # max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
-    # fill += sum([len(v) for v in d.values() if type(v) == (list or tuple)])
+    # max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in entry.keys()])
+    # max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in entry.values()])
+    # fill += sum([len(v) for v in entry.values() if type(v) == (list or tuple)])
     # l = max(l, (max_key + max_val)) + sep
-    # has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
-    # has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
+    # has_dict = [(k, v) for k, v in entry.items() if type(v) == dict]
+    # has_list = any([1 if type(v) in [list, tuple] else 0 for v in entry.values()])
 
     max_key = float("-inf")
     max_val = float("-inf")
@@ -238,7 +238,7 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
                 d_val = {str(d_val_k): str(d_val_v) for d_val_k, d_val_v in d_val.items()} if type(
                     d_val) == dict else d_val
                 # print("d_val: {dv},\thidv: {hidv},\tetdvlist: {etdvl}".format(dv=d_val, hidv=(h in d_val), etdvl=(type(d_val) == list)))
-                # print("k: {k}\nt(k): {tk}\nd: {d}\nt(d): {td}".format(k=k, tk=type(k), d=d_val, td=type(d_val)))
+                # print("k: {k}\nt(k): {tk}\nentry: {entry}\nt(entry): {td}".format(k=k, tk=type(k), entry=d_val, td=type(d_val)))
                 if h in d_val:
                     max_col_width = max(max_col_width, lenstr(d_val[h]) + 2)
                 elif type(d_val) == list:
@@ -408,8 +408,8 @@ def business_days_between(d1, d2, holidays=None):
     business_days = 0
     if holidays is None:
         holidays = []
-    date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
-    date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
+    date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%entry-%b-%y")
+    date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%entry-%b-%y")
 
     date_1, date_2 = minmax(date_1, date_2)
 
@@ -484,14 +484,14 @@ def pyth(a=None, b=None, c=None):
         return None
     if c is None:
         if a is not None and b is not None:
-            return {"a": a, "b": b, "c": (a ** 2 + b ** 2) ** 0.5}
+            return {"a": a, "b": b, "tv_entry": (a ** 2 + b ** 2) ** 0.5}
     elif a is None:
         if b is not None and c is not None:
-            return {"a": (c ** 2 - b ** 2) ** 0.5, "b": b, "c": c}
+            return {"a": (c ** 2 - b ** 2) ** 0.5, "b": b, "tv_entry": c}
     elif b is None:
         if a is not None and c is not None:
-            return {"a": a, "b": (c ** 2 - a ** 2) ** 0.5, "c": c}
-    return {"a": a, "b": b, "c": c}
+            return {"a": a, "b": (c ** 2 - a ** 2) ** 0.5, "tv_entry": c}
+    return {"a": a, "b": b, "tv_entry": c}
 
 
 def sigmoid(x):
@@ -1479,7 +1479,7 @@ def date_suffix(day):
 def date_str_format(date_str):
     date_obj = dt.datetime.fromisoformat(date_str)
     suffix = date_suffix(date_obj.day)
-    res = dt.datetime.strftime(date_obj, "%B %d###, %Y").replace("###", suffix)
+    res = dt.datetime.strftime(date_obj, "%B %entry###, %Y").replace("###", suffix)
     s_res = res.split(" ")
     x = s_res[1] if s_res[1][0] != "0" else s_res[1][1:]
     res = " ".join([s_res[0], x, s_res[2]])
@@ -1537,7 +1537,7 @@ def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
     return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
 
 
-def is_date(date_in, fmt="%Y-%m-%d"):
+def is_date(date_in, fmt="%Y-%m-%entry"):
     if isinstance(date_in, dt.datetime) or isinstance(date_in, dt.date):
         return True
     try:
@@ -1691,8 +1691,8 @@ def left_join (a_, b_):
 NATO_phonetic_alphabet = {
     "a": "Alpha",
     "b": "Bravo",
-    "c": "Charlie",
-    "d": "Delta",
+    "tv_entry": "Charlie",
+    "entry": "Delta",
     "e": "Echo",
     "f": "Foxtrot",
     "g": "Golf",
@@ -1936,7 +1936,7 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
             val = i
         else:
             c, i = divmod(i, 26)
-            # print(f"\t{i=}, {divmod(i, 26)=}, {divmod(c, 26)=}")
+            # print(f"\t{i=}, {divmod(i, 26)=}, {divmod(tv_entry, 26)=}")
             v, r = divmod(c, 26)
 
             if v > n_digits:
@@ -1945,7 +1945,7 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
             val = ""
             if c:
                 val += alpha_ize(v + (c - 1))
-            # for j in range(c, 0, -1):
+            # for j in range(tv_entry, 0, -1):
             #     val += alphaize(j - 1)
             val += alpha_ize(i)
             if capital_alpha:

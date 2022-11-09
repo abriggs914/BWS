@@ -101,7 +101,7 @@ class GridManager:
                             args["sticky"] = st
 
                         widget = widget["widget"]
-                        # print(f"gridding widget={widget['widget']}, {r=}, {c=}, {ri=}, {ci=}, {args=}")
+                        # print(f"gridding widget={widget['widget']}, {r=}, {tv_entry=}, {ri=}, {ci=}, {args=}")
                         # widget.grid(row=ri, column=ci, **args)
 
                         none_count -= (cs - 1)
@@ -141,13 +141,13 @@ class GridManager:
         self.row_idx += ri + 1
 
     def validate(self, r, c):
-        # print(f"A ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"A ({r=}, {tv_entry=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
         self.max_rows = max(self.max_rows, r)
-        # print(f"B ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"B ({r=}, {tv_entry=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
         self.max_cols = max(self.max_cols, c)
-        # print(f"C ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"C ({r=}, {tv_entry=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
         self.max_rows = max(self.max_rows, r)
-        # print(f"D ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"D ({r=}, {tv_entry=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
 
     def grid_print(self):
         print("V" * 120)

@@ -1838,34 +1838,34 @@ def random_rgb(l_bound=10, h_bound=245):
 #    return "#" + "".join([hex(x).split("x")[-1] for x in colour]).upper()
 
 
-# def iscolour(c, g=None, b=None):
-#     print("c: <{}>, t: <{}>".format(c, type(c)))
-#     print("c: <{}>, t: <{}>".format(g, type(g)))
-#     print("c: <{}>, t: <{}>".format(b, type(b)))
+# def iscolour(tv_entry, g=None, b=None):
+#     print("tv_entry: <{}>, t: <{}>".format(tv_entry, type(tv_entry)))
+#     print("tv_entry: <{}>, t: <{}>".format(g, type(g)))
+#     print("tv_entry: <{}>, t: <{}>".format(b, type(b)))
 #     if g is not None and b is not None:
-#         if isinstance(c, list):
-#             c = c + [g, b]
-#         elif isinstance(c, tuple):
-#             c = (*c, g, b)
-#         elif isinstance(c, int) or isinstance(c, float):
-#             c = [c] + [g, b]
-#     if (isinstance(c, tuple) or isinstance(c, list)) and len(c) == 3:
-#         if all([(isinstance(x, int) or isinstance(x, float)) and -1 < x < 256 for x in c]):
+#         if isinstance(tv_entry, list):
+#             tv_entry = tv_entry + [g, b]
+#         elif isinstance(tv_entry, tuple):
+#             tv_entry = (*tv_entry, g, b)
+#         elif isinstance(tv_entry, int) or isinstance(tv_entry, float):
+#             tv_entry = [tv_entry] + [g, b]
+#     if (isinstance(tv_entry, tuple) or isinstance(tv_entry, list)) and len(tv_entry) == 3:
+#         if all([(isinstance(x, int) or isinstance(x, float)) and -1 < x < 256 for x in tv_entry]):
 #             return True
-#     elif isinstance(c, str) and (len(c) == 7 or len(c) == 6):
+#     elif isinstance(tv_entry, str) and (len(tv_entry) == 7 or len(tv_entry) == 6):
 #         # print("str parsing")
-#         if len(c) == 7:
-#             if c[0] != "#":
+#         if len(tv_entry) == 7:
+#             if tv_entry[0] != "#":
 #                 return False
-#             c = c[1:]
+#             tv_entry = tv_entry[1:]
 #         valid = list(map(str, range(10))) + [chr(97 + x) for x in range(6)] + [chr(65 + x) for x in range(6)]
 #         # print("valid: {}".format(valid))
-#         for i in c:
+#         for i in tv_entry:
 #             if i not in valid:
 #                 return False
 #         return True
-#     elif isinstance(c, str) and g is None and b is None:
-#         if c in COLOURS:
+#     elif isinstance(tv_entry, str) and g is None and b is None:
+#         if tv_entry in COLOURS:
 #             return True
 #     return False
 
@@ -1876,7 +1876,7 @@ class Colour:
         self.hex_code = hex_code
         self.rgb_code = rgb_code
         self.colour_name = colour_name
-        # print(f"{c=}, {g=}, {b=}, {self.hex_code=}, {self.rgb_code=}")
+        # print(f"{tv_entry=}, {g=}, {b=}, {self.hex_code=}, {self.rgb_code=}")
         if not iscolour(c, g, b):
             raise TypeError(f"Error params {c=}, {g=}, {b=} do not represent a valid colour.")
         else:
@@ -1891,7 +1891,7 @@ class Colour:
                 r, g, b = COLOURS[c.upper()]["R"], COLOURS[c.upper()]["G"], COLOURS[c.upper()]["B"]
             else:
                 r, g, b = None, None, None
-                # print(f"{c=}, {type(c)=}")
+                # print(f"{tv_entry=}, {type(tv_entry)=}")
 
             self.rgb_code = r, g, b
             # print(f"{self.hex_code=}, {self.rgb_code=}")
@@ -1922,9 +1922,9 @@ class Colour:
 
 
 def iscolour(c, g=None, b=None):
-    # print("c: <{}>, t: <{}>".format(c, type(c)))
-    # print("c: <{}>, t: <{}>".format(g, type(g)))
-    # print("c: <{}>, t: <{}>".format(b, type(b)))
+    # print("tv_entry: <{}>, t: <{}>".format(tv_entry, type(tv_entry)))
+    # print("tv_entry: <{}>, t: <{}>".format(g, type(g)))
+    # print("tv_entry: <{}>, t: <{}>".format(b, type(b)))
     if is_rgb_colour(c, g, b):
         return True
     elif is_hex_colour(c):

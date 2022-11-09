@@ -46,6 +46,23 @@ class AddItemMenu(tkinter.Toplevel):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.title("Add New ITI Inventory")
 
+        self.tv_entry_scannable_input,\
+        self.label_scannable_input,\
+        self.tv_entry_scannable_input,\
+        self.entry_scannable_input\
+            = entry_factory(
+                self,
+                tv_label="Scannable"
+        )
+
+        self.tv_entry_scannable_input.trace_variable("w", self.update_serial_input)
+        self.tv2_reset_value = 750
+        self.tv2_counter = tkinter.IntVar(self, value=self.tv2_reset_value)
+
+        self.accept_reset_value = 2500
+        self.accept_counter = tkinter.IntVar(self, value=self.accept_reset_value)
+        self.accepting_bool = tkinter.BooleanVar(self, value=True)
+
         # Cancel button
         self.tv_btn_cancel_creation, \
         self.btn_cancel_creation \
@@ -299,6 +316,7 @@ class AddItemMenu(tkinter.Toplevel):
         ])
 
         self.tv_spin_type.trace_variable("w", self.update_type)
+        self.bind("<KeyPress>", self.change_key_press)
 
         if self.save_state:
             self.tv_entry_name.set(self.save_state.get("name", ""))
@@ -555,3 +573,57 @@ class AddItemMenu(tkinter.Toplevel):
         self.entry_serial.configure(foreground="red")
         self.accept_serial.set(False)
 
+    def change_key_press(self, *args):
+        print(f"key press {args=}")
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.pressed_keys.set(self.pressed_keys.get() + arg.char)
+        # self.tv2.set(self.pressed_keys.get())
+        # self.update_serial_input(args)
+
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.tv2.set(arg.char)
+
+        # arg, *rest = args
+        # if arg.char.isalpha() or arg.char.isdigit():
+        #     self.e1.focus()
+
+        arg, *rest = args
+        if arg.char.isalpha() or arg.char.isdigit():
+            if self.accepting_bool.get():
+                # self.tv2.set(arg.char + self.tv2.get())
+                print(f"I WANT TO ADD MISSING CHAR {arg.char=} to str={self.tv_entry_scannable_input.get()=}")
+                self.update_counter_in(arg.char, self.tv2_reset_value)
+                # self.tv2.set(self.tv2.get())
+                # self.tv2.set(self.tv2.get())
+                self.accepting_bool.set(False)
+            # self.e1.icursor("end")
+                self.entry_scannable_input.focus()
+
+    def update_serial_input(self, *args):
+        print(f"update_serial_input, {self.tv_entry_scannable_input.get()}")
+        self.tv2_counter.set(self.tv2_reset_value)
+        self.count_down_serial_input()
+
+    def count_down_serial_input(self, *args):
+        v = self.tv2_counter.get()
+        # print(f"{v=}")
+        if v > 0:
+            self.tv2_counter.set(v - 1)
+            self.after(1, self.count_down_serial_input)
+        elif v == 0:
+            self.submit_serial_entry()
+            self.tv2_counter.set(-1)
+
+    def update_counter_in(self, char, t):
+        if t <= 0:
+            self.tv_entry_scannable_input.set(char + self.tv_entry_scannable_input.get())
+            self.entry_scannable_input.icursor("end")
+        else:
+            self.after(1, self.update_counter_in, char, t - 1)
+
+    def submit_serial_entry(self):
+        print("submit_serial_entry")
+        serial_in = self.tv_entry_scannable_input.get()
+        print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
