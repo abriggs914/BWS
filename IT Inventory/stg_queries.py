@@ -177,6 +177,45 @@ SQL_UNKNOWN = {
 }
 
 
+SQL_ITI_SERIAL_INDICATION = {
+    "sql": """SELECT [ID]
+      ,[DateCreated]
+      ,[Active]
+      ,[DateActive]
+      ,[DateInactive]
+      ,[TableName]
+      ,[RowID]
+      ,[Serial]
+      ,[ColName]
+  FROM [BWSdb].[dbo].[ITI Serial Indication]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
+SQL_ITI_ITEM = {
+    "sql": """/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT [ID]
+      ,[Name]
+      ,[Description]
+      ,[IsActive]
+      ,[Condition]
+      ,[Status]
+      ,[Type]
+      ,[SubType]
+      ,[DateCreated]
+      ,[IsAssigned]
+      ,[IsBroken]
+      ,[IsMissing]
+      ,[Serial]
+  FROM [BWSdb].[dbo].[ITI Item]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
 SQL_INSERT_NEW_ITI_ITEM = {
     "sql": """INSERT INTO [dbo].[ITI Item]
            ([Name]

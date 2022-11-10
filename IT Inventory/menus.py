@@ -1,8 +1,9 @@
 import tkinter
 
+from dnd_onv_states import DNDItemManager
 from grid_manager import GridManager
 from tkinter_utility import *
-from utility import alpha_seq
+from utility import alpha_seq, dict_print
 
 
 class AddItemMenu(tkinter.Toplevel):
@@ -627,3 +628,71 @@ class AddItemMenu(tkinter.Toplevel):
         print("submit_serial_entry")
         serial_in = self.tv_entry_scannable_input.get()
         print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
+
+
+class TopLevelDNDMenu(tkinter.Toplevel):
+
+    def __init__(self, master, omit_server=False, omit_in_use=False, omit_disposed=False, omit_broken=False, omit_shopping_cart=False):
+        super().__init__(master)
+
+        self.omit_server = omit_server
+        self.omit_in_use = omit_in_use
+        self.omit_disposed = omit_disposed
+        self.omit_broken = omit_broken
+        self.omit_shopping_cart = omit_shopping_cart
+
+        self.frame_data_fields = tkinter.Frame(self)
+        self.frame_data_fields_row_1 = tkinter.Frame(self)
+        self.frame_data_fields_row_2 = tkinter.Frame(self)
+
+        self.tv_label_item_name,\
+        self.label_item_name,\
+        self.tv_entry_item_name,\
+        self.entry_item_name\
+            = entry_factory(
+                self.frame_data_fields_row_1,
+                tv_label="Item Name:",
+                kwargs_entry={
+                    "justify": "center",
+                    "font": ("Arial", 14),
+                    "state": "disabled"
+                }
+        )
+        self.tv_label_item_desc,\
+        self.label_item_desc,\
+        self.tv_entry_item_desc,\
+        self.entry_item_desc\
+            = entry_factory(
+                self.frame_data_fields_row_2,
+                tv_label="Item Description:",
+                kwargs_entry={
+                    "justify": "center",
+                    "font": ("Arial", 14),
+                    "state": "disabled"
+                }
+        )
+
+        self.canvas_dnd = DNDItemManager(
+            self,
+            omit_server=self.omit_server,
+            omit_in_use=self.omit_in_use,
+            omit_disposed=self.omit_disposed,
+            omit_broken=self.omit_broken,
+            omit_shopping_cart=self.omit_shopping_cart
+        )
+
+        self.frame_data_fields.pack()
+        self.frame_data_fields_row_1.pack()
+        self.label_item_name.pack(side=tkinter.LEFT)
+        self.entry_item_name.pack(side=tkinter.LEFT)
+        self.frame_data_fields_row_2.pack()
+        self.label_item_desc.pack(side=tkinter.LEFT)
+        self.entry_item_desc.pack(side=tkinter.LEFT)
+        self.canvas_dnd.pack()
+
+    def set_data(self, data_in):
+        self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
+        self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
+
+        print(dict_print(data_in, "Data_in"))
+

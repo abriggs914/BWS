@@ -501,3 +501,6 @@ class InventoryApp(tkinter.Tk):
         print(f"SERIAL AVAILABLE '{value}'")
         self.level_add_menu.set_unit_serial()
 
+if __name__ == '__main__':
+
+    InventoryApp().mainloop()
