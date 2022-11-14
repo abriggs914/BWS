@@ -632,7 +632,7 @@ class AddItemMenu(tkinter.Toplevel):
 
 class TopLevelDNDMenu(tkinter.Toplevel):
 
-    def __init__(self, master, omit_server=False, omit_in_use=False, omit_disposed=False, omit_broken=False, omit_shopping_cart=False):
+    def __init__(self, master, omit_server=False, omit_in_use=False, omit_disposed=False, omit_broken=False, omit_shopping_cart=False, omit_unkown=False):
         super().__init__(master)
 
         self.omit_server = omit_server
@@ -640,37 +640,55 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.omit_disposed = omit_disposed
         self.omit_broken = omit_broken
         self.omit_shopping_cart = omit_shopping_cart
+        self.omit_unknown = omit_unkown
 
         self.frame_data_fields = tkinter.Frame(self)
-        self.frame_data_fields_row_1 = tkinter.Frame(self)
-        self.frame_data_fields_row_2 = tkinter.Frame(self)
+        self.frame_data_fields_row_1 = tkinter.Frame(self.frame_data_fields)
+        self.frame_data_fields_row_2 = tkinter.Frame(self.frame_data_fields)
+        self.frame_data_fields_row_3 = tkinter.Frame(self.frame_data_fields)
 
-        self.tv_label_item_name,\
-        self.label_item_name,\
-        self.tv_entry_item_name,\
-        self.entry_item_name\
-            = entry_factory(
-                self.frame_data_fields_row_1,
-                tv_label="Item Name:",
-                kwargs_entry={
-                    "justify": "center",
-                    "font": ("Arial", 14),
-                    "state": "disabled"
-                }
-        )
-        self.tv_label_item_desc,\
-        self.label_item_desc,\
-        self.tv_entry_item_desc,\
-        self.entry_item_desc\
-            = entry_factory(
-                self.frame_data_fields_row_2,
-                tv_label="Item Description:",
-                kwargs_entry={
-                    "justify": "center",
-                    "font": ("Arial", 14),
-                    "state": "disabled"
-                }
-        )
+        # column 1
+        self.frame_data_fields_row_1_col_1 = tkinter.Frame(self.frame_data_fields_row_1)
+        self.frame_data_fields_row_2_col_1 = tkinter.Frame(self.frame_data_fields_row_2)
+        self.frame_data_fields_row_3_col_1 = tkinter.Frame(self.frame_data_fields_row_3)
+
+        # column 2
+        self.frame_data_fields_row_1_col_2 = tkinter.Frame(self.frame_data_fields_row_1)
+        self.frame_data_fields_row_2_col_2 = tkinter.Frame(self.frame_data_fields_row_2)
+        self.frame_data_fields_row_3_col_2 = tkinter.Frame(self.frame_data_fields_row_3)
+
+        # column 3
+        self.frame_data_fields_row_1_col_3 = tkinter.Frame(self.frame_data_fields_row_1)
+
+        self.tv_label_item_name, self.label_item_name,\
+        self.tv_entry_item_name, self.entry_item_name\
+            = None, None, None, None
+
+        self.tv_label_item_desc, self.label_item_desc,\
+        self.tv_entry_item_desc, self.entry_item_desc\
+            = None, None, None, None
+
+        self.tv_label_item_condition, self.label_item_condition,\
+        self.tv_entry_item_condition, self.entry_item_condition\
+            = None, None, None, None
+
+        self.tv_label_item_status, self.label_item_status,\
+        self.tv_entry_item_status, self.entry_item_status\
+            = None, None, None, None
+
+        self.tv_label_item_type, self.label_item_type,\
+        self.tv_entry_item_type, self.entry_item_type\
+            = None, None, None, None
+
+        self.tv_label_item_sub_type, self.label_item_sub_type,\
+        self.tv_entry_item_sub_type, self.entry_item_sub_type\
+            = None, None, None, None
+
+        self.tv_label_item_is_active, self.label_item_is_active,\
+        self.tv_entry_item_is_active, self.entry_item_is_active\
+            = None, None, None, None
+
+        self.init_data_fields()
 
         self.canvas_dnd = DNDItemManager(
             self,
@@ -678,21 +696,172 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             omit_in_use=self.omit_in_use,
             omit_disposed=self.omit_disposed,
             omit_broken=self.omit_broken,
-            omit_shopping_cart=self.omit_shopping_cart
+            omit_shopping_cart=self.omit_shopping_cart,
+            omit_unknown=self.omit_unknown
         )
 
+        self.entry_scannable = ScannableEntry(self)
+        self.entry_scannable.set_scan_pass_through()
+
+        # Add widgets
         self.frame_data_fields.pack()
+
         self.frame_data_fields_row_1.pack()
+        self.frame_data_fields_row_2.pack()
+        self.frame_data_fields_row_3.pack()
+
+        self.frame_data_fields_row_1_col_1.pack(side=tkinter.LEFT)
         self.label_item_name.pack(side=tkinter.LEFT)
         self.entry_item_name.pack(side=tkinter.LEFT)
-        self.frame_data_fields_row_2.pack()
+
+        self.frame_data_fields_row_2_col_1.pack(side=tkinter.LEFT)
         self.label_item_desc.pack(side=tkinter.LEFT)
         self.entry_item_desc.pack(side=tkinter.LEFT)
+
+        self.frame_data_fields_row_3_col_1.pack(side=tkinter.LEFT)
+        self.label_item_condition.pack(side=tkinter.LEFT)
+        self.entry_item_condition.pack(side=tkinter.LEFT)
+
+        self.frame_data_fields_row_1_col_2.pack(side=tkinter.LEFT)
+        self.label_item_status.pack(side=tkinter.LEFT)
+        self.entry_item_status.pack(side=tkinter.LEFT)
+
+        self.frame_data_fields_row_2_col_2.pack(side=tkinter.LEFT)
+        self.label_item_type.pack(side=tkinter.LEFT)
+        self.entry_item_type.pack(side=tkinter.LEFT)
+
+        self.frame_data_fields_row_3_col_2.pack(side=tkinter.LEFT)
+        self.label_item_sub_type.pack(side=tkinter.LEFT)
+        self.entry_item_sub_type.pack(side=tkinter.LEFT)
+
+        self.frame_data_fields_row_1_col_3.pack(side=tkinter.LEFT)
+        self.label_item_is_active.pack(side=tkinter.LEFT)
+        self.entry_item_is_active.pack(side=tkinter.LEFT)
+
         self.canvas_dnd.pack()
+        self.entry_scannable.pack()
+
+    def init_data_fields(self):
+        self.tv_label_item_name, \
+        self.label_item_name, \
+        self.tv_entry_item_name, \
+        self.entry_item_name \
+            = entry_factory(
+            self.frame_data_fields_row_1_col_1,
+            tv_label="Item Name:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_desc, \
+        self.label_item_desc, \
+        self.tv_entry_item_desc, \
+        self.entry_item_desc \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_1,
+            tv_label="Item Description:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_condition, \
+        self.label_item_condition, \
+        self.tv_entry_item_condition, \
+        self.entry_item_condition \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_1,
+            tv_label="Condition:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_status, \
+        self.label_item_status, \
+        self.tv_entry_item_status, \
+        self.entry_item_status \
+            = entry_factory(
+            self.frame_data_fields_row_1_col_2,
+            tv_label="Status:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_type, \
+        self.label_item_type, \
+        self.tv_entry_item_type, \
+        self.entry_item_type \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_2,
+            tv_label="Type:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_sub_type, \
+        self.label_item_sub_type, \
+        self.tv_entry_item_sub_type, \
+        self.entry_item_sub_type \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_2,
+            tv_label="Sub-Type:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_is_active, \
+        self.label_item_is_active, \
+        self.tv_entry_item_is_active, \
+        self.entry_item_is_active \
+            = entry_factory(
+            self.frame_data_fields_row_1_col_3,
+            tv_label="Is Active:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
 
     def set_data(self, data_in):
         self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
         self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
+        self.tv_entry_item_condition.set(data_in.get("ConditionName", "N/A"))
+        self.tv_entry_item_status.set(data_in.get("StatusName", "N/A"))
+        self.tv_entry_item_type.set(data_in.get("TypeName", "N/A"))
+        self.tv_entry_item_sub_type.set(data_in.get("SubTypeName", "N/A"))
+        self.tv_entry_item_is_active.set(data_in.get("IsActive", "N/A"))
+
+        qty_unknown = data_in.get("qty_unknown", 0)
+        qty_cart = data_in.get("qty_cart", 0)
+        qty_server = data_in.get("qty_server", 0)
+        qty_in_use = data_in.get("qty_in_use", 0)
+        qty_broken = data_in.get("qty_broken", 0)
+        qty_disposed = data_in.get("qty_disposed", 0)
+
+        self.canvas_dnd.iv_unknown_number.set(qty_unknown)
+        self.canvas_dnd.iv_shopping_cart_number.set(qty_cart)
+        self.canvas_dnd.iv_server_room_number.set(qty_server)
+        self.canvas_dnd.iv_in_use_number.set(qty_in_use)
+        self.canvas_dnd.iv_broken_number.set(qty_broken)
+        self.canvas_dnd.iv_disposed_number.set(qty_disposed)
 
         print(dict_print(data_in, "Data_in"))
 

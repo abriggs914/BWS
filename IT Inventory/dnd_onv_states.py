@@ -17,7 +17,8 @@ class DNDItemManager(tkinter.Canvas):
             omit_in_use=False,
             omit_broken=False,
             omit_disposed=False,
-            omit_shopping_cart=False
+            omit_shopping_cart=False,
+            omit_unknown=False
     ):
         super().__init__(master, width=canvas_width, height=canvas_height, background=canvas_background)
 
@@ -29,9 +30,16 @@ class DNDItemManager(tkinter.Canvas):
         self.btn_height = 50
         self.w_space = 48
 
-        match [omit_server, omit_in_use, (omit_broken and omit_disposed), omit_shopping_cart].count(True):
-            case 1:
-                self.btn_width += (self.btn_width / 4)
+        # match [omit_server, omit_in_use, (omit_broken and omit_disposed), omit_shopping_cart].count(True):
+        #     case 1:
+        #         self.btn_width += (self.btn_width / 4)
+        #     case 2:
+        #         self.btn_width += (self.btn_width / 3)
+        #     case 3:
+        #         self.btn_width += (self.btn_width / 2)
+        #     case _:
+        #         # 0, 4
+        #         pass
 
         self.locked_dnd = tkinter.BooleanVar(self, value=True)
         self.made_dnd = tkinter.BooleanVar(self, value=False)
@@ -41,12 +49,19 @@ class DNDItemManager(tkinter.Canvas):
         self.omit_broken = omit_broken
         self.omit_disposed = omit_disposed
         self.omit_shopping_cart = omit_shopping_cart
+        self.omit_unknown = omit_unknown
 
         self.iv_server_room_number = tkinter.IntVar(self, value=0)
         self.iv_in_use_number = tkinter.IntVar(self, value=0)
         self.iv_broken_number = tkinter.IntVar(self, value=0)
         self.iv_disposed_number = tkinter.IntVar(self, value=0)
         self.iv_shopping_cart_number = tkinter.IntVar(self, value=1)
+        self.iv_unknown_number = tkinter.IntVar(self, value=0)
+
+        self.status = tkinter.Variable(self, value={})
+
+        self.status.trace_variable("w", self.status_update)
+        self.set_status_update()
 
         def calc_btn_x(col_idx):
             return ((col_idx + 1) * self.w_space) + ((col_idx) * self.btn_width) + (self.btn_width / 2)
@@ -56,7 +71,7 @@ class DNDItemManager(tkinter.Canvas):
             c1 = rgb_to_hex(MEDIUMSLATEBLUE)
             c2 = rgb_to_hex(BLACK)
             f1 = ("Arial", 10, "bold")
-            cnt = (calc_btn_x(0), 100)
+            cnt = (calc_btn_x(0), 50)
             bounds = (*cnt, self.btn_width, self.btn_height)
             print(f"SHOPPING CART: {bounds=}")
             self.rect_shopping_cart_state, \
@@ -79,6 +94,36 @@ class DNDItemManager(tkinter.Canvas):
             self.tag_shopping_cart_state_rect, \
             self.tag_shopping_cart_state_text, \
             self.tag_shopping_cart_state_number \
+                = None, None, None, None
+
+        if not omit_unknown:
+            # Shopping Cart state
+            c1 = rgb_to_hex(FLORALWHITE)
+            c2 = rgb_to_hex(BLACK)
+            f1 = ("Arial", 10, "bold")
+            cnt = (calc_btn_x(0), 150)
+            bounds = (*cnt, self.btn_width, self.btn_height)
+            print(f"UNKNOWN: {bounds=}")
+            self.rect_unknown_state, \
+            self.tag_unknown_state_rect, \
+            self.tag_unknown_state_text, \
+            self.tag_unknown_state_number \
+                = self.init_drag_state(*bounds, "Unknown", c1, c2, f1, True, 0.35, False, 0.35)
+
+            self.iv_unknown_number.trace_variable("w", self.update_unknown_number)
+            self.iv_unknown_number.set(0)
+
+            self.tag_bind(self.tag_unknown_state_rect, "<B1-Motion>", self.event_drag_unknown)
+            self.tag_bind(self.tag_unknown_state_text, "<B1-Motion>", self.event_drag_unknown)
+            self.tag_bind(self.tag_unknown_state_number, "<B1-Motion>", self.event_drag_unknown)
+            self.tag_bind(self.tag_unknown_state_rect, "<ButtonRelease-1>", self.event_release_unknown)
+            self.tag_bind(self.tag_unknown_state_text, "<ButtonRelease-1>", self.event_release_unknown)
+            self.tag_bind(self.tag_unknown_state_number, "<ButtonRelease-1>", self.event_release_unknown)
+        else:
+            self.rect_unknown_state, \
+            self.tag_unknown_rect, \
+            self.tag_unknown_text, \
+            self.tag_unknown_number \
                 = None, None, None, None
 
         if not omit_server:
@@ -201,6 +246,20 @@ class DNDItemManager(tkinter.Canvas):
             self.tag_disposed_state_number \
                 = None, None, None, None
 
+    def set_status_update(self):
+        self.status.set({
+            "unknown": self.iv_unknown_number.get(),
+            "server": self.iv_server_room_number.get(),
+            "in_use": self.iv_in_use_number.get(),
+            "broken": self.iv_broken_number.get(),
+            "disposed": self.iv_disposed_number.get(),
+            "cart": self.iv_shopping_cart_number.get()
+        })
+
+    def status_update(self, *args):
+        # print(dict_print(eval(self.status.get()), "Self.Status"))
+        pass
+
     def event_drag(self, event, caller):
         print(f"event_drag")
         print(f"{event=}, {caller=}")
@@ -210,7 +269,7 @@ class DNDItemManager(tkinter.Canvas):
         print(f"event_release")
         print(f"{event=}, {caller=}")
         print(f"\t{event.widget=}")
-        order = ["server", "in use", "broken", "disposed", "cart"]
+        order = ["server", "in use", "broken", "disposed", "cart", "unknown"]
         bounds_to_check = []
         if not self.omit_server_room:
             bounds_to_check.append((0, self.rect_server_room_state))
@@ -222,6 +281,8 @@ class DNDItemManager(tkinter.Canvas):
             bounds_to_check.append((3, self.rect_disposed_state))
         if not self.omit_shopping_cart:
             bounds_to_check.append((4, self.rect_shopping_cart_state))
+        if not self.omit_unknown:
+            bounds_to_check.append((5, self.rect_unknown_state))
 
         ex, ey = event.x, event.y
         match caller:
@@ -252,6 +313,12 @@ class DNDItemManager(tkinter.Canvas):
             case "cart":
                 bounds_to_check.remove((4, self.rect_shopping_cart_state))
                 x1, y1, x2, y2 = self.rect_shopping_cart_state
+                if x1 <= ex <= x2 and y1 <= ey <= y2:
+                    print(f"RELEASE BACK ON CALLER")
+                    return
+            case "unknown":
+                bounds_to_check.remove((4, self.rect_unknown_state))
+                x1, y1, x2, y2 = self.rect_unknown_state
                 if x1 <= ex <= x2 and y1 <= ey <= y2:
                     print(f"RELEASE BACK ON CALLER")
                     return
@@ -286,16 +353,17 @@ class DNDItemManager(tkinter.Canvas):
                         var = self.iv_broken_number
                     case "disposed":
                         var = self.iv_disposed_number
-                    case "cart":
-                        var = self.iv_shopping_cart_number
+                    case "unknown":
+                        var = self.iv_unknown_number
                     case "cart":
                         tkinter.messagebox.showerror(title="Server Room Inventory", message="Error, can't send things back to shopping cart.")
                     case _:
                         raise Exception("Error, this can't happen B.")
 
                 self.iv_server_room_number.set(from_total - move_total)
-                print(f"{move_total=}, {var.get()=}, {type(move_total)=}, {type(var.get())=}")
+                print(f"{move_total=}, {var.get()=}, {type(move_total)=}, {type(var.get())=}, {self.status.get()=}, {type(self.status.get())=}")
                 var.set(var.get() + move_total)
+                self.set_status_update()
                 return True
             else:
                 tkinter.messagebox.showerror(title="Server Room Inventory", message="Error, none in the server room to move.")
@@ -317,6 +385,9 @@ class DNDItemManager(tkinter.Canvas):
                 case "cart":
                     var = self.iv_shopping_cart_number
                     title = "Shopping Cart"
+                case "unknown":
+                    var = self.iv_unknown_number
+                    title = "Unknown"
                 case _:
                     raise Exception("Error, this can't happen B.")
 
@@ -355,6 +426,9 @@ class DNDItemManager(tkinter.Canvas):
     def event_drag_shopping_cart(self, event):
         self.event_drag(event, "cart")
 
+    def event_drag_unknown(self, event):
+        self.event_drag(event, "unknown")
+
     def event_release_server_room(self, event):
         self.event_release(event, "server")
 
@@ -370,6 +444,9 @@ class DNDItemManager(tkinter.Canvas):
     def event_release_shopping_cart(self, event):
         self.event_release(event, "cart")
 
+    def event_release_unknown(self, event):
+        self.event_release(event, "unknown")
+
     def update_server_room_number(self, *args):
         self.itemconfigure(self.tag_server_room_state_number, text=f"# {self.iv_server_room_number.get()}")
 
@@ -384,6 +461,9 @@ class DNDItemManager(tkinter.Canvas):
 
     def update_shopping_cart_number(self, *args):
         self.itemconfigure(self.tag_shopping_cart_state_number, text=f"# {self.iv_shopping_cart_number.get()}")
+
+    def update_unknown_number(self, *args):
+        self.itemconfigure(self.tag_unknown_state_number, text=f"# {self.iv_unknown_number.get()}")
 
     def init_drag_state(self, x, y, w, h, name, c1, c2, font, dc1, pc1, dc2, pc2):
         # self.fill_server_room_state = c1

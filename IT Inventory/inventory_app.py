@@ -8,7 +8,7 @@ from colour_utility import *
 from tkinter_utility import *
 from stg_queries import *
 from menus import AddItemMenu, TopLevelDNDMenu
-from utility import alpha_seq
+from utility import alpha_seq, dict_print
 from dnd_onv_states import DNDItemManager
 
 
@@ -37,6 +37,8 @@ class InventoryApp(tkinter.Tk):
         self.df_serial_indication = None
 
         self.populate_data()
+
+        self.data_current = tkinter.Variable(self, value={})
 
         assert all(
             [isinstance(v, pandas.DataFrame) and not v.empty for v in [
@@ -73,7 +75,7 @@ class InventoryApp(tkinter.Tk):
 
         self.entry_scan_input.validated_text.trace_variable("w", self.submit_scan)
 
-        self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value)
+        self.bind_demo_keys()
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
@@ -90,6 +92,14 @@ class InventoryApp(tkinter.Tk):
         self.df_wire = connect(**SQL_WIRE)
         self.df_unknown = connect(**SQL_UNKNOWN)
         self.df_serial_indication = connect(**SQL_ITI_SERIAL_INDICATION)
+
+    def bind_demo_keys(self):
+        self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value)
+        self.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value)
+
+    def unbind_demo_keys(self):
+        self.unbind("<Control-Shift-KeyPress-Q>")
+        self.unbind("<Control-Shift-KeyPress-q>")
 
     def get_values_spin_uom(self):
         res = []
@@ -166,6 +176,8 @@ class InventoryApp(tkinter.Tk):
             print(f"{is_indication=}")
             # print(f"{is_indication_result=}")
             if not is_indication:
+                self.unbind_demo_keys()
+                self.entry_scan_input.stop_scan_pass_through()
                 is_known_item_result = self.is_known_serial(scan_in[1:-1])
                 is_known_item = not is_known_item_result.empty  # this serial was found in the list of known item serials.
                 print(f"{is_known_item=}")
@@ -212,20 +224,44 @@ class InventoryApp(tkinter.Tk):
         # only known item serials should be used at this point.
         data = self.is_known_serial(scan_in)
         print(f"{data=}, {type(data)=}")
-        result = {}
-        row = data.iloc[0]
+        # result = {}
+        # row = data.iloc[0]
         result = dict(zip(data.keys().tolist(), data.values[0].tolist()))
         if result["ID"]:
-            idx = result['ID']
+            idx = result['ID'] - 1
         if result["Condition"]:
-            idx = result['Condition']
+            idx = result['Condition'] - 1
             result.update({"ConditionName": self.df_condition.iloc[idx]["Name"]})
         if result["Status"]:
-            idx = result['Status']
+            idx = result['Status'] - 1
             result.update({"StatusName": self.df_status.iloc[idx]["Name"]})
         if result["Type"]:
-            idx = result['Type']
+            idx = result['Type'] - 1
             result.update({"TypeName": self.df_type.iloc[idx]["Name"]})
+
+        sub_type_id = result["SubType"] - 1
+        # sub_type_row_data = self.df_type.iloc[sub_type_id]
+        df = eval(f"self.df_{result['TypeName']}".lower())
+        print(f"{df=}")
+        result.update({"SubTypeName": df.iloc[sub_type_id]["Name"]})
+
+        qty_unknown = 1 if result["IsMissing"] not in [None, "None", 0] else 0
+        qty_cart = 1
+        qty_in_use = 1 if result["IsAssigned"] not in [None, "None", 0] else 0
+        qty_broken = 1 if result["IsBroken"] not in [None, "None", 0] else 0
+        qty_disposed = 1 if result["IsActive"] in [None, "None", 0, False, "False"] else 0
+        qty_server = 1 if sum([qty_unknown, qty_in_use, qty_broken, qty_disposed]) == 0 else 0
+
+        result.update({
+            "qty_unknown": qty_unknown,
+            "qty_cart": qty_cart,
+            "qty_server": qty_server,
+            "qty_in_use": qty_in_use,
+            "qty_broken": qty_broken,
+            "qty_disposed": qty_disposed
+        })
+
+        print(f"Gathered result '{result}'")
         return result
 
     def open_dnd(self, scan_in):
@@ -238,10 +274,18 @@ class InventoryApp(tkinter.Tk):
             "shopping_cart": self.tl_dnd_menu.canvas_dnd.iv_shopping_cart_number
         }
         data_in = self.gather_dnd_data(scan_in)
+        results = {k: v for k, v in data_in.items()}
+        results["scan_in"] = scan_in
+        self.data_current.set(results)
 
         self.tl_dnd_menu.set_data(data_in)
         apply_state(self.entry_scan_input, "disabled", "down")
+        # self.tl_dnd_menu.entry_scannable.set_scan_pass_through()
+        self.tl_dnd_menu.canvas_dnd.status.trace_variable("w", self.tl_dnd_menu_canvas_dnd_status_update)
         # self.tl_dnd_menu.mainloop()
+
+    def tl_dnd_menu_canvas_dnd_status_update(self, *args):
+        print(dict_print(eval(self.tl_dnd_menu.canvas_dnd.status.get()), "self.tl_dnd_menu.canvas_dnd.status.get()"))
 
     def insert_demo_value(self, event):
         # self.entry_scan_input.text.set("0000000250")
