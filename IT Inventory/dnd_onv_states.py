@@ -29,8 +29,18 @@ class DNDItemManager(tkinter.Canvas):
         self.btn_height = 50
         self.w_space = 48
 
+        match [omit_server, omit_in_use, (omit_broken and omit_disposed), omit_shopping_cart].count(True):
+            case 1:
+                self.btn_width += (self.btn_width / 4)
+
         self.locked_dnd = tkinter.BooleanVar(self, value=True)
         self.made_dnd = tkinter.BooleanVar(self, value=False)
+
+        self.omit_server_room = omit_server
+        self.omit_in_use = omit_in_use
+        self.omit_broken = omit_broken
+        self.omit_disposed = omit_disposed
+        self.omit_shopping_cart = omit_shopping_cart
 
         self.iv_server_room_number = tkinter.IntVar(self, value=0)
         self.iv_in_use_number = tkinter.IntVar(self, value=0)
@@ -201,13 +211,17 @@ class DNDItemManager(tkinter.Canvas):
         print(f"{event=}, {caller=}")
         print(f"\t{event.widget=}")
         order = ["server", "in use", "broken", "disposed", "cart"]
-        bounds_to_check = [
-            (0, self.rect_server_room_state),
-            (1, self.rect_in_use_state),
-            (2, self.rect_broken_state),
-            (3, self.rect_disposed_state),
-            (4, self.rect_shopping_cart_state)
-        ]
+        bounds_to_check = []
+        if not self.omit_server_room:
+            bounds_to_check.append((0, self.rect_server_room_state))
+        if not self.omit_in_use:
+            bounds_to_check.append((1, self.rect_in_use_state))
+        if not self.omit_broken:
+            bounds_to_check.append((2, self.rect_broken_state))
+        if not self.omit_disposed:
+            bounds_to_check.append((3, self.rect_disposed_state))
+        if not self.omit_shopping_cart:
+            bounds_to_check.append((4, self.rect_shopping_cart_state))
 
         ex, ey = event.x, event.y
         match caller:

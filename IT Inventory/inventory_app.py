@@ -73,6 +73,8 @@ class InventoryApp(tkinter.Tk):
 
         self.entry_scan_input.validated_text.trace_variable("w", self.submit_scan)
 
+        self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value)
+
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
         self.df_v_iti_items = connect(**SQL_V_ITI_ITEMS)
@@ -227,8 +229,7 @@ class InventoryApp(tkinter.Tk):
         return result
 
     def open_dnd(self, scan_in):
-        # self.tl_dnd_menu = TopLevelDNDMenu(self, omit_shopping_cart=True)
-        self.tl_dnd_menu = TopLevelDNDMenu(self)
+        self.tl_dnd_menu = TopLevelDNDMenu(self, omit_shopping_cart=True)
         self.data_tl_dnd_menu = {
             "server_room": self.tl_dnd_menu.canvas_dnd.iv_server_room_number,
             "use_number": self.tl_dnd_menu.canvas_dnd.iv_in_use_number,
@@ -241,3 +242,8 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.set_data(data_in)
         apply_state(self.entry_scan_input, "disabled", "down")
         # self.tl_dnd_menu.mainloop()
+
+    def insert_demo_value(self, event):
+        # self.entry_scan_input.text.set("0000000250")
+        self.entry_scan_input.text.set("0000000100")
+        self.entry_scan_input.return_text(event)
