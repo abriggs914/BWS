@@ -45,16 +45,9 @@ class DNDItemManager(tkinter.Canvas):
         self.ani_data_drag_object = {
             "x1": 0,
             "y1": 0,
-            "x2": 10,
-            "y2": 10
+            "x2": 30,
+            "y2": 30
         }
-        self.ani_data_drag_object["tag"] = self.create_rectangle(
-            self.ani_data_drag_object["x1"],
-            self.ani_data_drag_object["y1"],
-            self.ani_data_drag_object["x2"],
-            self.ani_data_drag_object["y2"],
-            fill=rgb_to_hex(BWS_GREY)
-        )
 
         self.locked_dnd = tkinter.BooleanVar(self, value=True)
         self.made_dnd = tkinter.BooleanVar(self, value=False)
@@ -261,6 +254,15 @@ class DNDItemManager(tkinter.Canvas):
             self.tag_disposed_state_number \
                 = None, None, None, None
 
+        self.ani_data_drag_object["tag"] = self.create_rectangle(
+            self.ani_data_drag_object["x1"],
+            self.ani_data_drag_object["y1"],
+            self.ani_data_drag_object["x2"],
+            self.ani_data_drag_object["y2"],
+            fill=rgb_to_hex(BWS_GREY)
+        )
+        self.itemconfigure(self.ani_data_drag_object["tag"], state="hidden")
+
     def set_status_update(self):
         self.status.set({
             "unknown": self.iv_unknown_number.get(),
@@ -277,18 +279,31 @@ class DNDItemManager(tkinter.Canvas):
 
     def event_drag(self, event, caller):
         if not self.locked_for_animation.get():
-            print(f"event_drag")
-            print(f"{event=}, {caller=}")
-            print(f"\t{event.widget=}")
+            caller_value = eval(self.status.get())[caller]
+            if caller_value > 0:
+                self.itemconfigure(self.ani_data_drag_object["tag"], state="normal")
+                x, y = event.x, event.y
+                w2, h2 = (self.ani_data_drag_object["x2"] - self.ani_data_drag_object["x1"]) / 2, (self.ani_data_drag_object["y2"] - self.ani_data_drag_object["y1"]) / 2
+                x -= w2
+                y -= h2
+                x = clamp(0, x, self.canvas_width - (2 * w2))
+                y = clamp(0, y, self.canvas_height - (2 * h2))
+                self.moveto(self.ani_data_drag_object["tag"], x, y)
+                print(f"event_drag")
+                print(f"{event=}, {caller=}, caller_value='{caller_value}'")
+                print(f"\t{event.widget=}")
+            else:
+                print(f"Nothing to move.")
         else:
             print(f"Locked for animation.")
 
     def event_release(self, event, caller):
         if not self.locked_for_animation.get():
+            self.itemconfigure(self.ani_data_drag_object["tag"], state="hidden")
             print(f"event_release")
             print(f"{event=}, {caller=}")
             print(f"\t{event.widget=}")
-            order = ["server", "in use", "broken", "disposed", "cart", "unknown"]
+            order = ["server", "in_use", "broken", "disposed", "cart", "unknown"]
             bounds_to_check = []
             if not self.omit_server_room:
                 bounds_to_check.append((0, self.rect_server_room_state))
@@ -311,7 +326,7 @@ class DNDItemManager(tkinter.Canvas):
                     if x1 <= ex <= x2 and y1 <= ey <= y2:
                         print(f"RELEASE BACK ON CALLER")
                         return
-                case "in use":
+                case "in_use":
                     bounds_to_check.remove((1, self.rect_in_use_state))
                     x1, y1, x2, y2 = self.rect_in_use_state
                     if x1 <= ex <= x2 and y1 <= ey <= y2:
@@ -336,7 +351,7 @@ class DNDItemManager(tkinter.Canvas):
                         print(f"RELEASE BACK ON CALLER")
                         return
                 case "unknown":
-                    bounds_to_check.remove((4, self.rect_unknown_state))
+                    bounds_to_check.remove((5, self.rect_unknown_state))
                     x1, y1, x2, y2 = self.rect_unknown_state
                     if x1 <= ex <= x2 and y1 <= ey <= y2:
                         print(f"RELEASE BACK ON CALLER")
@@ -368,7 +383,7 @@ class DNDItemManager(tkinter.Canvas):
             if (from_total - move_total) >= 0:
                 var = None
                 match receiver:
-                    case "in use":
+                    case "in_use":
                         var = self.iv_in_use_number
                     case "broken":
                         var = self.iv_broken_number
@@ -394,9 +409,9 @@ class DNDItemManager(tkinter.Canvas):
         elif receiver == "server":
             # can go directly from this state
             match caller:
-                case "in use":
+                case "in_use":
                     var = self.iv_in_use_number
-                    title = "In Use"
+                    title = "in_use"
                 case "broken":
                     var = self.iv_broken_number
                     title = "Broken"
@@ -436,7 +451,7 @@ class DNDItemManager(tkinter.Canvas):
         self.event_drag(event, "server")
 
     def event_drag_in_use(self, event):
-        self.event_drag(event, "in use")
+        self.event_drag(event, "in_use")
 
     def event_drag_broken(self, event):
         self.event_drag(event, "broken")
@@ -454,7 +469,7 @@ class DNDItemManager(tkinter.Canvas):
         self.event_release(event, "server")
 
     def event_release_in_use(self, event):
-        self.event_release(event, "in use")
+        self.event_release(event, "in_use")
 
     def event_release_broken(self, event):
         self.event_release(event, "broken")
@@ -538,6 +553,7 @@ class DNDItemManager(tkinter.Canvas):
         self.iv_disposed_number.set(disposed)
         self.iv_in_use_number.set(in_use)
         self.iv_server_room_number.set(qty)
+        self.set_status_update()
 
     def animate(self, state_from, state_to):
         valid_states = {"in_use", "server", "broken", "disposed", "unknown"}
@@ -545,14 +561,52 @@ class DNDItemManager(tkinter.Canvas):
         assert state_to in valid_states, f"Error param 'state_to' not recognized: '{state_to}'"
         self.locked_for_animation.set(True)
 
+        n_steps = 25
+
+        c_x, c_y = 0, 0
+        s_x, s_y = 0, 0
+
+        fss = state_from if state_from != "server" else "server_room"
+        tss = state_to if state_to != "server" else "server_room"
+
+        res_fss = eval(f"self.rect_{fss}_state")
+        res_tss = eval(f"self.rect_{tss}_state")
+        print(f"{res_fss=}, {res_tss=}")
+        fx1, fy1, fx2, fy2 = res_fss
+        tx1, ty1, tx2, ty2 = res_tss
+        drag_width = self.ani_data_drag_object["x2"] - self.ani_data_drag_object["x1"]
+        drag_height = self.ani_data_drag_object["y2"] - self.ani_data_drag_object["y1"]
+        t_x = fx2 - fx1
+        t_y = fy2 - fy1
+
+        fxd = (t_x - drag_width) / 2
+        fyd = (t_y - drag_height) / 2
+
+        s_x = (tx1 - fx1) / (n_steps + 1)
+        s_y = (ty1 - fy1) / (n_steps + 1)
+
+        self.ani_data_drag_object["x1"] = fx1 + fxd
+        self.ani_data_drag_object["y1"] = fy1 + fyd
+        self.ani_data_drag_object["x2"] = fx2 - fxd
+        self.ani_data_drag_object["y2"] = fy2 - fyd
+
+        self.moveto(
+            self.ani_data_drag_object["tag"],
+            self.ani_data_drag_object["x1"],
+            self.ani_data_drag_object["y1"]
+        )
+
+        self.itemconfigure(self.ani_data_drag_object["tag"], state="normal")
+
         def sub_animate(data):
+
+            print(dict_print(self.ani_data_drag_object, "self.ani_data_drag_object"))
+
             if data.get("count", 0) >= 0:
-                x_move_dist = 1
-                y_move_dist = 1
-                self.ani_data_drag_object["x1"] += x_move_dist
-                self.ani_data_drag_object["y1"] += y_move_dist
-                self.ani_data_drag_object["x2"] += x_move_dist
-                self.ani_data_drag_object["y2"] += y_move_dist
+                self.ani_data_drag_object["x1"] += s_x
+                self.ani_data_drag_object["y1"] += s_y
+                self.ani_data_drag_object["x2"] += s_x
+                self.ani_data_drag_object["y2"] += s_y
 
                 self.moveto(
                     self.ani_data_drag_object["tag"],
@@ -565,6 +619,7 @@ class DNDItemManager(tkinter.Canvas):
                 interval = new_data.get("interval", 1)
                 self.after(interval, sub_animate, new_data)
             else:
+                self.itemconfigure(self.ani_data_drag_object["tag"], state="hidden")
                 self.locked_for_animation.set(False)
 
-        sub_animate({"count": 25, "interval": 1000})
+        sub_animate({"count": n_steps, "interval": 25})

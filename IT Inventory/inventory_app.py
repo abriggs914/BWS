@@ -8,7 +8,7 @@ from colour_utility import *
 from tkinter_utility import *
 from stg_queries import *
 from menus import AddItemMenu, TopLevelDNDMenu
-from utility import alpha_seq, dict_print
+from utility import alpha_seq, dict_print, replace_timestamp_datetime
 from dnd_onv_states import DNDItemManager
 
 
@@ -278,6 +278,8 @@ class InventoryApp(tkinter.Tk):
 
     def open_dnd(self, scan_in):
         self.tl_dnd_menu = TopLevelDNDMenu(self, self.df_status, self.df_serial_indication, omit_shopping_cart=True)
+        self.tl_dnd_menu.protocol("WM_DELETE_WINDOW", self.closing_tl_dnd)
+        # self.tl_dnd_menu.bind("<Destroy>", self.closing_tl_dnd)
         self.data_tl_dnd_menu = {
             "server_room": self.tl_dnd_menu.canvas_dnd.iv_server_room_number.get(),
             "use_number": self.tl_dnd_menu.canvas_dnd.iv_in_use_number.get(),
@@ -367,8 +369,20 @@ class InventoryApp(tkinter.Tk):
             else:
                 print(f"Scanned serial is not an indication serial, '{scan_in}'")
 
+    def closing_tl_dnd(self):
+        if self.tl_dnd_menu.is_dirty():
+            print("DIRTY!!!")
+        self.tl_dnd_menu.destroy()
+
+
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
         print(dict_print(eval(self.tl_dnd_menu.canvas_dnd.status.get()), "self.tl_dnd_menu.canvas_dnd.status.get()"))
+        data = eval(self.tl_dnd_menu.canvas_dnd.status.get())
+        data = {"qty_" + k: v for k, v in data.items()}
+        print(dict_print(data, "DATA"))
+        old = eval(replace_timestamp_datetime(self.tl_dnd_menu.tv_set_data.get(), col_in_question="DateCreated"))
+        old.update(data)
+        self.tl_dnd_menu.tv_set_data.set(old)
 
     def insert_demo_value_main_menu(self, event):
         # self.entry_scan_input.text.set("0000000250")
@@ -377,7 +391,8 @@ class InventoryApp(tkinter.Tk):
 
     def insert_demo_value_tl_dnd_menu(self, event):
         # self.entry_scan_input.text.set("0000000250")
-        # self.tl_dnd_menu.entry_scannable.text.set("9000000009")  # In Service
-        # self.tl_dnd_menu.entry_scannable.text.set("9000000003")  # Used
-        self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000009")  # In Service (ITI Status)
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000003")  # Used (ITI Condition)
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service (ITI Status)
+        self.tl_dnd_menu.entry_scannable.text.set("9000000007")  # Unkown (ITI Status)
         self.tl_dnd_menu.entry_scannable.return_text(event)

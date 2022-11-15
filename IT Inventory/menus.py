@@ -3,7 +3,7 @@ import tkinter
 from dnd_onv_states import DNDItemManager
 from grid_manager import GridManager
 from tkinter_utility import *
-from utility import alpha_seq, dict_print
+from utility import alpha_seq, dict_print, replace_timestamp_datetime
 
 
 class AddItemMenu(tkinter.Toplevel):
@@ -657,6 +657,7 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.omit_unknown = omit_unknown
 
         self.tv_set_data = tkinter.Variable(self, value={})
+        self.original_data = tkinter.Variable(self, value={})
 
         self.frame_data_fields = tkinter.Frame(self)
         self.frame_data_fields_row_1 = tkinter.Frame(self.frame_data_fields)
@@ -867,6 +868,7 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         return self.df_serial_indication[self.df_serial_indication["Serial"] == scan_in]
 
     def set_data(self, data_in):
+        self.original_data.set(dict(data_in))
         self.tv_set_data.set(data_in)
         self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
         self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
@@ -890,5 +892,22 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.canvas_dnd.iv_broken_number.set(qty_broken)
         self.canvas_dnd.iv_disposed_number.set(qty_disposed)
 
+        self.canvas_dnd.set_status_update()
+
         print(dict_print(data_in, "Data_in"))
+
+    def is_dirty(self):
+        print(f"Checking is dirty")
+        old = replace_timestamp_datetime(self.original_data.get(), col_in_question="DateCreated")
+        new = replace_timestamp_datetime(self.tv_set_data.get(), col_in_question="DateCreated")
+        print(f"old: '{old}'")
+        print(f"new: '{new}'")
+        # old = eval(self.original_data.get())
+        # new = eval(self.tv_set_data.get())
+        old = eval(old)
+        new = eval(new)
+        print(dict_print(old, "Original Data"))
+        print(dict_print(new, "Current Data"))
+        print(f"result: {old != new}")
+        return old != new
 

@@ -2,13 +2,13 @@ import datetime
 from locale import currency, setlocale, LC_ALL
 from math import e, ceil, sin, cos, radians
 from random import random, choice, randint
+from operator import itemgetter
 from plyer import notification
 import datetime as dt
 import calendar
 import shutil
 import sys
 import os
-
 
 #######################################################################################################################
 #######################################################################################################################
@@ -17,8 +17,8 @@ import os
 VERSION = \
     """	
         General Utility Functions
-        Version..............1.60
-        Date...........2022-09-27
+        Version..............1.62
+        Date...........2022-11-15
         Author.......Avery Briggs
     """
 
@@ -33,6 +33,7 @@ def VERSION_DATE():
 
 def VERSION_AUTHOR():
     return VERSION.split("\n")[4].split(".")[-1]
+
 
 #######################################################################################################################
 #######################################################################################################################
@@ -70,7 +71,6 @@ def lenstr(x):
 
 
 def minmax(a, b):
-    
     if a <= b:
         return a, b
     return b, a
@@ -122,7 +122,7 @@ def mode(lst):
         if v > mv:
             mv = v
 
-    print("mv", mv, "entry", d)
+    print("mv", mv, "d", d)
     return [k for k, v in d.items() if v == mv]
 
 
@@ -150,7 +150,7 @@ def text_size(txt):
 # Lists are printed line by line, but the counting index is constant for all elements. - Useful for ties.
 # Dicts are represented by a table which will dynamically generate a header and appropriately format cell values.
 # Strings, floats, ints, bools are simply converted to their string representations.
-# entry					-	dict object.
+# d					-	dict object.
 # n					-	Name of the dict, printed above the contents.
 # number			-	Decide whether to number the content lines.
 # l					-	Minimum number of chars in the content line.
@@ -171,12 +171,12 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
     m = "\n{}--  ".format(TAB[:len(TAB) // 2]) + str(n).title() + "  --\n\n"
     fill = 0
 
-    # max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in entry.keys()])
-    # max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in entry.values()])
-    # fill += sum([len(v) for v in entry.values() if type(v) == (list or tuple)])
+    # max_key = max([len(str(k)) + ((2 * len(k) + 2 + len(k) - 1) if type(k) == (list or tuple) else 0) for k in d.keys()])
+    # max_val = max([max([len(str(v_elem)) for v_elem in v]) if type(v) == (list or tuple) else len(str(v)) if type(v) != dict else 0 for v in d.values()])
+    # fill += sum([len(v) for v in d.values() if type(v) == (list or tuple)])
     # l = max(l, (max_key + max_val)) + sep
-    # has_dict = [(k, v) for k, v in entry.items() if type(v) == dict]
-    # has_list = any([1 if type(v) in [list, tuple] else 0 for v in entry.values()])
+    # has_dict = [(k, v) for k, v in d.items() if type(v) == dict]
+    # has_list = any([1 if type(v) in [list, tuple] else 0 for v in d.values()])
 
     max_key = float("-inf")
     max_val = float("-inf")
@@ -238,7 +238,7 @@ def dict_print(d, n="Untitled", number=False, l=15, sep=5, marker=".", sort_head
                 d_val = {str(d_val_k): str(d_val_v) for d_val_k, d_val_v in d_val.items()} if type(
                     d_val) == dict else d_val
                 # print("d_val: {dv},\thidv: {hidv},\tetdvlist: {etdvl}".format(dv=d_val, hidv=(h in d_val), etdvl=(type(d_val) == list)))
-                # print("k: {k}\nt(k): {tk}\nentry: {entry}\nt(entry): {td}".format(k=k, tk=type(k), entry=d_val, td=type(d_val)))
+                # print("k: {k}\nt(k): {tk}\nd: {d}\nt(d): {td}".format(k=k, tk=type(k), d=d_val, td=type(d_val)))
                 if h in d_val:
                     max_col_width = max(max_col_width, lenstr(d_val[h]) + 2)
                 elif type(d_val) == list:
@@ -408,8 +408,8 @@ def business_days_between(d1, d2, holidays=None):
     business_days = 0
     if holidays is None:
         holidays = []
-    date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%entry-%b-%y")
-    date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%entry-%b-%y")
+    date_1 = d1 if type(d1) == dt.datetime else dt.datetime.strptime(d1, "%d-%b-%y")
+    date_2 = d2 if type(d2) == dt.datetime else dt.datetime.strptime(d2, "%d-%b-%y")
 
     date_1, date_2 = minmax(date_1, date_2)
 
@@ -484,14 +484,14 @@ def pyth(a=None, b=None, c=None):
         return None
     if c is None:
         if a is not None and b is not None:
-            return {"a": a, "b": b, "tv_entry": (a ** 2 + b ** 2) ** 0.5}
+            return {"a": a, "b": b, "c": (a ** 2 + b ** 2) ** 0.5}
     elif a is None:
         if b is not None and c is not None:
-            return {"a": (c ** 2 - b ** 2) ** 0.5, "b": b, "tv_entry": c}
+            return {"a": (c ** 2 - b ** 2) ** 0.5, "b": b, "c": c}
     elif b is None:
         if a is not None and c is not None:
-            return {"a": a, "b": (c ** 2 - a ** 2) ** 0.5, "tv_entry": c}
-    return {"a": a, "b": b, "tv_entry": c}
+            return {"a": a, "b": (c ** 2 - a ** 2) ** 0.5, "c": c}
+    return {"a": a, "b": b, "c": c}
 
 
 def sigmoid(x):
@@ -1479,7 +1479,7 @@ def date_suffix(day):
 def date_str_format(date_str):
     date_obj = dt.datetime.fromisoformat(date_str)
     suffix = date_suffix(date_obj.day)
-    res = dt.datetime.strftime(date_obj, "%B %entry###, %Y").replace("###", suffix)
+    res = dt.datetime.strftime(date_obj, "%B %d###, %Y").replace("###", suffix)
     s_res = res.split(" ")
     x = s_res[1] if s_res[1][0] != "0" else s_res[1][1:]
     res = " ".join([s_res[0], x, s_res[2]])
@@ -1537,7 +1537,7 @@ def random_date(start_year=1, end_year=10000, start_m=None, start_d=None):
     return "{}-{}-{}".format(("0000" + str(y))[-4:], ("00" + str(m))[-2:], ("00" + str(d))[-2:])
 
 
-def is_date(date_in, fmt="%Y-%m-%entry"):
+def is_date(date_in, fmt="%Y-%m-%d"):
     if isinstance(date_in, dt.datetime) or isinstance(date_in, dt.date):
         return True
     try:
@@ -1655,14 +1655,15 @@ def rect2_to_tkinter(rect):
 
 def tkinter_to_rect2(rect):
     """Tlinter (left, top, right, bottom) -> Rect2 (left, top, w, h)"""
-    assert isinstance(rect, list) or isinstance(rect, tuple), f"Error value is not a valid list or tuple representing a tkinter rect., got <{type(rect)}>, v=<{rect}>"
+    assert isinstance(rect, list) or isinstance(rect,
+                                                tuple), f"Error value is not a valid list or tuple representing a tkinter rect., got <{type(rect)}>, v=<{rect}>"
     assert len(rect) == 4, "This list is too long"
     x1, y1, x2, y2 = rect
     return Rect2(x1, y1, x2 - x1, y2 - y1)
 
 
 def kb_as_percent(kb, gb=2):
-    return ("%.3f" % (((100 * kb / (1024**2)) / gb))) + " %"
+    return ("%.3f" % (((100 * kb / (1024 ** 2)) / gb))) + " %"
 
 
 def calc_bounds(center, width, height=None):
@@ -1682,7 +1683,7 @@ def calc_bounds(center, width, height=None):
     )
 
 
-def left_join (a_, b_):
+def left_join(a_, b_):
     assert isinstance(a_, set), "Error, param 'a_' must be a set."
     assert isinstance(b_, set), "Error, param 'a_' must be a set."
     return a_.symmetric_difference(b_).union(a_).symmetric_difference(b_).union(a_)
@@ -1691,8 +1692,8 @@ def left_join (a_, b_):
 NATO_phonetic_alphabet = {
     "a": "Alpha",
     "b": "Bravo",
-    "tv_entry": "Charlie",
-    "entry": "Delta",
+    "c": "Charlie",
+    "d": "Delta",
     "e": "Echo",
     "f": "Foxtrot",
     "g": "Golf",
@@ -1835,8 +1836,10 @@ def grid_cells(
 
 def clamp_rect(rect_bounds, out_bounds, maintain_inner_dims=False):
     """Calculate the 'clamped' rectangle within the outer bounds."""
-    assert isinstance(rect_bounds, tuple) or isinstance(rect_bounds, list) or isinstance(rect_bounds, Rect2), f"Error, param 'rect_bounds; needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got{rect_bounds}"
-    assert isinstance(out_bounds, tuple) or isinstance(out_bounds, list) or isinstance(out_bounds, Rect2), f"Error, param 'out_bounds' needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got {out_bounds}"
+    assert isinstance(rect_bounds, tuple) or isinstance(rect_bounds, list) or isinstance(rect_bounds,
+                                                                                         Rect2), f"Error, param 'rect_bounds; needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got{rect_bounds}"
+    assert isinstance(out_bounds, tuple) or isinstance(out_bounds, list) or isinstance(out_bounds,
+                                                                                       Rect2), f"Error, param 'out_bounds' needs to be a list or tuple of length 10, or an instance of a Rect2 object. Got {out_bounds}"
 
     if isinstance(rect_bounds, tuple) or isinstance(rect_bounds, list):
         assert len(rect_bounds) == 4, f"Error, list or tuple needs to be length 4. Got {rect_bounds}"
@@ -1910,21 +1913,25 @@ def restart_program():
 
     """
     python = sys.executable
-    os.execl(python, python, * sys.argv)
+    os.execl(python, python, *sys.argv)
 
 
 def alpha_ize(number_in=0, capitalize=False):
-    assert isinstance(number_in, int) and 0 <= number_in <= 25, "Error, param 'number_in' must be an integer between 0 and 25."
+    assert isinstance(number_in,
+                      int) and 0 <= number_in <= 25, "Error, param 'number_in' must be an integer between 0 and 25."
     c = chr(number_in + 97)
     c = c if not capitalize else c.upper()
     return c
 
 
-def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=False, shift_pad_0_on_number=True, capital_alpha=True, pad_char="0"):
+def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=False, shift_pad_0_on_number=True,
+              capital_alpha=True, pad_char="0"):
     assert isinstance(prefix, str), f"Error, param 'prefix' must be an in stance of a string. Got '{prefix}'"
     assert isinstance(suffix, str), f"Error, param 'suffix' must be an in stance of a string. Got '{suffix}'"
-    assert isinstance(n_digits, int) and n_digits > 0, f"Error, param 'n_digits' must be a number and be greater than 0, Got '{n_digits}'"
-    assert all([isinstance(param, bool) for param in [numbers_instead, pad_0, shift_pad_0_on_number, capital_alpha]]), f"Error, 'params numbers_instead', 'pad_0', 'shift_pad_0_on_number', 'capital_alpha' must be boolean values.\nGot: {numbers_instead=}, {pad_0=}, {shift_pad_0_on_number=}, {capital_alpha=}"
+    assert isinstance(n_digits,
+                      int) and n_digits > 0, f"Error, param 'n_digits' must be a number and be greater than 0, Got '{n_digits}'"
+    assert all([isinstance(param, bool) for param in [numbers_instead, pad_0, shift_pad_0_on_number,
+                                                      capital_alpha]]), f"Error, 'params numbers_instead', 'pad_0', 'shift_pad_0_on_number', 'capital_alpha' must be boolean values.\nGot: {numbers_instead=}, {pad_0=}, {shift_pad_0_on_number=}, {capital_alpha=}"
     # print(f"A {n_digits=}, {prefix=}, {suffix=}, {numbers_instead=}, {pad_0=}, {shift_pad_0_on_number=}, {capital_alpha=}")
     pad_0 = pad_0 or ((not pad_0) and numbers_instead and shift_pad_0_on_number)
     pad_char = "0" if pad_0 and not pad_char else pad_char
@@ -1936,7 +1943,7 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
             val = i
         else:
             c, i = divmod(i, 26)
-            # print(f"\t{i=}, {divmod(i, 26)=}, {divmod(tv_entry, 26)=}")
+            # print(f"\t{i=}, {divmod(i, 26)=}, {divmod(c, 26)=}")
             v, r = divmod(c, 26)
 
             if v > n_digits:
@@ -1945,7 +1952,7 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
             val = ""
             if c:
                 val += alpha_ize(v + (c - 1))
-            # for j in range(tv_entry, 0, -1):
+            # for j in range(c, 0, -1):
             #     val += alphaize(j - 1)
             val += alpha_ize(i)
             if capital_alpha:
@@ -1956,8 +1963,46 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
         elif len(val) < n_digits and pad_0:
             val = val.rjust(n_digits, pad_char)
         # else:
-            # print(f"VAL='{val}'")
+        # print(f"VAL='{val}'")
         yield f"{prefix}{val}{suffix}"
+
+
+def sort_2_lists(list_1, list_2):
+    # https://stackoverflow.com/questions/13668393/python-sorting-two-lists
+    return [list(x) for x in zip(*sorted(zip(list_1, list_2), key=itemgetter(0)))]
+
+
+def replace_timestamp_datetime(str_in, col_in_question=None):
+    """Take a dict.__repr__ before calling eval, and replace all instances of Timestamp("YYYY-MM-DD HH:MM:SS")
+     with calls to datetime.datetime.strptime with appropriate parsing sequence.
+
+     Usage:
+        s = "{'DateCreated': Timestamp('2022-11-15 16:30:00'), 'Name': 'NAME HERE'}"
+        s = replace_timestamp_datetime(s, col_in_question='DateCreated')  # =>
+     """
+    result = ""
+    split_val = ", '"
+    spl = str_in.split(split_val)
+    r_in = "datetime.datetime.strptime"
+    r_out = "Timestamp"
+    if col_in_question is None:
+        col_in_question = []
+    if not isinstance(col_in_question, list) and not isinstance(col_in_question, tuple):
+        col_in_question = [col_in_question]
+    # print(f"{col_in_question=}")
+    for s in spl:
+        # print_by_line([(s.replace("{'", "").startswith(col), col, s) for col in col_in_question])
+        if not col_in_question or any([s.replace("{'", "").startswith(col) for col in col_in_question]):
+            end = s[-22:-1] + ", '%Y-%m-%d %H:%M:%S')"
+            ss = s.replace(r_out, r_in)
+            ss = ss[:-22] + end
+            result += ss
+        else:
+            result += s
+        result += split_val
+    result = result[:len(result) - len(split_val)]
+    # print(f"result: '{result}'")
+    return result
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "
