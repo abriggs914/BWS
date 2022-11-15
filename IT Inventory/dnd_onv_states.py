@@ -41,6 +41,21 @@ class DNDItemManager(tkinter.Canvas):
         #         # 0, 4
         #         pass
 
+        self.locked_for_animation = tkinter.BooleanVar(self, value=False)
+        self.ani_data_drag_object = {
+            "x1": 0,
+            "y1": 0,
+            "x2": 10,
+            "y2": 10
+        }
+        self.ani_data_drag_object["tag"] = self.create_rectangle(
+            self.ani_data_drag_object["x1"],
+            self.ani_data_drag_object["y1"],
+            self.ani_data_drag_object["x2"],
+            self.ani_data_drag_object["y2"],
+            fill=rgb_to_hex(BWS_GREY)
+        )
+
         self.locked_dnd = tkinter.BooleanVar(self, value=True)
         self.made_dnd = tkinter.BooleanVar(self, value=False)
 
@@ -98,8 +113,8 @@ class DNDItemManager(tkinter.Canvas):
 
         if not omit_unknown:
             # Shopping Cart state
-            c1 = rgb_to_hex(FLORALWHITE)
-            c2 = rgb_to_hex(BLACK)
+            c1 = rgb_to_hex(MAROON)
+            c2 = rgb_to_hex(FLORALWHITE)
             f1 = ("Arial", 10, "bold")
             cnt = (calc_btn_x(0), 150)
             bounds = (*cnt, self.btn_width, self.btn_height)
@@ -261,80 +276,86 @@ class DNDItemManager(tkinter.Canvas):
         pass
 
     def event_drag(self, event, caller):
-        print(f"event_drag")
-        print(f"{event=}, {caller=}")
-        print(f"\t{event.widget=}")
+        if not self.locked_for_animation.get():
+            print(f"event_drag")
+            print(f"{event=}, {caller=}")
+            print(f"\t{event.widget=}")
+        else:
+            print(f"Locked for animation.")
 
     def event_release(self, event, caller):
-        print(f"event_release")
-        print(f"{event=}, {caller=}")
-        print(f"\t{event.widget=}")
-        order = ["server", "in use", "broken", "disposed", "cart", "unknown"]
-        bounds_to_check = []
-        if not self.omit_server_room:
-            bounds_to_check.append((0, self.rect_server_room_state))
-        if not self.omit_in_use:
-            bounds_to_check.append((1, self.rect_in_use_state))
-        if not self.omit_broken:
-            bounds_to_check.append((2, self.rect_broken_state))
-        if not self.omit_disposed:
-            bounds_to_check.append((3, self.rect_disposed_state))
-        if not self.omit_shopping_cart:
-            bounds_to_check.append((4, self.rect_shopping_cart_state))
-        if not self.omit_unknown:
-            bounds_to_check.append((5, self.rect_unknown_state))
+        if not self.locked_for_animation.get():
+            print(f"event_release")
+            print(f"{event=}, {caller=}")
+            print(f"\t{event.widget=}")
+            order = ["server", "in use", "broken", "disposed", "cart", "unknown"]
+            bounds_to_check = []
+            if not self.omit_server_room:
+                bounds_to_check.append((0, self.rect_server_room_state))
+            if not self.omit_in_use:
+                bounds_to_check.append((1, self.rect_in_use_state))
+            if not self.omit_broken:
+                bounds_to_check.append((2, self.rect_broken_state))
+            if not self.omit_disposed:
+                bounds_to_check.append((3, self.rect_disposed_state))
+            if not self.omit_shopping_cart:
+                bounds_to_check.append((4, self.rect_shopping_cart_state))
+            if not self.omit_unknown:
+                bounds_to_check.append((5, self.rect_unknown_state))
 
-        ex, ey = event.x, event.y
-        match caller:
-            case "server":
-                bounds_to_check.remove((0, self.rect_server_room_state))
-                x1, y1, x2, y2 = self.rect_server_room_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case "in use":
-                bounds_to_check.remove((1, self.rect_in_use_state))
-                x1, y1, x2, y2 = self.rect_in_use_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case "broken":
-                bounds_to_check.remove((2, self.rect_broken_state))
-                x1, y1, x2, y2 = self.rect_broken_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case "disposed":
-                bounds_to_check.remove((3, self.rect_disposed_state))
-                x1, y1, x2, y2 = self.rect_disposed_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case "cart":
-                bounds_to_check.remove((4, self.rect_shopping_cart_state))
-                x1, y1, x2, y2 = self.rect_shopping_cart_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case "unknown":
-                bounds_to_check.remove((4, self.rect_unknown_state))
-                x1, y1, x2, y2 = self.rect_unknown_state
-                if x1 <= ex <= x2 and y1 <= ey <= y2:
-                    print(f"RELEASE BACK ON CALLER")
-                    return
-            case _:
-                raise Exception(f"Error, this caller is not recognized '{caller}'.")
+            ex, ey = event.x, event.y
+            match caller:
+                case "server":
+                    bounds_to_check.remove((0, self.rect_server_room_state))
+                    x1, y1, x2, y2 = self.rect_server_room_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case "in use":
+                    bounds_to_check.remove((1, self.rect_in_use_state))
+                    x1, y1, x2, y2 = self.rect_in_use_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case "broken":
+                    bounds_to_check.remove((2, self.rect_broken_state))
+                    x1, y1, x2, y2 = self.rect_broken_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case "disposed":
+                    bounds_to_check.remove((3, self.rect_disposed_state))
+                    x1, y1, x2, y2 = self.rect_disposed_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case "cart":
+                    bounds_to_check.remove((4, self.rect_shopping_cart_state))
+                    x1, y1, x2, y2 = self.rect_shopping_cart_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case "unknown":
+                    bounds_to_check.remove((4, self.rect_unknown_state))
+                    x1, y1, x2, y2 = self.rect_unknown_state
+                    if x1 <= ex <= x2 and y1 <= ey <= y2:
+                        print(f"RELEASE BACK ON CALLER")
+                        return
+                case _:
+                    raise Exception(f"Error, this caller is not recognized '{caller}'.")
 
-        for idx, lst in bounds_to_check:
-            x1, y1, x2, y2 = lst
-            if x1 <= ex <= x2 and y1 <= ey <= y2:
-                receiver = order[idx]
-                print(f"Release over index {idx}, {receiver=}")
-                self.handle_dnd(caller, receiver)
-                self.made_dnd.set(True)
-                return
+            for idx, lst in bounds_to_check:
+                x1, y1, x2, y2 = lst
+                if x1 <= ex <= x2 and y1 <= ey <= y2:
+                    receiver = order[idx]
+                    print(f"Release over index {idx}, {receiver=}")
+                    self.handle_dnd(caller, receiver)
+                    self.made_dnd.set(True)
+                    return
 
-        print(f"RELEASED OVER NOTHING")
+            print(f"RELEASED OVER NOTHING")
+        else:
+            print(f"Locked for animation.")
 
     def handle_dnd(self, caller, receiver):
         if caller == receiver:
@@ -517,3 +538,33 @@ class DNDItemManager(tkinter.Canvas):
         self.iv_disposed_number.set(disposed)
         self.iv_in_use_number.set(in_use)
         self.iv_server_room_number.set(qty)
+
+    def animate(self, state_from, state_to):
+        valid_states = {"in_use", "server", "broken", "disposed", "unknown"}
+        assert state_from in valid_states, f"Error param 'state_from' not recognized: '{state_from}'"
+        assert state_to in valid_states, f"Error param 'state_to' not recognized: '{state_to}'"
+        self.locked_for_animation.set(True)
+
+        def sub_animate(data):
+            if data.get("count", 0) >= 0:
+                x_move_dist = 1
+                y_move_dist = 1
+                self.ani_data_drag_object["x1"] += x_move_dist
+                self.ani_data_drag_object["y1"] += y_move_dist
+                self.ani_data_drag_object["x2"] += x_move_dist
+                self.ani_data_drag_object["y2"] += y_move_dist
+
+                self.moveto(
+                    self.ani_data_drag_object["tag"],
+                    self.ani_data_drag_object["x1"],
+                    self.ani_data_drag_object["y1"]
+                )
+
+                new_data = dict(data)
+                new_data["count"] = new_data.get("count", 0) - 1
+                interval = new_data.get("interval", 1)
+                self.after(interval, sub_animate, new_data)
+            else:
+                self.locked_for_animation.set(False)
+
+        sub_animate({"count": 25, "interval": 1000})

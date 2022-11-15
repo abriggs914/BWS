@@ -70,6 +70,14 @@ class InventoryApp(tkinter.Tk):
         self.entry_scan_input = ScannableEntry(self)
         self.entry_scan_input.set_scan_pass_through()
 
+        # self.tv_entry_barcode = tkinter.StringVar(self, value="")
+        # self.entry_barcode = tkinter.Entry(
+        #     self,
+        #     textvariable=self.tv_entry_barcode,
+        #     state="disabled",
+        #     font=("Code39AzaleaNarrow3", 14)
+        # )
+
         self.label_scan_input.pack()
         self.entry_scan_input.pack()
 
@@ -94,8 +102,8 @@ class InventoryApp(tkinter.Tk):
         self.df_serial_indication = connect(**SQL_ITI_SERIAL_INDICATION)
 
     def bind_demo_keys(self):
-        self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value)
-        self.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value)
+        self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)
+        self.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_main_menu)
 
     def unbind_demo_keys(self):
         self.unbind("<Control-Shift-KeyPress-Q>")
@@ -170,6 +178,7 @@ class InventoryApp(tkinter.Tk):
         scan_in = self.entry_scan_input.validated_text.get()
         if scan_in:
             scan_in = "*" + self.entry_scan_input.validated_text.get() + "*"
+            # self.tv_entry_barcode.set(scan_in)
             print(f"{scan_in=}")
             is_indication_result = self.is_indication_serial(scan_in)
             is_indication = not is_indication_result.empty  # this serial was found in the list of known serial indications.
@@ -213,6 +222,9 @@ class InventoryApp(tkinter.Tk):
         self.level_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
         self.level_add_menu.mainloop()
         self.accepting_bool.set(True)
+
+    def is_status_indication_serial(self, serial_in):
+        return self.df_serial_indication[(self.df_serial_indication["Serial"] == serial_in) & (self.df_serial_indication["TableName"] == "ITI Status")]
 
     def is_indication_serial(self, serial_in):
         return self.df_serial_indication[self.df_serial_indication["Serial"] == serial_in]
@@ -265,13 +277,13 @@ class InventoryApp(tkinter.Tk):
         return result
 
     def open_dnd(self, scan_in):
-        self.tl_dnd_menu = TopLevelDNDMenu(self, omit_shopping_cart=True)
+        self.tl_dnd_menu = TopLevelDNDMenu(self, self.df_status, self.df_serial_indication, omit_shopping_cart=True)
         self.data_tl_dnd_menu = {
-            "server_room": self.tl_dnd_menu.canvas_dnd.iv_server_room_number,
-            "use_number": self.tl_dnd_menu.canvas_dnd.iv_in_use_number,
-            "broken": self.tl_dnd_menu.canvas_dnd.iv_broken_number,
-            "disposed": self.tl_dnd_menu.canvas_dnd.iv_disposed_number,
-            "shopping_cart": self.tl_dnd_menu.canvas_dnd.iv_shopping_cart_number
+            "server_room": self.tl_dnd_menu.canvas_dnd.iv_server_room_number.get(),
+            "use_number": self.tl_dnd_menu.canvas_dnd.iv_in_use_number.get(),
+            "broken": self.tl_dnd_menu.canvas_dnd.iv_broken_number.get(),
+            "disposed": self.tl_dnd_menu.canvas_dnd.iv_disposed_number.get(),
+            "shopping_cart": self.tl_dnd_menu.canvas_dnd.iv_shopping_cart_number.get()
         }
         data_in = self.gather_dnd_data(scan_in)
         results = {k: v for k, v in data_in.items()}
@@ -283,11 +295,89 @@ class InventoryApp(tkinter.Tk):
         # self.tl_dnd_menu.entry_scannable.set_scan_pass_through()
         self.tl_dnd_menu.canvas_dnd.status.trace_variable("w", self.tl_dnd_menu_canvas_dnd_status_update)
         # self.tl_dnd_menu.mainloop()
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_tl_dnd_menu)
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_dnd_menu)
+
+        self.tl_dnd_menu.entry_scannable.validated_text.trace_variable("w", self.tl_dnd_menu_update_entry_scannable)
+
+        self.tl_dnd_menu.focus()
+        print(dict_print(self.tl_dnd_menu.entry_scannable.__dict__, 'A'))
+        self.tl_dnd_menu.entry_scannable.configure(state="disabled")
+        print(f"{dir(self.tl_dnd_menu.entry_scannable)=}")
+        print(dict_print(self.tl_dnd_menu.entry_scannable.__dict__, 'B'))
+
+    def tl_dnd_menu_update_entry_scannable(self, *args):
+        scan_in = "*" + self.tl_dnd_menu.entry_scannable.validated_text.get() + "*"
+        print(f"{scan_in=}")
+        if scan_in:
+            df_is_indication = self.is_indication_serial(scan_in)
+            is_indication = not df_is_indication.empty
+            print(f"{df_is_indication=}")
+            if is_indication:
+                df_is_status = self.is_status_indication_serial(scan_in)
+                is_status = not df_is_status.empty
+                print(f"{df_is_status=}")
+                if is_status:
+                    scanned_status_col_names = df_is_status["ColName"].tolist()
+                    if len(scanned_status_col_names) != 1:
+                        raise Exception(f"Error more than 1 record returned.")
+                    else:
+                        scanned_status_col_name = scanned_status_col_names[0]
+                        print(f"{scanned_status_col_name=}")
+                        match scanned_status_col_name:
+                            case "UNKNOWN":
+                                state_to = "unknown"
+                            case "Storage":
+                                state_to = "server"
+                            case "In Service":
+                                state_to = "in_use"
+                            case "Out of Service":
+                                apply_state(self, "disabled", direction="down")
+                                options = ["Broken", "Disposed"]
+
+                                ans = options[int(CustomMessageBox(
+                                    "Broken or Disposed?",  # title
+                                    "Is this item broken or being disposed?",  # msg
+                                    None,  # x
+                                    None,  # y
+                                    *options,  # b1 &  b2
+                                ).choice) - 1]
+
+                                apply_state(self, "normal", direction="down")
+                                apply_state(self.entry_scan_input, "disabled", direction="down")
+                                print(f"{ans=}")
+                                state_to = ans.lower()
+                            case _:
+                                raise Exception(f"Error, unknown state scanned. {scanned_status_col_name=}")
+                    quantities = {
+                        "in_use": self.tl_dnd_menu.canvas_dnd.iv_in_use_number.get(),
+                        "server": self.tl_dnd_menu.canvas_dnd.iv_server_room_number.get(),
+                        "unknown": self.tl_dnd_menu.canvas_dnd.iv_unknown_number.get(),
+                        "broken": self.tl_dnd_menu.canvas_dnd.iv_broken_number.get(),
+                        "disposed": self.tl_dnd_menu.canvas_dnd.iv_disposed_number.get()
+                    }
+                    if sum(quantities.values()) != 1:
+                        raise Exception("Error, unable to tell where this is coming from.")
+
+                    filtered = {k: v for k, v in quantities.items() if v > 0}
+                    state_from = list(filtered.keys())[0]
+                    self.tl_dnd_menu.canvas_dnd.animate(state_from, state_to)
+                else:
+                    print(f"Scanned indication serial is not a status, '{scan_in}'")
+            else:
+                print(f"Scanned serial is not an indication serial, '{scan_in}'")
 
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
         print(dict_print(eval(self.tl_dnd_menu.canvas_dnd.status.get()), "self.tl_dnd_menu.canvas_dnd.status.get()"))
 
-    def insert_demo_value(self, event):
+    def insert_demo_value_main_menu(self, event):
         # self.entry_scan_input.text.set("0000000250")
         self.entry_scan_input.text.set("0000000100")
         self.entry_scan_input.return_text(event)
+
+    def insert_demo_value_tl_dnd_menu(self, event):
+        # self.entry_scan_input.text.set("0000000250")
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000009")  # In Service
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000003")  # Used
+        self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service
+        self.tl_dnd_menu.entry_scannable.return_text(event)

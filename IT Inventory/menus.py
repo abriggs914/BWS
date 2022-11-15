@@ -632,15 +632,31 @@ class AddItemMenu(tkinter.Toplevel):
 
 class TopLevelDNDMenu(tkinter.Toplevel):
 
-    def __init__(self, master, omit_server=False, omit_in_use=False, omit_disposed=False, omit_broken=False, omit_shopping_cart=False, omit_unkown=False):
+    def __init__(
+            self,
+            master,
+            df_status,
+            df_serial_indication,
+            omit_server=False,
+            omit_in_use=False,
+            omit_disposed=False,
+            omit_broken=False,
+            omit_shopping_cart=False,
+            omit_unknown=False
+    ):
         super().__init__(master)
+
+        self.df_status = df_status
+        self.df_serial_indication = df_serial_indication
 
         self.omit_server = omit_server
         self.omit_in_use = omit_in_use
         self.omit_disposed = omit_disposed
         self.omit_broken = omit_broken
         self.omit_shopping_cart = omit_shopping_cart
-        self.omit_unknown = omit_unkown
+        self.omit_unknown = omit_unknown
+
+        self.tv_set_data = tkinter.Variable(self, value={})
 
         self.frame_data_fields = tkinter.Frame(self)
         self.frame_data_fields_row_1 = tkinter.Frame(self.frame_data_fields)
@@ -840,7 +856,18 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             }
         )
 
+    # def update_entry_scannable(self, *args):
+    #     scan_in = self.entry_scannable.validated_text.get()
+    #     if scan_in:
+    #         result_is_status = self.is_status(scan_in)
+    #         if not result_is_status.empty:
+    #             self.canvas_dnd.animate()
+
+    def is_status(self, scan_in):
+        return self.df_serial_indication[self.df_serial_indication["Serial"] == scan_in]
+
     def set_data(self, data_in):
+        self.tv_set_data.set(data_in)
         self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
         self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
         self.tv_entry_item_condition.set(data_in.get("ConditionName", "N/A"))
