@@ -1,5 +1,7 @@
 USE BWSdb
 GO
+
+SELECT 'ITR Customers' AS [Table], * FROM [ITR Customers];
 SELECT 'ITI InvMaster' AS [Table], * FROM [ITI InvMaster];
 SELECT 'ITI InvMaster Snap' AS [Table], * FROM [ITI InvMaster Snap];
 SELECT 'v_Tools&Equip' AS [Table], * FROM [uniPoint_Live].[dbo].[v_Tools&Equip];
@@ -17,7 +19,8 @@ SELECT 'ITI Type' AS [Table], * FROM [ITI Type];
 SELECT 'ITI UOM' AS [Table], * FROM [ITI UOM];
 SELECT 'ITI Wire' AS [Table], * FROM [ITI Wire];
 
-
+SELECT 'ITI Buildings' AS [Table], * FROM [ITI Buildings];
+SELECT 'ITI Locations' AS [Table], * FROM [ITI Locations];
 
 SELECT
 	[ITI Item].[ID]

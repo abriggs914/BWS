@@ -3,10 +3,13 @@
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dnd_onv_states.py" beforeDir="false" afterPath="$PROJECT_DIR$/dnd_onv_states.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app 2022-11-09.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app 2022-11-09.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app 2022-11-10.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app 2022-11-10.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/menus.py" beforeDir="false" afterPath="$PROJECT_DIR$/menus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/utility.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app_2022-10-24.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app_2022-10-24.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_app_2_2022-10-24.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app_2_2022-10-24.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/selects.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stg_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_queries.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,6 +90,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="inventory_queries" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IT Inventory" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\ABriggs\Documents\BWS\IT Inventory\inventory_queries.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="IT Inventory" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -129,27 +153,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="stg_queries" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="IT Inventory" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/stg_queries.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="tkinter_utility" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="IT Inventory" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -173,10 +176,10 @@
     </configuration>
     <list>
       <item itemvalue="Python.barcode_qr_code_driver" />
+      <item itemvalue="Python.inventory_queries" />
       <item itemvalue="Python.inventory_app 2022-11-09" />
       <item itemvalue="Python.main" />
       <item itemvalue="Python.scanable_entry" />
-      <item itemvalue="Python.stg_queries" />
       <item itemvalue="Python.tkinter_utility" />
     </list>
     <recent_temporary>
@@ -185,7 +188,7 @@
         <item itemvalue="Python.inventory_app 2022-11-09" />
         <item itemvalue="Python.scanable_entry" />
         <item itemvalue="Python.tkinter_utility" />
-        <item itemvalue="Python.stg_queries" />
+        <item itemvalue="Python.inventory_queries" />
       </list>
     </recent_temporary>
   </component>

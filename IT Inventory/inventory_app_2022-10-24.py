@@ -4,7 +4,7 @@ import pandas
 
 from grid_manager import GridManager
 from tkinter_utility import *
-from stg_queries import *
+from inventory_queries import *
 from menus import AddItemMenu
 from utility import alpha_seq
 

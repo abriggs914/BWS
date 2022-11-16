@@ -195,7 +195,7 @@ SQL_ITI_SERIAL_INDICATION = {
 
 
 SQL_ITI_ITEM = {
-    "sql": """/****** Script for SelectTopNRows command from SSMS  ******/
+    "sql": """
 SELECT [ID]
       ,[Name]
       ,[Description]
@@ -209,7 +209,46 @@ SELECT [ID]
       ,[IsBroken]
       ,[IsMissing]
       ,[Serial]
+      ,[LocationID]
   FROM [BWSdb].[dbo].[ITI Item]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
+SQL_ITI_LOCATIONS = {
+    "sql": """SELECT [ID]
+      ,[DateCreated]
+      ,[Active]
+      ,[DateActive]
+      ,[DateInactive]
+      ,[Name]
+      ,[BuildingID]
+      ,[FloorNumber]
+      ,[GridRow]
+      ,[GridCol]
+      ,[Description]
+      ,[EmployeeAssigned]
+  FROM [BWSdb].[dbo].[ITI Locations]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
+SQL_ITI_BUILDINGS = {
+    "sql": """SELECT [ID]
+      ,[DateCreated]
+      ,[Active]
+      ,[DateActive]
+      ,[DateInactive]
+      ,[Name]
+      ,[Address]
+      ,[Province]
+      ,[Floors]
+      ,[MapFile]
+  FROM [BWSdb].[dbo].[ITI Buildings]""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"
@@ -225,8 +264,9 @@ SQL_INSERT_NEW_ITI_ITEM = {
            ,[Type]
            ,[SubType]
            ,[DateCreated]
-           ,[Serial])
-     VALUES ('{n}', '{entry}', {a}, {tv_entry}, {t}, {y}, '{r}', '{s}');""",
+           ,[Serial]
+           ,[LocationID])
+     VALUES ('{n}', '{entry}', {a}, {tv_entry}, {t}, {y}, '{r}', '{s}', {l});""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"
@@ -241,6 +281,7 @@ def insert_new_item(data):
     ttype = data["type"]
     stype = data["sub_type"]
     serial = data["serial"]
+    location = data["LocationID"]
     date_created = datetime.datetime.now()
     sql = SQL_INSERT_NEW_ITI_ITEM["sql"].format(
         n=name,
@@ -250,7 +291,8 @@ def insert_new_item(data):
         t=ttype,
         y=stype,
         r=date_created.strftime("%Y-%m-%entry"),
-        s=serial
+        s=serial,
+        l=location
     )
     database = SQL_INSERT_NEW_ITI_ITEM["database"]
     uid = SQL_INSERT_NEW_ITI_ITEM["uid"]

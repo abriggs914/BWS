@@ -6,7 +6,7 @@ from top_level_scan_handler import TopLevelScanHandler
 from grid_manager import GridManager
 from colour_utility import *
 from tkinter_utility import *
-from stg_queries import *
+from inventory_queries import *
 from menus import AddItemMenu, TopLevelDNDMenu
 from utility import alpha_seq, dict_print, replace_timestamp_datetime
 from dnd_onv_states import DNDItemManager
@@ -35,6 +35,8 @@ class InventoryApp(tkinter.Tk):
         self.df_wire = None
         self.df_unknown = None
         self.df_serial_indication = None
+        self.df_buildings = None
+        self.df_locations = None
 
         self.populate_data()
 
@@ -56,6 +58,8 @@ class InventoryApp(tkinter.Tk):
                 ,self.df_unknown
                 ,self.df_serial_indication
                 ,self.df_iti_item
+                ,self.df_buildings
+                ,self.df_locations
             ]
              ]), "Error loading some data."
 
@@ -100,6 +104,8 @@ class InventoryApp(tkinter.Tk):
         self.df_wire = connect(**SQL_WIRE)
         self.df_unknown = connect(**SQL_UNKNOWN)
         self.df_serial_indication = connect(**SQL_ITI_SERIAL_INDICATION)
+        self.df_buildings = connect(**SQL_ITI_BUILDINGS)
+        self.df_locations = connect(**SQL_ITI_LOCATIONS)
 
     def bind_demo_keys(self):
         self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)

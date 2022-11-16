@@ -6,7 +6,7 @@ from top_level_scan_handler import TopLevelScanHandler
 from grid_manager import GridManager
 from colour_utility import *
 from tkinter_utility import *
-from stg_queries import *
+from inventory_queries import *
 from menus import AddItemMenu
 from utility import alpha_seq
 from dnd_onv_states import DNDItemManager
