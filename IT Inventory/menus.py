@@ -663,19 +663,43 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.frame_data_fields_row_1 = tkinter.Frame(self.frame_data_fields)
         self.frame_data_fields_row_2 = tkinter.Frame(self.frame_data_fields)
         self.frame_data_fields_row_3 = tkinter.Frame(self.frame_data_fields)
+        self.frame_data_fields_row_4 = tkinter.Frame(self.frame_data_fields)
+        self.frame_data_fields_row_5 = tkinter.Frame(self.frame_data_fields)
 
         # column 1
         self.frame_data_fields_row_1_col_1 = tkinter.Frame(self.frame_data_fields_row_1)
         self.frame_data_fields_row_2_col_1 = tkinter.Frame(self.frame_data_fields_row_2)
         self.frame_data_fields_row_3_col_1 = tkinter.Frame(self.frame_data_fields_row_3)
+        self.frame_data_fields_row_4_col_1 = tkinter.Frame(self.frame_data_fields_row_4)
+        self.frame_data_fields_row_5_col_1 = tkinter.Frame(self.frame_data_fields_row_5)
 
         # column 2
         self.frame_data_fields_row_1_col_2 = tkinter.Frame(self.frame_data_fields_row_1)
         self.frame_data_fields_row_2_col_2 = tkinter.Frame(self.frame_data_fields_row_2)
         self.frame_data_fields_row_3_col_2 = tkinter.Frame(self.frame_data_fields_row_3)
+        self.frame_data_fields_row_4_col_2 = tkinter.Frame(self.frame_data_fields_row_4)
+        self.frame_data_fields_row_5_col_2 = tkinter.Frame(self.frame_data_fields_row_5)
 
         # column 3
         self.frame_data_fields_row_1_col_3 = tkinter.Frame(self.frame_data_fields_row_1)
+        self.frame_data_fields_row_2_col_3 = tkinter.Frame(self.frame_data_fields_row_2)
+        self.frame_data_fields_row_3_col_3 = tkinter.Frame(self.frame_data_fields_row_3)
+        self.frame_data_fields_row_4_col_3 = tkinter.Frame(self.frame_data_fields_row_4)
+        self.frame_data_fields_row_5_col_3 = tkinter.Frame(self.frame_data_fields_row_5)
+
+        # column 4
+        self.frame_data_fields_row_1_col_4 = tkinter.Frame(self.frame_data_fields_row_1)
+        self.frame_data_fields_row_2_col_4 = tkinter.Frame(self.frame_data_fields_row_2)
+        self.frame_data_fields_row_3_col_4 = tkinter.Frame(self.frame_data_fields_row_3)
+        self.frame_data_fields_row_4_col_4 = tkinter.Frame(self.frame_data_fields_row_4)
+        self.frame_data_fields_row_5_col_4 = tkinter.Frame(self.frame_data_fields_row_5)
+
+        # column 5
+        self.frame_data_fields_row_1_col_5 = tkinter.Frame(self.frame_data_fields_row_1)
+        self.frame_data_fields_row_2_col_5 = tkinter.Frame(self.frame_data_fields_row_2)
+        self.frame_data_fields_row_3_col_5 = tkinter.Frame(self.frame_data_fields_row_3)
+        self.frame_data_fields_row_4_col_5 = tkinter.Frame(self.frame_data_fields_row_4)
+        self.frame_data_fields_row_5_col_5 = tkinter.Frame(self.frame_data_fields_row_5)
 
         self.tv_label_item_name, self.label_item_name,\
         self.tv_entry_item_name, self.entry_item_name\
@@ -705,6 +729,58 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.tv_entry_item_is_active, self.entry_item_is_active\
             = None, None, None, None
 
+        self.tv_label_location_name, self.label_location_name,\
+        self.tv_entry_location_name, self.entry_location_name\
+            = None, None, None, None
+
+        self.tv_label_location_desc, self.label_location_desc,\
+        self.tv_entry_location_desc, self.entry_location_desc\
+            = None, None, None, None
+
+        self.tv_label_location_floor, self.label_location_floor,\
+        self.tv_entry_location_floor, self.entry_location_floor\
+            = None, None, None, None
+
+        self.tv_label_building_name, self.label_building_name,\
+        self.tv_entry_building_name, self.entry_building_name\
+            = None, None, None, None
+
+        self.tv_label_building_address, self.label_building_address,\
+        self.tv_entry_building_address, self.entry_building_address\
+            = None, None, None, None
+
+        self.tv_label_building_province, self.label_building_province,\
+        self.tv_entry_building_province, self.entry_building_province\
+            = None, None, None, None
+
+        self.tv_label_building_floors, self.label_building_floors,\
+        self.tv_entry_building_floors, self.entry_building_floors\
+            = None, None, None, None
+
+        self.tv_label_employee_name, self.label_employee_name,\
+        self.tv_entry_employee_name, self.entry_employee_name\
+            = None, None, None, None
+
+        self.tv_label_employee_company, self.label_employee_company,\
+        self.tv_entry_employee_company, self.entry_employee_company\
+            = None, None, None, None
+
+        self.tv_label_employee_email, self.label_employee_email,\
+        self.tv_entry_employee_email, self.entry_employee_email\
+            = None, None, None, None
+
+        self.tv_label_employee_work_phone, self.label_employee_work_phone,\
+        self.tv_entry_employee_work_phone, self.entry_employee_work_phone\
+            = None, None, None, None
+
+        self.tv_label_employee_active, self.label_employee_active,\
+        self.tv_entry_employee_active, self.entry_employee_active\
+            = None, None, None, None
+
+        self.tv_label_department_name, self.label_department_name,\
+        self.tv_entry_department_name, self.entry_edepartment_name\
+            = None, None, None, None
+
         self.init_data_fields()
 
         self.canvas_dnd = DNDItemManager(
@@ -721,42 +797,63 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.entry_scannable.set_scan_pass_through()
 
         # Add widgets
-        self.frame_data_fields.pack()
+        self.frame_data_fields.grid()
 
-        self.frame_data_fields_row_1.pack()
-        self.frame_data_fields_row_2.pack()
-        self.frame_data_fields_row_3.pack()
+        self.frame_data_fields_row_1.grid()
+        self.frame_data_fields_row_2.grid()
+        self.frame_data_fields_row_3.grid()
+        self.frame_data_fields_row_4.grid()
+        self.frame_data_fields_row_5.grid()
 
-        self.frame_data_fields_row_1_col_1.pack(side=tkinter.LEFT)
-        self.label_item_name.pack(side=tkinter.LEFT)
-        self.entry_item_name.pack(side=tkinter.LEFT)
+        template = "self.frame_data_fields_row_{r}_col_{c}"
+        for i in range(1, 6):
+            for j in range(1, 5):
+                frame = eval(template.format(r=i, c=j))
+                # frame.pack(side=tkinter.LEFT)
+                frame.grid(row=i, column=j)
 
-        self.frame_data_fields_row_2_col_1.pack(side=tkinter.LEFT)
-        self.label_item_desc.pack(side=tkinter.LEFT)
-        self.entry_item_desc.pack(side=tkinter.LEFT)
+        self.suffixes = [
+            "item_name",
+            "item_status",
+            "item_is_active",
+            "item_desc",
 
-        self.frame_data_fields_row_3_col_1.pack(side=tkinter.LEFT)
-        self.label_item_condition.pack(side=tkinter.LEFT)
-        self.entry_item_condition.pack(side=tkinter.LEFT)
+            "item_type",
+            "item_sub_type",
+            "item_condition",
+            "location_name",
 
-        self.frame_data_fields_row_1_col_2.pack(side=tkinter.LEFT)
-        self.label_item_status.pack(side=tkinter.LEFT)
-        self.entry_item_status.pack(side=tkinter.LEFT)
+            "location_desc",
+            "location_floor",
+            "building_name",
+            "building_address",
 
-        self.frame_data_fields_row_2_col_2.pack(side=tkinter.LEFT)
-        self.label_item_type.pack(side=tkinter.LEFT)
-        self.entry_item_type.pack(side=tkinter.LEFT)
+            "building_province",
+            "building_floors",
+            "employee_name",
+            "employee_email",
 
-        self.frame_data_fields_row_3_col_2.pack(side=tkinter.LEFT)
-        self.label_item_sub_type.pack(side=tkinter.LEFT)
-        self.entry_item_sub_type.pack(side=tkinter.LEFT)
+            "employee_company",
+            "employee_work_phone",
+            "employee_active",
+            "department_name",
+        ]
 
-        self.frame_data_fields_row_1_col_3.pack(side=tkinter.LEFT)
-        self.label_item_is_active.pack(side=tkinter.LEFT)
-        self.entry_item_is_active.pack(side=tkinter.LEFT)
+        template_label = "self.label_{n}"
+        template_entry = "self.entry_{n}"
+        for i, suffix in enumerate(self.suffixes):
+            label = eval(template_label.format(n=suffix))
+            entry = eval(template_entry.format(n=suffix))
+            # label.pack(side=tkinter.LEFT)
+            # entry.pack(side=tkinter.LEFT)
+            row = i // 4
+            col = i % 4
+            col *= 2
+            label.grid(row=row, column=col)
+            entry.grid(row=row, column=col + 1)
 
-        self.canvas_dnd.pack()
-        self.entry_scannable.pack()
+        self.canvas_dnd.grid()
+        self.entry_scannable.grid()
 
     def init_data_fields(self):
         self.tv_label_item_name, \
@@ -773,69 +870,13 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             }
         )
 
-        self.tv_label_item_desc, \
-        self.label_item_desc, \
-        self.tv_entry_item_desc, \
-        self.entry_item_desc \
-            = entry_factory(
-            self.frame_data_fields_row_2_col_1,
-            tv_label="Item Description:",
-            kwargs_entry={
-                "justify": "center",
-                "font": ("Arial", 14),
-                "state": "disabled"
-            }
-        )
-
-        self.tv_label_item_condition, \
-        self.label_item_condition, \
-        self.tv_entry_item_condition, \
-        self.entry_item_condition \
-            = entry_factory(
-            self.frame_data_fields_row_3_col_1,
-            tv_label="Condition:",
-            kwargs_entry={
-                "justify": "center",
-                "font": ("Arial", 14),
-                "state": "disabled"
-            }
-        )
-
         self.tv_label_item_status, \
         self.label_item_status, \
         self.tv_entry_item_status, \
         self.entry_item_status \
             = entry_factory(
-            self.frame_data_fields_row_1_col_2,
+            self.frame_data_fields_row_1_col_1,
             tv_label="Status:",
-            kwargs_entry={
-                "justify": "center",
-                "font": ("Arial", 14),
-                "state": "disabled"
-            }
-        )
-
-        self.tv_label_item_type, \
-        self.label_item_type, \
-        self.tv_entry_item_type, \
-        self.entry_item_type \
-            = entry_factory(
-            self.frame_data_fields_row_2_col_2,
-            tv_label="Type:",
-            kwargs_entry={
-                "justify": "center",
-                "font": ("Arial", 14),
-                "state": "disabled"
-            }
-        )
-
-        self.tv_label_item_sub_type, \
-        self.label_item_sub_type, \
-        self.tv_entry_item_sub_type, \
-        self.entry_item_sub_type \
-            = entry_factory(
-            self.frame_data_fields_row_3_col_2,
-            tv_label="Sub-Type:",
             kwargs_entry={
                 "justify": "center",
                 "font": ("Arial", 14),
@@ -857,6 +898,244 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             }
         )
 
+        self.tv_label_item_desc, \
+        self.label_item_desc, \
+        self.tv_entry_item_desc, \
+        self.entry_item_desc \
+            = entry_factory(
+            self.frame_data_fields_row_1_col_4,
+            tv_label="Item Description:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_type, \
+        self.label_item_type, \
+        self.tv_entry_item_type, \
+        self.entry_item_type \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_1,
+            tv_label="Type:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_sub_type, \
+        self.label_item_sub_type, \
+        self.tv_entry_item_sub_type, \
+        self.entry_item_sub_type \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_2,
+            tv_label="Sub-Type:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_item_condition, \
+        self.label_item_condition, \
+        self.tv_entry_item_condition, \
+        self.entry_item_condition \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_3,
+            tv_label="Condition:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_location_name, \
+        self.label_location_name, \
+        self.tv_entry_location_name, \
+        self.entry_location_name \
+            = entry_factory(
+            self.frame_data_fields_row_2_col_4,
+            tv_label="Location:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_location_desc, \
+        self.label_location_desc, \
+        self.tv_entry_location_desc, \
+        self.entry_location_desc \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_1,
+            tv_label="Location Description:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_location_floor, \
+        self.label_location_floor, \
+        self.tv_entry_location_floor, \
+        self.entry_location_floor \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_2,
+            tv_label="Floor:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_building_name, \
+        self.label_building_name, \
+        self.tv_entry_building_name, \
+        self.entry_building_name \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_3,
+            tv_label="Building:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_building_address, \
+        self.label_building_address, \
+        self.tv_entry_building_address, \
+        self.entry_building_address \
+            = entry_factory(
+            self.frame_data_fields_row_3_col_4,
+            tv_label="Address:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_building_province, \
+        self.label_building_province, \
+        self.tv_entry_building_province, \
+        self.entry_building_province \
+            = entry_factory(
+            self.frame_data_fields_row_4_col_1,
+            tv_label="Province:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_building_floors, \
+        self.label_building_floors, \
+        self.tv_entry_building_floors, \
+        self.entry_building_floors \
+            = entry_factory(
+            self.frame_data_fields_row_4_col_2,
+            tv_label="# Floors:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_employee_name, \
+        self.label_employee_name, \
+        self.tv_entry_employee_name, \
+        self.entry_employee_name \
+            = entry_factory(
+            self.frame_data_fields_row_4_col_3,
+            tv_label="Employee:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_employee_email, \
+        self.label_employee_email, \
+        self.tv_entry_employee_email, \
+        self.entry_employee_email \
+            = entry_factory(
+            self.frame_data_fields_row_4_col_4,
+            tv_label="Email:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_employee_company, \
+        self.label_employee_company, \
+        self.tv_entry_employee_company, \
+        self.entry_employee_company \
+            = entry_factory(
+            self.frame_data_fields_row_5_col_1,
+            tv_label="Company:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_employee_work_phone, \
+        self.label_employee_work_phone, \
+        self.tv_entry_employee_work_phone, \
+        self.entry_employee_work_phone \
+            = entry_factory(
+            self.frame_data_fields_row_5_col_2,
+            tv_label="Work Phone #:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_employee_active, \
+        self.label_employee_active, \
+        self.tv_entry_employee_active, \
+        self.entry_employee_active \
+            = entry_factory(
+            self.frame_data_fields_row_5_col_3,
+            tv_label="Emp is Active:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
+        self.tv_label_department_name, \
+        self.label_department_name, \
+        self.tv_entry_department_name, \
+        self.entry_department_name \
+            = entry_factory(
+            self.frame_data_fields_row_5_col_4,
+            tv_label="Department:",
+            kwargs_entry={
+                "justify": "center",
+                "font": ("Arial", 14),
+                "state": "disabled"
+            }
+        )
+
     # def update_entry_scannable(self, *args):
     #     scan_in = self.entry_scannable.validated_text.get()
     #     if scan_in:
@@ -871,12 +1150,26 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         self.original_data.set(dict(data_in))
         self.tv_set_data.set(data_in)
         self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
-        self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
-        self.tv_entry_item_condition.set(data_in.get("ConditionName", "N/A"))
         self.tv_entry_item_status.set(data_in.get("StatusName", "N/A"))
+        self.tv_entry_item_is_active.set(data_in.get("IsActive", "N/A"))
+        self.tv_entry_item_desc.set(data_in.get("Description", "N/A"))
         self.tv_entry_item_type.set(data_in.get("TypeName", "N/A"))
         self.tv_entry_item_sub_type.set(data_in.get("SubTypeName", "N/A"))
-        self.tv_entry_item_is_active.set(data_in.get("IsActive", "N/A"))
+        self.tv_entry_item_condition.set(data_in.get("ConditionName", "N/A"))
+        self.tv_entry_location_name.set(data_in.get("location_name", "N/A"))
+
+        self.tv_entry_location_desc.set(data_in.get("location_desc", "N/A"))
+        self.tv_entry_location_floor.set(data_in.get("location_floor", "N/A"))
+        self.tv_entry_building_name.set(data_in.get("building_name", "N/A"))
+        self.tv_entry_building_address.set(data_in.get("building_address", "N/A"))
+        self.tv_entry_building_province.set(data_in.get("building_province", "N/A"))
+        self.tv_entry_building_floors.set(data_in.get("building_floors", "N/A"))
+        self.tv_entry_employee_name.set(data_in.get("employee_name", "N/A"))
+        self.tv_entry_employee_email.set(data_in.get("employee_email", "N/A"))
+        self.tv_entry_employee_company.set(data_in.get("employee_company", "N/A"))
+        self.tv_entry_employee_work_phone.set(data_in.get("employee_work_phone", "N/A"))
+        self.tv_entry_employee_active.set(data_in.get("employee_active", "N/A"))
+        self.tv_entry_department_name.set(data_in.get("department_name", "N/A"))
 
         qty_unknown = data_in.get("qty_unknown", 0)
         qty_cart = data_in.get("qty_cart", 0)

@@ -1,0 +1,16 @@
+USE BWSdb
+
+GO
+
+--SELECT * FROM [ITI Buildings]
+
+--DECLARE @bID AS INTEGER;
+--SELECT @bID = 2;
+
+CREATE PROCEDURE [sp_ITIHowManyFloors] 
+ @bID AS INTEGER
+ AS
+ BEGIN
+	SELECT [Floors] FROM [ITI Buildings] WHERE [ID] = @bID
+END
+GO

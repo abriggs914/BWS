@@ -16,6 +16,9 @@ SELECT '[BWSdb].[dbo].[OrdersV2]', * FROM [BWSdb].[dbo].[OrdersV2] WITH (NOLOCK)
 
 
 SELECT
+	[FD A],
+	[JobFinishDate],
+	[PO Date],
 	*
 FROM (
 	SELECT
@@ -30,11 +33,11 @@ FROM (
 		[OrdersV2].[SGQuote] = [dtProductionScheduleV2].[SGQuote]
 ) AS [A]
 ORDER BY
-	[FD A] DESC
+	[A].[FD A] DESC
 ;
 
 
-/*
+
 
 SELECT
 	*
@@ -43,21 +46,21 @@ FROM (
 		[Prod Date 1],
 		[Prod Date 2],
 		ISNULL([Prod Date 1], [Prod Date 2]) AS [PD],
-		[Orders].* 
+		[OrdersV2].* 
 	FROM
-		[Orders] WITH (NOLOCK)
+		[BWSdb].[dbo].[OrdersV2] WITH (NOLOCK)
 	LEFT JOIN
 		[dtProductionScheduleV2] WITH (NOLOCK)
 	ON
-		[Orders].[SGQuote] = [dtProductionScheduleV2].[SGQuote]
+		[OrdersV2].[SGQuote] = [dtProductionScheduleV2].[SGQuote]
 	LEFT JOIN
 		[Stargatedb].[dbo].[dtProductionSchedule] WITH (NOLOCK)
 	ON
-		[Orders].[SGQuote] = [dtProductionSchedule].[SGQuote]
-	--WHERE
-	--	ISNULL([Prod Date 1], [Prod Date 2]) > @dateOfEndProd
+		[OrdersV2].[SGQuote] = [dtProductionSchedule].[SGQuote]
+	WHERE
+		--ISNULL([Prod Date 1], [Prod Date 2]) > @dateOfEndProd
+		[PO Date] > @dateOfEndProd
 ) AS [A]
 ORDER BY
 	[PD] DESC
 ;
-*/

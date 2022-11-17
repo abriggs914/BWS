@@ -273,6 +273,48 @@ SQL_INSERT_NEW_ITI_ITEM = {
 }
 
 
+SQL_ITR_CUSTOMERS = {
+    "sql": """SELECT [CustomerID]
+      ,[Name]
+      ,[Department]
+      ,[Company]
+      ,[Email]
+      ,[WorkPhone]
+      ,[WorkExtension]
+      ,[CellPhone]
+      ,[HomePhone]
+      ,[Active]
+      ,[DateAdded]
+      ,[LastActive]
+      ,[WorkPhoneLastActive]
+      ,[WorkExtensionLastActive]
+      ,[CellPhoneLastActive]
+      ,[HomePhoneLastActive]
+  FROM [BWSdb].[dbo].[ITR Customers]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
+SQL_DEPARTMENTS = {
+    "sql": """SELECT [DeptID]
+      ,[BWS Code]
+      ,[Class]
+      ,[Grouping]
+      ,[Dept]
+      ,[Position]
+      ,[Budget]
+      ,[Authorized]
+      ,[Pay Scale]
+      ,[Comments]
+  FROM [BWSdb].[dbo].[Dept]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
 def insert_new_item(data):
     name = data["name"]
     description = data["description"]

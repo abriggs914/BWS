@@ -37,6 +37,8 @@ class InventoryApp(tkinter.Tk):
         self.df_serial_indication = None
         self.df_buildings = None
         self.df_locations = None
+        self.df_customers = None
+        self.df_departments = None
 
         self.populate_data()
 
@@ -60,6 +62,8 @@ class InventoryApp(tkinter.Tk):
                 ,self.df_iti_item
                 ,self.df_buildings
                 ,self.df_locations
+                ,self.df_customers
+                ,self.df_departments
             ]
              ]), "Error loading some data."
 
@@ -106,6 +110,8 @@ class InventoryApp(tkinter.Tk):
         self.df_serial_indication = connect(**SQL_ITI_SERIAL_INDICATION)
         self.df_buildings = connect(**SQL_ITI_BUILDINGS)
         self.df_locations = connect(**SQL_ITI_LOCATIONS)
+        self.df_customers = connect(**SQL_ITR_CUSTOMERS)
+        self.df_departments = connect(**SQL_DEPARTMENTS)
 
     def bind_demo_keys(self):
         self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)
@@ -256,6 +262,54 @@ class InventoryApp(tkinter.Tk):
         if result["Type"]:
             idx = result['Type'] - 1
             result.update({"TypeName": self.df_type.iloc[idx]["Name"]})
+
+        location_id = result["LocationID"]
+
+        # locationID, Name, Floor#, gridRow, gridCol, Description, EmployeeAssigned
+        # BuildingID, Name, Address, Province, Floors
+        row_location = self.df_locations[self.df_locations["ID"] == location_id]
+        if not row_location.empty:
+            row_location = dict(zip(row_location.keys().tolist(), row_location.values[0].tolist()))
+            result.update({
+                "location_name": row_location["Name"],
+                "location_floor": int(row_location["FloorNumber"]),
+                "location_g_row": row_location["GridRow"],
+                "location_g_col": row_location["GridCol"],
+                "location_desc": row_location["Description"],
+                "location_emp_assigned": row_location["EmployeeAssigned"],
+                "BuildingID": row_location["BuildingID"]
+            })
+            building_id = result["BuildingID"]
+            row_building = self.df_buildings[self.df_buildings["ID"] == building_id]
+            if not row_building.empty:
+                row_building = dict(zip(row_building.keys().tolist(), row_building.values[0].tolist()))
+                result.update({
+                    "building_name": row_building["Name"],
+                    "building_address": row_building["Address"],
+                    "building_province": row_building["Province"],
+                    "building_floors": int(row_building["Floors"])
+                })
+
+            employee_id = result["location_emp_assigned"]
+            row_employee = self.df_customers[self.df_customers["CustomerID"] == employee_id]
+            if not row_employee.empty:
+                row_employee = dict(zip(row_employee.keys().tolist(), row_employee.values[0].tolist()))
+                result.update({
+                    "employee_name": row_employee["Name"],
+                    "employee_department": row_employee["Department"],
+                    "employee_company": row_employee["Company"],
+                    "employee_email": row_employee["Email"],
+                    "employee_work_phone": row_employee["WorkPhone"],
+                    "employee_active": row_employee["Active"]
+                })
+
+                department_id = result["employee_department"]
+                row_department = self.df_departments[self.df_departments["DeptID"] == department_id]
+                if not row_department.empty:
+                    row_department = dict(zip(row_department.keys().tolist(), row_department.values[0].tolist()))
+                    result.update({
+                        "department_name": row_department["Dept"]
+                    })
 
         sub_type_id = result["SubType"] - 1
         # sub_type_row_data = self.df_type.iloc[sub_type_id]
