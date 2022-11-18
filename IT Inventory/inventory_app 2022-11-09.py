@@ -9,7 +9,7 @@ from tkinter_utility import *
 from inventory_queries import *
 from menus import AddItemMenu
 from utility import alpha_seq
-from dnd_onv_states import DNDItemManager
+from dnd_onv_states import DNDItemManagerStatus
 
 
 class InventoryApp(tkinter.Tk):
@@ -116,7 +116,7 @@ class InventoryApp(tkinter.Tk):
         # broken    ->  in use  ==  broken  ->  server  ->  in use
         # server    ->  dispose
         # in use    ->  dispose ==  in use  ->  server  ->  dispose
-        self.dnd_inventory_manager = DNDItemManager(self.frame_item_manager_buttons)
+        self.dnd_inventory_manager = DNDItemManagerStatus(self.frame_item_manager_buttons)
 
         self.tv_label_selected_item,\
         self.label_selected_item,\

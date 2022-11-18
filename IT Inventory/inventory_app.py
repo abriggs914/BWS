@@ -9,7 +9,7 @@ from tkinter_utility import *
 from inventory_queries import *
 from menus import AddItemMenu, TopLevelDNDMenu
 from utility import alpha_seq, dict_print, replace_timestamp_datetime
-from dnd_onv_states import DNDItemManager
+from dnd_onv_states import DNDItemManagerStatus
 
 
 class InventoryApp(tkinter.Tk):
@@ -120,6 +120,24 @@ class InventoryApp(tkinter.Tk):
     def unbind_demo_keys(self):
         self.unbind("<Control-Shift-KeyPress-Q>")
         self.unbind("<Control-Shift-KeyPress-q>")
+
+    def bind_demo_keys_tl_dnd(self):
+        # Status
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_tl_dnd_menu_status)
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_dnd_menu_status)
+
+        # Locations
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-W>", self.insert_demo_value_tl_dnd_menu_location)
+        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-w>", self.insert_demo_value_tl_dnd_menu_location)
+
+    def unbind_demo_keys_tl_dnd(self):
+        # Status
+        self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-Q>")
+        self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-q>")
+
+        # Locations
+        self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-Q>")
+        self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-q>")
 
     def get_values_spin_uom(self):
         res = []
@@ -238,6 +256,9 @@ class InventoryApp(tkinter.Tk):
     def is_status_indication_serial(self, serial_in):
         return self.df_serial_indication[(self.df_serial_indication["Serial"] == serial_in) & (self.df_serial_indication["TableName"] == "ITI Status")]
 
+    def is_location_indication_serial(self, serial_in):
+        return self.df_serial_indication[(self.df_serial_indication["Serial"] == serial_in) & (self.df_serial_indication["TableName"] == "ITI Locations")]
+
     def is_indication_serial(self, serial_in):
         return self.df_serial_indication[self.df_serial_indication["Serial"] == serial_in]
 
@@ -324,28 +345,40 @@ class InventoryApp(tkinter.Tk):
         qty_disposed = 1 if result["IsActive"] in [None, "None", 0, False, "False"] else 0
         qty_server = 1 if sum([qty_unknown, qty_in_use, qty_broken, qty_disposed]) == 0 else 0
 
+        if location_name := result.get("location_name") is not None:
+            if location_name == "Server Room":
+                qty_locations_server, qty_locations_known, qty_locations_unknown = 1, 0, 0
+            else:
+                qty_locations_server, qty_locations_known, qty_locations_unknown = 0, 1, 0
+        else:
+            qty_locations_server, qty_locations_known, qty_locations_unknown = 0, 0, 1
+
         result.update({
             "qty_unknown": qty_unknown,
             "qty_cart": qty_cart,
             "qty_server": qty_server,
             "qty_in_use": qty_in_use,
             "qty_broken": qty_broken,
-            "qty_disposed": qty_disposed
+            "qty_disposed": qty_disposed,
+
+            "qty_locations_server": qty_locations_server,
+            "qty_locations_known": qty_locations_known,
+            "qty_locations_unknown": qty_locations_unknown
         })
 
         print(f"Gathered result '{result}'")
         return result
 
     def open_dnd(self, scan_in):
-        self.tl_dnd_menu = TopLevelDNDMenu(self, self.df_status, self.df_serial_indication, omit_shopping_cart=True)
+        self.tl_dnd_menu = TopLevelDNDMenu(self, self.df_status, self.df_serial_indication, omit_status_shopping_cart=True)
         self.tl_dnd_menu.protocol("WM_DELETE_WINDOW", self.closing_tl_dnd)
         # self.tl_dnd_menu.bind("<Destroy>", self.closing_tl_dnd)
         self.data_tl_dnd_menu = {
-            "server_room": self.tl_dnd_menu.canvas_dnd.iv_server_room_number.get(),
-            "use_number": self.tl_dnd_menu.canvas_dnd.iv_in_use_number.get(),
-            "broken": self.tl_dnd_menu.canvas_dnd.iv_broken_number.get(),
-            "disposed": self.tl_dnd_menu.canvas_dnd.iv_disposed_number.get(),
-            "shopping_cart": self.tl_dnd_menu.canvas_dnd.iv_shopping_cart_number.get()
+            "server_room": self.tl_dnd_menu.canvas_dnd_status.iv_server_room_number.get(),
+            "use_number": self.tl_dnd_menu.canvas_dnd_status.iv_in_use_number.get(),
+            "broken": self.tl_dnd_menu.canvas_dnd_status.iv_broken_number.get(),
+            "disposed": self.tl_dnd_menu.canvas_dnd_status.iv_disposed_number.get(),
+            "shopping_cart": self.tl_dnd_menu.canvas_dnd_status.iv_shopping_cart_number.get()
         }
         data_in = self.gather_dnd_data(scan_in)
         results = {k: v for k, v in data_in.items()}
@@ -355,10 +388,13 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.set_data(data_in)
         apply_state(self.entry_scan_input, "disabled", "down")
         # self.tl_dnd_menu.entry_scannable.set_scan_pass_through()
-        self.tl_dnd_menu.canvas_dnd.status.trace_variable("w", self.tl_dnd_menu_canvas_dnd_status_update)
+        self.tl_dnd_menu.canvas_dnd_status.locked_for_animation.trace_variable("w", self.tl_dnd_menu_canvas_dnd_update_lock_animation)
+        self.tl_dnd_menu.canvas_dnd_status.status.trace_variable("w", self.tl_dnd_menu_canvas_dnd_status_update)
+        self.tl_dnd_menu.canvas_dnd_locations.status.trace_variable("w", self.tl_dnd_menu_canvas_dnd_locations_update)
         # self.tl_dnd_menu.mainloop()
-        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_tl_dnd_menu)
-        self.tl_dnd_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_dnd_menu)
+        self.bind_demo_keys_tl_dnd()
+        # self.tl_dnd_menu.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_tl_dnd_menu)
+        # self.tl_dnd_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_dnd_menu)
 
         self.tl_dnd_menu.entry_scannable.validated_text.trace_variable("w", self.tl_dnd_menu_update_entry_scannable)
 
@@ -367,6 +403,15 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.entry_scannable.configure(state="disabled")
         print(f"{dir(self.tl_dnd_menu.entry_scannable)=}")
         print(dict_print(self.tl_dnd_menu.entry_scannable.__dict__, 'B'))
+
+    def tl_dnd_menu_canvas_dnd_update_lock_animation(self, *args):
+        locked = self.tl_dnd_menu.canvas_dnd_status.locked_for_animation.get()
+        if locked:
+            self.tl_dnd_menu.entry_scannable.configure(state="readonly")
+            self.unbind_demo_keys_tl_dnd()
+        else:
+            self.tl_dnd_menu.entry_scannable.configure(state="normal")
+            self.bind_demo_keys_tl_dnd()
 
     def tl_dnd_menu_update_entry_scannable(self, *args):
         scan_in = "*" + self.tl_dnd_menu.entry_scannable.validated_text.get() + "*"
@@ -412,19 +457,102 @@ class InventoryApp(tkinter.Tk):
                             case _:
                                 raise Exception(f"Error, unknown state scanned. {scanned_status_col_name=}")
                     quantities = {
-                        "in_use": self.tl_dnd_menu.canvas_dnd.iv_in_use_number.get(),
-                        "server": self.tl_dnd_menu.canvas_dnd.iv_server_room_number.get(),
-                        "unknown": self.tl_dnd_menu.canvas_dnd.iv_unknown_number.get(),
-                        "broken": self.tl_dnd_menu.canvas_dnd.iv_broken_number.get(),
-                        "disposed": self.tl_dnd_menu.canvas_dnd.iv_disposed_number.get()
+                        "in_use": self.tl_dnd_menu.canvas_dnd_status.iv_in_use_number.get(),
+                        "server": self.tl_dnd_menu.canvas_dnd_status.iv_server_room_number.get(),
+                        "unknown": self.tl_dnd_menu.canvas_dnd_status.iv_unknown_number.get(),
+                        "broken": self.tl_dnd_menu.canvas_dnd_status.iv_broken_number.get(),
+                        "disposed": self.tl_dnd_menu.canvas_dnd_status.iv_disposed_number.get()
                     }
                     if sum(quantities.values()) != 1:
                         raise Exception("Error, unable to tell where this is coming from.")
 
                     filtered = {k: v for k, v in quantities.items() if v > 0}
                     state_from = list(filtered.keys())[0]
-                    self.tl_dnd_menu.canvas_dnd.animate(state_from, state_to)
+                    self.tl_dnd_menu.canvas_dnd_status.submit_animation(state_from, state_to)
                 else:
+                    df_is_location = self.is_location_indication_serial(scan_in)
+                    is_location = not df_is_location.empty
+                    if is_location:
+
+                        ##############################################################
+                        ##############################################################
+                        ##############################################################
+
+                        scanned_location_col_names = df_is_location["ColName"].tolist()
+                        if len(scanned_location_col_names) != 1:
+                            raise Exception(f"Error more than 1 record returned.")
+                        else:
+                            scanned_location_col_name = scanned_location_col_names[0]
+                            print(f"{scanned_location_col_name=}")
+                            match scanned_location_col_name:
+                                case "Server Room":
+                                    state_to = "server"
+                                case "UNKNOWN" | None:
+                                    state_to = "unknown"
+                                case _:
+                                    state_to = "known"
+
+                            quantities = {
+                                "known": self.tl_dnd_menu.canvas_dnd_locations.iv_known_number.get(),
+                                "server": self.tl_dnd_menu.canvas_dnd_locations.iv_server_room_number.get(),
+                                "unknown": self.tl_dnd_menu.canvas_dnd_locations.iv_unknown_number.get()
+                            }
+                            if sum(quantities.values()) != 1:
+                                raise Exception("Error, unable to tell where this is coming from.")
+
+                            filtered = {k: v for k, v in quantities.items() if v > 0}
+                            state_from = list(filtered.keys())[0]
+                            self.tl_dnd_menu.canvas_dnd_locations.submit_animation(state_from, state_to)
+                            # self.tl_dnd_menu.canvas_dnd_locations.animate(state_from, state_to)
+
+                            # match scanned_location_col_name:
+                            #     case "UNKNOWN":
+                            #         state_to = "unknown"
+                            #     case "Storage":
+                            #         state_to = "server"
+                            #     case "In Service":
+                            #         state_to = "in_use"
+                            #     case "Out of Service":
+                            #         apply_state(self, "disabled", direction="down")
+                            #         options = ["Broken", "Disposed"]
+                            #
+                            #         ans = options[int(CustomMessageBox(
+                            #             "Broken or Disposed?",  # title
+                            #             "Is this item broken or being disposed?",  # msg
+                            #             None,  # x
+                            #             None,  # y
+                            #             *options,  # b1 &  b2
+                            #         ).choice) - 1]
+                            #
+                            #         apply_state(self, "normal", direction="down")
+                            #         apply_state(self.entry_scan_input, "disabled", direction="down")
+                            #         print(f"{ans=}")
+                            #         state_to = ans.lower()
+                            #     case _:
+                            #         raise Exception(f"Error, unknown state scanned. {scanned_status_col_name=}")
+                        # quantities = {
+                        #     "in_use": self.tl_dnd_menu.canvas_dnd_status.iv_in_use_number.get(),
+                        #     "server": self.tl_dnd_menu.canvas_dnd_status.iv_server_room_number.get(),
+                        #     "unknown": self.tl_dnd_menu.canvas_dnd_status.iv_unknown_number.get(),
+                        #     "broken": self.tl_dnd_menu.canvas_dnd_status.iv_broken_number.get(),
+                        #     "disposed": self.tl_dnd_menu.canvas_dnd_status.iv_disposed_number.get()
+                        # }
+                        # if sum(quantities.values()) != 1:
+                        #     raise Exception("Error, unable to tell where this is coming from.")
+                        #
+                        # filtered = {k: v for k, v in quantities.items() if v > 0}
+                        # state_from = list(filtered.keys())[0]
+                        # self.tl_dnd_menu.canvas_dnd_status.animate(state_from, state_to)
+                        # state_from = "FROM"
+                        # state_to = "TO"
+                        # self.tl_dnd_menu.canvas_dnd_locations.animate(state_from, state_to)
+
+                        ##############################################################
+                        ##############################################################
+                        ##############################################################
+
+                    else:
+                        print(f"Scanned indication serial is not a location, '{scan_in}'")
                     print(f"Scanned indication serial is not a status, '{scan_in}'")
             else:
                 print(f"Scanned serial is not an indication serial, '{scan_in}'")
@@ -434,12 +562,20 @@ class InventoryApp(tkinter.Tk):
             print("DIRTY!!!")
         self.tl_dnd_menu.destroy()
 
-
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
-        print(dict_print(eval(self.tl_dnd_menu.canvas_dnd.status.get()), "self.tl_dnd_menu.canvas_dnd.status.get()"))
-        data = eval(self.tl_dnd_menu.canvas_dnd.status.get())
+        print(dict_print(eval(self.tl_dnd_menu.canvas_dnd_status.status.get()), "self.tl_dnd_menu.canvas_dnd_status.status.get()"))
+        data = eval(self.tl_dnd_menu.canvas_dnd_status.status.get())
         data = {"qty_" + k: v for k, v in data.items()}
-        print(dict_print(data, "DATA"))
+        print(dict_print(data, "tl_dnd_menu_canvas_dnd_status_update"))
+        old = eval(replace_timestamp_datetime(self.tl_dnd_menu.tv_set_data.get(), col_in_question="DateCreated"))
+        old.update(data)
+        self.tl_dnd_menu.tv_set_data.set(old)
+
+    def tl_dnd_menu_canvas_dnd_locations_update(self, *args):
+        print(dict_print(eval(self.tl_dnd_menu.canvas_dnd_locations.status.get()), "self.tl_dnd_menu.canvas_dnd_status.status.get()"))
+        data = eval(self.tl_dnd_menu.canvas_dnd_locations.status.get())
+        data = {"qty_" + k: v for k, v in data.items()}
+        print(dict_print(data, "tl_dnd_menu_canvas_dnd_locations_update"))
         old = eval(replace_timestamp_datetime(self.tl_dnd_menu.tv_set_data.get(), col_in_question="DateCreated"))
         old.update(data)
         self.tl_dnd_menu.tv_set_data.set(old)
@@ -449,10 +585,18 @@ class InventoryApp(tkinter.Tk):
         self.entry_scan_input.text.set("0000000100")
         self.entry_scan_input.return_text(event)
 
-    def insert_demo_value_tl_dnd_menu(self, event):
+    def insert_demo_value_tl_dnd_menu_status(self, event):
         # self.entry_scan_input.text.set("0000000250")
         # self.tl_dnd_menu.entry_scannable.text.set("9000000009")  # In Service (ITI Status)
         # self.tl_dnd_menu.entry_scannable.text.set("9000000003")  # Used (ITI Condition)
         # self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service (ITI Status)
         self.tl_dnd_menu.entry_scannable.text.set("9000000007")  # Unkown (ITI Status)
+        self.tl_dnd_menu.entry_scannable.return_text(event)
+
+    def insert_demo_value_tl_dnd_menu_location(self, event):
+        # self.entry_scan_input.text.set("0000000250")
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000009")  # In Service (ITI Status)
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000003")  # Used (ITI Condition)
+        # self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service (ITI Status)
+        self.tl_dnd_menu.entry_scannable.text.set("9000000060")  # Server Room (ITI Locations)
         self.tl_dnd_menu.entry_scannable.return_text(event)

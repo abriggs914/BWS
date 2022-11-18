@@ -1,6 +1,6 @@
 import tkinter
 
-from dnd_onv_states import DNDItemManager
+from dnd_onv_states import DNDItemManagerStatus, DNDItemManagerLocations
 from grid_manager import GridManager
 from tkinter_utility import *
 from utility import alpha_seq, dict_print, replace_timestamp_datetime
@@ -637,24 +637,32 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             master,
             df_status,
             df_serial_indication,
-            omit_server=False,
-            omit_in_use=False,
-            omit_disposed=False,
-            omit_broken=False,
-            omit_shopping_cart=False,
-            omit_unknown=False
+            omit_status_server=False,
+            omit_status_in_use=False,
+            omit_status_disposed=False,
+            omit_status_broken=False,
+            omit_status_shopping_cart=False,
+            omit_status_unknown=False,
+
+            omit_locations_unknown=False,
+            omit_locations_known=False,
+            omit_locations_server=False
     ):
         super().__init__(master)
 
         self.df_status = df_status
         self.df_serial_indication = df_serial_indication
 
-        self.omit_server = omit_server
-        self.omit_in_use = omit_in_use
-        self.omit_disposed = omit_disposed
-        self.omit_broken = omit_broken
-        self.omit_shopping_cart = omit_shopping_cart
-        self.omit_unknown = omit_unknown
+        self.omit_status_server = omit_status_server
+        self.omit_status_in_use = omit_status_in_use
+        self.omit_status_disposed = omit_status_disposed
+        self.omit_status_broken = omit_status_broken
+        self.omit_status_shopping_cart = omit_status_shopping_cart
+        self.omit_status_unknown = omit_status_unknown
+
+        self.omit_locations_known = omit_locations_known
+        self.omit_locations_unknown = omit_locations_unknown
+        self.omit_locations_server = omit_locations_server
 
         self.tv_set_data = tkinter.Variable(self, value={})
         self.original_data = tkinter.Variable(self, value={})
@@ -783,21 +791,25 @@ class TopLevelDNDMenu(tkinter.Toplevel):
 
         self.init_data_fields()
 
-        self.canvas_dnd = DNDItemManager(
+        self.canvas_dnd_status = DNDItemManagerStatus(
             self,
-            omit_server=self.omit_server,
-            omit_in_use=self.omit_in_use,
-            omit_disposed=self.omit_disposed,
-            omit_broken=self.omit_broken,
-            omit_shopping_cart=self.omit_shopping_cart,
-            omit_unknown=self.omit_unknown
+            omit_server=self.omit_status_server,
+            omit_in_use=self.omit_status_in_use,
+            omit_disposed=self.omit_status_disposed,
+            omit_broken=self.omit_status_broken,
+            omit_shopping_cart=self.omit_status_shopping_cart,
+            omit_unknown=self.omit_status_unknown
+        )
+
+        self.canvas_dnd_locations = DNDItemManagerLocations(
+            self,
+            omit_server=self.omit_locations_server,
+            omit_known=self.omit_locations_known,
+            omit_unknown=self.omit_locations_unknown
         )
 
         self.entry_scannable = ScannableEntry(self)
         self.entry_scannable.set_scan_pass_through()
-
-        # Add widgets
-        self.frame_data_fields.grid()
 
         self.frame_data_fields_row_1.grid()
         self.frame_data_fields_row_2.grid()
@@ -852,8 +864,27 @@ class TopLevelDNDMenu(tkinter.Toplevel):
             label.grid(row=row, column=col)
             entry.grid(row=row, column=col + 1)
 
-        self.canvas_dnd.grid()
-        self.entry_scannable.grid()
+        self.frame_history = tkinter.Frame(self)
+        self.tv_label_listview_history_list,\
+        self.label_listview_history_list,\
+        self.tv_listview_history_list,\
+        self.listview_history_list\
+            = list_factory(
+            self.frame_history,
+            tv_label="History",
+            tv_list=[
+                "Nothing to display."
+            ]
+        )
+        self.label_listview_history_list.grid()
+        self.listview_history_list.grid()
+
+        # Add widgets
+        self.frame_data_fields.grid(row=0, column=0, columnspan=2)
+        self.canvas_dnd_status.grid(row=1, column=0)
+        self.entry_scannable.grid(row=2, column=0)
+        self.canvas_dnd_locations.grid(row=3, column=0)
+        self.frame_history.grid(row=1, column=1, rowspan=3)
 
     def init_data_fields(self):
         self.tv_label_item_name, \
@@ -1141,7 +1172,7 @@ class TopLevelDNDMenu(tkinter.Toplevel):
     #     if scan_in:
     #         result_is_status = self.is_status(scan_in)
     #         if not result_is_status.empty:
-    #             self.canvas_dnd.animate()
+    #             self.canvas_dnd_status.animate()
 
     def is_status(self, scan_in):
         return self.df_serial_indication[self.df_serial_indication["Serial"] == scan_in]
@@ -1149,6 +1180,7 @@ class TopLevelDNDMenu(tkinter.Toplevel):
     def set_data(self, data_in):
         self.original_data.set(dict(data_in))
         self.tv_set_data.set(data_in)
+        self.init_dnd_location_tooltip()
         self.tv_entry_item_name.set(data_in.get("Name", "N/A"))
         self.tv_entry_item_status.set(data_in.get("StatusName", "N/A"))
         self.tv_entry_item_is_active.set(data_in.get("IsActive", "N/A"))
@@ -1178,16 +1210,37 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         qty_broken = data_in.get("qty_broken", 0)
         qty_disposed = data_in.get("qty_disposed", 0)
 
-        self.canvas_dnd.iv_unknown_number.set(qty_unknown)
-        self.canvas_dnd.iv_shopping_cart_number.set(qty_cart)
-        self.canvas_dnd.iv_server_room_number.set(qty_server)
-        self.canvas_dnd.iv_in_use_number.set(qty_in_use)
-        self.canvas_dnd.iv_broken_number.set(qty_broken)
-        self.canvas_dnd.iv_disposed_number.set(qty_disposed)
+        qty_locations_server = data_in.get("qty_locations_server", 0)
+        qty_locations_known = data_in.get("qty_locations_known", 0)
+        qty_locations_unknown = data_in.get("qty_locations_unknown", 0)
 
-        self.canvas_dnd.set_status_update()
+        self.canvas_dnd_status.iv_unknown_number.set(qty_unknown)
+        self.canvas_dnd_status.iv_shopping_cart_number.set(qty_cart)
+        self.canvas_dnd_status.iv_server_room_number.set(qty_server)
+        self.canvas_dnd_status.iv_in_use_number.set(qty_in_use)
+        self.canvas_dnd_status.iv_broken_number.set(qty_broken)
+        self.canvas_dnd_status.iv_disposed_number.set(qty_disposed)
+
+        self.canvas_dnd_locations.iv_server_room_number.set(qty_locations_server)
+        self.canvas_dnd_locations.iv_known_number.set(qty_locations_known)
+        self.canvas_dnd_locations.iv_unknown_number.set(qty_locations_unknown)
+
+        self.canvas_dnd_status.set_status_update()
+        self.canvas_dnd_locations.set_status_update()
 
         print(dict_print(data_in, "Data_in"))
+
+    def init_dnd_location_tooltip(self):
+        print(f"{self.tv_set_data.get()=}")
+        data_tt = eval(replace_timestamp_datetime(self.tv_set_data.get(), col_in_question="DateCreated"))
+        print(f"{data_tt=}")
+        self.canvas_dnd_locations.set_tooltip_data({
+            "text": "\tRoom ID = ({rid})\nName:\t{ln}\nDesc:\t{ld}".format(
+                rid=data_tt.get("locationID", "N/A"),
+                ln=data_tt.get("location_name", "N/A"),
+                ld=data_tt.get("location_desc", "N/A")
+            )
+        })
 
     def is_dirty(self):
         print(f"Checking is dirty")

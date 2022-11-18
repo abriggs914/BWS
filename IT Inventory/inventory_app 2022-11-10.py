@@ -9,7 +9,7 @@ from tkinter_utility import *
 from inventory_queries import *
 from menus import AddItemMenu
 from utility import alpha_seq
-from dnd_onv_states import DNDItemManager
+from dnd_onv_states import DNDItemManagerStatus
 
 
 class InventoryApp(tkinter.Tk):

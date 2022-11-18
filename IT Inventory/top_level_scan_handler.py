@@ -1,5 +1,5 @@
 import tkinter
-from dnd_onv_states import DNDItemManager
+from dnd_onv_states import DNDItemManagerStatus
 
 
 class TopLevelScanHandler(tkinter.Toplevel):
@@ -9,7 +9,7 @@ class TopLevelScanHandler(tkinter.Toplevel):
 
         # Create Widgets
         self.frame_a = tkinter.Frame(self)
-        self.dnd_states = DNDItemManager(self.frame_a)
+        self.dnd_states = DNDItemManagerStatus(self.frame_a)
 
 
         # Grid widgets
