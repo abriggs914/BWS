@@ -558,7 +558,10 @@ class DNDItemManagerStatus(tkinter.Canvas):
         self.set_status_update()
 
     def submit_animation(self, state_from, state_to):
-        self.animate(state_from, state_to)
+        if state_from != state_to:
+            self.animate(state_from, state_to)
+        else:
+            messagebox.showerror(title="Status Change", message=f"Cannot move item, new state is same as old state: '{state_to}'")
 
     def animate(self, state_from, state_to):
         valid_states = {"in_use", "server", "broken", "disposed", "unknown"}
@@ -1170,7 +1173,10 @@ class DNDItemManagerLocations(tkinter.Canvas):
         self.set_status_update()
 
     def submit_animation(self, state_from, state_to):
-        self.animate(state_from, state_to)
+        if state_from != state_to:
+            self.animate(state_from, state_to)
+        else:
+            messagebox.showerror(title="Location Movement", message=f"Cannot move item, new state is same as old state: '{state_to}'")
 
     def animate(self, state_from, state_to):
         valid_states = {"known", "server", "unknown"}

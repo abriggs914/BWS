@@ -117,9 +117,17 @@ class InventoryApp(tkinter.Tk):
         self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)
         self.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_main_menu)
 
+        # New item
+        self.bind("<Control-Shift-KeyPress-W>", self.insert_demo_value_new_item)
+        self.bind("<Control-Shift-KeyPress-w>", self.insert_demo_value_new_item)
+
     def unbind_demo_keys(self):
         self.unbind("<Control-Shift-KeyPress-Q>")
         self.unbind("<Control-Shift-KeyPress-q>")
+
+        # New item
+        self.unbind("<Control-Shift-KeyPress-W>")
+        self.unbind("<Control-Shift-KeyPress-w>")
 
     def bind_demo_keys_tl_dnd(self):
         # Status
@@ -204,6 +212,14 @@ class InventoryApp(tkinter.Tk):
             res.append("||".join(list(map(str, [iid, name]))))
         return res
 
+    def get_values_spin_location(self):
+        res = []
+        for i, row in self.df_locations.join(self.df_customers, on="").iterrows():
+            iid = row["ID"]
+            name = row["Name"]
+            res.append("||".join(list(map(str, [iid, name]))))
+        return res
+
     def submit_scan(self, *args):
         scan_in = self.entry_scan_input.validated_text.get()
         if scan_in:
@@ -223,6 +239,12 @@ class InventoryApp(tkinter.Tk):
                 if is_known_item:
                     # open dnd menu to handle the movements
                     self.open_dnd(scan_in[1:-1])
+                else:
+                    if len(scan_in[1:-1]) == 10:
+                        print(f"make a new entry with {scan_in=}")
+                        self.begin_create_new_item()
+            else:
+                messagebox.showinfo(title="Scan in", message="This serial is an indication serial")
 
     def begin_create_new_item(self):
         print("CREATE NEW ITEM")
@@ -251,7 +273,7 @@ class InventoryApp(tkinter.Tk):
         self.level_add_menu.status.trace_variable("w", self.submit_new_item)
         self.level_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
         self.level_add_menu.mainloop()
-        self.accepting_bool.set(True)
+        # self.accepting_bool.set(True)
 
     def is_status_indication_serial(self, serial_in):
         return self.df_serial_indication[(self.df_serial_indication["Serial"] == serial_in) & (self.df_serial_indication["TableName"] == "ITI Status")]
@@ -580,6 +602,10 @@ class InventoryApp(tkinter.Tk):
         old.update(data)
         self.tl_dnd_menu.tv_set_data.set(old)
 
+    def insert_demo_value_new_item(self, event):
+        self.entry_scan_input.text.set("1000000006")
+        self.entry_scan_input.return_text(event)
+
     def insert_demo_value_main_menu(self, event):
         # self.entry_scan_input.text.set("0000000250")
         self.entry_scan_input.text.set("0000000100")
@@ -600,3 +626,32 @@ class InventoryApp(tkinter.Tk):
         # self.tl_dnd_menu.entry_scannable.text.set("9000000010")  # Out of Service (ITI Status)
         self.tl_dnd_menu.entry_scannable.text.set("9000000060")  # Server Room (ITI Locations)
         self.tl_dnd_menu.entry_scannable.return_text(event)
+
+    def submit_new_item(self, *args):
+        print(f"New Item Submission:")
+        all_keys = self.level_add_menu.valid_status_keys
+        data_status = eval(self.level_add_menu.status.get())
+        data_valid = eval(self.level_add_menu.valid.get())
+        if not all_keys.difference(data_status.keys()) and data_status["submission"]:
+            # all valid
+            print(f"all valid")
+            msg = f"Are you sure you want to add '{data_status['name']}' to ITI Items?"
+            ans = messagebox.askyesnocancel(title="Inventory Addition", message=msg)
+            if ans:
+                insert_new_item(data_status)
+                msg = f"Successfully added '{data_status['name']}' to ITI Items."
+                messagebox.showinfo(title="Inventory Added", message=msg)
+                self.new_item_save_state.set({})
+                raise Exception("NEED TO REFRESH THE v_ITI_Items TREEVIEW")
+            else:
+                # save unfinished work for next opening
+                print(f"save unfinished work for next opening")
+                self.new_item_save_state.set(data_valid)
+        else:
+            # save unfinished work for next opening
+            print(f"save unfinished work for next opening")
+            self.new_item_save_state.set(data_valid)
+        print(f"{data_status=}\n{data_valid=}")
+
+    def update_serial_scan(self, *args):
+        print(f"{args=}")

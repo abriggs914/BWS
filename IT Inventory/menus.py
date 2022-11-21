@@ -1256,4 +1256,3 @@ class TopLevelDNDMenu(tkinter.Toplevel):
         print(dict_print(new, "Current Data"))
         print(f"result: {old != new}")
         return old != new
-
