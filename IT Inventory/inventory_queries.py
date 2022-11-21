@@ -323,7 +323,7 @@ def insert_new_item(data):
     ttype = data["type"]
     stype = data["sub_type"]
     serial = data["serial"]
-    location = data["LocationID"]
+    location = data["locationID"]
     date_created = datetime.datetime.now()
     sql = SQL_INSERT_NEW_ITI_ITEM["sql"].format(
         n=name,

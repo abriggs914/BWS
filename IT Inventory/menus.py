@@ -19,13 +19,14 @@ class AddItemMenu(tkinter.Toplevel):
             spin_values_network,
             spin_values_wire,
             spin_values_unknown,
+            df_locations,
             width=500,
             height=500,
             save_state=None
     ):
         super().__init__(master)
 
-        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition", "serial"]
+        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition", "serial", "locationID"]
         self.valid_status_keys = set(self.valid_status_keys_order)
         self.status = tkinter.Variable(self, value={})  # populate this only on successful exit.
         self.valid = tkinter.Variable(self, value={})  # populate this one in all other instances.
@@ -39,6 +40,7 @@ class AddItemMenu(tkinter.Toplevel):
         self.spin_values_network = self.validate_values_spin_network(spin_values_network)
         self.spin_values_wire = self.validate_values_spin_wire(spin_values_wire)
         self.spin_values_unknown = self.validate_values_spin_unknown(spin_values_unknown)
+        self.df_locations = df_locations
         self.save_state = save_state
 
         self.namer = alpha_seq(1000, prefix="w_AIM_")
@@ -47,22 +49,27 @@ class AddItemMenu(tkinter.Toplevel):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.title("Add New ITI Inventory")
 
-        self.tv_entry_scannable_input,\
-        self.label_scannable_input,\
-        self.tv_entry_scannable_input,\
-        self.entry_scannable_input\
-            = entry_factory(
-                self,
-                tv_label="Scannable"
-        )
+        # self.tv_entry_scannable_input,\
+        # self.label_scannable_input,\
+        # self.tv_entry_scannable_input,\
+        # self.entry_scannable_input\
+        #     = entry_factory(
+        #         self,
+        #         tv_label="Scannable"
+        # )
+        #
+        # self.tv_entry_scannable_input.trace_variable("w", self.update_serial_input)
+        # self.tv2_reset_value = 750
+        # self.tv2_counter = tkinter.IntVar(self, value=self.tv2_reset_value)
+        #
+        # self.accept_reset_value = 2500
+        # self.accept_counter = tkinter.IntVar(self, value=self.accept_reset_value)
+        # self.accepting_bool = tkinter.BooleanVar(self, value=True)
 
-        self.tv_entry_scannable_input.trace_variable("w", self.update_serial_input)
-        self.tv2_reset_value = 750
-        self.tv2_counter = tkinter.IntVar(self, value=self.tv2_reset_value)
-
-        self.accept_reset_value = 2500
-        self.accept_counter = tkinter.IntVar(self, value=self.accept_reset_value)
-        self.accepting_bool = tkinter.BooleanVar(self, value=True)
+        self.tv_entry_scannable_input = tkinter.StringVar(self, value="Scan Barcode:")
+        self.label_scannable_input = tkinter.Label(self, textvariable=self.tv_entry_scannable_input)
+        self.entry_scannable_input = ScannableEntry(self)
+        self.entry_scannable_input.set_scan_pass_through()
 
         # Cancel button
         self.tv_btn_cancel_creation, \
@@ -244,80 +251,133 @@ class AddItemMenu(tkinter.Toplevel):
             }
         )
 
-        # Grid Manage Widgets
-        self.gm1 = GridManager()
-        self.gm1.grid_widgets([
-            [
-                self.lbl_entry_name,
-                {
-                    "widget": self.entry_name,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.lbl_type,
-                {
-                    "widget": self.spin_type,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.lbl_subtype,
-                {
-                    "widget": self.spin_subtype,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.lbl_cond,
-                {
-                    "widget": self.spin_cond,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.lbl_qty,
-                {
-                    "widget": self.spin_qty,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.lbl_uom,
-                {
-                    "widget": self.spin_uom,
-                    "columnspan": 2
-                }
-            ],
-            [
-                {
-                    "widget": self.lbl_entry_desc,
-                    "columnspan": 3
-                }
-            ],
-            [
-                {
-                    "widget": self.entry_desc,
-                    "columnspan": 3,
-                    "sticky": "nsew"
-                }
-            ],
-            [
-                self.label_serial,
-                {
-                    "widget": self.entry_serial,
-                    "columnspan": 2
-                }
-            ],
-            [
-                self.btn_cancel_creation,
-                self.btn_clear_fields,
-                self.btn_submit
-            ]
-        ])
+        print(f"{df_locations.columns=}")
+        print(f"{df_locations=}")
+
+        self.tv_label_treeview_location,\
+        self.label_treeview_location,\
+        self.treeview_location,\
+        self.scrollbar_x_treeview_location,\
+        self.scrollbar_y_treeview_location\
+            = treeview_factory(
+            self
+            , self.df_locations
+            , viewable_column_names=["Loc. Name", "Description", "Bldng", "FloorNumber", "Emp. Name"]
+        )
+
+        self.lbl_entry_name.grid(row=0, column=0, rowspan=1, columnspan=1)
+        self.entry_name.grid(row=0, column=1, rowspan=1, columnspan=2)
+        self.lbl_type.grid(row=1, column=0, rowspan=1, columnspan=1)
+        self.spin_type.grid(row=1, column=1, rowspan=1, columnspan=2)
+        self.lbl_subtype.grid(row=2, column=0, rowspan=1, columnspan=1)
+        self.spin_subtype.grid(row=2, column=1, rowspan=1, columnspan=2)
+        self.lbl_cond.grid(row=3, column=0, rowspan=1, columnspan=1)
+        self.spin_cond.grid(row=3, column=1, rowspan=1, columnspan=2)
+        self.lbl_qty.grid(row=4, column=0, rowspan=1, columnspan=1)
+        self.spin_qty.grid(row=4, column=1, rowspan=1, columnspan=2)
+        self.lbl_uom.grid(row=5, column=0, rowspan=1, columnspan=1)
+        self.spin_uom.grid(row=5, column=1, rowspan=1, columnspan=2)
+
+        self.lbl_entry_desc.grid(row=6, column=0, rowspan=1, columnspan=3)
+        self.entry_desc.grid(row=7, column=0, rowspan=1, columnspan=3, sticky="nsew")
+        self.label_scannable_input.grid(row=8, column=0, rowspan=1, columnspan=1)
+        self.entry_scannable_input.grid(row=8, column=1, rowspan=1, columnspan=2)
+        self.label_treeview_location.grid(row=9, column=0, rowspan=1, columnspan=3)
+        self.treeview_location.grid(row=10, column=0, rowspan=1, columnspan=3)
+
+        self.scrollbar_x_treeview_location.grid(row=11, column=0, rowspan=1, columnspan=3, sticky="ew")
+        self.scrollbar_y_treeview_location.grid(row=10, column=4, rowspan=1, columnspan=1, sticky="ns")
+
+        self.btn_cancel_creation.grid(row=12, column=0, rowspan=1, columnspan=1)
+        self.btn_clear_fields.grid(row=12, column=1, rowspan=1, columnspan=1)
+        self.btn_submit.grid(row=12, column=2, rowspan=1, columnspan=1)
+
+        # # Grid Manage Widgets
+        # self.gm1 = GridManager()
+        # self.gm1.grid_widgets([
+        #     [
+        #         self.lbl_entry_name,
+        #         {
+        #             "widget": self.entry_name,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.lbl_type,
+        #         {
+        #             "widget": self.spin_type,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.lbl_subtype,
+        #         {
+        #             "widget": self.spin_subtype,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.lbl_cond,
+        #         {
+        #             "widget": self.spin_cond,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.lbl_qty,
+        #         {
+        #             "widget": self.spin_qty,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.lbl_uom,
+        #         {
+        #             "widget": self.spin_uom,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         {
+        #             "widget": self.lbl_entry_desc,
+        #             "columnspan": 3
+        #         }
+        #     ],
+        #     [
+        #         {
+        #             "widget": self.entry_desc,
+        #             "columnspan": 3,
+        #             "sticky": "nsew"
+        #         }
+        #     ],
+        #     [
+        #         self.label_serial,
+        #         {
+        #             "widget": self.entry_serial,
+        #             "columnspan": 2
+        #         }
+        #     ],
+        #     [
+        #         self.label_treeview_location,
+        #         {
+        #             "widget": self.treeview_location,
+        #             "columnspan": 3
+        #         },
+        #         {
+        #             "widget": self.scrollbar_x_treeview_location,
+        #             "columnspan": 3
+        #         },
+        #         self.scrollbar_y_treeview_location
+        #     ],
+        #     [
+        #         self.btn_cancel_creation,
+        #         self.btn_clear_fields,
+        #         self.btn_submit
+        #     ]
+        # ])
 
         self.tv_spin_type.trace_variable("w", self.update_type)
-        self.bind("<KeyPress>", self.change_key_press)
+        # self.bind("<KeyPress>", self.change_key_press)
 
         if self.save_state:
             self.tv_entry_name.set(self.save_state.get("name", ""))
@@ -327,6 +387,7 @@ class AddItemMenu(tkinter.Toplevel):
             self.tv_spin_uom.set(self.save_state.get("uom", "UNKNOWN"))
             self.tv_entry_desc.set(self.save_state.get("description", ""))
             self.tv_spin_qty.set(self.save_state.get("quantity", ""))
+            # self.tv_spin_location.set(self.save_state.get("location", "UNKNOWN"))
 
     def validate_values_spin_uom(self, spin_values_uom):
         res = {
@@ -574,60 +635,60 @@ class AddItemMenu(tkinter.Toplevel):
         self.entry_serial.configure(foreground="red")
         self.accept_serial.set(False)
 
-    def change_key_press(self, *args):
-        print(f"key press {args=}")
-        # arg, *rest = args
-        # if arg.char.isalpha() or arg.char.isdigit():
-        #     self.pressed_keys.set(self.pressed_keys.get() + arg.char)
-        # self.tv2.set(self.pressed_keys.get())
-        # self.update_serial_input(args)
+    # def change_key_press(self, *args):
+    #     print(f"key press {args=}")
+    #     # arg, *rest = args
+    #     # if arg.char.isalpha() or arg.char.isdigit():
+    #     #     self.pressed_keys.set(self.pressed_keys.get() + arg.char)
+    #     # self.tv2.set(self.pressed_keys.get())
+    #     # self.update_serial_input(args)
+    #
+    #     # arg, *rest = args
+    #     # if arg.char.isalpha() or arg.char.isdigit():
+    #     #     self.tv2.set(arg.char)
+    #
+    #     # arg, *rest = args
+    #     # if arg.char.isalpha() or arg.char.isdigit():
+    #     #     self.e1.focus()
+    #
+    #     arg, *rest = args
+    #     if arg.char.isalpha() or arg.char.isdigit():
+    #         if self.accepting_bool.get():
+    #             # self.tv2.set(arg.char + self.tv2.get())
+    #             print(f"I WANT TO ADD MISSING CHAR {arg.char=} to str={self.tv_entry_scannable_input.get()=}")
+    #             self.update_counter_in(arg.char, self.tv2_reset_value)
+    #             # self.tv2.set(self.tv2.get())
+    #             # self.tv2.set(self.tv2.get())
+    #             self.accepting_bool.set(False)
+    #         # self.e1.icursor("end")
+    #             self.entry_scannable_input.focus()
 
-        # arg, *rest = args
-        # if arg.char.isalpha() or arg.char.isdigit():
-        #     self.tv2.set(arg.char)
+    # def update_serial_input(self, *args):
+    #     print(f"update_serial_input, {self.tv_entry_scannable_input.get()}")
+    #     self.tv2_counter.set(self.tv2_reset_value)
+    #     self.count_down_serial_input()
 
-        # arg, *rest = args
-        # if arg.char.isalpha() or arg.char.isdigit():
-        #     self.e1.focus()
-
-        arg, *rest = args
-        if arg.char.isalpha() or arg.char.isdigit():
-            if self.accepting_bool.get():
-                # self.tv2.set(arg.char + self.tv2.get())
-                print(f"I WANT TO ADD MISSING CHAR {arg.char=} to str={self.tv_entry_scannable_input.get()=}")
-                self.update_counter_in(arg.char, self.tv2_reset_value)
-                # self.tv2.set(self.tv2.get())
-                # self.tv2.set(self.tv2.get())
-                self.accepting_bool.set(False)
-            # self.e1.icursor("end")
-                self.entry_scannable_input.focus()
-
-    def update_serial_input(self, *args):
-        print(f"update_serial_input, {self.tv_entry_scannable_input.get()}")
-        self.tv2_counter.set(self.tv2_reset_value)
-        self.count_down_serial_input()
-
-    def count_down_serial_input(self, *args):
-        v = self.tv2_counter.get()
-        # print(f"{v=}")
-        if v > 0:
-            self.tv2_counter.set(v - 1)
-            self.after(1, self.count_down_serial_input)
-        elif v == 0:
-            self.submit_serial_entry()
-            self.tv2_counter.set(-1)
-
-    def update_counter_in(self, char, t):
-        if t <= 0:
-            self.tv_entry_scannable_input.set(char + self.tv_entry_scannable_input.get())
-            self.entry_scannable_input.icursor("end")
-        else:
-            self.after(1, self.update_counter_in, char, t - 1)
-
-    def submit_serial_entry(self):
-        print("submit_serial_entry")
-        serial_in = self.tv_entry_scannable_input.get()
-        print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
+    # def count_down_serial_input(self, *args):
+    #     v = self.tv2_counter.get()
+    #     # print(f"{v=}")
+    #     if v > 0:
+    #         self.tv2_counter.set(v - 1)
+    #         self.after(1, self.count_down_serial_input)
+    #     elif v == 0:
+    #         self.submit_serial_entry()
+    #         self.tv2_counter.set(-1)
+    #
+    # def update_counter_in(self, char, t):
+    #     if t <= 0:
+    #         self.tv_entry_scannable_input.set(char + self.tv_entry_scannable_input.get())
+    #         self.entry_scannable_input.icursor("end")
+    #     else:
+    #         self.after(1, self.update_counter_in, char, t - 1)
+    #
+    # def submit_serial_entry(self):
+    #     print("submit_serial_entry")
+    #     serial_in = self.tv_entry_scannable_input.get()
+    #     print(f"FINALLY ==> ({len(serial_in)}), '{serial_in}'\n{type(serial_in)=}")
 
 
 class TopLevelDNDMenu(tkinter.Toplevel):

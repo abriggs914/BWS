@@ -39,6 +39,7 @@ class InventoryApp(tkinter.Tk):
         self.df_locations = None
         self.df_customers = None
         self.df_departments = None
+        self.df_loc_emp_bld_dpt = None
 
         self.populate_data()
 
@@ -64,6 +65,7 @@ class InventoryApp(tkinter.Tk):
                 ,self.df_locations
                 ,self.df_customers
                 ,self.df_departments
+                ,self.df_loc_emp_bld_dpt
             ]
              ]), "Error loading some data."
 
@@ -112,6 +114,26 @@ class InventoryApp(tkinter.Tk):
         self.df_locations = connect(**SQL_ITI_LOCATIONS)
         self.df_customers = connect(**SQL_ITR_CUSTOMERS)
         self.df_departments = connect(**SQL_DEPARTMENTS)
+
+        self.df_loc_emp_bld_dpt = pandas.merge(
+            pandas.merge(
+                self.df_locations,
+                self.df_customers,
+                left_on="EmployeeAssigned",
+                right_on="CustomerID"
+            ),
+            self.df_buildings,
+            left_on="BuildingID",
+            right_on="ID"
+        )
+        self.df_loc_emp_bld_dpt.rename(
+            columns={
+                'Name_x': 'Loc. Name',
+                'Name': 'Bldng',
+                'Name_y': 'Emp. Name'
+            },
+            inplace=True
+        )
 
     def bind_demo_keys(self):
         self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)
@@ -258,7 +280,7 @@ class InventoryApp(tkinter.Tk):
         values_unknown = self.get_values_spin_unknown()
         save_state = eval(self.new_item_save_state.get())
         # print(f"{values_uom=}, {values_type}")
-        self.level_add_menu = AddItemMenu(
+        self.tl_add_menu = AddItemMenu(
             self,
             spin_values_uom=values_uom,
             spin_values_type=values_type,
@@ -268,11 +290,12 @@ class InventoryApp(tkinter.Tk):
             spin_values_network=values_network,
             spin_values_wire=values_wire,
             spin_values_unknown=values_unknown,
+            df_locations=self.df_loc_emp_bld_dpt,
             save_state=save_state
         )
-        self.level_add_menu.status.trace_variable("w", self.submit_new_item)
-        self.level_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
-        self.level_add_menu.mainloop()
+        self.tl_add_menu.status.trace_variable("w", self.submit_new_item)
+        self.tl_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
+        self.tl_add_menu.mainloop()
         # self.accepting_bool.set(True)
 
     def is_status_indication_serial(self, serial_in):
@@ -629,9 +652,9 @@ class InventoryApp(tkinter.Tk):
 
     def submit_new_item(self, *args):
         print(f"New Item Submission:")
-        all_keys = self.level_add_menu.valid_status_keys
-        data_status = eval(self.level_add_menu.status.get())
-        data_valid = eval(self.level_add_menu.valid.get())
+        all_keys = self.tl_add_menu.valid_status_keys
+        data_status = eval(self.tl_add_menu.status.get())
+        data_valid = eval(self.tl_add_menu.valid.get())
         if not all_keys.difference(data_status.keys()) and data_status["submission"]:
             # all valid
             print(f"all valid")

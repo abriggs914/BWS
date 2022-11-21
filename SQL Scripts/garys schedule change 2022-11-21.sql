@@ -1,0 +1,1 @@
+exec [sp_ProductionSchedule V4_Slots] '2022-10-01', '2022-10-31'

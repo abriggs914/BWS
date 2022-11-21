@@ -93,5 +93,7 @@ SELECT TOP (1000) [Quote#]
       ,[DiscountSetBy]
       ,[ProductID]
   FROM [BWSdb].[dbo].[Orders]
+  WHERE
+	[Order Date] >= '2022-11-16'
   ORDER BY
 	[Order Date] DESC
