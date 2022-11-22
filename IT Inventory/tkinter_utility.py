@@ -291,7 +291,7 @@ def treeview_factory(
 
     for i, row in enumerate(dataframe.iterrows()):
         idx, row = row
-        # print(f"{row=}, {type(row)=}")
+        print(f"{row.tolist()=}, {type(row)=}, text={f'B_{i}'}, iid={f'C_{i}'}")
         dat = [row[c_name] for c_name in viewable_column_names]
         treeview.insert("", tkinter.END, text=f"B_{i}", iid=f"C_{i}", values=dat)
 

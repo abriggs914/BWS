@@ -169,6 +169,24 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-Q>")
         self.tl_dnd_menu.unbind("<Control-Shift-KeyPress-q>")
 
+    def bind_demo_keys_tl_add(self):
+        # Status
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_tl_add_menu_status)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_add_menu_status)
+
+        # Locations
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-W>", self.insert_demo_value_tl_add_menu_location)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-w>", self.insert_demo_value_tl_add_menu_location)
+
+    def unbind_demo_keys_tl_add(self):
+        # Status
+        self.tl_add_menu.unbind("<Control-Shift-KeyPress-Q>")
+        self.tl_add_menu.unbind("<Control-Shift-KeyPress-q>")
+
+        # Locations
+        self.tl_add_menu.unbind("<Control-Shift-KeyPress-Q>")
+        self.tl_add_menu.unbind("<Control-Shift-KeyPress-q>")
+
     def get_values_spin_uom(self):
         res = []
         for i, row in self.df_uom.iterrows():
@@ -234,14 +252,6 @@ class InventoryApp(tkinter.Tk):
             res.append("||".join(list(map(str, [iid, name]))))
         return res
 
-    def get_values_spin_location(self):
-        res = []
-        for i, row in self.df_locations.join(self.df_customers, on="").iterrows():
-            iid = row["ID"]
-            name = row["Name"]
-            res.append("||".join(list(map(str, [iid, name]))))
-        return res
-
     def submit_scan(self, *args):
         scan_in = self.entry_scan_input.validated_text.get()
         if scan_in:
@@ -294,7 +304,11 @@ class InventoryApp(tkinter.Tk):
             save_state=save_state
         )
         self.tl_add_menu.status.trace_variable("w", self.submit_new_item)
-        self.tl_add_menu.tv_entry_serial.trace_variable("w", self.update_serial_scan)
+        self.tl_add_menu.entry_scannable_input.text.trace_variable("w", self.tl_add_menu_update_serial_scan)
+
+        self.tl_add_menu.treeview_location.bind("<<TreeviewSelect>>", self.tl_add_menu_treeview_select)
+        self.unbind_demo_keys()
+        self.bind_demo_keys_tl_add()
         self.tl_add_menu.mainloop()
         # self.accepting_bool.set(True)
 
@@ -650,6 +664,14 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.entry_scannable.text.set("9000000060")  # Server Room (ITI Locations)
         self.tl_dnd_menu.entry_scannable.return_text(event)
 
+    def insert_demo_value_tl_add_menu_status(self, event):
+        self.tl_add_menu.entry_scannable_input.text.set("9000000010")  # Out of Service (ITI Status)
+        self.tl_add_menu.entry_scannable_input.return_text(event)
+
+    def insert_demo_value_tl_add_menu_location(self, event):
+        self.tl_add_menu.entry_scannable_input.text.set("9000000060")  # Server Room (ITI Locations)
+        self.tl_add_menu.entry_scannable_input.return_text(event)
+
     def submit_new_item(self, *args):
         print(f"New Item Submission:")
         all_keys = self.tl_add_menu.valid_status_keys
@@ -676,5 +698,47 @@ class InventoryApp(tkinter.Tk):
             self.new_item_save_state.set(data_valid)
         print(f"{data_status=}\n{data_valid=}")
 
-    def update_serial_scan(self, *args):
+    def tl_add_menu_update_serial_scan(self, *args):
         print(f"{args=}")
+        widget = self.tl_add_menu.entry_scannable_input
+        var = widget.text
+        val = var.get()
+        print(f"{widget=}, {var=}, {val=}")
+        df_is = self.is_indication_serial(f"*{val}*")
+        is_df_is = not df_is.empty
+        # if not (df_is := self.is_indication_serial(val)).empty:
+        print(f"{df_is=}, {is_df_is=}")
+        if is_df_is:
+            table = df_is["TableName"].tolist()[0]
+            row_id = df_is["RowID"].tolist()[0]
+            col_val = df_is["ColName"].tolist()[0]
+
+            df_loc = self.df_loc_emp_bld_dpt[self.df_loc_emp_bld_dpt["TableName"] == table & self.df_loc_emp_bld_dpt["RowID"] == row_id]
+            if not df_loc.empty:
+                print(f"{df_loc=}")
+                row = df_loc.tolist()[0]
+                print(f"{table=}, {row_id=}, {col_val=}, {row=}, {row['ID']=}")
+                match table:
+                    case "ITI Locations":
+                        self.tl_add_menu.treeview_location.selection_set(f"C_{row_id - 1}")
+                    case _:
+                        print("Error...")
+            else:
+                print(f"tl_add_menu_update_serial_scan, df_loc returned empty dataframe.")
+        else:
+            print(f"tl_add_menu_update_serial_scan, please use an indication serial here.")
+
+
+    def tl_add_menu_treeview_select(self, event):
+        """Treeview of location choices updated in top level add menu."""
+        print(f"{event=}")
+        tree = event.widget
+        selection = [tree.item(item)["text"] for item in tree.selection()]
+        print(f"{selection=}")
+        valid = eval(self.tl_add_menu.valid.get())
+        print(f"{valid=}")
+        idx_treeview = int(selection[0].split("_")[-1])
+        print(f"{idx_treeview=}")
+        valid.update({"locationID": idx_treeview})
+        self.tl_add_menu.valid.set(valid)
+

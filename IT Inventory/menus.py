@@ -236,20 +236,20 @@ class AddItemMenu(tkinter.Toplevel):
             justify="center"
         )
 
-        self.tv_label_serial,\
-        self.label_serial,\
-        self.tv_entry_serial,\
-        self.entry_serial\
-            = entry_factory(
-            self,
-            tv_label="Scan Serial #",
-            kwargs_label={
-                "name":next(self.namer)
-            },
-            kwargs_entry={
-                "name":next(self.namer)
-            }
-        )
+        # self.tv_label_serial,\
+        # self.label_serial,\
+        # self.tv_entry_serial,\
+        # self.entry_serial\
+        #     = entry_factory(
+        #     self,
+        #     tv_label="Scan Serial #",
+        #     kwargs_label={
+        #         "name":next(self.namer)
+        #     },
+        #     kwargs_entry={
+        #         "name":next(self.namer)
+        #     }
+        # )
 
         print(f"{df_locations.columns=}")
         print(f"{df_locations=}")
