@@ -265,6 +265,7 @@ class AddItemMenu(tkinter.Toplevel):
             , viewable_column_names=["Loc. Name", "Description", "Bldng", "FloorNumber", "Emp. Name"]
         )
 
+
         self.lbl_entry_name.grid(row=0, column=0, rowspan=1, columnspan=1)
         self.entry_name.grid(row=0, column=1, rowspan=1, columnspan=2)
         self.lbl_type.grid(row=1, column=0, rowspan=1, columnspan=1)
