@@ -1,5 +1,11 @@
+USE BWSdb
+GO
+
 /****** Script for SelectTopNRows command from SSMS  ******/
-SELECT TOP (1000) [Quote#]
+SELECT TOP (1000)
+	[Order Discounts].*
+	,[Discounts].*
+,[Quote#]
       ,[Quote Date]
       ,[Order Date]
       ,[WO#]
@@ -7,7 +13,7 @@ SELECT TOP (1000) [Quote#]
       ,[Model No]
       ,[Width]
       ,[Spread]
-      ,[DealerID]
+      ,[Orders].[DealerID]
       ,[Sale PersonID]
       ,[Price]
       ,[Prom Drawing]
@@ -91,8 +97,16 @@ SELECT TOP (1000) [Quote#]
       ,[DiscountID]
       ,[DiscountSetDate]
       ,[DiscountSetBy]
-      ,[ProductID]
+      ,[Orders].[ProductID]
   FROM [BWSdb].[dbo].[Orders]
+  LEFT JOIN
+	[Order Discounts]
+ON
+	[Orders].[DiscountID] = [Order Discounts].[ID]
+	LEFT JOIN
+		[Discounts]
+	ON
+		[Order Discounts].[DefaultDiscount] = [Discounts].[ID]
   WHERE
 	[Order Date] >= '2022-11-16'
   ORDER BY

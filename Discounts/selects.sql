@@ -80,10 +80,12 @@ SELECT * FROM [Order Discounts]
 
 
 DECLARE @quote AS INT;
-SELECT @quote = 28364;
+SELECT @quote = 28362;
 
 SELECT
 	[Orders].[Quote#]
+	, [COMPANY NAME]
+	, [Model No]
 	, ISNULL((CASE WHEN [UseDefaultDiscount] = 1 THEN [Slot] ELSE [SlotOverride] END), 0) AS [Slot]
 	, ISNULL((CASE WHEN [UseDefaultDiscount] = 1 THEN [Market] ELSE [MarketOverride] END), 0) AS [Market]
 FROM
@@ -96,5 +98,9 @@ INNER JOIN
 	[Discounts]
 ON
 	[Order Discounts].[DefaultDiscount] = [Discounts].[ID]
+LEFT JOIN
+	[Dealers]
+ON
+	[Discounts].[DealerID] = [Dealers].[ID]
 WHERE
 	[Quote#] = @quote;
