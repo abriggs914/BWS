@@ -2,13 +2,7 @@ from inventory_queries import *
 from pyodbc_connection import *
 
 
-if __name__ == '__main__':
-
-    df_customers = connect(**SQL_ITR_CUSTOMERS)
-    df_serial_indications = connect(**SQL_ITI_SERIAL_INDICATION)
-    df_locations = connect(**SQL_ITI_LOCATIONS)
-    df_buildings = connect(**SQL_ITI_BUILDINGS)
-
+def test_1():
     sql = """
         `   SELECT
                 [ITI Locations].[Name] AS [LocationName]
@@ -63,3 +57,57 @@ if __name__ == '__main__':
 
     print(df_3[["Name_x", "Name_y", "Description"]])
     print(df_4[["Name_x", "Description", "Name", "FloorNumber", "Name_y"]])
+
+
+def test_2():
+    table = "ITI Locations"
+    row_id = 4
+
+    print(f"{df_loc_emp_bld_dpt.columns=}")
+    print(f"{df_loc_emp_bld_dpt=}")
+
+    df_loc = df_loc_emp_bld_dpt[
+        df_loc_emp_bld_dpt["TableName"] == table & df_loc_emp_bld_dpt["RowID"] == row_id]
+
+
+if __name__ == '__main__':
+
+    df_customers = connect(**SQL_ITR_CUSTOMERS)
+    df_serial_indications = connect(**SQL_ITI_SERIAL_INDICATION)
+    df_locations = connect(**SQL_ITI_LOCATIONS)
+    df_buildings = connect(**SQL_ITI_BUILDINGS)
+    df_departments = connect(**SQL_DEPARTMENTS)
+    df_loc_emp_bld_dpt = pandas.merge(
+        pandas.merge(
+            pandas.merge(
+                df_locations,
+                df_customers,
+                left_on="EmployeeAssigned",
+                how="left",
+                right_on="CustomerID",
+                suffixes=("_[ITI Locations]", "_[ITR Customers]")
+            ),
+            df_buildings,
+            left_on="BuildingID",
+            how="left",
+            right_on="ID",
+            suffixes=("_[A]", "_[ITI Buildings]")
+        ),
+        df_departments,
+        how="left",
+        left_on="Department",
+        right_on="DeptID",
+        suffixes=("_[B]", "_[Dept]")
+    )
+
+    df_loc_emp_bld_dpt.rename(
+        columns={
+            'Name_x': 'Loc. Name',
+            'Name': 'Bldng',
+            'Name_y': 'Emp. Name'
+        },
+        inplace=True
+    )
+
+    # test_1()
+    test_2()
