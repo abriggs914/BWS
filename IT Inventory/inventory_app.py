@@ -117,15 +117,27 @@ class InventoryApp(tkinter.Tk):
 
         self.df_loc_emp_bld_dpt = pandas.merge(
             pandas.merge(
-                self.df_locations,
-                self.df_customers,
-                left_on="EmployeeAssigned",
-                right_on="CustomerID"
+                pandas.merge(
+                    self.df_locations,
+                    self.df_customers,
+                    left_on="EmployeeAssigned",
+                    how="left",
+                    ight_on="CustomerID",
+                    suffixes=("_[ITI Locations]", "_[ITR Customers]")
+                ),
+                self.df_buildings,
+                eft_on="BuildingID",
+                how="left",
+                right_on="ID",
+                suffixes=("_[A]", "_[ITI Buildings]")
             ),
-            self.df_buildings,
-            left_on="BuildingID",
-            right_on="ID"
+            self.df_departments,
+            how="left",
+            left_on="Department",
+            right_on="DeptID",
+            suffixes=("_[B]", "_[Dept]")
         )
+
         self.df_loc_emp_bld_dpt.rename(
             columns={
                 'Name_x': 'Loc. Name',
@@ -713,16 +725,21 @@ class InventoryApp(tkinter.Tk):
             row_id = df_is["RowID"].tolist()[0]
             col_val = df_is["ColName"].tolist()[0]
 
-            df_loc = self.df_loc_emp_bld_dpt[self.df_loc_emp_bld_dpt["TableName"] == table & self.df_loc_emp_bld_dpt["RowID"] == row_id]
+            df_loc = self.df_serial_indication[(self.df_serial_indication["TableName"] == table) & (self.df_serial_indication["RowID"] == row_id)]
             if not df_loc.empty:
-                print(f"{df_loc=}")
-                row = df_loc.tolist()[0]
-                print(f"{table=}, {row_id=}, {col_val=}, {row=}, {row['ID']=}")
-                match table:
-                    case "ITI Locations":
-                        self.tl_add_menu.treeview_location.selection_set(f"C_{row_id - 1}")
-                    case _:
-                        print("Error...")
+                if df_loc.size == 1:
+                    print(f"{df_loc=}")
+                    assert isinstance(df_loc, pandas.DataFrame)
+                    # row = df_loc.tolist()[0]
+                    row_number, row = list(df_loc.iterrows())[0]
+                    print(f"{table=}, {row_id=}, {col_val=}, {row=}, {row['ID']=}")
+                    match table:
+                        case "ITI Locations":
+                            self.tl_add_menu.treeview_location.selection_set(f"C_{row_id - 1}")
+                        case _:
+                            print("Error...")
+                else:
+                    print(f"tl_add_menu_update_serial_scan, df_loc returned more than one record.")
             else:
                 print(f"tl_add_menu_update_serial_scan, df_loc returned empty dataframe.")
         else:

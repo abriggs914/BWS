@@ -65,9 +65,19 @@ def test_2():
 
     print(f"{df_loc_emp_bld_dpt.columns=}")
     print(f"{df_loc_emp_bld_dpt=}")
-
-    df_loc = df_loc_emp_bld_dpt[
-        df_loc_emp_bld_dpt["TableName"] == table & df_loc_emp_bld_dpt["RowID"] == row_id]
+    df_loc1 = df_serial_indications[df_serial_indications["TableName"] == table]
+    print(f"serial indications 1\n{df_loc1}")
+    df_loc2 = df_serial_indications[df_serial_indications["RowID"] == row_id]
+    print(f"serial indications 2\n{df_loc2}")
+    df_loc3 = df_serial_indications[
+        (df_serial_indications["TableName"] == table) & (df_serial_indications["RowID"] == row_id)]
+    print(f"serial indications 3\n{df_loc3}")
+    assert isinstance(df_loc3, pandas.DataFrame)
+    print(f"{list(df_loc3.items())=}")
+    print(f"{list(df_loc3.iterrows())=}")
+    # df_loc = df_loc_emp_bld_dpt[
+    #     (df_loc_emp_bld_dpt["TableName"] == table) & (df_loc_emp_bld_dpt["RowID"] == row_id)]
+    # print(f"df_loc_emp_bld_dpt\n{df_loc}")
 
 
 if __name__ == '__main__':
