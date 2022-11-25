@@ -262,7 +262,7 @@ class AddItemMenu(tkinter.Toplevel):
             = treeview_factory(
             self
             , self.df_locations
-            , viewable_column_names=["Loc. Name", "Description", "Bldng", "FloorNumber", "Emp. Name"]
+            , viewable_column_names=["Name_[ITI Locations]", "Description", "Bldng", "FloorNumber", "Name_[ITR Customers]"]
         )
 
 

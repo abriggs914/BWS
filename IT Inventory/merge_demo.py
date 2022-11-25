@@ -80,6 +80,50 @@ def test_2():
     # print(f"df_loc_emp_bld_dpt\n{df_loc}")
 
 
+    df_loc_emp_bld_dpt_si = pandas.merge(
+        # pandas.merge(
+            pandas.merge(
+                pandas.merge(
+                    df_locations,
+                    df_customers,
+                    left_on="EmployeeAssigned",
+                    how="left",
+                    right_on="CustomerID",
+                    suffixes=("_[ITI Locations]", "_[ITR Customers]")
+                ),
+                df_buildings,
+                left_on="BuildingID",
+                how="left",
+                right_on="ID",
+                suffixes=("_[A]", "_[ITI Buildings]")
+            ),
+            df_departments,
+            how="left",
+            left_on="Department",
+            right_on="DeptID",
+            suffixes=("_[B]", "_[Dept]")
+        )
+        # ,
+    #     df_serial_indications,
+    #     how="left",
+    #     left_on="TableName",
+    #     right_on="TableName",
+    #     suffixes=("_[C]", "_[ITI SI]")
+    # )
+
+    df_loc_emp_bld_dpt_si.rename(
+        columns={
+            'Name_x': 'Loc. Name',
+            'Name': 'Bldng',
+            'Name_y': 'Emp. Name'
+        },
+        inplace=True
+    )
+    print(f"{df_loc_emp_bld_dpt_si.columns=}")
+    print(f"{df_loc_emp_bld_dpt_si=}")
+    print(f"{list(df_loc_emp_bld_dpt_si.iterrows())=}")
+
+
 if __name__ == '__main__':
 
     df_customers = connect(**SQL_ITR_CUSTOMERS)
@@ -118,6 +162,13 @@ if __name__ == '__main__':
         },
         inplace=True
     )
+
+    df_customers["TableName"] = ["ITR Customers" for _ in range(df_customers.shape[0])]
+    df_serial_indications["TableName"] = ["ITI Serial Indication" for _ in range(df_serial_indications.shape[0])]
+    df_locations["TableName"] = ["ITI Locations" for _ in range(df_locations.shape[0])]
+    df_buildings["TableName"] = ["ITI Buildings" for _ in range(df_buildings.shape[0])]
+    df_departments["TableName"] = ["Dept" for _ in range(df_departments.shape[0])]
+    df_loc_emp_bld_dpt["TableName"] = ["df_loc_emp_bld_dpt" for _ in range(df_loc_emp_bld_dpt.shape[0])]
 
     # test_1()
     test_2()

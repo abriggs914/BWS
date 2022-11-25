@@ -122,11 +122,11 @@ class InventoryApp(tkinter.Tk):
                     self.df_customers,
                     left_on="EmployeeAssigned",
                     how="left",
-                    ight_on="CustomerID",
+                    right_on="CustomerID",
                     suffixes=("_[ITI Locations]", "_[ITR Customers]")
                 ),
                 self.df_buildings,
-                eft_on="BuildingID",
+                left_on="BuildingID",
                 how="left",
                 right_on="ID",
                 suffixes=("_[A]", "_[ITI Buildings]")
@@ -137,6 +137,41 @@ class InventoryApp(tkinter.Tk):
             right_on="DeptID",
             suffixes=("_[B]", "_[Dept]")
         )
+
+        self.df_loc_emp_bld_dpt.rename(
+            columns={
+                'Name_x': 'Loc. Name',
+                'Name': 'Bldng',
+                'Name_y': 'Emp. Name'
+            },
+            inplace=True
+        )
+
+        self.df_loc_emp_bld_dpt = pandas.merge(
+            pandas.merge(
+                pandas.merge(
+                    pandas.merge(
+                        self.df_locations,
+                        self.df_customers,
+                        left_on="EmployeeAssigned",
+                        how="left",
+                        right_on="CustomerID",
+                        suffixes=("_[ITI Locations]", "_[ITR Customers]")
+                    ),
+                    self.df_buildings,
+                    left_on="BuildingID",
+                    how="left",
+                    right_on="ID",
+                    suffixes=("_[A]", "_[ITI Buildings]")
+                ),
+                self.df_departments,
+                how="left",
+                left_on="Department",
+                right_on="DeptID",
+                suffixes=("_[B]", "_[Dept]")
+            ),
+            self.df_serial_indication,
+            left_on=
 
         self.df_loc_emp_bld_dpt.rename(
             columns={
