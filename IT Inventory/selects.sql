@@ -22,6 +22,7 @@ SELECT 'ITI Wire' AS [Table], * FROM [ITI Wire];
 SELECT 'ITI Buildings' AS [Table], * FROM [ITI Buildings];
 SELECT 'ITI Locations' AS [Table], * FROM [ITI Locations];
 SELECT 'ITI Serial Indication' AS [Table], * FROM [ITI Serial Indication];
+SELECT 'v_ITI_SerialIndication' AS [Table], * FROM [v_ITI_SerialIndication];
 
 SELECT
 	[ITI Item].[ID]

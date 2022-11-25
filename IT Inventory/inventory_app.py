@@ -40,6 +40,7 @@ class InventoryApp(tkinter.Tk):
         self.df_customers = None
         self.df_departments = None
         self.df_loc_emp_bld_dpt = None
+        self.df_v_serial_indication = None
 
         self.populate_data()
 
@@ -66,6 +67,7 @@ class InventoryApp(tkinter.Tk):
                 ,self.df_customers
                 ,self.df_departments
                 ,self.df_loc_emp_bld_dpt
+                ,self.df_v_serial_indication
             ]
              ]), "Error loading some data."
 
@@ -147,40 +149,42 @@ class InventoryApp(tkinter.Tk):
             inplace=True
         )
 
-        self.df_loc_emp_bld_dpt = pandas.merge(
-            pandas.merge(
-                pandas.merge(
-                    pandas.merge(
-                        self.df_locations,
-                        self.df_customers,
-                        left_on="EmployeeAssigned",
-                        how="left",
-                        right_on="CustomerID",
-                        suffixes=("_[ITI Locations]", "_[ITR Customers]")
-                    ),
-                    self.df_buildings,
-                    left_on="BuildingID",
-                    how="left",
-                    right_on="ID",
-                    suffixes=("_[A]", "_[ITI Buildings]")
-                ),
-                self.df_departments,
-                how="left",
-                left_on="Department",
-                right_on="DeptID",
-                suffixes=("_[B]", "_[Dept]")
-            ),
-            self.df_serial_indication,
-            left_on=
+        self.df_v_serial_indication = connect(**SQL_V_ITI_SERIAL_INDICATION)
 
-        self.df_loc_emp_bld_dpt.rename(
-            columns={
-                'Name_x': 'Loc. Name',
-                'Name': 'Bldng',
-                'Name_y': 'Emp. Name'
-            },
-            inplace=True
-        )
+        # self.df_loc_emp_bld_dpt = pandas.merge(
+        #     pandas.merge(
+        #         pandas.merge(
+        #             pandas.merge(
+        #                 self.df_locations,
+        #                 self.df_customers,
+        #                 left_on="EmployeeAssigned",
+        #                 how="left",
+        #                 right_on="CustomerID",
+        #                 suffixes=("_[ITI Locations]", "_[ITR Customers]")
+        #             ),
+        #             self.df_buildings,
+        #             left_on="BuildingID",
+        #             how="left",
+        #             right_on="ID",
+        #             suffixes=("_[A]", "_[ITI Buildings]")
+        #         ),
+        #         self.df_departments,
+        #         how="left",
+        #         left_on="Department",
+        #         right_on="DeptID",
+        #         suffixes=("_[B]", "_[Dept]")
+        #     ),
+        #     self.df_serial_indication,
+        #     left_on=
+        #
+        # self.df_loc_emp_bld_dpt.rename(
+        #     columns={
+        #         'Name_x': 'Loc. Name',
+        #         'Name': 'Bldng',
+        #         'Name_y': 'Emp. Name'
+        #     },
+        #     inplace=True
+        # )
 
     def bind_demo_keys(self):
         self.bind("<Control-Shift-KeyPress-Q>", self.insert_demo_value_main_menu)
@@ -222,8 +226,10 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.bind("<Control-Shift-KeyPress-q>", self.insert_demo_value_tl_add_menu_status)
 
         # Locations
-        self.tl_add_menu.bind("<Control-Shift-KeyPress-W>", self.insert_demo_value_tl_add_menu_location)
-        self.tl_add_menu.bind("<Control-Shift-KeyPress-w>", self.insert_demo_value_tl_add_menu_location)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-W>", self.insert_demo_value_tl_add_menu_location_server_room)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-w>", self.insert_demo_value_tl_add_menu_location_server_room)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-R>", self.insert_demo_value_tl_add_menu_location_averys_office)
+        self.tl_add_menu.bind("<Control-Shift-KeyPress-r>", self.insert_demo_value_tl_add_menu_location_averys_office)
 
     def unbind_demo_keys_tl_add(self):
         # Status
@@ -715,8 +721,12 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.entry_scannable_input.text.set("9000000010")  # Out of Service (ITI Status)
         self.tl_add_menu.entry_scannable_input.return_text(event)
 
-    def insert_demo_value_tl_add_menu_location(self, event):
+    def insert_demo_value_tl_add_menu_location_server_room(self, event):
         self.tl_add_menu.entry_scannable_input.text.set("9000000060")  # Server Room (ITI Locations)
+        self.tl_add_menu.entry_scannable_input.return_text(event)
+
+    def insert_demo_value_tl_add_menu_location_averys_office(self, event):
+        self.tl_add_menu.entry_scannable_input.text.set("9000000062")  # Server Room (ITI Locations)
         self.tl_add_menu.entry_scannable_input.return_text(event)
 
     def submit_new_item(self, *args):
@@ -760,17 +770,41 @@ class InventoryApp(tkinter.Tk):
             row_id = df_is["RowID"].tolist()[0]
             col_val = df_is["ColName"].tolist()[0]
 
-            df_loc = self.df_serial_indication[(self.df_serial_indication["TableName"] == table) & (self.df_serial_indication["RowID"] == row_id)]
+            df_loc = self.df_v_serial_indication[(self.df_v_serial_indication["TableName"] == table) & (self.df_v_serial_indication["RowID"] == row_id)]
             if not df_loc.empty:
-                if df_loc.size == 1:
+                if df_loc.shape[0] == 1:
                     print(f"{df_loc=}")
+                    print(f"{self.df_loc_emp_bld_dpt.columns=}")
+                    print(f"{self.df_loc_emp_bld_dpt=}")
                     assert isinstance(df_loc, pandas.DataFrame)
                     # row = df_loc.tolist()[0]
                     row_number, row = list(df_loc.iterrows())[0]
-                    print(f"{table=}, {row_id=}, {col_val=}, {row=}, {row['ID']=}")
+                    serial_id = row["SerialID"]
+                    row_id = row["RowID"]
+                    row_x = self.df_loc_emp_bld_dpt[self.df_loc_emp_bld_dpt["ID_[A]"] == row_id]
+                    print(f"{table=}, {row_id=}, {col_val=}, {row=}, {serial_id=}, {row_x=}")
                     match table:
                         case "ITI Locations":
                             self.tl_add_menu.treeview_location.selection_set(f"C_{row_id - 1}")
+                        case "ITI Type":
+                            type_id = int(list(self.df_type[self.df_type["ID"] == row_id].iterrows())[0][1]["ID"])
+                            print(f"{type_id=}")
+                            type_name = self.tl_add_menu.spin_values_type["names"][type_id - 1]
+                            self.tl_add_menu.tv_spin_type.set(type_name)
+                        case "ITI Condition":
+                            condition_id = int(list(self.df_condition[self.df_condition["ID"] == row_id].iterrows())[0][1]["ID"])
+                            condition_name = self.tl_add_menu.spin_values_cond["names"][condition_id - 1]
+                            self.tl_add_menu.tv_spin_cond.set(condition_name)
+                        case "ITI UOM":
+                            uom_id = int(list(self.df_uom[self.df_uom["ID"] == row_id].iterrows())[0][1]["ID"])
+                            uom_name = self.tl_add_menu.spin_values_type["names"][uom_id - 1]
+                            self.tl_add_menu.tv_spin_uom.set(uom_name)
+                        case "ITI Unknown":
+
+                        case "ITI Computer":
+                        case "ITI Peripherals":
+                        case "ITI Network":
+                        case "ITI Wire":
                         case _:
                             print("Error...")
                 else:

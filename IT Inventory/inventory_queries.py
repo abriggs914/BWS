@@ -315,6 +315,21 @@ SQL_DEPARTMENTS = {
 }
 
 
+SQL_V_ITI_SERIAL_INDICATION = {
+    "sql": """SELECT [SerialID]
+      ,[TableName]
+      ,[ColName]
+      ,[RowID]
+      ,[Serial]
+      ,[Name]
+      ,[Description]
+  FROM [BWSdb].[dbo].[v_ITI_SerialIndication]""",
+    "database": "BWSdb",
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+
+
 def insert_new_item(data):
     name = data["name"]
     description = data["description"]

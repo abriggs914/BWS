@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe9d19b2-f055-4bd4-87b0-c038826af428" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/v_ITI_SerialIndication.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inventory_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/menus.py" beforeDir="false" afterPath="$PROJECT_DIR$/menus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/merge_demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/merge_demo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory_queries.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory_queries.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/selects.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +54,7 @@
       <recent name="C:\Users\ABriggs\Documents\BWS\IT Inventory" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.merge_demo">
+  <component name="RunManager" selected="Python.main">
     <configuration name="barcode_qr_code_driver" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="IT Inventory" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -190,8 +191,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.merge_demo" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.merge_demo" />
         <item itemvalue="Python.inventory_app 2022-11-09" />
         <item itemvalue="Python.scanable_entry" />
         <item itemvalue="Python.tkinter_utility" />
