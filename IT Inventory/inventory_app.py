@@ -306,6 +306,8 @@ class InventoryApp(tkinter.Tk):
         return res
 
     def submit_scan(self, *args):
+        """Root scan in listener"""
+        print(f"root.submit scan")
         scan_in = self.entry_scan_input.validated_text.get()
         if scan_in:
             scan_in = "*" + self.entry_scan_input.validated_text.get() + "*"
@@ -362,6 +364,8 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.treeview_location.bind("<<TreeviewSelect>>", self.tl_add_menu_treeview_select)
         self.unbind_demo_keys()
         self.bind_demo_keys_tl_add()
+        apply_state(self.entry_scan_input, "disabled", "down")
+        self.tl_add_menu.protocol("WM_DELETE_WINDOW", self.closing_tl_add)
         self.tl_add_menu.mainloop()
         # self.accepting_bool.set(True)
 
@@ -672,7 +676,18 @@ class InventoryApp(tkinter.Tk):
     def closing_tl_dnd(self):
         if self.tl_dnd_menu.is_dirty():
             print("DIRTY!!!")
+        assert isinstance(self.tl_dnd_menu, tkinter.Toplevel)
         self.tl_dnd_menu.destroy()
+        apply_state(self.entry_scan_input, "normal", "down")
+        self.bind_demo_keys()
+        print(f"{self.bind()=}")
+
+    def closing_tl_add(self):
+        print(f"closing tl_add_menu")
+        apply_state(self.entry_scan_input, "normal", "down")
+        self.tl_add_menu.destroy()
+        self.bind_demo_keys()
+        print(f"{self.bind()=}")
 
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
         print(dict_print(eval(self.tl_dnd_menu.canvas_dnd_status.status.get()), "self.tl_dnd_menu.canvas_dnd_status.status.get()"))
@@ -693,11 +708,14 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.tv_set_data.set(old)
 
     def insert_demo_value_new_item(self, event):
+        # W
         self.entry_scan_input.text.set("1000000006")
         self.entry_scan_input.return_text(event)
 
     def insert_demo_value_main_menu(self, event):
+        # Q
         # self.entry_scan_input.text.set("0000000250")
+        self.entry_scan_input.text.set("")
         self.entry_scan_input.text.set("0000000100")
         self.entry_scan_input.return_text(event)
 
@@ -747,11 +765,11 @@ class InventoryApp(tkinter.Tk):
                 raise Exception("NEED TO REFRESH THE v_ITI_Items TREEVIEW")
             else:
                 # save unfinished work for next opening
-                print(f"save unfinished work for next opening")
+                print(f"A save unfinished work for next opening")
                 self.new_item_save_state.set(data_valid)
         else:
             # save unfinished work for next opening
-            print(f"save unfinished work for next opening")
+            print(f"B save unfinished work for next opening")
             self.new_item_save_state.set(data_valid)
         print(f"{data_status=}\n{data_valid=}")
 
@@ -800,11 +818,30 @@ class InventoryApp(tkinter.Tk):
                             uom_name = self.tl_add_menu.spin_values_type["names"][uom_id - 1]
                             self.tl_add_menu.tv_spin_uom.set(uom_name)
                         case "ITI Unknown":
-
+                            self.tl_add_menu.tv_spin_type.set("UNKNOWN")
+                            item_sub_type_id = int(list(self.df_unknown[self.df_unknown["ID"] == row_id].iterrows())[0][1]["ID"])
+                            item_sub_type = self.tl_add_menu.spin_values_unknown["names"][item_sub_type_id - 1]
+                            self.tl_add_menu.tv_spin_subtype.set(item_sub_type)
                         case "ITI Computer":
+                            self.tl_add_menu.tv_spin_type.set("Computer")
+                            item_sub_type_id = int(list(self.df_computer[self.df_computer["ID"] == row_id].iterrows())[0][1]["ID"])
+                            item_sub_type = self.tl_add_menu.spin_values_computer["names"][item_sub_type_id - 1]
+                            self.tl_add_menu.tv_spin_subtype.set(item_sub_type)
                         case "ITI Peripherals":
+                            self.tl_add_menu.tv_spin_type.set("Peripherals")
+                            item_sub_type_id = int(list(self.df_peripherals[self.df_peripherals["ID"] == row_id].iterrows())[0][1]["ID"])
+                            item_sub_type = self.tl_add_menu.spin_values_peripherals["names"][item_sub_type_id - 1]
+                            self.tl_add_menu.tv_spin_subtype.set(item_sub_type)
                         case "ITI Network":
+                            self.tl_add_menu.tv_spin_type.set("Network")
+                            item_sub_type_id = int(list(self.df_network[self.df_network["ID"] == row_id].iterrows())[0][1]["ID"])
+                            item_sub_type = self.tl_add_menu.spin_values_network["names"][item_sub_type_id - 1]
+                            self.tl_add_menu.tv_spin_subtype.set(item_sub_type)
                         case "ITI Wire":
+                            self.tl_add_menu.tv_spin_type.set("Wire")
+                            item_sub_type_id = int(list(self.df_wire[self.df_wire["ID"] == row_id].iterrows())[0][1]["ID"])
+                            item_sub_type = self.tl_add_menu.spin_values_wire["names"][item_sub_type_id - 1]
+                            self.tl_add_menu.tv_spin_subtype.set(item_sub_type)
                         case _:
                             print("Error...")
                 else:
@@ -813,7 +850,6 @@ class InventoryApp(tkinter.Tk):
                 print(f"tl_add_menu_update_serial_scan, df_loc returned empty dataframe.")
         else:
             print(f"tl_add_menu_update_serial_scan, please use an indication serial here.")
-
 
     def tl_add_menu_treeview_select(self, event):
         """Treeview of location choices updated in top level add menu."""

@@ -542,7 +542,7 @@ class AddItemMenu(tkinter.Toplevel):
         cost = 0
         quantity = int(self.tv_spin_qty.get())
         condition = self.tv_spin_cond.get()
-        serial = self.tv_entry_serial.get()
+        serial = self.entry_scannable_input.text.get()
         keys = self.valid_status_keys
         valid = {"submission": False, "quantity": quantity, "description": description, "is_active": 1}
 
