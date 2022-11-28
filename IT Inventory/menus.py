@@ -26,7 +26,7 @@ class AddItemMenu(tkinter.Toplevel):
     ):
         super().__init__(master)
 
-        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition", "serial", "locationID"]
+        self.valid_status_keys_order = ["name", "type", "sub_type", "cost", "uom", "submission", "quantity", "description", "condition", "locationID"]
         self.valid_status_keys = set(self.valid_status_keys_order)
         self.status = tkinter.Variable(self, value={})  # populate this only on successful exit.
         self.valid = tkinter.Variable(self, value={})  # populate this one in all other instances.
@@ -585,7 +585,7 @@ class AddItemMenu(tkinter.Toplevel):
         valid.update({"cost": cost})
 
         # validating serial
-        valid.update({"serial": serial})
+        # valid.update({"serial": serial})
 
         print(f"{valid=}, {(not keys.difference(valid))=}, {list(valid.values())=}")
         self.valid.set(valid)

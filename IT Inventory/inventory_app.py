@@ -681,6 +681,7 @@ class InventoryApp(tkinter.Tk):
         apply_state(self.entry_scan_input, "normal", "down")
         self.bind_demo_keys()
         print(f"{self.bind()=}")
+        print(f"{self.entry_scan_input.bind()=}")
 
     def closing_tl_add(self):
         print(f"closing tl_add_menu")
@@ -688,6 +689,7 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.destroy()
         self.bind_demo_keys()
         print(f"{self.bind()=}")
+        print(f"{self.entry_scan_input.bind()=}")
 
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
         print(dict_print(eval(self.tl_dnd_menu.canvas_dnd_status.status.get()), "self.tl_dnd_menu.canvas_dnd_status.status.get()"))
