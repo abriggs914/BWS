@@ -80,6 +80,11 @@ class InventoryApp(tkinter.Tk):
         self.tv_label_input = tkinter.StringVar(self, value="Scan a Barcode Here:")
         self.label_scan_input = tkinter.Label(self, textvariable=self.tv_label_input)
         self.entry_scan_input = ScannableEntry(self)
+
+        print(f"after creation")
+        print(f"{self.bind()=}")
+        print(f"{self.entry_scan_input.entry.bind()=}")
+
         self.entry_scan_input.set_scan_pass_through()
 
         # self.tv_entry_barcode = tkinter.StringVar(self, value="")
@@ -335,6 +340,9 @@ class InventoryApp(tkinter.Tk):
 
     def begin_create_new_item(self):
         print("CREATE NEW ITEM")
+        print(f"begin_create_new_item")
+        print(f"{self.bind()=}")
+        print(f"{self.entry_scan_input.entry.bind()=}")
         values_uom = self.get_values_spin_uom()
         values_type = self.get_values_spin_type()
         values_condition = self.get_values_spin_cond()
@@ -486,6 +494,9 @@ class InventoryApp(tkinter.Tk):
         return result
 
     def open_dnd(self, scan_in):
+        print(f"open_dnd")
+        print(f"{self.bind()=}")
+        print(f"{self.entry_scan_input.entry.bind()=}")
         self.tl_dnd_menu = TopLevelDNDMenu(self, self.df_status, self.df_serial_indication, omit_status_shopping_cart=True)
         self.tl_dnd_menu.protocol("WM_DELETE_WINDOW", self.closing_tl_dnd)
         # self.tl_dnd_menu.bind("<Destroy>", self.closing_tl_dnd)
@@ -680,16 +691,34 @@ class InventoryApp(tkinter.Tk):
         self.tl_dnd_menu.destroy()
         apply_state(self.entry_scan_input, "normal", "down")
         self.bind_demo_keys()
+        self.entry_scan_input.set_bindings()
+        self.entry_scan_input.set_listeners()
+        self.entry_scan_input.set_scan_pass_through()
+
+        self.entry_scan_input.accepting_counter.set(self.entry_scan_input.accepting_counter_reset)
+        self.entry_scan_input.valid_submission.set(False)
+        self.entry_scan_input.validated_text.set("")
+
+        self.focus()
         print(f"{self.bind()=}")
-        print(f"{self.entry_scan_input.bind()=}")
+        print(f"{self.entry_scan_input.entry.bind()=}")
 
     def closing_tl_add(self):
         print(f"closing tl_add_menu")
         apply_state(self.entry_scan_input, "normal", "down")
         self.tl_add_menu.destroy()
         self.bind_demo_keys()
+        self.entry_scan_input.set_bindings()
+        self.entry_scan_input.set_listeners()
+        self.entry_scan_input.set_scan_pass_through()
+
+        self.entry_scan_input.accepting_counter.set(self.entry_scan_input.accepting_counter_reset)
+        self.entry_scan_input.valid_submission.set(False)
+        self.entry_scan_input.validated_text.set("")
+
+        self.focus()
         print(f"{self.bind()=}")
-        print(f"{self.entry_scan_input.bind()=}")
+        print(f"{self.entry_scan_input.entry.bind()=}")
 
     def tl_dnd_menu_canvas_dnd_status_update(self, *args):
         print(dict_print(eval(self.tl_dnd_menu.canvas_dnd_status.status.get()), "self.tl_dnd_menu.canvas_dnd_status.status.get()"))
@@ -712,6 +741,7 @@ class InventoryApp(tkinter.Tk):
     def insert_demo_value_new_item(self, event):
         # W
         self.entry_scan_input.text.set("1000000006")
+        event.char = self.entry_scan_input.text.get()
         self.entry_scan_input.return_text(event)
 
     def insert_demo_value_main_menu(self, event):
@@ -719,6 +749,7 @@ class InventoryApp(tkinter.Tk):
         # self.entry_scan_input.text.set("0000000250")
         self.entry_scan_input.text.set("")
         self.entry_scan_input.text.set("0000000100")
+        event.char = self.entry_scan_input.text.get()
         self.entry_scan_input.return_text(event)
 
     def insert_demo_value_tl_dnd_menu_status(self, event):
