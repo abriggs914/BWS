@@ -1142,17 +1142,17 @@ class ScannableEntry(tkinter.Entry):
 
         self.top_most = top_most_tk(master)
 
-        self.validated_text = tkinter.StringVar(self,
+        self.validated_text = tkinter.StringVar(self.top_most,
                                                 value="")  # use this variable to ensure that the text has already been validated
-        self.text = tkinter.StringVar(self, value="")
-        self.passing_through = tkinter.BooleanVar(self, value=False)
-        self.has_passed_through = tkinter.BooleanVar(self, value=False)
-        self.top_level_keypress = tkinter.StringVar(self, value="")
-        self.top_level_return = tkinter.StringVar(self, value="")
+        self.text = tkinter.StringVar(self.top_most, value="")
+        self.passing_through = tkinter.BooleanVar(self.top_most, value=False)
+        self.has_passed_through = tkinter.BooleanVar(self.top_most, value=False)
+        self.top_level_keypress = tkinter.StringVar(self.top_most, value="")
+        self.top_level_return = tkinter.StringVar(self.top_most, value="")
 
-        self.valid_submission = tkinter.BooleanVar(self, value=False)  # use this to prevent early submissions.
+        self.valid_submission = tkinter.BooleanVar(self.top_most, value=False)  # use this to prevent early submissions.
         self.accepting_counter_reset = 2000
-        self.accepting_counter = tkinter.IntVar(self,
+        self.accepting_counter = tkinter.IntVar(self.top_most,
                                                 value=self.accepting_counter_reset)  # use this to prevent submission while editing.
 
         self.entry = tkinter.Entry(self, textvariable=self.text, font=("Arial", 16), justify=tkinter.CENTER)
@@ -1165,20 +1165,25 @@ class ScannableEntry(tkinter.Entry):
         self.set_listeners()
 
     def set_listeners(self):
+        self.stop_listeners()
         self.accepting_counter.trace_variable("w", self.update_accepting_counter)
         self.valid_submission.trace_variable("w", self.update_valid_submission)
         self.text.trace_variable("w", self.update_text)
 
     def set_bindings(self):
+        self.stop_bindings()
         self.entry.bind("<Return>", self.return_text)
         self.entry.bind("<FocusIn>",
                         self.update_has_focus_in)  # prevents duplicate event firing when typing directly into the entry widget
         self.entry.bind("<FocusOut>", self.update_has_focus_out)
 
     def stop_listeners(self):
-        self.accepting_counter.trace_remove(*self.accepting_counter.trace_info()[0])
-        self.valid_submission.trace_remove(*self.valid_submission.trace_info()[0])
-        self.text.trace_remove(*self.text.trace_info()[0])
+        if self.accepting_counter.trace_info():
+            self.accepting_counter.trace_remove(*self.accepting_counter.trace_info()[0])
+        if self.valid_submission.trace_info():
+            self.valid_submission.trace_remove(*self.valid_submission.trace_info()[0])
+        if self.text.trace_info():
+            self.text.trace_remove(*self.text.trace_info()[0])
 
     def stop_bindings(self):
         # self.entry.unbind("<Return>")
@@ -1189,10 +1194,12 @@ class ScannableEntry(tkinter.Entry):
         # does not reset pass through status
         self.set_bindings()
         self.set_listeners()
+        self.accepting_counter.set(self.accepting_counter_reset)
+        self.valid_submission.set(False)
         self.text.set("")
 
     def update_text(self, *args):
-        print(f"tk_utility {args=}, {self.text.get()=}, {self.validated_text.get()=}")
+        print(f"==\ttk_utility {args=}, {self.text.get()=}, {self.validated_text.get()=}")
         if len(args) == 1:
             # print("\t\t\tFROM TOP MOST")
             event, *rest = args
@@ -1207,40 +1214,46 @@ class ScannableEntry(tkinter.Entry):
         self.count_stop_editing()
 
     def return_text(self, event):
-        print(f"self.return_text")
-        print(f"{self.accepting_counter.trace_info()[0]=}, {self.accepting_counter.get()=}")
+        # print(f"==\tself.return_text")
+        # print(f"{self.accepting_counter.trace_info()[0]=}, {self.accepting_counter.get()=}")
+        # self.update_accepting_counter(None)
         # print(f"{self.valid_submission.trace_info()[0]=}")
         # print(f"{self.text.trace_info()[0]=}")
+        # print(f"{self.accepting_counter.trace_info()=}")
+        # print(f"{self.accepting_counter.trace_vinfo()=}")
+        # print(f"AA\tpre set v={self.accepting_counter.get()}, t={self.text.get()}")
         self.accepting_counter.set(0)
+        # print(f"AA\tpost set v={self.accepting_counter.get()}, t={self.text.get()}")
 
     def count_stop_editing(self):
+        # print(f"==\tself.count_stop_editing {self.accepting_counter.get()=}")
         x = self.accepting_counter.get()
         if x > 1:
             self.accepting_counter.set(x - 1)
             self.after(1, self.count_stop_editing)
 
     def update_accepting_counter(self, *args):
-        print(f"update_accepting_counter, {self.accepting_counter.get()=}")
+        # print(f"==\tupdate_accepting_counter, {self.accepting_counter.get()=}")
         if self.accepting_counter.get() <= 0:
             self.valid_submission.set(True)
-        else:
-            print(f"{self.accepting_counter.get()=}")
+        # else:
+        #     print(f"{self.accepting_counter.get()=}")
 
     def update_valid_submission(self, *args):
         # this is called when the entry is ready to be read.
         if self.valid_submission.get() and self.text.get():
             print(f"DONE!! '{self.text.get()}'")
             self.validated_text.set(self.text.get())
-        else:
-            print(f"\t{self.valid_submission.get()=}, {self.text.get()=}, {(self.valid_submission.get() and self.text.get())=}")
+        # else:
+        #     print(f"\t{self.valid_submission.get()=}, {self.text.get()=}, {(self.valid_submission.get() and self.text.get())=}")
 
     def update_has_focus_in(self, *event):
-        print(f"update_has_focus_in")
+        # print(f"==\tupdate_has_focus_in")
         self.top_most.unbind("<Return>")
         self.top_most.unbind("<KeyPress>")
 
     def update_has_focus_out(self, *event):
-        print(f"update_has_focus_out")
+        # print(f"==\tupdate_has_focus_out")
         self.top_most.bind("<Return>", self.return_text)
         self.top_most.bind("<KeyPress>", self.update_text)
 
@@ -1251,8 +1264,8 @@ class ScannableEntry(tkinter.Entry):
         self.has_passed_through.set(True)
         self.top_level_keypress.set(self.top_most.bind("<KeyPress>"))
         self.top_level_return.set(self.top_most.bind("<Return>"))
-        self.top_most.bind("<KeyPress>", self.update_text)
-        self.top_most.bind("<Return>", self.return_text)
+        # self.top_most.bind("<Return>", self.return_text)
+        # self.top_most.bind("<KeyPress>", self.update_text)
         self.update_has_focus_out("")
 
     def stop_scan_pass_through(self):
@@ -1264,7 +1277,6 @@ class ScannableEntry(tkinter.Entry):
         self.passing_through.set(False)
         self.top_level_keypress.set("")
         self.top_level_return.set("")
-
 
 
 def apply_state(root, state_in, direction: Literal["up", "down"] = "up", exclude_self=False):

@@ -49,6 +49,8 @@ class AddItemMenu(tkinter.Toplevel):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.title("Add New ITI Inventory")
 
+        self.quit_condition = tkinter.StringVar(self, value="")
+
         # self.tv_entry_scannable_input,\
         # self.label_scannable_input,\
         # self.tv_entry_scannable_input,\
@@ -544,7 +546,8 @@ class AddItemMenu(tkinter.Toplevel):
         condition = self.tv_spin_cond.get()
         serial = self.entry_scannable_input.text.get()
         keys = self.valid_status_keys
-        valid = {"submission": False, "quantity": quantity, "description": description, "is_active": 1}
+        valid = eval(self.valid.get())
+        valid.update({"submission": False, "quantity": quantity, "description": description, "is_active": 1})
 
         # validating name field
         if name is not None and len(name):
@@ -587,6 +590,8 @@ class AddItemMenu(tkinter.Toplevel):
         # validating serial
         # valid.update({"serial": serial})
 
+        print(f"{sorted(list(valid))=}")
+        print(f"{sorted(list(keys))=}")
         print(f"{valid=}, {(not keys.difference(valid))=}, {list(valid.values())=}")
         self.valid.set(valid)
         return not keys.difference(valid) and all([len(str(v)) != 0 for k, v in valid.items() if k != "description"])
@@ -605,7 +610,8 @@ class AddItemMenu(tkinter.Toplevel):
         print(f"click_cancel_creation")
         self.validate()
         self.status.set(eval(self.valid.get()))
-        self.destroy()
+        # self.destroy()
+        self.quit_condition.set("cancel creation")
 
     def click_submit_creation(self):
         print(f"click_submit_creation")
@@ -614,7 +620,8 @@ class AddItemMenu(tkinter.Toplevel):
             valid = eval(self.valid.get())
             valid.update({"submission": True})
             self.status.set(valid)
-            self.destroy()
+            self.quit_condition.set("submit creation")
+            # self.destroy()
         else:
             valid = eval(self.valid.get())
             print(f"<ELSE> HERE IS WHAT IS VALID\n {valid}")

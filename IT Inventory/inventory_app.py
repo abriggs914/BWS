@@ -368,13 +368,14 @@ class InventoryApp(tkinter.Tk):
         )
         self.tl_add_menu.status.trace_variable("w", self.submit_new_item)
         self.tl_add_menu.entry_scannable_input.text.trace_variable("w", self.tl_add_menu_update_serial_scan)
+        self.tl_add_menu.quit_condition.trace_variable("w", update_tl_add_menu_quit_condition)
 
         self.tl_add_menu.treeview_location.bind("<<TreeviewSelect>>", self.tl_add_menu_treeview_select)
         self.unbind_demo_keys()
         self.bind_demo_keys_tl_add()
         apply_state(self.entry_scan_input, "disabled", "down")
         self.tl_add_menu.protocol("WM_DELETE_WINDOW", self.closing_tl_add)
-        self.tl_add_menu.mainloop()
+        # self.tl_add_menu.mainloop()
         # self.accepting_bool.set(True)
 
     def is_status_indication_serial(self, serial_in):
@@ -896,4 +897,10 @@ class InventoryApp(tkinter.Tk):
         print(f"{idx_treeview=}")
         valid.update({"locationID": idx_treeview})
         self.tl_add_menu.valid.set(valid)
+        print(dict_print(eval(self.tl_add_menu.valid.get()), "tl_add_menu.valid"))
 
+    def update_tl_add_menu_quit_condition(self):
+        """tl_add_menu has a new reason to quit"""
+        quit_status = self.tl_add_menu.quit_condition.get()
+        if quit_status:
+            self.tl_add_menu.destroy()
