@@ -904,3 +904,4 @@ class InventoryApp(tkinter.Tk):
         quit_status = self.tl_add_menu.quit_condition.get()
         if quit_status:
             self.tl_add_menu.destroy()
+            self.tl_add_menu.quit_condition.set("")
