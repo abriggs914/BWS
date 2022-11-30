@@ -368,7 +368,7 @@ class InventoryApp(tkinter.Tk):
         )
         self.tl_add_menu.status.trace_variable("w", self.submit_new_item)
         self.tl_add_menu.entry_scannable_input.text.trace_variable("w", self.tl_add_menu_update_serial_scan)
-        self.tl_add_menu.quit_condition.trace_variable("w", self.update_tl_add_menu_quit_condition)
+        self.tl_add_menu.quit_condition.trace_variable("w", update_tl_add_menu_quit_condition)
 
         self.tl_add_menu.treeview_location.bind("<<TreeviewSelect>>", self.tl_add_menu_treeview_select)
         self.unbind_demo_keys()
