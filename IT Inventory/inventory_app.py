@@ -778,7 +778,7 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.entry_scannable_input.return_text(event)
 
     def insert_demo_value_tl_add_menu_location_averys_office(self, event):
-        self.tl_add_menu.entry_scannable_input.text.set("9000000062")  # Server Room (ITI Locations)
+        self.tl_add_menu.entry_scannable_input.text.set("9000000062")  # Avery's Office (ITI Locations)
         self.tl_add_menu.entry_scannable_input.return_text(event)
 
     def submit_new_item(self, *args):
@@ -792,6 +792,7 @@ class InventoryApp(tkinter.Tk):
             msg = f"Are you sure you want to add '{data_status['name']}' to ITI Items?"
             ans = messagebox.askyesnocancel(title="Inventory Addition", message=msg)
             if ans:
+                data_status.update({"serial": self.entry_scan_input.text.get()})  # update the serial entry with the newly scanned serial.
                 insert_new_item(data_status)
                 msg = f"Successfully added '{data_status['name']}' to ITI Items."
                 messagebox.showinfo(title="Inventory Added", message=msg)

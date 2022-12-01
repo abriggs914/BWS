@@ -604,7 +604,7 @@ class AddItemMenu(tkinter.Toplevel):
         self.tv_spin_subtype.set("UNKNOWN")
         self.tv_spin_cond.set("UNKNOWN")
         self.tv_entry_desc.set("")
-        self.tv_entry_serial.set("")
+        self.entry_scannable_input.text.set("")
 
     def click_cancel_creation(self):
         print(f"click_cancel_creation")
@@ -634,13 +634,13 @@ class AddItemMenu(tkinter.Toplevel):
 
     def set_unit_serial(self):
         valid = eval(self.valid.get())
-        valid.update({"serial": self.tv_entry_serial.get()})
+        valid.update({"serial": self.entry_scannable_input.text.get()})
         self.status.set(valid)
-        self.entry_serial.configure(foreground="black")
+        self.entry_scannable_input.configure(foreground="black")
         self.accept_serial.set(True)
 
     def error_in_serial(self):
-        self.entry_serial.configure(foreground="red")
+        self.entry_scannable_input.configure(foreground="red")
         self.accept_serial.set(False)
 
     # def change_key_press(self, *args):
