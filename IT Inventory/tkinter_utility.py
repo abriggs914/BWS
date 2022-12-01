@@ -1,10 +1,11 @@
 import datetime
+import random
 import tkinter
 
 import pandas
 
 from typing import Literal
-from utility import grid_cells, clamp_rect, clamp, isnumber, alpha_seq
+from utility import grid_cells, clamp_rect, clamp, isnumber, alpha_seq, random_date
 from colour_utility import rgb_to_hex, font_foreground, Colour, random_colour
 from tkinter import ttk, messagebox
 
@@ -15,8 +16,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.19
-    Date...........2022-11-29
+    Version..............1.20
+    Date...........2022-12-01
     Author.......Avery Briggs
     """
 
@@ -47,7 +48,8 @@ def is_tk_var(var_in, str_var=True, int_var=True, dbl_var=True, bol_var=True, va
 
 
 def top_most_tk(obj):
-    assert isinstance(obj, tkinter.Tk) or isinstance(obj, tkinter.Widget) or isinstance(obj, tkinter.Toplevel), f"Error, function requires an instance of tkinter Tk or tkinter Widget Got '{type(obj)=}'"
+    assert isinstance(obj, tkinter.Tk) or isinstance(obj, tkinter.Widget) or isinstance(obj,
+                                                                                        tkinter.Toplevel), f"Error, function requires an instance of tkinter Tk or tkinter Widget Got '{type(obj)=}'"
     if isinstance(obj, tkinter.Tk):
         return obj
     else:
@@ -212,7 +214,8 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
             tv_vars.append(tv_var)
             if kwargs_buttons is not None:
                 print(f"WARNING kwargs param is applied to each radio button")
-                r_buttons.append(tkinter.Radiobutton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=btn))
+                r_buttons.append(
+                    tkinter.Radiobutton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=btn))
             else:
                 r_buttons.append(tkinter.Radiobutton(master, variable=var, textvariable=tv_var, value=btn))
 
@@ -227,6 +230,184 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
         # rb_sdd = Radiobutton(frame_rb_group_3, variable=tv_sort_direction, value="descending", textvariable=tv_sort_dir_d)
 
 
+class TreeviewExt(ttk.Treeview):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def treeview_sort_column(self, col, reverse):
+        l = [(self.set(k, col), k) for k in self.get_children('')]
+        l.sort(reverse=reverse)
+
+        # rearrange items in sorted positions
+        for index, (val, k) in enumerate(l):
+            self.move(k, '', index)
+
+        # reverse sort next time
+        self.heading(col, command=lambda: \
+            self.treeview_sort_column(col, not reverse))
+
+
+class TreeviewController(tkinter.Frame):
+
+    # choose which columns should have totals
+    # add button
+    # delete button
+    def __init__(
+            self,
+            master,
+            df,
+            viewable_column_names=None,
+            viewable_column_widths=None,
+            tv_label=None,
+            kwargs_label=None,
+            kwargs_treeview=None,
+            default_col_width=100,
+            include_scroll_x=True,
+            include_scroll_y=True,
+            text_prefix="B_",
+            iid_prefix="C_",
+            *args,
+            **kwargs
+    ):
+        """Create a frame with controls to interact with a ttk treeview widget.
+        Insert and Delete functions have been pre-defined, in order to change this to your own callbacks,
+        use self.button_insert_item.configure(command=<YOUR_CALLBACK_HERE>).
+
+        Call self.get_objects() to retrieve the text variables and widgets used on this frame.
+        self                            -   tkinter.Frame for background
+        self.tv_label                   -   tkinter.StringVar for top level
+        self.label                      -   tkinter.Label at top
+        self.treeview                   -   ttk.Treeview
+        self.scrollbar_x                -   ttk.Scrollbar for horizontal scrolling
+        self.scrollbar_y                -   ttk.Scrollbar for vertical scrolling
+        (
+            self.tv_button_new_item     -   tkinter.StringVar for new item button
+            self.button_new_item        -   tkinter.Button for new items
+        )
+        (
+            self.tv_button_delete_item  -   tkinter.StringVar for new item button
+            self.button_delete_item     -   tkinter.Button for new items
+        )
+        """
+        super().__init__(*args, **kwargs)
+
+        assert isinstance(df,
+                          pandas.DataFrame), f"Error, param 'dataframe' must be an instance of a pandas Dataframe, got: '{type(df)}'."
+
+        self.master = master
+        self.viewable_column_names = viewable_column_names
+        self.viewable_column_widths = viewable_column_widths
+        self.tv_label = tv_label
+        self.kwargs_label = kwargs_label
+        self.kwargs_treeview = kwargs_treeview
+        self.default_col_width = default_col_width
+        self.include_scroll_x = include_scroll_x
+        self.include_scroll_y = include_scroll_y
+        self.text_prefix = text_prefix
+
+        if self.viewable_column_names is None:
+            self.viewable_column_names = list(df.columns)
+
+        if not is_tk_var(self.tv_label):
+            self.tv_label = tkinter.StringVar(self, value="")
+
+        if self.kwargs_label is None:
+            self.kwargs_label = {}
+
+        if self.kwargs_treeview is None:
+            self.kwargs_treeview = {}
+
+        if self.viewable_column_widths is None:
+            self.viewable_column_widths = [self.default_col_width for _ in range(len(self.viewable_column_names))]
+        elif len(self.viewable_column_widths) < len(self.viewable_column_names):
+            self.viewable_column_widths = self.viewable_column_widths + [self.default_col_width for _ in range(
+                len(self.viewable_column_names) - len(self.viewable_column_widths))]
+
+        self.label = tkinter.Label(self, textvariable=self.tv_label, **self.kwargs_label)
+        self.treeview = TreeviewExt(
+            self,
+            columns=self.viewable_column_names
+            , displaycolumns=self.viewable_column_names
+            , **self.kwargs_treeview
+            # , **kwargs
+        )
+        self.treeview.column("#0", width=0, stretch=tkinter.NO)
+        self.treeview.heading("#0", text="", anchor=tkinter.CENTER)
+
+        for i, col in enumerate(self.viewable_column_names):
+            c_width = self.viewable_column_widths[i]
+            # print(f"{c_width=}, {type(c_width)=}")
+            self.treeview.column(col, width=c_width, anchor=tkinter.CENTER)
+            self.treeview.heading(col, text=col, anchor=tkinter.CENTER, command=lambda _col=col: \
+                self.treeview.treeview_sort_column(_col, False))
+
+        for i, row in enumerate(df.iterrows()):
+            idx, row = row
+            # print(f"{row=}, {type(row)=}")
+            dat = [row[c_name] for c_name in self.viewable_column_names]
+            self.treeview.insert("", tkinter.END, text=f"{self.text_prefix}{i}", iid=i, values=dat)
+
+        # treeview.bind("<<TreeviewSelect>>", CALLBACK_HERE)
+        self.scrollbar_x, self.scrollbar_y = None, None
+        if self.include_scroll_y:
+            self.scrollbar_y = ttk.Scrollbar(self, orient=tkinter.VERTICAL,
+                                             command=self.treeview.yview)
+        if self.include_scroll_x:
+            self.scrollbar_x = ttk.Scrollbar(self, orient=tkinter.HORIZONTAL,
+                                             command=self.treeview.xview)
+        if self.scrollbar_x is not None and self.scrollbar_y is not None:
+            self.treeview.configure(yscrollcommand=self.scrollbar_y.set, xscrollcommand=self.scrollbar_x.set)
+        elif self.scrollbar_x is not None:
+            self.treeview.configure(xscrollcommand=self.scrollbar_x.set)
+        elif self.scrollbar_y is not None:
+            self.treeview.configure(yscrollcommand=self.scrollbar_y.set)
+
+        self.tv_button_new_item, self.button_new_item = button_factory(self, tv_btn="new entry",
+                                                                       kwargs_btn={"command": self.insert_new_entry})
+        self.tv_button_delete_item, self.button_delete_item = button_factory(self, tv_btn="del entry",
+                                                                             kwargs_btn={"command": self.delete_entry})
+        # button_new_item.pack()
+        # button_delete_item.pack()
+
+    def get_objects(self):
+        return \
+            self, \
+            self.tv_label, \
+            self.label, \
+            self.treeview, \
+            self.scrollbar_x, \
+            self.scrollbar_y, \
+            (self.tv_button_new_item, self.button_new_item), \
+            (self.tv_button_delete_item, self.button_delete_item)
+
+    def next_iid(self):
+        return len(self.treeview.get_children()) + 1
+
+    def gen_random_entry(self):
+        return [
+            str(random.randint(0, 25)),
+            str(random.randint(0, 25)),
+            # random.choice([True, False]),
+            random_date(start_year=2020, end_year=2024)
+        ]
+
+    def insert_new_entry(self, index=tkinter.END):
+        data = self.gen_random_entry()
+        iid = self.next_iid()
+        text = f"NEW TEXT"
+        self.treeview.insert("", index, iid=iid, text=text, values=data)
+
+    def delete_entry(self):
+        selection = self.treeview.selection()
+        print(f"{selection=}")
+        if selection:
+            # delete the selected entries
+            # row_id = treeview.focus()  # return only 1
+            for row_id in selection:
+                print(f"{row_id=}")
+                self.treeview.delete(row_id)
+
+
 def treeview_factory(
         master,
         dataframe,
@@ -237,80 +418,128 @@ def treeview_factory(
         kwargs_treeview=None,
         default_col_width=100,
         include_scroll_x=True,
-        include_scroll_y=True
+        include_scroll_y=True,
+        text_prefix="B_",
+        iid_prefix="C_"
 ):
-    assert isinstance(dataframe, pandas.DataFrame), f"Error, param 'dataframe' must be an instance of a pandas Dataframe, got: '{type(dataframe)}'."
+    return \
+        TreeviewController(
+            master,
+            dataframe,
+            viewable_column_names,
+            viewable_column_widths,
+            tv_label, kwargs_label,
+            kwargs_treeview,
+            default_col_width,
+            include_scroll_x,
+            include_scroll_y,
+            text_prefix,
+            iid_prefix
+        ).get_objects()
 
-    def treeview_sort_column(tv, col, reverse):
-        l = [(tv.set(k, col), k) for k in tv.get_children('')]
-        l.sort(reverse=reverse)
 
-        # rearrange items in sorted positions
-        for index, (val, k) in enumerate(l):
-            tv.move(k, '', index)
-
-        # reverse sort next time
-        tv.heading(col, command=lambda: \
-            treeview_sort_column(tv, col, not reverse))
-
-    if viewable_column_names is None:
-        viewable_column_names = list(dataframe.columns)
-
-    if not is_tk_var(tv_label):
-        tv_label = tkinter.StringVar(master, value="")
-
-    if kwargs_label is None:
-        kwargs_label = {}
-
-    if kwargs_treeview is None:
-        kwargs_treeview = {}
-
-    if viewable_column_widths is None:
-        viewable_column_widths = [default_col_width for _ in range(len(viewable_column_names))]
-    elif len(viewable_column_widths) < len(viewable_column_names):
-        viewable_column_widths = viewable_column_widths + [default_col_width for _ in range(len(viewable_column_names) - len(viewable_column_widths))]
-
-    # print(f"About to look at column_names: {viewable_column_names=}, with {viewable_column_widths=}")
-
-    label = tkinter.Label(master, textvariable=tv_label, **kwargs_label)
-    treeview = ttk.Treeview(
-        master,
-        columns=viewable_column_names
-        , displaycolumns=viewable_column_names
-        , **kwargs_treeview
-    )
-    treeview.column("#0", width=0, stretch=tkinter.NO)
-    treeview.heading("#0", text="", anchor=tkinter.CENTER)
-
-    for i, col in enumerate(viewable_column_names):
-        c_width = viewable_column_widths[i]
-        # print(f"{c_width=}, {type(c_width)=}")
-        treeview.column(col, width=c_width, anchor=tkinter.CENTER)
-        treeview.heading(col, text=col, anchor=tkinter.CENTER, command=lambda _col=col: \
-                     treeview_sort_column(treeview, _col, False))
-
-    for i, row in enumerate(dataframe.iterrows()):
-        idx, row = row
-        # print(f"{row=}, {type(row)=}")
-        dat = [row[c_name] for c_name in viewable_column_names]
-        treeview.insert("", tkinter.END, text=f"B_{i}", iid=f"C_{i}", values=dat)
-
-    # treeview.bind("<<TreeviewSelect>>", CALLBACK_HERE)
-    scrollbar_x, scrollbar_y = None, None
-    if include_scroll_y:
-        scrollbar_y = ttk.Scrollbar(master, orient=tkinter.VERTICAL,
-                                                     command=treeview.yview)
-    if include_scroll_x:
-        scrollbar_x = ttk.Scrollbar(master, orient=tkinter.HORIZONTAL,
-                                                     command=treeview.xview)
-    if scrollbar_x is not None and scrollbar_y is not None:
-        treeview.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
-    elif scrollbar_x is not None:
-        treeview.configure(xscrollcommand=scrollbar_x.set)
-    elif scrollbar_y is not None:
-        treeview.configure(yscrollcommand=scrollbar_y.set)
-
-    return tv_label, label, treeview, scrollbar_x, scrollbar_y
+# old version 2022-11-30
+#
+# def treeview_factory(
+#         master,
+#         dataframe,
+#         viewable_column_names=None,
+#         viewable_column_widths=None,
+#         tv_label=None,
+#         kwargs_label=None,
+#         kwargs_treeview=None,
+#         default_col_width=100,
+#         include_scroll_x=True,
+#         include_scroll_y=True,
+#         text_prefix="B_",
+#         iid_prefix="C_"
+# ):
+#     assert isinstance(dataframe, pandas.DataFrame), f"Error, param 'dataframe' must be an instance of a pandas Dataframe, got: '{type(dataframe)}'."
+#
+#     def treeview_sort_column(tv, col, reverse):
+#         l = [(tv.set(k, col), k) for k in tv.get_children('')]
+#         l.sort(reverse=reverse)
+#
+#         # rearrange items in sorted positions
+#         for index, (val, k) in enumerate(l):
+#             tv.move(k, '', index)
+#
+#         # reverse sort next time
+#         tv.heading(col, command=lambda: \
+#             treeview_sort_column(tv, col, not reverse))
+#
+#     if viewable_column_names is None:
+#         viewable_column_names = list(dataframe.columns)
+#
+#     if not is_tk_var(tv_label):
+#         tv_label = tkinter.StringVar(master, value="")
+#
+#     if kwargs_label is None:
+#         kwargs_label = {}
+#
+#     if kwargs_treeview is None:
+#         kwargs_treeview = {}
+#
+#     if viewable_column_widths is None:
+#         viewable_column_widths = [default_col_width for _ in range(len(viewable_column_names))]
+#     elif len(viewable_column_widths) < len(viewable_column_names):
+#         viewable_column_widths = viewable_column_widths + [default_col_width for _ in range(len(viewable_column_names) - len(viewable_column_widths))]
+#
+#     # print(f"About to look at column_names: {viewable_column_names=}, with {viewable_column_widths=}")
+#
+#     # kwargs = {
+#     #     "viewable_column_names": viewable_column_names,
+#     #     "viewable_column_widths": viewable_column_widths,
+#     #     "tv_label": tv_label,
+#     #     "kwargs_label": kwargs_label,
+#     #     "kwargs_treeview": kwargs_treeview,
+#     #     "default_col_width": default_col_width,
+#     #     "include_scroll_x": include_scroll_x,
+#     #     "include_scroll_y": include_scroll_y,
+#     #     "text_prefix": text_prefix,
+#     #     "iid_prefix": iid_prefix
+#     # }
+#
+#     label = tkinter.Label(master, textvariable=tv_label, **kwargs_label)
+#     treeview = TreeviewExt(
+#         master,
+#         columns=viewable_column_names
+#         , displaycolumns=viewable_column_names
+#         , **kwargs_treeview
+#         # , **kwargs
+#     )
+#     treeview.column("#0", width=0, stretch=tkinter.NO)
+#     treeview.heading("#0", text="", anchor=tkinter.CENTER)
+#
+#     for i, col in enumerate(viewable_column_names):
+#         c_width = viewable_column_widths[i]
+#         # print(f"{c_width=}, {type(c_width)=}")
+#         treeview.column(col, width=c_width, anchor=tkinter.CENTER)
+#         treeview.heading(col, text=col, anchor=tkinter.CENTER, command=lambda _col=col: \
+#                      treeview_sort_column(treeview, _col, False))
+#
+#     for i, row in enumerate(dataframe.iterrows()):
+#         idx, row = row
+#         # print(f"{row=}, {type(row)=}")
+#         dat = [row[c_name] for c_name in viewable_column_names]
+#         treeview.insert("", tkinter.END, text=f"{text_prefix}{i}", iid=i, values=dat)
+#
+#     # treeview.bind("<<TreeviewSelect>>", CALLBACK_HERE)
+#     scrollbar_x, scrollbar_y = None, None
+#     if include_scroll_y:
+#         scrollbar_y = ttk.Scrollbar(master, orient=tkinter.VERTICAL,
+#                                                      command=treeview.yview)
+#     if include_scroll_x:
+#         scrollbar_x = ttk.Scrollbar(master, orient=tkinter.HORIZONTAL,
+#                                                      command=treeview.xview)
+#     if scrollbar_x is not None and scrollbar_y is not None:
+#         treeview.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+#     elif scrollbar_x is not None:
+#         treeview.configure(xscrollcommand=scrollbar_x.set)
+#     elif scrollbar_y is not None:
+#         treeview.configure(yscrollcommand=scrollbar_y.set)
+#
+#     return tv_label, label, treeview, scrollbar_x, scrollbar_y
 
 
 def test_entry_factory():
@@ -457,8 +686,9 @@ def test_treeview_factory_1():
 
     df = pandas.DataFrame({
         "species": ["Cat", "Dog", "Fish", "Parrot"]
-        ,"name": ["Tim", "Tam", "Tom", "Tum"]
-        ,"dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7), datetime.datetime(2005, 8, 31)]
+        , "name": ["Tim", "Tam", "Tom", "Tum"]
+        , "dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7),
+                  datetime.datetime(2005, 8, 31)]
     })
 
     print(f"df:\n\n{df}")
@@ -477,9 +707,10 @@ def test_treeview_factory_2():
 
     df = pandas.DataFrame({
         "species": ["Cat", "Dog", "Fish", "Parrot"]
-        ,"name": ["Tim", "Tam", "Tom", "Tum"]
-        ,"invisible_col": [True, True, True, False]
-        ,"dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7), datetime.datetime(2005, 8, 31)]
+        , "name": ["Tim", "Tam", "Tom", "Tum"]
+        , "invisible_col": [True, True, True, False]
+        , "dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7),
+                  datetime.datetime(2005, 8, 31)]
     })
 
     print(f"df:\n\n{df}")
@@ -495,6 +726,113 @@ def test_treeview_factory_2():
     scrollbar_y.pack(side=tkinter.RIGHT, anchor="e", fill="y")
     treeview.pack(side=tkinter.TOP)
     scrollbar_x.pack(side=tkinter.BOTTOM)
+
+    WIN.mainloop()
+
+
+def test_treeview_factory_3():
+    WIN = tkinter.Tk()
+    WIN.geometry(f"500x500")
+
+    df = pandas.DataFrame({
+        "species": ["Cat", "Dog", "Fish", "Parrot"]
+        , "name": ["Tim", "Tam", "Tom", "Tum"]
+        , "invisible_col": [True, True, True, False]
+        , "dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7),
+                  datetime.datetime(2005, 8, 31)]
+    })
+
+    namer = alpha_seq(4, numbers_instead=True)
+
+    for i in range(df.shape[0]):
+        next(namer)
+
+    def gen_random_entry():
+        return [
+            str(random.randint(0, 25)),
+            str(random.randint(0, 25)),
+            # random.choice([True, False]),
+            random_date(start_year=2020, end_year=2024)
+        ]
+
+    def insert_new_entry(index=tkinter.END):
+        data = gen_random_entry()
+        iid = int(next(namer))
+        text = f"NEW TEXT"
+        treeview.insert("", index, iid=iid, text=text, values=data)
+
+    def delete_entry():
+        selection = treeview.selection()
+        print(f"{selection=}")
+        if selection:
+            # delete the selected entries
+            # row_id = treeview.focus()  # return only 1
+            for row_id in selection:
+                print(f"{row_id=}")
+                treeview.delete(row_id)
+
+    print(f"df:\n\n{df}")
+
+    tv_label, label, treeview, scrollbar_x, scrollbar_y = treeview_factory(
+        WIN,
+        df,
+        viewable_column_names=["species", "name", "dob"],
+        viewable_column_widths=[300, 125, 200]
+    )
+    tv_label.set("I forgot to pass a title! - no worries.")
+    label.pack(side=tkinter.TOP)
+    scrollbar_y.pack(side=tkinter.RIGHT, anchor="e", fill="y")
+    treeview.pack(side=tkinter.TOP)
+    scrollbar_x.pack(side=tkinter.BOTTOM)
+
+    tv_btn1, btn1 = button_factory(WIN, tv_btn="new entry", kwargs_btn={"command": insert_new_entry})
+    tv_btn2, btn2 = button_factory(WIN, tv_btn="del entry", kwargs_btn={"command": delete_entry})
+    btn1.pack()
+    btn2.pack()
+
+    WIN.mainloop()
+
+
+def test_treeview_factory_4():
+    WIN = tkinter.Tk()
+    WIN.geometry(f"500x500")
+
+    df = pandas.DataFrame({
+        "species": ["Cat", "Dog", "Fish", "Parrot"]
+        , "name": ["Tim", "Tam", "Tom", "Tum"]
+        , "invisible_col": [True, True, True, False]
+        , "dob": [datetime.datetime(2000, 2, 13), datetime.datetime(2016, 4, 9), datetime.datetime(2010, 6, 7),
+                  datetime.datetime(2005, 8, 31)]
+    })
+
+    print(f"df:\n\n{df}")
+
+    frame, \
+    tv_label, \
+    label, \
+    treeview, \
+    scrollbar_x, \
+    scrollbar_y, \
+    insert_btn_data, \
+    delete_btn_data \
+        = treeview_factory(
+        WIN,
+        df,
+        viewable_column_names=["species", "name", "dob"],
+        viewable_column_widths=[300, 125, 200]
+    )
+    tv_label.set("I forgot to pass a title! - no worries.")
+    label.pack(side=tkinter.TOP)
+    scrollbar_y.pack(side=tkinter.RIGHT, anchor="e", fill="y")
+    treeview.pack(side=tkinter.TOP)
+    scrollbar_x.pack(side=tkinter.BOTTOM)
+
+    tv_button_insert_item, button_insert_item = insert_btn_data
+    tv_button_delete_item, button_delete_item = delete_btn_data
+
+    frame.pack()
+    button_insert_item.pack()
+    button_delete_item.pack()
 
     WIN.mainloop()
 
@@ -771,45 +1109,45 @@ class RGBSlider(tkinter.Frame):
             command=self.update_colour
         )
 
-        self.tv_label_red,\
-        self.label_red,\
-        self.tv_entry_red,\
-        self.entry_red\
+        self.tv_label_red, \
+        self.label_red, \
+        self.tv_entry_red, \
+        self.entry_red \
             = entry_factory(
-                self,
-                tv_label="Red:",
-                tv_entry=self.tv_value_red
+            self,
+            tv_label="Red:",
+            tv_entry=self.tv_value_red
         )
 
-        self.tv_label_green,\
-        self.label_green,\
-        self.tv_entry_green,\
-        self.entry_green\
+        self.tv_label_green, \
+        self.label_green, \
+        self.tv_entry_green, \
+        self.entry_green \
             = entry_factory(
-                self,
-                tv_label="Green:",
-                tv_entry=self.tv_value_green
+            self,
+            tv_label="Green:",
+            tv_entry=self.tv_value_green
         )
 
-        self.tv_label_blue,\
-        self.label_blue,\
-        self.tv_entry_blue,\
-        self.entry_blue\
+        self.tv_label_blue, \
+        self.label_blue, \
+        self.tv_entry_blue, \
+        self.entry_blue \
             = entry_factory(
-                self,
-                tv_label="Blue:",
-                tv_entry=self.tv_value_blue
+            self,
+            tv_label="Blue:",
+            tv_entry=self.tv_value_blue
         )
 
         if self.show_result:
-            self.tv_label_res,\
-            self.label_res,\
-            self.tv_entry_res,\
-            self.entry_res\
+            self.tv_label_res, \
+            self.label_res, \
+            self.tv_entry_res, \
+            self.entry_res \
                 = entry_factory(
-                    self,
-                    tv_label="Result:",
-                    tv_entry="Sample Text #123."
+                self,
+                tv_label="Result:",
+                tv_entry="Sample Text #123."
             )
 
         # self.slider_red.value.trace_variable("w", self.update_colour)
@@ -898,6 +1236,7 @@ class RGBSlider(tkinter.Frame):
         if self.show_result:
             h = Colour(self.colour.get()).hex_code
             self.entry_res.config(background=h, foreground=font_foreground(h, rgb=False))
+
 
 # https://stackoverflow.com/questions/70147814/hint-entry-widget-tkinter
 class EntryWithPlaceholder(tkinter.Entry):
@@ -1040,7 +1379,8 @@ class CustomMessageBox:
         self.CloseBtn.place(x=self.w - 50, y=5, width=40)
 
         # Changing Close Button Color on Mouseover
-        self.CloseBtn.bind("<Enter>", lambda e,: self.CloseBtn.config(bg=self.close_btn_active_colour, fg=self.close_btn_active_font_colour))
+        self.CloseBtn.bind("<Enter>", lambda e,: self.CloseBtn.config(bg=self.close_btn_active_colour,
+                                                                      fg=self.close_btn_active_font_colour))
         self.CloseBtn.bind("<Leave>", lambda e,: self.CloseBtn.config(bg=self.bg_color2, fg=self.text_colour))
 
         ts = 5
@@ -1107,7 +1447,6 @@ class CustomMessageBox:
     #     x = self.root.winfo_x()
     #     y = self.root.winfo_y()
     #     self.root.geometry('+{}+{}'.format(x, y))
-
 
     # Function on Closeing MessageBox
     def closed(self):
@@ -1280,7 +1619,6 @@ class ScannableEntry(tkinter.Entry):
 
 
 def apply_state(root, state_in, direction: Literal["up", "down"] = "up", exclude_self=False):
-
     og_root = root
 
     if direction not in ("up", "down"):
@@ -1334,10 +1672,10 @@ def test_messagebox():
 
     def func():
         a = CustomMessageBox(msg='Hello I m your multiline message',
-                       title='Hello World',
-                       b1='Button 1',
-                       b2='Button 2',
-                       )
+                             title='Hello World',
+                             b1='Button 1',
+                             b2='Button 2',
+                             )
         print(a.choice)
 
     tkinter.Button(root, text='Click Me', command=func).pack()
@@ -1527,5 +1865,7 @@ if __name__ == '__main__':
     # test_radio_factory()
     # test_treeview_factory_1()
     # test_treeview_factory_2()
+    # test_treeview_factory_3()
+    test_treeview_factory_4()
     # test_apply_state_1()
-    test_apply_state_3()
+    # test_apply_state_3()

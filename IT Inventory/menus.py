@@ -256,17 +256,22 @@ class AddItemMenu(tkinter.Toplevel):
         print(f"{df_locations.columns=}")
         print(f"{df_locations=}")
 
+        self.frame_treeview_controller,\
         self.tv_label_treeview_location,\
         self.label_treeview_location,\
         self.treeview_location,\
         self.scrollbar_x_treeview_location,\
-        self.scrollbar_y_treeview_location\
+        self.scrollbar_y_treeview_location,\
+        self.data_button_insert,\
+        self.data_button_delete,\
             = treeview_factory(
             self
             , self.df_locations
             , viewable_column_names=["Name_[ITI Locations]", "Description", "Bldng", "FloorNumber", "Name_[ITR Customers]"]
         )
 
+        self.tv_button_insert_item, self.button_insert_item = self.data_button_insert
+        self.tv_button_delete_item, self.button_delete_item = self.data_button_delete
 
         self.lbl_entry_name.grid(row=0, column=0, rowspan=1, columnspan=1)
         self.entry_name.grid(row=0, column=1, rowspan=1, columnspan=2)
@@ -285,11 +290,17 @@ class AddItemMenu(tkinter.Toplevel):
         self.entry_desc.grid(row=7, column=0, rowspan=1, columnspan=3, sticky="nsew")
         self.label_scannable_input.grid(row=8, column=0, rowspan=1, columnspan=1)
         self.entry_scannable_input.grid(row=8, column=1, rowspan=1, columnspan=2)
-        self.label_treeview_location.grid(row=9, column=0, rowspan=1, columnspan=3)
-        self.treeview_location.grid(row=10, column=0, rowspan=1, columnspan=3)
+        # self.label_treeview_location.grid(row=9, column=0, rowspan=1, columnspan=3)
+        # self.treeview_location.grid(row=10, column=0, rowspan=1, columnspan=3)
+        self.frame_treeview_controller.grid(row=10, column=0, rowspan=1, columnspan=3)
 
-        self.scrollbar_x_treeview_location.grid(row=11, column=0, rowspan=1, columnspan=3, sticky="ew")
-        self.scrollbar_y_treeview_location.grid(row=10, column=4, rowspan=1, columnspan=1, sticky="ns")
+        self.label_treeview_location.grid(row=0, column=0, rowspan=1, columnspan=3)
+        self.treeview_location.grid(row=1, column=0, rowspan=1, columnspan=3)
+        self.scrollbar_x_treeview_location.grid(row=1, column=0, rowspan=1, columnspan=3, sticky="ew")
+        self.scrollbar_x_treeview_location.grid(row=1, column=4, rowspan=1, columnspan=1, sticky="ns")
+
+        # self.scrollbar_x_treeview_location.grid(row=11, column=0, rowspan=1, columnspan=3, sticky="ew")
+        # self.scrollbar_y_treeview_location.grid(row=10, column=4, rowspan=1, columnspan=1, sticky="ns")
 
         self.btn_cancel_creation.grid(row=12, column=0, rowspan=1, columnspan=1)
         self.btn_clear_fields.grid(row=12, column=1, rowspan=1, columnspan=1)
