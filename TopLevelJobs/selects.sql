@@ -162,3 +162,22 @@ ORDER BY
 	, [Operation]
 
 ;
+
+SELECT
+	[InvMaster].[StockCode]
+	, [Description]
+	, [LongDesc]
+	, [Warehouse]
+	, [QtyOnHand]
+	, [QtyOnOrder]
+	, [QtyOnBackOrder]
+	, [QtyAllocated]
+	--, *
+FROm
+	[InvWarehouse]
+INNER JOIN
+	[InvMaster]
+ON
+	[InvWarehouse].[StockCode] = [InvMaster].[StockCode]
+--WHERE 
+
