@@ -256,6 +256,11 @@ class AddItemMenu(tkinter.Toplevel):
         print(f"{df_locations.columns=}")
         print(f"{df_locations=}")
 
+        self.treeview_controller = treeview_factory(
+            self
+            , self.df_locations
+            , viewable_column_names=["Name_[ITI Locations]", "Description", "Bldng", "FloorNumber", "Name_[ITR Customers]"]
+        )
         self.frame_treeview_controller,\
         self.tv_label_treeview_location,\
         self.label_treeview_location,\
@@ -264,11 +269,8 @@ class AddItemMenu(tkinter.Toplevel):
         self.scrollbar_y_treeview_location,\
         self.data_button_insert,\
         self.data_button_delete,\
-            = treeview_factory(
-            self
-            , self.df_locations
-            , viewable_column_names=["Name_[ITI Locations]", "Description", "Bldng", "FloorNumber", "Name_[ITR Customers]"]
-        )
+        self.aggregate_data\
+            = self.treeview_controller.get_objects()
 
         self.tv_button_insert_item, self.button_insert_item = self.data_button_insert
         self.tv_button_delete_item, self.button_delete_item = self.data_button_delete

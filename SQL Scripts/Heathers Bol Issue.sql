@@ -1,0 +1,50 @@
+USE BWSdb
+GO
+
+SELECT
+	*
+FROM
+	[BOL]
+ORDER BY
+	[BOL#]
+;
+
+SELECT
+	*
+FROM
+	[BOL]
+WHERE
+	[WO#] IN (
+	'10015772',
+	'10015771',
+	'10015949'
+)
+ORDER BY
+	[BOL#]
+;
+
+
+--BEGIN TRAN;
+
+--	UPDATE
+--		[BOL]
+--	SET
+--		[BOL#] = 4527
+--	WHERE
+--		[ID] IN (
+--		7722,
+--7723,
+--7724)
+
+--ROLLBACK;
+--COMMIT;
+
+
+
+SELECT
+	*
+FROM
+	[BOL]
+WHERE
+	[BOL#] = 4551
+;

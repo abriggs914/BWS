@@ -266,7 +266,7 @@ SQL_INSERT_NEW_ITI_ITEM = {
            ,[DateCreated]
            ,[Serial]
            ,[LocationID])
-     VALUES ('{n}', '{entry}', {a}, {tv_entry}, {t}, {y}, '{r}', '{s}', {l});""",
+     VALUES ('{n}', '{d}', {a}, {c}, {t}, {y}, '{r}', '{s}', {l});""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"
@@ -347,7 +347,7 @@ def insert_new_item(data):
         c=condition,
         t=ttype,
         y=stype,
-        r=date_created.strftime("%Y-%m-%entry"),
+        r=date_created.strftime("%Y-%m-%d"),
         s=serial,
         l=location
     )

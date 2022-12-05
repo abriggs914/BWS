@@ -1,3 +1,4 @@
+import math
 import tkinter
 
 import pandas
@@ -10,6 +11,43 @@ from inventory_queries import *
 from menus import AddItemMenu, TopLevelDNDMenu
 from utility import alpha_seq, dict_print, replace_timestamp_datetime
 from dnd_onv_states import DNDItemManagerStatus
+
+
+DEFAULT_DEPARTMENT = 176
+DEFAULT_STATUS = 1
+
+DATA_PAIRS = {
+    "df_v_tools_and_equip_unipoint": SQL_V_TOOLSANDEQUIP,
+    "df_v_iti_items": SQL_V_ITI_ITEMS,
+    "df_iti_invmaster": SQL_ITI_INVMASTER,
+    "df_iti_item": SQL_ITI_ITEM,
+    "df_uom": SQL_UOM,
+    "df_type": SQL_TYPE,
+    "df_status": SQL_STATUS,
+    "df_condition": SQL_CONDITION,
+    "df_computer": SQL_COMPUTER,
+    "df_peripherals": SQL_PERIPHERALS,
+    "df_network": SQL_NETWORK,
+    "df_wire": SQL_WIRE,
+    "df_unknown": SQL_UNKNOWN,
+    "df_serial_indication": SQL_ITI_SERIAL_INDICATION,
+    "df_buildings": SQL_ITI_BUILDINGS,
+    "df_locations": SQL_ITI_LOCATIONS,
+    "df_customers": SQL_ITR_CUSTOMERS,
+    "df_departments": SQL_DEPARTMENTS,
+    "df_loc_emp_bld_dpt": CALC_DF_LOC_EMP_BLD_DPT
+
+        self.df_loc_emp_bld_dpt.rename(
+            columns={
+                'Name_x': 'Loc. Name',
+                'Name': 'Bldng',
+                'Name_y': 'Emp. Name'
+            },
+            inplace=True
+        )
+
+        self.df_v_serial_indication = connect(**SQL_V_ITI_SERIAL_INDICATION)
+}
 
 
 class InventoryApp(tkinter.Tk):
@@ -95,12 +133,19 @@ class InventoryApp(tkinter.Tk):
         #     font=("Code39AzaleaNarrow3", 14)
         # )
 
-        self.label_scan_input.pack()
-        self.entry_scan_input.pack()
+        self.label_scan_input.grid(sticky="ew")
+        self.entry_scan_input.grid(sticky="ew")
 
         self.entry_scan_input.validated_text.trace_variable("w", self.submit_scan)
 
         self.bind_demo_keys()
+
+    def update_df(self, df_names):
+        if not isinstance(df_names, list) and not isinstance(df_names, tuple):
+            df_names = [df_names]
+
+        for df_name in df_names:
+            df = eval(f"self.{df_name}")
 
     def populate_data(self):
         self.df_v_tools_and_equip_unipoint = connect(**SQL_V_TOOLSANDEQUIP)
@@ -397,16 +442,35 @@ class InventoryApp(tkinter.Tk):
         # result = {}
         # row = data.iloc[0]
         result = dict(zip(data.keys().tolist(), data.values[0].tolist()))
+        result["Status"] = result["Status"] if not math.isnan(result["Status"]) else DEFAULT_STATUS
+        print(f"BEFORE\n{result=}")
+        print(dict_print(result, "BEFORE"))
         if result["ID"]:
-            idx = result['ID'] - 1
+            idx = result['ID']
+            if math.isnan(idx):
+                idx = 0
+            else:
+                idx -= 1
         if result["Condition"]:
-            idx = result['Condition'] - 1
+            idx = result['Condition']
+            if math.isnan(idx):
+                idx = 0
+            else:
+                idx -= 1
             result.update({"ConditionName": self.df_condition.iloc[idx]["Name"]})
         if result["Status"]:
-            idx = result['Status'] - 1
+            idx = result['Status']
+            if math.isnan(idx):
+                idx = 0
+            else:
+                idx -= 1
             result.update({"StatusName": self.df_status.iloc[idx]["Name"]})
         if result["Type"]:
-            idx = result['Type'] - 1
+            idx = result['Type']
+            if math.isnan(idx):
+                idx = 0
+            else:
+                idx -= 1
             result.update({"TypeName": self.df_type.iloc[idx]["Name"]})
 
         location_id = result["LocationID"]
@@ -442,7 +506,7 @@ class InventoryApp(tkinter.Tk):
                 row_employee = dict(zip(row_employee.keys().tolist(), row_employee.values[0].tolist()))
                 result.update({
                     "employee_name": row_employee["Name"],
-                    "employee_department": row_employee["Department"],
+                    "employee_department": (row_employee["Department"] if not math.isnan(row_employee["Department"]) else DEFAULT_DEPARTMENT),
                     "employee_company": row_employee["Company"],
                     "employee_email": row_employee["Email"],
                     "employee_work_phone": row_employee["WorkPhone"],
@@ -492,6 +556,7 @@ class InventoryApp(tkinter.Tk):
         })
 
         print(f"Gathered result '{result}'")
+        print(dict_print(result, "Result"))
         return result
 
     def open_dnd(self, scan_in):
@@ -741,7 +806,7 @@ class InventoryApp(tkinter.Tk):
 
     def insert_demo_value_new_item(self, event):
         # W
-        self.entry_scan_input.text.set("1000000006")
+        self.entry_scan_input.text.set("1000000007")
         event.char = self.entry_scan_input.text.get()
         self.entry_scan_input.return_text(event)
 
@@ -789,6 +854,7 @@ class InventoryApp(tkinter.Tk):
         if not all_keys.difference(data_status.keys()) and data_status["submission"]:
             # all valid
             print(f"all valid")
+            print(dict_print(data_status, "DATA_STATUS"))
             msg = f"Are you sure you want to add '{data_status['name']}' to ITI Items?"
             ans = messagebox.askyesnocancel(title="Inventory Addition", message=msg)
             if ans:
@@ -900,7 +966,7 @@ class InventoryApp(tkinter.Tk):
         self.tl_add_menu.valid.set(valid)
         print(dict_print(eval(self.tl_add_menu.valid.get()), "tl_add_menu.valid"))
 
-    def update_tl_add_menu_quit_condition(self):
+    def update_tl_add_menu_quit_condition(self, *event):
         """tl_add_menu has a new reason to quit"""
         quit_status = self.tl_add_menu.quit_condition.get()
         if quit_status:

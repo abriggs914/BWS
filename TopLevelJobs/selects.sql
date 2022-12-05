@@ -163,6 +163,9 @@ ORDER BY
 
 ;
 
+
+
+-- All Inventory
 SELECT
 	[InvMaster].[StockCode]
 	, [Description]
@@ -172,6 +175,7 @@ SELECT
 	, [QtyOnOrder]
 	, [QtyOnBackOrder]
 	, [QtyAllocated]
+	, [QtyAllocated] - ([QtyOnHand] + [QtyOnOrder] + [QtyOnBackOrder]) AS [CalcAvailable]
 	--, *
 FROm
 	[InvWarehouse]
@@ -180,4 +184,53 @@ INNER JOIN
 ON
 	[InvWarehouse].[StockCode] = [InvMaster].[StockCode]
 --WHERE 
+
+
+-- All AVAILABLE Inventory
+SELECT
+	*
+FROM (
+	SELECT
+		*
+		, [CalcOwned] - [QtyAllocated] AS [CalcAvailable]
+	FROM (
+		SELECT
+			[InvMaster].[StockCode]
+			, [Description]
+			, [LongDesc]
+			, [Warehouse]
+			, [QtyOnHand]
+			, [QtyOnOrder]
+			, [QtyOnBackOrder]
+			, [QtyAllocated]
+			, ([QtyOnHand] + [QtyOnOrder] + [QtyOnBackOrder]) AS [CalcOwned]
+			--, *
+		FROm
+			[InvWarehouse]
+		INNER JOIN
+			[InvMaster]
+		ON
+			[InvWarehouse].[StockCode] = [InvMaster].[StockCode]
+		
+	) AS [Sub1]
+	WHERE
+		[CalcOwned] > 0
+) AS [Sub2]
+WHERE
+	[CalcAvailable] > 0
+;
+
+
+DECLARE @SD AS DATETIME;
+DECLARE @ED AS DATETIME;
+SELECT @SD = DATEADD(DAY, -6, GETDATE());
+SELECT @ED = DATEADD(DAY, 7, GETDATE());
+
+SELECT
+	*
+FROM 
+	[BWSdb].[dbo].[Production]
+WHERE
+	ISNULL([Prod Date], [Prod Date2]) BETWEEN @SD AND @ED
+;
 
