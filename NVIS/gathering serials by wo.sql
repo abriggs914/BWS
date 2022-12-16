@@ -1,0 +1,4 @@
+SELECT * FROM [Orders] WHERE [WO#] IN (10015714, 10015715)
+SELECT * FROM [Orders] WHERE [WO#] IN (10015957, 10015955, 10015958, 10015956)
+
+SELECT [Serial Number] FROM [Orders] WHERE LEFT([Serial Number], 3) = '2XB' AND SUBSTRING([Serial Number], 10, 2) = 'RA' ORDER BY RIGHT([Serial Number], 6)
