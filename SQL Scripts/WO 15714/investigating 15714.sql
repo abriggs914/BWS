@@ -1,0 +1,27 @@
+
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Orders] WITH (NOLOCK)
+WHERE
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = '15714'
+;
+
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Production] WITH (NOLOCK)
+WHERE
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = '15714'
+;
+
+
+SELECT
+	*
+FROM
+	[SysproCompanyA].[dbo].[SorMaster] WITH (NOLOCK)
+WHERE
+	RIGHT(CAST([WO#] AS NVARCHAR(MAX)), 5) = '15714'
+;
