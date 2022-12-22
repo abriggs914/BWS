@@ -1,14 +1,14 @@
 USE BWSdb
 GO
 
--- Recalcuate the Serial Tag Check Digit
+-- Recalcuate the Serial Tag Check Digit   FOR ALL 2023 and 2024 models.
 
 -- Be weary of changes using this program. it does not take into account a change in prod year.
 -- If a unit moves ahead or backward, the sequence digits should be recalculated
 
 DECLARE @updater AS NVARCHAR(100) = 'ABRIGGS';
-DECLARE @updatePrefix AS NVARCHAR(MAX) = '2022-12-16 12 PM -';
-DECLARE @updateSuffix AS NVARCHAR(MAX) = 'to match correct axle configuration.';
+DECLARE @updatePrefix AS NVARCHAR(MAX) = '2022-12-22 2 PM -';
+DECLARE @updateSuffix AS NVARCHAR(MAX) = 'Check Digit Correction.';
 
 
 DECLARE @inputVINs AS TABLE([ID] INT IDENTITY(1, 1), [KnownSN] NVARCHAR(17), [CorrectedSN] NVARCHAR(17), [NewCalcSN] NVARCHAR(17))
@@ -44,18 +44,28 @@ INSERT INTO @charToNum VALUES
 
 -- Adjust inputs here
 
-INSERT INTO @inputVINs ([knownSN], [CorrectedSN]) VALUES
---('2XBB6FY34PA000966', '2XBB6FY2 PA000966'),
---('2XBB6FY36PA000967', '2XBB6FY2 PA000967')
---('2XBB2TR35RA000138', '2XBB2TR3 RA000138')
---('2XBB6VY23RA000290', '2XBB6VY2 RA000290')
-('2XBB6VY23RA000273', '2XBB6VY2 RA000273'),
-('2XBB6VY23RA000291', '2XBB6VY2 RA000291'),
-('2XBB6VY24RA000043', '2XBB6VY2 RA000043'),
-('2XBB6VY28RA000112',  '2XBB6VY2 RA000112'),
-('2XBB2TR32RA000573', '2XBB2TR3 RA000573'),
-('2XBB2TR32RA000573', '2XBB2TR3 RA000573'),
-('2XBB2TP32RA000134', '2XBB2TP3 RA000134')
+INSERT INTO @inputVINs ([knownSN], [CorrectedSN])
+--VALUES
+----('2XBB6FY34PA000966', '2XBB6FY2 PA000966'),
+----('2XBB6FY36PA000967', '2XBB6FY2 PA000967')
+----('2XBB2TR35RA000138', '2XBB2TR3 RA000138')
+----('2XBB6VY23RA000290', '2XBB6VY2 RA000290')
+--('2XBB6VY23RA000273', '2XBB6VY2 RA000273'),
+--('2XBB6VY23RA000291', '2XBB6VY2 RA000291'),
+--('2XBB6VY24RA000043', '2XBB6VY2 RA000043'),
+--('2XBB6VY28RA000112',  '2XBB6VY2 RA000112'),
+--('2XBB2TR32RA000573', '2XBB2TR3 RA000573'),
+--('2XBB2TR32RA000573', '2XBB2TR3 RA000573'),
+--('2XBB2TP32RA000134', '2XBB2TP3 RA000134')
+
+SELECT 
+	[Serial Number],
+	[Serial Number]
+FROM
+	[Orders]
+WHERE
+	LEFT(RIGHT([Serial Number], 8), 2) IN ('PA', 'RA')
+	AND [Serial Number] <> 'Paint' 
 ;
 -----------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------
@@ -114,9 +124,28 @@ END
 --SELECT * FROM @calc_vars
 SELECT * FROM @inputVINs
 
+SELECT
+	[KnownSN]
+	, [NewCalcSN]
+	, [Quote#]
+	, [WO#]
+	, [Serial Number] AS [CURRENT SN]
+	, [Model No]
+	, [Special Instructions]
+FROM
+	@inputVINs
+INNER JOIN
+	[Orders]
+ON
+	[Serial Number] = [KnownSN]
+WHERE
+	[KnownSN] <> [NewCalcSN]
+ORDER BY
+	[Serial Number]
 
-SELECT * FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [KnownSN]
-
+	
+--SELECT * FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [KnownSN]
+--SELECT * FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [KnownSN] AND [Quote#] = 27886
 IF (SELECT COUNT(*) FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [KnownSN]) > 0 BEGIN
 
 
@@ -125,7 +154,18 @@ IF (SELECT COUNT(*) FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [Kn
 	BEGIN TRAN;
 
 
-	SELECT 'BEFORE' AS [TABLE], * FROM [Orders] INNER JOIN @inputVINs ON [Serial Number] = [KnownSN]
+	SELECT 
+		'BEFORE' AS [TABLE]
+		, *
+	FROM
+		[Orders]
+	INNER JOIN
+		@inputVINs
+	ON
+		[Serial Number] = [KnownSN]
+	WHERE
+		[KnownSN] <> [NewCalcSN]
+	;
 
 	SELECT
 		[Orders].[Quote#]
@@ -157,6 +197,8 @@ IF (SELECT COUNT(*) FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [Kn
 		[Dealers]
 	ON
 		[Orders].[DealerID] = [Dealers].[ID]
+	WHERE 
+		[KnownSN] <> [NewCalcSN]
 	ORDER BY
 		ISNULL([Prod Date 1], [Prod Date 2])
 	;
@@ -179,11 +221,24 @@ IF (SELECT COUNT(*) FROM @inputVINs INNER JOIN [Orders] ON [Serial Number] = [Kn
 		@inputVINs
 	ON
 		[Serial Number] = [KnownSN]
+	WHERE 
+		[KnownSN] <> [NewCalcSN]
 
 
-	SELECT 'AFTER' AS [TABLE], * FROM [Orders] INNER JOIN @inputVINs ON [Serial Number] = [NewCalcSN]
+	SELECT 
+		'AFTER' AS [TABLE]
+		, *
+	FROM
+		[Orders]
+	INNER JOIN
+		@inputVINs 
+	ON
+		[Serial Number] = [NewCalcSN]
+	WHERE 
+		[KnownSN] <> [NewCalcSN]
 
 	SELECT [Serial Number] FROM [Orders]
+
 	--WHERE
 	--	([Serial Number] LIKE '%2B9%' OR [Serial Number] LIKE '%2XB%') AND ([Serial Number] LIKE '%RA%' OR [Serial Number] LIKE '%PA%')
 	GROUP BY
