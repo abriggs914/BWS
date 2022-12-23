@@ -4,6 +4,7 @@ import tkinter
 from utility import *
 from colour_utility import *
 from tkinter_utility import *
+from dateutil.relativedelta import relativedelta
 
 
 FONT_FAMILY, CALENDAR_TEXT_SIZE = "Arial", 16
@@ -25,35 +26,40 @@ class FrameCalendar(tkinter.Frame):
         # ensure that the current date parameter is a sunday!
         self.current_date.set(first_of_week(datetime.datetime.strptime(self.current_date.get(), self.date_format)).strftime(self.date_format))
 
-        self.calendar_width, self.calendar_height = 400, 600
+        self.calendar_width, self.calendar_height = 700, 600
         self.week_height = 20
         self.weekdays_list = ["S", "M", "T", "W", "T", "F", "S"]
         self.objects_week = []
         self.texts_week = []
+        self.tags_first_of_months = []
 
         self.canvas_week = tkinter.Canvas(self.frame, width=self.calendar_width, height=self.week_height, background=rgb_to_hex("GRAY_17"))
         self.canvas_grid = tkinter.Canvas(self.frame, width=self.calendar_width, height=self.calendar_height, background="darkgrey")
         self.scrollbar_canvas = ttk.Scrollbar(self.frame, orient="vertical", command=self.canvas_grid.yview)
         self.canvas_grid.configure(yscrollcommand=self.scrollbar_canvas.set, scrollregion=(0, 0, self.calendar_width, self.calendar_height))
+        self.canvas_grid.bind("<MouseWheel>", self.scroll_on_canvas)
 
         self.selected_dates = tkinter.Variable(self, value=[])
         self.w_tile = self.calendar_width / 7
         self.h_tile = None
 
-        self.tv_button_backward, self.button_backward = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward})
-        self.tv_button_forward, self.button_forward = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward})
+        self.tv_button_backward_year, self.button_backward_year = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward_year})
+        self.tv_button_forward_year, self.button_forward_year = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward_year})
+
+        self.tv_button_backward_month, self.button_backward_month = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward_year})
+        self.tv_button_forward_month, self.button_forward_month = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward_year})
 
         self.weekday_colour = rgb_to_hex("BURNTUMBER")
-        colours = [
+        self.colours = [
             LIGHTSKYBLUE,
             LIGHTSTEELBLUE,
             LIGHTSEAGREEN,
             SEAGREEN_4__SEAGREEN_,
             PALEVIOLETRED,
             PLUM_3,
-            ORANGERED_1__ORANGERED_,
             RED_3,
-            ORANGE,
+            CADMIUMORANGE,
+            GOLD_1__GOLD_,
             LIGHTSALMON_4,
             PALETURQUOISE_4,
             MIDNIGHTBLUE
@@ -63,9 +69,9 @@ class FrameCalendar(tkinter.Frame):
             "even": brighten(col, 0.1, rgb=False),
             "odd": darken(col, 0.1, rgb=False),
             "font": (FONT_FAMILY, CALENDAR_TEXT_SIZE),
-            "foreground_even": font_foreground(brighten(col, 0.1, rgb=False)),
-            "foreground_odd": font_foreground(darken(col, 0.1, rgb=False))
-        } for col in colours]))
+            "foreground_even": font_foreground(brighten(col, 0.1), rgb=False),
+            "foreground_odd": font_foreground(darken(col, 0.1), rgb=False)
+        } for col in self.colours]))
         # self.colours = {
         #     0: {
         #         "main": rgb_to_hex(LIGHTSKYBLUE),
@@ -143,11 +149,13 @@ class FrameCalendar(tkinter.Frame):
         # add widgets
         self.grid()
         self.frame.grid()
-        self.button_backward.grid(row=0, column=0, columnspan=1)
-        self.button_forward.grid(row=0, column=1, columnspan=1)
-        self.canvas_week.grid(row=1, column=0, columnspan=2, sticky="ew")
-        self.canvas_grid.grid(row=2, column=0, columnspan=2, sticky="ew")
-        self.scrollbar_canvas.grid(row=2, column=2, sticky="ns")
+        self.button_backward_year.grid(row=0, column=0, columnspan=1)
+        self.button_forward_year.grid(row=0, column=2, columnspan=1)
+        self.button_backward_month.grid(row=1, column=0, columnspan=1)
+        self.button_forward_month.grid(row=1, column=2, columnspan=1)
+        self.canvas_week.grid(row=2, column=0, columnspan=3, sticky="ew")
+        self.canvas_grid.grid(row=3, column=0, columnspan=3, sticky="ew")
+        self.scrollbar_canvas.grid(row=3, column=3, sticky="ns")
 
     def draw_weekdays(self):
         w, h = self.calendar_width, self.week_height
@@ -161,15 +169,27 @@ class FrameCalendar(tkinter.Frame):
     def draw_grid(self):
         raise Exception("Override this method in child classes.")
 
-    def click_button_backward(self):
-        print(f"click_button_backward")
+    def click_button_backward_year(self):
+        print(f"click_button_backward_year")
 
-    def click_button_forward(self):
-        print(f"click_button_forward")
+    def click_button_forward_year(self):
+        print(f"click_button_forward_year")
+
+    def click_button_backward_month(self):
+        print(f"click_button_backward_month")
+
+    def click_button_forward_month(self):
+        print(f"click_button_forward_month")
+
+    def scroll_on_canvas(self, event):
+        for i, fom in enumerate(self.tags_first_of_months):
+            print(f"{self.canvas_grid.bbox(fom)=}")
+        # print(f"{self.top_most_date=}")
+        self.canvas_grid.yview('scroll', int(-1 * (event.delta / 120)), 'units')
 
 
 class AnnualFrameCalendar(FrameCalendar):
-    def __init__(self, master, start_year=datetime.datetime.now().year):
+    def __init__(self, master, start_year=datetime.datetime.now().year, window=10):
         super().__init__(master)
 
         # week_1 = datetime.datetime(start_year, 1, 1)
@@ -178,8 +198,9 @@ class AnnualFrameCalendar(FrameCalendar):
         # week_52 = datetime.datetime(start_year, 12, 31)
         # week_52_wkdy = week_52.weekday()
         self.objects_grid = []
+        self.text_dates_grid = []
         self.dates_grid = []
-        self.number_rows = 52  # weeks
+        self.number_rows = 52 * window  # weeks
         self.h_tile = self.w_tile
         self.draw_grid()
         self.canvas_grid.configure(scrollregion=(0, 0, self.calendar_width, self.number_rows * self.h_tile))
@@ -210,16 +231,36 @@ class AnnualFrameCalendar(FrameCalendar):
         # self.canvas_grid.delete()
         gc = grid_cells(self.calendar_width, 7, self.number_rows * th, self.number_rows)
         date = datetime.datetime.strptime(self.current_date.get(), self.date_format)
+        c_month = None
+        c_year = None
         for i, row in enumerate(gc):
+            # t_week = date + relativedelta(weeks=i)
+            # days_to_month_end = (end_of_month(t_date) - t_date).days + round(
+            #     ((end_of_month(t_date) - t_date).seconds / 86400))
+            # weeks_to_month_end = round(days_to_month_end / 7)
+            # c_month = t_date.month
+            # c_year = t_date.year
+            # print(f"{t_date: {self.date_format}}, {days_to_month_end=}, {weeks_to_month_end=}, {c_month=}, {c_year=}")
             for j, dims in enumerate(row):
+                tx, ty = dims[0] + 8, dims[1] + 8
                 ii = self.rc_to_i(i, j)
                 t_date = date + datetime.timedelta(days=ii)
-                print(f"{t_date: {self.date_format}}")
+                days_to_month_end = (end_of_month(t_date) - t_date).days + round(((end_of_month(t_date) - t_date).seconds / 86400))
+                weeks_to_month_end = round(days_to_month_end / 7)
+                c_month = t_date.month
+                c_year = t_date.year
+
+                if t_date.day == 1 or t_date == date:
+                    self.tags_first_of_months.append(i)
+
+                print(f"{t_date: {self.date_format}}, {days_to_month_end=}, {weeks_to_month_end=}, {c_month=}, {c_year=}")
                 is_even = i % 2 == 0
                 colour_data = self.colours[t_date.month - 1]
                 fill_colour = colour_data["even"] if is_even else colour_data["odd"]
+                font_colour = colour_data["foreground_even"] if is_even else colour_data["foreground_odd"]
                 self.objects_grid.append(self.canvas_grid.create_rectangle(*dims, fill=fill_colour))
                 self.dates_grid.append(t_date)
+                self.text_dates_grid.append(self.canvas_grid.create_text(tx, ty, text=t_date.day, fill=font_colour))
                 tag = self.objects_grid[-1]
                 self.canvas_grid.tag_bind(tag, "<Button-1>", self.click_canvas_grid)
                 self.canvas_grid.tag_bind(tag, "<B1-Motion>", self.motion_canvas_grid)
