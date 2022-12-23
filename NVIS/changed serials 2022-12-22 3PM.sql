@@ -127,8 +127,6 @@ INSERT INTO @q ([Q]) VALUES
 (27738),
 (27741);
 
-
-
 SELECT
 	[Orders].[Serial Number]
 	, [Orders].[Quote#]
