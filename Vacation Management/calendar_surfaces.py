@@ -49,7 +49,7 @@ class FrameCalendar(tkinter.Frame):
 
         self.tv_button_backward_month, self.button_backward_month = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward_year})
         self.tv_button_forward_month, self.button_forward_month = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward_year})
-        self.tv_label_month, self.label_month = label_factory(self.frame, tv_label=datetime.datetime.month  self.get_current_date().month)
+        self.tv_label_month, self.label_month = label_factory(self.frame, tv_label=self.get_current_date().month)
 
         self.weekday_colour = rgb_to_hex("BURNTUMBER")
         self.colours = [

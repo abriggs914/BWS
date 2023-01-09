@@ -104,3 +104,6 @@ ON
 	[Discounts].[DealerID] = [Dealers].[ID]
 WHERE
 	[Quote#] = @quote;
+
+
+EXEC [sp_CalcDiscount] @quote=27451
