@@ -24,7 +24,7 @@ class FrameCalendar(tkinter.Frame):
             self.current_date.set(datetime.datetime.now().strftime(self.date_format))
 
         # ensure that the current date parameter is a sunday!
-        self.current_date.set(first_of_week(self.get_current_date()).strftime(self.date_format))
+        self.current_date.set(first_of_week(datetime.datetime.strptime(self.current_date.get(), self.date_format)).strftime(self.date_format))
 
         self.calendar_width, self.calendar_height = 700, 600
         self.week_height = 20
@@ -45,11 +45,9 @@ class FrameCalendar(tkinter.Frame):
 
         self.tv_button_backward_year, self.button_backward_year = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward_year})
         self.tv_button_forward_year, self.button_forward_year = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward_year})
-        self.tv_label_year, self.label_year = label_factory(self.frame, tv_label=self.get_current_date().year)
 
         self.tv_button_backward_month, self.button_backward_month = button_factory(self.frame, tv_btn="<<", kwargs_btn={"command": self.click_button_backward_year})
         self.tv_button_forward_month, self.button_forward_month = button_factory(self.frame, tv_btn=">>", kwargs_btn={"command": self.click_button_forward_year})
-        self.tv_label_month, self.label_month = label_factory(self.frame, tv_label=datetime.datetime.month  self.get_current_date().month)
 
         self.weekday_colour = rgb_to_hex("BURNTUMBER")
         self.colours = [
@@ -152,17 +150,12 @@ class FrameCalendar(tkinter.Frame):
         self.grid()
         self.frame.grid()
         self.button_backward_year.grid(row=0, column=0, columnspan=1)
-        self.label_year.grid(row=0, column=1, columnspan=1)
         self.button_forward_year.grid(row=0, column=2, columnspan=1)
         self.button_backward_month.grid(row=1, column=0, columnspan=1)
-        self.label_month.grid(row=1, column=1, columnspan=1)
         self.button_forward_month.grid(row=1, column=2, columnspan=1)
         self.canvas_week.grid(row=2, column=0, columnspan=3, sticky="ew")
         self.canvas_grid.grid(row=3, column=0, columnspan=3, sticky="ew")
         self.scrollbar_canvas.grid(row=3, column=3, sticky="ns")
-
-    def get_current_date(self):
-        return datetime.datetime.strptime(self.current_date.get(), self.date_format)
 
     def draw_weekdays(self):
         w, h = self.calendar_width, self.week_height
@@ -189,8 +182,6 @@ class FrameCalendar(tkinter.Frame):
         print(f"click_button_forward_month")
 
     def scroll_on_canvas(self, event):
-        print(f"{self.canvas_grid.bbox('all')=}")
-        # print(f"{self.canvas_grid.bb=}")
         for i, fom in enumerate(self.tags_first_of_months):
             print(f"{self.canvas_grid.bbox(fom)=}")
         # print(f"{self.top_most_date=}")
