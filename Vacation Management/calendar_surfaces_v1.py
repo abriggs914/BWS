@@ -13,7 +13,7 @@ FONT_FAMILY, CALENDAR_TEXT_SIZE = "Arial", 16
 
 
 class FrameCalendar(tkinter.Frame):
-    def __init__(self, master, date_in=None, calendar_width=700, calendar_height=600):
+    def __init__(self, master, date_in=None):
         super().__init__(master)
 
         self.frame = tkinter.Frame(self, height=400)
@@ -28,7 +28,7 @@ class FrameCalendar(tkinter.Frame):
         # ensure that the current date parameter is a sunday!
         self.current_date.set(first_of_week(self.get_current_date()).strftime(self.date_format))
 
-        self.calendar_width, self.calendar_height = calendar_width, calendar_height
+        self.calendar_width, self.calendar_height = 700, 600
         self.x_range = None
         self.y_range = None
         self.week_height = 20
@@ -193,8 +193,8 @@ class FrameCalendar(tkinter.Frame):
         print(f"click_button_forward_month")
 
 class AnnualFrameCalendar(FrameCalendar):
-    def __init__(self, master, start_year=datetime.datetime.now().year, window=10, calendar_width=700, calendar_height=600):
-        super().__init__(master, calendar_width=calendar_width, calendar_height=calendar_height)
+    def __init__(self, master, start_year=datetime.datetime.now().year, window=10):
+        super().__init__(master)
 
         # week_1 = datetime.datetime(start_year, 1, 1)
         # week_1_wkdy = week_1.weekday()
@@ -210,7 +210,6 @@ class AnnualFrameCalendar(FrameCalendar):
         self.buttons_grid = []
         self.number_rows = 52 * window  # weeks
         self.h_tile = self.w_tile
-        self.drop_down_dims = int(self.w_tile * 0.25), int(self.h_tile * 0.25)
         self.tile_width, self.tile_height = None, None
         self.draw_grid()
         self.canvas_grid.configure(scrollregion=(0, 0, self.calendar_width, self.number_rows * self.h_tile))
@@ -249,7 +248,7 @@ class AnnualFrameCalendar(FrameCalendar):
         self.tile_width = gc[0][0][2] - gc[0][0][0]
         self.tile_height = gc[0][0][3] - gc[0][0][1]
         # images = [tkinter.PhotoImage(file="computer-icons-arrow-drop-down-list-clip-art-png-favpng-QtCUnFi1C73JZZu0btQPFfsgY.png") for _ in range(len(gc) * 7)]
-        self.drop_down_image = ImageTk.PhotoImage(Image.open("computer-icons-arrow-drop-down-list-clip-art-png-favpng-QtCUnFi1C73JZZu0btQPFfsgY.png").resize(self.drop_down_dims), Image.ANTIALIAS)
+        self.drop_down_image = ImageTk.PhotoImage(Image.open("computer-icons-arrow-drop-down-list-clip-art-png-favpng-QtCUnFi1C73JZZu0btQPFfsgY.png").resize((int(tw * 0.25), int(th * 0.25)), Image.ANTIALIAS))
         date = datetime.datetime.strptime(self.current_date.get(), self.date_format)
         c_month = None
         c_year = None
@@ -263,9 +262,7 @@ class AnnualFrameCalendar(FrameCalendar):
             # print(f"{t_date: {self.date_format}}, {days_to_month_end=}, {weeks_to_month_end=}, {c_month=}, {c_year=}")
             for j, dims in enumerate(row):
                 tx, ty = dims[0] + 8, dims[1] + 8
-                ix, iy = dims[0] + (tw * 0.8), dims[1] + th * 0.05
-                iw, ih = self.drop_down_dims
-                iy += (ih / 2)
+                ix, iy = dims[0] + (tw * 0.8), dims[1] + 18
                 ii = self.rc_to_i(i, j)
                 t_date = date + datetime.timedelta(days=ii)
                 days_to_month_end = (end_of_month(t_date) - t_date).days + round(((end_of_month(t_date) - t_date).seconds / 86400))
@@ -426,8 +423,23 @@ class AnnualFrameCalendar(FrameCalendar):
         print(f"{event=}")
         x, y = self.canvas_grid.canvasx(event.x), self.canvas_grid.canvasy(event.y)
         x1, y1 = self.canvas_grid.canvasx(0), self.canvas_grid.canvasy(0)
+        # x1, y1 = 0, y
         eee = clamp(self.x_range[0], x1, self.x_range[1])
         fff = clamp(self.y_range[0], y1, self.y_range[1])
+        # eee = clamp(self.x_range[0], x1, self.x_range[1]) + self.tile_width
+        # fff = clamp(self.y_range[0], y1, self.y_range[1]) + self.tile_height
+        # eee = clamp(self.x_range[0], x1, self.x_range[1]) + (self.tile_width * 0.5)
+        # fff = clamp(self.y_range[0], y1, self.y_range[1]) + (self.tile_height * 0.5)
+        # page =
+
+        # print(f"{self.canvas_grid.winfo_viewable()=}\n{x=}\n{y=}\n{x1=}, {y1=}")
+        # self.top = clamp(b2, self.top - (event.delta / 2), b4)
+        # print(f"{self.top=}")
+        # print(dict_print(self.canvas_grid.__dict__, "Dict"))
+        # print(f"{self.canvas_grid.bb=}")
+        # for i, fom in enumerate(self.tags_first_of_months):
+        #     print(f"{self.canvas_grid.bbox(fom)=}")
+        # print(f"{self.top_most_date=}")
         self.canvas_grid.yview('scroll', int(-1 * (event.delta / 120)), 'units')
 
         for i, tag in enumerate(self.objects_grid):
