@@ -21,6 +21,10 @@ def restart_program():
     os.execl(python, python, * sys.argv)
 
 
+def version_generator():
+    return datetime.datetime.now().strftime("%Y.%m.%d.%H%M")
+
+
 # TODO fix broken line shifting. when the date is adjacent to the the edge of the calendar it skips a day
 # TODO allow weekend placements
 
@@ -32,7 +36,7 @@ if __name__ == '__main__':
     # today = datetime.datetime.today()
     # today = datetime.datetime(2022, 1, 1)
 
-    version = "2022.10.25.1116"
+    version = version_generator()
 
     App(
         TITLE=f"Stargate Production Scheduler {version}",

@@ -801,7 +801,13 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2022-10-10",
 		"2022-11-11",
 		"2022-12-26",
-		"2022-12-27"
+		"2022-12-27",
+		
+		"2023-11-10",
+		"2023-12-26",
+		"2023-12-27",
+		
+		"2024-01-01"
 	]
 	personal_holidays = [
 		

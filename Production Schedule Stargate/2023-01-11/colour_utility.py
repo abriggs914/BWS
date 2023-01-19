@@ -11,8 +11,8 @@ from utility import clamp, flatten, reduce
 VERSION = \
     """	
         General Utility file of RGB colour values
-        Version...........1.19
-        Date........2022-09-13
+        Version...........1.23
+        Date........2023-01-18
         Author....Avery Briggs
     """
 
@@ -1738,9 +1738,25 @@ colour_names_list = [
 ]
 
 
+def iscolour(c, g=None, b=None):
+    # print("c: <{}>, t: <{}>".format(c, type(c)))
+    # print("c: <{}>, t: <{}>".format(g, type(g)))
+    # print("c: <{}>, t: <{}>".format(b, type(b)))
+    if is_rgb_colour(c, g, b):
+        return True
+    elif is_hex_colour(c):
+        return True
+    elif isinstance(c, str) and g is None and b is None:
+        if c.upper() in COLOURS:
+            return True
+    return False
+
 def rgb_to_hex(colour):
     if is_hex_colour(colour):
         return colour
+    elif iscolour(colour) and isinstance(colour, str):
+        # print(f"{colour}")
+        return rgb_to_hex(eval(colour))
     r, g, b = None, None, None
     try:
         r, g, b = colour
@@ -1754,6 +1770,9 @@ def rgb_to_hex(colour):
 def hex_to_rgb(colour):
     if is_rgb_colour(colour):
         return colour
+    elif iscolour(colour) and isinstance(colour, str) and not ("#" in colour and (len(colour) == 7)):
+        print(f"{colour}")
+        return eval(colour)
     try:
         return (int(colour[1:3], 16), int(colour[3:5], 16), int(colour[5:], 16))
     except ValueError:
@@ -1921,20 +1940,6 @@ class Colour:
         return "<Colour RGB=({r}, {g}, {b}), hex = '{h}', name = '{n}'>".format(r=r, g=g, b=b, h=self.hex_code, n=name)
 
 
-def iscolour(c, g=None, b=None):
-    # print("c: <{}>, t: <{}>".format(c, type(c)))
-    # print("c: <{}>, t: <{}>".format(g, type(g)))
-    # print("c: <{}>, t: <{}>".format(b, type(b)))
-    if is_rgb_colour(c, g, b):
-        return True
-    elif is_hex_colour(c):
-        return True
-    elif isinstance(c, str) and g is None and b is None:
-        if c.upper() in COLOURS:
-            return True
-    return False
-
-
 def gradient(x, n, c1, c2):
     """Using increments, calculate a colour between two colours.
     ex. gradient(5, 10, BLACK, WHITE) -> A colour 5/10 te way between c1 & c2.
@@ -1963,7 +1968,7 @@ def gradient(x, n, c1, c2):
 
 
 # Darken an RGB color using a proportion p (0-1)
-def darken(c, p):
+def darken(c, p, rgb=True):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
@@ -1972,11 +1977,11 @@ def darken(c, p):
     r = clamp(0, round(r - (255 * p)), 255)
     g = clamp(0, round(g - (255 * p)), 255)
     b = clamp(0, round(b - (255 * p)), 255)
-    return r, g, b
+    return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 # Brighten an RGB color using a proportion p (0-1)
-def brighten(c, p):
+def brighten(c, p, rgb=True):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
@@ -1985,12 +1990,12 @@ def brighten(c, p):
     r = clamp(0, round(r + (255 * p)), 255)
     g = clamp(0, round(g + (255 * p)), 255)
     b = clamp(0, round(b + (255 * p)), 255)
-    return r, g, b
+    return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
-    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font_message of this colour will be visible on the background."""
-    assert iscolour(colour_in), f"Error cannot infer the correct font_message fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
+    """Given a background colour and a minimum threshold, return BLACK or WHITE to ensure a font of this colour will be visible on the background."""
+    assert iscolour(colour_in), f"Error cannot infer the correct font fore-colour from a non colour object. Got '{colour_in}', type={type(colour_in)}"
     try:
         if isinstance(colour_in, str):
             colour_in = hex_to_rgb(colour_in)
@@ -2009,7 +2014,7 @@ def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
         raise TypeError(f"Error cannot convert \'{colour_in}\' to a valid RGB colour scheme.", te)
 
 
-def rainbow_gradient(n_slices=None, start_colour="red"):
+def rainbow_gradient(n_slices=None, start_colour="red", rgb=True):
     # values = [(255, i, 0) for i in range(256)] + \
     #          [(i, 255, 0) for i in range(255, -1, -1)] + \
     #          [(0, 255, i) for i in range(255)] + \
@@ -2048,4 +2053,7 @@ def rainbow_gradient(n_slices=None, start_colour="red"):
     # print(f"C({len(values)}): <{values}>")
     # print(f"D({len(lst)}): <{lst[idx:] + lst[:idx]}>")
     for val in values:
-        yield val
+        if rgb:
+            yield val
+        else:
+            yield rgb_to_hex(val)

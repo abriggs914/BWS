@@ -108,7 +108,7 @@ class App(tkinter.Tk):
         self.frame_calendar_a = tkinter.Frame(self, name="frame_calendar_a")
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a, name="frame_calendar_b")
         self.frame_top_bar_a = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_a")
-        self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b")
+        self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b", background="CYAN")
         self.frame_top_bar_c = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_c")
 
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
@@ -135,12 +135,23 @@ class App(tkinter.Tk):
         # )
         self.multi_combo_unit_selection = MultiComboBox(
             self.frame_top_bar_b,
-            self.dat_list_of_units(remove_placed=True, remove_beyond=True)
+            self.dat_list_of_units(remove_placed=True, remove_beyond=True),
+            auto_grid=False,
+            tv_label="Select a Quote #:"
         )
-        self.tv_label_combo_unit_selection, \
-            # self.label_combo_unit_selection,\
-        # self.tv_combo_unit_selection,\
-        # self.combo_unit_selection\
+
+        self.multi_combo_unit_selection.configure(background="tan")
+
+        self.multi_combo_unit_selection.grid(row=0, column=0, ipadx=12, ipady=12)
+        self.multi_combo_unit_selection.res_label.grid(row=0, column=0)
+        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew", ipadx=12, ipady=12)
+        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew")
+        self.multi_combo_unit_selection.res_canvas.grid(row=0, column=1)
+
+        # self.tv_label_combo_unit_selection, \
+        self.label_combo_unit_selection = self.multi_combo_unit_selection.res_label
+        self.tv_combo_unit_selection = self.multi_combo_unit_selection.res_tv_entry
+        self.combo_unit_selection = self.multi_combo_unit_selection.res_entry
 
         self.tv_btn_insert_combo_choice,\
         self.button_insert_combo_choice \
@@ -292,83 +303,97 @@ class App(tkinter.Tk):
         #  pack widgets
         ###############################################################################################################
         self.grid()
+        self.frame_top_bar.grid(row=0, column=0)
+        self.frame_top_bar_b.grid(row=0, column=0)
+        self.frame_top_bar_c.grid(row=0, column=1)
+        self.frame_top_bar_a.grid(row=0, column=2, rowspan=2)
+        self.frame_colour_coder.grid(row=0, column=3)
+        self.line_shifter.grid(row=0, column=4)
         # print(f"{self.children=}")
-        self.grid_manager_1 = GridManager()
-        self.grid_manager_1.grid_widgets(
-            [
-                [
-                    self.frame_top_bar.grid()
-                ]
-            ]
-        )
-        self.grid_manager_2 = GridManager()
-        self.grid_manager_2.grid_widgets(
-            [
-                [
-                    self.frame_top_bar_b,
-                    self.frame_top_bar_c,
-                    {
-                        "widget": self.frame_top_bar_a,
-                        "rowspan": 2
-                    },
-                    self.frame_colour_coder,
-                    self.line_shifter
-                ]
-            ]
-        )
+        # self.grid_manager_1 = GridManager()
+        # self.grid_manager_1.grid_widgets(
+        #     [
+        #         [
+        #             self.frame_top_bar.grid()
+        #         ]
+        #     ]
+        # )
+        # self.grid_manager_2 = GridManager()
+        # self.grid_manager_2.grid_widgets(
+        #     [
+        #         [
+        #             self.frame_top_bar_b,
+        #             self.frame_top_bar_c,
+        #             {
+        #                 "widget": self.frame_top_bar_a,
+        #                 "rowspan": 2
+        #             },
+        #             self.frame_colour_coder,
+        #             self.line_shifter
+        #         ]
+        #     ]
+        # )
         if PROGRAM_MODE == "TEST":
             self.button_export_changes.grid()
             self.debug_label_entry_app_state.grid()
             self.debug_entry_app_state.grid()
             self.debug_show_history.grid()
 
-        self.grid_manager_3 = GridManager()
-        self.grid_manager_3.grid_widgets(
-            [
-                [
-                    self.label_combo_unit_selection,
-                ],
-                [
-                    self.combo_unit_selection,
-                ],
-                [
-                    self.button_insert_combo_choice,
-                ]
-            ]
-        )
+        # self.grid_manager_3 = GridManager()
+        self.label_combo_unit_selection.grid(row=0, column=0)
+        self.combo_unit_selection.grid(row=1, column=0)
+        self.button_insert_combo_choice.grid(row=2, column=0)
+        # self.grid_manager_3.grid_widgets(
+        #     [
+        #         [
+        #             self.label_combo_unit_selection,
+        #         ],
+        #         [
+        #             self.combo_unit_selection,
+        #         ],
+        #         [
+        #             self.button_insert_combo_choice,
+        #         ]
+        #     ]
+        # )
 
-        self.grid_manager_4 = GridManager()
-        self.grid_manager_4.grid_widgets(
-            [
-                [
-                    {
-                        "widget": self.button_update_changes,
-                        "columnspan": 2
-                    },
-                ],
-                [
-                    {
-                        "widget": self.button_refresh,
-                        "columnspan": 2
-                    }
-                ],
-                [
-                    self.button_undo,
-                    self.button_redo
-                ]
-            ]
-        )
+        # self.grid_manager_4 = GridManager()(
+        #         #     [
+        #         #         [
+        #         #             {
+        #         #                 "widget": self.button_update_changes,
+        #         #                 "columnspan": 2
+        #         #             },
+        #         #         ],
+        #         #         [
+        #         #             {
+        #         #                 "widget": self.button_refresh,
+        #         #                 "columnspan": 2
+        #         #             }
+        #         #         ],
+        #         #         [
+        #         #             self.button_undo,
+        #         #             self.button_redo
+        #         #         ]
+        #         #     ]
+        #         # )
+        self.button_update_changes.grid(row=0, column=0, columnspan=2)
+        self.button_refresh.grid(row=1, column=0, columnspan=2)
+        self.button_undo.grid(row=2, column=0)
+        self.button_redo.grid(row=2, column=1)
+        # self.grid_manager_4.grid_widgets
 
-        self.grid_manager_1.grid_widgets(
-            [
-                [
-                    {
-                        "widget": self.frame_calendar_a,
-                        "sticky": "ew"
-                    }
-                ]
-            ]
-        )
+        # self.grid_manager_1.grid_widgets(
+        #     [
+        #         [
+        #             {
+        #                 "widget": self.frame_calendar_a,
+        #                 "sticky": "ew"
+        #             }
+        #         ]
+        #     ]
+        # )
+        self.frame_calendar_a.grid(row=1, column=0, sticky="ew")
 
         self.entry_unit_scroll_search.grid(row=1, column=1)  #, sticky="ew")
         self.button_submit_unit_search.grid(row=2, column=1)  #, sticky="ew")
@@ -512,72 +537,139 @@ class App(tkinter.Tk):
             self.df_work_days = None
 
     def dat_list_of_units(self, remove_placed=False, remove_beyond=False):
+
+        def pick(x):
+            print(f"{x=}")
+            y = x.split("||")
+            y = [(z if z != "None" else None) for z in y]
+            return (y[0] if y[0] else (y[1] if y[1] else y[2]))
+
+
         units = self.calendar_surface.units
 
-        dict_result = {}
-        quotes = self.df_production["SGQuote"]
-        for i, row in quotes.iterrows():
-            print(f"{i=}, {row=}, {row.values=}")
-            q_a, q_b, q_c = row.values
-            print(f"{q_a=}, {q_b=}, {q_c}")
-            error = False
-            if q_a is not None:
-                if (q_b and q_a != q_b) or q_c and (q_a != q_c):
-                    error = True
-            elif q_b is not None:
-                if (q_a and q_b != q_a) or q_c and (q_b != q_c):
-                    error = True
-            elif q_c is not None:
-                if (q_a and q_c != q_a) or q_b and (q_c != q_b):
-                    error = True
-            if error:
-                raise Exception("ERROR")
-            dict_result[i] = (q_a if q_a is not None else (q_b if q_b is not None else q_c))
+        # dict_result = {}
+        # quotes = self.df_production["SGQuote"]
+        # print(f"{self.df_production[['SGQuote', 'WO#', 'Model No']]=}")
+        result = self.df_production[['SGQuote', 'WO#', 'Model No']]
+        # print(f"{result['SGQuote']=}\n{result['SGQuote'].iloc[0]=}")
+        # result["SG1"] =(
+        #     result["SGQuote"].iloc[0] + "||" +
+        #     result["SGQuote"].iloc[1] + "||" +
+        #     result["SGQuote"].iloc[2]
+        # ).agg(lambda x: pick(x))
+        picks_a = []
+        picks_b = []
+        for i in range(result.shape[0]):
+            # print(f"\n{i=}")
+            a, b, c =\
+                result["SGQuote"].iloc[i][0],\
+                result["SGQuote"].iloc[i][1],\
+                result["SGQuote"].iloc[i][2]
+            d, e, f =\
+                result["WO#"].iloc[i][0],\
+                result["WO#"].iloc[i][1],\
+                result["WO#"].iloc[i][2]
+            # print(f"\t{a=}\t\t{b=}\t\t{c=}")
+            picks_a.append(a if a else (b if b else c))
+            picks_b.append(d if d else (e if e else f))
 
-        print(f"{dict_result=}")
+        result["SG1"] = picks_a
+        result["WO1"] = picks_b
+        result.drop("SGQuote", axis=1, inplace=True)
+        result.drop("WO#", axis=1, inplace=True)
+        result.rename(columns={'SG1': 'SGQuote'}, inplace=True)
+        result.rename(columns={'WO1': 'WO#'}, inplace=True)
 
-        for key in dict_result:
-            row = self.df_production.iloc[key]
-
-
-
-
-
+        # print(f"\n\tA\n{result=}")
+        #
         # print(f"{units=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()[0]=}")
-        # print(f"{self.df_production['SGQuote'].values.tolist()[0][0]=}")
-        # # (1 == (1 if not remove_placed else (1 if tup[0] not in units else 0)))
-        # print(f"{rem=}")
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] is not None and (1 == (1 if not remove_placed else (1 if tup[0] in units else 0)))]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None) and (tup[0][0] is not None)]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None)]
-        # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup]
-        lst = [tup[0] if tup[0] is not None else tup[1] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None or tup[1] is not None)]
-        print(f"{self.df_production['SGQuote']=}\n{type(self.df_production['SGQuote'])=}")
-        uniqueA = self.df_production["SGQuote"]
-        assert isinstance(uniqueA, pandas.DataFrame)
-        print(f"{uniqueA=}")
-        print(f"{uniqueA['SGQuote']=}")
-        # print(f"{lst=}")
-
+        # print(f"{self.calendar_surface.tiles_beyond=}")
 
         if remove_placed:
             for unit_in, unit_o in units.items():
                 # print(f"{unit_in=}")
                 if unit_in not in [None, "none", ""]:
                     if unit_o.placed:
-                        lst.remove(unit_in)
+                        result = result[result["SGQuote"] != unit_in]
+
         if remove_beyond:
             for line, line_data in self.calendar_surface.tiles_beyond.items():
                 for direction, units_in in line_data.items():
                     for unit_in in units_in:
                         if unit_in is not None:
-                            # print(f"unit_in: {unit_in}\n\t{lst}")
-                            lst.remove(unit_in.SGQuote)
-        lst.sort()
-        # print(f"LST: {lst=}")
-        return lst
+                            print(f"unit_in: {unit_in}")
+                            # lst.remove(unit_in.SGQuote)
+                            result = result[result["SGQuote"] != unit_in]
+
+        print(f"\n\tB\n{result=}")
+
+        # raise Exception("STOP!")
+        return result[['SGQuote', 'WO#', 'Model No']]
+
+        # raise Exception("STOP!")
+        #
+        # for i, row in quotes.iterrows():
+        #     print(f"{i=}, {row=}, {row.values=}")
+        #     q_a, q_b, q_c = row.values
+        #     print(f"{q_a=}, {q_b=}, {q_c}")
+        #     error = False
+        #     if q_a is not None:
+        #         if (q_b and q_a != q_b) or q_c and (q_a != q_c):
+        #             error = True
+        #     elif q_b is not None:
+        #         if (q_a and q_b != q_a) or q_c and (q_b != q_c):
+        #             error = True
+        #     elif q_c is not None:
+        #         if (q_a and q_c != q_a) or q_b and (q_c != q_b):
+        #             error = True
+        #     if error:
+        #         raise Exception("ERROR")
+        #     dict_result[i] = (q_a if q_a is not None else (q_b if q_b is not None else q_c))
+        #
+        # print(f"{dict_result=}")
+        #
+        # for key in dict_result:
+        #     row = self.df_production.iloc[key]
+        #
+        #
+        #
+        #
+        #
+        # # print(f"{units=}")
+        # # print(f"{self.df_production['SGQuote'].values.tolist()=}")
+        # # print(f"{self.df_production['SGQuote'].values.tolist()[0]=}")
+        # # print(f"{self.df_production['SGQuote'].values.tolist()[0][0]=}")
+        # # # (1 == (1 if not remove_placed else (1 if tup[0] not in units else 0)))
+        # # print(f"{rem=}")
+        # # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup[0] is not None and (1 == (1 if not remove_placed else (1 if tup[0] in units else 0)))]
+        # # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None) and (tup[0][0] is not None)]
+        # # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None)]
+        # # lst = [tup[0] for tup in self.df_production["SGQuote"].values.tolist() if tup]
+        # lst = [tup[0] if tup[0] is not None else tup[1] for tup in self.df_production["SGQuote"].values.tolist() if tup and (tup[0] is not None or tup[1] is not None)]
+        # print(f"{self.df_production['SGQuote']=}\n{type(self.df_production['SGQuote'])=}")
+        # uniqueA = self.df_production["SGQuote"]
+        # assert isinstance(uniqueA, pandas.DataFrame)
+        # print(f"{uniqueA=}")
+        # print(f"{uniqueA['SGQuote']=}")
+        # # print(f"{lst=}")
+        #
+        #
+        # if remove_placed:
+        #     for unit_in, unit_o in units.items():
+        #         # print(f"{unit_in=}")
+        #         if unit_in not in [None, "none", ""]:
+        #             if unit_o.placed:
+        #                 lst.remove(unit_in)
+        # if remove_beyond:
+        #     for line, line_data in self.calendar_surface.tiles_beyond.items():
+        #         for direction, units_in in line_data.items():
+        #             for unit_in in units_in:
+        #                 if unit_in is not None:
+        #                     # print(f"unit_in: {unit_in}\n\t{lst}")
+        #                     lst.remove(unit_in.SGQuote)
+        # lst.sort()
+        # # print(f"LST: {lst=}")
+        # return lst
 
     def dat_list_of_dealers(self):
         lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if tup[0] is not None})
@@ -827,9 +919,6 @@ class App(tkinter.Tk):
     def onFrameConfigure(self, event):
         self.calendar_surface.configure(scrollregion=self.calendar_surface.bbox('all'))
 
-    def click_save_changes(self):
-        print(f"SAVING")
-
     def click_insert_combo_choice(self):
         print(f"insert combo choice")
         if self.tv_combo_unit_selection.get():
@@ -846,6 +935,7 @@ class App(tkinter.Tk):
             self.combo_unit_selection.focus()
 
     def click_export_sql(self):
+        print(f"TRYING TO SAVE")
         if self.this_user_publishes:
             sql_res = self.calendar_surface.export_tile_sql(self.removed_quotes)
             # print(f"SQL\n\n<{sql_res}>")

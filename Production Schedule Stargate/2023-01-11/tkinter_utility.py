@@ -1649,8 +1649,14 @@ class MultiComboBox(tkinter.Frame):
             self.res_label = tkinter.Label(self, textvariable=self.res_tv_label)
             # res_combo = ttk.Combobox(master, textvariable=res_tv_combo)
 
-        self.tree_controller = treeview_factory(self, data, kwargs_treeview={"selectmode": "browse"}, viewable_column_names=viewable_column_names)
-        self.tree_fact, \
+        # self.frame_top_most = tkinter.Frame(self, width=t_width, background="yellow")
+        self.frame_top_most = tkinter.Frame(self, background="yellow")
+        self.frame_tree = tkinter.Frame(self)
+        self.frame_tree.configure(background="lime")
+
+        self.tree_controller = treeview_factory(self.frame_tree, data, kwargs_treeview={"selectmode": "browse"},
+                                                viewable_column_names=viewable_column_names)
+        self.tree_controller, \
         self.tree_tv_label, \
         self.tree_label, \
         self.tree_treeview, \
@@ -1660,9 +1666,13 @@ class MultiComboBox(tkinter.Frame):
         (self.tree_tv_button_delete_item, self.tree_button_delete_item), \
         self.tree_aggregate_objects = self.tree_controller.get_objects()
 
+        self.tree_controller.configure(background="indigo")
+
         cn = self.tree_controller.viewable_column_names
         assert "All" not in cn, "Error, cannot use column name 'All'. This is reserved as a column filtering label."
-        self.indexable_column = indexable_column if (isinstance(indexable_column, int) and indexable_column < self.data.shape[1]) else (0 if not isinstance(indexable_column, str) or indexable_column not in cn else cn.index(indexable_column))
+        self.indexable_column = indexable_column if (
+                    isinstance(indexable_column, int) and indexable_column < self.data.shape[1]) else (
+            0 if not isinstance(indexable_column, str) or indexable_column not in cn else cn.index(indexable_column))
 
         self.new_entry_defaults = {}
         if isinstance(new_entry_defaults, list) or isinstance(new_entry_defaults, tuple):
@@ -1675,14 +1685,13 @@ class MultiComboBox(tkinter.Frame):
             # self.new_entry_defaults = dict(zip(cn, [None for _ in cn]))
             self.new_entry_defaults = dict()
 
-
         n_rows, n_cols = data.shape
-        t_width = self.tree_fact.idx_width + (n_cols * sum(self.tree_fact.viewable_column_widths))
-        self.config(width=t_width)
+        t_width = self.tree_controller.idx_width + (n_cols * sum(self.tree_controller.viewable_column_widths))
+        self.configure(width=t_width)
+        self.frame_top_most.configure(width=t_width)
 
         self.tv_tree_is_hidden = tkinter.BooleanVar(self, value=True)
 
-        self.frame_top_most = tkinter.Frame(self, width=t_width, background="yellow")
         self.frame_top_most.grid_columnconfigure(0, weight=9)
         self.frame_top_most.grid_columnconfigure(1, weight=1)
         self.frame_middle = tkinter.Frame(self)
@@ -1891,11 +1900,13 @@ class MultiComboBox(tkinter.Frame):
         if is_hidden:
             # now show
 
+            self.frame_middle.grid(row=2, column=0)
+            self.frame_tree.grid(row=3, column=0, ipadx=12, ipady=12)
+
             for i, btn in enumerate(self.rg_btns):
                 btn.grid(row=0, column=i)
-            self.frame_middle.grid()
 
-            self.tree_controller.grid(row=2, column=0)
+            self.tree_controller.grid(row=0, column=0, ipadx=12, ipady=12)
             self.tree_treeview.grid(row=0, column=0)
             self.tree_scrollbar_x.grid(row=3, sticky="ew")
             self.tree_scrollbar_y.grid(row=0, column=1, sticky="ns")
@@ -1908,13 +1919,14 @@ class MultiComboBox(tkinter.Frame):
                     data.grid(row=2)
         else:
             # now hide
+            self.frame_middle.grid_forget()
+            self.frame_tree.grid_forget()
             self.tree_treeview.grid_forget()
             self.tree_controller.grid_forget()
             self.tree_scrollbar_x.grid_forget()
             self.tree_scrollbar_y.grid_forget()
             for btn in self.rg_btns:
                 btn.grid_forget()
-            self.frame_middle.grid_forget()
             for i, data in enumerate(self.tree_aggregate_objects):
                 if i > 0:
                     tv, entry, x1x2 = data

@@ -483,7 +483,7 @@ class CalendarSurface(tkinter.Canvas):
                 new_line = new_unit.job_start_line_v2
 
             if new_line is not None:
-                # print(f"{new_unit=}, {new_line=}")
+                print(f"\n{new_unit=}\n\t{new_line=}\n{self.lines=}")
                 new_unit.job_start_line_v2 = new_line
                 line_idx = self.lines.index(new_line) + 1
             # print(f"{unit_in}")

@@ -422,7 +422,8 @@ SQL_ALL_STG_PROD_DAYS = {
 }
 
 SQL_USED_LINES = {
-    "sql": """SELECT DISTINCT
+    "sql": """
+SELECT DISTINCT
 	[Prod Line]
 	, [Order]
 FROM (
@@ -441,20 +442,29 @@ FROM (
 	UNION ALL
 	SELECT 
 		'PL', 5
+	UNION ALL
+	SELECT 
+		'T5', 6
 	--UNION ALL
 	--SELECT DISTINCT
 	--	[Prod Line], [ID] + 100
 	--FROM
-	--	[Stargatedb].[dbo].[Prod Lines]
+	--	[Prod Lines]
 	UNION ALL
 	SELECT DISTINCT
 		[Prod Line], [ID] + 1000
 	FROM
 		[Prod Lines]
+	INNER JOIN
+		[Stargatedb].[dbo].[dtProductionScheduleV2]
+	ON
+		[Prod Lines].[Prod Line] = [dtProductionScheduleV2].[JobStartLine]
 ) AS [SubA]
 ORDER BY
 	[Order]
-	, [Prod Line]""",
+	, [Prod Line]
+;
+	""",
     "database": "BWSdb",
     "uid": "user5",
     "pwd": "M@gic456"

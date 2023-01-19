@@ -40,6 +40,7 @@ SELECT
 	
 	[OrdersV2].[SGQuote]
 	, [OrdersV2].[WO#]
+	, [Model No]
 	, [Available Date]
 	, [Finish Date]
 	, [JobFinishDate]

@@ -29,6 +29,10 @@ FROM (
 		[Prod Line], [ID] + 1000
 	FROM
 		[BWSdb].[dbo].[Prod Lines]
+	INNER JOIN
+		[BWSdb].[dbo].[OrdersV2]
+	ON
+		[Prod Lines].[Prod Line] = [OrdersV2].[l]
 ) AS [SubA]
 ORDER BY
 	[Order]
