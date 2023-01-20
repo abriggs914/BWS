@@ -1,0 +1,12 @@
+USE BWSdb
+GO
+
+SELECT * FROM [OrdersV2]
+WHERE
+	[SGQuote] = 'SG101032'
+ORDER BY
+ [Quote Date] DESC
+
+
+-- End Dump 3X
+'2SVS6D33_4_RM000001'

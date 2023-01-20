@@ -1,5 +1,6 @@
 import os
 import json
+import tkinter
 
 import pandas
 
@@ -108,15 +109,15 @@ class App(tkinter.Tk):
         self.frame_calendar_a = tkinter.Frame(self, name="frame_calendar_a")
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a, name="frame_calendar_b")
         self.frame_top_bar_a = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_a")
-        self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b", background="CYAN")
+        self.frame_top_bar_b = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_b")
         self.frame_top_bar_c = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_c")
+        self.frame_top_bar_d = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_d")
+        self.frame_top_bar_e = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_e")
 
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
         self.calendar_surface = CalendarSurface(self.frame_calendar_b, lines=used_lines, user_name=self.user_name, width=can_w, height=can_h, dirty_status_var=self.dirty, start_date=self.start_date, weekend_proportion=0.1, illegal_saturday=self.illegal_saturday, illegal_sunday=self.illegal_sunday)
         self.calendar_surface.populate_units(self.df_production)
         self.calendar_surface.dirty_status_var.set(False)  # reset to false after tile initialization.
-
-        self.line_shifter = LineShifter(self.frame_top_bar, lines=["All"] + self.calendar_surface.lines)
 
         # self.combo_unit_selection = ttk.Combobox(self.frame_top_bar, values=self.dat_list_of_units(remove_placed=True), textvariable=self.tv_combo_unit_selection, state="readonly")
 
@@ -137,16 +138,12 @@ class App(tkinter.Tk):
             self.frame_top_bar_b,
             self.dat_list_of_units(remove_placed=True, remove_beyond=True),
             auto_grid=False,
-            tv_label="Select a Quote #:"
+            tv_label="Select a Quote #:",
+            height_in_rows=8,
+            lock_result_col="SGQuote"
         )
 
-        self.multi_combo_unit_selection.configure(background="tan")
-
-        self.multi_combo_unit_selection.grid(row=0, column=0, ipadx=12, ipady=12)
-        self.multi_combo_unit_selection.res_label.grid(row=0, column=0)
-        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew", ipadx=12, ipady=12)
-        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew")
-        self.multi_combo_unit_selection.res_canvas.grid(row=0, column=1)
+        # self.multi_combo_unit_selection.configure(background="tan")
 
         # self.tv_label_combo_unit_selection, \
         self.label_combo_unit_selection = self.multi_combo_unit_selection.res_label
@@ -274,7 +271,18 @@ class App(tkinter.Tk):
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
-        self.frame_colour_coder = ColourWidget(self.frame_top_bar, dealers=self.dat_list_of_dealers(), default_colour=rgb_to_hex(GRAY_17))
+        # colour coder
+        self.frame_colour_coder = ColourWidget(self.frame_top_bar_d, dealers=self.dat_list_of_dealers(), default_colour=rgb_to_hex(GRAY_17))
+        self.tv_label_colour_coder = tkinter.StringVar(self, value="Colour Code By Dealer:")
+        self.label_colour_coder = tkinter.Label(self.frame_top_bar_d, textvariable=self.tv_label_colour_coder)
+        self.canv_btn_show_colour_coder = ArrowButton(self.frame_top_bar_d)
+        self.canv_btn_show_colour_coder.bind("<Button-1>", self.click_)
+
+        # line shifter
+        self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines)
+        self.tv_label_line_shifter = tkinter.StringVar(self, value="Shift Lines:")
+        self.label_line_shifter = tkinter.Label(self.frame_top_bar_e, textvariable=self.tv_label_line_shifter)
+        self.canv_btn_show_line_shifter = ArrowButton(self.frame_top_bar_e)
 
         self.frame_colour_coder.status_code.trace_variable("w", self.colour_coder_update)
 
@@ -299,114 +307,86 @@ class App(tkinter.Tk):
         self.line_shifter.status.trace_variable("w", self.line_shifter_update)
         self.entry_unit_scroll_search.bind("<Return>", self.click_search_units)
 
+        self.showing_colour_coder = tkinter.BooleanVar(self, value=False)
+        self.showing_line_shifter = tkinter.BooleanVar(self, value=False)
+        self.showing_colour_coder.trace_variable("w", self.update_showing_colour_coder)
+        self.showing_colour_coder.trace_variable("w", self.update_showing_line_shifter)
+
         ###############################################################################################################
         #  pack widgets
         ###############################################################################################################
         self.grid()
+
+        # frames for positioning
         self.frame_top_bar.grid(row=0, column=0)
         self.frame_top_bar_b.grid(row=0, column=0)
         self.frame_top_bar_c.grid(row=0, column=1)
+        self.frame_top_bar_d.grid(row=0, column=3)
+        self.frame_top_bar_e.grid(row=0, column=4)
         self.frame_top_bar_a.grid(row=0, column=2, rowspan=2)
-        self.frame_colour_coder.grid(row=0, column=3)
-        self.line_shifter.grid(row=0, column=4)
-        # print(f"{self.children=}")
-        # self.grid_manager_1 = GridManager()
-        # self.grid_manager_1.grid_widgets(
-        #     [
-        #         [
-        #             self.frame_top_bar.grid()
-        #         ]
-        #     ]
-        # )
-        # self.grid_manager_2 = GridManager()
-        # self.grid_manager_2.grid_widgets(
-        #     [
-        #         [
-        #             self.frame_top_bar_b,
-        #             self.frame_top_bar_c,
-        #             {
-        #                 "widget": self.frame_top_bar_a,
-        #                 "rowspan": 2
-        #             },
-        #             self.frame_colour_coder,
-        #             self.line_shifter
-        #         ]
-        #     ]
-        # )
-        if PROGRAM_MODE == "TEST":
-            self.button_export_changes.grid()
-            self.debug_label_entry_app_state.grid()
-            self.debug_entry_app_state.grid()
-            self.debug_show_history.grid()
 
-        # self.grid_manager_3 = GridManager()
+        # multi-column combobox
+        self.multi_combo_unit_selection.grid(row=0, column=0)
+        self.multi_combo_unit_selection.res_label.grid(row=0, column=0)
+        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew")
+        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew")
+        self.multi_combo_unit_selection.res_canvas.grid(row=0, column=1)
         self.label_combo_unit_selection.grid(row=0, column=0)
         self.combo_unit_selection.grid(row=1, column=0)
         self.button_insert_combo_choice.grid(row=2, column=0)
-        # self.grid_manager_3.grid_widgets(
-        #     [
-        #         [
-        #             self.label_combo_unit_selection,
-        #         ],
-        #         [
-        #             self.combo_unit_selection,
-        #         ],
-        #         [
-        #             self.button_insert_combo_choice,
-        #         ]
-        #     ]
-        # )
 
-        # self.grid_manager_4 = GridManager()(
-        #         #     [
-        #         #         [
-        #         #             {
-        #         #                 "widget": self.button_update_changes,
-        #         #                 "columnspan": 2
-        #         #             },
-        #         #         ],
-        #         #         [
-        #         #             {
-        #         #                 "widget": self.button_refresh,
-        #         #                 "columnspan": 2
-        #         #             }
-        #         #         ],
-        #         #         [
-        #         #             self.button_undo,
-        #         #             self.button_redo
-        #         #         ]
-        #         #     ]
-        #         # )
+        # widgets
+        self.label_colour_coder.grid(row=0, column=0)
+        self.canv_btn_show_colour_coder.grid(row=0, column=1)
+        self.label_line_shifter.grid(row=0, column=0)
+        self.canv_btn_show_line_shifter.grid(row=0, column=1)
+        self.update_showing_widgets()
+
+        # search widget
+        self.entry_unit_scroll_search.grid(row=1, column=1)  #, sticky="ew")
+        self.button_submit_unit_search.grid(row=2, column=1)  #, sticky="ew")
+
+        # control buttons
         self.button_update_changes.grid(row=0, column=0, columnspan=2)
         self.button_refresh.grid(row=1, column=0, columnspan=2)
         self.button_undo.grid(row=2, column=0)
         self.button_redo.grid(row=2, column=1)
-        # self.grid_manager_4.grid_widgets
 
-        # self.grid_manager_1.grid_widgets(
-        #     [
-        #         [
-        #             {
-        #                 "widget": self.frame_calendar_a,
-        #                 "sticky": "ew"
-        #             }
-        #         ]
-        #     ]
-        # )
+        # calendar widget
         self.frame_calendar_a.grid(row=1, column=0, sticky="ew")
-
-        self.entry_unit_scroll_search.grid(row=1, column=1)  #, sticky="ew")
-        self.button_submit_unit_search.grid(row=2, column=1)  #, sticky="ew")
-
         self.frame_calendar_b.grid()
         self.calendar_surface.grid(row=1, column=1, sticky="ew")
         self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew")
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-
         # self.button_scroll_left.pack(side=tkinter.LEFT)
         # self.button_scroll_right.pack(side=tkinter.RIGHT)
+
+        if PROGRAM_MODE == "TEST":
+            self.button_export_changes.grid()
+            self.debug_label_entry_app_state.grid()
+            self.debug_entry_app_state.grid()
+            self.debug_show_history.grid()
+
+    def update_showing_colour_coder(self, *args):
+        self.showing_colour_coder.set(not self.showing_colour_coder.get())
+        self.update_showing_widgets()
+
+    def update_showing_line_shifter(self, *args):
+        self.showing_line_shifter.set(not self.showing_line_shifter.get())
+        self.update_showing_widgets()
+
+    def update_showing_widgets(self):
+        if self.showing_colour_coder.get():
+            self.frame_colour_coder.grid(row=0, column=3)
+        else:
+            self.frame_colour_coder.grid_forget()
+
+        if self.showing_line_shifter.get():
+            self.line_shifter.grid(row=0, column=4)
+        else:
+            self.line_shifter.grid_forget()
 
     def calendar_surface_status_update(self, *args):
         status_data = eval(self.calendar_surface.status.get())
@@ -492,6 +472,8 @@ class App(tkinter.Tk):
     def init_queries_directory(self):
         if not os.path.isdir("C:/Access/Queries"):
             os.mkdir("C:/Access/Queries")
+        if not os.path.isdir("./Queries"):
+            os.mkdir("./Queries")
 
     def verify_user(self, user_name):
         if user_name is None:
@@ -550,7 +532,7 @@ class App(tkinter.Tk):
         # dict_result = {}
         # quotes = self.df_production["SGQuote"]
         # print(f"{self.df_production[['SGQuote', 'WO#', 'Model No']]=}")
-        result = self.df_production[['SGQuote', 'WO#', 'Model No']]
+        result = self.df_production[['SGQuote', 'WO#', 'Model No', "COMPANY NAME"]]
         # print(f"{result['SGQuote']=}\n{result['SGQuote'].iloc[0]=}")
         # result["SG1"] =(
         #     result["SGQuote"].iloc[0] + "||" +
@@ -577,8 +559,11 @@ class App(tkinter.Tk):
         result["WO1"] = picks_b
         result.drop("SGQuote", axis=1, inplace=True)
         result.drop("WO#", axis=1, inplace=True)
-        result.rename(columns={'SG1': 'SGQuote'}, inplace=True)
-        result.rename(columns={'WO1': 'WO#'}, inplace=True)
+        result.rename(columns={
+            'SG1': 'SGQuote',
+            "COMPANY NAME": "Dealer",
+            'WO1': 'WO#'
+        }, inplace=True)
 
         # print(f"\n\tA\n{result=}")
         #
@@ -604,7 +589,7 @@ class App(tkinter.Tk):
         print(f"\n\tB\n{result=}")
 
         # raise Exception("STOP!")
-        return result[['SGQuote', 'WO#', 'Model No']]
+        return result[['SGQuote', 'WO#', 'Model No', "Dealer"]]
 
         # raise Exception("STOP!")
         #
@@ -812,10 +797,12 @@ class App(tkinter.Tk):
                 if from_combo:
                     if ht_rc[0] != 0 and ht_rc[1] != 0:
                         # TODO double check that this day is not a weekend
-                        values = list(self.combo_unit_selection["values"])
-                        values.remove(self.tv_combo_unit_selection.get())
-                        self.removed_quotes.append(self.tv_combo_unit_selection.get())
-                        self.combo_unit_selection.configure(values=values)
+                        # values = self.multi_combo_unit_selection.data["SGQuote"].values.tolist()
+                        # values.remove(self.tv_combo_unit_selection.get())
+                        quote_to_delete = self.tv_combo_unit_selection.get()
+                        self.removed_quotes.append(quote_to_delete)
+                        self.multi_combo_unit_selection.delete_item(value=quote_to_delete,)
+                        # self.combo_unit_selection.configure(values=values)
                         self.tv_combo_unit_selection.set("")
                         print("FROM COMBO")
                         success = self.overwrite_tile(ht, drag_unit)

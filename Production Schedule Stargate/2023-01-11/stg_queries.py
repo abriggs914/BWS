@@ -363,6 +363,7 @@ SQL_ALL_STG_UNITS = {
             ,O.[DateSecured]
             ,O.[SecuredBy]
 			,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+			,[COMPANY NAME]
         FROM
             BWSdb.dbo.OrdersV2 AS O
         LEFT JOIN 
@@ -377,6 +378,10 @@ SQL_ALL_STG_UNITS = {
             [BWSdb].[dbo].[v_GalvanizedStargateOrders] AS C
         ON
             C.SGQuote = O.SGQuote
+        LEFT JOIN
+            [BWSdb].[dbo].[DealersV2] AS D
+        ON
+            O.[DealerID] = D.[ID] 
         ORDER BY
             B.JobFinishDate
         ;                
