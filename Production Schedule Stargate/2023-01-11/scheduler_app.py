@@ -1,3 +1,7 @@
+import datetime
+
+import pdf_writer
+# import pdf_writer_old
 import os
 import json
 import tkinter
@@ -17,8 +21,8 @@ from calendar_surface import *
 from line_shift_demo import LineShifter
 
 
-PROGRAM_MODE = "LIVE"
-# PROGRAM_MODE = "TEST"
+# PROGRAM_MODE = "LIVE"
+PROGRAM_MODE = "TEST"
 
 SETTINGS_FILE = "C:/Access/PDS_User_Settings.json"
 
@@ -164,10 +168,10 @@ class App(tkinter.Tk):
                 self.frame_top_bar,
                 tv_btn="export",
                 kwargs_btn={
-                    "name": "button_export",
-                    "command": self.click_export_sql
+                    "name": "button_export"
                 }
         )
+        self.button_export_changes.bind("<Button-1>", self.click_export_sql, True)
 
         self.tv_btn_update_changes,\
         self.button_update_changes \
@@ -227,6 +231,17 @@ class App(tkinter.Tk):
                 }
         )
 
+        self.tv_btn_print_schedule,\
+        self.btn_print_schedule\
+            = button_factory(
+                self.frame_top_bar_c,
+                tv_btn="Print",
+                kwargs_btn={
+                    "name": "button_print",
+                    "command": self.print_schedule
+                }
+        )
+
         self.debug_tv_show_history,\
         self.debug_show_history \
             = button_factory(
@@ -276,13 +291,14 @@ class App(tkinter.Tk):
         self.tv_label_colour_coder = tkinter.StringVar(self, value="Colour Code By Dealer:")
         self.label_colour_coder = tkinter.Label(self.frame_top_bar_d, textvariable=self.tv_label_colour_coder)
         self.canv_btn_show_colour_coder = ArrowButton(self.frame_top_bar_d)
-        self.canv_btn_show_colour_coder.bind("<Button-1>", self.click_)
+        self.canv_btn_show_colour_coder.bind("<Button-1>", self.click_show_colour_coder)
 
         # line shifter
         self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines)
         self.tv_label_line_shifter = tkinter.StringVar(self, value="Shift Lines:")
         self.label_line_shifter = tkinter.Label(self.frame_top_bar_e, textvariable=self.tv_label_line_shifter)
         self.canv_btn_show_line_shifter = ArrowButton(self.frame_top_bar_e)
+        self.canv_btn_show_line_shifter.bind("<Button-1>", self.click_show_line_shifter)
 
         self.frame_colour_coder.status_code.trace_variable("w", self.colour_coder_update)
 
@@ -309,8 +325,8 @@ class App(tkinter.Tk):
 
         self.showing_colour_coder = tkinter.BooleanVar(self, value=False)
         self.showing_line_shifter = tkinter.BooleanVar(self, value=False)
-        self.showing_colour_coder.trace_variable("w", self.update_showing_colour_coder)
-        self.showing_colour_coder.trace_variable("w", self.update_showing_line_shifter)
+        self.showing_colour_coder.trace_variable("w", self.update_showing_widgets)
+        self.showing_line_shifter.trace_variable("w", self.update_showing_widgets)
 
         ###############################################################################################################
         #  pack widgets
@@ -318,45 +334,46 @@ class App(tkinter.Tk):
         self.grid()
 
         # frames for positioning
-        self.frame_top_bar.grid(row=0, column=0)
-        self.frame_top_bar_b.grid(row=0, column=0)
-        self.frame_top_bar_c.grid(row=0, column=1)
-        self.frame_top_bar_d.grid(row=0, column=3)
-        self.frame_top_bar_e.grid(row=0, column=4)
-        self.frame_top_bar_a.grid(row=0, column=2, rowspan=2)
+        self.frame_top_bar.grid(row=0, column=0, ipadx=5, ipady=2, sticky="ew")
+        self.frame_top_bar_b.grid(row=0, column=0, ipadx=5, ipady=2)
+        self.frame_top_bar_c.grid(row=0, column=1, ipadx=5, ipady=2)
+        self.frame_top_bar_d.grid(row=0, column=3, ipadx=5, ipady=2)
+        self.frame_top_bar_e.grid(row=0, column=4, ipadx=5, ipady=2)
+        self.frame_top_bar_a.grid(row=0, column=2, rowspan=2, ipadx=5, ipady=2)
 
         # multi-column combobox
-        self.multi_combo_unit_selection.grid(row=0, column=0)
-        self.multi_combo_unit_selection.res_label.grid(row=0, column=0)
-        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew")
-        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew")
+        self.multi_combo_unit_selection.grid(row=0, column=0, ipadx=5, ipady=2)
+        self.multi_combo_unit_selection.res_label.grid(row=0, column=0, ipadx=5, ipady=2)
+        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew", ipadx=5, ipady=2)
+        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew", ipadx=5, ipady=2)
         self.multi_combo_unit_selection.res_canvas.grid(row=0, column=1)
-        self.label_combo_unit_selection.grid(row=0, column=0)
-        self.combo_unit_selection.grid(row=1, column=0)
-        self.button_insert_combo_choice.grid(row=2, column=0)
+        self.label_combo_unit_selection.grid(row=0, column=0, ipadx=5, ipady=2)
+        self.combo_unit_selection.grid(row=1, column=0, ipadx=5, ipady=2)
+        self.button_insert_combo_choice.grid(row=2, column=0, ipadx=5, ipady=2)
 
         # widgets
-        self.label_colour_coder.grid(row=0, column=0)
+        self.label_colour_coder.grid(row=0, column=0, ipadx=5, ipady=2)
         self.canv_btn_show_colour_coder.grid(row=0, column=1)
-        self.label_line_shifter.grid(row=0, column=0)
+        self.label_line_shifter.grid(row=0, column=0, ipadx=5, ipady=2)
         self.canv_btn_show_line_shifter.grid(row=0, column=1)
         self.update_showing_widgets()
 
         # search widget
-        self.entry_unit_scroll_search.grid(row=1, column=1)  #, sticky="ew")
-        self.button_submit_unit_search.grid(row=2, column=1)  #, sticky="ew")
+        self.entry_unit_scroll_search.grid(row=1, column=1, ipadx=5, ipady=2)  #, sticky="ew")
+        self.button_submit_unit_search.grid(row=2, column=1, ipadx=5, ipady=2)  #, sticky="ew")
 
         # control buttons
-        self.button_update_changes.grid(row=0, column=0, columnspan=2)
-        self.button_refresh.grid(row=1, column=0, columnspan=2)
-        self.button_undo.grid(row=2, column=0)
-        self.button_redo.grid(row=2, column=1)
+        self.button_update_changes.grid(row=0, column=0, columnspan=2, ipadx=5, ipady=2)
+        self.button_refresh.grid(row=1, column=0, columnspan=2, ipadx=5, ipady=2)
+        self.btn_print_schedule.grid(row=2, column=0, columnspan=2, ipadx=5, ipady=2)
+        self.button_undo.grid(row=3, column=0, ipadx=5, ipady=2)
+        self.button_redo.grid(row=3, column=1, ipadx=5, ipady=2)
 
         # calendar widget
-        self.frame_calendar_a.grid(row=1, column=0, sticky="ew")
-        self.frame_calendar_b.grid()
-        self.calendar_surface.grid(row=1, column=1, sticky="ew")
-        self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew")
+        self.frame_calendar_a.grid(row=1, column=0, sticky="ew", ipadx=5, ipady=2)
+        self.frame_calendar_b.grid(ipadx=5, ipady=2)
+        self.calendar_surface.grid(row=1, column=1, sticky="ew", ipadx=5, ipady=2)
+        self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew", ipadx=5, ipady=2)
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -369,24 +386,31 @@ class App(tkinter.Tk):
             self.debug_entry_app_state.grid()
             self.debug_show_history.grid()
 
-    def update_showing_colour_coder(self, *args):
+    def click_show_colour_coder(self, *args):
+        print(f"\tclick_show_colour_coder")
         self.showing_colour_coder.set(not self.showing_colour_coder.get())
-        self.update_showing_widgets()
+        # self.update_showing_widgets()
 
-    def update_showing_line_shifter(self, *args):
+    def click_show_line_shifter(self, *args):
+        print(f"\tclick_show_line_shifter")
         self.showing_line_shifter.set(not self.showing_line_shifter.get())
-        self.update_showing_widgets()
+        # self.update_showing_widgets()
 
-    def update_showing_widgets(self):
+    def update_showing_widgets(self, *args):
+        print(f"\t\tupdate_showing_widgets")
         if self.showing_colour_coder.get():
-            self.frame_colour_coder.grid(row=0, column=3)
+            self.frame_colour_coder.grid(row=1, column=0, columnspan=2, ipadx=5, ipady=2)
+            self.canv_btn_show_colour_coder.change_direction("n")
         else:
             self.frame_colour_coder.grid_forget()
+            self.canv_btn_show_colour_coder.change_direction("s")
 
         if self.showing_line_shifter.get():
-            self.line_shifter.grid(row=0, column=4)
+            self.line_shifter.grid(row=1, column=0, columnspan=2, ipadx=5, ipady=2)
+            self.canv_btn_show_line_shifter.change_direction("n")
         else:
             self.line_shifter.grid_forget()
+            self.canv_btn_show_line_shifter.change_direction("s")
 
     def calendar_surface_status_update(self, *args):
         status_data = eval(self.calendar_surface.status.get())
@@ -404,6 +428,57 @@ class App(tkinter.Tk):
                 self.unbind_top_frame()
             case _:
                 pass
+
+    def print_schedule(self, *event):
+        print(f"print_schedule")
+        FILE_NAME = "test.pdf"
+        # pdf = pdf_writer_old.PDF(FILE_NAME, 'L', 'mm', (600, 750))
+        pdf = pdf_writer.PDF(FILE_NAME)
+        pdf.set_auto_page_break(True, margin=5)
+        pdf.set_title("Stargate Production Schedule")  # TODO needs start and end dates
+        pdf.set_author('Avery Briggs')
+        pdf.add_page()
+        pdf.margin_border(STARGATE_BLUE, WHITE)
+        pdf.time_stamp()
+
+        dates = self.calendar_surface.dates_list
+        lines = self.calendar_surface.lines
+        contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
+        min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
+        content = {line: {} for line in lines}
+
+        dd = (max_date - min_date).days
+        for d in range(dd):
+            t_date = min_date + datetime.timedelta(days=d)
+            found = False
+            for j, l in enumerate(lines):
+                value = self.calendar_surface.tile_properties[j][d]["unit_in"]
+                if value:
+                    found = True
+                    content[l][t_date] = value
+            if not found:
+                content[lines[0]][t_date] = None
+
+
+
+        print(f"\n{min_date=}\n{max_date=}\n")
+        for k, v in content.items():
+            print(f"{k=}\t{len(v)=}\t{v=}")
+        # raise Exception("STOP!!!")
+
+        pdf.table(
+            title="demo_table",
+            x=0,
+            y=0,
+            w=200,
+            # contents=pdf_writer.random_test_set(12),
+            contents=content,
+            desc_txt="demo description text."
+        )
+
+        pdf.output(FILE_NAME, 'F')
+        pdf.open_in_browser()
+
 
     def unbind_top_frame(self):
         self.line_shifter.disable_all_widgets()
@@ -921,12 +996,17 @@ class App(tkinter.Tk):
             tkinter.messagebox.showerror(title="Selection Needed", message=r_message)
             self.combo_unit_selection.focus()
 
-    def click_export_sql(self):
+    def click_export_sql(self, commit=False):
         print(f"TRYING TO SAVE")
         if self.this_user_publishes:
             sql_res = self.calendar_surface.export_tile_sql(self.removed_quotes)
             # print(f"SQL\n\n<{sql_res}>")
-            tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+
+            if commit:
+                tkinter.messagebox.showinfo(title="SQL Export", message="Data updated successfully!")
+                self.dirty.set(False)
+            else:
+                tkinter.messagebox.showinfo(title="SQL Export", message="Data successfully exported!")
         else:
             tkinter.messagebox.showinfo(title="SQL Export", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
@@ -934,7 +1014,7 @@ class App(tkinter.Tk):
         if self.this_user_publishes:
             if are_u_sure or tkinter.messagebox.askyesnocancel(title="Server Update", message="Are you sure you want to commit your changes to the server?"):
                 sql_res = self.calendar_surface.update_tile_sql(self.removed_quotes)
-                # print(f"SQL\n\n<{sql_res}>")
+                print(f"SQL\n\n<{sql_res}>")
                 tkinter.messagebox.showinfo(title="Server Update", message="Data updated successfully!")
         else:
             tkinter.messagebox.showinfo(title="Server Update", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")

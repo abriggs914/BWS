@@ -1,0 +1,1 @@
+exec [sp_NewQuoteReport V2] 26445, 1
