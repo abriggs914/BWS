@@ -2695,6 +2695,8 @@ def test_multi_combo_factory():
         "ColD": list(range(16, 21))
     })
 
+    print(f"{data.to_html()=}")
+
     mc = MultiComboBox(
         WIN,
         data,
@@ -2797,5 +2799,5 @@ if __name__ == '__main__':
     # test_treeview_factory_4()
     # test_apply_state_1()
     # test_apply_state_3()
-    # test_multi_combo_factory()
-    test_arrow_button()
+    test_multi_combo_factory()
+    # test_arrow_button()
