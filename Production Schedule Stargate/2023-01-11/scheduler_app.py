@@ -1,4 +1,5 @@
 import datetime
+from df2pdf import df2table
 
 import pdf_writer
 # import pdf_writer_old
@@ -445,19 +446,56 @@ class App(tkinter.Tk):
         lines = self.calendar_surface.lines
         contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
         min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
-        content = {line: {} for line in lines}
+        # content = {line: {} for line in lines}
+        #
+        # dd = (max_date - min_date).days
+        # for d in range(dd):
+        #     t_date = min_date + datetime.timedelta(days=d)
+        #     found = False
+        #     for j, l in enumerate(lines):
+        #         value = self.calendar_surface.tile_properties[j][d]["unit_in"]
+        #         if value:
+        #             found = True
+        #             content[l][t_date] = value
+        #     if not found:
+        #         content[lines[0]][t_date] = None
+        #
+        # print(f"\n{min_date=}\n{max_date=}\n")
+        # for k, v in content.items():
+        #     print(f"{k=}\t{len(v)=}\t{v=}")
+        # # raise Exception("STOP!!!")
+        #
+        # pdf.table(
+        #     title="demo_table",
+        #     x=0,
+        #     y=0,
+        #     w=200,
+        #     # contents=pdf_writer.random_test_set(12),
+        #     contents=content,
+        #     desc_txt="demo description text."
+        # )
+
+        xd = (max_date.month + (12 * max_date.year))
+        nd = (min_date.month + (12 * min_date.year))
+        td = 1 + xd - nd
+
+        print(f"{min_date=}, {max_date=}")
+        print(f"{xd=}, {nd=}, {td=}")
+        content = {i: {line: {} for line in lines} for i in range(td)}
 
         dd = (max_date - min_date).days
         for d in range(dd):
             t_date = min_date + datetime.timedelta(days=d)
+            mi = (t_date.month + (12 * t_date.year)) - nd
+            print(f"{d=}, {mi=}, {t_date=}")
             found = False
             for j, l in enumerate(lines):
                 value = self.calendar_surface.tile_properties[j][d]["unit_in"]
                 if value:
                     found = True
-                    content[l][t_date] = value
+                    content[mi][l][t_date] = value
             if not found:
-                content[lines[0]][t_date] = None
+                content[mi][lines[0]][t_date] = None
 
 
 
@@ -466,18 +504,22 @@ class App(tkinter.Tk):
             print(f"{k=}\t{len(v)=}\t{v=}")
         # raise Exception("STOP!!!")
 
-        pdf.table(
-            title="demo_table",
-            x=0,
-            y=0,
-            w=200,
-            # contents=pdf_writer.random_test_set(12),
-            contents=content,
-            desc_txt="demo description text."
-        )
+        df2table(self.df_production, title="DEMO", show_table=True)
 
-        pdf.output(FILE_NAME, 'F')
-        pdf.open_in_browser()
+        # for i in content:
+        #     pdf.table(
+        #         title=f"demo_table #{i}",
+        #         x=0,
+        #         y=0,
+        #         w=200,
+        #         # contents=pdf_writer.random_test_set(12),
+        #         contents=content[i],
+        #         desc_txt="demo description text."
+        #     )
+        #     break
+        #
+        # pdf.output(FILE_NAME, 'F')
+        # pdf.open_in_browser()
 
 
     def unbind_top_frame(self):
@@ -803,6 +845,7 @@ class App(tkinter.Tk):
                     # self.calendar_surface.scan_dragto(x, y)
                     self.calendar_surface.xview_moveto(x)
                     print(f"found! Q={text} at {r=}, {c=}, {x=}, {y=}")
+                    # TODO check this elif condition
                 elif unit_in.SGQuote in self.combo_unit_selection["values"]:
                     messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
                     self.tv_combo_unit_selection.set(text)

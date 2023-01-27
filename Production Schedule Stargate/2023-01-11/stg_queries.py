@@ -430,7 +430,7 @@ SQL_USED_LINES = {
     "sql": """
 SELECT DISTINCT
 	[Prod Line]
-	, [Order]
+	, MIN([Order]) AS [OrderB]
 FROM (
 	SELECT
 		'TL' AS [Prod Line]
@@ -448,26 +448,20 @@ FROM (
 	SELECT 
 		'PL', 5
 	UNION ALL
-	SELECT 
-		'T5', 6
-	--UNION ALL
-	--SELECT DISTINCT
-	--	[Prod Line], [ID] + 100
-	--FROM
-	--	[Prod Lines]
+	SELECT DISTINCT [Prod Line], [ProductionV2].[Prod#] + 1000 FROM [ProductionV2]
 	UNION ALL
-	SELECT DISTINCT
-		[Prod Line], [ID] + 1000
-	FROM
-		[Prod Lines]
-	INNER JOIN
-		[Stargatedb].[dbo].[dtProductionScheduleV2]
-	ON
-		[Prod Lines].[Prod Line] = [dtProductionScheduleV2].[JobStartLine]
+	SELECT DISTINCT [Prod Line2], [ProductionV2].[Prod#] + 2000 FROM [ProductionV2]
+	UNION ALL	
+	SELECT DISTINCT [JobStartLine], [dtProductionScheduleV2].[ProdSchedV2ID#] + 3000 FROM [Stargatedb].[dbo].[dtProductionScheduleV2]
+
 ) AS [SubA]
+WHERE
+	[Prod Line] IS NOT NULL
+GROUP BY
+	[Prod Line]
 ORDER BY
-	[Order]
-	, [Prod Line]
+	[OrderB],
+	[Prod Line]
 ;
 	""",
     "database": "BWSdb",
