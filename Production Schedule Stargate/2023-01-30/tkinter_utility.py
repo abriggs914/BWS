@@ -18,8 +18,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.27
-    Date...........2023-01-23
+    Version..............1.28
+    Date...........2023-01-30
     Author.......Avery Briggs
     """
 
@@ -1803,6 +1803,29 @@ class MultiComboBox(tkinter.Frame):
             print(f"{col=}")
             print(f"{value=}")
             self.res_tv_entry.set(str(value))
+
+    def value_exists(self, value_in):
+        for i, row in self.data.iterrows():
+            for j, x in enumerate(row.values):
+                if value_in == x:
+                    return True
+        return False
+
+    def value_iid(self, value_in):
+        for i, row in self.data.iterrows():
+            for j, x in enumerate(row.values):
+                if value_in == x:
+                    return i
+        return None
+
+    def select(self, iid):
+        if isinstance(iid, int):
+            if 0 <= iid < self.data.shape[0]:
+                self.tree_treeview.selection_add(iid)
+        else:
+            iid = self.value_iid(iid)
+            if iid is not None:
+                self.tree_treeview.selection_add(iid)
 
     def update_entry(self, *args):
         # print(f"update_entity")

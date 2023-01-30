@@ -883,11 +883,11 @@ class App(tkinter.Tk):
                         # self.calendar_surface.scan_dragto(x, y)
                         self.calendar_surface.xview_moveto(x)
                         print(f"found! Q={text} at {r=}, {c=}, {x=}, {y=}")
-                # TODO check this elif condition
-                elif unit_in.SGQuote in self.combo_unit_selection["values"]:
+                elif unit_in.SGQuote or self.multi_combo_unit_selection.value_exists(unit_in.SGQuote):
                     messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
                     self.tv_combo_unit_selection.set(text)
                     self.combo_unit_selection.focus()
+                    self.multi_combo_unit_selection.select(unit_in.SGQuote)
                 elif unit_in.SGQuote in self.calendar_surface.get_beyond_quotes():
                     d = unit_in.Available_Date
                     l = unit_in.job_start_line_v2
