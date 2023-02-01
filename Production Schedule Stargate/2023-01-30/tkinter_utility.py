@@ -1621,7 +1621,7 @@ class MultiComboBox(tkinter.Frame):
 
     def __init__(self, master, data, viewable_column_names=None, height_in_rows=10, indexable_column=0, tv_label=None,
                  kwargs_label=None, tv_combo=None, kwargs_combo=None, auto_grid=True, limit_to_list=True,
-                 new_entry_defaults=None, lock_result_col=None):
+                 new_entry_defaults=None, lock_result_col=None, allow_insert_ask=True):
         super().__init__(master)
 
         assert isinstance(data,
@@ -1638,6 +1638,7 @@ class MultiComboBox(tkinter.Frame):
         self.top_most = patriarch(master)
         self.data = data
         self.limit_to_list = limit_to_list
+        self.allow_insert_ask = False if not limit_to_list else allow_insert_ask
         self.lock_result_col = lock_result_col
 
         if tv_label is not None and tv_combo is not None:
@@ -1893,39 +1894,55 @@ class MultiComboBox(tkinter.Frame):
                         f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
         self.update_treeview()
 
-    def add_new_item(self, val, col):
+    def add_new_item(self, val, col, rest_values=None):
         cn = self.tree_controller.viewable_column_names
         col = cn[0] if col == "All" else col
         idx = cn.index(col)
-        ans = tkinter.messagebox.askyesnocancel("Create New Item",
-                                                message=f"Create a new combo box entry with '{val}' in column '{col}' position?")
-        row = []
-        if ans == tkinter.YES:
-            i = self.data.shape[0]
-            print(f"SELECTING {i=}")
-            column_names = self.tree_controller.viewable_column_names
-            for column in column_names:
-                if col != column:
-                    if column in self.new_entry_defaults:
-                        row.append(self.new_entry_defaults[column])
-                    else:
-                        ask_value = self.ask_value(column)
-                        if ask_value == self.ask_cancelled:
-                            return
-                        else:
-                            row.append(ask_value)
-                else:
-                    row.append(val)
+        i = self.data.shape[0]
+        if rest_values and (isinstance(rest_values, list) or isinstance(rest_values, list) or isinstance(rest_values, dict)):
+            if isinstance(rest_values, list) or isinstance(rest_values, tuple):
+                row = list(rest_values)
+                row.insert(idx, val)
+                self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                # print(f"\nB\t{self.data=}")
+                self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row)
+                # self.res_entry.config(foreground="black")
+            else:
+                row = rest_values.update({col: val})
+                self.data = self.data.append(pandas.DataFrame(row), ignore_index=True)
+                self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list({k: [v] for k, v in zip(cn, row)}.values()))
 
-            # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
-            # print(f"\nA\t{self.data=}")
-            # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
-            self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
-            # print(f"\nB\t{self.data=}")
-            self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row))
-            self.res_entry.config(foreground="black")
+        elif self.allow_insert_ask:
+            ans = tkinter.messagebox.askyesnocancel("Create New Item",
+                                                    message=f"Create a new combo box entry with '{val}' in column '{col}' position?")
+            row = []
+            if ans == tkinter.YES:
+                print(f"SELECTING {i=}")
+                column_names = self.tree_controller.viewable_column_names
+                for column in column_names:
+                    if col != column:
+                        if column in self.new_entry_defaults:
+                            row.append(self.new_entry_defaults[column])
+                        else:
+                            ask_value = self.ask_value(column)
+                            if ask_value == self.ask_cancelled:
+                                return
+                            else:
+                                row.append(ask_value)
+                    else:
+                        row.append(val)
+
+                # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
+                # print(f"\nA\t{self.data=}")
+                # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
+                self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                # print(f"\nB\t{self.data=}")
+                self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row))
+                self.res_entry.config(foreground="black")
+            else:
+                self.res_entry.config(foreground="red")
         else:
-            self.res_entry.config(foreground="red")
+            raise ValueError("Cannot insert into this combobox")
 
     def ask_value(self, col):
         tl = tkinter.Toplevel(self)

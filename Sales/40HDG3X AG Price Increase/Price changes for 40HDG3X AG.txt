@@ -1,0 +1,25 @@
+Price changes for 40HDG3X AG from
+	June 26th, 2018
+	To
+	December 31st, 2022
+
+June      26th 2018|	price = $ 94453.00
+September 30th 2018|	price = $ 110118.00  |	change + $ 15665.00   , 1.17 %
+December  31st 2018|	price = $ 110118.00  |
+January   1st  2019|	price = $ 88094.40   |	change - $  22023.60  , 0.80 %
+March     31st 2019|	price = $ 91618.17   |	change + $ 3523.78    , 1.04 %
+June      30th 2019|	price = $ 91618.17   |
+September 30th 2019|	price = $ 91618.17   |
+December  31st 2019|	price = $ 91618.17   |
+March     31st 2020|	price = $ 91618.17   |
+June      30th 2020|	price = $ 91618.17   |
+September 30th 2020|	price = $ 91618.17   |
+December  31st 2020|	price = $ 91618.17   |
+March     31st 2021|	price = $ 95282.90   |	change + $ 3664.73    , 1.04 %
+June      30th 2021|	price = $ 99094.22   |	change + $ 3811.32    , 1.04 %
+September 30th 2021|	price = $ 108012.70  |	change + $ 8918.48    , 1.09 %
+December  31st 2021|	price = $ 113413.33  |	change + $ 5400.63    , 1.05 %
+March     31st 2022|	price = $ 120218.13  |	change + $ 6804.80    , 1.06 %
+June      30th 2022|	price = $ 120218.13  |
+September 30th 2022|	price = $ 120218.13  |
+December  31st 2022|	price = $ 120218.13  |

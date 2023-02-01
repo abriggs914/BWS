@@ -1311,6 +1311,57 @@ class App(tkinter.Tk):
 
         # self.calendar_surface.tile_properties[r][c]["unit_in"] = None
         if unit_in.SGQuote in self.removed_quotes:
+            # add the deleted unit to the multi-select combo box.
+            # need to get WO, dealer, SN, model no from df_production
+            # to_add = self.df_production[self.df_production["SGQuote"] == unit_in.SGQuote].reset_index(drop=True)
+            # to_add = self.df_production["SGQuote"] == unit_in.SGQuote
+            df = pd.DataFrame(self.df_production)
+            # df.rename({
+            #     0: "SGQ1",
+            #     1: "SGQ2",
+            #     2: "SGQ3"
+            # })
+
+            # df.rename((
+            #     (0, "SGQ1"),
+            #     (1, "SGQ2"),
+            #     (2, "SGQ3")
+            # ))
+
+            print(f"\tBEFORE\n{df=}\n{type(df)=}\n{df.columns=}")
+            og_cols = list(df.columns)
+            # q_idxs = [i for i, c in enumerate(og_cols) if c == "SGQuote"]
+            reps = ["SQ1", "SQ2", "SQ3"]
+            d = 0
+            res_cols = []
+            for i, c in enumerate(og_cols):
+                if c == "SGQuote":
+                    res_cols.append(reps[d])
+                    d += 1
+                else:
+                    res_cols.append(c)
+
+            print(f"{res_cols=}")
+
+            print(f"\tAFTER\n{df=}\n{type(df)=}\n{df.columns=}")
+            df = pd.DataFrame(self.df_production, columns=res_cols)
+
+            # to_add = df["SGQuote"] == unit_in.SGQuote
+            # to_add = df.loc[:, (df == unit_in.SGQuote).any()]
+            # to_add = df.loc[["SGQuote", "WO#", "COMPANY NAME", "Serial Number", "Model No"], df["SGQuote"] == unit_in.SGQuote]
+
+            # filter = (df == unit_in.SGQuote).any()
+            # to_add = df.loc[:, filter]
+
+            to_add = df[df["SGQuote"] == unit_in.SGQuote]
+
+            # assert isinstance(to_add, pandas.DataFrame)
+
+            print(f"{to_add=}\n{type(to_add)=}")
+            if not to_add.empty:
+                wo, dealer, sn, model_no = to_add[["WO#", "COMPANY NAME", "Serial Number", "Model No"]].values.tolist()
+                print(f"{wo=}, {dealer=}, {sn=}, {model_no=}")
+                self.multi_combo_unit_selection.add_new_item(unit_in.SGQuote, "SGQuote", {"WO#": wo, "Dealer":dealer, "Serial#": sn, "Model No": model_no})
             new_list = list(self.combo_unit_selection["values"])
             new_list.append(unit_in.SGQuote)
             new_list.sort()
