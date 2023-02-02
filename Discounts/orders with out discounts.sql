@@ -13,6 +13,8 @@ ON
 	[Orders].[Quote#] = [Order Discounts].[Quote]
 WHERE
 	[Order Discounts].[Quote] IS NULL
+ORDER BY
+	[Order Date] DESC
 ;
 
 
