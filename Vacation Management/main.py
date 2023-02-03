@@ -14,4 +14,6 @@ if __name__ == '__main__':
     # StaffID#, Emp#, 2nd Name, 1st Name, Dept, DeptID, Date Hired, DOB
     df_list_of_employees = connect(**SQL_BWS_EMPLOYEE_LIST)
 
+    print(f"\n\tDF:\n{df_list_of_employees}")
+
     window.mainloop()
