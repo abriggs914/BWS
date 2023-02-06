@@ -35,18 +35,18 @@ DATA_PAIRS = {
     "df_locations": SQL_ITI_LOCATIONS,
     "df_customers": SQL_ITR_CUSTOMERS,
     "df_departments": SQL_DEPARTMENTS,
-    "df_loc_emp_bld_dpt": CALC_DF_LOC_EMP_BLD_DPT
+    # "df_loc_emp_bld_dpt": CALC_DF_LOC_EMP_BLD_DPT
 
-        self.df_loc_emp_bld_dpt.rename(
-            columns={
-                'Name_x': 'Loc. Name',
-                'Name': 'Bldng',
-                'Name_y': 'Emp. Name'
-            },
-            inplace=True
-        )
-
-        self.df_v_serial_indication = connect(**SQL_V_ITI_SERIAL_INDICATION)
+        # self.df_loc_emp_bld_dpt.rename(
+        #     columns={
+        #         'Name_x': 'Loc. Name',
+        #         'Name': 'Bldng',
+        #         'Name_y': 'Emp. Name'
+        #     },
+        #     inplace=True
+        # )
+        #
+        # self.df_v_serial_indication = connect(**SQL_V_ITI_SERIAL_INDICATION)
 }
 
 
