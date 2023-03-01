@@ -1,6 +1,9 @@
 import os
 import webbrowser
 
+import pdfkit
+
+import datetime_utility
 from html_utility import *
 from colour_utility import *
 from tkinter_utility import *
@@ -8,7 +11,7 @@ from datetime_utility import *
 from pyodbc_connection import connect
 from location_utility import company_from_location
 from orbiting_date_picker import OrbitingDatePicker
-from utility import dict_print, next_available_file_name
+from utility import dict_print, next_available_file_name, get_windows_user
 
 
 class ToggleButtonQuantity(ToggleButton):
@@ -309,7 +312,25 @@ class HardwareFormApp(tkinter.Tk):
             "start_of_day_minute": 0,
             "start_of_day_format": "%A %a %d %Y",
             "no_comment": "N/A",
-            "it_sign_off": ""
+            "it_sign_off": """
+            <div class=\"it_section\">
+                <form>
+                    <label for=\"form_start_date\">Start Date:</label>
+                    <input name=\"form_start_date\" class=\"it_text\" value=\"{it_start_date}\" disabled>
+                    <label for=\"form_end_date\">End Date:</label>
+                    <input name=\"form_end_date\" class=\"it_text\" value=\"{it_end_date}\" disabled>
+                </form>
+                <h5>Comments:</h5>
+                <p class=\"it_text_block\">{it_comments}</p>
+            </div>""",
+            "it_css": """
+                .it_text {{
+                    text-align: center;
+                }}
+                div.it_section {{
+                    background: {background_it_section};
+                }}
+            """
         }
 
         self.flags = {
@@ -338,12 +359,12 @@ class HardwareFormApp(tkinter.Tk):
         self.tv_auto_desc_text, \
         self.auto_desc_text, \
             = text_factory(
-                self.frame_auto_reports,
-                tv_label="Auto-Generated Objective:",
-                tv_text="Please select an objective from above.",
-                kwargs_text={
-                    "width": 100
-                }
+            self.frame_auto_reports,
+            tv_label="Auto-Generated Objective:",
+            tv_text="Please select an objective from above.",
+            kwargs_text={
+                "width": 100
+            }
         )
 
         self.tv_label_comp_choice = tkinter.StringVar(self, value="Select Hardware:", name="tv_label_comp_choice")
@@ -360,11 +381,20 @@ class HardwareFormApp(tkinter.Tk):
             "background_text_block": "#888888",
             "background_bws": Colour(BWS_GREY).hex_code,
             "foreground_bws": Colour(BWS_RED).hex_code,
+            "background_stg": Colour(STARGATE_BLUE).hex_code,
+            "foreground_stg": Colour(SNOW).hex_code,
+            "background_lew": Colour(GRAY_31).hex_code,
+            "foreground_lew": Colour(GREEN_ONION).hex_code,
+            "background_hug": Colour(GRAY_31).hex_code,
+            "foreground_hug": Colour(GOLD_2).hex_code,
             "font_size_p": 18,
             "font_size_emp_name": 18,
             "font_size_due_date": 18,
             "font_size_company": 18,
-            "font_size_boss": 18
+            "font_size_boss": 18,
+            "background_it_section": "#888888",
+            "foreground_invalid_date": "red",
+            "signature_font": "Brush Script MT"
         }
 
         self.list_of_objectives = {
@@ -391,7 +421,6 @@ Comments:
         div.lists {{
             display: flex;
 			justify-content: space-between;
-            width: 40%;
         }}
         div.lst_h {{
             display: inline-block;
@@ -403,7 +432,6 @@ Comments:
         }}
         div.text_block {{
             background:#888888;
-            width: 50%;
         }}
         p.text_block {{
             background:{background_text_block};
@@ -429,7 +457,15 @@ Comments:
             color:{foreground_boss_name};
             font-size:{font_size_boss}px;
         }}
-        {rem_styles}        
+        input.signature {{
+            font-family:{signature_font};
+        }}
+        div.signature_block {{
+            display: flex;
+        }}
+        {rem_styles}
+        {signature_css}
+        {it_css}      
     </style>
 </head>
 
@@ -464,6 +500,10 @@ Comments:
         <p class="text_block">
             {new_comments}.
         </p>
+    </div>
+
+    <div class="signature_block">
+        {signature_html}
     </div>
 
     <div class="it_section_block">
@@ -532,7 +572,7 @@ Comments:
             entry_factory(
                 self.frame_top_controls_b,
                 tv_label="Username:",
-                tv_entry=os.getlogin(),
+                tv_entry=get_windows_user(),
                 # tv_text=os.environ.get('USERNAME'),
                 kwargs_entry={
                     "justify": tkinter.CENTER,
@@ -573,16 +613,16 @@ Comments:
             label_factory(
                 self.frame_top_controls_b,
                 tv_label="Due Date:"
-        )
+            )
 
-        self.tv_button_submit_form,\
-        self.button_submit_form\
+        self.tv_button_submit_form, \
+        self.button_submit_form \
             = button_factory(
-                self.frame_top_controls_d,
-                tv_btn="Submit Form",
-                kwargs_btn={
-                    "command": self.click_submit_form
-                }
+            self.frame_top_controls_d,
+            tv_btn="Submit Form",
+            kwargs_btn={
+                "command": self.click_submit_form
+            }
         )
 
         # End factories #
@@ -691,7 +731,6 @@ Comments:
         self.tl_tv_label_text_comments = None
         self.tl_label_text_comments = None
         self.tl_tv_text_comments = tkinter.StringVar(self, value="", name="tv_comments")
-        self.test_id = id(self.tl_tv_text_comments)
         self.tl_text_comments = None
         self.tl_tv_btn_submit_comment = None
         self.tl_btn_submit_comment = None
@@ -701,6 +740,22 @@ Comments:
         self.tl_btn_clear_comment = None
         self.tl_tv_btn_undo_comment = None
         self.tl_btn_undo_comment = None
+
+        self.tl_frame_new_emp_name_btns = None
+        self.tl_tv_text_new_emp_name = tkinter.StringVar(self, value="", name="tv_new_emp_name")
+        self.tl_tv_btn_submit_new_emp_name = None
+        self.tl_btn_submit_new_emp_name = None
+        self.tl_tv_btn_cancel_new_emp_name = None
+        self.tl_btn_cancel_new_emp_name = None
+        self.tl_tv_btn_clear_new_emp_name = None
+        self.tl_btn_clear_new_emp_name = None
+        self.tl_tv_btn_undo_new_emp_name = None
+        self.tl_btn_undo_new_emp_name = None
+        self.tl_new_emp_name_input = None
+        self.tl_tv_label_new_emp_name = None
+        self.tl_new_emp_name = None
+        self.tl_label_new_emp_name = None
+        self.tl_tv_new_emp_name = None
 
         # End Other Control Widgets #
 
@@ -946,7 +1001,7 @@ Comments:
             "label_company_choice": {r: 2, c: 0, ix: ipad_x_1, iy: ipad_y_1},
             "combo_company_choice": {r: 2, c: 1, ix: ipad_x_1, iy: ipad_y_1},
             "label_odp": {r: 3, c: 0, ix: ipad_x_1, iy: ipad_y_1},
-            "odp": {r: 3, c:1, ix: ipad_x_1, iy: ipad_y_1},
+            "odp": {r: 3, c: 1, ix: ipad_x_1, iy: ipad_y_1},
             "btn_open_tl_comments": {r: 4, c: 1, ix: ipad_x_1, iy: ipad_y_1},
 
             # frame_top_controls_c
@@ -1069,6 +1124,8 @@ Comments:
         self.tb_same_user_as_for.state.trace_variable("w", self.update_who_for_me)
         self.tb_same_user_as_follow_up.state.trace_variable("w", self.update_follow_up_me)
         self.tv_comp_choice.trace_variable("w", self.update_comp_choice)
+        self.tv_company_choice.trace_variable("w", self.update_company_choice)
+        self.odp.date_var.trace_variable("w", self.update_due_date)
         self.tv_objective_choice.trace_variable("w", self.update_objective)
         self.tb_allow_hardware.state.trace_variable("w", self.update_allow_hardware)
         self.tb_allow_software.state.trace_variable("w", self.update_allow_software)
@@ -1078,7 +1135,8 @@ Comments:
         # End Configurations #
 
     def na_if_none(self, val):
-        if (val is None) or (not val and (isinstance(val, str) or isinstance(val, list) or isinstance(val, tuple) or isinstance(val, dict))):
+        if (val is None) or (not val and (
+                isinstance(val, str) or isinstance(val, list) or isinstance(val, tuple) or isinstance(val, dict))):
             return self.default_data["no_comment"]
         return val
 
@@ -1142,6 +1200,7 @@ Comments:
         if val:
             self.mc_follow_up_selection.grid_forget()
             self.mc_follow_up_selection.res_tv_entry.set(self.tv_entry_user_name.get())
+            self.update_objective(args)
         else:
             self.mc_follow_up_selection.grid_widget()
             self.mc_follow_up_selection.grid(**self.grid_args["mc_follow_up_selection"])
@@ -1151,12 +1210,35 @@ Comments:
         if val:
             self.mc_emp_selection.grid_forget()
             self.mc_emp_selection.res_tv_entry.set(self.tv_entry_user_name.get())
+            self.update_objective(args)
         else:
             self.mc_emp_selection.grid_widget()
             self.mc_emp_selection.grid(**self.grid_args["mc_emp_selection"])
 
+    def update_company_choice(self, *args):
+        print(f"update_company_choice")
+        self.update_objective(args)
+
+    def update_due_date(self, *args):
+        self.update_objective(args)
+        date = datetime.datetime.fromisoformat(self.odp.date_var.get())
+        print(f"date='{date}'")
+        if date < datetime.datetime.now():
+            colour = self.colour_schemes["foreground_invalid_date"]
+        else:
+            colour = "black"
+        # self.odp.dateentry_entry.configure(fieldforeground=colour)
+        style = self.odp.de_style
+        style.configure(self.odp.style_key, fieldforeground=colour)
+        self.odp.dateentry_entry.configure(style=self.odp.style_key)
+        # TODO fix this colouring for invalid dates.
+
     def update_comp_choice(self, *args):
         val = self.tv_comp_choice.get()
+
+        if val == "New Employee Hire":
+            self.ask_new_emp_name()
+
         if val not in self.list_of_computers[:2]:
             for k in self.questions_hardware:
                 # self.questions_hardware[k]["showing"] = False
@@ -1171,7 +1253,8 @@ Comments:
                 self.questions_hardware[k]["tb"].grid(**self.questions_hardware[k]["grid_args"]["tb"])
                 self.questions_hardware[k]["label"].grid(**self.questions_hardware[k]["grid_args"]["label"])
                 self.questions_hardware[k]["canvas"].grid(**self.questions_hardware[k]["grid_args"]["canvas"])
-                self.questions_hardware[k]["frame_canvas"].grid(**self.questions_hardware[k]["grid_args"]["frame_canvas"])
+                self.questions_hardware[k]["frame_canvas"].grid(
+                    **self.questions_hardware[k]["grid_args"]["frame_canvas"])
 
             show_chargers = True
             showing_chargers = self.questions_hardware["extra chargers"]["showing"]
@@ -1179,10 +1262,12 @@ Comments:
                 case "Desktop":
                     # hide charger + dock question for desktop users
                     show_chargers = False
+
             if show_chargers:
                 if not showing_chargers:
                     # self.questions_hardware["extra chargers"]["tb"].grid_widgets()
-                    self.questions_hardware["extra chargers"]["tb"].grid(**self.questions_hardware["extra chargers"]["grid_args"]["tb"])
+                    self.questions_hardware["extra chargers"]["tb"].grid(
+                        **self.questions_hardware["extra chargers"]["grid_args"]["tb"])
                     self.questions_hardware["extra chargers"]["showing"] = True
 
                     self.questions_hardware["dock"]["tb"].grid(**self.questions_hardware["dock"]["grid_args"]["tb"])
@@ -1226,6 +1311,75 @@ Comments:
 
     def hide_software_section(self):
         self.frame_software_toggle_buttons.grid_forget()
+
+    def ask_new_emp_name(self):
+        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        if self.tl_new_emp_name_input is None:
+            self.tl_new_emp_name_input = tkinter.Toplevel(self)
+            self.tl_new_emp_name_input.title("Edit Comments")
+            self.tl_frame_new_emp_name_btns = tkinter.Frame(self.tl_new_emp_name_input)
+            self.tl_tv_label_new_emp_name, \
+            self.tl_label_new_emp_name, \
+            self.tl_tv_new_emp_name, \
+            self.tl_new_emp_name \
+                = text_factory(
+                self.tl_new_emp_name_input,
+                tv_label="Enter New Employees Name:",
+                tv_text=self.tl_tv_text_new_emp_name
+            )
+            self.tl_tv_btn_submit_new_emp_name, \
+            self.tl_btn_submit_new_emp_name \
+                = button_factory(
+                self.tl_frame_new_emp_name_btns,
+                tv_btn="submit",
+                kwargs_btn={
+                    "command": self.tl_click_submit_new_emp_name
+                }
+            )
+            self.tl_tv_btn_cancel_new_emp_name, \
+            self.tl_btn_cancel_new_emp_name \
+                = button_factory(
+                self.tl_frame_new_emp_name_btns,
+                tv_btn="cancel",
+                kwargs_btn={
+                    "command": self.tl_click_cancel_new_emp_name
+                }
+            )
+            self.tl_tv_btn_clear_new_emp_name, \
+            self.tl_btn_clear_new_emp_name \
+                = button_factory(
+                self.tl_frame_new_emp_name_btns,
+                tv_btn="clear",
+                kwargs_btn={
+                    "command": self.tl_click_clear_new_emp_name
+                }
+            )
+            self.tl_tv_btn_undo_new_emp_name, \
+            self.tl_btn_undo_new_emp_name \
+                = button_factory(
+                self.tl_frame_new_emp_name_btns,
+                tv_btn="undo",
+                kwargs_btn={
+                    "command": self.tl_click_undo_new_emp_name
+                }
+            )
+
+            # print(f"TEST '{self.test_id == id(self.tl_text_comments.text)}'")
+
+            # self.tl_label_text_comments.grid(**{r: 0, c: 0, cs: 4})
+            self.tl_new_emp_name_input.grid(**{r: 1, c: 2, cs: 4})
+            self.tl_frame_new_emp_name_btns.grid(**{r: 2, c: 0, cs: 4})
+            self.tl_btn_submit_new_emp_name.grid(**{r: 0, c: 0})
+            # self.tl_btn_undo_comment.grid(**{r: 0, c: 1})  # TODO fix the undo function.
+            self.tl_btn_clear_new_emp_name.grid(**{r: 0, c: 2})
+            self.tl_btn_cancel_new_emp_name.grid(**{r: 0, c: 3})
+
+            self.tl_new_emp_name_input.protocol("WM_DELETE_WINDOW", self.tl_close_new_emp_name)
+            # self.wait_window(self.tl_comments_input)
+            # self.tl_comments_input.wait_window()
+            self.tl_new_emp_name_input.grab_set()
+        else:
+            print(f"Cant open another top level before closing the previous.")
 
     def click_open_comments(self, *event):
         print(f"click_open_comments")
@@ -1280,7 +1434,7 @@ Comments:
                 }
             )
 
-            print(f"TEST '{self.test_id == id(self.tl_text_comments.text)}'")
+            # print(f"TEST '{self.test_id == id(self.tl_text_comments.text)}'")
 
             # self.tl_label_text_comments.grid(**{r: 0, c: 0, cs: 4})
             self.tl_text_comments.grid(**{r: 1, c: 2, cs: 4})
@@ -1318,6 +1472,23 @@ Comments:
     def tl_click_undo_comments(self, *event):
         print(f"click_undo_comments")
         self.tl_text_comments.undo()
+
+    def tl_close_new_emp_name(self, *event):
+        print(f"close_tl_new_emp_name")
+        self.tl_new_emp_name_input.destroy()
+        self.tl_new_emp_name_input = None
+
+    def tl_click_submit_new_emp_name(self, *event):
+        print(f"tl_click_submit_new_emp_name")
+
+    def tl_click_cancel_new_emp_name(self, *event):
+        print(f"tl_click_cancel_new_emp_name")
+
+    def tl_click_clear_new_emp_name(self, *event):
+        print(f"tl_click_clear_new_emp_name")
+
+    def tl_click_undo_new_emp_name(self, *event):
+        print(f"tl_click_undo_new_emp_name")
 
     def flag_open_software(self):
         """Call this whenever an internal software switch needs to be shown.
@@ -1368,6 +1539,18 @@ Comments:
             else:
                 self.flag_open_hardware()
 
+    def generate_user_signature(self, user_name):
+        style = f"""
+        input.signature {{
+            border: 0;
+            border-bottom: 1px solid #000;
+            font-size: 22px;
+            text-align: center;
+        }}"""
+        html_ = f"<label class=\"signature_text\" for=\"user_signature\">Your Signature:</label>\n\t\t"
+        html_ += f"<input type=\"text\" class=\"signature\" value=\"{user_name}\" name=\"user_signature\" disabled>"
+        return style, html_
+
     def click_submit_form(self, *event):
         print(f"click_submit_form")
         if data := self.ready_to_submit():
@@ -1386,9 +1569,11 @@ Comments:
                 hardware_list = data["new_hardware"]
                 software_list = data["new_software"]
                 print(f"{hardware_list=}\n{software_list=}")
-                if not (isinstance(hardware_list, list) or isinstance(hardware_list, tuple) or isinstance(hardware_list, dict)):
+                if not (isinstance(hardware_list, list) or isinstance(hardware_list, tuple) or isinstance(hardware_list,
+                                                                                                          dict)):
                     hardware_list = [hardware_list]
-                if not (isinstance(software_list, list) or isinstance(software_list, tuple) or isinstance(software_list, dict)):
+                if not (isinstance(software_list, list) or isinstance(software_list, tuple) or isinstance(software_list,
+                                                                                                          dict)):
                     software_list = [software_list]
 
                 e_hardware = self.empty_comment(hardware_list)
@@ -1434,6 +1619,17 @@ Comments:
                 foreground_boss_name = foreground_company
 
                 cs = self.colour_schemes
+                print(dict_print(cs, "CS"))
+                signature_css, signature_html = self.generate_user_signature(data["new_user_name"])
+
+                it_css = self.default_data["it_css"]
+                kwargs = {
+                    "background_it_section": cs["background_it_section"]
+                }
+                print(f"it_css:\n")
+                print(it_css)
+                it_css = it_css.format(**kwargs)
+
                 kwargs = {
                     "new_emp_name": data["new_emp_name"],
                     "new_start_date": data["new_due_date"],
@@ -1455,7 +1651,12 @@ Comments:
                     "font_size_emp_name": cs["font_size_emp_name"],
                     "font_size_due_date": cs["font_size_due_date"],
                     "font_size_company": cs["font_size_company"],
-                    "font_size_boss": cs["font_size_boss"]
+                    "font_size_boss": cs["font_size_boss"],
+                    "signature_css": signature_css,
+                    "signature_html": signature_html,
+                    "it_sign_off": self.default_data["it_sign_off"],
+                    "it_css": it_css,
+                    "signature_font": cs["signature_font"]
                 }
 
                 html_ = html_.format(**kwargs)
@@ -1467,8 +1668,47 @@ Comments:
 
                 webbrowser.open(fn)
 
+                self.commit_pdf(fn)
+
             else:
                 raise ValueError(f"Error, objective '{val}' is not supported yet.")
+
+    def commit_pdf(self, file_name):
+
+        pdf_file_out = file_name.removesuffix(".html") + ".pdf"
+        print(f"HTML file: {file_name}")
+        print(f"PDF file : {pdf_file_out}")
+
+        wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        if not os.path.exists(wkhtmltopdf_path):
+            print(f"Error, please install wkhtmltopdf before continuing")
+            quit()
+        # else:
+        #     try:
+        #         config = pdfkit.configuration()
+        #     except OSError:
+        #         # not present in path
+        #         print(f"Error, wkhtmltopdf not found in path either. Please install before continuing")
+        #         quit()
+
+        options = {
+            "page-size": "letter",
+            "orientation": "portrait",
+            'margin-top': '0.5in',
+            'margin-right': '0.5in',
+            'margin-bottom': '0.5in',
+            'margin-left': '0.5in',
+            'encoding': "UTF-8",
+        }
+
+        config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+        pdfkit.from_file(file_name, pdf_file_out, configuration=config, options=options)
+
+        # from weasyprint import HTML
+        # HTML(file_out).write_pdf(pdf_file_out)
+
+        webbrowser.open(file_name)
+        webbrowser.open(pdf_file_out)
 
     def empty_comment(self, lst):
         if len(lst) == 1:
@@ -1507,7 +1747,7 @@ Comments:
             new_hardware = self.na_if_none(self.get_frame_hardware_toggles())
             new_software = self.na_if_none(self.get_frame_software_toggles())
             new_follow_up = self.na_if_none(self.mc_follow_up_selection.res_tv_entry.get())
-            new_boss = self.na_if_none(None)
+            new_boss = self.na_if_none(self.na_if_none(self.tv_entry_user_name.get()))
 
             if self.tl_text_comments is not None:
                 new_comments = self.na_if_none(self.tl_text_comments.text.get())
@@ -1557,9 +1797,11 @@ Comments:
             case "BWS":
                 return cs["background_bws"], cs["foreground_bws"]
             case "Stargate":
-                return cs["background_bws"], cs["foreground_bws"]
+                return cs["background_stg"], cs["foreground_stg"]
             case "Lewis":
-                return cs["background_bws"], cs["foreground_bws"]
+                return cs["background_lew"], cs["foreground_lew"]
+            case "Hugo":
+                return cs["background_hug"], cs["foreground_hug"]
             case _:
                 raise ValueError("Error")
 
