@@ -1,9 +1,7 @@
 import os
 import webbrowser
-
 import pdfkit
 
-import datetime_utility
 from html_utility import *
 from colour_utility import *
 from tkinter_utility import *
@@ -303,6 +301,8 @@ class HardwareFormApp(tkinter.Tk):
         super().__init__()
         self.state("zoomed")
 
+        # TODO the number of monitors needs to be displayed.
+
         q = "quantity"
         w = "wired(less)"
         d = "databaseSelection"
@@ -311,6 +311,7 @@ class HardwareFormApp(tkinter.Tk):
             "start_of_day_hour": 8,
             "start_of_day_minute": 0,
             "start_of_day_format": "%A %a %d %Y",
+            "odp_date_format": "YYYY-mm-dd",
             "no_comment": "N/A",
             "it_sign_off": """
             <div class=\"it_section\">
@@ -354,19 +355,6 @@ class HardwareFormApp(tkinter.Tk):
         self.frame_software_toggle_buttons = tkinter.Frame(self.frame_software, background=random_colour(rgb=False))
         self.frame_auto_reports = tkinter.Frame(self, name="frame_auto_reports", background="#54CE98")
 
-        self.tv_label_auto_desc_text, \
-        self.label_auto_desc_text, \
-        self.tv_auto_desc_text, \
-        self.auto_desc_text, \
-            = text_factory(
-            self.frame_auto_reports,
-            tv_label="Auto-Generated Objective:",
-            tv_text="Please select an objective from above.",
-            kwargs_text={
-                "width": 100
-            }
-        )
-
         self.tv_label_comp_choice = tkinter.StringVar(self, value="Select Hardware:", name="tv_label_comp_choice")
         self.tv_comp_choice = tkinter.StringVar(self, name="tv_comp_choice")
         self.tv_label_company_choice = tkinter.StringVar(self, value="Select Company:", name="tv_label_company_choice")
@@ -393,9 +381,17 @@ class HardwareFormApp(tkinter.Tk):
             "font_size_company": 18,
             "font_size_boss": 18,
             "background_it_section": "#888888",
+            "foreground_valid_date": "black",
             "foreground_invalid_date": "red",
-            "signature_font": "Brush Script MT"
+            "signature_font": "Brush Script MT",
+            "font_size_user_signature": 22
         }
+
+        # https://www.pythontutorial.net/tkinter/ttk-style/
+        self.style = ttk.Style()
+        self.style_key_odp_normal = "odp.Red.TEntry"
+        self.style_key_odp_invalid = "odp.Black.TEntry"
+        self.init_style_keys()
 
         self.list_of_objectives = {
             "New Employee Hire": {
@@ -530,8 +526,9 @@ Comments:
             "Employee Departure": {},
             "Installations": {},
             "Removals": {},
-            "Travelling / Sick Day Lending": {},
-            "License Renewals": {}
+            "Traveling / Sick Day Lending": {},
+            "License Renewals": {},
+            "Other": {}
         }
         self.list_of_computers = [
             "Laptop",
@@ -549,6 +546,19 @@ Comments:
         ]
 
         # Begin factories #
+
+        self.tv_label_auto_desc_text, \
+        self.label_auto_desc_text, \
+        self.tv_auto_desc_text, \
+        self.auto_desc_text, \
+            = text_factory(
+            self.frame_auto_reports,
+            tv_label="Auto-Generated Objective:",
+            tv_text="Please select an objective from above.",
+            kwargs_text={
+                "width": 100
+            }
+        )
 
         self.tv_label_objective_choice, \
         self.label_objective_choice, \
@@ -608,6 +618,7 @@ Comments:
                     "values": self.list_of_companies
                 }
             )
+        self.init_colour_combo_company()
 
         self.tv_label_odp, self.label_odp = \
             label_factory(
@@ -645,7 +656,7 @@ Comments:
             auto_grid=True
         )
 
-        self.odp = OrbitingDatePicker(self.frame_top_controls_b)
+        self.odp = OrbitingDatePicker(self.frame_top_controls_b, date_format=self.default_data["odp_date_format"])
 
         sql = """
             SELECT
@@ -1119,7 +1130,7 @@ Comments:
 
         # End Griding #
 
-        # Begin Configurations #
+        # Begin Traces #
 
         self.tb_same_user_as_for.state.trace_variable("w", self.update_who_for_me)
         self.tb_same_user_as_follow_up.state.trace_variable("w", self.update_follow_up_me)
@@ -1129,10 +1140,39 @@ Comments:
         self.tv_objective_choice.trace_variable("w", self.update_objective)
         self.tb_allow_hardware.state.trace_variable("w", self.update_allow_hardware)
         self.tb_allow_software.state.trace_variable("w", self.update_allow_software)
+        self.mc_emp_selection.res_tv_entry.trace_variable("w", self.update_who_for_selection)
+
+        # End Traces #
+
+        # Begin Configurations #
+
         self.frame_top_controls.columnconfigure([0, 1, 2], minsize=450)
         self.frame_top_controls.rowconfigure([0], minsize=150)
 
         # End Configurations #
+
+    def init_style_keys(self):
+
+        # normal ODP date foreground
+        self.style.configure(
+            self.style_key_odp_normal,
+            fieldforeground=self.colour_schemes["foreground_valid_date"],
+            foreground=self.colour_schemes["foreground_valid_date"]
+        )
+
+        # invalid ODP date foreground
+        self.style.configure(
+            self.style_key_odp_invalid,
+            fieldforeground=self.colour_schemes["foreground_invalid_date"],
+            foreground=self.colour_schemes["foreground_invalid_date"]
+        )
+
+    def init_colour_combo_company(self):
+        """Use this to initially set the colours of the company combo."""
+        print(f"init_colour_combo_company")
+        company = self.tv_company_choice.get()
+        background, foreground = self.company_colours(company)
+        self.combo_company_choice.configure(background=background, foreground=foreground)
 
     def na_if_none(self, val):
         if (val is None) or (not val and (
@@ -1140,12 +1180,12 @@ Comments:
             return self.default_data["no_comment"]
         return val
 
-    def update_objective(self, *args):
+    def update_objective(self, *args, do_flags=True):
         val = self.tv_objective_choice.get()
         if val in self.list_of_objectives:
             print(f"{val=}\n{self.list_of_objectives[val]=}")
             obj = self.list_of_objectives[val]["obj"]
-            data = self.form_data(val)
+            data = self.form_data(val, do_flags=do_flags)
 
             if val == "New Employee Hire":
                 kwargs = {
@@ -1200,37 +1240,48 @@ Comments:
         if val:
             self.mc_follow_up_selection.grid_forget()
             self.mc_follow_up_selection.res_tv_entry.set(self.tv_entry_user_name.get())
-            self.update_objective(args)
+            self.update_objective(args, do_flags=False)
         else:
             self.mc_follow_up_selection.grid_widget()
             self.mc_follow_up_selection.grid(**self.grid_args["mc_follow_up_selection"])
 
+    def update_who_for_selection(self, *args):
+        """Called as a trace when the multi-combobox, 'Who is this for?', value is changed."""
+        self.update_objective(args, do_flags=False)
+
     def update_who_for_me(self, *args):
+        """Called as a trace when the toggle button, 'Who is this for?', is changed."""
         val = self.tb_same_user_as_for.state.get()
         if val:
             self.mc_emp_selection.grid_forget()
             self.mc_emp_selection.res_tv_entry.set(self.tv_entry_user_name.get())
-            self.update_objective(args)
+            self.update_objective(args, do_flags=False)
         else:
             self.mc_emp_selection.grid_widget()
             self.mc_emp_selection.grid(**self.grid_args["mc_emp_selection"])
 
     def update_company_choice(self, *args):
         print(f"update_company_choice")
-        self.update_objective(args)
+        self.update_objective(args, do_flags=False)
+        company = self.tv_company_choice.get()
+        # background, foreground = self.company_colours(company)
+        # print(f"{background=}, {foreground=}")
+        # self.combo_company_choice.configure(background=background, foreground=foreground)
+
 
     def update_due_date(self, *args):
-        self.update_objective(args)
-        date = datetime.datetime.fromisoformat(self.odp.date_var.get())
-        print(f"date='{date}'")
-        if date < datetime.datetime.now():
+        self.update_objective(args, do_flags=False)
+        date = datetime.datetime.fromisoformat(self.odp.date_var.get()).date()
+        if date < datetime.datetime.now().date():
+            style_key = self.style_key_odp_invalid
             colour = self.colour_schemes["foreground_invalid_date"]
         else:
-            colour = "black"
+            style_key = self.style_key_odp_normal
+            # colour = "black"
+        print(f"date='{date}', '{style_key}'")
         # self.odp.dateentry_entry.configure(fieldforeground=colour)
-        style = self.odp.de_style
-        style.configure(self.odp.style_key, fieldforeground=colour)
-        self.odp.dateentry_entry.configure(style=self.odp.style_key)
+
+        self.odp.dateentry_entry.configure(style=style_key)
         # TODO fix this colouring for invalid dates.
 
     def update_comp_choice(self, *args):
@@ -1281,6 +1332,8 @@ Comments:
                     self.questions_hardware["dock"]["showing"] = False
 
             self.frame_hardware_toggle_buttons.grid(**self.grid_args["frame_hardware_toggle_buttons"])
+
+        self.update_objective(args, do_flags=False)
 
     def update_allow_hardware(self, *args):
         """When hardware switch is clicked, update showing section"""
@@ -1544,11 +1597,20 @@ Comments:
         input.signature {{
             border: 0;
             border-bottom: 1px solid #000;
-            font-size: 22px;
+            font-size: {self.colour_schemes['font_size_user_signature']}px;
+            text-align: center;
+        }}
+        input.date {{
+            border: 0;
+            border-bottom: 1px solid #000;
+            font-size: {self.colour_schemes['font_size_user_signature']}px;
             text-align: center;
         }}"""
+        now = date_str_format(datetime.datetime.now(), include_weekday=True)  # .strftime(self.default_data["start_of_day_format"])
         html_ = f"<label class=\"signature_text\" for=\"user_signature\">Your Signature:</label>\n\t\t"
-        html_ += f"<input type=\"text\" class=\"signature\" value=\"{user_name}\" name=\"user_signature\" disabled>"
+        html_ += f"<input type=\"text\" class=\"signature\" value=\"{user_name}\" name=\"user_signature\" size=45 disabled>"
+        html_ += f"<label class=\"date_text\" for=\"user_date\">Date:</label>\n\t\t"
+        html_ += f"<input type=\"text\" class=\"date\" value=\"{now}\" name=\"user_date\" size=45 disabled>"
         return style, html_
 
     def click_submit_form(self, *event):
@@ -1579,6 +1641,7 @@ Comments:
                 e_hardware = self.empty_comment(hardware_list)
                 e_software = self.empty_comment(software_list)
 
+                # Validate any input here before generating the html and pdf forms.
                 if e_hardware and not e_software:
                     if not self.ask_sure_no_hardware():
                         return
@@ -1673,7 +1736,7 @@ Comments:
             else:
                 raise ValueError(f"Error, objective '{val}' is not supported yet.")
 
-    def commit_pdf(self, file_name):
+    def commit_pdf(self, file_name, do_open=True):
 
         pdf_file_out = file_name.removesuffix(".html") + ".pdf"
         print(f"HTML file: {file_name}")
@@ -1707,8 +1770,8 @@ Comments:
         # from weasyprint import HTML
         # HTML(file_out).write_pdf(pdf_file_out)
 
-        webbrowser.open(file_name)
-        webbrowser.open(pdf_file_out)
+        if do_open:
+            webbrowser.open(pdf_file_out)
 
     def empty_comment(self, lst):
         if len(lst) == 1:
@@ -1729,9 +1792,10 @@ Comments:
 
             if do_flags:
                 for k, flags_list in flags_auto.items():
-                    if k:
+                    if isinstance(k, bool):
+                        # if key is True in auto-flags then ensure this is on
                         for flag in flags_list:
-                            self.flags[flag]()
+                            self.flags[flag](state=k)
 
             new_user_name = self.na_if_none(self.tv_entry_user_name.get())
             new_emp_name = self.na_if_none(self.mc_emp_selection.res_tv_entry.get())
@@ -1741,7 +1805,7 @@ Comments:
                 self.default_data["start_of_day_hour"], \
                 self.default_data["start_of_day_minute"]
             date = datetime.datetime(date.year, date.month, date.day, start_hour, start_minute)
-            date_s = date_str_format(date, include_time=True)
+            date_s = date_str_format(date, include_time=True, include_weekday=True)
             new_due_date = self.na_if_none(date_s)
             new_company = self.na_if_none(self.tv_company_choice.get())
             new_hardware = self.na_if_none(self.get_frame_hardware_toggles())
