@@ -295,6 +295,9 @@ class ToggleButtonWiredLess(ToggleButton):
     #     return (*super().get_objects(), (self.tv_scale, self.scale))
 
 
+# job description
+
+
 class HardwareFormApp(tkinter.Tk):
 
     def __init__(self):
