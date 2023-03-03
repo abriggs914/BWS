@@ -342,7 +342,13 @@ class HardwareFormApp(tkinter.Tk):
             "-outlook": self.flag_outlook,
             "-outlook_archive": self.flag_outlook_archive,
             "-g_drive": self.flag_g_drive,
-            "-u_drive": self.flag_u_drive
+            "-u_drive": self.flag_u_drive,
+            "-access": self.flag_access,
+            "-syspro": self.flag_syspro,
+            "-shopclock": self.flag_shopclock,
+            "-solidworks": self.flag_solidworks,
+            "-inventor": self.flag_inventor,
+            "-sg_vault": self.flag_sg_vault,
         }
 
         self.frame_top_controls = tkinter.Frame(self, name="top_controls", background="#10aee3")
@@ -394,6 +400,10 @@ class HardwareFormApp(tkinter.Tk):
         self.style = ttk.Style()
         self.style_key_odp_normal = "odp.Red.TEntry"
         self.style_key_odp_invalid = "odp.Black.TEntry"
+        self.style_key_company_bws = "companyBws.TCombobox"
+        self.style_key_company_stg = "companyStg.TCombobox"
+        self.style_key_company_lew = "companyLew.TCombobox"
+        self.style_key_company_hug = "companyHug.TCombobox"
         self.init_style_keys()
 
         self.list_of_objectives = {
@@ -401,7 +411,7 @@ class HardwareFormApp(tkinter.Tk):
                 "obj": """
 New employee {new_emp_name}, will be starting {new_start_date} at {new_company}.
 They will be reporting to {new_boss}.
-They will require the following Hardware and Software prepared and installed.
+They will require a{new_root_hardware} to be configured with the following Hardware and Software:
 {new_hardware}
 {new_software}
 
@@ -485,9 +495,11 @@ Comments:
             They will be reporting to <mark class="boss_name">{new_boss}</mark>.
         </p>
         <p class="text_block">
-            They will require the following Hardware and Software prepared and installed:
+            They will require a{new_root_hardware} to be configured with the following Hardware and Software:
         </p>
     </div>
+    
+    
 
     <div class="lists">
         {new_hardware_list}
@@ -865,6 +877,7 @@ Comments:
             canvas.grid(**self.questions_software[q_title]["grid_args"]["canvas"])
             frame_canvas.grid(**self.questions_software[q_title]["grid_args"]["frame_canvas"])
             label.grid(**self.questions_software[q_title]["grid_args"]["label"])
+            tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
 
             if q_follow_up is not None:
                 if style == q:
@@ -962,6 +975,7 @@ Comments:
                     "tb": {r: j, c: 0, cs: 1, rs: 1}
                 }
             })
+            tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
 
             # do not automatically grid the hardware toggles.
             # rely on the update_comp_choice function to add or remove them.
@@ -1152,6 +1166,9 @@ Comments:
         self.frame_top_controls.columnconfigure([0, 1, 2], minsize=450)
         self.frame_top_controls.rowconfigure([0], minsize=150)
 
+        self.bind("<Control-Return>", self.click_submit_form)
+        self.bind("<Control-q>", self.click_shrink)
+
         # End Configurations #
 
     def init_style_keys(self):
@@ -1170,17 +1187,68 @@ Comments:
             foreground=self.colour_schemes["foreground_invalid_date"]
         )
 
+        bg, fg = self.company_colours("BWS")
+        # fbg, ffg = self.company_colours("BWS")
+        self.style.configure(
+            self.style_key_company_bws,
+            fieldforeground=fg,
+            selectforeground=fg,
+            foreground=fg,
+            fieldbackground=bg,
+            selectbackground=bg,
+            background=bg
+        )
+
+        bg, fg = self.company_colours("Stargate")
+        self.style.configure(
+            self.style_key_company_stg,
+            fieldforeground=fg,
+            selectforeground=fg,
+            foreground=fg,
+            fieldbackground=bg,
+            selectbackground=bg,
+            background=bg
+        )
+
+        bg, fg = self.company_colours("Lewis")
+        self.style.configure(
+            self.style_key_company_lew,
+            fieldforeground=fg,
+            selectforeground=fg,
+            foreground=fg,
+            fieldbackground=bg,
+            selectbackground=bg,
+            background=bg
+        )
+
+        bg, fg = self.company_colours("Hugo")
+        self.style.configure(
+            self.style_key_company_hug,
+            fieldforeground=fg,
+            selectforeground=fg,
+            foreground=fg,
+            fieldbackground=bg,
+            selectbackground=bg,
+            background=bg
+        )
+
     def init_colour_combo_company(self):
         """Use this to initially set the colours of the company combo."""
         print(f"init_colour_combo_company")
-        company = self.tv_company_choice.get()
-        background, foreground = self.company_colours(company)
-        self.combo_company_choice.configure(background=background, foreground=foreground)
+        self.update_company_choice(None)
 
-    def na_if_none(self, val):
+    def na_if_none(self, val, filler=None):
         if (val is None) or (not val and (
                 isinstance(val, str) or isinstance(val, list) or isinstance(val, tuple) or isinstance(val, dict))):
-            return self.default_data["no_comment"]
+            if filler is None:
+                return self.default_data["no_comment"]
+            else:
+                return filler
+        return val
+
+    def none_if_na(self, val, filler=None):
+        if val == self.default_data["no_comment"] or val == filler:
+            return None
         return val
 
     def update_objective(self, *args, do_flags=True):
@@ -1194,6 +1262,7 @@ Comments:
                 kwargs = {
                     "new_emp_name": data["new_emp_name"],
                     "new_start_date": data["new_due_date"],
+                    "new_root_hardware": data["new_root_hardware"],
                     "new_company": data["new_company"],
                     "new_boss": data["new_boss"],
                     "new_hardware": data["new_hardware"],
@@ -1268,9 +1337,26 @@ Comments:
         self.update_objective(args, do_flags=False)
         company = self.tv_company_choice.get()
         # background, foreground = self.company_colours(company)
-        # print(f"{background=}, {foreground=}")
         # self.combo_company_choice.configure(background=background, foreground=foreground)
 
+        match company:
+            case "BWS":
+                style = self.style_key_company_bws
+            case "Stargate":
+                style = self.style_key_company_stg
+            case "Lewis":
+                style = self.style_key_company_lew
+            case "Hugo":
+                style = self.style_key_company_hug
+            case _:
+                raise ValueError(f"Error company '{company}' not recognized.")
+
+        print(f"{style=}")
+        self.combo_company_choice.configure(style=style)
+        self.combo_company_choice.update()
+        # background, foreground = self.company_colours(company)
+        # print(f"{background=}, {foreground=}")
+        # self.combo_company_choice.configure(background=background, foreground=foreground)
 
     def update_due_date(self, *args):
         self.update_objective(args, do_flags=False)
@@ -1575,6 +1661,24 @@ Comments:
     def flag_u_drive(self, state=None):
         self.flag_helper("software", "u-drive private", state)
 
+    def flag_access(self, state=None):
+        self.flag_helper("software", "access", state)
+
+    def flag_syspro(self, state=None):
+        self.flag_helper("software", "syspro8", state)
+
+    def flag_shopclock(self, state=None):
+        self.flag_helper("software", "shopclock", state)
+
+    def flag_solidworks(self, state=None):
+        self.flag_helper("software", "solidworks", state)
+
+    def flag_inventor(self, state=None):
+        self.flag_helper("software", "inventor", state)
+
+    def flag_sg_vault(self, state=None):
+        self.flag_helper("software", "sgvault", state)
+
     def flag_helper(self, sh, k, state):
         if sh == "software":
             tb = self.questions_software[k]["tb"]
@@ -1594,6 +1698,17 @@ Comments:
                 self.flag_open_software()
             else:
                 self.flag_open_hardware()
+
+    def click_shrink(self, event=None):
+        print(f"shrink")
+        if self.tb_allow_hardware.state.get():
+            self.tb_allow_hardware.click(event)
+        if self.tb_allow_software.state.get():
+            self.tb_allow_software.click(event)
+        if self.tb_same_user_as_for.state.get():
+            self.tb_same_user_as_for.click(event)
+        if self.tb_same_user_as_follow_up.state.get():
+            self.tb_same_user_as_follow_up.click(event)
 
     def generate_user_signature(self, user_name):
         style = f"""
@@ -1643,16 +1758,27 @@ Comments:
 
                 e_hardware = self.empty_comment(hardware_list)
                 e_software = self.empty_comment(software_list)
+                e_comp = not len(self.none_if_na(data["new_root_hardware"], filler=""))
 
                 # Validate any input here before generating the html and pdf forms.
+
+                if e_comp:
+                    if not self.ask_sure_no_computer():
+                        self.flag_open_hardware()
+                        self.flag_open_software()
+                        return
                 if e_hardware and not e_software:
                     if not self.ask_sure_no_hardware():
+                        self.flag_open_hardware()
                         return
                 elif e_software and not e_hardware:
                     if not self.ask_sure_no_software():
+                        self.flag_open_software()
                         return
                 elif e_hardware and e_software:
                     if not self.ask_sure_no_hardware_software():
+                        self.flag_open_hardware()
+                        self.flag_open_software()
                         return
 
                 style_tag_h, list_tag_h = list_to_html(
@@ -1706,6 +1832,7 @@ Comments:
                     "new_user_name": data["new_user_name"],
                     "new_follow_up": data["new_follow_up"],
                     "new_comments": data["new_comments"],
+                    "new_root_hardware": data["new_root_hardware"],
                     "rem_styles": rem_styles,
                     "background_company": background_company,
                     "foreground_company": foreground_company,
@@ -1800,6 +1927,8 @@ Comments:
                         for flag in flags_list:
                             self.flags[flag](state=k)
 
+            root_hardware = self.na_if_none(self.tv_comp_choice.get())
+            root_hardware = f" {root_hardware}"  # keep this here to allow for 'an' or number.
             new_user_name = self.na_if_none(self.tv_entry_user_name.get())
             new_emp_name = self.na_if_none(self.mc_emp_selection.res_tv_entry.get())
             date = self.odp.date
@@ -1809,6 +1938,7 @@ Comments:
                 self.default_data["start_of_day_minute"]
             date = datetime.datetime(date.year, date.month, date.day, start_hour, start_minute)
             date_s = date_str_format(date, include_time=True, include_weekday=True)
+            new_root_hardware = root_hardware
             new_due_date = self.na_if_none(date_s)
             new_company = self.na_if_none(self.tv_company_choice.get())
             new_hardware = self.na_if_none(self.get_frame_hardware_toggles())
@@ -1825,6 +1955,7 @@ Comments:
                 "flags": flags,
                 "flags_auto": flags_auto,
                 "flags_other": flags_other,
+                "new_root_hardware": new_root_hardware,
                 "new_user_name": new_user_name,
                 "new_emp_name": new_emp_name,
                 "new_due_date": new_due_date,
@@ -1844,10 +1975,16 @@ Comments:
 
     def ready_to_submit(self):
         val = self.tv_objective_choice.get()
+        if not val:
+            messagebox.showinfo(title="Error", message="You need to enter some information first.")
+            return {}
         data = self.form_data(val, do_flags=False)
         if all([val, *list(data.items())]):
             return data
         return {}
+
+    def ask_sure_no_computer(self):
+        return messagebox.askokcancel(title="Are you sure?", message="Proceed with no Core Hardware?")
 
     def ask_sure_no_hardware(self):
         return messagebox.askokcancel(title="Are you sure?", message="Proceed with no Hardware?")
