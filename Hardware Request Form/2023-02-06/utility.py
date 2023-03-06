@@ -34,11 +34,13 @@ def VERSION_NUMBER():
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(), "%Y-%m-%d")
+    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+                                      "%Y-%m-%d")
 
 
 def VERSION_AUTHORS():
-    return [w.removeprefix(".").strip().title() for w in VERSION.lower().split("author(s)")[-1].split("..") if w.strip()]
+    return [w.removeprefix(".").strip().title() for w in VERSION.lower().split("author(s)")[-1].split("..") if
+            w.strip()]
 
 
 #######################################################################################################################
@@ -1464,7 +1466,7 @@ def next_available_file_name(path):
         path = ".".join(spl[:-1]) + " ({}).".format(counter) + spl[-1]
     path.replace("/", "\\")
     return path
-	
+
 
 def alert_colour(x, n):
     assert isnumber(x), "Parameter \"x\": ({}) needs to be a number".format(x)
@@ -1839,7 +1841,7 @@ def margins(t_width, n_btns, btn_width):
     assert (isinstance(n_btns, int) or isinstance(n_btns,
                                                   float)) and n_btns > 0, "Error, param n_btns must be a number greater than 0."
     assert (isinstance(btn_width, int) or isinstance(btn_width, float)) and (
-                btn_width * n_btns) <= t_width, "Error, param btn_width must be a number greater than 0."
+            btn_width * n_btns) <= t_width, "Error, param btn_width must be a number greater than 0."
     mw = (t_width - (n_btns * btn_width)) / (n_btns + 1)
     return flatten([[
         i * (mw + btn_width),
@@ -1847,7 +1849,7 @@ def margins(t_width, n_btns, btn_width):
     ] for i in range(n_btns + 1)])
 
 
-def get_windows_user(EXTENDED_NAME_FORMAT: int=3):
+def get_windows_user(EXTENDED_NAME_FORMAT: int = 3):
     """Get detailed information about the windows user.
 
     print("NameUnknown            : ", get_data(0))  -> ''
