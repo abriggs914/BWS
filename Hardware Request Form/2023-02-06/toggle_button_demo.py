@@ -746,7 +746,7 @@ Comments:
             label_text="Working in your Department?",
             state=True,
             labels=("Yes", ""),
-            auto_grid=True
+            auto_grid=2
         )
         self.mc_same_department = MultiComboBox(
             self.frame_top_controls_a,
