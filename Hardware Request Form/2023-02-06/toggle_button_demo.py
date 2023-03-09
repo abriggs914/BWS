@@ -299,6 +299,204 @@ class ToggleButtonWiredLess(ToggleButton):
 # job description
 
 
+class ToggleButtonRadios(ToggleButton):
+
+    def __init__(
+            self,
+            master,
+            label,
+            radios,
+            btns_per_col=5,
+            inc_clear=True,
+            inc_select=True,
+
+            tb_kwargs=None,
+            tb_label_kwargs=None,
+            tb_frame_canvas_kwargs=None,
+            tb_canvas_kwargs=None,
+            *args,
+            **kwargs
+    ):
+        super().__init__(master, *args, **kwargs)
+
+        print(f"Start state: {self.state.get()=}\n{self.switch_mode.get()=}")
+
+        valid_tb_kwargs = {
+            "row": 0,
+            "column": 2,
+            "rowspan": 1,
+            "columnspan": 2,
+            "ipadx": 0,
+            "ipady": 0,
+            "padx": 0,
+            "pady": 0,
+            "sticky": "nsew"
+        }
+        valid_label_kwargs = {
+            "row": 0,
+            "column": 0,
+            "rowspan": 1,
+            "columnspan": 1,
+            "ipadx": 0,
+            "ipady": 0,
+            "padx": 0,
+            "pady": 0
+        }
+        valid_frame_canvas_kwargs = {
+            "row": 0,
+            "column": 1,
+            "rowspan": 1,
+            "columnspan": 1,
+            "ipadx": 0,
+            "ipady": 0,
+            "padx": 0,
+            "pady": 0
+        }
+        valid_canvas_kwargs = {
+            "row": 0,
+            "column": 0,
+            "rowspan": 1,
+            "columnspan": 1,
+            "ipadx": 0,
+            "ipady": 0,
+            "padx": 0,
+            "pady": 0
+        }
+
+        if tb_kwargs is None:
+            self.tb_kwargs = valid_tb_kwargs
+        else:
+            self.tb_kwargs = tb_kwargs
+            for k, v in valid_tb_kwargs.items():
+                if k not in self.tb_kwargs:
+                    self.tb_kwargs.update({k: v})
+
+        if tb_label_kwargs is None:
+            self.tb_label_kwargs = valid_label_kwargs
+        else:
+            self.tb_label_kwargs = tb_label_kwargs
+            for k, v in valid_label_kwargs.items():
+                if k not in self.tb_label_kwargs:
+                    self.tb_label_kwargs.update({k: v})
+
+        if tb_frame_canvas_kwargs is None:
+            self.tb_frame_canvas_kwargs = valid_frame_canvas_kwargs
+        else:
+            self.tb_frame_canvas_kwargs = tb_frame_canvas_kwargs
+            for k, v in valid_frame_canvas_kwargs.items():
+                if k not in self.tb_frame_canvas_kwargs:
+                    self.tb_frame_canvas_kwargs.update({k: v})
+
+        if tb_canvas_kwargs is None:
+            self.tb_canvas_kwargs = valid_canvas_kwargs
+        else:
+            self.tb_canvas_kwargs = tb_canvas_kwargs
+            for k, v in valid_canvas_kwargs.items():
+                if k not in self.tb_canvas_kwargs:
+                    self.tb_canvas_kwargs.update({k: v})
+
+        self.frame_buttons = tkinter.Frame(self)
+        self.frame_radio_buttons = tkinter.Frame(self.frame_buttons)
+        self.frame_control_buttons = tkinter.Frame(self.frame_buttons)
+        self.radio_var,\
+        self.radio_tv_vars,\
+        self.radio_buttons\
+            = radio_factory(
+                self.frame_radio_buttons,
+                radios
+        )
+
+        self.btns_per_col = clamp(2, (2 if not isinstance(btns_per_col, int) else btns_per_col), 25)
+
+        rows = self.btns_per_col
+        cols = len(self.radio_buttons) // self.btns_per_col
+        for j in range(cols):
+            for i in range(rows):
+                idx = (j * rows) + i
+                btn = self.radio_buttons[idx]
+                btn.grid(row=i, column=j)
+
+        self.frame_buttons.grid(column=2)
+        self.frame_radio_buttons.grid(column=0)
+        self.frame_control_buttons.grid(column=1)
+
+        self.rowconfigure("all", weight=1, uniform='row')
+        self.columnconfigure([0, 1, 2, 3], minsize=100)
+        self.columnconfigure([0, 1], weight=1, uniform='column')
+
+    def get_objects(self):
+        return (
+            *super().get_objects(),
+            (None, None, None)
+        )
+
+        # self.tb__, \
+        # self.tb__label_data, \
+        # self.tb__frame_canvas, \
+        # self.tb__canvas_data \
+        #     = ToggleButton(
+        #     self,
+        #     label_text="Wireless?",
+        #     labels=("Yes", "No"),
+        #     height_canvas=self.height,
+        #     height_label=self.height_label,
+        #     label_font=self.label_font,
+        #     width_canvas=100,
+        #     width_label=10,
+        #     auto_grid=False
+        # ).get_objects()
+        # self.tb__tv_label, self.tb__label = self.tb__label_data
+        # self.tb__state, self.tb__canvas = self.tb__canvas_data
+        #
+        # print(f"##{self.switch_positions=}")
+        # try:
+        #     print(f"##{self.switch_positions=}")
+        # except AttributeError:
+        #     print(f"##self.switch_positions NOT FOUND")
+
+        # print(f"Start state: {self.tb__.state.get()=}\n{self.tb__.switch_mode.get()=}")
+        #
+        # self.rowconfigure("all", weight=1, uniform='row')
+        # self.columnconfigure([0, 1, 2, 3], minsize=100)
+        # self.columnconfigure([0, 1], weight=1, uniform='column')
+
+        # self.rowconfigure("all", weight=1, uniform='row')
+        # self.columnconfigure("all", weight=1, uniform='column')
+        # self.columnconfigure(1, weight=1, uniform='column')
+        # self.columnconfigure(2, weight=1, uniform='column')
+        # self.columnconfigure(3, weight=1, uniform='column')
+
+    # def grid_widgets_(self):
+    #     super(ToggleButtonWiredLess, self).grid_widgets()
+    #     self.show_widgets()
+    #
+    # def grid_forget_widgets(self):
+    #     super(ToggleButtonWiredLess, self).grid_forget_widgets()
+    #     self.hide_widgets()
+    #
+
+    def show_question(self, *args):
+        print(f"show_question {self.state.get()=}")
+        if self.state.get():
+            self.show_widgets()
+        else:
+            self.hide_widgets()
+
+    def show_widgets(self):
+        self.frame_buttons.grid(column=2)
+        # self.tb__.grid(**self.tb_kwargs)
+        # self.tb__label.grid(**self.tb_label_kwargs)
+        # self.tb__frame_canvas.grid(**self.tb_frame_canvas_kwargs)
+        # self.tb__canvas.grid(**self.tb_canvas_kwargs)
+
+    def hide_widgets(self):
+        self.frame_buttons.grid_forget()
+        # self.tb__.grid_forget()
+        # self.tb__label.grid_forget()
+        # self.tb__frame_canvas.grid_forget()
+        # self.tb__canvas.grid_forget()
+
+
 class HardwareFormApp(tkinter.Tk):
 
     def __init__(self):
@@ -310,6 +508,23 @@ class HardwareFormApp(tkinter.Tk):
         q = "quantity"
         w = "wired(less)"
         d = "databaseSelection"
+
+        self.list_of_access_databases = {
+            "SCA": {"name": "SysproCompanyA"},
+            "SCS": {"name": "SysproCompanyS"},
+            "SCL": {"name": "SysproCompanyL"},
+            "SV4": {"name": "BWS Sales V4"},
+            "ENG": {"name": "Engineering V2"},
+            "PUR": {"name": "Purchasing V2"},
+            "ADM": {"name": "Admin"},
+            "DOM": {"name": "Doom"},
+            "JIG": {"name": "Jigs"},
+            "DEF": {"name": "Defects"},
+            "DFP": {"name": "Defects - Print"},
+            "DFO": {"name": "Defects- Finish Off"},
+            "DFR": {"name": "Defects - Receiving"},
+            "DFS": {"name": "Defects - Snags"}
+        }
 
         self.default_data = {
             "start_of_day_hour": 8,
@@ -817,210 +1032,259 @@ Comments:
 
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
 
+        self.do_software = True
+        self.do_hardware = True
+
         # Begin Software #
 
-        self.questions_software = [
-            ("Outlook Email", None, tkinter.StringVar(self, name="outlook")),
-            ("Outlook Archive", None, tkinter.StringVar(self, name="outlook")),
-            ("Access", d, tkinter.StringVar(self, name="access")),
-            ("ODBC", None, tkinter.StringVar(self, name="odbc")),
-            ("G-Drive (Public)", None, tkinter.StringVar(self, name="g_drive")),
-            ("U-Drive (Private)", None, tkinter.StringVar(self, name="u_drive")),
-            ("Syspro8", None, tkinter.StringVar(self, name="syspro8")),
-            ("ShopClock", None, tkinter.StringVar(self, name="shopclock")),
-            ("SolidWorks", None, tkinter.StringVar(self, name="solidworks")),
-            ("Inventor", None, tkinter.StringVar(self, name="inventor")),
-            ("SGVault", None, tkinter.StringVar(self, name="sgvault"))
-        ]
-        self.questions_software = {
-            k.lower().replace("(", "").replace(")", ""): dict(zip(["text", "follow_up", "var"], [k, f, v])) for
-            k, f, v in self.questions_software}
+        if self.do_software:
+            self.questions_software = [
+                ("Outlook Email", None, tkinter.StringVar(self, name="outlook")),
+                ("Outlook Archive", None, tkinter.StringVar(self, name="outlook")),
+                ("Access", d, tkinter.StringVar(self, name="access")),
+                ("ODBC", None, tkinter.StringVar(self, name="odbc")),
+                ("G-Drive (Public)", None, tkinter.StringVar(self, name="g_drive")),
+                ("U-Drive (Private)", None, tkinter.StringVar(self, name="u_drive")),
+                ("Syspro8", None, tkinter.StringVar(self, name="syspro8")),
+                ("ShopClock", None, tkinter.StringVar(self, name="shopclock")),
+                ("SolidWorks", None, tkinter.StringVar(self, name="solidworks")),
+                ("Inventor", None, tkinter.StringVar(self, name="inventor")),
+                ("SGVault", None, tkinter.StringVar(self, name="sgvault")),
+                ("Excel", None, tkinter.StringVar(self, name="excel"))
+            ]
+            self.questions_software = {
+                k.lower().replace("(", "").replace(")", ""): dict(zip(["text", "follow_up", "var"], [k, f, v])) for
+                k, f, v in self.questions_software}
 
-        for j, q_title_q_data in enumerate(self.questions_software.items()):
-            q_title, q_data = q_title_q_data
-            q_text, q_follow_up, q_var = list(q_data.values())
-            follow_up_style = None if q_follow_up is None else (
-                q_follow_up if not isinstance(q_follow_up, tuple) else q_follow_up[0])
-            if follow_up_style == q:
-                style, data = q_follow_up
-            # elif follow_up_style == w:
-            #     style, data = q_follow_up if q_follow_up
-            else:
-                style, data = (w, (None, None))
+            for j, q_title_q_data in enumerate(self.questions_software.items()):
+                q_title, q_data = q_title_q_data
+                q_text, q_follow_up, q_var = list(q_data.values())
+                follow_up_style = None if q_follow_up is None else (
+                    q_follow_up if not isinstance(q_follow_up, tuple) else q_follow_up[0])
+                if follow_up_style == q:
+                    style, data = q_follow_up
+                # elif follow_up_style == w:
+                #     style, data = q_follow_up if q_follow_up
+                else:
+                    style, data = (w, (None, None))
 
-            print(f"\n{follow_up_style=}, {style=}, {data=}")
+                print(f"\n{follow_up_style=}, {style=}, {data=}")
 
-            if follow_up_style == w:
-                print(f"WIREDLESS  {q_text=}")
-                tb, label_data, \
-                frame_canvas, \
-                btn_data = \
-                    ToggleButtonWiredLess(
-                        self.frame_software_toggle_buttons,
-                        label_text=q_text,
-                        labels=None,
-                        width_label=20,
-                        width_canvas=50,
-                        height_canvas=30,
-                        auto_grid=False
-                    ).get_objects()
-                quantity_data = None, None, None
-            else:
-                print(f"QUANTITY  {q_text=}")
-                tb, label_data, \
-                frame_canvas, btn_data, \
-                quantity_data = \
-                    ToggleButtonQuantity(
-                        self.frame_software_toggle_buttons,
-                        label_text=q_text,
-                        labels=None,
-                        start_val=data[0],
-                        stop_val=data[1],
-                        width_label=20,
-                        width_canvas=50,
-                        height_canvas=30,
-                        auto_grid=False
-                    ).get_objects()
+                if follow_up_style == w:
+                    print(f"WIREDLESS  {q_text=}")
+                    tb, label_data, \
+                    frame_canvas, \
+                    btn_data = \
+                        ToggleButtonWiredLess(
+                            self.frame_software_toggle_buttons,
+                            label_text=q_text,
+                            labels=None,
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
+                    quantity_data = None, None, None
+                elif follow_up_style == d:
+                    print(f"Database  {q_text=}")
+                    radios = self.list_of_access_databases.keys()
+                    tb, label_data, \
+                    frame_canvas, btn_data, \
+                    quantity_data = \
+                        ToggleButtonRadios(
+                            self.frame_software_toggle_buttons,
+                            label="LABEL",
+                            btns_per_col=5,
+                            radios=radios,
+                            label_text=q_text,
+                            labels=None,
+                            start_val=data[0],
+                            stop_val=data[1],
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
+                else:
+                    print(f"QUANTITY  {q_text=}")
+                    tb, label_data, \
+                    frame_canvas, btn_data, \
+                    quantity_data = \
+                        ToggleButtonQuantity(
+                            self.frame_software_toggle_buttons,
+                            label_text=q_text,
+                            labels=None,
+                            start_val=data[0],
+                            stop_val=data[1],
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
 
-            tv_label, label = label_data
-            var, canvas = btn_data
-            q_var, label_scale, scale = quantity_data
-            self.questions_software[q_title].update({
-                "tb": tb,
-                "tv_label": tv_label,
-                "label": label,
-                "var": var,
-                "frame_canvas": frame_canvas,
-                "canvas": canvas,
-                "q_var": q_var,
-                "scale": scale,
-                "showing": True,
-                "grid_args": {
-                    "label": {r: 0, c: 0, cs: 1, rs: 1},
-                    "canvas": {r: 0, c: 1, cs: 1, rs: 1},
-                    "frame_canvas": {r: 0, c: 1, cs: 1, rs: 1},
-                    "tb": {r: j, c: 0, cs: 1, rs: 1}
-                }
-            })
+                tv_label, label = label_data
+                var, canvas = btn_data
+                q_var, label_scale, scale = quantity_data
+                self.questions_software[q_title].update({
+                    "tb": tb,
+                    "tv_label": tv_label,
+                    "label": label,
+                    "var": var,
+                    "frame_canvas": frame_canvas,
+                    "canvas": canvas,
+                    "q_var": q_var,
+                    "scale": scale,
+                    "showing": True,
+                    "grid_args": {
+                        "label": {r: 0, c: 0, cs: 1, rs: 1},
+                        "canvas": {r: 0, c: 1, cs: 1, rs: 1},
+                        "frame_canvas": {r: 0, c: 1, cs: 1, rs: 1},
+                        "tb": {r: j, c: 0, cs: 1, rs: 1}
+                    }
+                })
 
-            tb.grid(**self.questions_software[q_title]["grid_args"]["tb"])
-            canvas.grid(**self.questions_software[q_title]["grid_args"]["canvas"])
-            frame_canvas.grid(**self.questions_software[q_title]["grid_args"]["frame_canvas"])
-            label.grid(**self.questions_software[q_title]["grid_args"]["label"])
-            tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
+                tb.grid(**self.questions_software[q_title]["grid_args"]["tb"])
+                canvas.grid(**self.questions_software[q_title]["grid_args"]["canvas"])
+                frame_canvas.grid(**self.questions_software[q_title]["grid_args"]["frame_canvas"])
+                label.grid(**self.questions_software[q_title]["grid_args"]["label"])
+                tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
 
-            if q_follow_up is not None:
-                if style == q:
-                    var.trace_variable("w", tb.show_question)
-                if style == w:
-                    var.trace_variable("w", tb.show_question)
+                if q_follow_up is not None:
+                    if style == q:
+                        var.trace_variable("w", tb.show_question)
+                    if style == w:
+                        var.trace_variable("w", tb.show_question)
 
-            # label.grid(row=0, column=0, columnspan=1, rowspan=1)
-            # canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
-            # frame_canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
-            # tb.grid()
+                # label.grid(row=0, column=0, columnspan=1, rowspan=1)
+                # canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
+                # frame_canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
+                # tb.grid()
 
         # End Software #
 
         # Begin Hardware #
 
-        self.questions_hardware = [
-            ("Extra Charger(s)", None, tkinter.StringVar(self, name="extra_chargers")),
-            ("Monitor(s)", (q, (1, 3)), tkinter.StringVar(self, name="monitors")),
-            # ("Peripheral Cable(s)", None, tkinter.StringVar(win, name="peripheral_cables")),
-            ("Dock", None, tkinter.StringVar(self, name="dock")),
-            ("Keyboard", w, tkinter.StringVar(self, name="keyboard")),
-            ("Mouse", w, tkinter.StringVar(self, name="mouse")),
-            ("Mouse pad", None, tkinter.StringVar(self, name="mouse_pad")),
-            ("Camera", None, tkinter.StringVar(self, name="camera")),
-            ("Microphone", None, tkinter.StringVar(self, name="microphone"))
-        ]
-        self.questions_hardware = {
-            k.lower().replace("(", "").replace(")", ""): dict(zip(["text", "follow_up", "var"], [k, f, v])) for
-            k, f, v in self.questions_hardware}
+        if self.do_hardware:
+            self.questions_hardware = [
+                ("Extra Charger(s)", None, tkinter.StringVar(self, name="extra_chargers")),
+                ("Monitor(s)", (q, (1, 3)), tkinter.StringVar(self, name="monitors")),
+                # ("Peripheral Cable(s)", None, tkinter.StringVar(win, name="peripheral_cables")),
+                ("Dock", None, tkinter.StringVar(self, name="dock")),
+                ("Keyboard", w, tkinter.StringVar(self, name="keyboard")),
+                ("Mouse", w, tkinter.StringVar(self, name="mouse")),
+                ("Mouse pad", None, tkinter.StringVar(self, name="mouse_pad")),
+                ("Camera", None, tkinter.StringVar(self, name="camera")),
+                ("Microphone", None, tkinter.StringVar(self, name="microphone")),
+                ("Monitor Arms", None, tkinter.StringVar(self, name="monitor_arms"))
+            ]
+            self.questions_hardware = {
+                k.lower().replace("(", "").replace(")", ""): dict(zip(["text", "follow_up", "var"], [k, f, v])) for
+                k, f, v in self.questions_hardware}
 
-        for j, q_title_q_data in enumerate(self.questions_hardware.items()):
-            q_title, q_data = q_title_q_data
-            q_text, q_follow_up, q_var = list(q_data.values())
-            follow_up_style = None if q_follow_up is None else (
-                q_follow_up if not isinstance(q_follow_up, tuple) else q_follow_up[0])
-            if follow_up_style == q:
-                style, data = q_follow_up
-            # elif follow_up_style == w:
-            #     style, data = q_follow_up if q_follow_up
-            else:
-                style, data = (w, (None, None))
+            for j, q_title_q_data in enumerate(self.questions_hardware.items()):
+                q_title, q_data = q_title_q_data
+                q_text, q_follow_up, q_var = list(q_data.values())
+                follow_up_style = None if q_follow_up is None else (
+                    q_follow_up if not isinstance(q_follow_up, tuple) else q_follow_up[0])
+                if follow_up_style == q:
+                    style, data = q_follow_up
+                # elif follow_up_style == w:
+                #     style, data = q_follow_up if q_follow_up
+                else:
+                    style, data = (w, (None, None))
 
-            print(f"\n{follow_up_style=}, {style=}, {data=}")
+                print(f"\n{follow_up_style=}, {style=}, {data=}")
 
-            if follow_up_style == w:
-                print(f"WIREDLESS  {q_text=}")
-                tb, label_data, \
-                frame_canvas, \
-                btn_data = \
-                    ToggleButtonWiredLess(
-                        self.frame_hardware_toggle_buttons,
-                        label_text=q_text,
-                        labels=None,
-                        width_label=20,
-                        width_canvas=50,
-                        height_canvas=30,
-                        auto_grid=False
-                    ).get_objects()
-                quantity_data = None, None, None
-            else:
-                print(f"QUANTITY  {q_text=}")
-                tb, label_data, \
-                frame_canvas, btn_data, \
-                quantity_data = \
-                    ToggleButtonQuantity(
-                        self.frame_hardware_toggle_buttons,
-                        label_text=q_text,
-                        labels=None,
-                        start_val=data[0],
-                        stop_val=data[1],
-                        width_label=20,
-                        width_canvas=50,
-                        height_canvas=30,
-                        auto_grid=False
-                    ).get_objects()
+                if follow_up_style == w:
+                    print(f"WIREDLESS  {q_text=}")
+                    tb, label_data, \
+                    frame_canvas, \
+                    btn_data = \
+                        ToggleButtonWiredLess(
+                            self.frame_hardware_toggle_buttons,
+                            label_text=q_text,
+                            labels=None,
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
+                    quantity_data = None, None, None
+                elif follow_up_style == d:
+                    print(f"Database  {q_text=}")
+                    radios = self.list_of_access_databases.keys()
+                    tb, label_data, \
+                    frame_canvas, btn_data, \
+                    quantity_data = \
+                        ToggleButtonRadios(
+                            self.frame_software_toggle_buttons,
+                            label="LABEL",
+                            btns_per_col=5,
+                            radios=radios,
+                            label_text=q_text,
+                            labels=None,
+                            start_val=data[0],
+                            stop_val=data[1],
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
+                else:
+                    print(f"QUANTITY  {q_text=}")
+                    tb, label_data, \
+                    frame_canvas, btn_data, \
+                    quantity_data = \
+                        ToggleButtonQuantity(
+                            self.frame_hardware_toggle_buttons,
+                            label_text=q_text,
+                            labels=None,
+                            start_val=data[0],
+                            stop_val=data[1],
+                            width_label=20,
+                            width_canvas=50,
+                            height_canvas=30,
+                            auto_grid=False
+                        ).get_objects()
 
-            tv_label, label = label_data
-            var, canvas = btn_data
-            q_var, label_scale, scale = quantity_data
-            self.questions_hardware[q_title].update({
-                "tb": tb,
-                "tv_label": tv_label,
-                "label": label,
-                "var": var,
-                "frame_canvas": frame_canvas,
-                "canvas": canvas,
-                "q_var": q_var,
-                "scale": scale,
-                "showing": True,
-                "grid_args": {
-                    "label": {r: 0, c: 0, cs: 1, rs: 1},
-                    "canvas": {r: 0, c: 1, cs: 1, rs: 1},
-                    "frame_canvas": {r: 0, c: 1, cs: 1, rs: 1},
-                    "tb": {r: j, c: 0, cs: 1, rs: 1}
-                }
-            })
-            tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
+                tv_label, label = label_data
+                var, canvas = btn_data
+                q_var, label_scale, scale = quantity_data
+                self.questions_hardware[q_title].update({
+                    "tb": tb,
+                    "tv_label": tv_label,
+                    "label": label,
+                    "var": var,
+                    "frame_canvas": frame_canvas,
+                    "canvas": canvas,
+                    "q_var": q_var,
+                    "scale": scale,
+                    "showing": True,
+                    "grid_args": {
+                        "label": {r: 0, c: 0, cs: 1, rs: 1},
+                        "canvas": {r: 0, c: 1, cs: 1, rs: 1},
+                        "frame_canvas": {r: 0, c: 1, cs: 1, rs: 1},
+                        "tb": {r: j, c: 0, cs: 1, rs: 1}
+                    }
+                })
+                tb.state.trace_variable("w", lambda *_: self.update_objective(do_flags=False))
 
-            # do not automatically grid the hardware toggles.
-            # rely on the update_comp_choice function to add or remove them.
-            # tb.grid(**self.questions_hardware[q_title]["grid_args"]["tb"])
-            # canvas.grid(**self.questions_hardware[q_title]["grid_args"]["canvas"])
-            # frame_canvas.grid(**self.questions_hardware[q_title]["grid_args"]["frame_canvas"])
-            # label.grid(**self.questions_hardware[q_title]["grid_args"]["label"])
+                # do not automatically grid the hardware toggles.
+                # rely on the update_comp_choice function to add or remove them.
+                # tb.grid(**self.questions_hardware[q_title]["grid_args"]["tb"])
+                # canvas.grid(**self.questions_hardware[q_title]["grid_args"]["canvas"])
+                # frame_canvas.grid(**self.questions_hardware[q_title]["grid_args"]["frame_canvas"])
+                # label.grid(**self.questions_hardware[q_title]["grid_args"]["label"])
 
-            if q_follow_up is not None:
-                if style == q:
-                    var.trace_variable("w", tb.show_question)
-                if style == w:
-                    var.trace_variable("w", tb.show_question)
-            # canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
-            # .grid(row=0, column=1, columnspan=1, rowspan=1)
+                if q_follow_up is not None:
+                    if style == q:
+                        var.trace_variable("w", tb.show_question)
+                    if style == w:
+                        var.trace_variable("w", tb.show_question)
+                # canvas.grid(row=0, column=1, columnspan=1, rowspan=1)
+                # .grid(row=0, column=1, columnspan=1, rowspan=1)
+
+        # End Hardware
 
         print(f"{dict_print(self.questions_hardware, 'Hardware')}")
         print(f"{dict_print(self.questions_software, 'Software')}")
