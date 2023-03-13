@@ -10,7 +10,11 @@ from datetime_utility import *
 from pyodbc_connection import connect
 from location_utility import company_from_location
 from orbiting_date_picker import OrbitingDatePicker
-from utility import dict_print, next_available_file_name, get_windows_user
+from utility import dict_print, next_available_file_name, get_windows_user, print_by_line
+
+
+def grid_keys():
+    return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
 
 
 class ToggleButtonQuantity(ToggleButton):
@@ -150,46 +154,48 @@ class ToggleButtonWiredLess(ToggleButton):
 
         print(f"Start state: {self.state.get()=}\n{self.switch_mode.get()=}")
 
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
+
         valid_tb_kwargs = {
-            "row": 0,
-            "column": 2,
-            "rowspan": 1,
-            "columnspan": 2,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0,
-            "sticky": "nsew"
+            r: 0,
+            c: 2,
+            rs: 1,
+            cs: 2,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0,
+            s: "nsew"
         }
         valid_label_kwargs = {
-            "row": 0,
-            "column": 0,
-            "rowspan": 1,
-            "columnspan": 1,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0
+            r: 0,
+            c: 0,
+            rs: 1,
+            cs: 1,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0
         }
         valid_frame_canvas_kwargs = {
-            "row": 0,
-            "column": 1,
-            "rowspan": 1,
-            "columnspan": 1,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0
+            r: 0,
+            c: 1,
+            rs: 1,
+            cs: 1,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0
         }
         valid_canvas_kwargs = {
-            "row": 0,
-            "column": 0,
-            "rowspan": 1,
-            "columnspan": 1,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0
+            r: 0,
+            c: 0,
+            rs: 1,
+            cs: 1,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0
         }
 
         if tb_kwargs is None:
@@ -225,9 +231,9 @@ class ToggleButtonWiredLess(ToggleButton):
                     self.tb_canvas_kwargs.update({k: v})
 
         self.tb__, \
-        self.tb__label_data, \
-        self.tb__frame_canvas, \
-        self.tb__canvas_data \
+            self.tb__label_data, \
+            self.tb__frame_canvas, \
+            self.tb__canvas_data \
             = ToggleButton(
             self,
             label_text="Wireless?",
@@ -321,36 +327,38 @@ class ToggleButtonRadios(ToggleButton):
 
         print(f"Start state: {self.state.get()=}\n{self.switch_mode.get()=}")
 
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
+
         valid_tb_kwargs = {
-            "row": 0,
-            "column": 2,
-            "rowspan": 1,
-            "columnspan": 2,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0,
-            "sticky": "nsew"
+            r: 0,
+            c: 2,
+            rs: 1,
+            cs: 2,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0,
+            s: "nsew"
         }
         valid_label_kwargs = {
-            "row": 0,
-            "column": 0,
-            "rowspan": 1,
-            "columnspan": 1,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0
+            r: 0,
+            c: 0,
+            rs: 1,
+            cs: 1,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0
         }
         valid_frame_canvas_kwargs = {
-            "row": 0,
-            "column": 1,
-            "rowspan": 1,
-            "columnspan": 1,
-            "ipadx": 0,
-            "ipady": 0,
-            "padx": 0,
-            "pady": 0
+            r: 0,
+            c: 1,
+            rs: 1,
+            cs: 1,
+            ix: 0,
+            iy: 0,
+            x: 0,
+            y: 0
         }
         valid_canvas_kwargs = {
             "row": 0,
@@ -396,31 +404,39 @@ class ToggleButtonRadios(ToggleButton):
                     self.tb_canvas_kwargs.update({k: v})
 
         self.frame_buttons = tkinter.Frame(self)
-        self.frame_radio_buttons = tkinter.Frame(self.frame_buttons)
+        self.frame_checkbox_buttons = tkinter.Frame(self.frame_buttons)
         self.frame_control_buttons = tkinter.Frame(self.frame_buttons)
-        self.radio_var,\
-        self.radio_tv_vars,\
-        self.radio_buttons\
-            = radio_factory(
-                self.frame_radio_buttons,
-                radios
+        self.checkbox_tv_vars, \
+        self.checkbox_buttons \
+            = checkbox_factory(
+            self.frame_checkbox_buttons,
+            radios
         )
 
         self.btns_per_col = clamp(2, (2 if not isinstance(btns_per_col, int) else btns_per_col), 25)
 
         rows = self.btns_per_col
-        cols = len(self.radio_buttons) // self.btns_per_col
+        cols = len(self.checkbox_buttons) // self.btns_per_col
         for j in range(cols):
             for i in range(rows):
                 idx = (j * rows) + i
-                btn = self.radio_buttons[idx]
+                btn = self.checkbox_buttons[idx]
                 btn.grid(row=i, column=j)
 
-        self.frame_buttons.grid(column=2)
-        self.frame_radio_buttons.grid(column=0)
-        self.frame_control_buttons.grid(column=1)
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
 
-        self.rowconfigure("all", weight=1, uniform='row')
+        self.grid_args = {
+            "frame_buttons": {r: 0, c: 2},
+            "frame_checkbox_buttons": {r: 0, c: 0},
+            "frame_control_buttons": {r: 0, c: 0}
+        }
+
+        # self.frame_buttons.grid(column=2)
+        # self.frame_radio_buttons.grid(column=0)
+        # self.frame_control_buttons.grid(column=1)
+
+        min_size = 10
+        self.rowconfigure("all", weight=1, uniform='row', minsize=rows*min_size)
         self.columnconfigure([0, 1, 2, 3], minsize=100)
         self.columnconfigure([0, 1], weight=1, uniform='column')
 
@@ -483,7 +499,10 @@ class ToggleButtonRadios(ToggleButton):
             self.hide_widgets()
 
     def show_widgets(self):
-        self.frame_buttons.grid(column=2)
+        self.frame_buttons.grid(**self.grid_args["frame_buttons"])
+        self.frame_checkbox_buttons.grid(**self.grid_args["frame_checkbox_buttons"])
+        self.frame_control_buttons.grid(**self.grid_args["frame_control_buttons"])
+        # self.frame_buttons.grid(column=2)
         # self.tb__.grid(**self.tb_kwargs)
         # self.tb__label.grid(**self.tb_label_kwargs)
         # self.tb__frame_canvas.grid(**self.tb_frame_canvas_kwargs)
@@ -491,6 +510,9 @@ class ToggleButtonRadios(ToggleButton):
 
     def hide_widgets(self):
         self.frame_buttons.grid_forget()
+        self.frame_control_buttons.grid_forget()
+        self.frame_checkbox_buttons.grid_forget()
+        # self.frame_buttons.grid_forget()
         # self.tb__.grid_forget()
         # self.tb__label.grid_forget()
         # self.tb__frame_canvas.grid_forget()
@@ -550,7 +572,9 @@ class HardwareFormApp(tkinter.Tk):
                 div.it_section {{
                     background: {background_it_section};
                 }}
-            """
+            """,
+            "unknown_objective": "I'm sorry, I don't know how to do that.",
+            "initial_auto_objective": "Please select an objective from above."
         }
 
         self.flags = {
@@ -776,22 +800,22 @@ Comments:
         # Begin factories #
 
         self.tv_label_auto_desc_text, \
-        self.label_auto_desc_text, \
-        self.tv_auto_desc_text, \
-        self.auto_desc_text, \
+            self.label_auto_desc_text, \
+            self.tv_auto_desc_text, \
+            self.auto_desc_text, \
             = text_factory(
             self.frame_auto_reports,
             tv_label="Auto-Generated Objective:",
-            tv_text="Please select an objective from above.",
+            tv_text=self.default_data["initial_auto_objective"],
             kwargs_text={
                 "width": 100
             }
         )
 
         self.tv_label_objective_choice, \
-        self.label_objective_choice, \
-        self.tv_objective_choice, \
-        self.combo_objective_choice = \
+            self.label_objective_choice, \
+            self.tv_objective_choice, \
+            self.combo_objective_choice = \
             combo_factory(
                 self.frame_top_controls_b,
                 tv_label=self.tv_label_objective_choice,
@@ -804,9 +828,9 @@ Comments:
             )
 
         self.tv_label_entry_user_name, \
-        self.label_entry_user_name, \
-        self.tv_entry_user_name, \
-        self.entry_user_name = \
+            self.label_entry_user_name, \
+            self.tv_entry_user_name, \
+            self.entry_user_name = \
             entry_factory(
                 self.frame_top_controls_b,
                 tv_label="Username:",
@@ -820,9 +844,9 @@ Comments:
             )
 
         self.tv_label_comp_choice, \
-        self.label_comp_choice, \
-        self.tv_comp_choice, \
-        self.combo_comp_choice = \
+            self.label_comp_choice, \
+            self.tv_comp_choice, \
+            self.combo_comp_choice = \
             combo_factory(
                 self.frame_comp_choice,
                 tv_label=self.tv_label_comp_choice,
@@ -834,9 +858,9 @@ Comments:
             )
 
         self.tv_label_company_choice, \
-        self.label_company_choice, \
-        self.tv_company_choice, \
-        self.combo_company_choice = \
+            self.label_company_choice, \
+            self.tv_company_choice, \
+            self.combo_company_choice = \
             combo_factory(
                 self.frame_top_controls_b,
                 tv_label=self.tv_label_company_choice,
@@ -855,7 +879,7 @@ Comments:
             )
 
         self.tv_button_submit_form, \
-        self.button_submit_form \
+            self.button_submit_form \
             = button_factory(
             self.frame_top_controls_d,
             tv_btn="Submit Form",
@@ -988,7 +1012,7 @@ Comments:
         # # self.res_canvas.grid(row=0, column=1)
 
         self.tv_btn_open_tl_comments, \
-        self.btn_open_tl_comments \
+            self.btn_open_tl_comments \
             = button_factory(
             self.frame_top_controls_b,
             tv_btn="Edit Comments",
@@ -1030,7 +1054,7 @@ Comments:
 
         # End Other Control Widgets #
 
-        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
 
         self.do_software = True
         self.do_hardware = True
@@ -1073,8 +1097,8 @@ Comments:
                 if follow_up_style == w:
                     print(f"WIREDLESS  {q_text=}")
                     tb, label_data, \
-                    frame_canvas, \
-                    btn_data = \
+                        frame_canvas, \
+                        btn_data = \
                         ToggleButtonWiredLess(
                             self.frame_software_toggle_buttons,
                             label_text=q_text,
@@ -1089,8 +1113,8 @@ Comments:
                     print(f"Database  {q_text=}")
                     radios = self.list_of_access_databases.keys()
                     tb, label_data, \
-                    frame_canvas, btn_data, \
-                    quantity_data = \
+                        frame_canvas, btn_data, \
+                        quantity_data = \
                         ToggleButtonRadios(
                             self.frame_software_toggle_buttons,
                             label="LABEL",
@@ -1108,8 +1132,8 @@ Comments:
                 else:
                     print(f"QUANTITY  {q_text=}")
                     tb, label_data, \
-                    frame_canvas, btn_data, \
-                    quantity_data = \
+                        frame_canvas, btn_data, \
+                        quantity_data = \
                         ToggleButtonQuantity(
                             self.frame_software_toggle_buttons,
                             label_text=q_text,
@@ -1198,8 +1222,8 @@ Comments:
                 if follow_up_style == w:
                     print(f"WIREDLESS  {q_text=}")
                     tb, label_data, \
-                    frame_canvas, \
-                    btn_data = \
+                        frame_canvas, \
+                        btn_data = \
                         ToggleButtonWiredLess(
                             self.frame_hardware_toggle_buttons,
                             label_text=q_text,
@@ -1214,8 +1238,8 @@ Comments:
                     print(f"Database  {q_text=}")
                     radios = self.list_of_access_databases.keys()
                     tb, label_data, \
-                    frame_canvas, btn_data, \
-                    quantity_data = \
+                        frame_canvas, btn_data, \
+                        quantity_data = \
                         ToggleButtonRadios(
                             self.frame_software_toggle_buttons,
                             label="LABEL",
@@ -1233,8 +1257,8 @@ Comments:
                 else:
                     print(f"QUANTITY  {q_text=}")
                     tb, label_data, \
-                    frame_canvas, btn_data, \
-                    quantity_data = \
+                        frame_canvas, btn_data, \
+                        quantity_data = \
                         ToggleButtonQuantity(
                             self.frame_hardware_toggle_buttons,
                             label_text=q_text,
@@ -1492,12 +1516,15 @@ Comments:
 
     def update_objective(self, *args, do_flags=True):
         val = self.tv_objective_choice.get()
+        print(f"\n\tA\nupdate_objective {val=} {val in self.list_of_objectives}")
+        print_by_line(self.list_of_objectives)
         if val in self.list_of_objectives:
-            print(f"{val=}\n{self.list_of_objectives[val]=}")
+            print(f"\tB\n{val=}\n{self.list_of_objectives[val]=}")
             obj = self.list_of_objectives[val]["obj"]
             data = self.form_data(val, do_flags=do_flags)
 
             if val == "New Employee Hire":
+                print(f"\tC")
                 kwargs = {
                     "new_emp_name": data["new_emp_name"],
                     "new_start_date": data["new_due_date"],
@@ -1513,15 +1540,32 @@ Comments:
 
                 # msg = re.sub("\s+", ' ', obj.format(**kwargs))
                 msg = obj.format(**kwargs)
+                self.tv_auto_desc_text.set(msg)
                 print(f"\n\tResult\n{msg}\n")
 
-                self.tv_auto_desc_text.set(msg)
             else:
                 raise ValueError(f"Error, right now this objective is not supported: obj='{val}'.")
 
         else:
-            # New objective
-            pass
+            print(f"\tD")
+
+            msg = self.default_data["unknown_objective"]
+            print(f"BEFORE: '{self.auto_desc_text.text.get()}'")
+            self.auto_desc_text.insert("0", ).set(msg)
+            print(f"AFTER: '{self.auto_desc_text.text.get()}'")
+
+            # msg = self.default_data["unknown_objective"]
+            # print(f"BEFORE: '{self.auto_desc_text.text.get()}'")
+            # self.tv_auto_desc_text.set(msg)
+            # print(f"AFTER: '{self.auto_desc_text.text.get()}'")
+
+            # # New objective
+            # self.auto_desc_text.focus_set()
+            # # self.auto_desc_text.update_set_text()
+            # self.auto_desc_text.text.set(msg)
+            # # self.auto_desc_text._on_text_changed(None+)
+            # self.combo_objective_choice.focus_set()
+
         print(f"objective='{val}'")
 
     def get_frame_hardware_toggles(self):
@@ -1703,22 +1747,22 @@ Comments:
         self.frame_software_toggle_buttons.grid_forget()
 
     def ask_new_emp_name(self):
-        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
         if self.tl_new_emp_name_input is None:
             self.tl_new_emp_name_input = tkinter.Toplevel(self)
             self.tl_new_emp_name_input.title("Edit Comments")
             self.tl_frame_new_emp_name_btns = tkinter.Frame(self.tl_new_emp_name_input)
             self.tl_tv_label_new_emp_name, \
-            self.tl_label_new_emp_name, \
-            self.tl_tv_new_emp_name, \
-            self.tl_new_emp_name \
+                self.tl_label_new_emp_name, \
+                self.tl_tv_new_emp_name, \
+                self.tl_new_emp_name \
                 = text_factory(
                 self.tl_new_emp_name_input,
                 tv_label="Enter New Employees Name:",
                 tv_text=self.tl_tv_text_new_emp_name
             )
             self.tl_tv_btn_submit_new_emp_name, \
-            self.tl_btn_submit_new_emp_name \
+                self.tl_btn_submit_new_emp_name \
                 = button_factory(
                 self.tl_frame_new_emp_name_btns,
                 tv_btn="submit",
@@ -1727,7 +1771,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_cancel_new_emp_name, \
-            self.tl_btn_cancel_new_emp_name \
+                self.tl_btn_cancel_new_emp_name \
                 = button_factory(
                 self.tl_frame_new_emp_name_btns,
                 tv_btn="cancel",
@@ -1736,7 +1780,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_clear_new_emp_name, \
-            self.tl_btn_clear_new_emp_name \
+                self.tl_btn_clear_new_emp_name \
                 = button_factory(
                 self.tl_frame_new_emp_name_btns,
                 tv_btn="clear",
@@ -1745,7 +1789,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_undo_new_emp_name, \
-            self.tl_btn_undo_new_emp_name \
+                self.tl_btn_undo_new_emp_name \
                 = button_factory(
                 self.tl_frame_new_emp_name_btns,
                 tv_btn="undo",
@@ -1773,22 +1817,22 @@ Comments:
 
     def click_open_comments(self, *event):
         print(f"click_open_comments")
-        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
         if self.tl_comments_input is None:
             self.tl_comments_input = tkinter.Toplevel(self)
             self.tl_comments_input.title("Edit Comments")
             self.tl_frame_comments_btns = tkinter.Frame(self.tl_comments_input)
             self.tl_tv_label_text_comments, \
-            self.tl_label_text_comments, \
-            self.tl_tv_text_comments, \
-            self.tl_text_comments \
+                self.tl_label_text_comments, \
+                self.tl_tv_text_comments, \
+                self.tl_text_comments \
                 = text_factory(
                 self.tl_comments_input,
                 tv_label="Enter Comments:",
                 tv_text=self.tl_tv_text_comments
             )
             self.tl_tv_btn_submit_comment, \
-            self.tl_btn_submit_comment \
+                self.tl_btn_submit_comment \
                 = button_factory(
                 self.tl_frame_comments_btns,
                 tv_btn="submit",
@@ -1797,7 +1841,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_cancel_comment, \
-            self.tl_btn_cancel_comment \
+                self.tl_btn_cancel_comment \
                 = button_factory(
                 self.tl_frame_comments_btns,
                 tv_btn="cancel",
@@ -1806,7 +1850,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_clear_comment, \
-            self.tl_btn_clear_comment \
+                self.tl_btn_clear_comment \
                 = button_factory(
                 self.tl_frame_comments_btns,
                 tv_btn="clear",
@@ -1815,7 +1859,7 @@ Comments:
                 }
             )
             self.tl_tv_btn_undo_comment, \
-            self.tl_btn_undo_comment \
+                self.tl_btn_undo_comment \
                 = button_factory(
                 self.tl_frame_comments_btns,
                 tv_btn="undo",
@@ -1972,7 +2016,8 @@ Comments:
             font-size: {self.colour_schemes['font_size_user_signature']}px;
             text-align: center;
         }}"""
-        now = date_str_format(datetime.datetime.now(), include_weekday=True)  # .strftime(self.default_data["start_of_day_format"])
+        now = date_str_format(datetime.datetime.now(),
+                              include_weekday=True)  # .strftime(self.default_data["start_of_day_format"])
         html_ = f"<label class=\"signature_text\" for=\"user_signature\">Your Signature:</label>\n\t\t"
         html_ += f"<input type=\"text\" class=\"signature\" value=\"{user_name}\" name=\"user_signature\" size=45 disabled>"
         html_ += f"<label class=\"date_text\" for=\"user_date\">Date:</label>\n\t\t"
@@ -2181,9 +2226,9 @@ Comments:
             new_emp_name = self.na_if_none(self.mc_emp_selection.res_tv_entry.get())
             date = self.odp.date
             start_hour, \
-            start_minute = \
+                start_minute = \
                 self.default_data["start_of_day_hour"], \
-                self.default_data["start_of_day_minute"]
+                    self.default_data["start_of_day_minute"]
             date = datetime.datetime(date.year, date.month, date.day, start_hour, start_minute)
             date_s = date_str_format(date, include_time=True, include_weekday=True)
             new_root_hardware = root_hardware
@@ -2256,9 +2301,6 @@ Comments:
                 return cs["background_hug"], cs["foreground_hug"]
             case _:
                 raise ValueError("Error")
-
-    def grid_keys(self):
-        return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
 
 
 if __name__ == '__main__':

@@ -363,7 +363,6 @@ class TreeviewController(tkinter.Frame):
         print(f"A {df.shape=}")
         print(f"{list(df.itertuples())=}\n{len(list(df.itertuples()))}")
         # for i, row in df.itertuples():
-        f = list(range(1015))
         for i, row in df.iterrows():
             # next(self.iid_namer)
             print(f"{i=}, {row=}, {type(row)=}")
