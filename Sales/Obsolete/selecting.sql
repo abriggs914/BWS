@@ -1,6 +1,9 @@
 USE BWSdb
 GO
 
+
+-- mismatch options. These options are non-obsolete on one table but not the other.
+
 SELECT 
 	[O].[Obsolete] AS [Options Obsolete]
 	, [BO].[Obsolete] AS [Budget Options Obsolete]
@@ -37,6 +40,8 @@ ORDER BY
 					ISNULL([BO].[Bud_Date_Opt], [P].[Start Date])
 	)))) DESC
 ;
+
+
 
 SELECT
 	*
