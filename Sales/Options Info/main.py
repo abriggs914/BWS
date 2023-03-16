@@ -4,8 +4,7 @@ import pandas as pd
 from pyodbc_connection import connect
 
 sg_quote_list = [
-    "SG101115",
-    "SG101116"
+    "SG101115"
 ]
 sg_quote_list = ",\n".join([f"('{el}')" for el in sg_quote_list])
 tt_name = f"tempdb_tempOptionsTable"
@@ -13,43 +12,106 @@ u_name = f"user5"
 collate_str = f"COLLATE DATABASE_DEFAULT"
 
 init_sql = f"""
-IF OBJECT_ID('{tt_name}') IS NOT NULL BEGIN
-	DROP TABLE {tt_name}
+USE BWSdb;
+
+IF OBJECT_ID('BWSdb..{tt_name}') IS NOT NULL BEGIN
+
+    ALTER AUTHORIZATION ON BWSdb..{tt_name} TO {u_name}
+    
+END;
+
+IF OBJECT_ID('BWSdb..{tt_name}') IS NOT NULL BEGIN
+
+    -- Grant ALTER permission to user5 on tempdb_tempOptionsTable
+    GRANT ALTER ON OBJECT::{tt_name} TO {u_name}
+    
+END;
+    
+IF OBJECT_ID('BWSdb..{tt_name}') IS NOT NULL BEGIN
+
+    -- Drop the table if it exists
+    DROP TABLE {tt_name}
+    
 END;
 
 GRANT CREATE TABLE TO {u_name};
-	
+
+-- Create the table
 CREATE TABLE {tt_name} (
-	[Quote] NVARCHAR(MAX),
-	[Model No] NVARCHAR(MAX),
-	[Dealer] INT,
-	[Customer] INT,
-	[WO] NVARCHAR(8)
+    [ID] INT IDENTITY(0, 1) PRIMARY KEY,
+    [Quote] NVARCHAR(MAX),
+    [Model No] NVARCHAR(MAX),
+    [Dealer] INT,
+    [Customer] INT,
+    [WO] NVARCHAR(8)
 );
 
-REVOKE CREATE TABLE ON BWSdb.* TO {u_name};
+-- Revoke ALTER permission from user5
+REVOKE ALTER ON OBJECT::{tt_name} TO {u_name};
 
-GRANT SELECT ON {tt_name} TO {u_name};
-GRANT UPDATE ON {tt_name} TO {u_name};
-GRANT INSERT ON {tt_name} TO {u_name};
+-- Grant SELECT, UPDATE, INSERT permission to user5 on the table
+GRANT SELECT, UPDATE, INSERT ON {tt_name} TO {u_name};
 
+-- Insert data into the table
 INSERT INTO {tt_name} ([Quote]) VALUES
 {sg_quote_list};
 
 UPDATE
-	{tt_name}
+    {tt_name}
 SET
-	[Model No] = [OrdersV2].[Model No]
-	, [Dealer] = [OrdersV2].[DealerID]
-	, [Customer] = [OrdersV2].[CustID]
-	, [WO] = [OrdersV2].[WO#]
+    [Model No] = [OrdersV2].[Model No],
+    [Dealer] = [OrdersV2].[DealerID],
+    [Customer] = [OrdersV2].[CustID],
+    [WO] = [OrdersV2].[WO#]
 FROM
-	[OrdersV2]
+    [OrdersV2]
 WHERE
-	[{tt_name}].[Quote] = [OrdersV2].[SGQuote];
+    [{tt_name}].[Quote] = [OrdersV2].[SGQuote];
 
 SELECT * FROM {tt_name};
 """
+
+# USE BWSdb;
+#
+# GRANT ALL ON BWSdb..{tt_name} TO {u_name};
+#
+# BEGIN TRAN
+# IF OBJECT_ID('BWSdb..{tt_name}') IS NOT NULL BEGIN
+# 	DROP TABLE {tt_name}
+# END
+# COMMIT;
+#
+# GRANT CREATE TABLE TO {u_name};
+#
+# CREATE TABLE {tt_name} (
+# 	[Quote] NVARCHAR(MAX),
+# 	[Model No] NVARCHAR(MAX),
+# 	[Dealer] INT,
+# 	[Customer] INT,
+# 	[WO] NVARCHAR(8)
+# );
+#
+# REVOKE CREATE TABLE FROM {u_name};
+#
+# GRANT SELECT, UPDATE, INSERT ON {tt_name} TO {u_name};
+#
+# INSERT INTO {tt_name} ([Quote]) VALUES
+# {sg_quote_list};
+#
+# UPDATE
+# 	{tt_name}
+# SET
+# 	[Model No] = [OrdersV2].[Model No]
+# 	, [Dealer] = [OrdersV2].[DealerID]
+# 	, [Customer] = [OrdersV2].[CustID]
+# 	, [WO] = [OrdersV2].[WO#]
+# FROM
+# 	[OrdersV2]
+# WHERE
+# 	[{tt_name}].[Quote] = [OrdersV2].[SGQuote];
+#
+# SELECT * FROM {tt_name};
+# """
 
 data = {
     "Quote-Specific Selects": {
@@ -216,9 +278,7 @@ def exec_init_sql(do_print=True):
     cnxn = pyodbc.connect(cstr)
 
     if do_print:
-        print(f"{cstr}\n{init_sql}")
-
-    # raise ValueError("STOPPPPP!")
+        print(f"CSTR:\t{cstr}\niSQL:\t{init_sql}")
 
     # Execute the SQL query
     cursor = cnxn.cursor()
@@ -226,7 +286,7 @@ def exec_init_sql(do_print=True):
     queries = [q.strip() for q in init_sql.split(";") if q.strip()]
     for i, q in enumerate(queries):
         if q:
-            # print(f"Q: {q}")
+            print(f"Q: {q}")
             if i == (len(queries) - 1):
                 df = pd.DataFrame(pd.read_sql_query(q, cnxn))
             else:
