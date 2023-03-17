@@ -1,4 +1,7 @@
 
+USE BWSdb
+GO
+
 -- Stargate
 -- Copy a models everything.
 
@@ -19,8 +22,7 @@ BEGIN TRAN;
 		[MCopyTo],
 		[Class]
 	) VALUES 
-		('B-Train PULL 3X - Pace', 'BTP4XAA PACE', 'Pace'),     
-		('B-Train PULL 3X - Pace', 'BTP3XSS PACE', 'Pace')
+		('End Dump 3X', 'BTL3X+2X', 'B-Trains')
 	;
 	
 	-- Whether or not to ensure all models are new to tables
