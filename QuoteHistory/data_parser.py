@@ -807,6 +807,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2023-11-10",
 		"2023-12-26",
 		"2023-12-27",
+		"2023-04-07",
 		
 		"2024-01-01"
 	]
