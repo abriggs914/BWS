@@ -13,8 +13,8 @@ BEGIN TRAN;
 
 	DECLARE @t AS TABLE (
 		[ID] INT IDENTITY(0, 1),
-		[MQuoteFrom] NVARCHAR(MAX),
-		[MQuoteTo] NVARCHAR(MAX),
+		[MQuoteFrom] INT,
+		[MQuoteTo] INT,
 		[NewWO] NVARCHAR(MAX),
 		[NewQuoteDate] DATETIME,
         [NewOrderDate] DATETIME
@@ -24,7 +24,7 @@ BEGIN TRAN;
 		[MQuoteFrom],
 		[MQuoteTo]
 	) VALUES 
-		('SG101129', 'SG101130')
+		(28804, 28805)
 	;
 
 	UPDATE
@@ -35,11 +35,11 @@ BEGIN TRAN;
         [NewOrderDate] = [Order Date]
 		--,[NewPrice] = [Price]
 	FROM
-		[OrdersV2]
+		[Orders]
 	INNER JOIN
 		@t
 	ON
-		[OrdersV2].[SGQuote] = [@t].[MQuoteTo]
+		[Orders].[Quote#] = [@t].[MQuoteTo]
 	;
 	
 	DECLARE @i AS INT, @c AS INT;
@@ -50,8 +50,8 @@ BEGIN TRAN;
 
 	WHILE @i < @c BEGIN
 	
-		SELECT @m1 = [ProductsV2].[Model No], @q1 = [MQuoteFrom] FROM [ProductsV2] INNER JOIN [OrdersV2] ON [ProductsV2].[Model No] = [OrdersV2].[Model No] INNER JOIN @t ON [OrdersV2].[SGQuote] = [@t].[MQuoteFrom] WHERE [ID] = @i;
-		SELECT @m2 = [ProductsV2].[Model No], @q2 = [MQuoteTo] FROM [ProductsV2] INNER JOIN [OrdersV2] ON [ProductsV2].[Model No] = [OrdersV2].[Model No] INNER JOIN @t ON [OrdersV2].[SGQuote] = [@t].[MQuoteTo] WHERE [ID] = @i;
+		SELECT @m1 = [Products].[Model No], @q1 = [MQuoteFrom] FROM [Products] INNER JOIN [Orders] ON [Products].[Model No] = [Orders].[Model No] INNER JOIN @t ON [Orders].[Quote#] = [@t].[MQuoteFrom] WHERE [ID] = @i;
+		SELECT @m2 = [Products].[Model No], @q2 = [MQuoteTo] FROM [Products] INNER JOIN [Orders] ON [Products].[Model No] = [Orders].[Model No] INNER JOIN @t ON [Orders].[Quote#] = [@t].[MQuoteTo] WHERE [ID] = @i;
 		
 		IF @m1 <> @m2 BEGIN
 			-- QUIT
@@ -72,65 +72,65 @@ BEGIN TRAN;
 	
 		PRINT 'Performing Deletes'
 		
-		-- Order OptionsV2
+		-- Order Options
 		DELETE 
-			[Order OptionsV2]
+			[Order Options]
 		FROM
-			[Order OptionsV2]
+			[Order Options]
 		INNER JOIN
 			@t
 		ON
-			[Order OptionsV2].[SGQuote] = [@t].[MQuoteTo]
+			[Order Options].[Quote#] = [@t].[MQuoteTo]
 		;
-		-- Order OptionsV2_FactoryLines
+		-- Order Options_FactoryLines
 		DELETE 
-			[Order OptionsV2_FactoryLines]
+			[Order Options_FactoryLines]
 		FROM
-			[Order OptionsV2_FactoryLines]
+			[Order Options_FactoryLines]
 		INNER JOIN
 			@t
 		ON
-			[Order OptionsV2_FactoryLines].[SGQuote] = [@t].[MQuoteTo]
+			[Order Options_FactoryLines].[Quote#] = [@t].[MQuoteTo]
 		;
-		-- Order OptionsV2_SpecLines
+		-- Order Options_SpecLines
 		DELETE 
-			[Order OptionsV2_SpecLines]
+			[Order Options_SpecLines]
 		FROM
-			[Order OptionsV2_SpecLines]
+			[Order Options_SpecLines]
 		INNER JOIN
 			@t
 		ON
-			[Order OptionsV2_SpecLines].[SGQuote] = [@t].[MQuoteTo]
+			[Order Options_SpecLines].[Quote#] = [@t].[MQuoteTo]
 		;
-		-- Custom WorkV2
+		-- Custom Work
 		DELETE 
-			[Custom WorkV2]
+			[Custom Work]
 		FROM
-			[Custom WorkV2]
+			[Custom Work]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2].[SGQuote] = [@t].[MQuoteTo]
+			[Custom Work].[Quote#] = [@t].[MQuoteTo]
 		;
-		-- Custom WorkV2_FactoryLines
+		-- Custom Work_FactoryLines
 		DELETE 
-			[Custom WorkV2_FactoryLines]
+			[Custom Work_FactoryLines]
 		FROM
-			[Custom WorkV2_FactoryLines]
+			[Custom Work_FactoryLines]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2_FactoryLines].[SGQuote] = [@t].[MQuoteTo]
+			[Custom Work_FactoryLines].[Quote#] = [@t].[MQuoteTo]
 		;
-		-- Custom WorkV2_SpecLines
+		-- Custom Work_SpecLines
 		DELETE 
-			[Custom WorkV2_SpecLines]
+			[Custom Work_SpecLines]
 		FROM
-			[Custom WorkV2_SpecLines]
+			[Custom Work_SpecLines]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2_SpecLines].[SGQuote] = [@t].[MQuoteTo]
+			[Custom Work_SpecLines].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 	ELSE BEGIN 
@@ -141,28 +141,28 @@ BEGIN TRAN;
 	
 	-- New Inserts
 
-	-- Order OptionsV2
+	-- Order Options
 	
 	SELECT
-		'BEF Order OptionsV2' AS [T]
+		'BEF Order Options' AS [T]
 		, *
 	FROM 
-		[Order OptionsV2] AS [A]
+		[Order Options] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 
 	IF @doUpdate = 1 BEGIN
 	
 		INSERT INTO
-			[Order OptionsV2]
+			[Order Options]
 		(
 			[Quote Date]
            ,[Order Date]
            ,[WO#]
-           ,[SGQuote]
+           ,[Quote#]
            ,[Option No]
            ,[Price]
            ,[Qty]
@@ -201,23 +201,6 @@ BEGIN TRAN;
            ,[OptionConfigInfo]
            ,[Are WO Specs Different?]
            ,[Comments V2]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		)		
 		SELECT
 			[NewQuoteDate]
@@ -262,63 +245,46 @@ BEGIN TRAN;
            ,[OptionConfigInfo]
            ,[Are WO Specs Different?]
            ,[Comments V2]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		FROM 
-			[Order OptionsV2] AS [A]
+			[Order Options] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteFrom]
+			[A].[Quote#] = [@t].[MQuoteFrom]
 		;
 
 		SELECT
-			'AFT Order OptionsV2' AS [T]
+			'AFT Order Options' AS [T]
 			, *
 		FROM 
-			[Order OptionsV2] AS [A]
+			[Order Options] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
-	-- Order OptionsV2_FactoryLines
+	-- Order Options_FactoryLines
 	
 	SELECT
-		'BEF Order OptionsV2_FactoryLines' AS [T]
+		'BEF Order Options_FactoryLines' AS [T]
 		, *
 	FROM 
-		[Order OptionsV2_FactoryLines] AS [A]
+		[Order Options_FactoryLines] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 	
 	IF @doUpdate = 1 BEGIN
 
 		INSERT INTO
-			[Order OptionsV2_FactoryLines]
+			[Order Options_FactoryLines]
 		(
 			[WO#]
-           ,[SGQuote]
+           ,[Quote#]
            ,[Option No]
            ,[Description]
            ,[Line#]
@@ -354,43 +320,43 @@ BEGIN TRAN;
            ,[SpecSortSeLine]
            ,[OrderOptionID]
 		FROM
-			[Order OptionsV2_FactoryLines]
+			[Order Options_FactoryLines]
 		INNER JOIN
 			@t
 		ON
-			[Order OptionsV2_FactoryLines].[SGQuote] = [@t].[MQuoteFrom] 
+			[Order Options_FactoryLines].[Quote#] = [@t].[MQuoteFrom] 
 		;
 
 		SELECT
-			'AFT Order OptionsV2_FactoryLines' AS [T]
+			'AFT Order Options_FactoryLines' AS [T]
 			, *
 		FROM 
-			[Order OptionsV2_FactoryLines] AS [A]
+			[Order Options_FactoryLines] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
-	-- Order OptionsV2_SpecLines
+	-- Order Options_SpecLines
 	
 	SELECT
-		'BEF Order OptionsV2_SpecLines' AS [T]
+		'BEF Order Options_SpecLines' AS [T]
 		, *
 	FROM 
-		[Order OptionsV2_SpecLines] AS [A]
+		[Order Options_SpecLines] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 	IF @doUpdate = 1 BEGIN
 		INSERT INTO
-			[Order OptionsV2_SpecLines]
+			[Order Options_SpecLines]
 		(
 			[WO#]
-           ,[SGQuote]
+           ,[Quote#]
            ,[Option No]
            ,[Description]
            ,[Line#]
@@ -426,43 +392,43 @@ BEGIN TRAN;
            ,[SpecSortSeLine]
            ,[OrderOptionID]
 		FROM
-			[Order OptionsV2_SpecLines]
+			[Order Options_SpecLines]
 		INNER JOIN
 			@t
 		ON
-			[Order OptionsV2_SpecLines].[SGQuote] = [@t].[MQuoteFrom]
+			[Order Options_SpecLines].[Quote#] = [@t].[MQuoteFrom]
 		;
 		SELECT
-			'AFT Order OptionsV2_SpecLines' AS [T]
+			'AFT Order Options_SpecLines' AS [T]
 			, *
 		FROM 
-			[Order OptionsV2_SpecLines] AS [A]
+			[Order Options_SpecLines] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
-	-- Custom WorkV2
+	-- Custom Work
 	
 	SELECT
-		'BEF Custom WorkV2' AS [T]
+		'BEF Custom Work' AS [T]
 		, *
 	FROM 
-		[Custom WorkV2] AS [A]
+		[Custom Work] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 
 	IF @doUpdate = 1 BEGIN
 		INSERT INTO
-			[Custom WorkV2]
+			[Custom Work]
 		(
 			[Quote Date]
-           ,[SGQuote]
+           ,[Quote#]
            ,[Order Date]
            ,[WO#]
            ,[Section]
@@ -502,23 +468,6 @@ BEGIN TRAN;
            ,[NPOExpirationDate]
            ,[US Price]
            ,[Are WO Specs Different?]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		)
 		SELECT
 			[NewQuoteDate]
@@ -562,60 +511,43 @@ BEGIN TRAN;
            ,[NPOExpirationDate]
            ,[US Price]
            ,[Are WO Specs Different?]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		FROM
-			[Custom WorkV2]
+			[Custom Work]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2].[SGQuote] = [@t].[MQuoteFrom]
+			[Custom Work].[Quote#] = [@t].[MQuoteFrom]
 		;
 		SELECT
-			'AFT Custom WorkV2' AS [T]
+			'AFT Custom Work' AS [T]
 			, *
 		FROM 
-			[Custom WorkV2] AS [A]
+			[Custom Work] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
-	-- Custom WorkV2_FactoryLines
+	-- Custom Work_FactoryLines
 
 	SELECT
-		'BEF Custom WorkV2_FactoryLines' AS [T]
+		'BEF Custom Work_FactoryLines' AS [T]
 		, *
 	FROM 
-		[Custom WorkV2_FactoryLines] AS [A]
+		[Custom Work_FactoryLines] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 
 	IF @doUpdate = 1 BEGIN
 		INSERT INTO
-			[Custom WorkV2_FactoryLines]
+			[Custom Work_FactoryLines]
 		(
-			[SGQuote]
+			[Quote#]
            ,[WO#]
            ,[Description]
            ,[Line#]
@@ -650,42 +582,42 @@ BEGIN TRAN;
            ,[SpecSortSeLine]
            ,[NPOID]
 		FROM
-			[Custom WorkV2_FactoryLines]
+			[Custom Work_FactoryLines]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2_FactoryLines].[SGQuote] = [@t].[MQuoteFrom]
+			[Custom Work_FactoryLines].[Quote#] = [@t].[MQuoteFrom]
 		;
 		SELECT
-			'AFT Custom WorkV2_FactoryLines' AS [T]
+			'AFT Custom Work_FactoryLines' AS [T]
 			, *
 		FROM 
-			[Custom WorkV2_FactoryLines] AS [A]
+			[Custom Work_FactoryLines] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
-	-- Custom WorkV2_SpecLines
+	-- Custom Work_SpecLines
 
 	SELECT
-		'BEF Custom WorkV2_SpecLines' AS [T]
+		'BEF Custom Work_SpecLines' AS [T]
 		, *
 	FROM 
-		[Custom WorkV2_SpecLines] AS [A]
+		[Custom Work_SpecLines] AS [A]
 	INNER JOIN
 		@t
 	ON
-		[A].[SGQuote] = [@t].[MQuoteFrom]
+		[A].[Quote#] = [@t].[MQuoteFrom]
 	;
 
 	IF @doUpdate = 1 BEGIN
 		INSERT INTO
-			[Custom WorkV2_SpecLines]
+			[Custom Work_SpecLines]
 		(
-			[SGQuote]
+			[Quote#]
            ,[WO#]
            ,[Description]
            ,[Line#]
@@ -701,27 +633,10 @@ BEGIN TRAN;
            ,[SpecDescriptionFontColour]
            ,[SpecSortSeLine]
            ,[NPOID]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		)
 		SELECT
 			[MQuoteTo]
-           ,[NewWO]	
+           ,[NewWO]
            ,[Description]
            ,[Line#]
            ,[SpecGroup]
@@ -736,39 +651,22 @@ BEGIN TRAN;
            ,[SpecDescriptionFontColour]
            ,[SpecSortSeLine]
            ,[NPOID]
-           ,[Operation1Hours]
-           ,[Operation2Hours]
-           ,[Operation3Hours]
-           ,[Operation4Hours]
-           ,[Operation5Hours]
-           ,[Operation6Hours]
-           ,[Operation7Hours]
-           ,[Operation8Hours]
-           ,[Operation9Hours]
-           ,[Operation10Hours]
-           ,[Operation11Hours]
-           ,[Operation12Hours]
-           ,[Operation13Hours]
-           ,[Operation14Hours]
-           ,[Operation15Hours]
-           ,[Operation16Hours]
-           ,[Operation17Hours]
 		FROM
-			[Custom WorkV2_SpecLines]
+			[Custom Work_SpecLines]
 		INNER JOIN
 			@t
 		ON
-			[Custom WorkV2_SpecLines].[SGQuote] = [@t].[MQuoteFrom]
+			[Custom Work_SpecLines].[Quote#] = [@t].[MQuoteFrom]
 		;
 		SELECT
-			'AFT Custom WorkV2_SpecLines' AS [T]
+			'AFT Custom Work_SpecLines' AS [T]
 			, *
 		FROM 
-			[Custom WorkV2_SpecLines] AS [A]
+			[Custom Work_SpecLines] AS [A]
 		INNER JOIN
 			@t
 		ON
-			[A].[SGQuote] = [@t].[MQuoteTo]
+			[A].[Quote#] = [@t].[MQuoteTo]
 		;
 	END
 
