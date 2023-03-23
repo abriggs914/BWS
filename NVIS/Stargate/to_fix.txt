@@ -1,0 +1,59 @@
+Please fix the following [SN Type V2] entries first
+
+
+########################################################################################################################
+	INVALID SERIALS:
+      SGQuote               Model No OLD SN NEW SN
+0    SG100929              Truck Box   1302   None
+5    SG100936         Pony Dump 3X17   4446   None
+7    SG101020              Truck Box   1314   None
+10   SG101096         Pony Dump 3X17   4496   None
+14   SG100922         Pony Dump 3X17   4422   None
+19   SG100934              Truck Box   1306   None
+21   SG101021              Truck Box   1315   None
+26   SG100849              Truck Box   1318   None
+27   SG100923         Pony Dump 3X17   4423   None
+32   SG101073              Truck Box   1319   None
+37   SG101094         Pony Dump 3X17   4500   None
+39   SG100925         Pony Dump 3X17   9998   None
+42   SG100935              Truck Box   1307   None
+44   SG101085              Truck Box   1331   None
+45   SG101097         Pony Dump 3X17   4497   None
+46   SG100761                42FHR2X   9506   None
+49   SG100937         Pony Dump 3X17   4447   None
+50   SG101114  Frameless End Dump 2X   4609   None
+54   SG101098         Pony Dump 3X17   4498   None
+56   SG100980              Truck Box   1308   None
+57   SG100938         Pony Dump 3X17   4448   None
+58   SG101075  Frameless End Dump 2X   4606   None
+62   SG101099         Pony Dump 3X17   4499   None
+65   SG100981              Truck Box   1309   None
+68   SG100939         Pony Dump 3X17   4449   None
+70   SG100982              Truck Box   1310   None
+76   SG101095         Pony Dump 3X17   4495   None
+79   SG101022         Pony Dump 3X17   4458   None
+81   SG101039              Truck Box   1316   None
+82   SG101083  Frameless End Dump 2X   9699   None
+83   SG101084         Pony Dump 3X17   4479   None
+86   SG100983              Truck Box   1311   None
+89   SG101023         Pony Dump 3X17   4459   None
+91   SG101071              Truck Box   1317   None
+95   SG101040         Pony Dump 3X17   4468   None
+100  SG100984              Truck Box   1312   None
+101  SG100985              Truck Box   1313   None
+102  SG101072         Pony Dump 3X17   4477   None
+103  SG101074         Pony Dump 3X17   4478   None
+108  SG100986         Pony Dump 3X17   4450   None
+111  SG100987         Pony Dump 3X17   4451   None
+115  SG100988         Pony Dump 3X17   4452   None
+119  SG100989         Pony Dump 3X17   4453   None
+120  SG100990         Pony Dump 3X17   4454   None
+121  SG100991         Pony Dump 3X17   4455   None
+
+	Invalid Models:
+		Truck Box
+		Pony Dump 3X17
+		42FHR2X
+		Frameless End Dump 2X
+
+########################################################################################################################

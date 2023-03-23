@@ -24,7 +24,8 @@ BEGIN TRAN;
 		[MQuoteFrom],
 		[MQuoteTo]
 	) VALUES 
-		('SG101129', 'SG101130')
+		('SG101133', 'SG101135'),
+		('SG101134', 'SG101136')
 	;
 
 	UPDATE
@@ -42,16 +43,21 @@ BEGIN TRAN;
 		[OrdersV2].[SGQuote] = [@t].[MQuoteTo]
 	;
 	
-	DECLARE @i AS INT, @c AS INT;
+	DECLARE @i AS INT = 0, @c AS INT = 0;
 	DECLARE @msg AS NVARCHAR(MAX);
 	DECLARE @m1 AS NVARCHAR(MAX), @m2 AS NVARCHAR(MAX);
 	DECLARE @q1 AS NVARCHAR(MAX), @q2 AS NVARCHAR(MAX);
 	SELECT @c = COUNT(*) FROM @t;
 
+	PRINT '@i = ' + CAST(@i AS NVARCHAR(MAX)) + ', @c = ' + CAST(@c AS NVARCHAR(MAX));
+	PRINT 'HERE 1';
+
 	WHILE @i < @c BEGIN
 	
 		SELECT @m1 = [ProductsV2].[Model No], @q1 = [MQuoteFrom] FROM [ProductsV2] INNER JOIN [OrdersV2] ON [ProductsV2].[Model No] = [OrdersV2].[Model No] INNER JOIN @t ON [OrdersV2].[SGQuote] = [@t].[MQuoteFrom] WHERE [ID] = @i;
 		SELECT @m2 = [ProductsV2].[Model No], @q2 = [MQuoteTo] FROM [ProductsV2] INNER JOIN [OrdersV2] ON [ProductsV2].[Model No] = [OrdersV2].[Model No] INNER JOIN @t ON [OrdersV2].[SGQuote] = [@t].[MQuoteTo] WHERE [ID] = @i;
+
+		PRINT '@i= ' + CAST(@i AS NVARCHAR(MAX)) + ', @m1 = ''' + @m1 + ''', @m2 = ''' + @m2 + '''.'
 		
 		IF @m1 <> @m2 BEGIN
 			-- QUIT
@@ -65,8 +71,8 @@ BEGIN TRAN;
 		SELECT @i = @i + 1;
 	END
 
-	SELECT * FROM @t
-	PRINT 'Good to go'
+	SELECT * FROM @t;
+	PRINT 'Good to go';
 
 	IF @deleteExisting = 1 AND @doUpdate = 1 BEGIN
 	
