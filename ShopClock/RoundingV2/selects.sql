@@ -3,9 +3,9 @@ GO
 
 --Please support an employee signing in up to 4 hours early or working up to 4 hours late.
 
-SELECT * FROM [ClkShiftEmpAssign];
-SELECT * FROM [ClkShiftDetail];
-SELECT * FROM [ClkShiftRoundRules V2];
+--SELECT * FROM [ClkShiftEmpAssign];
+--SELECT * FROM [ClkShiftDetail];
+--SELECT * FROM [ClkShiftRoundRules V2];
 
 --SELECT 
 --  emp.Employee, 
@@ -50,8 +50,69 @@ SELECT * FROM [ClkShiftRoundRules V2];
 --ORDER BY
 --	[Name]
 
-DECLARE @sd AS DATETIME = '2023-03-23';
-DECLARE @ed AS DATETIME = '2023-03-23 23:59:59';
+-- PART C
+
+--DECLARE @sd AS DATETIME = '2023-03-23';
+--DECLARE @ed AS DATETIME = '2023-03-23 23:59:59';
+DECLARE @sd AS DATETIME = '2023-03-24';
+DECLARE @ed AS DATETIME = '2023-03-24 23:59:59';
+DECLARE @w AS INT = 3;
+
+SELECT
+	[A_EmpName]
+	, [A_EmpNum]
+	, SUM([A_Len]) AS [Hours]
+	, CAST([ST] AS DATE) AS [EntryDate]
+	, MIN([A_LoggedOn]) AS [FirstLogOn]
+	, MAX([A_LoggedOff]) AS [LastLogOff]
+FROM (
+	SELECT 
+		[A_EmpName]
+		, [A_EmpNum]
+		, [A_LoggedOn]
+		, [A_LoggedOff]
+		, [A_Len]
+		, [ST]
+		, [ET]
+		, DATEDIFF(SECOND,
+			(CASE WHEN [A_LoggedOn] <= [ST] THEN [ST] ELSE [A_LoggedOn] END),
+			(CASE WHEN [A_LoggedOff] >= [ET] THEN [ET] ELSE [A_LoggedOff] END)
+		) AS [ToS]
+	FROM (
+		SELECT
+			[ClkTransaction].[EmployeeName] AS [A_EmpName]
+			, [ClkTransaction].[EmployeeNumber] AS [A_EmpNum]
+			, [ClkTransaction].[LoggedOn] AS [A_LoggedOn]
+			, [ClkTransaction].[LoggedOff] AS [A_LoggedOff]
+			, DATEDIFF(SECOND, [ClkTransaction].[LoggedOn], [ClkTransaction].[LoggedOff]) / (60.0 * 60) AS [A_Len]
+			, DATEADD(HOUR, @w, DATEADD(DAY, DAY(@sd) - 1, DATEADD(MONTH, MONTH(@sd) - 1, (DATEADD(YEAR, YEAR(@sd) - 1900, CAST([StartTime] AS DATETIME)))))) AS [ST]
+			, DATEADD(HOUR, @w, DATEADD(DAY, DAY(@ed) - 1, DATEADD(MONTH, MONTH(@ed) - 1, (DATEADD(YEAR, YEAR(@ed) - 1900, CAST([EndTime] AS DATETIME)))))) AS [ET]
+		FROM
+			[ClkTransaction]
+		INNER JOIN
+			[ClkShiftEmpAssign]
+		ON
+			[ClkTransaction].[EmployeeNumber] = [ClkShiftEmpAssign].[Emp#]
+		INNER JOIN
+			[ClkShiftRoundRules V2]
+		ON
+			[ClkShiftRoundRules V2].[ShiftID] = [ClkShiftEmpAssign].[ShiftID]
+		WHERE
+			LEFT([EmployeeNumber], 1) = '2'
+			AND
+			([LoggedOn] BETWEEN DATEADD(HOUR, -6, DATEADD(DAY, DAY(@sd) - 1, DATEADD(MONTH, MONTH(@sd) - 1, (DATEADD(YEAR, YEAR(@sd) - 1900, CAST([StartTime] AS DATETIME)))))) AND DATEADD(HOUR, 6, DATEADD(DAY, DAY(@ed) - 1, DATEADD(MONTH, MONTH(@ed) - 1, (DATEADD(YEAR, YEAR(@ed) - 1900, CAST([EndTime] AS DATETIME))))))
+			OR [LoggedOff] BETWEEN DATEADD(HOUR, -6, DATEADD(DAY, DAY(@sd) - 1, DATEADD(MONTH, MONTH(@sd) - 1, (DATEADD(YEAR, YEAR(@sd) - 1900, CAST([StartTime] AS DATETIME)))))) AND DATEADD(HOUR, 6, DATEADD(DAY, DAY(@ed) - 1, DATEADD(MONTH, MONTH(@ed) - 1, (DATEADD(YEAR, YEAR(@ed) - 1900, CAST([EndTime] AS DATETIME)))))))
+	) AS [SrcA]
+) AS [SrcB]
+WHERE
+	[ToS] > 0
+GROUP BY
+	[A_EmpName]
+	, [A_EmpNum]
+	, [ST]
+ORDER BY
+	[A_EmpName]
+
 
 
 --SELECT 
