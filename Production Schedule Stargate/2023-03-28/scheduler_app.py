@@ -1214,6 +1214,8 @@ class App(tkinter.Tk):
         tp_0 = self.calendar_surface.tile_properties[0][0]
         bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
         x -= bb_0[0]
+        print(f"{x=}, sp={scroll_pos}, sa={scroll_amount}, {tp_0=}, {bb_0=}")
+
         for i in range(1, len(lines) + 1):
             tp = self.calendar_surface.tile_properties[i][0]
             tile = tp["tag_rect"]
@@ -1221,7 +1223,7 @@ class App(tkinter.Tk):
             tw = self.calendar_surface.tile_width
             # x = self.calendar_surface.canvasx(0 - tw)
             # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
-            print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
+            # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
 
             # self.calendar_surface.moveto(tile, x, bbox[1])
             self.calendar_surface.move(tile, x, 0)
