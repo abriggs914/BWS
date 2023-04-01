@@ -1203,51 +1203,129 @@ class App(tkinter.Tk):
         self.calendar_surface.xview(*args)
 
     def re_draw_legend(self, event):
-        scroll_pos = self.calendar_surface.xview()[0]
-        scroll_amount = event.delta / 120.0
-        new_pos = scroll_pos - (scroll_amount * 0.1)
-        # new_pos = scroll_pos - (scroll_amount * 1)
-        cw = self.calendar_surface.canvas_width
-        # x = clamp(0, new_pos * cw, cw)
-        x = new_pos * cw
-        lines = self.calendar_surface.lines
-        tp_0 = self.calendar_surface.tile_properties[0][0]
-        bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
-        x -= bb_0[0]
-        print(f"{x=}, sp={scroll_pos}, sa={scroll_amount}, {tp_0=}, {bb_0=}")
 
+        xvi = self.calendar_surface.xview()
+        tw = self.calendar_surface.tile_width
+        a = int(self.calendar_surface["width"])
+        # b = self.calendar_surface.winfo_width()
+        visible_width = a
+        scroll_pos = xvi[0] * visible_width
+        x = int(scroll_pos)
+        lines = self.calendar_surface.lines
+        tp_0 = self.calendar_surface.tile_properties[1][0]
+        bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
+        x += bb_0[0]
+        print(f"Scroll: {x=}, vw={visible_width}, xvi[0]*vw={xvi[0]*visible_width:.2f}, {bb_0=}")
         for i in range(1, len(lines) + 1):
             tp = self.calendar_surface.tile_properties[i][0]
             tile = tp["tag_rect"]
             bbox = self.calendar_surface.rc_bbox((i, 0))
-            tw = self.calendar_surface.tile_width
+            # tw = self.calendar_surface.tile_width
             # x = self.calendar_surface.canvasx(0 - tw)
             # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
             # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
 
             # self.calendar_surface.moveto(tile, x, bbox[1])
-            self.calendar_surface.move(tile, x, 0)
+            # self.calendar_surface.move(tile, x, 0)
+            # self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
+            self.calendar_surface.coords(tile, x, bbox[1])
+            # self.calendar_surface.itemconfigure(tile, state="normal")
+
             for i in range(1, 6):
                 # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
-                self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+                # self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+                self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
 
-        # xv = self.calendar_surface.xview()
-        # print(f"redraw_legend {xv=}, {args=}")
+        # xvi = self.calendar_surface.xview()
+        # tw = self.calendar_surface.tile_width
+        # a = int(self.calendar_surface["width"])
+        # b = self.calendar_surface.winfo_width()
+        # visible_width = a - b
+        # scroll_pos = xvi[0] * visible_width
+        # x = -scroll_pos
         # lines = self.calendar_surface.lines
+        # print(f"Scroll: {x=}, vw={visible_width}, {a=}, {b=}")
         # for i in range(1, len(lines) + 1):
         #     tp = self.calendar_surface.tile_properties[i][0]
         #     tile = tp["tag_rect"]
-        #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        #     tw = self.calendar_surface.tile_width
-        #     x = self.calendar_surface.canvasx(0 - tw)
-        #     x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
-        #     print(f"{tile=}, {x=}, {bbox=}")
+        #     # bbox = self.calendar_surface.rc_bbox((i, 0))
+        #     # tw = self.calendar_surface.tile_width
+        #     # x = self.calendar_surface.canvasx(0 - tw)
+        #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
         #
-        #     self.calendar_surface.moveto(tile, x, bbox[1])
+        #     # self.calendar_surface.moveto(tile, x, bbox[1])
+        #     self.calendar_surface.move(tile, x, 0)
+        #     self.calendar_surface.itemconfigure(tile, state="normal")
+        #
         #     for i in range(1, 6):
-        #         self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
-        #     # self.xview('scroll', int(-1 * (event.delta / 120)), 'units')
-        #     # self.calendar_surface.xview('scroll', int(-1 * (args[1] / 120)), 'units')
+        #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        #
+        #
+        # # x = self.calendar_surface.canvasx(0)
+        # # lines = self.calendar_surface.lines
+        # # for i in range(1, len(lines) + 1):
+        # #     tp = self.calendar_surface.tile_properties[i][0]
+        # #     tile = tp["tag_rect"]
+        # #     # bbox = self.calendar_surface.rc_bbox((i, 0))
+        # #     # tw = self.calendar_surface.tile_width
+        # #     # x = self.calendar_surface.canvasx(0 - tw)
+        # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
+        # #
+        # #     # self.calendar_surface.moveto(tile, x, bbox[1])
+        # #     self.calendar_surface.move(tile, x, 0)
+        # #     for i in range(1, 6):
+        # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        # #
+        # #
+        # # # scroll_pos = self.calendar_surface.xview()[0]
+        # # # scroll_amount = event.delta / 120.0
+        # # # new_pos = scroll_pos - (scroll_amount * 0.1)
+        # # # # new_pos = scroll_pos - (scroll_amount * 1)
+        # # # cw = self.calendar_surface.canvas_width
+        # # # # x = clamp(0, new_pos * cw, cw)
+        # # # x = new_pos * cw
+        # # # lines = self.calendar_surface.lines
+        # # # tp_0 = self.calendar_surface.tile_properties[0][0]
+        # # # bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
+        # # # x -= bb_0[0]
+        # # # print(f"{x=}, sp={scroll_pos}, sa={scroll_amount}, {tp_0=}, {bb_0=}")
+        # # #
+        # # # for i in range(1, len(lines) + 1):
+        # # #     tp = self.calendar_surface.tile_properties[i][0]
+        # # #     tile = tp["tag_rect"]
+        # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
+        # # #     tw = self.calendar_surface.tile_width
+        # # #     # x = self.calendar_surface.canvasx(0 - tw)
+        # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
+        # # #
+        # # #     # self.calendar_surface.moveto(tile, x, bbox[1])
+        # # #     self.calendar_surface.move(tile, x, 0)
+        # # #     for i in range(1, 6):
+        # # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        # # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        # # #
+        # # # # xv = self.calendar_surface.xview()
+        # # # # print(f"redraw_legend {xv=}, {args=}")
+        # # # # lines = self.calendar_surface.lines
+        # # # # for i in range(1, len(lines) + 1):
+        # # # #     tp = self.calendar_surface.tile_properties[i][0]
+        # # # #     tile = tp["tag_rect"]
+        # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
+        # # # #     tw = self.calendar_surface.tile_width
+        # # # #     x = self.calendar_surface.canvasx(0 - tw)
+        # # # #     x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        # # # #     print(f"{tile=}, {x=}, {bbox=}")
+        # # # #
+        # # # #     self.calendar_surface.moveto(tile, x, bbox[1])
+        # # # #     for i in range(1, 6):
+        # # # #         self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        # # # #     # self.xview('scroll', int(-1 * (event.delta / 120)), 'units')
+        # # # #     # self.calendar_surface.xview('scroll', int(-1 * (args[1] / 120)), 'units')
 
 
     def onFrameConfigure(self, event):
