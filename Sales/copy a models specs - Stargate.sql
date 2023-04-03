@@ -22,7 +22,7 @@ BEGIN TRAN;
 		[MCopyTo],
 		[Class]
 	) VALUES 
-		('End Dump 3X', 'BTL3X+2X', 'B-Trains')
+		('BTL3X+2X', 'BTL2X+1X', 'B-Trains')
 	;
 	
 	-- Whether or not to ensure all models are new to tables
