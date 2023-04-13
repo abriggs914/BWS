@@ -1,6 +1,7 @@
 import datetime
 import sys
 import os
+import tkinter
 
 from settings_initializer import SettingsWriter
 from scheduler_app import App
@@ -43,8 +44,27 @@ if __name__ == '__main__':
 
     version = version_generator(today)
 
-    App(
-        TITLE=f"Stargate Production Scheduler {version}",
-        can_width_p=0.999,
-        restart_handle=restart_program
-    ).mainloop()
+    while True:
+        error = []
+        try:
+            App(
+                quit_var=error,
+                TITLE=f"Stargate Production Scheduler {version}",
+                can_width_p=0.999,
+                restart_handle=restart_program
+            ).mainloop()
+        except ValueError as ve:
+            error = True
+        except TypeError as te:
+            error = True
+        except tkinter.TclError as tke:
+            error = True
+        except AttributeError as ae:
+            error = True
+        except IndexError as ie:
+            error = True
+        except KeyError as ke:
+            error = True
+        finally:
+            if error:
+                break

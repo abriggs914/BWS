@@ -26,6 +26,7 @@ class App(tkinter.Tk):
 
     def __init__(
             self,
+            quit_var,
             TITLE="Stargate Production Scheduler",
             WIDTH=500,
             HEIGHT=500,
@@ -39,6 +40,7 @@ class App(tkinter.Tk):
     ):
         super().__init__()
 
+        self.quit_var = quit_var
         self.start_date = None
         self.df_production = None
         self.df_work_days = None
@@ -683,8 +685,10 @@ class App(tkinter.Tk):
                 case _:
                     pass
             if ans2 is not None:
+                self.quit_var.append(True)
                 self.destroy()
         if not self.dirty.get():
+            self.quit_var.append(True)
             self.destroy()
 
     def init_queries_directory(self):
@@ -1195,12 +1199,16 @@ class App(tkinter.Tk):
     #     self.calendar_surface.xview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def xview(self, event, *args):
-        self.re_draw_legend(event)
+        self.calendar_surface.xview(*args)
+        # TODO fix this
+        # self.re_draw_legend(event)
+
         # raise ValueError("STOPPP!")
         # https://stackoverflow.com/questions/63629407/tkinter-how-to-stop-scrolling-above-canvas-window
-        if self.calendar_surface.xview() == (0.0, 1.0):
-            return
-        self.calendar_surface.xview(*args)
+        # if self.calendar_surface.xview() == (0.0, 1.0):
+        #     print(f"EARLY EXIT")
+        #     return
+        print(f"LATE EXIT {args=}")
 
     def re_draw_legend(self, event):
 
@@ -1215,7 +1223,7 @@ class App(tkinter.Tk):
         tp_0 = self.calendar_surface.tile_properties[1][0]
         bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
         x += bb_0[0]
-        print(f"Scroll: {x=}, vw={visible_width}, xvi[0]*vw={xvi[0]*visible_width:.2f}, {bb_0=}")
+        print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0]*visible_width:.2f}, {bb_0=}")
         for i in range(1, len(lines) + 1):
             tp = self.calendar_surface.tile_properties[i][0]
             tile = tp["tag_rect"]
@@ -1227,8 +1235,8 @@ class App(tkinter.Tk):
 
             # self.calendar_surface.moveto(tile, x, bbox[1])
             # self.calendar_surface.move(tile, x, 0)
-            # self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
-            self.calendar_surface.coords(tile, x, bbox[1])
+            self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
+            # self.calendar_surface.coords(tile, x, bbox[1])
             # self.calendar_surface.itemconfigure(tile, state="normal")
 
             for i in range(1, 6):
