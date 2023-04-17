@@ -1,4 +1,5 @@
 import calendar
+import datetime
 import sys
 import os
 import json
@@ -11,6 +12,7 @@ import pdfkit
 from tkinter_utility import *
 from tkinter import messagebox
 
+from datetime_utility import is_date
 from colour_demo import ColourWidget
 from calendar_surface import *
 from line_shift_demo import LineShifter
@@ -278,10 +280,21 @@ class App(tkinter.Tk):
         self.button_submit_unit_search\
             = button_factory(
                 self.frame_top_bar_a,
-                tv_btn="search calendar",
+                tv_btn="Search Calendar",
                 kwargs_btn={
                     "name": "button_submit_search",
                     "command": self.click_search_units
+                }
+        )
+
+        self.tv_label_button_go_to_today,\
+        self.button_go_to_today\
+            = button_factory(
+                self.frame_top_bar_a,
+                tv_btn="Go To Today",
+                kwargs_btn={
+                    "name": "button_go_to_today",
+                    "command": self.click_go_to_today
                 }
         )
         # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
@@ -309,6 +322,7 @@ class App(tkinter.Tk):
         for r, tile_row in enumerate(self.calendar_surface.tiles):
             for c, tile in enumerate(tile_row):
                 self.calendar_surface.tag_bind(tile, "<Double-Button-1>", self.dbl_click_tile)
+                self.calendar_surface.tag_bind(tile, "<Double-3>", self.dbl_right_click_tile)
 
         self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal", command=self.calendar_surface.xview,)
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
@@ -367,6 +381,7 @@ class App(tkinter.Tk):
         # search widget
         self.entry_unit_scroll_search.grid(row=1, column=1, ipadx=5, ipady=2)  #, sticky="ew")
         self.button_submit_unit_search.grid(row=2, column=1, ipadx=5, ipady=2)  #, sticky="ew")
+        self.button_go_to_today.grid(row=3, column=1, ipadx=5, ipady=2)  #, sticky="ew")
 
         # control buttons
         self.button_update_changes.grid(row=0, column=0, columnspan=2, ipadx=5, ipady=2)
@@ -1013,7 +1028,7 @@ class App(tkinter.Tk):
 
                         # self.calendar_surface.scan_dragto(x, y)
                         self.calendar_surface.xview_moveto(x)
-                        print(f"found! Q={text} at {r=}, {c=}, {x=}, {y=}")
+                        print(f"found! Quote={text} at {r=}, {c=}, {x=}, {y=}")
                 elif unit_in.SGQuote or self.multi_combo_unit_selection.value_exists(unit_in.SGQuote):
                     messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
                     self.tv_combo_unit_selection.set(text)
@@ -1023,11 +1038,30 @@ class App(tkinter.Tk):
                     d = unit_in.Available_Date
                     l = unit_in.job_start_line_v2
                     messagebox.showinfo(title="Calendar Search", message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
+            elif (date_in := is_date(text)) is not None:
+                print(f"DATE: {text=}, {date_in=}")
+                if date_in in self.calendar_surface.dates_list:
+                    idx = self.calendar_surface.dates_list.index(date_in)
+                    r, c = 1, idx + 1
+                    bbox = self.calendar_surface.rc_bbox((r, c))
+                    x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                    # x, y = int(bbox[0] + ((bbox[2] - bbox[0]) / 2)) - (bbaw / 2), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                    x /= bbaw
+
+                    # self.calendar_surface.scan_dragto(x, y)
+                    self.calendar_surface.xview_moveto(x)
+                    print(f"found! Date={text} at {r=}, {c=}, {x=}, {y=}")
             else:
                 messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
 
         else:
             messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number.")
+
+    def click_go_to_today(self):
+        before = self.tv_entry_unit_scroll_search.get()
+        self.tv_entry_unit_scroll_search.set(datetime.datetime.now().strftime("%Y-%m-%d"))
+        self.click_search_units(None)
+        self.tv_entry_unit_scroll_search.set(before)
 
     def click_calendar_surface_left(self, event):
         """Delete a tile when right-clicking the mouse over a valid unit."""
@@ -1556,6 +1590,14 @@ class App(tkinter.Tk):
             self.drag_tile = tile
             self.app_state = "DRAGGING"
             self.update()
+
+    def dbl_right_click_tile(self, event):
+        # self.calendar_surface.dbl_click_tile(event)
+        x, y = event.x, event.y
+        tile = self.calendar_surface.tile_at_xy((x, y))
+        r_c = self.calendar_surface.rc_at_xy((x, y))
+        print(f"Double right click!, tile chosen: {tile}")
+        self.calendar_surface.revert_colour(r_c)
 
     def update(self) -> None:
         if self.app_state == "DRAGGING":
