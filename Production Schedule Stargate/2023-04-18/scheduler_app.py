@@ -3,8 +3,8 @@ import datetime
 import sys
 import os
 import json
+import tkinter
 import webbrowser
-
 
 import dateutil
 import pdfkit
@@ -16,7 +16,6 @@ from datetime_utility import is_date
 from colour_demo import ColourWidget
 from calendar_surface import *
 from line_shift_demo import LineShifter
-
 
 SETTINGS_FILE = "C:/Access/PDS_User_Settings.json"
 
@@ -52,13 +51,15 @@ class App(tkinter.Tk):
         self.init_queries_directory()
 
         if self.user_name is None:
-            tkinter.messagebox.showerror(title="Fatal", message="Error, you do not currently have permission to use this application.\nPlease contact IT for further assistance.")
+            tkinter.messagebox.showerror(title="Fatal",
+                                         message="Error, you do not currently have permission to use this application.\nPlease contact IT for further assistance.")
             sys.exit()
         if self.df_production is None or self.df_work_days is None or self.df_valid_users is None or self.this_user_is_valid is None or self.this_user_publishes is None:
             tkinter.messagebox.showerror(title="Fatal", message="Error, unable to load production data")
             sys.exit()
         if not self.this_user_is_valid:
-            tkinter.messagebox.showerror(title="Fatal", message="Error, you are not currently a vailid production schedule updater. Please contact IT for further assistance.")
+            tkinter.messagebox.showerror(title="Fatal",
+                                         message="Error, you are not currently a vailid production schedule updater. Please contact IT for further assistance.")
             sys.exit()
 
         print(f"\n\t" + "\n\t".join([f"{n.ljust(30)} - {v}" for n, v in zip(
@@ -114,8 +115,16 @@ class App(tkinter.Tk):
         self.frame_top_bar_d = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_d")
         self.frame_top_bar_e = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_e")
 
+        self.tl_multi_combo = None
+        self.tag_tl_multi_combo = "tl_multi_combo"
+        self.var_multi_combo_unit_popped = tkinter.BooleanVar(self, value=False)
+
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, lines=used_lines, user_name=self.user_name, width=can_w, height=can_h, dirty_status_var=self.dirty, start_date=self.start_date, weekend_proportion=0.1, illegal_saturday=self.illegal_saturday, illegal_sunday=self.illegal_sunday)
+        self.calendar_surface = CalendarSurface(self.frame_calendar_b, lines=used_lines, user_name=self.user_name,
+                                                width=can_w, height=can_h, dirty_status_var=self.dirty,
+                                                start_date=self.start_date, weekend_proportion=0.1,
+                                                illegal_saturday=self.illegal_saturday,
+                                                illegal_sunday=self.illegal_sunday)
         print(f"{list(enumerate(self.df_production.columns))=}")
         self.calendar_surface.populate_units(self.df_production)
         self.calendar_surface.dirty_status_var.set(False)  # reset to false after tile initialization.
@@ -152,108 +161,108 @@ class App(tkinter.Tk):
         self.tv_combo_unit_selection = self.multi_combo_unit_selection.res_tv_entry
         self.combo_unit_selection = self.multi_combo_unit_selection.res_entry
 
-        self.tv_btn_insert_combo_choice,\
-        self.button_insert_combo_choice \
+        self.tv_btn_insert_combo_choice, \
+            self.button_insert_combo_choice \
             = button_factory(
-                self.frame_top_bar_b,
-                tv_btn="+",
-                kwargs_btn={
-                    "background": rgb_to_hex(GRAY_17),
-                    "foreground": rgb_to_hex(WHITE),
-                    "font": ("Arial", 16)
-                }
+            self.frame_top_bar_b,
+            tv_btn="+",
+            kwargs_btn={
+                "background": rgb_to_hex(GRAY_17),
+                "foreground": rgb_to_hex(WHITE),
+                "font": ("Arial", 16)
+            }
         )
         self.button_insert_combo_choice.config(command=self.click_insert_combo_choice)
 
-        self.tv_btn_export_changes,\
-        self.button_export_changes\
+        self.tv_btn_export_changes, \
+            self.button_export_changes \
             = button_factory(
-                self.frame_top_bar,
-                tv_btn="export",
-                kwargs_btn={
-                    "name": "button_export"
-                }
+            self.frame_top_bar,
+            tv_btn="export",
+            kwargs_btn={
+                "name": "button_export"
+            }
         )
         self.button_export_changes.bind("<Button-1>", self.click_export_sql, True)
 
-        self.tv_btn_update_changes,\
-        self.button_update_changes \
+        self.tv_btn_update_changes, \
+            self.button_update_changes \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn="Commit",
-                kwargs_btn={
-                    "name": "button_update",
-                    "command": self.click_update_sql
-                }
+            self.frame_top_bar_c,
+            tv_btn="Commit",
+            kwargs_btn={
+                "name": "button_update",
+                "command": self.click_update_sql
+            }
         )
 
-        self.tv_label_debug_app_state,\
-        self.debug_label_entry_app_state,\
-        self.tv_debug_app_state,\
-        self.debug_entry_app_state\
+        self.tv_label_debug_app_state, \
+            self.debug_label_entry_app_state, \
+            self.tv_debug_app_state, \
+            self.debug_entry_app_state \
             = entry_factory(
-                self.frame_top_bar,
-                tv_label="App State:",
-                tv_entry=self.app_state,
-                kwargs_entry={
-                    "name": "debug_appstate",
-                    "state": "readonly"
-                }
+            self.frame_top_bar,
+            tv_label="App State:",
+            tv_entry=self.app_state,
+            kwargs_entry={
+                "name": "debug_appstate",
+                "state": "readonly"
+            }
         )
 
-        self.tv_btn_undo,\
-        self.button_undo \
+        self.tv_btn_undo, \
+            self.button_undo \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn="<",
-                kwargs_btn={
-                    "name": "button_undo",
-                    "command": self.click_undo
-                }
+            self.frame_top_bar_c,
+            tv_btn="<",
+            kwargs_btn={
+                "name": "button_undo",
+                "command": self.click_undo
+            }
         )
 
-        self.tv_btn_redo,\
-        self.button_redo \
+        self.tv_btn_redo, \
+            self.button_redo \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn=">",
-                kwargs_btn={
-                    "name": "button_redo",
-                    "command": self.click_redo
-                }
+            self.frame_top_bar_c,
+            tv_btn=">",
+            kwargs_btn={
+                "name": "button_redo",
+                "command": self.click_redo
+            }
         )
 
-        self.tv_btn_refresh,\
-        self.button_refresh \
+        self.tv_btn_refresh, \
+            self.button_refresh \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn="Refresh",
-                kwargs_btn={
-                    "name": "button_refresh",
-                    "command": self.click_refresh
-                }
+            self.frame_top_bar_c,
+            tv_btn="Refresh",
+            kwargs_btn={
+                "name": "button_refresh",
+                "command": self.click_refresh
+            }
         )
 
-        self.tv_btn_print_schedule,\
-        self.btn_print_schedule\
+        self.tv_btn_print_schedule, \
+            self.btn_print_schedule \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn="Print",
-                kwargs_btn={
-                    "name": "button_print",
-                    "command": self.print_schedule
-                }
+            self.frame_top_bar_c,
+            tv_btn="Print",
+            kwargs_btn={
+                "name": "button_print",
+                "command": self.print_schedule
+            }
         )
 
-        self.debug_tv_show_history,\
-        self.debug_show_history \
+        self.debug_tv_show_history, \
+            self.debug_show_history \
             = button_factory(
-                self.frame_top_bar,
-                tv_btn="show history",
-                kwargs_btn={
-                    "name": "debug_show_history",
-                    "command": self.click_debug_show_history
-                }
+            self.frame_top_bar,
+            tv_btn="show history",
+            kwargs_btn={
+                "name": "debug_show_history",
+                "command": self.click_debug_show_history
+            }
         )
 
         # self.tv_label_unit_scroll_search,\
@@ -273,26 +282,26 @@ class App(tkinter.Tk):
             placeholder="Enter a Quote#:"
         )
 
-        self.tv_label_submit_unit_search,\
-        self.button_submit_unit_search\
+        self.tv_label_submit_unit_search, \
+            self.button_submit_unit_search \
             = button_factory(
-                self.frame_top_bar_a,
-                tv_btn="Search Calendar",
-                kwargs_btn={
-                    "name": "button_submit_search",
-                    "command": self.click_search_units
-                }
+            self.frame_top_bar_a,
+            tv_btn="Search Calendar",
+            kwargs_btn={
+                "name": "button_submit_search",
+                "command": self.click_search_units
+            }
         )
 
-        self.tv_label_button_go_to_today,\
-        self.button_go_to_today\
+        self.tv_label_button_go_to_today, \
+            self.button_go_to_today \
             = button_factory(
-                self.frame_top_bar_a,
-                tv_btn="Go To Today",
-                kwargs_btn={
-                    "name": "button_go_to_today",
-                    "command": self.click_go_to_today
-                }
+            self.frame_top_bar_a,
+            tv_btn="Go To Today",
+            kwargs_btn={
+                "name": "button_go_to_today",
+                "command": self.click_go_to_today
+            }
         )
         # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
 
@@ -301,7 +310,8 @@ class App(tkinter.Tk):
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
         # colour coder
-        self.frame_colour_coder = ColourWidget(self.frame_top_bar_d, dealers=self.dat_list_of_dealers(), default_colour=rgb_to_hex(GRAY_17))
+        self.frame_colour_coder = ColourWidget(self.frame_top_bar_d, dealers=self.dat_list_of_dealers(),
+                                               default_colour=rgb_to_hex(GRAY_17))
         self.tv_label_colour_coder = tkinter.StringVar(self, value="Colour Code By Dealer:")
         self.label_colour_coder = tkinter.Label(self.frame_top_bar_d, textvariable=self.tv_label_colour_coder)
         self.canv_btn_show_colour_coder = ArrowButton(self.frame_top_bar_d)
@@ -321,7 +331,8 @@ class App(tkinter.Tk):
                 self.calendar_surface.tag_bind(tile, "<Double-Button-1>", self.dbl_click_tile)
                 self.calendar_surface.tag_bind(tile, "<Double-3>", self.dbl_right_click_tile)
 
-        self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal", command=self.calendar_surface.xview,)
+        self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal",
+                                                     command=self.calendar_surface.xview, )
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
 
         ###############################################################################################################
@@ -334,7 +345,8 @@ class App(tkinter.Tk):
         self.calendar_surface.bind("<Motion>", self.motion_calendar_surface)
         self.frame_calendar_b.bind('<Configure>', self.onFrameConfigure)
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
-        self.calendar_surface.bind("<MouseWheel>", lambda event: self.xview(event, 'scroll', int(-1*(event.delta/120)), 'units'))
+        self.calendar_surface.bind("<MouseWheel>",
+                                   lambda event: self.xview(event, 'scroll', int(-1 * (event.delta / 120)), 'units'))
         self.line_shifter.status.trace_variable("w", self.line_shifter_update)
         self.entry_unit_scroll_search.bind("<Return>", self.click_search_units)
 
@@ -348,50 +360,8 @@ class App(tkinter.Tk):
         ###############################################################################################################
         #  pack widgets
         ###############################################################################################################
-        self.grid()
 
-        # frames for positioning
-        self.frame_top_bar.grid(row=0, column=0, ipadx=5, ipady=2, sticky="ew")
-        self.frame_top_bar_b.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.frame_top_bar_c.grid(row=0, column=1, ipadx=5, ipady=2)
-        self.frame_top_bar_d.grid(row=0, column=3, ipadx=5, ipady=2)
-        self.frame_top_bar_e.grid(row=0, column=4, ipadx=5, ipady=2)
-        self.frame_top_bar_a.grid(row=0, column=2, rowspan=2, ipadx=5, ipady=2)
-
-        # multi-column combobox
-        self.multi_combo_unit_selection.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.multi_combo_unit_selection.res_label.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.multi_combo_unit_selection.frame_top_most.grid(row=1, column=0, sticky="ew", ipadx=5, ipady=2)
-        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew", ipadx=5, ipady=2)
-        self.multi_combo_unit_selection.res_canvas.grid(row=0, column=1)
-        self.label_combo_unit_selection.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.combo_unit_selection.grid(row=1, column=0, ipadx=5, ipady=2)
-        self.button_insert_combo_choice.grid(row=2, column=0, ipadx=5, ipady=2)
-
-        # widgets
-        self.label_colour_coder.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.canv_btn_show_colour_coder.grid(row=0, column=1)
-        self.label_line_shifter.grid(row=0, column=0, ipadx=5, ipady=2)
-        self.canv_btn_show_line_shifter.grid(row=0, column=1)
-        self.update_showing_widgets()
-
-        # search widget
-        self.entry_unit_scroll_search.grid(row=1, column=1, ipadx=5, ipady=2)  #, sticky="ew")
-        self.button_submit_unit_search.grid(row=2, column=1, ipadx=5, ipady=2)  #, sticky="ew")
-        self.button_go_to_today.grid(row=3, column=1, ipadx=5, ipady=2)  #, sticky="ew")
-
-        # control buttons
-        self.button_update_changes.grid(row=0, column=0, columnspan=2, ipadx=5, ipady=2)
-        self.button_refresh.grid(row=1, column=0, columnspan=2, ipadx=5, ipady=2)
-        self.btn_print_schedule.grid(row=2, column=0, columnspan=2, ipadx=5, ipady=2)
-        self.button_undo.grid(row=3, column=0, ipadx=5, ipady=2)
-        self.button_redo.grid(row=3, column=1, ipadx=5, ipady=2)
-
-        # calendar widget
-        self.frame_calendar_a.grid(row=1, column=0, sticky="ew", ipadx=5, ipady=2)
-        self.frame_calendar_b.grid(ipadx=5, ipady=2)
-        self.calendar_surface.grid(row=1, column=1, sticky="ew", ipadx=5, ipady=2)
-        self.calendar_scroll_bar.grid(row=2, column=1, sticky="ew", ipadx=5, ipady=2)
+        self.grid_widgets()
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -403,6 +373,59 @@ class App(tkinter.Tk):
             self.debug_label_entry_app_state.grid()
             self.debug_entry_app_state.grid()
             self.debug_show_history.grid()
+
+    def grid_keys(self):
+        return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
+
+    def grid_widgets(self):
+        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        self.grid()
+
+        # frames for positioning
+        self.frame_top_bar.grid(**{r: 0, c: 0, ix: 5, iy: 2, s: "ew"})
+        self.frame_top_bar_b.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.frame_top_bar_c.grid(**{r: 0, c: 1, ix: 5, iy: 2})
+        self.frame_top_bar_d.grid(**{r: 0, c: 3, ix: 5, iy: 2})
+        self.frame_top_bar_e.grid(**{r: 0, c: 4, ix: 5, iy: 2})
+        self.frame_top_bar_a.grid(**{r: 0, c: 2, rs: 2, ix: 5, iy: 2})
+
+        # multi-column combobox
+        self.multi_combo_unit_selection.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.multi_combo_unit_selection.res_label.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.multi_combo_unit_selection.frame_top_most.grid(**{r: 1, c: 0, s: "ew", ix: 5, iy: 2})
+        self.multi_combo_unit_selection.res_entry.grid(row=0, column=0, sticky="ew", ipadx=5, ipady=2)
+        self.multi_combo_unit_selection.res_canvas.grid(**{r: 0, c: 1})
+        self.label_combo_unit_selection.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.combo_unit_selection.grid(**{r: 1, c: 0, ix: 5, iy: 2})
+        self.button_insert_combo_choice.grid(**{r: 2, c: 0, ix: 5, iy: 2})
+
+        # widgets
+        self.label_colour_coder.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.canv_btn_show_colour_coder.grid(**{r: 0, c: 1})
+        self.label_line_shifter.grid(**{r: 0, c: 0, ix: 5, iy: 2})
+        self.canv_btn_show_line_shifter.grid(**{r: 0, c: 1})
+        self.update_showing_widgets()
+
+        # search widget
+        self.entry_unit_scroll_search.grid(**{r: 1, c: 1, ix: 5, iy: 2})  # , sticky="ew")
+        self.button_submit_unit_search.grid(**{r: 2, c: 1, ix: 5, iy: 2})  # , sticky="ew")
+        self.button_go_to_today.grid(**{r: 3, c: 1, ix: 5, iy: 2})  # , sticky="ew")
+
+        # control buttons
+        self.button_update_changes.grid(**{r: 0, c: 0, cs: 2, ix: 5, iy: 2})
+        self.button_refresh.grid(**{r: 1, c: 0, cs: 2, ix: 5, iy: 2})
+        self.btn_print_schedule.grid(**{r: 2, c: 0, cs: 2, ix: 5, iy: 2})
+        self.button_undo.grid(**{r: 3, c: 0, ix: 5, iy: 2})
+        self.button_redo.grid(**{r: 3, c: 1, ix: 5, iy: 2})
+
+        # calendar widget
+        self.frame_calendar_a.grid(**{r: 1, c: 0, s: "ew", ix: 5, iy: 2})
+        self.frame_calendar_b.grid(**{ix: 5, iy: 2})
+        self.calendar_surface.grid(**{r: 1, c: 1, s: "ew", ix: 5, iy: 2})
+        self.calendar_scroll_bar.grid(**{r: 2, c: 1, s: "ew", ix: 5, iy: 2})
+
+    def init_tl_multi_combo(self):
+        self.tl_multi_combo = tkinter.Toplevel()
 
     def click_show_colour_coder(self, *args):
         print(f"\tclick_show_colour_coder")
@@ -461,7 +484,8 @@ class App(tkinter.Tk):
 
         dates = self.calendar_surface.dates_list
         lines = self.calendar_surface.lines
-        contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
+        contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if
+                        self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
         min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
         # content = {line: {} for line in lines}
         #
@@ -550,7 +574,6 @@ class App(tkinter.Tk):
                 print(f"Error, wkhtmltopdf not found in path either. Please install before continuing")
                 sys.exit()
 
-
         options = {
             "page-size": "tabloid",
             "orientation": "Landscape",
@@ -567,7 +590,6 @@ class App(tkinter.Tk):
         # HTML(file_out).write_pdf(pdf_file_out)
 
         webbrowser.open(pdf_file_out)
-
 
         # # content = {i: {line: {} for line in lines} for i in range(td)}
         # content = {i: {line:  for line in lines} for i in range(td)}
@@ -722,7 +744,8 @@ class App(tkinter.Tk):
                 # print(f"READ USER {user_name=}, {j=}")
         except FileNotFoundError as fnf:
             print(fnf)
-            messagebox.showerror(title="Settings", message="Error no file named '{C:/Access/PDS_User_Setting.json}' found.")
+            messagebox.showerror(title="Settings",
+                                 message="Error no file named '{C:/Access/PDS_User_Setting.json}' found.")
 
         return data
 
@@ -730,19 +753,23 @@ class App(tkinter.Tk):
         """Mass Database Query 'Getter' Function. Should be called at the beginning of app execution, or using a thread."""
         # self.df_production = connect(**SQL_ALL_DATED_STG_UNITS)
         self.settings_data = self.read_settings_data()
-        self.start_date = datetime.datetime.strptime(self.settings_data.get("start_date", datetime.datetime.now().strftime("%Y-%m-%d")), "%Y-%m-%d")
+        self.start_date = datetime.datetime.strptime(
+            self.settings_data.get("start_date", datetime.datetime.now().strftime("%Y-%m-%d")), "%Y-%m-%d")
         self.df_production = connect(**SQL_ALL_STG_UNITS)
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
         self.df_valid_users = connect(**SQL_VALID_USERS)
         self.df_used_lines = connect(**SQL_USED_LINES)
         self.user_name = self.verify_user(self.settings_data.get("user_name", ""))
         self.this_user_is_valid = not self.df_valid_users.query(f"UserName == '{self.user_name}'").empty
-        self.this_user_publishes = self.this_user_is_valid and self.df_valid_users[self.df_valid_users["UserName"] == self.user_name]["AllowPublish"].tolist()[0]
+        self.this_user_publishes = self.this_user_is_valid and \
+                                   self.df_valid_users[self.df_valid_users["UserName"] == self.user_name][
+                                       "AllowPublish"].tolist()[0]
         if self.df_production.empty:
             self.df_production = None
         else:
             self.df_production = self.df_production.fillna("")
-            self.df_production["Available Date"] = pandas.to_datetime(self.df_production["Available Date"], errors="coerce").dt.strftime('%Y-%m-%d')
+            self.df_production["Available Date"] = pandas.to_datetime(self.df_production["Available Date"],
+                                                                      errors="coerce").dt.strftime('%Y-%m-%d')
             # self.df_production["WO#"] = int(self.df_production["WO#"]) if self.df_production["WO#"] else self.df_production["WO#"]
             # self.df_production.loc[self.df_production["WO#"], "WO#"] = int(self.df_production["WO#"])
             # self.df_production['WO#'] = np.where(isnumber(self.df_production['WO#']), 0, self.df_production['WO#'])
@@ -758,7 +785,6 @@ class App(tkinter.Tk):
             y = x.split("||")
             y = [(z if z != "None" else None) for z in y]
             return (y[0] if y[0] else (y[1] if y[1] else y[2]))
-
 
         units = self.calendar_surface.units
 
@@ -784,15 +810,15 @@ class App(tkinter.Tk):
         picks_b = []
         for i in range(result.shape[0]):
             # print(f"\n{i=}")
-            a, b, c =\
-                result["OrdersV2_SGQuote"].loc[i],\
-                result["dtProductionSchedule_SGQuote"].loc[i],\
-                result["dtProductionScheduleV2_SGQuote"].loc[i]
+            a, b, c = \
+                result["OrdersV2_SGQuote"].loc[i], \
+                    result["dtProductionSchedule_SGQuote"].loc[i], \
+                    result["dtProductionScheduleV2_SGQuote"].loc[i]
             print(f"\t{a=}\t\t{b=}\t\t{c=}")
-            d, e, f =\
-                result["OrdersV2_WO#"].iloc[i],\
-                result["dtProductionSchedule_WO#"].iloc[i],\
-                result["dtProductionScheduleV2_WO#"].iloc[i]
+            d, e, f = \
+                result["OrdersV2_WO#"].iloc[i], \
+                    result["dtProductionSchedule_WO#"].iloc[i], \
+                    result["dtProductionScheduleV2_WO#"].iloc[i]
             print(f"\t{d=}\t\t{e=}\t\t{f=}")
             picks_a.append(a if a else (b if b else c))
             x = d if d else (e if e else f)
@@ -863,12 +889,12 @@ class App(tkinter.Tk):
         if remove_placed:
             for unit_in, unit_o in units.items():
                 print(f"{unit_in=}, {unit_o=}")
-                if unit_in == "SG100520":
-                    print(f"\n\n\n\n\n\n")
-                    for v in unit_o.__dict__:
-                        print(f"{v[1:]=}, {getattr(unit_in, v[1:], '__')=}")
-                    print(f"\n\n\n\n\n\n")
-                    # raise Exception("STOP!!!!!!!")
+                # if unit_in == "SG100520":
+                #     print(f"\n\n\n\n\n\n")
+                #     for v in unit_o.__dict__:
+                #         print(f"{v[1:]=}, {getattr(unit_in, v[1:], '__')=}")
+                #     print(f"\n\n\n\n\n\n")
+                #     # raise Exception("STOP!!!!!!!")
                 if unit_in not in [None, "none", ""]:
                     if unit_o.placed:
                         assert isinstance(unit_o, Unit)
@@ -956,7 +982,8 @@ class App(tkinter.Tk):
         # return lst
 
     def dat_list_of_dealers(self):
-        lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if tup[0] is not None and tup[0] != ""})
+        lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if
+                    tup[0] is not None and tup[0] != ""})
         lst.sort()
         return lst
 
@@ -992,7 +1019,7 @@ class App(tkinter.Tk):
                             if self.move_tile(ht, ft, unit_in):
                                 print(f"MOVED!")
                     else:
-                        #TODO investigate where a dragged tile goes when released over the same spot. ht == dt
+                        # TODO investigate where a dragged tile goes when released over the same spot. ht == dt
                         # releasing a dragged tile on the same position.
                         self.app_state = "SELECTED"
                         self.select_details = {
@@ -1023,7 +1050,8 @@ class App(tkinter.Tk):
                     if r_c:
                         r, c = r_c
                         bbox = self.calendar_surface.rc_bbox((r, c))
-                        x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                        x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(
+                            bbox[1] + ((bbox[3] - bbox[1]) / 2))
                         # x, y = int(bbox[0] + ((bbox[2] - bbox[0]) / 2)) - (bbaw / 2), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
                         x /= bbaw
 
@@ -1038,14 +1066,16 @@ class App(tkinter.Tk):
                 elif unit_in.SGQuote in self.calendar_surface.get_beyond_quotes():
                     d = unit_in.Available_Date
                     l = unit_in.job_start_line_v2
-                    messagebox.showinfo(title="Calendar Search", message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
+                    messagebox.showinfo(title="Calendar Search",
+                                        message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
             elif (date_in := is_date(text)) is not None:
                 print(f"DATE: {text=}, {date_in=}")
                 if date_in in self.calendar_surface.dates_list:
                     idx = self.calendar_surface.dates_list.index(date_in)
                     r, c = 1, idx + 1
                     bbox = self.calendar_surface.rc_bbox((r, c))
-                    x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
+                    x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(
+                        bbox[1] + ((bbox[3] - bbox[1]) / 2))
                     # x, y = int(bbox[0] + ((bbox[2] - bbox[0]) / 2)) - (bbaw / 2), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
                     x /= bbaw
 
@@ -1137,7 +1167,7 @@ class App(tkinter.Tk):
                         # values.remove(self.tv_combo_unit_selection.get())
                         quote_to_delete = self.tv_combo_unit_selection.get()
                         self.removed_quotes.append(quote_to_delete)
-                        self.multi_combo_unit_selection.delete_item(value=quote_to_delete,)
+                        self.multi_combo_unit_selection.delete_item(value=quote_to_delete, )
                         # self.combo_unit_selection.configure(values=values)
                         self.tv_combo_unit_selection.set("")
                         print("FROM COMBO")
@@ -1214,7 +1244,8 @@ class App(tkinter.Tk):
             # self.calendar_surface.moveto(dt, xe, ye)
         elif self.app_state == "SELECTED":
             self.app_state = "DRAGGING"
-            r_c = self.calendar_surface.rc_at_xy((self.calendar_surface.canvasx(event.x), self.calendar_surface.canvasy(event.y)))
+            r_c = self.calendar_surface.rc_at_xy(
+                (self.calendar_surface.canvasx(event.x), self.calendar_surface.canvasy(event.y)))
             r_c = self.calendar_surface.rc_at_xy((event.x, event.y))
             if r_c:
                 r, c = r_c
@@ -1258,7 +1289,7 @@ class App(tkinter.Tk):
         tp_0 = self.calendar_surface.tile_properties[1][0]
         bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
         x += bb_0[0]
-        print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0]*visible_width:.2f}, {bb_0=}")
+        print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0] * visible_width:.2f}, {bb_0=}")
         for i in range(1, len(lines) + 1):
             tp = self.calendar_surface.tile_properties[i][0]
             tile = tp["tag_rect"]
@@ -1370,7 +1401,6 @@ class App(tkinter.Tk):
         # # # #     # self.xview('scroll', int(-1 * (event.delta / 120)), 'units')
         # # # #     # self.calendar_surface.xview('scroll', int(-1 * (args[1] / 120)), 'units')
 
-
     def onFrameConfigure(self, event):
         print(f"{self.calendar_surface.cget('scrollregion')=}")
         self.calendar_surface.configure(scrollregion=self.calendar_surface.bbox('all'))
@@ -1410,16 +1440,19 @@ class App(tkinter.Tk):
             else:
                 tkinter.messagebox.showinfo(title="SQL Export", message="Data successfully exported!")
         else:
-            tkinter.messagebox.showinfo(title="SQL Export", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
+            tkinter.messagebox.showinfo(title="SQL Export",
+                                        message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
     def click_update_sql(self, are_u_sure=False):
         if self.this_user_publishes:
-            if are_u_sure or tkinter.messagebox.askyesnocancel(title="Server Update", message="Are you sure you want to commit your changes to the server?"):
+            if are_u_sure or tkinter.messagebox.askyesnocancel(title="Server Update",
+                                                               message="Are you sure you want to commit your changes to the server?"):
                 sql_res = self.calendar_surface.update_tile_sql(self.removed_quotes)
                 print(f"SQL\n\n<{sql_res}>")
                 tkinter.messagebox.showinfo(title="Server Update", message="Data updated successfully!")
         else:
-            tkinter.messagebox.showinfo(title="Server Update", message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
+            tkinter.messagebox.showinfo(title="Server Update",
+                                        message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
     def click_debug_show_history(self):
         print(f"self.calendar_surface.history:\n{self.calendar_surface.history}")
@@ -1523,7 +1556,7 @@ class App(tkinter.Tk):
                 # 2 - success - but need to re-add a removed tile to the combo list.
                 quote = data["quote"]
                 if quote in self.removed_quotes:
-                    #TODO this doesnt work
+                    # TODO this doesnt work
                     df = self.df_production
                     to_add = df.loc[(
                             (df["OrdersV2_SGQuote"] == quote) |
@@ -1620,8 +1653,11 @@ class App(tkinter.Tk):
                 y1 -= cy
                 self.clear_drag_tile_queue()
                 self.clear_drag_text_queue()
-                self.drag_tile = self.calendar_surface.create_rectangle(x1 - (tw / 2), y1, x1 + (tw / 2), y1 + th, fill=self.calendar_surface.drag_colour)
-                self.drag_text = self.calendar_surface.create_text(x1, y1 + (th / 2), text=self.dragging_details["quote"], width=x1 + (tw / 2), fill="white")
+                self.drag_tile = self.calendar_surface.create_rectangle(x1 - (tw / 2), y1, x1 + (tw / 2), y1 + th,
+                                                                        fill=self.calendar_surface.drag_colour)
+                self.drag_text = self.calendar_surface.create_text(x1, y1 + (th / 2),
+                                                                   text=self.dragging_details["quote"],
+                                                                   width=x1 + (tw / 2), fill="white")
                 self.drag_tile_queue.append(self.drag_tile)
                 self.drag_text_queue.append(self.drag_text)
                 # self.drag_coordinates =
@@ -1650,7 +1686,8 @@ class App(tkinter.Tk):
             tr, tc = self.calendar_surface.tile_to_rc(tag_to)
             unit_from = self.calendar_surface.tile_properties[tr][tc]["unit_in"]
             already_a_tile = unit_from is not None
-            print(f"Moving a tile {r=}, {c=}, {already_a_tile=}, {unit_in=}, {self.calendar_surface.tile_properties[r][c]['unit_in']=}")
+            print(
+                f"Moving a tile {r=}, {c=}, {already_a_tile=}, {unit_in=}, {self.calendar_surface.tile_properties[r][c]['unit_in']=}")
             if already_a_tile:
                 self.calendar_surface.new_history(CalendarSurface.SwapUndoable(r, c, tr, tc, unit_from, unit_in))
                 s1 = self.overwrite_tile(tag_to, unit_in, undoable=False)
@@ -1744,9 +1781,9 @@ class App(tkinter.Tk):
             #                  ]] == unit_in.SGQuote).any()]
 
             to_add = df.loc[(
-                (df["OrdersV2_SGQuote"] == q) |
-                (df["dtProductionSchedule_SGQuote"] == q) |
-                (df["dtProductionScheduleV2_SGQuote"] == q)
+                    (df["OrdersV2_SGQuote"] == q) |
+                    (df["dtProductionSchedule_SGQuote"] == q) |
+                    (df["dtProductionScheduleV2_SGQuote"] == q)
             )]
 
             # assert isinstance(to_add, pandas.DataFrame)
@@ -1872,7 +1909,8 @@ class App(tkinter.Tk):
 
     def set_app_state(self, app_state_in):
         if app_state_in not in self.valid_app_states:
-            raise ValueError(f"Error param 'app_state_in' is not a valid app state.\nMust be one of {self.valid_app_states}\nGot: {app_state_in}")
+            raise ValueError(
+                f"Error param 'app_state_in' is not a valid app state.\nMust be one of {self.valid_app_states}\nGot: {app_state_in}")
         self._app_state = app_state_in
         self.tv_debug_app_state.set(self.app_state)
 

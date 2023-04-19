@@ -27,12 +27,13 @@ def restart_program():
 
 def version_generator(inp=None):
     fmt = "%Y.%m.%d.%H%M"
+    t_suf = " - TEST"
     if PROGRAM_MODE == "LIVE":
         return PROD_DATE.strftime(fmt)
     if inp is None:
-        return datetime.datetime.now().strftime(fmt)
+        return datetime.datetime.now().strftime(fmt) + t_suf
     else:
-        return inp.strftime(fmt)
+        return inp.strftime(fmt) + t_suf
 
 
 def run_live():
