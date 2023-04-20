@@ -6,6 +6,7 @@ import webbrowser
 
 import pdfkit
 
+from html_utility import html_to_pdf
 from tkinter_utility import *
 from tkinter import messagebox
 
@@ -65,6 +66,10 @@ class App(tkinter.Tk):
             [self.user_name, self.start_date, self.this_user_is_valid, self.this_user_publishes]
         )]))
 
+        self.colour_schemes = {
+            "fg_infor_frame_quote_hyperlink": "#3222ee"
+        }
+
         ###############################################################################################################
         # State variables
         ###############################################################################################################
@@ -113,6 +118,7 @@ class App(tkinter.Tk):
         self.frame_top_bar_d = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_d")
         self.frame_top_bar_e = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_e")
         self.frame_top_bar_f = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_f")
+        self.frame_top_bar_g = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_g")
 
         self.tl_multi_combo = None
         self.tag_tl_multi_combo = "tl_multi_combo"
@@ -298,6 +304,39 @@ class App(tkinter.Tk):
                                                      command=self.calendar_surface.xview, )
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
 
+        # Info Frame
+        self.info_frame_labels = [
+            "SGQuote#",
+            "WO#",
+            "Model No",
+            "Dealer",
+            "Serial #",
+            "Customer WO#",
+            "Galvanized",
+            "Prod Date",
+            "Delivery Date"
+        ]
+        self.frame_info_frame = InfoFrame(
+            self.frame_top_bar_g,
+            labels=self.info_frame_labels,
+            auto_grid=True,
+            key_width=25,
+            val_width=25,
+            width=50,
+            background="#77a1ee",
+            padx=10,
+            pady=10,
+            cell_border=True
+        )
+        ke_il = self.frame_info_frame.de_keyify(self.info_frame_labels[0])
+        quote_label_data = self.frame_info_frame.info_labels[ke_il]
+        if_qu_tv, if_qu_lb = quote_label_data["v_tv"], quote_label_data["v_label"]
+
+        col_scheme = self.colour_schemes
+        if_qu_lb.configure(foreground=col_scheme["fg_infor_frame_quote_hyperlink"])
+        if_qu_lb.bind("<Button-1>", self.click_info_frame_quote_hyperlink)
+        if_qu_lb.bind("<Double-Button-1>", self.click_info_frame_quote_hyperlink)
+
         ################################################################################################################
         # Begin Testing widgets
         ################################################################################################################
@@ -379,6 +418,8 @@ class App(tkinter.Tk):
         self.showing_line_shifter.trace_variable("w", self.update_showing_widgets)
 
         self.bind("<Control-p>", self.print_schedule)
+        self.bind("<Control-z>", self.click_undo)
+        self.bind("<Control-Shift-Z>", self.click_redo)
 
         ###############################################################################################################
         #  grid widgets
@@ -398,12 +439,13 @@ class App(tkinter.Tk):
         self.grid()
 
         # frames for positioning
-        self.frame_top_bar.grid(**{r: 0, c: 0, ix: 5, iy: 2, s: "ew"})
-        self.frame_top_bar_b.grid(**{r: 0, c: 0, ix: 5, iy: 2})
-        self.frame_top_bar_c.grid(**{r: 0, c: 1, ix: 5, iy: 2})
-        self.frame_top_bar_d.grid(**{r: 0, c: 3, ix: 5, iy: 2})
-        self.frame_top_bar_e.grid(**{r: 0, c: 4, ix: 5, iy: 2})
-        self.frame_top_bar_a.grid(**{r: 0, c: 2, rs: 2, ix: 5, iy: 2})
+        self.frame_top_bar.grid(**{r: 0, c: 0, s: "ew"})
+        self.frame_top_bar_b.grid(**{r: 0, c: 0})
+        self.frame_top_bar_c.grid(**{r: 0, c: 1})
+        self.frame_top_bar_d.grid(**{r: 0, c: 3})
+        self.frame_top_bar_e.grid(**{r: 0, c: 4})
+        self.frame_top_bar_g.grid(**{r: 0, c: 6})
+        self.frame_top_bar_a.grid(**{r: 0, c: 2, rs: 2})
 
         # multi-column combobox
         self.multi_combo_unit_selection.grid(**{r: 0, c: 0, ix: 5, iy: 2})
@@ -574,10 +616,13 @@ class App(tkinter.Tk):
         file_out = f"html_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.html"
         pdf_file_out = f"pdf_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.pdf"
         html = f"<!DOCTYPE html><html><head><title>Page Title</title></head><body>"
+        print(f"{content=}")
+        print(f"{list(content.keys())=}")
         for month, data in content.items():
             # print(f"{data['date'].items()=}")
+            print(f"{month=}")
             y = (min_date + relativedelta(months=month)).year
-            html = f"{html}<H2>{calendar.month_name[month + 1]} {y}</H2>"
+            html = f"{html}<H2>{calendar.month_name[(month % 12) + 1]} {y}</H2>"
             df_content = pd.DataFrame(data).transpose().fillna("")
             html = f"{html}{df_content.to_html()}"
         html = f"{html}</body></html>"
@@ -586,19 +631,6 @@ class App(tkinter.Tk):
             f.write(html)
 
         print(f"{file_out=}\n{pdf_file_out=}")
-
-        # TODO configure this for each computer.
-        wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-        if not os.path.exists(wkhtmltopdf_path):
-            # print(f"Error, please install wkhtmltopdf before continuing")
-            try:
-                print(f"Checking Environment Vars for wkhtmltopdf")
-                config = pdfkit.configuration()
-            except OSError:
-                # not present in path
-                print(f"Error, wkhtmltopdf not found in path either. Please install before continuing")
-                sys.exit()
-
         options = {
             "page-size": "tabloid",
             "orientation": "Landscape",
@@ -608,81 +640,105 @@ class App(tkinter.Tk):
             'margin-left': '0.5in',
             'encoding': "UTF-8",
         }
-        config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-        pdfkit.from_file(file_out, pdf_file_out, configuration=config, options=options)
+        html_to_pdf(file_out, pdf_file_out, do_open=True, options=options, do_quit=True)
 
-        # from weasyprint import HTML
-        # HTML(file_out).write_pdf(pdf_file_out)
 
-        webbrowser.open(pdf_file_out)
-
-        # # content = {i: {line: {} for line in lines} for i in range(td)}
-        # content = {i: {line:  for line in lines} for i in range(td)}
+        # # TODO configure this for each computer.
+        # wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        # if not os.path.exists(wkhtmltopdf_path):
+        #     # print(f"Error, please install wkhtmltopdf before continuing")
+        #     try:
+        #         print(f"Checking Environment Vars for wkhtmltopdf")
+        #         config = pdfkit.configuration()
+        #     except OSError:
+        #         # not present in path
+        #         print(f"Error, wkhtmltopdf not found in path either. Please install before continuing")
+        #         sys.exit()
         #
-        # # print(f"\n{self.calendar_surface.tile_properties[0]=}\n{type(self.calendar_surface.tile_properties)=}")
+        # options = {
+        #     "page-size": "tabloid",
+        #     "orientation": "Landscape",
+        #     'margin-top': '0.5in',
+        #     'margin-right': '0.5in',
+        #     'margin-bottom': '0.5in',
+        #     'margin-left': '0.5in',
+        #     'encoding': "UTF-8",
+        # }
+        # config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+        # pdfkit.from_file(file_out, pdf_file_out, configuration=config, options=options)
         #
-        # # print(f"\n\tBEFORE\n{content=}\n")
+        # # from weasyprint import HTML
+        # # HTML(file_out).write_pdf(pdf_file_out)
         #
-        # dd = (max_date - min_date).days
-        # for d in range(dd):
-        #     t_date = min_date + datetime.timedelta(days=d)
-        #     f_date = t_date.strftime("%Y-%m-%d")
-        #     mi = (t_date.month + (12 * t_date.year)) - nd
-        #     print(f"{d=}, {mi=}, {f_date=}")
-        #     found = False
-        #     for j, l in enumerate(lines):
-        #         value = self.calendar_surface.tile_properties[j][d]["unit_in"]
-        #         if value:
-        #             found = True
-        #             content[mi][l][f_date] = value
-        #     if not found:
-        #         print(f"\tFN\t\t{d=}, {mi=}, {f_date=}")
-        #         content[mi][lines[0]][f_date] = None
+        # webbrowser.open(pdf_file_out)
         #
-        # # print(f"\n\tAFTER\n{content=}\n")
-        #
-        # # print(f"\n{min_date=}\n{max_date=}\n")
-        # for k, v in content.items():
-        #     print(f"\n\t{k=}\n\t{len(v)=}\n")
-        #     for k1, v1 in v.items():
-        #         print(f"\n\t\t{k1=}\n\t\t{v1=}\n")
-        #
-        # # content
-        # # x     | day1  | day2   | day 2
-        # # Line1 |       | unit1  |
-        # # Line2 | unit2 | unit3  |
-        # file_out = f"html_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.html"
-        # html = f"<!DOCTYPE html><html><head><title>Page Title</title></head><body>"
-        # for month, data in content.items():
-        #     # print(f"{data['date'].items()=}")
-        #     # df_content = pd.DataFrame({f"{k:%Y-%m-%d}": v for k, v in data["date"].items()}).transpose()
-        #     df_content = pd.DataFrame(data).transpose().fillna("")
-        #     html = f"{html}{df_content.to_html()}"
-        #     # for day, value in month.items():
-        # html = f"{html}</body></html>"
-        # with open(file_out, 'w') as f:
-        #     f.write(html)
-        #
-        # webbrowser.open(file_out)
-        #
-        # # raise Exception("STOP!!!")
-        #
-        # # df2table(self.df_production, title="DEMO", show_table=True)
-        #
-        # # for i in content:
-        # #     pdf.table(
-        # #         title=f"demo_table #{i}",
-        # #         x=0,
-        # #         y=0,
-        # #         w=200,
-        # #         # contents=pdf_writer.random_test_set(12),
-        # #         contents=content[i],
-        # #         desc_txt="demo description text."
-        # #     )
-        # #     break
+        # # # content = {i: {line: {} for line in lines} for i in range(td)}
+        # # content = {i: {line:  for line in lines} for i in range(td)}
         # #
-        # # pdf.output(FILE_NAME, 'F')
-        # # pdf.open_in_browser()
+        # # # print(f"\n{self.calendar_surface.tile_properties[0]=}\n{type(self.calendar_surface.tile_properties)=}")
+        # #
+        # # # print(f"\n\tBEFORE\n{content=}\n")
+        # #
+        # # dd = (max_date - min_date).days
+        # # for d in range(dd):
+        # #     t_date = min_date + datetime.timedelta(days=d)
+        # #     f_date = t_date.strftime("%Y-%m-%d")
+        # #     mi = (t_date.month + (12 * t_date.year)) - nd
+        # #     print(f"{d=}, {mi=}, {f_date=}")
+        # #     found = False
+        # #     for j, l in enumerate(lines):
+        # #         value = self.calendar_surface.tile_properties[j][d]["unit_in"]
+        # #         if value:
+        # #             found = True
+        # #             content[mi][l][f_date] = value
+        # #     if not found:
+        # #         print(f"\tFN\t\t{d=}, {mi=}, {f_date=}")
+        # #         content[mi][lines[0]][f_date] = None
+        # #
+        # # # print(f"\n\tAFTER\n{content=}\n")
+        # #
+        # # # print(f"\n{min_date=}\n{max_date=}\n")
+        # # for k, v in content.items():
+        # #     print(f"\n\t{k=}\n\t{len(v)=}\n")
+        # #     for k1, v1 in v.items():
+        # #         print(f"\n\t\t{k1=}\n\t\t{v1=}\n")
+        # #
+        # # # content
+        # # # x     | day1  | day2   | day 2
+        # # # Line1 |       | unit1  |
+        # # # Line2 | unit2 | unit3  |
+        # # file_out = f"html_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.html"
+        # # html = f"<!DOCTYPE html><html><head><title>Page Title</title></head><body>"
+        # # for month, data in content.items():
+        # #     # print(f"{data['date'].items()=}")
+        # #     # df_content = pd.DataFrame({f"{k:%Y-%m-%d}": v for k, v in data["date"].items()}).transpose()
+        # #     df_content = pd.DataFrame(data).transpose().fillna("")
+        # #     html = f"{html}{df_content.to_html()}"
+        # #     # for day, value in month.items():
+        # # html = f"{html}</body></html>"
+        # # with open(file_out, 'w') as f:
+        # #     f.write(html)
+        # #
+        # # webbrowser.open(file_out)
+        # #
+        # # # raise Exception("STOP!!!")
+        # #
+        # # # df2table(self.df_production, title="DEMO", show_table=True)
+        # #
+        # # # for i in content:
+        # # #     pdf.table(
+        # # #         title=f"demo_table #{i}",
+        # # #         x=0,
+        # # #         y=0,
+        # # #         w=200,
+        # # #         # contents=pdf_writer.random_test_set(12),
+        # # #         contents=content[i],
+        # # #         desc_txt="demo description text."
+        # # #     )
+        # # #     break
+        # # #
+        # # # pdf.output(FILE_NAME, 'F')
+        # # # pdf.open_in_browser()
 
     def unbind_top_frame(self):
         self.line_shifter.disable_all_widgets()
@@ -1013,7 +1069,7 @@ class App(tkinter.Tk):
         return lst
 
     def release_calendar_surface(self, event):
-        print(f"release {event=}")
+        print(f"RCS release {event=}")
         x, y = event.x, event.y
         dt = self.drag_tile
         ddt = self.dragging_details
@@ -1056,6 +1112,7 @@ class App(tkinter.Tk):
                         self.drag_tile = None
                         self.calendar_surface.itemconfigure(dt, state="hidden")
                         self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
+                        self.update_info_frame()
                 else:
                     print(f"INVALID STATE")
         else:
@@ -1082,12 +1139,14 @@ class App(tkinter.Tk):
 
                         # self.calendar_surface.scan_dragto(x, y)
                         self.calendar_surface.xview_moveto(x)
+                        self.re_draw_legend(None)
                         print(f"found! Quote={text} at {r=}, {c=}, {x=}, {y=}")
                 elif unit_in.SGQuote or self.multi_combo_unit_selection.value_exists(unit_in.SGQuote):
                     messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
                     self.tv_combo_unit_selection.set(text)
                     self.combo_unit_selection.focus()
                     self.multi_combo_unit_selection.select(unit_in.SGQuote)
+                    self.re_draw_legend(None)
                 elif unit_in.SGQuote in self.calendar_surface.get_beyond_quotes():
                     d = unit_in.Available_Date
                     l = unit_in.job_start_line_v2
@@ -1106,12 +1165,45 @@ class App(tkinter.Tk):
 
                     # self.calendar_surface.scan_dragto(x, y)
                     self.calendar_surface.xview_moveto(x)
+                    self.re_draw_legend(None)
                     print(f"found! Date={text} at {r=}, {c=}, {x=}, {y=}")
             else:
                 messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
 
         else:
             messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number, or a date.")
+
+    def update_info_frame(self):
+        # "SGQuote#",
+        # "WO#",
+        # "Model No",
+        # "Dealer",
+        # "Serial #",
+        # "Customer WO#",
+        # "Galvanized",
+        # "Prod Date",
+        # "Delivery Date"
+        tile = self.select_tile
+        if tile is not None:
+            r_c = self.calendar_surface.tile_to_rc(tile)
+            if r_c is not None:
+                r, c = r_c
+                unit = self.calendar_surface.tile_properties[r][c]["unit_in"]
+                if unit is not None:
+                    labels = self.info_frame_labels
+                    values = [
+                        unit.SGQuote,
+                        unit.WO,
+                        unit.InputField1,
+                        unit.InputField2,
+                        unit.Serial_Number,
+                        unit.Customer_WO,
+                        unit.IsGalv,
+                        unit.Prod_Date_1,
+                        unit.Delivery_Date
+                    ]
+                    for k, v in zip(labels, values):
+                        self.frame_info_frame.change_value(k, v)
 
     def click_go_to_today(self):
         before = self.tv_entry_unit_scroll_search.get()
@@ -1121,7 +1213,7 @@ class App(tkinter.Tk):
 
     def click_calendar_surface_left(self, event):
         """Delete a tile when right-clicking the mouse over a valid unit."""
-        print(f"{event=}")
+        print(f"CCSL {event=}, {self.app_state=}")
         x, y = event.x, event.y
         rc = self.calendar_surface.rc_at_xy((x, y))
         if rc:
@@ -1131,6 +1223,16 @@ class App(tkinter.Tk):
                 if unit_in:
                     self.removed_quotes.append(unit_in.SGQuote)
                     self.delete_tile(r, c, unit_in)
+                elif self.app_state == "DRAGGING":
+                    # user is dragging a tile and right-clicked to drop it.
+                    self.calendar_surface.itemconfigure(self.drag_tile, state="hidden")
+                    self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
+                    self.drag_tile = None
+                    self.select_tile = None
+                    self.app_state = "IDLE"
+                    self.calendar_surface.revert_colour(rc)
+                    print(f"NO UNIT IN")
+
 
     def get_combo_quote(self):
         q = self.tv_combo_unit_selection.get()
@@ -1139,7 +1241,7 @@ class App(tkinter.Tk):
         return None
 
     def click_calendar_surface(self, event):
-        print(f"click {event=}")
+        print(f"CCS click {event=}")
         x, y = event.x, event.y
         tile = self.calendar_surface.tile_at_xy((x, y))
         print(f"\t{x=}, {y=}, {tile=}")
@@ -1172,6 +1274,7 @@ class App(tkinter.Tk):
                     }
                     self.calendar_surface.itemconfigure(self.drag_tile, state="normal")
                     self.calendar_surface.itemconfigure(self.drag_text, state="normal")
+                    self.update_info_frame()
                     # else:
                     #     print(f"NEW ELSE HERE")
 
@@ -1221,6 +1324,7 @@ class App(tkinter.Tk):
                     "unit_in": unit_in,
                     "from_tag": ht
                 }
+                self.update_info_frame()
 
     def motion_calendar_surface(self, event):
         # print(f"motion {event=}")
@@ -1292,33 +1396,51 @@ class App(tkinter.Tk):
     def xview(self, event, *args):
         self.calendar_surface.xview(*args)
         # TODO fix this
-        # self.re_draw_legend(event)
+        self.re_draw_legend(event)
 
         # raise ValueError("STOPPP!")
         # https://stackoverflow.com/questions/63629407/tkinter-how-to-stop-scrolling-above-canvas-window
         # if self.calendar_surface.xview() == (0.0, 1.0):
         #     print(f"EARLY EXIT")
         #     return
-        print(f"LATE EXIT {args=}")
+        # print(f"LATE EXIT {args=}")
 
     def re_draw_legend(self, event):
 
-        xvi = self.calendar_surface.xview()
-        tw = self.calendar_surface.tile_width
-        a = int(self.calendar_surface["width"])
-        # b = self.calendar_surface.winfo_width()
-        visible_width = a
-        scroll_pos = xvi[0] * visible_width
-        x = int(scroll_pos)
-        lines = self.calendar_surface.lines
-        tp_0 = self.calendar_surface.tile_properties[1][0]
-        bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
-        x += bb_0[0]
-        print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0] * visible_width:.2f}, {bb_0=}")
-        for i in range(1, len(lines) + 1):
-            tp = self.calendar_surface.tile_properties[i][0]
+        can = self.calendar_surface
+        cx, cy = can.canvasx(0), can.canvasy(0)
+
+        # xvi = self.calendar_surface.xview()
+        tw, th, ts = can.tile_width, can.tile_height, can.tile_space
+        # a = int(self.calendar_surface["width"])
+        # # b = self.calendar_surface.winfo_width()
+        # visible_width = a
+        # scroll_pos = xvi[0] * visible_width
+        # x = int(scroll_pos)
+        lines = can.lines
+        # tp_0 = self.calendar_surface.tile_properties[1][0]
+        # bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
+        # x += bb_0[0]
+        # print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0] * visible_width:.2f}, {bb_0=}")
+        x, y = cx, cy
+        # print(f"{x=}, {y=}")
+        for i in range(0, len(lines) + 1):
+            tp = can.tile_properties[i][0]
             tile = tp["tag_rect"]
-            bbox = self.calendar_surface.rc_bbox((i, 0))
+            x1, y1, x2, y2 = tp["x1"], tp["y1"], tp["x2"], tp["y2"]
+            # t1_x1, t1_y1, t1_x2, t1_y2 = tp["t1_x1"], tp["t1_y1"], tp["t1_x2"], tp["t1_y2"]
+            # t2_x1, t2_y1, t2_x2, t2_y2 = tp["t2_x1"], tp["t2_y1"], tp["t2_x2"], tp["t2_y2"]
+            # t3_x1, t3_y1, t3_x2, t3_y2 = tp["t3_x1"], tp["t3_y1"], tp["t3_x2"], tp["t3_y2"]
+            # t4_x1, t4_y1, t4_x2, t4_y2 = tp["t4_x1"], tp["t4_y1"], tp["t4_x2"], tp["t4_y2"]
+            # t5_x1, t5_y1, t5_x2, t5_y2 = tp["t5_x1"], tp["t5_y1"], tp["t5_x2"], tp["t5_y2"]
+            # t6_x1, t6_y1, t6_x2, t6_y2 = tp["t6_x1"], tp["t6_y1"], tp["t6_x2"], tp["t6_y2"]
+            t1_x1, t1_y1 = tp["t1_x1"], tp["t1_y1"]
+            t2_x1, t2_y1 = tp["t2_x1"], tp["t2_y1"]
+            t3_x1, t3_y1 = tp["t3_x1"], tp["t3_y1"]
+            t4_x1, t4_y1 = tp["t4_x1"], tp["t4_y1"]
+            t5_x1, t5_y1 = tp["t5_x1"], tp["t5_y1"]
+            t6_x1, t6_y1 = tp["t6_x1"], tp["t6_y1"]
+
             # tw = self.calendar_surface.tile_width
             # x = self.calendar_surface.canvasx(0 - tw)
             # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
@@ -1326,14 +1448,19 @@ class App(tkinter.Tk):
 
             # self.calendar_surface.moveto(tile, x, bbox[1])
             # self.calendar_surface.move(tile, x, 0)
-            self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
+            # self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
             # self.calendar_surface.coords(tile, x, bbox[1])
             # self.calendar_surface.itemconfigure(tile, state="normal")
+            y += th + (1.5 * ts)
+            # self.calendar_surface.coords(tile, x, y, x + tw, y + th)
+            self.calendar_surface.coords(tile, x, y1, x + tw, y2)
 
-            for i in range(1, 7):
-                # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
-                # self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
-                self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
+            if i > 0:
+                for j in range(1, 7):
+                    # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+                    # self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+                    # self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
+                    self.calendar_surface.coords(tp[f"t{j}_tag"], x + (tw / 2), eval(f"t{j}_y1"))
 
         # xvi = self.calendar_surface.xview()
         # tw = self.calendar_surface.tile_width
@@ -1370,32 +1497,44 @@ class App(tkinter.Tk):
         # # xvi = self.calendar_surface.xview()
         # # tw = self.calendar_surface.tile_width
         # # a = int(self.calendar_surface["width"])
-        # # b = self.calendar_surface.winfo_width()
-        # # visible_width = a - b
+        # # # b = self.calendar_surface.winfo_width()
+        # # visible_width = a
         # # scroll_pos = xvi[0] * visible_width
-        # # x = -scroll_pos
+        # # x = int(scroll_pos)
         # # lines = self.calendar_surface.lines
-        # # print(f"Scroll: {x=}, vw={visible_width}, {a=}, {b=}")
+        # # tp_0 = self.calendar_surface.tile_properties[1][0]
+        # # bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
+        # # x += bb_0[0]
+        # # print(f"Scroll: {xvi=}, {x=}, vw={visible_width}, xvi[0]*vw={xvi[0] * visible_width:.2f}, {bb_0=}")
         # # for i in range(1, len(lines) + 1):
         # #     tp = self.calendar_surface.tile_properties[i][0]
         # #     tile = tp["tag_rect"]
-        # #     # bbox = self.calendar_surface.rc_bbox((i, 0))
+        # #     bbox = self.calendar_surface.rc_bbox((i, 0))
         # #     # tw = self.calendar_surface.tile_width
         # #     # x = self.calendar_surface.canvasx(0 - tw)
         # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
         # #
         # #     # self.calendar_surface.moveto(tile, x, bbox[1])
-        # #     self.calendar_surface.move(tile, x, 0)
-        # #     self.calendar_surface.itemconfigure(tile, state="normal")
+        # #     # self.calendar_surface.move(tile, x, 0)
+        # #     self.calendar_surface.coords(tile, x, bbox[1], x + tw, bbox[3])
+        # #     # self.calendar_surface.coords(tile, x, bbox[1])
+        # #     # self.calendar_surface.itemconfigure(tile, state="normal")
         # #
-        # #     for i in range(1, 6):
+        # #     for i in range(1, 7):
         # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
-        # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        # #         # self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        # #         self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
         # #
-        # #
-        # # # x = self.calendar_surface.canvasx(0)
+        # # # xvi = self.calendar_surface.xview()
+        # # # tw = self.calendar_surface.tile_width
+        # # # a = int(self.calendar_surface["width"])
+        # # # b = self.calendar_surface.winfo_width()
+        # # # visible_width = a - b
+        # # # scroll_pos = xvi[0] * visible_width
+        # # # x = -scroll_pos
         # # # lines = self.calendar_surface.lines
+        # # # print(f"Scroll: {x=}, vw={visible_width}, {a=}, {b=}")
         # # # for i in range(1, len(lines) + 1):
         # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # #     tile = tp["tag_rect"]
@@ -1407,29 +1546,20 @@ class App(tkinter.Tk):
         # # #
         # # #     # self.calendar_surface.moveto(tile, x, bbox[1])
         # # #     self.calendar_surface.move(tile, x, 0)
+        # # #     self.calendar_surface.itemconfigure(tile, state="normal")
+        # # #
         # # #     for i in range(1, 6):
         # # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
         # # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
         # # #
         # # #
-        # # # # scroll_pos = self.calendar_surface.xview()[0]
-        # # # # scroll_amount = event.delta / 120.0
-        # # # # new_pos = scroll_pos - (scroll_amount * 0.1)
-        # # # # # new_pos = scroll_pos - (scroll_amount * 1)
-        # # # # cw = self.calendar_surface.canvas_width
-        # # # # # x = clamp(0, new_pos * cw, cw)
-        # # # # x = new_pos * cw
+        # # # # x = self.calendar_surface.canvasx(0)
         # # # # lines = self.calendar_surface.lines
-        # # # # tp_0 = self.calendar_surface.tile_properties[0][0]
-        # # # # bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
-        # # # # x -= bb_0[0]
-        # # # # print(f"{x=}, sp={scroll_pos}, sa={scroll_amount}, {tp_0=}, {bb_0=}")
-        # # # #
         # # # # for i in range(1, len(lines) + 1):
         # # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # # #     tile = tp["tag_rect"]
-        # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        # # # #     tw = self.calendar_surface.tile_width
+        # # # #     # bbox = self.calendar_surface.rc_bbox((i, 0))
+        # # # #     # tw = self.calendar_surface.tile_width
         # # # #     # x = self.calendar_surface.canvasx(0 - tw)
         # # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1440,23 +1570,52 @@ class App(tkinter.Tk):
         # # # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
         # # # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
         # # # #
-        # # # # # xv = self.calendar_surface.xview()
-        # # # # # print(f"redraw_legend {xv=}, {args=}")
+        # # # #
+        # # # # # scroll_pos = self.calendar_surface.xview()[0]
+        # # # # # scroll_amount = event.delta / 120.0
+        # # # # # new_pos = scroll_pos - (scroll_amount * 0.1)
+        # # # # # # new_pos = scroll_pos - (scroll_amount * 1)
+        # # # # # cw = self.calendar_surface.canvas_width
+        # # # # # # x = clamp(0, new_pos * cw, cw)
+        # # # # # x = new_pos * cw
         # # # # # lines = self.calendar_surface.lines
+        # # # # # tp_0 = self.calendar_surface.tile_properties[0][0]
+        # # # # # bb_0 = self.calendar_surface.bbox(tp_0["tag_rect"])
+        # # # # # x -= bb_0[0]
+        # # # # # print(f"{x=}, sp={scroll_pos}, sa={scroll_amount}, {tp_0=}, {bb_0=}")
+        # # # # #
         # # # # # for i in range(1, len(lines) + 1):
         # # # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # # # #     tile = tp["tag_rect"]
         # # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
         # # # # #     tw = self.calendar_surface.tile_width
-        # # # # #     x = self.calendar_surface.canvasx(0 - tw)
-        # # # # #     x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
-        # # # # #     print(f"{tile=}, {x=}, {bbox=}")
+        # # # # #     # x = self.calendar_surface.canvasx(0 - tw)
+        # # # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        # # # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
         # # # # #
-        # # # # #     self.calendar_surface.moveto(tile, x, bbox[1])
+        # # # # #     # self.calendar_surface.moveto(tile, x, bbox[1])
+        # # # # #     self.calendar_surface.move(tile, x, 0)
         # # # # #     for i in range(1, 6):
-        # # # # #         self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
-        # # # # #     # self.xview('scroll', int(-1 * (event.delta / 120)), 'units')
-        # # # # #     # self.calendar_surface.xview('scroll', int(-1 * (args[1] / 120)), 'units')
+        # # # # #         # self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        # # # # #         self.calendar_surface.move(tp[f"t{i}_tag"], x, 0)
+        # # # # #
+        # # # # # # xv = self.calendar_surface.xview()
+        # # # # # # print(f"redraw_legend {xv=}, {args=}")
+        # # # # # # lines = self.calendar_surface.lines
+        # # # # # # for i in range(1, len(lines) + 1):
+        # # # # # #     tp = self.calendar_surface.tile_properties[i][0]
+        # # # # # #     tile = tp["tag_rect"]
+        # # # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
+        # # # # # #     tw = self.calendar_surface.tile_width
+        # # # # # #     x = self.calendar_surface.canvasx(0 - tw)
+        # # # # # #     x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
+        # # # # # #     print(f"{tile=}, {x=}, {bbox=}")
+        # # # # # #
+        # # # # # #     self.calendar_surface.moveto(tile, x, bbox[1])
+        # # # # # #     for i in range(1, 6):
+        # # # # # #         self.calendar_surface.moveto(tp[f"t{i}_tag"], x + (tw // 2), bbox[1] + ((bbox[3] - bbox[1]) // 2))
+        # # # # # #     # self.xview('scroll', int(-1 * (event.delta / 120)), 'units')
+        # # # # # #     # self.calendar_surface.xview('scroll', int(-1 * (args[1] / 120)), 'units')
 
     def onFrameConfigure(self, event):
         print(f"{self.calendar_surface.cget('scrollregion')=}")
@@ -1511,6 +1670,13 @@ class App(tkinter.Tk):
             tkinter.messagebox.showinfo(title="Server Update",
                                         message="Error, your user is not currently allowed to make edits to the production schedule. Please contact IT for further assistance.")
 
+    def click_info_frame_quote_hyperlink(self, event):
+        before = self.tv_entry_unit_scroll_search.get()
+        self.tv_entry_unit_scroll_search.set(self.frame_info_frame.get_value("SGQuote#"))
+        self.click_search_units(None)
+        self.tv_entry_unit_scroll_search.set(before)
+
+
     def click_debug_show_scrollregion(self):
         can = self.calendar_surface
         print(f"self.calendar_surface.scrollregion:\n{can.cget('scrollregion')}")
@@ -1530,7 +1696,7 @@ class App(tkinter.Tk):
         print("REFRESHING")
         self.restart_handle()
 
-    def click_redo(self):
+    def click_redo(self, *event):
         redo_data = self.calendar_surface.redo()
         success, data = redo_data
         msg = data["msg"]
@@ -1567,13 +1733,14 @@ class App(tkinter.Tk):
                         (df["dtProductionSchedule_SGQuote"] == quote) |
                         (df["dtProductionScheduleV2_SGQuote"] == quote)
                 )]
-                wo1, wo2, wo3, dealer, sn, model_no = to_add[[
+                wo1, wo2, wo3, dealer, sn, model_no, cust_wo = to_add[[
                     "OrdersV2_WO#",
                     "dtProductionSchedule_WO#",
                     "dtProductionScheduleV2_WO#",
                     "COMPANY NAME",
                     "Serial Number",
-                    "Model No"
+                    "Model No",
+                    "Customer WO#"
                 ]].values.tolist()[0]
                 wo = wo1 if wo1 else (wo2 if wo2 else wo3)
                 print(f"{wo=}, {dealer=}, {sn=}, {model_no=}")
@@ -1583,6 +1750,8 @@ class App(tkinter.Tk):
                 od.update({"Model No": model_no})
                 od.update({"Dealer": dealer})
                 od.update({"Serial#": sn})
+                od.update({"Serial#": sn})
+                od.update({"Customer WO#": cust_wo})
                 self.multi_combo_unit_selection.add_new_item(quote, "SGQuote", od)
                 # values = list(self.combo_unit_selection["values"])
                 # values.append(quote)
@@ -1608,7 +1777,7 @@ class App(tkinter.Tk):
                 raise ValueError(f"Error redo not successful. Returned {success}\n{msg=}")
         print(f"REDO {success}, {msg=}")
 
-    def click_undo(self):
+    def click_undo(self, *args):
         undo_data = self.calendar_surface.undo()
         success, data = undo_data
         msg = data["msg"]
@@ -1701,9 +1870,13 @@ class App(tkinter.Tk):
         # self.calendar_surface.dbl_click_tile(event)
         x, y = event.x, event.y
         tile = self.calendar_surface.tile_at_xy((x, y))
-        r_c = self.calendar_surface.rc_at_xy((x, y))
-        print(f"Double right click!, tile chosen: {tile}")
-        self.calendar_surface.revert_colour(r_c)
+        r, c = self.calendar_surface.rc_at_xy((x, y))
+        unit = self.calendar_surface.tile_properties[r][c]["unit_in"]
+        print(f"Double right click!, tile chosen: {tile=}, {unit=}, {r=}, {c=}")
+
+        if tile is not None and unit is None:
+            print(f"REVERTING COLOUR ON DBL CLICK")
+            self.calendar_surface.revert_colour((r, c))
 
     def update(self) -> None:
         if self.app_state == "DRAGGING":

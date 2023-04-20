@@ -115,6 +115,10 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_width = None
         self.tile_height = None
         # self.texts = []
+        self.legend_frame_lines = tkinter.Frame(self)
+        self.label_left_most_legend = tkinter.Label(self.legend_frame_lines, text="LEGEND HERE")
+        self.window_legend_lines = self.create_window((0, 0), window=self.legend_frame_lines, anchor="center")
+        self.label_left_most_legend.grid()
         self.tile_properties = []  # list of dictionaries containing the rest of the required tile data (text id and tvs)
         self.tiles = self.init_tiles()  # list of canvas tags for the cells len = n_rows * n_cols
         self.raise_legend()
@@ -152,7 +156,7 @@ class CalendarSurface(tkinter.Canvas):
 
     def init_tiles(self) -> list:
         ts = self.tile_space  # space between tiles
-        tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
+        tw = (self.canvas_width - ((self.n_visible_cols) * ts)) / (self.n_visible_cols)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
         tw_we = tw * self.weekend_proportion  # tile width weekend
         th_we = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height weekend
@@ -176,7 +180,7 @@ class CalendarSurface(tkinter.Canvas):
             row_2 = []
             tile_detail_row = []
             weekend_days = 0
-            for c in range(self.cols + 1):
+            for c in range(self.cols):
 
                 x1 = (c * tw) + ((c + 1) * ts) + (ts / 2)
                 y1 = (r * th) + ((r + 1) * ts) + (ts / 2)
@@ -192,13 +196,12 @@ class CalendarSurface(tkinter.Canvas):
 
                 # print(f"\tB {r=}, {c=}, {x1=}, {x2=}, {x2=}, {y2=}, {weekend_days=}, {tw - tw_we=}, {th - th_we=}")
 
-                if c > 0:
-                    today = self.dates_list[c - 1]
-                    if self.date_status[c - 1] > 4:
-                        # print(f"\t{today=}, {self.date_status[c - 1]=}")
-                        weekend_days += 1
-                        x2 -= (tw - tw_we)
-                        y2 -= (th - th_we)
+                today = self.dates_list[c]
+                if self.date_status[c] > 4:
+                    # print(f"\t{today=}, {self.date_status[c - 1]=}")
+                    weekend_days += 1
+                    x2 -= (tw - tw_we)
+                    y2 -= (th - th_we)
 
                 xd = x2 - x1
                 yd = y2 - y1
@@ -216,7 +219,7 @@ class CalendarSurface(tkinter.Canvas):
                 ))
                 # text_1 = tkinter.StringVar(self, name=self.cal, value=f"{r-1=}")
                 text_1 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 1), value=f"{r-1=}")
-                text_2 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 2), value=f"{c-1=}")
+                text_2 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 2), value=f"{c=}")
                 text_3 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 3), value=f"")
                 text_4 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 4), value=f"")
                 text_5 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 5), value=f"")
@@ -233,11 +236,11 @@ class CalendarSurface(tkinter.Canvas):
                     # else:
                     #     text_1.set("")
                     #     text_2.set("")
-                    if r == 0 and c > 0:
-                        if (self.day_of_week(c - 1) <= 4 or c == 0):
+                    if r == 0:
+                        if (self.day_of_week(c) <= 4 or c == 0):
                             # text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
                             # legend
-                            today = self.dates_list[c - 1]
+                            today = self.dates_list[c]
                             text_1.set(f"{today:%Y}")
                             text_2.set(f"{today:%B}")
                             text_3.set(f"{today:%d}")
@@ -246,6 +249,7 @@ class CalendarSurface(tkinter.Canvas):
                             text_5.set(f"{today:%A}")
                             text_6.set(f"{today:%A}")
                         else:
+                            # top left-most tile
                             text_1.set("")
                             text_2.set("")
                             text_3.set("")
@@ -253,8 +257,10 @@ class CalendarSurface(tkinter.Canvas):
                             text_5.set("")
                             text_6.set("")
                     elif c == 0 and r > 0:
-                        text_1.set("")
-                        text_2.set(f"{self.lines[r - 1]}")
+                        # TODO add to the new window here
+                        pass
+                        # text_1.set("")
+                        # text_2.set(f"{self.lines[r - 1]}")
                     else:
                         text_1.set("")
                         text_2.set("")
@@ -263,8 +269,10 @@ class CalendarSurface(tkinter.Canvas):
                         text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
                         text_2.set("")
                     if c == 0 and r > 0:
-                        text_1.set("")
-                        text_2.set(f"{self.lines[r - 1]}")
+                        # TODO add to the new window here
+                        pass
+                        # text_1.set("")
+                        # text_2.set(f"{self.lines[r - 1]}")
 
                     text_3.set(f"{row[-1]}")
                     text_4.set(f"{r=}")
@@ -296,7 +304,7 @@ class CalendarSurface(tkinter.Canvas):
                             wip_y,
                             text=wip_t.get(),
                             fill=font_colour,
-                            width=tw if (self.day_of_week(c - 1) <= 4 or (c == 0 and r > 0)) else tw_we,
+                            width=tw if (self.day_of_week(c) <= 4 or (c == 0 and r > 0)) else tw_we,
                             activefill=active_fill_colour
                         )
                     )
@@ -355,29 +363,31 @@ class CalendarSurface(tkinter.Canvas):
         outline_colour = self.tile_outline_colour
         active_fill_colour = self.active_fill_colour
         active_outline_colour = self.active_outline_colour
-        if r == 0 and c > 0:
-            tile_colour = self.col_legend_background_colour
-            outline_colour = self.col_legend_outline_colour
-            active_fill_colour = self.col_legend_active_background_colour
-            active_outline_colour = self.col_legend_active_outline_colour
-        if c == 0 and r > 0:
-            tile_colour = self.row_legend_background_colour
-            outline_colour = self.row_legend_outline_colour
-            active_fill_colour = self.row_legend_active_background_colour
-            active_outline_colour = self.row_legend_active_outline_colour
+        # if r == 0 and c > 0:
+
+        tile_colour = self.col_legend_background_colour
+        outline_colour = self.col_legend_outline_colour
+        active_fill_colour = self.col_legend_active_background_colour
+        active_outline_colour = self.col_legend_active_outline_colour
+
+        # if c == 0 and r > 0:
+        #     tile_colour = self.row_legend_background_colour
+        #     outline_colour = self.row_legend_outline_colour
+        #     active_fill_colour = self.row_legend_active_background_colour
+        #     active_outline_colour = self.row_legend_active_outline_colour
         if r == 0 and c == 0:
             tile_colour = rgb_to_hex(BLACK)
             outline_colour = rgb_to_hex(WHITE)
             active_fill_colour = rgb_to_hex(WHITE)
             active_outline_colour = rgb_to_hex(BLACK)
 
-        if c > 0:
-            dat = self.dates_list[c - 1]
-            if dat.weekday() > 4:
-                tile_colour = self.tile_wkd_background_colour
-                outline_colour = self.tile_wkd_outline_colour
-                active_fill_colour = self.active_wkd_fill_colour
-                active_outline_colour = self.active_wkd_outline_colour
+        # if c > 0:
+        dat = self.dates_list[c]
+        if dat.weekday() > 4:
+            tile_colour = self.tile_wkd_background_colour
+            outline_colour = self.tile_wkd_outline_colour
+            active_fill_colour = self.active_wkd_fill_colour
+            active_outline_colour = self.active_wkd_outline_colour
 
         font_colour = rgb_to_hex(font_foreground(tile_colour))
         return tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour
@@ -811,16 +821,16 @@ class CalendarSurface(tkinter.Canvas):
                 next_col = self.next_available_day(r)
                 print(f"NEXT AVAILABLE COLUMN={next_col} ON {self.dates_list[next_col]}, ON LINE {self.lines[r - 1]}")
 
-            wd = self.day_of_week(c - 1)
+            wd = self.day_of_week(c)
             if wd > 4:
-                date = self.dates_list[c - 1]
+                date = self.dates_list[c]
                 pn = [-1, -1]
                 tc = c - 1
-                while (tc > 0) and (self.day_of_week(tc - 1) > 4):
+                while (tc > 0) and (self.day_of_week(tc) > 4):
                     tc -= 1
                 if tc < 0:
                     raise ValueError(f"Error, cannot place tile at column c prev. Out of range: {tc}")
-                prev_day = self.dates_list[tc - 1]
+                prev_day = self.dates_list[tc]
                 if tc == 0:
                     # need to add to beyond left
                     print("\tAdding to beyond left")
@@ -828,7 +838,7 @@ class CalendarSurface(tkinter.Canvas):
                     self.tiles_beyond[line_in]["left"].insert(-1, unit_in)
                 pn[0] = tc - 0
                 tc = c + 1
-                while (tc < len(self.dates_list)) and (self.day_of_week(tc - 1) > 4):
+                while (tc < len(self.dates_list)) and (self.day_of_week(tc) > 4):
                     tc += 1
                 if tc < 0:
                     raise ValueError(f"Error, cannot place tile at column c next. Out of range: {tc}")
@@ -837,7 +847,7 @@ class CalendarSurface(tkinter.Canvas):
                     print("\tAdding to beyond right")
                     line_in = unit_in.JobStartLine
                     self.tiles_beyond[line_in]["right"].insert(0, unit_in)
-                next_day = self.dates_list[tc - 1]
+                next_day = self.dates_list[tc]
                 pn[1] = tc + 0
                 prev_day_msg = f"<< {prev_day:'%Y-%m-%d'} <<"
                 next_day_msg = f">> {next_day:'%Y-%m-%d'} >>"
@@ -937,7 +947,7 @@ class CalendarSurface(tkinter.Canvas):
                     print(f"placing tile! B {unit_in=}")
                     unit_in.placed = True
                 # print(f"{unit_in.history['_placed']=}")
-                unit_in.Available_Date = self.dates_list[c - 1]
+                unit_in.Available_Date = self.dates_list[c]
                 unit_in.JobStartLine = self.lines[r - 1]
                 unit_in.job_start_line_v2 = self.lines[r - 1]
             self.tile_properties[r][c]["unit_in"] = unit_in
