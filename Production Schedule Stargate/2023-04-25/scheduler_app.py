@@ -2145,7 +2145,6 @@ class App(tkinter.Tk):
         else:
             cd = dict(data[cs])
 
-
         if not clear:
             cd[dealer] = colour
         elif dealer in cd:

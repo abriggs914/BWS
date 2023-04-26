@@ -1,3 +1,5 @@
+USE BWSdb
+GO
 
 -- Who updates discounts when
 
@@ -15,6 +17,8 @@ LEFT JOIN
 	 [Discounts].[DealerID] = [Dealers].[ID]
 ORDER BY
  [LastUpdated] DESC
+;
+
 --WHERE
 	--[Discounts].[Slot] <> 1 OR [Market] <> 1
 	--[Active] = 1
