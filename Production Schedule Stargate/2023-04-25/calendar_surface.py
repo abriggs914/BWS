@@ -1,4 +1,4 @@
-import datetime
+import dataclasses
 import tkinter_utility
 from tkinter_utility import tkinter
 
@@ -10,15 +10,12 @@ from stg_queries import *
 import math
 
 
-PROGRAM_MODE = "LIVE"
-# PROGRAM_MODE = "TEST"
-
-
 class CalendarSurface(tkinter.Canvas):
 
     def __init__(
             self,
             master,
+            PROGRAM_MODE: str,
             user_name: str,
             width: int,
             height: int,
@@ -65,6 +62,8 @@ class CalendarSurface(tkinter.Canvas):
     ):
         super().__init__(master, width=width, height=height)
 
+        self.PROGRAM_MODE = PROGRAM_MODE
+
         self.status = tkinter.Variable(self, value={})
         self.dirty_status_var = dirty_status_var if dirty_status_var is not None else tkinter.BooleanVar(self, value=False)
 
@@ -82,8 +81,8 @@ class CalendarSurface(tkinter.Canvas):
         self.cols = (self.end_date - self.start_date).days
         self.max_tiles = self.rows * self.cols
         self.text_order = text_order
-        self.illegal_saturday = illegal_saturday
-        self.illegal_sunday = illegal_sunday
+        self.illegal_saturday = tkinter.BooleanVar(self, value=illegal_saturday)
+        self.illegal_sunday = tkinter.BooleanVar(self, value=illegal_sunday)
 
         self.weekend_proportion = weekend_proportion
         self.holidays = holidays
@@ -150,6 +149,79 @@ class CalendarSurface(tkinter.Canvas):
             # for c in range(self.cols + 1):
             #     if c == 0
 
+    def toggle_saturday(self):
+        illegal_sat = self.illegal_saturday.get()
+        tw_we = self.tile_width_weekend
+        th_we = self.tile_height_weekend
+        tw = self.tile_width
+        th = self.tile_height
+        ntw = tw if illegal_sat else tw_we
+        n_weekends = sum([d.weekday() == 5 for d in self.dates_list])
+        gd = (tw - tw_we) if illegal_sat else (tw_we - tw)
+        t_props = self.tile_properties
+
+        for j in range(len(self.dates_list) - 1, -1, -1):
+            d = self.dates_list[j - 1]
+            isat = d.weekday() == 5
+            c_off = 0
+            for i in range(len(self.lines) + 1):
+                r = i
+                # c = len(t_props[r]) - (j + 1)
+                c = j
+                props = t_props[r][c]
+                r_id = props["tag_rect"]
+                x1, y1, x2, y2 = props["x1"], props["y1"], props["x2"], props["y2"]
+                w = x2 - x1
+                x1 += ((n_weekends - c_off) * gd)
+                # x2 += (c * gd)
+                # if w != ntw:
+                x2 = x1 + (ntw if isat else tw)
+                self.coords(r_id, x1, y1, x2, y2)
+                if r < 5 and c < 5:
+                    print(f"{r=}, {c=}, {((n_weekends - c_off) * gd)=}")
+                    print(f"{props}")
+            if isat:
+                c_off += 1
+
+        self.illegal_saturday.set(not illegal_sat)
+
+        # illegal_sun = self.illegal_sunday.get()
+        # self.illegal_sunday.set(not illegal_sun)
+
+    #
+    # def toggle_saturday(self):
+    #     illegal_sat = self.illegal_saturday.get()
+    #     tw_we = self.tile_width_weekend
+    #     th_we = self.tile_height_weekend
+    #     tw = self.tile_width
+    #     th = self.tile_height
+    #     ntw = tw if not illegal_sat else tw_we
+    #     n_weekends = sum([d.weekday() > 4 for d in self.dates_list])
+    #     # gd = (tw - tw_we) if illegal_sat else (tw_we - tw)
+    #     t_props = self.tile_properties
+    #     for j, d in enumerate(self.dates_list):
+    #         c_off = 0
+    #         for i, line in enumerate(self.lines):
+    #             we = d.weekday() > 4
+    #             r = i + 1
+    #             c = len(t_props[r]) - (j + 1)
+    #             props = t_props[r][c]
+    #             r_id = props["tag_rect"]
+    #             x1, y1, x2, y2 = props["x1"], props["y1"], props["x2"], props["y2"]
+    #             w = x2 - x1
+    #             x1 += (c * gd)
+    #             x2 += (c * gd)
+    #             if w != ntw:
+    #                 x2 = x1 + ntw
+    #             self.coords(r_id, x1, y1, x2, y2)
+    #             if j < 5:
+    #                 print(f"{props}")
+    #
+    #     self.illegal_saturday.set(not illegal_sat)
+    #
+    #     # illegal_sun = self.illegal_sunday.get()
+    #     # self.illegal_sunday.set(not illegal_sun)
+
     def init_tiles(self) -> list:
         ts = self.tile_space  # space between tiles
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
@@ -166,9 +238,10 @@ class CalendarSurface(tkinter.Canvas):
         # print(f"{self.rows=}, {self.cols=}")
 
         tiles = []
-        # n_slices = (self.rows + 1) * (self.cols + 1)
+        n_slices = (self.rows + 1) * (self.cols + 1)
         # print(f"{n_slices=}")
-        # grad = rainbow_gradient(n_slices)
+        grad = rainbow_gradient(n_slices, rgb=False)
+        count = 0
         # TODO recalculate these positions so that the left most column is unaffected by the 'timeline' shifting
         #  Currently this tile is treated the same as all of the others
         for r in range(self.rows + 1):
@@ -207,6 +280,15 @@ class CalendarSurface(tkinter.Canvas):
 
                 tile_colour, outline_colour, active_fill_colour, active_outline_colour, font_colour = self.calc_colours(r, c)
 
+                if self.PROGRAM_MODE == "TEST":
+                    count += 1
+                    # print(f"grabbing the {count=}, {n_slices=}")
+                    try:
+                        tile_colour = next(grad)
+                        font_colour = font_foreground(tile_colour, rgb=False)
+                    except StopIteration:
+                        pass
+
                 row.append(self.create_rectangle(
                     x1, y1, x2, y2,
                     fill=tile_colour,
@@ -222,7 +304,7 @@ class CalendarSurface(tkinter.Canvas):
                 text_5 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 5), value=f"")
                 text_6 = tkinter.StringVar(self, name=self.sv_keyify(r, c, 6), value=f"")
 
-                if PROGRAM_MODE == "LIVE":
+                if self.PROGRAM_MODE == "LIVE":
                     # if r == 0 and c > 0:
                     #     # text_1.set(f"{self.start_date + datetime.timedelta(days=c):%Y-%m-%d}")
                     #     text_1.set(f"{self.dates_list[c - 1]:%Y-%m-%d}")

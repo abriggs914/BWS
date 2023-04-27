@@ -3,6 +3,7 @@ import json
 import os
 
 from utility import dict_print
+from datetime_utility import date_str_format
 
 class SettingsWriter:
 
@@ -20,6 +21,7 @@ class SettingsWriter:
         assert isinstance(viewable_months, int) and viewable_months > 0, f"Error param 'viewable_months' must be a valid int instance, and it must be non-negative, and non-zero. Got viewable_months={viewable_months}, type='{type(illegal_sun)}'"
         assert isinstance(start_date, datetime.datetime), f"Error param 'start_date must be a valid datetime.datetime instance. Got '{type(start_date)}'"
 
+        self.write_date = datetime.datetime.now()
         self.output_file = output_file
         self.user_name = os.getlogin()
         self.illegal_sat = illegal_sat
@@ -29,6 +31,7 @@ class SettingsWriter:
         self.colour_scheme = colour_scheme
 
         self.settings_keys = [
+            "write_date",
             "user_name",
             "allow_saturday",
             "allow_sunday",
@@ -38,6 +41,7 @@ class SettingsWriter:
         ]
 
     def write(self):
+        write_date = date_str_format(self.write_date, include_time=True)
         name = self.user_name
         illegal_sat = self.illegal_sat
         illegal_sun = self.illegal_sun
@@ -48,6 +52,7 @@ class SettingsWriter:
 
         keys = self.settings_keys
         vals = [
+            write_date,
             name,
             not illegal_sat,
             not illegal_sun,

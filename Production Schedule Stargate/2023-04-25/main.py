@@ -77,8 +77,10 @@ def error_test():
 
 if __name__ == '__main__':
 
-    if not os.path.isfile(SETTINGS_FILE):
-        sf = SETTINGS_FILE if not PROGRAM_MODE != "TEST" else SETTINGS_FILE_TEST
+    sf = SETTINGS_FILE if not PROGRAM_MODE == "TEST" else SETTINGS_FILE_TEST
+    print(f"{sf=}")
+    if not os.path.isfile(sf):
+        print(f"not os")
         SettingsWriter(output_file=sf).write()
 
     today = None

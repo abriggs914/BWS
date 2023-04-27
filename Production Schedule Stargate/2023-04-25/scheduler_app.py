@@ -2,6 +2,7 @@ import calendar
 import sys
 import os
 import json
+import tkinter
 import webbrowser
 
 import pdfkit
@@ -121,12 +122,15 @@ class App(tkinter.Tk):
         self.frame_top_bar_f = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_f")
         self.frame_top_bar_g = tkinter.Frame(self.frame_top_bar, name="frame_top_bar_g")
 
+        self.frame_toggles_sat_sun = tkinter.Frame(self.frame_top_bar_f, name="frame_toggles_sat_sun")
+
         self.tl_multi_combo = None
         self.tag_tl_multi_combo = "tl_multi_combo"
         self.var_multi_combo_unit_popped = tkinter.BooleanVar(self, value=False)
 
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, lines=used_lines, user_name=self.user_name,
+        self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
+                                                lines=used_lines, user_name=self.user_name,
                                                 width=can_w, height=can_h, dirty_status_var=self.dirty,
                                                 start_date=self.start_date, weekend_proportion=0.1,
                                                 illegal_saturday=self.illegal_saturday,
@@ -398,6 +402,23 @@ class App(tkinter.Tk):
             }
         )
 
+        self.toggle_button_sat = ToggleButton(
+            self.frame_toggles_sat_sun,
+            labels=None,
+            label_text="Sat",
+            state=not self.illegal_saturday,
+            width_label=5
+        )
+
+        self.toggle_button_sun = ToggleButton(
+            self.frame_toggles_sat_sun,
+            labels=None,
+            label_text="Sun",
+            state=not self.illegal_sunday,
+            width_label=5,
+            auto_grid=(0, 1)
+        )
+
         ###############################################################################################################
         #   bind event handlers
         ###############################################################################################################
@@ -417,6 +438,9 @@ class App(tkinter.Tk):
         self.showing_line_shifter = tkinter.BooleanVar(self, value=False)
         self.showing_colour_coder.trace_variable("w", self.update_showing_widgets)
         self.showing_line_shifter.trace_variable("w", self.update_showing_widgets)
+
+        self.toggle_button_sat.state.trace_variable("w", self.update_toggle_sat)
+        self.toggle_button_sun.state.trace_variable("w", self.update_toggle_sun)
 
         self.bind("<Control-p>", self.print_schedule)
         self.bind("<Control-z>", self.click_undo)
@@ -438,8 +462,17 @@ class App(tkinter.Tk):
         data = self.settings_data
         if cs in data:
             dealers = self.settings_data[cs]
-            for dealer, colour in dealers.items():
-                self.colour_coder_update(None, None, None, init_pass={"dealer": dealer, "colour": colour})
+            if dealers is not None:
+                for dealer, colour in dealers.items():
+                    c = colour.lower()
+                    self.frame_colour_coder.status[dealer.title()] = c
+                    if c in self.frame_colour_coder.colours:
+                        self.frame_colour_coder.remove_colour(c)
+                    # else:
+                    #     self.frame_colour_coder.colours
+                    self.colour_coder_update(None, None, None, init_pass={"dealer": dealer, "colour": c})
+                    print(f"INIT {dealer=} with {c=}")
+                    print(dict_print(self.frame_colour_coder.status, "NEW STATUS"))
 
     def grid_keys(self):
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
@@ -500,6 +533,7 @@ class App(tkinter.Tk):
             self.debug_entry_app_state.grid()
             self.debug_show_history.grid()
             self.debug_show_scrollregion.grid()
+            self.frame_toggles_sat_sun.grid()
 
     def init_tl_multi_combo(self):
         self.tl_multi_combo = tkinter.Toplevel()
@@ -529,6 +563,13 @@ class App(tkinter.Tk):
         else:
             self.line_shifter.grid_forget()
             self.canv_btn_show_line_shifter.change_direction("s")
+
+    def update_toggle_sat(self, *args):
+        print(f"update saturday toggle: {self.toggle_button_sat.state.get()}")
+        self.calendar_surface.toggle_saturday()
+
+    def update_toggle_sun(self, *args):
+        print(f"update sunday toggle: {self.toggle_button_sun.state.get()}")
 
     def calendar_surface_status_update(self, *args):
         status_data = eval(self.calendar_surface.status.get())
@@ -2133,6 +2174,11 @@ class App(tkinter.Tk):
             info = init_pass
 
         dealer, colour, clear = info["dealer"], info["colour"], info.get("clear", False)
+        colour = Colour(colour)
+        if colour.colour_name is None:
+            colour = get_colour_name(colour, name_only=True).title()
+        else:
+            colour = colour.colour_name
         self.calendar_surface.colour_code_dealer(dealer, colour)
 
         data = dict(self.settings_data)
@@ -2149,6 +2195,12 @@ class App(tkinter.Tk):
             cd[dealer] = colour
         elif dealer in cd:
             del cd[dealer]
+
+        # print(f"{data=}")
+        # print(f"{cd=}")
+        self.settings_data[cs] = cd
+
+        # self.settings_data = cd
 
         SettingsWriter(output_file=self.SETTINGS_FILE, colour_scheme=cd).write()
 

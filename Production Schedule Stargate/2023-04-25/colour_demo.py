@@ -1,7 +1,7 @@
 import datetime
 
 from tkinter import colorchooser
-from colour_utility import Colour
+from colour_utility import Colour, get_colour_name
 from tkinter_utility import tkinter, combo_factory, button_factory
 
 
@@ -52,8 +52,8 @@ class ColourWidget(tkinter.Frame):
         if do_c_sort:
             self.colours.sort(key=lambda k: k if k else "none")
 
-        self.status = {d: "none" for d in self.dealers}
-        self.custom = {d: "none" for d in self.dealers}
+        self.status = {d.title(): "none" for d in self.dealers}
+        self.custom = {d.title(): "none" for d in self.dealers}
 
         self.tv_lbl1, self.lbl1, self.tv_cb1, self.cb1 = combo_factory(self.f1, tv_label="Dealers", kwargs_label={"background": self.colour_background}, kwargs_combo={"values": self.dealers, "state": "readonly", "width":75})
         self.tv_lbl2, self.lbl2, self.tv_cb2, self.cb2 = combo_factory(self.f1, tv_label="Colours", kwargs_label={"background": self.colour_background}, kwargs_combo={"values": self.colours, "state": "readonly", "width":75})
@@ -117,7 +117,7 @@ class ColourWidget(tkinter.Frame):
         self.configure(background=self.colour_background)
 
     def dealer_colour(self):
-        return self.tv_cb1.get(), self.tv_cb2.get()
+        return self.tv_cb1.get().title(), self.tv_cb2.get().lower()
 
     def click_clear_all(self):
         for d in self.dealers:
@@ -135,18 +135,22 @@ class ColourWidget(tkinter.Frame):
             clear = True
         elif colour == "custom":
             colour = self.colour_choose()
+            colour = get_colour_name(colour, name_only=True).title()
+            self.tv_cb2.set(colour)
         if colour is None:
             colour = self.default_colour
             clear = True
-        self.status[dealer] = colour
+        self.status[dealer] = colour.lower()
         self.status_code.set(f"{{'dealer': '{dealer.upper()}', 'colour': '{colour.upper()}', 'clear': {clear}}}")
 
     def new_dealer(self, var_name, index, mode):
         d, c = self.dealer_colour()
+        print(f"NEW DEALER {d=}, {c=}")
         if c:
             self.tv_cb2.set("")
         if d:
-            state = self.status[d]
+            state = self.status[d].lower()
+            print(f"d and {state=}")
             if state and state != "none":
                 self.cb2.set(state)
 
@@ -162,8 +166,9 @@ class ColourWidget(tkinter.Frame):
     def remove_colour(self, colour):
         if colour not in ["custom", "none"]:
             lst = list(self.cb2["values"])
-            lst.remove(colour)
-            self.cb2.config(values=lst)
+            if colour in lst:
+                lst.remove(colour)
+                self.cb2.config(values=lst)
 
     def add_colour(self, colour):
         colour = "none" if colour is None else colour
