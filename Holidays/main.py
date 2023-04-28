@@ -2,6 +2,8 @@ import datetime
 
 import holidays
 
+from datetime_utility import first_of_month, first_of_week
+
 
 # can_holidays = holidays.Canada()
 
@@ -82,7 +84,42 @@ def add_halloweens():
     print("\n" + "\n".join(i_templates_list) + "\n")
 
 
+def add_mothers_day():
+    # second sunday in May, https://www.calendardate.com/mothers_day_2023.htm
+    start = 2011
+    end = 2025
+    i_templates_list = []
+    for y in range(start, end + 1):
+        dm = first_of_month(datetime.datetime(y, 5, 1))
+        dw = first_of_week(dm)
+        dy = 14
+        if dm == dw:
+            dy = 7
+        d = dw + datetime.timedelta(days=dy)
+        # print(f"{d:%Y-%m-%d}")
+        i_templates_list.append(f"UPDATE [Calendar] SET [HolidayName] = 'Mother''s Day' WHERE [Date] = '{d:%Y-%m-%d}';")
+    print("\n" + "\n".join(i_templates_list) + "\n")
+
+
+def add_fathers_day():
+    # third sunday in June, https://www.calendardate.com/mothers_day_2023.htm
+    start = 2011
+    end = 2025
+    i_templates_list = []
+    for y in range(start, end + 1):
+        dm = first_of_month(datetime.datetime(y, 6, 1))
+        dw = first_of_week(dm)
+        dy = 21
+        if dm == dw:
+            dy = 14
+        d = dw + datetime.timedelta(days=dy)
+        # print(f"{d:%Y-%m-%d}")
+        i_templates_list.append(f"UPDATE [Calendar] SET [HolidayName] = 'Father''s Day' WHERE [Date] = '{d:%Y-%m-%d}';")
+    print("\n" + "\n".join(i_templates_list) + "\n")
+
 if __name__ == '__main__':
     # new_inserts()
     # old_updates()
-    add_halloweens()
+    # add_halloweens()
+    add_mothers_day()
+    add_fathers_day()
