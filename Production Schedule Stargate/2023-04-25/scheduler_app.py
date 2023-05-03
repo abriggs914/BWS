@@ -77,6 +77,7 @@ class App(tkinter.Tk):
         ###############################################################################################################
         self.valid_app_states = ["IDLE", "DRAGGING", "SELECTED"]
         self._app_state = "IDLE"
+        self.min_calendar_search_char_threshold = 3
         self.drag_tile_queue = []
         self.drag_text_queue = []
         self.drag_tile = None
@@ -124,6 +125,10 @@ class App(tkinter.Tk):
 
         self.frame_toggles_sat_sun = tkinter.Frame(self.frame_top_bar_f, name="frame_toggles_sat_sun")
 
+        self.tl_search_choice = None
+        self.tl_search_choice_frame = None
+        self.tag_tl_search_choice = "tl_search_choice"
+
         self.tl_multi_combo = None
         self.tag_tl_multi_combo = "tl_multi_combo"
         self.var_multi_combo_unit_popped = tkinter.BooleanVar(self, value=False)
@@ -161,7 +166,8 @@ class App(tkinter.Tk):
             tv_label="Select a Quote #:",
             height_in_rows=8,
             lock_result_col="SGQuote",
-            viewable_column_widths=[100, 100, 180, 180, 150]
+            viewable_column_widths=[100, 100, 180, 180, 150],
+            limit_to_list=False
         )
 
         # self.multi_combo_unit_selection.configure(background="tan")
@@ -1169,12 +1175,31 @@ class App(tkinter.Tk):
         else:
             print(f"LET GO OFF CALENDAR")
 
+    def finalize_search_choice(self, options):
+        if len(options) == 1:
+            return list(options.keys())[0]
+        self.tl_search_choice = tkinter.Toplevel(self)
+        self.tl_search_choice_frame = tkinter.Frame(self.tl_search_choice)
+        buttons = list(options.keys())
+        frames = []
+        for quote in buttons:
+            opts = "\n".join(options[quote])
+            frames.append(tkinter.Frame(self.tl_search_choice_frame))
+            bf = button_factory(frames[-1], tv_btn=quote.upper())
+            lf = label_factory(frames[-1], tv_label=opts)
+            frames[-1].grid()
+            bf[1].grid()
+            lf[1].grid()
+        self.tl_search_choice_frame.grid()
+
+
     def click_search_units(self, *args):
         text = self.tv_entry_unit_scroll_search.get().upper()
         bba = self.calendar_surface.bbox("all")
         bbaw = (bba[2] - bba[0])
         cw = self.calendar_surface.canvas_width
         print(f"{self.calendar_surface.units=}")
+        handled = False
         if text:
             if text in self.calendar_surface.units:
                 unit_in = self.calendar_surface.units[text]
@@ -1203,7 +1228,39 @@ class App(tkinter.Tk):
                     l = unit_in.job_start_line_v2
                     messagebox.showinfo(title="Calendar Search",
                                         message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
-            elif (date_in := is_date(text)) is not None:
+                    handled = True
+            elif len(text) >= self.min_calendar_search_char_threshold:
+                print(f"Need to search all units by all columns.")
+                print(f"Searching placed units")
+                f_unit = None
+                results = {}
+                for unit, u_data in self.calendar_surface.units.items():
+                    if unit:
+                        print(f"unit= {unit}")
+                        dat = u_data.__dict__
+                        for key, val in dat.items():
+                            if key != "_history":
+                                if text in str(val).upper():
+                                    handled = True
+                                    f_unit = unit
+                                    msg = f"Search term = {text}, Same value as {key=}: {val}"
+                                    print(msg)
+                                    if unit not in results:
+                                        results[unit] = []
+                                    results[unit].append(msg)
+
+                print(dict_print(results, "Possible matches"))
+
+                                # self.multi_combo_unit_selection.select(u_data.SGQuote)
+                        #         break
+                        # if handled:
+                        #     break
+
+                if handled:
+                    print(f"f_unit= {f_unit}")
+                    self.finalize_search_choice(results)
+
+            if not handled and ((date_in := is_date(text)) is not None):
                 print(f"DATE: {text=}, {date_in=}")
                 if date_in in self.calendar_surface.dates_list:
                     idx = self.calendar_surface.dates_list.index(date_in)
@@ -1218,6 +1275,8 @@ class App(tkinter.Tk):
                     self.calendar_surface.xview_moveto(x)
                     self.re_draw_legend(None)
                     print(f"found! Date={text} at {r=}, {c=}, {x=}, {y=}")
+            elif handled:
+                pass
             else:
                 messagebox.showerror(title="Search Error", message=f"Error, quote '{text}' not found.")
 
@@ -2101,7 +2160,7 @@ class App(tkinter.Tk):
                 od.update({"Dealer": dealer})
                 od.update({"Serial#": sn})
                 od.update({"Customer WO#": cw})
-                self.multi_combo_unit_selection.add_new_item(unit_in.SGQuote, "SGQuote", od)
+                self.multi_combo_unit_selection.add_new_item(val=unit_in.SGQuote, col="SGQuote", rest_values=od)
             # new_list = list(self.combo_unit_selection["values"])
             # new_list.append(unit_in.SGQuote)
             # new_list.sort()

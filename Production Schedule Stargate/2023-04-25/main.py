@@ -10,8 +10,8 @@ from scheduler_app import App
 SETTINGS_FILE = "./PDS_User_Settings.json"
 SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
 PROD_DATE = datetime.datetime(2023, 4, 18, 11, 30)
-PROGRAM_MODE = "LIVE"
-# PROGRAM_MODE = "TEST"
+# PROGRAM_MODE = "LIVE"
+PROGRAM_MODE = "TEST"
 
 
 # NOTE - Copy this into the desired script you want to restart.
