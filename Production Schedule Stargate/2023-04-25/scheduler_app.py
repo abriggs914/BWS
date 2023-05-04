@@ -440,6 +440,8 @@ class App(tkinter.Tk):
         self.line_shifter.status.trace_variable("w", self.line_shifter_update)
         self.entry_unit_scroll_search.bind("<Return>", self.click_search_units)
 
+        self.multi_combo_unit_selection.tree_treeview.bind("<<TreeviewSelect>>", self.multi_combo_tree_selection_update)
+
         self.showing_colour_coder = tkinter.BooleanVar(self, value=False)
         self.showing_line_shifter = tkinter.BooleanVar(self, value=False)
         self.showing_colour_coder.trace_variable("w", self.update_showing_widgets)
@@ -796,6 +798,18 @@ class App(tkinter.Tk):
         # # #
         # # # pdf.output(FILE_NAME, 'F')
         # # # pdf.open_in_browser()
+
+    def multi_combo_tree_selection_update(self, *args):
+        self.multi_combo_unit_selection.treeview_selection_update(*args)
+        selections = self.multi_combo_unit_selection.tree_treeview.selection()
+        if selections:
+            q_id = int(selections[0])
+            print(f"{q_id=}")
+            # print(f"{self.multi_combo_unit_selection.data=}")
+            # print(f"{self.multi_combo_unit_selection.data['SGQuote']=}")
+            quote = self.multi_combo_unit_selection.data["SGQuote"].tolist()[q_id]
+            print(f"SELECTED Quote: {quote}")
+            self.update_info_frame(quote)
 
     def unbind_top_frame(self):
         self.line_shifter.disable_all_widgets()
@@ -1175,21 +1189,70 @@ class App(tkinter.Tk):
         else:
             print(f"LET GO OFF CALENDAR")
 
+    def enter_multi_combo_unit_and_search(self, quote):
+        self.multi_combo_unit_selection.res_tv_entry.set(quote)
+        self.multi_combo_unit_selection.update_typed_in(None)
+        self.multi_combo_unit_selection.filter_treeview()
+        is_hidden = self.multi_combo_unit_selection.tv_tree_is_hidden.get()
+        if is_hidden:
+            self.multi_combo_unit_selection.click_canvas_dropdown_button(None)
+
+    def destroy_final_search_window(self):
+        self.tl_search_choice.destroy()
+        self.tl_search_choice = None
+
+    def select_final_search(self, quote, key, value, where):
+        # self.multi_combo_unit_selection.select(quote)
+        print(f"FINAL SELECT QUOTE={quote}, {key=}, {value=}, {where=}")
+        if self.tl_search_choice:
+            self.destroy_final_search_window()
+        if where == "combo_box":
+            self.enter_multi_combo_unit_and_search(quote)
+            # print(f"selecting combo box")
+            # self.multi_combo_unit_selection.select(quote)
+            # self.multi_combo_unit_selection.res_tv_entry.set(quote)
+            # self.multi_combo_unit_selection.update_typed_in(None)
+            # self.multi_combo_unit_selection.filter_treeview()
+            # self.multi_combo_unit_selection.submit_typed_in(None)
+        else:
+            # "calendar_surface"
+            self.tv_entry_unit_scroll_search.set(quote)
+            self.click_search_units(None)
+
     def finalize_search_choice(self, options):
-        if len(options) == 1:
-            return list(options.keys())[0]
+        m_rows = 20
+
         self.tl_search_choice = tkinter.Toplevel(self)
+        self.tl_search_choice.grab_set()
+        self.tl_search_choice.protocol("WM_DELETE_WINDOW", self.destroy_final_search_window)
         self.tl_search_choice_frame = tkinter.Frame(self.tl_search_choice)
         buttons = list(options.keys())
+        buttons.sort()
         frames = []
-        for quote in buttons:
-            opts = "\n".join(options[quote])
-            frames.append(tkinter.Frame(self.tl_search_choice_frame))
-            bf = button_factory(frames[-1], tv_btn=quote.upper())
+        row_count = 0
+        for i, quote in enumerate(buttons):
+            opts = "\n".join(options[quote]["msgs"])
+            key = options[quote]["keys"][0]
+            val = options[quote]["vals"][0]
+            where = options[quote]["wheres"][0]
+            frames.append(
+                tkinter.Frame(
+                    self.tl_search_choice_frame,
+                    borderwidth=2,
+                    relief="groove",
+                    width=200
+                )
+            )
+            bf = button_factory(
+                frames[-1],
+                tv_btn=quote.upper(),
+                command=lambda q=quote, k=key, v=val, w=where: self.select_final_search(q, k, v, w))
             lf = label_factory(frames[-1], tv_label=opts)
-            frames[-1].grid()
-            bf[1].grid()
-            lf[1].grid()
+            frames[-1].columnconfigure(0, minsize=100)
+            frames[-1].grid(row=i % m_rows, column=i // m_rows)
+            bf[1].grid(row=0, column=0)
+            lf[1].grid(row=0, column=1)
+            row_count += 1
         self.tl_search_choice_frame.grid()
 
 
@@ -1200,6 +1263,10 @@ class App(tkinter.Tk):
         cw = self.calendar_surface.canvas_width
         print(f"{self.calendar_surface.units=}")
         handled = False
+        if len(text) < self.min_calendar_search_char_threshold:
+            messagebox.showerror(title="Calendar Search",
+                                message=f"Please enter at least {self.min_calendar_search_char_threshold} characters before trying to search.")
+            return
         if text:
             if text in self.calendar_surface.units:
                 unit_in = self.calendar_surface.units[text]
@@ -1217,19 +1284,24 @@ class App(tkinter.Tk):
                         self.calendar_surface.xview_moveto(x)
                         self.re_draw_legend(None)
                         print(f"found! Quote={text} at {r=}, {c=}, {x=}, {y=}")
+                        handled = True
                 elif unit_in.SGQuote or self.multi_combo_unit_selection.value_exists(unit_in.SGQuote):
                     messagebox.showinfo(title="Calendar Search", message="unit found in combo box.")
-                    self.tv_combo_unit_selection.set(text)
-                    self.combo_unit_selection.focus()
-                    self.multi_combo_unit_selection.select(unit_in.SGQuote)
+
+                    self.enter_multi_combo_unit_and_search(unit_in.SGQuote)
+
+                    # self.tv_combo_unit_selection.set(text)
+                    # self.combo_unit_selection.focus()
+                    # self.multi_combo_unit_selection.select(unit_in.SGQuote)
                     self.re_draw_legend(None)
+                    handled = True
                 elif unit_in.SGQuote in self.calendar_surface.get_beyond_quotes():
                     d = unit_in.Available_Date
                     l = unit_in.job_start_line_v2
                     messagebox.showinfo(title="Calendar Search",
                                         message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
                     handled = True
-            elif len(text) >= self.min_calendar_search_char_threshold:
+            else:
                 print(f"Need to search all units by all columns.")
                 print(f"Searching placed units")
                 f_unit = None
@@ -1243,11 +1315,18 @@ class App(tkinter.Tk):
                                 if text in str(val).upper():
                                     handled = True
                                     f_unit = unit
-                                    msg = f"Search term = {text}, Same value as {key=}: {val}"
+                                    where = "combo_box"
+                                    if u_data.placed:
+                                        where = "calendar_surface"
+                                    # msg = f"Search term = {text}, Same value as {key=}: {val}"
+                                    msg = f"Matches '{key.removeprefix('_')}', Value: '{str(val)[:50]}', Where: '{where}'"
                                     print(msg)
                                     if unit not in results:
-                                        results[unit] = []
-                                    results[unit].append(msg)
+                                        results[unit] = {"msgs": [], "keys": [], "vals": [], "wheres": []}
+                                    results[unit]["msgs"].append(msg)
+                                    results[unit]["keys"].append(key)
+                                    results[unit]["vals"].append(val)
+                                    results[unit]["wheres"].append(where)
 
                 print(dict_print(results, "Possible matches"))
 
@@ -1257,8 +1336,16 @@ class App(tkinter.Tk):
                         #     break
 
                 if handled:
-                    print(f"f_unit= {f_unit}")
-                    self.finalize_search_choice(results)
+                    # print(f"f_unit= {f_unit}")
+                    if len(results) > 1:
+                        self.finalize_search_choice(results)
+                    else:
+                        quote = list(results.keys())[0]
+                        key = results[quote]["keys"][0]
+                        val = results[quote]["keys"][0]
+                        where = results[quote]["keys"][0]
+                        self.select_final_search(quote, key, val, where)
+
 
             if not handled and ((date_in := is_date(text)) is not None):
                 print(f"DATE: {text=}, {date_in=}")
@@ -1283,7 +1370,7 @@ class App(tkinter.Tk):
         else:
             messagebox.showerror(title="Search Error", message="Error, please enter a valid quote number, or a date.")
 
-    def update_info_frame(self):
+    def update_info_frame(self, tile_in=None):
         # "SGQuote#",
         # "WO#",
         # "Model No",
@@ -1293,27 +1380,35 @@ class App(tkinter.Tk):
         # "Galvanized",
         # "Prod Date",
         # "Delivery Date"
-        tile = self.select_tile
-        if tile is not None:
-            r_c = self.calendar_surface.tile_to_rc(tile)
-            if r_c is not None:
-                r, c = r_c
-                unit = self.calendar_surface.tile_properties[r][c]["unit_in"]
-                if unit is not None:
-                    labels = self.info_frame_labels
-                    values = [
-                        unit.SGQuote,
-                        unit.WO,
-                        unit.InputField1,
-                        unit.InputField2,
-                        unit.Serial_Number,
-                        unit.Customer_WO,
-                        unit.IsGalv,
-                        unit.Prod_Date_1,
-                        unit.Delivery_Date
-                    ]
-                    for k, v in zip(labels, values):
-                        self.frame_info_frame.change_value(k, v)
+        unit = None
+        if tile_in is None:
+            # use selected tile
+            tile = self.select_tile
+            if tile is not None:
+                r_c = self.calendar_surface.tile_to_rc(tile)
+                if r_c is not None:
+                    r, c = r_c
+                    unit = self.calendar_surface.tile_properties[r][c]["unit_in"]
+        else:
+            unit = self.calendar_surface.units[tile_in]
+
+        print(f"{unit}")
+        if unit is not None:
+            labels = self.info_frame_labels
+            values = [
+                unit.SGQuote,
+                unit.WO,
+                unit.InputField1,
+                unit.InputField2,
+                unit.Serial_Number,
+                unit.Customer_WO,
+                unit.IsGalv,
+                unit.Prod_Date_1,
+                unit.Delivery_Date
+            ]
+            for k, v in zip(labels, values):
+                self.frame_info_frame.change_value(k, v)
+
 
     def click_go_to_today(self):
         before = self.tv_entry_unit_scroll_search.get()
@@ -1786,7 +1881,6 @@ class App(tkinter.Tk):
         self.click_search_units(None)
         self.tv_entry_unit_scroll_search.set(before)
 
-
     def click_debug_show_scrollregion(self):
         can = self.calendar_surface
         print(f"self.calendar_surface.scrollregion:\n{can.cget('scrollregion')}")
@@ -1796,7 +1890,6 @@ class App(tkinter.Tk):
         vs = Rect2(x, y, w, h).tkinter_rect()
         print(f"Viewable region: x={x}, y={y}, w={w}, h={h}")
         print(f"{vs.x1=}, {vs.y1=}, {vs.x2=}, {vs.y2=}")
-
 
     def click_debug_show_history(self):
         print(f"self.calendar_surface.history:\n{self.calendar_surface.history}")
