@@ -200,3 +200,35 @@ WHERE
 	)
 	--AND [EntryDate] BETWEEN @d1 AND @d2
 ;
+--------------------------------------------------
+
+SELECT
+	'[PorMasterDetail]' AS [T],
+	*
+FROM
+	[PorMasterDetail]
+WHERE
+	(
+		[MStockCode] LIKE '%' + @s1 + '%'
+	OR
+		[MStockCode] LIKE '%' + @s2 + '%'
+	)
+	--AND [EntryDate] BETWEEN @d1 AND @d2
+;
+
+
+--------------------------------------------------
+
+SELECT
+	'[SorDetail]' AS [T],
+	*
+FROM
+	[SorDetail]
+WHERE
+	(
+		[MStockCode] LIKE '%' + @s1 + '%'
+	OR
+		[MStockCode] LIKE '%' + @s2 + '%'
+	)
+	--AND [EntryDate] BETWEEN @d1 AND @d2
+;

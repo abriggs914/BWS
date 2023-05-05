@@ -1,3 +1,6 @@
+USE SysproCompanyA
+GO
+
 /****** Script for SelectTopNRows command from SSMS  ******/
 
 
@@ -39,7 +42,7 @@ SELECT
 	RIGHT('00' + CAST(CAST(60 * ((([EndRule] % @tm) / 60) - CAST(([EndRule] % @tm) / 60 AS INTEGER)) AS INTEGER) AS NVARCHAR(MAX)), 2)
 	AS [EndRuleTimeS]
 
-	() AS [StartRuleTime]
+	--() AS [StartRuleTime]
 	
 	,[EndRule] - [StartRule] AS [Duration(m)]
 	,([EndRule] - [StartRule]) / 60 AS [Duration(h)]
