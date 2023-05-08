@@ -265,24 +265,24 @@ class App(tkinter.Tk):
         self.tv_label_submit_unit_search, \
             self.button_submit_unit_search \
             = button_factory(
-            self.frame_top_bar_a,
-            tv_btn="Search Calendar",
-            kwargs_btn={
-                "name": "button_submit_search",
-                "command": self.click_search_units
-            }
-        )
+                self.frame_top_bar_a,
+                tv_btn="Search Calendar",
+                kwargs_btn={
+                    "name": "button_submit_search",
+                    "command": self.click_search_units
+                }
+            )
 
         self.tv_label_button_go_to_today, \
             self.button_go_to_today \
             = button_factory(
-            self.frame_top_bar_a,
-            tv_btn="Go To Today",
-            kwargs_btn={
-                "name": "button_go_to_today",
-                "command": self.click_go_to_today
-            }
-        )
+                self.frame_top_bar_a,
+                tv_btn="Go To Today",
+                kwargs_btn={
+                    "name": "button_go_to_today"
+                },
+                command=self.click_go_to_today
+            )
         # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
 
         # canvas and calendar objects
@@ -1256,19 +1256,22 @@ class App(tkinter.Tk):
         self.tl_search_choice_frame.grid()
 
 
-    def click_search_units(self, *args):
+    def click_search_units(self, *args, pass_thru_date=None):
         text = self.tv_entry_unit_scroll_search.get().upper()
         bba = self.calendar_surface.bbox("all")
         bbaw = (bba[2] - bba[0])
         cw = self.calendar_surface.canvas_width
         print(f"{self.calendar_surface.units=}")
         handled = False
+        results = {}
+        date_in = is_date(text)
+        is_date_in = date_in is not None
         if len(text) < self.min_calendar_search_char_threshold:
             messagebox.showerror(title="Calendar Search",
                                 message=f"Please enter at least {self.min_calendar_search_char_threshold} characters before trying to search.")
             return
         if text:
-            if text in self.calendar_surface.units:
+            if pass_thru_date is None and (text in self.calendar_surface.units):
                 unit_in = self.calendar_surface.units[text]
                 if unit_in.placed:
                     r_c = self.calendar_surface.quote_rc(text)
@@ -1301,34 +1304,62 @@ class App(tkinter.Tk):
                     messagebox.showinfo(title="Calendar Search",
                                         message=f"Unit found beyond viewable range.\nLine: {l}\nDate: {d:%A, %B} {d.day}{date_suffix(d.day)} {d:%Y}")
                     handled = True
-            else:
-                print(f"Need to search all units by all columns.")
-                print(f"Searching placed units")
-                f_unit = None
-                results = {}
-                for unit, u_data in self.calendar_surface.units.items():
-                    if unit:
-                        print(f"unit= {unit}")
-                        dat = u_data.__dict__
-                        for key, val in dat.items():
-                            if key != "_history":
-                                if text in str(val).upper():
-                                    handled = True
-                                    f_unit = unit
-                                    where = "combo_box"
-                                    if u_data.placed:
-                                        where = "calendar_surface"
-                                    # msg = f"Search term = {text}, Same value as {key=}: {val}"
-                                    msg = f"Matches '{key.removeprefix('_')}', Value: '{str(val)[:50]}', Where: '{where}'"
-                                    print(msg)
-                                    if unit not in results:
-                                        results[unit] = {"msgs": [], "keys": [], "vals": [], "wheres": []}
-                                    results[unit]["msgs"].append(msg)
-                                    results[unit]["keys"].append(key)
-                                    results[unit]["vals"].append(val)
-                                    results[unit]["wheres"].append(where)
+            elif pass_thru_date is None:
 
-                print(dict_print(results, "Possible matches"))
+                search_units = True
+                if is_date_in:
+                    options = ["Include Units", "Just Calendar Days", "Cancel"]
+                    # ans = tkinter.messagebox.askquestion(
+                    #     title="Calendar Search",
+                    #     message=f"Do you want to search units for date {date_in:%Y-%m-%d}, or just the calendar days?"
+                    #     #options=options
+                    # )
+                    x, y = self.winfo_reqwidth(), self.winfo_reqheight()
+                    x //= 2
+                    y //= 2
+                    cmb = CustomMessageBox(
+                        title="Calendar Search",
+                        x=x,
+                        y=y,
+                        msg=f"Do you want to search units for date {date_in:%Y-%m-%d}, or just the calendar days?",
+                        b1=options[0],
+                        b2=options[1],
+                        b3=options[2]
+                        #     #options=options
+                    )
+                    # assert isinstance(cmb, tkinter.Toplevel)
+                    # cmb.root.grab_set()
+                    ans = cmb.choice
+                    if options.index(ans) != 0:
+                        search_units = False
+
+                if search_units:
+                    print(f"Need to search all units by all columns.")
+                    print(f"Searching placed units")
+                    f_unit = None
+                    for unit, u_data in self.calendar_surface.units.items():
+                        if unit:
+                            print(f"unit= {unit}")
+                            dat = u_data.__dict__
+                            for key, val in dat.items():
+                                if key != "_history":
+                                    if text in str(val).upper():
+                                        handled = True
+                                        f_unit = unit
+                                        where = "combo_box"
+                                        if u_data.placed:
+                                            where = "calendar_surface"
+                                        # msg = f"Search term = {text}, Same value as {key=}: {val}"
+                                        msg = f"Matches '{key.removeprefix('_')}', Value: '{str(val)[:50]}', Where: '{where}'"
+                                        print(msg)
+                                        if unit not in results:
+                                            results[unit] = {"msgs": [], "keys": [], "vals": [], "wheres": []}
+                                        results[unit]["msgs"].append(msg)
+                                        results[unit]["keys"].append(key)
+                                        results[unit]["vals"].append(val)
+                                        results[unit]["wheres"].append(where)
+
+                    print(dict_print(results, "Possible matches"))
 
                                 # self.multi_combo_unit_selection.select(u_data.SGQuote)
                         #         break
@@ -1346,8 +1377,7 @@ class App(tkinter.Tk):
                         where = results[quote]["keys"][0]
                         self.select_final_search(quote, key, val, where)
 
-
-            if not handled and ((date_in := is_date(text)) is not None):
+            if not handled and (date_in is not None):
                 print(f"DATE: {text=}, {date_in=}")
                 if date_in in self.calendar_surface.dates_list:
                     idx = self.calendar_surface.dates_list.index(date_in)
@@ -1409,11 +1439,10 @@ class App(tkinter.Tk):
             for k, v in zip(labels, values):
                 self.frame_info_frame.change_value(k, v)
 
-
     def click_go_to_today(self):
         before = self.tv_entry_unit_scroll_search.get()
         self.tv_entry_unit_scroll_search.set(datetime.datetime.now().strftime("%Y-%m-%d"))
-        self.click_search_units(None)
+        self.click_search_units(None, pass_thru_date=True)
         self.tv_entry_unit_scroll_search.set(before)
 
     def click_calendar_surface_left(self, event):
