@@ -6,29 +6,83 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
---ALTER PROCEDURE [dbo].[sp_ITREstimateLabour]
---	@company NVARCHAR(MAX)=NULL
---	, @department INT=NULL
---	, @requestType NVARCHAR(MAX)=NULL
---	, @requestSubType NVARCHAR(MAX)=NULL
+ALTER PROCEDURE [dbo].[sp_ITREstimateLabour]
+	@company NVARCHAR(MAX)=NULL
+	, @department INT=NULL
+	, @requestType NVARCHAR(MAX)=NULL
+	, @requestSubType NVARCHAR(MAX)=NULL
 	
---AS
---BEGIN
+AS
+BEGIN
 
-	---- TESTING --
-	
-	DECLARE @company NVARCHAR(MAX);
-	DECLARE @department AS INT; --NVARCHAR(MAX);
-	DECLARE @requestType AS NVARCHAR(MAX);
-	DECLARE @requestSubType AS NVARCHAR(MAX);
-	
-	SET @company = NULL;
-	SET @department = NULL;
-	--SET @department = 12;
-	SET @requestType = 'Hardware';
-	SET @requestSubType = 'Computer';
+	DECLARE @t_id AS INT;
+	DECLARE @t_ans AS NVARCHAR(1);
 
-	-----------------
+	------ TESTING --
+	
+	--DECLARE @company NVARCHAR(MAX);
+	--DECLARE @department AS INT; --NVARCHAR(MAX);
+	--DECLARE @requestType AS NVARCHAR(MAX);
+	--DECLARE @requestSubType AS NVARCHAR(MAX);
+	
+	---- Use this for direct injection testing.
+	----SET @company = NULL;
+	----SET @department = NULL;
+	------SET @department = 12;
+	----SET @requestType = 'Hardware';
+	----SET @requestSubType = 'Computer';
+
+	--DECLARE @tt AS TABLE (
+	--	[ID] INT IDENTITY(0, 1),
+	--	[qid] NVARCHAR(1),
+	--	[comp] NVARCHAR(MAX),
+	--	[dept] INT,
+	--	[reqt] NVARCHAR(MAX),
+	--	[rqst] NVARCHAR(MAX)
+	--)
+
+	--INSERT INTO @tt ([qid], [comp], [dept], [reqt], [rqst]) VALUES
+	--('A', NULL, NULL, NULL, NULL),
+	--('B', NULL, NULL, NULL, 'Computer'),
+	--('C', NULL, NULL, 'Hardware', NULL),
+	--('D', NULL, NULL, 'Hardware', 'Computer'),
+
+	--('E', NULL, 12, NULL, NULL),
+	--('F', NULL, 12, NULL, 'Computer'),
+	--('G', NULL, 12, 'Hardware', NULL),
+	--('H', NULL, 12, 'Hardware', 'Computer'),
+
+	--('I', 'BWS', NULL, NULL, NULL),
+	--('J', 'BWS', NULL, NULL, 'Computer'),
+	--('K', 'BWS', NULL, 'Hardware', NULL),
+	--('L', 'BWS', NULL, 'Hardware', 'Computer'),
+
+	--('M', 'BWS', 12, NULL, NULL),
+	--('N', 'BWS', 12, NULL, 'Computer'),
+	--('O', 'BWS', 12, 'Hardware', NULL),
+	--('P', 'BWS', 12, 'Hardware', 'Computer')
+	--;
+	
+
+	--SELECT @t_id = 8;
+	--SELECT @t_ans = [qid] FROM @tt WHERE [ID] = @t_id;
+
+	--SELECT
+	--	@company = [comp],
+	--	@department = [dept],
+	--	@requestType = [reqt],
+	--	@requestSubType = [rqst]
+	--FROM
+	--	@tt
+	--WHERE
+	--	[ID] = @t_id
+	--;
+
+	-------------------
+
+	IF @department < 0 BEGIN
+		SELECT @department = NULL;
+	END
 
 	DECLARE @ttl_hours_act AS FLOAT;
 	DECLARE @ttl_hours_bud AS FLOAT;
@@ -52,14 +106,15 @@ GO
 		, @in_dept = (CASE WHEN @department IS NULL THEN 0 ELSE 1 END)
 		, @in_reqt = (CASE WHEN @requestType IS NULL THEN 0 ELSE 1 END)
 		, @in_srqt = (CASE WHEN @requestSubType IS NULL THEN 0 ELSE 1 END)
+	;
 
-	SELECT
-		@in_comp AS [@in_comp]
-		, @in_dept AS [@in_dept]
-		, @in_reqt AS [@in_reqt]
-		, @in_srqt AS [@in_sqrt]
-		
-
+	--SELECT
+	--	@t_ans AS [Expected Qid]
+	--	, @in_comp AS [@in_comp]
+	--	, @in_dept AS [@in_dept]
+	--	, @in_reqt AS [@in_reqt]
+	--	, @in_srqt AS [@in_sqrt]
+	--;
 
 	IF @in_comp = 0 AND @in_dept = 0 AND @in_reqt = 0 AND @in_srqt = 0 BEGIN
 		-- A
@@ -70,20 +125,41 @@ GO
 			, 'All' AS [Dept]
 			, 'All' AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+		FROM
+			[IT Requests]
+		;
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			----, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			----, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			----, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			----, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 0 AND @in_reqt = 0 AND @in_srqt = 1 BEGIN
@@ -95,24 +171,44 @@ GO
 			, 'All' AS [Dept]
 			, 'All' AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
-		FROM 
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+		FROM
 			[IT Requests]
 		WHERE
 			[RequestSubType] = @requestSubType
+		;
+		--	, @ttl_requests AS [# Reqs]
+		--	, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+		--	, ROUND(@ttl_hours_act, 2) AS [Act]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Bud]
+		--	, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+		--	, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+		--	, @ttl_requests AS [Total Requests]
+		--	, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+		--FROM 
+		--	[IT Requests]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 0 AND @in_reqt = 1 AND @in_srqt = 0 BEGIN
@@ -124,24 +220,44 @@ GO
 			, 'All' AS [Dept]
 			, @requestType AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
-		FROM 
+		
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+		FROM
 			[IT Requests]
 		WHERE
 			[RequestType] = @requestType
+		--	, @ttl_requests AS [# Reqs]
+		--	, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+		--	, ROUND(@ttl_hours_act, 2) AS [Act]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Bud]
+		--	, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+		--	, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+		--	, @ttl_requests AS [Total Requests]
+		--	, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+		--FROM 
+		--	[IT Requests]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 0 AND @in_reqt = 1 AND @in_srqt = 1 BEGIN
@@ -154,22 +270,27 @@ GO
 			, @requestType AS [RequestType]
 			, @requestSubType AS [RequestSubType]
 			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
 			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
 			, SUM([LabourActual]) AS [Act]
 			, SUM([LabourEstimate]) AS [Bud]
 			, ROUND(SUM([LabourActual]) / (
 				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
-			AS [Act / Req]
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
 			, ROUND(SUM([LabourEstimate]) / (
-				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2)
-			AS [Bud / Req]
-			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Act]
-			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Bud]
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
 
-			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
 			--, @ttl_requests AS [Total Requests]
 			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -189,21 +310,25 @@ GO
 			, @department AS [Dept]
 			, 'All' AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
-		FROM 
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+		FROM
 			[IT Requests]
 		LEFT JOIN
 			[BWSdb].[dbo].[Dept]
@@ -211,6 +336,22 @@ GO
 			[IT Requests].[Department] = [Dept].[DeptID]
 		WHERE
 			[Department] = @department
+		--	, @ttl_requests AS [# Reqs]
+		--	, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+		--	, ROUND(@ttl_hours_act, 2) AS [Act]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Bud]
+		--	, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+		--	, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+		--	, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+		--	, @ttl_requests AS [Total Requests]
+		--	, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+		--	, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+		--FROM 
+		--	[IT Requests]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 1 AND @in_reqt = 0 AND @in_srqt = 1 BEGIN
@@ -222,21 +363,25 @@ GO
 			, @department AS [Dept]
 			, 'All' AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
-		FROM 
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+		FROM
 			[IT Requests]
 		LEFT JOIN
 			[BWSdb].[dbo].[Dept]
@@ -245,6 +390,20 @@ GO
 		WHERE
 			[Department] = @department
 			AND [RequestSubType] = @requestSubType
+
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 1 AND @in_reqt = 1 AND @in_srqt = 0 BEGIN
@@ -256,20 +415,24 @@ GO
 			, @department AS [Dept]
 			, @requestType AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -279,6 +442,21 @@ GO
 		WHERE
 			[Department] = @department
 			AND [RequestType] = @requestType
+
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 0 AND @in_dept = 1 AND @in_reqt = 1 AND @in_srqt = 1 BEGIN
@@ -290,20 +468,24 @@ GO
 			, @department AS [Dept]
 			, @requestType AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -314,6 +496,20 @@ GO
 			[Department] = @department
 			AND [RequestType] = @requestType
 			AND [RequestSubType] = @requestSubType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	
@@ -326,24 +522,42 @@ GO
 			, 'All' AS [Dept]
 			, 'All' AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		WHERE
 			[Company] = @company
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 	END
 	IF @in_comp = 1 AND @in_dept = 0 AND @in_reqt = 0 AND @in_srqt = 1 BEGIN
 		-- J
@@ -354,25 +568,43 @@ GO
 			, 'All' AS [Dept]
 			, 'All' AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		WHERE
 			[Company] = @company
 			AND [RequestSubType] = @requestSubType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 	END
 	IF @in_comp = 1 AND @in_dept = 0 AND @in_reqt = 1 AND @in_srqt = 0 BEGIN
 		-- K
@@ -383,25 +615,43 @@ GO
 			, 'All' AS [Dept]
 			, @requestType AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		WHERE
 			[Company] = @company
 			AND [RequestType] = @requestType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 1 AND @in_dept = 0 AND @in_reqt = 1 AND @in_srqt = 1 BEGIN
@@ -413,20 +663,38 @@ GO
 			, 'All' AS [Dept]
 			, @requestType AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 		FROM 
 			[IT Requests]
 		WHERE
@@ -444,20 +712,24 @@ GO
 			, @department AS [Dept]
 			, 'All' AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -467,6 +739,20 @@ GO
 		WHERE
 			[Company] = @company
 			AND [Department] = @department
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 1 AND @in_dept = 1 AND @in_reqt = 0 AND @in_srqt = 1 BEGIN
@@ -478,20 +764,24 @@ GO
 			, @department AS [Dept]
 			, 'All' AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -502,6 +792,20 @@ GO
 			[Company] = @company
 			AND [Department] = @department
 			AND [RequestSubType] = @requestSubType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 1 AND @in_dept = 1 AND @in_reqt = 1 AND @in_srqt = 0 BEGIN
@@ -513,20 +817,24 @@ GO
 			, @department AS [Dept]
 			, @requestType AS [RequestType]
 			, 'All' AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -537,6 +845,20 @@ GO
 			[Company] = @company
 			AND [Department] = @department
 			AND [RequestType] = @requestType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 	IF @in_comp = 1 AND @in_dept = 1 AND @in_reqt = 1 AND @in_srqt = 1 BEGIN
@@ -548,20 +870,24 @@ GO
 			, @department AS [Dept]
 			, @requestType AS [RequestType]
 			, @requestSubType AS [RequestSubType]
-			, @ttl_requests AS [# Reqs]
-			, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
-			, ROUND(@ttl_hours_act, 2) AS [Act]
-			, ROUND(@ttl_hours_bud, 2) AS [Bud]
-			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
-			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
-			, @ttl_requests AS [Total Requests]
-			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
-			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
+			
+			, COUNT(*) AS [# Reqs]
+			, @ttl_requests AS [Tot Reqs]
+			, @ttl_hours_act AS [Tot Act]
+			, @ttl_hours_bud AS [Tot Bud]
+			, CAST(ROUND(100 * ((COUNT(*) + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			, SUM([LabourActual]) AS [Act]
+			, SUM([LabourEstimate]) AS [Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN SUM([LabourEstimate]) = 0 THEN 1 ELSE SUM([LabourEstimate]) END), 2)
+			AS [Act / Bud]
+			, ROUND(SUM([LabourActual]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Act / Req]
+			, ROUND(SUM([LabourEstimate]) / (
+				CASE WHEN COUNT(*) = 0 THEN 1 ELSE COUNT(*) END), 2) AS [Bud / Req]
+
+			, ROUND(100 * SUM([LabourActual]) / @ttl_hours_act, 2) AS [% Total Act]
+			, ROUND(100 * SUM([LabourEstimate]) / @ttl_hours_bud, 2) AS [% Total Bud]
 		FROM 
 			[IT Requests]
 		LEFT JOIN
@@ -573,10 +899,24 @@ GO
 			AND [Department] = @department
 			AND [RequestType] = @requestType
 			AND [RequestSubType] = @requestSubType
+			--, @ttl_requests AS [# Reqs]
+			--, CAST(ROUND(100 * ((@ttl_requests + 0.0) / @ttl_requests), 2) AS DECIMAL(16, 2)) AS [% Ttl Reqs]
+			--, ROUND(@ttl_hours_act, 2) AS [Act]
+			--, ROUND(@ttl_hours_bud, 2) AS [Bud]
+			--, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
+			--, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+			--, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
+			--, @ttl_requests AS [Total Requests]
+			--, ROUND(@ttl_hours_act, 2) AS [Total Actual]
+			--, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
 
 	END
 
-
+END
 
 	--IF @company IS NULL BEGIN
 	--	IF @department IS NULL BEGIN
@@ -592,11 +932,11 @@ GO
 	--			, ROUND(@ttl_hours_bud, 2) AS [Bud]
 	--			, ROUND(@ttl_hours_act / @ttl_requests, 2) AS [Act / Req]
 	--			, ROUND(@ttl_hours_bud / @ttl_requests, 2) AS [Bud / Req]
-	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Bud]
-	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Act vs Ttl Act]
-	--			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Bud vs Ttl Bud]
-	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Act vs Ttl Bud]
-	--			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Bud vs Ttl Act]
+	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Bud]
+	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_act, 2) AS [% Total Act vs Ttl Act]
+	--			, ROUND(100 * @ttl_hours_bud / @ttl_hours_bud, 2) AS [% Total Bud vs Ttl Bud]
+	--			, ROUND(100 * @ttl_hours_act / @ttl_hours_bud, 2) AS [% Total Act vs Ttl Bud]
+	--			, ROUND(100 * @ttl_hours_bud / @ttl_hours_act, 2) AS [% Total Bud vs Ttl Act]
 	--			, @ttl_requests AS [Total Requests]
 	--			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -612,11 +952,11 @@ GO
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--				, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--				, @ttl_requests AS [Total Requests]
 	--				, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--				, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -652,11 +992,11 @@ GO
 	--			, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--			, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--			, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--			, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--			, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--			, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--			, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--			, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--			, @ttl_requests AS [Total Requests]
 	--			, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--			, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -682,11 +1022,11 @@ GO
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--				, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--				, @ttl_requests AS [Total Requests]
 	--				, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--				, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -716,11 +1056,11 @@ GO
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--				, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--				, @ttl_requests AS [Total Requests]
 	--				, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--				, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -752,11 +1092,11 @@ GO
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--				, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--				, @ttl_requests AS [Total Requests]
 	--				, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--				, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -789,11 +1129,11 @@ GO
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--				, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--				, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--				, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--				, @ttl_requests AS [Total Requests]
 	--				, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--				, ROUND(@ttl_hours_bud, 2) AS [Total Budget]
@@ -833,11 +1173,11 @@ GO
 	--	, ROUND(SUM(ISNULL([LabourEstimate], 0)), 2) AS [Bud]
 	--	, ROUND(SUM(ISNULL([LabourActual], 0)) / COUNT(*), 2) AS [Act / Req]
 	--	, ROUND(SUM(ISNULL([LabourEstimate], 0)) / COUNT(*), 2) AS [Bud / Req]
-	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Bud]
-	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Act vs Ttl Act]
-	--	, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Bud vs Ttl Bud]
-	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Act vs Ttl Bud]
-	--	, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Bud vs Ttl Act]
+	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / SUM(ISNULL([LabourEstimate], 0)), 2) AS [% Total Bud]
+	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Act vs Ttl Act]
+	--	, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Bud vs Ttl Bud]
+	--	, ROUND(100 * SUM(ISNULL([LabourActual], 0)) / ISNULL(@ttl_hours_bud, 0), 2) AS [% Total Act vs Ttl Bud]
+	--	, ROUND(100 * SUM(ISNULL([LabourEstimate], 0)) / ISNULL(@ttl_hours_act, 0), 2) AS [% Total Bud vs Ttl Act]
 	--	, @ttl_requests AS [Total Requests]
 	--	, ROUND(@ttl_hours_act, 2) AS [Total Actual]
 	--	, ROUND(@ttl_hours_bud, 2) AS [Total Budget]

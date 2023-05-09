@@ -928,7 +928,7 @@ class CalendarSurface(tkinter.Canvas):
                 x, y = self.winfo_reqwidth(), self.winfo_reqheight()
                 x //= 2
                 y //= 2
-                self.unbind_pre_pop_up()
+                # self.unbind_pre_pop_up()
                 if default_answer is None:
                     ans = tkinter_utility.CustomMessageBox(
                         title="Illegal Placement",
@@ -939,15 +939,19 @@ class CalendarSurface(tkinter.Canvas):
                         b2="cancel",
                         b3=next_day_msg
                     )
+                    ans.grab_set()
+                    print(f"{ans.choice=}")
                     ans = ans.choice
                 else:
                     ans = default_answer
-                self.configure(state="disabled")
+                # self.configure(state="disabled")
+
+
                 if ans == "closed":
                     ans = 0
                 else:
                     ans = int(ans)
-                self.bind_post_pop_up()
+                # self.bind_post_pop_up()
                 print(f"{ans=}")
                 print(f"A {c=}, {pn=}")
                 if ans == 1:
@@ -1028,6 +1032,168 @@ class CalendarSurface(tkinter.Canvas):
             # print(dict_print(self.units, "self.units"))
         else:
             raise ValueError(f"Error can't assign this tile with this unit_in. {tag_in=}, {unit_in=}")
+
+        # """Associate a unit object with a given tile space. Unit data only, no UI changes."""
+        # # default_answer = 1 == back, 3 == forward, else == Nothing
+        # assert isinstance(unit_in, Unit), "Error param 'unit_in' must be an instance of a Unit."
+        # rc = self.tile_to_rc(tag_in)
+        # if rc:
+        #     r, c = rc
+        #     line_in = self.lines[r - 1]
+        #
+        #     already_unit = self.tile_properties[r][c]["unit_in"]
+        #     if already_unit is not None:
+        #         print(
+        #             f"\n\n\tABOUT TO OVERWRITE TILE {already_unit=} WITH {unit_in=}, {r=}, {c=}\n\tNEED TO WALK THE LINE TO DETERMINE IF A UNIT NEEDS TO BE SENT BEYOND.\n\n\n")
+        #
+        #         next_col = self.next_available_day(r)
+        #         print(f"NEXT AVAILABLE COLUMN={next_col} ON {self.dates_list[next_col]}, ON LINE {self.lines[r - 1]}")
+        #
+        #     wd = self.day_of_week(c - 1)
+        #     if wd > 4:
+        #         date = self.dates_list[c - 1]
+        #         pn = [-1, -1]
+        #         tc = c - 1
+        #         while (tc > 0) and (self.day_of_week(tc - 1) > 4):
+        #             tc -= 1
+        #         if tc < 0:
+        #             raise ValueError(f"Error, cannot place tile at column c prev. Out of range: {tc}")
+        #         prev_day = self.dates_list[tc - 1]
+        #         if tc == 0:
+        #             # need to add to beyond left
+        #             print("\tAdding to beyond left")
+        #             line_in = unit_in.JobStartLine
+        #             self.tiles_beyond[line_in]["left"].insert(-1, unit_in)
+        #         pn[0] = tc - 0
+        #         tc = c + 1
+        #         while (tc < len(self.dates_list)) and (self.day_of_week(tc - 1) > 4):
+        #             tc += 1
+        #         if tc < 0:
+        #             raise ValueError(f"Error, cannot place tile at column c next. Out of range: {tc}")
+        #         if tc == len(self.dates_list):
+        #             # need to add to beyond right
+        #             print("\tAdding to beyond right")
+        #             line_in = unit_in.JobStartLine
+        #             self.tiles_beyond[line_in]["right"].insert(0, unit_in)
+        #         next_day = self.dates_list[tc - 1]
+        #         pn[1] = tc + 0
+        #         prev_day_msg = f"<< {prev_day:'%Y-%m-%d'} <<"
+        #         next_day_msg = f">> {next_day:'%Y-%m-%d'} >>"
+        #
+        #         # x, y = self.rc_bbox((r, c))[:2]
+        #         x, y = self.winfo_reqwidth(), self.winfo_reqheight()
+        #         x //= 2
+        #         y //= 2
+        #
+        #         # self.unbind_pre_pop_up()
+        #
+        #         def close_cmb(ans, r, c):
+        #             if rc:
+        #                 if wd > 4:
+        #                     if ans == "closed":
+        #                         ans = 0
+        #                     else:
+        #                         ans = int(ans)
+        #                     # self.bind_post_pop_up()
+        #                     print(f"{ans=}")
+        #                     print(f"A {c=}, {pn=}")
+        #                     if ans == 1:
+        #                         # prev_day_msg
+        #                         self.remove_tile(r, c)
+        #                         self.delete_tile(r, c)
+        #                         c = pn[0]
+        #                         print(f"B {c=}")
+        #                     elif ans == 3:
+        #                         # next_day_msg
+        #                         self.remove_tile(r, c)
+        #                         self.delete_tile(r, c)
+        #                         c = pn[1]
+        #                         print(f"C {c=}")
+        #                     else:
+        #                         # 2
+        #                         c = c
+        #                         print(f"D {c=}")
+        #
+        #                     if 0 < c < len(self.dates_list):
+        #                         self.set_rc_with_unit((r, c), unit_in)
+        #                     # modify the history created from the placement action.
+        #                     if self.history:
+        #                         last = self.history[-1]
+        #                         if isinstance(last, CalendarSurface.MovementUndoable):
+        #                             # r_from = last.r_from
+        #                             # c_from = last.c_from
+        #                             # r_to = last.r_to
+        #                             # c_to = last.c_to
+        #                             # print(f"Modifying the history: {last.c_to=}, {c=}")
+        #                             last.c_to = c
+        #                             # self.status.set({"msg": "Need to swap the to col.", "c": c})
+        #                     else:
+        #                         print(f"NO HISTORY TO UNDO")
+        #                     return
+        #
+        #                     # print(f"date: {self.dates_list[c - 1]=}, {c - 1=}")
+        #                     # SGQuote# | Model No | Dealer Name | WO | Galv
+        #
+        #                 text_order = self.text_order
+        #                 details = self.get_text_vars(tag_in)
+        #                 keys = unit_in.__dict__.keys()
+        #                 print(f"AA {text_order=}")
+        #                 print(f"AA {details=}")
+        #                 print(f"AA {keys=}")
+        #                 for i, text_tv in enumerate(zip(text_order, details)):
+        #                     text, tv = text_tv
+        #                     text = "_" + text
+        #                     value = text
+        #                     if text in keys:
+        #                         print(f"\t\t\tBEFORE {value=}")
+        #                         value = getattr(unit_in, text, "N/A")
+        #                         print(f"\t\t\tAFTER {value=}")
+        #                         # TODO last point for UI formatting
+        #                         if text == "_IsGalv":
+        #                             value = value if value != 'N' else ''
+        #                         elif text == "_WO" or text == "_Customer_WO":
+        #                             if value is not None and value != "":
+        #                                 if not math.isnan(value):
+        #                                     value = int(value)
+        #                         # print(f"\t\t\tAFTER {value=}")
+        #                     # print(f"\t\tLOOK HERE 2 {i=}, {text=} = {value=}, {tv.get()=}")
+        #                     value = str("" if value is None or str(value).lower() in ["none", "nan"] else value)
+        #                     tv.set(value)
+        #                     # print(f"\t\t\t{tv.get()=}")
+        #
+        #                 # print(f"{do_assign=}, {unit_in}")
+        #                 if do_assign:
+        #                     if do_place:
+        #                         print(f"placing tile! B {unit_in=}")
+        #                         unit_in.placed = True
+        #                     # print(f"{unit_in.history['_placed']=}")
+        #                     unit_in.Available_Date = self.dates_list[c - 1]
+        #                     unit_in.JobStartLine = self.lines[r - 1]
+        #                     unit_in.job_start_line_v2 = self.lines[r - 1]
+        #                 self.tile_properties[r][c]["unit_in"] = unit_in
+        #                 self.units[unit_in.SGQuote] = unit_in
+        #                 self.dirty_status_var.set(True)
+        #                 # print(dict_print(self.units, "self.units"))
+        #             else:
+        #                 raise ValueError(f"Error can't assign this tile with this unit_in. {tag_in=}, {unit_in=}")
+        #
+        #         if default_answer is None:
+        #             ans = tkinter_utility.CustomMessageBox(
+        #                 title="Illegal Placement",
+        #                 msg=f"Error placing Quote {unit_in.SGQuote} on line '{line_in}'.\nCurrent application mode does not allow units to placed on a weekend.\nPlease Choose a valid action:",
+        #                 x=x,
+        #                 y=y,
+        #                 b1=prev_day_msg,
+        #                 b2="cancel",
+        #                 b3=next_day_msg
+        #             )
+        #             ans.grab_set()
+        #             ans.protocol("WM_DELETE_WINDOW", lambda ans=ans.choice, r=r, c=c: close_cmb(ans, r, c))
+        #         else:
+        #             ans = default_answer
+        #
+        #         close_cmb(ans, r, c)
+        #         # self.configure(state="disabled")
 
     def export_tile_sql(self, removed_quotes):
         """Create a sql file containing batch statements from this session."""
