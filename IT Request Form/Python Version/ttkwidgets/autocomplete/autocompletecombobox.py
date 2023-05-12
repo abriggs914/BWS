@@ -74,7 +74,7 @@ bind $popdown.f.l <KeyPress> [list ComboListKeyPressed %%W %%K]
         :param completion_list: completion values
         :type completion_list: list
         """
-        self._completion_list = sorted(completion_list, key=str.lower)  # Work with a sorted list
+        # self._completion_list = sorted(completion_list, key=str.lower)  # Work with a sorted list
         self.configure(values=completion_list)
         self._hits = []
         self._hit_index = 0
