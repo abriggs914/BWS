@@ -92,11 +92,12 @@ class App(tkinter.Tk):
     def __init__(self):
         super().__init__()
 
-        self.nbk_control = ttk.Notebook(self)
+        self.style = ttk.Style()
+        self.style.configure("Custom.TNotebook.Tab", minwidth=300, maxwidth=500)
+
+        self.nbk_control = ttk.Notebook(self, style="Custom.TNotebook")
         self.nbk_control_tab_texts = ["New", "Edit"]
 
-        self.style = ttk.Style()
-        self.style.configure("Custom.TNotebook.Tab", minwidth=100, maxwidth=200)
 
         r, c, rs, cs, ix, iy, px, py, s = grid_keys()
         self.grid_args = {
