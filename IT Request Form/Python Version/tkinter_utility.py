@@ -2866,6 +2866,8 @@ class TextWithVar(tkinter.Text):
     def _on_text_changed(self, *args):
         self.delete("1.0", tkinter.END)
         self.insert("1.0", self.text.get())
+        print(f"             OTC {self.text.get()=}")
+        print(f"OTC {self.get('1.0', tkinter.END)=}")
         self.history.append(self.text.get())
 
     def set_text(self, new_text):
