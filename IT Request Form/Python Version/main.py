@@ -241,7 +241,7 @@ class ReqFrame(tkinter.Frame):
         # Binding and variable tracing
         self.def_data["__state_showing_radios_request_type"].trace_variable("w", self.update_showing_radios_request_type)
         self.def_data["__state_showing_radios_company"].trace_variable("w", self.update_showing_radios_company)
-        self.tv_ctl_comments.trace_variable("w", self.update_comments)
+        self.tv_ctl_comments.trace_add("write", self.update_comments)
 
 
         if self.def_data["__state_request_type_as_combobox"]:
@@ -416,9 +416,9 @@ class ReqFrame(tkinter.Frame):
     def update_comments(self, *args):
         print(f"\nUPDATE!")
         self.ctl_request_comments.see(tkinter.END)
-        print(f"{self.tv_ctl_comments.get()=}")
+        print(f"                       {self.tv_ctl_comments.get()=}")
+        print(f"             {self.ctl_request_comments.text.get()=}")
         print(f"{self.ctl_request_comments.get('1.0', tkinter.END)=}")
-        print(f"{self.ctl_request_comments.text.get()=}")
 
     def update_radio_btn_request_type(self, *args):
         self.click_cbox_selected_req_type(None)
