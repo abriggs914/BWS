@@ -23,7 +23,7 @@ VERSION = \
     """	
     General Utility Functions
     Version..............1.49
-    Date...........2023-05-14
+    Date...........2023-05-15
     Author(s)....Avery Briggs
     """
 
@@ -2155,7 +2155,7 @@ class MultiComboBox(tkinter.Frame):
         children = self.tree_treeview.get_children()
         if children and not bypass:
             self.tree_treeview.selection_set(children[0])
-        elif bypass or not children:
+        elif bypass or not children and not self.limit_to_list:
             val = self.res_tv_entry.get()
             col = self.rg_var.get()
             if val:

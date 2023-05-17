@@ -2381,6 +2381,14 @@ class Unit:
 			prev = record[-2]
 			setattr(self, k, prev)
 			self.history[k].pop(-1)
+			
+	def calendar_repr(self):
+		qu = self.SGQuote
+		wo = "" if not self.WO else int(self.WO)
+		sn = self.Serial_Number
+		mn = self._InputField1_v2
+		dl = self._InputField2_v2
+		return f"{qu}\n{wo}\n{sn}\n{mn}\n{dl}"
 
 
 if __name__ == "__main__":

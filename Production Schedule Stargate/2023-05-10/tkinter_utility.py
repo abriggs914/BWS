@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.48
-    Date...........2023-05-10
+    Version..............1.49
+    Date...........2023-05-15
     Author(s)....Avery Briggs
     """
 
@@ -144,9 +144,11 @@ def button_factory(master, tv_btn=None, kwargs_btn=None, command=None):
     """Return tkinter StringVar, Button objects"""
 
     if kwargs_btn is not None:
-        assert isinstance(kwargs_btn, dict), f"Error param 'kwargs_btn' must be a dict if not None. Got: '{kwargs_btn}'."
+        assert isinstance(kwargs_btn,
+                          dict), f"Error param 'kwargs_btn' must be a dict if not None. Got: '{kwargs_btn}'."
         if "command" in kwargs_btn and command is not None:
-            raise KeyError(f"Error, command key has already been passed in param 'kwargs_btn'. Please pass only one command.")
+            raise KeyError(
+                f"Error, command key has already been passed in param 'kwargs_btn'. Please pass only one command.")
         elif command is not None:
             assert callable(command), "Error, param 'command' is not callable."
             kwargs_btn.update({"command": command})
@@ -263,18 +265,27 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
         if not (isinstance(buttons, list) and isinstance(buttons, tuple)):
             buttons = list(buttons)
         if default_value is not None:
-            if is_tk_var(default_value):
+            print(f"not None")
+            if isinstance(default_value, tkinter.IntVar):
+                print(f"is_var")
                 var = default_value
+            elif isnumber(default_value):
+                print(f"not var")
+                var = tkinter.IntVar(master, value=int(default_value))
             else:
-                var = tkinter.StringVar(master, value=default_value)
+                raise ValueError(f"Error default value '{default_value}' is not a number.")
         else:
-            var = tkinter.StringVar(master, buttons[0])
+            print(f"is None")
+            var = tkinter.IntVar(master, value=-1)
+
+        if 0 > var.get() >= len(buttons):
+            raise IndexError("Error var index is out of range")
 
         # print(f"CREATED {var.get()=}")
 
         r_buttons = []
         tv_vars = []
-        for btn in buttons:
+        for i, btn in enumerate(buttons):
             if is_tk_var(btn):
                 tv_var = btn
             else:
@@ -283,10 +294,13 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
             if kwargs_buttons is not None:
                 print(f"WARNING kwargs param is applied to each radio button")
                 r_buttons.append(
-                    tkinter.Radiobutton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=btn))
+                    tkinter.Radiobutton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=i, name=f"rbtn_{btn}"))
             else:
-                r_buttons.append(tkinter.Radiobutton(master, variable=var, textvariable=tv_var, value=btn))
+                r_buttons.append(
+                    tkinter.Radiobutton(master, variable=var, textvariable=tv_var, value=i, name=f"rbtn_{btn}")
+                )
 
+        print(f"OUT {var.get()=}")
         return var, tv_vars, r_buttons
     else:
         raise Exception("Error, must pass a list of buttons.")
@@ -2141,7 +2155,7 @@ class MultiComboBox(tkinter.Frame):
         children = self.tree_treeview.get_children()
         if children and not bypass:
             self.tree_treeview.selection_set(children[0])
-        elif bypass or not children:
+        elif bypass or not children and not self.limit_to_list:
             val = self.res_tv_entry.get()
             col = self.rg_var.get()
             if val:
@@ -2834,101 +2848,199 @@ class ToggleButton(tkinter.Frame):
 class TextWithVar(tkinter.Text):
     def __init__(self, master, textvariable=None, max_undos=100, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        if textvariable is None:
-            print(f"TextWithVar A")
-            textvariable = tkinter.StringVar(value=self.get("1.0", tkinter.END))
-        else:
-            if isinstance(textvariable, tkinter.StringVar):
-                print(f"TextWithVar B")
-                textvariable = textvariable
-            elif isinstance(textvariable, tkinter.Variable):
-                print(f"TextWithVar C")
-                textvariable = tkinter.StringVar(self, value=str(textvariable.get()))
-            else:
-                print(f"TextWithVar D")
-                textvariable = tkinter.StringVar(self, value=textvariable)
-
-        print(f"HELLO TEXT: '{textvariable.get()}'")
-
-        self.max_undos = clamp(0, max_undos, 1000)
-        self.history = deque(maxlen=self.max_undos)
         self.text = textvariable
-        self.text.trace_variable("w", self.update_set_text)
-        self.bind("<<CustomTextChanged>>", self._on_text_changed)
-        self.bind("<Control-Return>", self.submit)
-        self.bind("<KeyRelease>", self.key_release)
+        if self.text is None:
+            self.text = tkinter.StringVar(value=self.get("1.0", tkinter.END))
+        self.text.trace_variable("w", self._on_text_changed)
+
+        self.max_undos = max_undos
+        self.history = deque(maxlen=self.max_undos)
         self.history.append(self.text.get())
 
-        # Initialize the text widget if a initial value is passed with the StringVar.
-        if txt := self.text.get():
-            self.insert("1.0", txt, pass_thru=False)
-            # self.text.set(txt)
+        self.scrollbar = ttk.Scrollbar(master, orient="vertical", command=self.yview)
+        self.configure(yscrollcommand=self.scrollbar.set)
 
-    def submit(self, event):
-        print(f"submit")
-        print(f"{self.history=}")
+        self.bind("<Control-z>", self.undo)
+        self.bind("<Control-Shift-z>", self.redo)
 
-    def key_release(self, *event):
-        self.text.set(self.get("1.0", "end-1c"))
-        # self._update_text_variable()
-        # print(f"key_release TEXT='{self.text.get()}', T2='{}' {event=}")
+    def _on_text_changed(self, *args):
+        self.delete("1.0", tkinter.END)
+        self.insert("1.0", self.text.get())
+        self.history.append(self.text.get())
 
-    def undo(self):
+    def set_text(self, new_text):
+        self.text.set(new_text)
+
+    def undo(self, event=None):
         if len(self.history) > 1:
-            hist = self.history.pop()
-            hist = self.history.pop()
-            # print(f"hist='{hist}'")
-            self.text.set(hist)
-            return True
-        elif len(self.history):
-            hist = self.history.pop()
-            self.text.set(hist)
-            return True
-        else:
-            print("Nothing to undo.")
-            self.history.append('')
-            return False
+            current_state = self.text.get()
+            self.history.pop()  # Remove the current state
+            previous_state = self.history.pop()
+            self.text.set(previous_state)
+            self.insert("1.0", self.text.get())  # Update the text widget
+            self.history.append(previous_state)  # Add back the previous state
+            self.history.append(current_state)  # Add the current state for redo
+            return "break"  # Prevent default behavior of Ctrl+z
+        return None
 
-    # def update_set_text(self, *args):
-    #     # print(f"update_set_text, {self.text.get()=}")
-    #     self._on_text_changed(None, pass_thru=False)
+    def redo(self, event=None):
+        if len(self.history) > 1:
+            current_state = self.text.get()
+            self.history.pop()  # Remove the current state (undo of undo)
+            next_state = self.history.pop()
+            self.text.set(next_state)
+            self.insert("1.0", self.text.get())  # Update the text widget
+            self.history.append(next_state)  # Add back the next state
+            self.history.append(current_state)  # Add the current state for undo
+            return "break"  # Prevent default behavior of Ctrl+y
+        return None
 
-    def update_set_text(self, *args, pass_thru=True):
-        try:
-            if self.focus_get() == self:
-                self.text.set(self.get("1.0", tkinter.END).rstrip())
-                if not pass_thru:
-                    self.event_generate("<<CustomTextChanged>>")
-            else:
-                print(f"does not have focus")
-        except KeyError as ke:
-            self._on_text_changed(None, pass_thru=False)
 
-    def _on_text_changed(self, event, pass_thru=True):
-        self.trim_history()
-        self.history.append(self.text.get())
-        self.delete("1.0", tkinter.END, pass_thru=pass_thru)
-        self.insert("1.0", self.text.get(), pass_thru=pass_thru)
+# class TextWithVar(tkinter.Text):
+#     def __init__(self, master, textvariable=None, max_undos=100, *args, **kwargs):
+#         super().__init__(master, *args, **kwargs)
+#         if textvariable is None:
+#             textvariable = tkinter.StringVar(value=self.get("1.0", tkinter.END))
+#         self.text = textvariable
+#         self.text.trace_variable("w", self._on_text_changed)
+#
+#         self.max_undos = max_undos
+#         self.history = deque(maxlen=self.max_undos)
+#         self.history.append(self.text.get())
+#
+#         self.bind("<Control-z>", self.undo)
+#         self.bind("<Control-y>", self.redo)
+#
+#     def _on_text_changed(self, *args):
+#         self.delete("1.0", tkinter.END)
+#         self.insert("1.0", self.text.get())
+#
+#     def set_text(self, new_text):
+#         self.text.set(new_text)
+#
+#     def undo(self, event=None):
+#         if len(self.history) > 1:
+#             current_state = self.text.get()
+#             self.history.pop()  # Remove the current state
+#             previous_state = self.history.pop()
+#             self.text.set(previous_state)
+#             self.insert("1.0", self.text.get())  # Update the text widget
+#             self.history.append(previous_state)  # Add back the previous state
+#             self.history.append(current_state)  # Add the current state for redo
+#             return "break"  # Prevent default behavior of Ctrl+z
+#         return None
+#
+#     def redo(self, event=None):
+#         if len(self.history) > 1:
+#             current_state = self.text.get()
+#             self.history.pop()  # Remove the current state (undo of undo)
+#             next_state = self.history.pop()
+#             self.text.set(next_state)
+#             self.insert("1.0", self.text.get())  # Update the text widget
+#             self.history.append(next_state)  # Add back the next state
+#             self.history.append(current_state)  # Add the current state for undo
+#             return "break"  # Prevent default behavior of Ctrl+y
+#         return None
 
-    def trim_history(self):
-        if len(self.history) >= self.max_undos:
-            self.history.popleft()
 
-    def insert(self, index, text, pass_thru=True):
-        super().insert(index, text)
-        if pass_thru:
-            self._update_text_variable()
-
-    def delete(self, index1, index2=None, pass_thru=True):
-        print(f"Delete: {index1=}, {index2=}, {pass_thru=}")
-        super().delete(index1, index2)
-        if pass_thru:
-            self._update_text_variable()
-
-    def _update_text_variable(self):
-        print(f"{self.text.get()=}")
-        self.text.set(self.get("1.0", tkinter.END))
-        self.event_generate("<<CustomTextChanged>>")
+# class TextWithVar(tkinter.Text):
+#     def __init__(self, master, textvariable=None, max_undos=100, *args, **kwargs):
+#         super().__init__(master, *args, **kwargs)
+#         if textvariable is None:
+#             print(f"TextWithVar A")
+#             textvariable = tkinter.StringVar(value=self.get("1.0", tkinter.END))
+#         else:
+#             if isinstance(textvariable, tkinter.StringVar):
+#                 print(f"TextWithVar B")
+#                 textvariable = textvariable
+#             elif isinstance(textvariable, tkinter.Variable):
+#                 print(f"TextWithVar C")
+#                 textvariable = tkinter.StringVar(self, value=str(textvariable.get()))
+#             else:
+#                 print(f"TextWithVar D")
+#                 textvariable = tkinter.StringVar(self, value=textvariable)
+#
+#         print(f"HELLO TEXT: '{textvariable.get()}'")
+#
+#         self.max_undos = clamp(0, max_undos, 1000)
+#         self.history = deque(maxlen=self.max_undos)
+#         self.text = textvariable
+#         self.text.trace_variable("w", self.update_set_text)
+#         self.bind("<<CustomTextChanged>>", self._on_text_changed)
+#         self.bind("<Control-Return>", self.submit)
+#         self.bind("<KeyRelease>", self.key_release)
+#         self.history.append(self.text.get())
+#
+#         # Initialize the text widget if a initial value is passed with the StringVar.
+#         if txt := self.text.get():
+#             self.insert("1.0", txt, pass_thru=False)
+#             # self.text.set(txt)
+#
+#     def submit(self, event):
+#         print(f"submit")
+#         print(f"{self.history=}")
+#
+#     def key_release(self, *event):
+#         self.text.set(self.get("1.0", "end-1c"))
+#         # self._update_text_variable()
+#         # print(f"key_release TEXT='{self.text.get()}', T2='{}' {event=}")
+#
+#     def undo(self):
+#         if len(self.history) > 1:
+#             hist = self.history.pop()
+#             hist = self.history.pop()
+#             # print(f"hist='{hist}'")
+#             self.text.set(hist)
+#             return True
+#         elif len(self.history):
+#             hist = self.history.pop()
+#             self.text.set(hist)
+#             return True
+#         else:
+#             print("Nothing to undo.")
+#             self.history.append('')
+#             return False
+#
+#     # def update_set_text(self, *args):
+#     #     # print(f"update_set_text, {self.text.get()=}")
+#     #     self._on_text_changed(None, pass_thru=False)
+#
+#     def update_set_text(self, *args, pass_thru=True):
+#         try:
+#             if self.focus_get() == self:
+#                 self.text.set(self.get("1.0", tkinter.END).rstrip())
+#                 if not pass_thru:
+#                     self.event_generate("<<CustomTextChanged>>")
+#             else:
+#                 print(f"does not have focus")
+#         except KeyError as ke:
+#             self._on_text_changed(None, pass_thru=False)
+#
+#     def _on_text_changed(self, event, pass_thru=True):
+#         self.trim_history()
+#         self.history.append(self.text.get())
+#         self.delete("1.0", tkinter.END, pass_thru=pass_thru)
+#         self.insert("1.0", self.text.get(), pass_thru=pass_thru)
+#
+#     def trim_history(self):
+#         if len(self.history) >= self.max_undos:
+#             self.history.popleft()
+#
+#     def insert(self, index, text, pass_thru=True):
+#         super().insert(index, text)
+#         if pass_thru:
+#             self._update_text_variable()
+#
+#     def delete(self, index1, index2=None, pass_thru=True):
+#         print(f"Delete: {index1=}, {index2=}, {pass_thru=}")
+#         super().delete(index1, index2)
+#         if pass_thru:
+#             self._update_text_variable()
+#
+#     def _update_text_variable(self):
+#         print(f"{self.text.get()=}")
+#         self.text.set(self.get("1.0", tkinter.END))
+#         self.event_generate("<<CustomTextChanged>>")
 
 
 class TextWithVar_DON(tkinter.Text):
@@ -2994,11 +3106,13 @@ class TextWithVar_DON(tkinter.Text):
         '''Change the variable when the widget changes'''
         if self._textvariable is not None:
             self._textvariable.set(self.get("1.0", "end-1c"))
-			
+
 
 class InfoFrame(tkinter.Frame):
 
-    def __init__(self, master, labels=None, auto_grid=False, key_width=10, val_width=10, header=None, footer=None, cell_border=None, key_label_keywords=None, value_label_keywords=None, header_kwargs=None, footer_kwargs=None, *args, **kwargs):
+    def __init__(self, master, labels=None, auto_grid=False, key_width=10, val_width=10, header=None, footer=None,
+                 cell_border=None, key_label_keywords=None, value_label_keywords=None, header_kwargs=None,
+                 footer_kwargs=None, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.auto_grid = auto_grid
         self.header = header
@@ -3016,7 +3130,8 @@ class InfoFrame(tkinter.Frame):
         self.val_label_kwargs = value_label_keywords if value_label_keywords is not None else {}
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
 
-        assert hasattr(self.labels_in, "__iter__"), f"Error param 'labels_in' must be an iterable. Got type='{type(self.labels_in)}'"
+        assert hasattr(self.labels_in,
+                       "__iter__"), f"Error param 'labels_in' must be an iterable. Got type='{type(self.labels_in)}'"
 
         self.check_header()
         self.check_footer()
@@ -3117,7 +3232,7 @@ class InfoFrame(tkinter.Frame):
             self.grid_args["footer"] = {r: ri, c: 0, rs: 1, cs: 2}
 
     def keyify(self, label_name_in):
-        return f"k_{('000000'+str(next(self.key_gener)))[-6:]}_{label_name_in}"
+        return f"k_{('000000' + str(next(self.key_gener)))[-6:]}_{label_name_in}"
 
     def de_keyify(self, key_in):
         alike = []
@@ -3131,7 +3246,7 @@ class InfoFrame(tkinter.Frame):
         else:
             if len(alike) > 1:
                 print(
-                f"WARNING de-keyify function found multiple keys with the given name '{key_in}', returning the first occurence.")
+                    f"WARNING de-keyify function found multiple keys with the given name '{key_in}', returning the first occurence.")
             return alike[0]
 
     def grid_keys(self):

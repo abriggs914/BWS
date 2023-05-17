@@ -12,11 +12,12 @@ from html_utility import html_to_pdf
 from tkinter_utility import *
 from tkinter import messagebox
 
-from datetime_utility import is_date
+from datetime_utility import *
 from colour_demo import ColourWidget
 from calendar_surface import *
 from line_shift_demo import LineShifter
 from utility import Rect2
+from bs4 import BeautifulSoup
 
 
 class App(tkinter.Tk):
@@ -34,12 +35,16 @@ class App(tkinter.Tk):
             colour_background_frame_top_bar=Colour(78, 15, 15).hex_code,
             warn_weekends: bool = True,
             illegal_saturday: bool = True,
-            illegal_sunday: bool = True
+            illegal_sunday: bool = True,
+            pdf_dir="C:/Access/STGProdSched/PDFs",
+            html_dir="C:/Access/STGProdSched/HTMLs"
     ):
         super().__init__()
 
         self.PROGRAM_MODE = PROGRAM_MODE
         self.SETTINGS_FILE = SETTINGS_FILE
+        self.directory_pdf = pdf_dir
+        self.directory_html = html_dir
         self.start_date = None
         self.df_production = None
         self.df_work_days = None
@@ -49,7 +54,10 @@ class App(tkinter.Tk):
         self.this_user_publishes = None
         self.user_name = None
         self.populate_data()
+        self.init_stgprodsched_directory()
         self.init_queries_directory()
+        self.init_pdfs_directory()
+        self.init_html_directory()
 
         if self.user_name is None:
             tkinter.messagebox.showerror(title="Fatal",
@@ -167,7 +175,8 @@ class App(tkinter.Tk):
             height_in_rows=8,
             lock_result_col="SGQuote",
             viewable_column_widths=[100, 100, 180, 180, 150],
-            limit_to_list=False
+            # limit_to_list=False
+            limit_to_list=True
         )
 
         # self.multi_combo_unit_selection.configure(background="tan")
@@ -196,9 +205,9 @@ class App(tkinter.Tk):
                 self.frame_top_bar_c,
                 tv_btn="Commit",
                 kwargs_btn={
-                    "name": "button_update",
-                    "command": self.click_update_sql
-                }
+                    "name": "button_update"
+                },
+                command=self.click_update_sql
         )
 
         self.tv_btn_undo, \
@@ -207,9 +216,9 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn="<",
             kwargs_btn={
-                "name": "button_undo",
-                "command": self.click_undo
-            }
+                "name": "button_undo"
+            },
+            command=self.click_undo
         )
 
         self.tv_btn_redo, \
@@ -218,9 +227,9 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn=">",
             kwargs_btn={
-                "name": "button_redo",
-                "command": self.click_redo
-            }
+                "name": "button_redo"
+            },
+            command=self.click_redo
         )
 
         self.tv_btn_refresh, \
@@ -229,9 +238,9 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn="Refresh",
             kwargs_btn={
-                "name": "button_refresh",
-                "command": self.click_refresh
-            }
+                "name": "button_refresh"
+            },
+            command=self.click_refresh
         )
 
         self.tv_btn_print_schedule, \
@@ -240,9 +249,9 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn="Print",
             kwargs_btn={
-                "name": "button_print",
-                "command": self.print_schedule
-            }
+                "name": "button_print"
+            },
+            command=self.print_schedule
         )
 
         # self.tv_label_unit_scroll_search,\
@@ -612,7 +621,7 @@ class App(tkinter.Tk):
         lines = self.calendar_surface.lines
         contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if
                         self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
-        min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
+        # min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
         # content = {line: {} for line in lines}
         #
         # dd = (max_date - min_date).days
@@ -642,29 +651,38 @@ class App(tkinter.Tk):
         #     desc_txt="demo description text."
         # )
 
+        min_date, max_date = utility.minmax(dates)
+
         xd = (max_date.month + (12 * max_date.year))
         nd = (min_date.month + (12 * min_date.year))
         # td = 1 + xd - nd
         td = relativedelta(max_date, min_date).months + (12 * relativedelta(max_date, min_date).years)
 
-        dates = [d for d in dates if min_date <= d and d <= max_date]
+        print(f"1 {dates=}")
+        # dates = [d for d in dates if min_date <= d and d <= max_date]
 
         print(f"{min_date=}, {max_date=}")
         print(f"{xd=}, {nd=}, {td=}")
-        print(f"{dates=}")
+        print(f"2 {dates=}")
 
         content = {i: {line: {} for line in lines} for i in range(td + 1)}
 
         for i, d in enumerate(dates):
-            if d.isoweekday() % 6 not in [0, 1]:
+            if d.isoweekday() % 7 not in [0, 6]:
                 # t_date = min_date + datetime.timedelta(days=)
                 f_date = d.strftime("%Y-%m-%d")
                 mi = (d.month + (12 * d.year)) - nd
                 print(f"{i=}, {d=}, {f_date=}, {mi=}")
                 for j, l in enumerate(lines):
                     value = self.calendar_surface.tile_properties[j][i]["unit_in"]
-                    k = f"{d:%A\n%Y-%m-%d}"
+                    if value:
+                        value = value.calendar_repr().replace("\n", "<br>")
+                    # k = f"{d:%A\n%Y-%m-%d}"
+                    # k = f"{d:%a\n%Y-%m-%d}"
+                    k = f"{d:%a}, {d.day}{date_suffix(d)}"
                     content[mi][l][k] = value
+            # else:
+            #     print(f"{d=}")
 
         # print(f"{content=}")
 
@@ -672,19 +690,40 @@ class App(tkinter.Tk):
         # x     | day1  | day2   | day 2
         # Line1 |       | unit1  |
         # Line2 | unit2 | unit3  |
-        file_out = f"html_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.html"
-        pdf_file_out = f"pdf_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.pdf"
-        html = f"<!DOCTYPE html><html><head><title>Page Title</title></head><body>"
+        pdf_dir = self.directory_pdf
+        html_dir = self.directory_html
+        file_out = f"{html_dir}/html_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.html"
+        pdf_file_out = f"{pdf_dir}/pdf_output_{datetime.datetime.now():%Y-%m-%d_%H_%M_%S}.pdf"
+
+        # t_style = f"<style>@media print {{table {{width: 100%; height: 100%;}}"
+        # t_style = f"{t_style} @page {{size: 11in 17in; margin: 0;}}}}</style>"
+
+        # t_style = f"<style> table {{max-width: 5100px; width: 100%; max-height: 3100px; height: 100%; table-layout: auto;}}</style>"
+        t_style = f"<style>html, body {{height: 100%; margin: 0; padding: 0;}}"
+        # t_style = f"{t_style} table {{max-width: 5100px; width: 100%; max-height: 3100px; height: 100%; table-layout: auto;}}</style>"
+        t_style = f"{t_style} table {{max-width: 5100px; width: 100%; table-layout: auto;}}"
+        t_style = f"{t_style} h2 {{page-break-before: always;}}"
+        t_style = f"{t_style} .table-wrapper {{display: flex; flex-direction: column; height: 100%;}}"
+        t_style = f"{t_style} tr {{flex-grow: 1;}}"
+        t_style = f"{t_style}</style>"
+
+        t_title = f"<title>Page Title</title>"
+        html = f"<!DOCTYPE html><html><head>{t_title}{t_style}</head><body>"
         print(f"{content=}")
         print(f"{list(content.keys())=}")
         for month, data in content.items():
             # print(f"{data['date'].items()=}")
-            print(f"{month=}")
             y = (min_date + relativedelta(months=month)).year
-            html = f"{html}<H2>{calendar.month_name[(month % 12) + 1]} {y}</H2>"
+            mn = calendar.month_name[(month % 12) + 1]
+            html = f"{html}<H2>{mn} {y}</H2>"
+            print(f"{month=} {mn}")
             df_content = pd.DataFrame(data).transpose().fillna("")
-            html = f"{html}{df_content.to_html()}"
+            html = f"{html}<div class='table-wrapper'>{df_content.to_html(escape=False)}</div>"
+            # print(f"{df_content.to_html()=}")
         html = f"{html}</body></html>"
+
+        soup = BeautifulSoup(html, "html.parser")
+        html = soup.prettify()
 
         with open(file_out, 'w') as f:
             f.write(html)
@@ -875,11 +914,29 @@ class App(tkinter.Tk):
         if not self.dirty.get():
             self.destroy()
 
+    def init_stgprodsched_directory(self):
+        if not os.path.isdir("C:/Access/STGProdSched"):
+            os.mkdir("C:/Access/STGProdSched")
+        if not os.path.isdir("./STGProdSched"):
+            os.mkdir("./STGProdSched")
+
     def init_queries_directory(self):
-        if not os.path.isdir("C:/Access/Queries"):
-            os.mkdir("C:/Access/Queries")
-        if not os.path.isdir("./Queries"):
-            os.mkdir("./Queries")
+        if not os.path.isdir("C:/Access/STGProdSched/Queries"):
+            os.mkdir("C:/Access/STGProdSched/Queries")
+        if not os.path.isdir("./STGProdSched/Queries"):
+            os.mkdir("./STGProdSched/Queries")
+
+    def init_pdfs_directory(self):
+        if not os.path.isdir("C:/Access/STGProdSched/PDFs"):
+            os.mkdir("C:/Access/STGProdSched/PDFs")
+        if not os.path.isdir("./STGProdSched/PDFs"):
+            os.mkdir("./STGProdSched/PDFs")
+
+    def init_html_directory(self):
+        if not os.path.isdir("C:/Access/STGProdSched/HTMLs"):
+            os.mkdir("C:/Access/STGProdSched/HTMLs")
+        if not os.path.isdir("./STGProdSched/HTMLs"):
+            os.mkdir("./STGProdSched/HTMLs")
 
     def verify_user(self, user_name):
         if user_name is None:

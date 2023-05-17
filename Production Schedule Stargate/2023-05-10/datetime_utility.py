@@ -7,8 +7,8 @@ from utility import minmax, clamp, choice
 
 """
 	General datetime Utility Functions
-	Version...............1.7
-	Date...........2023-04-17
+	Version...............1.8
+	Date...........2023-05-15
 	Author.......Avery Briggs
 """
 
@@ -75,7 +75,10 @@ def same_calendar_day(d1, d2):
 
 
 def date_suffix(day):
-    s_day = str(day)
+    if isinstance(day, datetime.datetime):
+        s_day = f"{day:%Y-%m-%d}"
+    else:
+        s_day = str(day)
     if s_day[-1] == "1":
         res = "st"
         if len(s_day) > 1:
@@ -108,7 +111,7 @@ def date_str_format(date_str, include_time=False, include_weekday=False, short_m
         date_obj = date_str
     else:
         date_obj = datetime.datetime.fromisoformat(date_str)
-    suffix = date_suffix(date_obj.day)
+    suffix = date_suffix(date_obj)
     res = datetime.datetime.strftime(date_obj, f"%{'b' if short_month else 'B'} %d###, %Y").replace("###", suffix)
     s_res = res.split(" ")
     x = s_res[1] if s_res[1][0] != "0" else s_res[1][1:]

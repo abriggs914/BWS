@@ -5,7 +5,8 @@ from tkinter_utility import tkinter, is_tk_var
 from dateutil.relativedelta import relativedelta
 from colour_utility import *
 from unit import Unit
-from utility import dict_print, date_suffix
+from utility import dict_print
+from datetime_utility import *
 from stg_queries import *
 import math
 
@@ -52,7 +53,7 @@ class CalendarSurface(tkinter.Canvas):
             drag_colour: str = rgb_to_hex(FIREBRICK_4),
 
             n_visible_cols: int = 14,
-            sql_output_file_name: str = "./Queries/{ts}_sql_output.sql",
+            sql_output_file_name: str = "./STGProdSched/Queries/{ts}_sql_output.sql",
             text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "Customer_WO", "IsGalv"],
 
             weekend_proportion: float = 0.5,
@@ -464,15 +465,15 @@ class CalendarSurface(tkinter.Canvas):
                 active_outline_colour = self.active_wkd_outline_colour
 
         #TODO here
-        print(f"-A")
+        # print(f"-A")
         if r < len(self.tile_properties) and c < len(self.tile_properties[r]):
-            print(f"-B")
+            # print(f"-B")
             unit = self.tile_properties[r][c]["unit_in"]
             if unit:
                 dealer = unit.InputField2_v2.upper()
-                print(f"-C, {dealer=}")
+                # print(f"-C, {dealer=}")
                 if dealer in self.dealer_colour_scheme:
-                    print(f"-D, {self.dealer_colour_scheme[dealer]}")
+                    # print(f"-D, {self.dealer_colour_scheme[dealer]}")
 
                     colour = Colour(self.dealer_colour_scheme[dealer])
                     b = brighten(colour.rgb_code, 0.25, rgb=False)

@@ -392,8 +392,8 @@ def html_to_pdf(
     if avoid_overwrite:
         pdf_file_out = next_available_file_name(pdf_file_out)
 
-    # print(f"HTML file: {html_file}")
-    # print(f"PDF file : {pdf_file_out}")
+    print(f"HTML file: {html_file}")
+    print(f"PDF file : {pdf_file_out}")
 
     # else:
     #     try:
