@@ -9,9 +9,9 @@ from scheduler_app import App
 
 SETTINGS_FILE = "./PDS_User_Settings.json"
 SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
-PROD_DATE = datetime.datetime(2023, 5, 15, 13, 16)
-# PROGRAM_MODE = "LIVE"
-PROGRAM_MODE = "TEST"
+PROD_DATE = datetime.datetime(2023, 5, 18, 18, 1)
+PROGRAM_MODE = "LIVE"
+# PROGRAM_MODE = "TEST"
 
 
 # NOTE - Copy this into the desired script you want to restart.
@@ -57,7 +57,7 @@ def run_live():
                 KeyError
         ) as err:
             error = True
-            print(f"{err=}")
+            print(f"\n{err=}")
         else:
             error = False
 

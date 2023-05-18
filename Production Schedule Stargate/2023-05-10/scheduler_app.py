@@ -16,7 +16,7 @@ from datetime_utility import *
 from colour_demo import ColourWidget
 from calendar_surface import *
 from line_shift_demo import LineShifter
-from utility import Rect2
+from utility import Rect2, print_by_line
 from bs4 import BeautifulSoup
 
 
@@ -617,6 +617,7 @@ class App(tkinter.Tk):
         # pdf.margin_border(STARGATE_BLUE, WHITE)
         # pdf.time_stamp()
 
+        n_info_lines = 6
         dates = self.calendar_surface.dates_list
         lines = self.calendar_surface.lines
         contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if
@@ -666,17 +667,23 @@ class App(tkinter.Tk):
         print(f"2 {dates=}")
 
         content = {i: {line: {} for line in lines} for i in range(td + 1)}
+        print(f"A {content=}")
 
         for i, d in enumerate(dates):
-            if d.isoweekday() % 7 not in [0, 6]:
+            if (d.isoweekday() % 7 not in [0, 6]):
                 # t_date = min_date + datetime.timedelta(days=)
                 f_date = d.strftime("%Y-%m-%d")
                 mi = (d.month + (12 * d.year)) - nd
-                print(f"{i=}, {d=}, {f_date=}, {mi=}")
+                print(f"{i=}, {f_date=}, {mi=}")
                 for j, l in enumerate(lines):
-                    value = self.calendar_surface.tile_properties[j][i]["unit_in"]
+                    # value = self.calendar_surface.tile_properties[j][i]["unit_in"]
+                    value = self.calendar_surface.tile_properties[j + 1][i + 1]["unit_in"]
                     if value:
-                        value = value.calendar_repr().replace("\n", "<br>")
+                        value = value.calendar_repr()
+                    else:
+                        value = "\n" * n_info_lines
+                    value = value.replace("\n", "<br>")
+                    print(f"\t{i=}, {j=}, {f_date=}, {l=}, {value=}")
                     # k = f"{d:%A\n%Y-%m-%d}"
                     # k = f"{d:%a\n%Y-%m-%d}"
                     k = f"{d:%a}, {d.day}{date_suffix(d)}"
@@ -707,16 +714,17 @@ class App(tkinter.Tk):
         t_style = f"{t_style} tr {{flex-grow: 1;}}"
         t_style = f"{t_style}</style>"
 
+        smi = min_date.month - 1
         t_title = f"<title>Page Title</title>"
         html = f"<!DOCTYPE html><html><head>{t_title}{t_style}</head><body>"
-        print(f"{content=}")
+        print(f"FIN {content=}")
         print(f"{list(content.keys())=}")
         for month, data in content.items():
             # print(f"{data['date'].items()=}")
             y = (min_date + relativedelta(months=month)).year
-            mn = calendar.month_name[(month % 12) + 1]
+            mn = calendar.month_name[((smi + month) % 12) + 1]
             html = f"{html}<H2>{mn} {y}</H2>"
-            print(f"{month=} {mn}")
+            # print(f"{month=} {mn} {smi + month}")
             df_content = pd.DataFrame(data).transpose().fillna("")
             html = f"{html}<div class='table-wrapper'>{df_content.to_html(escape=False)}</div>"
             # print(f"{df_content.to_html()=}")
@@ -965,6 +973,10 @@ class App(tkinter.Tk):
         self.start_date = datetime.datetime.strptime(
             self.settings_data.get("start_date", datetime.datetime.now().strftime("%Y-%m-%d")), "%Y-%m-%d")
         self.df_production = connect(**SQL_ALL_STG_UNITS)
+
+        # print(f"A {list(self.df_production.columns)=}")
+        # print(f"A {len(list(self.df_production.columns))=}")
+
         self.df_work_days = connect(**SQL_ALL_STG_PROD_DAYS)
         self.df_valid_users = connect(**SQL_VALID_USERS)
         self.df_used_lines = connect(**SQL_USED_LINES)
@@ -1191,8 +1203,10 @@ class App(tkinter.Tk):
         # return lst
 
     def dat_list_of_dealers(self):
-        lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if
-                    tup[0] is not None and tup[0] != ""})
+        print_by_line(self.df_production["InputField2"].values.tolist())
+        # lst = list({tup[0] for tup in self.df_production["InputField2"].values.tolist() if
+        #             tup[0]})
+        lst = list({tup for tup in self.df_production["InputField2"].values.tolist() if tup})
         lst.sort()
         return lst
 
