@@ -87,8 +87,42 @@ def exec_labour_prediction(company=None, department=None, request_type=None, req
                 vals[i] = f"'{v}"
             if not v.endswith("'"):
                 vals[i] = f"{v}'"
-    sql = "EXEC [sp_ITREstimateLabour] @company={0}, @department={1}, @requestType={2}, @requestSubType={3}".format(*vals)
-    print(f"{sql=}")
+    sql = """
+DECLARE @t AS TABLE (
+	[qid] NVARCHAR(1)
+	, [ID] INT
+	, [Company] NVARCHAR(MAX)
+	, [Dept] NVARCHAR(MAX)
+	, [RequestType] NVARCHAR(MAX)
+	, [RequestSubType] NVARCHAR(MAX)
+	, [# Reqs] INT
+	, [Tot Reqs] INT
+	, [Tot Act] DECIMAL(14,7)
+	, [Tot Bud] DECIMAL(14,7) 
+	, [% Ttl Reqs] DECIMAL(16,2)
+	, [Act] DECIMAL(14,7)
+	, [Bud] DECIMAL(14,7)
+	, [Act / Bud] DECIMAL(14,2)
+	, [Act / Req] DECIMAL(14,2)
+	, [Bud / Req] DECIMAL(14,2)
+	, [% Total Act] DECIMAL(14,2)
+	, [% Total Bud] DECIMAL(14,2)
+)
+;
+
+INSERT INTO @t
+EXEC	[dbo].[sp_ITREstimateLabour]
+		@company = {0},
+		@department = {1},
+		@requestType = {2},
+		@requestSubType = {3}
+;
+
+SELECT * FROM @t
+;
+""".format(*vals)
+    # sql = "EXEC [sp_ITREstimateLabour] @company={0}, @department={1}, @requestType={2}, @requestSubType={3}".format(*vals)
+    print(f"sql={sql}")
     print(f"{connect(sql)=}")
     return connect(
         sql=sql
