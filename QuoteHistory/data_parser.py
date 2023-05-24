@@ -57,8 +57,8 @@ us_cost = lambda x: cdn_cost(us_cdn(x))
 day_calculator = lambda day, n_holidays=0: (((day - 1) // 5) * 2) + day + n_holidays
 
 # Function used to generate a list of lists containing the total day count for each day up to the given work day number
-def work_weeks(first_day, public_holdays, personal_holidays):
-	holidays = public_holdays + personal_holidays
+def work_weeks(first_day, public_holdays, personal_holidays, sick_days):
+	holidays = public_holdays + personal_holidays + sick_days
 	holidays.sort()
 		
 	today = datetime.date.today()
@@ -848,10 +848,14 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		,"2023-01-05"
 		,"2023-01-06"
 	]
+	sick_days = [
+		"2023-05-23"
+	]
 	
-	holidays = public_holidays + personal_holidays
+	holidays = public_holidays + personal_holidays + sick_days
 	holidays.sort()
-	a = work_weeks(day_one, public_holidays, personal_holidays)
+	# print(f"{holidays=}")
+	a = work_weeks(day_one, public_holidays, personal_holidays, sick_days)
 	# a = [work_weeks(i, [43]) for i in range(1, 45)]
 	# b = "\n".join([str(i+1) + " - " + str(v) for i, v in enumerate(a)])
 	print(dict_print(a, "work weeks", number=True, table_title="Weeks"))  #, sort_header=True
