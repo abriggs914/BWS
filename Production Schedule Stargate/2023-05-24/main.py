@@ -12,6 +12,8 @@ SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
 PROD_DATE = datetime.datetime(2023, 5, 18, 18, 1)
 PROGRAM_MODE = "LIVE"
 # PROGRAM_MODE = "TEST"
+# DARK_MODE = True
+DARK_MODE = False
 
 
 # NOTE - Copy this into the desired script you want to restart.
@@ -46,7 +48,8 @@ def run_live():
                 PROGRAM_MODE=PROGRAM_MODE,
                 TITLE=f"Stargate Production Scheduler {version}",
                 can_width_p=0.999,
-                restart_handle=restart_program
+                restart_handle=restart_program,
+                dark_mode=DARK_MODE
             ).mainloop()
         except (
                 ValueError,
@@ -68,7 +71,8 @@ def error_test():
         PROGRAM_MODE=PROGRAM_MODE,
         TITLE=f"Stargate Production Scheduler {version}",
         can_width_p=0.999,
-        restart_handle=restart_program
+        restart_handle=restart_program,
+        dark_mode=DARK_MODE
     ).mainloop()
 
 

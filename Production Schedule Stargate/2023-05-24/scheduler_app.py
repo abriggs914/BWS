@@ -37,7 +37,8 @@ class App(tkinter.Tk):
             illegal_saturday: bool = True,
             illegal_sunday: bool = True,
             pdf_dir="C:/Access/STGProdSched/PDFs",
-            html_dir="C:/Access/STGProdSched/HTMLs"
+            html_dir="C:/Access/STGProdSched/HTMLs",
+            dark_mode=True
     ):
         super().__init__()
 
@@ -53,6 +54,7 @@ class App(tkinter.Tk):
         self.this_user_is_valid = None
         self.this_user_publishes = None
         self.user_name = None
+        self.dark_mode = dark_mode
         self.populate_data()
         self.init_stgprodsched_directory()
         self.init_queries_directory()
@@ -142,12 +144,49 @@ class App(tkinter.Tk):
         self.var_multi_combo_unit_popped = tkinter.BooleanVar(self, value=False)
 
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
-        self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
-                                                lines=used_lines, user_name=self.user_name,
-                                                width=can_w, height=can_h, dirty_status_var=self.dirty,
-                                                start_date=self.start_date, weekend_proportion=0.1,
-                                                illegal_saturday=self.illegal_saturday,
-                                                illegal_sunday=self.illegal_sunday)
+        if dark_mode:
+            self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
+                                                    lines=used_lines, user_name=self.user_name,
+                                                    width=can_w, height=can_h, dirty_status_var=self.dirty,
+                                                    start_date=self.start_date, weekend_proportion=0.1,
+                                                    illegal_saturday=self.illegal_saturday,
+                                                    illegal_sunday=self.illegal_sunday)
+        else:
+            self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
+                                                    lines=used_lines, user_name=self.user_name,
+                                                    width=can_w, height=can_h, dirty_status_var=self.dirty,
+                                                    start_date=self.start_date, weekend_proportion=0.1,
+                                                    illegal_saturday=self.illegal_saturday,
+                                                    illegal_sunday=self.illegal_sunday,
+
+                                                    # colours for date axis legend (Y)
+                                                    row_legend_background_colour=rgb_to_hex(GRAY_60),
+                                                    row_legend_outline_colour=rgb_to_hex(BLACK),
+                                                    row_legend_active_background_colour="#e2e0ee",
+                                                    row_legend_active_outline_colour=rgb_to_hex(BLACK),
+
+                                                    # colours for trailer line axis legend (X)
+                                                    col_legend_background_colour=rgb_to_hex(GRAY_60),
+                                                    col_legend_outline_colour=rgb_to_hex(BLACK),
+                                                    col_legend_active_background_colour="#e2e0ee",
+                                                    col_legend_active_outline_colour=rgb_to_hex(BLACK),
+
+                                                    # regular tile colour
+                                                    tile_background_colour=rgb_to_hex(GRAY_99),
+                                                    tile_outline_colour=rgb_to_hex(BLACK),
+                                                    active_fill_colour=rgb_to_hex(GRAY_90),
+                                                    active_outline_colour=rgb_to_hex(YELLOW_3),
+
+                                                    # weekend tile colour
+                                                    tile_wkd_background_colour=rgb_to_hex(GRAY_8),
+                                                    tile_wkd_outline_colour=rgb_to_hex(GRAY_8),
+                                                    active_wkd_fill_colour=rgb_to_hex(GRAY_8),
+                                                    active_wkd_outline_colour=rgb_to_hex(GRAY_8),
+
+                                                    # other colours
+                                                    selected_colour=rgb_to_hex(CADETBLUE),
+                                                    drag_colour=rgb_to_hex(CORNFLOWERBLUE),
+                                                    )
         print(f"{list(enumerate(self.df_production.columns))=}")
         self.calendar_surface.populate_units(self.df_production)
         self.calendar_surface.dirty_status_var.set(False)  # reset to false after tile initialization.
@@ -202,12 +241,12 @@ class App(tkinter.Tk):
         self.tv_btn_update_changes, \
             self.button_update_changes \
             = button_factory(
-                self.frame_top_bar_c,
-                tv_btn="Commit",
-                kwargs_btn={
-                    "name": "button_update"
-                },
-                command=self.click_update_sql
+            self.frame_top_bar_c,
+            tv_btn="Commit",
+            kwargs_btn={
+                "name": "button_update"
+            },
+            command=self.click_update_sql
         )
 
         self.tv_btn_undo, \
@@ -274,24 +313,24 @@ class App(tkinter.Tk):
         self.tv_label_submit_unit_search, \
             self.button_submit_unit_search \
             = button_factory(
-                self.frame_top_bar_a,
-                tv_btn="Search Calendar",
-                kwargs_btn={
-                    "name": "button_submit_search",
-                    "command": self.click_search_units
-                }
-            )
+            self.frame_top_bar_a,
+            tv_btn="Search Calendar",
+            kwargs_btn={
+                "name": "button_submit_search",
+                "command": self.click_search_units
+            }
+        )
 
         self.tv_label_button_go_to_today, \
             self.button_go_to_today \
             = button_factory(
-                self.frame_top_bar_a,
-                tv_btn="Go To Today",
-                kwargs_btn={
-                    "name": "button_go_to_today"
-                },
-                command=self.click_go_to_today
-            )
+            self.frame_top_bar_a,
+            tv_btn="Go To Today",
+            kwargs_btn={
+                "name": "button_go_to_today"
+            },
+            command=self.click_go_to_today
+        )
         # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
 
         # canvas and calendar objects
@@ -310,7 +349,8 @@ class App(tkinter.Tk):
         dates = self.calendar_surface.dates_list
         min_date, max_date = utility.minmax(dates)
         # print(f"{min_date=}, {max_date=}")
-        self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines, min_date=min_date, max_date=max_date)
+        self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines,
+                                        min_date=min_date, max_date=max_date)
         self.tv_label_line_shifter = tkinter.StringVar(self, value="Shift Lines:")
         self.label_line_shifter = tkinter.Label(self.frame_top_bar_e, textvariable=self.tv_label_line_shifter)
         self.canv_btn_show_line_shifter = ArrowButton(self.frame_top_bar_e)
@@ -400,13 +440,13 @@ class App(tkinter.Tk):
             self.tv_debug_app_state, \
             self.debug_entry_app_state \
             = entry_factory(
-                self.frame_top_bar_f,
-                tv_label="App State:",
-                tv_entry=self.app_state,
-                kwargs_entry={
-                    "name": "debug_appstate",
-                    "state": "readonly"
-                }
+            self.frame_top_bar_f,
+            tv_label="App State:",
+            tv_entry=self.app_state,
+            kwargs_entry={
+                "name": "debug_appstate",
+                "state": "readonly"
+            }
         )
 
         self.debug_tv_show_scrollregion, \
@@ -750,7 +790,6 @@ class App(tkinter.Tk):
             'encoding': "UTF-8",
         }
         html_to_pdf(file_out, pdf_file_out, do_open=True, options=options, do_quit=True)
-
 
         # # TODO configure this for each computer.
         # wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
@@ -1329,7 +1368,6 @@ class App(tkinter.Tk):
             row_count += 1
         self.tl_search_choice_frame.grid()
 
-
     def click_search_units(self, *args, pass_thru_date=None):
         text = self.tv_entry_unit_scroll_search.get().upper()
         bba = self.calendar_surface.bbox("all")
@@ -1342,7 +1380,7 @@ class App(tkinter.Tk):
         is_date_in = date_in is not None
         if len(text) < self.min_calendar_search_char_threshold:
             messagebox.showerror(title="Calendar Search",
-                                message=f"Please enter at least {self.min_calendar_search_char_threshold} characters before trying to search.")
+                                 message=f"Please enter at least {self.min_calendar_search_char_threshold} characters before trying to search.")
             return
         if text:
             if pass_thru_date is None and (text in self.calendar_surface.units):
@@ -1438,10 +1476,10 @@ class App(tkinter.Tk):
 
                     print(dict_print(results, "Possible matches"))
 
-                                # self.multi_combo_unit_selection.select(u_data.SGQuote)
-                        #         break
-                        # if handled:
-                        #     break
+                    # self.multi_combo_unit_selection.select(u_data.SGQuote)
+                    #         break
+                    # if handled:
+                    #     break
 
                 if handled:
                     # print(f"f_unit= {f_unit}")
@@ -1543,7 +1581,6 @@ class App(tkinter.Tk):
                     self.app_state = "IDLE"
                     self.calendar_surface.revert_colour(rc)
                     print(f"NO UNIT IN")
-
 
     def get_combo_quote(self):
         q = self.tv_combo_unit_selection.get()
