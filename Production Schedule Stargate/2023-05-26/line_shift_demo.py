@@ -283,7 +283,7 @@ class LineShifter(tkinter.Frame):
             print(f"{osd=}, {oed=}, {sd=}, {ed=}, {ln=}, {dr=}, {dy=}, {st=}")
             msg = ""
             if osd and sd:
-                msg = f"From {sd:%Y-%m-%d}"
+                msg = f"Starting {sd:%Y-%m-%d}"
             if oed and ed:
                 if msg:
                     msg += f" to {ed:%Y-%m-%d}, "

@@ -1,3 +1,6 @@
+USE BWSdb
+GO
+
 
 BEGIN TRAN;
 
