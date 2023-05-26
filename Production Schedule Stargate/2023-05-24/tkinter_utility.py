@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.49
-    Date...........2023-05-15
+    Version..............1.50
+    Date...........2023-05-25
     Author(s)....Avery Briggs
     """
 
@@ -2044,9 +2044,9 @@ class MultiComboBox(tkinter.Frame):
         self.frame_top_most.grid_columnconfigure(0, weight=9)
         self.frame_top_most.grid_columnconfigure(1, weight=1)
         self.frame_middle = tkinter.Frame(self, name="fm")
+        self.radio_btn_texts = ["All", *self.tree_controller.viewable_column_names]
         self.rg_var, self.rg_tv_var, self.rg_btns = radio_factory(self.frame_middle,
-                                                                  buttons=["All",
-                                                                           *self.tree_controller.viewable_column_names])
+                                                                  buttons=self.radio_btn_texts, default_value=0)
         self.rg_var.trace_variable("w", self.update_radio_group)
         self.res_tv_entry.trace_variable("w", self.update_entry)
         self.typed_in = tkinter.BooleanVar(self, value=False)
@@ -2233,13 +2233,17 @@ class MultiComboBox(tkinter.Frame):
                 else:
                     row = dict(rest_values)
                     row.update({col: val})
-                    # print(f"\n\n\t\trow:\n{row}\n>\n\tcn\n{cn}\n>")
+                    print(f"\n\trow:\n{row}\n\n\tcn\n{cn}\n>")
                     # self.data = self.data.append(pandas.DataFrame(row))
-                    # print(f"\n\n\tData\n{self.data}")
-                    # print(f"\n\n\tcols\n{self.data.columns}")
+                    print(f"A\n\tData\n{self.data}\n{type(self.data)=}")
+                    print(f"\n\tcols\n{self.data.columns}")
                     # print(f"DF 2:{pandas.DataFrame(row)}")
-                    # print(f"DF 1:{pandas.DataFrame([row], columns=list(row.keys()))}")
-                    self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
+                    df1 = pandas.DataFrame([row], columns=list(row.keys()))
+                    print(f"DF 1:{df1}\n{type(df1)=}")
+                    # self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
+                    # self.data = self.data.append(df1, ignore_index=True)
+                    self.data = pd.concat([self.data, df1], ignore_index=True)
+                    print(f"B\n\tData\n{self.data}\n{type(self.data)=}")
                     # self.data = self.data.append(pandas.DataFrame(row))
                     self.tree_treeview.insert("", "end", iid=i, text=str(i + 1),
                                               values=list({k: [v] for k, v in zip(cn, row)}.values()))
@@ -2321,6 +2325,7 @@ class MultiComboBox(tkinter.Frame):
             val = self.res_tv_entry.get().lower()
             print(f"SUBMISSION VAL {val=}")
             col = self.rg_var.get()
+            col = self.radio_btn_texts[col]
             some = False
             if not val:
                 # print(f"Not val")

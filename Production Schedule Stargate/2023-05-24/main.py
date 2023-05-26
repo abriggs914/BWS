@@ -3,13 +3,14 @@ import sys
 import os
 import tkinter
 
+from colour_utility import *
 from settings_initializer import SettingsWriter
 from scheduler_app import App
 
 
 SETTINGS_FILE = "./PDS_User_Settings.json"
 SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
-PROD_DATE = datetime.datetime(2023, 5, 18, 18, 1)
+PROD_DATE = datetime.datetime(2023, 5, 25, 17, 25)
 PROGRAM_MODE = "LIVE"
 # PROGRAM_MODE = "TEST"
 # DARK_MODE = True
@@ -49,7 +50,8 @@ def run_live():
                 TITLE=f"Stargate Production Scheduler {version}",
                 can_width_p=0.999,
                 restart_handle=restart_program,
-                dark_mode=DARK_MODE
+                dark_mode=DARK_MODE,
+                colour_background_frame_top_bar=Colour(STARGATE_BLUE).hex_code
             ).mainloop()
         except (
                 ValueError,
@@ -72,7 +74,8 @@ def error_test():
         TITLE=f"Stargate Production Scheduler {version}",
         can_width_p=0.999,
         restart_handle=restart_program,
-        dark_mode=DARK_MODE
+        dark_mode=DARK_MODE,
+        colour_background_frame_top_bar=Colour(STARGATE_BLUE).hex_code
     ).mainloop()
 
 

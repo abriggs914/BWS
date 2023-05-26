@@ -1,4 +1,5 @@
 import calendar
+import datetime
 import sys
 import os
 import json
@@ -178,9 +179,9 @@ class App(tkinter.Tk):
                                                     active_outline_colour=rgb_to_hex(YELLOW_3),
 
                                                     # weekend tile colour
-                                                    tile_wkd_background_colour=rgb_to_hex(GRAY_8),
+                                                    tile_wkd_background_colour=Colour(STARGATE_BLUE).hex_code,
                                                     tile_wkd_outline_colour=rgb_to_hex(GRAY_8),
-                                                    active_wkd_fill_colour=rgb_to_hex(GRAY_8),
+                                                    active_wkd_fill_colour=Colour(STARGATE_BLUE).brighten(0.25).hex_code,
                                                     active_wkd_outline_colour=rgb_to_hex(GRAY_8),
 
                                                     # other colours
@@ -213,9 +214,9 @@ class App(tkinter.Tk):
             tv_label="Select a Quote #:",
             height_in_rows=8,
             lock_result_col="SGQuote",
-            viewable_column_widths=[100, 100, 180, 180, 150],
-            # limit_to_list=False
-            limit_to_list=True
+            viewable_column_widths=[90, 85, 180, 170, 140],
+            limit_to_list=False
+            # limit_to_list=True
         )
 
         # self.multi_combo_unit_selection.configure(background="tan")
@@ -351,6 +352,10 @@ class App(tkinter.Tk):
         # print(f"{min_date=}, {max_date=}")
         self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines,
                                         min_date=min_date, max_date=max_date)
+        self.tv_ls_start_date = self.line_shifter.odp_start_date.tv_date
+        self.tv_ls_end_date = self.line_shifter.odp_end_date.tv_date
+        self.tv_ls_start_date.trace_variable("w", self.update_ls_start_date)
+        self.tv_ls_end_date.trace_variable("w", self.update_ls_end_date)
         self.tv_label_line_shifter = tkinter.StringVar(self, value="Shift Lines:")
         self.label_line_shifter = tkinter.Label(self.frame_top_bar_e, textvariable=self.tv_label_line_shifter)
         self.canv_btn_show_line_shifter = ArrowButton(self.frame_top_bar_e)
@@ -630,6 +635,18 @@ class App(tkinter.Tk):
 
     def update_toggle_sun(self, *args):
         print(f"update sunday toggle: {self.toggle_button_sun.state.get()}")
+
+    def update_ls_start_date(self, *args):
+        dt = self.line_shifter.odp_start_date.tv_date.get()
+        print(f"update_ls_start_date {dt=}")
+        if is_date(dt):
+            self.line_shifter.update_status()
+
+    def update_ls_end_date(self, *args):
+        dt = self.line_shifter.odp_end_date.tv_date.get()
+        print(f"update_ls_end_date {dt=}")
+        if is_date(dt):
+            self.line_shifter.update_status()
 
     def calendar_surface_status_update(self, *args):
         status_data = eval(self.calendar_surface.status.get())
@@ -1398,6 +1415,7 @@ class App(tkinter.Tk):
                         # self.calendar_surface.scan_dragto(x, y)
                         self.calendar_surface.xview_moveto(x)
                         self.re_draw_legend(None)
+                        self.flash_tile(r, c)
                         print(f"found! Quote={text} at {r=}, {c=}, {x=}, {y=}")
                         handled = True
                 elif unit_in.SGQuote or self.multi_combo_unit_selection.value_exists(unit_in.SGQuote):
@@ -1559,23 +1577,91 @@ class App(tkinter.Tk):
         self.tv_entry_unit_scroll_search.set(datetime.datetime.now().strftime("%Y-%m-%d"))
         self.click_search_units(None, pass_thru_date=True)
         self.tv_entry_unit_scroll_search.set(before)
+        self.flash_today()
+
+    def flash_today(self, slices=10, half_offset=250):
+        d = datetime.datetime.now().date()
+        d1, d2, d3 = d.year, d.month, d.day
+        d = datetime.datetime(d1, d2, d3)
+        # print(f"{self.calendar_surface.dates_list=}")
+        di = self.calendar_surface.dates_list.index(d)
+        lines = self.calendar_surface.lines
+        tp = self.calendar_surface.tile_properties
+        tags = [tp[i][di] for i in range(len(lines) + 1)]
+        # print(f"{tags=}")
+
+        rect_org_colours = [self.calendar_surface.itemcget(tg["tag_rect"], "fill") for tg in tags]
+        rect_new_colours = [Colour(c).darkened(0.3) for c in rect_org_colours]
+        grads = [[gradient(j, slices, *org_new_c, rgb=False) for i, org_new_c in enumerate(zip(rect_org_colours, rect_new_colours))] for j in range(slices)]
+        rev_grads = grads[::-1]
+        grads = grads + rev_grads
+        # print(f"{grads=}\n{rect_org_colours=}\n{rect_new_colours=}\n{len(grads)=}\n{len(tags)=}\n{len(grads[0])=}")
+        # print_by_line(grads)
+        for j, grad in enumerate(grads):
+            if j >= len(grads) // 2:
+                o = half_offset
+            else:
+                o = 0
+            for i, row in enumerate(tags):
+                tg = row["tag_rect"]
+                # print(f"{j=}, {i=}, {tg=}")
+                self.after(100 + (15 * j) + (2 * i) + o, lambda t=tg, ii=i, jj=j: self.calendar_surface.itemconfigure(t, fill=grads[jj][ii]))
+
+    def flash_quote(self, quote_in, slices=10, half_offset=250):
+        quote_f = self.calendar_surface.quote_rc(quote_in)
+        if quote_f:
+            self.flash_tile(*quote_f, slices=slices, half_offset=half_offset)
+
+    def flash_tile(self, i, j, slices=10, half_offset=250):
+        tp = self.calendar_surface.tile_properties
+        tags = [tp[i][j]]
+        # print(f"{tags=}")
+
+        rect_org_colours = [self.calendar_surface.itemcget(tg["tag_rect"], "fill") for tg in tags]
+        rect_new_colours = [Colour(c).darkened(0.3) for c in rect_org_colours]
+        grads = [[gradient(j, slices, *org_new_c, rgb=False) for i, org_new_c in enumerate(zip(rect_org_colours, rect_new_colours))] for j in range(slices)]
+        rev_grads = grads[::-1]
+        grads = grads + rev_grads
+        # print(f"{grads=}\n{rect_org_colours=}\n{rect_new_colours=}\n{len(grads)=}\n{len(tags)=}\n{len(grads[0])=}")
+        # print_by_line(grads)
+        for j, grad in enumerate(grads):
+            if j >= len(grads) // 2:
+                o = half_offset
+            else:
+                o = 0
+            for i, row in enumerate(tags):
+                tg = row["tag_rect"]
+                # print(f"{j=}, {i=}, {tg=}")
+                self.after(100 + (15 * j) + (2 * i) + o, lambda t=tg, ii=i, jj=j: self.calendar_surface.itemconfigure(t, fill=grads[jj][ii]))
 
     def click_calendar_surface_left(self, event):
         """Delete a tile when right-clicking the mouse over a valid unit."""
         print(f"CCSL {event=}, {self.app_state=}")
         x, y = event.x, event.y
         rc = self.calendar_surface.rc_at_xy((x, y))
+        # print(f"{rc=}")
         if rc:
+            # print(f"--A")
             r, c = rc
             if r > 0 and c > 0:
+                # print(f"--B")
                 unit_in = self.calendar_surface.tile_properties[r][c]["unit_in"]
                 if unit_in:
+                    # print(f"--C")
                     self.removed_quotes.append(unit_in.SGQuote)
                     self.delete_tile(r, c, unit_in)
                 elif self.app_state == "DRAGGING":
+                    # print(f"--D {self.drag_tile=}, {self.select_tile=}")
                     # user is dragging a tile and right-clicked to drop it.
                     self.calendar_surface.itemconfigure(self.drag_tile, state="hidden")
                     self.calendar_surface.itemconfigure(self.drag_text, state="hidden")
+                    st_rc = self.calendar_surface.tile_to_rc(self.select_tile)
+                    # print(f"{st_rc=}")
+                    if st_rc:
+                        # print(f"flashing")
+                        st_r, st_c = st_rc
+                        self.calendar_surface.revert_colour(st_rc)
+                        self.flash_tile(st_r, st_c)
                     self.drag_tile = None
                     self.select_tile = None
                     self.app_state = "IDLE"
@@ -2189,6 +2275,7 @@ class App(tkinter.Tk):
                 unit_from = data["unit_from"]
                 self.colour_code_dealer(unit_to.InputField2_v2)
                 self.colour_code_dealer(unit_from.InputField2_v2)
+                self.flash_quote(unit_from.SGQuote)
             case 5:
                 # 4 - success - but need to shift in reverse
                 line_in = data["line_in"]

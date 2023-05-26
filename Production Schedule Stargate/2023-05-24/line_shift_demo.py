@@ -274,8 +274,8 @@ class LineShifter(tkinter.Frame):
         else:
             osd = self.btn_arrow_start_date.mode == "up"
             oed = self.btn_arrow_end_date.mode == "up"
-            sd = self.odp_start_date.date
-            ed = self.odp_end_date.date
+            sd = datetime.datetime.strptime(self.odp_start_date.tv_date.get(), "%Y-%m-%d")
+            ed = datetime.datetime.strptime(self.odp_end_date.tv_date.get(), "%Y-%m-%d")
             ln = self.tv_combo.get()
             dr = "forward" if self.tv_direction.get() == 1 else "backward"
             dy = self.tv_spinbox.get()
