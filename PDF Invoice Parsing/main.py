@@ -3,6 +3,8 @@ import time
 import os
 import pandas as pd
 import PyPDF2
+
+from datetime_utility import date_str_format
 from utility import *
 
 
@@ -168,9 +170,10 @@ async def process_pdf(fn, fails, files, qtys, p_nums, revs, prices, amounts, inv
     return fails, text, files, qtys, p_nums, revs, prices, amounts, invoices, orders
 
 
-async def test_batch_laser_amp(stop_num=None):
+async def test_batch_laser_amp(root_in=None, stop_num=None):
     timings["batch_start"] = time.time()
     root_laser_amp = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP"
+    root_laser_amp = root_laser_amp if root_in is None else root_in
     sub_dirs = [(f"{root_laser_amp}\\{s_d}", "", "") for s_d in os.listdir(root_laser_amp)]
 
     i = 0
@@ -249,7 +252,9 @@ if __name__ == "__main__":
 
     timings = {"program_start": time.time()}
 
-    results = asyncio.run(test_batch_laser_amp())
+    t_root_1 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\NOV 2021"
+
+    results = asyncio.run(test_batch_laser_amp(root_in=t_root_1, stop_num=1))
     print(f"{results=}")
     print(f"{type(results)=}")
     print(f"{dir(results)=}")
@@ -260,10 +265,13 @@ if __name__ == "__main__":
     print(dict_print(timings, "Timings"))
 
     fails, text, files, qtys, p_nums, revs, prices, amounts, invoices, orders = results[0]
-    with open(r"C:\Users\ABriggs\Documents\BWS\PDF Invoice Parsing\output" + f"{datetime.datetime.now():%Y-%m-%d}" + ".txt", "w") as f:
-        f.write(f"\n{len(fails)=}, {fails=}",)
+    d = date_str_format(datetime.datetime.now(), file_name=True)
+    with open(r"C:\Users\ABriggs\Documents\BWS\PDF Invoice Parsing\output_" + d + ".txt", "w") as f:
+        s_fails = '\n'.join(fails)
+        s_files = '\n'.join(files)
+        f.write(f"{len(fails)=},\n'\\n'.join(fails)={s_fails}",)
         f.write(f"\n{len(text)=}, {text=}")
-        f.write(f"\n{len(files)=}, {files=}")
+        f.write(f"\n{len(files)=},\nfiles=\n{s_files}")
         f.write(f"\n{len(qtys)=}, {qtys=}")
         f.write(f"\n{len(p_nums)=}, {p_nums=}")
         f.write(f"\n{len(revs)=}, {revs=}")

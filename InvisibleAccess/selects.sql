@@ -1,6 +1,8 @@
 USE BWSdb
 GO
 
+-- Selects for Access Database Glossary (ADG).
+
 SELECT
 	*
 FROM
@@ -17,4 +19,10 @@ SELECT
 	*
 FROM
 	[ADG Events]
+;
+
+SELECT
+	*
+FROM
+	[v_ADG User Access Log]
 ;
