@@ -69,6 +69,10 @@ async def process_pdf(fn, fails, files, qtys, p_nums, revs, prices, amounts, inv
             if row:
                 vals_list = list(row.split("\n"))  # [1].split(" ")
                 # print("\nVALS")
+
+                for i, vl in enumerate(vals_list):
+                    print(f"\t{i=}, {vl=}")
+
                 # print_by_line(vals)
                 for val_s in vals_list:
                     f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10 = [True for i in range(11)]
@@ -81,6 +85,7 @@ async def process_pdf(fn, fails, files, qtys, p_nums, revs, prices, amounts, inv
                         f3 = False
 
                     vals = val_s.split(" ")
+                    print(f"l={len(vals)}, {vals=}")
                     if len(vals) > 1:
                         try:
                             # print(f"{row=}, {vals=}, {splitter=}")
@@ -254,7 +259,12 @@ if __name__ == "__main__":
 
     t_root_1 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\NOV 2021"
 
-    results = asyncio.run(test_batch_laser_amp(root_in=t_root_1, stop_num=1))
+    results = asyncio.run(
+        test_batch_laser_amp(
+            root_in=t_root_1,
+            stop_num=1
+        )
+    )
     print(f"{results=}")
     print(f"{type(results)=}")
     print(f"{dir(results)=}")
