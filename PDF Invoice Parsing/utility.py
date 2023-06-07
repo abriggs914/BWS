@@ -24,8 +24,8 @@ import os
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.70
-    Date...........2023-05-04
+    Version..............1.71
+    Date...........2023-06-07
     Author(s)....Avery Briggs
     """
 
@@ -376,6 +376,15 @@ def money_value(m):
     return float("".join(m[1:].split(",")))
 
 
+def is_money(value):
+    if isnumber(value):
+        value = f"$ {value}"
+    if isinstance(value, str):
+        value = value.replace(',', '').replace(' ', '').replace('.', '', 1).replace('-', '', 1)
+        return value.startswith('$') and value.count('$') == 1 and value[1:].isdigit()
+    return False
+
+
 def percent(v):
     return ("%.2f" % (v * 100)) + " %"
 
@@ -697,9 +706,29 @@ def bar(a, b, c=10):
 
 def lstindex(lst, target):
     """Iterate a list and return the index of a target value. Avoids IndexError, but iterates the whole list."""
-    for i, val in enumerate(lst):
-        if val == target:
+    if isinstance(lst, str):
+        found = False
+        i = -1
+        for i, c1 in enumerate(lst):
+            started = False
+            found = False
+            for j, c2 in enumerate(target):
+                cc = lst[i + j]
+                if j == 0 and cc == c2:
+                    started = True
+                if cc != c2:
+                    break
+                if started and (j == len(target) - 1):
+                    found = True
+                    break
+            if found:
+                break
+        if found:
             return i
+    else:
+        for i, val in enumerate(lst):
+            if val == target:
+                return i
     return -1
 
 
