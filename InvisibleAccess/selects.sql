@@ -24,6 +24,14 @@ FROM
 SELECT
 	*
 FROM
+	[v_ADG Latest Accessors]
+ORDER BY
+	[When] DESC
+;
+
+SELECT
+	*
+FROM
 	[v_ADG User Access Log]
 ORDER BY
 	[Date],
@@ -34,9 +42,7 @@ ORDER BY
 SELECT
 	*
 FROM
-	[v_ADG Latest Accessors]
-ORDER BY
-	[When] DESC
+	[v_ADG Buttons Inventory]
 ;
 
 --SELECT
