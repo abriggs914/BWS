@@ -3,6 +3,7 @@ import time
 import re
 import os
 from collections import OrderedDict
+from results_last import failed_files as ff_2023_06_09_1118
 
 import pandas
 import pandas as pd
@@ -283,16 +284,17 @@ async def process_pdf(fn, page_idxs, fails, qtys, passes, p_nums, revs, prices, 
                     if print_test:
                         print(f"{i=} {j=}, PASS ON {vals=}")
 
-    except (ValueError) as e:
-        print(f"FAILURE")
-        raise e
+        if print_test:
+            print(f"{invoices_l=}")
+            print(f"{orders_l=}")
+        for i, idx in enumerate(page_idxs):
+            invoices[i] = invoices_l[idx]
+            orders[i] = orders_l[idx]
 
-    if print_test:
-        print(f"{invoices_l=}")
-        print(f"{orders_l=}")
-    for i, idx in enumerate(page_idxs):
-        invoices[i] = invoices_l[idx]
-        orders[i] = orders_l[idx]
+    except (ValueError, AttributeError, KeyError, NameError, TypeError, IndexError) as e:
+        # print(f"FAILURE")
+        # raise e
+        fails.append((fn, e))
 
     if print_test:
         print(f"\n\n\tFINAL\n")
@@ -320,7 +322,10 @@ async def test_batch_laser_amp(root_in=None, stop_num=None, print_test=False):
 
     page_idxs, fails, qtys, passes, p_nums, revs, prices, amounts, invoices, orders = [], [], [], [], [], [], [], [], [], []
     timings.update({"start_collect_files": time.time()})
-    files = collect_files(root_in)
+    if isinstance(root_in, str):
+        files = collect_files(root_in)
+    elif isinstance(root_in, (tuple, list)):
+        files = root_in
     timings.update({"end_collect_files": time.time()})
     file = None
     stop_num = stop_num if stop_num is not None else len(files)
@@ -356,7 +361,9 @@ if __name__ == "__main__":
     t_root_1 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\NOV 2021"
     t_root_2 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\August 2021"
     t_root_3 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2022\2. FEB 2022\LASER AMP 232142 NGR AND CREDIT 02"
-    t_root = t_root_1
+    t_root_4 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\DEC 2021"
+    t_root_5 = [r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\DEC 2021\LASER AMP 230851.pdf"]
+    t_root = t_root_5
     # t_root = t_root_2
     # t_root = None
 
@@ -407,16 +414,18 @@ if __name__ == "__main__":
 
     # scratch(t_root_1)
     # scratch(t_root_2)
+
+    # t_root = ff_2023_06_09_1118
     results = asyncio.run(
         test_batch_laser_amp(
-            # root_in=None,
+            root_in=t_root,
             # root_in=t_root_1,
             # root_in=t_root_2,
-            root_in=t_root_3,
-            stop_num=None,
-            # stop_num=20,
-            # print_test=False
-            print_test=True
+            # root_in=t_root_3,
+            # stop_num=None,
+            stop_num=1,
+            print_test=False
+            # print_test=True
         )
     )
     results = results.result()
@@ -444,7 +453,7 @@ if __name__ == "__main__":
         ],
         data=transposed_data
     )
-    df_failed = pandas.DataFrame(columns=["fileName"], data=[[f] for f in fails])
+    df_failed = pandas.DataFrame(columns=["fileName", "reason"], data=[[*f] for f in fails])
     print(dict_print(timings, "Timings"))
     print(df_passed)
     print(f"{df_passed['partNum']}")
