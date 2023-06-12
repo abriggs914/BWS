@@ -10,7 +10,7 @@ if __name__ == '__main__':
     current_directory = os.getcwd()
 
     # Get a list of all files in the current directory
-    all_files = glob.glob(os.path.join(current_directory, "*.json"))
+    all_files = glob.glob(os.path.join(current_directory + "/Outputs/", "*.json"))
 
     # Sort the files by creation date
     sorted_files = sorted(all_files, key=os.path.getctime)
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     #     failed_data = json.load(f)
 
     # print(f"{passed_data=}\n{failed_data=}")
-    num_passed = passed_data.size
-    num_failed = failed_data.size
+    num_passed = passed_data.shape[0]
+    num_failed = failed_data.shape[0]
     print(f"{num_passed=}\n{num_failed=}")
 
     failed_files = sorted(failed_data["fileName"].unique().tolist())

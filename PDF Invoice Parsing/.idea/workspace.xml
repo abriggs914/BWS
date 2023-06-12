@@ -5,10 +5,76 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bfd33fa5-46b7-4744-8cf4-2f70a148a0a6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/output_analyzer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/results_last.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../InvisibleAccess/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../InvisibleAccess/selects.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output2023-06-02.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output2023-06-02.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-05 11.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-05 11.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-05 1712.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-05 1712.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-05 1720.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-05 1720.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-05.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-05.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-06 1257.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-06 1257.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-06 1259.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-06 1259.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-06 1532.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-06 1532.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-06 1555.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-06 1555.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1036.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1036.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1049.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1049.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1051.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1051.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1055.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1055.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1103.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1103.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1105.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1105.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1113.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1113.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1117.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1117.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1119.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1119.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1121.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1121.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1124.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1124.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1125.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1125.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1127.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1127.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1128.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1128.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1131.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1131.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1159.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1159.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1201.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1201.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1202.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1202.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1203.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1203.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1206.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1206.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1207.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1207.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1226.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1226.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1230.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1230.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1314.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1314.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1315.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1315.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-07 1340.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-07 1340.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_2023-06-08_1626.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_2023-06-08_1626.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/output_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1628.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1628.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1629.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1629.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1631.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1631.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1632 (1).json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1632 (1).json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1632.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1632.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1649.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1649.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1748.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1748.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1750.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1750.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1751.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1751.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-08_1809.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-08_1809.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-09_1014.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-09_1014.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-09_1118.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-09_1118.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-09_1425.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-09_1425.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-09_1525.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-09_1525.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_failed_2023-06-09_1603.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_failed_2023-06-09_1603.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1628.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1628.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1629.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1629.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1631.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1631.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1632 (1).json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1632 (1).json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1632.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1632.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1649.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1649.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1748.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1748.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1750.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1750.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1751.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1751.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-08_1809.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-08_1809.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-09_1014.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-09_1014.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-09_1118.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-09_1118.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-09_1425.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-09_1425.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-09_1525.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-09_1525.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_passed_2023-06-09_1603.json" beforeDir="false" afterPath="$PROJECT_DIR$/Outputs/output_passed_2023-06-09_1603.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/results_last.py" beforeDir="false" afterPath="$PROJECT_DIR$/results_last.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +110,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ABriggs\Documents\BWS\PDF Invoice Parsing" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\ABriggs\Documents\BWS\PDF Invoice Parsing\Outputs" />
     </key>
   </component>
   <component name="RunManager" selected="Python.main">

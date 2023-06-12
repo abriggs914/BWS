@@ -1,9 +1,10 @@
+import warnings
 import asyncio
 import time
 import re
 import os
 from collections import OrderedDict
-from results_last import failed_files as ff_2023_06_09_1118
+from results_last import failed_files as ff_2023_06_09_1118, failed_list
 
 import pandas
 import pandas as pd
@@ -37,6 +38,8 @@ LEN_ORDER_NUMBER = 6
 
 
 def collect_files(root_in):
+
+    print(f"COLLECTING!")
 
     timings["batch_start"] = time.time()
     root_laser_amp = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP"
@@ -109,6 +112,7 @@ async def process_pdf(fn, page_idxs, fails, qtys, passes, p_nums, revs, prices, 
         "-": lambda s: f1(s)
     })
 
+    i = 0
     try:
 
         # open the PDF file in binary mode
@@ -144,157 +148,164 @@ async def process_pdf(fn, page_idxs, fails, qtys, passes, p_nums, revs, prices, 
 
         for i, page in enumerate(pages):
 
-            if print_test:
-                print(f"\nNewPage {i}")
+            try:
+                la_idx = lstindex(page, "laseramp")
+                assert la_idx >= 0, f"Error 'laseramp' not found on page {i + 1}."
 
-            # if invoice_number == None and order_number == None:
-            re_check_order_1 = False
-            re_check_order_2 = False
-            iv_idx = lstindex(page, in_spl_invoice)
-            if print_test:
-                print(f"{iv_idx=}, {page=}")
-            if iv_idx >= 0:
-                left = (page[:iv_idx]).strip().split(" ")[-1] + in_spl_invoice
-                right1 = page[iv_idx:].split(" ")[0].strip()
-                right2 = f"{in_spl_invoice} " + (page[iv_idx:].split(" ")[1]).strip()
-                # check right first:
-                l_match = re.search(r'(\d+)' + in_spl_invoice, left)
-                r_match1 = re.search(in_spl_invoice + r'(\d+)', right1)
-                r_match2 = re.search(in_spl_invoice + r' (\d+)', right2)
                 if print_test:
-                    print(f"A> {iv_idx=} {l_match=}, {left=}\n{r_match1=}, {right1=}\n{r_match2=}, {right2=}")
-                if r_match1:
-                    invoice_match = r_match1.group(1)
-                elif r_match2:
-                    invoice_match = r_match2.group(1)
-                else:
-                    invoice_match = l_match.group(1)
+                    print(f"\nNewPage {i}")
 
-                p_a = l_match.group(0)
-                p_b = len(p_a)
-                p_c = len(in_spl_invoice)
+                # if invoice_number == None and order_number == None:
+                re_check_order_1 = False
+                re_check_order_2 = False
+                iv_idx = lstindex(page, in_spl_invoice)
                 if print_test:
-                    print(f"\t\t{p_a=}, {p_b=}, {p_c}, {(p_b - p_c)=}")
-                if l_match and ((len(p_a)) - len(in_spl_invoice) == LEN_ORDER_NUMBER) and any([r_match1, r_match2]):
-                    order_match = p_a.replace(in_spl_invoice, "")
-                    re_check_order_1 = False
-                else:
+                    print(f"{iv_idx=}, {page=}")
+                if iv_idx >= 0:
+                    left = (page[:iv_idx]).strip().split(" ")[-1] + in_spl_invoice
+                    right1 = page[iv_idx:].split(" ")[0].strip()
+                    right2 = f"{in_spl_invoice} " + (page[iv_idx:].split(" ")[1]).strip()
+                    # check right first:
+                    l_match = re.search(r'(\d+)' + in_spl_invoice, left)
+                    r_match1 = re.search(in_spl_invoice + r'(\d+)', right1)
+                    r_match2 = re.search(in_spl_invoice + r' (\d+)', right2)
+                    if print_test:
+                        print(f"A> {iv_idx=} {l_match=}, {left=}\n{r_match1=}, {right1=}\n{r_match2=}, {right2=}")
+                    if r_match1:
+                        invoice_match = r_match1.group(1)
+                    elif r_match2:
+                        invoice_match = r_match2.group(1)
+                    else:
+                        invoice_match = l_match.group(1)
+
+                    p_a = l_match.group(0)
+                    p_b = len(p_a)
+                    p_c = len(in_spl_invoice)
+                    if print_test:
+                        print(f"\t\t{p_a=}, {p_b=}, {p_c}, {(p_b - p_c)=}")
+                    if l_match and ((len(p_a)) - len(in_spl_invoice) == LEN_ORDER_NUMBER) and any([r_match1, r_match2]):
+                        order_match = p_a.replace(in_spl_invoice, "")
+                        re_check_order_1 = False
+                    else:
+                        re_check_order_1 = True
+
+                if order_match is None and iv_idx < 0:
                     re_check_order_1 = True
 
-            if order_match is None and iv_idx < 0:
-                re_check_order_1 = True
-
-            if re_check_order_1:
-                # order number not found
-                iv_idx = lstindex(page, in_spl_order_1)
-                left = (page[:iv_idx].split(" ")[-1] + in_spl_order_1).replace("\n", "")
-                right = (page[iv_idx:].split(" ")[0]).replace("\n", "")
-                l_match = re.search(r'(\d+)' + in_spl_order_1, left)
-                r_match = re.search(in_spl_order_1 + r'(\d+)', right)
-                if print_test:
-                    print(f"B> {iv_idx=} {l_match=}, {left=}\n{r_match=}, {right=}")
-                if r_match:
-                    order_match = r_match.group(1)
-                    re_check_order_2 = False
+                if re_check_order_1:
+                    # order number not found
+                    iv_idx = lstindex(page, in_spl_order_1)
+                    left = (page[:iv_idx].split(" ")[-1] + in_spl_order_1).replace("\n", "")
+                    right = (page[iv_idx:].split(" ")[0]).replace("\n", "")
+                    l_match = re.search(r'(\d+)' + in_spl_order_1, left)
+                    r_match = re.search(in_spl_order_1 + r'(\d+)', right)
                     if print_test:
-                        print(f"\n\t0-0 {order_match=}")
-                elif l_match:
-                    order_match = l_match.group(1)
-                    re_check_order_2 = False
-                    if print_test:
-                        print(f"\n\t0-1 {order_match=}")
-                else:
-                    re_check_order_2 = True
-
-            if re_check_order_2:
-                # order number not found
-                iv_idx = lstindex(page, in_spl_order_2)
-                left = (page[:iv_idx].split(" ")[-1] + in_spl_order_2).replace(" ", "")
-                right = in_spl_order_2 + (page[iv_idx:].replace(in_spl_order_2, "").split(" ")[0]).replace(" ", "")
-                l_match = re.search(r'(\d+)' + in_spl_order_2, left)
-                r_match = re.search(in_spl_order_2 + r'(\d+)', right)
-                if print_test:
-                    print(f"C> {iv_idx=} {l_match=}, {left=}\n{r_match=}, {right=}")
-                if r_match:
-                    order_match = r_match.group(1)
-                    if print_test:
-                        print(f"\n\t1-0 {order_match=}")
-                elif l_match:
-                    order_match = l_match.group(1)
-                    if print_test:
-                        print(f"\n\t1-1 {order_match=}")
-                else:
-                    order_match = None
-                    if print_test:
-                        print(f"\n\t1-2 {order_match=}")
-
-            if invoice_match:
-                invoice_number = invoice_match.replace(in_spl_invoice, "")
-                invoices_l.append(invoice_number)
-            if order_match:
-                order_number = order_match
-                orders_l.append(order_number)
-
-            page_lines = [pl for pl in page.split("\n") if (pl.count("$") == 2) or ("No.:" in pl)]
-            values = [pl.split(" ")[:5] for pl in page_lines if len(pl.split(" ")) >= 4]
-            if print_test:
-                print(f"{page_lines=}\n{values=}")
-            for j, vals in enumerate(values):
-                if len(vals) == 4:
-                    a, b, c, d = vals
-                    if is_money(a) and "$" in a:
-                        # money value first
-                        a, b, c, d = d, c, b, a
-                    l_vals = [a, b, c, d]
-                else:
-                    if print_test:
-                        print("! 5 !")
-                    a, b, c, d, e = vals
-                    if is_money(a) and "$" in a:
-                        # money value first
-                        a, b, c, d, e = e, d, c, b, a
-                    l_vals = [a, b, c, d, e]
-
-
-                if is_money(l_vals[-2]) and is_money(l_vals[-1]):
-                    if print_test:
-                        print(f"\t{a=}, {b=}, {c=}, {d=}")
-                    if len(vals) == 4:
-                        part_func_type = [key for key in known_prefixes.keys() if key in a][0]
-                        part_type_func = known_prefixes[part_func_type]
-                        qty, part_number = part_type_func(a)
-                        rev, price, amount = b, c, d
+                        print(f"B> {iv_idx=} {l_match=}, {left=}\n{r_match=}, {right=}")
+                    if r_match:
+                        order_match = r_match.group(1)
+                        re_check_order_2 = False
+                        if print_test:
+                            print(f"\n\t0-0 {order_match=}")
+                    elif l_match:
+                        order_match = l_match.group(1)
+                        re_check_order_2 = False
+                        if print_test:
+                            print(f"\n\t0-1 {order_match=}")
                     else:
-                        part_number = a
-                        qty = b
-                        rev, price, amount = c, d, e
+                        re_check_order_2 = True
+
+                if re_check_order_2:
+                    # order number not found
+                    iv_idx = lstindex(page, in_spl_order_2)
+                    left = (page[:iv_idx].split(" ")[-1] + in_spl_order_2).replace(" ", "")
+                    right = in_spl_order_2 + (page[iv_idx:].replace(in_spl_order_2, "").split(" ")[0]).replace(" ", "")
+                    l_match = re.search(r'(\d+)' + in_spl_order_2, left)
+                    r_match = re.search(in_spl_order_2 + r'(\d+)', right)
                     if print_test:
-                        print(f"{qty=}, {part_number=}, {rev=}, {price=}, {amount=}")
-                    # print(f"ELSE")
-                    page_idxs.append(i - 1)
-                    qtys.append(qty)
-                    p_nums.append(part_number)
-                    revs.append(rev)
-                    prices.append(price)
-                    amounts.append(amount)
-                    invoices.append(invoice_number)
-                    orders.append(order_number)
-                    passes.append(fn)
-                else:
-                    if print_test:
-                        print(f"{i=} {j=}, PASS ON {vals=}")
+                        print(f"C> {iv_idx=} {l_match=}, {left=}\n{r_match=}, {right=}")
+                    if r_match:
+                        order_match = r_match.group(1)
+                        if print_test:
+                            print(f"\n\t1-0 {order_match=}")
+                    elif l_match:
+                        order_match = l_match.group(1)
+                        if print_test:
+                            print(f"\n\t1-1 {order_match=}")
+                    else:
+                        order_match = None
+                        if print_test:
+                            print(f"\n\t1-2 {order_match=}")
+
+                if invoice_match:
+                    invoice_number = invoice_match.replace(in_spl_invoice, "")
+                    invoices_l.append(invoice_number)
+                if order_match:
+                    order_number = order_match
+                    orders_l.append(order_number)
+
+                page_lines = [pl for pl in page.split("\n") if (pl.count("$") == 2) or ("No.:" in pl)]
+                values = [pl.split(" ")[:5] for pl in page_lines if len(pl.split(" ")) >= 4]
+                if print_test:
+                    print(f"{page_lines=}\n{values=}")
+                for j, vals in enumerate(values):
+                    if len(vals) == 4:
+                        a, b, c, d = vals
+                        if is_money(a) and "$" in a:
+                            # money value first
+                            a, b, c, d = d, c, b, a
+                        l_vals = [a, b, c, d]
+                    else:
+                        if print_test:
+                            print("! 5 !")
+                        a, b, c, d, e = vals
+                        if is_money(a) and "$" in a:
+                            # money value first
+                            a, b, c, d, e = e, d, c, b, a
+                        l_vals = [a, b, c, d, e]
+
+                    if is_money(l_vals[-2]) and is_money(l_vals[-1]):
+                        if print_test:
+                            print(f"\t{a=}, {b=}, {c=}, {d=}")
+                        if len(vals) == 4:
+                            part_func_type = [key for key in known_prefixes.keys() if key in a][0]
+                            part_type_func = known_prefixes[part_func_type]
+                            qty, part_number = part_type_func(a)
+                            rev, price, amount = b, c, d
+                        else:
+                            part_number = a
+                            qty = b
+                            rev, price, amount = c, d, e
+                        if print_test:
+                            print(f"{qty=}, {part_number=}, {rev=}, {price=}, {amount=}")
+                        # print(f"ELSE")
+                        page_idxs.append(i - 1)
+                        qtys.append(qty)
+                        p_nums.append(part_number)
+                        revs.append(rev)
+                        prices.append(price)
+                        amounts.append(amount)
+                        invoices.append(invoice_number)
+                        orders.append(order_number)
+                        passes.append(fn)
+                    else:
+                        if print_test:
+                            print(f"{i=} {j=}, PASS ON {vals=}")
+            except (ValueError, AttributeError, KeyError, NameError, TypeError, IndexError, AssertionError) as e2:
+                # print(f"FAILURE")
+                # raise e
+                fails.append((fn, i+1, e2))
 
         if print_test:
             print(f"{invoices_l=}")
             print(f"{orders_l=}")
-        for i, idx in enumerate(page_idxs):
-            invoices[i] = invoices_l[idx]
-            orders[i] = orders_l[idx]
+        for j, idx in enumerate(page_idxs):
+            invoices[j] = invoices_l[idx]
+            orders[j] = orders_l[idx]
 
-    except (ValueError, AttributeError, KeyError, NameError, TypeError, IndexError) as e:
+    except (ValueError, AttributeError, KeyError, NameError, TypeError, IndexError, AssertionError) as e1:
         # print(f"FAILURE")
         # raise e
-        fails.append((fn, e))
+        fails.append((fn, i+1, e1))
 
     if print_test:
         print(f"\n\n\tFINAL\n")
@@ -322,10 +333,10 @@ async def test_batch_laser_amp(root_in=None, stop_num=None, print_test=False):
 
     page_idxs, fails, qtys, passes, p_nums, revs, prices, amounts, invoices, orders = [], [], [], [], [], [], [], [], [], []
     timings.update({"start_collect_files": time.time()})
-    if isinstance(root_in, str):
-        files = collect_files(root_in)
-    elif isinstance(root_in, (tuple, list)):
+    if isinstance(root_in, (tuple, list)):
         files = root_in
+    else:
+        files = collect_files(root_in)
     timings.update({"end_collect_files": time.time()})
     file = None
     stop_num = stop_num if stop_num is not None else len(files)
@@ -356,6 +367,8 @@ async def test_batch_laser_amp(root_in=None, stop_num=None, print_test=False):
 
 if __name__ == "__main__":
 
+    warnings.filterwarnings("ignore")
+
     timings = {"program_start": time.time()}
 
     t_root_1 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\NOV 2021"
@@ -363,9 +376,12 @@ if __name__ == "__main__":
     t_root_3 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2022\2. FEB 2022\LASER AMP 232142 NGR AND CREDIT 02"
     t_root_4 = r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\DEC 2021"
     t_root_5 = [r"\\nas1\Public\Accounts Payable\AP - BWS Manufacturing\Posted\Laser AMP\2021\DEC 2021\LASER AMP 230851.pdf"]
+    t_root_6 = failed_list
+
     t_root = t_root_5
     # t_root = t_root_2
-    # t_root = None
+    t_root = None
+    t_root = t_root_6
 
     # t_root_1 = None
     #
@@ -424,27 +440,31 @@ if __name__ == "__main__":
             # root_in=t_root_3,
             # stop_num=None,
             stop_num=1,
-            print_test=False
-            # print_test=True
+            # print_test=False
+            print_test=True
         )
     )
     results = results.result()
     timings["program_end"] = time.time()
     timings.update({
-        "program run time (ms)": timings["program_end"] - timings["program_start"],
-        "collect files time (ms)": timings["end_collect_files"] - timings["start_collect_files"],
-        "task creation time (ms)": timings["end_task_creation"] - timings["start_task_creation"]
+        "program run time (s)": timings["program_end"] - timings["program_start"],
+        "collect files time (s)": timings["end_collect_files"] - timings["start_collect_files"],
+        "task creation time (s)": timings["end_task_creation"] - timings["start_task_creation"]
     })
     # print(f"{results=}\n{type(results)=}")
-    page_idxs, fails, files, qtys, p_nums,\
-        revs, prices, amounts, invoices, orders \
-        = results[0]
+
+    # page_idxs, fails, files, qtys, p_nums,\
+    #     revs, prices, amounts, invoices, orders \
+    #     = results[0]
+    page_idxs, fails, qtys, passes, p_nums, revs, prices, amounts, invoices, orders = results[0]
     data = [
-        files, page_idxs, invoices,
+        passes, page_idxs, invoices,
         orders, p_nums, qtys,
         revs, prices, amounts
     ]
+    print(f"data_a={data}")
     transposed_data = list(zip(*data))
+    print(f"data_b={transposed_data}")
     df_passed = pd.DataFrame(
         columns=[
             "fileName", "pageNum", "invoiceNum",
@@ -453,12 +473,15 @@ if __name__ == "__main__":
         ],
         data=transposed_data
     )
-    df_failed = pandas.DataFrame(columns=["fileName", "reason"], data=[[*f] for f in fails])
+    df_failed = pandas.DataFrame(columns=["fileName", "page", "reason"], data=[[*f] for f in fails])
     print(dict_print(timings, "Timings"))
-    print(df_passed)
-    print(f"{df_passed['partNum']}")
+    print(f"\n\tPassed\n\n{df_passed}")
+    print(f"\n\tParts\n\n{df_passed['partNum']}")
+    print(f"{df_passed.iloc[0]=}")
 
-    output_file_passed = next_available_file_name(f"./output_passed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")
-    output_file_failed = next_available_file_name(f"./output_failed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")
+    output_file_passed = next_available_file_name(f"./Outputs/output_passed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")
+    output_file_failed = next_available_file_name(f"./Outputs/output_failed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")
     df_passed.to_json(output_file_passed, orient="records")
     df_failed.to_json(output_file_failed, orient="records")
+    print(f"Failed Files: shape={df_failed.shape}")
+    print(df_failed[["fileName", "page", "reason"]])
