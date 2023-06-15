@@ -46,7 +46,8 @@ ORDER BY
 
 SELECT * FROM @t;
 SELECT
-	[SpecSortG]
+	'>1' AS [T]
+	, [SpecSortG]
 	, [SpecSortSe]
 	, COUNT(*) AS [NumUses]
 FROM 
@@ -62,7 +63,48 @@ ORDER BY
 ;
 
 SELECT
-	'' AS  [T]
+	'Result' AS [T]
+	, [A].[SpecGroup]
+	, [A].[SpecSortG]
+	, [A].[SpecSection]
+	, [A].[SpecSortSe]
+	, [C]
+	, COUNT(*) AS [NumberUses]
+	, ROW_NUMBER() OVER(
+		PARTITION BY
+			[A].[SpecGroup]
+			, [A].[SpecSortG]
+			, [A].[SpecSortSe]
+		ORDER BY
+			[A].[SpecGroup]
+			, [A].[SpecSortG]
+			, [A].[SpecSortSe]
+			, [C]
+	) AS [RowIdx]
+	--, [@t].*
+	--, [A].*
+FROM
+	[Options_FactoryLines] AS [A]
+INNER JOIN
+	@t
+ON
+	[@t].[SpecSortG] = [A].[SpecSortG]
+	AND [@t].[SpecSortSe] = [A].[SpecSortSe]
+WHERE [C] <> 1
+GROUP BY
+	[A].[SpecGroup]
+	, [A].[SpecSortG]
+	, [A].[SpecSection]
+	, [A].[SpecSortSe]
+	, [C]
+ORDER BY
+	[A].[SpecSortG]
+	, [A].[SpecSortSe]
+
+--
+
+SELECT
+	'=1' AS  [T]
 	, [SpecSortG]
 	, [SpecSortSe]
 	, COUNT(*) AS [NumUses]
