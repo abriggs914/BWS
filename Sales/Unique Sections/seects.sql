@@ -62,44 +62,65 @@ ORDER BY
 	, [SpecSortSe]
 ;
 
+SELECT 
+	*
+FROM (
+	SELECT
+		'Result1' AS [T]
+		, [A].[SpecGroup]
+		, [A].[SpecSortG]
+		, [A].[SpecSection]
+		, [A].[SpecSortSe]
+		--, [C]
+		, COUNT(*) AS [NumberUses]
+		, ROW_NUMBER() OVER(
+			PARTITION BY
+				[A].[SpecGroup]
+				, [A].[SpecSortG]
+				, [A].[SpecSortSe]
+			ORDER BY
+				[A].[SpecGroup]
+				, [A].[SpecSortG]
+				, [A].[SpecSortSe]
+				, COUNT(*) DESC
+		--		, [C]
+		) AS [RowIdx]
+		--, [@t].*
+		--, [A].*
+	FROM
+		[Options_FactoryLines] AS [A]
+	INNER JOIN
+		@t
+	ON
+		[@t].[SpecSortG] = [A].[SpecSortG]
+		AND [@t].[SpecSortSe] = [A].[SpecSortSe]
+	--WHERE [C] <> 1
+	GROUP BY
+		[A].[SpecGroup]
+		, [A].[SpecSortG]
+		, [A].[SpecSection]
+		, [A].[SpecSortSe]
+		--, [C]
+)  AS [B]
+ORDER BY
+	[B].[SpecSortG]
+	, [B].[SpecSortSe]
+	, [RowIdx]
+
+
 SELECT
-	'Result' AS [T]
+	'Result2' AS [T]
 	, [A].[SpecGroup]
 	, [A].[SpecSortG]
-	, [A].[SpecSection]
-	, [A].[SpecSortSe]
-	, [C]
-	, COUNT(*) AS [NumberUses]
-	, ROW_NUMBER() OVER(
-		PARTITION BY
-			[A].[SpecGroup]
-			, [A].[SpecSortG]
-			, [A].[SpecSortSe]
-		ORDER BY
-			[A].[SpecGroup]
-			, [A].[SpecSortG]
-			, [A].[SpecSortSe]
-			, [C]
-	) AS [RowIdx]
-	--, [@t].*
-	--, [A].*
+	, COUNT(*) AS [C]
 FROM
 	[Options_FactoryLines] AS [A]
-INNER JOIN
-	@t
-ON
-	[@t].[SpecSortG] = [A].[SpecSortG]
-	AND [@t].[SpecSortSe] = [A].[SpecSortSe]
-WHERE [C] <> 1
 GROUP BY
 	[A].[SpecGroup]
 	, [A].[SpecSortG]
-	, [A].[SpecSection]
-	, [A].[SpecSortSe]
-	, [C]
 ORDER BY
 	[A].[SpecSortG]
-	, [A].[SpecSortSe]
+
 
 --
 
