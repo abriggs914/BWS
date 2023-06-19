@@ -10,7 +10,7 @@ from scheduler_app import App
 
 SETTINGS_FILE = "./PDS_User_Settings.json"
 SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
-PROD_DATE = datetime.datetime(2023, 5, 26, 13, 2)
+PROD_DATE = datetime.datetime(2023, 6, 19, 12, 0)
 PROGRAM_MODE = "LIVE"
 # PROGRAM_MODE = "TEST"
 # DARK_MODE = True

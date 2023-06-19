@@ -8,9 +8,10 @@ from colour_utility import *
 
 class LineShifter(tkinter.Frame):
 
-    def __init__(self, master, lines, min_date, max_date):
+    def __init__(self, master, lines, min_date, max_date, disabled=False):
         super().__init__(master)
 
+        self.disabled = disabled
         self.status = tkinter.Variable(self, value={})
 
         self.colour_background = Colour(185, 185, 185).hex_code
@@ -89,7 +90,8 @@ class LineShifter(tkinter.Frame):
             tv_btn="shift units",
             kwargs_btn={
                 "background": self.colour_button_background,
-                "command": self.click_shift_units
+                "command": self.click_shift_units,
+                "foreground": Colour(GRAY_60).hex_code
             }
         )
 
@@ -203,8 +205,11 @@ class LineShifter(tkinter.Frame):
         print(f"\tstatus\n{self.status.get()}")
 
     def click_shift_units(self):
-        print(f"click_shift_units")
-        self.status_update(1)
+        if not self.disabled:
+            print(f"click_shift_units")
+            self.status_update(1)
+        else:
+            tkinter.messagebox.showinfo("STG Prod Sched", "Shifting is not enabled for this application - Feature coming soon.")
 
     def disable_all_widgets(self):
         self.combo.configure(state="disabled")

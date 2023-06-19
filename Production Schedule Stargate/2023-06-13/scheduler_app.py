@@ -102,6 +102,7 @@ class App(tkinter.Tk):
         self.illegal_saturday = illegal_saturday
         self.illegal_sunday = illegal_sunday
         self.dirty = tkinter.BooleanVar(self, value=False)
+        self.line_shifter_is_disabled = True
 
         ###############################################################################################################
         #  Tkinter variables and set-up
@@ -351,7 +352,7 @@ class App(tkinter.Tk):
         min_date, max_date = utility.minmax(dates)
         # print(f"{min_date=}, {max_date=}")
         self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines,
-                                        min_date=min_date, max_date=max_date)
+                                        min_date=min_date, max_date=max_date, disabled=self.line_shifter_is_disabled)
         self.tv_ls_start_date = self.line_shifter.odp_start_date.tv_date
         self.tv_ls_end_date = self.line_shifter.odp_end_date.tv_date
         self.tv_ls_start_date.trace_variable("w", self.update_ls_start_date)
@@ -494,7 +495,9 @@ class App(tkinter.Tk):
         # self.calendar_surface.bind_all("<MouseWheel>", lambda event: self.xview('scroll', int(-1*(event.delta/120)), 'units'))
         self.calendar_surface.bind("<MouseWheel>",
                                    lambda event: self.xview(event, 'scroll', int(-1 * (event.delta / 120)), 'units'))
-        self.line_shifter.status.trace_variable("w", self.line_shifter_update)
+
+        if not self.line_shifter_is_disabled:
+            self.line_shifter.status.trace_variable("w", self.line_shifter_update)
         self.entry_unit_scroll_search.bind("<Return>", self.click_search_units)
 
         self.multi_combo_unit_selection.tree_treeview.bind("<<TreeviewSelect>>", self.multi_combo_tree_selection_update)
@@ -1524,10 +1527,9 @@ class App(tkinter.Tk):
                     bbox = self.calendar_surface.rc_bbox((r, c))
                     x, y = int((bbox[0] - (cw / 2)) + ((bbox[2] - bbox[0]) / 2)), int(
                         bbox[1] + ((bbox[3] - bbox[1]) / 2))
-                    # x, y = int(bbox[0] + ((bbox[2] - bbox[0]) / 2)) - (bbaw / 2), int(bbox[1] + ((bbox[3] - bbox[1]) / 2))
                     x /= bbaw
 
-                    # self.calendar_surface.scan_dragto(x, y)
+                    self.flash_today(d=date_in)
                     self.calendar_surface.xview_moveto(x)
                     self.re_draw_legend(None)
                     print(f"found! Date={text} at {r=}, {c=}, {x=}, {y=}")
@@ -1585,12 +1587,11 @@ class App(tkinter.Tk):
         self.tv_entry_unit_scroll_search.set(before)
         self.flash_today()
 
-    def flash_today(self, slices=10, half_offset=250):
-        d = datetime.datetime.now().date()
+    def flash_today(self, d=datetime.datetime.now(), slices=10, half_offset=250):
         d1, d2, d3 = d.year, d.month, d.day
         d = datetime.datetime(d1, d2, d3)
         # print(f"{self.calendar_surface.dates_list=}")
-        di = self.calendar_surface.dates_list.index(d)
+        di = self.calendar_surface.dates_list.index(d) + 1
         lines = self.calendar_surface.lines
         tp = self.calendar_surface.tile_properties
         tags = [tp[i][di] for i in range(len(lines) + 1)]
@@ -2602,6 +2603,7 @@ class App(tkinter.Tk):
 
         # self.settings_data = cd
 
+        print(dict_print(self.settings_data, "SETTINGS DATA"))
         SettingsWriter(output_file=self.SETTINGS_FILE, colour_scheme=cd).write()
 
     def line_shifter_update(self, *args):
