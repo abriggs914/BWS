@@ -124,6 +124,7 @@ class App(tkinter.Tk):
 
         self.colour_background_frame_top_bar = colour_background_frame_top_bar
 
+        print(f"-A {self.winfo_width()=}, {self.winfo_height()=}")
         self.frame_top_bar = tkinter.Frame(self, name="frame_top_bar", background=self.colour_background_frame_top_bar)
 
         can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
@@ -221,6 +222,8 @@ class App(tkinter.Tk):
             limit_to_list=False
             # limit_to_list=True
         )
+        self.multi_combo_unit_selection_is_hidden = self.multi_combo_unit_selection.tv_tree_is_hidden
+        self.multi_combo_unit_selection_is_hidden.trace_variable("w", self.update_showing_unit_selection_combo)
 
         # self.multi_combo_unit_selection.configure(background="tan")
 
@@ -407,7 +410,6 @@ class App(tkinter.Tk):
         if_qu_lb.configure(foreground=col_scheme["fg_infor_frame_quote_hyperlink"])
         if_qu_lb.bind("<Button-1>", self.click_info_frame_quote_hyperlink)
         if_qu_lb.bind("<Double-Button-1>", self.click_info_frame_quote_hyperlink)
-        self.bind("<Configure>", self.resize_window)
 
         ################################################################################################################
         # Begin Testing widgets
@@ -516,6 +518,7 @@ class App(tkinter.Tk):
         self.bind("<Control-p>", self.print_schedule)
         self.bind("<Control-z>", self.click_undo)
         self.bind("<Control-Shift-Z>", self.click_redo)
+        self.bind("<Configure>", self.on_resize_window)
 
         ###############################################################################################################
         #  grid widgets
@@ -524,6 +527,7 @@ class App(tkinter.Tk):
         self.grid_widgets()
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        print(f"GO!")
 
         # self.button_scroll_left.pack(side=tkinter.LEFT)
         # self.button_scroll_right.pack(side=tkinter.RIGHT)
@@ -576,7 +580,6 @@ class App(tkinter.Tk):
         self.canv_btn_show_colour_coder.grid(**{r: 0, c: 1})
         self.label_line_shifter.grid(**{r: 0, c: 0, ix: 5, iy: 2})
         self.canv_btn_show_line_shifter.grid(**{r: 0, c: 1})
-        self.update_showing_widgets()
 
         # search widget
         self.entry_unit_scroll_search.grid(**{r: 1, c: 1, ix: 5, iy: 2})  # , sticky="ew")
@@ -606,6 +609,9 @@ class App(tkinter.Tk):
             self.debug_show_scrollregion.grid()
             self.frame_toggles_sat_sun.grid()
 
+        # self.update_idletasks()
+        self.update_showing_widgets()
+
     def init_tl_multi_combo(self):
         self.tl_multi_combo = tkinter.Toplevel()
 
@@ -613,11 +619,13 @@ class App(tkinter.Tk):
         print(f"\tclick_show_colour_coder")
         self.showing_colour_coder.set(not self.showing_colour_coder.get())
         # self.update_showing_widgets()
+        self.resize_top_frame()
 
     def click_show_line_shifter(self, *args):
         print(f"\tclick_show_line_shifter")
         self.showing_line_shifter.set(not self.showing_line_shifter.get())
         # self.update_showing_widgets()
+        self.resize_top_frame()
 
     def update_showing_widgets(self, *args):
         print(f"\t\tupdate_showing_widgets")
@@ -634,6 +642,11 @@ class App(tkinter.Tk):
         else:
             self.line_shifter.grid_forget()
             self.canv_btn_show_line_shifter.change_direction("s")
+
+        self.resize_top_frame()
+
+    def update_showing_unit_selection_combo(self, *args):
+        self.resize_top_frame()
 
     def update_toggle_sat(self, *args):
         print(f"update saturday toggle: {self.toggle_button_sat.state.get()}")
@@ -2634,16 +2647,30 @@ class App(tkinter.Tk):
             if dealer_colour and dealer_colour != "none":
                 self.calendar_surface.colour_code_dealer(dealer_in, dealer_colour)
 
-    def resize_window(self, event):
-        pass
-        # width = event.width
-        # height = event.height
-        # print(f"{width=}, {height=}")
+    def resize_top_frame(self):
+        print(f"resize_top_frame")
+        event = tkinter.Event()
+        event.width = int(self.winfo_width())  # Set the desired width
+        event.height = int(self.winfo_height())  # Set the desired height
+        self.on_resize_window(event)
+
+    def on_resize_window(self, event):
+        width = event.width
+        height = event.height
         # self.window_width, self.window_height = width, height
-        #
-        # # can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
+
         # can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
-        # self.frame_top_bar.configure(width=can_w)
+        can_w, can_h = int(self.window_width * self.width_p), int(self.window_height * self.height_p)
+        f_height = max([
+            self.frame_top_bar.winfo_height() - (self.multi_combo_unit_selection.winfo_height() if self.multi_combo_unit_selection_is_hidden.get() else 0),
+            (self.multi_combo_unit_selection.winfo_height() if not self.multi_combo_unit_selection_is_hidden.get() else 0),
+            (self.frame_top_bar_e.winfo_height() if self.showing_line_shifter.get() else 0),
+            (self.frame_colour_coder.winfo_height() if self.showing_colour_coder.get() else 0),
+            self.frame_info_frame.winfo_height()
+        ])
+        # self.frame_top_bar.configure(width=can_w, height=f_height)
+        print(f"{width=}, {f_height=}, {height=}")
+        self.frame_top_bar.configure(width=width, height=f_height, background=random_colour(rgb=False))
 
     def get_app_state(self):
         return self._app_state
