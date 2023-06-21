@@ -1,0 +1,12 @@
+USE BWSdb
+GO
+
+SELECT
+	* FROM
+	[OrdersV2]
+	WHERE [SGQuote] = 'SG101173'
+
+SELECT
+	* FROM
+	[OrdersV2]
+	WHERE [SGQuote] = 'SG101165'

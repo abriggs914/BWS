@@ -29,8 +29,6 @@ SELECT
 	*
 FROM
 	[ADG Databases]
-ORDER BY
-	[DateCreated] DESC
 ;
 
 SELECT
