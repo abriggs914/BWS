@@ -1,0 +1,9 @@
+USE BWSdb
+GO
+
+SELECT
+	*
+FROM
+	[IT Requests]
+WHERE
+	[SeenByIT] IS NOT NULL

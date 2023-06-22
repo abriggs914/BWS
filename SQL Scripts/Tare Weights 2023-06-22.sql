@@ -1,0 +1,58 @@
+USE BWSdb
+GO
+
+
+SELECT
+	[Tare]
+	,*
+FROM 
+	[Orders]
+WHERE [WO#] = '10016246'
+;
+SELECT
+	--[Tare]
+	*
+FROM 
+	[Design]
+WHERE [WO#] = '10016246'
+;
+SELECT
+	*
+FROM 
+	[BWSdb].[dbo].[BWS DRAWING # CROSS REFERENCE]
+WHERE [WO#:] = '10016246'
+;
+
+--EXEC sp_columns [Orders]
+
+
+DECLARE @t AS TABLE([ID] INT IDENTITY(0, 1), [WO] NVARCHAR(8));
+INSERT INTO @t ([WO]) VALUES
+('10016246'), ('10016205'), ('10016149'), ('10016098'), ('10016030'),
+('10016029'), ('10016028'), ('10016027'), ('10016013'), ('10016011'),
+('10016008'), ('10015977'), ('10015976'), ('10015975'), ('10015972'),
+('10015971'), ('10015970'), ('10015969'), ('10015968'), ('10015967'),
+('10015951'), ('10015950'), ('10015949'), ('10015938'), ('10015937'),
+('10015936'), ('10015935'), ('10015916'), ('10015915'), ('10015910'),
+('10015763'), ('10015637'), ('10015595'), ('10015589'), ('10015588'),
+('10015565'), ('10015522'), ('10015487'), ('10015486'), ('10015485'),
+('10015484'), ('10015483'), ('10015482'), ('10015469'), ('10015459'),
+('10015377')
+;
+
+
+SELECT
+	[WO#:]
+	, [Standard] AS [Model]
+	, [Tare Weight (LBS)]
+FROM 
+	[BWS DRAWING # CROSS REFERENCE]
+INNER JOIN
+	@t
+ON
+	[BWS DRAWING # CROSS REFERENCE].[WO#:] = [@t].[WO]
+
+
+-- This is the correct way to calculate the weight of a trailer.
+-- From Access WO Rpt 2023-06-22
+exec [sp_NewWOReport V2] 27731, 1
