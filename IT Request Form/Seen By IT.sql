@@ -2,8 +2,19 @@ USE BWSdb
 GO
 
 SELECT
+	'IS NOT NULL',
 	*
 FROM
 	[IT Requests]
 WHERE
 	[SeenByIT] IS NOT NULL
+;
+
+SELECT
+	'IS NULL',
+	*
+FROM
+	[IT Requests]
+WHERE
+	[SeenByIT] IS NULL
+;

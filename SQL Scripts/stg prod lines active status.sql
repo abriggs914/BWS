@@ -1,0 +1,28 @@
+USE BWSdb
+GO
+
+BEGIN TRAN;
+
+SELECT
+	*
+FROM
+	[Prod Lines]
+WHERE
+	[ID] BETWEEN 1 AND 7
+
+UPDATE
+	[Prod Lines]
+SET
+	[Active] = 1
+WHERE
+	[ID] BETWEEN 1 AND 7
+
+SELECT
+	*
+FROM
+	[Prod Lines]
+WHERE
+	[ID] BETWEEN 1 AND 7
+
+ROLLBACK;
+COMMIT;

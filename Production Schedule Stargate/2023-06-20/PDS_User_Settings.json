@@ -1,1 +1,20 @@
-{"write_date": "June 21st, 2023 at 13:14 PM", "user_name": "abriggs", "allow_saturday": false, "allow_sunday": false, "start_date": "2021-10-01", "viewable_months": 36, "colour_scheme": {"TRANSIT TRAILER LIMITED": "NAVAJOWHITE_2", "R.R. CHARLESBOIS INC": "PURPLE", "NORTHEAST TRUCK & TRAILER SALES": "RED", "FLEET MAINTENANCE, INC.": "DEEP_PURPLE", "REMORQUES LEWIS INC.": "PASTEL_GREEN", "WIELAND SALES INC.": "CARROT", "TRANS EQUIPMENT CO. INC.": "PEACOCK", "NUSS TRUCK & EQUIPMENT": "SAMCO_BLUE", "QUALITY TRAILERS LTD.": "SEA_TURTLE_GREEN", "ARKEL MOTORS": "SALMON_PINK"}}
+{
+  "write_date": "June 27th, 2023 at 13:12 PM",
+  "user_name": "abriggs",
+  "allow_saturday": false,
+  "allow_sunday": false,
+  "start_date": "2021-10-01",
+  "viewable_months": 36,
+  "colour_scheme": {
+    "TRANSIT TRAILER LIMITED": "NAVAJOWHITE_2",
+    "R.R. CHARLESBOIS INC": "PURPLE",
+    "NORTHEAST TRUCK & TRAILER SALES": "RED",
+    "FLEET MAINTENANCE, INC.": "DEEP_PURPLE",
+    "REMORQUES LEWIS INC.": "PASTEL_GREEN",
+    "WIELAND SALES INC.": "CARROT",
+    "TRANS EQUIPMENT CO. INC.": "PEACOCK",
+    "NUSS TRUCK & EQUIPMENT": "SAMCO_BLUE",
+    "QUALITY TRAILERS LTD.": "SEA_TURTLE_GREEN",
+    "ARKEL MOTORS": "SALMON_PINK"
+  }
+}
