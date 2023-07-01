@@ -73,13 +73,33 @@ FROM
 --;
 
 SELECT
-	'ADG Events' AS [Table],
+	'ADG Events -1' AS [Table],
 	MAX([ID]) AS [LastID]
+	, COUNT([ID]) AS [NumAccesses]
 	, [WindowsUser]
 FROM
 	[ADG Events]
 GROUP BY
 	[WindowsUser]
+ORDER BY
+	[NumAccesses] DESC
+;
+
+SELECT
+	'ADG Events -2' AS [Table],
+	MAX([ADG Databases].[ID]) AS [LastID]
+	, COUNT([ADG Databases].[ID]) AS [NumAccesses]
+	, [ADG Databases].[Name]
+FROM
+	[ADG Events]
+INNER JOIN
+	[ADG Databases]
+ON
+	[ADG Events].[AccessDBID] = [ADG Databases].[ID]
+GROUP BY
+	[ADG Databases].[Name]
+ORDER BY
+	[NumAccesses] DESC
 ;
 
 SELECT

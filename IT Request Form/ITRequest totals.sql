@@ -6,7 +6,7 @@ DECLARE @sd AS DATETIME;
 DECLARE @ed AS DATETIME;
 
 SET @sd = '2021-11-20';
-SET @ed = '2021-11-29';
+SET @ed = '2023-12-31';--'2021-11-29';
 
 -- Date constraints cover all requests that have ANY date column fall into the range.
 -- [RequestDate]
