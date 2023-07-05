@@ -31,6 +31,7 @@ FROM
 	[ADG Databases]
 ;
 
+
 SELECT
 	'v_ADG Latest Accessors' AS [Table],
 	*
