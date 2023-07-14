@@ -97,7 +97,7 @@ async def process_pdf(fn, page_idxs, fails, qtys, passes, p_nums, revs, prices, 
     print(f"processing '{fn}'")
 
     text = ""
-    pages = []
+    pages_real_pages = []
 
     def f1(s):
         i = s.index("-")
@@ -142,11 +142,11 @@ async def process_pdf(fn, page_idxs, fails, qtys, passes, p_nums, revs, prices, 
             print(f"{text=}")
             print(f"{num_pages=}")
             print(f"{splitter=}")
-        pages = text.split(splitter[1])  # [1:]
+        pages_real_pages = text.split(splitter[1])  # [1:]
         invoices_l, orders_l = [], []
         invoice_match, order_match = None, None
 
-        for i, page in enumerate(pages):
+        for i, page in enumerate(pages_real_pages):
 
             try:
                 la_idx = lstindex(page, "laseramp")
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     t_root = t_root_5
     # t_root = t_root_2
     t_root = None
-    t_root = t_root_6
+    # t_root = t_root_6
 
     # t_root_1 = None
     #
@@ -477,7 +477,9 @@ if __name__ == "__main__":
     print(dict_print(timings, "Timings"))
     print(f"\n\tPassed\n\n{df_passed}")
     print(f"\n\tParts\n\n{df_passed['partNum']}")
-    print(f"{df_passed.iloc[0]=}")
+
+    if not df_passed.empty:
+        print(f"{df_passed.iloc[0]=}")
 
     output_file_passed = next_available_file_name(f"./Outputs/output_passed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")
     output_file_failed = next_available_file_name(f"./Outputs/output_failed_{datetime.datetime.now():%Y-%m-%d_%H%M}.json")

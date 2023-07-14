@@ -109,4 +109,20 @@ SELECT
 FROM
 	[ADG Events]
 ;
+
+SELECT
+	[ADG Events].[FormAccessed]
+FROM
+	[ADG Events]
+GROUP BY
+	[ADG Events].[FormAccessed]
+;
+
+SELECT
+	[ADG Events].[DestinationForm]
+FROM
+	[ADG Events]
+GROUP BY
+	[ADG Events].[DestinationForm]
+;
 	

@@ -24,8 +24,8 @@ import os
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.71
-    Date...........2023-06-07
+    Version..............1.72
+    Date...........2023-07-14
     Author(s)....Avery Briggs
     """
 
@@ -654,7 +654,7 @@ def km_miles(km):
 	:param km: int or float value in kilometers.
 	:return: float value in miles.
 	"""
-    if not isinstance(km, int) or isinstance(km, float):
+    if not isinstance(km, (int, float)):
         raise ValueError("Cannot convert \"{}\" of type: \"{}\" to kilometers.".format(km, type(km)))
     if km == 0:
         return 0.0

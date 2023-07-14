@@ -14,6 +14,8 @@ INNER JOIN
 	[LongLeadQuotePartClass] AS [C]
 ON
 	[A].[PartClassID] = [C].[PartClassID]
+ORDER BY
+	[A].[LastUpdated] DESC
 
 
 SELECT
