@@ -142,3 +142,16 @@ WHERE
 ORDER BY
 	[CustomerEmail]
 ;
+
+SELECT DISTINCT
+	[CustomerName]
+	,[CustomerContact]
+	,[CustomerEmail]
+FROM
+	@results 
+WHERE
+	[CustomerEmail] IS NOT NULL
+	AND [CustomerName] LIKE '%chiac%'
+ORDER BY
+	[CustomerEmail]
+;

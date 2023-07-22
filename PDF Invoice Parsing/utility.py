@@ -1,4 +1,3 @@
-import datetime
 import math
 import ctypes
 from typing import Literal
@@ -6,16 +5,17 @@ from typing import Literal
 import pandas as pd
 from locale import currency, setlocale, LC_ALL
 from math import e, ceil, sin, cos, radians
-from random import random, choice, randint, sample
+from random import random, choice, sample
 from operator import itemgetter
 from plyer import notification
 from decimal import Decimal
 from fractions import Fraction
 import datetime
-import calendar
 import shutil
 import sys
 import os
+
+from screeninfo import get_monitors
 
 #######################################################################################################################
 #######################################################################################################################
@@ -24,8 +24,8 @@ import os
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.72
-    Date...........2023-07-14
+    Version..............1.74
+    Date...........2023-07-20
     Author(s)....Avery Briggs
     """
 
@@ -373,7 +373,7 @@ def money(v, int_only=False):
 
 
 def money_value(m):
-    return float("".join(m[1:].split(",")))
+    return float("".join(m.removeprefix("$").strip().split(",")))
 
 
 def is_money(value):
@@ -654,7 +654,7 @@ def km_miles(km):
 	:param km: int or float value in kilometers.
 	:return: float value in miles.
 	"""
-    if not isinstance(km, (int, float)):
+    if not isinstance(km, int) or isinstance(km, float):
         raise ValueError("Cannot convert \"{}\" of type: \"{}\" to kilometers.".format(km, type(km)))
     if km == 0:
         return 0.0
@@ -706,29 +706,17 @@ def bar(a, b, c=10):
 
 def lstindex(lst, target):
     """Iterate a list and return the index of a target value. Avoids IndexError, but iterates the whole list."""
-    if isinstance(lst, str):
-        found = False
-        i = -1
-        for i, c1 in enumerate(lst):
-            started = False
-            found = False
-            for j, c2 in enumerate(target):
-                cc = lst[i + j]
-                if j == 0 and cc == c2:
-                    started = True
-                if cc != c2:
-                    break
-                if started and (j == len(target) - 1):
-                    found = True
-                    break
-            if found:
-                break
-        if found:
-            return i
-    else:
+    if lenstr(target) == 1:
         for i, val in enumerate(lst):
             if val == target:
                 return i
+    else:
+        for i, val in enumerate(lst):
+            for j, tar in enumerate(target):
+                if tar != lst[i + j]:
+                    break
+                if j == len(target) - 1:
+                    return i
     return -1
 
 
@@ -1948,6 +1936,12 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
 
 def sort_2_lists(list_1, list_2):
     # https://stackoverflow.com/questions/13668393/python-sorting-two-lists
+    # l1 = [-7, 4, 0, -6, 14, 1, -4]
+    # l2 = list(range(len(l1)))
+    # sort_2_lists(l1, l2)
+    # # [[-7, -6, -4, 0, 1, 4, 14], [0, 3, 6, 2, 5, 1, 4]]
+    # sort_2_lists(l2, l1)
+    # # [[0, 1, 2, 3, 4, 5, 6], [-7, 4, 0, -6, 14, 1, -4]]
     return [list(x) for x in zip(*sorted(zip(list_1, list_2), key=itemgetter(0)))]
 
 
@@ -1998,6 +1992,10 @@ def get_windows_user(EXTENDED_NAME_FORMAT: int = 3):
     nameBuffer = ctypes.create_unicode_buffer(size.contents.value)
     GetUserNameEx(data, nameBuffer, size)
     return nameBuffer.value
+
+
+def get_largest_monitor():
+    return sorted(get_monitors(), key=lambda m: (-m.width_mm, m.width_mm * m.height_mm))[0]
 
 
 BLK_ONE = "1", "  1  \n  1  \n  1  \n  1  \n  1  "

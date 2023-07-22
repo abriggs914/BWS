@@ -5,10 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bfd33fa5-46b7-4744-8cf4-2f70a148a0a6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../InvisibleAccess/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../InvisibleAccess/selects.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Long Lead Time/selects.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../Long Lead Time/selects.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/colour_utility.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gui_main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gui_main_v0.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gui_main_v1.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gui_main_v2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tkinter_utility.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ISO Audit/2023/Customers List.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../ISO Audit/2023/Customers List.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InvisibleAccess/v_ADG Latest Accessors.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../InvisibleAccess/v_ADG Latest Accessors.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datetime_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/datetime_utility.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,7 +56,28 @@
       <recent name="C:\Users\ABriggs\Documents\BWS\PDF Invoice Parsing\Outputs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.gui_main">
+    <configuration name="gui_main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="PDF Invoice Parsing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/gui_main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="PDF Invoice Parsing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -96,6 +123,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.gui_main" />
         <item itemvalue="Python.output_analyzer" />
       </list>
     </recent_temporary>
@@ -110,5 +138,86 @@
       <updated>1685370153052</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>810</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>838</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>853</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>858</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>867</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>877</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>893</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>787</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>748</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>698</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>774</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>773</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>1061</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>1062</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gui_main.py</url>
+          <line>1066</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

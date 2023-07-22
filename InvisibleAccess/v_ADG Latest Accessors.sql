@@ -1,13 +1,12 @@
 USE [BWSdb]
 GO
 
-/****** Object:  View [dbo].[v_ADG Latest Accessors]    Script Date: 2023-06-21 10:04:26 AM ******/
+/****** Object:  View [dbo].[v_ADG Latest Accessors]    Script Date: 2023-07-17 9:36:41 AM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
-
 
 
 
@@ -22,6 +21,7 @@ SELECT
 	, [FormAccessed] AS [On Form]
 	, [DestinationForm] AS [Target Form]
 	, [LastID] AS [Last ID]
+	, [NumAccesses] AS [TotalAccesses]
 	, (CASE 
 		WHEN [DateCreated] >= DATEADD(HOUR, -12, GETDATE()) THEN
 			'Today'
@@ -51,6 +51,7 @@ FROM
 INNER JOIN (
 	SELECT
 		MAX([ID]) AS [LastID]
+		, COUNT(*) AS [NumAccesses]
 		, [WindowsUser]
 	FROM
 		[ADG Events]
