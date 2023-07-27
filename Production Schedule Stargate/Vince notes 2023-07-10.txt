@@ -1,0 +1,41 @@
+
+
+Remove T1 - 
+
+LBL - go to the bottom
+remove t1 - t3
+ED1 ED2
+
+
+P
+T
+
+Schedules back in time
+
+
+fix font 
+
+
+stargate1234!!!!
+
+
+hiddenimports=['sqlalchemy.util.compat', 'babel.numbers'],
+
+
+
+TL
+ED1
+ED2
+WF
+TB
+PL
+LBL
+
+W/L
+
+
+
+
+
+
+WO 9698

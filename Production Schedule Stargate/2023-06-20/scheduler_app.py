@@ -375,7 +375,7 @@ class App(tkinter.Tk):
                 self.calendar_surface.tag_bind(tile, "<Double-3>", self.dbl_right_click_tile)
 
         self.calendar_scroll_bar = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal",
-                                                     command=self.calendar_surface.xview, )
+                                                     command=self.scroll_canvas)
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
 
         # Info Frame
@@ -531,6 +531,10 @@ class App(tkinter.Tk):
 
         # self.button_scroll_left.pack(side=tkinter.LEFT)
         # self.button_scroll_right.pack(side=tkinter.RIGHT)
+
+    def scroll_canvas(self, *args):
+        self.calendar_surface.xview(*args)
+        self.re_draw_legend(None)
 
     def init_colour_code(self):
         cs = "colour_scheme"
@@ -979,7 +983,7 @@ class App(tkinter.Tk):
     def unbind_calendar_surface(self):
         print(f"unbind_calendar_surface")
         # self.calendar_surface.unbind_all("all")
-        # self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
+        # self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar_x.set)
         self.calendar_surface.unbind("<Button-1>")
         self.calendar_surface.unbind("<Button-3>")
         self.calendar_surface.unbind("<ButtonRelease-1>")
@@ -2572,8 +2576,9 @@ class App(tkinter.Tk):
             self.calendar_surface.set_rc_with_unit(rc, unit_in)
             # print(f"{unit_in=}")
             # self.calendar_surface.tile_properties[r][c]["unit_in"] = unit_in
-            dealer = unit_in.InputField2_v2
+            dealer = unit_in.InputField2_v2.title()
             if dealer:
+                print(f"{self.frame_colour_coder.status=}")
                 dealer_colour = self.frame_colour_coder.status[dealer]
                 if dealer_colour and dealer_colour != "none":
                     self.calendar_surface.colour_code_dealer(dealer, dealer_colour)

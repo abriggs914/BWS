@@ -34,12 +34,25 @@ FROM
 
 SELECT
 	'v_ADG Latest Accessors' AS [Table],
+	'When' AS [By],
 	*
 FROM
 	[v_ADG Latest Accessors]
 ORDER BY
 	[When] DESC
 ;
+
+
+SELECT
+	'v_ADG Latest Accessors' AS [Table],
+	'TotalAccesses' AS [By],
+	*
+FROM
+	[v_ADG Latest Accessors]
+ORDER BY
+	[TotalAccesses] DESC
+;
+
 
 SELECT
 	'v_ADG User Access Log' AS [Table],

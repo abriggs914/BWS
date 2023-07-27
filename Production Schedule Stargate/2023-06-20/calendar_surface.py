@@ -14,8 +14,8 @@ from datetime_utility import *
 from stg_queries import *
 
 
-def get_largest_monitor():
-    return sorted(get_monitors(), key=lambda m: (-m.width_mm, m.width_mm * m.height_mm))[0]
+def get_largest_monitors():
+    return sorted(get_monitors(), key=lambda m: (-m.width_mm, m.width_mm * m.height_mm))
 
 
 class CalendarSurface(tkinter.Canvas):
@@ -790,7 +790,7 @@ class CalendarSurface(tkinter.Canvas):
 
             new_unit = Unit(*values).init()
             # print(f"{new_unit=}, {list(new_unit)=}, {new_unit.__dict__}")
-            # print(f"{new_unit=}, {list(new_unit)=}")
+            print(f"{new_unit=}, {list(new_unit)=}")
             sgquote = new_unit.SGQuote
             # print(f"{len(values)=}, {values[5:8]=}, {values=}")
             # if sgquote in ["SG100621", "SG100535"]:

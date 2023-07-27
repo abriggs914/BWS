@@ -727,7 +727,7 @@ class App(tkinter.Tk):
     def unbind_calendar_surface(self):
         print(f"unbind_calendar_surface")
         # self.calendar_surface.unbind_all("all")
-        # self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar.set)
+        # self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar_x.set)
         self.calendar_surface.unbind("<Button-1>")
         self.calendar_surface.unbind("<Button-3>")
         self.calendar_surface.unbind("<ButtonRelease-1>")
