@@ -26,4 +26,13 @@ FROM
 	[IT Requests]
 WHERE
 	[SeenByRequester] IS NOT NULL
+ORDER BY
+	[SeenByRequester] DESC
 ;
+
+SELECT TOP 5
+	*
+FROM
+	[IT Requests]
+ORDER BY	
+	[OpenCounter] DESC
