@@ -37,7 +37,7 @@ SELECT
 	'When' AS [By],
 	*
 FROM
-	[v_ADG Latest Accessors]
+	[BWSdb].[dbo].[v_ADG Latest Accessors]
 ORDER BY
 	[When] DESC
 ;
@@ -48,9 +48,23 @@ SELECT
 	'TotalAccesses' AS [By],
 	*
 FROM
-	[v_ADG Latest Accessors]
+	[BWSdb].[dbo].[v_ADG Latest Accessors]
 ORDER BY
 	[TotalAccesses] DESC
+;
+
+SELECT
+	'v_ADG Latest Accessors' AS [Table],
+	'TotalAccesses' AS [By],
+	SUM([TotalAccesses]) AS [Tot TotalAccesses]
+	,COUNT([TotalAccesses]) AS [Num Accessors]
+	,SUM([TotalAccesses])/COUNT([TotalAccesses]) AS [Avg Num Accesses Per Accessor]
+	,MIN([When]) AS [First Access]
+	,MAX([When]) AS [Last Access]
+FROM
+	[BWSdb].[dbo].[v_ADG Latest Accessors]
+--ORDER BY
+	--[TotalAccesses] DESC
 ;
 
 

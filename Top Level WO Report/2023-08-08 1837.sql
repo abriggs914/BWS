@@ -27,9 +27,9 @@ WHERE
 SELECT
 	'R' AS [T]
 	, [Wip].[Job] AS [WipJob]
-	, [Wip].[Customer]
+	--, [Wip].[Customer]
 	, [Por].[PurchaseOrder]
-	, [Wip].[JobStartDate]
+	, MAX([Wip].[JobStartDate]) AS [MAX_JobStartDate]
 	, [Mat].[OperationOffset]
 	, [Inv].[PartCategory]
 	, [Mat].[Warehouse]
@@ -74,9 +74,9 @@ WHERE
 GROUP BY
 	[Wip].[Job]
 	, [Wip].[Job]
-	, [Wip].[Customer]
+	--, [Wip].[Customer]
 	, [Por].[PurchaseOrder]
-	, [Wip].[JobStartDate]
+	--, [Wip].[JobStartDate]
 	, [Mat].[OperationOffset]
 	, [Inv].[PartCategory]
 	, [Mat].[Warehouse]
