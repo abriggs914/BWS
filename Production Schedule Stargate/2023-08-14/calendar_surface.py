@@ -65,6 +65,7 @@ class CalendarSurface(tkinter.Canvas):
             text_order: list[str] = ["SGQuote", "InputField1_v2", "InputField2_v2", "WO", "Customer_WO", "IsGalv"],
 
             calendar_text_size: int = 8,
+            calendar_max_text_len: int = 18,
 
             weekend_proportion: float = 0.5,
             illegal_saturday: bool = True,
@@ -123,6 +124,7 @@ class CalendarSurface(tkinter.Canvas):
         self.drag_colour = drag_colour
 
         self.calendar_text_size = calendar_text_size
+        self.calendar_max_text_len = calendar_max_text_len
         self.tile_space = 3
         self.tile_width = None
         self.tile_height = None
@@ -542,7 +544,7 @@ class CalendarSurface(tkinter.Canvas):
                     wip_x = eval(f"t{i}_x1")
                     wip_y = eval(f"t{i}_y1")
                     wip_t = eval(f"text_{i}")
-                    text = wip_t.get()
+                    text = wip_t.get()[:self.calendar_max_text_len]
                     text_width = def_font.measure(text)
                     # print(f"r={str(r).ljust(4)}, c={str(c).ljust(4)}, i={str(i).ljust(4)}")
                     # def_font = auto_font(def_font, text, width, y2 - y1, min_font_size=4, max_font_size=20)
@@ -726,7 +728,7 @@ class CalendarSurface(tkinter.Canvas):
         if r_c_num:
             r, c, num = r_c_num
             tag = self.tile_properties[r][c][f"t{num}_tag"]
-            value = self.tile_properties[r][c][f'text_{num}'].get()
+            value = self.tile_properties[r][c][f'text_{num}'].get()[:self.calendar_max_text_len]
 
             font = tkinter.font.nametofont(self.itemcget(tag, "font"))
             font.configure(size=self.calendar_text_size)
@@ -798,6 +800,7 @@ class CalendarSurface(tkinter.Canvas):
 
     def populate_units(self, df: pandas.DataFrame) -> None:
         assert isinstance(df, pandas.DataFrame)
+        default_line = self.lines[0]
         for row in df.iterrows():
             # df["Available Date"] = pandas.to_datetime(df["Available Date"])
             i, values = row
@@ -1026,6 +1029,9 @@ class CalendarSurface(tkinter.Canvas):
                 new_line = new_unit.WO_Line_2
             elif new_unit.job_start_line_v2:
                 new_line = new_unit.job_start_line_v2
+
+            if new_line not in self.lines:
+                new_line = default_line
 
             if new_line is not None:
                 # print(f"\n{new_unit=}\n\t{new_line=}\n{self.lines=}")

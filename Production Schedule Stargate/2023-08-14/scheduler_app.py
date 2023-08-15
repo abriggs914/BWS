@@ -134,6 +134,9 @@ class App(tkinter.Tk):
         self.tag_tl_multi_combo = "tl_multi_combo"
         self.var_multi_combo_unit_popped = tkinter.BooleanVar(self, value=False)
 
+        self.multicombobox_min_rows = 3
+        self.multicombobox_max_rows = 8
+
         self.calendar_surface = None
         self.multi_combo_unit_selection = None
         self.multi_combo_unit_selection_is_hidden = None
@@ -169,7 +172,7 @@ class App(tkinter.Tk):
         self.label_line_shifter = None
         self.canv_btn_show_line_shifter = None
         self.calendar_scroll_bar_x = None
-        self.calendar_scroll_bar_y = None
+        # self.calendar_scroll_bar_y = None
         self.info_frame_labels = None
         self.frame_info_frame = None
         self.tv_label_testing_frame = None
@@ -196,10 +199,12 @@ class App(tkinter.Tk):
         self.withdraw()
         self.tl_please_wait.grab_set()
 
+        # Thread setup
+        self.thread_data = None
+        self.images = None
+        self.thread_setup()
         # rest of processing
-        self.thread_data = threading.Thread(target=self.thread_setup)
-        self.thread_data.start()
-        self.thread_data.join()
+        self.init_images()
         self.gui_setup()
 
         self.hide_please_wait()
@@ -208,14 +213,40 @@ class App(tkinter.Tk):
         print(f"GO!")
 
     def thread_setup(self):
-        print(f"BEGIN THREAD PROCESSING")
-        self.populate_data()
-        self.init_stgprodsched_directory()
-        self.init_queries_directory()
-        self.init_pdfs_directory()
-        self.init_html_directory()
 
-        print(f"END THREAD PROCESSING")
+        # self.thread_data = threading.Thread(target=self.thread_setup)
+        # self.thread_data.start()
+        # self.thread_data.join()
+
+        t1 = threading.Thread(target=self.populate_data)
+        t2 = threading.Thread(target=self.init_stgprodsched_directory)
+        t3 = threading.Thread(target=self.init_queries_directory)
+        t4 = threading.Thread(target=self.init_pdfs_directory)
+        t5 = threading.Thread(target=self.init_html_directory)
+        # t6 = threading.Thread(target=self.init_images)
+
+        t1.start()
+        t2.start()
+        t3.start()
+        t4.start()
+        t5.start()
+        # t6.start()
+
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
+        t5.join()
+        # t6.join()
+
+        # print(f"BEGIN THREAD PROCESSING")
+        # self.populate_data()
+        # self.init_stgprodsched_directory()
+        # self.init_queries_directory()
+        # self.init_pdfs_directory()
+        # self.init_html_directory()
+        #
+        # print(f"END THREAD PROCESSING")
 
     def gui_setup(self):
         if self.user_name is None:
@@ -237,6 +268,10 @@ class App(tkinter.Tk):
 
         can_w, can_h = self.calc_calendar_surface_dims()
         used_lines = self.df_used_lines["Prod Line"].values.tolist()
+
+        n_visible_cols = 14 if len(used_lines) >= 6 else 10
+        calendar_text_size = 8 if len(used_lines) >= 6 else 10
+
         if self.dark_mode:
             self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
                                                     lines=used_lines, user_name=self.user_name,
@@ -244,7 +279,9 @@ class App(tkinter.Tk):
                                                     start_date=self.start_date, weekend_proportion=0.1,
                                                     illegal_saturday=self.illegal_saturday,
                                                     illegal_sunday=self.illegal_sunday,
-                                                    id_monitor_in_use=self.id_monitor_in_use)
+                                                    id_monitor_in_use=self.id_monitor_in_use,
+                                                    n_visible_cols=n_visible_cols,
+                                                    calendar_text_size=calendar_text_size)
         else:
             self.calendar_surface = CalendarSurface(self.frame_calendar_b, PROGRAM_MODE=self.PROGRAM_MODE,
                                                     lines=used_lines, user_name=self.user_name,
@@ -253,6 +290,8 @@ class App(tkinter.Tk):
                                                     id_monitor_in_use=self.id_monitor_in_use,
                                                     illegal_saturday=self.illegal_saturday,
                                                     illegal_sunday=self.illegal_sunday,
+                                                    n_visible_cols=n_visible_cols,
+                                                    calendar_text_size=calendar_text_size,
 
                                                     # colours for date axis legend (Y)
                                                     row_legend_background_colour=rgb_to_hex(GRAY_60),
@@ -355,7 +394,8 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn="<",
             kwargs_btn={
-                "name": "button_undo"
+                "name": "button_undo",
+                "image": self.images["btn_undo"]  # r"C:\Users\ABriggs\Downloads\left_arrow.png"
             },
             command=self.click_undo
         )
@@ -366,7 +406,8 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn=">",
             kwargs_btn={
-                "name": "button_redo"
+                "name": "button_redo",
+                "image": self.images["btn_redo"]  # r"C:\Users\ABriggs\Downloads\right_arrow.png"
             },
             command=self.click_redo
         )
@@ -469,8 +510,8 @@ class App(tkinter.Tk):
 
         self.calendar_scroll_bar_x = tkinter.Scrollbar(self.frame_calendar_b, orient="horizontal",
                                                        command=self.scroll_canvas_x)
-        self.calendar_scroll_bar_y = tkinter.Scrollbar(self.frame_calendar_b, orient="vertical",
-                                                       command=self.scroll_canvas_y)
+        # self.calendar_scroll_bar_y = tkinter.Scrollbar(self.frame_calendar_b, orient="vertical",
+        #                                                command=self.scroll_canvas_y)
         self.calendar_surface.configure(xscrollcommand=self.calendar_scroll_bar_x.set)
 
         # Info Frame
@@ -619,7 +660,7 @@ class App(tkinter.Tk):
         self.reset_val_is_configuring = 750
         self.id_after_config = None
         self.tv_is_configuring = tkinter.IntVar(self, value=self.reset_val_is_configuring)
-        self.bind("<Configure>", self.on_resize_window)
+        self.bind("<Configure>", self.wrap_on_resize_window)
 
         ###############################################################################################################
         #  grid widgets
@@ -717,7 +758,7 @@ class App(tkinter.Tk):
         self.frame_calendar_a.grid(**{r: 1, c: 0, s: "ew", ix: 5, iy: 2})
         self.frame_calendar_b.grid(**{ix: 5, iy: 2})
         self.calendar_surface.grid(**{r: 1, c: 1, s: "ew", ix: 5, iy: 2})
-        self.calendar_scroll_bar_y.grid(**{r: 1, c: 2, s: "ns", ix: 5, iy: 2})
+        # self.calendar_scroll_bar_y.grid(**{r: 1, c: 2, s: "ns", ix: 5, iy: 2})
         self.calendar_scroll_bar_x.grid(**{r: 2, c: 1, s: "ew", ix: 5, iy: 2})
 
         if self.PROGRAM_MODE == "TEST":
@@ -1052,7 +1093,7 @@ class App(tkinter.Tk):
             q_id = int(selections[0])
             print(f"{q_id=}")
             # print(f"{self.multi_combo_unit_selection.data=}")
-            # print(f"{self.multi_combo_unit_selection.data['SGQuote']=}")
+            print(f"{self.multi_combo_unit_selection.data['SGQuote'].tolist()=}")
             quote = self.multi_combo_unit_selection.data["SGQuote"].tolist()[q_id]
             print(f"SELECTED Quote: {quote}")
             self.update_info_frame(quote)
@@ -1144,6 +1185,34 @@ class App(tkinter.Tk):
             os.mkdir("C:/Access/STGProdSched/HTMLs")
         if not os.path.isdir("./STGProdSched/HTMLs"):
             os.mkdir("./STGProdSched/HTMLs")
+
+    def init_images(self):
+
+        self.images = {
+            "btn_undo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\left_arrow.png").subsample(50, 50),
+            "btn_redo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\right_arrow.png").subsample(50, 50)
+        }
+    #
+    #     def resizeImage(img, newWidth, newHeight):
+    #         # https://stackoverflow.com/questions/3177969/how-to-resize-an-image-using-tkinter
+    #         oldWidth = img.width()
+    #         oldHeight = img.height()
+    #         newPhotoImage = tkinter.PhotoImage(width=newWidth, height=newHeight)
+    #         for x in range(newWidth):
+    #             for y in range(newHeight):
+    #                 xOld = int(x * oldWidth / newWidth)
+    #                 yOld = int(y * oldHeight / newHeight)
+    #                 rgb = '#%02x%02x%02x' % img.get(xOld, yOld)
+    #                 newPhotoImage.put(rgb, (x, y))
+    #         return newPhotoImage
+    #
+    #     self.images = {
+    #         "btn_undo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\left_arrow.png"),  #.subsample(3, 3),
+    #         "btn_redo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\right_arrow.png")  #.subsample(3, 3)
+    #     }
+    #     self.images["btn_undo"] = resizeImage(self.images["btn_undo"], 25, 25)
+    #     self.images["btn_redo"] = resizeImage(self.images["btn_redo"], 25, 25)
+
 
     def verify_user(self, user_name):
         if user_name is None:
@@ -1618,7 +1687,7 @@ class App(tkinter.Tk):
                     f_unit = None
                     for unit, u_data in self.calendar_surface.units.items():
                         if unit:
-                            print(f"unit= {unit}")
+                            # print(f"unit= {unit}")
                             dat = u_data.__dict__
                             for key, val in dat.items():
                                 if key != "_history":
@@ -1720,7 +1789,7 @@ class App(tkinter.Tk):
                 unit.Delivery_Date
             ]
             for k, v in zip(labels, values):
-                print(f"{{K:V}}: {k}: {v}")
+                # print(f"{{K:V}}: {k}: {v}")
                 self.frame_info_frame.change_value(k, v)
 
     def click_go_to_today(self):
@@ -2825,10 +2894,20 @@ class App(tkinter.Tk):
         event = tkinter.Event()
         event.width = int(self.winfo_width())  # Set the desired width
         event.height = int(self.winfo_height())  # Set the desired height
+        # print(f"{event.width=}, {event.height=}")
+        self.check_multicombobox_row_n(event.height)
+
         self.on_resize_window(event)
         self.calendar_surface.resize_canvas(*self.calc_calendar_surface_dims())
         self.re_draw_legend(None)
         self.hide_please_wait()
+
+    def check_multicombobox_row_n(self, height):
+        # if event height is less than 1500px, shrink the number of viewable rows in the treeview.
+        if height <= 900:
+            self.multi_combo_unit_selection.tree_treeview.config(height=self.multicombobox_min_rows)
+        else:
+            self.multi_combo_unit_selection.tree_treeview.config(height=self.multicombobox_max_rows)
 
     def calc_top_frame_height(self):
         return max([
@@ -2840,6 +2919,12 @@ class App(tkinter.Tk):
             (self.frame_colour_coder.winfo_height() if self.showing_colour_coder.get() else 0),
             self.frame_info_frame.winfo_height()
         ])
+
+    def wrap_on_resize_window(self, event):
+        event.width = int(self.winfo_width())  # Set the desired width
+        event.height = int(self.winfo_height())  # Set the desired height
+        self.check_multicombobox_row_n(event.height)
+        self.on_resize_window(event)
 
     def on_resize_window(self, event):
 
