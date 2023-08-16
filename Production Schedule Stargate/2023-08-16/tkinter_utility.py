@@ -22,7 +22,7 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.60
+    Version..............1.59
     Date...........2023-08-16
     Author(s)....Avery Briggs
     """
@@ -2103,8 +2103,6 @@ class MultiComboBox(tkinter.Frame):
         self.include_searching_widgets = include_searching_widgets
         self.exhaustive_filtering = exhaustive_filtering
         self.default_null_char = default_null_char
-        self.cell_tag_delim = "|-=-=-=-|"
-        self.row_tag_delim = "row="
 
         if not self.include_drop_down_arrow:
             # must show table, if this is false
@@ -2506,10 +2504,6 @@ class MultiComboBox(tkinter.Frame):
             raise ValueError("Cannot insert into this combobox")
 
         print(f"{tags=}")
-
-    def gen_cell_tag(self, i, j):
-        """12|-=-=-=-|12"""
-        return f"{i}{self.cell_tag_delim}{j}"
 
     def throw_fit(self, code):
         raise ValueError(f"You cannot use code='{code}'. It is a keyword.")

@@ -2,16 +2,19 @@ USE BWSdb
 GO
 
 SELECT
-	[CtlClicked]
+	[AccessDB]
+	, [CtlClicked]
 	, [CtlCaption]
 	, COUNT([ID]) AS [C]
 FROM
 	[ADG Events]
-WHERE
-	[AccessDB] = 'SysproCompanyA'
+--WHERE
+--	[AccessDB] = 'SysproCompanyA'
 GROUP BY
-	[CtlClicked]
+	[AccessDB]
+	, [CtlClicked]
 	, [CtlCaption]
 ORDER BY
-	[C] DESC
+	[AccessDB]
+	, [C] DESC
 	--[CtlCaption]
