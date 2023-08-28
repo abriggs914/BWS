@@ -22,6 +22,17 @@ from utility import Rect2, print_by_line
 from bs4 import BeautifulSoup
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 class App(tkinter.Tk):
 
     def __init__(
@@ -45,6 +56,9 @@ class App(tkinter.Tk):
             dark_mode=True
     ):
         super().__init__()
+
+        self.closing_app = tkinter.BooleanVar(self, value=False)
+        self.setup_complete = tkinter.BooleanVar(self, value=False)
 
         self.id_monitor_in_use = True  # 'True' argument chooses largest monitor by default, otherwise use an int index.
 
@@ -197,7 +211,7 @@ class App(tkinter.Tk):
 
         self.show_please_wait()
         self.withdraw()
-        self.tl_please_wait.grab_set()
+        # self.tl_please_wait.grab_set()
 
         # Thread setup
         self.thread_data = None
@@ -209,6 +223,8 @@ class App(tkinter.Tk):
 
         self.hide_please_wait()
         self.deiconify()
+
+        self.setup_complete.set(True)
 
         print(f"GO!")
 
@@ -394,8 +410,8 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn="<",
             kwargs_btn={
-                "name": "button_undo",
-                "image": self.images["btn_undo"]  # r"C:\Users\ABriggs\Downloads\left_arrow.png"
+                "name": "button_undo"
+                # ,"image": self.images["btn_undo"]  # r"C:\Users\ABriggs\Downloads\left_arrow.png"
             },
             command=self.click_undo
         )
@@ -406,8 +422,8 @@ class App(tkinter.Tk):
             self.frame_top_bar_c,
             tv_btn=">",
             kwargs_btn={
-                "name": "button_redo",
-                "image": self.images["btn_redo"]  # r"C:\Users\ABriggs\Downloads\right_arrow.png"
+                "name": "button_redo"
+                # ,"image": self.images["btn_redo"]  # r"C:\Users\ABriggs\Downloads\right_arrow.png"
             },
             command=self.click_redo
         )
@@ -1151,12 +1167,15 @@ class App(tkinter.Tk):
         self.calendar_surface.unbind("<MouseWheel>")
 
     def on_closing(self):
+        # print(f"START CLOSE")
+        self.closing_app.set(True)
         if self.dirty.get() and messagebox.askokcancel("Quit?", "Do you want to quit?"):
             match ans2 := messagebox.askyesnocancel("Save?", "Do you want to commit your session?"):
                 case True:
                     self.click_update_sql(are_u_sure=True)
                 case _:
-                    pass
+                    # never-mind
+                    self.closing_app.set(False)
             if ans2 is not None:
                 self.destroy()
         if not self.dirty.get():
@@ -1187,11 +1206,13 @@ class App(tkinter.Tk):
             os.mkdir("./STGProdSched/HTMLs")
 
     def init_images(self):
-
-        self.images = {
-            "btn_undo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\left_arrow.png").subsample(50, 50),
-            "btn_redo": tkinter.PhotoImage(file=r"C:\Users\ABriggs\Downloads\right_arrow.png").subsample(50, 50)
-        }
+        try:
+            self.images = {
+                "btn_undo": tkinter.PhotoImage(file=resource_path(r"C:\Users\ABriggs\Downloads\left_arrow.png")).subsample(50, 50),
+                "btn_redo": tkinter.PhotoImage(file=resource_path(r"C:\Users\ABriggs\Downloads\right_arrow.png")).subsample(50, 50)
+            }
+        except tkinter.TclError:
+            self.images = {}
     #
     #     def resizeImage(img, newWidth, newHeight):
     #         # https://stackoverflow.com/questions/3177969/how-to-resize-an-image-using-tkinter
@@ -2864,7 +2885,8 @@ class App(tkinter.Tk):
         self.tl_please_wait.rowconfigure(0, weight=1)
         self.tl_please_wait.columnconfigure(0, weight=1)
         self.tl_please_wait_lbl.grid(row=0, column=0, sticky="nsew")
-        self.tl_please_wait.grab_set()
+        # self.tl_please_wait.bind("<Visibility>")
+        # self.tl_please_wait.grab_set()
         self.tl_please_wait.protocol("WM_DELETE_WINDOW", self.tl_please_wait.withdraw)
 
     def show_please_wait(self, msg="Processing...", animate=True):
@@ -2886,8 +2908,9 @@ class App(tkinter.Tk):
             update_lbl()
 
     def hide_please_wait(self):
-        self.tl_please_wait.withdraw()
-        self.grab_set()
+        if self.tl_please_wait is not None:
+            self.tl_please_wait.withdraw()
+            self.grab_set()
 
     def resize_top_frame(self):
         # print(f"resize_top_frame")
@@ -2922,10 +2945,12 @@ class App(tkinter.Tk):
         ])
 
     def wrap_on_resize_window(self, event):
+        # print(f"CONFIG {event=}")
         event.width = int(self.winfo_width())  # Set the desired width
         event.height = int(self.winfo_height())  # Set the desired height
-        self.check_multicombobox_row_n(event.height)
-        self.on_resize_window(event)
+        if not self.closing_app.get():
+            self.check_multicombobox_row_n(event.height)
+            self.on_resize_window(event)
 
     def on_resize_window(self, event):
 

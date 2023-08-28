@@ -7,11 +7,12 @@ import traceback
 from colour_utility import *
 from settings_initializer import SettingsWriter
 from scheduler_app import App
+from tkinter import messagebox
 
 
 SETTINGS_FILE = "./PDS_User_Settings.json"
 SETTINGS_FILE_TEST = r"C:\Access\PDS_User_Settings.json"
-PROD_DATE = datetime.datetime(2023, 8, 14, 15, 20)
+PROD_DATE = datetime.datetime(2023, 8, 28, 15, 52)
 PROGRAM_MODE = "LIVE"
 # PROGRAM_MODE = "TEST"
 # DARK_MODE = True
@@ -49,8 +50,9 @@ def version_generator(inp=None):
 def run_live():
     error = True
     while error:
+        app = None
         try:
-            App(
+            app = App(
                 SETTINGS_FILE=SETTINGS_FILE,
                 PROGRAM_MODE=PROGRAM_MODE,
                 TITLE=f"Stargate Production Scheduler {version}",
@@ -59,7 +61,8 @@ def run_live():
                 restart_handle=restart_program,
                 dark_mode=DARK_MODE,
                 colour_background_frame_top_bar=Colour(STARGATE_BLUE).hex_code
-            ).mainloop()
+            )
+            app.mainloop()
         except (
                 ValueError,
                 TypeError,
@@ -69,7 +72,12 @@ def run_live():
                 KeyError
         ) as err:
             error = True
-            print(f"\n{err=}, {traceback.print_exc()=}")
+            m = ""
+            if isinstance(app, App):
+                m = "\nApp did not complete setup\n"
+                messagebox.showerror(f"STG Prod Sched", m)
+                error = app.setup_complete.get()
+            print(f"\n{err=}, {m}{traceback.print_exc()=}")
         else:
             error = False
 
