@@ -31,6 +31,13 @@ FROM
 ;
 
 SELECT
+	'ITI Locations' AS [Table],
+	*
+FROM
+	[ITI Locations]
+;
+
+SELECT
 	'v_ITI_DistinctBrandNames' AS [Table],
 	*
 FROM
