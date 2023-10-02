@@ -1,23 +1,65 @@
+import json
+
+from json_utility import jsonify
 from pyodbc_connection import *
 from utility import *
 import streamlit as st
 
 
+settings_file = r"./settings.json"
+
+
 def save_edit_form():
+    print(f"save")
     # global dat_form_edit
     dat_form_edit["HardwareType"] = inp_hw_type
     dat_form_edit["BrandName"] = inp_b_name
     dat_form_edit["ModelName"] = inp_m_name
     dat_form_edit["Supplier"] = inp_supplier
 
+    data = {
+        "HardwareType": inp_hw_type,
+        "BrandName": inp_b_name,
+        "ModelName": inp_m_name,
+        "Supplier": inp_supplier
+    }
+
+    with open(settings_file, "w") as f:
+        f.write(jsonify(data))
+
 
 def load_edit_form():
     # global dat_form_edit
-    inp_hw_type.selected_value = dat_form_edit.get("HardwareType", "")
-    inp_b_name.selected_value = dat_form_edit.get("BrandName", "")
-    inp_m_name.selected_value = dat_form_edit.get("ModelName", "")
-    inp_supplier.selected_value = dat_form_edit.get("Supplier", "")
+    # inp_hw_type.selected_value = dat_form_edit.get("HardwareType", "")
+    # inp_b_name.selected_value = dat_form_edit.get("BrandName", "")
+    # inp_m_name.selected_value = dat_form_edit.get("ModelName", "")
+    # inp_supplier.selected_value = dat_form_edit.get("Supplier", "")
 
+    # inp_hw_type.selected_value = st.session_state["HardwareType"]
+    # inp_b_name.selected_value = st.session_state["BrandName"]
+    # inp_m_name.selected_value = st.session_state["ModelName"]
+    # inp_supplier.selected_value = st.session_state["Supplier"]
+
+    with open(settings_file, "r") as f:
+        data = json.loads(f.read())
+
+    # inp_hw_type = st.session_state["HardwareType"]
+    # inp_b_name = st.session_state["BrandName"]
+    # inp_m_name = st.session_state["ModelName"]
+    # inp_supplier = st.session_state["Supplier"]
+
+    print(F"{data=}")
+
+    inp_hw_type = data.get("HardwareType", "")
+    inp_b_name = data.get("BrandName", "")
+    inp_m_name = data.get("ModelName", "")
+    inp_supplier = data.get("Supplier", "")
+
+
+# st.session_state["HardwareType"] = ""
+# st.session_state["BrandName"] = ""
+# st.session_state["ModelName"] = ""
+# st.session_state["Supplier"] = ""
 
 dat_form_edit = dict()
 
