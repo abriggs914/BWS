@@ -18,20 +18,24 @@ if __name__ == '__main__':
 
     st.title(title)
 
-    # df = connect("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
-    conn = st.experimental_connection(
-        "BWSdb",
-        type="sql",
-        # url="server3://user5:M@gic456@localhost:3306/BWSdb"
-        # url="server3://user5:M@gic456@localhost/BWSdb"
-        # url="mssql://user5:M@gic456@localhost/BWSdb"
-        # url="mssql://user5:M@gic456@localhost/Server3/BWSdb"
-        # url="mssql://user5:M@gic456@localhost/Server3"
-        # url="mssql://user5:M@gic456@localhost:1433/Server3"
-        # url="mssql+pyodbc://user5:M@gic456@localhost:1433/Server3"
-        url="mssql+pyodbc://user5:M@gic456@localhost:1433/BWSdb"
-    )
-    df = conn.query("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
+    df = connect("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
+    # conn = st.experimental_connection(
+    #     "BWSdb",
+    #     type="sql",
+    #     # url="server3://user5:M@gic456@localhost:3306/BWSdb"
+    #     # url="server3://user5:M@gic456@localhost/BWSdb"
+    #     # url="mssql://user5:M@gic456@localhost/BWSdb"
+    #     # url="mssql://user5:M@gic456@localhost/Server3/BWSdb"
+    #     # url="mssql://user5:M@gic456@localhost/Server3"
+    #     # url="mssql://user5:M@gic456@localhost:1433/Server3"
+    #     # url="mssql+pyodbc://user5:M@gic456@localhost:1433/Server3"
+    #     # url="mssql+pyodbc://user5:M@gic456@localhost:1433/BWSdb"
+    #     # url="mssql://user5:M@gic456@localhost:1433/Server3/BWSdb"
+    #
+    #     # mssql://[Server_Name[:Portno]]/[Database_Instance_Name]/[Database_Name]?FailoverPartner=[Partner_Server_Name]&InboundId=[Inbound_ID]
+    #     url="mssql://Server3:1433/user5:M@gic456@localhost:1433/Server3/BWSdb"
+    # )
+    # df = conn.query("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
 
     pyg_html = pyg.walk(df, return_html=True)
 
