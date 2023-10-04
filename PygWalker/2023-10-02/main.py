@@ -18,7 +18,9 @@ if __name__ == '__main__':
 
     st.title(title)
 
-    df = connect("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
+    # df = connect("SELECT * FROM [IT Requests] LEFT JOIN [Department] ON [IT Requests].[Department] = [Department].[Dept ID]")
+    # df = connect("exec sp_BudgetCostVariance_AllCurrentProposedUnits 'December 31 2019', '1.5', '1', '1'")
+    df = connect("exec [sp_DSR_ACD_PygWalker2023_10_04]")
     # conn = st.experimental_connection(
     #     "BWSdb",
     #     type="sql",
