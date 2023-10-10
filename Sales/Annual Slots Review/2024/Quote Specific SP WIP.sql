@@ -19,7 +19,7 @@ INSERT INTO @dpm ([Month], [Days]) VALUES
 
 -- 2023-10-05 1849
 -- Every daily quote for each currently active dealer
--- Model specifics
+-- Quote specifics
 
 DECLARE @dealerID AS INT;
 DECLARE @mode AS NVARCHAR(MAX);
@@ -36,12 +36,12 @@ DECLARE @periodLen AS DECIMAL(10, 6);
 
 SELECT
 	@dateIn = '2023-09-30'
-	, @dealerID = 6
+	, @dealerID = NULL
 	, @mode = 0
 	, @dateMonth = MONTH(@dateIn)
 	, @dateYear = YEAR(@dateIn)
 	, @periodLen = (
-		CASE @mode
+		CASE ABS(@mode)
 			WHEN 1 THEN 365/4
 			WHEN 2 THEN 365/12
 			WHEN 3 THEN 365/52
@@ -163,7 +163,9 @@ FROM (
 		AND [C].[Date] <= @dateIn
 ) AS [Src]
 WHERE
-	[ID] = @dealerID
+	(CASE WHEN @dealerID IS NULL THEN 1
+		ELSE (CASE WHEN [ID] = @dealerID THEN 1 ELSE 0 END)
+	END) = 1
 ORDER BY
 	[Date]
 	, [ID]
