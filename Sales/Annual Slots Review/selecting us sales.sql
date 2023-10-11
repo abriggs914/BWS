@@ -23,9 +23,9 @@ FROM
 SELECT
 	* 
 FROM
-	[DealersV2]
+	[Dealers]
 WHERE
 	[CURRENT DEALER] = 1
-	AND [CompanyID] = 1
+	--AND [CompanyID] = 1
 ORDER BY
 	[COMPANY NAME]

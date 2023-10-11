@@ -9,17 +9,23 @@ Option Compare Database
 ' Office utility
 
 
-Public Function Printf(ByRef text As Variant, Optional ByVal doPrint As Boolean = True) As String
+' Needs to support Parameters, Fields, Collections
+Public Function Printf(ByRef Text As Variant, Optional ByVal doPrint As Boolean = True) As String
     
-    If IsArray(text) Then
-        Printf = PrintArr(text, doPrint:=False)
-    ElseIf TypeName(text) = "Dictionary" Then
-        Printf = PrintDict(text, doPrint:=False)
+    Dim tName As String
+    tName = TypeName(Text)
+    
+    If IsArray(Text) Then
+        Printf = PrintArr(Text, doPrint:=False)
+    ElseIf tName = "Dictionary" Then
+        Printf = PrintDict(Text, doPrint:=False)
+    ElseIf tName = "Recordset2" Then
+        Printf = PrintRecordset(Text, doPrint:=False)
     Else
-        If IsNull(text) Then
+        If IsNull(Text) Then
             Printf = "NULL"
         Else
-            Printf = CStr(text)
+            Printf = CStr(Text)
         End If
     End If
     
@@ -27,6 +33,23 @@ Public Function Printf(ByRef text As Variant, Optional ByVal doPrint As Boolean 
         Debug.Print Printf
     End If
 
+End Function
+
+
+Public Function PrintRecordset(ByRef rs As Variant, Optional ByVal doPrint As Boolean = True) As String
+    
+    If Not IsRecordset(rs) Then
+        Err.Raise vbObjectError, "PrintRecordset", "Error, param 'rs' must be an instance of a recordset."
+    End If
+    
+    Dim CD As String  ' Column delimeter
+    CD = "|"
+    
+    Dim res As String
+    res = "FUNCTIONALITY FOR 'PrintRecordset' NOT COMPLETED YET - Avery 2023-10-11"
+    
+    PrintRecordset = res
+    
 End Function
 
 
@@ -196,23 +219,25 @@ Public Function NullPad(word As String) As String
 End Function
 
 
-Public Function Divmod(ByVal X As Integer, ByVal Y As Integer) As Integer()
+Public Function Divmod(ByVal X As Integer, ByVal y As Integer) As Integer()
 
-    If Y = 0 Then
+    If y = 0 Then
         Err.Raise "y cannot be 0"
     End If
 
     Dim res(0 To 1) As Integer
-    res(0) = CInt(X / Y)
-    res(1) = X Mod Y
-    If res(1) >= (0.5 * Y) Then
+    res(0) = CInt(X / y)
+    res(1) = X Mod y
+    If res(1) >= (0.5 * y) Then
         res(0) = res(0) - 1
     End If
     Divmod = res
 
 End Function
 
-
+' 2023-10-11 - Avery - Modified for use with 'looser' string params.
+' Now supports ?isinstance(Range(3), "array")  -> True
+' Now supports ?isinstance(dictionary(1,2,3,4,5,6,7,8), "dictionary")  -> True
 Public Function IsInstance(ByVal var As Variant, ByVal vbType As Variant) As Boolean
 
     'Printf "ISINTANCE vt <" & VarType(var) & ">, tn <" & TypeName(var) & "> vbType:<" & Printf(vbType, False) & ">"
@@ -227,13 +252,48 @@ Public Function IsInstance(ByVal var As Variant, ByVal vbType As Variant) As Boo
         'Call printArr(wArray, "BEFORE ANY")
         IsInstance = Any_(wArray)
     Else
+    
+        ' value
+        Dim ia As Boolean
+        Dim ir As Boolean
+        Dim vName As String
+        Dim vID As String
+        ' target
+        Dim tName As String
+        Dim tID As String
+        
+        ia = IsArray(var)
+        ir = IsRecordset(var)
+        vName = TypeName(var)
+        vID = VarType(var)
+        tName = TypeName(vbType)
+        tID = VarType(vbType)
+    
         If vbType = vbArray Then
             IsInstance = IsArray(var)
-        ElseIf VarType(vbType) = vbLong Or VarType(vbType) = vbInteger Then
-            IsInstance = IIf(VarType(var) = CLng(vbType), True, False)
+        ElseIf tID = vbLong Or tID = vbInteger Then
+            IsInstance = IIf(vID = CLng(vbType), True, False)
         Else
-            IsInstance = IIf(TypeName(var) = vbType, True, False)
+            'IsInstance = IIf(TypeName(var) = vbType, True, False)
+            IsInstance = vName = vbType
+            
+            If Not IsInstance Then
+                If tID = vbString Then
+                    tName = LCase(vbType)
+                    If tName = "array" And ia Then
+                        IsInstance = True
+                    ElseIf LCase(Left(tName, 9)) = "recordset" And ir Then
+                        IsInstance = True
+                    End If
+                End If
+            End If
         End If
+        'Debug.Print ia
+        'Debug.Print ir
+        'Debug.Print vName
+        'Debug.Print vID
+        'Debug.Print tName
+        'Debug.Print tID
     End If
 
 End Function
@@ -471,5 +531,22 @@ Public Function Flatten(ByVal arr As Variant) As Variant
         Next k
         Flatten = res
     End If
+
+End Function
+
+
+Public Function HasParent(ByVal frm As Form) As Boolean
+
+    On Error GoTo NoParent
+    Dim parent As Form
+    Set parent = frm.parent
+    HasParent = True
+
+CleanExit:
+    Exit Function
+    
+NoParent:
+    HasParent = False
+    Resume CleanExit
 
 End Function

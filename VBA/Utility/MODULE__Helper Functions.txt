@@ -1031,7 +1031,7 @@ End Function
 
 
 
-Public Function WriteFile(ByVal text As String, ByVal path As String, Optional ByVal allowOverwrites As Boolean = False) As Boolean
+Public Function WriteFile(ByVal Text As String, ByVal path As String, Optional ByVal allowOverwrites As Boolean = False) As Boolean
 
     On Error GoTo FailedToWrite
     Dim fso As Object
@@ -1041,7 +1041,7 @@ Public Function WriteFile(ByVal text As String, ByVal path As String, Optional B
         'path = NextAvailableFileName(path)
     End If
     Set oFile = fso.CreateTextFile(path)
-    oFile.Writeline text
+    oFile.Writeline Text
     oFile.Close
     Set fso = Nothing
     Set oFile = Nothing

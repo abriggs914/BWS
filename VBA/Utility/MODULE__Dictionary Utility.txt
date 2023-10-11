@@ -253,18 +253,18 @@ Public Function DictEqual(ByRef valA As Variant, ByRef valB As Variant) As Boole
     If Size(valA) <> Size(valB) Then
         DictEqual = False
     Else
-        Dim a As Variant
+        Dim A As Variant
         Dim b As Variant
-        For Each a In valA
-            If Not valB.exists(a) Then
+        For Each A In valA
+            If Not valB.exists(A) Then
                 DictEqual = False
                 Exit Function
             End If
-            If valA(a) <> valB(a) Then
+            If valA(A) <> valB(A) Then
                 DictEqual = False
                 Exit Function
             End If
-        Next a
+        Next A
         DictEqual = True
     End If
     

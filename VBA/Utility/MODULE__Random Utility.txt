@@ -151,19 +151,19 @@ End Function
 ' **************************************************************************************
 ' 1         2023-06-28                  Initial Release
 '---------------------------------------------------------------------------------------
-Public Function RandomInRange(ByVal a As Long, ByVal b As Long, Optional ByVal rType As String = "dbl")
+Public Function RandomInRange(ByVal A As Long, ByVal b As Long, Optional ByVal rType As String = "dbl")
 
     Dim C As Integer
-    C = a
-    a = Min(a, b)
+    C = A
+    A = Min(A, b)
     b = Max(C, b)
 
     If LCase(rType) = "int" Or LCase(rType) = "integer" Then
-        RandomInRange = CInt((a + ((Rnd() * (b - a)))))
+        RandomInRange = CInt((A + ((Rnd() * (b - A)))))
     ElseIf LCase(rType) = "double" Or LCase(rType) = "dbl" Then
-        RandomInRange = (a + ((Rnd() * (b - a))))
+        RandomInRange = (A + ((Rnd() * (b - A))))
     ElseIf LCase(rType) = "long" Or LCase(rType) = "lng" Then
-        RandomInRange = CLng((a + ((Rnd() * (b - a)))))
+        RandomInRange = CLng((A + ((Rnd() * (b - A)))))
     Else
         Err.Number = 1
     End If

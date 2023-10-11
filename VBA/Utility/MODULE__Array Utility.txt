@@ -1640,20 +1640,20 @@ Public Function Zip(ByVal arrA As Variant, ByVal arrB As Variant) As Variant
     Dim aa As Boolean
     Dim ab As Boolean
     Dim da As Boolean
-    Dim db As Boolean
+    Dim DB As Boolean
     Dim sa As Boolean
     Dim sb As Boolean
     aa = IsArray(arrA)
     ab = IsArray(arrB)
     da = IsDict(arrA)
-    db = IsDict(arrB)
+    DB = IsDict(arrB)
     sa = IsInstance(arrA, vbString)
     sb = IsInstance(arrB, vbString)
 
     If Not aa And Not da And Not sa Then
         Err.Raise vbObjectError, "zip", "Error, param 'arrA' cannot be a non-array, non-string, or non-dictionary object."
     End If
-    If Not ab And Not db And Not sb Then
+    If Not ab And Not DB And Not sb Then
         Err.Raise vbObjectError, "zip", "Error, param 'arrB' cannot be a non-array, non-string, or non-dictionary object."
     End If
     
@@ -1663,7 +1663,7 @@ Public Function Zip(ByVal arrA As Variant, ByVal arrB As Variant) As Variant
         Zip = Array()
     ElseIf da And IsDictEmpty(arrA) Then
         Zip = Array()
-    ElseIf db And IsDictEmpty(arrB) Then
+    ElseIf DB And IsDictEmpty(arrB) Then
         Zip = Array()
     ElseIf sa And Equal(arrA, "") Then
         Zip = Array()
@@ -1677,7 +1677,7 @@ Public Function Zip(ByVal arrA As Variant, ByVal arrB As Variant) As Variant
             arrA = DictKeys(arrA)
         End If
         
-        If db Then
+        If DB Then
             arrB = Str2Array(arrB)
         ElseIf sb Then
             arrB = Str2Array(arrB)
@@ -2019,7 +2019,7 @@ TryLambda:
     Printf "aFunc: <" & Printf(aFunc, False) & ">"
     
     If UBound(Split(aFunc, ",")) <> 0 Then
-        ER.Raise vbObjectError, "Map", "Only 1 argument is supported in lambdas currently."
+        er.Raise vbObjectError, "Map", "Only 1 argument is supported in lambdas currently."
     End If
     
     For Each el In srcArray
