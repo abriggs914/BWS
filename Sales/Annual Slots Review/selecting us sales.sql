@@ -29,3 +29,9 @@ WHERE
 	--AND [CompanyID] = 1
 ORDER BY
 	[COMPANY NAME]
+
+
+SELECT
+	*
+FROM
+	[Dealers]
