@@ -35,6 +35,9 @@ ORDER BY
 	[Claim Date]
 
 
+SELECT * FROM [BWSdb].[dbo].[Dealers]
+
+
 DECLARE
 	@dateIn AS DATETIME
 	, @dateMonth AS INTEGER
