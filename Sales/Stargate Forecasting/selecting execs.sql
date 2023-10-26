@@ -9,6 +9,7 @@ exec [sp_BudgetForecastV2_RptByClassSpecificDealer V2] @fiscalyear, @dealerid, @
 
 EXEC [sp_BudgetForecastV2_RptByClassMonthlyUnits] @fiscalyear, @version, 0
 
+EXEC [sp_BudgetForecastV2_ForecastEditDataFetch] @fiscalyear, @dealerid, @version,
 
 ---- Solving sp_BudgetForecastV2_ForecastEditDataFetch
 

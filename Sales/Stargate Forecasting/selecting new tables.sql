@@ -1,4 +1,5 @@
-SELECT * FROM [Budget Forecast V2 Master]
+SELECT * FROM [Budget Forecast V2 Master] WHERE [CompanyID] = 1
+SELECT * FROM [Budget Forecast V2] WHERE [CompanyID] = 1
 SELECT * FROM [v_Class Totals Breakdown V2]
 
 SELECT * FROM [SysproCompanyA].[dbo].[v_BOMCosting]
