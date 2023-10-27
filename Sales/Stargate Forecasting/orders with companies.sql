@@ -1,0 +1,21 @@
+USE BWSdb
+GO
+
+DECLARE	@d1 AS DATETIME = '2022-01-01';
+DECLARE	@d2 AS DATETIME = '2023-12-31';
+
+SELECT
+	[COMPANY NAME],
+	*
+FROM
+	[OrdersV2] AS [O2]
+INNER JOIN
+	[DealersV2] AS [D2]
+ON
+	[O2].[dealerID] = [D2].[ID]
+WHERE
+	[COMPANY NAME] LIKE '%arkel%'
+	OR [COMPANY NAME] LIKE '%stargate%'
+AND
+	[Order Date] BETWEEN @d1 AND @d2
+;

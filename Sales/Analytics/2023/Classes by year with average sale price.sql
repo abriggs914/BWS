@@ -74,6 +74,10 @@ FROM (
 			[Products] AS [P]
 		ON
 			[O].[Model No] = [P].[Model No]
+		INNER JOIN
+			[SysproCompanyA].[dbo].[SorDetail] AS [S]
+		ON
+			[O].[Sales Order#] = [S].[SalesOrder] COLLATE DATABASE_DEFAULT
 		WHERE
 			[Order Date] IS NOT NULL
 			--[Decline/Rejected] = 4
@@ -162,6 +166,10 @@ FROM (
 			[Products] AS [P]
 		ON
 			[O].[Model No] = [P].[Model No]
+		INNER JOIN
+			[SysproCompanyA].[dbo].[SorDetail] AS [S]
+		ON
+			[O].[Sales Order#] = [S].[SalesOrder] COLLATE DATABASE_DEFAULT
 		WHERE
 			[Order Date] IS NOT NULL
 			--[Decline/Rejected] = 4
