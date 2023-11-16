@@ -9,6 +9,10 @@ if __name__ == '__main__':
     table_alias = "C"
     alias = "ITRCustomers"
 
+    table_name = "IT Personnel"
+    table_alias = "P"
+    alias = "ITPersonnel"
+
     df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{table_name}'""")
     # print(df)
 

@@ -15,14 +15,21 @@ if __name__ == '__main__':
 
     st.title(title)
 
+#     df = connect("""
+# SELECT
+# 	*
+# FROM
+# 	[v_SFC_OrdersData]
+# ;
+# """)
     df = connect("""
-SELECT
-	*
-FROM
-	[v_SFC_OrdersData]
-;
-""")
+    SELECT
+    	*
+    FROM
+    	[v_SFC_SalesPersonIndividualSalesCounts]
+    ;
+    """)
 
     # for Pygwalker visualizer
-    # pyg_html = pyg.walk(df, return_html=True)
-    # components.html(pyg_html, height=1000, scrolling=True)
+    pyg_html = pyg.walk(df, return_html=True)
+    components.html(pyg_html, height=1000, scrolling=True)
