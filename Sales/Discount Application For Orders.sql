@@ -1,3 +1,6 @@
+USE BWSdb
+GO
+
 DECLARE @tol DECIMAL(14, 4) = 0.5;
 SELECT
 	*
@@ -25,6 +28,7 @@ FROM (
 			SELECT
 				COUNT(*) AS [Count]
 			,SUM([O].[Price]) AS [TotalModelBasePrice]
+					
 					,SUM(CASE 
 						WHEN ISNULL([O].[Discount1], 0) = 0 THEN 0
 						ELSE (CASE
@@ -35,17 +39,35 @@ FROM (
 					+ SUM(CASE 
 						WHEN ISNULL([O].[Discount2], 0) = 0 THEN 0
 						ELSE (CASE
-								WHEN ISNULL([O].[Discount2_Type], '') = 'Percent' THEN (-1 * ([O].[Discount2] * [O].[Price]))
+								WHEN ISNULL([O].[Discount2_Type], '') = 'Percent' THEN (-1 * ([O].[Discount2] 
+									* ([O].[Price] - (CASE WHEN [O].[Discount1_Type] IS NULL THEN 0 ELSE 
+										(CASE 
+											WHEN [O].[Discount1_Type] = 'Percent' THEN [O].[Price] * [Discount1]
+											ELSE [Discount1] 
+										END) 
+									END))))
 								ELSE [O].[Discount2]
 							END)
 					END)
 					+ SUM(CASE 
 						WHEN ISNULL([O].[Discount3], 0) = 0 THEN 0
 						ELSE (CASE
-								WHEN ISNULL([O].[Discount3_Type], '') = 'Percent' THEN (-1 * ([O].[Discount3] * [O].[Price]))
+								WHEN ISNULL([O].[Discount3_Type], '') = 'Percent' THEN (-1 * ([O].[Discount3] 
+								* ([O].[Price] - (CASE WHEN [O].[Discount1_Type] IS NULL AND [O].[Discount2_Type] IS NULL THEN 0 ELSE 
+										(CASE 
+											WHEN [O].[Discount1_Type] = 'Percent' AND [O].[Discount2_Type] IS NULL THEN [O].[Price] * [Discount1]
+											WHEN [O].[Discount1_Type] IS NULL AND [O].[Discount2_Type]= 'Percent' THEN [O].[Price] * [Discount2]
+											WHEN [O].[Discount1_Type] = 'Percent' AND [O].[Discount2_Type]= 'Percent' THEN [O].[Price] * ((1 - [Discount1]) * (1 - [Discount2]))
+											WHEN [O].[Discount1_Type] = 'Fixed' AND [O].[Discount2_Type]= 'Percent' THEN (([O].[Price] + [Discount1]) * (1 - [Discount2]))
+											WHEN [O].[Discount1_Type] = 'Percent' AND [O].[Discount2_Type]= 'Fixed' THEN (([O].[Price] * (1 - [Discount1])) + [O].[Discount2])
+											WHEN [O].[Discount1_Type] = 'Fixed' AND [O].[Discount2_Type]= 'Fixed' THEN ([O].[Price] + [Discount1] + [O].[Discount2])
+											ELSE 0 
+										END) 
+									END))))
 								ELSE [O].[Discount3]
 							END)
 					END) AS [TotalDiscountsMethod1]  --(D1D2D3)
+
 					,SUM(CASE 
 						WHEN ISNULL([O].[Discount3], 0) = 0 THEN 0
 						ELSE (CASE
@@ -109,18 +131,21 @@ FROM (
 					,[Discount1]
 					,[Discount2]
 					,[Discount3]
-		
+					,[Discount1_Type]
+					,[Discount2_Type]
+					,[Discount3_Type]
 		
 					,
+						
 						(CASE WHEN ISNULL([O].[Discount1_Type], '') = 'Fixed' THEN [Discount1] ELSE 0 END)
 						+ (CASE WHEN ISNULL([O].[Discount2_Type], '') = 'Fixed' THEN [Discount2] ELSE 0 END)
 						+ (CASE WHEN ISNULL([O].[Discount3_Type], '') = 'Fixed' THEN [Discount3] ELSE 0 END) AS [A]
-					 ,-([O].[Price] 
+					 , -([O].[Price] 
 						+ (CASE WHEN ISNULL([O].[Discount1_Type], '') = 'Fixed' THEN [Discount1] ELSE 0 END)
 						+ (CASE WHEN ISNULL([O].[Discount2_Type], '') = 'Fixed' THEN [Discount2] ELSE 0 END)
 						+ (CASE WHEN ISNULL([O].[Discount3_Type], '') = 'Fixed' THEN [Discount3] ELSE 0 END)) AS [B]
 
-						,(CASE WHEN
+						, (CASE WHEN
 							(ISNULL([Discount1_Type], '') = 'Percent' AND ISNULL([Discount1], 0) = 0)
 							AND (ISNULL([Discount2_Type], '') = 'Percent' AND ISNULL([Discount2], 0) = 0) 
 							AND (ISNULL([Discount3_Type], '') = 'Percent' AND ISNULL([Discount3], 0) = 0) THEN 0 -- No Discount
@@ -130,11 +155,23 @@ FROM (
 							* (CASE WHEN ISNULL([O].[Discount2_Type], '') = 'Percent' THEN (CASE WHEN [Discount2] = 0 THEN 1 ELSE (1 - [Discount2]) END) ELSE 1.0 END)
 							* (CASE WHEN ISNULL([O].[Discount3_Type], '') = 'Percent' THEN (CASE WHEN [Discount3] = 0 THEN 1 ELSE (1 - [Discount3]) END) ELSE 1.0 END))
 						END) AS [C]
+
+						, (-([O].[Price] 
+						+ (CASE WHEN ISNULL([O].[Discount1_Type], '') = 'Fixed' THEN [Discount1] ELSE 0 END)
+						+ (CASE WHEN ISNULL([O].[Discount2_Type], '') = 'Fixed' THEN [Discount2] ELSE 0 END)
+						+ (CASE WHEN ISNULL([O].[Discount3_Type], '') = 'Fixed' THEN [Discount3] ELSE 0 END)))
+
+						* (CASE WHEN
+							(ISNULL([Discount1_Type], '') = 'Percent' AND ISNULL([Discount1], 0) = 0)
+							AND (ISNULL([Discount2_Type], '') = 'Percent' AND ISNULL([Discount2], 0) = 0) 
+							AND (ISNULL([Discount3_Type], '') = 'Percent' AND ISNULL([Discount3], 0) = 0) THEN 0 -- No Discount
+						ELSE
+							(1 - 
+							(CASE WHEN ISNULL([O].[Discount1_Type], '') = 'Percent' THEN (CASE WHEN [Discount1] = 0 THEN 1 ELSE (1 - [Discount1]) END) ELSE 1.0 END)
+							* (CASE WHEN ISNULL([O].[Discount2_Type], '') = 'Percent' THEN (CASE WHEN [Discount2] = 0 THEN 1 ELSE (1 - [Discount2]) END) ELSE 1.0 END)
+							* (CASE WHEN ISNULL([O].[Discount3_Type], '') = 'Percent' THEN (CASE WHEN [Discount3] = 0 THEN 1 ELSE (1 - [Discount3]) END) ELSE 1.0 END))
+						END) AS [D]
 					--) AS [TotalDiscountsMethod3]  --(Fixed First)
-		 
-					,[Discount1_Type]
-					,[Discount2_Type]
-					,[Discount3_Type]
 
 				FROM
 					[v_SFC_BWSUnionSTGOrders] AS [O]
