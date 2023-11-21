@@ -20,13 +20,9 @@ if __name__ == '__main__':
 
     df = connect("""
 SELECT
-	'v_ADG Latest Accessors' AS [Table],
-	'TotalAccesses' AS [By],
 	*
 FROM
-	[BWSdb].[dbo].[v_ADG Latest Accessors]
-ORDER BY
-	[TotalAccesses] DESC
+	[BWSdb].[dbo].[v_SFC_SalesPersonCountsMasterData]
 ;
 """)
 
