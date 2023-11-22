@@ -81,11 +81,23 @@ if __name__ == '__main__':
         ("Products", "P", "Products_")
     ]
 
-    tables = [
-        ("OrdersV2", "O2", "OrdersV2_"),
-        ("DealersV2", "D2", "DealersV2_"),
-        ("ProductsV2", "P2", "ProductsV2_")
-    ]
+    # tables = [
+    #     ("OrdersV2", "O2", "OrdersV2_"),
+    #     ("DealersV2", "D2", "DealersV2_"),
+    #     ("ProductsV2", "P2", "ProductsV2_")
+    # ]
+    #
+    # tables = [
+    #     ("Sales Staff", "SS", "SalesStaff_")
+    # ]
+    #
+    # tables = [
+    #     ("SorMaster", "SO", "SorMaster_")
+    # ]
+    #
+    # tables = [
+    #     ("v_SFC_BWSUnionSTGOrders", "O", "")
+    # ]
 
     for tn, ta, a in tables:
         l_table_names.append(tn)
@@ -97,6 +109,7 @@ if __name__ == '__main__':
 
     for tn, ta, a in zip(l_table_names, l_table_alias, l_alias):
 
+        # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="SysproCompanyA", uid="SRS", pwd="")
         df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""")
         # print(df)
 

@@ -195,17 +195,22 @@ if __name__ == '__main__':
 
 
 # ADG User events
-    df = connect("""
-SELECT
-	'v_ADG Latest Accessors' AS [Table],
-	'TotalAccesses' AS [By],
-	*
-FROM
-	[BWSdb].[dbo].[v_ADG Latest Accessors]
-ORDER BY
-	[TotalAccesses] DESC
-;
-""")
+#     df = connect("""
+# SELECT
+# 	'v_ADG Latest Accessors' AS [Table],
+# 	'TotalAccesses' AS [By],
+# 	*
+# FROM
+# 	[BWSdb].[dbo].[v_ADG Latest Accessors]
+# ORDER BY
+# 	[TotalAccesses] DESC
+# ;
+# """)
+
+    df = connect("""EXEC
+	[sp_SFC_IndividualSalesData] 
+	@salesPersonID=0,
+	@allCompanies = 1""")
 
 
     # conn = st.experimental_connection(
