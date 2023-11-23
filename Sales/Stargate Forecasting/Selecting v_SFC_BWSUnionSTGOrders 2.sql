@@ -25,7 +25,7 @@ ORDER BY
 
 --SELECT * FROM [Sales Staff]
 
---EXEC
---	[sp_SFC_IndividualSalesData]
---	@salesPersonID=0,
---	@allCompanies = 1
+EXEC
+	[sp_SFC_IndividualSalesData]
+	@salesPersonID = 0,
+	@allCompanies = 1

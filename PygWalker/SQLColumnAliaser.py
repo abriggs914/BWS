@@ -99,6 +99,13 @@ if __name__ == '__main__':
     #     ("v_SFC_BWSUnionSTGOrders", "O", "")
     # ]
 
+    tables = [
+        ("Order Options", "OO", "OrderOptions"),
+        ("Custom Work", "CW", "CustomWork_"),
+        ("Order OptionsV2", "OO2", "OrderOptionsV2"),
+        ("Custom WorkV2", "CW2", "CustomWorkV2_")
+    ]
+
     for tn, ta, a in tables:
         l_table_names.append(tn)
         l_table_alias.append(ta)

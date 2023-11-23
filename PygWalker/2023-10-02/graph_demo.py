@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import plotly.figure_factory as ff
 
+from pyodbc_connection import connect
 
 if __name__ == '__main__':
 
@@ -15,7 +16,7 @@ if __name__ == '__main__':
     #
     # group_labels = ['Group 1', 'Group 2', 'Group 3']
 
-
+    df = connect("")
 
     # Create distplot with custom bin_size
     fig = ff.create_distplot(
