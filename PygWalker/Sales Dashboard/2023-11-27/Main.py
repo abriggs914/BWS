@@ -365,7 +365,7 @@ def click_showing_quotes_vs_orders_legend():
 
 if __name__ == '__main__':
 
-    title = "Dealer Review Dashboard"
+    title = "Dealer Review Dashboard V1 20231127"
 
     st.set_page_config(
         page_title=title,
