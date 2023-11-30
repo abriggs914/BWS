@@ -108,7 +108,9 @@ if __name__ == '__main__':
         #("Custom Work", "CW", "CustomWork_"),
         #("Order OptionsV2", "OO2", "OrderOptionsV2"),
         #("Custom WorkV2", "CW2", "CustomWorkV2_"),
-		("WipMaster", "W", "WipMaster_")
+		#("WipMaster", "W", "WipMaster_")
+		#("WipMaster", "W", "WipMaster_")
+		("dtProductionSchedule", "dt2", "dtProdSched_")
     ]
 
     for tn, ta, a in tables:
@@ -121,7 +123,8 @@ if __name__ == '__main__':
 
     for tn, ta, a in zip(l_table_names, l_table_alias, l_alias):
 
-        df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="SysproCompanyA", uid="SRS", pwd="")
+        # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="SysproCompanyA", uid="SRS", pwd="")
+        df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
         # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""")
         # print(df)
 
