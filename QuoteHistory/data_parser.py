@@ -230,6 +230,11 @@ def work_weeks(first_day, public_holdays, personal_holidays, sick_days):
 		res.update({"Next Holiday": when_holiday_next + ", " + str(next_holiday)})
 	if when_holiday_last:
 		res.update({"Last Holiday": when_holiday_last + ", " + str(last_holiday)})
+	#if avg_holiday < :
+	res.update({
+		"1 Day Off Every N Days": ((day + 1.0) / (day + 1 - days_worked)),
+		"1 Holiday Every N Days": ((day + 1.0) / (holidays_past_pu + holidays_past_pr))
+	})
 	res.update({"  ": empty})
 	for month in months:
 		if months[month]:
