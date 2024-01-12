@@ -9,8 +9,11 @@ import datetime_utility
 import dataframe_utility
 from pyodbc_connection import connect
 from colour_utility import *
-from PIL import Image, ImageTk
 
+
+# Main grid program for STG Production scheduling tool.
+# changed the active listeners to a motion binding a reverse lookups. - seems quicker
+# Needs click and drag event handlers.
 
 SQL_USED_LINES = {
     "sql": """
@@ -234,9 +237,7 @@ class App(tkinter.Tk):
         self.data = {
             "state": {
                 "hovered": [],
-                "selected": [],
-                "dragged": [],
-                "cursor_drag_pos": [None, None]
+                "selected": []
             }
         }
         
@@ -251,12 +252,10 @@ class App(tkinter.Tk):
             "colour_tile_header_row_foreground": Colour("#e4e4ff"),
             "colour_tile_header_col_background": Colour("#321116"),
             "colour_tile_header_col_foreground": Colour("#e4e4ff"),
-
             "colour_tile_background": Colour("#ecdddd"),
             "colour_tile_foreground": Colour("#090909"),
             "font_tile": "Arial 10",
-            "colour_tile_outline": Colour("#111111"),
-            "width_tile_outline": 1
+            "colour_tile_outline": Colour("#111111")
         })
         self.data.update({
             # "colour_calendar_background": Colour("#000000"),
@@ -268,14 +267,7 @@ class App(tkinter.Tk):
             "colour_tile_background_hover": self.data["colour_tile_background"].brightened(0.25),
             "colour_tile_foreground_hover": self.data["colour_tile_foreground"].brightened(0.25),
             "font_tile_hover": "Arial 12 bold",
-            "colour_tile_outline_hover": self.data["colour_tile_outline"].brightened(0.25),
-            "width_tile_outline_hover": 2,
-
-            "colour_tile_background_selected": Colour("#DC4245"),
-            "colour_tile_foreground_selected": Colour("#090909"),
-            "font_tile_selected": "Arial 12 bold",
-            "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 2
+            "colour_tile_outline_hover": self.data["colour_tile_outline"].brightened(0.25)
         })
 
         self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
@@ -353,6 +345,80 @@ class App(tkinter.Tk):
 
         # print(f"{now=}\n{self.list_dates=}")
 
+        # top left 'home' cell
+        self.tiles["home"]["tile"] = self.canvas.create_rectangle(
+            *self.calc_grid_cells[0][0],
+            fill=self.data["colour_tile_header_home_background"].hex_code
+        )
+
+        # header row
+        for i, row in enumerate(self.calc_grid_cells[:1]):
+            for j, col in enumerate(row[1:]):
+                # print(f"{i=}, {j=}")
+                prod_line = self.list_prod_lines[i]
+                date = self.list_dates[j]
+                tile_colour = self.data["colour_tile_header_row_background"]
+                tile_text_colour = self.data["colour_tile_header_row_foreground"]
+                font = self.data["font_tile"]
+                to_do_texts = [
+                    f"{date:%A}",  # Day of Week
+                    f"{date:%B}",  # Month
+                    f"{date:%d}".removeprefix("0") + f"{utility.number_suffix(date.day)}",  # Numerical month date
+                    f"{date:%Y}"  # Year
+                ]
+                self.tiles[date][prod_line].update({
+                    "tile": self.canvas.create_rectangle(
+                        *col,
+                        fill=tile_colour.hex_code
+                    ),
+                    "texts": [
+                        self.canvas.create_text(
+                            int(col[0] + (self.data["tile_width"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            text=txt,
+                            fill=tile_text_colour.hex_code,
+                            font=font
+                        )
+                        for k, txt, in enumerate(to_do_texts)
+                    ]
+                })
+
+        print(f"--A {self.tiles[pd.Timestamp(2023,12,27)]['ED1']=}")
+        print(f"--A {self.tiles[pd.Timestamp(2023,12,28)]['ED1']=}")
+
+        # header columns
+        for i, row in enumerate(self.calc_grid_cells[1:]):
+            for j, col in enumerate(row[:1]):
+                # i, j = i + 1, j + 1  # enumeration from second element will offset the data
+                # print(f"{i=}, {j=}")
+                prod_line = self.list_prod_lines[i]
+                date = self.list_dates[j]
+                tile_colour = self.data["colour_tile_header_col_background"]
+                tile_text_colour = self.data["colour_tile_header_col_foreground"]
+                font = self.data["font_tile"]
+                to_do_texts = [
+                    prod_line
+                ]
+                self.tiles[date][prod_line].update({
+                    "tile": self.canvas.create_rectangle(
+                        *col,
+                        fill=tile_colour.hex_code
+                    ),
+                    "texts": [
+                        self.canvas.create_text(
+                            int(col[0] + (self.data["tile_width"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            text=txt,
+                            fill=tile_text_colour.hex_code,
+                            font=font
+                        )
+                        for k, txt, in enumerate(to_do_texts)
+                    ]
+                })
+
+        print(f"--B {self.tiles[pd.Timestamp(2023,12,27)]['ED1']=}")
+        print(f"--B {self.tiles[pd.Timestamp(2023,12,28)]['ED1']=}")
+
         # rest of the tiles
         for i, row in enumerate(self.calc_grid_cells[1:]):
             for j, col in enumerate(row[1:]):
@@ -360,18 +426,43 @@ class App(tkinter.Tk):
                 date = self.list_dates[j]
                 tile_colour = self.data["colour_tile_background"]
                 tile_outline = self.data["colour_tile_outline"]
-                tile_outline_width = self.data["width_tile_outline"]
+                tile_active_colour = self.data["colour_tile_background_hover"]
+                tile_active_outline = self.data["colour_tile_outline_hover"]
                 font = self.data["font_tile"]
                 tile = self.canvas.create_rectangle(
                     *col,
                     fill=tile_colour.hex_code,
-                    outline=tile_outline.hex_code,
-                    width=tile_outline_width
+                    outline=tile_outline.hex_code
+                    # ,
+                    # activefill=tile_active_colour.hex_code,
+                    # activeoutline=tile_active_outline.hex_code
                 )
+                # tile_text_colour = self.data["colour_tile_foreground"]
+                # to_do_texts = [
+                #     f"{i}x{j}"
+                # ]
                 self.tiles[date][prod_line].update({
                     "tile": tile,
                     "texts": []
+                    # "texts": [
+                    #     self.canvas.create_text(
+                    #         int(col[0] + (self.data["tile_width"] * 0.5)),
+                    #         int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                    #         text=txt,
+                    #         fill="#115712"
+                    #     )
+                    #     for k, txt, in enumerate(to_do_texts)
+                    # ]
                 })
+                self.canvas.tag_bind(tile, "<Motion>", self.on_motion_calendar)
+                # self.canvas.tag_bind(tile, "<Motion>", self.on_motion)
+
+        print(f"--C {self.tiles[pd.Timestamp(2023,12,27)]['ED1']=}")
+        print(f"--C {self.tiles[pd.Timestamp(2023,12,28)]['ED1']=}")
+
+
+        # self.df_orders["Available Date"] = pd.to_datetime(self.df_orders["Available Date"], infer_datetime_format=True)
+        # self.df_orders["Available Date"] = pd.to_datetime(self.df_orders["Available Date"]).dt.to_pydatetime()
 
         # loop orders and populate the calendar
         for i, row in self.df_orders.iterrows():
@@ -424,114 +515,8 @@ class App(tkinter.Tk):
                 # add this order to the combobox for placing
                 pass
 
-        # header row
-        for i, row in enumerate(self.calc_grid_cells[:1]):
-            for j, col in enumerate(row[1:]):
-                # print(f"{i=}, {j=}")
-                # prod_line = self.list_prod_lines[i]
-                key = "date_legend"
-                date = self.list_dates[j]
-                tile_colour = self.data["colour_tile_header_row_background"]
-                tile_text_colour = self.data["colour_tile_header_row_foreground"]
-                font = self.data["font_tile"]
-                tile_outline = self.data["colour_tile_outline"]
-                tile_outline_width = self.data["width_tile_outline"]
-                to_do_texts = [
-                    f"{date:%A}",  # Day of Week
-                    f"{date:%B}",  # Month
-                    f"{date:%d}".removeprefix("0") + f"{utility.number_suffix(date.day)}",
-                    # Numerical month date
-                    f"{date:%Y}"  # Year
-                ]
-                if key not in self.tiles[date]:
-                    self.tiles[date][key] = dict()
-                self.tiles[date][key].update({
-                    "tile": self.canvas.create_rectangle(
-                        *col,
-                        fill=tile_colour.hex_code,
-                        outline=tile_outline.hex_code,
-                        width=tile_outline_width
-                    ),
-                    "texts": [
-                        self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
-                            text=txt,
-                            fill=tile_text_colour.hex_code,
-                            font=font
-                        )
-                        for k, txt, in enumerate(to_do_texts)
-                    ]
-                })
-
-        # header columns
-        for i, row in enumerate(self.calc_grid_cells[1:]):
-            for j, col in enumerate(row[:1]):
-                # i, j = i + 1, j + 1  # enumeration from second element will offset the data
-                # print(f"{i=}, {j=}")
-                prod_line = self.list_prod_lines[i]
-                # date = self.list_dates[j]
-                key = "line_legend"
-                tile_colour = self.data["colour_tile_header_col_background"]
-                tile_text_colour = self.data["colour_tile_header_col_foreground"]
-                font = self.data["font_tile"]
-                tile_outline = self.data["colour_tile_outline"]
-                tile_outline_width = self.data["width_tile_outline"]
-                to_do_texts = [
-                    prod_line
-                ]
-                if key not in self.tiles:
-                    print(f"ADDING KEY {key=}")
-                    self.tiles[key] = dict()
-                if prod_line not in self.tiles:
-                    print(f"ADDING SUB KEY {prod_line=}")
-                    self.tiles[key][prod_line] = dict()
-                self.tiles[key][prod_line].update({
-                    "tile": self.canvas.create_rectangle(
-                        *col,
-                        fill=tile_colour.hex_code,
-                        outline=tile_outline.hex_code,
-                        width=tile_outline_width
-                    ),
-                    "texts": [
-                        self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
-                            text=txt,
-                            fill=tile_text_colour.hex_code,
-                            font=font
-                        )
-                        for k, txt, in enumerate(to_do_texts)
-                    ]
-                })
-
-        # top left 'home' cell
-        try:
-            self.data["stg_logo_image"] = Image.open(r"C:\Access\Stargate Logo 50%.jpg")
-            self.data["stg_logo_image"] = ImageTk.PhotoImage(
-                self.data["stg_logo_image"].resize(
-                    (
-                        int(self.data["tile_width"]),
-                        int(self.data["tile_height"])
-                    ),
-                    Image.ANTIALIAS
-                )
-            )
-        except FileExistsError:
-            self.data["stg_logo_image"] = None
-
-        if self.data["stg_logo_image"]:
-            self.tiles["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.data["tile_width"] / 2),
-                self.calc_grid_cells[0][0][1] + (self.data["tile_height"] / 2),
-                anchor=tkinter.CENTER,
-                image=self.data["stg_logo_image"]
-            )
-        else:
-            self.tiles["home"]["tile"] = self.canvas.create_rectangle(
-                *self.calc_grid_cells[0][0],
-                fill=self.data["colour_tile_header_home_background"].hex_code
-            )
+        print(f"--D {self.tiles[pd.Timestamp(2023,12,27)]['ED1']=}")
+        print(f"--D {self.tiles[pd.Timestamp(2023,12,28)]['ED1']=}")
 
         self.title("Stargate Production Scheduler")
         self.geometry(self.data["geometry"]["str"])
@@ -540,75 +525,29 @@ class App(tkinter.Tk):
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
-        self.canvas.bind("<Motion>", self.on_motion_calendar)
-        self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
-        self.canvas.bind("<ButtonRelease-1>", self.on_left_click_calendar)
 
         print(f"{self.data=}")
-        print(f"{self.tiles=}")
 
-    def grid_keys(self) -> tuple[str, str, str, str, str, str, str, str, str]:
+    def grid_keys(self):
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
 
-    def grid_widgets(self) -> None:
+    def grid_widgets(self):
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         self.frame_calendar.grid()
         self.canvas.grid()
         self.scroll_bar_x.grid(**{s: "ew"})
 
-    def scroll_x_calendar(self, *args) -> None:
+    def scroll_x_calendar(self, *args):
         # change the canvas xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
         self.canvas.xview(*args)
-        self.redraw_legend()
 
-    def on_mousewheel_calendar(self, event) -> None:
+    def on_mousewheel_calendar(self, event):
         # move the canvas xview when mousewheel scrolled
         self.canvas.xview_scroll(int(-1*(event.delta/120)), "units")
-        self.redraw_legend()
 
-    def get_current_canvas_view(self) -> tuple[float, float, float, float]:
-        x_1, x_2 = self.canvas.xview()
-        y_1, y_2 = self.canvas.yview()
-        srw = self.data["canvas_width_scroll_region"]
-        srh = self.data["canvas_height_scroll_region"]
-        x_1 *= srw
-        x_2 *= srw
-        y_1 *= srh
-        y_2 *= srh
-        return x_1, y_1, x_2, y_2
-
-    def redraw_legend(self):
-        tw, th = self.data["tile_width"], self.data["tile_height"]
-        x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
-        # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
-        col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
-        # print(f"{col_legend=}")
-        # tiles = [dat["tile"] for dat in col_legend]
-        home_tile = self.tiles["home"]["tile"]
-        self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
-        for dat in col_legend:
-            tile = dat["tile"]
-            bw = float(self.canvas.itemcget(tile, "width"))
-            bbox = self.canvas.bbox(tile)
-            y_t = bbox[1] + bw
-            # print(f"{bbox=}, {x_1=}, {y_1=}, {x_2=}, {y_2=}, {x_1=}, {y_t=}, {x_1 + tw=}, {y_t + th=}")
-            # self.canvas.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
-            self.canvas.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
-
-            for txt in dat.get("texts", []):
-                # print(f"{self.canvas.itemcget(txt, 'text')=}")
-                self.canvas.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
-
-        # print(f"{self.canvas.winfo_viewable()=}")
-        # print(f"{self.canvas.xview()=}")
-
-    def get_date_bucket(self, x: int | float) -> pd.Timestamp | None:
-        """
-        Return the CLOSEST date to a given x position on the calendar
-        Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
-        """
+    def get_date_bucket(self, x):
+        """Return the CLOSEST date to a given x position on the calendar"""
         srw = self.data["canvas_width_scroll_region"]
         dates = self.list_dates
         p = min(x / srw, 0.999)  # prevent index out of bounds
@@ -616,133 +555,37 @@ class App(tkinter.Tk):
         # i = int(p * (len(dates) + 1))
         # include the legend in space calculations, but exclude for indexing
         i = int(p * (len(dates) + 1)) - 1
-        # print(f"DB {x=}, {srw=}, {p=}, {len(dates)=}, {i=}")
-        # return dates[i] if i > 0 else dates[0]
-        return dates[i] if i >= 0 else None
+        return dates[i] if i > 0 else dates[0]
 
-    def get_prod_line_bucket(self, y: int | float) -> str | None:
-        """
-        Return the CLOSEST prod line to a given y position on the calendar
-        Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
-        """
+    def get_prod_line_bucket(self, y):
+        """Return the CLOSEST date to a given x position on the calendar"""
         srh = self.data["canvas_height_scroll_region"]
         lines = self.list_prod_lines
         p = min(y / srh, 0.999)  # prevent index out of bounds
         # include the legend in space calculations, but exclude for indexing
         i = int(p * (len(lines) + 1)) - 1
         # print(f"PLB {y=}, {srh=}, {p=}, {len(lines)=}, {i=}")
-        # return lines[i] if i > 0 else lines[0]
-        return lines[i] if i >= 0 else None
+        return lines[i] if i > 0 else lines[0]
 
-    def get_tile_at_x_y(self, x: int | float, y: int | float) -> dict:
-        """
-        Get the tile data for a given x and y on the canvas.
-        Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
-        """
-        # tile = self.canvas.find_closest(x, y)
-        date = self.get_date_bucket(x)
-        line = self.get_prod_line_bucket(y)
-        return self.tiles.get(date, {}).get(line, {})
-
-    def select_tile(self, date: pd.Timestamp, prod_line: str) -> None:
-        self.data["state"]["selected"].append((date, prod_line))
-
-    def on_left_click_calendar(self, event) -> None:
+    def on_motion_calendar(self, event):
         x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
-        date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
-        tile_data = self.get_tile_at_x_y(o_x, o_y)
-        shift_held = event.state & 0x1
-        control_held = event.state & 0x4
-        selected = []
-
-        if date is None:
-            # clicked the prod line select the whole line
-            # TODO
-            pass
-        elif line is None:
-            # clicked the date select the entire column
-            selected = [(date, line_) for line_ in self.list_prod_lines]
-        elif date is None and line is None:
-            return
-        else:
-            selected = [(date, line)]
-
-        if selected:
-            if not shift_held:
-                print(f"CLEARING SELECTED")
-                self.clear_selected_tiles()
-
-            for sel in selected:
-                self.select_tile(*sel)
-                # self.data["state"]["selected"].append(sel)
-            self.update_selected_tiles()
-            print(f"END SELECTED = {self.data['state']['selected']=}")
-
-    def on_left_click_motion_calendar(self, event) -> None:
-        ht = self.data["state"]["hovered"]
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
-        x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
-        x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
-        print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
-        if not st:
-            # nothing selected, select the hovered and continue
-            for date, line in ht:
-                self.select_tile(date, line)
-
-            st = self.data["state"]["selected"]
-
-        p_x, p_y = self.data["state"]["cursor_drag_pos"]
-        if p_x is None:
-            p_x = x
-        if p_y is None:
-            p_y = y
-        d_x, d_y = o_x - p_x, o_y - p_y
-        for date, line in (dt + st):
-            td = self.tiles[date][line]
-            tile = td["tile"]
-            bw = float(self.canvas.itemcget(tile, "width"))
-            bbox = self.canvas.bbox(tile)
-            print(f"\n{self.canvas.type(tile)=}")
-            print(f"{tile=}, {bbox=}")
-            t_x, t_y = bbox[0] + bw, bbox[1] + bw
-            print(f"{date=}, {line=}, {d_x=}, {d_y=}, {t_x=}, {t_y=}")
-            self.canvas.move(tile, t_x + d_x, t_y + d_y)
-            self.canvas.tag_raise(tile)
-
-        self.data["state"]["cursor_drag_pos"] = (o_x, o_y)
-
-    def on_motion_calendar(self, event) -> None:
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
-        x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
-        # tile = self.canvas.find_closest(ox, oy)
-        date = self.get_date_bucket(o_x)
-        line = self.get_prod_line_bucket(o_y)
-        if date is None or line is None:
-            return
+        ox, oy = self.canvas.canvasx(x), self.canvas.canvasy(y)
+        tile = self.canvas.find_closest(ox, oy)
+        date = self.get_date_bucket(ox)
+        line = self.get_prod_line_bucket(oy)
         # self.canvas.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
         # self.data["state"]["hovered"].clear()
+        self.clear_hover_tiles()
+        self.data["state"]["hovered"].append((date, line))
+        self.update_hover_tiles()
 
-        # don't overwrite the selected and dragging tiles with new hovers
-        if (date, line) not in (st + dt):
-            self.clear_hover_tiles()
-            self.data["state"]["hovered"].append((date, line))
-            self.update_hover_tiles()
-
-    def update_hover_tiles(self) -> None:
+    def update_hover_tiles(self):
         ht = self.data["state"]["hovered"]
         ab = self.data["colour_tile_background_hover"]
         af = self.data["colour_tile_foreground_hover"]
         ao = self.data["colour_tile_outline_hover"]
         font = self.data["font_tile_hover"]
-        ow = self.data["width_tile_outline_hover"]
         for date, prod_line in ht:
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
@@ -750,8 +593,7 @@ class App(tkinter.Tk):
                 self.canvas.itemconfigure(
                     tile,
                     fill=ab.hex_code,
-                    outline=ao.hex_code,
-                    width=ow
+                    outline=ao.hex_code
                 )
             for text in texts:
                 self.canvas.itemconfigure(
@@ -760,29 +602,20 @@ class App(tkinter.Tk):
                     font=font
                 )
 
-    def clear_hover_tiles(self) -> None:
+    def clear_hover_tiles(self):
         ht = self.data["state"]["hovered"]
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
         b = self.data["colour_tile_background"]
         f = self.data["colour_tile_foreground"]
         o = self.data["colour_tile_outline"]
         font = self.data["font_tile"]
-        ow = self.data["width_tile_outline"]
-        # print(f"{(st + dt)=}")
-
-        # ensure that the selected and dragging tiles are not blanked
-        sub_ht = [key for key in ht if key not in (st + dt)]
-
-        for date, prod_line in sub_ht:
+        for date, prod_line in ht:
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile:
                 self.canvas.itemconfigure(
                     tile,
                     fill=b.hex_code,
-                    outline=o.hex_code,
-                    width=ow
+                    outline=o.hex_code
                 )
             for text in texts:
                 # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
@@ -793,56 +626,7 @@ class App(tkinter.Tk):
                 )
         self.data["state"]["hovered"].clear()
 
-    def update_selected_tiles(self) -> None:
-        st = self.data["state"]["selected"]
-        ab = self.data["colour_tile_background_selected"]
-        af = self.data["colour_tile_foreground_selected"]
-        ao = self.data["colour_tile_outline_selected"]
-        font = self.data["font_tile_selected"]
-        ow = self.data["width_tile_outline_selected"]
-        print(f"{st=}")
-        for date, prod_line in st:
-            tile = self.tiles[date][prod_line].get("tile", None)
-            texts = self.tiles[date][prod_line].get("texts", [])
-            if tile:
-                self.canvas.itemconfigure(
-                    tile,
-                    fill=ab.hex_code,
-                    outline=ao.hex_code,
-                    width=ow
-                )
-            for text in texts:
-                self.canvas.itemconfigure(
-                    text,
-                    fill=af.hex_code,
-                    font=font
-                )
 
-    def clear_selected_tiles(self) -> None:
-        st = self.data["state"]["selected"]
-        b = self.data["colour_tile_background"]
-        f = self.data["colour_tile_foreground"]
-        o = self.data["colour_tile_outline"]
-        font = self.data["font_tile"]
-        ow = self.data["width_tile_outline"]
-        for date, prod_line in st:
-            tile = self.tiles[date][prod_line].get("tile", None)
-            texts = self.tiles[date][prod_line].get("texts", [])
-            if tile:
-                self.canvas.itemconfigure(
-                    tile,
-                    fill=b.hex_code,
-                    outline=o.hex_code,
-                    width=ow
-                )
-            for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
-                self.canvas.itemconfigure(
-                    text,
-                    fill=f.hex_code,
-                    font=font
-                )
-        self.data["state"]["selected"].clear()
 
 
 if __name__ == '__main__':
