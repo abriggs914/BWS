@@ -12,6 +12,10 @@ from colour_utility import *
 from PIL import Image, ImageTk
 
 
+# Main grid program for STG Production scheduling tool.
+# click and drag listeners implemented, undo history, disable multiselect
+
+
 SQL_USED_LINES = {
     "sql": """
 SELECT
@@ -282,8 +286,7 @@ class App(tkinter.Tk):
             "width_tile_outline_selected": 2
         })
 
-        # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
-        self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.99, 0.99, largest=1, rtype=dict)
+        self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
         self.data.update({
             "total_width": self.data["geometry"]["width"],
             "total_height": self.data["geometry"]["height"]
@@ -328,48 +331,9 @@ class App(tkinter.Tk):
             r_type=list
         )
 
-        self.frame_calendar = tkinter.Frame(
-            self,
-            width=self.data["geometry"]["width"] + 100,
-            height=self.data["geometry"]["height"] + 100,
-            background="#AB2194"
-        )
-        self.root_canvas = tkinter.Canvas(
-            self.frame_calendar,
-            width=self.data["geometry"]["width"] + 100,
-            height=self.data["geometry"]["height"] + 100,
-            background="#1216CC",
-            scrollregion=(
-                0,
-                0,
-                self.data["geometry"]["width"] + 100,
-                self.data["geometry"]["height"] + 100
-            )
-        )
-        print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
-        print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
-        print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
-        self.frame_canvas = tkinter.Frame(
-            self.root_canvas,
-            width=self.data["canvas_width"],
-            height=self.data["canvas_height"],
-            background="#44318B"
-        )
-        self.canvas_window = self.root_canvas.create_window(
-            # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
-            (30, 30),
-            width=int(self.data["geometry"]["width"]),
-            height=int(self.data["geometry"]["height"]),
-            window=self.frame_canvas
-            #int(self.data["geometry"]["height"] - self.data["canvas_height"])
-            # ,
-            # self.data["geometry"]["width"],
-            # self.data["geometry"]["height"]
-            # ,
-            # window=self.canvas
-        )
+        self.frame_calendar = tkinter.Frame(self)
         self.canvas = tkinter.Canvas(
-            self.frame_canvas,
+            self.frame_calendar,
             width=self.data["canvas_width"],
             height=self.data["canvas_height"],
             background=canvas_background.hex_code,
@@ -381,7 +345,7 @@ class App(tkinter.Tk):
             )
         )
         self.scroll_bar_x = tkinter.Scrollbar(
-            self.frame_canvas,
+            self.frame_calendar,
             orient="horizontal",
             command=self.scroll_x_calendar
         )
@@ -604,9 +568,7 @@ class App(tkinter.Tk):
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         self.frame_calendar.grid()
-        self.frame_canvas.grid(**{s: "nsew"})
-        self.root_canvas.grid(**{s: "nsew"})
-        # self.canvas.grid()
+        self.canvas.grid()
         self.scroll_bar_x.grid(**{s: "ew"})
 
     def scroll_x_calendar(self, *args) -> None:
