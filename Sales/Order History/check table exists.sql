@@ -1,0 +1,29 @@
+USE BWSdb
+GO
+
+SELECT
+	*
+FROM
+	[OrdersV2 History]
+
+IF (
+	EXISTS (
+		SELECT
+			*
+		FROM 
+			INFORMATION_SCHEMA.TABLES
+		WHERE
+			--TABLE_SCHEMA = 'TheSchema'
+			--AND
+			TABLE_NAME = 'OrdersV2'
+	)
+) BEGIN
+
+	SELECT 'A'
+
+END
+ELSE BEGIN
+
+	SELECT 'B'
+
+END

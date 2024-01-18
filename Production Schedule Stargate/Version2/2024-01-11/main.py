@@ -249,7 +249,7 @@ class App(tkinter.Tk):
             "days_backward": 3 * 7,
             "days_forward": 52 * 7,
 
-            "colour_calendar_background": Colour("#000000"),
+            "colour_calendar_background": Colour("#101060"),
             "colour_tile_header_home_background": Colour("#181210"),
             "colour_tile_header_row_background": Colour("#321116"),
             "colour_tile_header_row_foreground": Colour("#e4e4ff"),
@@ -283,7 +283,8 @@ class App(tkinter.Tk):
         })
 
         # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
-        self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.99, 0.99, largest=1, rtype=dict)
+        self.data["geometry"] = tkinter_utility.calc_geometry_tl("zoomed", largest=1, rtype=dict)
+        print(f"DIMS: {self.data['geometry']=}")
         self.data.update({
             "total_width": self.data["geometry"]["width"],
             "total_height": self.data["geometry"]["height"]
@@ -319,7 +320,7 @@ class App(tkinter.Tk):
             "canvas_height_scroll_region": self.data["tile_height"] * n_rows,
         })
 
-        canvas_background = self.data["colour_calendar_background"]
+        # canvas_background = self.data["colour_calendar_background"]
         self.calc_grid_cells = utility.grid_cells(
             self.data["canvas_width_scroll_region"],
             n_cols,
@@ -330,37 +331,42 @@ class App(tkinter.Tk):
 
         self.frame_calendar = tkinter.Frame(
             self,
-            width=self.data["geometry"]["width"] + 100,
-            height=self.data["geometry"]["height"] + 100,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
             background="#AB2194"
         )
         self.root_canvas = tkinter.Canvas(
             self.frame_calendar,
-            width=self.data["geometry"]["width"] + 100,
-            height=self.data["geometry"]["height"] + 100,
-            background="#1216CC",
+            width=self.data["geometry"]["width"] - 250,
+            height=self.data["geometry"]["height"] - 250,
+            background="#12CC16",
             scrollregion=(
                 0,
                 0,
-                self.data["geometry"]["width"] + 100,
-                self.data["geometry"]["height"] + 100
+                self.data["geometry"]["width"],
+                self.data["geometry"]["height"]
             )
         )
-        print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
-        print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
-        print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
+        # print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
+        # print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
+        # print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
         self.frame_canvas = tkinter.Frame(
             self.root_canvas,
             width=self.data["canvas_width"],
-            height=self.data["canvas_height"],
+            height=self.data["canvas_height"] + 20,  # scrollbar space
             background="#44318B"
         )
         self.canvas_window = self.root_canvas.create_window(
             # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
-            (30, 30),
+            30, 200,
+            # (30, 200),
+            # self.data["geometry"]["width"] / 2,
+            # self.data["geometry"]["height"] / 2,
             width=int(self.data["geometry"]["width"]),
             height=int(self.data["geometry"]["height"]),
-            window=self.frame_canvas
+            window=self.frame_canvas,
+            # anchor=tkinter.CENTER
+            anchor=tkinter.NW
             #int(self.data["geometry"]["height"] - self.data["canvas_height"])
             # ,
             # self.data["geometry"]["width"],
@@ -372,7 +378,7 @@ class App(tkinter.Tk):
             self.frame_canvas,
             width=self.data["canvas_width"],
             height=self.data["canvas_height"],
-            background=canvas_background.hex_code,
+            background=self.data["colour_calendar_background"].hex_code,
             scrollregion=(
                 0,
                 0,
@@ -422,7 +428,7 @@ class App(tkinter.Tk):
             dat_quote = row.get("OrdersV2_SGQuote", "QUOTE=____")
             # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
             dat_wo = row.get("OrdersV2_WO#", "WO=____")
-            dat_sn = row.get("Serial Number#", "SN=____")
+            dat_sn = row.get("Serial Number#", "")
             dat_dealer = row.get("InputField2", "DEALER=____")
             dat_galv = row.get("IsGalv", "GALV=____")
             dat_model = row.get("InputField1", "MODEL=____")
@@ -446,7 +452,7 @@ class App(tkinter.Tk):
                             dat_model,
                             dat_dealer,
                             dat_galv
-                        ]
+                        ] if v
                     ]
                     self.tiles[date][prod_line].update({
                         "order": i,
@@ -578,7 +584,10 @@ class App(tkinter.Tk):
             )
 
         self.title("Stargate Production Scheduler")
-        self.geometry(self.data["geometry"]["str"])
+        if (geo := self.data["geometry"]["str"]) == "zoomed":
+            self.state(geo)
+        else:
+            self.geometry(geo)
 
         self.grid_widgets()
 
@@ -604,10 +613,12 @@ class App(tkinter.Tk):
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         self.frame_calendar.grid()
-        self.frame_canvas.grid(**{s: "nsew"})
+        self.frame_calendar.grid_propagate(False)
         self.root_canvas.grid(**{s: "nsew"})
-        # self.canvas.grid()
-        self.scroll_bar_x.grid(**{s: "ew"})
+        self.frame_canvas.grid(**{s: "nsew"})
+        # self.frame_canvas.grid_propagate(False)
+        self.canvas.grid(**{r: 0})
+        self.scroll_bar_x.grid(**{r:1, s: "ew"})
 
     def scroll_x_calendar(self, *args) -> None:
         # change the canvas xview when the scrollbar is interacted with

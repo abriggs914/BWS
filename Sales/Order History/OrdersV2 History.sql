@@ -1,0 +1,125 @@
+USE [BWSdb]
+GO
+
+/****** Object:  Table [dbo].[OrdersV2 History]    Script Date: 2024-01-17 3:54:49 PM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OrdersV2 History]') AND type in (N'U'))
+DROP TABLE [dbo].[OrdersV2 History]
+GO
+
+/****** Object:  Table [dbo].[OrdersV2 History]    Script Date: 2024-01-17 3:54:49 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[OrdersV2 History](
+	[HistoryID] [int] IDENTITY(0,1) NOT NULL,
+	[OrderID] [int] NULL,
+	[Action] NVARCHAR(MAX) NULL,
+	[When] [datetime] NOT NULL,
+	[User] [nvarchar](max) NULL,
+	[SGQuote] [varchar](8) NULL,
+	[Quote Date] [datetime] NULL,
+	[Order Date] [datetime] NULL,
+	[WO#] [int] NULL,
+	[Sales Order#] [int] NULL,
+	[Model No] [nvarchar](50) NULL,
+	[Width] [int] NULL,
+	[Spread] [int] NULL,
+	[DealerID] [int] NULL,
+	[Sale PersonID] [int] NULL,
+	[Price] [money] NULL,
+	[Prom Drawing] [nvarchar](255) NULL,
+	[Special Instructions] [nvarchar](max) NULL,
+	[Date Declined] [datetime] NULL,
+	[Decline/Rejected] [int] NULL,
+	[Serial Number] [nvarchar](255) NULL,
+	[Available Date] [datetime] NULL,
+	[Delivery Date] [datetime] NULL,
+	[Requested Delivery Date] [datetime] NULL,
+	[Finish Date] [datetime] NULL,
+	[Purchase Order] [nvarchar](255) NULL,
+	[PO Date] [datetime] NULL,
+	[PayID] [int] NULL,
+	[Volume Discount] [real] NULL,
+	[Program Discount] [real] NULL,
+	[Discount1_Name] [nvarchar](100) NULL,
+	[Discount1_Type] [nvarchar](50) NULL,
+	[Discount1] [real] NULL,
+	[Discount2_Name] [nvarchar](100) NULL,
+	[Discount2_Type] [nvarchar](50) NULL,
+	[Discount2] [real] NULL,
+	[Discount3_Name] [nvarchar](100) NULL,
+	[Discount3_Type] [nvarchar](50) NULL,
+	[Discount3] [real] NULL,
+	[Est Pro Date] [datetime] NULL,
+	[Notes] [nvarchar](max) NULL,
+	[EngNotes] [ntext] NULL,
+	[CarrierID] [int] NULL,
+	[CustID] [int] NULL,
+	[US Sale] [bit] NULL,
+	[Shipped Date] [datetime] NULL,
+	[GL Override Date] [datetime] NULL,
+	[FE Rate] [money] NULL,
+	[PDD] [datetime] NULL,
+	[Deck Length] [int] NULL,
+	[Invoice #] [nvarchar](50) NULL,
+	[Date Registered] [datetime] NULL,
+	[Date In Service] [datetime] NULL,
+	[Invoice Date] [datetime] NULL,
+	[Date Requested] [datetime] NULL,
+	[GVWR] [int] NULL,
+	[Tare] [int] NULL,
+	[Selection] [bit] NULL,
+	[Warranty] [bit] NULL,
+	[BWSPaid] [bit] NULL,
+	[BWSPaidDate] [datetime] NULL,
+	[CommPaid] [bit] NULL,
+	[CommPaidDate] [datetime] NULL,
+	[ts_timestamp] [timestamp] NULL,
+	[ModifiedBy] [nvarchar](40) NULL,
+	[Lead Date] [datetime] NULL,
+	[Lead Source] [nvarchar](50) NULL,
+	[LeadID] [int] NULL,
+	[DealerBranchID] [int] NULL,
+	[DealerSalesPersonID] [int] NULL,
+	[DataEntryCheck] [int] NULL,
+	[DataEntryUser] [nvarchar](100) NULL,
+	[FinishedGoodsDealerLocID] [int] NULL,
+	[WO Reviewed] [bit] NULL,
+	[WO Review Date] [datetime] NULL,
+	[Follow Up Date] [datetime] NULL,
+	[MSOIsDifferent] [bit] NULL,
+	[MSOLocID] [int] NULL,
+	[EstInvDateOverride] [bit] NULL,
+	[Estimated Invoice Date] [datetime] NULL,
+	[AdditionalPricingInfo] [nvarchar](max) NULL,
+	[Slot#] [int] NULL,
+	[TempModel?] [bit] NULL,
+	[HighRiskUnit] [bit] NULL,
+	[EngNotes V2] [nvarchar](max) NULL,
+	[CompanyID] [int] NULL,
+	[Customer WO#] [int] NULL,
+	[PriceSecured] [bit] NULL,
+	[DateSecured] [datetime] NULL,
+	[SecuredBy] [nvarchar](max) NULL,
+	[InternalSalesComments] [nvarchar](max) NULL,
+	[InternalSalesCommentDate] [datetime] NULL,
+	[InternalSalesCommenter] [nvarchar](255) NULL,
+	[DiscountSetDate] [datetime] NULL,
+	[DiscountSetBy] [nvarchar](255) NULL,
+	[ProductID] [int] NULL,
+	[DiscountID] [int] NULL,
+	[DateLastQuoteReport] [datetime] NULL,
+	[JobAvailableLine] [nvarchar](max) NULL,
+	[JobAvailableScheduled] [datetime] NULL,
+	[JobAvailableScheduledBy] [nvarchar](max) NULL,
+ CONSTRAINT [PK_OrdersV2 History] PRIMARY KEY CLUSTERED 
+(
+	[HistoryID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+

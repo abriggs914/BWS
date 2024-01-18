@@ -3740,7 +3740,7 @@ def calc_geometry_tl(
         x_, y_, width_, height_ = dims
 
     t_width, t_height = width_, height_
-
+    
     if height is None:
         height = width
 
@@ -3752,48 +3752,38 @@ def calc_geometry_tl(
         assert 0 < width <= 1, "Error, if param 'width' is a float, it must be between 0 and 1."
         width = int(width * width_)
 
-    p_a = width == "zoomed"
-    p_b = height == "zoomed"
-    if p_a or p_b:
-        print(f"A, {p_a=}, {p_b=}")
-
-        if p_a:
-            height_o = height_ if p_b else height
-            x_ = 0
-            height_c = clamp(1, height_o, height_)
-            y_ = (height_ - height_c) // 2
-            height_ = height_c
-
-        if p_b:
-            width_o = width_ if p_a else width
-            y_ = 0
-            width_c = clamp(1, width_o, width_)
-            x_ = (width_ - width_c) // 2
-            width_ = width_c
-    else:
-        print(f"B")
-        width_c = clamp(1, width, width_)
-        height_c = clamp(1, height, height_)
-        x = (width_ - width_c) // 2
-        y = (height_ - height_c) // 2
-        x_, y_, width_, height_ = x, y, width_c, height_c
-
-    x_ += x_off
-    y_ += y_off
-
     if width == height == "zoomed":
-        res = "zoomed"
+        return width
     else:
-        res = f"{width_}x{height_}+{x_}+{y_}"
+        if width == "zoomed":
+            x_ = 0
+            height_c = clamp(1, height, height_)
+            y_ = (height_ - height_c) // 2
+            height_ = height
+        elif height == "zoomed":
+            y_ = 0
+            width_c = clamp(1, width, width_)
+            x_ = (width_ - width_c) // 2
+            width_ = width
+        else:
+            width_c = clamp(1, width, width_)
+            height_c = clamp(1, height, height_)
+            x = (width_ - width_c) // 2
+            y = (height_ - height_c) // 2
+            x_, y_, width_, height_ = x, y, width_c, height_c
 
-    print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
-    if rtype == str:
-        return res
-    elif rtype == dict:
-        return {"x": x_, "y": y_, "width": width_, "height": height_, "x1": x_, "y1": y_, "x2": x_ + width_,
-                "y2": y_ + height_, "str": res, str: res, "geometry": res, str: res, "res": res, str: res}
-    else:
-        return [x_, y_, width_, height_]
+        x_ += x_off
+        y_ += y_off
+
+        res = f"{width_}x{height_}+{x_}+{y_}"
+        print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
+        if rtype == str:
+            return res
+        elif rtype == dict:
+            return {"x": x_, "y": y_, "width": width_, "height": height_, "x1": x_, "y1": y_, "x2": x_ + width_,
+                    "y2": y_ + height_, "str": res, str: res, "geometry": res, str: res, "res": res, str: res}
+        else:
+            return [x_, y_, width_, height_]
 
 
 def auto_font(font, text, c_width, c_height, min_font_size=4, max_font_size=300):
