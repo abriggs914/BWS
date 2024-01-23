@@ -1,5 +1,9 @@
+from typing import Literal
+
 from pyodbc_connection import connect
 from itertools import combinations
+import pandas as pd
+import datetime
 
 
 def date_first(msg: str, keyword="date") -> str:
@@ -13,6 +17,7 @@ def date_first(msg: str, keyword="date") -> str:
 
 
 def parse_connection_data(data: dict) -> dict:
+    """Given a dictionary of ODBC connection data, verify that the user and password are pre-verified."""
 
     valid_ = {
         "bwsdb": {
@@ -54,8 +59,14 @@ def select_with_alias(
         specials_replace: bool = True,
         do_print: bool = False,
         connection_data: dict | None = None,
-        with_no_locks: bool = True
+        with_no_locks: bool = True,
+        default_join_style: Literal['INNER', 'LEFT', 'RIGHT', 'FULL', 'LEFT OUTER', 'RIGHT OUTER', 'FULL OUTER'] = "INNER"
 ) -> str:
+
+    if (len(table) > 2) and (not f_keys):
+        raise ValueError(f"When joining more than 2 tables, you must use pass join criterion through the 'f_keys' parameter.")
+
+    placeholder = "##__PLACEHOLDER__##"
 
     l_table_names = []
     l_table_alias = []
@@ -89,16 +100,6 @@ def select_with_alias(
                 # print(f"{k=}, {new_key=}, {combo=}")
                 specials[new_key] = val
 
-    # tables = [
-    #     # ("Order Options", "OO", "OrderOptions"),
-    #     # ("Custom Work", "CW", "CustomWork_"),
-    #     # ("Order OptionsV2", "OO2", "OrderOptionsV2"),
-    #     # ("Custom WorkV2", "CW2", "CustomWorkV2_"),
-    #     # ("WipMaster", "W", "WipMaster_")
-    #     # ("WipMaster", "W", "WipMaster_")
-    #     ("dtProductionSchedule", "dt2", "dtProdSched_")
-    # ]
-
     if not table:
         raise ValueError(f"'table' can't be None or empty")
     else:
@@ -116,15 +117,7 @@ def select_with_alias(
     else:
         tables = table
 
-    # print(f"-A {type(f_keys)=}, {f_keys=}")
-    # if isinstance(f_keys, (list, tuple)):
-    #     print(f"-B")
-    #     if f_keys:
-    #         print(f"-C {f_keys[0]=}")
-    #         # if not isinstance(f_keys[0], (list, tuple)):
-    #         print(f"{len(tables)=}")
-    #         f_keys = [f_keys for _ in range(len(tables))]
-    #         print(f"{len(f_keys)=}")
+
     if f_keys is not None:
         if isinstance(f_keys, (list, tuple)) and isinstance(f_keys[0], (list, tuple)) and (len(tables) > len(f_keys)):
             # print(f"--AA")
@@ -140,7 +133,7 @@ def select_with_alias(
 
     i = 0
     for tn, ta, *a in tables:
-        # print(f"{a=}, {i=}, {f_keys=}")
+        # print(f"{tn=}, {ta=}, {a=}, {i=}, {f_keys=}")
         cd = None
         fk = (None, None, None)
         if f_keys:
@@ -149,9 +142,9 @@ def select_with_alias(
             # no prefix | connection data | foreign key given
             a = ta
         else:
-            a = a[0]
             if isinstance(a, (list, tuple)) and (len(a) > 1):
-                fk = a[1]
+                fk = (default_join_style, a[1], placeholder)
+            a = a[0]
 
         # print(f">> {tn=}, {ta=}, {a=}, {cd=}, {fk=}")
 
@@ -180,23 +173,16 @@ def select_with_alias(
         if not a.endswith("_"):
             a += "_"
 
-        # print(f"{tn=}, {ta=}, {a=}, {cd_l_keys=}")
-        # cd, l_keys = cd_l_keys
         # print(f"{tn=}, {ta=}, {a=}, {cd=}, {l_key=}")
 
         if re_connect:
             connection_data = parse_connection_data(cd)
 
-        # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="SysproCompanyA", uid="SRS", pwd="")
-        # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", database="Stargatedb",
-        #              uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
-        # df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""")
         df = connect(f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{tn}'""", **connection_data)
         # print(df)
 
         col_names = df["COLUMN_NAME"].values.tolist()
 
-        # ,[C].[Name] AS [ITRCustomersName]
         if specials_replace:
             spec_results = []
             for word in [ta, a]:
@@ -251,17 +237,21 @@ def select_with_alias(
 
     # print(f"{cols=}")
 
-    msg = ""
-    i = 0
-    for tn, ta, a, cd, l_key in zip(l_table_names, l_table_alias, l_alias, l_cds, l_keys):
+    # print(f"{l_table_names=}, {l_table_alias=}, {l_alias=}, {l_cds=}, {l_keys=}")
+    # msg = ""
+    for i, lsts in enumerate(zip(l_table_names, l_table_alias, l_alias, l_cds, l_keys)):
+        tn, ta, a, cd, l_key = lsts
         # print(f"<< {tn=}, {ta=}, {a=}, {cd=}, {l_key=}")
         msg = f"\t[{tn}] AS [{ta}]" + (" WITH (NOLOCK)" if with_no_locks else "")
         if join_msg:
             msg += join_msg.format(OTHERTABLE=ta)
+            msg = msg.replace(placeholder, l_key[1])
             join_msg = ""
+            # msg = msg.strip()
+            select_statement += msg
         else:
             msg += ","
-        select_statement += msg + "\n"
+            select_statement += msg + "\n"
 
         if do_print:
             print(msg)
@@ -275,23 +265,250 @@ def select_with_alias(
                 select_statement = select_statement.removesuffix(",\n") + "\n"
                 msg = f"{j_style.upper()} JOIN"
                 join_msg = f"\nON\n\t[{table}].[{l1}] = [{{OTHERTABLE}}].[{l2}]"
-                select_statement += msg + "\n"
+                # print(f"{i=}, {msg=}, {j_style=}, {l1=}, {l2=}")
+                if i < (len(l_table_names) - 1):
+                    # select_statement = select_statement.removesuffix("\n\n") + msg + "\n"
+                    select_statement += msg + "\n"
                 if do_print:
                     print(msg)
-        i += 1
 
-    if join_msg:
-        if (i < len(tables)) and join_msg:
-            msg += join_msg.format(OTHERTABLE=ta)
-            join_msg = ""
-        else:
-            msg += ","
-        select_statement += msg + "\n"
-
-    # print(f"BEFORE\n{select_statement=}")
-    # select_statement = select_statement.removesuffix(msg + "\n")
+    select_statement = select_statement.strip().removesuffix(",").strip() + "\n;"
     select_statement = select_statement.removesuffix(",\n")
 
-    print(f"\n--" + ("#" * 120) + "\n")
+    # print(f"\n--" + ("#" * 120) + "\n")
 
     return select_statement
+
+
+def create_history_table(
+        table: str,
+        history_table: str = "",
+        connection_data: dict | None = None
+):
+
+    if " " in table:
+        if "[" in table or "]" in table:
+            raise ValueError(f"Invalid table name '{table}'.")
+        # table = f"[{table}]"
+
+    sql = """
+    SELECT *
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = '{TABLE}';
+    """
+
+    hist_table = f"[{table}_History]" if not history_table else history_table
+
+    df = connect(sql.format(TABLE=table))
+    df_history = connect(sql.format(TABLE=hist_table))
+
+    if not df_history.empty:
+        raise ValueError(f"Error this table name is already in use '{hist_table}'.")
+
+    sql_trigger = """
+-- ================================================
+-- Template generated from Template Explorer using:
+-- Create Trigger (New Menu).SQL
+--
+-- Use the Specify Values for Template Parameters
+-- command (Ctrl-Shift-M) to fill in the parameter
+-- values below.
+--
+-- See additional Create Trigger templates for more
+-- examples of different Trigger statements.
+--
+-- This block of comments will not be included in
+-- the definition of the function.
+-- ================================================
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<{AUTHOR}>
+-- Create date: <{DATE_CREATED}>
+-- Description:	<{DESCRIPTION}>
+-- =============================================
+CREATE TRIGGER  [dbo].[tr_Update{TABLE}History]
+   ON [{TABLE}]
+   --BEFORE
+   AFTER
+   --INSTEAD OF
+   INSERT
+   , DELETE
+   , UPDATE
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	IF TRIGGER_NESTLEVEL() < 2 BEGIN
+
+	    -- Differences Table
+	    {SQL_DIFF_TABLE}
+
+	    -- Declarative Statements
+	    {SQL_DECLARES}
+
+	    -- Assignment Statements
+	    {SQL_ASSIGNS}
+
+		DECLARE @user NVARCHAR(20);
+		DECLARE @activity NVARCHAR(20);
+
+		-- Insert statements for trigger here
+		IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted) BEGIN
+			SET @activity = 'UPDATE';
+			SET @user = SYSTEM_USER;
+			{SQL_UPDATED}
+		END
+		IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted) BEGIN
+			SET @activity = 'INSERT';
+			SET @user = SYSTEM_USER;
+			{SQL_INSERTED}
+		END
+		IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted) BEGIN
+			SET @activity = 'DELETE';
+			SET @user = SYSTEM_USER;
+			{SQL_DELETED}
+		END
+
+		-- Check if new changes
+		{SQL_DIFF}
+
+		-- Update the History table for as many changes as were identified
+		{SQL_HIST_UPDATE}
+
+	END
+END
+GO
+    """
+    sql_declares = ["{TD}DECLARE @{COL} AS {TYP}", "", ""]
+    sql_assigns = ["{TDp1}@{COL_A} = [{COL}]", "{TD}SELECT\n", "{TD}SELECT\n", "\n{TD}FROM\n{TDp1}{TAB_A}\n{TD};"]
+    sql_differences_t = """
+		DECLARE @t_to_update AS TABLE
+		(
+			[ID] INT IDENTITY(1, 1),
+			[Column] NVARCHAR(255),
+			[ValueBefore] NVARCHAR(MAX),
+			[ValueAfter] NVARCHAR(MAX)
+		)
+	;
+	"""
+    sql_differences = ["{TD}IF {COLA} <> {COLB} BEGIN\n{TDp1}INSERT INTO @t_to_update ([Column], [ValueBefore], [ValueAfter])\n{TDp1}SELECT '{COL}', CAST({COLA} AS NVARCHAR(MAX)), CAST({COLB} AS NVARCHAR(MAX));\n{TD}END", ""]
+    sql_hist_update = """
+    -- Finally iteratively update [dbo].[IT Request History] for each changed value
+
+		DECLARE @c AS INT;
+		SELECT @c = COUNT(*) FROM @t_to_update;
+
+		IF @c > 0 BEGIN
+
+			IF @user IS NULL BEGIN
+				SELECT @user = SYSTEM_USER;
+			END
+
+			DECLARE @i AS INT;
+			DECLARE @column AS NVARCHAR(MAX);
+			DECLARE @value_before AS NVARCHAR(MAX);
+			DECLARE @value_after AS NVARCHAR(MAX);
+
+			SELECT @i = 0;
+
+			WHILE @i < @c BEGIN
+
+				SELECT @i = @i + 1;
+
+				SELECT
+					@column = [Column]
+					,@value_before = [ValueBefore]
+					,@value_after = [ValueAfter]
+				FROM
+					@t_to_update
+				WHERE
+					[ID] = @i
+
+				INSERT INTO
+					[dbo].[{HIST_TABLE}]
+				(
+				    {NEW_HIST_COLUMNS}
+				    ,{LIST_HISTORY_COLUMNS}
+				)
+				
+				SELECT
+				{NEW_COLUMNS}
+                ,{LIST_COLUMNS}
+				FROM
+					[{TABLE}]
+				WHERE
+					[{PK}] = ISNULL(@new_{PK}, @old_{PK})
+
+			END
+		END
+    """
+
+    invalid_types = list(map(str.upper, ["text", "ntext", "image", "timestamp"]))
+    td = 2 * "\t"
+    tdp1 = (len(td) + 1) * "\t"
+    sql_assigns[1] = sql_assigns[1].format(TD=td)
+    sql_assigns[2] = sql_assigns[2].format(TD=td)
+
+    # loop the table schema and collect the column names and types to prepare declarative statements.
+    # 1 new and 1 old declare per column name
+    for i, row in df.iterrows():
+        col = row["COLUMN_NAME"]
+        typ = row["DATA_TYPE"].upper()
+        siz = row["CHARACTER_MAXIMUM_LENGTH"]
+
+        if typ in invalid_types:
+            continue
+
+        old_col = f"old_{col.replace(' ', '_')}".replace("?", "_").replace("#", "_").replace("/", "_")
+        new_col = f"new_{col.replace(' ', '_')}".replace("?", "_").replace("#", "_").replace("/", "_")
+
+        siz = "MAX" if siz == -1 else (int(siz) if not pd.isnull(siz) else siz)
+        # print(f"{col=}, {typ=}")
+        new_declare = sql_declares[0].format(TD=td, COL=old_col, TYP=typ)
+        old_declare = sql_declares[0].format(TD=td, COL=new_col, TYP=typ)
+        if typ == "NVARCHAR":
+            new_declare += f"({siz})"
+            old_declare += f"({siz})"
+        sql_declares[1] += new_declare + ";\n"
+        sql_declares[2] += old_declare + ";\n"
+
+        old_assign = sql_assigns[0].format(TDp1=tdp1, COL_A=old_col, COL=col)
+        new_assign = sql_assigns[0].format(TDp1=tdp1, COL_A=new_col, COL=col)
+        sql_assigns[1] += old_assign + ",\n"
+        sql_assigns[2] += new_assign + ",\n"
+
+        diff = sql_differences[0].format(TD=td, TDp1=tdp1, COLA=f"@{old_col}", COLB=f"@{new_col}", COL=col)
+        sql_differences[1] += diff + "\n"
+
+    print(f"A {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
+
+    # clean up
+    sql_declares[1] = sql_declares[1].removesuffix("\n")
+    sql_declares[2] = sql_declares[2].removesuffix("\n")
+    sql_assigns[1] = sql_assigns[1].removesuffix(",\n")
+    sql_assigns[2] = sql_assigns[2].removesuffix(",\n")
+
+    print(f"B {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
+
+    sql_assigns[1] += sql_assigns[3].format(TD=td, TDp1=tdp1, TAB_A=f"DELETED [D]")
+    sql_assigns[2] += sql_assigns[3].format(TD=td, TDp1=tdp1, TAB_A=f"INSERTED [I]")
+
+    author = "Avery Briggs"
+    date_created = f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
+    description = f"SQL Trigger to check changes to all columns, and if found, then will create a history record to mark the change"
+    sql_c = sql_declares[1] + '\n' + sql_declares[2]
+    sql_a = sql_assigns[1] + '\n' + sql_assigns[2]
+    sql_u = ""
+    sql_i = ""
+    sql_d = ""
+    print(f"{sql_trigger.format(TABLE=table, SQL_DECLARES=sql_c, SQL_ASSIGNS=sql_a, SQL_INSERTED=sql_i, SQL_UPDATED=sql_u, SQL_DELETED=sql_d, AUTHOR=author, DATE_CREATED=date_created, DESCRIPTION=description, SQL_DIFF_TABLE=sql_differences_t, SQL_DIFF=sql_differences[1], SQL_HIST_UPDATE=sql_hist_update)}")
+
+    # print(f"{sql_declares[1]}")
+    # print(f"{sql_declares[2]}")
+    # print(f"{sql_assigns[1]}")
+    # print(f"{sql_assigns[2]}")

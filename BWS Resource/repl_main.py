@@ -3,7 +3,68 @@ import datetime
 import pandas as pd
 
 from pyodbc_connection import connect
-from sql_utility import select_with_alias
+from sql_utility import select_with_alias, create_history_table
+
+
+def test_select_with_alias():
+    space = " "
+
+    # print(select_with_alias([
+    #     ("ITR Customers", "C", "C"),
+    #     ("ITD Dept", "D", "D")
+    # ]))
+    # print(select_with_alias([
+    #     ("Orders", "O", "O"),
+    #     ("OrdersV2", "O2", "O2")
+    # ]))
+    # print(select_with_alias([
+    #     ("ITD Dept", "D"),
+    #     ("ITF Flags", "F")
+    # ]))
+    # print(select_with_alias(
+    #     [
+    #         ("Orders", "O"),
+    #         ("Dealers", "D")
+    #     ],
+    #     f_keys=("inner", "DealerID", "ID")
+    # ))
+    # print(select_with_alias(
+    #     [
+    #         ("Orders", "O", "O", "DealerID"),
+    #         ("Dealers", "D", "D", "ID")
+    #     ]
+    # ))
+    print(select_with_alias(
+        [
+            ("Orders", "O", "O"),
+            ("Dealers", "D", "D"),
+            # ("Orders", "O", "O", "DealerID"),
+            # ("Sales Staff", "S", "S", "Sales PersonID")
+            ("Sales Staff", "S", "S")
+        ],
+        f_keys=(
+            ("inner", "DealerID", "ID"),
+            ("inner", "Sale PersonID", "ID-SaleStaff")
+        )
+    ))
+    print(select_with_alias(
+        [
+            ("Orders", "O"),
+            ("Dealers", "D"),
+            ("Sales Staff", "S"),
+            ("Products", "P")
+        ],
+        f_keys=(
+            ("left", "DealerID", "ID"),
+            ("left", "Sale PersonID", "ID-SaleStaff"),
+            ("left", "ProductID", "IDTrailer")
+        )
+    ))
+
+def test_create_history_table():
+    print(f"{create_history_table('ITF Flags')}")
+
+
 
 if __name__ == '__main__':
 
@@ -423,40 +484,7 @@ if __name__ == '__main__':
 #     # print(f"{sql_assigns[2]}")
 
     # print(select_with_alias("Orders", "O", "O"))
-    print(select_with_alias([
-        ("ITR Customers", "C", "C"),
-        ("ITD Dept", "D", "D")
-    ]))
-    print(select_with_alias([
-        ("Orders", "O", "O"),
-        ("OrdersV2", "O2", "O2")
-    ]))
-    print(select_with_alias([
-        ("ITD Dept", "D"),
-        ("ITF Flags", "F")
-    ]))
-    print(select_with_alias(
-        [
-            ("Orders", "O"),
-            ("Dealers", "D")
-        ],
-        f_keys=("inner", "DealerID", "ID")
-    ))
-    # print(select_with_alias(
-    #     [
-    #         ("Orders", "O", "O", "DealerID"),
-    #         ("Dealers", "D", "D", "ID")
-    #     ]
-    # ))
-    # print(select_with_alias(
-    #     [
-    #         ("Orders", "O"),
-    #         ("Dealers", "D"),
-    #         ("Sales Staff", "S")
-    #     ],
-    #     f_keys=(
-    #         ("inner", "DealerID", "ID"),
-    #         ("inner", "Sale PersonID", "ID-SaleStaff")
-    #     )
-    # ))
+
+    # test_select_with_alias()
+    test_create_history_table()
 
