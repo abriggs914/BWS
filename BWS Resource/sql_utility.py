@@ -430,7 +430,7 @@ GO
 					[ID] = @i
 
 				INSERT INTO
-					[dbo].[{HIST_TABLE}]
+					[dbo].{HIST_TABLE}
 				(
 				    {NEW_HIST_COLUMNS}
 				    ,{LIST_HISTORY_COLUMNS}
@@ -503,9 +503,24 @@ GO
     description = f"SQL Trigger to check changes to all columns, and if found, then will create a history record to mark the change"
     sql_c = sql_declares[1] + '\n' + sql_declares[2]
     sql_a = sql_assigns[1] + '\n' + sql_assigns[2]
-    sql_u = ""
-    sql_i = ""
-    sql_d = ""
+    sql_u = "-- SQL Update"
+    sql_i = "-- SQL Insert"
+    sql_d = "-- SQL Delete"
+
+    pk = "PK"
+    new_hist_columns = "NEW_HIST_COLUMNS"
+    list_history_columns = "LIST_HISTORY_COLUMNS"
+    new_columns = "NEW_COLUMNS"
+    list_columns = "LIST_COLUMNS"
+    sql_hist_update = sql_hist_update.format(
+        PK=pk,
+        NEW_HIST_COLUMNS=new_hist_columns,
+        LIST_HISTORY_COLUMNS=list_history_columns,
+        TABLE=table,
+        HIST_TABLE=hist_table,
+        NEW_COLUMNS=new_columns,
+        LIST_COLUMNS=list_columns
+    )
     print(f"{sql_trigger.format(TABLE=table, SQL_DECLARES=sql_c, SQL_ASSIGNS=sql_a, SQL_INSERTED=sql_i, SQL_UPDATED=sql_u, SQL_DELETED=sql_d, AUTHOR=author, DATE_CREATED=date_created, DESCRIPTION=description, SQL_DIFF_TABLE=sql_differences_t, SQL_DIFF=sql_differences[1], SQL_HIST_UPDATE=sql_hist_update)}")
 
     # print(f"{sql_declares[1]}")

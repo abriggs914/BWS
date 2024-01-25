@@ -7,33 +7,32 @@ from sql_utility import select_with_alias, create_history_table
 
 
 def test_select_with_alias():
-    space = " "
 
-    # print(select_with_alias([
-    #     ("ITR Customers", "C", "C"),
-    #     ("ITD Dept", "D", "D")
-    # ]))
-    # print(select_with_alias([
-    #     ("Orders", "O", "O"),
-    #     ("OrdersV2", "O2", "O2")
-    # ]))
-    # print(select_with_alias([
-    #     ("ITD Dept", "D"),
-    #     ("ITF Flags", "F")
-    # ]))
-    # print(select_with_alias(
-    #     [
-    #         ("Orders", "O"),
-    #         ("Dealers", "D")
-    #     ],
-    #     f_keys=("inner", "DealerID", "ID")
-    # ))
-    # print(select_with_alias(
-    #     [
-    #         ("Orders", "O", "O", "DealerID"),
-    #         ("Dealers", "D", "D", "ID")
-    #     ]
-    # ))
+    print(select_with_alias([
+        ("ITR Customers", "C", "C"),
+        ("ITD Dept", "D", "D")
+    ]))
+    print(select_with_alias([
+        ("Orders", "O", "O"),
+        ("OrdersV2", "O2", "O2")
+    ]))
+    print(select_with_alias([
+        ("ITD Dept", "D"),
+        ("ITF Flags", "F")
+    ]))
+    print(select_with_alias(
+        [
+            ("Orders", "O"),
+            ("Dealers", "D")
+        ],
+        f_keys=("inner", "DealerID", "ID")
+    ))
+    print(select_with_alias(
+        [
+            ("Orders", "O", "O", "DealerID"),
+            ("Dealers", "D", "D", "ID")
+        ]
+    ))
     print(select_with_alias(
         [
             ("Orders", "O", "O"),
