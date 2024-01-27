@@ -6,6 +6,20 @@ import pandas as pd
 import datetime
 
 
+def no_specials(text: str, r_char: str = "_") -> str:
+
+    for c in [
+        " ", "!", "@", "#", "$", "%",
+        "^", "&", "*", "(", ")", "-",
+        "+", "=", "'", "\"", "[", "]",
+        "{", "}", "\\", "|", ":", ";",
+        "<", ",", ">", ".", "?", "/",
+        "~", "`"
+    ]:
+        text = text.replace(c, "")
+    return text
+
+
 def date_first(msg: str, keyword="date") -> str:
     lmsg = msg.lower()
     if keyword in msg:
@@ -283,8 +297,14 @@ def select_with_alias(
 def create_history_table(
         table: str,
         history_table: str = "",
-        connection_data: dict | None = None
+        connection_data: dict | None = None,
+        block_warnings: bool = True,
+        create_alter: Literal['CREATE', 'ALTER'] = "CREATE"
 ):
+
+    if block_warnings:
+        import warnings
+        warnings.filterwarnings("ignore", category=UserWarning)
 
     if " " in table:
         if "[" in table or "]" in table:
@@ -299,13 +319,57 @@ def create_history_table(
 
     hist_table = f"[{table}_History]" if not history_table else history_table
 
-    df = connect(sql.format(TABLE=table))
+    connection_data = parse_connection_data(connection_data)
+
+    df = connect(sql.format(TABLE=table), **connection_data)
+
+    if df.empty:
+        raise ValueError(f"Couldn't find any data on table '{table}' for this database. Please check spelling and connection data settings.\n{connection_data=}")
+
+    df_pk = df.loc[(df["TABLE_NAME"] == table) & (df["IS_NULLABLE"] == "NO") & (df["DATA_TYPE"] == "int")]
+    if df_pk.empty:
+        df_pk = df.loc[(df["TABLE_NAME"] == table) & (df["IS_NULLABLE"] == "NO")]
+
+    pk = df_pk.loc[0]["COLUMN_NAME"]
+
+    # print(f"{pk=}")
+
     df_history = connect(sql.format(TABLE=hist_table))
 
     if not df_history.empty:
         raise ValueError(f"Error this table name is already in use '{hist_table}'.")
 
+    new_hist_columns = [
+        # "[History_ID]",  # do not include PK
+        "[History_DateCreated]",
+        "[History_Action]",
+        "[History_User]",
+        "[History_Column]",
+        "[History_OldValue]",
+        "[History_NewValue]",
+    ]
+
+    sql_create_table = f"""{create_alter} TABLE [dbo].{hist_table} ( 
+    [History_ID] [int] IDENTITY(0, 1) NOT NULL, 
+    [History_DateCreated] [datetime] NULL, 
+    [History_Action] [nvarchar](max) NULL,
+    [History_User] [nvarchar](max) NULL,
+    [History_Column] [nvarchar](max) NULL,
+    [History_OldValue] [nvarchar](max) NULL,
+    [History_NewValue] [nvarchar](max) NULL,
+    {{REST_COLUMNS}}
+    CONSTRAINT [PK_{hist_table.replace('[', '').replace(']', '')}] PRIMARY KEY CLUSTERED 
+(
+	[History_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO"""
     sql_trigger = """
+    
+-- BEGIN TABLE CREATION
+    {SQL_TABLE_CREATION}
+    
+    
 -- ================================================
 -- Template generated from Template Explorer using:
 -- Create Trigger (New Menu).SQL
@@ -329,7 +393,7 @@ GO
 -- Create date: <{DATE_CREATED}>
 -- Description:	<{DESCRIPTION}>
 -- =============================================
-CREATE TRIGGER  [dbo].[tr_Update{TABLE}History]
+{CREATE_ALTER} TRIGGER [dbo].[tr_Update{TABLE}History]
    ON [{TABLE}]
    --BEFORE
    AFTER
@@ -437,12 +501,12 @@ GO
 				)
 				
 				SELECT
-				{NEW_COLUMNS}
-                ,{LIST_COLUMNS}
+				    {NEW_COLUMNS}
+                    ,{LIST_COLUMNS}
 				FROM
 					[{TABLE}]
 				WHERE
-					[{PK}] = ISNULL(@new_{PK}, @old_{PK})
+					[{PK}] = ISNULL(@new_{PK_A}, @old_{PK_A})
 
 			END
 		END
@@ -454,6 +518,20 @@ GO
     sql_assigns[1] = sql_assigns[1].format(TD=td)
     sql_assigns[2] = sql_assigns[2].format(TD=td)
 
+    rest_columns = ""
+    # new_hist_columns = "NEW_HISTORY_COLUMNS"
+    list_history_columns = ""
+    new_columns = [
+        # f"'{datetime.datetime.now():%Y-%m-%d %H:%M:%S}'",
+        f"GETDATE()",
+        "@activity",
+        "@user",
+        "@column",
+        "@value_before",
+        "@value_after"
+    ]
+    list_columns = ""
+
     # loop the table schema and collect the column names and types to prepare declarative statements.
     # 1 new and 1 old declare per column name
     for i, row in df.iterrows():
@@ -464,18 +542,23 @@ GO
         if typ in invalid_types:
             continue
 
-        old_col = f"old_{col.replace(' ', '_')}".replace("?", "_").replace("#", "_").replace("/", "_")
-        new_col = f"new_{col.replace(' ', '_')}".replace("?", "_").replace("#", "_").replace("/", "_")
+        old_col = no_specials(f"old_{col.replace(' ', '_')}")
+        new_col = no_specials(f"new_{col.replace(' ', '_')}")
 
         siz = "MAX" if siz == -1 else (int(siz) if not pd.isnull(siz) else siz)
-        # print(f"{col=}, {typ=}")
+        # print(f"{i=}, {col=}, {typ=}, {siz=}")
         new_declare = sql_declares[0].format(TD=td, COL=old_col, TYP=typ)
         old_declare = sql_declares[0].format(TD=td, COL=new_col, TYP=typ)
+        r_c_size = ""
         if typ == "NVARCHAR":
             new_declare += f"({siz})"
             old_declare += f"({siz})"
+            r_c_size = f"({siz})"
         sql_declares[1] += new_declare + ";\n"
         sql_declares[2] += old_declare + ";\n"
+
+        rest_columns += f"\t[{col}] [{typ}]{r_c_size} NULL,\n"
+        list_history_columns += f"{td}{tdp1}[{col}],\n"
 
         old_assign = sql_assigns[0].format(TDp1=tdp1, COL_A=old_col, COL=col)
         new_assign = sql_assigns[0].format(TDp1=tdp1, COL_A=new_col, COL=col)
@@ -485,7 +568,7 @@ GO
         diff = sql_differences[0].format(TD=td, TDp1=tdp1, COLA=f"@{old_col}", COLB=f"@{new_col}", COL=col)
         sql_differences[1] += diff + "\n"
 
-    print(f"A {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
+    # print(f"A {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
 
     # clean up
     sql_declares[1] = sql_declares[1].removesuffix("\n")
@@ -493,7 +576,7 @@ GO
     sql_assigns[1] = sql_assigns[1].removesuffix(",\n")
     sql_assigns[2] = sql_assigns[2].removesuffix(",\n")
 
-    print(f"B {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
+    # print(f"B {len(sql_assigns[1])=}, {sql_assigns[1][-1]=}")
 
     sql_assigns[1] += sql_assigns[3].format(TD=td, TDp1=tdp1, TAB_A=f"DELETED [D]")
     sql_assigns[2] += sql_assigns[3].format(TD=td, TDp1=tdp1, TAB_A=f"INSERTED [I]")
@@ -507,23 +590,50 @@ GO
     sql_i = "-- SQL Insert"
     sql_d = "-- SQL Delete"
 
-    pk = "PK"
-    new_hist_columns = "NEW_HIST_COLUMNS"
-    list_history_columns = "LIST_HISTORY_COLUMNS"
-    new_columns = "NEW_COLUMNS"
-    list_columns = "LIST_COLUMNS"
+    rest_columns = rest_columns.removeprefix("\t").removesuffix(",\n")
+    new_hist_columns = f",\n{td}{tdp1}".join(new_hist_columns)
+    new_columns = f",\n{td}{tdp1}".join(new_columns)
+    list_history_columns = list_history_columns.strip().removesuffix(",")
+
+    pk = pk
+    pk_a = no_specials(pk)
+    sql_create_table = sql_create_table.format(REST_COLUMNS=rest_columns)
     sql_hist_update = sql_hist_update.format(
         PK=pk,
+        PK_A=pk_a,
         NEW_HIST_COLUMNS=new_hist_columns,
         LIST_HISTORY_COLUMNS=list_history_columns,
         TABLE=table,
         HIST_TABLE=hist_table,
         NEW_COLUMNS=new_columns,
-        LIST_COLUMNS=list_columns
+        # LIST_COLUMNS=list_columns
+        LIST_COLUMNS=list_history_columns
     )
-    print(f"{sql_trigger.format(TABLE=table, SQL_DECLARES=sql_c, SQL_ASSIGNS=sql_a, SQL_INSERTED=sql_i, SQL_UPDATED=sql_u, SQL_DELETED=sql_d, AUTHOR=author, DATE_CREATED=date_created, DESCRIPTION=description, SQL_DIFF_TABLE=sql_differences_t, SQL_DIFF=sql_differences[1], SQL_HIST_UPDATE=sql_hist_update)}")
+    all_sql = sql_trigger.format(
+        TABLE=table,
+        CREATE_ALTER=create_alter,
+        SQL_DECLARES=sql_c,
+        SQL_ASSIGNS=sql_a,
+        SQL_INSERTED=sql_i,
+        SQL_UPDATED=sql_u,
+        SQL_DELETED=sql_d,
+        AUTHOR=author,
+        DATE_CREATED=date_created,
+        DESCRIPTION=description,
+        SQL_DIFF_TABLE=sql_differences_t,
+        SQL_DIFF=sql_differences[1],
+        SQL_HIST_UPDATE=sql_hist_update,
+        SQL_TABLE_CREATION=sql_create_table
+    )
+
+    # print(f"{all_sql=}")
 
     # print(f"{sql_declares[1]}")
     # print(f"{sql_declares[2]}")
     # print(f"{sql_assigns[1]}")
     # print(f"{sql_assigns[2]}")
+
+    if block_warnings:
+        warnings.resetwarnings()
+
+    return all_sql

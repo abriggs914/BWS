@@ -61,8 +61,23 @@ def test_select_with_alias():
     ))
 
 def test_create_history_table():
-    print(f"{create_history_table('ITF Flags')}")
+    # print(f"{create_history_table('ITF Flags')}")
+    # print(f"{create_history_table('Orders')}")
+    #
+    # print(f"{create_history_table('Products')}")
+    # print(f"{create_history_table('ProductsV2', create_alter='ALTER')}")
+    #
+    # print(f"{create_history_table('Order Standards')}")
+    # print(f"{create_history_table('Order StandardsV2')}")
+    # print(f"{create_history_table('Order Options')}")
+    # print(f"{create_history_table('Order OptionsV2')}")
+    # print(f"{create_history_table('Order Options_FactoryLines')}")
+    # print(f"{create_history_table('Order OptionsV2_FactoryLines')}")
+    # print(f"{create_history_table('Order Options_SpecLines')}")
+    # print(f"{create_history_table('Order OptionsV2_SpecLines')}")
 
+    print(f"{create_history_table('Custom Work')}")
+    print(f"{create_history_table('Custom WorkV2')}")
 
 
 if __name__ == '__main__':
