@@ -36,6 +36,8 @@ USE BWSdb
 GO
 
 SELECT * FROM [Orders_History]
+SELECT * FROM [Products_History]
+SELECT * FROM [ProductsV2_History]
 SELECT * FROM [OrdersV2 History]
 SELECT * FROM [Order standards_history]
 SELECT * FROM [Order standardsV2_history]
@@ -47,3 +49,20 @@ SELECT * FROM [Order optionsv2_speclines_history]
 SELECT * FROM [Order options_speclines_history]
 SELECT * FROM [Custom Work_history]
 SELECT * FROM [Custom WorkV2_history]
+
+BEGIN TRAN;
+
+PRINT CAST(GETDATE() AS NVARCHAR(MAX))
+
+UPDATE
+	[Orders]
+SET 
+	[DataEntryCheck] = 1
+	,[DataEntryUser] = 'Avery Briggs'
+WHERE
+	[Quote#] = 17386
+
+PRINT CAST(GETDATE() AS NVARCHAR(MAX))
+
+ROLLBACK;
+COMMIT;
