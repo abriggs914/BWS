@@ -337,8 +337,8 @@ class App(tkinter.Tk):
         )
         self.root_canvas = tkinter.Canvas(
             self.frame_calendar,
-            width=self.data["geometry"]["width"] - 250,
-            height=self.data["geometry"]["height"] - 250,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
             background="#12CC16",
             scrollregion=(
                 0,
@@ -1158,5 +1158,19 @@ class App(tkinter.Tk):
 
 if __name__ == '__main__':
 
-    app = App()
+    # app = App()
+    # app.mainloop()
+
+
+    app = tkinter.Tk()
+
+    can1 = tkinter.Canvas(app, background="#789456")
+    can2 = tkinter.Canvas(can1, background="#654987")
+    can3 = tkinter.Canvas(can2, background="#654321")
+
+    can1.create_window(10, 10, anchor=tkinter.NW, window=can2)
+    can2.create_window(20, 20, anchor=tkinter.NW, window=can3)
+
+    can1.pack()
+
     app.mainloop()

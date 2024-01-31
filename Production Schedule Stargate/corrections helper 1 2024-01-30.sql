@@ -1,0 +1,155 @@
+USE BWSdb
+GO
+
+BEGIN TRAN;
+
+DECLARE @t TABLE(
+	[ID] INT IDENTITY(0, 1)
+	,[Quote] NVARCHAR(MAX)
+	,[Date] DATETIME
+	,[Line] NVARCHAR(MAX)
+	,[PLine] NVARCHAR(MAX)
+	,[PDate] DATETIME
+)
+;
+INSERT INTO @t ([Quote], [Date], [Line]) VALUES 
+('SG101431', '2024-02-05', 'ED1'),
+('SG101434', '2024-02-06', 'ED2'),
+('SG101403', '2024-02-07', 'ED'),
+('SG101437', '2024-02-08', 'ED'),
+('SG101397', '2024-02-09', 'ED'),
+('SG101432', '2024-02-12', 'ED'),
+('SG101438', '2024-02-13', 'ED'),
+('SG101407', '2024-02-14', 'ED'),
+('SG101440', '2024-02-15', 'ED'),
+('SG101433', '2024-02-16', 'ED'),
+('SG101435', '2024-02-20', 'ED'),
+('SG101411', '2024-02-21', 'ED'),
+('SG101304', '2024-02-22', 'ED'),
+('SG101436', '2024-02-23', 'ED'),
+('SG101513', '2024-02-26', 'ED'),
+('SG101515', '2024-02-27', 'ED'),
+('SG101412', '2024-02-28', 'ED'),
+('SG101204', '2024-02-29', 'ED'),
+
+('SG101497', '2024-02-06', 'WF'),
+('SG101498', '2024-02-13', 'WF'),
+('SG101499', '2024-02-20', 'WF'),
+('SG101500', '2024-02-27', 'WF'),
+
+('SG101480', '2024-03-04', 'ED'),
+('SG101456', '2024-03-05', 'ED'),
+('SG101457', '2024-03-06', 'ED'),
+('SG101505', '2024-03-11', 'ED'),
+('SG101402', '2024-03-12', 'ED'),
+('SG101305', '2024-03-13', 'ED'),
+('SG101506', '2024-03-18', 'ED'),
+('SG101458', '2024-03-19', 'ED'),
+('SG101530', '2024-03-20', 'ED'),
+('SG101459', '2024-03-21', 'ED'),
+('SG101539', '2024-03-22', 'ED'),
+('SG101507', '2024-03-25', 'ED'),
+('SG101414', '2024-03-26', 'ED'),
+('SG101460', '2024-03-27', 'ED'),
+('SG101508', '2024-03-28', 'ED'),
+
+('SG101501', '2024-03-05', 'WF'),
+('SG101502', '2024-03-12', 'WF'),
+('SG101___', '2024-03-19', 'WF'),
+('SG______', '2024-03-21', 'WF'),
+('SG101503', '2024-03-26', 'WF'),
+
+('SG101430', '2024-04-01', 'ED'),
+('SG101306', '2024-04-05', 'ED'),
+('SG101509', '2024-04-08', 'ED'),
+('SG101523', '2024-04-09', 'ED'),
+('SG101415', '2024-04-10', 'ED'),
+('SG101492', '2024-04-11', 'ED'),
+('SG101510', '2024-04-15', 'ED'),
+('SG101493', '2024-04-16', 'ED'),
+('SG101511', '2024-04-17', 'ED'),
+('SG101494', '2024-04-18', 'ED'),
+('SG101512', '2024-04-22', 'ED'),
+('SG101454', '2024-04-23', 'ED'),
+('SG101525', '2024-04-24', 'ED'),
+('SG101455', '2024-04-25', 'ED'),
+('SG101450', '2024-04-29', 'ED'),
+('SG101526', '2024-04-30', 'ED'),
+
+('SG101521', '2024-04-09', 'WF'),
+('SG101370', '2024-04-11', 'WF'),
+
+('SG101442', '2024-05-01', 'ED'),
+('SG101476', '2024-05-02', 'ED'),
+('SG101477', '2024-05-07', 'ED'),
+('SG101443', '2024-05-13', 'ED'),
+('SG101495', '2024-05-14', 'ED'),
+('SG101522', '2024-05-15', 'ED'),
+('SG101496', '2024-05-16', 'ED'),
+('SG101527', '2024-05-21', 'ED'),
+('SG101451', '2024-05-22', 'ED'),
+('SG101452', '2024-05-24', 'ED'),
+('SG101528', '2024-05-27', 'ED'),
+('SG101453', '2024-05-29', 'ED'),
+('SG101529', '2024-05-30', 'ED'),
+
+('SG101444', '2024-06-03', 'ED'),
+('SG101531', '2024-06-05', 'ED'),
+('SG101461', '2024-06-10', 'ED'),
+('SG101532', '2024-06-11', 'ED'),
+('SG101462', '2024-06-17', 'ED'),
+('SG101441', '2024-06-24', 'ED')
+;
+
+
+UPDATE
+	[Stargatedb].[dbo].[dtProductionScheduleV2]
+SET
+	--[JobAvailableLine] = (
+	--	CASE WHEN [JobAvailableLine] = 'WF' THEN 'WF1'
+	--	WHEN [JobAvailableLine] = 'ED' THEN 'ED1'
+	--	ELSE [JobAvailableLine]
+	--	END
+	--)
+	--,[Available Date] = [Date]
+	--,[JobAvailableScheduled] = GETDATE()
+	--,[JobAvailableScheduledBy] = 'vincf via abriggs'
+	[JobFinishDate] = [Date]
+FROM
+	[Stargatedb].[dbo].[dtProductionScheduleV2] [O2]
+INNER JOIN
+	@t [T]
+ON
+	[O2].[SGQuote] = [T].[Quote]
+
+ROLLBACK;
+COMMIT;
+
+BEGIN TRAN
+
+DECLARE @quote NVARCHAR(MAX) = 'SG101370'
+DECLARE @line NVARCHAR(MAX) = 'TPL'
+DECLARE @date DATETIME = '2024-04-11'
+
+UPDATE
+	[BWSdb].[dbo].[OrdersV2]
+SET
+	[JobAvailableLine] = @line
+	,[Available Date] = @date
+	,[JobAvailableScheduled] = GETDATE()
+	,[JobAvailableScheduledBy] = 'vincef via abriggs'
+WHERE
+	[SGQuote] = @quote
+;
+
+UPDATE
+	[Stargatedb].[dbo].[dtProductionScheduleV2]
+SET
+	[JobFinishDate] = @date
+	,[JobStartLine] = @line
+WHERE
+	[SGQuote] = @quote
+;
+
+ROLLBACK;
+COMMIT;
