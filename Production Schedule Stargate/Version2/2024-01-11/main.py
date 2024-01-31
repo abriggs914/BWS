@@ -293,6 +293,9 @@ class App(tkinter.Tk):
 
         self.df_prod_lines = connect(**SQL_USED_LINES)
         self.df_orders = connect(**SQL_DATED_STG_UNITS)
+        self.data["multi_combobox_columns"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
+        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.data["multi_combobox_columns"])
+        self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
         # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
         # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
         # print(f"{self.df_orders.dtypes=}")
@@ -392,6 +395,17 @@ class App(tkinter.Tk):
             command=self.scroll_x_calendar
         )
 
+        # multicombobox for searching
+        self.frame_multi_combobox = tkinter.Frame(
+            self.root_canvas
+        )
+        self.multi_combobox_window = self.root_canvas.create_window(
+            10,
+            5,
+            anchor=tkinter.NW,
+            window=self.frame_multi_combobox
+        )
+
         now = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
         self.data["first_date"] = now + datetime.timedelta(days=-self.data["days_backward"])
@@ -425,6 +439,7 @@ class App(tkinter.Tk):
 
         # loop orders and populate the calendar
         for i, row in self.df_orders.iterrows():
+            # mc_append_row = None
             dat_quote = row.get("OrdersV2_SGQuote", "QUOTE=____")
             # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
             dat_wo = row.get("OrdersV2_WO#", "WO=____")
@@ -432,6 +447,7 @@ class App(tkinter.Tk):
             dat_dealer = row.get("InputField2", "DEALER=____")
             dat_galv = row.get("IsGalv", "GALV=____")
             dat_model = row.get("InputField1", "MODEL=____")
+            dat_cust_wo = row.get("Customer WO#", "CUSTWO=____")
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
             # print(f"{type(date)=}, {date=}, {prod_line=}")
@@ -469,10 +485,24 @@ class App(tkinter.Tk):
                     })
                 else:
                     # this order has already been placed and does not fit on this calendar
-                    pass
+                    # mc_append_row = []
+                    new_row_data = {k: [v] for k, v in row.items()}
+                    new_df = pd.DataFrame(new_row_data)
+                    self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
             else:
                 # add this order to the combobox for placing
-                pass
+                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
+                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
+                new_df = pd.DataFrame(new_row_data)
+                self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
+
+            # if mc_append_row:
+            #     # add new row record to mc
+            #     pass
+
+        print(f"self.df_orders==\n{self.df_orders}")
+        print(f"self.df_rest_orders==\n{self.df_rest_orders}")
+        print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders}")
 
         # header row
         for i, row in enumerate(self.calc_grid_cells[:1]):
@@ -567,7 +597,7 @@ class App(tkinter.Tk):
                     Image.ANTIALIAS
                 )
             )
-        except FileExistsError:
+        except FileNotFoundError:
             self.data["stg_logo_image"] = None
 
         if self.data["stg_logo_image"]:
@@ -582,6 +612,14 @@ class App(tkinter.Tk):
                 *self.calc_grid_cells[0][0],
                 fill=self.data["colour_tile_header_home_background"].hex_code
             )
+
+        # multi-combobox now that data has been sorted
+        self.multi_combobox = tkinter_utility.MultiComboBox(
+            self.frame_multi_combobox,
+            data=self.df_multi_combobox_data_orders,
+            include_aggregate_row=False,
+            include_drop_down_arrow=False
+        )
 
         self.title("Stargate Production Scheduler")
         if (geo := self.data["geometry"]["str"]) == "zoomed":
@@ -598,6 +636,9 @@ class App(tkinter.Tk):
         self.canvas.bind("<ButtonRelease-1>", self.on_left_click_calendar)
         self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
         self.canvas.bind("<Control-z>", self.undo)
+        self.multi_combobox.res_tv_entry.trace_remove("write", self.multi_combobox.trace_res_tv_entry)
+        self.multi_combobox.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
+        self.multi_combobox.trace_res_tv_entry = self.multi_combobox.res_tv_entry.trace_add("write", self.multi_combobox.update_entry)
         self.bind("<Control-z>", self.undo)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # self.bind("<Control-Z>", self.undo)
@@ -615,7 +656,7 @@ class App(tkinter.Tk):
         self.frame_calendar.grid()
         self.frame_calendar.grid_propagate(False)
         self.root_canvas.grid(**{s: "nsew"})
-        self.frame_canvas.grid(**{s: "nsew"})
+        # self.frame_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid_propagate(False)
         self.canvas.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r:1, s: "ew"})
@@ -651,7 +692,14 @@ class App(tkinter.Tk):
         # print(f"{col_legend=}")
         # tiles = [dat["tile"] for dat in col_legend]
         home_tile = self.tiles["home"]["tile"]
-        self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
+
+        if self.data["stg_logo_image"]:
+            # move image
+            self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
+        else:
+            # move rectangle
+            self.canvas.coords(home_tile, x_1, y_1, x_1 + tw, y_1 + th)
+
         for dat in col_legend:
             tile = dat["tile"]
             bw = float(self.canvas.itemcget(tile, "width"))
@@ -1090,6 +1138,9 @@ class App(tkinter.Tk):
                 case _:
                     raise ValueError("Cant undo")
 
+    def multi_combobox_entry_update(self, *args):
+        print(f"multi_combobox_entry_update {self.multi_combobox.res_tv_entry.get()=}, {len(self.multi_combobox.tree_treeview.get_children())=}")
+
     def on_closing(self):
         # need the date, line, and Quote # for SQL update query
         user = "abriggs"
@@ -1156,12 +1207,7 @@ class App(tkinter.Tk):
         self.destroy()
 
 
-if __name__ == '__main__':
-
-    # app = App()
-    # app.mainloop()
-
-
+def test_canvas_window():
     app = tkinter.Tk()
 
     can1 = tkinter.Canvas(app, background="#789456")
@@ -1173,4 +1219,11 @@ if __name__ == '__main__':
 
     can1.pack()
 
+    app.mainloop()
+
+
+if __name__ == '__main__':
+
+    # test_canvas_window()
+    app = App()
     app.mainloop()

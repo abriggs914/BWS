@@ -2274,7 +2274,7 @@ class MultiComboBox(tkinter.Frame):
         self.rg_var, self.rg_tv_var, self.rg_btns = radio_factory(self.frame_middle,
                                                                   buttons=self.radio_btn_texts, default_value=0)
         self.rg_var.trace_variable("w", self.update_radio_group)
-        self.res_tv_entry.trace_variable("w", self.update_entry)
+        self.trace_res_tv_entry = self.res_tv_entry.trace_variable("w", self.update_entry)
         self.typed_in = tkinter.BooleanVar(self, value=False)
 
         self.res_entry = tkinter.Entry(self.frame_top_most, textvariable=self.res_tv_entry, justify="center")
