@@ -2474,15 +2474,30 @@ class MultiComboBox(tkinter.Frame):
         self.update_treeview()
 
     def add_new_item(self, val, col, rest_values=None, rest_tags=None):
+        # TODO support multiple values to be passed in iterable or dictionary fashion.
+
+        cn = self.tree_controller.viewable_column_names
+
+        d idx = cn.index(col)
+        if (typ := type(val)) == dict:
+            val_keys = set(val.keys())
+            set_cn = set(cn)
+            if val_keys.difference(set_cn):
+                # the dictionary 'val' has unknown column names.
+                raise KeyError(f"param 'val' has unknown column names.")
+
+        elif typ in (list, tuple):
+            if len(val) > len(cn):
+                # the list or tuple has too many positional values to insert
+                raise ValueError(f"param 'val' has too many values.")
+
         if val in self.invalid_inp_codes:
             self.throw_fit(val)
-        cn = self.tree_controller.viewable_column_names
         print(f"{col=}")
         # idx = col
         # col = cn[col]
         # col = cn[0] if col == 0 else col
         tags = set()
-        idx = cn.index(col)
         i = self.data.shape[0]
         # print(f"{type(rest_values)=}\n{rest_values=}")
         if not self.limit_to_list:
@@ -2493,8 +2508,8 @@ class MultiComboBox(tkinter.Frame):
                 is_list = False
                 if (is_list := isinstance(rest_tags, (tuple, list))) or (is_dict := isinstance(rest_tags, dict)):
                     if is_dict:
-                        for j, col in enumerate(cn):
-                            tags.add(rest_tags.get(col, self.tree_controller.gen_row_tag(i)))
+                        for j, col_ in enumerate(cn):
+                            tags.add(rest_tags.get(col_, self.tree_controller.gen_row_tag(i)))
                     else:
                         if (l_rt := len(rest_tags)) != (l_cn := len(cn)):
                             if l_rt > l_cn:

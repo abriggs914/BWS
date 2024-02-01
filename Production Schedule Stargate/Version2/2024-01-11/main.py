@@ -630,7 +630,9 @@ class App(tkinter.Tk):
             self.frame_multi_combobox,
             data=self.df_multi_combobox_data_orders,
             include_aggregate_row=False,
-            include_drop_down_arrow=False
+            include_drop_down_arrow=False,
+            limit_to_list=True,
+            lock_result_col="SGQuote"
         )
 
         self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
