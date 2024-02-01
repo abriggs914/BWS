@@ -279,7 +279,8 @@ class App(tkinter.Tk):
             "colour_tile_foreground_selected": Colour("#090909"),
             "font_tile_selected": "Arial 12 bold",
             "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 2
+            "width_tile_outline_selected": 2,
+            "height_calendar_scrollbar": 20
         })
 
         # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
@@ -308,8 +309,8 @@ class App(tkinter.Tk):
         self.data.update({
             "tile_width": 175,
             "tile_height": 110,
-            "canvas_width": self.data["total_width"] * 0.75,
-            "canvas_height": self.data["total_height"] * 0.75
+            "canvas_width": self.data["total_width"] - self.data["width_multi_combobox"],
+            "canvas_height": self.data["total_height"] - self.data["height_multi_combobox"]
         })
 
         # adjust incase too few prod lines
@@ -356,7 +357,7 @@ class App(tkinter.Tk):
         self.frame_canvas = tkinter.Frame(
             self.root_canvas,
             width=self.data["canvas_width"],
-            height=self.data["canvas_height"] + 20,  # scrollbar space
+            height=self.data["canvas_height"] + self.data["height_calendar_scrollbar"],  # scrollbar space
             background="#44318B"
         )
         self.canvas_window = self.root_canvas.create_window(
@@ -438,6 +439,8 @@ class App(tkinter.Tk):
                 })
 
         # loop orders and populate the calendar
+        concats_rest_orders = []
+        concats_multi_combobox_orders = []
         for i, row in self.df_orders.iterrows():
             # mc_append_row = None
             dat_quote = row.get("OrdersV2_SGQuote", "QUOTE=____")
@@ -487,14 +490,23 @@ class App(tkinter.Tk):
                     # this order has already been placed and does not fit on this calendar
                     # mc_append_row = []
                     new_row_data = {k: [v] for k, v in row.items()}
-                    new_df = pd.DataFrame(new_row_data)
-                    self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
+                    new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders.shape[0]])
+                    concats_rest_orders.append(new_df)
+                    # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
+                    # self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
+                    # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
             else:
                 # add this order to the combobox for placing
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
-                self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
+                # self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
+                concats_multi_combobox_orders.append(new_df)
+
+        if concats_rest_orders:
+            self.df_rest_orders = pd.concat(concats_rest_orders, ignore_index=True)
+        if concats_multi_combobox_orders:
+            self.df_multi_combobox_data_orders = pd.concat(concats_multi_combobox_orders, ignore_index=True)
 
             # if mc_append_row:
             #     # add new row record to mc
@@ -620,6 +632,9 @@ class App(tkinter.Tk):
             include_aggregate_row=False,
             include_drop_down_arrow=False
         )
+
+        self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
+        self.data["height_multi_combobox"] = self.multi_combobox.winfo_height()
 
         self.title("Stargate Production Scheduler")
         if (geo := self.data["geometry"]["str"]) == "zoomed":

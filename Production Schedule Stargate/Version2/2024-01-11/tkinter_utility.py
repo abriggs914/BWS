@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.65
-    Date...........2024-01-17
+    Version..............1.66
+    Date...........2024-01-31
     Author(s)....Avery Briggs
     """
 
@@ -38,7 +38,7 @@ def VERSION_NUMBER():
 
 def VERSION_DATE():
     return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
-                                      "%Y-%m-%dictionary")
+                                      "%Y-%m-%d")
 
 
 def VERSION_AUTHORS():

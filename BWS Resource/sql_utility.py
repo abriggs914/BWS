@@ -454,7 +454,7 @@ GO
 		DECLARE @t_to_update AS TABLE
 		(
 			[ID] INT IDENTITY(1, 1),
-			[Column] NVARCHAR(255),
+			[Column] NVARCHAR(MAX),
 			[ValueBefore] NVARCHAR(MAX),
 			[ValueAfter] NVARCHAR(MAX)
 		)
