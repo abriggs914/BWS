@@ -76,8 +76,11 @@ def test_create_history_table():
     # print(f"{create_history_table('Order Options_SpecLines')}")
     # print(f"{create_history_table('Order OptionsV2_SpecLines')}")
 
-    print(f"{create_history_table('Custom Work')}")
-    print(f"{create_history_table('Custom WorkV2')}")
+    # print(f"{create_history_table('Custom Work')}")
+    # print(f"{create_history_table('Custom WorkV2')}")
+
+    # print(f"{create_history_table('ITI Buildings')}")
+    print(f"{create_history_table('ITR Customers')}")
 
 
 if __name__ == '__main__':

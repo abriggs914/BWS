@@ -306,6 +306,50 @@ class App(tkinter.Tk):
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
 
+        self.frame_calendar = tkinter.Frame(
+            self,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
+            background="#AB2194"
+        )
+        self.root_canvas = tkinter.Canvas(
+            self.frame_calendar,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
+            background="#12CC16",
+            scrollregion=(
+                0,
+                0,
+                self.data["geometry"]["width"],
+                self.data["geometry"]["height"]
+            )
+        )
+
+        # multicombobox for searching
+        self.frame_multi_combobox = tkinter.Frame(
+            self.root_canvas
+        )
+        self.multi_combobox_window = self.root_canvas.create_window(
+            10,
+            5,
+            anchor=tkinter.NW,
+            window=self.frame_multi_combobox
+        )
+
+        # multi-combobox now that data has been sorted
+        self.multi_combobox = tkinter_utility.MultiComboBox(
+            self.frame_multi_combobox,
+            data=self.df_multi_combobox_data_orders,
+            include_aggregate_row=False,
+            include_drop_down_arrow=False,
+            limit_to_list=False,
+            allow_insert_ask=False,
+            lock_result_col="SGQuote"
+        )
+
+        self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
+        self.data["height_multi_combobox"] = self.multi_combobox.winfo_height()
+
         self.data.update({
             "tile_width": 175,
             "tile_height": 110,
@@ -333,24 +377,24 @@ class App(tkinter.Tk):
             r_type=list
         )
 
-        self.frame_calendar = tkinter.Frame(
-            self,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background="#AB2194"
-        )
-        self.root_canvas = tkinter.Canvas(
-            self.frame_calendar,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background="#12CC16",
-            scrollregion=(
-                0,
-                0,
-                self.data["geometry"]["width"],
-                self.data["geometry"]["height"]
-            )
-        )
+        # self.frame_calendar = tkinter.Frame(
+        #     self,
+        #     width=self.data["geometry"]["width"],
+        #     height=self.data["geometry"]["height"],
+        #     background="#AB2194"
+        # )
+        # self.root_canvas = tkinter.Canvas(
+        #     self.frame_calendar,
+        #     width=self.data["geometry"]["width"],
+        #     height=self.data["geometry"]["height"],
+        #     background="#12CC16",
+        #     scrollregion=(
+        #         0,
+        #         0,
+        #         self.data["geometry"]["width"],
+        #         self.data["geometry"]["height"]
+        #     )
+        # )
         # print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
         # print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
         # print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
@@ -396,16 +440,16 @@ class App(tkinter.Tk):
             command=self.scroll_x_calendar
         )
 
-        # multicombobox for searching
-        self.frame_multi_combobox = tkinter.Frame(
-            self.root_canvas
-        )
-        self.multi_combobox_window = self.root_canvas.create_window(
-            10,
-            5,
-            anchor=tkinter.NW,
-            window=self.frame_multi_combobox
-        )
+        # # multicombobox for searching
+        # self.frame_multi_combobox = tkinter.Frame(
+        #     self.root_canvas
+        # )
+        # self.multi_combobox_window = self.root_canvas.create_window(
+        #     10,
+        #     5,
+        #     anchor=tkinter.NW,
+        #     window=self.frame_multi_combobox
+        # )
 
         now = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
@@ -625,18 +669,11 @@ class App(tkinter.Tk):
                 fill=self.data["colour_tile_header_home_background"].hex_code
             )
 
-        # multi-combobox now that data has been sorted
-        self.multi_combobox = tkinter_utility.MultiComboBox(
-            self.frame_multi_combobox,
-            data=self.df_multi_combobox_data_orders,
-            include_aggregate_row=False,
-            include_drop_down_arrow=False,
-            limit_to_list=True,
-            lock_result_col="SGQuote"
-        )
+        # # multi-comb
+        # mbobox.add_new_item(vals[0], keys[0], rest_values={k: v for k, v in zip(keys[1:], vals[1:])})
 
-        self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
-        self.data["height_multi_combobox"] = self.multi_combobox.winfo_height()
+        # self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
+        # self.data["height_multi_combobox"] = self.multi_combobox.winfo_height()
 
         self.title("Stargate Production Scheduler")
         if (geo := self.data["geometry"]["str"]) == "zoomed":
@@ -645,6 +682,8 @@ class App(tkinter.Tk):
             self.geometry(geo)
 
         self.grid_widgets()
+
+        self.root_canvas.tag_raise(self.multi_combobox_window)
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
