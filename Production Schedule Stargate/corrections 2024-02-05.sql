@@ -1,6 +1,8 @@
 USE BWSdb
 GO
 
+-- Updates 2024-02-05
+
 DECLARE @vinceTables20240205 TABLE (
 	[ID] INT IDENTITY(0, 1)
 	,[Quote] NVARCHAR(MAX)

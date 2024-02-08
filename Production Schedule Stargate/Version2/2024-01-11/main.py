@@ -1064,9 +1064,12 @@ class App(tkinter.Tk):
 
                 for sel in selected:
                     self.select_tile(*sel)
+                    o_id = self.tiles[sel[0]][sel[1]].get('order', None)
+                    quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
+                    print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
                     # self.data["state"]["selected"].append(sel)
                 self.update_selected_tiles()
-                # print(f"END SELECTED = {self.data['state']['selected']=}")
+                print(f"END SELECTED = {self.data['state']['selected']=}")
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
