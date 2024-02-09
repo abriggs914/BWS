@@ -532,11 +532,14 @@ class App(tkinter.Tk):
             dat_cust_wo = row.get("Customer WO#", "CUSTWO=____")
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
-            print(f"{type(date)=}, {date=}, {prod_line=}")
+            if prod_line == "":
+                prod_line = None
+            print(f"{type(date)=}, {date=}, {prod_line=}", end="")
             # print(f"{dat_dealer=}")
             if date is not None and prod_line is not None:
                 if self.data["first_date"] <= date <= self.data["last_date"]:
                     # place this tile with date and prod_line
+                    print(f"\tFITS")
                     tile_data = self.tiles[date][prod_line]
                     col = self.canvas.bbox(tile_data["tile"])
                     # prev_texts = tile_data.get("texts", [])
@@ -567,6 +570,7 @@ class App(tkinter.Tk):
                     })
                 else:
                     # this order has already been placed and does not fit on this calendar
+                    print(f"\tDOESNT FIT")
                     # mc_append_row = []
                     new_row_data = {k: [v] for k, v in row.items()}
                     new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders.shape[0]])
@@ -576,6 +580,7 @@ class App(tkinter.Tk):
                     # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
             else:
                 # add this order to the combobox for placing
+                print(f"\tCOMBOBOX")
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
@@ -768,6 +773,7 @@ class App(tkinter.Tk):
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
+        self.root_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
         self.canvas.bind("<ButtonRelease-1>", self.on_left_click_calendar)
         self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
         self.canvas.bind("<Control-z>", self.undo)
@@ -1070,6 +1076,9 @@ class App(tkinter.Tk):
                     # self.data["state"]["selected"].append(sel)
                 self.update_selected_tiles()
                 print(f"END SELECTED = {self.data['state']['selected']=}")
+
+    def on_left_click_root_canvas(self, event) -> None:
+        print(f"on_left_click_root_canvas")
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
