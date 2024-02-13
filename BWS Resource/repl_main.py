@@ -8,18 +8,22 @@ from sql_utility import select_with_alias, create_history_table
 
 def test_select_with_alias():
 
+    # cross join example
     print(select_with_alias([
         ("ITR Customers", "C", "C"),
         ("ITD Dept", "D", "D")
     ]))
+    # cross join example
     print(select_with_alias([
         ("Orders", "O", "O"),
         ("OrdersV2", "O2", "O2")
     ]))
+    # cross join example
     print(select_with_alias([
         ("ITD Dept", "D"),
         ("ITF Flags", "F")
     ]))
+    # inner join example using f_keys
     print(select_with_alias(
         [
             ("Orders", "O"),
@@ -27,12 +31,14 @@ def test_select_with_alias():
         ],
         f_keys=("inner", "DealerID", "ID")
     ))
+    # inner join example using keys in the table list
     print(select_with_alias(
         [
             ("Orders", "O", "O", "DealerID"),
             ("Dealers", "D", "D", "ID")
         ]
     ))
+    # inner join across multiple tables using f_keys
     print(select_with_alias(
         [
             ("Orders", "O", "O"),
@@ -46,6 +52,7 @@ def test_select_with_alias():
             ("inner", "Sale PersonID", "ID-SaleStaff")
         )
     ))
+    # left joins using f_keys
     print(select_with_alias(
         [
             ("Orders", "O"),
@@ -58,6 +65,10 @@ def test_select_with_alias():
             ("left", "Sale PersonID", "ID-SaleStaff"),
             ("left", "ProductID", "IDTrailer")
         )
+    ))
+    # single-table select
+    print(select_with_alias(
+        "Dealers", alias="D", prefix="DEAL_"
     ))
 
 def test_create_history_table():

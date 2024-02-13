@@ -6,32 +6,89 @@ import pandas as pd
 import datetime
 
 
-def no_specials(text: str, r_char: str = "_") -> str:
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
 
-    for c in [
+VERSION = \
+    """	
+    General SQL Utility Functions
+    Version..............1.01
+    Date...........2024-02-13
+    Author(s)....Avery Briggs
+    """
+
+
+def VERSION_DETAILS():
+    return VERSION.lower().split("version")[0].strip()
+
+
+def VERSION_NUMBER():
+    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+
+
+def VERSION_DATE():
+    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+                                      "%Y-%m-%dictionary")
+
+
+def VERSION_AUTHORS():
+    return [w.removeprefix(".").strip().title() for w in VERSION.lower().split("author(s)")[-1].split("..") if
+            w.strip()]
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
+def no_specials(text: str, r_char: str = "") -> str:
+    """ Exception on '_' """
+    invalid = {
         " ", "!", "@", "#", "$", "%",
         "^", "&", "*", "(", ")", "-",
         "+", "=", "'", "\"", "[", "]",
         "{", "}", "\\", "|", ":", ";",
         "<", ",", ">", ".", "?", "/",
         "~", "`"
-    ]:
-        text = text.replace(c, "")
+    }
+    for c in invalid:
+        text = text.replace(c, r_char)
     return text
 
 
 def date_first(msg: str, keyword="date") -> str:
-    lmsg = msg.lower()
-    if keyword in msg:
-        idx = msg.index(keyword)
-        if msg[idx - 2 : idx].lower() != "up":
-            msg = f"Date{msg[:idx]}{msg[idx + len(keyword):]}"
+    """
+        Ensure that a column name that specifies data follows the 'date-first' noming convention
+        1 pass only! If the keyword appears
+        EX: date_first("Quote Date") => "DateQuote"
+    """
+
+    r_msg = msg
+    l_msg = msg.lower()
+    l_key = keyword.lower()
+    if l_key in l_msg:
+        i = l_msg.index(l_key)
+        # ensure that the word isn't "update"
+        if l_msg[i-2:i] != "up":
+            r_msg = f"Date{msg[:i]}{msg[i+len(keyword):]}"
+    return r_msg.strip()
+
+
+    # lmsg = msg.lower()
+    # if keyword in msg:
+    #     idx = msg.index(keyword)
+    #     if msg[idx - 2 : idx].lower() != "up":
+    #         msg = f"Date{msg[:idx]}{msg[idx + len(keyword):]}"
     # print(f"RETURNED MESSAGE '{msg=}'")
-    return msg
+    # return msg
 
 
-def parse_connection_data(data: dict) -> dict:
-    """Given a dictionary of ODBC connection data, verify that the user and password are pre-verified."""
+def parse_connection_data(data: dict | str) -> dict:
+    """
+        Given a dictionary of ODBC connection data, verify that the user and password are pre-verified.
+        Optionally pass a single string matching the key for a known valid ODBC connection (BWSdb).
+    """
 
     valid_ = {
         "bwsdb": {
@@ -41,6 +98,14 @@ def parse_connection_data(data: dict) -> dict:
         "stargatedb": {
             "uid": "SGeu1",
             "pwd": "Pupplies-Hagard->Rio0"
+        },
+        "sysprocompanya": {
+            "uid": "SRS",
+            "pwd": ""
+        },
+        "sysprocompanys": {
+            "uid": "SCSRS",
+            "pwd": ""
         }
     }
 
@@ -54,6 +119,18 @@ def parse_connection_data(data: dict) -> dict:
         r_pwd = valid_[database]["pwd"]
 
         if (uid == r_uid) and (pwd == r_pwd):
+            return {
+                "server": server,
+                "database": database,
+                "uid": uid,
+                "pwd": pwd
+            }
+    elif isinstance(data, str):
+        server = "SERVER3"
+        database = data.lower()
+        uid = valid_[database]["uid"]
+        pwd = valid_[database]["pwd"]
+        if database in valid_:
             return {
                 "server": server,
                 "database": database,
@@ -76,8 +153,21 @@ def select_with_alias(
         with_no_locks: bool = True,
         default_join_style: Literal['INNER', 'LEFT', 'RIGHT', 'FULL', 'LEFT OUTER', 'RIGHT OUTER', 'FULL OUTER'] = "INNER"
 ) -> str:
+    """
+        Select table data from an SQL Server using a table alias and column-prefixes.
+        Use 'alias' to set an alias for the selecting table.
+        Use 'prefix' to add a prefix to each of the columns being selected.
+        'no_spaces' and 'specials_replace' modify the column names to be without spaces and specials respectively.
+        'with_no_locks' adds the optional "WITH (NOLOCK)" when accessing tables.
+        'default_join_style' will affect the method used to join a list of tables together.
+        'connection_data' param is meant to be parsed by parse_connection function.
 
-    if (len(table) > 2) and (not f_keys):
+        See 'test_select_with_alias' in the __main__ section below, for examples.
+    """
+
+    is_str = isinstance(table, str)
+    is_lst = isinstance(table, (tuple, list))
+    if is_lst and (len(table) > 2) and (not f_keys):
         raise ValueError(f"When joining more than 2 tables, you must use pass join criterion through the 'f_keys' parameter.")
 
     placeholder = "##__PLACEHOLDER__##"
@@ -114,23 +204,30 @@ def select_with_alias(
                 # print(f"{k=}, {new_key=}, {combo=}")
                 specials[new_key] = val
 
+    # print(f"1 {prefix=}", end="")
+
     if not table:
         raise ValueError(f"'table' can't be None or empty")
     else:
         if not alias:
+            # print(f" A", end="")
             if not isinstance(table, (tuple, list)):
                 raise ValueError(f"'alias' can't be None or empty string")
         else:
+            # print(f" B", end="")
             if not prefix:
-                raise ValueError(f"'prefix' can't be None or empty string")
-            else:
+                # print(f" C", end="")
                 prefix = alias
+                # raise ValueError(f"'prefix' can't be None or empty string")
+            # else:
+            #     prefix = prefix
 
-    if not isinstance(table, (list, tuple)):
+    # print(f"\n2 {prefix=}")
+
+    if not is_lst:
         tables = [(table, alias, prefix)]
     else:
         tables = table
-
 
     if f_keys is not None:
         if isinstance(f_keys, (list, tuple)) and isinstance(f_keys[0], (list, tuple)) and (len(tables) > len(f_keys)):
@@ -301,6 +398,9 @@ def create_history_table(
         block_warnings: bool = True,
         create_alter: Literal['CREATE', 'ALTER'] = "CREATE"
 ):
+
+    # TODO correct the trigger to support MULTIPLE transactions on the same table.
+    #  Right now using the OldID and NewID method, only 1 record is updated in any trigger call.
 
     if block_warnings:
         import warnings
@@ -985,3 +1085,72 @@ GO
 #         warnings.resetwarnings()
 #
 #     return all_sql
+
+
+if __name__ == '__main__':
+
+    def test_select_with_alias():
+        # cross join example
+        print(select_with_alias([
+            ("ITR Customers", "C", "C"),
+            ("ITD Dept", "D", "D")
+        ]))
+        # cross join example
+        print(select_with_alias([
+            ("Orders", "O", "O"),
+            ("OrdersV2", "O2", "O2")
+        ]))
+        # cross join example
+        print(select_with_alias([
+            ("ITD Dept", "D"),
+            ("ITF Flags", "F")
+        ]))
+        # inner join example using f_keys
+        print(select_with_alias(
+            [
+                ("Orders", "O"),
+                ("Dealers", "D")
+            ],
+            f_keys=("inner", "DealerID", "ID")
+        ))
+        # inner join example using keys in the table list
+        print(select_with_alias(
+            [
+                ("Orders", "O", "O", "DealerID"),
+                ("Dealers", "D", "D", "ID")
+            ]
+        ))
+        # inner join across multiple tables using f_keys
+        print(select_with_alias(
+            [
+                ("Orders", "O", "O"),
+                ("Dealers", "D", "D"),
+                # ("Orders", "O", "O", "DealerID"),
+                # ("Sales Staff", "S", "S", "Sales PersonID")
+                ("Sales Staff", "S", "S")
+            ],
+            f_keys=(
+                ("inner", "DealerID", "ID"),
+                ("inner", "Sale PersonID", "ID-SaleStaff")
+            )
+        ))
+        # left joins using f_keys
+        print(select_with_alias(
+            [
+                ("Orders", "O"),
+                ("Dealers", "D"),
+                ("Sales Staff", "S"),
+                ("Products", "P")
+            ],
+            f_keys=(
+                ("left", "DealerID", "ID"),
+                ("left", "Sale PersonID", "ID-SaleStaff"),
+                ("left", "ProductID", "IDTrailer")
+            )
+        ))
+        # single-table select
+        print(select_with_alias(
+            "Dealers", alias="D", prefix="DEAL_"
+        ))
+
+    test_select_with_alias()
