@@ -774,6 +774,7 @@ class App(tkinter.Tk):
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
         self.root_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
+        self.bind_treeview_to_canvas()
         self.canvas.bind("<ButtonRelease-1>", self.on_left_click_calendar)
         self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
         self.canvas.bind("<Control-z>", self.undo)
@@ -916,11 +917,11 @@ class App(tkinter.Tk):
     def get_tile_bbox(self, date: pd.Timestamp, prod_line: str) -> tuple[float, float, float, float] | None:
         try:
             i_line = self.list_prod_lines.index(prod_line) + 1
-        except IndexError:
+        except (IndexError, ValueError):
             i_line = None
         try:
             i_date = self.list_dates.index(date) + 1
-        except IndexError:
+        except (IndexError, ValueError):
             i_date = None
 
         if i_line is None or i_date is None:
@@ -941,6 +942,7 @@ class App(tkinter.Tk):
             self.data["state"]["selected"].append((date, prod_line))
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
+        # print(f"HOVER ({date=}, {prod_line=})")
         self.data["state"]["hovered"].append((date, prod_line))
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
@@ -982,12 +984,18 @@ class App(tkinter.Tk):
 
     def on_left_click_calendar(self, event) -> None:
         dt = self.data["state"]["dragged"]
-        print(f"on_left_click_calendar, {dt=}")
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
         # tile_data = self.get_tile_at_x_y(o_x, o_y)
-        print(f"on_left_click_calendar, {date=}, {line=}")
+        print(f"on_left_click_calendar, {dt=} {date=}, {line=}")
+
+        if date is None or line is None:
+            # print(f"NONE => {date=}, {line=}, {dt=}")
+            # return dt to its original position.
+            self.clear_drag_tiles()
+            return
+
         state = event.state
         shift_held = state & 0x1
         control_held = state & 0x4
@@ -1044,7 +1052,7 @@ class App(tkinter.Tk):
             #     # self.tiles[drag_date][drag_line]["tile"] = stat_tile
 
             self.drag_tile(date, line)  # add the stationary tile for drag re-adjustment
-            self.reset_drag_tiles()
+            self.clear_drag_tiles()
             self.clear_selected_tiles()
 
         else:
@@ -1078,7 +1086,10 @@ class App(tkinter.Tk):
                 print(f"END SELECTED = {self.data['state']['selected']=}")
 
     def on_left_click_root_canvas(self, event) -> None:
-        print(f"on_left_click_root_canvas")
+        print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
+    def bind_treeview_to_canvas(self):
+        old_bind = self.multi_combobox.tree_controller.binding_treeview_b1_motion
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
@@ -1088,6 +1099,7 @@ class App(tkinter.Tk):
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
+        print(f"{ht=}, {st=}, {dt=}")
         if not st:
             # nothing selected, select the hovered and continue
             for date, line in ht:
@@ -1141,6 +1153,7 @@ class App(tkinter.Tk):
         date = self.get_date_bucket(o_x)
         line = self.get_prod_line_bucket(o_y)
         if date is None or line is None:
+            self.clear_hover_tiles()
             return
         # self.canvas.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
@@ -1288,7 +1301,7 @@ class App(tkinter.Tk):
                 )
         self.data["state"]["selected"].clear()
 
-    def reset_drag_tiles(self):
+    def clear_drag_tiles(self):
         print(f"RESETTING DRAG TILES")
         tw, th = self.data["tile_width"], self.data["tile_height"]
         tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
