@@ -11,9 +11,9 @@ from pyodbc_connection import connect
 from colour_utility import *
 from PIL import Image, ImageTk
 
-import win32gui
-import win32con
-import win32api
+
+# Main grid program for STG Production scheduling tool.
+# click and drag listeners implemented, undo history, disable multiselect
 
 
 SQL_USED_LINES = {
@@ -253,15 +253,7 @@ class App(tkinter.Tk):
             "days_backward": 3 * 7,
             "days_forward": 52 * 7,
 
-            "x_top_widgets": 10,
-            "y_top_widgets": 5,
-            "margin_between_mc_and_calendar": 20,
-
-            # "colour_app_background": Colour("#C3C3C3"),
-            # "colour_app_background": Colour("#941186"),
-            # "colour_app_background": self.cget("bg"),
-            "colour_app_background": Colour("#F0F0F0"),
-            "colour_calendar_background": Colour("#101060"),
+            "colour_calendar_background": Colour("#000000"),
             "colour_tile_header_home_background": Colour("#181210"),
             "colour_tile_header_row_background": Colour("#321116"),
             "colour_tile_header_row_foreground": Colour("#e4e4ff"),
@@ -281,9 +273,6 @@ class App(tkinter.Tk):
             # "colour_tile_header_row_foreground": Colour("#e4e4ff"),
             # "colour_tile_header_col_background": Colour("#321116"),
             # "colour_tile_header_col_foreground": Colour("#e4e4ff"),
-            # "colour_fill_multi_combobox_drag_tile": self.data["colour_tile_background"].darkened(0.2),
-            "colour_fill_multi_combobox_drag_tile": self.data["colour_app_background"],
-            "colour_outline_multi_combobox_drag_tile":self.data["colour_tile_foreground"].darkened(0.2),
             "colour_tile_background_hover": self.data["colour_tile_background"].brightened(0.25),
             "colour_tile_foreground_hover": self.data["colour_tile_foreground"].brightened(0.25),
             "font_tile_hover": "Arial 12 bold",
@@ -294,35 +283,10 @@ class App(tkinter.Tk):
             "colour_tile_foreground_selected": Colour("#090909"),
             "font_tile_selected": "Arial 12 bold",
             "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 2,
-            "height_calendar_scrollbar": 20,
-
-            "colour_tile_background_weekend": self.data["colour_tile_background"].darkened(0.5),
-            "colour_tile_foreground_weekend": self.data["colour_tile_foreground"].darkened(0.5),
-            "colour_tile_outline_weekend": self.data["colour_tile_outline"].darkened(0.5),
-            "font_tile_weekend": self.data["font_tile"],
-            "width_tile_outline_weekend": self.data["width_tile_outline"]
-        })
-        self.data.update({
-            "colour_tile_background_weekend_selected": self.data["colour_tile_background_selected"].darkened(0.25),
-            "colour_tile_foreground_weekend_selected": self.data["colour_tile_foreground_selected"].darkened(0.25),
-            "colour_tile_outline_weekend_selected": self.data["colour_tile_outline_selected"].darkened(0.25),
-            "font_tile_weekend_selected": self.data["font_tile_selected"],
-
-            "colour_tile_background_weekend_hover": self.data["colour_tile_background_hover"].darkened(0.25),
-            "colour_tile_foreground_weekend_hover": self.data["colour_tile_foreground_hover"].darkened(0.25),
-            "colour_tile_outline_weekend_hover": self.data["colour_tile_outline_hover"].darkened(0.25),
-            "font_tile_weekend_hover": self.data["font_tile_hover"]
+            "width_tile_outline_selected": 2
         })
 
-        print(f"{self.cget('bg')=}")
-
-        self.title("Stargate Production Scheduler")
-        self.configure(background=self.data["colour_app_background"].hex_code)
-
-        # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
-        self.data["geometry"] = tkinter_utility.calc_geometry_tl("zoomed", largest=1, rtype=dict)
-        print(f"DIMS: {self.data['geometry']=}")
+        self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
         self.data.update({
             "total_width": self.data["geometry"]["width"],
             "total_height": self.data["geometry"]["height"]
@@ -330,11 +294,7 @@ class App(tkinter.Tk):
         n_cols = self.data["days_forward"] + self.data["days_backward"] + 1  # +1 for today in the middle
 
         self.df_prod_lines = connect(**SQL_USED_LINES)
-        self.df_orders = connect(**SQL_DATED_STG_UNITS).fillna("")
-        self.data["multi_combobox_columns"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
-        self.data["info_frame_columns"] = ["US Sale"] + self.data["multi_combobox_columns"] + ["Prod Date", "Delivery Date"]
-        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.data["multi_combobox_columns"])
-        self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
+        self.df_orders = connect(**SQL_DATED_STG_UNITS)
         # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
         # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
         # print(f"{self.df_orders.dtypes=}")
@@ -344,37 +304,11 @@ class App(tkinter.Tk):
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
 
-        self.frame_calendar = tkinter.Frame(
-            self,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background="#AB2194"
-        )
-        self.root_canvas = tkinter.Canvas(
-            self.frame_calendar,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background="#12CC16",
-            scrollregion=(
-                0,
-                0,
-                self.data["geometry"]["width"],
-                self.data["geometry"]["height"]
-            )
-        )
-
-        self.data["width_multi_combobox"] = 725
-        self.data["height_multi_combobox"] = 150
-
-        print(f"{self.data['width_multi_combobox']=}\n{self.data['height_multi_combobox']=}")
-
         self.data.update({
             "tile_width": 175,
             "tile_height": 110,
-            "tile_width_weekend": 60,
-            "tile_height_weekend": 110,
-            "canvas_width": self.data["total_width"] - self.data["width_multi_combobox"],
-            "canvas_height": self.data["total_height"] - self.data["height_multi_combobox"]
+            "canvas_width": self.data["total_width"] * 0.75,
+            "canvas_height": self.data["total_height"] * 0.75
         })
 
         # adjust incase too few prod lines
@@ -383,31 +317,38 @@ class App(tkinter.Tk):
                 "tile_height": self.data["canvas_height"] / n_rows
             })
 
-        self.frame_info_frame = tkinter.Frame(self.root_canvas)
-        self.frame_canvas = tkinter.Frame(
-            self.root_canvas,
+        self.data.update({
+            "canvas_width_scroll_region": self.data["tile_width"] * n_cols,
+            "canvas_height_scroll_region": self.data["tile_height"] * n_rows,
+        })
+
+        canvas_background = self.data["colour_calendar_background"]
+        self.calc_grid_cells = utility.grid_cells(
+            self.data["canvas_width_scroll_region"],
+            n_cols,
+            self.data["canvas_height_scroll_region"],
+            n_rows,
+            r_type=list
+        )
+
+        self.frame_calendar = tkinter.Frame(self)
+        self.canvas = tkinter.Canvas(
+            self.frame_calendar,
             width=self.data["canvas_width"],
-            height=self.data["canvas_height"] + self.data["height_calendar_scrollbar"],  # scrollbar space
-            background="#44318B"
+            height=self.data["canvas_height"],
+            background=canvas_background.hex_code,
+            scrollregion=(
+                0,
+                0,
+                self.data["canvas_width_scroll_region"],
+                self.data["canvas_height_scroll_region"]
+            )
         )
-        # multicombobox for searching
-        self.frame_multi_combobox = tkinter.Frame(
-            self.root_canvas
+        self.scroll_bar_x = tkinter.Scrollbar(
+            self.frame_calendar,
+            orient="horizontal",
+            command=self.scroll_x_calendar
         )
-
-        # multi-combobox now that data has been sorted
-        self.multi_combobox = tkinter_utility.MultiComboBox(
-            self.frame_multi_combobox,
-            data=self.df_multi_combobox_data_orders,
-            include_aggregate_row=False,
-            include_drop_down_arrow=False,
-            limit_to_list=False,
-            allow_insert_ask=False,
-            lock_result_col="SGQuote"
-        )
-
-        # self.data["width_multi_combobox"] = self.frame_multi_combobox.winfo_width()
-        # self.data["height_multi_combobox"] = self.frame_multi_combobox.winfo_height()
 
         now = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
@@ -418,94 +359,6 @@ class App(tkinter.Tk):
         self.tiles = {d: {pl: dict() for pl in self.list_prod_lines} for d in self.list_dates}
         self.tiles["home"] = dict()
 
-        n_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
-        self.data.update({
-            "canvas_width_scroll_region":
-                # ((n_cols - n_weekend_days) * self.data["tile_width"])
-                # + (n_weekend_days * self.data["tile_width_weekend"]),
-                self.data["tile_width"] * n_cols,
-            "canvas_height_scroll_region": self.data["tile_height"] * n_rows,
-        })
-
-        # canvas_background = self.data["colour_calendar_background"]
-        self.calc_grid_cells = utility.grid_cells(
-            self.data["canvas_width_scroll_region"],
-            n_cols,
-            self.data["canvas_height_scroll_region"],
-            n_rows,
-            r_type=list
-        )
-
-        # self.frame_calendar = tkinter.Frame(
-        #     self,
-        #     width=self.data["geometry"]["width"],
-        #     height=self.data["geometry"]["height"],
-        #     background="#AB2194"
-        # )
-        # self.root_canvas = tkinter.Canvas(
-        #     self.frame_calendar,
-        #     width=self.data["geometry"]["width"],
-        #     height=self.data["geometry"]["height"],
-        #     background="#12CC16",
-        #     scrollregion=(
-        #         0,
-        #         0,
-        #         self.data["geometry"]["width"],
-        #         self.data["geometry"]["height"]
-        #     )
-        # )
-        # print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
-        # print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
-        # print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
-        self.canvas_window = self.root_canvas.create_window(
-            # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
-            self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
-            self.data["y_top_widgets"],
-            # self.data["height_multi_combobox"],
-            # (30, 200),
-            # self.data["geometry"]["width"] / 2,
-            # self.data["geometry"]["height"] / 2,
-            width=int(self.data["geometry"]["width"]),
-            height=int(self.data["geometry"]["height"]),
-            window=self.frame_canvas,
-            # anchor=tkinter.CENTER
-            anchor=tkinter.NW
-            #int(self.data["geometry"]["height"] - self.data["canvas_height"])
-            # ,
-            # self.data["geometry"]["width"],
-            # self.data["geometry"]["height"]
-            # ,
-            # window=self.canvas
-        )
-        self.canvas = tkinter.Canvas(
-            self.frame_canvas,
-            width=self.data["canvas_width"],
-            height=self.data["canvas_height"],
-            background=self.data["colour_calendar_background"].hex_code,
-            scrollregion=(
-                0,
-                0,
-                self.data["canvas_width_scroll_region"],
-                self.data["canvas_height_scroll_region"]
-            )
-        )
-        self.scroll_bar_x = tkinter.Scrollbar(
-            self.frame_canvas,
-            orient="horizontal",
-            command=self.scroll_x_calendar
-        )
-
-        # # multicombobox for searching
-        # self.frame_multi_combobox = tkinter.Frame(
-        #     self.root_canvas
-        # )
-        # self.multi_combobox_window = self.root_canvas.create_window(
-        #     10,
-        #     5,
-        #     anchor=tkinter.NW,
-        #     window=self.frame_multi_combobox
-        # )
-
         # print(f"{now=}\n{self.list_dates=}")
 
         # rest of the tiles
@@ -513,17 +366,10 @@ class App(tkinter.Tk):
             for j, col in enumerate(row[1:]):
                 prod_line = self.list_prod_lines[i]
                 date = self.list_dates[j]
-                is_weekend = date.weekday() >= 5
-                if is_weekend:
-                    tile_colour = self.data["colour_tile_background_weekend"]
-                    tile_outline = self.data["colour_tile_outline_weekend"]
-                    tile_outline_width = self.data["width_tile_outline_weekend"]
-                    font = self.data["font_tile_weekend"]
-                else:
-                    tile_colour = self.data["colour_tile_background"]
-                    tile_outline = self.data["colour_tile_outline"]
-                    tile_outline_width = self.data["width_tile_outline"]
-                    font = self.data["font_tile"]
+                tile_colour = self.data["colour_tile_background"]
+                tile_outline = self.data["colour_tile_outline"]
+                tile_outline_width = self.data["width_tile_outline"]
+                font = self.data["font_tile"]
                 tile = self.canvas.create_rectangle(
                     *col,
                     fill=tile_colour.hex_code,
@@ -536,28 +382,21 @@ class App(tkinter.Tk):
                 })
 
         # loop orders and populate the calendar
-        concats_rest_orders = []
-        concats_multi_combobox_orders = []
         for i, row in self.df_orders.iterrows():
-            # mc_append_row = None
             dat_quote = row.get("OrdersV2_SGQuote", "QUOTE=____")
             # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
             dat_wo = row.get("OrdersV2_WO#", "WO=____")
-            dat_sn = row.get("Serial Number#", "")
+            dat_sn = row.get("Serial Number#", "SN=____")
             dat_dealer = row.get("InputField2", "DEALER=____")
             dat_galv = row.get("IsGalv", "GALV=____")
             dat_model = row.get("InputField1", "MODEL=____")
-            dat_cust_wo = row.get("Customer WO#", "CUSTWO=____")
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
-            if prod_line == "":
-                prod_line = None
-            print(f"{type(date)=}, {date=}, {prod_line=}", end="")
+            # print(f"{type(date)=}, {date=}, {prod_line=}")
             # print(f"{dat_dealer=}")
             if date is not None and prod_line is not None:
                 if self.data["first_date"] <= date <= self.data["last_date"]:
                     # place this tile with date and prod_line
-                    print(f"\tFITS")
                     tile_data = self.tiles[date][prod_line]
                     col = self.canvas.bbox(tile_data["tile"])
                     # prev_texts = tile_data.get("texts", [])
@@ -571,7 +410,7 @@ class App(tkinter.Tk):
                             dat_model,
                             dat_dealer,
                             dat_galv
-                        ] if v
+                        ]
                     ]
                     self.tiles[date][prod_line].update({
                         "order": i,
@@ -588,35 +427,10 @@ class App(tkinter.Tk):
                     })
                 else:
                     # this order has already been placed and does not fit on this calendar
-                    print(f"\tDOESNT FIT")
-                    # mc_append_row = []
-                    new_row_data = {k: [v] for k, v in row.items()}
-                    new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders.shape[0]])
-                    concats_rest_orders.append(new_df)
-                    # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
-                    # self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
-                    # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
+                    pass
             else:
                 # add this order to the combobox for placing
-                print(f"\tCOMBOBOX")
-                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
-                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
-                new_df = pd.DataFrame(new_row_data)
-                # self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
-                concats_multi_combobox_orders.append(new_df)
-
-        if concats_rest_orders:
-            self.df_rest_orders = pd.concat(concats_rest_orders, ignore_index=True)
-        if concats_multi_combobox_orders:
-            self.df_multi_combobox_data_orders = pd.concat(concats_multi_combobox_orders, ignore_index=True)
-
-            # if mc_append_row:
-            #     # add new row record to mc
-            #     pass
-
-        print(f"self.df_orders==\n{self.df_orders}")
-        print(f"self.df_rest_orders==\n{self.df_rest_orders}")
-        print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders}")
+                pass
 
         # header row
         for i, row in enumerate(self.calc_grid_cells[:1]):
@@ -711,7 +525,7 @@ class App(tkinter.Tk):
                     Image.ANTIALIAS
                 )
             )
-        except FileNotFoundError:
+        except FileExistsError:
             self.data["stg_logo_image"] = None
 
         if self.data["stg_logo_image"]:
@@ -727,115 +541,18 @@ class App(tkinter.Tk):
                 fill=self.data["colour_tile_header_home_background"].hex_code
             )
 
-        print(f"{self.df_multi_combobox_data_orders=}")
-        self.multi_combobox.add_new_item(self.df_multi_combobox_data_orders)
-        self.window_root_canvas = self.root_canvas.create_window(
-            # self.data["height_multi_combobox"],
-            # self.data["y_top_widgets"],
-            # 40, 40,
-            self.data["x_top_widgets"],
-            self.data["height_multi_combobox"] + 250,
-            anchor=tkinter.NW,
-            window=self.frame_info_frame
-        )
-
-        # font="default" key_width=30, val_width=64, width=250
-        # font="Arial 14 bold" key_width=16, val_width=35, width=100
-        # font="Arial 16 bold" key_width=20, val_width=40, width=80
-        self.info_frame = tkinter_utility.InfoFrame(
-            self.frame_info_frame,
-            labels=self.data["info_frame_columns"],
-            auto_grid=True,
-            header="Quote Information:",
-            key_width=16,
-            val_width=35,
-            width=100,
-            background="#77a1ee",
-            padx=10,
-            pady=10,
-            cell_border=True,
-            key_label_keywords={"font": "Arial 14 bold"},
-            value_label_keywords={"font": "Arial 14 bold"},
-            formats={
-                "Prod Date": lambda d: d.strftime("%Y-%m-%d"),
-                "Delivery Date": lambda d: d.strftime("%Y-%m-%d")
-            }
-        )
-
-        # # multi-comb
-        # mbobox.add_new_item(vals[0], keys[0], rest_values={k: v for k, v in zip(keys[1:], vals[1:])})
-
-        # self.data["width_multi_combobox"] = self.multi_combobox.winfo_width()
-        # self.data["height_multi_combobox"] = self.multi_combobox.winfo_height()
-
-        if (geo := self.data["geometry"]["str"]) == "zoomed":
-            self.state(geo)
-        else:
-            self.geometry(geo)
-
-        self.multi_combobox_window = self.root_canvas.create_window(
-            self.data["x_top_widgets"],
-            self.data["y_top_widgets"],
-            anchor=tkinter.NW,
-            window=self.frame_multi_combobox
-        )
-
-        self.tv_multi_combobox_drag_tile = tkinter.BooleanVar(self, value=False)
-
-        self.multi_combobox_canvas_drag_tile = tkinter.Canvas(
-            self.frame_multi_combobox,
-            width=100 + self.data["tile_width"],
-            height=100 + self.data["tile_height"],
-            bg=self.data["colour_fill_multi_combobox_drag_tile"].hex_code
-            # ,
-            # outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code
-        )
-
-        # canvas
-        hwnd = self.multi_combobox_canvas_drag_tile.winfo_id()
-        colorkey = win32api.RGB(*self.data["colour_fill_multi_combobox_drag_tile"].rgb_code)
-        wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-        new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
-        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_exstyle)
-        print(f"C1 {hwnd=}, {colorkey=}, {wnd_exstyle=}, {new_exstyle=}")
-        win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
-
-        # window
-        hwnd = self.winfo_id()
-        colorkey = win32api.RGB(*self.data["colour_app_background"].rgb_code)
-        wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-        new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
-        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_exstyle)
-        print(f"C2 {hwnd=}, {colorkey=}, {wnd_exstyle=}, {new_exstyle=}")
-        win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
-        # canvas.create_rectangle(50, 50, 100, 100, fill='blue')
-        # canvas.pack()
-
-        self.multi_combobox_drag_tile = self.multi_combobox_canvas_drag_tile.create_rectangle(
-            200, 400,
-            100 + self.data["tile_width"],
-            100 + self.data["tile_height"],
-            fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
-            outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code
-        )
+        self.title("Stargate Production Scheduler")
+        self.geometry(self.data["geometry"]["str"])
 
         self.grid_widgets()
-
-        # self.root_canvas.tag_raise(self.multi_combobox_window)
-        # # self.multi_combobox_window.lift()
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
-        self.root_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
-        self.bind_treeview_to_canvas()
         self.canvas.bind("<ButtonRelease-1>", self.on_left_click_calendar)
         self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
         self.canvas.bind("<Control-z>", self.undo)
-        self.multi_combobox.res_tv_entry.trace_remove("write", self.multi_combobox.trace_res_tv_entry)
-        self.multi_combobox.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
-        self.multi_combobox.trace_res_tv_entry = self.multi_combobox.res_tv_entry.trace_add("write", self.multi_combobox.update_entry)
         self.bind("<Control-z>", self.undo)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # self.bind("<Control-Z>", self.undo)
@@ -851,12 +568,8 @@ class App(tkinter.Tk):
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         self.frame_calendar.grid()
-        self.frame_calendar.grid_propagate(False)
-        self.root_canvas.grid(**{s: "nsew"})
-        # self.frame_canvas.grid(**{s: "nsew"})
-        # self.frame_canvas.grid_propagate(False)
-        self.canvas.grid(**{r: 0})
-        self.scroll_bar_x.grid(**{r:1, s: "ew"})
+        self.canvas.grid()
+        self.scroll_bar_x.grid(**{s: "ew"})
 
     def scroll_x_calendar(self, *args) -> None:
         # change the canvas xview when the scrollbar is interacted with
@@ -883,21 +596,13 @@ class App(tkinter.Tk):
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
         tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
         col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
         # print(f"{col_legend=}")
         # tiles = [dat["tile"] for dat in col_legend]
         home_tile = self.tiles["home"]["tile"]
-
-        if self.data["stg_logo_image"]:
-            # move image
-            self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
-        else:
-            # move rectangle
-            self.canvas.coords(home_tile, x_1, y_1, x_1 + tw, y_1 + th)
-
+        self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
         for dat in col_legend:
             tile = dat["tile"]
             bw = float(self.canvas.itemcget(tile, "width"))
@@ -972,11 +677,11 @@ class App(tkinter.Tk):
     def get_tile_bbox(self, date: pd.Timestamp, prod_line: str) -> tuple[float, float, float, float] | None:
         try:
             i_line = self.list_prod_lines.index(prod_line) + 1
-        except (IndexError, ValueError):
+        except IndexError:
             i_line = None
         try:
             i_date = self.list_dates.index(date) + 1
-        except (IndexError, ValueError):
+        except IndexError:
             i_date = None
 
         if i_line is None or i_date is None:
@@ -993,11 +698,9 @@ class App(tkinter.Tk):
         else:
             if not self.data["settings"]["allow_multi_select"]:
                 self.select_tile(date, prod_line, False)
-            self.update_info_frame(date, prod_line)
             self.data["state"]["selected"].append((date, prod_line))
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
-        # print(f"HOVER ({date=}, {prod_line=})")
         self.data["state"]["hovered"].append((date, prod_line))
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
@@ -1037,20 +740,15 @@ class App(tkinter.Tk):
     def on_right_click_calendar(self, event) -> None:
         self.clear_selected_tiles()
 
+
     def on_left_click_calendar(self, event) -> None:
         dt = self.data["state"]["dragged"]
+        print(f"on_left_click_calendar, {dt=}")
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
         # tile_data = self.get_tile_at_x_y(o_x, o_y)
-        print(f"on_left_click_calendar, {dt=} {date=}, {line=}")
-
-        if date is None or line is None:
-            # print(f"NONE => {date=}, {line=}, {dt=}")
-            # return dt to its original position.
-            self.clear_drag_tiles()
-            return
-
+        print(f"on_left_click_calendar, {date=}, {line=}")
         state = event.state
         shift_held = state & 0x1
         control_held = state & 0x4
@@ -1107,7 +805,7 @@ class App(tkinter.Tk):
             #     # self.tiles[drag_date][drag_line]["tile"] = stat_tile
 
             self.drag_tile(date, line)  # add the stationary tile for drag re-adjustment
-            self.clear_drag_tiles()
+            self.reset_drag_tiles()
             self.clear_selected_tiles()
 
         else:
@@ -1133,69 +831,9 @@ class App(tkinter.Tk):
 
                 for sel in selected:
                     self.select_tile(*sel)
-                    o_id = self.tiles[sel[0]][sel[1]].get('order', None)
-                    quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
-                    print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
                     # self.data["state"]["selected"].append(sel)
                 self.update_selected_tiles()
-                print(f"END SELECTED = {self.data['state']['selected']=}")
-
-    def on_left_click_root_canvas(self, event) -> None:
-        print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-
-    def drag_treeview_entry(self, event):
-
-        treeview = self.multi_combobox.tree_treeview
-        vcn = self.multi_combobox.tree_controller.viewable_column_names
-        tv_dt = self.tv_multi_combobox_drag_tile.get()
-        self.multi_combobox_canvas_drag_tile.grid_forget()
-
-        print(f"DRAG TREEVIEW ENTRY, {tv_dt=}")
-
-        region1 = treeview.identify("region", event.x, event.y)
-        column = treeview.identify_column(event.x)
-        # # print(f"Treeview B1 Motion {column=}")
-        # if column:
-        #     column_data = treeview.column(column)
-        #     width1 = column_data.get("width_canvas", 0)
-        #     name = column_data.get("id", None)
-        #     # print(f"{name=}\n{self.viewable_column_names=}\n{self.viewable_column_widths=}")
-        #     if tv_dt or (name in vcn):
-        if tv_dt or column:
-            # col_idx1 = vcn.index(name)
-            # col_idx2 = (col_idx1 + 1) if col_idx1 < len(vcn) else (len(vcn) - 1)
-            # width2 = treeview.column(f"#{col_idx2}").get("width_canvas", 0)
-            if tv_dt or (region1 not in ("separator", "nothing")):
-                # dragging something not the column headers or nothing
-                bbox = (event.x, event.y, event.x + 100, event.y + 100)
-                # print(f"{region1=}, {column=}, {name=}, {bbox=}")
-                print(f"{region1=}, {bbox=}")
-                self.multi_combobox_canvas_drag_tile.configure(
-                    # width=self.multi_combobox.winfo_screenwidth(),
-                    width=self.root_canvas.winfo_screenwidth(),
-                    height=self.root_canvas.winfo_screenheight()
-                )
-                self.multi_combobox_canvas_drag_tile.grid(row=0, column=0)
-                self.multi_combobox.grid_forget()
-                self.multi_combobox_canvas_drag_tile.coords(
-                    self.multi_combobox_drag_tile,
-                    *bbox
-                )
-                self.tv_multi_combobox_drag_tile.set(True)
-                # bring MC drag tile to the top
-                self.multi_combobox_canvas_drag_tile.tag_raise(self.multi_combobox_drag_tile)
-
-    def release_treeview_entry(self, event):
-        print(f"release_treeview_entry")
-        self.multi_combobox_canvas_drag_tile.grid_forget()
-        self.multi_combobox.grid()
-        self.tv_multi_combobox_drag_tile.set(False)
-
-    def bind_treeview_to_canvas(self):
-        old_bind = self.multi_combobox.tree_controller.binding_treeview_b1_motion
-        self.multi_combobox.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_entry)
-        self.multi_combobox.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_entry)
-        print(f"{old_bind=}")
+                # print(f"END SELECTED = {self.data['state']['selected']=}")
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
@@ -1205,7 +843,6 @@ class App(tkinter.Tk):
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
-        print(f"{ht=}, {st=}, {dt=}")
         if not st:
             # nothing selected, select the hovered and continue
             for date, line in ht:
@@ -1220,7 +857,6 @@ class App(tkinter.Tk):
             p_y = y
 
         tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         d_x, d_y = o_x - p_x, o_y - p_y
         for date, line in (dt + st):
             td = self.tiles[date][line]
@@ -1259,7 +895,6 @@ class App(tkinter.Tk):
         date = self.get_date_bucket(o_x)
         line = self.get_prod_line_bucket(o_y)
         if date is None or line is None:
-            self.clear_hover_tiles()
             return
         # self.canvas.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
@@ -1278,28 +913,21 @@ class App(tkinter.Tk):
         ao = self.data["colour_tile_outline_hover"]
         font = self.data["font_tile_hover"]
         ow = self.data["width_tile_outline_hover"]
-
-        ab_w = self.data["colour_tile_background_weekend_hover"]
-        af_w = self.data["colour_tile_foreground_weekend_hover"]
-        ao_w = self.data["colour_tile_outline_weekend_hover"]
-        font_w = self.data["font_tile_weekend_hover"]
-
         for date, prod_line in ht:
-            is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile:
                 self.canvas.itemconfigure(
                     tile,
-                    fill=(ab_w if is_weekend else ab).hex_code,
-                    outline=(ao_w if is_weekend else ao).hex_code,
+                    fill=ab.hex_code,
+                    outline=ao.hex_code,
                     width=ow
                 )
             for text in texts:
                 self.canvas.itemconfigure(
                     text,
-                    fill=(af_w if is_weekend else af).hex_code,
-                    font=(font_w if is_weekend else font)
+                    fill=af.hex_code,
+                    font=font
                 )
 
     def clear_hover_tiles(self) -> None:
@@ -1310,12 +938,6 @@ class App(tkinter.Tk):
         f = self.data["colour_tile_foreground"]
         o = self.data["colour_tile_outline"]
         font = self.data["font_tile"]
-
-        b_w = self.data["colour_tile_background_weekend"]
-        f_w = self.data["colour_tile_foreground_weekend"]
-        o_w = self.data["colour_tile_outline_weekend"]
-        font_w = self.data["font_tile_weekend"]
-
         ow = self.data["width_tile_outline"]
         # print(f"{(st + dt)=}")
 
@@ -1323,22 +945,21 @@ class App(tkinter.Tk):
         sub_ht = [key for key in ht if key not in (st + dt)]
 
         for date, prod_line in sub_ht:
-            is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile:
                 self.canvas.itemconfigure(
                     tile,
-                    fill=(b_w if is_weekend else b).hex_code,
-                    outline=(o_w if is_weekend else o).hex_code,
+                    fill=b.hex_code,
+                    outline=o.hex_code,
                     width=ow
                 )
             for text in texts:
                 # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
                 self.canvas.itemconfigure(
                     text,
-                    fill=(f_w if is_weekend else f).hex_code,
-                    font=(font_w if is_weekend else font)
+                    fill=f.hex_code,
+                    font=font
                 )
         self.data["state"]["hovered"].clear()
 
@@ -1348,30 +969,23 @@ class App(tkinter.Tk):
         af = self.data["colour_tile_foreground_selected"]
         ao = self.data["colour_tile_outline_selected"]
         font = self.data["font_tile_selected"]
-
-        ab_w = self.data["colour_tile_background_weekend_selected"]
-        af_w = self.data["colour_tile_foreground_weekend_selected"]
-        ao_w = self.data["colour_tile_outline_weekend_selected"]
-        font_w = self.data["font_tile_weekend_selected"]
-
         ow = self.data["width_tile_outline_selected"]
         print(f"{st=}")
         for date, prod_line in st:
-            is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile:
                 self.canvas.itemconfigure(
                     tile,
-                    fill=(ab_w if is_weekend else ab).hex_code,
-                    outline=(ao_w if is_weekend else ao).hex_code,
+                    fill=ab.hex_code,
+                    outline=ao.hex_code,
                     width=ow
                 )
             for text in texts:
                 self.canvas.itemconfigure(
                     text,
-                    fill=(af_w if is_weekend else af).hex_code,
-                    font=(font_w if is_weekend else font)
+                    fill=af.hex_code,
+                    font=font
                 )
 
     def clear_selected_tiles(self) -> None:
@@ -1380,37 +994,29 @@ class App(tkinter.Tk):
         f = self.data["colour_tile_foreground"]
         o = self.data["colour_tile_outline"]
         font = self.data["font_tile"]
-
-        b_w = self.data["colour_tile_background_weekend"]
-        f_w = self.data["colour_tile_foreground_weekend"]
-        o_w = self.data["colour_tile_outline_weekend"]
-        font_w = self.data["font_tile_weekend"]
-
         ow = self.data["width_tile_outline"]
         for date, prod_line in st:
-            is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile:
                 self.canvas.itemconfigure(
                     tile,
-                    fill=(b_w if is_weekend else b).hex_code,
-                    outline=(o_w if is_weekend else o).hex_code,
+                    fill=b.hex_code,
+                    outline=o.hex_code,
                     width=ow
                 )
             for text in texts:
                 # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
                 self.canvas.itemconfigure(
                     text,
-                    fill=(f_w if is_weekend else f).hex_code,
-                    font=(font_w if is_weekend else font)
+                    fill=f.hex_code,
+                    font=font
                 )
         self.data["state"]["selected"].clear()
 
-    def clear_drag_tiles(self):
+    def reset_drag_tiles(self):
         print(f"RESETTING DRAG TILES")
         tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         for date, line in self.data["state"]["dragged"]:
             bbox = self.get_tile_bbox(date, line)
             tile = self.tiles[date][line]["tile"]
@@ -1434,31 +1040,6 @@ class App(tkinter.Tk):
                     self.swap_tiles(keys_2, keys_1, from_undo=True)
                 case _:
                     raise ValueError("Cant undo")
-
-    def multi_combobox_entry_update(self, *args):
-        print(f"multi_combobox_entry_update {self.multi_combobox.res_tv_entry.get()=}, {len(self.multi_combobox.tree_treeview.get_children())=}")
-
-    def update_info_frame(self, date, prod_line):
-        tile = self.tiles[date][prod_line]
-        print(f"{tile=}")
-        order = self.tiles[date][prod_line].get("order")
-        if order is not None:
-            series = self.df_orders.iloc[order]
-            dat_1 = {
-                "KD": date,
-                "KL": prod_line,
-                "US Sale": series["US Sale"],
-                "SGQuote": series["OrdersV2_SGQuote"],
-                "WO#": series["OrdersV2_WO#"],
-                "Model No": series["Model No"],
-                "Dealer": series["InputField2"],
-                "Serial#": series["Serial Number"],
-                "Customer WO#": series["Customer WO#"]
-            }
-            print(f"{dat_1=}")
-            for k in self.data["info_frame_columns"]:
-                v = dat_1.get(k, f"'{k}'=?")
-                self.info_frame.change_value(k, v)
 
     def on_closing(self):
         # need the date, line, and Quote # for SQL update query
@@ -1526,23 +1107,7 @@ class App(tkinter.Tk):
         self.destroy()
 
 
-def test_canvas_window():
-    app = tkinter.Tk()
-
-    can1 = tkinter.Canvas(app, background="#789456")
-    can2 = tkinter.Canvas(can1, background="#654987")
-    can3 = tkinter.Canvas(can2, background="#654321")
-
-    can1.create_window(10, 10, anchor=tkinter.NW, window=can2)
-    can2.create_window(20, 20, anchor=tkinter.NW, window=can3)
-
-    can1.pack()
-
-    app.mainloop()
-
-
 if __name__ == '__main__':
 
-    # test_canvas_window()
     app = App()
     app.mainloop()
