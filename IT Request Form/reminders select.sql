@@ -9,6 +9,20 @@ SELECT @currID = 1515;
 SELECT
 	*
 FROM
+	[ITR Customers]
+;
+
+
+SELECT
+	*
+FROM
+	[ITR Request Reminder Importance Codes] 
+;
+
+
+SELECT
+	*
+FROM
 	[ITR Request Reminders] [IR]
 WHERE
 	[IR].[ITRequestID] = @currID

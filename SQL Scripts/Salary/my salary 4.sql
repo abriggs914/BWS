@@ -139,7 +139,7 @@ END
 SELECT * FROM @og_data
 SELECT * FROM @emp_ids
 SELECT * FROM @emp_dat ORDER BY [2nd Name], [1st Name]
-SELECT * FROM @emp_dat WHERE [1st Name] LIKE '%avery%'
+SELECT * FROM @emp_dat WHERE [1st Name] LIKE '%avery%' AND [2nd Name] LIKE '%briggs%'
 
 -- View raises in 2023
 SELECT 2023 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2023 ORDER BY [DAnnual]

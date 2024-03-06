@@ -5,8 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31e54beb-d316-4ebb-a0e2-e142e4c71ec6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/sql_utility.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/phone_line_organizer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../IT Request Form/reminders select.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../IT Request Form/reminders select.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-02-20/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-02-20/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SQL Scripts/Salary/my salary 4.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../SQL Scripts/Salary/my salary 4.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

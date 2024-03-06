@@ -45,7 +45,7 @@ ORDER BY
 SQL_DATED_STG_UNITS = {
     "sql": """SELECT
     B.[ProdSchedV2ID#]
-    ,B.[SGQuote] AS [OrdersV2_SGQuote]
+    ,[O].[SGQuote] AS [OrdersV2_SGQuote]
     ,B.[WO#] AS [OrdersV2_WO#]
     ,B.[JobStartDate]
     ,B.[JobFinishDate]
