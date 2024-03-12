@@ -15,7 +15,7 @@ ON
 	[P].[ITRCustomerID] = [C].[CustomerID]
 WHERE
 	[Status] NOT IN ('Declined', 'Complete', 'Incomplete')
-	AND LOWER([C].[Name]) LIKE '%avery%'
-	OR LOWER([RequestedBy]) LIKE '%avery%'
+	AND (LOWER([C].[Name]) LIKE '%avery%'
+	OR LOWER([RequestedBy]) LIKE '%avery%')
 ORDER BY
 	[RequestDateOriginal] DESC
