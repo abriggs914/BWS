@@ -1,6 +1,5 @@
 import tkinter
 from tkinter import messagebox
-import datetime
 from itertools import zip_longest
 from typing import Tuple
 
@@ -9,11 +8,9 @@ import pandas as pd
 import utility
 import tkinter_utility
 import datetime_utility
-import dataframe_utility
 from pyodbc_connection import connect
 from colour_utility import *
 from PIL import Image, ImageTk
-
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
 
@@ -261,7 +258,6 @@ FROM
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
-
 
 class App(tkinter.Tk):
 
