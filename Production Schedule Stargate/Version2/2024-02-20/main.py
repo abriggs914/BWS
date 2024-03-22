@@ -273,7 +273,9 @@ class App(tkinter.Tk):
                 "dragged": [],
                 "cursor_drag_pos": [None, None]
             },
-            "history": [],
+            # "history": [],
+            "history": tkinter.Variable(value=list(), name="history"),
+            "listbox_history": [],
             "settings": {
                 "allow_multi_select": False,
                 "colour_coding": {},
@@ -1047,6 +1049,16 @@ class App(tkinter.Tk):
             )
         ]
 
+        # scrollable listbox for event history
+        self.frame_listbox_history = tkinter.Frame(self)
+        self.listbox_history = tkinter.Listbox(
+            self.frame_listbox_history,
+            width=110
+        )
+        self.scroll_bar_history = tkinter.Scrollbar(self.frame_listbox_history)
+        self.listbox_history.configure(yscrollcommand=self.scroll_bar_history.set)
+        self.scroll_bar_history.configure(command=self.listbox_history.yview)
+
         # garbage 'X'
         # self.drag_tile_garbage_tile = {
         #     "tile": self.root_canvas.create_rectangle(
@@ -1082,6 +1094,7 @@ class App(tkinter.Tk):
         # # self.multi_combobox_window.lift()
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
+        self.data["history"].trace_variable("w", self.tv_update_history)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
@@ -1106,6 +1119,29 @@ class App(tkinter.Tk):
 
         in_test_mode = self.data["settings"]["TEST_MODE"]
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
+
+    def tv_update_history(self, *args):
+        hist = self.data["history"].get()
+        print(f"History update: {hist=}")
+        # known_hist = self.data.get("listbox_history", [])
+        known_hist = self.listbox_history.get(0, tkinter.END)
+        lh, lkh = len(hist), len(known_hist)
+        if lh > lkh:
+            # added new history event
+            new_item = hist[-1]
+            self.listbox_history.insert(tkinter.END, str(new_item))
+            print(f"Inserted {new_item=}")
+        elif lh < lkh:
+            # deleted a history event
+            del_item = known_hist[-1]
+            idx = known_hist.index(str(del_item))
+            self.listbox_history.delete(idx)
+            print(f"deleted {del_item=}")
+        else:
+            # no change
+            print(f"No Change")
+        # self.listbox_history
+        print(f"AFTER {list(self.data['history'].get())=}")
 
     def colour_code(self, date=None, line=None):
         cc = self.data["settings"]["colour_coding"]
@@ -1254,6 +1290,13 @@ class App(tkinter.Tk):
         self.frame_info_frame.place(
             x=self.data["x_top_widgets"],
             y=self.data["height_multi_combobox"] + 195
+        )
+
+        self.listbox_history.grid(row=0, column=0, columnspan=1, rowspan=1)
+        self.scroll_bar_history.grid(row=0, column=1, columnspan=1, rowspan=1, sticky="ns")
+        self.frame_listbox_history.place(
+            x=self.data["x_top_widgets"],
+            y=self.data["height_multi_combobox"] + 195 + 340
         )
 
         # self.window_root_canvas = self.root_canvas.create_window(
@@ -1444,7 +1487,10 @@ class App(tkinter.Tk):
             self.multi_combobox.add_new_item(val=new_df)
             self.df_ids_to_date_line[order] = (None, None)
             if not from_undo:
-                self.data["history"].append(("DELETE", order, date_line))
+                # self.data["history"].append(("DELETE", order, date_line))
+                hist = list(self.data["history"].get())
+                hist.append(("DELETE", order, date_line))
+                self.data["history"].set(hist)
 
     def insert_tile(
             self,
@@ -1559,11 +1605,17 @@ class App(tkinter.Tk):
             "texts": texts
         })
         if not from_undo:
-            self.data["history"].append(
-                ("INSERT", df_orders_id, date_line)
-            )
+            # self.data["history"].append(
+            #     ("INSERT", df_orders_id, date_line)
+            # )
+
+            hist = list(self.data["history"].get())
+            hist.append(("INSERT", df_orders_id, date_line))
+            self.data["history"].set(hist)
+
         self.colour_code(date, line)
-        print(f"\n\tPOST INSERT\n{self.data['history']=}")
+        # print(f"\n\tPOST INSERT\n{self.data['history']=}")
+        print(f"\n\tPOST INSERT\n{self.data['history'].get()=}")
         self.select_tile(date, line)
         self.update_selected_tiles()
         self.redraw_legend()
@@ -1580,13 +1632,23 @@ class App(tkinter.Tk):
         date_1, line_1 = date_line_1
         date_2, line_2 = date_line_2
 
+        # TODO undo swap doesnt work
+
+        print(f"SWAP => {date_1=}, {date_2=}\n{type(date_1)=}, {type(date_2)=}\n{line_1=}, {line_2=}")
+        if isinstance(date_1, str) and date_1:
+            date_1 = pd.Timestamp(date_1)
+        if isinstance(date_2, str) and date_2:
+            date_2 = pd.Timestamp(date_2)
+
         if (date_1 != date_2) or (line_1 != line_2):
             # assert the tile being place in a NEW position, not the same one.
+            print(f"New position")
 
             bbox_1, bbox_2 = self.get_tile_bbox(date_1, line_1), self.get_tile_bbox(date_2, line_2)
             order_1, order_2 = self.tiles[date_1][line_1].get("order"), self.tiles[date_2][line_2].get("order")
             texts_1, texts_2 = self.tiles[date_1][line_1].get("texts"), self.tiles[date_2][line_2].get("texts")
             tile_1, tile_2 = self.tiles[date_1][line_1].get("tile"), self.tiles[date_2][line_2].get("tile")
+            print(f"{texts_1=}, {texts_2=}")
 
             # swap df_ids_to_date_line
             if order_1 is not None:
@@ -1618,9 +1680,15 @@ class App(tkinter.Tk):
             if not from_undo:
                 if order_1 or order_2:
                     # one of these tiles is an order, record in the history and allow undos.
-                    self.data["history"].append(
-                        ("SWAP", date_line_1, date_line_2)
-                    )
+                    # self.data["history"].append(
+                    #     ("SWAP", date_line_1, date_line_2)
+                    # )
+
+                    hist = list(self.data["history"].get())
+                    hist.append(("SWAP", date_line_1, date_line_2))
+                    self.data["history"].set(hist)
+
+            print(f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
 
     def on_right_click_calendar(self, event) -> None:
         print(f"on_right_click_calendar")
@@ -1953,6 +2021,8 @@ class App(tkinter.Tk):
 
         print(f"FLASH TILE {date_line=}, {mode=} ", end="")
         date, line = date_line
+        if isinstance(date, str) and date:
+            date = pd.Timestamp(date)
         tile_data = self.tiles[date][line]
         tile = tile_data["tile"]
 
@@ -2281,9 +2351,12 @@ class App(tkinter.Tk):
         self.data["state"]["dragged"].clear()
 
     def undo(self, event):
-        print(f"undo {self.data['history']=}")
-        if self.data["history"]:
-            action, *data = self.data["history"].pop(-1)
+        # print(f"undo {self.data['history']=}")
+        print(f"undo {self.data['history'].get()=}")
+        # if self.data["history"]:
+        if self.data["history"].get():
+            # action, *data = self.data["history"].pop(-1)
+            action, *data = list(self.data["history"].get()).pop(-1)
             match action:
                 case "SWAP":
                     keys_1, keys_2 = data
@@ -3324,7 +3397,9 @@ class App(tkinter.Tk):
     def click_mb_save(self, event=None):
         print(f"click_mb_save, {event=}")
         test_mode = self.data["settings"]["TEST_MODE"]
-        history = self.data["history"]
+        # history = self.data["history"]
+
+        hist = list(self.data["history"].get())
         if not history:
             messagebox.showinfo(
                 title=self.data["title_application_short"],
@@ -3339,7 +3414,8 @@ class App(tkinter.Tk):
                     sql=stmt
                 )
 
-        self.data["history"].clear()
+        # self.data["history"].clear()
+        self.data["history"].set(list())
         messagebox.showinfo(
             title=self.data["title_application_short"],
             message=self.data["msg_save_successful"]
@@ -3357,7 +3433,8 @@ class App(tkinter.Tk):
             pass
 
     def on_closing(self, do_quit: bool = True) -> None | list:
-        history = self.data["history"]
+        # history = self.data["history"]
+        history = list(self.data["history"].get())
         sql_statments = []
 
         if do_quit:
