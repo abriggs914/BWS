@@ -20,6 +20,8 @@ import win32api
 
 # TODO shrink weekend tiles, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.
+# TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
+#   The hovered tile is too far to the right of the pointer.
 
 
 SQL_USED_LINES = {
@@ -37,6 +39,20 @@ ORDER BY
     "database": "StargateDB",
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
+}
+
+
+SQL_HOLIDAYS = {
+    "sql": """
+    SELECT
+    	*
+    FROM
+    	[Calendar]
+    ;
+    """,
+    "database": "BWSDB",
+    "uid": "user5",
+    "pwd": "M@gic456"
 }
 
 SQL_DATED_STG_UNITS = {
@@ -414,6 +430,7 @@ class App(tkinter.Tk):
         })
         n_cols = self.data["days_forward"] + self.data["days_backward"] + 1  # +1 for today in the middle
 
+        self.df_calendar = connect(**SQL_HOLIDAYS)
         self.df_prod_lines = connect(**SQL_USED_LINES)
         self.df_orders = connect(**SQL_DATED_STG_UNITS).fillna("")
         self.data["multi_combobox_columns"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
@@ -522,6 +539,12 @@ class App(tkinter.Tk):
         self.tiles = {d: {pl: dict() for pl in self.list_prod_lines} for d in self.list_dates}
         self.tiles["home"] = dict()
         self.df_ids_to_date_line = {}
+        # print(f"{list(self.tiles)[:5]=}")
+
+        self.df_calendar = self.df_calendar.loc[(self.list_dates[0] <= self.df_calendar["Date"]) & (self.df_calendar["Date"] <= self.list_dates[-1])]
+        self.holidays = self.df_calendar.dropna(subset=["HolidayName"]).set_index("Date")["HolidayName"].to_dict()
+        print(f"{self.df_calendar=}")
+        print(f"{self.holidays=}")
 
         n_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
         self.data.update({
@@ -774,6 +797,8 @@ class App(tkinter.Tk):
                 # prod_line = self.list_prod_lines[i]
                 key = "date_legend"
                 date = self.list_dates[j]
+                # is_holiday = date in self.holidays
+                holiday_name = self.holidays.get(date, None)
                 tile_colour = self.data["colour_tile_header_row_background"]
                 tile_text_colour = self.data["colour_tile_header_row_foreground"]
                 font = self.data["font_tile"]
@@ -786,6 +811,8 @@ class App(tkinter.Tk):
                     # Numerical month date
                     f"{date:%Y}"  # Year
                 ]
+                if holiday_name is not None:
+                    to_do_texts.append(holiday_name)
                 if key not in self.tiles[date]:
                     self.tiles[date][key] = dict()
                 self.tiles[date][key].update({
@@ -813,6 +840,8 @@ class App(tkinter.Tk):
                         for k, txt, in enumerate(to_do_texts)
                     ]
                 })
+                if holiday_name is not None:
+                    self.canvas.itemconfigure(self.tiles[date][key]["texts"][-1], fill="#A44000")
 
         # header columns
         for i, row in enumerate(self.calc_grid_cells[1:]):
@@ -901,6 +930,35 @@ class App(tkinter.Tk):
                 fill=self.data["colour_tile_header_home_background"].hex_code,
                 parent=self.canvas
             )
+
+        # xm, ym = 10, 10
+        # for holiday, holiday_name in self.holidays.items():
+        #     for line in self.list_prod_lines:
+        #         tile = self.tiles[holiday][line]["tile"]
+        #         texts = self.tiles[holiday][line].get("texts", [])
+        #         if not texts:
+        #             # create texts
+        #             texts_to_do = [holiday_name]
+        #             print(f"{texts_to_do=}")
+        #
+        #             bbox = self.canvas.bbox(tile)
+        #             x0_ = bbox[0]
+        #             y0_ = bbox[1]
+        #
+        #             self.tiles[holiday][line]["texts"].append([
+        #                 self.canvas.create_text(
+        #                     x0_ + (self.data["tile_width"] / 2),
+        #                     y0_ + ym + ((k + 1) * (self.data["tile_width"] / (1 + len(texts_to_do)))),
+        #                     text=txt,
+        #                     fill="#000000"
+        #                 )
+        #                 for k, txt in enumerate(texts_to_do)])
+        #         else:
+        #             for i, txt in enumerate(texts):
+        #                 if i == 0:
+        #                     self.canvas.itemconfigure(txt, text=holiday_name)
+        #                 else:
+        #                     self.canvas.itemconfigure(txt, text="")
 
         # print(f"AAA\n{self.df_multi_combobox_data_orders=}")
         self.multi_combobox.add_new_item(self.df_multi_combobox_data_orders)
@@ -3513,9 +3571,16 @@ class App(tkinter.Tk):
                             keys_1, keys_2 = data
                             date_1, line_1 = keys_1
                             date_2, line_2 = keys_2
+                            if isinstance(date_1, str):
+                                date_1 = pd.Timestamp(date_1)
+                            if isinstance(date_2, str):
+                                date_2 = pd.Timestamp(date_2)
+                            print(f"{date_1=}, {line_1=}, {date_2=}, {line_2=}", end="")
                             order_1 = self.tiles[date_1][line_1].get("order")
                             order_2 = self.tiles[date_2][line_2].get("order")
+                            print(f"{order_1=}, {order_1=}")
                             if order_1 is not None:
+                                order_1 = int(order_1)
                                 dat_1 = {
                                     "KD": date_1,
                                     "KL": line_1,
@@ -3528,6 +3593,7 @@ class App(tkinter.Tk):
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             if order_2 is not None:
+                                order_2 = int(order_2)
                                 dat_1 = {
                                     "KD": date_2,
                                     "KL": line_2,
@@ -3546,6 +3612,11 @@ class App(tkinter.Tk):
                         case "INSERT":
                             order, date_line = data
                             date_, line_ = date_line
+                            if isinstance(date_, str):
+                                date_ = pd.Timestamp(date_)
+                            if isinstance(order, str):
+                                order = int(order)
+                            print(f"{order=}, {date_=}, {line_=}")
 
                             dat = {
                                 "KD": date_,
@@ -3565,6 +3636,11 @@ class App(tkinter.Tk):
                         case "DELETE":
                             order, date_line = data
                             date, line = date_line
+                            if isinstance(date, str):
+                                date = pd.Timestamp(date)
+                            if isinstance(order, str):
+                                order = int(order)
+                            print(f"{order=}, {date=}, {line=}")
 
                             quote = self.df_orders.iloc[order]["OrdersV2_SGQuote"]
                             dat = {
