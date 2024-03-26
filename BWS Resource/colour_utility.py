@@ -10,8 +10,8 @@ from utility import clamp, flatten, reduce
 VERSION = \
     """	
     General Utility file of RGB colour values
-    Version..............1.33
-    Date...........2023-08-22
+    Version..............1.36
+    Date...........2024-03-26
     Author(s)....Avery Briggs
     """
 
@@ -1170,6 +1170,7 @@ THREEDSHADOW = (162, 164, 161)
 WINDOW = (251, 250, 253)
 WINDOWFRAME = (2, 1, 0)
 WINDOWTEXT = (1, 0, 4)
+SYSTEMBUTTONFACE = (240, 240, 241)
 
 
 # removed 2023-04-27 to ensure that COLOURS and COLOURS_INVERSE dictionaries are the same length.
@@ -2341,7 +2342,9 @@ colour_values_list = [
     THREEDSHADOW,
     WINDOW,
     WINDOWFRAME,
-    WINDOWTEXT
+    WINDOWTEXT,
+
+    SYSTEMBUTTONFACE
 ]
 
 
@@ -3465,7 +3468,9 @@ colour_names_list = [
     "THREEDSHADOW",
     "WINDOW",
     "WINDOWFRAME",
-    "WINDOWTEXT"
+    "WINDOWTEXT",
+
+    "SYSTEMBUTTONFACE"
 ]
 
 
@@ -3650,25 +3655,25 @@ class Colour:
         # print(f"{c=}, {g=}, {b=}, {self.hex_code=}, {self.rgb_code=}")
         self.set_colour_values(c=c, g=g, b=b)
 
-    def brighten(self, p):
+    def brighten(self, p, safe=False):
         # return Colour(brighten(self.rgb_code, p, rgb=False))
-        self.rgb_code = Colour(brighten(self, p, rgb=False)).rgb_code
+        self.rgb_code = Colour(brighten(self, p, rgb=False, safe=safe)).rgb_code
         return self
 
-    def darken(self, p):
-        self.rgb_code = Colour(darken(self, p, rgb=False)).rgb_code
+    def darken(self, p, safe=False):
+        self.rgb_code = Colour(darken(self, p, rgb=False, safe=safe)).rgb_code
         return self
 
     def inverse(self):
         self.rgb_code = Colour(inverse(self, rgb=False)).rgb_code
         return self
 
-    def brightened(self, p):
+    def brightened(self, p, safe=False):
         # return Colour(brighten(self.rgb_code, p, rgb=False))
-        return Colour(brighten(self, p, rgb=False))
+        return Colour(brighten(self, p, rgb=False, safe=safe))
 
-    def darkened(self, p):
-        return Colour(darken(self, p, rgb=False))
+    def darkened(self, p, safe=False):
+        return Colour(darken(self, p, rgb=False, safe=safe))
 
     def inverted(self):
         return Colour(inverse(self, rgb=False))
@@ -3818,39 +3823,68 @@ def gradient(x, n, c1, c2, rgb=True):
 
 
 # Darken an RGB color using a proportion p (0-1)
-def darken(c, p, rgb=True):
+def darken(c, p: float, rgb=True, safe=False):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
         raise ValueError(f"Error cannot brighten non-colour object: {c}")
-    r, g, b = c
-    r = clamp(0, round(r - (255 * p)), 255)
-    g = clamp(0, round(g - (255 * p)), 255)
-    b = clamp(0, round(b - (255 * p)), 255)
+    if (p < 0) or (1 < p):
+        raise ValueError(f"Error param 'p' must be between 0 and 1")
+    o_r, o_g, o_b = c
+    og = rgb_to_long(o_r, o_g, o_b)
+    max_ = (256**3) + (256**2) + 256
+    r = clamp(0, round(o_r - (255 * p)), 255)
+    g = clamp(0, round(o_g - (255 * p)), 255)
+    b = clamp(0, round(o_b - (255 * p)), 255)
+    if safe:
+        nw = rgb_to_long(r, g, b)
+        ogp = og / max_
+        nwp = nw / max_
+        if abs(ogp - nwp) < p:
+            # this colour is too dark to darken p, lighten it
+            r, g, b = Colour(o_r, o_g, o_b).brighten(p, safe=False)
+
     return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 # Brighten an RGB color using a proportion p (0-1)
-def brighten(c, p, rgb=True):
+def brighten(c, p: float, rgb=True, safe=False):
     if is_hex_colour(c):
         c = hex_to_rgb(c)
     if not iscolour(c):
         raise ValueError(f"Error cannot brighten non-colour object: {c}")
-    r, g, b = c
-    r = clamp(0, round(r + (255 * p)), 255)
-    g = clamp(0, round(g + (255 * p)), 255)
-    b = clamp(0, round(b + (255 * p)), 255)
+    if (p < 0) or (1 < p):
+        raise ValueError(f"Error param 'p' must be between 0 and 1")
+    o_r, o_g, o_b = c
+    og = rgb_to_long(o_r, o_g, o_b)
+    max_ = (256**3) + (256**2) + 256
+    r = clamp(0, round(o_r + (255 * p)), 255)
+    g = clamp(0, round(o_g + (255 * p)), 255)
+    b = clamp(0, round(o_b + (255 * p)), 255)
+    if safe:
+        nw = rgb_to_long(r, g, b)
+        ogp = og / max_
+        nwp = nw / max_
+        if abs(ogp - nwp) < p:
+            # this colour is too dark to darken p, lighten it
+            r, g, b = Colour(o_r, o_g, o_b).darken(p, safe=False)
+
     return (r, g, b) if rgb else rgb_to_hex((r, g, b))
 
 
 def inverse(c, rgb=True):
     if not iscolour(c):
         raise ValueError(f"Error, cannot invert non-colour param '{c}', it is not a colour.")
-    col = Colour(c)
-    r, g, b = map(lambda x: x + 1, col.rgb_code)
-    dr, dg, db = 128 - r, 128 - g, 128 - b
-    nc = Colour((128 + dr if (dr < 0) else 128 - dr), (128 + dg if (dg < 0) else 128 - dg), (128 + db if (db < 0) else 128 - db))
+    r, g, b = map(lambda x: 255 - x, Colour(c).rgb_code)
+    nc = Colour(r, g, b)
     return nc.rgb_code if rgb else nc.hex_code
+    # if not iscolour(c):
+    #     raise ValueError(f"Error, cannot invert non-colour param '{c}', it is not a colour.")
+    # col = Colour(c)
+    # r, g, b = map(lambda x: x + 1, col.rgb_code)
+    # dr, dg, db = 128 - r, 128 - g, 128 - b
+    # nc = Colour((128 + dr if (dr < 0) else 128 - dr), (128 + dg if (dg < 0) else 128 - dg), (128 + db if (db < 0) else 128 - db))
+    # return nc.rgb_code if rgb else nc.hex_code
 
 
 def font_foreground(colour_in, threshold=255 * 3 / 2, rgb=True):
@@ -4023,6 +4057,34 @@ def get_colour_name(hx, name_only=True, r_type=dict, rgb=False, certainty_as_per
         if name_only:
             return list(result.values())[0]
         return list(result.values())
+
+
+def rgb_to_long(r, g=None, b=None):
+    # Long = Blue x 256 x 256 + Green x 256 + Red
+
+    if not iscolour(r, g, b):
+        raise ValueError(f"params {r=}, {g=}, {b=} do not represent a valid colour.")
+
+    if g is None and b is None:
+        colour = Colour(r)
+    else:
+        colour = Colour(r, g, b)
+
+    r_, g_, b_ = colour.rgb_code
+    return (b_ * (256**2)) + (g_ * 256) + r_
+
+
+def long_to_rgb(long_colour: int, rgb: bool = True):
+    max_ = 256**3 + 256**2 + 256
+    if not (0 <= long_colour <= max_):
+        raise ValueError(f"param 'long_colour' is out of range (0-{max_}), {long_colour=}")
+
+    # Long = Blue x 256 x 256 + Green x 256 + Red
+    bp = long_colour // (256**2)
+    gp = (long_colour - (bp * (256**2))) // 256
+    rp = long_colour - (bp * (256**2)) - (gp * 256)
+    colour = Colour(rp, gp, bp)
+    return colour.rgb_code if rgb else colour
 
 
 if __name__ == '__main__':
