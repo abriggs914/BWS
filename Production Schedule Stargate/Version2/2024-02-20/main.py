@@ -297,7 +297,9 @@ class App(tkinter.Tk):
                 "colour_coding": {},
                 "TEST_MODE": True,
                 "min_font_size_tile": 8,
-                "max_font_size_tile": 18
+                "max_font_size_tile": 18,
+                "start_at_first_of_month": True,
+                "end_at_end_of_month": True
             }
         }
         self.tl_data = {}
@@ -533,7 +535,11 @@ class App(tkinter.Tk):
         now = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
         self.data["first_date"] = now + datetime.timedelta(days=-self.data["days_backward"])
+        if self.data["settings"]["start_at_first_of_month"]:
+            self.data["first_date"] = datetime_utility.first_of_month(self.data["first_date"])
         self.data["last_date"] = now + datetime.timedelta(days=self.data["days_forward"])
+        if self.data["settings"]["end_at_end_of_month"]:
+            self.data["last_date"] = datetime_utility.end_of_month(self.data["last_date"])
         # self.list_dates = pd.date_range(self.data["first_date"], periods=n_cols).to_pydatetime().tolist()
         self.list_dates = pd.date_range(self.data["first_date"], periods=n_cols, normalize=False).to_list()
         self.tiles = {d: {pl: dict() for pl in self.list_prod_lines} for d in self.list_dates}
@@ -1564,6 +1570,8 @@ class App(tkinter.Tk):
         else:
             quote = self.multi_combobox.res_tv_entry.get()
         date, line = date_line
+        if isinstance(date, str):
+            date = pd.Timestamp(date)
         order_already_exists = self.tiles[date][line].get("order", None)
 
         if order_already_exists is not None:
@@ -3665,6 +3673,8 @@ class App(tkinter.Tk):
 
                 stmts = "\n".join(sql_statments)
                 print(f"SQL =\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;")
+                # TODO async
+                connect(stmts)
         # else:
         #     do_quit = False
 
