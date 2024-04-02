@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.65
-    Date...........2024-01-17
+    Version..............1.71
+    Date...........2024-02-29
     Author(s)....Avery Briggs
     """
 
@@ -38,7 +38,7 @@ def VERSION_NUMBER():
 
 def VERSION_DATE():
     return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
-                                      "%Y-%m-%dictionary")
+                                      "%Y-%m-%d")
 
 
 def VERSION_AUTHORS():
@@ -516,6 +516,8 @@ class TreeviewController(tkinter.Frame):
         assert isinstance(df,
                           pandas.DataFrame), f"Error, param 'dataframe' must be an instance of a pandas Dataframe, got: '{type(df)}'."
 
+        # print(f"\n\nNEW TREEVIEW_CONTROLLER")
+
         self.master = master
         self.df = df.reset_index(drop=True)
         self.viewable_column_names = viewable_column_names
@@ -533,8 +535,22 @@ class TreeviewController(tkinter.Frame):
 
         # self.iid_namer = (i for i in range(1000000))
 
+        # print(f"--CC {self.viewable_column_names=}\n{self.df=}")
+        cn = list(self.df.columns)
         if self.viewable_column_names is None:
             self.viewable_column_names = list(df.columns)
+        elif isinstance(self.viewable_column_names, dict):
+            # print(f"\tDICT PROCESSING")
+            self.df = self.df.rename(columns=self.viewable_column_names)
+            vcn = []
+            for i, col in enumerate(cn):
+                col_a = col
+                if col in self.viewable_column_names:
+                    col_a = self.viewable_column_names[col]
+                vcn.append(col_a)
+            self.viewable_column_names = vcn
+
+        # print(f"--AA {self.viewable_column_names=}\n{self.df=}")
 
         if not is_tk_var(self.tv_label):
             self.tv_label = tkinter.StringVar(self, value="")
@@ -551,31 +567,61 @@ class TreeviewController(tkinter.Frame):
             self.viewable_column_widths = self.viewable_column_widths + [self.default_col_width for _ in range(
                 len(self.viewable_column_names) - len(self.viewable_column_widths))]
 
+        # self.viewable_column_names_indexable = {}
+
+        # for i, col in enumerate(cn):
+            # self.viewable_column_names_indexable[col] = "#" + col.replace(" ", "").strip()
+            # self.viewable_column_names_indexable[col] = col
+            # self.viewable_column_names_indexable[col] = f"#{i}"
+
+        # # print(
+        # #     f"AA {self.viewable_column_names=}\n{self.viewable_column_names_indexable.keys()=}\n{self.viewable_column_names_indexable.values()=}")
+        # # for col in self.viewable_column_names:
+        # #     print(f"\t{col}, {cn[cn.index(col)]=}")
+        #     if isinstance(self.viewable_column_names, dict):
+        #         col = self.viewable_column_names[col]
+        #     # self.viewable_column_names_indexable[cn[cn.index(col)]] = col
+        #     self.viewable_column_names_indexable[col] = "#" + col.replace(" ", "").strip()
+        #     self.viewable_column_names_indexable[col] = "#"
+
+        # print(f"BB {self.viewable_column_names=}\n{self.viewable_column_names_indexable.keys()=}\n{self.viewable_column_names_indexable.values()=}")
+
         self.label = tkinter.Label(self, textvariable=self.tv_label, **self.kwargs_label)
         self.treeview = TreeviewExt(
             self,
+            # columns=list(self.viewable_column_names_indexable.values())
+            # columns=self.viewable_column_names
+            # , displaycolumns=self.viewable_column_names
             columns=self.viewable_column_names
-            , displaycolumns=self.viewable_column_names
+            # ,displaycolumns=self.viewable_column_names_indexable
+            ,displaycolumns="#all"
             , **self.kwargs_treeview
             # , **kwargs
         )
 
+        # print(f"==TC\n{self.df=}\n{viewable_column_names=}")
+
+        # for i, col in enumerate(self.viewable_column_names_indexable):
         for i, col in enumerate(self.viewable_column_names):
+            # if isinstance(self.viewable_column_names, dict):
+            # col_i = self.viewable_column_names_indexable[col]
+            # col_i = f"#{i}"
+            col_i = col
             c_width = self.viewable_column_widths[i]
-            # print(f"{c_width=}, {type(c_width)=}")
-            self.treeview.column(col, width=c_width, anchor=tkinter.CENTER)
-            self.treeview.heading(col, text=col, anchor=tkinter.CENTER, command=lambda _col=col: \
+            # print(f"{c_width=}, {type(c_width)=}, {i=}, {col=}, {col_i=}")
+            self.treeview.column(col_i, width=c_width, anchor=tkinter.CENTER)
+            self.treeview.heading(col_i, text=col, anchor=tkinter.CENTER, command=lambda _col=col_i: \
                 self.treeview.treeview_sort_column(_col, False))
 
         self.idx_width = 50
         self.treeview.column("#0", width=self.idx_width, stretch=False)
         self.treeview.heading("#0", text="#", anchor=tkinter.CENTER)
 
-        # print(f"A {df.shape=}")
+        # print(f"--BB {df.shape=}\n{self.df}")
         # print(f"{list(df.itertuples())=}\n{len(list(df.itertuples()))}")
         # for i, row in df.itertuples():
         # f = list(range(1015))
-        for i, row in df.iterrows():
+        for i, row in self.df.iterrows():
             # next(self.iid_namer)
             # print(f"{i=}, {row=}, {type(row)=}")
             dat = [row[c_name] for c_name in self.viewable_column_names]
@@ -694,8 +740,8 @@ class TreeviewController(tkinter.Frame):
             # print(f"{self.treeview.column(key)=}, {type(self.treeview.column(key))=}")
             # print(f"{self.treeview.heading(key)=}, {type(self.treeview.heading(key))=}")
 
-        self.treeview.bind("<B1-Motion>", self.check_column_width_update)
-        self.treeview.bind("<Button-1>", self.stop_row_idx_resize)
+        self.binding_treeview_b1_motion = self.treeview.bind("<B1-Motion>", self.check_column_width_update)
+        self.binding_treeview_b1 = self.treeview.bind("<Button-1>", self.stop_row_idx_resize)
 
     def gen_cell_tag(self, i, j):
         """12|-=-=-=-|12"""
@@ -811,32 +857,34 @@ class TreeviewController(tkinter.Frame):
         # print(f"{event=}, {type(event)=}")
         region1 = self.treeview.identify("region", event.x, event.y)
         column = self.treeview.identify_column(event.x)
-        column_data = self.treeview.column(column)
-        width1 = column_data.get("width_canvas", 0)
-        name = column_data.get("id", None)
-        # print(f"{name=}\n{self.viewable_column_names=}\n{self.viewable_column_widths=}")
-        col_idx1 = self.viewable_column_names.index(name)
-        col_idx2 = (col_idx1 + 1) if col_idx1 < len(self.viewable_column_names) else (
-                len(self.viewable_column_names) - 1)
-        width2 = self.treeview.column(f"#{col_idx2}").get("width_canvas", 0)
-        if region1 == "separator" and column != "#0":
-            diff_width = self.viewable_column_widths[col_idx1 - 1] - width1
-            # print(f"\n\n\t{column_data=}, {width1=}, {width2=}, {diff_width=}")
-            # print(f"{region1=}, {column=}")
-            # print(f"{col_idx1=}, {col_idx2=}")
-            # print(f"{self.viewable_column_widths=}")
-            # print(f"{self.viewable_column_widths[col_idx1]=}, {self.viewable_column_widths[col_idx2]=}")
+        # print(f"Treeview B1 Motion {column=}")
+        if column:
+            column_data = self.treeview.column(column)
+            width1 = column_data.get("width_canvas", 0)
+            name = column_data.get("id", None)
+            # print(f"{name=}\n{self.viewable_column_names=}\n{self.viewable_column_widths=}")
+            col_idx1 = self.viewable_column_names.index(name)
+            col_idx2 = (col_idx1 + 1) if col_idx1 < len(self.viewable_column_names) else (
+                    len(self.viewable_column_names) - 1)
+            width2 = self.treeview.column(f"#{col_idx2}").get("width_canvas", 0)
+            if region1 == "separator" and column != "#0":
+                diff_width = self.viewable_column_widths[col_idx1 - 1] - width1
+                # print(f"\n\n\t{column_data=}, {width1=}, {width2=}, {diff_width=}")
+                # print(f"{region1=}, {column=}")
+                # print(f"{col_idx1=}, {col_idx2=}")
+                # print(f"{self.viewable_column_widths=}")
+                # print(f"{self.viewable_column_widths[col_idx1]=}, {self.viewable_column_widths[col_idx2]=}")
 
-            self.viewable_column_widths[col_idx1 - 1] -= diff_width
-            self.viewable_column_widths[col_idx2 - 1] += diff_width
+                self.viewable_column_widths[col_idx1 - 1] -= diff_width
+                self.viewable_column_widths[col_idx2 - 1] += diff_width
 
-            # print(f"{self.aggregate_objects=}")
-            # print(f"{self.aggregate_objects[col_idx1 + 2]=}")
-            # print(f"{self.aggregate_objects[col_idx1 + 2][1]=}")
-            self.aggregate_objects[col_idx1 + 2][1].configure(
-                width=int(self.viewable_column_widths[col_idx1 - 1] * self.p_width))
-            self.aggregate_objects[col_idx2 + 2][1].configure(
-                width=int(self.viewable_column_widths[col_idx2 - 1] * self.p_width))
+                # print(f"{self.aggregate_objects=}")
+                # print(f"{self.aggregate_objects[col_idx1 + 2]=}")
+                # print(f"{self.aggregate_objects[col_idx1 + 2][1]=}")
+                self.aggregate_objects[col_idx1 + 2][1].configure(
+                    width=int(self.viewable_column_widths[col_idx1 - 1] * self.p_width))
+                self.aggregate_objects[col_idx2 + 2][1].configure(
+                    width=int(self.viewable_column_widths[col_idx2 - 1] * self.p_width))
 
     def get_objects(self):
         """TreeViewController(tkinter.Frame) || StringVar || Label || TreeViewExt(ttk.TreeView) || ttk.Srollbar || ttk.ScrollBar || Tuple(StringVar, Button) || Tuple(StringVar, Button) || ListOf(Frame, Tuple(TextVariablev, Entry, (x1, x2))) ... Tuple(TextVariablev, Entry, (x1, x2)))"""
@@ -2151,7 +2199,7 @@ class MultiComboBox(tkinter.Frame):
                  new_entry_defaults=None, lock_result_col=None, allow_insert_ask=True, viewable_column_widths=None,
                  include_aggregate_row=True, include_drop_down_arrow=True, drop_down_is_clicked=True,
                  include_searching_widgets=True, exhaustive_filtering=False, default_null_char="",
-                 row_colour_bg=None, row_colour_fg=None
+                 row_colour_bg=None, row_colour_fg=None, use_str_dtype:bool=True, nan_repr:str|None=None
                  ):
         super().__init__(master)
 
@@ -2161,11 +2209,36 @@ class MultiComboBox(tkinter.Frame):
                 "values" in kwargs_combo)) else True, f"Cannot pass values as a keyword argument here. Pass all data in the data param as a pandas.DataFrame."
         # assert auto_pack + auto_grid <= 1, f"Error parameters 'auto_pack'={auto_pack} and 'auto_grid'={auto_grid} must be in a configuration where both params are not True.\nCannot grid and pack child widgets. (1 or None)"
 
-        assert (lock_result_col in viewable_column_names) if viewable_column_names else ((
-                                                                                                 lock_result_col in data.columns) if lock_result_col else True), f"Error column '{lock_result_col}' cannot be set as the locked result column. It is not in the list of viewable column names or in the list of columns in the passed dataframe."
+        # print(f"{lock_result_col=}\n{viewable_column_names=}\n{data.columns=}")
+        if lock_result_col is not None:
+            assert (lock_result_col in viewable_column_names) if viewable_column_names else ((
+                                                                                                 lock_result_col in data.columns) if (lock_result_col is not None) else True), f"Error column '{lock_result_col}' cannot be set as the locked result column. It is not in the list of viewable column names or in the list of columns in the passed dataframe."
+
+        self.data = data
+        self.use_str_dtype = use_str_dtype
+        self.nan_repr = nan_repr
+
+        # print(f"PRE\n{self.data=}")
+
+        if self.nan_repr is not None:
+            self.data = self.data.fillna(self.nan_repr)
+
+        # print(f"POST\n{self.data=}")
+
+        # convert the datatypes to string for all columns
+        if self.use_str_dtype:
+            for col_ in self.data.columns:
+                self.data[col_] = self.data[col_].astype(str)
 
         if viewable_column_names is None:
             viewable_column_names = list(data.columns)
+        else:
+            # print(f"PRE=RENAME\n{self.data=}")
+            self.data = self.data.rename(columns=viewable_column_names)
+            # print(f"POST=RENAME\n{self.data=}")
+
+        if None in viewable_column_names:
+            raise ValueError("Error, the None datatype cannot be the name of any column in the dataframe. This is a reserved keyword, please use 'None' as a string.")
 
         if len(viewable_column_names) == 1:
             new_entry_defaults = []
@@ -2175,7 +2248,6 @@ class MultiComboBox(tkinter.Frame):
         self.master = master
         self.namer = alpha_seq(10000000)
         self.top_most = patriarch(master)
-        self.data = data
         self.limit_to_list = limit_to_list
         self.p_allow_insert_ask = allow_insert_ask
         self.allow_insert_ask = False if limit_to_list else allow_insert_ask
@@ -2221,7 +2293,8 @@ class MultiComboBox(tkinter.Frame):
         self.frame_tree = tkinter.Frame(self, name="ft")
 
         # print(f"{data.shape=}")
-        # print(f"{data=}")
+        # print(f"PRE-TREE-CONTROLLER\n{self.data=}")
+        # print(f"PRE-TREE-CONTROLLER\n{data=}")
         self.tree_controller = treeview_factory(
             self.frame_tree,
             data,
@@ -2241,6 +2314,11 @@ class MultiComboBox(tkinter.Frame):
             (self.tree_tv_button_new_item, self.tree_button_new_item), \
             (self.tree_tv_button_delete_item, self.tree_button_delete_item), \
             self.tree_aggregate_objects = self.tree_controller.get_objects()
+
+        # print(f"PRE {self.tree_controller.df=}")
+        if self.nan_repr is not None:
+            self.tree_controller.df = self.tree_controller.df.fillna(self.nan_repr)
+        # print(f"POST {self.tree_controller.df=}")
 
         cn = self.tree_controller.viewable_column_names
         assert "All" not in cn, "Error, cannot use column name 'All'. This is reserved as a column filtering label."
@@ -2274,7 +2352,7 @@ class MultiComboBox(tkinter.Frame):
         self.rg_var, self.rg_tv_var, self.rg_btns = radio_factory(self.frame_middle,
                                                                   buttons=self.radio_btn_texts, default_value=0)
         self.rg_var.trace_variable("w", self.update_radio_group)
-        self.res_tv_entry.trace_variable("w", self.update_entry)
+        self.trace_res_tv_entry = self.res_tv_entry.trace_variable("w", self.update_entry)
         self.typed_in = tkinter.BooleanVar(self, value=False)
 
         self.res_entry = tkinter.Entry(self.frame_top_most, textvariable=self.res_tv_entry, justify="center")
@@ -2283,10 +2361,10 @@ class MultiComboBox(tkinter.Frame):
 
         self.res_canvas = ArrowButton(self.frame_top_most, background=rgb_to_hex("GRAY_62"))
 
-        self.res_canvas.bind("<Button-1>", self.click_canvas_dropdown_button)
-        self.tree_treeview.bind("<<TreeviewSelect>>", self.treeview_selection_update)
-        self.res_entry.bind("<Key>", self.update_typed_in)
-        self.res_entry.bind("<Return>", self.submit_typed_in)
+        self.bind_button1_res_camvas = self.res_canvas.bind("<Button-1>", self.click_canvas_dropdown_button)
+        self.bind_treeview_select_tree_treeview = self.tree_treeview.bind("<<TreeviewSelect>>", self.treeview_selection_update)
+        self.bind_key_res_entry = self.res_entry.bind("<Key>", self.update_typed_in)
+        self.bind_return_res_entry = self.res_entry.bind("<Return>", self.submit_typed_in)
 
         self.returned_value = tkinter.StringVar(self, value="")
 
@@ -2319,6 +2397,9 @@ class MultiComboBox(tkinter.Frame):
 
         # print(f"Multicombobox created with dimensions (r x c)=({self.data.shape[0]} x {self.data.shape[1]})")
 
+        # print(f"END SETUP {self.data=}")
+        # print(f"END SETUP {self.tree_controller.df=}")
+
     def grid_widget(self):
         """Use this to appropriately place self and all sub widgets."""
         self.grid(ipadx=12, ipady=12)
@@ -2347,11 +2428,11 @@ class MultiComboBox(tkinter.Frame):
         # self.tree_treeview.tag_configure(f"{row}-{column}", background=bg_colour, foreground=fg_colour)
         # self.tree_treeview.tag_configure(f"{row}", background=bg_colour, foreground=fg_colour)
         # self.tree_treeview.tag_configure(f"{column}", background=bg_colour, foreground=fg_colour)
-        self.tree_treeview.tag_configure(self.tree_controller.gen_row_tag(i, j), background=bg_colour,
+        self.tree_treeview.tag_configure(self.tree_controller.gen_row_tag(i, +-j), background=bg_colour,
                                          foreground=fg_colour)
 
     def treeview_selection_update(self, event):
-        print(f"treeview_selection_update")
+        # print(f"treeview_selection_update")
         row_ids = self.tree_treeview.selection()
         if row_ids:
 
@@ -2410,7 +2491,7 @@ class MultiComboBox(tkinter.Frame):
             self.tree_treeview.selection_set(children[0])
         elif bypass or not children and not self.limit_to_list:
             val = self.res_tv_entry.get()
-            col = self.rg_var.get()
+            col = self.tree_controller.viewable_column_names[self.rg_var.get()]
             if val:
                 self.add_new_item(val, col, self.new_entry_defaults)
 
@@ -2455,6 +2536,9 @@ class MultiComboBox(tkinter.Frame):
                         if value == x:
                             to_delete.append(i)
                             break
+                        elif self.use_str_dtype and (str(value) == x):
+                            to_delete.append(i)
+                            break
                     if to_delete and not delete_multi:
                         break
 
@@ -2473,120 +2557,370 @@ class MultiComboBox(tkinter.Frame):
                         f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
         self.update_treeview()
 
-    def add_new_item(self, val, col, rest_values=None, rest_tags=None):
-        if val in self.invalid_inp_codes:
-            self.throw_fit(val)
+    def add_new_item(self, val, col=None, rest_values=None, rest_tags=None):
+        # TODO support multiple values to be passed in iterable or dictionary fashion.
+
         cn = self.tree_controller.viewable_column_names
-        print(f"{col=}")
-        # idx = col
-        # col = cn[col]
-        # col = cn[0] if col == 0 else col
+        # print(f"{self.data=}, {cn=}, {val=}, {col=}, {rest_values=}, {rest_tags=}")
+
         tags = set()
-        idx = cn.index(col)
         i = self.data.shape[0]
-        # print(f"{type(rest_values)=}\n{rest_values=}")
-        if not self.limit_to_list:
-            if rest_values and (
-                    isinstance(rest_values, (tuple, list, dict))):
+        new_dfs = []
 
-                is_dict = False
-                is_list = False
-                if (is_list := isinstance(rest_tags, (tuple, list))) or (is_dict := isinstance(rest_tags, dict)):
-                    if is_dict:
-                        for j, col in enumerate(cn):
-                            tags.add(rest_tags.get(col, self.tree_controller.gen_row_tag(i)))
+        if isinstance(val, pd.DataFrame):
+            # print(f"DATAFRAME")
+
+            if set(val.columns).difference(set(cn)) != set():
+                raise ValueError("New dataframe cannot have unspecified columns from the original.")
+
+            is_dict = False
+            is_list = False
+            if (is_list := isinstance(rest_tags, (tuple, list))) or (is_dict := isinstance(rest_tags, dict)):
+                if is_dict:
+                    for j, col_ in enumerate(cn):
+                        tags.add(rest_tags.get(col_, self.tree_controller.gen_row_tag(i)))
+                else:
+                    if (l_rt := len(rest_tags)) != (l_cn := len(cn)):
+                        if l_rt > l_cn:
+                            raise ValueError(
+                                f"Error, too many tags were passed for this table. Got {l_rt}, expected {l_cn}")
+                        else:
+                            raise ValueError(
+                                f"Error, too few tags were passed for this table. Got {l_rt}, expected {l_cn}")
                     else:
-                        if (l_rt := len(rest_tags)) != (l_cn := len(cn)):
-                            if l_rt > l_cn:
-                                raise ValueError(
-                                    f"Error, too many tags were passed for this table. Got {l_rt}, expected {l_cn}")
-                            else:
-                                raise ValueError(
-                                    f"Error, too few tags were passed for this table. Got {l_rt}, expected {l_cn}")
-                        else:
-                            [tags.add(tag) for tag in rest_tags]
-                else:
-                    tags = [self.tree_controller.gen_cell_tag(i, j) for j in range(len(cn))]
-
-                if isinstance(rest_values, list) or isinstance(rest_values, tuple):
-                    row = list(rest_values)
-                    row.insert(idx, val)
-                    self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
-                    # print(f"\nB\t{self.data=}").0
-                    self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tuple(tags))
-                    # self.res_entry.config(foreground="black")
-                else:
-                    row = dict(rest_values)
-                    row.update({col: val})
-                    print(f"\n\trow:\n{row}\n\n\tcn\n{cn}\n>")
-                    # self.data = self.data.append(pandas.DataFrame(row))
-                    print(f"A\n\tData\n{self.data}\n{type(self.data)=}")
-                    print(f"\n\tcols\n{self.data.columns}")
-                    # print(f"DF 2:{pandas.DataFrame(row)}")
-                    df1 = pandas.DataFrame([row], columns=list(row.keys()))
-                    print(f"DF 1:{df1}\n{type(df1)=}")
-                    # self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
-                    # self.data = self.data.append(df1, ignore_index=True)
-                    self.data = pd.concat([self.data, df1], ignore_index=True)
-                    print(f"B\n\tData\n{self.data}\n{type(self.data)=}")
-                    # self.data = self.data.append(pandas.DataFrame(row))
-
-                    row_vals = [row.get(c, self.default_null_char) for c in cn]
-                    cdvd = {k: [v] for k, v in zip(cn, row)}.values()
-                    print(f"{row_vals=}")
-                    print(f"{cn=}, {row=}")
-                    print(f"{cdvd=}")
-                    print(f"{list({k: [v] for k, v in zip(cn, row)}.values())=}")
-
-                    # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1),
-                    #                           values=list({k: [v] for k, v in zip(cn, row)}.values()))
-
-                    self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row_vals, tags=tuple(tags))
-
-            elif self.allow_insert_ask and not self.p_allow_insert_ask:
-                # prevents situations where an item can be inserted by typing. Will accept if and only if its column values are passed with it.
-                print(
-                    f"Combobox is not limited to list contents, however, it is alos not allowed to ask for new values. You must pass default values.")
-            elif self.allow_insert_ask:
-                ans = tkinter.messagebox.askyesnocancel("Create New Item",
-                                                        message=f"Create a new combo box cell_is_entry with '{val}' in column '{col}' position?")
-                row = []
-                if ans == tkinter.YES:
-                    tags = (self.tree_controller.gen_row_tag(i),)
-                    # print(f"SELECTING {i=}")
-                    column_names = self.tree_controller.viewable_column_names
-                    for column in column_names:
-                        if col != column:
-                            if column in self.new_entry_defaults:
-                                row.append(self.new_entry_defaults[column])
-                            else:
-                                ask_value = self.ask_value(column)
-                                if ask_value in self.invalid_inp_codes:
-                                    self.throw_fit(ask_value)
-                                else:
-                                    row.append(ask_value)
-                        else:
-                            row.append(val)
-
-                    # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
-                    # print(f"\nA\t{self.data=}")
-                    # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
-                    # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
-                    self.data = pd.concat([self.data, (pandas.DataFrame({k: [v] for k, v in zip(cn, row)}))],
-                                          ignore_index=True)
-                    # print(f"\nB\t{self.data=}")
-                    self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row), tags=tuple(tags))
-                    self.res_entry.config(foreground="black")
-                else:
-                    self.res_entry.config(foreground="red")
-            elif len(self.tree_controller.viewable_column_names) == 1:
-                return
+                        [tags.add(tag) for tag in rest_tags]
             else:
-                raise ValueError("Cannot insert into this combobox")
-        else:
-            raise ValueError("Cannot insert into this combobox")
+                tags = [[self.tree_controller.gen_cell_tag(k, j) for j in range(len(cn))] for k in range(i, i + val.shape[0])]
 
-        print(f"{tags=}")
+            new_dfs.append((val, [tup[1:] for tup in val.itertuples()], tags))
+        else:
+            print(f"SINGLE RECORD")
+
+            if col is None:
+                if hasattr(val, "__iter__") and not isinstance(val, str):
+                    if len(val) == len(cn):
+                        col = cn[0]
+                    elif rest_values:
+                        if (1 + len(rest_values)) == len(cn):
+                            col = cn[0]
+                        elif not self.limit_to_list or self.allow_insert_ask:
+                            # allowed to insert later, choose the
+                            if self.lock_result_col is not None:
+                                col = self.lock_result_col
+                            else:
+                                col = cn[0]
+                        else:
+                            raise ValueError("Error, when 'col' is None, then 'rest_values' must cover the ")
+                    else:
+                        raise ValueError("Error, when 'col' is None, then the ")
+                elif rest_values:
+                    if (1 + len(rest_values)) == len(cn):
+                        if isinstance(rest_values, dict):
+                            col = set(cn).difference(set(rest_values)).pop()
+                        else:
+                            col = cn[0]
+                    elif not self.limit_to_list and self.allow_insert_ask:
+                        # allowed to insert later, choose the
+                        if self.lock_result_col is not None:
+                            col = self.lock_result_col
+                        else:
+                            col = cn[0]
+                    else:
+                        raise ValueError("Error, when 'col' is None, then 'rest_values' must cover the ")
+                elif not self.limit_to_list and self.allow_insert_ask:
+                    col = cn[0]
+                else:
+                    raise ValueError("Error, when 'col' is None, then the ")
+
+            print(f"COL VAL IN {col=}")
+
+            try:
+                print(f"{cn=}, {col=}")
+                idx = cn.index(col)
+            except ValueError as ie:
+                raise ValueError(f"Column '{col}' is not a valid column name for this dataframe. Remember to use visible column names.")
+
+            if (typ := type(val)) == dict:
+                val_keys = set(val.keys())
+                set_cn = set(cn)
+                if val_keys.difference(set_cn):
+                    # the dictionary 'val' has unknown column names.
+                    raise KeyError(f"param 'val' has unknown column names.")
+
+            elif typ in (list, tuple):
+                if len(val) > len(cn):
+                    # the list or tuple has too many positional values to insert
+                    raise ValueError(f"param 'val' has too many values.")
+
+            if val in self.invalid_inp_codes:
+                self.throw_fit(val)
+            print(f"{col=}")
+            # idx = col
+            # col = cn[col]
+            # col = cn[0] if col == 0 else col
+            # print(f"{type(rest_values)=}\n{rest_values=}")
+
+            if not self.limit_to_list:
+                if rest_values and (
+                        isinstance(rest_values, (tuple, list, dict))):
+
+                    is_dict = False
+                    is_list = False
+                    if (is_list := isinstance(rest_tags, (tuple, list))) or (is_dict := isinstance(rest_tags, dict)):
+                        if is_dict:
+                            for j, col_ in enumerate(cn):
+                                tags.add(rest_tags.get(col_, self.tree_controller.gen_row_tag(i)))
+                        else:
+                            if (l_rt := len(rest_tags)) != (l_cn := len(cn)):
+                                if l_rt > l_cn:
+                                    raise ValueError(
+                                        f"Error, too many tags were passed for this table. Got {l_rt}, expected {l_cn}")
+                                else:
+                                    raise ValueError(
+                                        f"Error, too few tags were passed for this table. Got {l_rt}, expected {l_cn}")
+                            else:
+                                [tags.add(tag) for tag in rest_tags]
+                    else:
+                        tags = [self.tree_controller.gen_cell_tag(i, j) for j in range(len(cn))]
+
+                    if isinstance(rest_values, list) or isinstance(rest_values, tuple):
+                        row = list(rest_values)
+                        row.insert(idx, val)
+                        # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                        new_dfs.append((pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), [row], [tags]))
+                        # print(f"\nB\t{self.data=}").0
+                        # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tuple(tags))
+                        # self.res_entry.config(foreground="black")
+                    else:
+                        row = dict(rest_values)
+                        row.update({col: val})
+                        print(f"\n\trow:\n{row}\n\n\tcn\n{cn}\n>")
+                        # self.data = self.data.append(pandas.DataFrame(row))
+                        print(f"A\n\tData\n{self.data}\n{type(self.data)=}")
+                        print(f"\n\tcols\n{self.data.columns}")
+                        # print(f"DF 2:{pandas.DataFrame(row)}")
+                        df1 = pandas.DataFrame([row], columns=list(row.keys()))
+                        print(f"DF 1:{df1}\n{type(df1)=}")
+                        # self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
+                        # self.data = self.data.append(df1, ignore_index=True)
+                        # self.data = pd.concat([self.data, df1], ignore_index=True)
+                        # print(f"B\n\tData\n{self.data}\n{type(self.data)=}")
+                        # self.data = self.data.append(pandas.DataFrame(row))
+                        row_vals = [row.get(c, self.default_null_char) for c in cn]
+                        new_dfs.append((df1, [row_vals], [tags]))
+                        cdvd = {k: [v] for k, v in zip(cn, row)}.values()
+                        print(f"{row_vals=}")
+                        print(f"{cn=}, {row=}")
+                        print(f"{cdvd=}")
+                        print(f"{list({k: [v] for k, v in zip(cn, row)}.values())=}")
+
+                        # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1),
+                        #                           values=list({k: [v] for k, v in zip(cn, row)}.values()))
+
+                        # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row_vals, tags=tuple(tags))
+
+                elif self.allow_insert_ask and not self.p_allow_insert_ask:
+                    # prevents situations where an item can be inserted by typing. Will accept if and only if its column values are passed with it.
+                    print(
+                        f"Combobox is not limited to list contents, however, it is alos not allowed to ask for new values. You must pass default values.")
+                elif self.allow_insert_ask:
+                    ans = tkinter.messagebox.askyesnocancel("Create New Item",
+                                                            message=f"Create a new combo box cell_is_entry with '{val}' in column '{col}' position?")
+                    row = []
+                    if ans == tkinter.YES:
+                        tags = (self.tree_controller.gen_row_tag(i),)
+                        # print(f"SELECTING {i=}")
+                        column_names = self.tree_controller.viewable_column_names
+                        for column in column_names:
+                            if col != column:
+                                if column in self.new_entry_defaults:
+                                    row.append(self.new_entry_defaults[column])
+                                else:
+                                    ask_value = self.ask_value(column)
+                                    if ask_value in self.invalid_inp_codes:
+                                        self.throw_fit(ask_value)
+                                    else:
+                                        row.append(ask_value)
+                            else:
+                                row.append(val)
+
+                        # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
+                        # print(f"\nA\t{self.data=}")
+                        # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
+                        # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                        # self.data = pd.concat([self.data, (pandas.DataFrame({k: [v] for k, v in zip(cn, row)}))],
+                        #                       ignore_index=True)
+                        # print(f"\nB\t{self.data=}")
+                        new_dfs.append((pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), [row], [tags]))
+                        # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row), tags=tuple(tags))
+                        self.res_entry.config(foreground="black")
+
+                        # i = self.data.shape[0]
+                        # for df, vals, tags in new_dfs:
+                        #     self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=vals, tags=tuple(tags))
+                        #     i += 1
+                        # self.data = pd.concat(new_dfs, ignore_index=True)
+                    else:
+                        self.res_entry.config(foreground="red")
+                elif len(self.tree_controller.viewable_column_names) == 1:
+                    return
+                else:
+                    raise ValueError("Cannot insert into this combobox.")
+            else:
+                raise ValueError("Cannot insert into this combobox, 'limit_to_list' is True.")
+
+        # print(f"PRE-INSERT")
+        # print(f"{new_dfs=}")
+        # print(f"{tags=}")
+        # print(f"self.data={self.data}")
+        k = self.data.shape[0]
+        for df, vals, tags in new_dfs:
+            if self.nan_repr is not None:
+                df = df.fillna(self.nan_repr)
+            for i, row in df.iterrows():
+                vals_ = vals[i]
+                tags_ = tags[i]
+            # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
+            #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
+                self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
+            k += df.shape[0]
+        self.data = pd.concat([self.data, *[df for df, *rest in new_dfs]], ignore_index=True)
+
+        if self.nan_repr is not None:
+            self.tree_controller.df = self.tree_controller.df.fillna(self.nan_repr)
+            self.data = self.data.fillna(self.nan_repr)
+
+        # print(f"END==\n{self.data=}")
+
+    # def add_new_item(self, val, col, rest_values=None, rest_tags=None):
+    #     # TODO support multiple values to be passed in iterable or dictionary fashion.
+    #
+    #     cn = self.tree_controller.viewable_column_names
+    #
+    #     idx = cn.index(col)
+    #     if (typ := type(val)) == dict:
+    #         val_keys = set(val.keys())
+    #         set_cn = set(cn)
+    #         if val_keys.difference(set_cn):
+    #             # the dictionary 'val' has unknown column names.
+    #             raise KeyError(f"param 'val' has unknown column names.")
+    #
+    #     elif typ in (list, tuple):
+    #         if len(val) > len(cn):
+    #             # the list or tuple has too many positional values to insert
+    #             raise ValueError(f"param 'val' has too many values.")
+    #
+    #     if val in self.invalid_inp_codes:
+    #         self.throw_fit(val)
+    #     print(f"{col=}")
+    #     # idx = col
+    #     # col = cn[col]
+    #     # col = cn[0] if col == 0 else col
+    #     tags = set()
+    #     i = self.data.shape[0]
+    #     # print(f"{type(rest_values)=}\n{rest_values=}")
+    #     if not self.limit_to_list:
+    #         if rest_values and (
+    #                 isinstance(rest_values, (tuple, list, dict))):
+    #
+    #             is_dict = False
+    #             is_list = False
+    #             if (is_list := isinstance(rest_tags, (tuple, list))) or (is_dict := isinstance(rest_tags, dict)):
+    #                 if is_dict:
+    #                     for j, col_ in enumerate(cn):
+    #                         tags.add(rest_tags.get(col_, self.tree_controller.gen_row_tag(i)))
+    #                 else:
+    #                     if (l_rt := len(rest_tags)) != (l_cn := len(cn)):
+    #                         if l_rt > l_cn:
+    #                             raise ValueError(
+    #                                 f"Error, too many tags were passed for this table. Got {l_rt}, expected {l_cn}")
+    #                         else:
+    #                             raise ValueError(
+    #                                 f"Error, too few tags were passed for this table. Got {l_rt}, expected {l_cn}")
+    #                     else:
+    #                         [tags.add(tag) for tag in rest_tags]
+    #             else:
+    #                 tags = [self.tree_controller.gen_cell_tag(i, j) for j in range(len(cn))]
+    #
+    #             if isinstance(rest_values, list) or isinstance(rest_values, tuple):
+    #                 row = list(rest_values)
+    #                 row.insert(idx, val)
+    #                 self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+    #                 # print(f"\nB\t{self.data=}").0
+    #                 self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tuple(tags))
+    #                 # self.res_entry.config(foreground="black")
+    #             else:
+    #                 row = dict(rest_values)
+    #                 row.update({col: val})
+    #                 print(f"\n\trow:\n{row}\n\n\tcn\n{cn}\n>")
+    #                 # self.data = self.data.append(pandas.DataFrame(row))
+    #                 print(f"A\n\tData\n{self.data}\n{type(self.data)=}")
+    #                 print(f"\n\tcols\n{self.data.columns}")
+    #                 # print(f"DF 2:{pandas.DataFrame(row)}")
+    #                 df1 = pandas.DataFrame([row], columns=list(row.keys()))
+    #                 print(f"DF 1:{df1}\n{type(df1)=}")
+    #                 # self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
+    #                 # self.data = self.data.append(df1, ignore_index=True)
+    #                 self.data = pd.concat([self.data, df1], ignore_index=True)
+    #                 print(f"B\n\tData\n{self.data}\n{type(self.data)=}")
+    #                 # self.data = self.data.append(pandas.DataFrame(row))
+    #
+    #                 row_vals = [row.get(c, self.default_null_char) for c in cn]
+    #                 cdvd = {k: [v] for k, v in zip(cn, row)}.values()
+    #                 print(f"{row_vals=}")
+    #                 print(f"{cn=}, {row=}")
+    #                 print(f"{cdvd=}")
+    #                 print(f"{list({k: [v] for k, v in zip(cn, row)}.values())=}")
+    #
+    #                 # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1),
+    #                 #                           values=list({k: [v] for k, v in zip(cn, row)}.values()))
+    #
+    #                 self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row_vals, tags=tuple(tags))
+    #
+    #         elif self.allow_insert_ask and not self.p_allow_insert_ask:
+    #             # prevents situations where an item can be inserted by typing. Will accept if and only if its column values are passed with it.
+    #             print(
+    #                 f"Combobox is not limited to list contents, however, it is alos not allowed to ask for new values. You must pass default values.")
+    #         elif self.allow_insert_ask:
+    #             ans = tkinter.messagebox.askyesnocancel("Create New Item",
+    #                                                     message=f"Create a new combo box cell_is_entry with '{val}' in column '{col}' position?")
+    #             row = []
+    #             if ans == tkinter.YES:
+    #                 tags = (self.tree_controller.gen_row_tag(i),)
+    #                 # print(f"SELECTING {i=}")
+    #                 column_names = self.tree_controller.viewable_column_names
+    #                 for column in column_names:
+    #                     if col != column:
+    #                         if column in self.new_entry_defaults:
+    #                             row.append(self.new_entry_defaults[column])
+    #                         else:
+    #                             ask_value = self.ask_value(column)
+    #                             if ask_value in self.invalid_inp_codes:
+    #                                 self.throw_fit(ask_value)
+    #                             else:
+    #                                 row.append(ask_value)
+    #                     else:
+    #                         row.append(val)
+    #
+    #                 # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
+    #                 # print(f"\nA\t{self.data=}")
+    #                 # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
+    #                 # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+    #                 self.data = pd.concat([self.data, (pandas.DataFrame({k: [v] for k, v in zip(cn, row)}))],
+    #                                       ignore_index=True)
+    #                 # print(f"\nB\t{self.data=}")
+    #                 self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row), tags=tuple(tags))
+    #                 self.res_entry.config(foreground="black")
+    #             else:
+    #                 self.res_entry.config(foreground="red")
+    #         elif len(self.tree_controller.viewable_column_names) == 1:
+    #             return
+    #         else:
+    #             raise ValueError("Cannot insert into this combobox")
+    #     else:
+    #         raise ValueError("Cannot insert into this combobox")
+    #
+    #     print(f"{tags=}")
 
     def throw_fit(self, code):
         raise ValueError(f"You cannot use code='{code}'. It is a keyword.")
@@ -2638,7 +2972,7 @@ class MultiComboBox(tkinter.Frame):
         # print(f"filter_treeview: {self.typed_in.get()}\n\n\tDATA\n{self.data}")
         if self.typed_in.get():
             val = self.res_tv_entry.get().lower()
-            print(f"SUBMISSION VAL {val=}")
+            # print(f"SUBMISSION VAL {val=}")
             col = self.rg_var.get()
             col = self.radio_btn_texts[col]
             some = False
@@ -2686,7 +3020,7 @@ class MultiComboBox(tkinter.Frame):
                         tags = [self.tree_controller.gen_cell_tag(i, j) for j in
                                 range(len(self.tree_controller.viewable_column_names))]
                         self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=list(row), tags=tags)
-                        print(f"{tags=}")
+                        # print(f"{tags=}")
                         c += 1
                         some = True
                     # print(f"{i=}\n{row=}\n{found=}")
@@ -3516,7 +3850,7 @@ class InfoFrame(tkinter.Frame):
         else:
             self.formats = {lbl: formats for lbl in self.labels_in}
 
-        print(dict_print(self.formats, "formats"))
+        # print(dict_print(self.formats, "formats"))
 
         self.check_header()
         self.check_footer()
@@ -3677,7 +4011,7 @@ class InfoFrame(tkinter.Frame):
 
     def change_value(self, key, value):
         if key not in self.info_labels:
-            print(f"de-keying")
+            # print(f"de-keying")
             ke = self.de_keyify(key)
         else:
             ke = key
@@ -3695,7 +4029,7 @@ class InfoFrame(tkinter.Frame):
 
     def get_value(self, key, default=None):
         if key not in self.info_labels:
-            print(f"de-keying")
+            # print(f"de-keying")
             try:
                 ke = self.de_keyify(key)
             except KeyError:
@@ -3710,11 +4044,15 @@ def calc_geometry_tl(
         height: int | float = None,
         dims: None | tuple | list = None,
         largest: bool | int = True,
-        rtype: str | dict | list | tuple = str
+        rtype: str | dict | list | tuple = str,
+        parent: tkinter.BaseWidget | tkinter.Toplevel | tkinter.Tk = None
 
         # one_display_orient: Literal["horizontal", "vertical"]="horizontal"
 ) -> str | dict | list | tuple:
+    # TODO add 'parent' param. Would allow you to specify where a screen's parent is, and to match it's dimensions.
+
     x_off, y_off = 0, 0
+
     if dims is None:
 
         monitors = utility.get_largest_monitors()
@@ -3739,8 +4077,17 @@ def calc_geometry_tl(
     else:
         x_, y_, width_, height_ = dims
 
+    # print(f"{parent=}")
+    if parent is not None:
+        # a parent widget or window has been identified.
+        # calculate this new geometry
+        px, py = parent.winfo_rootx(), parent.winfo_rooty()
+        # print(f"{px=}, {py=}")
+        x_off = px
+        y_off = py
+
     t_width, t_height = width_, height_
-    
+
     if height is None:
         height = width
 
@@ -3752,38 +4099,48 @@ def calc_geometry_tl(
         assert 0 < width <= 1, "Error, if param 'width' is a float, it must be between 0 and 1."
         width = int(width * width_)
 
-    if width == height == "zoomed":
-        return width
-    else:
-        if width == "zoomed":
+    p_a = width == "zoomed"
+    p_b = height == "zoomed"
+    if p_a or p_b:
+        print(f"A, {p_a=}, {p_b=}")
+
+        if p_a:
+            height_o = height_ if p_b else height
             x_ = 0
-            height_c = clamp(1, height, height_)
+            height_c = clamp(1, height_o, height_)
             y_ = (height_ - height_c) // 2
-            height_ = height
-        elif height == "zoomed":
+            height_ = height_c
+
+        if p_b:
+            width_o = width_ if p_a else width
             y_ = 0
-            width_c = clamp(1, width, width_)
+            width_c = clamp(1, width_o, width_)
             x_ = (width_ - width_c) // 2
-            width_ = width
-        else:
-            width_c = clamp(1, width, width_)
-            height_c = clamp(1, height, height_)
-            x = (width_ - width_c) // 2
-            y = (height_ - height_c) // 2
-            x_, y_, width_, height_ = x, y, width_c, height_c
+            width_ = width_c
+    else:
+        print(f"B")
+        width_c = clamp(1, width, width_)
+        height_c = clamp(1, height, height_)
+        x = (width_ - width_c) // 2
+        y = (height_ - height_c) // 2
+        x_, y_, width_, height_ = x, y, width_c, height_c
 
-        x_ += x_off
-        y_ += y_off
+    x_ += x_off
+    y_ += y_off
 
+    if width == height == "zoomed":
+        res = "zoomed"
+    else:
         res = f"{width_}x{height_}+{x_}+{y_}"
-        print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
-        if rtype == str:
-            return res
-        elif rtype == dict:
-            return {"x": x_, "y": y_, "width": width_, "height": height_, "x1": x_, "y1": y_, "x2": x_ + width_,
-                    "y2": y_ + height_, "str": res, str: res, "geometry": res, str: res, "res": res, str: res}
-        else:
-            return [x_, y_, width_, height_]
+
+    print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
+    if rtype == str:
+        return res
+    elif rtype == dict:
+        return {"x": x_, "y": y_, "width": width_, "height": height_, "x1": x_, "y1": y_, "x2": x_ + width_,
+                "y2": y_ + height_, "str": res, str: res, "geometry": res, str: res, "res": res, str: res}
+    else:
+        return [x_, y_, width_, height_]
 
 
 def auto_font(font, text, c_width, c_height, min_font_size=4, max_font_size=300):
