@@ -56,7 +56,7 @@ def connect(sql, driver="{SQL Server}",
     has_insert = all([(stmt in sql.upper()) for stmt in ["INSERT INTO", "VALUES"]])
     has_update = all([(stmt in sql.upper()) for stmt in ["UPDATE", "SET"]])
 
-    if n_distinct_queries == 1 and ("SELECT" not in sql.upper()) and ("FROM" not in sql.upper()):
+    if n_distinct_queries == 1 and ("SELECT" not in sql.upper()) and ("FROM" not in sql.upper()) and not (has_insert or has_update):
         # single table name passed
         tbl = sql.removeprefix("[").removesuffix("]")
         sql = f"SELECT * FROM [{tbl}];"

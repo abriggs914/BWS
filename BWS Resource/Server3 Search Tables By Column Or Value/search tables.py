@@ -1,9 +1,11 @@
-import tkinter
-
 from pyodbc_connection import connect
 from sql_utility import parse_connection_data
 from tkinter_utility import *
 import warnings
+
+
+
+# 2024-04-04 1624
 
 
 class App(tkinter.Tk):
@@ -48,7 +50,8 @@ class App(tkinter.Tk):
             "StargateDB",
             "SysproCompanyA",
             "SysproCompanyS",
-            "SysproCompanyL",
+            "SysproCompanyL"
+            ,
             "uniPoint_Live"
         ]
 
@@ -93,24 +96,11 @@ class App(tkinter.Tk):
             command=self.click_clear_search
         )
 
-        self.frame_columns_tables = tkinter.Frame(self)
         self.mc = MultiComboBox(
-            self.frame_columns_tables,
+            self,
             pd.DataFrame(columns=self.sel_col_names),
             include_aggregate_row=False,
             include_searching_widgets=False
-        )
-        self.frame_names_tables = tkinter.Frame(self)
-        self.list_mcs = list()
-        self.tv_btn_prev_table, self.btn_prev_table = button_factory(
-            self.frame_names_tables,
-            "prev",
-            command=self.click_prev_table
-        )
-        self.tv_btn_next_table, self.btn_next_table = button_factory(
-            self.frame_names_tables,
-            "next",
-            command=self.click_next_table
         )
 
         self.lbl_title.grid(row=0, column=0, columnspan=4)
@@ -118,56 +108,16 @@ class App(tkinter.Tk):
         self.frame_db_btns.grid(row=3, column=0, rowspan=2)
         for i, btn in enumerate(self.list_rb_dv_bts):
             btn.grid(row=i, column=0)
-            # if i > 0:
-            #     btn.configure(state="disabled")
+            if i > 0:
+                btn.configure(state="disabled")
         for i, btn in enumerate(self.list_rb_db_bts):
             btn.grid(row=i, column=0)
 
-        r, c, rs, cs, ix, iy, x, y, s = grid_keys()
-        self.grid_args = {
-            # self
-            "lbl_search_input": {r: 1, c: 1, cs: 2},
-            "search_input": {r: 2, c: 1, cs: 2},
-            "btn_clear_search": {r: 3, c: 1},
-            "btn_search": {r: 3, c: 2},
-            "frame_columns_tables": {r: 4, c: 1, cs: 2},
-            "frame_names_tables": {r: 4, c: 1, cs: 2},
-
-            # frame_columns_tables
-            "btn_prev_table": {r: 0, c: 0},
-            "btn_next_table": {r: 0, c: 1}
-        }
-        # self.lbl_search_input.grid(row=1, column=1, columnspan=2)
-        # self.search_input.grid(row=2, column=1, columnspan=2)
-        for k, v in self.grid_args.items():
-            if k != "self.state" and k != "self.tv_label":
-                # print(f"{k=}")
-                eval(f"self.{k}.grid(**{v})")
-        # self.btn_clear_search.grid(row=3, column=1)
-        # self.btn_search.grid(row=3, column=2)
-        # self.frame_columns_tables.grid(**self.grid_args["frame_columns_tables"])
-        # self.btn_prev_table.grid(**self.grid_args["btn_prev_table"])
-
-        self.frame_names_tables.grid_forget()
-        self.tv_rb_dv.trace_variable("w", self.update_columns_or_vals)
-
-    def update_columns_or_vals(self, *args):
-        print(f"update_columns_or_vals")
-        val = self.tv_rb_dv.get()
-        if val == self.rv_options[0]:
-            # column names
-            self.frame_columns_tables.grid(**self.grid_args["frame_columns_tables"])
-            self.frame_names_tables.grid_forget()
-        else:
-            # values OR anything
-            self.frame_columns_tables.grid_forget()
-            self.frame_names_tables.grid(**self.grid_args["frame_names_tables"])
-
-    def click_prev_table(self):
-        print(f"click_prev_table")
-
-    def click_next_table(self):
-        print(f"click_mext_table")
+        self.lbl_search_input.grid(row=1, column=1, columnspan=2)
+        self.search_input.grid(row=2, column=1, columnspan=2)
+        self.btn_clear_search.grid(row=3, column=1)
+        self.btn_search.grid(row=3, column=2)
+        self.mc.grid(row=4, column=1, columnspan=2)
 
     def get_selected_dbs(self):
         selected = []
