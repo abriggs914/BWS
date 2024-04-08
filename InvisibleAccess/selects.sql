@@ -4,10 +4,10 @@ GO
 -- Selects for Access Database Glossary (ADG).
 
 SELECT
-	'ADG Databases' AS [Table],
+	'ADO Databases' AS [Table],
 	*
 FROM
-	[ADG Databases]
+	[ADO Databases]
 ;
 
 SELECT
@@ -23,13 +23,14 @@ SELECT
 FROM
 	[ADG Events]
 ;
-
+/*
 SELECT
-	'ADG Databases' AS [Table],
+	'ADO Databases' AS [Table],
 	*
 FROM
-	[ADG Databases]
+	[ADO Databases]
 ;
+*/
 
 
 SELECT
@@ -115,17 +116,17 @@ ORDER BY
 
 SELECT
 	'ADG Events -2' AS [Table],
-	MAX([ADG Databases].[ID]) AS [LastID]
-	, COUNT([ADG Databases].[ID]) AS [NumAccesses]
-	, [ADG Databases].[Name]
+	MAX([ADO Databases].[ADODatabasesID]) AS [LastID]
+	, COUNT([ADO Databases].[ADODatabasesID]) AS [NumAccesses]
+	, [ADO Databases].[Name]
 FROM
 	[ADG Events]
 INNER JOIN
-	[ADG Databases]
+	[ADO Databases]
 ON
-	[ADG Events].[AccessDBID] = [ADG Databases].[ID]
+	[ADG Events].[AccessDBID] = [ADO Databases].[ADODatabasesID]
 GROUP BY
-	[ADG Databases].[Name]
+	[ADO Databases].[Name]
 ORDER BY
 	[NumAccesses] DESC
 ;
