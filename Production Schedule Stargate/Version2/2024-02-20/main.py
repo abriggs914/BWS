@@ -19,7 +19,7 @@ import win32con
 import win32api
 
 # TODO shrink weekend tiles, currently they are just exempt from placement actions. Takes too much space.
-# TODO add slight animation for successful placement. 'Ripple' the row and column once complete.
+# TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
 # TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
 #   The hovered tile is too far to the right of the pointer.
 
@@ -54,6 +54,7 @@ SQL_HOLIDAYS = {
     "uid": "user5",
     "pwd": "M@gic456"
 }
+
 
 SQL_DATED_STG_UNITS = {
     "sql": """SELECT
@@ -253,6 +254,7 @@ ORDER BY
     "pwd": "Pupplies-Hagard->Rio0"
 }
 
+
 SQL_VALID_UPDATERS = {
     "sql": """
 SELECT
@@ -275,12 +277,14 @@ FROM
     "pwd": "Pupplies-Hagard->Rio0"
 }
 
+
 class App(tkinter.Tk):
 
     def __init__(self):
         super().__init__()
 
-        print(f"DATEVERSION >>> 2024-02-20")
+        print(f"DATEVERSION >>> 2024-04-16")
+        self.file_last_session_sql = "last_session_sql.sql"
 
         self.data = {
             "state": {
@@ -3672,9 +3676,14 @@ class App(tkinter.Tk):
                 #     print(f"SQL =\n\nBEGIN TRAN;\n\n{stmt_1}\n\nROLLBACK;\nCOMMIT;")
 
                 stmts = "\n".join(sql_statments)
-                print(f"SQL =\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;")
+                tran_stmts = f"-- SQL\n-- Date: {self.today:%Y-%m-%d %H:%M:%S} =\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
+                print(tran_stmts)
+                with open(self.file_last_session_sql, "w") as f:
+                    f.write(tran_stmts)
+                # for stmt in stmts.split(";"):
+                #     connect(stmt)
                 # TODO async
-                connect(stmts)
+                connect(stmts, do_print=True)  # fires all update statements
         # else:
         #     do_quit = False
 
