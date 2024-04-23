@@ -283,7 +283,7 @@ class App(tkinter.Tk):
     def __init__(self):
         super().__init__()
 
-        print(f"DATEVERSION >>> 2024-04-16")
+        print(f"DATEVERSION >>> 2024-04-23")
         self.file_last_session_sql = "last_session_sql.sql"
 
         self.data = {
@@ -536,12 +536,12 @@ class App(tkinter.Tk):
         # self.data["width_multi_combobox"] = self.frame_multi_combobox.winfo_width()
         # self.data["height_multi_combobox"] = self.frame_multi_combobox.winfo_height()
 
-        now = datetime_utility.date_to_datetime(datetime.datetime.now().date())
+        self.today = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
-        self.data["first_date"] = now + datetime.timedelta(days=-self.data["days_backward"])
+        self.data["first_date"] = self.today + datetime.timedelta(days=-self.data["days_backward"])
         if self.data["settings"]["start_at_first_of_month"]:
             self.data["first_date"] = datetime_utility.first_of_month(self.data["first_date"])
-        self.data["last_date"] = now + datetime.timedelta(days=self.data["days_forward"])
+        self.data["last_date"] = self.today + datetime.timedelta(days=self.data["days_forward"])
         if self.data["settings"]["end_at_end_of_month"]:
             self.data["last_date"] = datetime_utility.end_of_month(self.data["last_date"])
         # self.list_dates = pd.date_range(self.data["first_date"], periods=n_cols).to_pydatetime().tolist()
@@ -2701,9 +2701,12 @@ class App(tkinter.Tk):
 
     def update_info_frame(self, date, prod_line):
         if (date is not None) and (prod_line is not None):
-            tile = self.tiles[date][prod_line]
+            date_tile_data = self.tiles.get(date)
+            tile, order = None, None
+            if date_tile_data:
+                tile = date_tile_data[prod_line]
+                order = date_tile_data[prod_line].get("order")
             print(f"{tile=}")
-            order = self.tiles[date][prod_line].get("order")
             if order is not None:
                 series = self.df_orders.iloc[order]
                 dat_1 = {
