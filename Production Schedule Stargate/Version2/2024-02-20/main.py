@@ -3446,6 +3446,7 @@ class App(tkinter.Tk):
         self.colour_code()
 
     def ask_before_close(self) -> Tuple[bool, bool]:
+        print(f"ask_before_close")
         has_history = self.data.get("history", {})
         msg = self.data["abc_no_hist_msg"]
         if has_history:
@@ -3511,7 +3512,12 @@ class App(tkinter.Tk):
         sql_statments = []
 
         if do_quit:
-            ans_has_history = self.ask_save_before_close()
+            # ans_has_history = self.ask_save_before_close()
+            if history:
+                ans_has_history = self.ask_save_before_close()
+            else:
+                ans_has_history = self.ask_before_close()
+
             ans, has_history = ans_has_history
         else:
             ans = tkinter.YES
@@ -3554,7 +3560,7 @@ class App(tkinter.Tk):
                     stmt_1 = f""
                     print(f"{s_df[['OrdersV2_SGQuote', 'Available Date', 'JobAvailableLine']]=}")
                     # sql_1 += sql_blank_double_1.format()
-                    stmt_1 += f"\n-- SQL OUTPUT - FIX DOUBLE - {date}\n\n-- {rt1}\n"
+                    stmt_1 += f"\n/* SQL OUTPUT - FIX DOUBLE - {date}\n\n {rt1}*/\n"
 
                     for i, row in s_df.iterrows():
                         quote = s_df.iloc[i]["OrdersV2_SGQuote"]
@@ -3565,9 +3571,9 @@ class App(tkinter.Tk):
                         }
 
                         dat_2 = {"KQ": quote}
-                        stmt_1 += f"-- Quote: {quote}\n"
+                        stmt_1 += f"/* Quote: {quote}*/\n"
                         stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
-                        stmt_1 += f"\n-- {rt2}\n"
+                        stmt_1 += f"\n/* {rt2}*/\n"
                         stmt_1 += f"\n{sql_blank_double_2.format(**dat_2)}\n"
                         sql_statments.append(stmt_1)
                         # print(f"<<<<\n{sql_blank_double_2.format(**dat_2)}")
@@ -3590,11 +3596,12 @@ class App(tkinter.Tk):
                                 date_1 = pd.Timestamp(date_1)
                             if isinstance(date_2, str):
                                 date_2 = pd.Timestamp(date_2)
-                            print(f"{date_1=}, {line_1=}, {date_2=}, {line_2=}", end="")
+                            print(f"{date_1=}, {line_1=}, {date_2=}, {line_2=}")
                             order_1 = self.tiles[date_1][line_1].get("order")
                             order_2 = self.tiles[date_2][line_2].get("order")
-                            print(f"{order_1=}, {order_1=}")
+                            print(f"{order_1=}, {order_2=}")
                             if order_1 is not None:
+                                print(f"\torder_1 is not NONE")
                                 order_1 = int(order_1)
                                 dat_1 = {
                                     "KD": date_1,
@@ -3608,6 +3615,7 @@ class App(tkinter.Tk):
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             if order_2 is not None:
+                                print(f"\torder_2 is not NONE")
                                 order_2 = int(order_2)
                                 dat_1 = {
                                     "KD": date_2,
@@ -3617,12 +3625,15 @@ class App(tkinter.Tk):
                                     "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]
                                 }
                                 stmt_1 += f"\n{sql_swap_1.format(**dat_1)}"
-                                dat_2 = {"KJ": line_1, "KK": date_2, "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]}
+                                dat_2 = {"KJ": line_2, "KK": date_2, "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
-                            stmt_1 = f"-- SQL OUTPUT - SWAP - {date}\n\n-- {rt1}\n{stmt_1}\n\n-- {rt2}\n{stmt_2}"
+                            print(f"PRE_APPEND TO stmt_1:")
+                            print(f"1: {stmt_1}")
+                            print(f"2: {stmt_2}")
+                            stmt_1 = f"/* SQL OUTPUT - SWAP - {date}\n\n {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
 
                         case "INSERT":
                             order, date_line = data
@@ -3646,7 +3657,7 @@ class App(tkinter.Tk):
 
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
-                            stmt_1 = f"-- SQL OUTPUT - INSERT - {date}\n\n-- {rt1}\n{stmt_1}\n\n-- {rt2}\n{stmt_2}"
+                            stmt_1 = f"/* SQL OUTPUT - INSERT - {date}\n\n {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
 
                         case "DELETE":
                             order, date_line = data
@@ -3664,11 +3675,11 @@ class App(tkinter.Tk):
                                 "KQ": quote
                             }
 
-                            stmt_1 += f"\n-- SQL OUTPUT - DELETE ORDER - {date}\n\n-- {rt1}\n"
+                            stmt_1 += f"\n/* SQL OUTPUT - DELETE ORDER - {date}\n\n {rt1}*/\n"
                             dat_2 = {"KQ": quote}
-                            stmt_1 += f"-- Quote: {quote}\n"
+                            stmt_1 += f"/* Quote: {quote}*/\n"
                             stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
-                            stmt_1 += f"\n-- {rt2}\n"
+                            stmt_1 += f"\n/* {rt2}*/\n"
                             stmt_1 += f"\n{sql_blank_double_2.format(**dat_2)}\n"
 
                         case _:
@@ -3679,14 +3690,19 @@ class App(tkinter.Tk):
                 #     print(f"SQL =\n\nBEGIN TRAN;\n\n{stmt_1}\n\nROLLBACK;\nCOMMIT;")
 
                 stmts = "\n".join(sql_statments)
-                tran_stmts = f"-- SQL\n-- Date: {self.today:%Y-%m-%d %H:%M:%S} =\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
-                print(tran_stmts)
+                # connect_stmts = " ".join([stmt.replace("\n", " ") for stmt in sql_statments[1:]])
+                tran_stmts = f"/* SQL\n Date: {self.today:%Y-%m-%d %H:%M:%S} =*/\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
+                print(f"{'='*120}\n\ttran_stmts:\n{tran_stmts}{'='*120}")
                 with open(self.file_last_session_sql, "w") as f:
                     f.write(tran_stmts)
-                # for stmt in stmts.split(";"):
-                #     connect(stmt)
-                # TODO async
-                connect(stmts, do_print=True)  # fires all update statements
+                for stmt in stmts.split(";"):
+                    st = stmt.replace("\t", " ").replace("\n", " ")
+                    if st and (not st.startswith("--")):
+                        print(f"{st=}")
+                        connect(st)
+                # # TODO async
+                # print(f"{'='*120}\n\tstmts:\n{stmts}{'='*120}\n{stmts=}\n{'='*120}")
+                # connect(stmts, do_show=True)  # fires all update statements
         # else:
         #     do_quit = False
 
