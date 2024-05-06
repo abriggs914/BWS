@@ -42,6 +42,116 @@ ORDER BY
 }
 
 
+SQL_WARRANTY_CLAIMS = {
+    "sql": """
+
+SELECT
+	[WAR].[ID] AS [WAR_ID]
+	,[WAR].[WO#] AS [WAR_WO]
+	,[WAR].[Model No] AS [WAR_ModelNo]
+	,[WAR].[Dealer] AS [WAR_Dealer]
+	,[WAR].[Dealer V2] AS [WAR_DealerV2]
+	,[WAR].[Serial Number] AS [WAR_SerialNumber]
+	,[WAR].[S/N] AS [WAR_SN]
+	,[WAR].[S/N V2] AS [WAR_SNV2]
+	,[WAR].[Claim Number] AS [WAR_ClaimNumber]
+	,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
+	,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
+	,[WAR].[Issue Number] AS [WAR_IssueNumber]
+	,[WAR].[Failure] AS [WAR_Failure]
+	,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
+	,[WAR].[Auth By] AS [WAR_AuthBy]
+	,[WAR].[Reason Denied/Goodwill] AS [WAR_Reason]
+	,[WAR].[Location] AS [WAR_Location]
+	,[WAR].[Customer] AS [WAR_Customer]
+	,[WAR].[Customer V2] AS [WAR_CustomerV2]
+	,[WAR].[Parts/Labour] AS [WAR_PartsLabour]
+FROM 
+	[Stargatedb].[dbo].[Warranty Claims] AS [WAR]
+LEFT JOIN (
+	SELECT
+		B.[ProdSchedV2ID#]
+		,[O].[SGQuote] AS [OrdersV2_SGQuote]
+		,B.[WO#] AS [OrdersV2_WO#]
+		,B.[JobStartDate]
+		,B.[JobFinishDate]
+		,B.[JobStartLine]
+		,B.[InputField1]
+		,B.[InputField2]
+      
+		,A.[ProdSchedID#]
+		,A.[SGQuote] AS [dtProductionSchedule_SGQuote]
+		,A.[WO#] AS [dt_ProductionSchedule_WO#]
+		,A.[Prod Date 1]
+		,A.[WO Line 2]
+		,A.[Prod Date 2]
+		,A.[Slot#]
+		,A.[Slot/Quote]
+		,A.[Stargate WO#]
+          
+		,O.[OrderID]
+		,O.[SGQuote] AS [dtProductionScheduleV2_SGQuote]
+		,O.[Quote Date]
+		,O.[Order Date]
+		,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
+		,O.[Sales Order#]
+		,O.[Model No]
+		,O.[Width]
+		,O.[Spread]
+		,O.[DealerID]
+		,O.[Sale PersonID]
+		,O.[Price]
+		,O.[Prom Drawing]
+		,O.[Date Declined]
+		,O.[Decline/Rejected]
+		,O.[Serial Number]
+		,O.[Available Date]
+		,O.[Delivery Date]
+		,O.[Requested Delivery Date]
+		,O.[Finish Date]
+		,O.[Purchase Order]
+		,O.[PO Date]
+		,O.[US Sale]
+		,O.[Shipped Date]
+		,O.[Deck Length]
+		,O.[Invoice #]
+		,O.[Date Registered]
+		,O.[Date In Service]
+		,O.[Invoice Date]
+		,O.[CompanyID]
+		,O.[Customer WO#]
+		,[O].[JobAvailableLine]
+		,[O].[JobAvailableScheduled]
+		,[O].[JobAvailableScheduledBy]
+		,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+	FROM
+		[BWSdb].[dbo].[OrdersV2] AS [O]
+	LEFT JOIN 
+		[dtProductionSchedule] AS [A]
+	ON
+		[A].[SGQuote] = [O].[SGQuote]
+	LEFT JOIN 
+		[dtProductionScheduleV2] AS [B]
+	ON
+		[B].[SGQuote] = [O].[SGQuote]
+	LEFT JOIN
+		[BWSdb].[dbo].[v_GalvanizedStargateOrders] AS [C]
+	ON
+		[C].[SGQuote] = [O].[SGQuote]
+	--ORDER BY
+	--	[B].[JobFinishDate]
+) AS [Src]
+ON
+	[Src].[OrdersV2_WO#] = CAST([WAR].[WO#] AS NVARCHAR(MAX))
+WHERE
+	[Src].[OrdersV2_WO#] IS NULL
+	""",
+    "database": "StargateDB",
+    "uid": "SGeu1",
+    "pwd": "Pupplies-Hagard->Rio0"
+}
+
+
 SQL_HOLIDAYS = {
     "sql": """
     SELECT
@@ -450,6 +560,8 @@ class App(tkinter.Tk):
         # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
         # print(f"{self.df_orders.dtypes=}")
 
+        self.df_multi_combobox_data_warranties = connect(**SQL_WARRANTY_CLAIMS)
+
         # TODO gracefully fail if DFs are empty
 
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
@@ -520,8 +632,19 @@ class App(tkinter.Tk):
             )
         )
 
+        # multi-combobox selector for orders or warranties
+        self.toggle_warranty = tkinter_utility.ToggleCanvas(
+            self.frame_multi_combobox,
+            option_a="Orders",
+            option_b="Warranty",
+            width=300,
+            height=40,
+            default_value="Orders"
+        )
+        self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
+
         # multi-combobox now that data has been sorted
-        self.multi_combobox = tkinter_utility.MultiComboBox(
+        self.multi_combobox_orders = tkinter_utility.MultiComboBox(
             self.frame_multi_combobox,
             data=self.df_multi_combobox_data_orders,
             include_aggregate_row=False,
@@ -530,8 +653,20 @@ class App(tkinter.Tk):
             allow_insert_ask=False,
             lock_result_col="SGQuote"
         )
-        self.multi_combobox.res_entry.unbind("<Return>", self.multi_combobox.bind_return_res_entry)
-        self.multi_combobox.res_entry.bind("<Return>", self.submit_combobox_entry)
+        self.multi_combobox_orders.res_entry.unbind("<Return>", self.multi_combobox_orders.bind_return_res_entry)
+        self.multi_combobox_orders.res_entry.bind("<Return>", self.submit_combobox_entry)
+
+        # multi-combobox for warranty quotes
+        self.multi_combobox_warranties = tkinter_utility.MultiComboBox(
+            self.frame_multi_combobox,
+            data=self.df_multi_combobox_data_warranties,
+            include_aggregate_row=False,
+            include_drop_down_arrow=False,
+            limit_to_list=False,
+            allow_insert_ask=False,
+            lock_result_col="WAR_WO",
+            auto_grid=False
+        )
 
         # self.data["width_multi_combobox"] = self.frame_multi_combobox.winfo_width()
         # self.data["height_multi_combobox"] = self.frame_multi_combobox.winfo_height()
@@ -971,7 +1106,7 @@ class App(tkinter.Tk):
         #                     self.canvas.itemconfigure(txt, text="")
 
         # print(f"AAA\n{self.df_multi_combobox_data_orders=}")
-        self.multi_combobox.add_new_item(self.df_multi_combobox_data_orders)
+        self.multi_combobox_orders.add_new_item(self.df_multi_combobox_data_orders)
         # print(f"BBB\n{self.df_multi_combobox_data_orders=}")
         # self.window_root_canvas = self.root_canvas.create_window(
         #     # self.data["height_multi_combobox"],
@@ -1172,10 +1307,10 @@ class App(tkinter.Tk):
         self.canvas.bind("<Button-1>", self.on_left_click_calendar)
         self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
         self.canvas.bind("<Control-z>", self.undo)
-        self.multi_combobox.res_tv_entry.trace_remove("write", self.multi_combobox.trace_res_tv_entry)
-        self.multi_combobox.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
-        self.multi_combobox.trace_res_tv_entry = self.multi_combobox.res_tv_entry.trace_add("write",
-                                                                                            self.multi_combobox.update_entry)
+        self.multi_combobox_orders.res_tv_entry.trace_remove("write", self.multi_combobox_orders.trace_res_tv_entry)
+        self.multi_combobox_orders.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
+        self.multi_combobox_orders.trace_res_tv_entry = self.multi_combobox_orders.res_tv_entry.trace_add("write",
+                                                                                                          self.multi_combobox_orders.update_entry)
         self.bind("<Control-z>", self.undo)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # self.bind("<Control-Z>", self.undo)
@@ -1552,7 +1687,7 @@ class App(tkinter.Tk):
             new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
                                                    [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
             new_df = pd.DataFrame(new_row_data)
-            self.multi_combobox.add_new_item(val=new_df)
+            self.multi_combobox_orders.add_new_item(val=new_df)
             self.df_ids_to_date_line[order] = (None, None)
             if not from_undo:
                 # self.data["history"].append(("DELETE", order, date_line))
@@ -1572,7 +1707,7 @@ class App(tkinter.Tk):
         if from_undo:
             quote = self.df_orders.iloc[df_orders_id]["OrdersV2_SGQuote"]
         else:
-            quote = self.multi_combobox.res_tv_entry.get()
+            quote = self.multi_combobox_orders.res_tv_entry.get()
         date, line = date_line
         if isinstance(date, str):
             date = pd.Timestamp(date)
@@ -1666,7 +1801,7 @@ class App(tkinter.Tk):
                 self.canvas.itemconfigure(txt, text=text)
 
         # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
-        self.multi_combobox.delete_item(value=quote, mode="all")
+        self.multi_combobox_orders.delete_item(value=quote, mode="all")
 
         print(f"SETTING {date=}, {line=} == {{'order': {df_orders_id}, 'texts': {texts}}}")
         self.df_ids_to_date_line[df_orders_id] = date_line
@@ -1917,8 +2052,8 @@ class App(tkinter.Tk):
 
     def drag_treeview_entry(self, event):
 
-        treeview = self.multi_combobox.tree_treeview
-        vcn = self.multi_combobox.tree_controller.viewable_column_names
+        treeview = self.multi_combobox_orders.tree_treeview
+        vcn = self.multi_combobox_orders.tree_controller.viewable_column_names
         tv_dt = self.tv_multi_combobox_drag_tile.get()
         # self.multi_combobox_canvas_drag_tile.grid_forget()
         tw, th = self.data["tile_width"], self.data["tile_height"]
@@ -1961,7 +2096,7 @@ class App(tkinter.Tk):
                 # bring MC drag tile to the top
                 self.root_canvas.tag_raise(self.multi_combobox_drag_tile)
 
-                quote = self.multi_combobox.res_tv_entry.get()
+                quote = self.multi_combobox_orders.res_tv_entry.get()
                 order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
                 quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
                 # print(f"{quote_data=}")
@@ -2007,7 +2142,7 @@ class App(tkinter.Tk):
     def release_treeview_entry(self, event):
         print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
-        self.multi_combobox.grid()
+        self.multi_combobox_orders.grid()
         self.tv_multi_combobox_drag_tile.set(False)
         self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         ex, ey = event.x, event.y
@@ -2028,7 +2163,7 @@ class App(tkinter.Tk):
         # bbox_mc = self.multi_combobox_orders.bbox()
         bbox_canvas = list(self.frame_canvas.bbox(self.canvas))
         bbox_if = list(self.frame_info_frame.bbox(self.info_frame))
-        bbox_mc = list(self.frame_multi_combobox.bbox(self.multi_combobox))
+        bbox_mc = list(self.frame_multi_combobox.bbox(self.multi_combobox_orders))
 
         bbox_canvas[0] += x_fc
         bbox_canvas[1] += y_fc
@@ -2053,7 +2188,7 @@ class App(tkinter.Tk):
                 if date.weekday() < 5:
                     # dropped in calendar and on a weekday
                     # order_id = self.multi_combobox_orders.res_tv_entry.get()
-                    quote = self.multi_combobox.res_tv_entry.get()
+                    quote = self.multi_combobox_orders.res_tv_entry.get()
                     # order_id_1 = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
                     # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
                     # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
@@ -2064,12 +2199,12 @@ class App(tkinter.Tk):
                     print(f"dropped in calendar {date_line=}")
                     self.insert_tile(order_id, date_line, do_animate="valid")
                     try:
-                        self.multi_combobox.delete_item(value=quote)
+                        self.multi_combobox_orders.delete_item(value=quote)
                     except ValueError as ve:
                         # quote not found in multi-combobox
                         pass
 
-                    self.multi_combobox.res_tv_entry.set("")
+                    self.multi_combobox_orders.res_tv_entry.set("")
                 else:
                     # weekend placement not supported
                     self.flash_tile(date_line, mode="invalid_we")
@@ -2173,9 +2308,9 @@ class App(tkinter.Tk):
             )
 
     def bind_treeview_to_canvas(self):
-        old_bind = self.multi_combobox.tree_controller.binding_treeview_b1_motion
-        self.multi_combobox.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_entry)
-        self.multi_combobox.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_entry)
+        old_bind = self.multi_combobox_orders.tree_controller.binding_treeview_b1_motion
+        self.multi_combobox_orders.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_entry)
+        self.multi_combobox_orders.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_entry)
         print(f"{old_bind=}")
 
     def on_left_click_motion_calendar(self, event) -> None:
@@ -2445,8 +2580,8 @@ class App(tkinter.Tk):
     def submit_combobox_entry(self, event):
         print(f"submit_combobox_entry")
 
-        quote = self.multi_combobox.res_tv_entry.get().lower()
-        n_mc_records = len(self.multi_combobox.tree_treeview.get_children())
+        quote = self.multi_combobox_orders.res_tv_entry.get().lower()
+        n_mc_records = len(self.multi_combobox_orders.tree_treeview.get_children())
 
         if n_mc_records:
             messagebox.showinfo(
@@ -2481,9 +2616,9 @@ class App(tkinter.Tk):
                 )
 
     def multi_combobox_entry_update(self, *args):
-        quote = self.multi_combobox.res_tv_entry.get().lower()
+        quote = self.multi_combobox_orders.res_tv_entry.get().lower()
         lq = len(quote)
-        n_mc_records = len(self.multi_combobox.tree_treeview.get_children())
+        n_mc_records = len(self.multi_combobox_orders.tree_treeview.get_children())
         print(f"multi_combobox_entry_update {quote=}, {n_mc_records=}")
         if n_mc_records > 0:
             # search text in multi-combobox
@@ -2532,7 +2667,7 @@ class App(tkinter.Tk):
         date, line = self.df_ids_to_date_line[idx]
         print(f"{date=}, {line=}")
         self.tl_data["tl_dataframe_choice"].destroy()
-        self.multi_combobox.res_tv_entry.set(self.df_orders.iloc[idx]["OrdersV2_SGQuote"])
+        self.multi_combobox_orders.res_tv_entry.set(self.df_orders.iloc[idx]["OrdersV2_SGQuote"])
         self.flash_tile((date, line), mode="attention")
 
     def motion_tl_tile(self, idx, tag, tidx=None, ttag=None):
@@ -3710,6 +3845,18 @@ class App(tkinter.Tk):
             self.destroy()
         else:
             return sql_statments
+
+    def update_toggle_canvas_selection(self, *args):
+        print(f"update_toggle_canvas_selection")
+        toggle_mode = self.toggle_warranty.value.get()
+
+        if toggle_mode == "Warranty":
+            self.multi_combobox_orders.grid_forget()
+            self.multi_combobox_warranties.grid_widget()
+        else:
+            # Orders
+            self.multi_combobox_orders.grid()
+            self.multi_combobox_warranties.grid_forget()
 
 
 def test_canvas_window():
