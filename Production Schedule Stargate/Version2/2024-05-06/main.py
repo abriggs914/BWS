@@ -46,7 +46,8 @@ SQL_WARRANTY_CLAIMS = {
     "sql": """
 
 SELECT
-	[WAR].[ID] AS [WAR_ID]
+    [WAR].[Claim Number] AS [WAR_ClaimNumber]
+	,[WAR].[ID] AS [WAR_ID]
 	,[WAR].[WO#] AS [WAR_WO]
 	,[WAR].[Model No] AS [WAR_ModelNo]
 	,[WAR].[Dealer] AS [WAR_Dealer]
@@ -54,7 +55,6 @@ SELECT
 	,[WAR].[Serial Number] AS [WAR_SerialNumber]
 	,[WAR].[S/N] AS [WAR_SN]
 	,[WAR].[S/N V2] AS [WAR_SNV2]
-	,[WAR].[Claim Number] AS [WAR_ClaimNumber]
 	,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
 	,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
 	,[WAR].[Issue Number] AS [WAR_IssueNumber]
@@ -471,6 +471,8 @@ class App(tkinter.Tk):
             "colour_tile_outline_hover": self.data["colour_tile_outline"].brightened(0.25),
             "width_tile_outline_hover": 2,
 
+            "colour_background_app": Colour("#777797"),
+            "colour_background_calendar_app": Colour("#777797"),
             "colour_tile_background_selected": Colour("#DC4245"),
             "colour_tile_foreground_selected": Colour("#090909"),
             "font_tile_selected": "Arial 12 bold",
@@ -561,6 +563,47 @@ class App(tkinter.Tk):
         # print(f"{self.df_orders.dtypes=}")
 
         self.df_multi_combobox_data_warranties = connect(**SQL_WARRANTY_CLAIMS)
+        self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.fillna("")
+        # # self.df_multi_combobox_data_warranties["WAR_WO"] = self.df_multi_combobox_data_warranties["WAR_WO"].apply(lambda val: int(val) if str(val).isnumeric() else val)
+        # self.df_multi_combobox_data_warranties["WAR_WO"] = self.df_multi_combobox_data_warranties["WAR_WO"].apply(
+        #     lambda x:
+        #     int(x) if str(x).isnumeric() else str(x)
+        # )
+        print(f"{self.df_multi_combobox_data_warranties['WAR_WO']=}")
+        self.list_multi_combobox_warranties_viewable_col_widths = {
+            "Claim #": 60,
+            "WO": 80,
+            "Model Name": 100,
+            "Dealer": 85,
+            "Serial Number": 110,
+            "Failure": 100,
+            "Reason": 75,
+            "Location": 80,
+            "Parts & Labour": 90
+        }
+        self.list_multi_combobox_warranties_viewable_cols = {
+            "WAR_ClaimNumber": "Claim #",
+            "WAR_WO": "WO",
+            "WAR_ModelNo": "Model Name",
+            "WAR_Dealer": "Dealer",
+            #,[WAR].[Dealer V2] AS [WAR_DealerV2]
+            "WAR_SerialNumber": "Serial Number",
+            #,[WAR].[S/N] AS [WAR_SN]
+            #,[WAR].[S/N V2] AS [WAR_SNV2]
+            # ,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
+            # ,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
+            # ,[WAR].[Issue Number] AS [WAR_IssueNumber]
+            "WAR_Failure": "Failure",
+            # ,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
+            # ,[WAR].[Auth By] AS [WAR_AuthBy]
+            "WAR_Reason": "Reason",
+            "WAR_Location": "Location",
+            # ,[WAR].[Customer] AS [WAR_Customer]
+            # ,[WAR].[Customer V2] AS [WAR_CustomerV2]
+            # "WAR_PartsLabour": "Parts & Labour"
+        }
+        self.list_multi_combobox_warranties_viewable_col_widths = [self.list_multi_combobox_warranties_viewable_col_widths[k] for k in self.list_multi_combobox_warranties_viewable_cols.values()]
+        # self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.rename(columns=self.list_multi_combobox_warranties_viewable_cols)
 
         # TODO gracefully fail if DFs are empty
 
@@ -571,7 +614,7 @@ class App(tkinter.Tk):
             self,
             width=self.data["geometry"]["width"],
             height=self.data["geometry"]["height"],
-            background="#AB2194"
+            background=self.data["colour_background_app"].hex_code
         )
 
         self.data["width_multi_combobox"] = 725
@@ -612,7 +655,7 @@ class App(tkinter.Tk):
             self.frame_calendar,
             width=self.data["canvas_width"],
             height=self.data["canvas_height"] + self.data["height_calendar_scrollbar"],  # scrollbar space
-            background="#44318B"
+            background=self.data["colour_background_calendar_app"].hex_code
         )
         # multicombobox for searching
         self.frame_multi_combobox = tkinter.Frame(
@@ -639,7 +682,8 @@ class App(tkinter.Tk):
             option_b="Warranty",
             width=300,
             height=40,
-            default_value="Orders"
+            default_value="Orders",
+            auto_grid=False
         )
         self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
 
@@ -660,12 +704,16 @@ class App(tkinter.Tk):
         self.multi_combobox_warranties = tkinter_utility.MultiComboBox(
             self.frame_multi_combobox,
             data=self.df_multi_combobox_data_warranties,
+            viewable_column_names=self.list_multi_combobox_warranties_viewable_cols,
+            viewable_column_widths=self.list_multi_combobox_warranties_viewable_col_widths,
             include_aggregate_row=False,
             include_drop_down_arrow=False,
             limit_to_list=False,
             allow_insert_ask=False,
-            lock_result_col="WAR_WO",
-            auto_grid=False
+            lock_result_col="WO",
+            auto_grid=False,
+            width=self.data["x_place_frame_canvas"],
+            show_index_column=False
         )
 
         # self.data["width_multi_combobox"] = self.frame_multi_combobox.winfo_width()
@@ -1450,6 +1498,8 @@ class App(tkinter.Tk):
         self.canvas.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: "ew"})
 
+        self.toggle_warranty.grid()
+
         self.frame_canvas.place(
             x=self.data["x_place_frame_canvas"],
             y=self.data["y_place_frame_canvas"],
@@ -1492,14 +1542,14 @@ class App(tkinter.Tk):
 
         self.frame_info_frame.place(
             x=self.data["x_top_widgets"],
-            y=self.data["height_multi_combobox"] + 195
+            y=self.data["height_multi_combobox"] + 235
         )
 
         self.listbox_history.grid(row=0, column=0, columnspan=1, rowspan=1)
         self.scroll_bar_history.grid(row=0, column=1, columnspan=1, rowspan=1, sticky="ns")
         self.frame_listbox_history.place(
             x=self.data["x_top_widgets"],
-            y=self.data["height_multi_combobox"] + 195 + 340
+            y=self.data["height_multi_combobox"] + 235 + 340
         )
 
         # self.window_root_canvas = self.root_canvas.create_window(
@@ -2051,12 +2101,21 @@ class App(tkinter.Tk):
         print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
     def drag_treeview_entry(self, event):
+        print(f"drag_treeview_entry")
 
         treeview = self.multi_combobox_orders.tree_treeview
         vcn = self.multi_combobox_orders.tree_controller.viewable_column_names
         tv_dt = self.tv_multi_combobox_drag_tile.get()
         # self.multi_combobox_canvas_drag_tile.grid_forget()
         tw, th = self.data["tile_width"], self.data["tile_height"]
+        h_multi_combobox_toggle = self.toggle_warranty.height
+        e_x, e_y = event.x, event.y
+        e_x1, e_y1 = self.root_canvas.canvasx(e_x), self.root_canvas.canvasy(e_y)
+        bbf = self.multi_combobox_orders.bbox()
+        mcy = self.multi_combobox_orders.winfo_y()
+        hmct = self.toggle_warranty.height
+        offy = 20
+        print(f"{h_multi_combobox_toggle=}, {e_x=}, {e_y=}\n{e_x1=}, {e_y1=}\n\t{bbf=}\n\t{mcy=}")
 
         # print(f"DRAG TREEVIEW ENTRY, {tv_dt=}")
 
@@ -2076,7 +2135,18 @@ class App(tkinter.Tk):
             if tv_dt or (region1 not in ("separator", "nothing")):
                 # dragging something not the column headers or nothing
                 # bbox = (event.x, event.y, event.x + 100, event.y + 100)
-                bbox = (event.x - (tw / 2), event.y - (th / 2), event.x + (tw / 2), event.y + (th / 2))
+                bbox = (
+                    event.x - (tw / 2),
+                    event.y - (th / 2),
+                    event.x + (tw / 2),
+                    event.y + (th / 2)
+                )
+                # bbox = (
+                #     event.x - (tw / 2),
+                #     event.y + mcy + hmct + offy - (th / 2),
+                #     event.x + (tw / 2),
+                #     event.y + mcy + hmct + offy + (th / 2)
+                # )
                 # print(f"{region1=}, {column=}, {name=}, {bbox=}")
                 # print(f"{region1=}, {bbox=}")
                 # self.multi_combobox_canvas_drag_tile.configure(

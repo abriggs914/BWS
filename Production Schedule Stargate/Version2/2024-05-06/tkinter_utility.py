@@ -23,7 +23,7 @@ VERSION = \
     """	
     General tkinter Centered Utility Functions
     Version..............1.73
-    Date...........2024-05-06
+    Date...........2024-05-07
     Author(s)....Avery Briggs
     """
 
@@ -488,6 +488,7 @@ class TreeviewController(tkinter.Frame):
             include_scroll_x=True,
             include_scroll_y=True,
             aggregate_data=None,
+            show_index_column=True,
             *args,
             **kwargs
     ):
@@ -520,6 +521,7 @@ class TreeviewController(tkinter.Frame):
 
         self.master = master
         self.df = df.reset_index(drop=True)
+        self.show_index_column = show_index_column
         self.viewable_column_names = viewable_column_names
         self.viewable_column_widths = viewable_column_widths
         self.tv_label = tv_label
@@ -547,7 +549,7 @@ class TreeviewController(tkinter.Frame):
                 col_a = col
                 if col in self.viewable_column_names:
                     col_a = self.viewable_column_names[col]
-                vcn.append(col_a)
+                    vcn.append(col_a)
             self.viewable_column_names = vcn
 
         # print(f"--AA {self.viewable_column_names=}\n{self.df=}")
@@ -596,6 +598,7 @@ class TreeviewController(tkinter.Frame):
             # ,displaycolumns=self.viewable_column_names_indexable
             , displaycolumns="#all"
             , **self.kwargs_treeview
+            ,show=("tree headings" if show_index_column else "headings")
             # , **kwargs
         )
 
@@ -614,8 +617,9 @@ class TreeviewController(tkinter.Frame):
                 self.treeview.treeview_sort_column(_col, False))
 
         self.idx_width = 50
-        self.treeview.column("#0", width=self.idx_width, stretch=False)
-        self.treeview.heading("#0", text="#", anchor=tkinter.CENTER)
+        if show_index_column:
+            self.treeview.column("#0", width=self.idx_width, stretch=False)
+            self.treeview.heading("#0", text="#", anchor=tkinter.CENTER)
 
         # print(f"--BB {df.shape=}\n{self.df}")
         # print(f"{list(df.itertuples())=}\n{len(list(df.itertuples()))}")
@@ -939,7 +943,8 @@ def treeview_factory(
         include_scroll_y=True,
         text_prefix="B_",
         iid_prefix="C_",
-        aggregate_data=None
+        aggregate_data=None,
+        show_index_column=True
 ):
     return \
         TreeviewController(
@@ -947,12 +952,14 @@ def treeview_factory(
             dataframe,
             viewable_column_names,
             viewable_column_widths,
-            tv_label, kwargs_label,
+            tv_label,
+            kwargs_label,
             kwargs_treeview,
             default_col_width,
             include_scroll_x,
             include_scroll_y,
-            aggregate_data
+            aggregate_data,
+            show_index_column
         )
 
 
@@ -2199,7 +2206,8 @@ class MultiComboBox(tkinter.Frame):
                  new_entry_defaults=None, lock_result_col=None, allow_insert_ask=True, viewable_column_widths=None,
                  include_aggregate_row=True, include_drop_down_arrow=True, drop_down_is_clicked=True,
                  include_searching_widgets=True, exhaustive_filtering=False, default_null_char="",
-                 row_colour_bg=None, row_colour_fg=None, use_str_dtype: bool = True, nan_repr: str | None = None
+                 row_colour_bg=None, row_colour_fg=None, use_str_dtype: bool = True, nan_repr: str | None = None,
+                 width: float | None = None, height: float | None = None, show_index_column: bool = True
                  ):
         super().__init__(master)
 
@@ -2211,7 +2219,7 @@ class MultiComboBox(tkinter.Frame):
 
         # print(f"{lock_result_col=}\n{viewable_column_names=}\n{data.columns=}")
         if lock_result_col is not None:
-            assert (lock_result_col in viewable_column_names) if viewable_column_names else ((
+            assert ((lock_result_col in viewable_column_names) if isinstance(viewable_column_names, (list, tuple)) else (lock_result_col in viewable_column_names.values())) if viewable_column_names else ((
                                                                                                      lock_result_col in data.columns) if (
                         lock_result_col is not None) else True), f"Error column '{lock_result_col}' cannot be set as the locked result column. It is not in the list of viewable column names or in the list of columns in the passed dataframe."
 
@@ -2260,6 +2268,7 @@ class MultiComboBox(tkinter.Frame):
         self.include_searching_widgets = include_searching_widgets
         self.exhaustive_filtering = exhaustive_filtering
         self.default_null_char = default_null_char
+        self.show_index_column = show_index_column
 
         if not self.include_drop_down_arrow:
             # must show table, if this is false
@@ -2305,7 +2314,8 @@ class MultiComboBox(tkinter.Frame):
                 "height": height_in_rows
             },
             viewable_column_names=viewable_column_names,
-            viewable_column_widths=viewable_column_widths
+            viewable_column_widths=viewable_column_widths,
+            show_index_column=show_index_column
         )
         self.tree_controller, \
             self.tree_tv_label, \
@@ -2345,12 +2355,23 @@ class MultiComboBox(tkinter.Frame):
         # self.configure(width=t_width)
         # self.frame_top_most.configure(width=t_width)
 
+        if width is not None:
+            if not (0 < width < 10000):
+                raise ValueError(f"Parameter 'width' is out of range: '{width}'")
+            self.configure(width=width)
+        if height is not None:
+            if not (0 < height < 10000):
+                raise ValueError(f"Parameter 'width' is out of range: '{height}'")
+            self.configure(height=height)
+
         self.tv_tree_is_hidden = tkinter.BooleanVar(self, value=not self.drop_down_is_clicked)
 
         self.frame_top_most.grid_columnconfigure(0, weight=9)
         self.frame_top_most.grid_columnconfigure(1, weight=1)
         self.frame_middle = tkinter.Frame(self, name="fm")
         self.radio_btn_texts = ["All", *self.tree_controller.viewable_column_names]
+        if not self.show_index_column:
+            self.radio_btn_texts.pop(0)
         self.rg_var, self.rg_tv_var, self.rg_btns = radio_factory(self.frame_middle,
                                                                   buttons=self.radio_btn_texts, default_value=0)
         self.rg_var.trace_variable("w", self.update_radio_group)
