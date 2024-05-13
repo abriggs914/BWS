@@ -15,6 +15,26 @@ INSERT INTO @warJobs ([Job], [LastVin]) VALUES
 ('30000235', '3202')
 
 
+
+SELECT
+	'H' AS [H]
+	,*
+FROM
+	[SysproCompanyS].[dbo].[WipMaster] AS [WC]
+INNER JOIN
+	@warJobs [WAR] 
+ON
+	--[WIP].[Job] = [WAR].[Job]
+	[WC].[Job] = [WAR].[Job] 
+	--OR RIGHT([WC].[Serial Number], LEN([WAR].[LastVin])) = [WAR].[LastVin] COLLATE DATABASE_DEFAULT
+LEFT JOIN
+	[BWSdb].[dbo].[OrdersV2] [O2]
+ON
+	[WAR].[LastVin] = RIGHT([O2].[Serial Number], 4) COLLATE DATABASE_DEFAULT
+
+
+
+
 SELECT
 	'A' AS [A]
 	,*
@@ -71,6 +91,8 @@ FROM
 WHERE
 	(LEFT([Job], 1) = '3')
 	OR (ISNULL([JobClassification], '') = 'WAR')
+ORDER BY
+	[Job]
 ;
 
 
@@ -90,7 +112,7 @@ SELECT
 	,*
 FROM
 	[SysproCompanyS].[dbo].[WipMaster] AS [WM]
-FULL OUTER JOIN
+FULL JOIN
 	[BWSdb].[dbo].[OrdersV2] AS [O]
 ON
 	RIGHT(ISNULL([WM].[StockDescription], '    '), 4) COLLATE DATABASE_DEFAULT = RIGHT(ISNULL([O].[Serial Number], '    '), 4)

@@ -41,115 +41,128 @@ ORDER BY
     "pwd": "Pupplies-Hagard->Rio0"
 }
 
-
 SQL_WARRANTY_CLAIMS = {
-    "sql": """
-
-SELECT
-    [WAR].[Claim Number] AS [WAR_ClaimNumber]
-	,[WAR].[ID] AS [WAR_ID]
-	,[WAR].[WO#] AS [WAR_WO]
-	,[WAR].[Model No] AS [WAR_ModelNo]
-	,[WAR].[Dealer] AS [WAR_Dealer]
-	,[WAR].[Dealer V2] AS [WAR_DealerV2]
-	,[WAR].[Serial Number] AS [WAR_SerialNumber]
-	,[WAR].[S/N] AS [WAR_SN]
-	,[WAR].[S/N V2] AS [WAR_SNV2]
-	,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
-	,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
-	,[WAR].[Issue Number] AS [WAR_IssueNumber]
-	,[WAR].[Failure] AS [WAR_Failure]
-	,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
-	,[WAR].[Auth By] AS [WAR_AuthBy]
-	,[WAR].[Reason Denied/Goodwill] AS [WAR_Reason]
-	,[WAR].[Location] AS [WAR_Location]
-	,[WAR].[Customer] AS [WAR_Customer]
-	,[WAR].[Customer V2] AS [WAR_CustomerV2]
-	,[WAR].[Parts/Labour] AS [WAR_PartsLabour]
-FROM 
-	[Stargatedb].[dbo].[Warranty Claims] AS [WAR]
-LEFT JOIN (
-	SELECT
-		B.[ProdSchedV2ID#]
-		,[O].[SGQuote] AS [OrdersV2_SGQuote]
-		,B.[WO#] AS [OrdersV2_WO#]
-		,B.[JobStartDate]
-		,B.[JobFinishDate]
-		,B.[JobStartLine]
-		,B.[InputField1]
-		,B.[InputField2]
-      
-		,A.[ProdSchedID#]
-		,A.[SGQuote] AS [dtProductionSchedule_SGQuote]
-		,A.[WO#] AS [dt_ProductionSchedule_WO#]
-		,A.[Prod Date 1]
-		,A.[WO Line 2]
-		,A.[Prod Date 2]
-		,A.[Slot#]
-		,A.[Slot/Quote]
-		,A.[Stargate WO#]
-          
-		,O.[OrderID]
-		,O.[SGQuote] AS [dtProductionScheduleV2_SGQuote]
-		,O.[Quote Date]
-		,O.[Order Date]
-		,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
-		,O.[Sales Order#]
-		,O.[Model No]
-		,O.[Width]
-		,O.[Spread]
-		,O.[DealerID]
-		,O.[Sale PersonID]
-		,O.[Price]
-		,O.[Prom Drawing]
-		,O.[Date Declined]
-		,O.[Decline/Rejected]
-		,O.[Serial Number]
-		,O.[Available Date]
-		,O.[Delivery Date]
-		,O.[Requested Delivery Date]
-		,O.[Finish Date]
-		,O.[Purchase Order]
-		,O.[PO Date]
-		,O.[US Sale]
-		,O.[Shipped Date]
-		,O.[Deck Length]
-		,O.[Invoice #]
-		,O.[Date Registered]
-		,O.[Date In Service]
-		,O.[Invoice Date]
-		,O.[CompanyID]
-		,O.[Customer WO#]
-		,[O].[JobAvailableLine]
-		,[O].[JobAvailableScheduled]
-		,[O].[JobAvailableScheduledBy]
-		,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
-	FROM
-		[BWSdb].[dbo].[OrdersV2] AS [O]
-	LEFT JOIN 
-		[dtProductionSchedule] AS [A]
-	ON
-		[A].[SGQuote] = [O].[SGQuote]
-	LEFT JOIN 
-		[dtProductionScheduleV2] AS [B]
-	ON
-		[B].[SGQuote] = [O].[SGQuote]
-	LEFT JOIN
-		[BWSdb].[dbo].[v_GalvanizedStargateOrders] AS [C]
-	ON
-		[C].[SGQuote] = [O].[SGQuote]
-	--ORDER BY
-	--	[B].[JobFinishDate]
-) AS [Src]
-ON
-	[Src].[OrdersV2_WO#] = CAST([WAR].[WO#] AS NVARCHAR(MAX))
-WHERE
-	[Src].[OrdersV2_WO#] IS NULL
-	""",
+    "sql": """SELECT
+	[ID]
+	,[DateCreated]
+	,[CreatedBy]
+	,[Job]
+	,[Line]
+	,[Date]
+FROM
+	[PDS_WarrantyUnits]""",
     "database": "StargateDB",
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
+# SQL_WARRANTY_CLAIMS = {
+#     "sql": """
+#
+# SELECT
+#     [WAR].[Claim Number] AS [WAR_ClaimNumber]
+# 	,[WAR].[ID] AS [WAR_ID]
+# 	,[WAR].[WO#] AS [WAR_WO]
+# 	,[WAR].[Model No] AS [WAR_ModelNo]
+# 	,[WAR].[Dealer] AS [WAR_Dealer]
+# 	,[WAR].[Dealer V2] AS [WAR_DealerV2]
+# 	,[WAR].[Serial Number] AS [WAR_SerialNumber]
+# 	,[WAR].[S/N] AS [WAR_SN]
+# 	,[WAR].[S/N V2] AS [WAR_SNV2]
+# 	,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
+# 	,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
+# 	,[WAR].[Issue Number] AS [WAR_IssueNumber]
+# 	,[WAR].[Failure] AS [WAR_Failure]
+# 	,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
+# 	,[WAR].[Auth By] AS [WAR_AuthBy]
+# 	,[WAR].[Reason Denied/Goodwill] AS [WAR_Reason]
+# 	,[WAR].[Location] AS [WAR_Location]
+# 	,[WAR].[Customer] AS [WAR_Customer]
+# 	,[WAR].[Customer V2] AS [WAR_CustomerV2]
+# 	,[WAR].[Parts/Labour] AS [WAR_PartsLabour]
+# FROM
+# 	[Stargatedb].[dbo].[Warranty Claims] AS [WAR]
+# LEFT JOIN (
+# 	SELECT
+# 		B.[ProdSchedV2ID#]
+# 		,[O].[SGQuote] AS [OrdersV2_SGQuote]
+# 		,B.[WO#] AS [OrdersV2_WO#]
+# 		,B.[JobStartDate]
+# 		,B.[JobFinishDate]
+# 		,B.[JobStartLine]
+# 		,B.[InputField1]
+# 		,B.[InputField2]
+#
+# 		,A.[ProdSchedID#]
+# 		,A.[SGQuote] AS [dtProductionSchedule_SGQuote]
+# 		,A.[WO#] AS [dt_ProductionSchedule_WO#]
+# 		,A.[Prod Date 1]
+# 		,A.[WO Line 2]
+# 		,A.[Prod Date 2]
+# 		,A.[Slot#]
+# 		,A.[Slot/Quote]
+# 		,A.[Stargate WO#]
+#
+# 		,O.[OrderID]
+# 		,O.[SGQuote] AS [dtProductionScheduleV2_SGQuote]
+# 		,O.[Quote Date]
+# 		,O.[Order Date]
+# 		,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
+# 		,O.[Sales Order#]
+# 		,O.[Model No]
+# 		,O.[Width]
+# 		,O.[Spread]
+# 		,O.[DealerID]
+# 		,O.[Sale PersonID]
+# 		,O.[Price]
+# 		,O.[Prom Drawing]
+# 		,O.[Date Declined]
+# 		,O.[Decline/Rejected]
+# 		,O.[Serial Number]
+# 		,O.[Available Date]
+# 		,O.[Delivery Date]
+# 		,O.[Requested Delivery Date]
+# 		,O.[Finish Date]
+# 		,O.[Purchase Order]
+# 		,O.[PO Date]
+# 		,O.[US Sale]
+# 		,O.[Shipped Date]
+# 		,O.[Deck Length]
+# 		,O.[Invoice #]
+# 		,O.[Date Registered]
+# 		,O.[Date In Service]
+# 		,O.[Invoice Date]
+# 		,O.[CompanyID]
+# 		,O.[Customer WO#]
+# 		,[O].[JobAvailableLine]
+# 		,[O].[JobAvailableScheduled]
+# 		,[O].[JobAvailableScheduledBy]
+# 		,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+# 	FROM
+# 		[BWSdb].[dbo].[OrdersV2] AS [O]
+# 	LEFT JOIN
+# 		[dtProductionSchedule] AS [A]
+# 	ON
+# 		[A].[SGQuote] = [O].[SGQuote]
+# 	LEFT JOIN
+# 		[dtProductionScheduleV2] AS [B]
+# 	ON
+# 		[B].[SGQuote] = [O].[SGQuote]
+# 	LEFT JOIN
+# 		[BWSdb].[dbo].[v_GalvanizedStargateOrders] AS [C]
+# 	ON
+# 		[C].[SGQuote] = [O].[SGQuote]
+# 	--ORDER BY
+# 	--	[B].[JobFinishDate]
+# ) AS [Src]
+# ON
+# 	[Src].[OrdersV2_WO#] = CAST([WAR].[WO#] AS NVARCHAR(MAX))
+# WHERE
+# 	[Src].[OrdersV2_WO#] IS NULL
+# 	""",
+#     "database": "StargateDB",
+#     "uid": "SGeu1",
+#     "pwd": "Pupplies-Hagard->Rio0"
+# }
 
 
 SQL_HOLIDAYS = {
@@ -569,7 +582,8 @@ class App(tkinter.Tk):
         #     lambda x:
         #     int(x) if str(x).isnumeric() else str(x)
         # )
-        print(f"{self.df_multi_combobox_data_warranties['WAR_WO']=}")
+        # print(f"{self.df_multi_combobox_data_warranties['WAR_WO']=}")
+        print(f"{self.df_multi_combobox_data_warranties['Job']=}")
         self.list_multi_combobox_warranties_viewable_col_widths = {
             "Claim #": 60,
             "WO": 80,
@@ -579,28 +593,51 @@ class App(tkinter.Tk):
             "Failure": 100,
             "Reason": 75,
             "Location": 80,
-            "Parts & Labour": 90
+            "Parts & Labour": 90,
+            "Job": 100
         }
+        # self.list_multi_combobox_warranties_viewable_cols = {
+        #     "WAR_ClaimNumber": "Claim #",
+        #     "WAR_WO": "WO",
+        #     "WAR_ModelNo": "Model Name",
+        #     "WAR_Dealer": "Dealer",
+        #     #,[WAR].[Dealer V2] AS [WAR_DealerV2]
+        #     "WAR_SerialNumber": "Serial Number",
+        #     #,[WAR].[S/N] AS [WAR_SN]
+        #     #,[WAR].[S/N V2] AS [WAR_SNV2]
+        #     # ,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
+        #     # ,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
+        #     # ,[WAR].[Issue Number] AS [WAR_IssueNumber]
+        #     "WAR_Failure": "Failure",
+        #     # ,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
+        #     # ,[WAR].[Auth By] AS [WAR_AuthBy]
+        #     "WAR_Reason": "Reason",
+        #     "WAR_Location": "Location",
+        #     # ,[WAR].[Customer] AS [WAR_Customer]
+        #     # ,[WAR].[Customer V2] AS [WAR_CustomerV2]
+        #     # "WAR_PartsLabour": "Parts & Labour"
+        # }
         self.list_multi_combobox_warranties_viewable_cols = {
-            "WAR_ClaimNumber": "Claim #",
-            "WAR_WO": "WO",
-            "WAR_ModelNo": "Model Name",
-            "WAR_Dealer": "Dealer",
-            #,[WAR].[Dealer V2] AS [WAR_DealerV2]
-            "WAR_SerialNumber": "Serial Number",
-            #,[WAR].[S/N] AS [WAR_SN]
-            #,[WAR].[S/N V2] AS [WAR_SNV2]
-            # ,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
-            # ,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
-            # ,[WAR].[Issue Number] AS [WAR_IssueNumber]
-            "WAR_Failure": "Failure",
-            # ,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
-            # ,[WAR].[Auth By] AS [WAR_AuthBy]
-            "WAR_Reason": "Reason",
-            "WAR_Location": "Location",
-            # ,[WAR].[Customer] AS [WAR_Customer]
-            # ,[WAR].[Customer V2] AS [WAR_CustomerV2]
-            # "WAR_PartsLabour": "Parts & Labour"
+            "Job": "Job"
+            # ,
+            # "WAR_WO": "WO",
+            # "WAR_ModelNo": "Model Name",
+            # "WAR_Dealer": "Dealer",
+            # #,[WAR].[Dealer V2] AS [WAR_DealerV2]
+            # "WAR_SerialNumber": "Serial Number",
+            # #,[WAR].[S/N] AS [WAR_SN]
+            # #,[WAR].[S/N V2] AS [WAR_SNV2]
+            # # ,[WAR].[Claim Date] AS [WAR_ClaimDateOpen]
+            # # ,[WAR].[Date Closed] AS [WAR_ClaimDateClose]
+            # # ,[WAR].[Issue Number] AS [WAR_IssueNumber]
+            # "WAR_Failure": "Failure",
+            # # ,[WAR].[BWS Invoice #] AS [WAR_InvoiceNumber]
+            # # ,[WAR].[Auth By] AS [WAR_AuthBy]
+            # "WAR_Reason": "Reason",
+            # "WAR_Location": "Location",
+            # # ,[WAR].[Customer] AS [WAR_Customer]
+            # # ,[WAR].[Customer V2] AS [WAR_CustomerV2]
+            # # "WAR_PartsLabour": "Parts & Labour"
         }
         self.list_multi_combobox_warranties_viewable_col_widths = [self.list_multi_combobox_warranties_viewable_col_widths[k] for k in self.list_multi_combobox_warranties_viewable_cols.values()]
         # self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.rename(columns=self.list_multi_combobox_warranties_viewable_cols)
@@ -609,6 +646,7 @@ class App(tkinter.Tk):
 
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
+        self.list_warranty_lines = self.list_prod_lines[-1]  # currently only using the last line
 
         self.frame_calendar = tkinter.Frame(
             self,
@@ -710,7 +748,7 @@ class App(tkinter.Tk):
             include_drop_down_arrow=False,
             limit_to_list=False,
             allow_insert_ask=False,
-            lock_result_col="WO",
+            lock_result_col="Job",
             auto_grid=False,
             width=self.data["x_place_frame_canvas"],
             show_index_column=False
@@ -1712,6 +1750,7 @@ class App(tkinter.Tk):
         print(f"DELETE TILE {date_line=}")
 
         date, line = date_line
+        is_warranty = line in self.list_warranty_lines
         order = self.tiles[date][line].get("order", None)
         if order is not None:
 
@@ -1724,20 +1763,30 @@ class App(tkinter.Tk):
             self.tiles[date][line]["order"] = None
 
             # add to combobox
-            data = self.df_orders.iloc[order]
+            if is_warranty:
+                data = self.df_multi_combobox_data_warranties.iloc[order]
+                dat_job = data.get("Job")
+                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_warranties.columns,
+                                                       [dat_job])}
+            else:
+                data = self.df_orders.iloc[order]
 
-            dat_quote = data.get("OrdersV2_SGQuote")
-            # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
-            dat_wo = data.get("OrdersV2_WO#")
-            dat_sn = data.get("Serial Number#")
-            dat_dealer = data.get("InputField2")
-            dat_galv = data.get("IsGalv")
-            dat_model = data.get("InputField1")
-            dat_cust_wo = data.get("Customer WO#")
-            new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
-                                                   [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
+                dat_quote = data.get("OrdersV2_SGQuote")
+                # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
+                dat_wo = data.get("OrdersV2_WO#")
+                dat_sn = data.get("Serial Number#")
+                dat_dealer = data.get("InputField2")
+                dat_galv = data.get("IsGalv")
+                dat_model = data.get("InputField1")
+                dat_cust_wo = data.get("Customer WO#")
+                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
+                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
+
             new_df = pd.DataFrame(new_row_data)
-            self.multi_combobox_orders.add_new_item(val=new_df)
+            if is_warranty:
+                self.multi_combobox_warranties.add_new_item(val=new_df)
+            else:
+                self.multi_combobox_orders.add_new_item(val=new_df)
             self.df_ids_to_date_line[order] = (None, None)
             if not from_undo:
                 # self.data["history"].append(("DELETE", order, date_line))
@@ -1754,33 +1803,57 @@ class App(tkinter.Tk):
     ) -> None:
         print(f"insert_tile")
 
-        if from_undo:
-            quote = self.df_orders.iloc[df_orders_id]["OrdersV2_SGQuote"]
-        else:
-            quote = self.multi_combobox_orders.res_tv_entry.get()
         date, line = date_line
+        is_warranty = line in self.list_warranty_lines
+        if from_undo:
+            if is_warranty:
+                war_job = self.df_multi_combobox_data_warranties[df_orders_id]["Job"]
+            else:
+                quote = self.df_orders.iloc[df_orders_id]["OrdersV2_SGQuote"]
+        else:
+            if is_warranty:
+                war_job = self.multi_combobox_warranties.res_tv_entry.get()
+            else:
+                quote = self.multi_combobox_orders.res_tv_entry.get()
         if isinstance(date, str):
             date = pd.Timestamp(date)
         order_already_exists = self.tiles[date][line].get("order", None)
 
         if order_already_exists is not None:
             # there is already a tile in this position.
-            exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
-            ans = messagebox.askyesnocancel(
-                title=self.data["title_application_short"],
-                message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?"
-            )
-            if ans == tkinter.YES:
-                # move existing unit to combobox, then place this new one
-                self.delete_tile(date_line)
+            if is_warranty:
+                exist_war_job = self.df_multi_combobox_data_warranties.iloc[order_already_exists]["Job"]
+                ans = messagebox.askyesnocancel(
+                    title=self.data["title_application_short"],
+                    message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?"
+                )
+                if ans == tkinter.YES:
+                    # move existing unit to combobox, then place this new one
+                    self.delete_tile(date_line)
+                else:
+                    # return the dragging tile to the combobox and stop
+                    self.clear_master_drag_tile()
+                    return
             else:
-                # return the dragging tile to the combobox and stop
-                self.clear_master_drag_tile()
-                return
+                exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
+                ans = messagebox.askyesnocancel(
+                    title=self.data["title_application_short"],
+                    message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?"
+                )
+                if ans == tkinter.YES:
+                    # move existing unit to combobox, then place this new one
+                    self.delete_tile(date_line)
+                else:
+                    # return the dragging tile to the combobox and stop
+                    self.clear_master_drag_tile()
+                    return
 
         bbox = self.get_tile_bbox(date, line)
         # order = self.tiles[date][line].get("order")
-        row = self.df_orders.iloc[df_orders_id]
+        if is_warranty:
+            row = self.df_multi_combobox_data_warranties[df_orders_id]
+        else:
+            row = self.df_orders.iloc[df_orders_id]
         texts = self.tiles[date][line].get("texts", [])
         drag_texts = self.multi_combobox_drag_tile_texts
 
@@ -1837,16 +1910,19 @@ class App(tkinter.Tk):
             # print(f"{quote_data=}")
 
             # data = row[0]
-            mc_quote = quote
-            # mc_wo = data["OrdersV2_WO#"]
-            # mc_model = data["Model No"]
-            # mc_dealer = data["InputField2"]
-            # mc_galv = data["IsGalv"]
-            mc_wo = row["OrdersV2_WO#"]
-            mc_model = row["Model No"]
-            mc_dealer = row["InputField2"]
-            mc_galv = row["IsGalv"]
-            mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
+            if is_warranty:
+                mc_vals = [war_job]
+            else:
+                mc_quote = quote
+                # mc_wo = data["OrdersV2_WO#"]
+                # mc_model = data["Model No"]
+                # mc_dealer = data["InputField2"]
+                # mc_galv = data["IsGalv"]
+                mc_wo = row["OrdersV2_WO#"]
+                mc_model = row["Model No"]
+                mc_dealer = row["InputField2"]
+                mc_galv = row["IsGalv"]
+                mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
             for txt, text in zip(texts, mc_vals):
                 self.canvas.itemconfigure(txt, text=text)
 
@@ -2086,8 +2162,13 @@ class App(tkinter.Tk):
                     self.select_tile(*sel)
                     s_date, s_line = sel
                     o_id = self.tiles[s_date][s_line].get('order', None)
-                    quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
-                    print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
+                    is_warranty = s_line in self.list_warranty_lines
+                    if is_warranty:
+                        war_job = self.df_multi_combobox_data_warranties[o_id]["Job"]
+                        print(f"\tSel: <{sel=}>, <{o_id=}>, <{war_job=}>")
+                    else:
+                        quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
+                        print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
                     # self.data["state"]["selected"].append(sel)
                     if o_id:
                         orders.append(sel)
@@ -2100,8 +2181,18 @@ class App(tkinter.Tk):
     def on_left_click_root_canvas(self, event) -> None:
         print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
+    def drag_treeview_warranty_entry(self, event):
+        print(f"drag_treeview_warranty_entry {event=}")
+        self.drag_treeview_entry(event)
+
+    def release_treeview_warranty_entry(self, event):
+        print(f"release_treeview_warranty_entry {event=}")
+        self.release_treeview_entry(event)
+
     def drag_treeview_entry(self, event):
         print(f"drag_treeview_entry")
+        is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        print(f"\t{is_warranty=}")
 
         treeview = self.multi_combobox_orders.tree_treeview
         vcn = self.multi_combobox_orders.tree_controller.viewable_column_names
@@ -2166,28 +2257,34 @@ class App(tkinter.Tk):
                 # bring MC drag tile to the top
                 self.root_canvas.tag_raise(self.multi_combobox_drag_tile)
 
-                quote = self.multi_combobox_orders.res_tv_entry.get()
-                order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
-                quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
-                # print(f"{quote_data=}")
-
-                mc_quote = quote
-                mc_wo = quote_data["OrdersV2_WO#"]
-                mc_model = quote_data["Model No"]
-                mc_dealer = quote_data["InputField2"]
-                mc_galv = quote_data["IsGalv"]
-
                 bw = float(self.root_canvas.itemcget(self.multi_combobox_drag_tile, "width"))
                 y_t = bbox[1] + bw
-                txts = self.multi_combobox_drag_tile_texts
                 out_texts = []
-                new_texts = [
-                    mc_quote,
-                    mc_wo,
-                    mc_model,
-                    mc_dealer,
-                    mc_galv
-                ]
+                txts = self.multi_combobox_drag_tile_texts
+                if is_warranty:
+                    war_job = self.multi_combobox_warranties.res_tv_entry.get()
+                    new_texts = [war_job]
+                else:
+                    quote = self.multi_combobox_orders.res_tv_entry.get()
+                    order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
+                    quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
+                    # print(f"{quote_data=}")
+
+                    mc_quote = quote
+                    mc_wo = quote_data["OrdersV2_WO#"]
+                    mc_model = quote_data["Model No"]
+                    mc_dealer = quote_data["InputField2"]
+                    mc_galv = quote_data["IsGalv"]
+
+                    new_texts = [
+                        mc_quote,
+                        mc_wo,
+                        mc_model,
+                        mc_dealer,
+                        mc_galv
+                    ]
+
+                # move the tile
                 # print(f"{new_texts=}")
                 n_txts = max([len(lst) for lst in [txts, new_texts]])
                 for i, txts_ in enumerate(zip_longest(txts, new_texts)):
@@ -2212,6 +2309,8 @@ class App(tkinter.Tk):
     def release_treeview_entry(self, event):
         print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
+        is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        print(f"\t{is_warranty=}")
         self.multi_combobox_orders.grid()
         self.tv_multi_combobox_drag_tile.set(False)
         self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
@@ -2258,23 +2357,39 @@ class App(tkinter.Tk):
                 if date.weekday() < 5:
                     # dropped in calendar and on a weekday
                     # order_id = self.multi_combobox_orders.res_tv_entry.get()
-                    quote = self.multi_combobox_orders.res_tv_entry.get()
-                    # order_id_1 = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
-                    # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
-                    # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
-                    # order_id = order_id_2
-                    order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index[0]
-                    # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
-                    print(f"{quote=}, {order_id=}")
-                    print(f"dropped in calendar {date_line=}")
-                    self.insert_tile(order_id, date_line, do_animate="valid")
-                    try:
-                        self.multi_combobox_orders.delete_item(value=quote)
-                    except ValueError as ve:
-                        # quote not found in multi-combobox
-                        pass
 
-                    self.multi_combobox_orders.res_tv_entry.set("")
+                    if is_warranty:
+
+                        war_job = self.multi_combobox_warranties.res_tv_entry.get()
+                        war_job_id = self.df_multi_combobox_data_warranties.loc[self.df_multi_combobox_data_warranties["Job"] == war_job].index[0]
+                        # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
+                        print(f"{war_job=}, {war_job_id=}")
+                        print(f"dropped in calendar {date_line=}")
+                        self.insert_tile(war_job_id, date_line, do_animate="valid")
+                        try:
+                            self.multi_combobox_warranties.delete_item(value=war_job)
+                        except ValueError as ve:
+                            # quote not found in multi-combobox
+                            pass
+                        self.multi_combobox_warranties.res_tv_entry.set("")
+                    else:
+                        quote = self.multi_combobox_orders.res_tv_entry.get()
+                        # order_id_1 = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
+                        # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
+                        # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
+                        # order_id = order_id_2
+                        order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index[0]
+                        # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
+                        print(f"{quote=}, {order_id=}")
+                        print(f"dropped in calendar {date_line=}")
+                        self.insert_tile(order_id, date_line, do_animate="valid")
+                        try:
+                            self.multi_combobox_orders.delete_item(value=quote)
+                        except ValueError as ve:
+                            # quote not found in multi-combobox
+                            pass
+
+                        self.multi_combobox_orders.res_tv_entry.set("")
                 else:
                     # weekend placement not supported
                     self.flash_tile(date_line, mode="invalid_we")
@@ -2382,6 +2497,10 @@ class App(tkinter.Tk):
         self.multi_combobox_orders.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_entry)
         self.multi_combobox_orders.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_entry)
         print(f"{old_bind=}")
+
+        old_bind_war = self.multi_combobox_warranties.tree_controller.binding_treeview_b1_motion
+        self.multi_combobox_warranties.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_warranty_entry)
+        self.multi_combobox_warranties.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
