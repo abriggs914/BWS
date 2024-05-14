@@ -646,7 +646,7 @@ class App(tkinter.Tk):
 
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
-        self.list_warranty_lines = self.list_prod_lines[-1]  # currently only using the last line
+        self.list_warranty_lines = self.list_prod_lines[-1:]  # currently only using the last line
 
         self.frame_calendar = tkinter.Frame(
             self,
@@ -1805,6 +1805,8 @@ class App(tkinter.Tk):
 
         date, line = date_line
         is_warranty = line in self.list_warranty_lines
+        print(f"{is_warranty=}")
+
         if from_undo:
             if is_warranty:
                 war_job = self.df_multi_combobox_data_warranties[df_orders_id]["Job"]
@@ -1851,7 +1853,7 @@ class App(tkinter.Tk):
         bbox = self.get_tile_bbox(date, line)
         # order = self.tiles[date][line].get("order")
         if is_warranty:
-            row = self.df_multi_combobox_data_warranties[df_orders_id]
+            row = self.df_multi_combobox_data_warranties.iloc[df_orders_id]
         else:
             row = self.df_orders.iloc[df_orders_id]
         texts = self.tiles[date][line].get("texts", [])
@@ -1912,6 +1914,7 @@ class App(tkinter.Tk):
             # data = row[0]
             if is_warranty:
                 mc_vals = [war_job]
+
             else:
                 mc_quote = quote
                 # mc_wo = data["OrdersV2_WO#"]
@@ -1927,7 +1930,10 @@ class App(tkinter.Tk):
                 self.canvas.itemconfigure(txt, text=text)
 
         # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
-        self.multi_combobox_orders.delete_item(value=quote, mode="all")
+        if is_warranty:
+            self.multi_combobox_warranties.delete_item(value=war_job, mode="all")
+        else:
+            self.multi_combobox_orders.delete_item(value=quote, mode="all")
 
         print(f"SETTING {date=}, {line=} == {{'order': {df_orders_id}, 'texts': {texts}}}")
         self.df_ids_to_date_line[df_orders_id] = date_line
@@ -1962,6 +1968,17 @@ class App(tkinter.Tk):
     ) -> None:
         date_1, line_1 = date_line_1
         date_2, line_2 = date_line_2
+
+        is_war_1 = line_1 in self.list_warranty_lines
+        is_war_2 = line_2 in self.list_warranty_lines
+        if (is_war_1 + is_war_2) % 2 != 0:
+            # 1 of these units comes from warranty
+            messagebox.showinfo(
+                title=self.data["title_application_short"],
+                message=f"Cannot swap production units with warranty units"
+            )
+            self.flash_tile(date_line_2, mode="invalid")
+            return
 
         # TODO undo swap doesnt work
 
@@ -2311,7 +2328,7 @@ class App(tkinter.Tk):
         # self.multi_combobox_canvas_drag_tile.grid_forget()
         is_warranty = self.toggle_warranty.value.get() == "Warranty"
         print(f"\t{is_warranty=}")
-        self.multi_combobox_orders.grid()
+        # self.multi_combobox_orders.grid()
         self.tv_multi_combobox_drag_tile.set(False)
         self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         ex, ey = event.x, event.y
@@ -2360,6 +2377,16 @@ class App(tkinter.Tk):
 
                     if is_warranty:
 
+                        if line not in self.list_warranty_lines:
+                            # return the dragging tile to the combobox and stop
+                            messagebox.showinfo(
+                                title=self.data["title_application_short"],
+                                message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(self.list_warranty_lines)
+                            )
+                            self.flash_tile(date_line, mode="invalid")
+                            self.clear_master_drag_tile()
+                            return
+
                         war_job = self.multi_combobox_warranties.res_tv_entry.get()
                         war_job_id = self.df_multi_combobox_data_warranties.loc[self.df_multi_combobox_data_warranties["Job"] == war_job].index[0]
                         # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
@@ -2373,6 +2400,21 @@ class App(tkinter.Tk):
                             pass
                         self.multi_combobox_warranties.res_tv_entry.set("")
                     else:
+
+                        if line in self.list_warranty_lines:
+                            # return the dragging tile to the combobox and stop
+                            prod_lines = [l for l in self.list_prod_lines]
+                            for l in self.list_warranty_lines:
+                                prod_lines.remove(l)
+                            messagebox.showinfo(
+                                title=self.data["title_application_short"],
+                                message=f"Production units can only be placed in production lines:\n\t" + "\n\t".join(
+                                    prod_lines)
+                            )
+                            self.flash_tile(date_line, mode="invalid")
+                            self.clear_master_drag_tile()
+                            return
+
                         quote = self.multi_combobox_orders.res_tv_entry.get()
                         # order_id_1 = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
                         # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
