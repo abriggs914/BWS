@@ -580,7 +580,7 @@ class App(tkinter.Tk):
         #     height=self.data["geometry"]["height"],
         #     background="#AB2194"
         # )
-        # self.root_canvas = tkinter.Canvas(
+        # self.invisible_canvas = tkinter.Canvas(
         #     self.frame_calendar,
         #     width=self.data["geometry"]["width"],
         #     height=self.data["geometry"]["height"],
@@ -595,7 +595,7 @@ class App(tkinter.Tk):
         # print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
         # print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
         # print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
-        # self.canvas_window = self.root_canvas.create_window(
+        # self.canvas_window = self.invisible_canvas.create_window(
         #     # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
         #     self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
         #     self.data["y_top_widgets"],
@@ -635,9 +635,9 @@ class App(tkinter.Tk):
 
         # # multicombobox for searching
         # self.frame_multi_combobox = tkinter.Frame(
-        #     self.root_canvas
+        #     self.invisible_canvas
         # )
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     10,
         #     5,
         #     anchor=tkinter.NW,
@@ -973,7 +973,7 @@ class App(tkinter.Tk):
         # print(f"AAA\n{self.df_multi_combobox_data_orders=}")
         self.multi_combobox.add_new_item(self.df_multi_combobox_data_orders)
         # print(f"BBB\n{self.df_multi_combobox_data_orders=}")
-        # self.window_root_canvas = self.root_canvas.create_window(
+        # self.window_root_canvas = self.invisible_canvas.create_window(
         #     # self.data["height_multi_combobox"],
         #     # self.data["y_top_widgets"],
         #     # 40, 40,
@@ -1030,7 +1030,7 @@ class App(tkinter.Tk):
         else:
             self.geometry(geo)
 
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     self.data["x_top_widgets"],
         #     self.data["y_top_widgets"],
         #     anchor=tkinter.NW,
@@ -1089,7 +1089,7 @@ class App(tkinter.Tk):
         # )
 
         drag_tile_start_pos = 200, 400
-        # self.multi_combobox_drag_tile = self.root_canvas.create_rectangle(
+        # self.multi_combobox_drag_tile = self.invisible_canvas.create_rectangle(
         #     *drag_tile_start_pos,
         #     100 + self.data["tile_width"],
         #     100 + self.data["tile_height"],
@@ -1129,7 +1129,7 @@ class App(tkinter.Tk):
 
         # garbage 'X'
         # self.drag_tile_garbage_tile = {
-        #     "tile": self.root_canvas.create_rectangle(
+        #     "tile": self.invisible_canvas.create_rectangle(
         #         self.data["x_place_frame_info_frame"] + 10,
         #         self.data["canvas_height"] - (self.data["tile_height"] + 20),
         #         self.data["x_place_frame_info_frame"] + (self.data["tile_width"] + 10),
@@ -1141,7 +1141,7 @@ class App(tkinter.Tk):
         #         activefill=self.data["colour_garbage_background"].brightened(0.25).hex_code,
         #         activeoutline=self.data["colour_garbage_outline"].brightened(0.25).hex_code
         #     ),
-        #     "text": self.root_canvas.create_text(
+        #     "text": self.invisible_canvas.create_text(
         #         (self.data["x_place_frame_info_frame"] + 10) + (self.data["tile_width"] / 2),
         #         (self.data["canvas_height"] + 35) - (self.data["tile_height"] + 50) + (self.data["tile_width"] / 2),
         #         text="X",
@@ -1153,12 +1153,12 @@ class App(tkinter.Tk):
 
         self.grid_widgets()
 
-        # self.root_canvas.tag_raise(self.multi_combobox_drag_tile)
+        # self.invisible_canvas.tag_raise(self.multi_combobox_drag_tile)
         self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         for txt in self.multi_combobox_drag_tile_texts:
             self.root_canvas.itemconfigure(txt, state="hidden")
 
-        # self.root_canvas.tag_raise(self.multi_combobox_window)
+        # self.invisible_canvas.tag_raise(self.multi_combobox_window)
         # # self.multi_combobox_window.lift()
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
@@ -1322,7 +1322,7 @@ class App(tkinter.Tk):
             height=self.data["h_place_frame_canvas"]
         )
 
-        # self.canvas_window = self.root_canvas.create_window(
+        # self.canvas_window = self.invisible_canvas.create_window(
         #     # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
         #     self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
         #     self.data["y_top_widgets"],
@@ -1348,7 +1348,7 @@ class App(tkinter.Tk):
             y=self.data["y_place_frame_multi_combobox"]
         )
 
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     self.data["x_top_widgets"],
         #     self.data["y_top_widgets"],
         #     anchor=tkinter.NW,
@@ -1367,7 +1367,7 @@ class App(tkinter.Tk):
             y=self.data["height_multi_combobox"] + 195 + 340
         )
 
-        # self.window_root_canvas = self.root_canvas.create_window(
+        # self.window_root_canvas = self.invisible_canvas.create_window(
         #     # self.data["height_multi_combobox"],
         #     # self.data["y_top_widgets"],
         #     # 40, 40,
@@ -1946,8 +1946,8 @@ class App(tkinter.Tk):
                 # print(f"{region1=}, {bbox=}")
                 # self.multi_combobox_canvas_drag_tile.configure(
                 #     # width=self.multi_combobox_orders.winfo_screenwidth(),
-                #     width=self.root_canvas.winfo_screenwidth(),
-                #     height=self.root_canvas.winfo_screenheight()
+                #     width=self.invisible_canvas.winfo_screenwidth(),
+                #     height=self.invisible_canvas.winfo_screenheight()
                 # )
                 # self.multi_combobox_canvas_drag_tile.grid(row=0, column=0)
                 # self.multi_combobox_orders.grid_forget()
@@ -1998,7 +1998,7 @@ class App(tkinter.Tk):
                     if self.root_canvas.itemcget(txt, "state") == "hidden":
                         self.root_canvas.itemconfigure(txt, state="normal")
                     # bbox_t = ()
-                    # self.root_canvas.coords(text, *bbox_t)
+                    # self.invisible_canvas.coords(text, *bbox_t)
                     self.root_canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
                     self.root_canvas.itemconfigure(txt, text=text)
                     self.root_canvas.tag_raise(txt)

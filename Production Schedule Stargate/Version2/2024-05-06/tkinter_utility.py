@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.73
-    Date...........2024-05-07
+    Version..............1.74
+    Date...........2024-05-15
     Author(s)....Avery Briggs
     """
 
@@ -598,7 +598,7 @@ class TreeviewController(tkinter.Frame):
             # ,displaycolumns=self.viewable_column_names_indexable
             , displaycolumns="#all"
             , **self.kwargs_treeview
-            ,show=("tree headings" if show_index_column else "headings")
+            , show=("tree headings" if show_index_column else "headings")
             # , **kwargs
         )
 
@@ -2207,7 +2207,8 @@ class MultiComboBox(tkinter.Frame):
                  include_aggregate_row=True, include_drop_down_arrow=True, drop_down_is_clicked=True,
                  include_searching_widgets=True, exhaustive_filtering=False, default_null_char="",
                  row_colour_bg=None, row_colour_fg=None, use_str_dtype: bool = True, nan_repr: str | None = None,
-                 width: float | None = None, height: float | None = None, show_index_column: bool = True
+                 width: float | None = None, height: float | None = None, show_index_column: bool = True,
+                 include_clear_button: bool = True
                  ):
         super().__init__(master)
 
@@ -2269,6 +2270,7 @@ class MultiComboBox(tkinter.Frame):
         self.exhaustive_filtering = exhaustive_filtering
         self.default_null_char = default_null_char
         self.show_index_column = show_index_column
+        self.include_clear_button = include_clear_button
 
         if not self.include_drop_down_arrow:
             # must show table, if this is false
@@ -2379,6 +2381,8 @@ class MultiComboBox(tkinter.Frame):
         self.typed_in = tkinter.BooleanVar(self, value=False)
 
         self.res_entry = tkinter.Entry(self.frame_top_most, textvariable=self.res_tv_entry, justify="center")
+        self.tv_btn_clear = tkinter.StringVar(self, value="x")
+        self.btn_clear = tkinter.Button(self.frame_top_most, textvariable=self.tv_btn_clear, command=self.click_btn_clear)
         # self.res_canvas = tkinter.Canvas(self.frame_top_most, width=20, height=20, background=rgb_to_hex("GRAY_62"))
         # self.res_canvas.create_line(11, 6, 11, 19, arrow=tkinter.LAST, arrowshape=(12, 12, 9))
 
@@ -2424,21 +2428,36 @@ class MultiComboBox(tkinter.Frame):
         # print(f"END SETUP {self.data=}")
         # print(f"END SETUP {self.tree_controller.df=}")
 
-    def grid_widget(self):
+    def grid_widget(self, do_grid: bool = True):
         """Use this to appropriately place self and all sub widgets."""
-        self.grid(ipadx=12, ipady=12)
-        # self.grid_columnconfigure(, weight=10)
-        self.res_label.grid(row=0, column=0)
 
-        if self.include_searching_widgets:
-            self.frame_top_most.grid(row=1, column=0, sticky="ew")
-            self.res_entry.grid(row=0, column=0, sticky="ew")
-
-        if self.include_drop_down_arrow:
-            self.res_canvas.grid(row=0, column=1)
+        if not do_grid:
+            self.grid_forget()
+            self.res_label.grid_forget()
+            self.frame_top_most.grid_forget()
+            self.res_entry.grid_forget()
+            self.res_canvas.grid_forget()
+            self.btn_clear.grid_forget()
         else:
-            if self.tv_tree_is_hidden.get():
-                self.click_canvas_dropdown_button(None)
+            self.grid(ipadx=12, ipady=12)
+            # self.grid_columnconfigure(, weight=10)
+            self.res_label.grid(row=0, column=0)
+
+            if self.include_searching_widgets:
+                self.frame_top_most.grid(row=1, column=0, sticky="ew")
+                self.res_entry.grid(row=0, column=0, sticky="ew")
+                self.btn_clear.grid(row=0, column=1)
+
+            if self.include_drop_down_arrow:
+                self.res_canvas.grid(row=0, column=1)
+            else:
+                if self.tv_tree_is_hidden.get():
+                    self.click_canvas_dropdown_button(None)
+        print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
+
+    def click_btn_clear(self):
+        self.res_tv_entry.set("")
+        self.update_treeview()
 
     def set_cell_colours(self, i, j, bg_colour, fg_colour):
         # self.tree_treeview.tag_configure(f"{row}-{column}", background=bg_colour, foreground=fg_colour)
@@ -2534,6 +2553,8 @@ class MultiComboBox(tkinter.Frame):
         self.update_typed_in(None)
 
     def delete_item(self, iid=None, value="|/|/||NONE||/|/|", mode="first" | Literal["first", "all", "ask"]):
+        print(f"delete_item: {iid=}, {value=}, {mode=}")
+        print(f"A self.data=\n{self.data}")
         delete_code = "|/|/||NONE||/|/|"
         if iid is None and value == delete_code:
             self.tree_treeview.delete(*self.tree_treeview.get_children())
@@ -2580,6 +2601,8 @@ class MultiComboBox(tkinter.Frame):
                 else:
                     raise ValueError(
                         f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
+
+        print(f"B self.data=\n{self.data}")
         self.update_treeview()
 
     def add_new_item(self, val, col=None, rest_values=None, rest_tags=None):
@@ -2988,10 +3011,15 @@ class MultiComboBox(tkinter.Frame):
 
     def update_treeview(self):
         self.tree_treeview.delete(*self.tree_treeview.get_children())
-        for i, row in enumerate(self.data.itertuples(), 0):
-            # print(f"{i=}, {row=}")
+        # sic = self.show_index_column
+        # for i, row in enumerate(self.data.itertuples(), 0):
+        for i, data in self.data.iterrows():
+            # print(f"{i=}, {data=}, {self.tree_controller.viewable_column_names=}")
+            row = [data[k] for k in self.tree_controller.viewable_column_names]
+            # print(f"{i=}, {row=}, {self.tree_controller.viewable_column_names=}")
             tags = [self.tree_controller.gen_row_tag(i)]
-            self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row[1:], tags=tags)
+            # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row[1:], tags=tags)
+            self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
             # self.tree_treeview.set(str(i + 1), j, val, tags=)
             # print(f"{tags=}")
 
@@ -3025,11 +3053,13 @@ class MultiComboBox(tkinter.Frame):
                     # print(f"\t\t{i=}, {value=}")
                     if val in str(value).lower():
                         some = True
-                        row = self.data.iloc[[i]].values
+                        # row = self.data.iloc[[i]].values
+                        row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
+                        # print(f"A {row=}")
                         # print(f"\t\t{i=}, {value=}, {row=}")
                         tags = tags = [self.tree_controller.gen_cell_tag(i, j) for j in
                                        range(len(self.tree_controller.viewable_column_names))]
-                        self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(*row), tags=tags)
+                        self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
                         # print(f"{tags=}")
             else:
                 # print(f"\n\nFilter Else")
@@ -3046,7 +3076,9 @@ class MultiComboBox(tkinter.Frame):
                         # print(f"BACK IN {i=}\t{row=}")
                         tags = [self.tree_controller.gen_cell_tag(i, j) for j in
                                 range(len(self.tree_controller.viewable_column_names))]
-                        self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=list(row), tags=tags)
+                        row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
+                        # print(f"B {row=}")
+                        self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=row, tags=tags)
                         # print(f"{tags=}")
                         c += 1
                         some = True

@@ -699,8 +699,11 @@ class App(tkinter.Tk):
         self.frame_multi_combobox = tkinter.Frame(
             self.frame_calendar
         )
+        self.frame_mc_inner = tkinter.Frame(
+            self.frame_multi_combobox
+        )
 
-        self.root_canvas = tkinter.Canvas(
+        self.invisible_canvas = tkinter.Canvas(
             self.frame_calendar,
             width=self.data["geometry"]["width"],
             height=self.data["geometry"]["height"],
@@ -725,22 +728,27 @@ class App(tkinter.Tk):
         )
         self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
 
+        self.data.update({
+            "y_place_toggle_warranty": self.data["y_top_widgets"] + self.toggle_warranty.height
+        })
+
         # multi-combobox now that data has been sorted
         self.multi_combobox_orders = tkinter_utility.MultiComboBox(
-            self.frame_multi_combobox,
+            self.frame_mc_inner,
             data=self.df_multi_combobox_data_orders,
             include_aggregate_row=False,
             include_drop_down_arrow=False,
             limit_to_list=False,
             allow_insert_ask=False,
-            lock_result_col="SGQuote"
+            lock_result_col="SGQuote",
+            auto_grid=False
         )
         self.multi_combobox_orders.res_entry.unbind("<Return>", self.multi_combobox_orders.bind_return_res_entry)
         self.multi_combobox_orders.res_entry.bind("<Return>", self.submit_combobox_entry)
 
         # multi-combobox for warranty quotes
         self.multi_combobox_warranties = tkinter_utility.MultiComboBox(
-            self.frame_multi_combobox,
+            self.frame_mc_inner,
             data=self.df_multi_combobox_data_warranties,
             viewable_column_names=self.list_multi_combobox_warranties_viewable_cols,
             viewable_column_widths=self.list_multi_combobox_warranties_viewable_col_widths,
@@ -801,7 +809,7 @@ class App(tkinter.Tk):
         #     height=self.data["geometry"]["height"],
         #     background="#AB2194"
         # )
-        # self.root_canvas = tkinter.Canvas(
+        # self.invisible_canvas = tkinter.Canvas(
         #     self.frame_calendar,
         #     width=self.data["geometry"]["width"],
         #     height=self.data["geometry"]["height"],
@@ -816,7 +824,7 @@ class App(tkinter.Tk):
         # print(f"WIDTHS 1 {self.data['geometry']['width']=}, {self.data['geometry']['height']=}")
         # print(f"WIDTHS 2 {self.data['geometry']['width']=}, {self.data['geometry']['height'] - self.data['canvas_height']=}")
         # print(f"WIDTHS 3 {self.data['canvas_width']=}, {self.data['canvas_height']=}")
-        # self.canvas_window = self.root_canvas.create_window(
+        # self.canvas_window = self.invisible_canvas.create_window(
         #     # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
         #     self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
         #     self.data["y_top_widgets"],
@@ -856,9 +864,9 @@ class App(tkinter.Tk):
 
         # # multicombobox for searching
         # self.frame_multi_combobox = tkinter.Frame(
-        #     self.root_canvas
+        #     self.invisible_canvas
         # )
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     10,
         #     5,
         #     anchor=tkinter.NW,
@@ -1194,7 +1202,7 @@ class App(tkinter.Tk):
         # print(f"AAA\n{self.df_multi_combobox_data_orders=}")
         self.multi_combobox_orders.add_new_item(self.df_multi_combobox_data_orders)
         # print(f"BBB\n{self.df_multi_combobox_data_orders=}")
-        # self.window_root_canvas = self.root_canvas.create_window(
+        # self.window_root_canvas = self.invisible_canvas.create_window(
         #     # self.data["height_multi_combobox"],
         #     # self.data["y_top_widgets"],
         #     # 40, 40,
@@ -1251,7 +1259,7 @@ class App(tkinter.Tk):
         else:
             self.geometry(geo)
 
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     self.data["x_top_widgets"],
         #     self.data["y_top_widgets"],
         #     anchor=tkinter.NW,
@@ -1272,7 +1280,7 @@ class App(tkinter.Tk):
         # transparent method
         # canvas
         # https://stackoverflow.com/questions/53021603/how-to-make-a-tkinter-canvas-background-transparent
-        hwnd = self.root_canvas.winfo_id()
+        hwnd = self.invisible_canvas.winfo_id()
         colorkey = win32api.RGB(*self.data["colour_background_root_canvas"].rgb_code)
         wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
         new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
@@ -1310,7 +1318,7 @@ class App(tkinter.Tk):
         # )
 
         drag_tile_start_pos = 200, 400
-        # self.multi_combobox_drag_tile = self.root_canvas.create_rectangle(
+        # self.multi_combobox_drag_tile = self.invisible_canvas.create_rectangle(
         #     *drag_tile_start_pos,
         #     100 + self.data["tile_width"],
         #     100 + self.data["tile_height"],
@@ -1325,11 +1333,11 @@ class App(tkinter.Tk):
             ),
             fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
             outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code,
-            parent=self.root_canvas
+            parent=self.invisible_canvas
         )
         self.multi_combobox_drag_tile_texts_placeholder = "PLACEHOLDER"
         self.multi_combobox_drag_tile_texts = [
-            self.root_canvas.create_text(
+            self.invisible_canvas.create_text(
                 (drag_tile_start_pos[0] + ((100 + self.data["tile_width"]) / 2)),
                 (drag_tile_start_pos[1] + ((100 + self.data["tile_height"]) / 2)),
                 text=self.multi_combobox_drag_tile_texts_placeholder,
@@ -1350,7 +1358,7 @@ class App(tkinter.Tk):
 
         # garbage 'X'
         # self.drag_tile_garbage_tile = {
-        #     "tile": self.root_canvas.create_rectangle(
+        #     "tile": self.invisible_canvas.create_rectangle(
         #         self.data["x_place_frame_info_frame"] + 10,
         #         self.data["canvas_height"] - (self.data["tile_height"] + 20),
         #         self.data["x_place_frame_info_frame"] + (self.data["tile_width"] + 10),
@@ -1362,7 +1370,7 @@ class App(tkinter.Tk):
         #         activefill=self.data["colour_garbage_background"].brightened(0.25).hex_code,
         #         activeoutline=self.data["colour_garbage_outline"].brightened(0.25).hex_code
         #     ),
-        #     "text": self.root_canvas.create_text(
+        #     "text": self.invisible_canvas.create_text(
         #         (self.data["x_place_frame_info_frame"] + 10) + (self.data["tile_width"] / 2),
         #         (self.data["canvas_height"] + 35) - (self.data["tile_height"] + 50) + (self.data["tile_width"] / 2),
         #         text="X",
@@ -1374,12 +1382,12 @@ class App(tkinter.Tk):
 
         self.grid_widgets()
 
-        # self.root_canvas.tag_raise(self.multi_combobox_drag_tile)
-        self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
+        # self.invisible_canvas.tag_raise(self.multi_combobox_drag_tile)
+        self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         for txt in self.multi_combobox_drag_tile_texts:
-            self.root_canvas.itemconfigure(txt, state="hidden")
+            self.invisible_canvas.itemconfigure(txt, state="hidden")
 
-        # self.root_canvas.tag_raise(self.multi_combobox_window)
+        # self.invisible_canvas.tag_raise(self.multi_combobox_window)
         # # self.multi_combobox_window.lift()
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
@@ -1387,7 +1395,7 @@ class App(tkinter.Tk):
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
-        self.root_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
+        self.invisible_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
         self.bind_treeview_to_canvas()
         self.canvas.bind("<ButtonRelease-1>", self.on_left_click_release_calendar)
         self.canvas.bind("<Button-1>", self.on_left_click_calendar)
@@ -1530,13 +1538,12 @@ class App(tkinter.Tk):
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         self.frame_calendar.grid()
         self.frame_calendar.grid_propagate(False)
-        self.root_canvas.grid(**{s: "nsew"})
+        self.invisible_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid_propagate(False)
         self.canvas.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: "ew"})
-
-        self.toggle_warranty.grid()
+        is_warranty = self.toggle_warranty.value.get() == "Warranty"
 
         self.frame_canvas.place(
             x=self.data["x_place_frame_canvas"],
@@ -1545,7 +1552,7 @@ class App(tkinter.Tk):
             height=self.data["h_place_frame_canvas"]
         )
 
-        # self.canvas_window = self.root_canvas.create_window(
+        # self.canvas_window = self.invisible_canvas.create_window(
         #     # (0, int(self.data["geometry"]["height"] - self.data["canvas_height"])),
         #     self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
         #     self.data["y_top_widgets"],
@@ -1570,8 +1577,9 @@ class App(tkinter.Tk):
             x=self.data["x_place_frame_multi_combobox"],
             y=self.data["y_place_frame_multi_combobox"]
         )
+        self.frame_mc_inner.grid(**{r: 0, c: 0})
 
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     self.data["x_top_widgets"],
         #     self.data["y_top_widgets"],
         #     anchor=tkinter.NW,
@@ -1590,7 +1598,18 @@ class App(tkinter.Tk):
             y=self.data["height_multi_combobox"] + 235 + 340
         )
 
-        # self.window_root_canvas = self.root_canvas.create_window(
+        if is_warranty:
+            self.multi_combobox_warranties.grid_widget()
+        else:
+            self.multi_combobox_orders.grid_widget()
+        self.toggle_warranty.grid(**{r: 1, c: 0})
+        # self.toggle_warranty.place(
+        #     x=self.data["x_place_frame_multi_combobox"],
+        #     # y=self.data["y_place_toggle_warranty"]
+        #     y=450
+        # )
+
+        # self.window_root_canvas = self.invisible_canvas.create_window(
         #     # self.data["height_multi_combobox"],
         #     # self.data["y_top_widgets"],
         #     # 40, 40,
@@ -1764,11 +1783,20 @@ class App(tkinter.Tk):
 
             # add to combobox
             if is_warranty:
+                print(f"{is_warranty=}")
                 data = self.df_multi_combobox_data_warranties.iloc[order]
                 dat_job = data.get("Job")
-                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_warranties.columns,
-                                                       [dat_job])}
+                new_row_data = {
+                    k: [v]
+                    for k, v in zip(
+                        self.multi_combobox_warranties.tree_controller.viewable_column_names,
+                        [dat_job]
+                    )
+                }
+                print(f"self.multi_combobox_warranties.tree_controller.viewable_column_names=\n\t{self.multi_combobox_warranties.tree_controller.viewable_column_names}")
+                print(f"{[dat_job]=}")
             else:
+                print(f"{is_warranty=}")
                 data = self.df_orders.iloc[order]
 
                 dat_quote = data.get("OrdersV2_SGQuote")
@@ -1779,10 +1807,20 @@ class App(tkinter.Tk):
                 dat_galv = data.get("IsGalv")
                 dat_model = data.get("InputField1")
                 dat_cust_wo = data.get("Customer WO#")
-                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
-                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
+                # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
+                print(f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
+                print(f"{[dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]=}")
+                # print(f"zip(self.multi_combobox_orders.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
+                new_row_data = {
+                    k: [v]
+                    for k, v in zip(
+                        self.multi_combobox_orders.tree_controller.viewable_column_names,
+                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]
+                    )
+                }
 
             new_df = pd.DataFrame(new_row_data)
+            print(f"new_df={new_df}")
             if is_warranty:
                 self.multi_combobox_warranties.add_new_item(val=new_df)
             else:
@@ -1875,7 +1913,7 @@ class App(tkinter.Tk):
             bbox = self.get_tile_bbox(date, line)
 
             to_do_texts = [
-                self.root_canvas.itemcget(txt, "text")
+                self.invisible_canvas.itemcget(txt, "text")
                 for txt in self.multi_combobox_drag_tile_texts
             ]
             # if len(to_do_texts) == 1:
@@ -2218,7 +2256,7 @@ class App(tkinter.Tk):
         tw, th = self.data["tile_width"], self.data["tile_height"]
         h_multi_combobox_toggle = self.toggle_warranty.height
         e_x, e_y = event.x, event.y
-        e_x1, e_y1 = self.root_canvas.canvasx(e_x), self.root_canvas.canvasy(e_y)
+        e_x1, e_y1 = self.invisible_canvas.canvasx(e_x), self.invisible_canvas.canvasy(e_y)
         bbf = self.multi_combobox_orders.bbox()
         mcy = self.multi_combobox_orders.winfo_y()
         hmct = self.toggle_warranty.height
@@ -2243,11 +2281,17 @@ class App(tkinter.Tk):
             if tv_dt or (region1 not in ("separator", "nothing")):
                 # dragging something not the column headers or nothing
                 # bbox = (event.x, event.y, event.x + 100, event.y + 100)
+                # bbox = (
+                #     event.x - (tw / 2),
+                #     event.y - (th / 2),
+                #     event.x + (tw / 2),
+                #     event.y + (th / 2)
+                # )
                 bbox = (
-                    event.x - (tw / 2),
-                    event.y - (th / 2),
-                    event.x + (tw / 2),
-                    event.y + (th / 2)
+                    event.x,
+                    event.y,
+                    event.x + tw,
+                    event.y + th
                 )
                 # bbox = (
                 #     event.x - (tw / 2),
@@ -2255,26 +2299,28 @@ class App(tkinter.Tk):
                 #     event.x + (tw / 2),
                 #     event.y + mcy + hmct + offy + (th / 2)
                 # )
+                print(f"{event.x=}, {event.y=}\n{self.invisible_canvas.canvasx(event.x)=}, {self.invisible_canvas.canvasy(event.y)=}")
+                print(f"{region1=}, {column=}, {bbox=}")
                 # print(f"{region1=}, {column=}, {name=}, {bbox=}")
                 # print(f"{region1=}, {bbox=}")
                 # self.multi_combobox_canvas_drag_tile.configure(
                 #     # width=self.multi_combobox_orders.winfo_screenwidth(),
-                #     width=self.root_canvas.winfo_screenwidth(),
-                #     height=self.root_canvas.winfo_screenheight()
+                #     width=self.invisible_canvas.winfo_screenwidth(),
+                #     height=self.invisible_canvas.winfo_screenheight()
                 # )
                 # self.multi_combobox_canvas_drag_tile.grid(row=0, column=0)
                 # self.multi_combobox_orders.grid_forget()
-                self.root_canvas.coords(
+                self.invisible_canvas.coords(
                     self.multi_combobox_drag_tile,
                     *bbox
                 )
 
-                self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="normal")
+                self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="normal")
                 self.tv_multi_combobox_drag_tile.set(True)
                 # bring MC drag tile to the top
-                self.root_canvas.tag_raise(self.multi_combobox_drag_tile)
+                self.invisible_canvas.tag_raise(self.multi_combobox_drag_tile)
 
-                bw = float(self.root_canvas.itemcget(self.multi_combobox_drag_tile, "width"))
+                bw = float(self.invisible_canvas.itemcget(self.multi_combobox_drag_tile, "width"))
                 y_t = bbox[1] + bw
                 out_texts = []
                 txts = self.multi_combobox_drag_tile_texts
@@ -2301,26 +2347,28 @@ class App(tkinter.Tk):
                         mc_galv
                     ]
 
+                print(f"{txts=}, {new_texts=}")
+
                 # move the tile
                 # print(f"{new_texts=}")
                 n_txts = max([len(lst) for lst in [txts, new_texts]])
                 for i, txts_ in enumerate(zip_longest(txts, new_texts)):
                     txt, text = txts_
                     if txt is None:
-                        out_texts.append(self.root_canvas.create_text(
+                        out_texts.append(self.invisible_canvas.create_text(
                             bbox[0], bbox[1], text=text
                         ))
                         txt = out_texts[-1]
                     else:
                         out_texts.append(txt)
 
-                    if self.root_canvas.itemcget(txt, "state") == "hidden":
-                        self.root_canvas.itemconfigure(txt, state="normal")
+                    if self.invisible_canvas.itemcget(txt, "state") == "hidden":
+                        self.invisible_canvas.itemconfigure(txt, state="normal")
                     # bbox_t = ()
-                    # self.root_canvas.coords(text, *bbox_t)
-                    self.root_canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
-                    self.root_canvas.itemconfigure(txt, text=text)
-                    self.root_canvas.tag_raise(txt)
+                    # self.invisible_canvas.coords(text, *bbox_t)
+                    self.invisible_canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
+                    self.invisible_canvas.itemconfigure(txt, text=text)
+                    self.invisible_canvas.tag_raise(txt)
                 self.multi_combobox_drag_tile_texts = out_texts
 
     def release_treeview_entry(self, event):
@@ -2330,7 +2378,7 @@ class App(tkinter.Tk):
         print(f"\t{is_warranty=}")
         # self.multi_combobox_orders.grid()
         self.tv_multi_combobox_drag_tile.set(False)
-        self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
+        self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         ex, ey = event.x, event.y
 
         x_fc = self.data.get("x_place_frame_canvas", 0)
@@ -2696,9 +2744,9 @@ class App(tkinter.Tk):
         self.data["state"]["hovered"].clear()
 
     def clear_master_drag_tile(self):
-        self.root_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
+        self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         for txt in self.multi_combobox_drag_tile_texts:
-            self.root_canvas.itemconfigure(txt, state="hidden")
+            self.invisible_canvas.itemconfigure(txt, state="hidden")
 
     def update_selected_tiles(self) -> None:
         st = self.data["state"]["selected"]
@@ -3874,6 +3922,7 @@ class App(tkinter.Tk):
 
     def on_closing(self, do_quit: bool = True) -> None | list:
         # history = self.data["history"]
+        do_exec = False  # automatically update server using generated sql statements.
         history = list(self.data["history"].get())
         sql_statments = []
 
@@ -3926,7 +3975,7 @@ class App(tkinter.Tk):
                     stmt_1 = f""
                     print(f"{s_df[['OrdersV2_SGQuote', 'Available Date', 'JobAvailableLine']]=}")
                     # sql_1 += sql_blank_double_1.format()
-                    stmt_1 += f"\n/* SQL OUTPUT - FIX DOUBLE - {date}\n\n {rt1}*/\n"
+                    stmt_1 += f"\n/* SQL OUTPUT - FIX DOUBLE - {date}*/\n\n/*{rt1}*/\n"
 
                     for i, row in s_df.iterrows():
                         quote = s_df.iloc[i]["OrdersV2_SGQuote"]
@@ -3999,7 +4048,7 @@ class App(tkinter.Tk):
                             print(f"PRE_APPEND TO stmt_1:")
                             print(f"1: {stmt_1}")
                             print(f"2: {stmt_2}")
-                            stmt_1 = f"/* SQL OUTPUT - SWAP - {date}\n\n {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
+                            stmt_1 = f"/* SQL OUTPUT - SWAP - {date}*/\n\n/* {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
 
                         case "INSERT":
                             order, date_line = data
@@ -4023,7 +4072,7 @@ class App(tkinter.Tk):
 
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
-                            stmt_1 = f"/* SQL OUTPUT - INSERT - {date}\n\n {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
+                            stmt_1 = f"/* SQL OUTPUT - INSERT - {date}*/\n\n/* {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
 
                         case "DELETE":
                             order, date_line = data
@@ -4041,7 +4090,7 @@ class App(tkinter.Tk):
                                 "KQ": quote
                             }
 
-                            stmt_1 += f"\n/* SQL OUTPUT - DELETE ORDER - {date}\n\n {rt1}*/\n"
+                            stmt_1 += f"\n/* SQL OUTPUT - DELETE ORDER - {date}*/\n\n/* {rt1}*/\n"
                             dat_2 = {"KQ": quote}
                             stmt_1 += f"/* Quote: {quote}*/\n"
                             stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
@@ -4061,11 +4110,14 @@ class App(tkinter.Tk):
                 print(f"{'='*120}\n\ttran_stmts:\n{tran_stmts}{'='*120}")
                 with open(self.file_last_session_sql, "w") as f:
                     f.write(tran_stmts)
-                for stmt in stmts.split(";"):
-                    st = stmt.replace("\t", " ").replace("\n", " ")
-                    if st and (not st.startswith("--")):
-                        print(f"{st=}")
-                        connect(st)
+
+                if do_exec:
+                    for stmt in stmts.split(";"):
+                        st = stmt.replace("\t", " ").replace("\n", " ")
+                        if st and (not st.startswith("--")):
+                            print(f"{st=}")
+                            connect(st)
+
                 # # TODO async
                 # print(f"{'='*120}\n\tstmts:\n{stmts}{'='*120}\n{stmts=}\n{'='*120}")
                 # connect(stmts, do_show=True)  # fires all update statements
@@ -4081,13 +4133,23 @@ class App(tkinter.Tk):
         print(f"update_toggle_canvas_selection")
         toggle_mode = self.toggle_warranty.value.get()
 
+        # # self.toggle_warranty.grid()
+        # self.toggle_warranty.place(
+        #     x=self.data["x_place_frame_multi_combobox"],
+        #     # y=self.data["y_place_toggle_warranty"]
+        #     y=450
+        # )
+        self.toggle_warranty.grid_forget()
+
         if toggle_mode == "Warranty":
-            self.multi_combobox_orders.grid_forget()
-            self.multi_combobox_warranties.grid_widget()
+            self.multi_combobox_orders.grid_widget(False)
+            self.multi_combobox_warranties.grid_widget(True)
         else:
             # Orders
-            self.multi_combobox_orders.grid()
-            self.multi_combobox_warranties.grid_forget()
+            self.multi_combobox_orders.grid_widget(True)
+            self.multi_combobox_warranties.grid_widget(False)
+
+        self.toggle_warranty.grid(row=1, column=0)
 
 
 def test_canvas_window():

@@ -442,7 +442,7 @@ class App(tkinter.Tk):
         #     height=self.data["geometry"]["height"],
         #     background="#AB2194"
         # )
-        # self.root_canvas = tkinter.Canvas(
+        # self.invisible_canvas = tkinter.Canvas(
         #     self.frame_calendar,
         #     width=self.data["geometry"]["width"],
         #     height=self.data["geometry"]["height"],
@@ -497,9 +497,9 @@ class App(tkinter.Tk):
 
         # # multicombobox for searching
         # self.frame_multi_combobox = tkinter.Frame(
-        #     self.root_canvas
+        #     self.invisible_canvas
         # )
-        # self.multi_combobox_window = self.root_canvas.create_window(
+        # self.multi_combobox_window = self.invisible_canvas.create_window(
         #     10,
         #     5,
         #     anchor=tkinter.NW,
@@ -821,7 +821,7 @@ class App(tkinter.Tk):
 
         self.grid_widgets()
 
-        # self.root_canvas.tag_raise(self.multi_combobox_window)
+        # self.invisible_canvas.tag_raise(self.multi_combobox_window)
         # # self.multi_combobox_window.lift()
 
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
