@@ -1,5 +1,7 @@
 import calendar
 import datetime
+from typing import List
+
 import numpy as np
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -7,8 +9,8 @@ from utility import minmax, clamp, choice, dict_print
 
 """
 	General datetime Utility Functions
-	Version..............1.13
-	Date...........2024-01-11
+	Version..............1.14
+	Date...........2024-05-22
 	Author.......Avery Briggs
 """
 
@@ -22,12 +24,13 @@ class datetime2(datetime.datetime):
         return self + relativedelta(months=n_months)
 
 
-def add_business_days(d, bd, holidays=None):
+def add_business_days(d, bd, holidays: None | List[datetime.datetime] = None):
     if holidays is None:
         holidays = []
     i = 0
     t = datetime.datetime(d.year, d.month, d.day)
     # print("holidays: " + str(holidays))
+    bd = max(i, bd)
     while i < bd:
         t = t + datetime.timedelta(days=1)
         # print("t: " + str(t) + ", (t not in holidays): " + str(t not in holidays))

@@ -1964,8 +1964,11 @@ class App(tkinter.Tk):
                 mc_dealer = row["InputField2"]
                 mc_galv = row["IsGalv"]
                 mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
-            for txt, text in zip(texts, mc_vals):
-                self.canvas.itemconfigure(txt, text=text)
+            for txt, text in zip_longest(texts, mc_vals):
+                if text is not None:
+                    self.canvas.itemconfigure(txt, text=text)
+                else:
+                    self.canvas.itemconfigure(txt, state="hidden")
 
         # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
         if is_warranty:
@@ -2245,7 +2248,7 @@ class App(tkinter.Tk):
         self.release_treeview_entry(event)
 
     def drag_treeview_entry(self, event):
-        print(f"drag_treeview_entry")
+        print(f"drag_treeview_entry, {event=}")
         is_warranty = self.toggle_warranty.value.get() == "Warranty"
         print(f"\t{is_warranty=}")
 
@@ -2414,9 +2417,10 @@ class App(tkinter.Tk):
         bbox_mc[2] += x_mc
         bbox_mc[3] += y_mc
 
-        print(f"\n\t{ex=}, {ey=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
+        print(f"\n\t{ex=}, {ey=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
         if (bbox_canvas[0] <= ex <= bbox_canvas[2]) and (bbox_canvas[1] <= ey <= bbox_canvas[3]):
             date_line = self.get_date_line_at_x_y(self.canvas.canvasx(ex - x_fc), self.canvas.canvasy(ey - y_fc))
+            # date_line = self.get_date_line_at_x_y(self.canvas.canvasx(ex), self.canvas.canvasy(ey))
             if date_line:
                 date, line = date_line
                 if date.weekday() < 5:
