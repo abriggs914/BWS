@@ -1,3 +1,5 @@
+import threading
+import time
 import tkinter
 from tkinter import messagebox
 from itertools import zip_longest
@@ -24,37 +26,12 @@ import win32api
 #   The hovered tile is too far to the right of the pointer.
 
 
-SQL_USED_LINES = {
-    "sql": """
-SELECT
-	[Prod Line]
-FROM
-	[Prod Lines]
-WHERE
-	[Active] = 1
-ORDER BY
-	[LO]
-;
-	""",
+STARGATE_SQL_CREDS = {
     "database": "StargateDB",
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
 
-SQL_WARRANTY_CLAIMS = {
-    "sql": """SELECT
-	[ID]
-	,[DateCreated]
-	,[CreatedBy]
-	,[Job]
-	,[Line]
-	,[Date]
-FROM
-	[PDS_WarrantyUnits]""",
-    "database": "StargateDB",
-    "uid": "SGeu1",
-    "pwd": "Pupplies-Hagard->Rio0"
-}
 # SQL_WARRANTY_CLAIMS = {
 #     "sql": """
 #
@@ -165,240 +142,266 @@ FROM
 # }
 
 
-SQL_HOLIDAYS = {
-    "sql": """
+for sql_data in (
+
+        SQL_USED_LINES := {
+            "sql": """
     SELECT
-    	*
+        [Prod Line]
     FROM
-    	[Calendar]
+        [Prod Lines]
+    WHERE
+        [Active] = 1
+    ORDER BY
+        [LO]
     ;
-    """,
-    "database": "BWSDB",
-    "uid": "user5",
-    "pwd": "M@gic456"
-}
+        """
+        },
 
+        SQL_WARRANTY_CLAIMS := {
+            "sql": """SELECT
+        [ID]
+        ,[DateCreated]
+        ,[CreatedBy]
+        ,[Job]
+        ,[Line]
+        ,[Date]
+    FROM
+        [PDS_WarrantyUnits]"""
+        },
 
-SQL_DATED_STG_UNITS = {
-    "sql": """SELECT
-    B.[ProdSchedV2ID#]
-    ,[O].[SGQuote] AS [OrdersV2_SGQuote]
-    ,B.[WO#] AS [OrdersV2_WO#]
-    ,B.[JobStartDate]
-    ,B.[JobFinishDate]
-    --,B.[dtprodschedv2ts]
-    ,B.[JobStartLine]
-    --,B.[HideFromProdInput]
-    ,B.[InputField1]
-    ,B.[InputField2]
-    --,B.[ApplyUpdate]
-    --,B.[ApplyUpdateUser]
-      
-    , A.[ProdSchedID#]
-    ,A.[SGQuote] AS [dtProductionSchedule_SGQuote]
-    ,A.[WO#] AS [dt_ProductionSchedule_WO#]
-    --,A.[InputField1]
-    --,A.[InputField2]
-    ,A.[Beam Line]
-    ,A.[Beam Date]
-    ,A.[GN Line]
-    ,A.[GN Date]
-    ,A.[WO Line 1]
-    ,A.[Prod Date 1]
-    ,A.[WO Line 2]
-    ,A.[Prod Date 2]
-    --,A.[Other]
-    --,A.[Other Line]
-    --,A.[Other Date]
-    --,A.[HideFromProdInput]
-    --,A.[Step1SYSPROBudget]
-    --,A.[Step2SYSPROBudget]
-    --,A.[dtprodschedts]
-    --,A.[ApplyUpdate]
-    --,A.[ApplyUpdateUser]
-    ,A.[Slot#]
-    ,A.[Slot/Quote]
-    --,A.[Slot Approved]
-    ,A.[Prod On]
-    ,A.[Prod On Time]
-    ,A.[Prod Off]
-    ,A.[Prod Off Time]
-    ,A.[Prod PM]
-    ,A.[Prod Complete]
-    ,A.[Prod2 On]
-    ,A.[Prod2 On Time]
-    ,A.[Prod2 Off]
-    ,A.[Prod2 Off Time]
-    ,A.[Prod2 PM]
-    ,A.[Prod2 Complete]
-    --,A.[Prod Instructions]
-    ,A.[Beam On]
-    ,A.[Beam Off]
-    ,A.[Beam Complete]
-    ,A.[Beam PM]
-    ,A.[Beam Instructions]
-    ,A.[GN On]
-    ,A.[GN Off]
-    ,A.[GN Complete]
-    ,A.[GN PM]
-    ,A.[GN Instructions]
-    ,A.[Axle]
-    ,A.[Axle On]
-    ,A.[Axle Off]
-    ,A.[Axle Complete]
-    ,A.[Axle PM]
-    ,A.[Axle Instructions]
-    ,A.[Other On]
-    ,A.[Other On Time]
-    ,A.[Other Off]
-    ,A.[Other Off Time]
-    ,A.[Other Complete]
-    ,A.[Other PM]
-    ,A.[Other Instructions]
-    ,A.[Stargate WO#]
-            
-    , O. [OrderID]
-    ,O.[SGQuote] AS [dtProductionScheduleV2_SGQuote]
-    ,O.[Quote Date]
-    ,O.[Order Date]
-    ,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
-    ,O.[Sales Order#]
-    ,O.[Model No]
-    ,O.[Width]
-    ,O.[Spread]
-    ,O.[DealerID]
-    ,O.[Sale PersonID]
-    ,O.[Price]
-    ,O.[Prom Drawing]
-    --,O.[Special Instructions]
-    ,O.[Date Declined]
-    ,O.[Decline/Rejected]
-    ,O.[Serial Number]
-    ,O.[Available Date]
-    ,O.[Delivery Date]
-    ,O.[Requested Delivery Date]
-    ,O.[Finish Date]
-    ,O.[Purchase Order]
-    ,O.[PO Date]
-    --,O.[PayID]
-    --,O.[Volume Discount]
-    --,O.[Program Discount]
-    --,O.[Discount1_Name]
-    --,O.[Discount1_Type]
-    --,O.[Discount1]
-    --,O.[Discount2_Name]
-    --,O.[Discount2_Type]
-    --,O.[Discount2]
-    --,O.[Discount3_Name]
-    --,O.[Discount3_Type]
-    --,O.[Discount3]
-    --,O.[Est Pro Date]
-    --,O.[Notes]
-    --,O.[EngNotes]
-    --,O.[CarrierID]
-    --,O.[CustID]
-    ,O.[US Sale]
-    ,O.[Shipped Date]
-    --,O.[GL Override Date]
-    --,O.[FE Rate]
-    --,O.[PDD]
-    ,O.[Deck Length]
-    ,O.[Invoice #]
-    ,O.[Date Registered]
-    ,O.[Date In Service]
-    ,O.[Invoice Date]
-    --,O.[Date Requested]
-    ,O.[GVWR]
-    ,O.[Tare]
-    --,O.[Selection]
-    --,O.[Warranty]
-    --,O.[BWSPaid]
-    --,O.[BWSPaidDate]
-    --,O.[CommPaid]
-    --,O.[CommPaidDate]
-    --,O.[ts_timestamp]
-    --,O.[ModifiedBy]
-    --,O.[Lead Date]
-    --,O.[Lead Source]
-    --,O.[LeadID]
-    --,O.[DealerBranchID]
-    --,O.[DealerSalesPersonID]
-    --,O.[DataEntryCheck]
-    --,O.[DataEntryUser]
-    --,O.[FinishedGoodsDealerLocID]
-    --,O.[WO Reviewed]
-    --,O.[WO Review Date]
-    --,O.[Follow Up Date]
-    --,O.[MSOIsDifferent]
-    --,O.[MSOLocID]
-    --,O.[EstInvDateOverride]
-    --,O.[Estimated Invoice Date]
-    --,O.[AdditionalPricingInfo]
-    ,O.[Slot#]
-    --,O.[TempModel?]
-    --,O.[HighRiskUnit]
-    --,O.[EngNotes V2]
-    ,O.[CompanyID]
-    ,O.[Customer WO#]
-	,[O].[JobAvailableLine]
-	,[O].[JobAvailableScheduled]
-	,[O].[JobAvailableScheduledBy]
-    --,O.[PriceSecured]
-    --,O.[DateSecured]
-    --,O.[SecuredBy]
-	,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+        SQL_HOLIDAYS := {
+            "sql": """
+        SELECT
+            *
+        FROM
+            [Calendar]
+        ;
+        """,
+            "database": "BWSDB",
+            "uid": "user5",
+            "pwd": "M@gic456"
+        },
 
-	--,[D].[COMPANY NAME]
-FROM
-    [BWSdb].[dbo].[OrdersV2] AS [O]
-LEFT JOIN 
-    [dtProductionSchedule] AS [A]
-ON
-    [A].[SGQuote] = [O].[SGQuote]
-LEFT JOIN 
-    [dtProductionScheduleV2] AS [B]
-ON
-    [B].[SGQuote] = [O].[SGQuote]
-LEFT JOIN
-    [BWSdb].[dbo].[v_GalvanizedStargateOrders] AS [C]
-ON
-    [C].[SGQuote] = [O].[SGQuote]
---LEFT JOIN
---    [BWSdb].[dbo].[DealersV2] AS [D]
---ON
---    [O].[DealerID] = [D].[ID]
---WHERE
---    [B].[JobFinishDate] IS NOT NULL
-ORDER BY
-    [B].[JobFinishDate]
-;""",
-    "database": "StargateDB",
-    "uid": "SGeu1",
-    "pwd": "Pupplies-Hagard->Rio0"
-}
+        SQL_DATED_STG_UNITS := {
+            "sql": """SELECT
+        B.[ProdSchedV2ID#]
+        ,[O].[SGQuote] AS [OrdersV2_SGQuote]
+        ,B.[WO#] AS [OrdersV2_WO#]
+        ,B.[JobStartDate]
+        ,B.[JobFinishDate]
+        --,B.[dtprodschedv2ts]
+        ,B.[JobStartLine]
+        --,B.[HideFromProdInput]
+        ,B.[InputField1]
+        ,B.[InputField2]
+        --,B.[ApplyUpdate]
+        --,B.[ApplyUpdateUser]
+    
+        , A.[ProdSchedID#]
+        ,A.[SGQuote] AS [dtProductionSchedule_SGQuote]
+        ,A.[WO#] AS [dt_ProductionSchedule_WO#]
+        --,A.[InputField1]
+        --,A.[InputField2]
+        ,A.[Beam Line]
+        ,A.[Beam Date]
+        ,A.[GN Line]
+        ,A.[GN Date]
+        ,A.[WO Line 1]
+        ,A.[Prod Date 1]
+        ,A.[WO Line 2]
+        ,A.[Prod Date 2]
+        --,A.[Other]
+        --,A.[Other Line]
+        --,A.[Other Date]
+        --,A.[HideFromProdInput]
+        --,A.[Step1SYSPROBudget]
+        --,A.[Step2SYSPROBudget]
+        --,A.[dtprodschedts]
+        --,A.[ApplyUpdate]
+        --,A.[ApplyUpdateUser]
+        ,A.[Slot#]
+        ,A.[Slot/Quote]
+        --,A.[Slot Approved]
+        ,A.[Prod On]
+        ,A.[Prod On Time]
+        ,A.[Prod Off]
+        ,A.[Prod Off Time]
+        ,A.[Prod PM]
+        ,A.[Prod Complete]
+        ,A.[Prod2 On]
+        ,A.[Prod2 On Time]
+        ,A.[Prod2 Off]
+        ,A.[Prod2 Off Time]
+        ,A.[Prod2 PM]
+        ,A.[Prod2 Complete]
+        --,A.[Prod Instructions]
+        ,A.[Beam On]
+        ,A.[Beam Off]
+        ,A.[Beam Complete]
+        ,A.[Beam PM]
+        ,A.[Beam Instructions]
+        ,A.[GN On]
+        ,A.[GN Off]
+        ,A.[GN Complete]
+        ,A.[GN PM]
+        ,A.[GN Instructions]
+        ,A.[Axle]
+        ,A.[Axle On]
+        ,A.[Axle Off]
+        ,A.[Axle Complete]
+        ,A.[Axle PM]
+        ,A.[Axle Instructions]
+        ,A.[Other On]
+        ,A.[Other On Time]
+        ,A.[Other Off]
+        ,A.[Other Off Time]
+        ,A.[Other Complete]
+        ,A.[Other PM]
+        ,A.[Other Instructions]
+        ,A.[Stargate WO#]
+    
+        , O. [OrderID]
+        ,O.[SGQuote] AS [dtProductionScheduleV2_SGQuote]
+        ,O.[Quote Date]
+        ,O.[Order Date]
+        ,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
+        ,O.[Sales Order#]
+        ,O.[Model No]
+        ,O.[Width]
+        ,O.[Spread]
+        ,O.[DealerID]
+        ,O.[Sale PersonID]
+        ,O.[Price]
+        ,O.[Prom Drawing]
+        --,O.[Special Instructions]
+        ,O.[Date Declined]
+        ,O.[Decline/Rejected]
+        ,O.[Serial Number]
+        ,O.[Available Date]
+        ,O.[Delivery Date]
+        ,O.[Requested Delivery Date]
+        ,O.[Finish Date]
+        ,O.[Purchase Order]
+        ,O.[PO Date]
+        --,O.[PayID]
+        --,O.[Volume Discount]
+        --,O.[Program Discount]
+        --,O.[Discount1_Name]
+        --,O.[Discount1_Type]
+        --,O.[Discount1]
+        --,O.[Discount2_Name]
+        --,O.[Discount2_Type]
+        --,O.[Discount2]
+        --,O.[Discount3_Name]
+        --,O.[Discount3_Type]
+        --,O.[Discount3]
+        --,O.[Est Pro Date]
+        --,O.[Notes]
+        --,O.[EngNotes]
+        --,O.[CarrierID]
+        --,O.[CustID]
+        ,O.[US Sale]
+        ,O.[Shipped Date]
+        --,O.[GL Override Date]
+        --,O.[FE Rate]
+        --,O.[PDD]
+        ,O.[Deck Length]
+        ,O.[Invoice #]
+        ,O.[Date Registered]
+        ,O.[Date In Service]
+        ,O.[Invoice Date]
+        --,O.[Date Requested]
+        ,O.[GVWR]
+        ,O.[Tare]
+        --,O.[Selection]
+        --,O.[Warranty]
+        --,O.[BWSPaid]
+        --,O.[BWSPaidDate]
+        --,O.[CommPaid]
+        --,O.[CommPaidDate]
+        --,O.[ts_timestamp]
+        --,O.[ModifiedBy]
+        --,O.[Lead Date]
+        --,O.[Lead Source]
+        --,O.[LeadID]
+        --,O.[DealerBranchID]
+        --,O.[DealerSalesPersonID]
+        --,O.[DataEntryCheck]
+        --,O.[DataEntryUser]
+        --,O.[FinishedGoodsDealerLocID]
+        --,O.[WO Reviewed]
+        --,O.[WO Review Date]
+        --,O.[Follow Up Date]
+        --,O.[MSOIsDifferent]
+        --,O.[MSOLocID]
+        --,O.[EstInvDateOverride]
+        --,O.[Estimated Invoice Date]
+        --,O.[AdditionalPricingInfo]
+        ,O.[Slot#]
+        --,O.[TempModel?]
+        --,O.[HighRiskUnit]
+        --,O.[EngNotes V2]
+        ,O.[CompanyID]
+        ,O.[Customer WO#]
+        ,[O].[JobAvailableLine]
+        ,[O].[JobAvailableScheduled]
+        ,[O].[JobAvailableScheduledBy]
+        --,O.[PriceSecured]
+        --,O.[DateSecured]
+        --,O.[SecuredBy]
+        ,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+    
+        --,[D].[COMPANY NAME]
+    FROM
+        [BWSdb].[dbo].[OrdersV2] AS [O]
+    LEFT JOIN 
+        [dtProductionSchedule] AS [A]
+    ON
+        [A].[SGQuote] = [O].[SGQuote]
+    LEFT JOIN 
+        [dtProductionScheduleV2] AS [B]
+    ON
+        [B].[SGQuote] = [O].[SGQuote]
+    LEFT JOIN
+        [BWSdb].[dbo].[v_GalvanizedStargateOrders] AS [C]
+    ON
+        [C].[SGQuote] = [O].[SGQuote]
+    --LEFT JOIN
+    --    [BWSdb].[dbo].[DealersV2] AS [D]
+    --ON
+    --    [O].[DealerID] = [D].[ID]
+    --WHERE
+    --    [B].[JobFinishDate] IS NOT NULL
+    ORDER BY
+        [B].[JobFinishDate]
+    ;"""
+        },
 
+        SQL_VALID_UPDATERS := {
+            "sql": """
+    SELECT
+        [ID]
+        ,[DateAdded]
+        ,[TimeStamp]
+        ,[UserName]
+        ,[Active]
+        ,[DateRemoved]
+        ,[AllowPublish]
+        ,[AllowSaturday]
+        ,[AllowSunday]
+        ,[ColourCoding]
+        ,[InTestingMode]
+    FROM
+        [Stargatedb].[dbo].[PDS Valid Updaters]
+    ;
+    """
+        }
 
-SQL_VALID_UPDATERS = {
-    "sql": """
-SELECT
-	[ID]
-	,[DateAdded]
-	,[TimeStamp]
-	,[UserName]
-	,[Active]
-	,[DateRemoved]
-	,[AllowPublish]
-	,[AllowSaturday]
-	,[AllowSunday]
-	,[ColourCoding]
-FROM
-	[Stargatedb].[dbo].[PDS Valid Updaters]
-;
-""",
-    "database": "StargateDB",
-    "uid": "SGeu1",
-    "pwd": "Pupplies-Hagard->Rio0"
-}
+):
+    for cred_k, cred_v in STARGATE_SQL_CREDS.items():
+        if cred_k not in sql_data:
+            sql_data.update({cred_k: cred_v})
 
 
 class App(tkinter.Tk):
@@ -422,7 +425,7 @@ class App(tkinter.Tk):
             "settings": {
                 "allow_multi_select": False,
                 "colour_coding": {},
-                "TEST_MODE": True,
+                "TEST_MODE": tkinter.BooleanVar(self, value=False),
                 "min_font_size_tile": 8,
                 "max_font_size_tile": 18,
                 "start_at_first_of_month": True,
@@ -430,9 +433,6 @@ class App(tkinter.Tk):
             }
         }
         self.tl_data = {}
-
-        self.df_valid_updaters = None
-        self.check_valid_updater()
 
         # default values
         self.data.update({
@@ -443,6 +443,11 @@ class App(tkinter.Tk):
             "y_top_widgets": 5,
             "margin_between_mc_and_calendar": 20,
 
+            "colour_foreground_testing_mode_label": Colour("#981415"),
+            "font_foreground_testing_mode_label": ("Arial", 12, "bold"),
+            "colour_foreground_processing_label": Colour(JADE_GREEN),
+            "colour_background_processing_label": Colour("#083712"),
+            "font_foreground_processing_label": ("Arial", 32, "bold"),
             "colour_background_root_canvas": Colour("#12CC16"),
             # "colour_app_background": Colour("#C3C3C3"),
             # "colour_app_background": Colour("#941186"),
@@ -466,6 +471,15 @@ class App(tkinter.Tk):
             "colour_garbage_outline": Colour("#632234"),
             "colour_garbage_border_width": 4,
 
+            "colour_background_app": Colour("#777797"),
+            "colour_background_calendar_app": Colour("#777797"),
+            "colour_tile_background_selected": Colour("#DC4245"),
+            "colour_tile_foreground_selected": Colour("#090909"),
+            "font_tile_selected": "Arial 12 bold",
+            "colour_tile_outline_selected": Colour("#DDA911"),
+            "width_tile_outline_selected": 2,
+            "height_calendar_scrollbar": 20,
+
             "default_font": ("Arial", 10)
         })
         self.data.update({
@@ -475,6 +489,7 @@ class App(tkinter.Tk):
             # "colour_tile_header_row_foreground": Colour("#e4e4ff"),
             # "colour_tile_header_col_background": Colour("#321116"),
             # "colour_tile_header_col_foreground": Colour("#e4e4ff"),
+            "colour_background_testing_mode_label": self.data["colour_background_app"].brightened(0.15),
             "colour_fill_multi_combobox_drag_tile": self.data["colour_tile_background"].darkened(0.2),
             # "colour_fill_multi_combobox_drag_tile": self.data["colour_app_background"],
             "colour_outline_multi_combobox_drag_tile": self.data["colour_tile_foreground"].darkened(0.2),
@@ -483,15 +498,6 @@ class App(tkinter.Tk):
             "font_tile_hover": "Arial 12 bold",
             "colour_tile_outline_hover": self.data["colour_tile_outline"].brightened(0.25),
             "width_tile_outline_hover": 2,
-
-            "colour_background_app": Colour("#777797"),
-            "colour_background_calendar_app": Colour("#777797"),
-            "colour_tile_background_selected": Colour("#DC4245"),
-            "colour_tile_foreground_selected": Colour("#090909"),
-            "font_tile_selected": "Arial 12 bold",
-            "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 2,
-            "height_calendar_scrollbar": 20,
 
             "colour_tile_background_weekend": self.data["colour_tile_background"].darkened(0.5),
             "colour_tile_foreground_weekend": self.data["colour_tile_foreground"].darkened(0.5),
@@ -519,7 +525,8 @@ class App(tkinter.Tk):
             "abcsh_has_hist_msg": f"Save your work before quitting?",
             "abcsh_no_hist_msg": f"Are you sure you want to exit?",
             "msg_no_hist_on_save": f"You do not have any unsaved changes.",
-            "msg_save_successful": f"Changes saved successfully!"
+            "msg_save_successful": f"Changes saved successfully!",
+            "msg_no_commit_test_mode": f"No changes saved because testing mode is enabled."
         })
 
         # print(f"{self.cget('bg')=}")
@@ -537,6 +544,10 @@ class App(tkinter.Tk):
             label="Colour Code",
             command=self.click_mb_colour_code
         )
+        self.mb_file.add_command(
+            label="Testing Mode",
+            command=self.click_mb_testing_mode
+        )
         self.mb_file.add_separator()
         self.mb_file.add_command(
             label="Exit",
@@ -549,7 +560,9 @@ class App(tkinter.Tk):
         )
 
         self.title(self.data["title_application_full"])
-        self.configure(background=self.data["colour_app_background"].hex_code)
+        self.configure(
+            background=self.data["colour_app_background"].hex_code
+        )
 
         # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
         # self.data["geometry"] = tkinter_utility.calc_geometry_tl("zoomed", largest=1, rtype=dict)
@@ -560,6 +573,29 @@ class App(tkinter.Tk):
             "total_height": self.data["geometry"]["height"]
         })
         n_cols = self.data["days_forward"] + self.data["days_backward"] + 1  # +1 for today in the middle
+
+        self.frame_calendar = tkinter.Frame(
+            self,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
+            background=self.data["colour_background_app"].hex_code
+        )
+
+        self.tv_lbl_processing, self.lbl_processing = None, None
+
+        self.tv_lbl_testing_mode, self.lbl_testing_mode = tkinter_utility.label_factory(
+            self,
+            tv_label="TESTING MODE ENABLED",
+            kwargs_label={
+                "fg": self.data["colour_foreground_testing_mode_label"].hex_code,
+                "bg": self.data["colour_background_testing_mode_label"].hex_code,
+                "font": self.data["font_foreground_testing_mode_label"]
+            }
+        )
+
+        self.df_valid_updaters = None
+        self.data["settings"]["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
+        self.check_valid_updater()
 
         self.df_calendar = connect(**SQL_HOLIDAYS)
         self.df_prod_lines = connect(**SQL_USED_LINES)
@@ -639,7 +675,9 @@ class App(tkinter.Tk):
             # # ,[WAR].[Customer V2] AS [WAR_CustomerV2]
             # # "WAR_PartsLabour": "Parts & Labour"
         }
-        self.list_multi_combobox_warranties_viewable_col_widths = [self.list_multi_combobox_warranties_viewable_col_widths[k] for k in self.list_multi_combobox_warranties_viewable_cols.values()]
+        self.list_multi_combobox_warranties_viewable_col_widths = [
+            self.list_multi_combobox_warranties_viewable_col_widths[k] for k in
+            self.list_multi_combobox_warranties_viewable_cols.values()]
         # self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.rename(columns=self.list_multi_combobox_warranties_viewable_cols)
 
         # TODO gracefully fail if DFs are empty
@@ -647,13 +685,6 @@ class App(tkinter.Tk):
         n_rows = self.df_prod_lines.shape[0] + 1  # +1 for header row
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
         self.list_warranty_lines = self.list_prod_lines[-1:]  # currently only using the last line
-
-        self.frame_calendar = tkinter.Frame(
-            self,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background=self.data["colour_background_app"].hex_code
-        )
 
         self.data["width_multi_combobox"] = 725
         self.data["height_multi_combobox"] = 150
@@ -703,19 +734,6 @@ class App(tkinter.Tk):
             self.frame_multi_combobox
         )
 
-        self.invisible_canvas = tkinter.Canvas(
-            self.frame_calendar,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background=self.data["colour_background_root_canvas"].hex_code,
-            scrollregion=(
-                0,
-                0,
-                self.data["geometry"]["width"],
-                self.data["geometry"]["height"]
-            )
-        )
-
         # multi-combobox selector for orders or warranties
         self.toggle_warranty = tkinter_utility.ToggleCanvas(
             self.frame_multi_combobox,
@@ -741,7 +759,8 @@ class App(tkinter.Tk):
             limit_to_list=False,
             allow_insert_ask=False,
             lock_result_col="SGQuote",
-            auto_grid=False
+            auto_grid=False,
+            show_index_column=False
         )
         self.multi_combobox_orders.res_entry.unbind("<Return>", self.multi_combobox_orders.bind_return_res_entry)
         self.multi_combobox_orders.res_entry.bind("<Return>", self.submit_combobox_entry)
@@ -780,7 +799,8 @@ class App(tkinter.Tk):
         self.df_ids_to_date_line = {}
         # print(f"{list(self.tiles)[:5]=}")
 
-        self.df_calendar = self.df_calendar.loc[(self.list_dates[0] <= self.df_calendar["Date"]) & (self.df_calendar["Date"] <= self.list_dates[-1])]
+        self.df_calendar = self.df_calendar.loc[
+            (self.list_dates[0] <= self.df_calendar["Date"]) & (self.df_calendar["Date"] <= self.list_dates[-1])]
         self.holidays = self.df_calendar.dropna(subset=["HolidayName"]).set_index("Date")["HolidayName"].to_dict()
         print(f"{self.df_calendar=}")
         print(f"{self.holidays=}")
@@ -844,6 +864,7 @@ class App(tkinter.Tk):
         #     # ,
         #     # window=self.canvas
         # )
+
         self.canvas = tkinter.Canvas(
             self.frame_canvas,
             width=self.data["canvas_width"],
@@ -860,6 +881,30 @@ class App(tkinter.Tk):
             self.frame_canvas,
             orient="horizontal",
             command=self.scroll_x_calendar
+        )
+
+        self.invisible_canvas = tkinter.Canvas(
+            self.frame_calendar,
+            width=self.data["geometry"]["width"],
+            height=self.data["geometry"]["height"],
+            background=self.data["colour_background_root_canvas"].hex_code,
+            scrollregion=(
+                0,
+                0,
+                self.data["geometry"]["width"],
+                self.data["geometry"]["height"]
+            )
+        )
+
+        # High level message labels:
+        self.tv_lbl_processing, self.lbl_processing = tkinter_utility.label_factory(
+            self.invisible_canvas,
+            tv_label="processing",
+            kwargs_label={
+                "fg": self.data["colour_foreground_processing_label"].hex_code,
+                "bg": self.data["colour_background_processing_label"].hex_code,
+                "font": self.data["font_foreground_processing_label"]
+            }
         )
 
         # # multicombobox for searching
@@ -1280,13 +1325,7 @@ class App(tkinter.Tk):
         # transparent method
         # canvas
         # https://stackoverflow.com/questions/53021603/how-to-make-a-tkinter-canvas-background-transparent
-        hwnd = self.invisible_canvas.winfo_id()
-        colorkey = win32api.RGB(*self.data["colour_background_root_canvas"].rgb_code)
-        wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-        new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
-        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_exstyle)
-        # print(f"C1 {hwnd=}, {colorkey=}, {wnd_exstyle=}, {new_exstyle=}")
-        win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
+        self.set_invisible_canvas()
 
         # transparent method
         # # canvas
@@ -1334,6 +1373,10 @@ class App(tkinter.Tk):
             fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
             outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code,
             parent=self.invisible_canvas
+        )
+        self.dot = self.invisible_canvas.create_oval(
+            5, 5, 25, 25,
+            fill="#AE3341"
         )
         self.multi_combobox_drag_tile_texts_placeholder = "PLACEHOLDER"
         self.multi_combobox_drag_tile_texts = [
@@ -1416,6 +1459,31 @@ class App(tkinter.Tk):
 
         in_test_mode = self.data["settings"]["TEST_MODE"]
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
+
+    def set_invisible_canvas(self, mode="invisble"):
+
+        if mode == "gray":
+            self.attributes("-alpha", 0.9)
+        else:
+            # invisble
+            self.attributes("-alpha", 1)
+            hwnd = self.invisible_canvas.winfo_id()
+            colorkey = win32api.RGB(*self.data["colour_background_root_canvas"].rgb_code)
+            wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+            new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
+            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_exstyle)
+            # print(f"C1 {hwnd=}, {colorkey=}, {wnd_exstyle=}, {new_exstyle=}")
+            win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
+
+    def tv_update_test_mode(self, *args):
+        print(f"tv_update_test_mode")
+        tm = self.data["settings"]["TEST_MODE"].get()
+        if tm:
+            self.lbl_testing_mode.grid(row=0, column=0, columnspan=2, pady=3)
+        else:
+            self.lbl_testing_mode.grid_forget()
+
+        self.reload_application()
 
     def tv_update_history(self, *args):
         hist = self.data["history"].get()
@@ -1523,9 +1591,14 @@ class App(tkinter.Tk):
         if not df.empty:
             print(f" FOUND!")
             idx = df.index[0]
-            cc = df.iloc[idx]["ColourCoding"]
+            df_pds_user = df.iloc[idx]
+            cc = df_pds_user["ColourCoding"]
+            test_mode = df_pds_user["InTestingMode"]
             cc = cc if not pd.isna(cc) else {}
             self.data["settings"]["colour_coding"] = eval(str(cc))
+            print(f"INIT TEST MODE {test_mode}")
+            self.data["settings"]["init_test_mode_done"] = tkinter.BooleanVar(self, value=False)
+            self.data["settings"]["TEST_MODE"].set(bool(test_mode))
             return True
 
         print(f" NOT FOUND")
@@ -1536,9 +1609,10 @@ class App(tkinter.Tk):
 
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
-        self.frame_calendar.grid()
+        # if self.data["settings"]["TEST_MODE"].get():
+        #     self.lbl_testing_mode.grid()
+        self.frame_calendar.grid(**{r: 1})
         self.frame_calendar.grid_propagate(False)
-        self.invisible_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid_propagate(False)
         self.canvas.grid(**{r: 0})
@@ -1603,6 +1677,9 @@ class App(tkinter.Tk):
         else:
             self.multi_combobox_orders.grid_widget()
         self.toggle_warranty.grid(**{r: 1, c: 0})
+
+        # goes on top of everything
+        self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
         # self.toggle_warranty.place(
         #     x=self.data["x_place_frame_multi_combobox"],
         #     # y=self.data["y_place_toggle_warranty"]
@@ -1793,7 +1870,8 @@ class App(tkinter.Tk):
                         [dat_job]
                     )
                 }
-                print(f"self.multi_combobox_warranties.tree_controller.viewable_column_names=\n\t{self.multi_combobox_warranties.tree_controller.viewable_column_names}")
+                print(
+                    f"self.multi_combobox_warranties.tree_controller.viewable_column_names=\n\t{self.multi_combobox_warranties.tree_controller.viewable_column_names}")
                 print(f"{[dat_job]=}")
             else:
                 print(f"{is_warranty=}")
@@ -1808,7 +1886,8 @@ class App(tkinter.Tk):
                 dat_model = data.get("InputField1")
                 dat_cust_wo = data.get("Customer WO#")
                 # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
-                print(f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
+                print(
+                    f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
                 print(f"{[dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]=}")
                 # print(f"zip(self.multi_combobox_orders.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
                 new_row_data = {
@@ -2077,7 +2156,8 @@ class App(tkinter.Tk):
                     hist.append(("SWAP", date_line_1, date_line_2))
                     self.data["history"].set(hist)
 
-            print(f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
+            print(
+                f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
 
     def on_right_click_calendar(self, event) -> None:
         print(f"on_right_click_calendar")
@@ -2290,19 +2370,24 @@ class App(tkinter.Tk):
                 #     event.x + (tw / 2),
                 #     event.y + (th / 2)
                 # )
-                bbox = (
+                bbox = [
                     event.x,
                     event.y,
                     event.x + tw,
                     event.y + th
-                )
+                ]
+                if not is_warranty:
+                    bbox[0] -= (tw / 2)
+                    bbox[2] -= (tw / 2)
+
                 # bbox = (
                 #     event.x - (tw / 2),
                 #     event.y + mcy + hmct + offy - (th / 2),
                 #     event.x + (tw / 2),
                 #     event.y + mcy + hmct + offy + (th / 2)
                 # )
-                print(f"{event.x=}, {event.y=}\n{self.invisible_canvas.canvasx(event.x)=}, {self.invisible_canvas.canvasy(event.y)=}")
+                print(
+                    f"{event.x=}, {event.y=}\n{self.invisible_canvas.canvasx(event.x)=}, {self.invisible_canvas.canvasy(event.y)=}")
                 print(f"{region1=}, {column=}, {bbox=}")
                 # print(f"{region1=}, {column=}, {name=}, {bbox=}")
                 # print(f"{region1=}, {bbox=}")
@@ -2374,6 +2459,8 @@ class App(tkinter.Tk):
                     self.invisible_canvas.tag_raise(txt)
                 self.multi_combobox_drag_tile_texts = out_texts
 
+        self.invisible_canvas.coords(self.dot, e_x-10, e_y-10, e_x+10, e_y+10)
+
     def release_treeview_entry(self, event):
         print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
@@ -2382,7 +2469,8 @@ class App(tkinter.Tk):
         # self.multi_combobox_orders.grid()
         self.tv_multi_combobox_drag_tile.set(False)
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
-        ex, ey = event.x, event.y
+        e_x, e_y = event.x, event.y
+        tw, th = self.data["tile_width"], self.data["tile_height"]
 
         x_fc = self.data.get("x_place_frame_canvas", 0)
         y_fc = self.data.get("y_place_frame_canvas", 0)
@@ -2417,10 +2505,20 @@ class App(tkinter.Tk):
         bbox_mc[2] += x_mc
         bbox_mc[3] += y_mc
 
-        print(f"\n\t{ex=}, {ey=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
-        if (bbox_canvas[0] <= ex <= bbox_canvas[2]) and (bbox_canvas[1] <= ey <= bbox_canvas[3]):
-            date_line = self.get_date_line_at_x_y(self.canvas.canvasx(ex - x_fc), self.canvas.canvasy(ey - y_fc))
-            # date_line = self.get_date_line_at_x_y(self.canvas.canvasx(ex), self.canvas.canvasy(ey))
+        if not is_warranty:
+            pass
+            # e_y += th
+        else:
+            e_x += (tw / 2)
+        #
+        e_y += (th / 2)
+
+        self.invisible_canvas.coords(self.dot, e_x-10, e_y-10, e_x+10, e_y+10)
+
+        print(f"\n\t{e_x=}, {e_y=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
+        if (bbox_canvas[0] <= e_x <= bbox_canvas[2]) and (bbox_canvas[1] <= e_y <= bbox_canvas[3]):
+            date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x - x_fc), self.canvas.canvasy(e_y - y_fc))
+            # date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x), self.canvas.canvasy(e_y))
             if date_line:
                 date, line = date_line
                 if date.weekday() < 5:
@@ -2433,14 +2531,16 @@ class App(tkinter.Tk):
                             # return the dragging tile to the combobox and stop
                             messagebox.showinfo(
                                 title=self.data["title_application_short"],
-                                message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(self.list_warranty_lines)
+                                message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(
+                                    self.list_warranty_lines)
                             )
                             self.flash_tile(date_line, mode="invalid")
                             self.clear_master_drag_tile()
                             return
 
                         war_job = self.multi_combobox_warranties.res_tv_entry.get()
-                        war_job_id = self.df_multi_combobox_data_warranties.loc[self.df_multi_combobox_data_warranties["Job"] == war_job].index[0]
+                        war_job_id = self.df_multi_combobox_data_warranties.loc[
+                            self.df_multi_combobox_data_warranties["Job"] == war_job].index[0]
                         # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
                         print(f"{war_job=}, {war_job_id=}")
                         print(f"dropped in calendar {date_line=}")
@@ -2487,10 +2587,10 @@ class App(tkinter.Tk):
                 else:
                     # weekend placement not supported
                     self.flash_tile(date_line, mode="invalid_we")
-        elif (bbox_if[0] <= ex <= bbox_if[2]) and (bbox_if[1] <= ey <= bbox_if[3]):
+        elif (bbox_if[0] <= e_x <= bbox_if[2]) and (bbox_if[1] <= e_y <= bbox_if[3]):
             # dropped in info frame
             print(f"dropped in info frame")
-        elif (bbox_mc[0] <= ex <= bbox_mc[2]) and (bbox_mc[1] <= ey <= bbox_mc[3]):
+        elif (bbox_mc[0] <= e_x <= bbox_mc[2]) and (bbox_mc[1] <= e_y <= bbox_mc[3]):
             # dropped in calendar
             print(f"dropped in multi combobox")
         else:
@@ -2594,7 +2694,8 @@ class App(tkinter.Tk):
 
         old_bind_war = self.multi_combobox_warranties.tree_controller.binding_treeview_b1_motion
         self.multi_combobox_warranties.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_warranty_entry)
-        self.multi_combobox_warranties.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_warranty_entry)
+        self.multi_combobox_warranties.tree_controller.treeview.bind("<ButtonRelease-1>",
+                                                                     self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
         ht = self.data["state"]["hovered"]
@@ -3354,7 +3455,8 @@ class App(tkinter.Tk):
                 if font_name_font_size is None:
                     font_name_font_size = self.data["default_font"]
                 font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.data["settings"]["min_font_size_tile"], min(font_size, self.data["settings"]["max_font_size_tile"]))
+                font_size_ = max(self.data["settings"]["min_font_size_tile"],
+                                 min(font_size, self.data["settings"]["max_font_size_tile"]))
                 # print(f"1 {font_obj=}")
                 if font_size != font_size_:
                     font_obj = (font_name, font_size_)
@@ -3380,7 +3482,8 @@ class App(tkinter.Tk):
                 if font_name_font_size is None:
                     font_name_font_size = self.data["default_font"]
                 font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.data["settings"]["min_font_size_tile"], min(font_size, self.data["settings"]["max_font_size_tile"]))
+                font_size_ = max(self.data["settings"]["min_font_size_tile"],
+                                 min(font_size, self.data["settings"]["max_font_size_tile"]))
                 # print(f"1 {font_obj=}")
                 if font_size != font_size_:
                     font_obj = (font_name, font_size_)
@@ -3452,7 +3555,8 @@ class App(tkinter.Tk):
             )
 
             self.tl_data["tl_font_label_choice"][1].grid(row=0, column=0, columnspan=2, rowspan=1, padx=5, pady=5)
-            self.tl_data["tl_font_select_frame"].grid(row=1, column=0, columnspan=2, rowspan=1, sticky="snew", padx=5, pady=5)
+            self.tl_data["tl_font_select_frame"].grid(row=1, column=0, columnspan=2, rowspan=1, sticky="snew", padx=5,
+                                                      pady=5)
             self.tl_data["tl_fc_btn_cancel"][1].grid(row=2, column=0, columnspan=1, rowspan=1, padx=5, pady=5)
             self.tl_data["tl_fc_btn_save"][1].grid(row=2, column=1, columnspan=1, rowspan=1, padx=5, pady=5)
             self.tl_data["tl_font_choice"].grab_set()
@@ -3575,7 +3679,6 @@ class App(tkinter.Tk):
             dealer = can_vc.itemcget(cv_t_tag, "text")
 
             if dealer.strip():
-
                 dealer_idx = known_dealers.index(dealer)
 
                 tag = opt_tags[dealer_idx]["tile"]
@@ -3888,7 +3991,7 @@ class App(tkinter.Tk):
 
     def click_mb_save(self, event=None):
         print(f"click_mb_save, {event=}")
-        test_mode = self.data["settings"]["TEST_MODE"]
+        test_mode = self.data["settings"]["TEST_MODE"].get()
         # history = self.data["history"]
 
         hist = list(self.data["history"].get())
@@ -3913,6 +4016,90 @@ class App(tkinter.Tk):
             message=self.data["msg_save_successful"]
         )
 
+    def reload_application(self, reload_time=4000):
+        print(f"begin reload_application")
+        if self.lbl_processing is not None:
+            self.lbl_processing.pack(expand=True, fill="both")
+
+        def wait_loop():
+            print(f"begin sleep")
+            time.sleep(reload_time / 1000)
+            print(f"end sleep")
+
+        if self.data["settings"]["init_test_mode_done"].get():
+            thread = threading.Thread(target=wait_loop)
+            thread.start()
+            thread.join()
+        else:
+            self.data["settings"]["init_test_mode_done"].set(True)
+
+        if self.lbl_processing is not None:
+            self.lbl_processing.pack_forget()
+        print(f"end reload_application")
+
+    def set_pds_testing_mode(self, in_testing_mode: bool):
+
+        domain_un = self.data["state"]["user_full"]
+        *domain, un = domain_un.split("\\")
+        sql = f"UPDATE [PDS Valid Updaters] SET [InTestingMode] = {int(in_testing_mode)} WHERE [UserName] = '{un}';"
+        print(f"--\n{sql}")
+        connect(sql, **STARGATE_SQL_CREDS, do_print=True, do_show=True)
+        print(f"--")
+        self.data["settings"]["TEST_MODE"].set(in_testing_mode)
+
+    def click_mb_testing_mode(self, event=None):
+        print(f"click_mb_testing_mode")
+
+        in_tm = self.data["settings"]["TEST_MODE"].get()
+        tl_name = "tl_testing_mode"
+        tlsn = "tl_tm"
+
+        def click_yes():
+            print(f"click_yes")
+            on_closing_tm()
+            self.set_pds_testing_mode(not in_tm)
+
+        def click_no():
+            print(f"click_no")
+            on_closing_tm()
+            self.set_pds_testing_mode(not in_tm)
+
+        def on_closing_tm(*args):
+            self.tl_data[tl_name].destroy()
+
+        self.tl_data[tl_name] = tkinter.Toplevel(self)
+        self.tl_data[tl_name].title(self.data["title_application_full"])
+
+        w, h = 200, 120
+        tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
+        self.tl_data[tl_name].geometry(tl_geom["geometry"])
+
+        message = f"Enter Testing Mode?" if (not in_tm) else f"Exit Testing Mode?"
+
+        # toplevel - testing mode - textvariable - label
+        self.tl_data[f"{tlsn}_tv_lbl_message"], self.tl_data[f"{tlsn}_lbl_message"] = tkinter_utility.label_factory(
+            self.tl_data[tl_name],
+            tv_label=message
+        )
+        self.tl_data[f"{tlsn}_tv_btn_yes"], self.tl_data[f"{tlsn}_btn_yes"] = tkinter_utility.button_factory(
+            self.tl_data[tl_name],
+            tv_btn="yes",
+            command=click_yes
+        )
+        self.tl_data[f"{tlsn}_tv_btn_no"], self.tl_data[f"{tlsn}_btn_no"] = tkinter_utility.button_factory(
+            self.tl_data[tl_name],
+            tv_btn="no",
+            command=click_no
+        )
+
+        self.tl_data[f"{tlsn}_lbl_message"].grid(row=0, column=0, columnspan=2, padx=20, pady=20)
+        self.tl_data[f"{tlsn}_btn_yes"].grid(row=1, column=0, columnspan=1, padx=5, pady=5)
+        self.tl_data[f"{tlsn}_btn_no"].grid(row=1, column=1, columnspan=1, padx=5, pady=5)
+
+        self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", on_closing_tm)
+        self.tl_data[tl_name].grab_set()
+        self.wait_window(self.tl_data[tl_name])
+
     def click_mb_exit(self, event=None):
         print(f"click_mb_exit, {event=}")
         ans_has_history = self.ask_save_before_close()
@@ -3927,6 +4114,12 @@ class App(tkinter.Tk):
     def on_closing(self, do_quit: bool = True) -> None | list:
         # history = self.data["history"]
         do_exec = False  # automatically update server using generated sql statements.
+
+        in_test_mode = self.data["settings"]["TEST_MODE"].get()
+        print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
+
+        do_exec = do_exec and (not in_test_mode)
+
         history = list(self.data["history"].get())
         sql_statments = []
 
@@ -4030,7 +4223,8 @@ class App(tkinter.Tk):
                                     "KQ": self.df_orders.iloc[order_1]["OrdersV2_SGQuote"]
                                 }
                                 stmt_1 += f"\n{sql_swap_1.format(**dat_1)}"
-                                dat_2 = {"KJ": line_1, "KK": date_1, "KQ": self.df_orders.iloc[order_1]["OrdersV2_SGQuote"]}
+                                dat_2 = {"KJ": line_1, "KK": date_1,
+                                         "KQ": self.df_orders.iloc[order_1]["OrdersV2_SGQuote"]}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             if order_2 is not None:
@@ -4044,7 +4238,8 @@ class App(tkinter.Tk):
                                     "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]
                                 }
                                 stmt_1 += f"\n{sql_swap_1.format(**dat_1)}"
-                                dat_2 = {"KJ": line_2, "KK": date_2, "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]}
+                                dat_2 = {"KJ": line_2, "KK": date_2,
+                                         "KQ": self.df_orders.iloc[order_2]["OrdersV2_SGQuote"]}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             stmt_1 = stmt_1.removeprefix('\n')
@@ -4109,18 +4304,29 @@ class App(tkinter.Tk):
                 #     print(f"SQL =\n\nBEGIN TRAN;\n\n{stmt_1}\n\nROLLBACK;\nCOMMIT;")
 
                 stmts = "\n".join(sql_statments)
+                print(f"{do_exec=}")
+                print(f"{stmts=}")
                 # connect_stmts = " ".join([stmt.replace("\n", " ") for stmt in sql_statments[1:]])
-                tran_stmts = f"/* SQL\n Date: {self.today:%Y-%m-%d %H:%M:%S} =*/\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
-                print(f"{'='*120}\n\ttran_stmts:\n{tran_stmts}{'='*120}")
-                with open(self.file_last_session_sql, "w") as f:
-                    f.write(tran_stmts)
+                tran_stmts = f"/* SQL */\n/* Date: {self.today:%Y-%m-%d %H:%M:%S} =*/\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
+                print(f"{'=' * 120}\n\ttran_stmts:\n{tran_stmts}{'=' * 120}")
 
                 if do_exec:
-                    for stmt in stmts.split(";"):
-                        st = stmt.replace("\t", " ").replace("\n", " ")
-                        if st and (not st.startswith("--")):
-                            print(f"{st=}")
-                            connect(st)
+
+                    with open(self.file_last_session_sql, "w") as f:
+                        f.write(tran_stmts)
+
+                    connect(stmts, **STARGATE_SQL_CREDS)
+                    # for stmt in stmts.split(";"):
+                    #     st = stmt.replace("\t", " ").replace("\n", " ")
+                    #     if st and (not st.startswith("--")):
+                    #         print(f"{st=}")
+                    #         connect(st)
+                else:
+                    if in_test_mode:
+                        messagebox.showinfo(
+                            title=self.data["title_application_short"],
+                            message=self.data["msg_no_commit_test_mode"]
+                        )
 
                 # # TODO async
                 # print(f"{'='*120}\n\tstmts:\n{stmts}{'='*120}\n{stmts=}\n{'='*120}")

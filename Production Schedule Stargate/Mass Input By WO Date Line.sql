@@ -2,16 +2,13 @@ USE Stargatedb
 GO
 
 DECLARE @c TABLE (
-	[Q] NVARCHAR(MAX),
+	[W] NVARCHAR(MAX),
 	[Date] DATETIME,
 	[Line] NVARCHAR(MAX)
 );
 
-INSERT INTO @c ([Q], [Date], [Line]) VALUES
---('SG101675', '2024-08-01', 'ED1')
---('SG101673', '2024-08-07', 'ED1')
---('SG101674', '2024-09-11', 'ED1')
-('SG101653', '2024-08-06', 'ED1')
+INSERT INTO @c ([W], [Date], [Line]) VALUES
+('10001480', '2024-05-31', 'WFL')
 
 
 
@@ -28,7 +25,7 @@ FROM
 INNER JOIN
 	@c [C]
 ON	
-	[D].[SGQuote] = [C].[Q]
+	[D].[WO#] = [C].[W]
 
 UPDATE
 	[O]
@@ -44,7 +41,7 @@ FROM
 INNER JOIN
 	@c [C]
 ON	
-	[O].[SGQuote] = [C].[Q]
+	[O].[WO#] = [C].[W]
 
 ROLLBACK;
 COMMIT;
