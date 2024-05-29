@@ -1,0 +1,158 @@
+{
+	"work_stations": {
+		"settings": {
+			"width_cell": 4,
+			"height_cell": 4,
+			"map_file": "\\\\bwsfp01\\public\\IT\\Resource\\Images\\production_floor_map_2024_05_29_marked_.jpg"
+		},
+		"stations": [
+			{
+				"name": "Beams #2 - 3D Computer",
+				"is_cad_station": false,
+				"number": 90,
+				"row": 7,
+				"col": 14
+			},
+			{
+				"name": "Stiffener Station",
+				"is_cad_station": false,
+				"number": 91,
+				"row": 9,
+				"col": 31
+			},
+			{
+				"name": "Beams #2",
+				"is_cad_station": false,
+				"number": null,
+				"row": 5,
+				"col": 38 
+			},
+			{
+				"name": "T3",
+				"is_cad_station": false,
+				"number": 84,
+				"row": 5,
+				"col": 50 
+			},
+			{
+				"name": "T1",
+				"is_cad_station": false,
+				"number": null,
+				"row": 5,
+				"col": 62
+			},
+			{
+				"name": "T2",
+				"is_cad_station": false,
+				"number": 83,
+				"row": 14,
+				"col": 62
+			},
+			{
+				"name": "T4",
+				"is_cad_station": false,
+				"number": 85,
+				"row": 13,
+				"col": 50
+			},
+			{
+				"name": "Joe McAdam's Station",
+				"is_cad_station": false,
+				"number": 142,
+				"row": 14,
+				"col": 14
+			},
+			{
+				"name": "Machine Shop",
+				"is_cad_station": false,
+				"number": 40,
+				"row": 14,
+				"col": 21
+			},
+			{
+				"name": "Shear",
+				"is_cad_station": false,
+				"number": 104,
+				"row": 15,
+				"col": 29
+			},
+			{
+				"name": "Saw",
+				"is_cad_station": false,
+				"number": 38,
+				"row": 24,
+				"col": 16
+			},
+			{
+				"name": "Warehouse",
+				"is_cad_station": false,
+				"number": 126,
+				"row": 29,
+				"col": 16
+			},
+			{
+				"name": "Chelsey Hamilton's Station",
+				"is_cad_station": false,
+				"number": 134,
+				"row": 32,
+				"col": 17
+			},
+			{
+				"name": "Maintenance",
+				"is_cad_station": false,
+				"number": null,
+				"row": 15,
+				"col": 31
+			},
+			{
+				"name": "Parts",
+				"is_cad_station": false,
+				"number": 143,
+				"row": 27,
+				"col": 34
+			},
+			{
+				"name": "T9",
+				"is_cad_station": false,
+				"number": 124,
+				"row": 23,
+				"col": 41
+			},
+			{
+				"name": "T10 - Subs",
+				"is_cad_station": false,
+				"number": 100,
+				"row": 24,
+				"col": 54
+			},
+			{
+				"name": "T11",
+				"is_cad_station": false,
+				"number": 77,
+				"row": 22,
+				"col": 62
+			},
+			{
+				"name": "Subs",
+				"is_cad_station": false,
+				"number": 51,
+				"row": 34,
+				"col": 55
+			},
+			{
+				"name": "Axles",
+				"is_cad_station": true,
+				"number": 9,
+				"row": 20,
+				"col": 71
+			},
+			{
+				"name": "Parts TV Station",
+				"is_cad_station": null,
+				"number": null,
+				"row": 27,
+				"col": 33
+			}
+		]
+	}
+}
