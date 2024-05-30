@@ -1,15 +1,24 @@
 import tkinter
+from tkinter import font
 
 from tkinter_utility import *
 from PIL import ImageTk, Image
 import json
 
 
-def collide_point(bbox, point):
+def collide_point(bbox: tuple[float, float, float, float], point: tuple[float, float]) -> bool:
+    """Check if a point is inside a rectangular 'bbox' of format (x0, y0, x1, y1)"""
     return all([
         bbox[0] <= point[0] <= bbox[2],
         bbox[1] <= point[1] <= bbox[3]
     ])
+
+
+def center_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
+    return (
+        bbox[0] + ((bbox[2] - bbox[0]) / 2),
+        bbox[1] + ((bbox[3] - bbox[1]) / 2)
+    )
 
 
 class WorkStation:
@@ -24,6 +33,291 @@ class WorkStation:
         self.background = data.get("colour_background", Colour("#303078"))
 
 
+class PopUpContentManager:
+
+    def __init__(
+            self,
+            canvas: tkinter.Canvas,
+            pop_up_tag: int,
+            bbox_pop_up: tkinter.Variable,
+            x_y_pop_up_launch: tkinter.Variable,
+            w_pop_up: tkinter.IntVar,
+            h_pop_up: tkinter.IntVar,
+            rv_w_pop_up: int = 300,
+            rv_h_pop_up: int = 250
+    ):
+        self.canvas = canvas
+        self.pop_up_tag = pop_up_tag
+        self.bbox_pop_up = bbox_pop_up
+        self.x_y_pop_up_launch = x_y_pop_up_launch
+        self.w_pop_up = w_pop_up
+        self.h_pop_up = h_pop_up
+        self.rv_w_pop_up = rv_w_pop_up
+        self.rv_h_pop_up = rv_h_pop_up
+
+        # default_values
+        self.default_font_name = "Arial"
+        self.default_font_size = 14
+        self.default_lbl_station_name = "Station:"
+        self.default_lbl_station_number = "Number:"
+        self.m_top, self.m_left, self.m_right, self.m_bottom = [10] * 4
+
+        self.colour_lbl_txt_station_name = Colour("#000000")
+        self.font_lbl_txt_station_name = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_name = Colour("#111945")
+        self.font_txt_station_name = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_number = Colour("#000000")
+        self.font_lbl_txt_station_number = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_number = Colour("#111945")
+        self.font_txt_station_number = (self.default_font_name, self.default_font_size)
+
+        # to be populated
+        self.tag_lbl_txt_station_name = None
+        self.tag_txt_station_name = None
+        self.tag_lbl_txt_station_number = None
+        self.tag_txt_station_number = None
+        self.bbox_lbl_txt_station_name = None
+        self.bbox_txt_station_name = None
+        self.bbox_lbl_txt_station_number = None
+        self.bbox_txt_station_number = None
+        self.list_tags_txt_content = list()
+        self.list_tags_content = list()
+
+        # begin population
+        self.init_pop_up_contents()
+        self.show_contents()
+        self.hide_contents()
+
+    def init_pop_up_contents(self) -> None:
+        self.tag_lbl_txt_station_name = self.canvas.create_text(
+            -2, -2,
+            text=self.default_lbl_station_name,
+            fill=self.colour_lbl_txt_station_name.hex_code,
+            font=self.font_lbl_txt_station_name
+        )
+        self.tag_txt_station_name = self.canvas.create_text(
+            -1, -1,
+            text="",
+            fill=self.colour_txt_station_name.hex_code,
+            font=self.font_txt_station_name
+        )
+        self.tag_lbl_txt_station_number = self.canvas.create_text(
+            -2, -2,
+            text=self.default_lbl_station_number,
+            fill=self.colour_lbl_txt_station_number.hex_code,
+            font=self.font_lbl_txt_station_number
+        )
+        self.tag_txt_station_number = self.canvas.create_text(
+            -1, -1,
+            text="",
+            fill=self.colour_txt_station_number.hex_code,
+            font=self.font_txt_station_number
+        )
+
+        self.list_tags_txt_content = [
+            self.tag_lbl_txt_station_name,
+            self.tag_txt_station_name,
+            self.tag_lbl_txt_station_number,
+            self.tag_txt_station_number
+        ]
+
+    def show_contents(self) -> None:
+        self.configure_contents({"state": "normal"})
+
+        # update coordinates
+        # bbox_pop_up = self.canvas.bbox(self.pop_up_tag)
+        print(f"show_contents {self.bbox_pop_up.get()=}")
+        bbox_pop_up = self.bbox_pop_up.get()
+        w, h = bbox_pop_up[2] - bbox_pop_up[0], bbox_pop_up[3] - bbox_pop_up[1]
+        mx, my = bbox_pop_up[0] + (w / 2), bbox_pop_up[1] + (h / 2)
+        w_txt_station_name = (w - 20) / 2
+        h_txt_station_name = 20
+        m_top, m_left, m_right, m_bottom = self.m_top, self.m_left, self.m_right, self.m_bottom
+        m_h_text = 5
+
+        # create offset text bboxes based on the current position of the pop-up
+        self.bbox_lbl_txt_station_name = (
+            bbox_pop_up[0] + m_left,
+            bbox_pop_up[1] + m_top,
+            bbox_pop_up[0] + m_left + w_txt_station_name,
+            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (0 * m_h_text)
+        )
+        self.bbox_txt_station_name = (
+            bbox_pop_up[2] - m_right - w_txt_station_name,
+            bbox_pop_up[1] + m_top,
+            bbox_pop_up[2] - m_right,
+            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (0 * m_h_text)
+        )
+        self.bbox_lbl_txt_station_number = (
+            bbox_pop_up[0] + m_left,
+            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (1 * m_h_text),
+            bbox_pop_up[0] + m_left + w_txt_station_name,
+            bbox_pop_up[1] + m_top + (2 * h_txt_station_name) + (1 * m_h_text)
+        )
+        self.bbox_txt_station_number = (
+            bbox_pop_up[2] - m_right - w_txt_station_name,
+            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (1 * m_h_text),
+            bbox_pop_up[2] - m_top,
+            bbox_pop_up[1] + m_top + (2 * h_txt_station_name) + (1 * m_h_text),
+        )
+
+        # center text tags since coords only takes x and y for texts
+        for tag, bbox in zip(
+            (
+                self.tag_lbl_txt_station_name,
+                self.tag_txt_station_name,
+                self.tag_lbl_txt_station_number,
+                self.tag_txt_station_number
+            ),
+            (
+                self.bbox_lbl_txt_station_name,
+                self.bbox_txt_station_name,
+                self.bbox_lbl_txt_station_number,
+                self.bbox_txt_station_number
+            )
+        ):
+            self.canvas.coords(
+                tag,
+                *center_bbox(bbox)
+            )
+
+    def hide_contents(self) -> None:
+        self.configure_contents({"state": "hidden"})
+
+    def configure_contents(self, kwargs: dict, apply_to_contents: bool = True, apply_to_texts: bool = True) -> None:
+        if apply_to_contents:
+            for tag in self.list_tags_content:
+                if tag is not None:
+                    self.canvas.itemconfigure(
+                        tag,
+                        **kwargs
+                    )
+                self.canvas.tag_raise(tag)
+
+        if apply_to_texts:
+            for tag in self.list_tags_txt_content:
+                if tag is not None:
+                    self.canvas.itemconfigure(
+                        tag,
+                        **kwargs
+                    )
+                self.canvas.tag_raise(tag)
+
+    def check_widths(self, lbl_data: tuple[tuple[float, float, float, float], int, str], txt_data: tuple[tuple[float, float, float, float], int, str]):
+        px, py = self.x_y_pop_up_launch.get()
+
+        left_canvas = self.canvas.winfo_rootx()
+        top_canvas = self.canvas.winfo_rooty()
+        px += left_canvas
+        py += top_canvas
+
+        bbox = self.bbox_pop_up.get()
+        bbox_lbl, tag_lbl, text_lbl = lbl_data
+        bbox_txt, tag_txt, text_txt = txt_data
+        # bbox_txt = self.bbox_txt_station_name
+        # bbox_lbl = self.bbox_lbl_txt_station_name
+        # font_txt: tkinter.font = self.canvas.itemcget(self.tag_txt_station_name, "font")
+        # font_lbl: tkinter.font = self.canvas.itemcget(self.tag_lbl_txt_station_name, "font")
+        font_txt: tkinter.font = font.Font(font=self.canvas.itemcget(tag_txt, "font"))
+        font_lbl: tkinter.font = font.Font(font=self.canvas.itemcget(tag_lbl, "font"))
+        # w_txt = font_txt.measure(station_name)
+        # w_lbl = font_lbl.measure(self.canvas.itemcget(self.tag_lbl_txt_station_name, "text"))
+        w_txt = font_txt.measure(text_txt)
+        w_lbl = font_lbl.measure(text_lbl)
+        w_bbox_txt = abs(bbox_txt[2] - bbox_txt[0])
+        w_bbox_lbl = abs(bbox_lbl[2] - bbox_lbl[0])
+        new_width = sum([
+            self.m_left,
+            w_txt,
+            w_lbl,
+            self.m_right
+        ])
+        curr_width = sum([
+            self.m_left,
+            w_bbox_lbl,
+            w_bbox_txt,
+            self.m_right
+        ])
+        print(f"{lbl_data=}")
+        print(f"{txt_data=}")
+        print(f"{self.m_left=}, {w_txt=}, {w_lbl=}, {self.m_right=}, {w_bbox_lbl=}, {w_bbox_txt=}")
+        print(f"{new_width=}, {curr_width=}")
+        print(f"{left_canvas=}, {top_canvas=}")
+        if new_width > curr_width:
+            # need to expand
+            print(f"\tNEED TO EXPAND")
+            self.w_pop_up.set(new_width)
+            nx, ny = clamp(0, px, bbox[2] - self.w_pop_up.get()), clamp(0, py, bbox[3] - self.h_pop_up.get())
+            print(f"Old (x,y)=({px}, {py}), New (x,y)=({nx}, {ny})")
+            self.x_y_pop_up_launch.set((nx, ny))
+            self.bbox_pop_up.set((
+                nx,
+                ny,
+                nx + self.w_pop_up.get(),
+                ny + self.h_pop_up.get()
+            ))
+        # else:
+        #     print(f"WIDTH IS FINE")
+        #     self.w_pop_up.set(self.rv_w_pop_up)
+
+    def set_station_name(self, station_name: str) -> None:
+        station_name = str(station_name)
+        # print(f"POP UP STATION NAME: '{station_name}'")
+        self.canvas.itemconfigure(
+            self.tag_txt_station_name,
+            text=station_name
+        )
+        self.check_widths(
+            (self.bbox_lbl_txt_station_name, self.tag_lbl_txt_station_name, self.canvas.itemcget(self.tag_lbl_txt_station_name, "text")),
+            (self.bbox_txt_station_name, self.tag_txt_station_name, station_name)
+        )
+
+        # bbox_txt = self.bbox_txt_station_name
+        # bbox_lbl = self.bbox_lbl_txt_station_name
+        # font_txt: tkinter.font = self.canvas.itemcget(self.tag_txt_station_name, "font")
+        # font_lbl: tkinter.font = self.canvas.itemcget(self.tag_lbl_txt_station_name, "font")
+        # w_txt = font_txt.measure(station_name)
+        # w_lbl = font_lbl.measure(self.canvas.itemcget(self.tag_lbl_txt_station_name, "text"))
+        # w_bbox_txt = bbox_txt[2] - bbox_txt[0]
+        # w_bbox_lbl = bbox_lbl[2] - bbox_lbl[0]
+        # new_width = sum([
+        #     self.m_left,
+        #     w_txt,
+        #     w_lbl,
+        #     self.m_right
+        # ])
+        # curr_width = sum([
+        #     self.m_left,
+        #     w_bbox_lbl,
+        #     w_bbox_txt,
+        #     self.m_right
+        # ])
+        # if new_width > curr_width:
+        #     # need to expand
+        #     self.w_pop_up.set(new_width)
+        # else:
+        #     self.w_pop_up.set(self.rv_w_pop_up)
+
+    def set_station_number(self, station_number: str) -> None:
+        station_number = str(station_number)
+        print(f"POP UP STATION NUMBER: '{station_number}'")
+        self.canvas.itemconfigure(
+            self.tag_txt_station_number,
+            text=station_number
+        )
+        self.check_widths(
+            (self.bbox_lbl_txt_station_number, self.tag_lbl_txt_station_number, self.canvas.itemcget(self.tag_lbl_txt_station_number, "text")),
+            (self.bbox_txt_station_number, self.tag_txt_station_number, station_number)
+        )
+
+    def set_station(self, station: WorkStation):
+        self.set_station_name(station.name)
+        self.set_station_number(station.number)
+
+
 class App(tkinter.Tk):
 
     def __init__(self):
@@ -32,13 +326,14 @@ class App(tkinter.Tk):
         ########################
         #  Application title   #
         ########################
-        self.tv_title_app_full = tkinter.StringVar(self, value="Demo Tkinter App")
-        self.tv_title_app_short = tkinter.StringVar(self, value="Demo App")
+        self.tv_title_app_full = tkinter.StringVar(self, value="BWS Production Floor Viewer")
+        self.tv_title_app_short = tkinter.StringVar(self, value="Prod Floor Viewer")
         self.title(self.tv_title_app_full.get())
 
         ##############################
         #   Application dimensions   #
         ##############################
+        self.geometry(f"100x100+81+80")
         self.calc_geometry = calc_geometry_tl("zoomed", largest=True, rtype=dict)  # full-screen application
         self.w_p_app, self.h_p_app = 2 / 3, 4 / 9
         # self.calc_geometry = calc_geometry_tl(self.w_p_app, self.h_p_app, largest=True, rtype=dict)  # dimensions above
@@ -53,10 +348,10 @@ class App(tkinter.Tk):
 
         self.time_wait_hover_canvas_map = 1200
         self.rv_showing_pop_up_frames = 10  # Number of total frames to expand the pop-up window
-        self.fps_pop_up = 1 / 32  # Frames per second the pop-up button is rendered. Represents a percentage of a one second.
-        self.width_pop_up = 180
-        self.height_pop_up = 250
-        self.pad_pop_up = 20
+        self.fps_pop_up = 1 / 48  # Seconds per frame the pop-up button is rendered, (1/2 => 0.5s per frame).
+        self.width_pop_up = tkinter.IntVar(self, value=300)
+        self.height_pop_up = tkinter.IntVar(self, value=250)
+        self.pad_pop_up = 40  # Horizontal and Vertical spacing to 'pad' the pop-up bbox. this will allow the user to hover a larger rectangle when trying to navigate to the pop-up from the launch cell
         self.colour_pop_up = Colour("#A0A8FF")
 
         self.json_layout_file = "hawkins_layout_2024_05_29.json"
@@ -76,14 +371,7 @@ class App(tkinter.Tk):
         self.frame_button_bar = tkinter.Frame(self)
         self.frame_ctl_checks = tkinter.Frame(self.frame_button_bar)
 
-        # self.list_tv_ctl_checks, self.list_ctl_checks = checkbox_factory(
-        # 	self.frame_ctl_checks,
-        # 	buttons=[
-        # 		("Show Grid-Lines", self.update_show_grid_lines),
-        # 		("Show Station Markers", self.update_show_station_markers)
-        # 	]
-        # )
-
+        self.text_err_could_not_loap_map = f"Could not load map"
         self.text_checkbox_show_grid_lines = "Show Grid-Lines"
         self.text_checkbox_show_station_markers = "Show Station Markers"
         self.controls_checkboxes = checkbox_factory(
@@ -92,7 +380,7 @@ class App(tkinter.Tk):
                 (self.text_checkbox_show_grid_lines, self.update_show_grid_lines),
                 (self.text_checkbox_show_station_markers, self.update_show_station_markers)
             ],
-			default_values=[True, True],
+            default_values=[True, True],
             rtype=dict
         )
 
@@ -124,7 +412,7 @@ class App(tkinter.Tk):
             self.canvas_map.create_text(
                 self.w_canvas_map / 2,
                 self.h_canvas_map / 2,
-                text=f"Could not load map",
+                text=self.text_err_could_not_loap_map,
                 font=("Arial", 42, "bold"),
                 fill=self.colour_err_no_map_found_label.hex_code
             )
@@ -170,9 +458,16 @@ class App(tkinter.Tk):
                 )
             )
 
-        self.bbox_pop_up = (-100, -50, -100, -50)
+        self.bbox_pop_up = tkinter.Variable(self, value=(
+            (-2 * self.width_pop_up.get()) - self.width_pop_up.get(),
+            (-2 * self.height_pop_up.get()) - self.height_pop_up.get(),
+            -self.width_pop_up.get(),
+            -self.height_pop_up.get()
+        ))
+
+        # (-200, -100, -100, -50))
         self.tag_pop_up = self.canvas_map.create_rectangle(
-            *self.bbox_pop_up,
+            *self.bbox_pop_up.get(),
             fill=self.colour_pop_up.hex_code
         )
 
@@ -185,8 +480,19 @@ class App(tkinter.Tk):
         self.tv_showing_pop_up = tkinter.BooleanVar(self, value=False)
         self.tv_x_y_pop_up_launch = tkinter.Variable(self, value=(None, None))
         self.tv_showing_pop_up_frames = tkinter.IntVar(self, value=self.rv_showing_pop_up_frames)
-        self.bbox_pop_up = tkinter.Variable(self, value=[None] * 4)
+        # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
         self.list_ids_after_expand_showing_pop_up = tkinter.Variable(self, value=list())
+
+        self.puc = PopUpContentManager(
+            self.canvas_map,
+            self.tag_pop_up,
+            self.bbox_pop_up,
+            self.tv_x_y_pop_up_launch,
+            self.width_pop_up,
+            self.height_pop_up,
+            self.width_pop_up.get(),
+            self.height_pop_up.get()
+        )
 
         # self.columnconfigure(0, weight=1)
         self.grid_widgets()
@@ -211,10 +517,16 @@ class App(tkinter.Tk):
 
     # self.columnconfigure(0, weight=1)
 
-    def get_line_idxs(self, ex, ey):
+    def idxs_to_station(self, idx_h: int, idx_v: int) -> WorkStation | None:
+        for i, r_c in enumerate(self.list_idxs_stations):
+            r, c = r_c
+            if (r == idx_h) and (c == idx_v):
+                return self.list_stations[i]
+
+    def get_line_idxs(self, ex: int, ey: int) -> tuple[int, int]:
         return int(ey / (self.height_cell ** 2)), int(ex / (self.width_cell ** 2))
 
-    def get_event_lines(self, event):
+    def get_event_lines(self, event: tkinter.Event) -> tuple[list[int, int], list[int, int]]:
         ex, ey = event.x, event.y
         idx_h, idx_v = self.get_line_idxs(ex, ey)
 
@@ -222,7 +534,7 @@ class App(tkinter.Tk):
         lines_v = self.lines_vertical[idx_v:idx_v + 2]
         return lines_h, lines_v
 
-    def update_show_grid_lines(self, *args):
+    def update_show_grid_lines(self, *args) -> None:
         # print(f"update_show_grid_lines v={self.list_tv_ctl_checks[0].get()}")
         key = self.text_checkbox_show_grid_lines
         val = self.controls_checkboxes[key]['var'].get()
@@ -242,7 +554,7 @@ class App(tkinter.Tk):
                 state=state
             )
 
-    def update_show_station_markers(self, *args):
+    def update_show_station_markers(self, *args) -> None:
         key = self.text_checkbox_show_station_markers
         val = self.controls_checkboxes[key]['var'].get()
         print(f"update_show_station_markers v={val}")
@@ -255,7 +567,7 @@ class App(tkinter.Tk):
                 state=state
             )
 
-    def init_station_squares(self):
+    def init_station_squares(self) -> None:
         for i, station in enumerate(self.list_stations):
             name = station.name
             idx_h = station.row
@@ -285,7 +597,7 @@ class App(tkinter.Tk):
                 )
             )
 
-    def motion_canvas_map(self, event):
+    def motion_canvas_map(self, event: tkinter.Event) -> None:
 
         if self.id_after_hover_canvas_map is not None:
             self.after_cancel(self.id_after_hover_canvas_map)
@@ -353,7 +665,7 @@ class App(tkinter.Tk):
             #	print(f"{ex=}, {ey=}, {idx_h=}, {idx_v=}")
             self.id_after_hover_canvas_map = self.after(self.time_wait_hover_canvas_map, self.show_pop_up)
 
-    def click_canvas_map(self, event):
+    def click_canvas_map(self, event: tkinter.Event) -> None:
         self.n_clicks.set(self.n_clicks.get() + 1)
         ex, ey = event.x, event.y
         idx_h, idx_v = self.get_line_idxs(ex, ey)
@@ -380,7 +692,7 @@ class App(tkinter.Tk):
                 self.tv_showing_pop_up.set(True)
                 self.tv_x_y_pop_up_launch.set((mx, my))
 
-    def update_showing_pop_up(self, *args):
+    def update_showing_pop_up(self, *args) -> None:
         showing = self.tv_showing_pop_up.get()
 
         if showing:
@@ -389,6 +701,7 @@ class App(tkinter.Tk):
             state = "hidden"
             for id_after in self.list_ids_after_expand_showing_pop_up.get():
                 self.after_cancel(id_after)
+            self.puc.hide_contents()
 
         self.canvas_map.itemconfigure(
             self.tag_pop_up,
@@ -401,16 +714,18 @@ class App(tkinter.Tk):
             for i in range(self.tv_showing_pop_up_frames.get()):
                 ms = int(i * 1000 * self.fps_pop_up)
                 print(f"{i=}, {ms=}")
-                list_ids_after_expand_showing_pop_up.append(self.after(ms, self.expand_pop_up))
+                list_ids_after_expand_showing_pop_up.append(
+                    self.after(ms, self.expand_pop_up)
+                )
             self.list_ids_after_expand_showing_pop_up.set(list_ids_after_expand_showing_pop_up)
 
-    def expand_pop_up(self):
+    def expand_pop_up(self) -> None:
         n_frames = self.rv_showing_pop_up_frames - self.tv_showing_pop_up_frames.get()
         p_frames = n_frames / self.rv_showing_pop_up_frames
 
         bbox_canvas_map = self.bbox(self.canvas_map)
         mx, my = self.tv_x_y_pop_up_launch.get()
-        w_pu, h_pu = self.width_pop_up, self.height_pop_up
+        w_pu, h_pu = self.width_pop_up.get(), self.height_pop_up.get()
         w_pu *= p_frames
         h_pu *= p_frames
 
@@ -428,6 +743,20 @@ class App(tkinter.Tk):
             *self.bbox_pop_up.get()
         )
         self.tv_showing_pop_up_frames.set(self.tv_showing_pop_up_frames.get() - 1)
+        if self.tv_showing_pop_up_frames.get() <= 0:
+            self.finished_expanding_pop_up()
+
+    def finished_expanding_pop_up(self) -> None:
+        print(f"finished_expanding_pop_up")
+        puc = self.puc
+        row, col = self.curr_row.get(), self.curr_col.get()
+        station = self.idxs_to_station(row, col)
+        bbox_pop_up = self.bbox_pop_up.get()
+        if station is not None:
+            puc.set_station(station)
+            puc.show_contents()
+        else:
+            puc.hide_contents()
 
 
 if __name__ == '__main__':
