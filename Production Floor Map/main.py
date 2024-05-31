@@ -1,6 +1,7 @@
 import tkinter
 from tkinter import font
 
+from pyodbc_connection import connect
 from tkinter_utility import *
 from PIL import ImageTk, Image
 import json
@@ -29,6 +30,9 @@ class WorkStation:
         self.number = data.get("number", None)
         self.row = data.get("row", None)
         self.col = data.get("col", None)
+        self.uni_point_name = f"STATION{self.number if self.number is not None else '__'}"
+        if self.is_cad_station:
+            self.uni_point_name = f"CAD{self.uni_point_name}"
 
         self.background = data.get("colour_background", Colour("#303078"))
 
@@ -44,7 +48,8 @@ class PopUpContentManager:
             w_pop_up: tkinter.IntVar,
             h_pop_up: tkinter.IntVar,
             rv_w_pop_up: int = 300,
-            rv_h_pop_up: int = 250
+            rv_h_pop_up: int = 250,
+            **kwargs
     ):
         self.canvas = canvas
         self.pop_up_tag = pop_up_tag
@@ -56,23 +61,96 @@ class PopUpContentManager:
         self.rv_h_pop_up = rv_h_pop_up
 
         # default_values
+        self.default_colour_lbl = Colour("#000000")
+        self.default_colour_txt = Colour("#111945")
         self.default_font_name = "Arial"
         self.default_font_size = 14
         self.default_lbl_station_name = "Station:"
         self.default_lbl_station_number = "Number:"
+        self.default_lbl_station_manufacturer = "Manufacturer:"
+        self.default_lbl_station_model_name = "Model Name:"
+        self.default_lbl_station_acquisition_date = "Acquisition Date:"
+        self.default_lbl_station_manager = "Manager:"
+        self.default_lbl_station_division = "Division:"
+        self.default_lbl_station_assigned_to = "Assigned To:"
+        self.default_lbl_station_assigned_dept = "Assigned Dept:"
+        self.default_lbl_station_class = "Class:"
+        self.default_lbl_station_category = "Category:"
+        self.default_lbl_station_current_location = "Current Location:"
+
         self.m_top, self.m_left, self.m_right, self.m_bottom = [10] * 4
 
-        self.colour_lbl_txt_station_name = Colour("#000000")
+        self.colour_lbl_txt_station_name = self.default_colour_lbl
         self.font_lbl_txt_station_name = (self.default_font_name, self.default_font_size)
 
-        self.colour_txt_station_name = Colour("#111945")
+        self.colour_txt_station_name = Colour(kwargs.get("colour_txt_station_name", self.default_colour_txt))
         self.font_txt_station_name = (self.default_font_name, self.default_font_size)
 
-        self.colour_lbl_txt_station_number = Colour("#000000")
+        self.colour_lbl_txt_station_number = Colour(kwargs.get("colour_lbl_txt_station_number", self.default_colour_lbl))
         self.font_lbl_txt_station_number = (self.default_font_name, self.default_font_size)
 
-        self.colour_txt_station_number = Colour("#111945")
+        self.colour_txt_station_number = Colour(kwargs.get("colour_txt_station_number", self.default_colour_txt))
         self.font_txt_station_number = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_manufacturer = Colour(kwargs.get("colour_lbl_txt_station_manufacturer", self.default_colour_lbl))
+        self.font_lbl_txt_station_manufacturer = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_manufacturer = Colour(kwargs.get("colour_txt_station_manufacturer", self.default_colour_txt))
+        self.font_txt_station_manufacturer = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_model_name = Colour(kwargs.get("colour_lbl_txt_station_model_name", self.default_colour_lbl))
+        self.font_lbl_txt_station_model_name = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_model_name = Colour(kwargs.get("colour_txt_station_model_name", self.default_colour_txt))
+        self.font_txt_station_model_name = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_acquisition_date = Colour(kwargs.get("colour_lbl_txt_station_acquisition_date", self.default_colour_lbl))
+        self.font_lbl_txt_station_acquisition_date = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_acquisition_date = Colour(kwargs.get("colour_txt_station_acquisition_date", self.default_colour_txt))
+        self.font_txt_station_acquisition_date = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_manager = Colour(kwargs.get("colour_lbl_txt_station_manager", self.default_colour_lbl))
+        self.font_lbl_txt_station_manager = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_manager = Colour(kwargs.get("colour_txt_station_manager", self.default_colour_txt))
+        self.font_txt_station_manager = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_division = Colour(kwargs.get("colour_lbl_txt_station_division", self.default_colour_lbl))
+        self.font_lbl_txt_station_division = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_division = Colour(kwargs.get("colour_txt_station_division", self.default_colour_txt))
+        self.font_txt_station_division = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_assigned_to = Colour(kwargs.get("colour_lbl_txt_station_assigned_to", self.default_colour_lbl))
+        self.font_lbl_txt_station_assigned_to = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_assigned_to = Colour(kwargs.get("colour_txt_station_assigned_to", self.default_colour_txt))
+        self.font_txt_station_assigned_to = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_assigned_dept = Colour(kwargs.get("colour_lbl_txt_station_assigned_dept", self.default_colour_lbl))
+        self.font_lbl_txt_station_assigned_dept = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_assigned_dept = Colour(kwargs.get("colour_txt_station_assigned_dept", self.default_colour_txt))
+        self.font_txt_station_assigned_dept = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_class = Colour(kwargs.get("colour_lbl_txt_station_class", self.default_colour_lbl))
+        self.font_lbl_txt_station_class = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_class = Colour(kwargs.get("colour_txt_station_class", self.default_colour_txt))
+        self.font_txt_station_class = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_category = Colour(kwargs.get("colour_lbl_txt_station_category", self.default_colour_lbl))
+        self.font_lbl_txt_station_category = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_category = Colour(kwargs.get("colour_txt_station_category", self.default_colour_txt))
+        self.font_txt_station_category = (self.default_font_name, self.default_font_size)
+
+        self.colour_lbl_txt_station_current_location = Colour(kwargs.get("colour_lbl_txt_station_current_location", self.default_colour_lbl))
+        self.font_lbl_txt_station_current_location = (self.default_font_name, self.default_font_size)
+
+        self.colour_txt_station_current_location = Colour(kwargs.get("colour_txt_station_current_location", self.default_colour_txt))
+        self.font_txt_station_current_location = (self.default_font_name, self.default_font_size)
 
         # to be populated
         self.tag_lbl_txt_station_name = None
@@ -83,6 +161,27 @@ class PopUpContentManager:
         self.bbox_txt_station_name = None
         self.bbox_lbl_txt_station_number = None
         self.bbox_txt_station_number = None
+        self.bbox_lbl_txt_station_manufacturer = None
+        self.bbox_txt_station_manufacturer = None
+        self.bbox_lbl_txt_station_model_name = None
+        self.bbox_txt_station_model_name = None
+        self.bbox_lbl_txt_station_acquisition_date = None
+        self.bbox_txt_station_acquisition_date = None
+
+        self.bbox_lbl_txt_station_manager = None
+        self.bbox_txt_station_manager = None
+        self.bbox_lbl_txt_station_division = None
+        self.bbox_txt_station_division = None
+        self.bbox_lbl_txt_station_assigned_to = None
+        self.bbox_txt_station_assigned_to = None
+        self.bbox_lbl_txt_station_assigned_dept = None
+        self.bbox_txt_station_assigned_dept = None
+        self.bbox_lbl_txt_station_class = None
+        self.bbox_txt_station_class = None
+        self.bbox_lbl_txt_station_category = None
+        self.bbox_txt_station_category = None
+        self.bbox_lbl_txt_station_current_location = None
+        self.bbox_txt_station_current_location = None
         self.list_tags_txt_content = list()
         self.list_tags_content = list()
 
@@ -270,10 +369,10 @@ class PopUpContentManager:
             self.tag_txt_station_name,
             text=station_name
         )
-        self.check_widths(
-            (self.bbox_lbl_txt_station_name, self.tag_lbl_txt_station_name, self.canvas.itemcget(self.tag_lbl_txt_station_name, "text")),
-            (self.bbox_txt_station_name, self.tag_txt_station_name, station_name)
-        )
+        # self.check_widths(
+        #     (self.bbox_lbl_txt_station_name, self.tag_lbl_txt_station_name, self.canvas.itemcget(self.tag_lbl_txt_station_name, "text")),
+        #     (self.bbox_txt_station_name, self.tag_txt_station_name, station_name)
+        # )
 
         # bbox_txt = self.bbox_txt_station_name
         # bbox_lbl = self.bbox_lbl_txt_station_name
@@ -308,10 +407,10 @@ class PopUpContentManager:
             self.tag_txt_station_number,
             text=station_number
         )
-        self.check_widths(
-            (self.bbox_lbl_txt_station_number, self.tag_lbl_txt_station_number, self.canvas.itemcget(self.tag_lbl_txt_station_number, "text")),
-            (self.bbox_txt_station_number, self.tag_txt_station_number, station_number)
-        )
+        # self.check_widths(
+        #     (self.bbox_lbl_txt_station_number, self.tag_lbl_txt_station_number, self.canvas.itemcget(self.tag_lbl_txt_station_number, "text")),
+        #     (self.bbox_txt_station_number, self.tag_txt_station_number, station_number)
+        # )
 
     def set_station(self, station: WorkStation):
         self.set_station_name(station.name)
@@ -349,7 +448,7 @@ class App(tkinter.Tk):
         self.time_wait_hover_canvas_map = 1200
         self.rv_showing_pop_up_frames = 10  # Number of total frames to expand the pop-up window
         self.fps_pop_up = 1 / 48  # Seconds per frame the pop-up button is rendered, (1/2 => 0.5s per frame).
-        self.width_pop_up = tkinter.IntVar(self, value=300)
+        self.width_pop_up = tkinter.IntVar(self, value=400)
         self.height_pop_up = tkinter.IntVar(self, value=250)
         self.pad_pop_up = 40  # Horizontal and Vertical spacing to 'pad' the pop-up bbox. this will allow the user to hover a larger rectangle when trying to navigate to the pop-up from the launch cell
         self.colour_pop_up = Colour("#A0A8FF")
@@ -371,9 +470,10 @@ class App(tkinter.Tk):
         self.frame_button_bar = tkinter.Frame(self)
         self.frame_ctl_checks = tkinter.Frame(self.frame_button_bar)
 
+        self.text_err_could_not_unipoint_data = f"Could not load Unipoint Data from Server3."
         self.text_err_could_not_loap_map = f"Could not load map"
-        self.text_checkbox_show_grid_lines = "Show Grid-Lines"
-        self.text_checkbox_show_station_markers = "Show Station Markers"
+        self.text_checkbox_show_grid_lines = f"Show Grid-Lines"
+        self.text_checkbox_show_station_markers = f"Show Station Markers"
         self.controls_checkboxes = checkbox_factory(
             self.frame_ctl_checks,
             buttons=[
@@ -416,6 +516,9 @@ class App(tkinter.Tk):
                 font=("Arial", 42, "bold"),
                 fill=self.colour_err_no_map_found_label.hex_code
             )
+
+        self.df_unipoint_equipment = None
+        self.load_dfs()
 
         self.colour_dot = Colour("#B0FFCF")
         self.width_dot, self.height_dot = 12, 12
@@ -516,6 +619,43 @@ class App(tkinter.Tk):
         self.canvas_map.grid(**{r: 1, c: 0, s: "nsew"})
 
     # self.columnconfigure(0, weight=1)
+
+    def load_dfs(self):
+        sql_unipoint_equipment = {
+            "sql": """
+SELECT 
+    [Equip_num]
+    ,[Equip_Desc]
+    ,[Status]
+    ,[Availability]
+    ,[Acquisition_date]
+    ,[ModelYear]
+    ,[ModelNo]
+    ,[Serial_No]
+    ,[Manufacturer]
+    ,[Manager]
+    ,[Division]
+    ,[Owner]
+    ,[Acquisition]
+    ,[SupplierName]
+    ,[Assigned_to]
+    ,[Assigned_dept]
+    ,[Class]
+    ,[Category]
+    ,[Location]
+    ,[Current_location]
+    ,[Warranty_date]
+    ,[UsageGroup]
+FROM 
+    [uniPoint_Live].[dbo].[v_Tools&Equip]""",
+            "database": "uniPoint_Live",
+            "uid": "SRS",
+            "pwd": ""
+        }
+        self.df_unipoint_equipment = connect(**sql_unipoint_equipment)
+
+        if self.df_unipoint_equipment.empty:
+            raise ValueError(self.text_err_could_not_unipoint_data)
 
     def idxs_to_station(self, idx_h: int, idx_v: int) -> WorkStation | None:
         for i, r_c in enumerate(self.list_idxs_stations):
@@ -754,6 +894,11 @@ class App(tkinter.Tk):
         bbox_pop_up = self.bbox_pop_up.get()
         if station is not None:
             puc.set_station(station)
+            df_station = self.df_unipoint_equipment.loc[self.df_unipoint_equipment["Equip_Desc"] == station.uni_point_name]
+            if not df_station.empty:
+                print(f"{df_station=}")
+            else:
+                print(f"could not find unipoint entry for '{station.uni_point_name}'")
             puc.show_contents()
         else:
             puc.hide_contents()

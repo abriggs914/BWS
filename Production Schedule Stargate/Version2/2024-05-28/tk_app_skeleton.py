@@ -2,12 +2,6 @@ from tkinter_utility import *
 from PIL import ImageTk, Image
 
 
-class WorkStation:
-
-    def __init__(self, name):
-        self.name = name
-
-
 class App(tkinter.Tk):
 
     def __init__(self):

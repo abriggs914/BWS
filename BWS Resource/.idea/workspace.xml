@@ -5,8 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31e54beb-d316-4ebb-a0e2-e142e4c71ec6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-06/datetime_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-06/datetime_utility.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-06/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-06/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/info_frame_canvas_demo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Production Floor Map/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Floor Map/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-28/tk_app_skeleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-28/tk_app_skeleton.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,20 +33,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/ABriggs/Documents/BWS/BWS Resource/Server3 Search Tables By Column Or Value&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/ABriggs/Documents/BWS/BWS Resource/info_frame_canvas_demo.py"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ABriggs\Documents\BWS\BWS Resource\Server3 Search Tables By Column Or Value" />
       <recent name="C:\Users\ABriggs\Documents\BWS\BWS Resource" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.Update Databases">
+  <component name="RunManager" selected="Python.info_frame_canvas_demo">
     <configuration name="Update Databases" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="BWS Resource" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -79,6 +81,28 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/colour_demo.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="info_frame_canvas_demo" type="PythonConfigurationType" factoryName="Python">
+      <module name="BWS Resource" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\ABriggs\AppData\Local\Programs\Python\Python311\python.exe" />
+      <option name="SDK_NAME" value="Python 3.11" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/info_frame_canvas_demo.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -171,6 +195,15 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python.info_frame_canvas_demo" />
+      <item itemvalue="Python.colour_demo" />
+      <item itemvalue="Python.search tables" />
+      <item itemvalue="Python.sql_utility" />
+      <item itemvalue="Python.test_pyodbc_connection_mass_updates" />
+      <item itemvalue="Python.Update Databases" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.Update Databases" />
