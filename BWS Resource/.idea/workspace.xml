@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31e54beb-d316-4ebb-a0e2-e142e4c71ec6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/info_frame_canvas_demo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Floor Map/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Floor Map/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-28/tk_app_skeleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version2/2024-05-28/tk_app_skeleton.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tkinter_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/tkinter_utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +34,7 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/ABriggs/Documents/BWS/BWS Resource/info_frame_canvas_demo.py"
+    "last_opened_file_path": "C:/Users/abrig/Documents/BWS/BWS/BWS Resource"
   }
 }]]></component>
   <component name="RecentsManager">
