@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31e54beb-d316-4ebb-a0e2-e142e4c71ec6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/tkinter_utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/tkinter_utility.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../QuoteHistory/output.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../QuoteHistory/output.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,13 +30,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/abrig/Documents/BWS/BWS/BWS Resource"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/abrig/Documents/BWS/BWS/BWS Resource&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ABriggs\Documents\BWS\BWS Resource\Server3 Search Tables By Column Or Value" />
