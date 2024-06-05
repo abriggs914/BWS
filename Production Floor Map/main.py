@@ -2,6 +2,8 @@ import datetime
 import tkinter
 from tkinter import font
 
+import pandas as pd
+
 from pyodbc_connection import connect
 from tkinter_utility import *
 from PIL import ImageTk, Image
@@ -450,7 +452,9 @@ class App(tkinter.Tk):
         self.rv_showing_pop_up_frames = 10  # Number of total frames to expand the pop-up window
         self.fps_pop_up = 1 / 48  # Seconds per frame the pop-up button is rendered, (1/2 => 0.5s per frame).
         self.width_pop_up = tkinter.IntVar(self, value=400)
-        self.height_pop_up = tkinter.IntVar(self, value=250)
+        self.height_pop_up = tkinter.IntVar(self, value=550)
+        self.width_pop_up_ab_next = tkinter.IntVar(self, value=20)
+        self.height_pop_up_ab_next = tkinter.IntVar(self, value=20)
         self.p_w_info_frame_pop_up = tkinter.DoubleVar(self, value=0.8)
         self.p_h_info_frame_pop_up = tkinter.DoubleVar(self, value=0.8)
         self.pad_pop_up = 40  # Horizontal and Vertical spacing to 'pad' the pop-up bbox. this will allow the user to hover a larger rectangle when trying to navigate to the pop-up from the launch cell
@@ -521,7 +525,7 @@ class App(tkinter.Tk):
             )
 
         self.df_unipoint_equipment = None
-        # self.load_dfs()
+        self.load_dfs()
 
         self.colour_dot = Colour("#B0FFCF")
         self.width_dot, self.height_dot = 12, 12
@@ -601,7 +605,6 @@ class App(tkinter.Tk):
         # )
         self.info_frame_pop_up = InfoFrame(
             self.canvas_map,
-            labels={"Key_A": "Val_A"},
             auto_grid=True,
             key_width=15,
             val_width=20
@@ -612,6 +615,30 @@ class App(tkinter.Tk):
             window=self.info_frame_pop_up,
             width=self.width_pop_up.get() * self.p_w_info_frame_pop_up.get(),
             height=self.height_pop_up.get() * self.p_h_info_frame_pop_up.get()
+        )
+        self.arrow_button_pop_up_prev = ArrowButton(
+            self.canvas_map,
+            mode="left",
+            callback=self.click_pop_up_arrow_btn_prev
+        )
+        self.arrow_button_pop_up_next = ArrowButton(
+            self.canvas_map,
+            mode="right",
+            callback=self.click_pop_up_arrow_btn_next
+        )
+        self.tag_arrow_button_pop_up_next = self.canvas_map.create_window(
+            *self.tv_x_y_pop_up_launch.get(),
+            anchor=tkinter.NW,
+            window=self.arrow_button_pop_up_next,
+            width=self.width_pop_up_ab_next.get(),
+            height=self.height_pop_up_ab_next.get()
+        )
+        self.tag_arrow_button_pop_up_prev = self.canvas_map.create_window(
+            *self.tv_x_y_pop_up_launch.get(),
+            anchor=tkinter.NW,
+            window=self.arrow_button_pop_up_prev,
+            width=self.width_pop_up_ab_next.get(),
+            height=self.height_pop_up_ab_next.get()
         )
 
         # self.columnconfigure(0, weight=1)
@@ -625,7 +652,15 @@ class App(tkinter.Tk):
         self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
         self.canvas_map.bind("<Motion>", self.motion_canvas_map)
         self.canvas_map.bind("<Button-1>", self.click_canvas_map)
-        self.canvas_map.itemconfigure(self.tag_info_frame_pop_up, state="hidden")
+
+        self.list_tags_pop_up_window = (
+            self.tag_info_frame_pop_up,
+            self.tag_arrow_button_pop_up_prev,
+            self.tag_arrow_button_pop_up_next
+        )
+
+        for pop_up_window_tag in self.list_tags_pop_up_window:
+            self.canvas_map.itemconfigure(pop_up_window_tag, state="hidden")
 
     def grid_widgets(self):
         r, c, rs, cs, ix, iy, x, y, s = grid_keys()
@@ -644,27 +679,27 @@ class App(tkinter.Tk):
             "sql": """
 SELECT 
     [Equip_num]
-    ,[Equip_Desc]
-    ,[Status]
-    ,[Availability]
-    ,[Acquisition_date]
-    ,[ModelYear]
-    ,[ModelNo]
-    ,[Serial_No]
-    ,[Manufacturer]
-    ,[Manager]
-    ,[Division]
-    ,[Owner]
-    ,[Acquisition]
-    ,[SupplierName]
-    ,[Assigned_to]
-    ,[Assigned_dept]
-    ,[Class]
-    ,[Category]
     ,[Location]
     ,[Current_location]
+    ,[Class]
+    ,[Category]
+    ,[Equip_Desc]
+    ,[Acquisition_date]
     ,[Warranty_date]
+    ,[Manufacturer]
+    ,[ModelNo]
+    ,[ModelYear]
+    ,[Serial_No]
     ,[UsageGroup]
+    ,[Assigned_dept]
+    ,[Assigned_to]
+    ,[Manager]
+    ,[Division]
+    ,[Acquisition]
+    ,[SupplierName]
+    ,[Owner]
+    ,[Status]
+    ,[Availability]
 FROM 
     [uniPoint_Live].[dbo].[v_Tools&Equip]""",
             "database": "uniPoint_Live",
@@ -672,6 +707,30 @@ FROM
             "pwd": ""
         }
         self.df_unipoint_equipment = connect(**sql_unipoint_equipment)
+        # self.list_info_frame_pop_up_columns = [
+        #     # 'Equip_num',
+        #     'Equip_Desc',
+        #     'Status',
+        #     'Availability',
+        #     'Acquisition_date',
+        #     'Warranty_date',
+        #     'ModelYear',
+        #     'ModelNo',
+        #     'Serial_No',
+        #     'Manufacturer',
+        #     'Manager',
+        #     'Division',
+        #     'Owner',
+        #     'Acquisition',
+        #     'SupplierName',
+        #     'Assigned_to',
+        #     'Assigned_dept',
+        #     'Class',
+        #     'Category',
+        #     'Location',
+        #     'Current_location',
+        #     'UsageGroup'
+        # ]
 
         if self.df_unipoint_equipment.empty:
             raise ValueError(self.text_err_could_not_unipoint_data)
@@ -913,11 +972,17 @@ FROM
     def finished_expanding_pop_up(self) -> None:
         print(f"finished_expanding_pop_up, {self.tv_x_y_pop_up_launch.get()=}")
 
-        self.info_frame_pop_up.change_value("Key_B", f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-        self.canvas_map.itemconfigure(
-            self.tag_info_frame_pop_up,
-            state="normal"
-        )
+        # values = dict(zip(self.))
+        # {
+            # "Key_B": f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}",
+            # "key_C": f"{}"
+
+        # }
+        # self.info_frame_pop_up.change_value(values)
+        # self.info_frame_pop_up.change_value("Key_B", f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
+        for pop_up_window_tag in self.list_tags_pop_up_window:
+            self.canvas_map.itemconfigure(pop_up_window_tag, state="normal")
 
         width = self.width_pop_up.get()
         height = self.height_pop_up.get()
@@ -925,7 +990,8 @@ FROM
         h_info_frame = height * self.p_h_info_frame_pop_up.get()
         h_space = width - w_info_frame
         v_space = height - h_info_frame
-        px, py = self.tv_x_y_pop_up_launch.get()
+        # px, py = self.tv_x_y_pop_up_launch.get()
+        px, py = self.bbox_pop_up.get()[:2]
         x_info_frame = px + (h_space / 4)
         y_info_frame = py + (v_space / 4)
         self.canvas_map.coords(
@@ -933,22 +999,46 @@ FROM
             x_info_frame,
             y_info_frame
         )
+        self.canvas_map.coords(
+            self.tag_arrow_button_pop_up_prev,
+            x_info_frame,
+            y_info_frame - (self.height_pop_up_ab_next.get() + 5)
+        )
+        self.canvas_map.coords(
+            self.tag_arrow_button_pop_up_next,
+            # (px + w_info_frame) - ((h_space / 4) + self.width_pop_up_ab_next.get()),
+            # (px + self.width_pop_up.get()) - ((h_space / 2) + self.width_pop_up_ab_next.get()),
+            (x_info_frame + w_info_frame) - self.width_pop_up_ab_next.get(),
+            y_info_frame - (self.height_pop_up_ab_next.get() + 5)
+        )
 
         # puc = self.puc
-        # row, col = self.curr_row.get(), self.curr_col.get()
-        # station = self.idxs_to_station(row, col)
+        row, col = self.curr_row.get(), self.curr_col.get()
+        station = self.idxs_to_station(row, col)
         # bbox_pop_up = self.bbox_pop_up.get()
-        # if station is not None:
+        print(f"{station=}")
+        if station is not None:
         #     puc.set_station(station)
-        #     if self.df_unipoint_equipment is not None:
-        #         df_station = self.df_unipoint_equipment.loc[self.df_unipoint_equipment["Equip_Desc"] == station.uni_point_name]
-        #         if not df_station.empty:
-        #             print(f"{df_station=}")
-        #         else:
-        #             print(f"could not find unipoint entry for '{station.uni_point_name}'")
+            if self.df_unipoint_equipment is not None:
+                print(f"self.df_unipoint_equipment is not None")
+                df_station = self.df_unipoint_equipment.loc[self.df_unipoint_equipment["Equip_Desc"] == station.uni_point_name]
+                if not df_station.empty:
+                    print(f"{df_station=}")
+                    print(f"{df_station.shape[0]} row(s)")
+                    for i, data in df_station.iterrows():
+                        self.info_frame_pop_up.change_value(data)
+
+                else:
+                    print(f"could not find unipoint entry for '{station.uni_point_name}'")
         #     puc.show_contents()
         # else:
         #     puc.hide_contents()
+
+    def click_pop_up_arrow_btn_prev(self, event):
+        print(f"click_pop_up_arrow_btn_prev {event=}")
+
+    def click_pop_up_arrow_btn_next(self, event):
+        print(f"click_pop_up_arrow_btn_next {event=}")
 
 
 if __name__ == '__main__':
