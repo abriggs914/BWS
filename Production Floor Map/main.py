@@ -1,3 +1,4 @@
+import datetime
 import tkinter
 from tkinter import font
 
@@ -450,6 +451,8 @@ class App(tkinter.Tk):
         self.fps_pop_up = 1 / 48  # Seconds per frame the pop-up button is rendered, (1/2 => 0.5s per frame).
         self.width_pop_up = tkinter.IntVar(self, value=400)
         self.height_pop_up = tkinter.IntVar(self, value=250)
+        self.p_w_info_frame_pop_up = tkinter.DoubleVar(self, value=0.8)
+        self.p_h_info_frame_pop_up = tkinter.DoubleVar(self, value=0.8)
         self.pad_pop_up = 40  # Horizontal and Vertical spacing to 'pad' the pop-up bbox. this will allow the user to hover a larger rectangle when trying to navigate to the pop-up from the launch cell
         self.colour_pop_up = Colour("#A0A8FF")
 
@@ -518,7 +521,7 @@ class App(tkinter.Tk):
             )
 
         self.df_unipoint_equipment = None
-        self.load_dfs()
+        # self.load_dfs()
 
         self.colour_dot = Colour("#B0FFCF")
         self.width_dot, self.height_dot = 12, 12
@@ -581,20 +584,34 @@ class App(tkinter.Tk):
         self.curr_col = tkinter.IntVar(self, value=-1)
         self.curr_row = tkinter.IntVar(self, value=-1)
         self.tv_showing_pop_up = tkinter.BooleanVar(self, value=False)
-        self.tv_x_y_pop_up_launch = tkinter.Variable(self, value=(None, None))
+        self.tv_x_y_pop_up_launch = tkinter.Variable(self, value=(-1, -1))
         self.tv_showing_pop_up_frames = tkinter.IntVar(self, value=self.rv_showing_pop_up_frames)
         # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
         self.list_ids_after_expand_showing_pop_up = tkinter.Variable(self, value=list())
 
-        self.puc = PopUpContentManager(
+        # self.puc = PopUpContentManager(
+        #     self.canvas_map,
+        #     self.tag_pop_up,
+        #     self.bbox_pop_up,
+        #     self.tv_x_y_pop_up_launch,
+        #     self.width_pop_up,
+        #     self.height_pop_up,
+        #     self.width_pop_up.get(),
+        #     self.height_pop_up.get()
+        # )
+        self.info_frame_pop_up = InfoFrame(
             self.canvas_map,
-            self.tag_pop_up,
-            self.bbox_pop_up,
-            self.tv_x_y_pop_up_launch,
-            self.width_pop_up,
-            self.height_pop_up,
-            self.width_pop_up.get(),
-            self.height_pop_up.get()
+            labels={"Key_A": "Val_A"},
+            auto_grid=True,
+            key_width=15,
+            val_width=20
+        )
+        self.tag_info_frame_pop_up = self.canvas_map.create_window(
+            *self.tv_x_y_pop_up_launch.get(),
+            anchor=tkinter.NW,
+            window=self.info_frame_pop_up,
+            width=self.width_pop_up.get() * self.p_w_info_frame_pop_up.get(),
+            height=self.height_pop_up.get() * self.p_h_info_frame_pop_up.get()
         )
 
         # self.columnconfigure(0, weight=1)
@@ -604,9 +621,11 @@ class App(tkinter.Tk):
         self.n_clicks = tkinter.IntVar(self, value=0)
         self.canvas_map.tag_raise(self.tag_pop_up)
         self.canvas_map.tag_raise(self.tag_dot)
+        # self.canvas_map.tag_raise(self.tag_info_frame_pop_up)
         self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
         self.canvas_map.bind("<Motion>", self.motion_canvas_map)
         self.canvas_map.bind("<Button-1>", self.click_canvas_map)
+        self.canvas_map.itemconfigure(self.tag_info_frame_pop_up, state="hidden")
 
     def grid_widgets(self):
         r, c, rs, cs, ix, iy, x, y, s = grid_keys()
@@ -841,7 +860,12 @@ FROM
             state = "hidden"
             for id_after in self.list_ids_after_expand_showing_pop_up.get():
                 self.after_cancel(id_after)
-            self.puc.hide_contents()
+            # self.puc.hide_contents()
+
+            self.canvas_map.itemconfigure(
+                self.tag_info_frame_pop_up,
+                state=state
+            )
 
         self.canvas_map.itemconfigure(
             self.tag_pop_up,
@@ -853,7 +877,7 @@ FROM
             list_ids_after_expand_showing_pop_up = list()
             for i in range(self.tv_showing_pop_up_frames.get()):
                 ms = int(i * 1000 * self.fps_pop_up)
-                print(f"{i=}, {ms=}")
+                # print(f"{i=}, {ms=}")
                 list_ids_after_expand_showing_pop_up.append(
                     self.after(ms, self.expand_pop_up)
                 )
@@ -877,7 +901,7 @@ FROM
             min(mx + w_pu, bbox_canvas_map[2]),
             min(my + h_pu, bbox_canvas_map[3])
         ))
-        print(f"{w_pu=}, {h_pu=}, {self.bbox_pop_up.get()=}")
+        # print(f"{w_pu=}, {h_pu=}, {self.bbox_pop_up.get()=}")
         self.canvas_map.coords(
             self.tag_pop_up,
             *self.bbox_pop_up.get()
@@ -887,21 +911,44 @@ FROM
             self.finished_expanding_pop_up()
 
     def finished_expanding_pop_up(self) -> None:
-        print(f"finished_expanding_pop_up")
-        puc = self.puc
-        row, col = self.curr_row.get(), self.curr_col.get()
-        station = self.idxs_to_station(row, col)
-        bbox_pop_up = self.bbox_pop_up.get()
-        if station is not None:
-            puc.set_station(station)
-            df_station = self.df_unipoint_equipment.loc[self.df_unipoint_equipment["Equip_Desc"] == station.uni_point_name]
-            if not df_station.empty:
-                print(f"{df_station=}")
-            else:
-                print(f"could not find unipoint entry for '{station.uni_point_name}'")
-            puc.show_contents()
-        else:
-            puc.hide_contents()
+        print(f"finished_expanding_pop_up, {self.tv_x_y_pop_up_launch.get()=}")
+
+        self.info_frame_pop_up.change_value("Key_B", f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+        self.canvas_map.itemconfigure(
+            self.tag_info_frame_pop_up,
+            state="normal"
+        )
+
+        width = self.width_pop_up.get()
+        height = self.height_pop_up.get()
+        w_info_frame = width * self.p_w_info_frame_pop_up.get()
+        h_info_frame = height * self.p_h_info_frame_pop_up.get()
+        h_space = width - w_info_frame
+        v_space = height - h_info_frame
+        px, py = self.tv_x_y_pop_up_launch.get()
+        x_info_frame = px + (h_space / 4)
+        y_info_frame = py + (v_space / 4)
+        self.canvas_map.coords(
+            self.tag_info_frame_pop_up,
+            x_info_frame,
+            y_info_frame
+        )
+
+        # puc = self.puc
+        # row, col = self.curr_row.get(), self.curr_col.get()
+        # station = self.idxs_to_station(row, col)
+        # bbox_pop_up = self.bbox_pop_up.get()
+        # if station is not None:
+        #     puc.set_station(station)
+        #     if self.df_unipoint_equipment is not None:
+        #         df_station = self.df_unipoint_equipment.loc[self.df_unipoint_equipment["Equip_Desc"] == station.uni_point_name]
+        #         if not df_station.empty:
+        #             print(f"{df_station=}")
+        #         else:
+        #             print(f"could not find unipoint entry for '{station.uni_point_name}'")
+        #     puc.show_contents()
+        # else:
+        #     puc.hide_contents()
 
 
 if __name__ == '__main__':
