@@ -1228,6 +1228,23 @@ class App(tkinter.Tk):
             # self.listbox_history.insert(tkinter.END, str(new_item))
             new_code, *new_items = new_item
             date_2, line_2, order_2 = [None] * 3
+
+
+            # TODO investigate here
+            # Exception in Tkinter callback
+            # Traceback (most recent call last):
+            #   File "C:\Users\ABriggs\AppData\Local\Programs\Python\Python311\Lib\tkinter\__init__.py", line 1948, in __call__
+            #     return self.func(*args)
+            #            ^^^^^^^^^^^^^^^^
+            #   File "C:\Users\ABriggs\Documents\BWS\Production Schedule Stargate\Version2\2024-05-28\main.py", line 1232, in tv_update_history
+            #     date_1 = pd.Timestamp(date_1)
+            #              ^^^^^^^^^^^^^^^^^^^^
+            #   File "pandas\_libs\tslibs\timestamps.pyx", line 1667, in pandas._libs.tslibs.timestamps.Timestamp.__new__
+            #   File "pandas\_libs\tslibs\conversion.pyx", line 280, in pandas._libs.tslibs.conversion.convert_to_tsobject
+            #   File "pandas\_libs\tslibs\conversion.pyx", line 557, in pandas._libs.tslibs.conversion.convert_str_to_tsobject
+            #   File "pandas\_libs\tslibs\parsing.pyx", line 307, in pandas._libs.tslibs.parsing.parse_datetime_string
+            # ValueError: Given date string "4" not likely a datetime
+
             date_1, line_1 = new_items[0]
             date_1 = pd.Timestamp(date_1)
             # date_2 = pd.Timestamp(date_2)

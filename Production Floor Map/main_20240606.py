@@ -567,28 +567,19 @@ class App(tkinter.Tk):
         )
         self.tv_combo_map_sel.trace_variable("w", self.update_tv_combo_map_sel)
 
-        self.json_layout_file = None
-        self.map_file = None
-        self.width_cell = None
-        self.height_cell = None
-        self.list_stations = list()
-        self.list_printers = list()
-        self.list_idxs_stations = list()
-        self.list_idxs_printers = list()
+        self.json_layout_file = "hawkins_layout_2024_05_29.json"
+        self.json_layout_file = "hawkins_office_layout_2024_06_06.json"
+        with open(self.json_layout_file, "r") as f:
+            json_data = json.load(f)
+            # self.map_file = "\\\\bwsfp01\\public\\IT\\Resource\\Images\\production_floor_map_2024_05_29_marked.jpg"
+            self.map_file = json_data["work_stations"]["settings"]["map_file"]
+            self.width_cell = json_data["work_stations"]["settings"]["width_cell"]
+            self.height_cell = json_data["work_stations"]["settings"]["height_cell"]
+            self.list_stations = [WorkStation(data) for data in json_data["work_stations"].get("stations", [])]
+            self.list_printers = [WorkPrinter(data) for data in json_data["work_stations"].get("printers", [])]
 
-        # self.json_layout_file = "hawkins_layout_2024_05_29.json"
-        # self.json_layout_file = "hawkins_office_layout_2024_06_06.json"
-        # with open(self.json_layout_file, "r") as f:
-        #     json_data = json.load(f)
-        #     # self.map_file = "\\\\bwsfp01\\public\\IT\\Resource\\Images\\production_floor_map_2024_05_29_marked.jpg"
-        #     self.map_file = json_data["work_stations"]["settings"]["map_file"]
-        #     self.width_cell = json_data["work_stations"]["settings"]["width_cell"]
-        #     self.height_cell = json_data["work_stations"]["settings"]["height_cell"]
-        #     self.list_stations = [WorkStation(data) for data in json_data["work_stations"].get("stations", [])]
-        #     self.list_printers = [WorkPrinter(data) for data in json_data["work_stations"].get("printers", [])]
-        #
-        # self.list_idxs_stations = [(s.row, s.col) for s in self.list_stations]
-        # self.list_idxs_printers = [(p.row, p.col) for p in self.list_printers]
+        self.list_idxs_stations = [(s.row, s.col) for s in self.list_stations]
+        self.list_idxs_printers = [(p.row, p.col) for p in self.list_printers]
 
         #############################
         #   Begin widget creation   #
@@ -618,32 +609,30 @@ class App(tkinter.Tk):
 
         self.colour_err_no_map_found_label = Colour("#CD6951")
 
-        self.img_prod_floor_hawkins_map = None
-        self.photo_prod_floor_hawkins_map = None
-        # try:
-        #     self.img_prod_floor_hawkins_map = Image.open(self.map_file)
-        #     self.img_prod_floor_hawkins_map = self.img_prod_floor_hawkins_map.resize(
-        #         (
-        #             int(self.w_canvas_map),
-        #             int(self.h_canvas_map)
-        #         ),
-        #         Image.LANCZOS
-        #     )
-        #     self.photo_prod_floor_hawkins_map = ImageTk.PhotoImage(self.img_prod_floor_hawkins_map)
-        #     self.canvas_map.create_image(
-        #         0,
-        #         0,
-        #         anchor=tkinter.NW,
-        #         image=self.photo_prod_floor_hawkins_map
-        #     )
-        # except OSError:
-        #     self.canvas_map.create_text(
-        #         self.w_canvas_map / 2,
-        #         self.h_canvas_map / 2,
-        #         text=self.text_err_could_not_loap_map,
-        #         font=("Arial", 42, "bold"),
-        #         fill=self.colour_err_no_map_found_label.hex_code
-        #     )
+        try:
+            self.img_prod_floor_hawkins_map = Image.open(self.map_file)
+            self.img_prod_floor_hawkins_map = self.img_prod_floor_hawkins_map.resize(
+                (
+                    int(self.w_canvas_map),
+                    int(self.h_canvas_map)
+                ),
+                Image.LANCZOS
+            )
+            self.photo_prod_floor_hawkins_map = ImageTk.PhotoImage(self.img_prod_floor_hawkins_map)
+            self.canvas_map.create_image(
+                0,
+                0,
+                anchor=tkinter.NW,
+                image=self.photo_prod_floor_hawkins_map
+            )
+        except OSError:
+            self.canvas_map.create_text(
+                self.w_canvas_map / 2,
+                self.h_canvas_map / 2,
+                text=self.text_err_could_not_loap_map,
+                font=("Arial", 42, "bold"),
+                fill=self.colour_err_no_map_found_label.hex_code
+            )
 
         self.df_unipoint_equipment = None
         self.load_dfs()
@@ -664,30 +653,30 @@ class App(tkinter.Tk):
         self.colour_line_horizontal = Colour("#323296")
 
         self.lines_vertical = list()
-        # for i in range(0, int(self.w_canvas_map), self.width_cell):
-        #     self.lines_vertical.append(
-        #         self.canvas_map.create_line(
-        #             0 + (i * self.width_cell),
-        #             0,
-        #             0 + (i * self.width_cell),
-        #             self.h_canvas_map,
-        #             fill=self.colour_line_vertical.hex_code,
-        #             width=self.width_line_vertical
-        #         )
-        #     )
+        for i in range(0, int(self.w_canvas_map), self.width_cell):
+            self.lines_vertical.append(
+                self.canvas_map.create_line(
+                    0 + (i * self.width_cell),
+                    0,
+                    0 + (i * self.width_cell),
+                    self.h_canvas_map,
+                    fill=self.colour_line_vertical.hex_code,
+                    width=self.width_line_vertical
+                )
+            )
 
         self.lines_horizontal = list()
-        # for i in range(0, int(self.h_canvas_map), self.height_cell):
-        #     self.lines_horizontal.append(
-        #         self.canvas_map.create_line(
-        #             0,
-        #             0 + (i * self.height_cell),
-        #             self.w_canvas_map,
-        #             0 + (i * self.height_cell),
-        #             fill=self.colour_line_horizontal.hex_code,
-        #             width=self.width_line_horizontal
-        #         )
-        #     )
+        for i in range(0, int(self.h_canvas_map), self.height_cell):
+            self.lines_horizontal.append(
+                self.canvas_map.create_line(
+                    0,
+                    0 + (i * self.height_cell),
+                    self.w_canvas_map,
+                    0 + (i * self.height_cell),
+                    fill=self.colour_line_horizontal.hex_code,
+                    width=self.width_line_horizontal
+                )
+            )
 
         self.bbox_pop_up = tkinter.Variable(self, value=(
             (-2 * self.width_pop_up.get()) - self.width_pop_up.get(),
@@ -1192,8 +1181,6 @@ FROM
 
                 else:
                     print(f"could not find unipoint entry for '{station.uni_point_name}'")
-                    self.info_frame_pop_up.change_value({k: "" for k in self.info_frame_pop_up.info_labels})
-
         #     puc.show_contents()
         # else:
         #     puc.hide_contents()
@@ -1207,221 +1194,6 @@ FROM
     def update_tv_combo_map_sel(self, *args):
         sel_map = self.tv_combo_map_sel.get()
         print(f"{sel_map=}")
-        self.json_layout_file = sel_map
-
-        with open(self.json_layout_file, "r") as f:
-            json_data = json.load(f)
-            # self.map_file = "\\\\bwsfp01\\public\\IT\\Resource\\Images\\production_floor_map_2024_05_29_marked.jpg"
-            self.map_file = json_data["work_stations"]["settings"]["map_file"]
-            self.width_cell = json_data["work_stations"]["settings"]["width_cell"]
-            self.height_cell = json_data["work_stations"]["settings"]["height_cell"]
-            self.list_stations = [WorkStation(data) for data in json_data["work_stations"].get("stations", [])]
-            self.list_printers = [WorkPrinter(data) for data in json_data["work_stations"].get("printers", [])]
-
-        self.list_idxs_stations = [(s.row, s.col) for s in self.list_stations]
-        self.list_idxs_printers = [(p.row, p.col) for p in self.list_printers]
-
-        # #############################
-        # #   Begin widget creation   #
-        # #############################
-        # self.frame_button_bar = tkinter.Frame(self)
-        # self.frame_ctl_checks = tkinter.Frame(self.frame_button_bar)
-        #
-        # self.text_err_could_not_unipoint_data = f"Could not load Unipoint Data from Server3."
-        # self.text_err_could_not_loap_map = f"Could not load map"
-        # self.text_checkbox_show_grid_lines = f"Show Grid-Lines"
-        # self.text_checkbox_show_station_markers = f"Show Station Markers"
-        # self.controls_checkboxes = checkbox_factory(
-        #     self.frame_ctl_checks,
-        #     buttons=[
-        #         (self.text_checkbox_show_grid_lines, self.update_show_grid_lines),
-        #         (self.text_checkbox_show_station_markers, self.update_show_station_markers)
-        #     ],
-        #     default_values=[True, True],
-        #     rtype=dict
-        # )
-        #
-        # self.canvas_map = tkinter.Canvas(
-        #     self,
-        #     width=self.w_canvas_map,
-        #     height=self.h_canvas_map
-        # )
-        #
-        # self.colour_err_no_map_found_label = Colour("#CD6951")
-
-        try:
-            self.img_prod_floor_hawkins_map = Image.open(self.map_file)
-            self.img_prod_floor_hawkins_map = self.img_prod_floor_hawkins_map.resize(
-                (
-                    int(self.w_canvas_map),
-                    int(self.h_canvas_map)
-                ),
-                Image.LANCZOS
-            )
-            self.photo_prod_floor_hawkins_map = ImageTk.PhotoImage(self.img_prod_floor_hawkins_map)
-            self.canvas_map.create_image(
-                0,
-                0,
-                anchor=tkinter.NW,
-                image=self.photo_prod_floor_hawkins_map
-            )
-        except OSError:
-            self.canvas_map.create_text(
-                self.w_canvas_map / 2,
-                self.h_canvas_map / 2,
-                text=self.text_err_could_not_loap_map,
-                font=("Arial", 42, "bold"),
-                fill=self.colour_err_no_map_found_label.hex_code
-            )
-
-        # self.df_unipoint_equipment = None
-        # self.load_dfs()
-        #
-        # self.colour_dot = Colour("#B0FFCF")
-        # self.width_dot, self.height_dot = 12, 12
-        # self.tag_dot = self.canvas_map.create_oval(
-        #     (-2 * self.width_dot) - (self.width_dot / 2),
-        #     (-2 * self.height_dot) - (self.height_dot / 2),
-        #     (-2 * self.width_dot) + (self.width_dot / 2),
-        #     (-2 * self.height_dot) + (self.height_dot / 2),
-        #     fill=self.colour_dot.hex_code
-        # )
-        #
-        # self.width_line_vertical = 2
-        # self.colour_line_vertical = Colour("#963232")
-        # self.width_line_horizontal = 2
-        # self.colour_line_horizontal = Colour("#323296")
-
-        for line in self.lines_vertical:
-            self.canvas_map.delete(line)
-        self.lines_vertical.clear()
-        for i in range(0, int(self.w_canvas_map), self.width_cell):
-            self.lines_vertical.append(
-                self.canvas_map.create_line(
-                    0 + (i * self.width_cell),
-                    0,
-                    0 + (i * self.width_cell),
-                    self.h_canvas_map,
-                    fill=self.colour_line_vertical.hex_code,
-                    width=self.width_line_vertical
-                )
-            )
-
-        for line in self.lines_horizontal:
-            self.canvas_map.delete(line)
-        self.lines_horizontal.clear()
-        for i in range(0, int(self.h_canvas_map), self.height_cell):
-            self.lines_horizontal.append(
-                self.canvas_map.create_line(
-                    0,
-                    0 + (i * self.height_cell),
-                    self.w_canvas_map,
-                    0 + (i * self.height_cell),
-                    fill=self.colour_line_horizontal.hex_code,
-                    width=self.width_line_horizontal
-                )
-            )
-
-        # self.bbox_pop_up = tkinter.Variable(self, value=(
-        #     (-2 * self.width_pop_up.get()) - self.width_pop_up.get(),
-        #     (-2 * self.height_pop_up.get()) - self.height_pop_up.get(),
-        #     -self.width_pop_up.get(),
-        #     -self.height_pop_up.get()
-        # ))
-        #
-        # # (-200, -100, -100, -50))
-        # self.tag_pop_up = self.canvas_map.create_rectangle(
-        #     *self.bbox_pop_up.get(),
-        #     fill=self.colour_pop_up.hex_code
-        # )
-
-        for line in self.list_station_rects:
-            self.canvas_map.delete(line)
-        self.list_station_rects.clear()
-        for line in self.list_printer_rects:
-            self.canvas_map.delete(line)
-        self.list_printer_rects.clear()
-
-        self.init_station_squares()
-        self.init_printer_squares()
-
-        self.n_cols, self.n_rows = len(self.lines_vertical) + 1, len(self.lines_vertical) + 1
-        self.curr_col.set(-1)
-        self.curr_row.set(-1)
-        self.tv_showing_pop_up.set(False)
-        self.tv_x_y_pop_up_launch.set((-1, -1))
-        self.tv_showing_pop_up_frames.set(self.rv_showing_pop_up_frames)
-        # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
-        self.list_ids_after_expand_showing_pop_up.set(list())
-
-        # self.puc = PopUpContentManager(
-        #     self.canvas_map,
-        #     self.tag_pop_up,
-        #     self.bbox_pop_up,
-        #     self.tv_x_y_pop_up_launch,
-        #     self.width_pop_up,
-        #     self.height_pop_up,
-        #     self.width_pop_up.get(),
-        #     self.height_pop_up.get()
-        # )
-        # self.info_frame_pop_up = InfoFrame(
-        #     self.canvas_map,
-        #     auto_grid=True,
-        #     key_width=15,
-        #     val_width=20
-        # )
-        # self.tag_info_frame_pop_up = self.canvas_map.create_window(
-        #     *self.tv_x_y_pop_up_launch.get(),
-        #     anchor=tkinter.NW,
-        #     window=self.info_frame_pop_up,
-        #     width=self.width_pop_up.get() * self.p_w_info_frame_pop_up.get(),
-        #     height=self.height_pop_up.get() * self.p_h_info_frame_pop_up.get()
-        # )
-        # self.arrow_button_pop_up_prev = ArrowButton(
-        #     self.canvas_map,
-        #     mode="left",
-        #     callback=self.click_pop_up_arrow_btn_prev
-        # )
-        # self.arrow_button_pop_up_next = ArrowButton(
-        #     self.canvas_map,
-        #     mode="right",
-        #     callback=self.click_pop_up_arrow_btn_next
-        # )
-        # self.tag_arrow_button_pop_up_next = self.canvas_map.create_window(
-        #     *self.tv_x_y_pop_up_launch.get(),
-        #     anchor=tkinter.NW,
-        #     window=self.arrow_button_pop_up_next,
-        #     width=self.width_pop_up_ab_next.get(),
-        #     height=self.height_pop_up_ab_next.get()
-        # )
-        # self.tag_arrow_button_pop_up_prev = self.canvas_map.create_window(
-        #     *self.tv_x_y_pop_up_launch.get(),
-        #     anchor=tkinter.NW,
-        #     window=self.arrow_button_pop_up_prev,
-        #     width=self.width_pop_up_ab_next.get(),
-        #     height=self.height_pop_up_ab_next.get()
-        # )
-        #
-        # # self.columnconfigure(0, weight=1)
-        # self.grid_widgets()
-
-        self.id_after_hover_canvas_map = None
-        self.n_clicks.set(0)
-        self.canvas_map.tag_raise(self.tag_pop_up)
-        self.canvas_map.tag_raise(self.tag_dot)
-        # # self.canvas_map.tag_raise(self.tag_info_frame_pop_up)
-        # self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
-        # self.canvas_map.bind("<Motion>", self.motion_canvas_map)
-        # self.canvas_map.bind("<Button-1>", self.click_canvas_map)
-        #
-        # self.list_tags_pop_up_window = (
-        #     self.tag_info_frame_pop_up,
-        #     self.tag_arrow_button_pop_up_prev,
-        #     self.tag_arrow_button_pop_up_next
-        # )
-
-        for pop_up_window_tag in self.list_tags_pop_up_window:
-            self.canvas_map.itemconfigure(pop_up_window_tag, state="hidden")
 
 
 if __name__ == '__main__':

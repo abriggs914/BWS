@@ -1,0 +1,262 @@
+{
+	"work_stations": {
+		"settings": {
+			"width_cell": 6,
+			"height_cell": 6,
+			"map_file": "\\\\bwsfp01\\public\\IT\\Network Port Layout\\Images\\hawkins_office_layout_2024_06_06_marked.jpg"
+		},
+		"stations": [
+			{
+				"name": "Jamie Merrithew's Office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 4,
+				"col": 31
+			},
+			{
+				"name": "Barry Blaney's Office",
+				"is_cad_station": true,
+				"number": null,
+				"row": 3,
+				"col": 35
+			},
+			{
+				"name": "Llyod Orser's old station",
+				"is_cad_station": true,
+				"number": null,
+				"row": 3,
+				"col": 38
+			},
+			{
+				"name": "Jamie Merrithew's old office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 3,
+				"col": 29
+			},
+			{
+				"name": "Jennifer Skaarup's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 3,
+				"col": 26
+			},
+			{
+				"name": "Theresa Merrithew's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 3,
+				"col": 24
+			},
+			{
+				"name": "Lori Piper's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 3,
+				"col": 20
+			},
+			{
+				"name": "Glen Findlater's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 4,
+				"col": 18
+			},
+			{
+				"name": "Spare Sales office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 2,
+				"col": 14
+			},
+			{
+				"name": "Shelley Holmes's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 3,
+				"col": 11
+			},
+			{
+				"name": "Conference Room computer",
+				"is_cad_station": false,
+				"number": null,
+				"row": 11,
+				"col": 8
+			},
+			{
+				"name": "Charlie Guest's office",
+				"is_cad_station": false,
+				"number": null,
+				"row": 15,
+				"col": 13
+			},
+			{
+				"name": "Jason Morgan's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 9,
+				"col": 15
+			},
+			{
+				"name": "Gary Thomas's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 13,
+				"col": 15
+			},
+			{
+				"name": "Ashlie Brown's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 9,
+				"col": 19
+			},
+			{
+				"name": "Janet Orser's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 13,
+				"col": 19
+			},
+			{
+				"name": "Jason Morgan's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 13,
+				"col": 21
+			},
+			{
+				"name": "Rhonda Demerchant's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 14,
+				"col": 24
+			},
+			{
+				"name": "Sarah Lord's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 13,
+				"col": 27
+			},
+			{
+				"name": "Aaron Faulkner's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 13,
+				"col": 28
+			},
+			{
+				"name": "Stephen Boyd's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 9,
+				"col": 30
+			},
+			{
+				"name": "Cameron Farrell's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 14,
+				"col": 30
+			},
+			{
+				"name": "Francis Campbell's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 9,
+				"col": 33
+			},
+			{
+				"name": "Llyod Orser's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 15,
+				"col": 33
+			},
+			{
+				"name": "Jack Johnson's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 11,
+				"col": 35
+			},
+			{
+				"name": "Ian Rasmussen's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 15,
+				"col": 35
+			},
+			{
+				"name": "Yassin Nasser's station",
+				"is_cad_station": false,
+				"number": null,
+				"row": 9,
+				"col": 37
+			}
+		],
+		"printers": [
+			{
+				"name": "Engineering printer",
+				"number": null,
+				"row": 11,
+				"col": 31
+			},
+			{
+				"name": "Barry Blaney's printer",
+				"number": null,
+				"row": 2,
+				"col": 36
+			},
+			{
+				"name": "Sarah Lord's printer",
+				"number": null,
+				"row": 15,
+				"col": 27
+			},
+			{
+				"name": "Administration printer",
+				"number": null,
+				"row": 9,
+				"col": 23
+			},
+			{
+				"name": "Jason Morgan's printer",
+				"number": null,
+				"row": 12,
+				"col": 16
+			},
+			{
+				"name": "Sales NVIS printer",
+				"number": null,
+				"row": 13,
+				"col": 16
+			},
+			{
+				"name": "Charlie Guest's printer",
+				"number": null,
+				"row": 16,
+				"col": 13
+			},
+			{
+				"name": "Shelley Holmes's printer",
+				"number": null,
+				"row": 2,
+				"col": 12
+			},
+			{
+				"name": "Theresa Merrithew's printer",
+				"number": null,
+				"row": 2,
+				"col": 35
+			},
+			{
+				"name": "Jennifer Skaarup's printer",
+				"number": null,
+				"row": 3,
+				"col": 28
+			}
+		]
+	}
+}
