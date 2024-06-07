@@ -1,4 +1,5 @@
 import datetime
+import enum
 import tkinter
 from tkinter import font
 
@@ -134,384 +135,12 @@ class WorkPrinter(Hardware):
     is_printer = property(get_is_printer, set_is_printer, del_is_printer)
 
 
-class PopUpContentManager:
+class State(enum.Enum):
 
-    def __init__(
-            self,
-            canvas: tkinter.Canvas,
-            pop_up_tag: int,
-            bbox_pop_up: tkinter.Variable,
-            x_y_pop_up_launch: tkinter.Variable,
-            w_pop_up: tkinter.IntVar,
-            h_pop_up: tkinter.IntVar,
-            rv_w_pop_up: int = 300,
-            rv_h_pop_up: int = 250,
-            **kwargs
-    ):
-        self.canvas = canvas
-        self.pop_up_tag = pop_up_tag
-        self.bbox_pop_up = bbox_pop_up
-        self.x_y_pop_up_launch = x_y_pop_up_launch
-        self.w_pop_up = w_pop_up
-        self.h_pop_up = h_pop_up
-        self.rv_w_pop_up = rv_w_pop_up
-        self.rv_h_pop_up = rv_h_pop_up
-
-        # default_values
-        self.default_colour_lbl = Colour("#000000")
-        self.default_colour_txt = Colour("#111945")
-        self.default_font_name = "Arial"
-        self.default_font_size = 14
-        self.default_lbl_station_name = "Station:"
-        self.default_lbl_station_number = "Number:"
-        self.default_lbl_station_manufacturer = "Manufacturer:"
-        self.default_lbl_station_model_name = "Model Name:"
-        self.default_lbl_station_acquisition_date = "Acquisition Date:"
-        self.default_lbl_station_manager = "Manager:"
-        self.default_lbl_station_division = "Division:"
-        self.default_lbl_station_assigned_to = "Assigned To:"
-        self.default_lbl_station_assigned_dept = "Assigned Dept:"
-        self.default_lbl_station_class = "Class:"
-        self.default_lbl_station_category = "Category:"
-        self.default_lbl_station_current_location = "Current Location:"
-
-        self.m_top, self.m_left, self.m_right, self.m_bottom = [10] * 4
-
-        self.colour_lbl_txt_station_name = self.default_colour_lbl
-        self.font_lbl_txt_station_name = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_name = Colour(kwargs.get("colour_txt_station_name", self.default_colour_txt))
-        self.font_txt_station_name = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_number = Colour(kwargs.get("colour_lbl_txt_station_number", self.default_colour_lbl))
-        self.font_lbl_txt_station_number = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_number = Colour(kwargs.get("colour_txt_station_number", self.default_colour_txt))
-        self.font_txt_station_number = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_manufacturer = Colour(kwargs.get("colour_lbl_txt_station_manufacturer", self.default_colour_lbl))
-        self.font_lbl_txt_station_manufacturer = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_manufacturer = Colour(kwargs.get("colour_txt_station_manufacturer", self.default_colour_txt))
-        self.font_txt_station_manufacturer = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_model_name = Colour(kwargs.get("colour_lbl_txt_station_model_name", self.default_colour_lbl))
-        self.font_lbl_txt_station_model_name = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_model_name = Colour(kwargs.get("colour_txt_station_model_name", self.default_colour_txt))
-        self.font_txt_station_model_name = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_acquisition_date = Colour(kwargs.get("colour_lbl_txt_station_acquisition_date", self.default_colour_lbl))
-        self.font_lbl_txt_station_acquisition_date = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_acquisition_date = Colour(kwargs.get("colour_txt_station_acquisition_date", self.default_colour_txt))
-        self.font_txt_station_acquisition_date = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_manager = Colour(kwargs.get("colour_lbl_txt_station_manager", self.default_colour_lbl))
-        self.font_lbl_txt_station_manager = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_manager = Colour(kwargs.get("colour_txt_station_manager", self.default_colour_txt))
-        self.font_txt_station_manager = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_division = Colour(kwargs.get("colour_lbl_txt_station_division", self.default_colour_lbl))
-        self.font_lbl_txt_station_division = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_division = Colour(kwargs.get("colour_txt_station_division", self.default_colour_txt))
-        self.font_txt_station_division = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_assigned_to = Colour(kwargs.get("colour_lbl_txt_station_assigned_to", self.default_colour_lbl))
-        self.font_lbl_txt_station_assigned_to = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_assigned_to = Colour(kwargs.get("colour_txt_station_assigned_to", self.default_colour_txt))
-        self.font_txt_station_assigned_to = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_assigned_dept = Colour(kwargs.get("colour_lbl_txt_station_assigned_dept", self.default_colour_lbl))
-        self.font_lbl_txt_station_assigned_dept = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_assigned_dept = Colour(kwargs.get("colour_txt_station_assigned_dept", self.default_colour_txt))
-        self.font_txt_station_assigned_dept = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_class = Colour(kwargs.get("colour_lbl_txt_station_class", self.default_colour_lbl))
-        self.font_lbl_txt_station_class = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_class = Colour(kwargs.get("colour_txt_station_class", self.default_colour_txt))
-        self.font_txt_station_class = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_category = Colour(kwargs.get("colour_lbl_txt_station_category", self.default_colour_lbl))
-        self.font_lbl_txt_station_category = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_category = Colour(kwargs.get("colour_txt_station_category", self.default_colour_txt))
-        self.font_txt_station_category = (self.default_font_name, self.default_font_size)
-
-        self.colour_lbl_txt_station_current_location = Colour(kwargs.get("colour_lbl_txt_station_current_location", self.default_colour_lbl))
-        self.font_lbl_txt_station_current_location = (self.default_font_name, self.default_font_size)
-
-        self.colour_txt_station_current_location = Colour(kwargs.get("colour_txt_station_current_location", self.default_colour_txt))
-        self.font_txt_station_current_location = (self.default_font_name, self.default_font_size)
-
-        # to be populated
-        self.tag_lbl_txt_station_name = None
-        self.tag_txt_station_name = None
-        self.tag_lbl_txt_station_number = None
-        self.tag_txt_station_number = None
-        self.bbox_lbl_txt_station_name = None
-        self.bbox_txt_station_name = None
-        self.bbox_lbl_txt_station_number = None
-        self.bbox_txt_station_number = None
-        self.bbox_lbl_txt_station_manufacturer = None
-        self.bbox_txt_station_manufacturer = None
-        self.bbox_lbl_txt_station_model_name = None
-        self.bbox_txt_station_model_name = None
-        self.bbox_lbl_txt_station_acquisition_date = None
-        self.bbox_txt_station_acquisition_date = None
-
-        self.bbox_lbl_txt_station_manager = None
-        self.bbox_txt_station_manager = None
-        self.bbox_lbl_txt_station_division = None
-        self.bbox_txt_station_division = None
-        self.bbox_lbl_txt_station_assigned_to = None
-        self.bbox_txt_station_assigned_to = None
-        self.bbox_lbl_txt_station_assigned_dept = None
-        self.bbox_txt_station_assigned_dept = None
-        self.bbox_lbl_txt_station_class = None
-        self.bbox_txt_station_class = None
-        self.bbox_lbl_txt_station_category = None
-        self.bbox_txt_station_category = None
-        self.bbox_lbl_txt_station_current_location = None
-        self.bbox_txt_station_current_location = None
-        self.list_tags_txt_content = list()
-        self.list_tags_content = list()
-
-        # begin population
-        self.init_pop_up_contents()
-        self.show_contents()
-        self.hide_contents()
-
-    def init_pop_up_contents(self) -> None:
-        self.tag_lbl_txt_station_name = self.canvas.create_text(
-            -2, -2,
-            text=self.default_lbl_station_name,
-            fill=self.colour_lbl_txt_station_name.hex_code,
-            font=self.font_lbl_txt_station_name
-        )
-        self.tag_txt_station_name = self.canvas.create_text(
-            -1, -1,
-            text="",
-            fill=self.colour_txt_station_name.hex_code,
-            font=self.font_txt_station_name
-        )
-        self.tag_lbl_txt_station_number = self.canvas.create_text(
-            -2, -2,
-            text=self.default_lbl_station_number,
-            fill=self.colour_lbl_txt_station_number.hex_code,
-            font=self.font_lbl_txt_station_number
-        )
-        self.tag_txt_station_number = self.canvas.create_text(
-            -1, -1,
-            text="",
-            fill=self.colour_txt_station_number.hex_code,
-            font=self.font_txt_station_number
-        )
-
-        self.list_tags_txt_content = [
-            self.tag_lbl_txt_station_name,
-            self.tag_txt_station_name,
-            self.tag_lbl_txt_station_number,
-            self.tag_txt_station_number
-        ]
-
-    def show_contents(self) -> None:
-        self.configure_contents({"state": "normal"})
-
-        # update coordinates
-        # bbox_pop_up = self.canvas.bbox(self.pop_up_tag)
-        print(f"show_contents {self.bbox_pop_up.get()=}")
-        bbox_pop_up = self.bbox_pop_up.get()
-        w, h = bbox_pop_up[2] - bbox_pop_up[0], bbox_pop_up[3] - bbox_pop_up[1]
-        mx, my = bbox_pop_up[0] + (w / 2), bbox_pop_up[1] + (h / 2)
-        w_txt_station_name = (w - 20) / 2
-        h_txt_station_name = 20
-        m_top, m_left, m_right, m_bottom = self.m_top, self.m_left, self.m_right, self.m_bottom
-        m_h_text = 5
-
-        # create offset text bboxes based on the current position of the pop-up
-        self.bbox_lbl_txt_station_name = (
-            bbox_pop_up[0] + m_left,
-            bbox_pop_up[1] + m_top,
-            bbox_pop_up[0] + m_left + w_txt_station_name,
-            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (0 * m_h_text)
-        )
-        self.bbox_txt_station_name = (
-            bbox_pop_up[2] - m_right - w_txt_station_name,
-            bbox_pop_up[1] + m_top,
-            bbox_pop_up[2] - m_right,
-            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (0 * m_h_text)
-        )
-        self.bbox_lbl_txt_station_number = (
-            bbox_pop_up[0] + m_left,
-            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (1 * m_h_text),
-            bbox_pop_up[0] + m_left + w_txt_station_name,
-            bbox_pop_up[1] + m_top + (2 * h_txt_station_name) + (1 * m_h_text)
-        )
-        self.bbox_txt_station_number = (
-            bbox_pop_up[2] - m_right - w_txt_station_name,
-            bbox_pop_up[1] + m_top + (1 * h_txt_station_name) + (1 * m_h_text),
-            bbox_pop_up[2] - m_top,
-            bbox_pop_up[1] + m_top + (2 * h_txt_station_name) + (1 * m_h_text),
-        )
-
-        # center text tags since coords only takes x and y for texts
-        for tag, bbox in zip(
-            (
-                self.tag_lbl_txt_station_name,
-                self.tag_txt_station_name,
-                self.tag_lbl_txt_station_number,
-                self.tag_txt_station_number
-            ),
-            (
-                self.bbox_lbl_txt_station_name,
-                self.bbox_txt_station_name,
-                self.bbox_lbl_txt_station_number,
-                self.bbox_txt_station_number
-            )
-        ):
-            self.canvas.coords(
-                tag,
-                *center_bbox(bbox)
-            )
-
-    def hide_contents(self) -> None:
-        self.configure_contents({"state": "hidden"})
-
-    def configure_contents(self, kwargs: dict, apply_to_contents: bool = True, apply_to_texts: bool = True) -> None:
-        if apply_to_contents:
-            for tag in self.list_tags_content:
-                if tag is not None:
-                    self.canvas.itemconfigure(
-                        tag,
-                        **kwargs
-                    )
-                self.canvas.tag_raise(tag)
-
-        if apply_to_texts:
-            for tag in self.list_tags_txt_content:
-                if tag is not None:
-                    self.canvas.itemconfigure(
-                        tag,
-                        **kwargs
-                    )
-                self.canvas.tag_raise(tag)
-
-    def check_widths(self, lbl_data: tuple[tuple[float, float, float, float], int, str], txt_data: tuple[tuple[float, float, float, float], int, str]):
-        px, py = self.x_y_pop_up_launch.get()
-
-        left_canvas = self.canvas.winfo_rootx()
-        top_canvas = self.canvas.winfo_rooty()
-        px += left_canvas
-        py += top_canvas
-
-        bbox = self.bbox_pop_up.get()
-        bbox_lbl, tag_lbl, text_lbl = lbl_data
-        bbox_txt, tag_txt, text_txt = txt_data
-        # bbox_txt = self.bbox_txt_station_name
-        # bbox_lbl = self.bbox_lbl_txt_station_name
-        # font_txt: tkinter.font = self.canvas.itemcget(self.tag_txt_station_name, "font")
-        # font_lbl: tkinter.font = self.canvas.itemcget(self.tag_lbl_txt_station_name, "font")
-        font_txt: tkinter.font = font.Font(font=self.canvas.itemcget(tag_txt, "font"))
-        font_lbl: tkinter.font = font.Font(font=self.canvas.itemcget(tag_lbl, "font"))
-        # w_txt = font_txt.measure(station_name)
-        # w_lbl = font_lbl.measure(self.canvas.itemcget(self.tag_lbl_txt_station_name, "text"))
-        w_txt = font_txt.measure(text_txt)
-        w_lbl = font_lbl.measure(text_lbl)
-        w_bbox_txt = abs(bbox_txt[2] - bbox_txt[0])
-        w_bbox_lbl = abs(bbox_lbl[2] - bbox_lbl[0])
-        new_width = sum([
-            self.m_left,
-            w_txt,
-            w_lbl,
-            self.m_right
-        ])
-        curr_width = sum([
-            self.m_left,
-            w_bbox_lbl,
-            w_bbox_txt,
-            self.m_right
-        ])
-        print(f"{lbl_data=}")
-        print(f"{txt_data=}")
-        print(f"{self.m_left=}, {w_txt=}, {w_lbl=}, {self.m_right=}, {w_bbox_lbl=}, {w_bbox_txt=}")
-        print(f"{new_width=}, {curr_width=}")
-        print(f"{left_canvas=}, {top_canvas=}")
-        if new_width > curr_width:
-            # need to expand
-            print(f"\tNEED TO EXPAND")
-            self.w_pop_up.set(new_width)
-            nx, ny = clamp(0, px, bbox[2] - self.w_pop_up.get()), clamp(0, py, bbox[3] - self.h_pop_up.get())
-            print(f"Old (x,y)=({px}, {py}), New (x,y)=({nx}, {ny})")
-            self.x_y_pop_up_launch.set((nx, ny))
-            self.bbox_pop_up.set((
-                nx,
-                ny,
-                nx + self.w_pop_up.get(),
-                ny + self.h_pop_up.get()
-            ))
-        # else:
-        #     print(f"WIDTH IS FINE")
-        #     self.w_pop_up.set(self.rv_w_pop_up)
-
-    def set_station_name(self, station_name: str) -> None:
-        station_name = str(station_name)
-        # print(f"POP UP STATION NAME: '{station_name}'")
-        self.canvas.itemconfigure(
-            self.tag_txt_station_name,
-            text=station_name
-        )
-        # self.check_widths(
-        #     (self.bbox_lbl_txt_station_name, self.tag_lbl_txt_station_name, self.canvas.itemcget(self.tag_lbl_txt_station_name, "text")),
-        #     (self.bbox_txt_station_name, self.tag_txt_station_name, station_name)
-        # )
-
-        # bbox_txt = self.bbox_txt_station_name
-        # bbox_lbl = self.bbox_lbl_txt_station_name
-        # font_txt: tkinter.font = self.canvas.itemcget(self.tag_txt_station_name, "font")
-        # font_lbl: tkinter.font = self.canvas.itemcget(self.tag_lbl_txt_station_name, "font")
-        # w_txt = font_txt.measure(station_name)
-        # w_lbl = font_lbl.measure(self.canvas.itemcget(self.tag_lbl_txt_station_name, "text"))
-        # w_bbox_txt = bbox_txt[2] - bbox_txt[0]
-        # w_bbox_lbl = bbox_lbl[2] - bbox_lbl[0]
-        # new_width = sum([
-        #     self.m_left,
-        #     w_txt,
-        #     w_lbl,
-        #     self.m_right
-        # ])
-        # curr_width = sum([
-        #     self.m_left,
-        #     w_bbox_lbl,
-        #     w_bbox_txt,
-        #     self.m_right
-        # ])
-        # if new_width > curr_width:
-        #     # need to expand
-        #     self.w_pop_up.set(new_width)
-        # else:
-        #     self.w_pop_up.set(self.rv_w_pop_up)
-
-    def set_station_number(self, station_number: str) -> None:
-        station_number = str(station_number)
-        print(f"POP UP STATION NUMBER: '{station_number}'")
-        self.canvas.itemconfigure(
-            self.tag_txt_station_number,
-            text=station_number
-        )
-        # self.check_widths(
-        #     (self.bbox_lbl_txt_station_number, self.tag_lbl_txt_station_number, self.canvas.itemcget(self.tag_lbl_txt_station_number, "text")),
-        #     (self.bbox_txt_station_number, self.tag_txt_station_number, station_number)
-        # )
-
-    def set_station(self, station: WorkStation):
-        self.set_station_name(station.name)
-        self.set_station_number(station.number)
+    POP_UP: str = "pop_up"
+    IDLE: str = "idle"
+    REPORTING_ISSUE: str = "reporting_issue"
+    LOADING: str = "loading"
 
 
 class App(tkinter.Tk):
@@ -565,7 +194,6 @@ class App(tkinter.Tk):
                 "hawkins_office_layout_2024_06_06.json"
             ]
         )
-        self.tv_combo_map_sel.trace_variable("w", self.update_tv_combo_map_sel)
 
         self.json_layout_file = None
         self.map_file = None
@@ -594,12 +222,31 @@ class App(tkinter.Tk):
         #   Begin widget creation   #
         #############################
         self.frame_button_bar = tkinter.Frame(self)
+        self.frame_toggle_report_issue = tkinter.Frame(self.frame_button_bar)
         self.frame_ctl_checks = tkinter.Frame(self.frame_button_bar)
 
         self.text_err_could_not_unipoint_data = f"Could not load Unipoint Data from Server3."
         self.text_err_could_not_loap_map = f"Could not load map"
         self.text_checkbox_show_grid_lines = f"Show Grid-Lines"
         self.text_checkbox_show_station_markers = f"Show Station Markers"
+
+        # self.t = ToggleButton(
+        #     self.frame_button_bar,
+        #     label_text=f"Report Issue",
+        #     labels=("Yes", "No")
+        # )
+        self.tv_lbl_toggle_report_issue, self.lbl_toggle_report_issue = label_factory(
+            self.frame_toggle_report_issue,
+            tv_label=f"Report an Issue"
+        )
+        self.toggle_report_issue = ToggleCanvas(
+            self.frame_toggle_report_issue,
+            option_a="Yes",
+            option_b="No",
+            auto_grid=False,
+            default_value="No"
+        )
+
         self.controls_checkboxes = checkbox_factory(
             self.frame_ctl_checks,
             buttons=[
@@ -620,30 +267,6 @@ class App(tkinter.Tk):
 
         self.img_prod_floor_hawkins_map = None
         self.photo_prod_floor_hawkins_map = None
-        # try:
-        #     self.img_prod_floor_hawkins_map = Image.open(self.map_file)
-        #     self.img_prod_floor_hawkins_map = self.img_prod_floor_hawkins_map.resize(
-        #         (
-        #             int(self.w_canvas_map),
-        #             int(self.h_canvas_map)
-        #         ),
-        #         Image.LANCZOS
-        #     )
-        #     self.photo_prod_floor_hawkins_map = ImageTk.PhotoImage(self.img_prod_floor_hawkins_map)
-        #     self.canvas_map.create_image(
-        #         0,
-        #         0,
-        #         anchor=tkinter.NW,
-        #         image=self.photo_prod_floor_hawkins_map
-        #     )
-        # except OSError:
-        #     self.canvas_map.create_text(
-        #         self.w_canvas_map / 2,
-        #         self.h_canvas_map / 2,
-        #         text=self.text_err_could_not_loap_map,
-        #         font=("Arial", 42, "bold"),
-        #         fill=self.colour_err_no_map_found_label.hex_code
-        #     )
 
         self.df_unipoint_equipment = None
         self.load_dfs()
@@ -664,30 +287,7 @@ class App(tkinter.Tk):
         self.colour_line_horizontal = Colour("#323296")
 
         self.lines_vertical = list()
-        # for i in range(0, int(self.w_canvas_map), self.width_cell):
-        #     self.lines_vertical.append(
-        #         self.canvas_map.create_line(
-        #             0 + (i * self.width_cell),
-        #             0,
-        #             0 + (i * self.width_cell),
-        #             self.h_canvas_map,
-        #             fill=self.colour_line_vertical.hex_code,
-        #             width=self.width_line_vertical
-        #         )
-        #     )
-
         self.lines_horizontal = list()
-        # for i in range(0, int(self.h_canvas_map), self.height_cell):
-        #     self.lines_horizontal.append(
-        #         self.canvas_map.create_line(
-        #             0,
-        #             0 + (i * self.height_cell),
-        #             self.w_canvas_map,
-        #             0 + (i * self.height_cell),
-        #             fill=self.colour_line_horizontal.hex_code,
-        #             width=self.width_line_horizontal
-        #         )
-        #     )
 
         self.bbox_pop_up = tkinter.Variable(self, value=(
             (-2 * self.width_pop_up.get()) - self.width_pop_up.get(),
@@ -710,22 +310,12 @@ class App(tkinter.Tk):
         self.n_cols, self.n_rows = len(self.lines_vertical) + 1, len(self.lines_vertical) + 1
         self.curr_col = tkinter.IntVar(self, value=-1)
         self.curr_row = tkinter.IntVar(self, value=-1)
-        self.tv_showing_pop_up = tkinter.BooleanVar(self, value=False)
+        # self.tv_showing_pop_up = tkinter.BooleanVar(self, value=False)
         self.tv_x_y_pop_up_launch = tkinter.Variable(self, value=(-1, -1))
         self.tv_showing_pop_up_frames = tkinter.IntVar(self, value=self.rv_showing_pop_up_frames)
         # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
         self.list_ids_after_expand_showing_pop_up = tkinter.Variable(self, value=list())
 
-        # self.puc = PopUpContentManager(
-        #     self.canvas_map,
-        #     self.tag_pop_up,
-        #     self.bbox_pop_up,
-        #     self.tv_x_y_pop_up_launch,
-        #     self.width_pop_up,
-        #     self.height_pop_up,
-        #     self.width_pop_up.get(),
-        #     self.height_pop_up.get()
-        # )
         self.info_frame_pop_up = InfoFrame(
             self.canvas_map,
             auto_grid=True,
@@ -767,14 +357,31 @@ class App(tkinter.Tk):
         # self.columnconfigure(0, weight=1)
         self.grid_widgets()
 
+        #############################
+        #      State Variables      #
+        #############################
+        # self.valid_states = (
+        #     State.LOADING,
+        #     State.IDLE,
+        #     State.REPORTING_ISSUE
+        # )
+        self.var_state = tkinter.Variable(self, value=State.LOADING)
+
+        #############################
+        #          Bindings         #
+        #############################
+        self.toggle_report_issue.value.trace_variable("w", self.update_tv_toggle_report_issue)
         self.id_after_hover_canvas_map = None
         self.n_clicks = tkinter.IntVar(self, value=0)
         self.canvas_map.tag_raise(self.tag_pop_up)
         self.canvas_map.tag_raise(self.tag_dot)
         # self.canvas_map.tag_raise(self.tag_info_frame_pop_up)
-        self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
-        self.canvas_map.bind("<Motion>", self.motion_canvas_map)
-        self.canvas_map.bind("<Button-1>", self.click_canvas_map)
+        self.tv_combo_map_sel.trace_variable("w", self.update_tv_combo_map_sel)
+        # self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
+        self.var_state.trace_variable("w", self.update_var_state)
+        self.bind_motion_canvas_map = None
+        # self.bind_motion_canvas_map = self.canvas_map.bind("<Motion>", self.motion_canvas_map)
+        self.bind_button1_canvas_map = self.canvas_map.bind("<Button-1>", self.click_canvas_map)
 
         self.list_tags_pop_up_window = (
             self.tag_info_frame_pop_up,
@@ -785,11 +392,20 @@ class App(tkinter.Tk):
         for pop_up_window_tag in self.list_tags_pop_up_window:
             self.canvas_map.itemconfigure(pop_up_window_tag, state="hidden")
 
+    def update_var_state(self, *args):
+        state = eval(self.var_state.get())
+        # print(f"update_var_state => {state=}")
+        self.update_showing_pop_up()
+        # if state == State.POP_UP:
+
     def grid_widgets(self):
         r, c, rs, cs, ix, iy, x, y, s = grid_keys()
         # self.lbl_demo.grid(**{r: 0, c: 0, s: "nsew"})
         self.frame_button_bar.grid(**{r: 0, c: 0, s: "nsew"})
-        self.frame_ctl_checks.grid(**{r: 0, c: 0, s: "nsew"})
+        self.frame_toggle_report_issue.grid(**{r: 0, c: 0})
+        self.lbl_toggle_report_issue.grid(**{r: 0, c: 0})
+        self.toggle_report_issue.grid(**{r: 1, c: 0})
+        self.frame_ctl_checks.grid(**{r: 0, c: 1, rs: 2, s: "nsew"})
         self.lbl_combo_map_sel.grid(**{r: 1, c: 0, s: "nsew"})
         self.combo_map_sel.grid(**{r: 2, c: 0, s: "nsew"})
         for i, key in enumerate(self.controls_checkboxes):
@@ -987,7 +603,10 @@ FROM
             ey + (self.height_dot / 2)
         )
 
-        if self.tv_showing_pop_up.get():
+        state = eval(self.var_state.get())
+        # print(f"{ex=}, {ey=}, {state=}")
+
+        if state == State.POP_UP:
 
             bbox = self.bbox_pop_up.get()
             bbox = (
@@ -998,7 +617,8 @@ FROM
             )
 
             if not collide_point(bbox, (ex, ey)):
-                self.tv_showing_pop_up.set(False)
+                self.var_state.set(State.IDLE)
+                # self.tv_showing_pop_up.set(False)
 
         else:
 
@@ -1028,6 +648,12 @@ FROM
                     fill=self.colour_line_vertical.brightened(0.4).hex_code
                 )
 
+            if state != State.IDLE:
+                # if state='loading' quit
+                # OR if state='reporting_issue' quit
+                print(f"QQ1")
+                return
+
             changed = False
             if self.curr_col.get() != idx_v:
                 self.curr_col.set(idx_v)
@@ -1047,6 +673,12 @@ FROM
         # lines_h, lines_v = self.get_event_lines(event)
         print(f"#{str(self.n_clicks.get()).rjust(3)} | row={idx_h}, col={idx_v}")
 
+        state = eval(self.var_state.get())
+        # if state == self.valid_states[2]:
+        if state == State.REPORTING_ISSUE:
+            # reporting issue
+            print(f"reporting issue")
+
     def show_pop_up(self):
         omx, omy = self.winfo_pointerx(), self.winfo_pointery()
         left_canvas_map = self.canvas_map.winfo_rootx()
@@ -1065,15 +697,18 @@ FROM
             print(f"{self.list_idxs_printers=}")
             if (row, col) in self.list_idxs_stations:
                 print(f"hovering station")
-                self.tv_showing_pop_up.set(True)
+                # self.tv_showing_pop_up.set(True)
+                self.var_state.set(State.POP_UP)
                 self.tv_x_y_pop_up_launch.set((mx, my))
             elif (row, col) in self.list_idxs_printers:
                 print(f"hovering station")
-                self.tv_showing_pop_up.set(True)
+                # self.tv_showing_pop_up.set(True)
+                self.var_state.set(State.POP_UP)
                 self.tv_x_y_pop_up_launch.set((mx, my))
 
     def update_showing_pop_up(self, *args) -> None:
-        showing = self.tv_showing_pop_up.get()
+        # showing = self.tv_showing_pop_up.get()
+        showing = eval(self.var_state.get()) == State.POP_UP
 
         if showing:
             state = "normal"
@@ -1205,6 +840,8 @@ FROM
         print(f"click_pop_up_arrow_btn_next {event=}")
 
     def update_tv_combo_map_sel(self, *args):
+        # self.var_state.set(self.valid_states[0])
+        self.var_state.set(State.LOADING)
         sel_map = self.tv_combo_map_sel.get()
         print(f"{sel_map=}")
         self.json_layout_file = sel_map
@@ -1348,7 +985,7 @@ FROM
         self.n_cols, self.n_rows = len(self.lines_vertical) + 1, len(self.lines_vertical) + 1
         self.curr_col.set(-1)
         self.curr_row.set(-1)
-        self.tv_showing_pop_up.set(False)
+        # self.tv_showing_pop_up.set(False)
         self.tv_x_y_pop_up_launch.set((-1, -1))
         self.tv_showing_pop_up_frames.set(self.rv_showing_pop_up_frames)
         # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
@@ -1422,6 +1059,17 @@ FROM
 
         for pop_up_window_tag in self.list_tags_pop_up_window:
             self.canvas_map.itemconfigure(pop_up_window_tag, state="hidden")
+
+        self.bind_motion_canvas_map = self.canvas_map.bind("<Motion>", self.motion_canvas_map)
+        self.var_state.set(State.IDLE)
+
+    def update_tv_toggle_report_issue(self, *args):
+        val = self.toggle_report_issue.value.get()
+        if val == self.toggle_report_issue.option_a:
+            self.var_state.set(State.REPORTING_ISSUE)
+        else:
+            self.var_state.set(State.IDLE)
+
 
 
 if __name__ == '__main__':
