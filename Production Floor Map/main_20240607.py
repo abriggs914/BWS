@@ -29,35 +29,20 @@ def center_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
 class Hardware:
 
     def __init__(self, data: dict):
-        self.data = self.data
-        self.name = self.data.get("name", "UNNAMED WORK STATION")
-        self.is_cad_station = self.data.get("is_cad_station", False)
-        self.number = self.data.get("number", None)
-        self.row = self.data.get("row", None)
-        self.col = self.data.get("col", None)
+        self.data = data
+        self.name = data.get("name", "UNNAMED WORK STATION")
+        self.is_cad_station = data.get("is_cad_station", False)
+        self.number = data.get("number", None)
+        self.row = data.get("row", None)
+        self.col = data.get("col", None)
         self.uni_point_name = f"STATION{self.number if self.number is not None else '__'}"
         if self.is_cad_station:
             self.uni_point_name = f"CAD{self.uni_point_name}"
 
-        self.background = self.data.get("colour_background", Colour("#303078"))
+        self.background = data.get("colour_background", Colour("#303078"))
 
         self._is_computer = True
         self._is_printer = False
-
-        self.possible_issues = {
-            "Power": {
-                "No Power": "No Power",
-                "UPS Battery Replacement": "UPS Battery Replacement"
-            },
-            "Network": {
-                "No Internet Connection": "No Internet Connection",
-                "No Wi-Fi": "No Wi-Fi"
-            },
-            "Dirt & Damage": {
-                "Needs Cleaning": "Needs Cleaning",
-                "Needs Repair / Replacement": "Needs Repair / Replacement"
-            }
-        }
 
     def set_is_printer(self, value: bool):
         raise NotImplementedError
@@ -284,8 +269,7 @@ class App(tkinter.Tk):
         self.photo_prod_floor_hawkins_map = None
 
         self.df_unipoint_equipment = None
-        self.can_connect_server3 = can_connect(timeout=60)
-        if self.can_connect_server3 is not None:
+        if can_connect(timeout=60):
             self.load_dfs()
 
         self.colour_dot = Colour("#B0FFCF")
@@ -401,7 +385,6 @@ class App(tkinter.Tk):
         self.bind_button1_canvas_map = self.canvas_map.bind("<Button-1>", self.click_canvas_map)
 
         self.list_tags_pop_up_window = (
-            self.tag_pop_up,
             self.tag_info_frame_pop_up,
             self.tag_arrow_button_pop_up_prev,
             self.tag_arrow_button_pop_up_next
@@ -736,11 +719,15 @@ FROM
                 self.after_cancel(id_after)
             # self.puc.hide_contents()
 
-            for tag in self.list_tags_pop_up_window:
-                self.canvas_map.itemconfigure(
-                    tag,
-                    state=state
-                )
+            self.canvas_map.itemconfigure(
+                self.tag_info_frame_pop_up,
+                state=state
+            )
+
+        self.canvas_map.itemconfigure(
+            self.tag_pop_up,
+            state=state
+        )
 
         if showing:
             self.tv_showing_pop_up_frames.set(self.rv_showing_pop_up_frames)
@@ -872,6 +859,34 @@ FROM
         self.list_idxs_stations = [(s.row, s.col) for s in self.list_stations]
         self.list_idxs_printers = [(p.row, p.col) for p in self.list_printers]
 
+        # #############################
+        # #   Begin widget creation   #
+        # #############################
+        # self.frame_button_bar = tkinter.Frame(self)
+        # self.frame_ctl_checks = tkinter.Frame(self.frame_button_bar)
+        #
+        # self.text_err_could_not_unipoint_data = f"Could not load Unipoint Data from Server3."
+        # self.text_err_could_not_loap_map = f"Could not load map"
+        # self.text_checkbox_show_grid_lines = f"Show Grid-Lines"
+        # self.text_checkbox_show_station_markers = f"Show Station Markers"
+        # self.controls_checkboxes = checkbox_factory(
+        #     self.frame_ctl_checks,
+        #     buttons=[
+        #         (self.text_checkbox_show_grid_lines, self.update_show_grid_lines),
+        #         (self.text_checkbox_show_station_markers, self.update_show_station_markers)
+        #     ],
+        #     default_values=[True, True],
+        #     rtype=dict
+        # )
+        #
+        # self.canvas_map = tkinter.Canvas(
+        #     self,
+        #     width=self.w_canvas_map,
+        #     height=self.h_canvas_map
+        # )
+        #
+        # self.colour_err_no_map_found_label = Colour("#CD6951")
+
         try:
             self.img_prod_floor_hawkins_map = Image.open(self.map_file)
             self.img_prod_floor_hawkins_map = self.img_prod_floor_hawkins_map.resize(
@@ -896,6 +911,24 @@ FROM
                 font=("Arial", 42, "bold"),
                 fill=self.colour_err_no_map_found_label.hex_code
             )
+
+        # self.df_unipoint_equipment = None
+        # self.load_dfs()
+        #
+        # self.colour_dot = Colour("#B0FFCF")
+        # self.width_dot, self.height_dot = 12, 12
+        # self.tag_dot = self.canvas_map.create_oval(
+        #     (-2 * self.width_dot) - (self.width_dot / 2),
+        #     (-2 * self.height_dot) - (self.height_dot / 2),
+        #     (-2 * self.width_dot) + (self.width_dot / 2),
+        #     (-2 * self.height_dot) + (self.height_dot / 2),
+        #     fill=self.colour_dot.hex_code
+        # )
+        #
+        # self.width_line_vertical = 2
+        # self.colour_line_vertical = Colour("#963232")
+        # self.width_line_horizontal = 2
+        # self.colour_line_horizontal = Colour("#323296")
 
         for line in self.lines_vertical:
             self.canvas_map.delete(line)
@@ -927,6 +960,19 @@ FROM
                 )
             )
 
+        # self.bbox_pop_up = tkinter.Variable(self, value=(
+        #     (-2 * self.width_pop_up.get()) - self.width_pop_up.get(),
+        #     (-2 * self.height_pop_up.get()) - self.height_pop_up.get(),
+        #     -self.width_pop_up.get(),
+        #     -self.height_pop_up.get()
+        # ))
+        #
+        # # (-200, -100, -100, -50))
+        # self.tag_pop_up = self.canvas_map.create_rectangle(
+        #     *self.bbox_pop_up.get(),
+        #     fill=self.colour_pop_up.hex_code
+        # )
+
         for line in self.list_station_rects:
             self.canvas_map.delete(line)
         self.list_station_rects.clear()
@@ -946,10 +992,71 @@ FROM
         # self.bbox_pop_up = tkinter.Variable(self, value=(None, None, None, None))
         self.list_ids_after_expand_showing_pop_up.set(list())
 
+        # self.puc = PopUpContentManager(
+        #     self.canvas_map,
+        #     self.tag_pop_up,
+        #     self.bbox_pop_up,
+        #     self.tv_x_y_pop_up_launch,
+        #     self.width_pop_up,
+        #     self.height_pop_up,
+        #     self.width_pop_up.get(),
+        #     self.height_pop_up.get()
+        # )
+        # self.info_frame_pop_up = InfoFrame(
+        #     self.canvas_map,
+        #     auto_grid=True,
+        #     key_width=15,
+        #     val_width=20
+        # )
+        # self.tag_info_frame_pop_up = self.canvas_map.create_window(
+        #     *self.tv_x_y_pop_up_launch.get(),
+        #     anchor=tkinter.NW,
+        #     window=self.info_frame_pop_up,
+        #     width=self.width_pop_up.get() * self.p_w_info_frame_pop_up.get(),
+        #     height=self.height_pop_up.get() * self.p_h_info_frame_pop_up.get()
+        # )
+        # self.arrow_button_pop_up_prev = ArrowButton(
+        #     self.canvas_map,
+        #     mode="left",
+        #     callback=self.click_pop_up_arrow_btn_prev
+        # )
+        # self.arrow_button_pop_up_next = ArrowButton(
+        #     self.canvas_map,
+        #     mode="right",
+        #     callback=self.click_pop_up_arrow_btn_next
+        # )
+        # self.tag_arrow_button_pop_up_next = self.canvas_map.create_window(
+        #     *self.tv_x_y_pop_up_launch.get(),
+        #     anchor=tkinter.NW,
+        #     window=self.arrow_button_pop_up_next,
+        #     width=self.width_pop_up_ab_next.get(),
+        #     height=self.height_pop_up_ab_next.get()
+        # )
+        # self.tag_arrow_button_pop_up_prev = self.canvas_map.create_window(
+        #     *self.tv_x_y_pop_up_launch.get(),
+        #     anchor=tkinter.NW,
+        #     window=self.arrow_button_pop_up_prev,
+        #     width=self.width_pop_up_ab_next.get(),
+        #     height=self.height_pop_up_ab_next.get()
+        # )
+        #
+        # # self.columnconfigure(0, weight=1)
+        # self.grid_widgets()
+
         self.id_after_hover_canvas_map = None
         self.n_clicks.set(0)
         self.canvas_map.tag_raise(self.tag_pop_up)
         self.canvas_map.tag_raise(self.tag_dot)
+        # # self.canvas_map.tag_raise(self.tag_info_frame_pop_up)
+        # self.tv_showing_pop_up.trace_variable("w", self.update_showing_pop_up)
+        # self.canvas_map.bind("<Motion>", self.motion_canvas_map)
+        # self.canvas_map.bind("<Button-1>", self.click_canvas_map)
+        #
+        # self.list_tags_pop_up_window = (
+        #     self.tag_info_frame_pop_up,
+        #     self.tag_arrow_button_pop_up_prev,
+        #     self.tag_arrow_button_pop_up_next
+        # )
 
         for pop_up_window_tag in self.list_tags_pop_up_window:
             self.canvas_map.itemconfigure(pop_up_window_tag, state="hidden")
