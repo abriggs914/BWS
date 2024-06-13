@@ -29,7 +29,7 @@ def center_bbox(bbox: tuple[float, float, float, float]) -> tuple[float, float]:
 class Hardware:
 
     def __init__(self, data: dict):
-        self.data = self.data
+        self.data = data
         self.name = self.data.get("name", "UNNAMED WORK STATION")
         self.is_cad_station = self.data.get("is_cad_station", False)
         self.number = self.data.get("number", None)
@@ -168,6 +168,7 @@ class App(tkinter.Tk):
         ########################
         self.tv_title_app_full = tkinter.StringVar(self, value="BWS Production Floor Viewer")
         self.tv_title_app_short = tkinter.StringVar(self, value="Prod Floor Viewer")
+        self.tl_title_report_issue = tkinter.StringVar(self, value=f"Report an Issue")
         self.title(self.tv_title_app_full.get())
 
         ##############################
@@ -179,6 +180,9 @@ class App(tkinter.Tk):
         # self.calc_geometry = calc_geometry_tl(self.w_p_app, self.h_p_app, largest=True, rtype=dict)  # dimensions above
         self.w_app, self.h_app = self.calc_geometry["width"], self.calc_geometry["height"]
         self.w_canvas_map, self.h_canvas_map = self.w_app * 0.75, self.h_app * 0.75
+
+        self.tl_width, self.tl_height = tkinter.IntVar(self, value=900), tkinter.IntVar(self, value=600)
+        self.tl_calc_geometry = calc_geometry_tl(self.tl_width.get(), self.tl_height.get(), parent=self, rtype=dict)
 
         print(f"{self.calc_geometry=}")
         if (geo := self.calc_geometry["geometry"]) == "zoomed":
@@ -244,6 +248,7 @@ class App(tkinter.Tk):
         self.text_err_could_not_loap_map = f"Could not load map"
         self.text_checkbox_show_grid_lines = f"Show Grid-Lines"
         self.text_checkbox_show_station_markers = f"Show Station Markers"
+        self.text_err_could_not_find_station_or_printer_with_idxs = f"Could not find a printer or a station for this map at this location."
 
         # self.t = ToggleButton(
         #     self.frame_button_bar,
@@ -500,6 +505,12 @@ FROM
             if (r == idx_h) and (c == idx_v):
                 return self.list_stations[i]
 
+    def idxs_to_printer(self, idx_h: int, idx_v: int) -> WorkPrinter | None:
+        for i, r_c in enumerate(self.list_idxs_printers):
+            r, c = r_c
+            if (r == idx_h) and (c == idx_v):
+                return self.list_printers[i]
+
     def get_line_idxs(self, ex: int, ey: int) -> tuple[int, int]:
         return int(ey / (self.height_cell ** 2)), int(ex / (self.width_cell ** 2))
 
@@ -669,7 +680,7 @@ FROM
             if state != State.IDLE:
                 # if state='loading' quit
                 # OR if state='reporting_issue' quit
-                print(f"QQ1")
+                # print(f"QQ1")
                 return
 
             changed = False
@@ -696,6 +707,35 @@ FROM
         if state == State.REPORTING_ISSUE:
             # reporting issue
             print(f"reporting issue")
+            station = self.idxs_to_station(idx_h, idx_v)
+            printer = None
+            if station is None:
+                printer = self.idxs_to_printer(idx_h, idx_v)
+                if printer is None:
+                    messagebox.showinfo(
+                        self.tv_title_app_short.get(),
+                        self.text_err_could_not_find_station_or_printer_with_idxs
+                    )
+            #     else:
+            #         # report error with workprinter
+            #         self.toplevel = tkinter.Toplevel(self)
+            # else:
+            #     # report error with workstation
+
+            if (station is not None) or (printer is not None):
+                title = f"Report an issue with "
+                title += printer.name if (printer is not None) else station.name
+                self.toplevel = tkinter.Toplevel(self)
+                self.toplevel.title(self.tl_title_report_issue.get())
+                self.toplevel.geometry(self.tl_calc_geometry["geometry"])
+
+                self.tl_tv_lbl_title, self.tl_tv_lbl_title = label_factory(
+                    self.toplevel,
+                    tv_label=title
+                )
+
+                self.toplevel.grab_set()
+                self.wait_window(self.toplevel)
 
     def show_pop_up(self):
         omx, omy = self.winfo_pointerx(), self.winfo_pointery()
