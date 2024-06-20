@@ -369,7 +369,7 @@ class App(tkinter.Tk):
             "colour_tile_foreground_selected": Colour("#090909"),
             "font_tile_selected": "Arial 12 bold",
             "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 2,
+            "width_tile_outline_selected": 4,
             "height_calendar_scrollbar": 20,
 
             "default_font": ("Arial", 10)
@@ -1088,6 +1088,17 @@ class App(tkinter.Tk):
                 "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
             }
         )
+        self.tv_btn_if_goto, self.btn_if_goto = tkinter_utility.button_factory(
+            self.info_frame.frame_header,
+            tv_btn="go to",
+            command=self.click_if_goto
+        )
+        ga = {k: v for k, v in self.info_frame.grid_args["header"].items()}
+        ga.update({"columnspan": 1, "column": 0})
+        self.info_frame.header[1].grid_forget()
+        self.info_frame.header[1].grid(**ga)
+        ga.update({"columnspan": 1, "column": 1, "padx": 25})
+        self.btn_if_goto.grid(**ga)
 
         if (geo := self.data["geometry"]["str"]) == "zoomed":
             self.state(geo)
@@ -1216,8 +1227,9 @@ class App(tkinter.Tk):
         self.reload_application()
 
     def tv_update_history(self, *args):
+        tm = self.data["settings"]["TEST_MODE"].get()
         hist = self.data["history"].get()
-        if self.data["settings"]["TEST_MODE"].get():
+        if tm:
             print(f"History update: {hist=}")
         # known_hist = self.data.get("listbox_history", [])
         known_hist = self.listbox_history.get(0, tkinter.END)
@@ -1225,6 +1237,8 @@ class App(tkinter.Tk):
         if lh > lkh:
             # added new history event
             new_item = hist[-1]
+            if tm:
+                print(f"{new_item=}")
             # self.listbox_history.insert(tkinter.END, str(new_item))
             new_code, *new_items = new_item
             date_2, line_2, order_2 = [None] * 3
@@ -1245,7 +1259,9 @@ class App(tkinter.Tk):
             #   File "pandas\_libs\tslibs\parsing.pyx", line 307, in pandas._libs.tslibs.parsing.parse_datetime_string
             # ValueError: Given date string "4" not likely a datetime
 
-            date_1, line_1 = new_items[0]
+            if tm:
+                print(f"{new_code=}, {new_items=}")
+            date_1, line_1 = new_items[-1]
             date_1 = pd.Timestamp(date_1)
             # date_2 = pd.Timestamp(date_2)
             print(f"{list(self.tiles.keys())=}")
@@ -1262,6 +1278,7 @@ class App(tkinter.Tk):
             if len(new_items) > 1:
                 date_2, line_2 = new_items[1]
 
+                date_2 = pd.Timestamp(date_2)
                 print(f"{date_2=}, {line_2=}")
                 print(f"{self.tiles.get(date_2)=}")
                 print(f"{self.tiles.get(date_2, {}).get(line_2)=}")
@@ -2037,7 +2054,8 @@ class App(tkinter.Tk):
 
             if selected:
                 if not shift_held:
-                    # print(f"CLEARING SELECTED")
+                    if tm:
+                        print(f"CLEARING SELECTED")
                     self.clear_selected_tiles()
 
                 for sel in selected:
@@ -3156,13 +3174,14 @@ class App(tkinter.Tk):
                 title="Select a Foreground colour"
             )
             res_rgb, res_hex = res_colour
-            res_c = Colour(res_hex)
-            if tm:
-                print(f"{res_colour=}, {res_c=}")
-            self.tl_data["tl_cc_view_canvas"].itemconfigure(
-                self.tl_data["tl_cc_vc_edit_text"],
-                fill=res_c.hex_code
-            )
+            if res_hex.strip() != '':
+                res_c = Colour(res_hex)
+                if tm:
+                    print(f"{res_colour=}, {res_c=}")
+                self.tl_data["tl_cc_view_canvas"].itemconfigure(
+                    self.tl_data["tl_cc_vc_edit_text"],
+                    fill=res_c.hex_code
+                )
 
         def click_border(event=None):
             if tm:
@@ -4137,6 +4156,38 @@ class App(tkinter.Tk):
 
         self.toggle_warranty.grid(row=1, column=0)
 
+    def click_if_goto(self):
+        print(f"click_if_goto")
+
+        # before = self.tv_entry_unit_scroll_search.get()
+        quote = self.info_frame.get_value("SGQuote")
+        print(f"{quote=}")
+        if quote:
+            date = pd.Timestamp(self.info_frame.get_value("Sched Finish"))
+            line = self.info_frame.get_value("Sched Line")
+            # self.tv_entry_unit_scroll_search.set(datetime.datetime.now().strftime("%Y-%m-%d"))
+            # self.click_search_units(None, pass_thru_date=True)
+            bbox = self.canvas.bbox("all")
+            xv = self.canvas.xview()
+            x1, x2 = bbox[0::2]
+            w = x2 - x1
+            vw = (xv[1] - xv[0]) * w
+            sw = self.data["canvas_width"]
+            # w += (sw / 2)
+            w += (vw / 2)
+            print(f"{date=}, {line=}")
+            print(f"{self.canvas.xview()=}")
+            print(f"{self.canvas.bbox('all')=}")
+            bbox = self.get_tile_bbox(date, line)
+            print(f"{bbox=}, {vw=}")
+            x = bbox[0]
+            p = x / w
+            print(f"{x=}, {p=}, {self.canvas.canvasx(x)=}")
+            # self.canvas.xview_moveto(x)
+
+            self.canvas.xview_moveto(p)
+            self.flash_tile((date, line), mode="attention")
+            self.redraw_legend()
 
 def test_canvas_window():
     app = tkinter.Tk()

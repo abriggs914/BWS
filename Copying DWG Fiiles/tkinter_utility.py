@@ -5,7 +5,7 @@ from collections import OrderedDict, deque
 
 import pandas
 
-from typing import Literal
+from typing import Literal, Tuple, List, Callable, Optional
 
 import pandas as pd
 
@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.71
-    Date...........2024-02-29
+    Version..............1.77
+    Date...........2024-06-05
     Author(s)....Avery Briggs
     """
 
@@ -400,7 +400,7 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
         # rb_sdd = Radiobutton(frame_rb_group_3, variable=tv_sort_direction, value="descending", textvariable=tv_sort_dir_d)
 
 
-def checkbox_factory(master, buttons, default_values=None, kwargs_buttons=None):
+def checkbox_factory(master, buttons, default_values=None, kwargs_buttons=None, rtype=list):
     if hasattr(buttons, '__iter__') and buttons:
         if not (isinstance(buttons, list) and isinstance(buttons, tuple)):
             buttons = list(buttons)
@@ -414,6 +414,15 @@ def checkbox_factory(master, buttons, default_values=None, kwargs_buttons=None):
 
         c_buttons = []
         for i, btn in enumerate(buttons):
+            func, arg = None, "w"
+            if isinstance(btn, (list, tuple)) and (len(btn) > 1):
+                if len(btn) == 3:
+                    btn, func, arg = btn
+                if len(btn) == 2:
+                    btn, func, arg = *btn, "w"
+                else:
+                    raise ValueError(f"Parameter 'buttons' must be a list of strings indicating button names, or a list of lists or tuples of length 2 or 3 containing a string name and a single callable arg (name, func) or a callable arg and a trace_variable binding (name, func, 'w').")
+
             if kwargs_buttons is not None:
                 print(f"WARNING kwargs param is applied to each checkbox button")
                 c_buttons.append(
@@ -421,7 +430,16 @@ def checkbox_factory(master, buttons, default_values=None, kwargs_buttons=None):
             else:
                 c_buttons.append(tkinter.Checkbutton(master, variable=tv_vars[i], text=btn))
 
-        return tv_vars, c_buttons
+            if func is not None:
+                if callable(func):
+                    tv_vars[i].trace_variable(arg, func)
+                else:
+                    raise ValueError(f"Received a non-callable function as a trace got button '{btn}'")
+
+        if rtype in (list, tuple):
+            return tv_vars, c_buttons
+        else:
+            return {btn if not isinstance(btn, (list, tuple)) else btn[0]: {"btn": c_buttons[i], "var": tv_vars[i]} for i, btn, in enumerate(buttons)}
     else:
         raise Exception("Error, must pass a list of buttons.")
 
@@ -488,6 +506,7 @@ class TreeviewController(tkinter.Frame):
             include_scroll_x=True,
             include_scroll_y=True,
             aggregate_data=None,
+            show_index_column=True,
             *args,
             **kwargs
     ):
@@ -520,6 +539,7 @@ class TreeviewController(tkinter.Frame):
 
         self.master = master
         self.df = df.reset_index(drop=True)
+        self.show_index_column = show_index_column
         self.viewable_column_names = viewable_column_names
         self.viewable_column_widths = viewable_column_widths
         self.tv_label = tv_label
@@ -547,7 +567,7 @@ class TreeviewController(tkinter.Frame):
                 col_a = col
                 if col in self.viewable_column_names:
                     col_a = self.viewable_column_names[col]
-                vcn.append(col_a)
+                    vcn.append(col_a)
             self.viewable_column_names = vcn
 
         # print(f"--AA {self.viewable_column_names=}\n{self.df=}")
@@ -570,9 +590,9 @@ class TreeviewController(tkinter.Frame):
         # self.viewable_column_names_indexable = {}
 
         # for i, col in enumerate(cn):
-            # self.viewable_column_names_indexable[col] = "#" + col.replace(" ", "").strip()
-            # self.viewable_column_names_indexable[col] = col
-            # self.viewable_column_names_indexable[col] = f"#{i}"
+        # self.viewable_column_names_indexable[col] = "#" + col.replace(" ", "").strip()
+        # self.viewable_column_names_indexable[col] = col
+        # self.viewable_column_names_indexable[col] = f"#{i}"
 
         # # print(
         # #     f"AA {self.viewable_column_names=}\n{self.viewable_column_names_indexable.keys()=}\n{self.viewable_column_names_indexable.values()=}")
@@ -594,8 +614,9 @@ class TreeviewController(tkinter.Frame):
             # , displaycolumns=self.viewable_column_names
             columns=self.viewable_column_names
             # ,displaycolumns=self.viewable_column_names_indexable
-            ,displaycolumns="#all"
+            , displaycolumns="#all"
             , **self.kwargs_treeview
+            , show=("tree headings" if show_index_column else "headings")
             # , **kwargs
         )
 
@@ -614,8 +635,9 @@ class TreeviewController(tkinter.Frame):
                 self.treeview.treeview_sort_column(_col, False))
 
         self.idx_width = 50
-        self.treeview.column("#0", width=self.idx_width, stretch=False)
-        self.treeview.heading("#0", text="#", anchor=tkinter.CENTER)
+        if show_index_column:
+            self.treeview.column("#0", width=self.idx_width, stretch=False)
+            self.treeview.heading("#0", text="#", anchor=tkinter.CENTER)
 
         # print(f"--BB {df.shape=}\n{self.df}")
         # print(f"{list(df.itertuples())=}\n{len(list(df.itertuples()))}")
@@ -939,7 +961,8 @@ def treeview_factory(
         include_scroll_y=True,
         text_prefix="B_",
         iid_prefix="C_",
-        aggregate_data=None
+        aggregate_data=None,
+        show_index_column=True
 ):
     return \
         TreeviewController(
@@ -947,12 +970,14 @@ def treeview_factory(
             dataframe,
             viewable_column_names,
             viewable_column_widths,
-            tv_label, kwargs_label,
+            tv_label,
+            kwargs_label,
             kwargs_treeview,
             default_col_width,
             include_scroll_x,
             include_scroll_y,
-            aggregate_data
+            aggregate_data,
+            show_index_column
         )
 
 
@@ -2199,7 +2224,9 @@ class MultiComboBox(tkinter.Frame):
                  new_entry_defaults=None, lock_result_col=None, allow_insert_ask=True, viewable_column_widths=None,
                  include_aggregate_row=True, include_drop_down_arrow=True, drop_down_is_clicked=True,
                  include_searching_widgets=True, exhaustive_filtering=False, default_null_char="",
-                 row_colour_bg=None, row_colour_fg=None, use_str_dtype:bool=True, nan_repr:str|None=None
+                 row_colour_bg=None, row_colour_fg=None, use_str_dtype: bool = True, nan_repr: str | None = None,
+                 width: float | None = None, height: float | None = None, show_index_column: bool = True,
+                 include_clear_button: bool = True
                  ):
         super().__init__(master)
 
@@ -2211,8 +2238,9 @@ class MultiComboBox(tkinter.Frame):
 
         # print(f"{lock_result_col=}\n{viewable_column_names=}\n{data.columns=}")
         if lock_result_col is not None:
-            assert (lock_result_col in viewable_column_names) if viewable_column_names else ((
-                                                                                                 lock_result_col in data.columns) if (lock_result_col is not None) else True), f"Error column '{lock_result_col}' cannot be set as the locked result column. It is not in the list of viewable column names or in the list of columns in the passed dataframe."
+            assert ((lock_result_col in viewable_column_names) if isinstance(viewable_column_names, (list, tuple)) else (lock_result_col in viewable_column_names.values())) if viewable_column_names else ((
+                                                                                                     lock_result_col in data.columns) if (
+                        lock_result_col is not None) else True), f"Error column '{lock_result_col}' cannot be set as the locked result column. It is not in the list of viewable column names or in the list of columns in the passed dataframe."
 
         self.data = data
         self.use_str_dtype = use_str_dtype
@@ -2238,7 +2266,8 @@ class MultiComboBox(tkinter.Frame):
             # print(f"POST=RENAME\n{self.data=}")
 
         if None in viewable_column_names:
-            raise ValueError("Error, the None datatype cannot be the name of any column in the dataframe. This is a reserved keyword, please use 'None' as a string.")
+            raise ValueError(
+                "Error, the None datatype cannot be the name of any column in the dataframe. This is a reserved keyword, please use 'None' as a string.")
 
         if len(viewable_column_names) == 1:
             new_entry_defaults = []
@@ -2258,6 +2287,8 @@ class MultiComboBox(tkinter.Frame):
         self.include_searching_widgets = include_searching_widgets
         self.exhaustive_filtering = exhaustive_filtering
         self.default_null_char = default_null_char
+        self.show_index_column = show_index_column
+        self.include_clear_button = include_clear_button
 
         if not self.include_drop_down_arrow:
             # must show table, if this is false
@@ -2303,7 +2334,8 @@ class MultiComboBox(tkinter.Frame):
                 "height": height_in_rows
             },
             viewable_column_names=viewable_column_names,
-            viewable_column_widths=viewable_column_widths
+            viewable_column_widths=viewable_column_widths,
+            show_index_column=show_index_column
         )
         self.tree_controller, \
             self.tree_tv_label, \
@@ -2343,12 +2375,23 @@ class MultiComboBox(tkinter.Frame):
         # self.configure(width=t_width)
         # self.frame_top_most.configure(width=t_width)
 
+        if width is not None:
+            if not (0 < width < 10000):
+                raise ValueError(f"Parameter 'width' is out of range: '{width}'")
+            self.configure(width=width)
+        if height is not None:
+            if not (0 < height < 10000):
+                raise ValueError(f"Parameter 'width' is out of range: '{height}'")
+            self.configure(height=height)
+
         self.tv_tree_is_hidden = tkinter.BooleanVar(self, value=not self.drop_down_is_clicked)
 
         self.frame_top_most.grid_columnconfigure(0, weight=9)
         self.frame_top_most.grid_columnconfigure(1, weight=1)
         self.frame_middle = tkinter.Frame(self, name="fm")
         self.radio_btn_texts = ["All", *self.tree_controller.viewable_column_names]
+        if not self.show_index_column:
+            self.radio_btn_texts.pop(0)
         self.rg_var, self.rg_tv_var, self.rg_btns = radio_factory(self.frame_middle,
                                                                   buttons=self.radio_btn_texts, default_value=0)
         self.rg_var.trace_variable("w", self.update_radio_group)
@@ -2356,13 +2399,16 @@ class MultiComboBox(tkinter.Frame):
         self.typed_in = tkinter.BooleanVar(self, value=False)
 
         self.res_entry = tkinter.Entry(self.frame_top_most, textvariable=self.res_tv_entry, justify="center")
+        self.tv_btn_clear = tkinter.StringVar(self, value="x")
+        self.btn_clear = tkinter.Button(self.frame_top_most, textvariable=self.tv_btn_clear, command=self.click_btn_clear)
         # self.res_canvas = tkinter.Canvas(self.frame_top_most, width=20, height=20, background=rgb_to_hex("GRAY_62"))
         # self.res_canvas.create_line(11, 6, 11, 19, arrow=tkinter.LAST, arrowshape=(12, 12, 9))
 
         self.res_canvas = ArrowButton(self.frame_top_most, background=rgb_to_hex("GRAY_62"))
 
         self.bind_button1_res_camvas = self.res_canvas.bind("<Button-1>", self.click_canvas_dropdown_button)
-        self.bind_treeview_select_tree_treeview = self.tree_treeview.bind("<<TreeviewSelect>>", self.treeview_selection_update)
+        self.bind_treeview_select_tree_treeview = self.tree_treeview.bind("<<TreeviewSelect>>",
+                                                                          self.treeview_selection_update)
         self.bind_key_res_entry = self.res_entry.bind("<Key>", self.update_typed_in)
         self.bind_return_res_entry = self.res_entry.bind("<Return>", self.submit_typed_in)
 
@@ -2400,21 +2446,36 @@ class MultiComboBox(tkinter.Frame):
         # print(f"END SETUP {self.data=}")
         # print(f"END SETUP {self.tree_controller.df=}")
 
-    def grid_widget(self):
+    def grid_widget(self, do_grid: bool = True):
         """Use this to appropriately place self and all sub widgets."""
-        self.grid(ipadx=12, ipady=12)
-        # self.grid_columnconfigure(, weight=10)
-        self.res_label.grid(row=0, column=0)
 
-        if self.include_searching_widgets:
-            self.frame_top_most.grid(row=1, column=0, sticky="ew")
-            self.res_entry.grid(row=0, column=0, sticky="ew")
-
-        if self.include_drop_down_arrow:
-            self.res_canvas.grid(row=0, column=1)
+        if not do_grid:
+            self.grid_forget()
+            self.res_label.grid_forget()
+            self.frame_top_most.grid_forget()
+            self.res_entry.grid_forget()
+            self.res_canvas.grid_forget()
+            self.btn_clear.grid_forget()
         else:
-            if self.tv_tree_is_hidden.get():
-                self.click_canvas_dropdown_button(None)
+            self.grid(ipadx=12, ipady=12)
+            # self.grid_columnconfigure(, weight=10)
+            self.res_label.grid(row=0, column=0)
+
+            if self.include_searching_widgets:
+                self.frame_top_most.grid(row=1, column=0, sticky="ew")
+                self.res_entry.grid(row=0, column=0, sticky="ew")
+                self.btn_clear.grid(row=0, column=1)
+
+            if self.include_drop_down_arrow:
+                self.res_canvas.grid(row=0, column=1)
+            else:
+                if self.tv_tree_is_hidden.get():
+                    self.click_canvas_dropdown_button(None)
+        print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
+
+    def click_btn_clear(self):
+        self.res_tv_entry.set("")
+        self.update_treeview()
 
     def set_cell_colours(self, i, j, bg_colour, fg_colour):
         # self.tree_treeview.tag_configure(f"{row}-{column}", background=bg_colour, foreground=fg_colour)
@@ -2510,9 +2571,12 @@ class MultiComboBox(tkinter.Frame):
         self.update_typed_in(None)
 
     def delete_item(self, iid=None, value="|/|/||NONE||/|/|", mode="first" | Literal["first", "all", "ask"]):
+        print(f"delete_item: {iid=}, {value=}, {mode=}")
+        print(f"A self.data=\n{self.data}")
         delete_code = "|/|/||NONE||/|/|"
         if iid is None and value == delete_code:
             self.tree_treeview.delete(*self.tree_treeview.get_children())
+            self.data = self.data.iloc[0:0]
         else:
             if iid is not None:
                 if isinstance(iid, int):
@@ -2555,6 +2619,8 @@ class MultiComboBox(tkinter.Frame):
                 else:
                     raise ValueError(
                         f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
+
+        print(f"B self.data=\n{self.data}")
         self.update_treeview()
 
     def add_new_item(self, val, col=None, rest_values=None, rest_tags=None):
@@ -2590,7 +2656,8 @@ class MultiComboBox(tkinter.Frame):
                     else:
                         [tags.add(tag) for tag in rest_tags]
             else:
-                tags = [[self.tree_controller.gen_cell_tag(k, j) for j in range(len(cn))] for k in range(i, i + val.shape[0])]
+                tags = [[self.tree_controller.gen_cell_tag(k, j) for j in range(len(cn))] for k in
+                        range(i, i + val.shape[0])]
 
             new_dfs.append((val, [tup[1:] for tup in val.itertuples()], tags))
         else:
@@ -2638,7 +2705,8 @@ class MultiComboBox(tkinter.Frame):
                 print(f"{cn=}, {col=}")
                 idx = cn.index(col)
             except ValueError as ie:
-                raise ValueError(f"Column '{col}' is not a valid column name for this dataframe. Remember to use visible column names.")
+                raise ValueError(
+                    f"Column '{col}' is not a valid column name for this dataframe. Remember to use visible column names.")
 
             if (typ := type(val)) == dict:
                 val_keys = set(val.keys())
@@ -2780,8 +2848,8 @@ class MultiComboBox(tkinter.Frame):
             for i, row in df.iterrows():
                 vals_ = vals[i]
                 tags_ = tags[i]
-            # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
-            #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
+                # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
+                #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
                 self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
             k += df.shape[0]
         self.data = pd.concat([self.data, *[df for df, *rest in new_dfs]], ignore_index=True)
@@ -2961,10 +3029,15 @@ class MultiComboBox(tkinter.Frame):
 
     def update_treeview(self):
         self.tree_treeview.delete(*self.tree_treeview.get_children())
-        for i, row in enumerate(self.data.itertuples(), 0):
-            # print(f"{i=}, {row=}")
+        # sic = self.show_index_column
+        # for i, row in enumerate(self.data.itertuples(), 0):
+        for i, data in self.data.iterrows():
+            # print(f"{i=}, {data=}, {self.tree_controller.viewable_column_names=}")
+            row = [data[k] for k in self.tree_controller.viewable_column_names]
+            # print(f"{i=}, {row=}, {self.tree_controller.viewable_column_names=}")
             tags = [self.tree_controller.gen_row_tag(i)]
-            self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row[1:], tags=tags)
+            # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row[1:], tags=tags)
+            self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
             # self.tree_treeview.set(str(i + 1), j, val, tags=)
             # print(f"{tags=}")
 
@@ -2998,11 +3071,13 @@ class MultiComboBox(tkinter.Frame):
                     # print(f"\t\t{i=}, {value=}")
                     if val in str(value).lower():
                         some = True
-                        row = self.data.iloc[[i]].values
+                        # row = self.data.iloc[[i]].values
+                        row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
+                        # print(f"A {row=}")
                         # print(f"\t\t{i=}, {value=}, {row=}")
                         tags = tags = [self.tree_controller.gen_cell_tag(i, j) for j in
                                        range(len(self.tree_controller.viewable_column_names))]
-                        self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(*row), tags=tags)
+                        self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
                         # print(f"{tags=}")
             else:
                 # print(f"\n\nFilter Else")
@@ -3019,7 +3094,9 @@ class MultiComboBox(tkinter.Frame):
                         # print(f"BACK IN {i=}\t{row=}")
                         tags = [self.tree_controller.gen_cell_tag(i, j) for j in
                                 range(len(self.tree_controller.viewable_column_names))]
-                        self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=list(row), tags=tags)
+                        row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
+                        # print(f"B {row=}")
+                        self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=row, tags=tags)
                         # print(f"{tags=}")
                         c += 1
                         some = True
@@ -3114,11 +3191,24 @@ class MultiComboBox(tkinter.Frame):
 
 
 class ArrowButton(tkinter.Canvas):
-    def __init__(self, master, mode: Literal[
-        "up", "down", "left", "right",
-        "top-left", "top-right", "bottom-left", "bottom-right",
-        "n", "s", "e", "w", "ne", "nw", "se", "sw",
-        "N", "S", "E", "W", "NE", "NW", "SE", "SW"] = "down", width=20, height=20, *args, **kwargs):
+    def __init__(
+            self,
+            master,
+            mode: Literal[
+                "up", "down", "left", "right",
+                "top-left", "top-right", "bottom-left", "bottom-right",
+                "n", "s", "e", "w", "ne", "nw", "se", "sw",
+                "N", "S", "E", "W", "NE", "NW", "SE", "SW"
+            ] = "down",
+            width: int = 20,
+            height: int = 20,
+            autogrid: bool = True,
+            callback: Optional[Callable] = None,
+            callback_binding: Literal[
+                "<Button-1>", "<Button-2>", "<Button-3>"
+            ] = "<Button-1>",
+            *args, **kwargs
+    ):
         super().__init__(master, width=width, height=height, *args, **kwargs)
 
         self.valid = {
@@ -3127,17 +3217,26 @@ class ArrowButton(tkinter.Canvas):
             "n", "s", "e", "w", "ne", "nw", "se", "sw",
             "N", "S", "E", "W", "NE", "NW", "SE", "SW"
         }
+        self.valid_btns = ("<Button-1>", "<Button-2>", "<Button-3>")
         mode = self.validate_mode(mode)
+        binding = self.valid_btns[0] if (callback_binding not in self.valid_btns) else callback_binding
 
         self.mode = mode
         self.width = width
         self.height = height
+        self.auto_grid = autogrid
+        self.callback = callback
+        self.callback_binding = binding
 
         self.configure(width=20, height=20, background=rgb_to_hex("GRAY_62"))
 
-        self.draw_arrow()
+        if self.auto_grid:
+            self.draw_arrow()
         # print(f"=={game_mode=} :: ({x1}, {y1}), ({x2}, {y2})")
-        self.bind("<Button-1>", self.click_canvas_button)
+        if self.callback is None:
+            self.tag_bind_click_button = self.bind(self.callback_binding, self.click_canvas_button)
+        else:
+            self.tag_bind_click_button = self.bind(self.callback_binding, self.callback)
 
     def validate_mode(self, mode):
         if mode not in self.valid:
@@ -3812,17 +3911,33 @@ class TextWithVar_DON(tkinter.Text):
 
 class InfoFrame(tkinter.Frame):
 
-    def __init__(self, master, labels=None, auto_grid=False, key_width=10, val_width=10, header=None, footer=None,
-                 cell_border=None, key_label_keywords=None, value_label_keywords=None, header_kwargs=None,
-                 footer_kwargs=None, formats=None, *args, **kwargs):
+    def __init__(
+            self,
+            master,
+            labels=None,
+            auto_grid=False,
+            key_width=10,
+            val_width=10,
+            header=None,
+            footer=None,
+            cell_border=None,
+            key_label_keywords=None,
+            value_label_keywords=None,
+            header_kwargs=None,
+            footer_kwargs=None,
+            formats=None,
+            allow_inserts=True,
+            *args, **kwargs
+    ):
         super().__init__(master, *args, **kwargs)
         self.auto_grid = auto_grid
         self.header = header
         self.footer = footer
         self.header_kwargs = header_kwargs
         self.footer_kwargs = footer_kwargs
+        self.allow_inserts = allow_inserts
         self.grid_args = {}
-        self.labels_in = labels
+        self.labels_in = labels if (labels is not None) else dict()
         self.info_labels = {}
         self.key_gener = (i for i in range(1000000))
         self.key_width = key_width
@@ -3830,10 +3945,11 @@ class InfoFrame(tkinter.Frame):
         self.cell_border = cell_border
         self.key_label_kwargs = key_label_keywords if key_label_keywords is not None else {}
         self.val_label_kwargs = value_label_keywords if value_label_keywords is not None else {}
-        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
 
         assert hasattr(self.labels_in,
                        "__iter__"), f"Error param 'labels_in' must be an iterable. Got type='{type(self.labels_in)}'"
+        if not isinstance(self.labels_in, dict):
+            self.labels_in = dict(zip(self.labels_in, [None] * len(self.labels_in)))
 
         self.formats = {}
         if formats is None:
@@ -3854,45 +3970,54 @@ class InfoFrame(tkinter.Frame):
 
         self.check_header()
         self.check_footer()
+
         hi = 1 if self.header is not None else 0
-
         for i, k in enumerate(self.labels_in):
-            if isinstance(self.labels_in, dict):
-                k, v = str(k), str(self.labels_in[k])
-            elif hasattr(k, "__iter__") and len(k) == 2:
-                k, v = map(str, k)
-            else:
-                k, v = str(k), ""
-
-            ke = self.keyify(k)
-
-            self.check_border()
-            self.check_width()
-
-            k_tv, k_label = label_factory(
-                self,
-                tv_label=k,
-                kwargs_label=self.key_label_kwargs
-            )
-            v_tv, v_label = label_factory(
-                self,
-                tv_label=v,
-                kwargs_label=self.val_label_kwargs
-            )
-            ri = i + hi
-            self.info_labels[ke] = {
-                "k_tv": k_tv,
-                "k_label": k_label,
-                "v_tv": v_tv,
-                "v_label": v_label
-            }
-            self.grid_args[ke] = {
-                "k_label": {r: ri, c: 0},
-                "v_label": {r: ri, c: 1}
-            }
+            self.create_key(i + hi, k)
 
         if self.auto_grid:
             self.auto_grid_widgets()
+
+    def create_key(self, i, k, v=None):
+        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        if isinstance(self.labels_in, dict):
+            gk = str(self.labels_in.get(k, ""))
+            if gk:
+                k, v = str(k), gk
+            else:
+                self.labels_in.update({k: v})
+        elif hasattr(k, "__iter__") and len(k) == 2:
+            k, v = map(str, k)
+        else:
+            k, v = str(k), ""
+
+        # ke = self.keyify(k)
+
+        self.check_border()
+        self.check_width()
+
+        k_tv, k_label = label_factory(
+            self,
+            tv_label=k,
+            kwargs_label=self.key_label_kwargs
+        )
+        v_tv, v_label = label_factory(
+            self,
+            tv_label=v,
+            kwargs_label=self.val_label_kwargs
+        )
+        ri = i
+        self.info_labels[k] = {
+            "k_tv": k_tv,
+            "k_label": k_label,
+            "v_tv": v_tv,
+            "v_label": v_label
+        }
+        self.grid_args[k] = {
+            "k_label": {r: ri, c: 0},
+            "v_label": {r: ri, c: 1}
+        }
+        print(f"({i}) finished making key {k=}, {v=}")
 
     def check_border(self):
         if "highlightthickness" not in self.key_label_kwargs and "highlightbackground" not in self.key_label_kwargs and "borderwidth" not in self.key_label_kwargs:
@@ -3950,23 +4075,36 @@ class InfoFrame(tkinter.Frame):
             ri = len(self.labels_in) + (1 if self.header is not None else 0)
             self.grid_args["footer"] = {r: ri, c: 0, rs: 1, cs: 2}
 
-    def keyify(self, label_name_in):
-        return f"k_{('000000' + str(next(self.key_gener)))[-6:]}_{label_name_in}"
+    # def keyify(self, label_name_in):
+    #     return f"k_{('000000' + str(next(self.key_gener)))[-6:]}_{label_name_in}"
 
-    def de_keyify(self, key_in):
-        alike = []
-        ke = key_in.lower()
-        for k in self.info_labels:
-            if k.split("_")[-1].lower() == ke:
-                alike.append(k)
-
-        if not alike:
-            raise KeyError(f"Error cannot find any keys that are alike the given key '{key_in}'")
-        else:
-            if len(alike) > 1:
-                print(
-                    f"WARNING de-keyify function found multiple keys with the given name '{key_in}', returning the first occurence.")
-            return alike[0]
+    # def de_keyify(self, key_in, new_value=None):
+    #     print(f"dekeying '{key_in}'")
+    #     print(f"{self.labels_in=}")
+    #     alike = []
+    #     ke = key_in.lower()
+    #     for k in self.info_labels:
+    #         if k.split("_")[-1].lower() == ke:
+    #             alike.append(k)
+    #
+    #     if not alike:
+    #         print(f"not alike")
+    #         if not self.allow_inserts:
+    #             raise KeyError(f"Error cannot find any keys that are alike the given key '{key_in}'")
+    #         else:
+    #             if isinstance(self.labels_in, dict):
+    #                 print(f"adding new item")
+    #                 self.labels_in.update({key_in: new_value})
+    #                 self.create_key(len(self.labels_in) + 1, key_in)
+    #                 if self.auto_grid is not None:
+    #                     self.info_labels[key_in]["k_label"].grid(**self.grid_args[key_in])
+    #                     self.info_labels[key_in]["v_label"].grid(**self.grid_args[key_in])
+    #             return key_in
+    #     else:
+    #         if len(alike) > 1:
+    #             print(
+    #                 f"WARNING de-keyify function found multiple keys with the given name '{key_in}', returning the first occurence.")
+    #         return alike[0]
 
     def grid_keys(self):
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
@@ -4009,34 +4147,56 @@ class InfoFrame(tkinter.Frame):
     def get_objects(self):
         return self, *self.info_labels
 
-    def change_value(self, key, value):
-        if key not in self.info_labels:
-            # print(f"de-keying")
-            ke = self.de_keyify(key)
+    def change_value(self, key: str | dict, value=None):
+        if isinstance(key, str):
+            data = {key: value}
         else:
-            ke = key
+            data = {k: v for k, v in key.items()}
 
-        val = value
-        if key in self.formats:
-            fmt = self.formats[key]
-            try:
-                val = fmt(value)
-            except Exception as e:
-                print(f"FAILED TO FORMAT key='{key}'.")
-                val = value
+        for k, v in data.items():
+            if k not in self.info_labels:
+                # print(f"de-keying")
+                if not self.allow_inserts:
+                    raise KeyError(f"Error cannot find any keys that are alike the given key '{k}'")
+                else:
+                    self.create_key(len(self.info_labels), k, v)
+                    if self.auto_grid is not None:
+                        self.info_labels[k]["k_label"].grid(**self.grid_args[k]["k_label"])
+                        self.info_labels[k]["v_label"].grid(**self.grid_args[k]["v_label"])
+            #         ke = key
+            #     # ke = self.de_keyify(key, new_value=value)
+            # else:
+            # ke = key
 
-        self.info_labels[ke]["v_tv"].set(val)
+            # val = value
+            if k in self.formats:
+                fmt = self.formats[k]
+                try:
+                    v = fmt(v)
+                except Exception as e:
+                    print(f"FAILED TO FORMAT key='{k}'.")
+                    # v = v
+
+            self.info_labels[k]["v_tv"].set(v)
 
     def get_value(self, key, default=None):
         if key not in self.info_labels:
+            if not self.allow_inserts:
+                raise KeyError(f"Error cannot find any keys that are alike the given key '{key_in}'")
+            else:
+                self.create_key(len(self.info_labels), key, default)
+                self.change_value(key, default)
+                if self.auto_grid is not None:
+                    self.info_labels[key]["k_label"].grid(**self.grid_args[key]["k_label"])
+                    self.info_labels[key]["v_label"].grid(**self.grid_args[key]["v_label"])
             # print(f"de-keying")
-            try:
-                ke = self.de_keyify(key)
-            except KeyError:
-                return default
-        else:
-            ke = key
-        return self.info_labels[ke]["v_tv"].get()
+            # try:
+            #     ke = self.de_keyify(key)
+            # except KeyError:
+            #     return default
+        # else:
+        #     ke = key
+        return self.info_labels[key]["v_tv"].get()
 
 
 def calc_geometry_tl(
@@ -4045,8 +4205,8 @@ def calc_geometry_tl(
         dims: None | tuple | list = None,
         largest: bool | int = True,
         rtype: str | dict | list | tuple = str,
-        parent: tkinter.BaseWidget | tkinter.Toplevel | tkinter.Tk = None
-
+        parent: tkinter.BaseWidget | tkinter.Toplevel | tkinter.Tk = None,
+        do_print: bool = False
         # one_display_orient: Literal["horizontal", "vertical"]="horizontal"
 ) -> str | dict | list | tuple:
     # TODO add 'parent' param. Would allow you to specify where a screen's parent is, and to match it's dimensions.
@@ -4102,7 +4262,8 @@ def calc_geometry_tl(
     p_a = width == "zoomed"
     p_b = height == "zoomed"
     if p_a or p_b:
-        print(f"A, {p_a=}, {p_b=}")
+        if do_print:
+            print(f"A, {p_a=}, {p_b=}")
 
         if p_a:
             height_o = height_ if p_b else height
@@ -4118,7 +4279,8 @@ def calc_geometry_tl(
             x_ = (width_ - width_c) // 2
             width_ = width_c
     else:
-        print(f"B")
+        if do_print:
+            print(f"B")
         width_c = clamp(1, width, width_)
         height_c = clamp(1, height, height_)
         x = (width_ - width_c) // 2
@@ -4133,7 +4295,8 @@ def calc_geometry_tl(
     else:
         res = f"{width_}x{height_}+{x_}+{y_}"
 
-    print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
+    if do_print:
+        print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
     if rtype == str:
         return res
     elif rtype == dict:
@@ -4189,9 +4352,254 @@ def auto_font(font, text, c_width, c_height, min_font_size=4, max_font_size=300)
     return font
 
 
+class ToggleCanvas(tkinter.Canvas):
+
+    def __init__(
+            self,
+            master,
+            option_a: str | list[str, str] | tuple[str, str] = "On",
+            option_b: str | None = None,
+            default_value: int | None = None,
+            width: int = 100,
+            height: int = 20,
+            colour_background: str | Colour = "#BBBBCE",
+            colour_divider: str | Colour = "#000000",
+            colour_text_option_a: str | Colour = "#9F0808",
+            colour_text_option_b: str | Colour = "#089F08",
+            colour_option_a: str | None | Colour = None,
+            colour_option_b: str | None | Colour = None,
+            font_text_option_a: str | Tuple[str, int] = "Arial 16",
+            font_text_option_b: str | Tuple[str, int] = "Arial 16",
+            auto_grid: bool = True,
+            margin_rect_w: int = 2,
+            margin_rect_h: int = 2,
+            width_divider: int = 3,
+            p_bright: float = 0.15
+    ):
+        super().__init__(master)
+
+        if not (0 < width < 10000):
+            raise ValueError(f"Parameter 'width' is out of range: '{width}'")
+        if not (0 < height < 10000):
+            raise ValueError(f"Parameter 'height' is out of range: '{height}'")
+
+        if not (0.05 < p_bright < 0.9):
+            raise ValueError(f"Parameter 'p_bright' is out of range: '{p_bright}'")
+
+        if isinstance(option_a, (list, tuple)):
+            option_b = None
+
+        if option_b is None:
+            if isinstance(option_a, (list, tuple)):
+                if len(option_a) != 2:
+                    raise ValueError(f"Parameter 'option_a' can be a single string or a list or tuple of length 2.")
+                option_a, option_b = option_a
+            elif option_a.lower() == "on":
+                option_b = "Off"
+            else:
+                option_b = f"Not {option_a}"
+
+        self.width = width
+        self.height = height
+        self.option_a = option_a
+        self.option_b = option_b
+        self.colour_background = colour_background if isinstance(colour_background, Colour) else Colour(colour_background)
+        self.colour_divider = colour_divider if isinstance(colour_divider, Colour) else Colour(colour_divider)
+        self.colour_text_option_a = colour_text_option_a if isinstance(colour_text_option_a, Colour) else Colour(colour_text_option_a)
+        self.colour_text_option_b = colour_text_option_b if isinstance(colour_text_option_b, Colour) else Colour(colour_text_option_b)
+        self.colour_option_a = colour_option_a if isinstance(colour_option_a, Colour) else (Colour(colour_option_a) if colour_option_a is not None else self.colour_background)
+        self.colour_option_b = colour_option_b if isinstance(colour_option_b, Colour) else (Colour(colour_option_b) if colour_option_b is not None else self.colour_background)
+        self.font_text_option_a = font_text_option_a
+        self.font_text_option_b = font_text_option_b
+
+        self.margin_rect_w = margin_rect_w
+        self.margin_rect_h = margin_rect_h
+        self.width_divider = width_divider
+        self.p_bright = p_bright
+
+        self.configure(
+            width=self.width,
+            height=self.height,
+            background=self.colour_background.hex_code
+        )
+
+        self.default_value = default_value
+        if default_value is not None:
+            if default_value not in [self.option_a, self.option_b]:
+                raise ValueError(f"Error with default value '{default_value}' it is not recognized as option.")
+
+        self.value = tkinter.StringVar(self, value=default_value)
+
+        self.rect_option_a = self.create_rectangle(
+            self.margin_rect_w,
+            self.margin_rect_h,
+            (self.width / 2) - self.margin_rect_w,
+            self.height - self.margin_rect_h,
+            fill=self.colour_option_a.hex_code,
+            outline=self.colour_option_b.hex_code,
+            activefill=self.colour_option_a.brightened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_b.brightened(self.p_bright).hex_code
+        )
+
+        self.rect_option_b = self.create_rectangle(
+            (self.width / 2) + self.margin_rect_w,
+            self.margin_rect_h,
+            self.width - self.margin_rect_w,
+            self.height - self.margin_rect_h,
+            fill=self.colour_option_b.hex_code,
+            outline=self.colour_option_b.hex_code,
+            activefill=self.colour_option_b.brightened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_b.brightened(self.p_bright).hex_code
+        )
+
+        self.line_divider = self.create_line(
+            self.width / 2,
+            self.height * 0.1,
+            self.width / 2,
+            self.height * 0.9,
+            fill=self.colour_divider.hex_code,
+            width=self.width_divider
+        )
+
+        self.tag_option_a = self.create_text(
+            self.width * 0.25,
+            self.height * 0.5,
+            text=self.option_a,
+            fill=self.colour_text_option_a.hex_code,
+            font=self.font_text_option_a
+        )
+
+        self.tag_option_b = self.create_text(
+            self.width * 0.75,
+            self.height * 0.5,
+            text=self.option_b,
+            fill=self.colour_text_option_b.hex_code,
+            font=self.font_text_option_b
+        )
+
+        self.auto_grid = auto_grid
+        if self.auto_grid:
+            self.auto_grid_widgets()
+
+        self.tag_bind(self.rect_option_a, "<Button-1>", self.click_option_a)
+        self.tag_bind(self.tag_option_a, "<Button-1>", self.click_option_a)
+        self.tag_bind(self.tag_option_a, "<Enter>", self.enter_option_a)
+        self.tag_bind(self.tag_option_a, "<Leave>", self.leave_option_a)
+
+        self.tag_bind(self.rect_option_b, "<Button-1>", self.click_option_b)
+        self.tag_bind(self.tag_option_b, "<Button-1>", self.click_option_b)
+        self.tag_bind(self.tag_option_b, "<Enter>", self.enter_option_b)
+        self.tag_bind(self.tag_option_b, "<Leave>", self.leave_option_b)
+
+        if self.default_value is not None:
+            if self.default_value.lower() == self.option_a.lower():
+                self.click_option_a()
+            elif self.default_value.lower() == self.option_b.lower():
+                self.click_option_b()
+
+    def auto_grid_widgets(self):
+        # auto_grid_widgets
+        self.grid()
+
+    def click_option_a(self, event=None):
+        # print(f"click_option_a")
+        self.value.set(self.option_a)
+        self.itemconfigure(
+            self.rect_option_a,
+            fill=self.colour_option_a.darkened(self.p_bright).hex_code,
+            outline=self.colour_option_a.darkened(self.p_bright).hex_code,
+            activefill=self.colour_option_a.darkened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_a.darkened(self.p_bright).hex_code
+        )
+        self.itemconfigure(
+            self.rect_option_b,
+            fill=self.colour_option_b.hex_code,
+            outline=self.colour_option_b.hex_code,
+            activefill=self.colour_option_b.brightened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_b.brightened(self.p_bright).hex_code
+        )
+
+    def click_option_b(self, event=None):
+        # print(f"click_option_b")
+        self.value.set(self.option_b)
+        self.itemconfigure(
+            self.rect_option_a,
+            fill=self.colour_option_a.hex_code,
+            outline=self.colour_option_a.hex_code,
+            activefill=self.colour_option_a.brightened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_a.brightened(self.p_bright).hex_code
+        )
+        self.itemconfigure(
+            self.rect_option_b,
+            fill=self.colour_option_b.darkened(self.p_bright).hex_code,
+            outline=self.colour_option_b.darkened(self.p_bright).hex_code,
+            activefill=self.colour_option_b.darkened(self.p_bright).hex_code,
+            activeoutline=self.colour_option_b.darkened(self.p_bright).hex_code
+        )
+
+    def enter_option_a(self, event):
+        # print(f"enter_option_a {self.value.get()=}, {self.option_a=}")
+        c = self.colour_option_a
+        b = c.brightened(self.p_bright)
+        d = c.darkened(self.p_bright)
+        self.itemconfigure(
+            self.rect_option_a,
+            fill=(b if (self.value.get() != self.option_a) else d).hex_code,
+            outline=(b if (self.value.get() != self.option_a) else d).hex_code
+        )
+
+    def leave_option_a(self, event):
+        # print(f"leave_option_a {self.value.get()=}, {self.option_a=}")
+        c = self.colour_option_a
+        b = c.brightened(self.p_bright)
+        d = c.darkened(self.p_bright)
+        self.itemconfigure(
+            self.rect_option_a,
+            fill=(c if (self.value.get() != self.option_a) else d).hex_code,
+            outline=(c if (self.value.get() != self.option_a) else d).hex_code
+        )
+
+    def enter_option_b(self, event):
+        # print(f"enter_option_b {self.value.get()=}, {self.option_b=}")
+        c = self.colour_option_b
+        b = c.brightened(self.p_bright)
+        d = c.darkened(self.p_bright)
+        self.itemconfigure(
+            self.rect_option_b,
+            fill=(b if self.value.get() != self.option_b else d).hex_code,
+            outline=(b if self.value.get() != self.option_b else d).hex_code
+        )
+
+    def leave_option_b(self, event):
+        # print(f"leave_option_b {self.value.get()=}, {self.option_b=}")
+        c = self.colour_option_b
+        b = c.brightened(self.p_bright)
+        d = c.darkened(self.p_bright)
+        self.itemconfigure(
+            self.rect_option_b,
+            fill=(c if (self.value.get() != self.option_b) else d).hex_code,
+            outline=(c if (self.value.get() != self.option_b) else d).hex_code
+        )
+
+
 if __name__ == '__main__':
     print(f"\n\tVersion:\n{VERSION}\n")
     print(f"Details: {VERSION_DETAILS()}.")
     print(f"{VERSION_NUMBER()=}.")
     print(f"{VERSION_DATE()=}.")
     print(f"{VERSION_AUTHORS()=}.")
+
+    app = tkinter.Tk()
+    tb = ToggleCanvas(
+        app,
+        width=600,
+        height=200
+        # ,
+        # colour_option_a="#874556",
+        # colour_option_b="#455687",
+        ,font_text_option_a="CourierNew 18"
+        ,font_text_option_b="Arial 32",
+        option_a=["PART 1", "PART 2"],
+        p_bright=0.25
+    )
+    app.mainloop()

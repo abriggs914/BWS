@@ -3929,6 +3929,7 @@ class InfoFrame(tkinter.Frame):
 
         # print(dict_print(self.formats, "formats"))
 
+        self.frame_header = None
         self.check_header()
         self.check_footer()
         hi = 1 if self.header is not None else 0
@@ -4008,13 +4009,15 @@ class InfoFrame(tkinter.Frame):
         if self.header is not None:
             r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
             off_r, off_c = self.parse_auto_grid()
+            self.frame_header = tkinter.Frame(self)
             self.header = label_factory(
-                self,
+                self.frame_header,
                 tv_label=self.header,
                 kwargs_label=self.header_kwargs
             )
             self.auto_grid = (off_r + 1, off_c)
-            self.grid_args["header"] = {r: 0, c: 0, rs: 1, cs: 2}
+            self.grid_args["frame_header"] = {r: 0, c: 0, rs: 1, cs: 2}
+            self.grid_args["header"] = {r: 0, c: 0, rs: 1, cs: 1}
 
     def check_footer(self):
         if self.footer is not None:
@@ -4067,6 +4070,8 @@ class InfoFrame(tkinter.Frame):
             v = self.grid_args[k]
             if k == ".":
                 self.grid(**v)
+            elif k == "frame_header":
+                self.frame_header.grid(**v)
             elif k == "header":
                 self.header[1].grid(**v)
             elif k == "footer":

@@ -1,0 +1,10 @@
+
+SELECT
+	DATEPART(DW, GETDATE()) [DayOfWeek]
+	,DATEPART(DD, GETDATE()) [DayOfWeek]
+	,DATEPART(DY, GETDATE()) [DayOfWeek]
+	,DATEPART(HH, GETDATE()) [DayOfWeek]
+	,DATEPART(M, GETDATE()) [DayOfWeek]
+	,DATEPART(MI, GETDATE()) [DayOfWeek]
+	,DATEPART(MM, GETDATE()) [DayOfWeek]
+
