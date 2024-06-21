@@ -305,123 +305,109 @@ class App(tkinter.Tk):
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
         self.file_last_session_sql: str = "last_session_sql.sql"
 
-        self.data: dict = {
-            "state": {
-                "hovered": [],
-                "selected": [],
-                "dragged": [],
-                "cursor_drag_pos": [None, None]
-            },
-            # "history": [],
-            "history": tkinter.Variable(value=list(), name="history"),
-            "listbox_history": [],
-            "settings": {
-                "allow_multi_select": False,
-                "colour_coding": {},
-                "TEST_MODE": tkinter.BooleanVar(self, value=False),
-                "min_font_size_tile": 8,
-                "max_font_size_tile": 18,
-                "start_at_first_of_month": True,
-                "end_at_end_of_month": True
-            }
+        self.app_state = {
+            "hovered": [],
+            "selected": [],
+            "dragged": [],
+            "cursor_drag_pos": [None, None]
+        }
+        self.history = tkinter.Variable(value=list(), name="history")
+        self.listbox_history = []
+        self.settings = {
+            "allow_multi_select": False,
+            "colour_coding": {},
+            "TEST_MODE": tkinter.BooleanVar(self, value=False),
+            "min_font_size_tile": 8,
+            "max_font_size_tile": 18,
+            "start_at_first_of_month": True,
+            "end_at_end_of_month": True
         }
         self.tl_data: dict = {}
 
         # default values
-        self.data.update({
-            "days_backward": 3 * 7,
-            "days_forward": 52 * 7,
+        self.days_backward = 3 * 7
+        self.days_forward = 52 * 7
 
-            "opacity_reload": 0.6,
-            "x_top_widgets": 10,
-            "y_top_widgets": 5,
-            "margin_between_mc_and_calendar": 20,
+        self.opacity_reload = 0.6
+        self.x_top_widgets = 10
+        self.y_top_widgets = 5
+        self.margin_between_mc_and_calendar = 20
 
-            "colour_foreground_testing_mode_label": Colour("#981415"),
-            "font_foreground_testing_mode_label": ("Arial", 12, "bold"),
-            "colour_foreground_processing_label": Colour(JADE_GREEN),
-            "colour_background_processing_label": Colour("#083712"),
-            "font_foreground_processing_label": ("Arial", 32, "bold"),
-            "colour_background_root_canvas": Colour("#12CC16"),
-            # "colour_app_background": Colour("#C3C3C3"),
-            # "colour_app_background": Colour("#941186"),
-            "colour_app_background": Colour(self.cget("bg")),
-            # "colour_app_background": Colour("#F0F0F0"),
-            "colour_calendar_background": Colour("#101060"),
-            "colour_tile_header_home_background": Colour("#181210"),
-            "colour_tile_header_row_background": Colour("#321116"),
-            "colour_tile_header_row_foreground": Colour("#e4e4ff"),
-            "colour_tile_header_col_background": Colour("#321116"),
-            "colour_tile_header_col_foreground": Colour("#e4e4ff"),
+        self.colour_foreground_testing_mode_label = Colour("#981415")
+        self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
+        self.colour_foreground_processing_label = Colour(JADE_GREEN)
+        self.colour_background_processing_label = Colour("#083712")
+        self.font_foreground_processing_label = ("Arial", 32, "bold")
+        self.colour_background_root_canvas = Colour("#12CC16")
+        # "colour_app_background" = Colour("#C3C3C3"),
+        # "colour_app_background" = Colour("#941186"),
+        self.colour_app_background = Colour(self.cget("bg"))
+        # "colour_app_background" = Colour("#F0F0F0"),
+        self.colour_calendar_background = Colour("#101060")
+        self.colour_tile_header_home_background = Colour("#181210")
+        self.colour_tile_header_row_background = Colour("#321116")
+        self.colour_tile_header_row_foreground = Colour("#e4e4ff")
+        self.colour_tile_header_col_background = Colour("#321116")
+        self.colour_tile_header_col_foreground = Colour("#e4e4ff")
 
-            "colour_tile_background": Colour("#ecdddd"),
-            "colour_tile_foreground": Colour("#090909"),
-            "font_tile": "Arial 10",
-            "colour_tile_outline": Colour("#111111"),
-            "width_tile_outline": 1,
+        self.colour_tile_background = Colour("#ecdddd")
+        self.colour_tile_foreground = Colour("#090909")
+        self.font_tile = "Arial 10"
+        self.colour_tile_outline = Colour("#111111")
+        self.width_tile_outline = 1
 
-            "colour_garbage_background": Colour("#A32234"),
-            "colour_garbage_foreground": Colour("#632234"),
-            "colour_garbage_outline": Colour("#632234"),
-            "colour_garbage_border_width": 4,
+        self.colour_garbage_background = Colour("#A32234")
+        self.colour_garbage_foreground = Colour("#632234")
+        self.colour_garbage_outline = Colour("#632234")
+        self.colour_garbage_border_width = 4
 
-            "colour_background_app": Colour("#777797"),
-            "colour_background_calendar_app": Colour("#777797"),
-            "colour_tile_background_selected": Colour("#DC4245"),
-            "colour_tile_foreground_selected": Colour("#090909"),
-            "font_tile_selected": "Arial 12 bold",
-            "colour_tile_outline_selected": Colour("#DDA911"),
-            "width_tile_outline_selected": 4,
-            "height_calendar_scrollbar": 20,
+        self.colour_background_app = Colour("#777797")
+        self.colour_background_calendar_app = Colour("#777797")
+        self.colour_tile_background_selected = Colour("#DC4245")
+        self.colour_tile_foreground_selected = Colour("#090909")
+        self.font_tile_selected = "Arial 12 bold"
+        self.colour_tile_outline_selected = Colour("#DDA911")
+        self.colour_foreground_holiday = Colour("#A44000")
+        self.colour_test_dot = Colour("#AE3341")
+        self.width_tile_outline_selected = 4
+        self.height_calendar_scrollbar = 20
 
-            "default_font": ("Arial", 10)
-        })
-        self.data.update({
-            # "colour_calendar_background": Colour("#000000"),
-            # "colour_tile_header_home_background": Colour("#181210"),
-            # "colour_tile_header_row_background": Colour("#321116"),
-            # "colour_tile_header_row_foreground": Colour("#e4e4ff"),
-            # "colour_tile_header_col_background": Colour("#321116"),
-            # "colour_tile_header_col_foreground": Colour("#e4e4ff"),
-            "colour_background_testing_mode_label": self.data["colour_background_app"].brightened(0.15),
-            "colour_fill_multi_combobox_drag_tile": self.data["colour_tile_background"].darkened(0.2),
-            # "colour_fill_multi_combobox_drag_tile": self.data["colour_app_background"],
-            "colour_outline_multi_combobox_drag_tile": self.data["colour_tile_foreground"].darkened(0.2),
-            "colour_tile_background_hover": self.data["colour_tile_background"].brightened(0.25),
-            "colour_tile_foreground_hover": self.data["colour_tile_foreground"].brightened(0.25),
-            "font_tile_hover": "Arial 12 bold",
-            "colour_tile_outline_hover": self.data["colour_tile_outline"].brightened(0.25),
-            "width_tile_outline_hover": 2,
+        self.default_font = ("Arial", 10)
 
-            "colour_tile_background_weekend": self.data["colour_tile_background"].darkened(0.5),
-            "colour_tile_foreground_weekend": self.data["colour_tile_foreground"].darkened(0.5),
-            "colour_tile_outline_weekend": self.data["colour_tile_outline"].darkened(0.5),
-            "font_tile_weekend": self.data["font_tile"],
-            "width_tile_outline_weekend": self.data["width_tile_outline"]
-        })
-        self.data.update({
-            "colour_tile_background_weekend_selected": self.data["colour_tile_background_selected"].darkened(0.25),
-            "colour_tile_foreground_weekend_selected": self.data["colour_tile_foreground_selected"].darkened(0.25),
-            "colour_tile_outline_weekend_selected": self.data["colour_tile_outline_selected"].darkened(0.25),
-            "font_tile_weekend_selected": self.data["font_tile_selected"],
+        self.colour_background_testing_mode_label = self.colour_background_app.brightened(0.15)
+        self.colour_fill_multi_combobox_drag_tile = self.colour_tile_background.darkened(0.2)
+        self.colour_outline_multi_combobox_drag_tile = self.colour_tile_foreground.darkened(0.2)
+        self.colour_tile_background_hover = self.colour_tile_background.brightened(0.25)
+        self.colour_tile_foreground_hover = self.colour_tile_foreground.brightened(0.25)
+        self.font_tile_hover = "Arial 12 bold"
+        self.colour_tile_outline_hover = self.colour_tile_outline.brightened(0.25)
+        self.width_tile_outline_hover = 2
 
-            "colour_tile_background_weekend_hover": self.data["colour_tile_background_hover"].darkened(0.25),
-            "colour_tile_foreground_weekend_hover": self.data["colour_tile_foreground_hover"].darkened(0.25),
-            "colour_tile_outline_weekend_hover": self.data["colour_tile_outline_hover"].darkened(0.25),
-            "font_tile_weekend_hover": self.data["font_tile_hover"]
-        })
+        self.colour_tile_background_weekend = self.colour_tile_background.darkened(0.5)
+        self.colour_tile_foreground_weekend = self.colour_tile_foreground.darkened(0.5)
+        self.colour_tile_outline_weekend = self.colour_tile_outline.darkened(0.5)
+        self.font_tile_weekend = self.font_tile
+        self.width_tile_outline_weekend = self.width_tile_outline
 
-        self.data.update({
-            "title_application_full": f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}",
-            "title_application_short": "STG Prod Sched",
-            "abc_has_hist_msg": f"Are you sure you want to exit, you have unsaved work?",
-            "abc_no_hist_msg": f"Are you sure you want to exit?",
-            "abcsh_has_hist_msg": f"Save your work before quitting?",
-            "abcsh_no_hist_msg": f"Are you sure you want to exit?",
-            "msg_no_hist_on_save": f"You do not have any unsaved changes.",
-            "msg_save_successful": f"Changes saved successfully!",
-            "msg_no_commit_test_mode": f"No changes saved because testing mode is enabled."
-        })
+        self.colour_tile_background_weekend_selected = self.colour_tile_background_selected.darkened(0.25)
+        self.colour_tile_foreground_weekend_selected = self.colour_tile_foreground_selected.darkened(0.25)
+        self.colour_tile_outline_weekend_selected = self.colour_tile_outline_selected.darkened(0.25)
+        self.font_tile_weekend_selected = self.font_tile_selected
+
+        self.colour_tile_background_weekend_hover = self.colour_tile_background_hover.darkened(0.25)
+        self.colour_tile_foreground_weekend_hover = self.colour_tile_foreground_hover.darkened(0.25)
+        self.colour_tile_outline_weekend_hover = self.colour_tile_outline_hover.darkened(0.25)
+        self.font_tile_weekend_hover = self.font_tile_hover
+
+        self.title_application_full = f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}"
+        self.title_application_short = "STG Prod Sched"
+        self.abc_has_hist_msg = f"Are you sure you want to exit, you have unsaved work?"
+        self.abc_no_hist_msg = f"Are you sure you want to exit?"
+        self.abcsh_has_hist_msg = f"Save your work before quitting?"
+        self.abcsh_no_hist_msg = f"Are you sure you want to exit?"
+        self.msg_no_hist_on_save = f"You do not have any unsaved changes."
+        self.msg_save_successful = f"Changes saved successfully!"
+        self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
 
         self.tl_cc_app: Optional[tkinter.Toplevel] = None
 
@@ -459,28 +445,26 @@ class App(tkinter.Tk):
             underline=0
         )
 
-        self.title(self.data["title_application_full"])
+        self.title(self.title_application_full)
         self.configure(
-            background=self.data["colour_app_background"].hex_code
+            background=self.colour_app_background.hex_code
         )
 
-        # self.data["geometry"] = tkinter_utility.calc_geometry_tl(0.75, 0.75, largest=1, rtype=dict)
-        # self.data["geometry"] = tkinter_utility.calc_geometry_tl("zoomed", largest=1, rtype=dict)
-        self.data["geometry"] = tkinter_utility.calc_geometry_tl("zoomed", largest=True, rtype=dict)
+        self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", largest=True, rtype=dict)
 
-        if self.data["settings"]["TEST_MODE"].get():
-            print(f"DIMS: {self.data['geometry']=}")
-        self.data.update({
-            "total_width": self.data["geometry"]["width"],
-            "total_height": self.data["geometry"]["height"]
-        })
-        n_cols: int = self.data["days_forward"] + self.data["days_backward"] + 1  # +1 for today in the middle
+        if self.settings["TEST_MODE"].get():
+            print(f"DIMS: {self.calc_geometry=}")
+
+        self.total_width = self.calc_geometry["width"]
+        self.total_height = self.calc_geometry["height"]
+        
+        n_cols: int = self.days_forward + self.days_backward + 1  # +1 for today in the middle
 
         self.frame_calendar = tkinter.Frame(
             self,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background=self.data["colour_background_app"].hex_code
+            width=self.calc_geometry["width"],
+            height=self.calc_geometry["height"],
+            background=self.colour_background_app.hex_code
         )
 
         self.tv_lbl_processing, self.lbl_processing = None, None
@@ -489,27 +473,27 @@ class App(tkinter.Tk):
             self,
             tv_label="TESTING MODE ENABLED",
             kwargs_label={
-                "fg": self.data["colour_foreground_testing_mode_label"].hex_code,
-                "bg": self.data["colour_background_testing_mode_label"].hex_code,
-                "font": self.data["font_foreground_testing_mode_label"]
+                "fg": self.colour_foreground_testing_mode_label.hex_code,
+                "bg": self.colour_background_testing_mode_label.hex_code,
+                "font": self.font_foreground_testing_mode_label
             }
         )
 
         self.df_valid_updaters = None
-        self.data["settings"]["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
-        self.data["settings"]["init_test_mode_done"] = tkinter.BooleanVar(self, value=False)
+        self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
+        self.settings["init_test_mode_done"] = tkinter.BooleanVar(self, value=False)
         self.check_valid_updater()
 
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         self.df_calendar = connect(**SQL_HOLIDAYS, do_show=tm, do_print=tm)
         self.df_prod_lines = connect(**SQL_USED_LINES, do_show=tm, do_print=tm)
         self.df_orders = connect(**SQL_DATED_STG_UNITS, do_show=tm, do_print=tm).fillna("")
-        self.data["multi_combobox_columns"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
-        self.data["info_frame_columns"] = \
+        self.multi_combobox_columns = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
+        self.info_frame_columns = \
             ["US Sale"] \
-            + self.data["multi_combobox_columns"] \
+            + self.multi_combobox_columns \
             + ["Prod Date", "Delivery Date", "Sched Finish", "Sched Line"]
-        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.data["multi_combobox_columns"])
+        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.multi_combobox_columns)
         self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
         # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
         # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
@@ -524,7 +508,7 @@ class App(tkinter.Tk):
         # )
         # print(f"{self.df_multi_combobox_data_warranties['WAR_WO']=}")
 
-        if self.data["settings"]["TEST_MODE"].get():
+        if self.settings["TEST_MODE"].get():
             print(f"{self.df_multi_combobox_data_warranties['Job']=}")
         self.list_multi_combobox_warranties_viewable_col_widths = {
             "Claim #": 60,
@@ -552,48 +536,42 @@ class App(tkinter.Tk):
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
         self.list_warranty_lines = self.list_prod_lines[-1:]  # currently only using the last line
 
-        self.data["width_multi_combobox"] = 725
-        self.data["height_multi_combobox"] = 150
+        self.width_multi_combobox = 725
+        self.height_multi_combobox = 150
 
-        if self.data["settings"]["TEST_MODE"].get():
-            print(f"{self.data['width_multi_combobox']=}\n{self.data['height_multi_combobox']=}")
+        if self.settings["TEST_MODE"].get():
+            print(f"{self.width_multi_combobox=}\n{self.height_multi_combobox=}")
 
-        self.data.update({
-            "tile_width": 175,
-            "tile_height": 110,
-            "tile_width_weekend": 60,
-            "tile_height_weekend": 110,
-            "tile_width_legend_lines": 110,
-            "tile_height_legend_lines": 110,
-            "canvas_width": self.data["total_width"] - self.data["width_multi_combobox"],
-            "canvas_height": self.data["total_height"] - self.data["height_multi_combobox"]
-        })
+        self.tile_width = 175
+        self.tile_height = 110
+        self.tile_width_weekend = 60
+        self.tile_height_weekend = 110
+        self.tile_width_legend_lines = 110
+        self.tile_height_legend_lines = 110
+        self.canvas_width = self.total_width - self.width_multi_combobox
+        self.canvas_height = self.total_height - self.height_multi_combobox
 
         # adjust incase too few prod lines
-        if (self.data["tile_height"] * n_rows) < self.data["total_height"]:
-            self.data.update({
-                "tile_height": self.data["canvas_height"] / n_rows
-            })
+        if (self.tile_height * n_rows) < self.total_height:
+            self.tile_height = self.canvas_height / n_rows
 
-        self.data.update({
-            "x_place_frame_canvas": self.data["width_multi_combobox"] - self.data["margin_between_mc_and_calendar"],
-            "y_place_frame_canvas": self.data["y_top_widgets"],
-            "w_place_frame_canvas": int(self.data["geometry"]["width"]),
-            "h_place_frame_canvas": int(self.data["geometry"]["height"]),
+        self.x_place_frame_canvas = self.width_multi_combobox - self.margin_between_mc_and_calendar
+        self.y_place_frame_canvas = self.y_top_widgets
+        self.w_place_frame_canvas = int(self.calc_geometry["width"])
+        self.h_place_frame_canvas = int(self.calc_geometry["height"])
 
-            "x_place_frame_multi_combobox": self.data["x_top_widgets"],
-            "y_place_frame_multi_combobox": self.data["y_top_widgets"],
+        self.x_place_frame_multi_combobox = self.x_top_widgets
+        self.y_place_frame_multi_combobox = self.y_top_widgets
 
-            "x_place_frame_info_frame": self.data["x_top_widgets"],
-            "y_place_frame_info_frame": self.data["height_multi_combobox"] + 195
-        })
+        self.x_place_frame_info_frame = self.x_top_widgets
+        self.y_place_frame_info_frame = self.height_multi_combobox + 195
 
         self.frame_info_frame = tkinter.Frame(self.frame_calendar)
         self.frame_canvas = tkinter.Frame(
             self.frame_calendar,
-            width=self.data["canvas_width"],
-            height=self.data["canvas_height"] + self.data["height_calendar_scrollbar"],  # scrollbar space
-            background=self.data["colour_background_calendar_app"].hex_code
+            width=self.canvas_width,
+            height=self.canvas_height + self.height_calendar_scrollbar,  # scrollbar space
+            background=self.colour_background_calendar_app.hex_code
         )
         # multicombobox for searching
         self.frame_multi_combobox = tkinter.Frame(
@@ -615,9 +593,7 @@ class App(tkinter.Tk):
         )
         self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
 
-        self.data.update({
-            "y_place_toggle_warranty": self.data["y_top_widgets"] + self.toggle_warranty.height
-        })
+        self.y_place_toggle_warranty = self.y_top_widgets + self.toggle_warranty.height
 
         # multi-combobox now that data has been sorted
         self.multi_combobox_orders = tkinter_utility.MultiComboBox(
@@ -646,20 +622,19 @@ class App(tkinter.Tk):
             allow_insert_ask=False,
             lock_result_col="Job",
             auto_grid=False,
-            width=self.data["x_place_frame_canvas"],
+            width=self.x_place_frame_canvas,
             show_index_column=False
         )
 
         self.today = datetime_utility.date_to_datetime(datetime.datetime.now().date())
         # now = datetime.datetime.now()
-        self.data["first_date"] = self.today + datetime.timedelta(days=-self.data["days_backward"])
-        if self.data["settings"]["start_at_first_of_month"]:
-            self.data["first_date"] = datetime_utility.first_of_month(self.data["first_date"])
-        self.data["last_date"] = self.today + datetime.timedelta(days=self.data["days_forward"])
-        if self.data["settings"]["end_at_end_of_month"]:
-            self.data["last_date"] = datetime_utility.end_of_month(self.data["last_date"])
-        # self.list_dates = pd.date_range(self.data["first_date"], periods=n_cols).to_pydatetime().tolist()
-        self.list_dates = pd.date_range(self.data["first_date"], periods=n_cols, normalize=False).to_list()
+        self.first_date = self.today + datetime.timedelta(days=-self.days_backward)
+        if self.settings["start_at_first_of_month"]:
+            self.first_date = datetime_utility.first_of_month(self.first_date)
+        self.last_date = self.today + datetime.timedelta(days=self.days_forward)
+        if self.settings["end_at_end_of_month"]:
+            self.last_date = datetime_utility.end_of_month(self.last_date)
+        self.list_dates = pd.date_range(self.first_date, periods=n_cols, normalize=False).to_list()
         self.tiles = {d: {pl: dict() for pl in self.list_prod_lines} for d in self.list_dates}
         self.tiles["home"] = dict()
         self.df_ids_to_date_line = {}
@@ -669,7 +644,7 @@ class App(tkinter.Tk):
             (self.list_dates[0] <= self.df_calendar["Date"]) & (self.df_calendar["Date"] <= self.list_dates[-1])]
         self.holidays = self.df_calendar.dropna(subset=["HolidayName"]).set_index("Date")["HolidayName"].to_dict()
 
-        if self.data["settings"]["TEST_MODE"].get():
+        if self.settings["TEST_MODE"].get():
             print(f"{self.df_calendar=}")
             print(f"{self.holidays=}")
 
@@ -678,48 +653,28 @@ class App(tkinter.Tk):
         n_weekdays = n_cols - n_weekend_days
 
         # TODO fix variable column sizing
-        canvas_width_scroll = self.data["tile_width"] * n_cols  # old method
-        # canvas_width_scroll = sum([
-        #     self.data["tile_width_legend_lines"],
-        #     (n_weekdays * self.data["tile_width"]),
-        #     (n_weekend_days * self.data["tile_width_weekend"])
-        # ])
+        canvas_width_scroll = self.tile_width * n_cols  # old method
+        self.canvas_width_scroll_region = canvas_width_scroll
+        self.canvas_height_scroll_region = self.tile_height * n_rows
 
-        self.data.update({
-            "canvas_width_scroll_region":
-            # ((n_cols - n_weekend_days) * self.data["tile_width"])
-            # + (n_weekend_days * self.data["tile_width_weekend"]),
-            #     self.data["tile_width"] * n_cols,
-                canvas_width_scroll,
-            "canvas_height_scroll_region": self.data["tile_height"] * n_rows,
-        })
-
-        # canvas_background = self.data["colour_calendar_background"]
         self.calc_grid_cells = utility.grid_cells(
-            self.data["canvas_width_scroll_region"],
+            self.canvas_width_scroll_region,
             n_cols,
-            self.data["canvas_height_scroll_region"],
+            self.canvas_height_scroll_region,
             n_rows,
             r_type=list
         )
-        # self.calc_grid_cells = utility.grid_cells(
-        #     self.data["canvas_width_scroll_region"],
-        #     n_cols,
-        #     self.data["canvas_height_scroll_region"],
-        #     n_rows,
-        #     r_type=list
-        # )
 
         self.canvas = tkinter.Canvas(
             self.frame_canvas,
-            width=self.data["canvas_width"],
-            height=self.data["canvas_height"],
-            background=self.data["colour_calendar_background"].hex_code,
+            width=self.canvas_width,
+            height=self.canvas_height,
+            background=self.colour_calendar_background.hex_code,
             scrollregion=(
                 0,
                 0,
-                self.data["canvas_width_scroll_region"],
-                self.data["canvas_height_scroll_region"]
+                self.canvas_width_scroll_region,
+                self.canvas_height_scroll_region
             )
         )
         self.scroll_bar_x = tkinter.Scrollbar(
@@ -730,14 +685,14 @@ class App(tkinter.Tk):
 
         self.invisible_canvas = tkinter.Canvas(
             self.frame_calendar,
-            width=self.data["geometry"]["width"],
-            height=self.data["geometry"]["height"],
-            background=self.data["colour_background_root_canvas"].hex_code,
+            width=self.calc_geometry["width"],
+            height=self.calc_geometry["height"],
+            background=self.colour_background_root_canvas.hex_code,
             scrollregion=(
                 0,
                 0,
-                self.data["geometry"]["width"],
-                self.data["geometry"]["height"]
+                self.calc_geometry["width"],
+                self.calc_geometry["height"]
             )
         )
 
@@ -746,9 +701,9 @@ class App(tkinter.Tk):
             self.invisible_canvas,
             tv_label="processing",
             kwargs_label={
-                "fg": self.data["colour_foreground_processing_label"].hex_code,
-                "bg": self.data["colour_background_processing_label"].hex_code,
-                "font": self.data["font_foreground_processing_label"]
+                "fg": self.colour_foreground_processing_label.hex_code,
+                "bg": self.colour_background_processing_label.hex_code,
+                "font": self.font_foreground_processing_label
             }
         )
 
@@ -759,15 +714,15 @@ class App(tkinter.Tk):
                 date = self.list_dates[j]
                 is_weekend = date.weekday() >= 5
                 if is_weekend:
-                    tile_colour = self.data["colour_tile_background_weekend"]
-                    tile_outline = self.data["colour_tile_outline_weekend"]
-                    tile_outline_width = self.data["width_tile_outline_weekend"]
-                    font = self.data["font_tile_weekend"]
+                    tile_colour = self.colour_tile_background_weekend
+                    tile_outline = self.colour_tile_outline_weekend
+                    tile_outline_width = self.width_tile_outline_weekend
+                    font = self.font_tile_weekend
                 else:
-                    tile_colour = self.data["colour_tile_background"]
-                    tile_outline = self.data["colour_tile_outline"]
-                    tile_outline_width = self.data["width_tile_outline"]
-                    font = self.data["font_tile"]
+                    tile_colour = self.colour_tile_background
+                    tile_outline = self.colour_tile_outline
+                    tile_outline_width = self.width_tile_outline
+                    font = self.font_tile
                 # tile = self.canvas.create_rectangle(
                 #     *col,
                 #     fill=tile_colour.hex_code,
@@ -809,22 +764,22 @@ class App(tkinter.Tk):
             if prod_line == "":
                 prod_line = None
 
-            if self.data["settings"]["TEST_MODE"].get():
+            if self.settings["TEST_MODE"].get():
                 print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
                 # print(f"{dat_dealer=}")
 
             if date is not None and prod_line is not None:
-                if self.data["first_date"] <= date <= self.data["last_date"]:
+                if self.first_date <= date <= self.last_date:
                     # place this tile with date and prod_line
 
-                    if self.data["settings"]["TEST_MODE"].get():
+                    if self.settings["TEST_MODE"].get():
                         print(f"\tFITS")
 
                     tile_data = self.tiles[date][prod_line]
                     col = self.canvas.bbox(tile_data["tile"])
                     # prev_texts = tile_data.get("texts", [])
-                    tile_text_colour = self.data["colour_tile_foreground"]
-                    font = self.data["font_tile"]
+                    tile_text_colour = self.colour_tile_foreground
+                    font = self.font_tile
                     to_do_texts = [
                         v for v in [
                             dat_quote,
@@ -837,7 +792,7 @@ class App(tkinter.Tk):
                     ]
                     if self.tiles[date][prod_line].get("order"):
 
-                        if self.data["settings"]["TEST_MODE"].get():
+                        if self.settings["TEST_MODE"].get():
                             print(f">>> {dat_quote=}, {date=}, {prod_line=} already has an order!!!!")
 
                         no_fit = True
@@ -847,8 +802,8 @@ class App(tkinter.Tk):
                             "order": i,
                             "texts": [
                                 self.canvas.create_text(
-                                    int(col[0] + (self.data["tile_width"] * 0.5)),
-                                    int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                                    int(col[0] + (self.tile_width * 0.5)),
+                                    int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                                     text=txt,
                                     fill=tile_text_colour.hex_code,
                                     font=font
@@ -862,7 +817,7 @@ class App(tkinter.Tk):
 
                 if no_fit:
 
-                    if self.data["settings"]["TEST_MODE"].get():
+                    if self.settings["TEST_MODE"].get():
                         print(f"\tDOESNT FIT")
 
                     # mc_append_row = []
@@ -870,7 +825,7 @@ class App(tkinter.Tk):
                     new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders.shape[0]])
                     self.concats_rest_orders.append(new_df)
 
-                    if self.data["settings"]["TEST_MODE"].get():
+                    if self.settings["TEST_MODE"].get():
                         # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
                         # self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
                         # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
@@ -882,7 +837,7 @@ class App(tkinter.Tk):
             else:
                 # add this order to the combobox for placing
 
-                if self.data["settings"]["TEST_MODE"].get():
+                if self.settings["TEST_MODE"].get():
                     print(f"\tCOMBOBOX")
 
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
@@ -918,7 +873,7 @@ class App(tkinter.Tk):
             #     # add new row record to mc
             #     pass
 
-        if self.data["settings"]["TEST_MODE"].get():
+        if self.settings["TEST_MODE"].get():
             print(f"self.df_orders==\n{self.df_orders}")
             print(f"self.df_rest_orders==\n{self.df_rest_orders}")
             print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders}")
@@ -934,11 +889,11 @@ class App(tkinter.Tk):
                 date = self.list_dates[j]
                 # is_holiday = date in self.holidays
                 holiday_name = self.holidays.get(date, None)
-                tile_colour = self.data["colour_tile_header_row_background"]
-                tile_text_colour = self.data["colour_tile_header_row_foreground"]
-                font = self.data["font_tile"]
-                tile_outline = self.data["colour_tile_outline"]
-                tile_outline_width = self.data["width_tile_outline"]
+                tile_colour = self.colour_tile_header_row_background
+                tile_text_colour = self.colour_tile_header_row_foreground
+                font = self.font_tile
+                tile_outline = self.colour_tile_outline
+                tile_outline_width = self.width_tile_outline
                 to_do_texts = [
                     f"{date:%A}",  # Day of Week
                     f"{date:%B}",  # Month
@@ -966,8 +921,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.tile_width * 0.5)),
+                            int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -976,7 +931,7 @@ class App(tkinter.Tk):
                     ]
                 })
                 if holiday_name is not None:
-                    self.canvas.itemconfigure(self.tiles[date][key]["texts"][-1], fill="#A44000")
+                    self.canvas.itemconfigure(self.tiles[date][key]["texts"][-1], fill=self.colour_foreground_holiday.hex_code)
 
         # header columns
         for i, row in enumerate(self.calc_grid_cells[1:]):
@@ -986,20 +941,20 @@ class App(tkinter.Tk):
                 prod_line = self.list_prod_lines[i]
                 # date = self.list_dates[j]
                 key = "line_legend"
-                tile_colour = self.data["colour_tile_header_col_background"]
-                tile_text_colour = self.data["colour_tile_header_col_foreground"]
-                font = self.data["font_tile"]
-                tile_outline = self.data["colour_tile_outline"]
-                tile_outline_width = self.data["width_tile_outline"]
+                tile_colour = self.colour_tile_header_col_background
+                tile_text_colour = self.colour_tile_header_col_foreground
+                font = self.font_tile
+                tile_outline = self.colour_tile_outline
+                tile_outline_width = self.width_tile_outline
                 to_do_texts = [
                     prod_line
                 ]
                 if key not in self.tiles:
-                    if self.data["settings"]["TEST_MODE"].get():
+                    if self.settings["TEST_MODE"].get():
                         print(f"ADDING KEY {key=}")
                     self.tiles[key] = dict()
                 if prod_line not in self.tiles:
-                    if self.data["settings"]["TEST_MODE"].get():
+                    if self.settings["TEST_MODE"].get():
                         print(f"ADDING SUB KEY {prod_line=}")
                     self.tiles[key][prod_line] = dict()
                 self.tiles[key][prod_line].update({
@@ -1018,8 +973,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.tile_width * 0.5)),
+                            int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -1033,35 +988,31 @@ class App(tkinter.Tk):
 
         # top left 'home' cell
         try:
-            self.data["stg_logo_image"] = Image.open(r"C:\Access\Stargate Logo 50%.jpg")
-            self.data["stg_logo_image"] = ImageTk.PhotoImage(
-                self.data["stg_logo_image"].resize(
+            self.stg_logo_image = Image.open(r"C:\Access\Stargate Logo 50%.jpg")
+            self.stg_logo_image = ImageTk.PhotoImage(
+                self.stg_logo_image.resize(
                     (
-                        int(self.data["tile_width"]),
-                        int(self.data["tile_height"])
+                        int(self.tile_width),
+                        int(self.tile_height)
                     ),
                     # Image.ANTIALIAS
                     Image.LANCZOS
                 )
             )
         except FileNotFoundError:
-            self.data["stg_logo_image"] = None
+            self.stg_logo_image = None
 
-        if self.data["stg_logo_image"]:
+        if self.stg_logo_image:
             self.tiles["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.data["tile_width"] / 2),
-                self.calc_grid_cells[0][0][1] + (self.data["tile_height"] / 2),
+                self.calc_grid_cells[0][0][0] + (self.tile_width / 2),
+                self.calc_grid_cells[0][0][1] + (self.tile_height / 2),
                 anchor=tkinter.CENTER,
-                image=self.data["stg_logo_image"]
+                image=self.stg_logo_image
             )
         else:
-            # self.tiles["home"]["tile"] = self.canvas.create_rectangle(
-            #     *self.calc_grid_cells[0][0],
-            #     fill=self.data["colour_tile_header_home_background"].hex_code
-            # )
             self.tiles["home"]["tile"] = self.draw_rect(
                 *self.calc_grid_cells[0][0],
-                fill=self.data["colour_tile_header_home_background"].hex_code,
+                fill=self.colour_tile_header_home_background.hex_code,
                 parent=self.canvas
             )
 
@@ -1070,7 +1021,7 @@ class App(tkinter.Tk):
         bg_info_frame = Colour("SystemButtonFace")
         self.info_frame = tkinter_utility.InfoFrame(
             self.frame_info_frame,
-            labels=self.data["info_frame_columns"],
+            labels=self.info_frame_columns,
             auto_grid=True,
             header="Quote Information:",
             key_width=16,
@@ -1110,7 +1061,7 @@ class App(tkinter.Tk):
         ga.update({"columnspan": 1, "column": 1, "padx": 110})
         self.btn_if_goto.grid(**ga)
 
-        if (geo := self.data["geometry"]["str"]) == "zoomed":
+        if (geo := self.calc_geometry["str"]) == "zoomed":
             self.state(geo)
         else:
             self.geometry(geo)
@@ -1126,25 +1077,25 @@ class App(tkinter.Tk):
         self.multi_combobox_drag_tile = self.draw_rect(
             (
                 *drag_tile_start_pos,
-                100 + self.data["tile_width"],
-                100 + self.data["tile_height"]
+                100 + self.tile_width,
+                100 + self.tile_height
             ),
-            fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
-            outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code,
+            fill=self.colour_fill_multi_combobox_drag_tile.hex_code,
+            outline=self.colour_outline_multi_combobox_drag_tile.hex_code,
             parent=self.invisible_canvas
         )
         self.dot = self.invisible_canvas.create_oval(
             5, 5, 25, 25,
-            fill="#AE3341"
+            fill=self.colour_test_dot.hex_code
         )
         self.multi_combobox_drag_tile_texts_placeholder = "PLACEHOLDER"
         self.multi_combobox_drag_tile_texts = [
             self.invisible_canvas.create_text(
-                (drag_tile_start_pos[0] + ((100 + self.data["tile_width"]) / 2)),
-                (drag_tile_start_pos[1] + ((100 + self.data["tile_height"]) / 2)),
+                (drag_tile_start_pos[0] + ((100 + self.tile_width) / 2)),
+                (drag_tile_start_pos[1] + ((100 + self.tile_height) / 2)),
                 text=self.multi_combobox_drag_tile_texts_placeholder,
-                fill=self.data["colour_tile_foreground"].hex_code,
-                font=self.data["font_tile"]
+                fill=self.colour_tile_foreground.hex_code,
+                font=self.font_tile
             )
         ]
 
@@ -1171,7 +1122,7 @@ class App(tkinter.Tk):
 
         # bindings
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
-        self.data["history"].trace_variable("w", self.tv_update_history)
+        self.history.trace_variable("w", self.tv_update_history)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
         self.canvas.bind("<Motion>", self.on_motion_calendar)
         self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
@@ -1192,27 +1143,26 @@ class App(tkinter.Tk):
         # self.canvas.bind("<Control-z>", self.undo)
         # self.bind("<Ctrl-z>", self.undo)
 
-        if self.data["settings"]["TEST_MODE"].get():
-            print(f"{self.data=}")
+        if self.settings["TEST_MODE"].get():
             print(f"{self.tiles=}")
 
-        in_test_mode = self.data["settings"]["TEST_MODE"]
+        in_test_mode = self.settings["TEST_MODE"]
 
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
 
     def set_invisible_canvas(self, mode="invisble"):
 
         if mode == "gray":
-            if self.data["settings"]["init_test_mode_done"].get():
-                self.wm_attributes("-alpha", self.data["opacity_reload"])
+            if self.settings["init_test_mode_done"].get():
+                self.wm_attributes("-alpha", self.opacity_reload)
             # self.call("wm", "attributes", ".", "-alpha", "0.9")  # Window Opacity 0.0-1.0
         else:
             # invisible
-            if self.data["settings"]["init_test_mode_done"].get():
+            if self.settings["init_test_mode_done"].get():
                 self.wm_attributes("-alpha", 1)
             # self.call("wm", "attributes", ".", "-alpha", "1.0")  # Window Opacity 0.0-1.0
             hwnd = self.invisible_canvas.winfo_id()
-            colorkey = win32api.RGB(*self.data["colour_background_root_canvas"].rgb_code)
+            colorkey = win32api.RGB(*self.colour_background_root_canvas.rgb_code)
             wnd_exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
             new_exstyle = wnd_exstyle | win32con.WS_EX_LAYERED
             win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_exstyle)
@@ -1220,7 +1170,7 @@ class App(tkinter.Tk):
             win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
 
     def tv_update_test_mode(self, *args):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"tv_update_test_mode")
             print(f"{getattr(self, 'invisible_canvas', None)=}")
@@ -1237,11 +1187,10 @@ class App(tkinter.Tk):
         self.reload_application()
 
     def tv_update_history(self, *args):
-        tm = self.data["settings"]["TEST_MODE"].get()
-        hist = self.data["history"].get()
+        tm = self.settings["TEST_MODE"].get()
+        hist = self.history.get()
         if tm:
             print(f"History update: {hist=}")
-        # known_hist = self.data.get("listbox_history", [])
         known_hist = self.listbox_history.get(0, tkinter.END)
         lh, lkh = len(hist), len(known_hist)
         if lh > lkh:
@@ -1298,25 +1247,25 @@ class App(tkinter.Tk):
 
             self.listbox_history.insert(tkinter.END, msg)
 
-            if self.data["settings"]["TEST_MODE"].get():
+            if self.settings["TEST_MODE"].get():
                 print(f"Inserted {new_item=}\n{hist=}")
         elif lh < lkh:
             # deleted a history event
             del_item = known_hist[-1]
             idx = known_hist.index(str(del_item))
             self.listbox_history.delete(idx)
-            if self.data["settings"]["TEST_MODE"].get():
+            if self.settings["TEST_MODE"].get():
                 print(f"deleted {del_item=}")
         else:
             # no change
-            if self.data["settings"]["TEST_MODE"].get():
+            if self.settings["TEST_MODE"].get():
                 print(f"No Change")
         # self.listbox_history
-        if self.data["settings"]["TEST_MODE"].get():
-            print(f"AFTER {list(self.data['history'].get())=}")
+        if self.settings["TEST_MODE"].get():
+            print(f"AFTER {list(self.history.get())=}")
 
     def colour_code(self, date=None, line=None):
-        cc = self.data["settings"]["colour_coding"]
+        cc = self.settings["colour_coding"]
         if date is None or line is None:
             # colour code every tile
             date_to_check = [d for d in self.list_dates]
@@ -1386,16 +1335,16 @@ class App(tkinter.Tk):
         user = utility.get_windows_user(2)
         # use this for testing
         # user = "bwsdomain.local\\cbg"
-        self.data["state"]["user_full"] = user
+        self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
         if not user_name:
             user_name = user
-        self.data["state"]["user_domain"] = user_domain
-        self.data["state"]["user_name"] = user_name[0] if isinstance(user_name, (list, tuple)) else user_name
+        self.app_state["user_domain"] = user_domain
+        self.app_state["user_name"] = user_name[0] if isinstance(user_name, (list, tuple)) else user_name
         df = self.df_valid_updaters.loc[self.df_valid_updaters["UserName"].str.lower().str.strip() == user_name[0]]
 
         # valid_users = [un.lower().strip() for un in self.df_valid_updaters["UserName"].unique() if len(un)]
-        if self.data["settings"]["TEST_MODE"].get():
+        if self.settings["TEST_MODE"].get():
             print(f"{df=}")
 
         print(f"{user=}, {user_domain=}, {user_name=}", end="")
@@ -1408,9 +1357,9 @@ class App(tkinter.Tk):
             cc = df_pds_user["ColourCoding"]
             test_mode = df_pds_user["InTestingMode"]
             cc = cc if not pd.isna(cc) else {}
-            self.data["settings"]["colour_coding"] = eval(str(cc))
+            self.settings["colour_coding"] = eval(str(cc))
             print(f"INIT TEST MODE {test_mode}")
-            self.data["settings"]["TEST_MODE"].set(bool(test_mode))
+            self.settings["TEST_MODE"].set(bool(test_mode))
             return True
 
         print(f" NOT FOUND")
@@ -1421,7 +1370,7 @@ class App(tkinter.Tk):
 
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
-        # if self.data["settings"]["TEST_MODE"].get():
+        # if self.settings["TEST_MODE"].get():
         #     self.lbl_testing_mode.grid()
         self.frame_calendar.grid(**{r: 1})
         self.frame_calendar.grid_propagate(False)
@@ -1432,30 +1381,30 @@ class App(tkinter.Tk):
         is_warranty = self.toggle_warranty.value.get() == "Warranty"
 
         self.frame_canvas.place(
-            x=self.data["x_place_frame_canvas"],
-            y=self.data["y_place_frame_canvas"],
-            width=self.data["w_place_frame_canvas"],
-            height=self.data["h_place_frame_canvas"]
+            x=self.x_place_frame_canvas,
+            y=self.y_place_frame_canvas,
+            width=self.w_place_frame_canvas,
+            height=self.h_place_frame_canvas
         )
 
         self.frame_multi_combobox.place(
-            x=self.data["x_place_frame_multi_combobox"],
-            y=self.data["y_place_frame_multi_combobox"]
+            x=self.x_place_frame_multi_combobox,
+            y=self.y_place_frame_multi_combobox
         )
         self.frame_mc_inner.grid(**{r: 0, c: 0})
 
         self.frame_info_frame.place(
-            x=self.data["x_top_widgets"],
-            y=self.data["height_multi_combobox"] + 235
+            x=self.x_top_widgets,
+            y=self.height_multi_combobox + 235
         )
 
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             self.listbox_history.grid(row=0, column=0, columnspan=1, rowspan=1)
             self.scroll_bar_history.grid(row=0, column=1, columnspan=1, rowspan=1, sticky="ns")
             self.frame_listbox_history.place(
-                x=self.data["x_top_widgets"],
-                y=self.data["height_multi_combobox"] + 235 + 340
+                x=self.x_top_widgets,
+                y=self.height_multi_combobox + 235 + 340
             )
 
         if is_warranty:
@@ -1481,8 +1430,8 @@ class App(tkinter.Tk):
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
         x_1, x_2 = self.canvas.xview()
         y_1, y_2 = self.canvas.yview()
-        srw = self.data["canvas_width_scroll_region"]
-        srh = self.data["canvas_height_scroll_region"]
+        srw = self.canvas_width_scroll_region
+        srh = self.canvas_height_scroll_region
         x_1 *= srw
         x_2 *= srw
         y_1 *= srh
@@ -1491,10 +1440,10 @@ class App(tkinter.Tk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
-        tw_legend_lines = self.data["tile_width_legend_lines"]
-        th_legend_lines = self.data["tile_height_legend_lines"]
-        tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
+        tw_legend_lines = self.tile_width_legend_lines
+        th_legend_lines = self.tile_height_legend_lines
+        tw, th = self.tile_width, self.tile_height
+        tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
         col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
@@ -1502,7 +1451,7 @@ class App(tkinter.Tk):
         # tiles = [dat["tile"] for dat in col_legend]
         home_tile = self.tiles["home"]["tile"]
 
-        if self.data["stg_logo_image"]:
+        if self.stg_logo_image:
             # move image
             self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
         else:
@@ -1533,7 +1482,7 @@ class App(tkinter.Tk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
         """
-        srw = self.data["canvas_width_scroll_region"]
+        srw = self.canvas_width_scroll_region
         dates = self.list_dates
         p = min(x / srw, 0.999)  # prevent index out of bounds
         # i = int(p * len(dates)) - 1
@@ -1550,7 +1499,7 @@ class App(tkinter.Tk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
         """
-        srh = self.data["canvas_height_scroll_region"]
+        srh = self.canvas_height_scroll_region
         lines = self.list_prod_lines
         p = min(y / srh, 0.999)  # prevent index out of bounds
         # include the legend in space calculations, but exclude for indexing
@@ -1597,26 +1546,26 @@ class App(tkinter.Tk):
         return self.calc_grid_cells[i_line][i_date]
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
-        # print(f"SEL {self.data['settings']['allow_multi_select']=}")
+        # print(f"SEL {self.settings['allow_multi_select']=}")
         if not select:
-            # self.data["state"]["selected"].clear()
+            # self.app_state["selected"].clear()
             self.clear_selected_tiles()
         else:
-            if not self.data["settings"]["allow_multi_select"]:
+            if not self.settings["allow_multi_select"]:
                 self.select_tile(date, prod_line, False)
             if (date is not None) and (prod_line is not None):
                 self.update_info_frame(date, prod_line)
-                self.data["state"]["selected"].append((date, prod_line))
+                self.app_state["selected"].append((date, prod_line))
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         # print(f"HOVER ({date=}, {prod_line=})")
-        self.data["state"]["hovered"].append((date, prod_line))
+        self.app_state["hovered"].append((date, prod_line))
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
-        self.data["state"]["dragged"].append((date, prod_line))
+        self.app_state["dragged"].append((date, prod_line))
 
     def delete_tile(self, date_line: tuple[pd.Timestamp, str], from_undo: bool = False) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"DELETE TILE {date_line=}")
 
@@ -1687,10 +1636,10 @@ class App(tkinter.Tk):
                 self.multi_combobox_orders.add_new_item(val=new_df)
             self.df_ids_to_date_line[order] = (None, None)
             if not from_undo:
-                # self.data["history"].append(("DELETE", order, date_line))
-                hist = list(self.data["history"].get())
+                # self.history.append(("DELETE", order, date_line))
+                hist = list(self.history.get())
                 hist.append(("DELETE", order, date_line))
-                self.data["history"].set(hist)
+                self.history.set(hist)
 
     def insert_tile(
             self,
@@ -1699,7 +1648,7 @@ class App(tkinter.Tk):
             from_undo: bool = False,
             do_animate: None | str = None
     ) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"insert_tile")
 
@@ -1727,7 +1676,7 @@ class App(tkinter.Tk):
             if is_warranty:
                 exist_war_job = self.df_multi_combobox_data_warranties.iloc[order_already_exists]["Job"]
                 ans = messagebox.askyesnocancel(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?"
                 )
                 if ans == tkinter.YES:
@@ -1740,7 +1689,7 @@ class App(tkinter.Tk):
             else:
                 exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
                 ans = messagebox.askyesnocancel(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?"
                 )
                 if ans == tkinter.YES:
@@ -1760,8 +1709,8 @@ class App(tkinter.Tk):
         texts = self.tiles[date][line].get("texts", [])
         drag_texts = self.multi_combobox_drag_tile_texts
 
-        tile_text_colour = self.data["colour_tile_foreground"]
-        font = self.data["font_tile"]
+        tile_text_colour = self.colour_tile_foreground
+        font = self.font_tile
 
         if tm:
             print(f"{df_orders_id=}\n{texts=}\n{row=}\n{type(row)=}\n{bbox=}")
@@ -1790,8 +1739,8 @@ class App(tkinter.Tk):
 
             texts = [
                 self.canvas.create_text(
-                    int(bbox[0] + (self.data["tile_width"] * 0.5)),
-                    int(bbox[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                    int(bbox[0] + (self.tile_width * 0.5)),
+                    int(bbox[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                     text=txt,
                     fill=tile_text_colour.hex_code,
                     font=font
@@ -1799,7 +1748,7 @@ class App(tkinter.Tk):
                 for k, txt, in enumerate(to_do_texts)
             ]
 
-            tw, th = self.data["tile_width"], self.data["tile_height"]
+            tw, th = self.tile_width, self.tile_height
             n_txts = len(texts)
             bw = float(self.canvas.itemcget(self.tiles[date][line]["tile"], "width"))
             y_t = bbox[1] + bw
@@ -1851,18 +1800,18 @@ class App(tkinter.Tk):
             "texts": texts
         })
         if not from_undo:
-            # self.data["history"].append(
+            # self.history.append(
             #     ("INSERT", df_orders_id, date_line)
             # )
 
-            hist = list(self.data["history"].get())
+            hist = list(self.history.get())
             hist.append(("INSERT", df_orders_id, date_line))
-            self.data["history"].set(hist)
+            self.history.set(hist)
 
         self.colour_code(date, line)
         if tm:
-            # print(f"\n\tPOST INSERT\n{self.data['history']=}")
-            print(f"\n\tPOST INSERT\n{self.data['history'].get()=}")
+            # print(f"\n\tPOST INSERT\n{self.history=}")
+            print(f"\n\tPOST INSERT\n{self.history.get()=}")
         self.select_tile(date, line)
         self.update_selected_tiles()
         self.redraw_legend()
@@ -1876,7 +1825,7 @@ class App(tkinter.Tk):
             from_undo: bool = False,
             do_animate: None | str = None
     ) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         date_1, line_1 = date_line_1
         date_2, line_2 = date_line_2
 
@@ -1885,7 +1834,7 @@ class App(tkinter.Tk):
         if (is_war_1 + is_war_2) % 2 != 0:
             # 1 of these units comes from warranty
             messagebox.showinfo(
-                title=self.data["title_application_short"],
+                title=self.title_application_short,
                 message=f"Cannot swap production units with warranty units"
             )
             self.flash_tile(date_line_2, mode="invalid")
@@ -1942,20 +1891,20 @@ class App(tkinter.Tk):
             if not from_undo:
                 if order_1 or order_2:
                     # one of these tiles is an order, record in the history and allow undos.
-                    # self.data["history"].append(
+                    # self.history.append(
                     #     ("SWAP", date_line_1, date_line_2)
                     # )
 
-                    hist = list(self.data["history"].get())
+                    hist = list(self.history.get())
                     hist.append(("SWAP", date_line_1, date_line_2))
-                    self.data["history"].set(hist)
+                    self.history.set(hist)
 
             if tm:
                 print(
                     f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
 
     def on_right_click_calendar(self, event) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"on_right_click_calendar")
         ex, ey = event.x, event.y
@@ -1973,12 +1922,12 @@ class App(tkinter.Tk):
         self.clear_selected_tiles()
 
     def on_left_click_calendar(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"on_left_click_calendar_ {event=}")
-        ht = self.data["state"]["hovered"]
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
+        ht = self.app_state["hovered"]
+        st = self.app_state["selected"]
+        dt = self.app_state["dragged"]
         if ht:
             ht_0 = ht[0]
             h_date, h_line = ht_0
@@ -2000,8 +1949,8 @@ class App(tkinter.Tk):
                 print(f"NOTHING HOVERED")
 
     def on_left_click_release_calendar(self, event) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
-        dt = self.data["state"]["dragged"]
+        tm = self.settings["TEST_MODE"].get()
+        dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
@@ -2085,35 +2034,35 @@ class App(tkinter.Tk):
                         quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
                         if tm:
                             print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
-                    # self.data["state"]["selected"].append(sel)
+                    # self.app_state["selected"].append(sel)
                     if o_id:
                         orders.append(sel)
                 self.update_selected_tiles()
                 if tm:
-                    print(f"END SELECTED = {self.data['state']['selected']=}")
+                    print(f"END SELECTED = {self.app_state['selected']=}")
 
         if not orders:
             self.clear_info_frame()
 
     def on_left_click_root_canvas(self, event) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
     def drag_treeview_warranty_entry(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"drag_treeview_warranty_entry {event=}")
         self.drag_treeview_entry(event)
 
     def release_treeview_warranty_entry(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"release_treeview_warranty_entry {event=}")
         self.release_treeview_entry(event)
 
     def drag_treeview_entry(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"drag_treeview_entry, {event=}")
         is_warranty = self.toggle_warranty.value.get() == "Warranty"
@@ -2124,7 +2073,7 @@ class App(tkinter.Tk):
         vcn = self.multi_combobox_orders.tree_controller.viewable_column_names
         tv_dt = self.tv_multi_combobox_drag_tile.get()
         # self.multi_combobox_canvas_drag_tile.grid_forget()
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.tile_width, self.tile_height
         h_multi_combobox_toggle = self.toggle_warranty.height
         e_x, e_y = event.x, event.y
         e_x1, e_y1 = self.invisible_canvas.canvasx(e_x), self.invisible_canvas.canvasy(e_y)
@@ -2237,7 +2186,7 @@ class App(tkinter.Tk):
         self.invisible_canvas.coords(self.dot, e_x-10, e_y-10, e_x+10, e_y+10)
 
     def release_treeview_entry(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
@@ -2248,18 +2197,18 @@ class App(tkinter.Tk):
         self.tv_multi_combobox_drag_tile.set(False)
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         e_x, e_y = event.x, event.y
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.tile_width, self.tile_height
 
-        x_fc = self.data.get("x_place_frame_canvas", 0)
-        y_fc = self.data.get("y_place_frame_canvas", 0)
-        w_fc = self.data.get("w_place_frame_canvas", 1)
-        h_fc = self.data.get("h_place_frame_canvas", 1)
+        x_fc = getattr(self, "x_place_frame_canvas", 0)
+        y_fc = getattr(self, "y_place_frame_canvas", 0)
+        w_fc = getattr(self, "w_place_frame_canvas", 1)
+        h_fc = getattr(self, "h_place_frame_canvas", 1)
 
-        x_mc = self.data.get("x_place_frame_multi_combobox", 0)
-        y_mc = self.data.get("y_place_frame_multi_combobox", 0)
+        x_mc = getattr(self, "x_place_frame_multi_combobox", 0)
+        y_mc = getattr(self, "y_place_frame_multi_combobox", 0)
 
-        x_if = self.data.get("x_place_frame_info_frame", 0)
-        y_if = self.data.get("y_place_frame_info_frame", 0)
+        x_if = getattr(self, "x_place_frame_info_frame", 0)
+        y_if = getattr(self, "y_place_frame_info_frame", 0)
 
         # bbox_canvas = self.canvas.bbox()
         # bbox_if = self.info_frame.bbox()
@@ -2309,7 +2258,7 @@ class App(tkinter.Tk):
                         if line not in self.list_warranty_lines:
                             # return the dragging tile to the combobox and stop
                             messagebox.showinfo(
-                                title=self.data["title_application_short"],
+                                title=self.title_application_short,
                                 message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(
                                     self.list_warranty_lines)
                             )
@@ -2340,7 +2289,7 @@ class App(tkinter.Tk):
                             for l in self.list_warranty_lines:
                                 prod_lines.remove(l)
                             messagebox.showinfo(
-                                title=self.data["title_application_short"],
+                                title=self.title_application_short,
                                 message=f"Production units can only be placed in production lines:\n\t" + "\n\t".join(
                                     prod_lines)
                             )
@@ -2388,7 +2337,7 @@ class App(tkinter.Tk):
         # before = self.tv_entry_unit_scroll_search.get()
         # before = self.scroll_bar_x.get()
 
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"FLASH TILE {date_line=}, {mode=} ", end="")
         date, line = date_line
@@ -2401,7 +2350,7 @@ class App(tkinter.Tk):
 
         bba = self.canvas.bbox("all")
         bbaw = (bba[2] - bba[0])
-        cw = self.data["canvas_width"]
+        cw = self.canvas_width
         t_bbox = self.canvas.bbox(tile)
         x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
             t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
@@ -2418,9 +2367,9 @@ class App(tkinter.Tk):
 
         bg_f, fg_f, outline_f = None, None, None
         bg, fg, outline = \
-            self.data["colour_tile_background"], \
-                self.data["colour_tile_foreground"], \
-                self.data["colour_tile_outline"]
+            self.colour_tile_background, \
+                self.colour_tile_foreground, \
+                self.colour_tile_outline
         match mode:
             case "valid":
                 bg_f = Colour("#A2F9A3")
@@ -2433,9 +2382,9 @@ class App(tkinter.Tk):
             case "invalid_we":
                 # invalid placement, tile cant be placed on the weekend
                 bg, fg, outline = \
-                    self.data["colour_tile_background_weekend"], \
-                        self.data["colour_tile_foreground_weekend"], \
-                        self.data["colour_tile_outline_weekend"]
+                    self.colour_tile_background_weekend, \
+                        self.colour_tile_foreground_weekend, \
+                        self.colour_tile_outline_weekend
 
                 bg_f = Colour("#791213")
                 fg_f = Colour("#400203")
@@ -2460,7 +2409,7 @@ class App(tkinter.Tk):
                        self.canvas.itemconfigure(tile_, fill=g_bg_, outline=g_ol_))
 
         # after animation, check if the tile is selected, then restore.
-        if (sel := self.data["state"].get("selected", None)) is not None:
+        if (sel := self.app_state.get("selected", None)) is not None:
             # print(f"{sel=}, {type(sel)=}")
             for s_date, s_line in sel:
                 # s_date, s_line = sel
@@ -2475,7 +2424,7 @@ class App(tkinter.Tk):
             )
 
     def bind_treeview_to_canvas(self):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         old_bind = self.multi_combobox_orders.tree_controller.binding_treeview_b1_motion
         self.multi_combobox_orders.tree_controller.treeview.bind("<B1-Motion>", self.drag_treeview_entry)
         self.multi_combobox_orders.tree_controller.treeview.bind("<ButtonRelease-1>", self.release_treeview_entry)
@@ -2489,13 +2438,13 @@ class App(tkinter.Tk):
                                                                      self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
-        ht = self.data["state"]["hovered"]
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
+        ht = self.app_state["hovered"]
+        st = self.app_state["selected"]
+        dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
             print(f"{ht=}, {st=}, {dt=}")
@@ -2504,16 +2453,16 @@ class App(tkinter.Tk):
             for date, line in ht:
                 self.select_tile(date, line)
 
-            st = self.data["state"]["selected"]
+            st = self.app_state["selected"]
 
-        p_x, p_y = self.data["state"]["cursor_drag_pos"]
+        p_x, p_y = self.app_state["cursor_drag_pos"]
         if p_x is None:
             p_x = x
         if p_y is None:
             p_y = y
 
-        tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
+        tw, th = self.tile_width, self.tile_height
+        tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
         d_x, d_y = o_x - p_x, o_y - p_y
         for date, line in (dt + st):
             if date.weekday() < 5:
@@ -2545,11 +2494,11 @@ class App(tkinter.Tk):
                 # self.get_tile_at_x_y()
                 self.hover_tile(date, line)
 
-        self.data["state"]["cursor_drag_pos"] = (o_x, o_y)
+        self.app_state["cursor_drag_pos"] = (o_x, o_y)
 
     def on_motion_calendar(self, event) -> None:
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
+        st = self.app_state["selected"]
+        dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         # tile = self.canvas.find_closest(ox, oy)
@@ -2560,7 +2509,7 @@ class App(tkinter.Tk):
             return
         # self.canvas.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
-        # self.data["state"]["hovered"].clear()
+        # self.app_state["hovered"].clear()
 
         # don't overwrite the selected and dragging tiles with new hovers
         if (date, line) not in (st + dt):
@@ -2569,17 +2518,17 @@ class App(tkinter.Tk):
             self.update_hover_tiles()
 
     def update_hover_tiles(self) -> None:
-        ht = self.data["state"]["hovered"]
-        ab = self.data["colour_tile_background_hover"]
-        af = self.data["colour_tile_foreground_hover"]
-        ao = self.data["colour_tile_outline_hover"]
-        font = self.data["font_tile_hover"]
-        ow = self.data["width_tile_outline_hover"]
+        ht = self.app_state["hovered"]
+        ab = self.colour_tile_background_hover
+        af = self.colour_tile_foreground_hover
+        ao = self.colour_tile_outline_hover
+        font = self.font_tile_hover
+        ow = self.width_tile_outline_hover
 
-        ab_w = self.data["colour_tile_background_weekend_hover"]
-        af_w = self.data["colour_tile_foreground_weekend_hover"]
-        ao_w = self.data["colour_tile_outline_weekend_hover"]
-        font_w = self.data["font_tile_weekend_hover"]
+        ab_w = self.colour_tile_background_weekend_hover
+        af_w = self.colour_tile_foreground_weekend_hover
+        ao_w = self.colour_tile_outline_weekend_hover
+        font_w = self.font_tile_weekend_hover
 
         for date, prod_line in ht:
             is_weekend = date.weekday() >= 5
@@ -2602,20 +2551,20 @@ class App(tkinter.Tk):
             self.colour_code(date, prod_line)
 
     def clear_hover_tiles(self) -> None:
-        ht = self.data["state"]["hovered"]
-        st = self.data["state"]["selected"]
-        dt = self.data["state"]["dragged"]
-        b = self.data["colour_tile_background"]
-        f = self.data["colour_tile_foreground"]
-        o = self.data["colour_tile_outline"]
-        font = self.data["font_tile"]
+        ht = self.app_state["hovered"]
+        st = self.app_state["selected"]
+        dt = self.app_state["dragged"]
+        b = self.colour_tile_background
+        f = self.colour_tile_foreground
+        o = self.colour_tile_outline
+        font = self.font_tile
 
-        b_w = self.data["colour_tile_background_weekend"]
-        f_w = self.data["colour_tile_foreground_weekend"]
-        o_w = self.data["colour_tile_outline_weekend"]
-        font_w = self.data["font_tile_weekend"]
+        b_w = self.colour_tile_background_weekend
+        f_w = self.colour_tile_foreground_weekend
+        o_w = self.colour_tile_outline_weekend
+        font_w = self.font_tile_weekend
 
-        ow = self.data["width_tile_outline"]
+        ow = self.width_tile_outline
         # print(f"{(st + dt)=}")
 
         # ensure that the selected and dragging tiles are not blanked
@@ -2641,7 +2590,7 @@ class App(tkinter.Tk):
                 )
 
             self.colour_code(date, prod_line)
-        self.data["state"]["hovered"].clear()
+        self.app_state["hovered"].clear()
 
     def clear_master_drag_tile(self):
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
@@ -2649,19 +2598,19 @@ class App(tkinter.Tk):
             self.invisible_canvas.itemconfigure(txt, state="hidden")
 
     def update_selected_tiles(self) -> None:
-        st = self.data["state"]["selected"]
-        ab = self.data["colour_tile_background_selected"]
-        af = self.data["colour_tile_foreground_selected"]
-        ao = self.data["colour_tile_outline_selected"]
-        font = self.data["font_tile_selected"]
+        st = self.app_state["selected"]
+        ab = self.colour_tile_background_selected
+        af = self.colour_tile_foreground_selected
+        ao = self.colour_tile_outline_selected
+        font = self.font_tile_selected
 
-        ab_w = self.data["colour_tile_background_weekend_selected"]
-        af_w = self.data["colour_tile_foreground_weekend_selected"]
-        ao_w = self.data["colour_tile_outline_weekend_selected"]
-        font_w = self.data["font_tile_weekend_selected"]
+        ab_w = self.colour_tile_background_weekend_selected
+        af_w = self.colour_tile_foreground_weekend_selected
+        ao_w = self.colour_tile_outline_weekend_selected
+        font_w = self.font_tile_weekend_selected
 
-        ow = self.data["width_tile_outline_selected"]
-        tm = self.data["settings"]["TEST_MODE"].get()
+        ow = self.width_tile_outline_selected
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"{st=}")
         for date, prod_line in st:
@@ -2685,18 +2634,18 @@ class App(tkinter.Tk):
             self.colour_code(date, prod_line)
 
     def clear_selected_tiles(self) -> None:
-        st = self.data["state"]["selected"]
-        b = self.data["colour_tile_background"]
-        f = self.data["colour_tile_foreground"]
-        o = self.data["colour_tile_outline"]
-        font = self.data["font_tile"]
+        st = self.app_state["selected"]
+        b = self.colour_tile_background
+        f = self.colour_tile_foreground
+        o = self.colour_tile_outline
+        font = self.font_tile
 
-        b_w = self.data["colour_tile_background_weekend"]
-        f_w = self.data["colour_tile_foreground_weekend"]
-        o_w = self.data["colour_tile_outline_weekend"]
-        font_w = self.data["font_tile_weekend"]
+        b_w = self.colour_tile_background_weekend
+        f_w = self.colour_tile_foreground_weekend
+        o_w = self.colour_tile_outline_weekend
+        font_w = self.font_tile_weekend
 
-        ow = self.data["width_tile_outline"]
+        ow = self.width_tile_outline
         for date, prod_line in st:
             is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
@@ -2716,15 +2665,15 @@ class App(tkinter.Tk):
                     font=(font_w if is_weekend else font)
                 )
             self.colour_code(date, prod_line)
-        self.data["state"]["selected"].clear()
+        self.app_state["selected"].clear()
 
     def clear_drag_tiles(self):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"RESETTING DRAG TILES")
-        tw, th = self.data["tile_width"], self.data["tile_height"]
-        tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
-        for date, line in self.data["state"]["dragged"]:
+        tw, th = self.tile_width, self.tile_height
+        tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
+        for date, line in self.app_state["dragged"]:
             bbox = self.get_tile_bbox(date, line)
             tile = self.tiles[date][line]["tile"]
             # print(f"{date=}, {line=}, {tile=}, {bbox=}")
@@ -2736,17 +2685,17 @@ class App(tkinter.Tk):
                 self.canvas.coords(txt, tx, ty)
             self.colour_code(date, line)
 
-        self.data["state"]["dragged"].clear()
+        self.app_state["dragged"].clear()
 
     def undo(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
-            # print(f"undo {self.data['history']=}")
-            print(f"undo {self.data['history'].get()=}")
-        # if self.data["history"]:
-        if self.data["history"].get():
-            # action, *data = self.data["history"].pop(-1)
-            action, *data = list(self.data["history"].get()).pop(-1)
+            # print(f"undo {self.history=}")
+            print(f"undo {self.history.get()=}")
+        # if self.history:
+        if self.history.get():
+            # action, *data = self.history.pop(-1)
+            action, *data = list(self.history.get()).pop(-1)
             match action:
                 case "SWAP":
                     keys_1, keys_2 = data
@@ -2763,7 +2712,7 @@ class App(tkinter.Tk):
                     raise ValueError("Cant undo")
 
     def submit_combobox_entry(self, event):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"submit_combobox_entry")
 
@@ -2772,7 +2721,7 @@ class App(tkinter.Tk):
 
         if n_mc_records:
             messagebox.showinfo(
-                title=self.data["title_application_short"],
+                title=self.title_application_short,
                 message=f"Please keep entering characters. There are still options in the combo-box below."
             )
             return
@@ -2799,12 +2748,12 @@ class App(tkinter.Tk):
                     self.choose_from_choices(df)
             else:
                 messagebox.showinfo(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"Could not find anything matching '{quote}'."
                 )
 
     def multi_combobox_entry_update(self, *args):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         quote = self.multi_combobox_orders.res_tv_entry.get().lower()
         lq = len(quote)
         n_mc_records = len(self.multi_combobox_orders.tree_treeview.get_children())
@@ -2849,7 +2798,7 @@ class App(tkinter.Tk):
 
     def click_tl_tile(self, event, idx, tag):
         # select this tile, and flash it on the calendar
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         date, line = self.df_ids_to_date_line[idx]
         if tm:
             print(f"{event=}, {idx=}, {tag=}")
@@ -2876,7 +2825,7 @@ class App(tkinter.Tk):
                 self.tl_data["canvas_tl"].itemconfigure(tile, fill=self.tl_data["bg"].hex_code)
 
     def choose_from_choices(self, df: pd.DataFrame) -> None:
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
 
         self.tl_data["bg"] = Colour("#006723")
         self.tl_data["fg"] = Colour("#101010")
@@ -2899,7 +2848,7 @@ class App(tkinter.Tk):
                 n_cols -= 1
                 n_rows = (n_choices // n_cols) + 1
 
-            tw, th = self.data["tile_width"], self.data["tile_height"]
+            tw, th = self.tile_width, self.tile_height
             x0, y0 = 0, 0
             xm, ym = 10, 10
             m = 2
@@ -3017,13 +2966,13 @@ class App(tkinter.Tk):
                 print(f"{w=}, {h=}")
 
             tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict)
-            self.tl_data["tl_dataframe_choice"].title(self.data["title_application_full"])
+            self.tl_data["tl_dataframe_choice"].title(self.title_application_full)
             self.tl_data["tl_dataframe_choice"].geometry(tl_geom["geometry"])
             self.tl_data["tl_dataframe_choice"].grab_set()
             self.wait_window(self.tl_data["tl_dataframe_choice"])
 
     def update_info_frame(self, date, prod_line):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if (date is not None) and (prod_line is not None):
             date_tile_data = self.tiles.get(date)
             tile, order = None, None
@@ -3049,14 +2998,14 @@ class App(tkinter.Tk):
                 }
                 if tm:
                     print(f"{dat_1=}")
-                for k in self.data["info_frame_columns"]:
+                for k in self.info_frame_columns:
                     v = dat_1.get(k, f"'{k}'=?")
                     self.info_frame.change_value(k, v)
         else:
             self.info_frame.change_value("SGQuote", "?")
 
     def clear_info_frame(self):
-        for k in self.data["info_frame_columns"]:
+        for k in self.info_frame_columns:
             self.info_frame.change_value(k, "")
 
     def draw_rect(
@@ -3084,11 +3033,11 @@ class App(tkinter.Tk):
 
         args = {}
         if default_all:
-            args["fill"] = self.data["colour_tile_background"].hex_code
-            args["activefill"] = self.data["colour_tile_background_hover"].hex_code
-            args["outline"] = self.data["colour_tile_background"].hex_code
-            args["activeoutline"] = self.data["colour_tile_background_hover"].hex_code
-            args["width"] = self.data["width_tile_outline"]
+            args["fill"] = self.colour_tile_background.hex_code
+            args["activefill"] = self.colour_tile_background_hover.hex_code
+            args["outline"] = self.colour_tile_background.hex_code
+            args["activeoutline"] = self.colour_tile_background_hover.hex_code
+            args["width"] = self.width_tile_outline
         else:
             for k, v in zip(kwarg_keys, kwarg_vals):
                 args[k] = v
@@ -3102,17 +3051,17 @@ class App(tkinter.Tk):
         return parent.create_rectangle(*bbox, **args)
 
     def click_mb_colour_code(self, event=None):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
 
         # open colour code TopLevel.
         known_dealers = [d for d in self.df_orders["InputField2"].unique().tolist() if len(str(d))]
         known_dealers.sort()
-        known_colour_codes = self.data.get("settings", {}).get("colour_coding", {})
+        known_colour_codes = self.settings.get("colour_coding", {})
         n_dealers = len(known_dealers)
         if tm:
             print(f"{known_dealers=}, {known_colour_codes=}")
         self.tl_data["tl_colour_code"] = tkinter.Toplevel(self)
-        self.tl_data["tl_colour_code"].title(self.data["title_application_full"])
+        self.tl_data["tl_colour_code"].title(self.title_application_full)
 
         self.tl_data["cc_changed"] = tkinter.BooleanVar(self, value=False)
 
@@ -3243,10 +3192,10 @@ class App(tkinter.Tk):
             if font:
                 font_name_font_size, font_obj = font
                 if font_name_font_size is None:
-                    font_name_font_size = self.data["default_font"]
+                    font_name_font_size = self.default_font
                 font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.data["settings"]["min_font_size_tile"],
-                                 min(font_size, self.data["settings"]["max_font_size_tile"]))
+                font_size_ = max(self.settings["min_font_size_tile"],
+                                 min(font_size, self.settings["max_font_size_tile"]))
                 # print(f"1 {font_obj=}")
                 if font_size != font_size_:
                     font_obj = (font_name, font_size_)
@@ -3273,10 +3222,10 @@ class App(tkinter.Tk):
             if font:
                 font_name_font_size, font_obj = font
                 if font_name_font_size is None:
-                    font_name_font_size = self.data["default_font"]
+                    font_name_font_size = self.default_font
                 font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.data["settings"]["min_font_size_tile"],
-                                 min(font_size, self.data["settings"]["max_font_size_tile"]))
+                font_size_ = max(self.settings["min_font_size_tile"],
+                                 min(font_size, self.settings["max_font_size_tile"]))
                 # print(f"1 {font_obj=}")
                 if font_size != font_size_:
                     font_obj = (font_name, font_size_)
@@ -3422,14 +3371,14 @@ class App(tkinter.Tk):
             self.grab_set()
 
         def save_changes():
-            cc = self.data.get("settings", {}).get("colour_coding", {})
+            cc = self.settings.get("colour_coding", {})
             cc.update(known_colour_codes)
-            self.data["settings"]["colour_coding"] = cc
+            self.settings["colour_coding"] = cc
             if tm:
-                print(f"{self.data['settings']['colour_coding']=}")
+                print(f"{self.settings['colour_coding']=}")
             self.save_colour_coding()
             messagebox.showinfo(
-                title=self.data["title_application_short"],
+                title=self.title_application_short,
                 message=f"Changes applied successfully."
             )
 
@@ -3451,11 +3400,11 @@ class App(tkinter.Tk):
                 tag = opt_tags_dealers[dealer_idx]["tile"]
                 t_tag = opt_tags_dealers[dealer_idx]["text"]
 
-                bg = self.data["colour_tile_background"].hex_code
-                fg = self.data["colour_tile_foreground"].hex_code
-                bd = self.data["colour_tile_outline"].hex_code
-                ou = self.data["width_tile_outline"]
-                ft = self.data["font_tile"]
+                bg = self.colour_tile_background.hex_code
+                fg = self.colour_tile_foreground.hex_code
+                bd = self.colour_tile_outline.hex_code
+                ou = self.width_tile_outline
+                ft = self.font_tile
 
                 can_opts.itemconfigure(
                     tag,
@@ -3512,7 +3461,6 @@ class App(tkinter.Tk):
                     fill=fg,
                     font=ft
                 )
-                # self.data
                 known_colour_codes[dealer] = {
                     "bg": bg,
                     "fg": fg,
@@ -3533,7 +3481,7 @@ class App(tkinter.Tk):
                 print(f"\t{changes}")
             if changes:
                 ans = messagebox.askyesnocancel(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"Would you like to save your changes?"
                 )
                 if ans == tkinter.YES:
@@ -3555,7 +3503,7 @@ class App(tkinter.Tk):
             if dealer.strip():
                 # a tile is in the edit window now
                 ans = messagebox.askyesnocancel(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"Save changes for '{dealer}'?"
                 )
                 if ans == tkinter.YES:
@@ -3568,7 +3516,7 @@ class App(tkinter.Tk):
                 save_changes()
             else:
                 messagebox.showinfo(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"No changes to apply."
                 )
 
@@ -3580,7 +3528,7 @@ class App(tkinter.Tk):
                 print(f"\t{changes}")
             if changes:
                 ans = messagebox.askyesnocancel(
-                    title=self.data["title_application_short"],
+                    title=self.title_application_short,
                     message=f"Would you like to save your changes?"
                 )
                 if ans == tkinter.YES:
@@ -3642,11 +3590,11 @@ class App(tkinter.Tk):
 
                 dealer = known_dealers[idx]
                 k_dealer = known_colour_codes.get(dealer, {})
-                k_bg = k_dealer.get("bg", self.data["colour_tile_background"].hex_code)
-                k_fg = k_dealer.get("fg", self.data["colour_tile_foreground"].hex_code)
-                k_bd = k_dealer.get("outline", self.data["colour_tile_outline"].hex_code)
-                k_ou = k_dealer.get("width", self.data["width_tile_outline"])
-                k_ft = k_dealer.get("font", self.data["font_tile"])
+                k_bg = k_dealer.get("bg", self.colour_tile_background.hex_code)
+                k_fg = k_dealer.get("fg", self.colour_tile_foreground.hex_code)
+                k_bd = k_dealer.get("outline", self.colour_tile_outline.hex_code)
+                k_ou = k_dealer.get("width", self.width_tile_outline)
+                k_ft = k_dealer.get("font", self.font_tile)
 
                 tag = self.draw_rect(
                     gc,
@@ -3769,9 +3717,9 @@ class App(tkinter.Tk):
         self.wait_window(self.tl_data["tl_colour_code"])
 
     def save_colour_coding(self):
-        tm = self.data["settings"]["TEST_MODE"].get()
-        known_colour_codes = self.data.get("settings", {}).get("colour_coding", {})
-        un = self.data["state"]["user_name"]
+        tm = self.settings["TEST_MODE"].get()
+        known_colour_codes = self.settings.get("colour_coding", {})
+        un = self.app_state["user_name"]
         if tm:
             print(f"{un=}")
         user_domain, *user_name = un.lower().split("\\")
@@ -3793,50 +3741,50 @@ class App(tkinter.Tk):
 
     def ask_before_close(self) -> Tuple[bool, bool]:
         print(f"ask_before_close")
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"ask_before_close")
-        # has_history = self.data.get("history", {})
-        print(f"{self.data['history'].get()=}")
-        has_history = self.data["history"].get()
+        # has_history = self.history
+        print(f"{self.history.get()=}")
+        has_history = self.history.get()
 
         print(f"{has_history=}")
 
-        msg = self.data["abc_no_hist_msg"]
+        msg = self.abc_no_hist_msg
         if has_history:
-            msg = self.data["abc_has_hist_msg"]
+            msg = self.abc_has_hist_msg
 
         return messagebox.askyesnocancel(
-            title=self.data["title_application_short"],
+            title=self.title_application_short,
             message=msg
         ), has_history
 
     def ask_save_before_close(self) -> Tuple[bool, bool]:
         print(f"ask_save_before_close")
-        # has_history = self.data.get("history", {})
-        has_history = self.data["history"].get()
+        # has_history = self.history
+        has_history = self.history.get()
         print(f"{has_history=}")
-        msg = self.data["abcsh_no_hist_msg"]
+        msg = self.abcsh_no_hist_msg
         if has_history:
-            msg = self.data["abcsh_has_hist_msg"]
+            msg = self.abcsh_has_hist_msg
 
         return messagebox.askyesnocancel(
-            title=self.data["title_application_short"],
+            title=self.title_application_short,
             message=msg
         ), has_history
 
     def click_mb_save(self, event=None):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_save, {event=}")
-        test_mode = self.data["settings"]["TEST_MODE"].get()
-        # history = self.data["history"]
+        test_mode = self.settings["TEST_MODE"].get()
+        # history = self.history
 
-        hist = list(self.data["history"].get())
+        hist = list(self.history.get())
         if not hist:
             messagebox.showinfo(
-                title=self.data["title_application_short"],
-                message=self.data["msg_no_hist_on_save"]
+                title=self.title_application_short,
+                message=self.msg_no_hist_on_save
             )
             return
 
@@ -3847,17 +3795,17 @@ class App(tkinter.Tk):
                     sql=stmt
                 )
 
-        # self.data["history"].clear()
-        self.data["history"].set(list())
+        # self.history.clear()
+        self.history.set(list())
         messagebox.showinfo(
-            title=self.data["title_application_short"],
-            message=self.data["msg_save_successful"]
+            title=self.title_application_short,
+            message=self.msg_save_successful
         )
 
     def reload_application(self, reload_time=4000):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
-            print(f"begin reload_application {self.data['settings']['init_test_mode_done'].get()=}")
+            print(f"begin reload_application {self.settings['init_test_mode_done'].get()=}")
         if self.lbl_processing is not None:
             self.lbl_processing.pack(expand=True, fill="both")
 
@@ -3868,14 +3816,14 @@ class App(tkinter.Tk):
             if tm:
                 print(f"end sleep")
 
-        if self.data["settings"]["init_test_mode_done"].get():
+        if self.settings["init_test_mode_done"].get():
             self.set_invisible_canvas("gray")
             thread = threading.Thread(target=wait_loop)
             thread.start()
             thread.join()
             self.set_invisible_canvas()
         else:
-            self.data["settings"]["init_test_mode_done"].set(True)
+            self.settings["init_test_mode_done"].set(True)
 
         if self.lbl_processing is not None:
             self.lbl_processing.pack_forget()
@@ -3884,8 +3832,8 @@ class App(tkinter.Tk):
 
     def set_pds_testing_mode(self, in_testing_mode: bool):
 
-        tm = self.data["settings"]["TEST_MODE"].get()
-        domain_un = self.data["state"]["user_full"]
+        tm = self.settings["TEST_MODE"].get()
+        domain_un = self.app_state["user_full"]
         *domain, un = domain_un.split("\\")
         sql = f"UPDATE [PDS Valid Updaters] SET [InTestingMode] = {int(in_testing_mode)} WHERE [UserName] = '{un}';"
         if tm:
@@ -3893,14 +3841,14 @@ class App(tkinter.Tk):
         connect(sql, **STARGATE_SQL_CREDS, do_print=tm, do_show=tm)
         if tm:
             print(f"--")
-        self.data["settings"]["TEST_MODE"].set(in_testing_mode)
+        self.settings["TEST_MODE"].set(in_testing_mode)
 
     def click_mb_testing_mode(self, event=None):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_testing_mode")
 
-        in_tm = self.data["settings"]["TEST_MODE"].get()
+        in_tm = self.settings["TEST_MODE"].get()
         tl_name = "tl_testing_mode"
         tlsn = "tl_tm"
 
@@ -3920,7 +3868,7 @@ class App(tkinter.Tk):
             self.tl_data[tl_name].destroy()
 
         self.tl_data[tl_name] = tkinter.Toplevel(self)
-        self.tl_data[tl_name].title(self.data["title_application_full"])
+        self.tl_data[tl_name].title(self.title_application_full)
 
         w, h = 200, 120
         tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
@@ -3953,7 +3901,7 @@ class App(tkinter.Tk):
         self.wait_window(self.tl_data[tl_name])
 
     def click_mb_exit(self, event=None):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_exit, {event=}")
         ans_has_history = self.ask_save_before_close()
@@ -3967,17 +3915,17 @@ class App(tkinter.Tk):
 
     def on_closing(self, do_quit: bool = True) -> None | list:
         print(f"on_closing")
-        tm = self.data["settings"]["TEST_MODE"].get()
-        # history = self.data["history"]
+        tm = self.settings["TEST_MODE"].get()
+        # history = self.history
         # do_exec = False  # automatically update server using generated sql statements.
         do_exec = True  # automatically update server using generated sql statements.
 
-        # in_test_mode = self.data["settings"]["TEST_MODE"].get()
+        # in_test_mode = self.settings["TEST_MODE"].get()
         print(f"TEST_MODE={'Y' if tm else 'N'}")
 
         do_exec = do_exec and (not tm)
 
-        history = list(self.data["history"].get())
+        history = list(self.history.get())
         print(f"{history=}")
         sql_statments = []
 
@@ -3999,8 +3947,8 @@ class App(tkinter.Tk):
 
                 # need the date, line, and Quote # for SQL update query
                 # user = utility.get_windows_user(2)
-                # user = self.data["state"]["user"]
-                user = self.data["state"]["user_name"]
+                # user = self.app_state["user"]
+                user = self.app_state["user_name"]
                 rt1 = "[BWSdb].[dbo].[OrdersV2]"
                 kd = "[Available Date]"
                 kl = "[JobAvailableLine]"
@@ -4186,8 +4134,8 @@ class App(tkinter.Tk):
 
                     connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
                     messagebox.showinfo(
-                        title=self.data["title_application_short"],
-                        message=self.data["msg_save_successful"]
+                        title=self.title_application_short,
+                        message=self.msg_save_successful
                     )
                     # for stmt in stmts.split(";"):
                     #     st = stmt.replace("\t", " ").replace("\n", " ")
@@ -4197,8 +4145,8 @@ class App(tkinter.Tk):
                 else:
                     if tm:
                         messagebox.showinfo(
-                            title=self.data["title_application_short"],
-                            message=self.data["msg_no_commit_test_mode"]
+                            title=self.title_application_short,
+                            message=self.msg_no_commit_test_mode
                         )
 
                 # # TODO async
@@ -4215,7 +4163,7 @@ class App(tkinter.Tk):
             return sql_statments
 
     def update_toggle_canvas_selection(self, *args):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_toggle_canvas_selection")
         toggle_mode = self.toggle_warranty.value.get()
@@ -4233,7 +4181,7 @@ class App(tkinter.Tk):
         self.toggle_warranty.grid(row=1, column=0)
 
     def click_if_goto(self):
-        tm = self.data["settings"]["TEST_MODE"].get()
+        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_if_goto")
 
@@ -4288,7 +4236,7 @@ class App(tkinter.Tk):
                     shown_dates.add(d)
                 msg += f"\n{4*t}{l.rjust(5)}: {qn}"
             messagebox.showwarning(
-                title=self.data["title_application_short"],
+                title=self.title_application_short,
                 message=msg
             )
 
