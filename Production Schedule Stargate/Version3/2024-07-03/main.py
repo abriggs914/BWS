@@ -467,10 +467,17 @@ class App(tkinter.Tk):
             background=self.colour_background_app.hex_code
         )
 
+        self.frame_testing = tkinter.Frame(
+            self.frame_calendar,
+            width=self.calc_geometry["width"],
+            height=self.calc_geometry["height"],
+            background=self.colour_background_app.hex_code
+        )
+
         self.tv_lbl_processing, self.lbl_processing = None, None
 
         self.tv_lbl_testing_mode, self.lbl_testing_mode = tkinter_utility.label_factory(
-            self,
+            self.frame_testing,
             tv_label="TESTING MODE ENABLED",
             kwargs_label={
                 "fg": self.colour_foreground_testing_mode_label.hex_code,
@@ -482,6 +489,7 @@ class App(tkinter.Tk):
         self.df_valid_updaters = None
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
         self.settings["init_test_mode_done"] = tkinter.BooleanVar(self, value=False)
+        self.settings["count_application_reloads"] = tkinter.IntVar(self, value=0)
         self.check_valid_updater()
 
         tm = self.settings["TEST_MODE"].get()
@@ -1151,6 +1159,7 @@ class App(tkinter.Tk):
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
 
     def set_invisible_canvas(self, mode="invisble"):
+        print(f'set_invisible_canvas {mode=}, {self.settings['init_test_mode_done'].get()=}')
 
         if mode == "gray":
             if self.settings["init_test_mode_done"].get():
@@ -1176,11 +1185,13 @@ class App(tkinter.Tk):
             print(f"{getattr(self, 'invisible_canvas', None)=}")
 
         if tm:
-            self.lbl_testing_mode.grid(row=0, column=0, columnspan=2, pady=3)
+            self.frame_testing.grid(row=0, column=0, columnspan=2, pady=3)
+            # self.lbl_testing_mode.grid(row=0, column=0, columnspan=2, pady=3)
             if getattr(self, "invisible_canvas", None) is not None:
                 self.invisible_canvas.itemconfigure(self.dot, state="normal")
         else:
-            self.lbl_testing_mode.grid_forget()
+            self.frame_testing.grid_forget()
+            # self.lbl_testing_mode.grid_forget()
             if getattr(self, "invisible_canvas", None) is not None:
                 self.invisible_canvas.itemconfigure(self.dot, state="hidden")
 
@@ -1372,7 +1383,7 @@ class App(tkinter.Tk):
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         # if self.settings["TEST_MODE"].get():
         #     self.lbl_testing_mode.grid()
-        self.frame_calendar.grid(**{r: 1})
+        self.frame_calendar.grid(**{r: 0})
         self.frame_calendar.grid_propagate(False)
         # self.frame_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid_propagate(False)
@@ -1386,6 +1397,8 @@ class App(tkinter.Tk):
             width=self.w_place_frame_canvas,
             height=self.h_place_frame_canvas
         )
+
+        # self.frame_canvas.grid({r:0, c:2})
 
         self.frame_multi_combobox.place(
             x=self.x_place_frame_multi_combobox,
@@ -1415,6 +1428,9 @@ class App(tkinter.Tk):
 
         # goes on top of everything
         self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
+
+        self.frame_testing.grid(**{r: 0})
+        self.lbl_testing_mode.grid()
 
     def scroll_x_calendar(self, *args) -> None:
         # change the canvas xview when the scrollbar is interacted with
@@ -3815,6 +3831,7 @@ class App(tkinter.Tk):
             time.sleep(reload_time / 1000)
             if tm:
                 print(f"end sleep")
+                self.settings["count_application_reloads"].set(self.settings["count_application_reloads"].get() + 1)
 
         if self.settings["init_test_mode_done"].get():
             self.set_invisible_canvas("gray")
@@ -3823,7 +3840,8 @@ class App(tkinter.Tk):
             thread.join()
             self.set_invisible_canvas()
         else:
-            self.settings["init_test_mode_done"].set(True)
+            if self.settings["count_application_reloads"].get() > 0:
+                self.settings["init_test_mode_done"].set(True)
 
         if self.lbl_processing is not None:
             self.lbl_processing.pack_forget()
