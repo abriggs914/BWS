@@ -1,10 +1,12 @@
+import datetime
 import threading
 import time
 import tkinter
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from itertools import zip_longest
 from typing import Tuple, Optional
 
+import CTkTable
 import pandas as pd
 
 import utility
@@ -15,6 +17,7 @@ from colour_utility import *
 from PIL import Image, ImageTk
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
+from customtkinter_utility import CtkEntryDate
 
 import win32gui
 import win32con
@@ -296,12 +299,19 @@ for sql_data in (
             sql_data.update({cred_k: cred_v})
 
 
+def calculate_nth_business_day(date: datetime.datetime | pd.Timestamp, n_days: int):
+    sql = f"SELECT [SysproCompanyS].[dbo].[GetNthBusinessDay]('{date:%Y-%m-%d}', {n_days}) AS [NthDay]"
+    df = connect(sql, **STARGATE_SQL_CREDS)
+    if not df.empty:
+        return df.iloc[0]["NthDay"]
+
+
 class App(tkinter.Tk):
 
     def __init__(self):
         super().__init__()
 
-        self.date_version = datetime.datetime(2024,6,21)
+        self.date_version = datetime.datetime(2024,7,11)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
         self.file_last_session_sql: str = "last_session_sql.sql"
 
@@ -408,6 +418,7 @@ class App(tkinter.Tk):
         self.msg_no_hist_on_save = f"You do not have any unsaved changes."
         self.msg_save_successful = f"Changes saved successfully!"
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
+        self.msg_no_units_on_holiday = f"There are currently no units scheduled on a holiday for this period."
 
         self.tl_cc_app: Optional[tkinter.Toplevel] = None
 
@@ -425,6 +436,10 @@ class App(tkinter.Tk):
         self.mb_file.add_command(
             label="Check Units Planned On Holiday",
             command=self.check_for_units_on_holidays
+        )
+        self.mb_file.add_command(
+            label="Shift Line",
+            command=self.click_mb_shift_line
         )
         self.mb_file.add_command(
             label="Colour Code",
@@ -2647,7 +2662,7 @@ class App(tkinter.Tk):
                     font=(font_w if is_weekend else font)
                 )
 
-            self.colour_code(date, prod_line)
+            # self.colour_code(date, prod_line)
 
     def clear_selected_tiles(self) -> None:
         st = self.app_state["selected"]
@@ -3065,6 +3080,286 @@ class App(tkinter.Tk):
         # print(f"{args=}")
 
         return parent.create_rectangle(*bbox, **args)
+
+    def click_mb_shift_line(self, event=None):
+
+        w, h = 1400, 800
+        wm, hm = 5, 5
+        tl_name = "tl_shift_lines"
+        self.tl_data[tl_name] = tkinter.Toplevel(self)
+
+        bg_sl_main = Colour("#153001")
+        bg_sl_vc = Colour("#051001")
+        bg_sl_btn = Colour("#E0E0FF")
+        fg_sl_btn = Colour("#051001")
+        bg_sl_btn_hover = bg_sl_btn.brightened(0.25)
+        fg_sl_btn_hover = fg_sl_btn.brightened(0.25)
+
+        def update_quotes_affected(*args):
+            print(f"update_quotes_affected")
+
+            p_line = self.tl_data["combobox_lines"][2].get()
+            n_days = self.tl_data["var_slider_n_days"].get()
+            sd = self.tl_data["frame_sd"].var_date_entry.get()
+            ed = self.tl_data["frame_ed"].var_date_entry.get()
+            ed_disabled = self.tl_data["var_end_date_disabled"].get()
+
+            if isinstance(sd, str):
+                sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
+
+            if not ed_disabled:
+                if isinstance(ed, str):
+                    ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+            else:
+                ed = self.list_dates[-1]
+
+            # data = self.df_orders.loc[self.df_orders[""]]
+            data = []
+            for i, date in enumerate(self.list_dates[::-1]):
+                if not (sd <= date <= ed):
+                    continue
+                for j, line in enumerate(self.list_prod_lines):
+                    if line != p_line:
+                        continue
+                    date_tile_data = self.tiles.get(date, {})
+                    date_line_data = date_tile_data.get(p_line)
+                    order = None
+                    if date_line_data:
+                        order = date_line_data.get("order")
+                        if order:
+                            # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
+                            df_o = self.df_orders.iloc[order]
+                            quote = df_o["OrdersV2_SGQuote"]
+                            data.append([quote, date, calculate_nth_business_day(date, n_days)])
+                    print(f"EFFECTED: ij=({i}, {j}) {date=}, {order=}")
+            print(f"{data=}")
+            self.tl_data["table_change_preview"].update_values(data)
+
+        def update_shift_text(*args):
+            line = self.tl_data["combobox_lines"][2].get()
+            n_days = self.tl_data["var_slider_n_days"].get()
+            sd = self.tl_data["frame_sd"].var_date_entry.get()
+            ed = self.tl_data["frame_ed"].var_date_entry.get()
+
+            ed_disabled = self.tl_data["var_end_date_disabled"].get()
+
+            if isinstance(sd, str):
+                sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
+
+            if sd < datetime.datetime(self.today.year, self.today.month, self.today.day):
+                self.tl_data["label_shift_text"][0][0].set("")
+                self.tl_data["label_shift_text"][1][0].set("Please correct dates.")
+                return
+
+            if not ed_disabled:
+                if isinstance(ed, str):
+                    ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+
+                if ed <= sd:
+                    self.tl_data["label_shift_text"][0][0].set("")
+                    self.tl_data["label_shift_text"][1][0].set("Please correct dates.")
+                    return
+
+            msg1 = "Shift"
+            if line:
+                msg1 += f" {line} "
+            else:
+                msg1 += f" ____ "
+
+            if n_days:
+                msg1 += f"{n_days}"
+            else:
+                msg1 += f"____"
+                n_days = 0
+
+            msg1 += f" day{'s' if n_days != 1 else ''} forward"
+            msg2 = "Between " if not ed_disabled else "Starting "
+            if sd:
+                msg2 += f"{sd:%Y-%m-%d}"
+            else:
+                msg2 += "____"
+            if not ed_disabled:
+                msg2 += " and "
+                if ed:
+                    msg2 += f"{ed:%Y-%m-%d}"
+                else:
+                    msg2 += "____"
+
+            all_set = all(map(bool, [line, n_days, sd, (ed or ed_disabled)]))
+
+            self.tl_data["label_shift_text"][0][0].set(msg1)
+            self.tl_data["label_shift_text"][1][0].set(msg2)
+
+            if all_set:
+                update_quotes_affected()
+
+        def update_combobox_lines(*args):
+            line = self.tl_data["combobox_lines"][2].get()
+            if line:
+                update_shift_text()
+
+        def update_slider_n_days(*args):
+            n_days = self.tl_data["var_slider_n_days"].get()
+            if n_days:
+                update_shift_text()
+
+        def update_frame_sd(*args):
+            sd = self.tl_data["frame_sd"].var_date_entry.get()
+            if sd:
+                update_shift_text()
+
+        def update_frame_ed(*args):
+            ed = self.tl_data["frame_ed"].var_date_entry.get()
+            if ed:
+                update_shift_text()
+
+        def click_cancel(*args):
+            print(f"click_cancel")
+            on_closing_shift_lines()
+
+        def click_submit(*args):
+            print(f"click_submit")
+
+        def click_disable_end_date(*args):
+            disabled = self.tl_data["var_end_date_disabled"].get()
+            widgets = [
+                self.tl_data["frame_ed"].entry,
+                self.tl_data["frame_ed"].date_picker,
+                self.tl_data["frame_ed"].btn_dropdown
+            ]
+            if disabled:
+                self.tl_data["btn_disable_end_date"][0].set("Disable 'End Date'")
+                state = "normal"
+            else:
+                self.tl_data["btn_disable_end_date"][0].set("Enable 'End Date'")
+                state = "disabled"
+
+            for wid in widgets:
+                wid.configure(state=state)
+            self.tl_data["var_end_date_disabled"].set(not disabled)
+            update_shift_text()
+
+        def on_closing_shift_lines(*args):
+            self.tl_data[tl_name].destroy()
+
+        tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
+        self.tl_data[tl_name].geometry(tl_geom["geometry"])
+
+        # line
+        # sd
+        # ed
+        # n days
+
+        self.tl_data["tl_frame_days"] = tkinter.Frame(
+            self.tl_data[tl_name],
+            width=w-(wm / 2),
+            height=300,
+            bg=bg_sl_main.hex_code
+        )
+        self.tl_data["label_sd"] = tkinter_utility.label_factory(
+            self.tl_data["tl_frame_days"],
+            tv_label="Start Date:"
+        )
+        self.tl_data["frame_sd"] = CtkEntryDate(
+            self.tl_data["tl_frame_days"]
+        )
+        self.tl_data["label_ed"] = tkinter_utility.label_factory(
+            self.tl_data["tl_frame_days"],
+            tv_label="End Date:"
+        )
+        self.tl_data["var_end_date_disabled"] = tkinter.BooleanVar(self.tl_data[tl_name], value=False)
+        self.tl_data["btn_disable_end_date"] = tkinter_utility.button_factory(
+            self.tl_data["tl_frame_days"],
+            tv_btn="Disable 'End Date'",
+            command=click_disable_end_date
+        )
+        self.tl_data["frame_ed"] = CtkEntryDate(
+            self.tl_data["tl_frame_days"]
+        )
+        # ed = f"{datetime.datetime.now() + datetime.timedelta(days=7):%Y-%m-%d}"
+        # self.tl_data["frame_ed"].date_picker.selection_set(self.tl_data["frame_ed"].date_picker.format_date(ed))
+        ed = datetime.datetime.now() + datetime.timedelta(days=7)
+        self.tl_data["frame_ed"].date_picker.selection_set(ed)
+        # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
+        # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
+
+        self.tl_data["combobox_lines"] = tkinter_utility.combo_factory(
+            self.tl_data[tl_name],
+            tv_label="Line:",
+            values=self.list_prod_lines
+        )
+
+        self.tl_data["var_slider_n_days"] = tkinter.IntVar(self, value=1)
+        self.tl_data["slider_n_days"] = ttk.Scale(
+            self.tl_data[tl_name],
+            from_=1,
+            to=7,
+            orient="horizontal",
+            variable=self.tl_data["var_slider_n_days"]
+        )
+
+        self.tl_data["tl_frame_btns"] = tkinter.Frame(
+            self.tl_data[tl_name]
+        )
+        self.tl_data["btn_cancel"] = tkinter_utility.button_factory(
+            self.tl_data["tl_frame_btns"],
+            tv_btn="cancel",
+            command=click_cancel
+        )
+        self.tl_data["btn_submit"] = tkinter_utility.button_factory(
+            self.tl_data["tl_frame_btns"],
+            tv_btn="submit",
+            command=click_submit
+        )
+
+        self.tl_data["label_shift_text"] = [
+            tkinter_utility.label_factory(
+                self.tl_data[tl_name],
+                tv_label=""
+            ),
+            tkinter_utility.label_factory(
+                self.tl_data[tl_name],
+                tv_label=""
+            )
+        ]
+
+        self.tl_data["table_change_preview"] = CTkTable.CTkTable(
+            self.tl_data[tl_name],
+            values=[["Quote", "Current Date", "New Date"]]
+        )
+
+        self.tl_data["combobox_lines"][2].trace_variable("w", update_combobox_lines)
+        self.tl_data["var_slider_n_days"].trace_variable("w", update_slider_n_days)
+        self.tl_data["frame_sd"].var_date_entry.trace_variable("w", update_frame_sd)
+        self.tl_data["frame_ed"].var_date_entry.trace_variable("w", update_frame_ed)
+
+        self.tl_data["tl_frame_days"].grid()
+        self.tl_data["tl_frame_days"].rowconfigure(0, weight=10)
+        self.tl_data["tl_frame_days"].rowconfigure(1, weight=90)
+        self.tl_data["tl_frame_days"].columnconfigure(0, weight=50)
+        self.tl_data["tl_frame_days"].columnconfigure(1, weight=50)
+        self.tl_data["tl_frame_days"].grid_propagate(False)
+        self.tl_data["combobox_lines"][1].grid()
+        self.tl_data["combobox_lines"][3].grid()
+        self.tl_data["slider_n_days"].grid()
+        self.tl_data["tl_frame_btns"].grid()
+        self.tl_data["label_shift_text"][0][1].grid()
+        self.tl_data["label_shift_text"][1][1].grid()
+
+        # tl_frame_days
+        self.tl_data["label_sd"][1].grid(row=0, column=0, rowspan=1, columnspan=1, padx=10, pady=10)
+        self.tl_data["frame_sd"].grid(row=1, column=0, rowspan=1, columnspan=1, padx=10, pady=10)
+        self.tl_data["label_ed"][1].grid(row=0, column=1, rowspan=1, columnspan=1, padx=10, pady=10)
+        self.tl_data["btn_disable_end_date"][1].grid(row=0, column=2, rowspan=1, columnspan=1, padx=10, pady=10)
+        self.tl_data["frame_ed"].grid(row=1, column=1, rowspan=1, columnspan=2, padx=10, pady=10)
+
+        # tl_frame_btns
+        self.tl_data["btn_cancel"][1].grid(row=0, column=0, rowspan=1, columnspan=1)
+        self.tl_data["btn_submit"][1].grid(row=0, column=1, rowspan=1, columnspan=1)
+
+        self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", on_closing_shift_lines)
+        self.tl_data[tl_name].grab_set()
+        self.wait_window(self.tl_data[tl_name])
 
     def click_mb_colour_code(self, event=None):
         tm = self.settings["TEST_MODE"].get()
@@ -4259,6 +4554,11 @@ class App(tkinter.Tk):
             messagebox.showwarning(
                 title=self.title_application_short,
                 message=msg
+            )
+        else:
+            messagebox.showinfo(
+                title=self.title_application_short,
+                message=self.msg_no_units_on_holiday
             )
 
     def quit_cc_app(self):
