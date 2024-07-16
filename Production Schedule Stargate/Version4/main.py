@@ -7,6 +7,7 @@ from itertools import zip_longest
 from typing import Tuple, Optional
 
 import CTkTable
+import customtkinter as ctk
 import pandas as pd
 
 import utility
@@ -22,6 +23,7 @@ from customtkinter_utility import CtkEntryDate
 import win32gui
 import win32con
 import win32api
+
 
 # TODO shrink weekend tiles, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
@@ -306,12 +308,12 @@ def calculate_nth_business_day(date: datetime.datetime | pd.Timestamp, n_days: i
         return df.iloc[0]["NthDay"]
 
 
-class App(tkinter.Tk):
+class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
 
-        self.date_version = datetime.datetime(2024,7,11)
+        self.date_version = datetime.datetime(2024, 7, 16)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
         self.file_last_session_sql: str = "last_session_sql.sql"
 
@@ -321,12 +323,12 @@ class App(tkinter.Tk):
             "dragged": [],
             "cursor_drag_pos": [None, None]
         }
-        self.history = tkinter.Variable(value=list(), name="history")
+        self.history = ctk.Variable(value=list(), name="history")
         self.listbox_history = []
         self.settings = {
             "allow_multi_select": False,
             "colour_coding": {},
-            "TEST_MODE": tkinter.BooleanVar(self, value=False),
+            "TEST_MODE": ctk.BooleanVar(self, value=False),
             "min_font_size_tile": 8,
             "max_font_size_tile": 18,
             "start_at_first_of_month": True,
@@ -420,10 +422,11 @@ class App(tkinter.Tk):
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
         self.msg_no_units_on_holiday = f"There are currently no units scheduled on a holiday for this period."
 
-        self.tl_cc_app: Optional[tkinter.Toplevel] = None
+        self.tl_cc_app: Optional[ctk.CTkToplevel] = None
 
         # print(f"{self.cget('bg')=}")
         self.menubar = tkinter.Menu(self)
+        # self.menubar = ctk.CTkOptionMenu(self)
         self.configure(menu=self.menubar)
         self.mb_file = tkinter.Menu(
             self.menubar,
@@ -465,7 +468,7 @@ class App(tkinter.Tk):
             background=self.colour_app_background.hex_code
         )
 
-        self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict)
+        self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
 
         if self.settings["TEST_MODE"].get():
             print(f"DIMS: {self.calc_geometry=}")
@@ -475,18 +478,18 @@ class App(tkinter.Tk):
         
         n_cols: int = self.days_forward + self.days_backward + 1  # +1 for today in the middle
 
-        self.frame_calendar = tkinter.Frame(
+        self.frame_calendar = ctk.CTkFrame(
             self,
             width=self.calc_geometry["width"],
             height=self.calc_geometry["height"],
-            background=self.colour_background_app.hex_code
+            bg_color=self.colour_background_app.hex_code
         )
 
-        self.frame_testing = tkinter.Frame(
+        self.frame_testing = ctk.CTkFrame(
             self.frame_calendar,
             width=self.calc_geometry["width"],
             height=self.calc_geometry["height"],
-            background=self.colour_background_app.hex_code
+            bg_color=self.colour_background_app.hex_code
         )
 
         self.tv_lbl_processing, self.lbl_processing = None, None
@@ -503,8 +506,8 @@ class App(tkinter.Tk):
 
         self.df_valid_updaters = None
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
-        self.settings["init_test_mode_done"] = tkinter.BooleanVar(self, value=False)
-        self.settings["count_application_reloads"] = tkinter.IntVar(self, value=0)
+        self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
+        self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
         self.check_valid_updater()
 
         tm = self.settings["TEST_MODE"].get()
@@ -589,18 +592,23 @@ class App(tkinter.Tk):
         self.x_place_frame_info_frame = self.x_top_widgets
         self.y_place_frame_info_frame = self.height_multi_combobox + 195
 
-        self.frame_info_frame = tkinter.Frame(self.frame_calendar)
-        self.frame_canvas = tkinter.Frame(
+        self.frame_info_frame = ctk.CTkFrame(self.frame_calendar)
+        self.frame_canvas = ctk.CTkFrame(
             self.frame_calendar,
+
             width=self.canvas_width,
             height=self.canvas_height + self.height_calendar_scrollbar,  # scrollbar space
-            background=self.colour_background_calendar_app.hex_code
+
+            # width = self.w_place_frame_canvas,
+            # height = self.h_place_frame_canvas,
+
+            bg_color=self.colour_background_calendar_app.hex_code
         )
         # multicombobox for searching
-        self.frame_multi_combobox = tkinter.Frame(
+        self.frame_multi_combobox = ctk.CTkFrame(
             self.frame_calendar
         )
-        self.frame_mc_inner = tkinter.Frame(
+        self.frame_mc_inner = ctk.CTkFrame(
             self.frame_multi_combobox
         )
 
@@ -688,7 +696,7 @@ class App(tkinter.Tk):
             r_type=list
         )
 
-        self.canvas = tkinter.Canvas(
+        self.canvas = ctk.CTkCanvas(
             self.frame_canvas,
             width=self.canvas_width,
             height=self.canvas_height,
@@ -700,13 +708,13 @@ class App(tkinter.Tk):
                 self.canvas_height_scroll_region
             )
         )
-        self.scroll_bar_x = tkinter.Scrollbar(
+        self.scroll_bar_x = ctk.CTkScrollbar(
             self.frame_canvas,
-            orient="horizontal",
+            orientation="horizontal",
             command=self.scroll_x_calendar
         )
 
-        self.invisible_canvas = tkinter.Canvas(
+        self.invisible_canvas = ctk.CTkCanvas(
             self.frame_calendar,
             width=self.calc_geometry["width"],
             height=self.calc_geometry["height"],
@@ -1029,7 +1037,7 @@ class App(tkinter.Tk):
             self.tiles["home"]["tile"] = self.canvas.create_image(
                 self.calc_grid_cells[0][0][0] + (self.tile_width / 2),
                 self.calc_grid_cells[0][0][1] + (self.tile_height / 2),
-                anchor=tkinter.CENTER,
+                anchor=ctk.CENTER,
                 image=self.stg_logo_image
             )
         else:
@@ -1089,7 +1097,7 @@ class App(tkinter.Tk):
         else:
             self.geometry(geo)
 
-        self.tv_multi_combobox_drag_tile = tkinter.BooleanVar(self, value=False)
+        self.tv_multi_combobox_drag_tile = ctk.BooleanVar(self, value=False)
 
         # transparent method
         # canvas
@@ -1123,12 +1131,12 @@ class App(tkinter.Tk):
         ]
 
         # scrollable listbox for event history
-        self.frame_listbox_history = tkinter.Frame(self)
+        self.frame_listbox_history = ctk.CTkFrame(self)
         self.listbox_history = tkinter.Listbox(
             self.frame_listbox_history,
             width=110
         )
-        self.scroll_bar_history = tkinter.Scrollbar(self.frame_listbox_history)
+        self.scroll_bar_history = ctk.CTkScrollbar(self.frame_listbox_history)
         self.listbox_history.configure(yscrollcommand=self.scroll_bar_history.set)
         self.scroll_bar_history.configure(command=self.listbox_history.yview)
 
@@ -1217,7 +1225,7 @@ class App(tkinter.Tk):
         hist = self.history.get()
         if tm:
             print(f"History update: {hist=}")
-        known_hist = self.listbox_history.get(0, tkinter.END)
+        known_hist = self.listbox_history.get(0, ctk.END)
         lh, lkh = len(hist), len(known_hist)
         if lh > lkh:
             # added new history event
@@ -1271,7 +1279,7 @@ class App(tkinter.Tk):
                 order_2 = self.tiles[date_2][line_2].get("order")
                 msg += f"<-> {order_2} ({date_2:%Y-%m-%d}, {line_2})"
 
-            self.listbox_history.insert(tkinter.END, msg)
+            self.listbox_history.insert(ctk.END, msg)
 
             if self.settings["TEST_MODE"].get():
                 print(f"Inserted {new_item=}\n{hist=}")
@@ -1408,9 +1416,10 @@ class App(tkinter.Tk):
 
         self.frame_canvas.place(
             x=self.x_place_frame_canvas,
-            y=self.y_place_frame_canvas,
-            width=self.w_place_frame_canvas,
-            height=self.h_place_frame_canvas
+            y=self.y_place_frame_canvas
+            # ,
+            # width=self.w_place_frame_canvas,
+            # height=self.h_place_frame_canvas
         )
 
         # self.frame_canvas.grid({r:0, c:2})
@@ -1446,6 +1455,7 @@ class App(tkinter.Tk):
 
         self.frame_testing.grid(**{r: 0})
         self.lbl_testing_mode.grid()
+        print(f"END Grid")
 
     def scroll_x_calendar(self, *args) -> None:
         # change the canvas xview when the scrollbar is interacted with
@@ -1710,7 +1720,7 @@ class App(tkinter.Tk):
                     title=self.title_application_short,
                     message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?"
                 )
-                if ans == tkinter.YES:
+                if ans == ctk.YES:
                     # move existing unit to combobox, then place this new one
                     self.delete_tile(date_line)
                 else:
@@ -1723,7 +1733,7 @@ class App(tkinter.Tk):
                     title=self.title_application_short,
                     message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?"
                 )
-                if ans == tkinter.YES:
+                if ans == ctk.YES:
                     # move existing unit to combobox, then place this new one
                     self.delete_tile(date_line)
                 else:
@@ -2866,8 +2876,8 @@ class App(tkinter.Tk):
         if tm:
             print(f"CHOOSE FROM CHOICES\n{df=}")
         if not df.empty:
-            self.tl_data["tl_dataframe_choice"] = tkinter.Toplevel(self)
-            self.tl_data["frame_tl"] = tkinter.Frame(self.tl_data["tl_dataframe_choice"])
+            self.tl_data["tl_dataframe_choice"] = ctk.CTkToplevel(self)
+            self.tl_data["frame_tl"] = ctk.CTkFrame(self.tl_data["tl_dataframe_choice"])
             n_choices = df.shape[0]
             max_choices_per_col = 4
             choices_per_col = min(n_choices, max_choices_per_col)
@@ -2887,7 +2897,7 @@ class App(tkinter.Tk):
             w = int((tw + m + m) * n_cols)
             h = int((th + m + m) * n_rows)
 
-            self.tl_data["canvas_tl"] = tkinter.Canvas(
+            self.tl_data["canvas_tl"] = ctk.CTkCanvas(
                 self.tl_data["frame_tl"],
                 width=w,
                 height=h,
@@ -3047,7 +3057,7 @@ class App(tkinter.Tk):
             outline: None | str | Colour = None,
             activeoutline: None | str | Colour = None,
             width: None | int = None,
-            parent: None | tkinter.Canvas = None,
+            parent: None | ctk.CTkCanvas = None,
             default_all: bool = False
     ):
         if parent is None:
@@ -3086,7 +3096,7 @@ class App(tkinter.Tk):
         w, h = 1400, 800
         wm, hm = 5, 5
         tl_name = "tl_shift_lines"
-        self.tl_data[tl_name] = tkinter.Toplevel(self)
+        self.tl_data[tl_name] = ctk.CTkToplevel(self)
 
         bg_sl_main = Colour("#153001")
         bg_sl_vc = Colour("#051001")
@@ -3250,7 +3260,7 @@ class App(tkinter.Tk):
         # ed
         # n days
 
-        self.tl_data["tl_frame_days"] = tkinter.Frame(
+        self.tl_data["tl_frame_days"] = ctk.CTkFrame(
             self.tl_data[tl_name],
             width=w-(wm / 2),
             height=300,
@@ -3267,7 +3277,7 @@ class App(tkinter.Tk):
             self.tl_data["tl_frame_days"],
             tv_label="End Date:"
         )
-        self.tl_data["var_end_date_disabled"] = tkinter.BooleanVar(self.tl_data[tl_name], value=False)
+        self.tl_data["var_end_date_disabled"] = ctk.BooleanVar(self.tl_data[tl_name], value=False)
         self.tl_data["btn_disable_end_date"] = tkinter_utility.button_factory(
             self.tl_data["tl_frame_days"],
             tv_btn="Disable 'End Date'",
@@ -3289,7 +3299,7 @@ class App(tkinter.Tk):
             values=self.list_prod_lines
         )
 
-        self.tl_data["var_slider_n_days"] = tkinter.IntVar(self, value=1)
+        self.tl_data["var_slider_n_days"] = ctk.IntVar(self, value=1)
         self.tl_data["slider_n_days"] = ttk.Scale(
             self.tl_data[tl_name],
             from_=1,
@@ -3298,7 +3308,7 @@ class App(tkinter.Tk):
             variable=self.tl_data["var_slider_n_days"]
         )
 
-        self.tl_data["tl_frame_btns"] = tkinter.Frame(
+        self.tl_data["tl_frame_btns"] = ctk.CTkFrame(
             self.tl_data[tl_name]
         )
         self.tl_data["btn_cancel"] = tkinter_utility.button_factory(
@@ -3371,10 +3381,10 @@ class App(tkinter.Tk):
         n_dealers = len(known_dealers)
         if tm:
             print(f"{known_dealers=}, {known_colour_codes=}")
-        self.tl_data["tl_colour_code"] = tkinter.Toplevel(self)
+        self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self)
         self.tl_data["tl_colour_code"].title(self.title_application_full)
 
-        self.tl_data["cc_changed"] = tkinter.BooleanVar(self, value=False)
+        self.tl_data["cc_changed"] = ctk.BooleanVar(self, value=False)
 
         w, h = 1400, 800
         tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
@@ -3401,13 +3411,13 @@ class App(tkinter.Tk):
             y_pad=m,
             r_type=list
         )
-        self.tl_data["tl_canvas"] = tkinter.Canvas(
+        self.tl_data["tl_canvas"] = ctk.CTkCanvas(
             self.tl_data["tl_colour_code"],
             width=total_width_dealers + (2 * m),
             height=total_height_dealers + (2 * m),
             bg=bg_cc_main.hex_code
         )
-        self.tl_data["tl_frame"] = tkinter.Frame(
+        self.tl_data["tl_frame"] = ctk.CTkFrame(
             self.tl_data["tl_colour_code"],
             width=total_width_dealers + (2 * m),
             height=total_height_dealers + (2 * m),
@@ -3571,7 +3581,7 @@ class App(tkinter.Tk):
                 self.tl_data["tl_cc_vc_edit_text"],
                 "font"
             )
-            self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
+            self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = tkinter_utility.calc_geometry_tl(
                 0.2, 0.12, parent=self, rtype=dict
             )
@@ -3795,7 +3805,7 @@ class App(tkinter.Tk):
                     title=self.title_application_short,
                     message=f"Would you like to save your changes?"
                 )
-                if ans == tkinter.YES:
+                if ans == ctk.YES:
                     # save changes
                     save_changes()
                 else:
@@ -3817,7 +3827,7 @@ class App(tkinter.Tk):
                     title=self.title_application_short,
                     message=f"Save changes for '{dealer}'?"
                 )
-                if ans == tkinter.YES:
+                if ans == ctk.YES:
                     click_save()
                 changes = True
 
@@ -3842,7 +3852,7 @@ class App(tkinter.Tk):
                     title=self.title_application_short,
                     message=f"Would you like to save your changes?"
                 )
-                if ans == tkinter.YES:
+                if ans == ctk.YES:
                     # save changes
                     save_changes()
                 else:
@@ -3852,7 +3862,7 @@ class App(tkinter.Tk):
 
         def click_app_theme():
             print(f"click_app_theme")
-            self.tl_cc_app = tkinter.Toplevel(self)
+            self.tl_cc_app = ctk.CTkToplevel(self)
             self.tl_cc_app.geometry(tkinter_utility.calc_geometry_tl(900, 600, parent=self))
 
             # calendar row legend row and column
@@ -3947,7 +3957,7 @@ class App(tkinter.Tk):
             if (idx + 1) >= n_dealers:
                 break
 
-        self.tl_data["tl_cc_view_canvas"] = tkinter.Canvas(
+        self.tl_data["tl_cc_view_canvas"] = ctk.CTkCanvas(
             self.tl_data["tl_frame"],
             width=int(total_width_dealers * 0.75),
             height=int(total_height_dealers * 0.12),
@@ -3988,9 +3998,9 @@ class App(tkinter.Tk):
 
             ("tl_cc_btn_app", "tl_frame", "App Theme", click_app_theme)
         ]
-        self.tl_data["tl_cc_frame_btn_bar"] = tkinter.Frame(
+        self.tl_data["tl_cc_frame_btn_bar"] = ctk.CTkFrame(
             self.tl_data["tl_frame"],
-            background=bg_cc_main.hex_code
+            bg_color=bg_cc_main.hex_code
         )
 
         for btn_key, parent_frame, btn_text, callback in btn_data:
@@ -4180,7 +4190,7 @@ class App(tkinter.Tk):
         def on_closing_tm(*args):
             self.tl_data[tl_name].destroy()
 
-        self.tl_data[tl_name] = tkinter.Toplevel(self)
+        self.tl_data[tl_name] = ctk.CTkToplevel(self)
         self.tl_data[tl_name].title(self.title_application_full)
 
         w, h = 200, 120
@@ -4219,7 +4229,7 @@ class App(tkinter.Tk):
             print(f"click_mb_exit, {event=}")
         ans_has_history = self.ask_save_before_close()
         ans, has_history = ans_has_history
-        if ans == tkinter.YES:
+        if ans == ctk.YES:
             # quit without saving
             self.destroy()
         else:
@@ -4251,10 +4261,10 @@ class App(tkinter.Tk):
 
             ans, has_history = ans_has_history
         else:
-            ans = tkinter.YES
+            ans = ctk.YES
             has_history = bool(len(history))
         print(f"{ans=}, {has_history=}")
-        if ans == tkinter.YES:
+        if ans == ctk.YES:
 
             if has_history:
 
@@ -4542,7 +4552,7 @@ class App(tkinter.Tk):
                     print(f"no order, {d=}, {line=}")
 
         if units_on_holiday:
-            msg = f"The following quotes were found to be sheduled on a holiday:\n"
+            msg = f"The following quotes were found to be scheduled on a holiday:\n"
             shown_dates = set()
             for d, l in units_on_holiday:
                 qn, order = units_on_holiday[(d, l)]
@@ -4565,15 +4575,16 @@ class App(tkinter.Tk):
         print(f"quit_cc_app")
         self.tl_cc_app.destroy()
 
+
 def test_canvas_window():
-    app = tkinter.Tk()
+    app = ctk.CTk()
 
-    can1 = tkinter.Canvas(app, background="#789456")
-    can2 = tkinter.Canvas(can1, background="#654987")
-    can3 = tkinter.Canvas(can2, background="#654321")
+    can1 = ctk.CTkCanvas(app, background="#789456")
+    can2 = ctk.CTkCanvas(can1, background="#654987")
+    can3 = ctk.CTkCanvas(can2, background="#654321")
 
-    can1.create_window(10, 10, anchor=tkinter.NW, window=can2)
-    can2.create_window(20, 20, anchor=tkinter.NW, window=can3)
+    can1.create_window(10, 10, anchor=ctk.NW, window=can2)
+    can2.create_window(20, 20, anchor=ctk.NW, window=can3)
 
     can1.pack()
 
