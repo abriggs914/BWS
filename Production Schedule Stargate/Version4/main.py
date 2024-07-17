@@ -1,4 +1,5 @@
 import datetime
+import random
 import threading
 import time
 import tkinter
@@ -18,7 +19,7 @@ from colour_utility import *
 from PIL import Image, ImageTk
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
-from customtkinter_utility import CtkEntryDate
+import customtkinter_utility
 
 import win32gui
 import win32con
@@ -334,6 +335,7 @@ class App(ctk.CTk):
             "start_at_first_of_month": True,
             "end_at_end_of_month": True
         }
+        self.list_sl_preview_table_cols = ["Quote", "Current Date", "New Date"]
         self.tl_data: dict = {}
 
         # default values
@@ -381,6 +383,9 @@ class App(ctk.CTk):
         self.colour_tile_outline_selected = Colour("#DDA911")
         self.colour_foreground_holiday = Colour("#A44000")
         self.colour_test_dot = Colour("#AE3341")
+
+        self.colour_tl_sl_preview_header = Colour("#003578")
+
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
 
@@ -440,10 +445,10 @@ class App(ctk.CTk):
             label="Check Units Planned On Holiday",
             command=self.check_for_units_on_holidays
         )
-        # self.mb_file.add_command(
-        #     label="Shift Line",
-        #     command=self.click_mb_shift_line
-        # )
+        self.mb_file.add_command(
+            label="Shift Line",
+            command=self.click_mb_shift_line
+        )
         self.mb_file.add_command(
             label="Colour Code",
             command=self.click_mb_colour_code
@@ -468,7 +473,8 @@ class App(ctk.CTk):
             background=self.colour_app_background.hex_code
         )
 
-        self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
+        # self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
+        self.calc_geometry = tkinter_utility.calc_geometry_tl(1.0, 1.0, parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
 
         if self.settings["TEST_MODE"].get():
             print(f"DIMS: {self.calc_geometry=}")
@@ -3129,10 +3135,10 @@ class App(ctk.CTk):
                 if not (sd <= date <= ed):
                     continue
                 for j, line in enumerate(self.list_prod_lines):
-                    if line != p_line:
+                    if (p_line != "All") and (line != p_line):
                         continue
                     date_tile_data = self.tiles.get(date, {})
-                    date_line_data = date_tile_data.get(p_line)
+                    date_line_data = date_tile_data.get(line)
                     order = None
                     if date_line_data:
                         order = date_line_data.get("order")
@@ -3140,10 +3146,108 @@ class App(ctk.CTk):
                             # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
                             df_o = self.df_orders.iloc[order]
                             quote = df_o["OrdersV2_SGQuote"]
-                            data.append([quote, date, calculate_nth_business_day(date, n_days)])
+                            date_fmt = "%Y-%m-%d"
+                            nth_date = calculate_nth_business_day(date, n_days)
+                            date = f"{date:{date_fmt}}"
+                            nth_date = f"{nth_date:{date_fmt}}"
+                            if p_line == "All":
+                                data.append([quote, line, date, nth_date])
+                            else:
+                                data.append([quote, date, nth_date])
                     print(f"EFFECTED: ij=({i}, {j}) {date=}, {order=}")
+            header = [col for col in self.list_sl_preview_table_cols]
+            if p_line == "All":
+                header.insert(1, "Line")
+            data = [header, *data]
             print(f"{data=}")
+            print(f"# rows: {len(data)}")
+            if len(data) <= 1:
+                data = [header, ["", "No Data", ""]]
+            self.tl_data["table_change_preview"].columns = len(header)
+            self.tl_data["table_change_preview"].rows = len(data)
             self.tl_data["table_change_preview"].update_values(data)
+            check_warnings()
+
+        def check_warnings():
+            data = self.tl_data["table_change_preview"].get()[1:]
+            p_line = self.tl_data["combobox_lines"][2].get()
+            n_days = self.tl_data["var_slider_n_days"].get()
+            sd = self.tl_data["frame_sd"].var_date_entry.get()
+            ed = self.tl_data["frame_ed"].var_date_entry.get()
+            direction = "forward"
+
+            if isinstance(sd, str):
+                sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
+
+            ed_disabled = self.tl_data["var_end_date_disabled"].get()
+
+            min_date, max_date = self.list_dates[0], self.list_dates[-1]
+
+            if len(data) > 1:
+
+                if ed_disabled:
+                    ed = max_date
+
+                if isinstance(ed, str):
+                    ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+
+                # TODO consider business days here
+                days_of_interest = pd.date_range(
+                    sd - datetime.timedelta(days=n_days),
+                    ed + datetime.timedelta(days=n_days)
+                ).to_list()
+                # days_of_interest = days_of_interest[:days_of_interest.index(sd)] + days_of_interest[days_of_interest.index(ed) + 1:]
+
+                print(f"{days_of_interest=}")
+
+                warnings = []
+                if direction == "backward":
+                    pass
+                else:
+                    # for i, day in enumerate(days_of_interest[::-1]):
+                    quotes_new_dates = {tup[0]: tup[-1] for tup in data}
+                    dates_line_quote = {tup[-1]: {tup[-2]: tup[1] if p_line == "All" else p_line} for tup in data}
+                    for row in data:
+                        if p_line == "All":
+                            quote, line_, curr_date_s, new_date_s = row
+                        else:
+                            quote, curr_date_s, new_date_s = row
+                            line_ = p_line
+                        curr_date, new_date = pd.Timestamp(curr_date_s), pd.Timestamp(new_date_s)
+                        c_date_idx = days_of_interest.index(curr_date)
+                        n_date_idx = c_date_idx + n_days
+                        for line in self.list_prod_lines:
+                            if (line != line_) or ((p_line != "All") and (p_line != line)):
+                                continue
+                            # # check quotes being moved
+                            # e_quote = dates_line_quote[new_date_s].get(line)
+                            # if e_quote is not None:
+                            #     # warn there is already an order here.
+                            #     warnings.append(f"Cannot move {quote} on {line_} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
+
+                            data_date_line = self.tiles[new_date][line]
+                            order = data_date_line.get("order")
+                            if order is not None:
+                                # warn there is already an order here.
+                                e_quote = self.df_orders.iloc[order]["OrdersV2_SGQuote"]
+                                if e_quote not in quotes_new_dates:
+                                    warnings.append(f"Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
+
+                print(f"{warnings=}")
+                self.tl_data["tl_textbox_warning"].configure(state="normal")
+                self.tl_data["tl_textbox_warning"].delete("1.0", ctk.END)
+                for i, warning in enumerate(warnings):
+                    print(f"{warning=}")
+                    # self.tl_data["tl_textbox_warning"].insert("1.0", warning)
+                    self.tl_data["tl_textbox_warning"].insert(ctk.END, ("\n" if i != 0 else "") + warning)
+
+                if not warnings:
+                    self.tl_data["tl_textbox_warning"].insert(ctk.END, "No Issues found.\nClick submit to commit this shift.")
+
+
+                self.tl_data["tl_textbox_warning"].see(ctk.END)
+                print(f"{self.tl_data['tl_textbox_warning'].get('1.0', ctk.END)=}")
+                self.tl_data["tl_textbox_warning"].configure(state="disabled")
 
         def update_shift_text(*args):
             line = self.tl_data["combobox_lines"][2].get()
@@ -3153,12 +3257,21 @@ class App(ctk.CTk):
 
             ed_disabled = self.tl_data["var_end_date_disabled"].get()
 
+            min_date, max_date = self.list_dates[0], self.list_dates[-1]
+
             if isinstance(sd, str):
                 sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
 
-            if sd < datetime.datetime(self.today.year, self.today.month, self.today.day):
-                self.tl_data["label_shift_text"][0][0].set("")
-                self.tl_data["label_shift_text"][1][0].set("Please correct dates.")
+            # TODO consider business days
+            if sd < (min_date + datetime.timedelta(days=n_days)):
+                self.tl_data["label_shift_text"][0][0].set("Please correct dates.")
+                self.tl_data["label_shift_text"][1][0].set("Start date is too early.")
+                return
+
+            # if sd < datetime.datetime(self.today.year, self.today.month, self.today.day):
+            if sd < min_date:
+                self.tl_data["label_shift_text"][0][0].set("Please correct dates.")
+                self.tl_data["label_shift_text"][1][0].set("Start date is too early.")
                 return
 
             if not ed_disabled:
@@ -3170,11 +3283,18 @@ class App(ctk.CTk):
                     self.tl_data["label_shift_text"][1][0].set("Please correct dates.")
                     return
 
-            msg1 = "Shift"
+                if ed > (max_date - datetime.timedelta(days=n_days)):
+                    self.tl_data["label_shift_text"][0][0].set("")
+                    self.tl_data["label_shift_text"][1][0].set("Please correct dates.")
+                    return
+
+            msg1 = "Shift "
             if line:
-                msg1 += f" {line} "
+                msg1 += f"{line}"
             else:
-                msg1 += f" ____ "
+                msg1 += f"____"
+            msg1 += " line"
+            msg1 += "s " if line == "All" else " "
 
             if n_days:
                 msg1 += f"{n_days}"
@@ -3264,26 +3384,32 @@ class App(ctk.CTk):
             self.tl_data[tl_name],
             width=w-(wm / 2),
             height=300,
-            bg=bg_sl_main.hex_code
+            bg_color=bg_sl_main.hex_code
         )
-        self.tl_data["label_sd"] = tkinter_utility.label_factory(
+        self.tl_data["tl_frame_days"].rowconfigure(0, weight=10)
+        self.tl_data["tl_frame_days"].rowconfigure(1, weight=90)
+        self.tl_data["tl_frame_days"].columnconfigure(0, weight=50)
+        self.tl_data["tl_frame_days"].columnconfigure(1, weight=50)
+        self.tl_data["tl_frame_days"].grid_propagate(False)
+
+        self.tl_data["label_sd"] = customtkinter_utility.label_factory(
             self.tl_data["tl_frame_days"],
             tv_label="Start Date:"
         )
-        self.tl_data["frame_sd"] = CtkEntryDate(
+        self.tl_data["frame_sd"] = customtkinter_utility.CtkEntryDate(
             self.tl_data["tl_frame_days"]
         )
-        self.tl_data["label_ed"] = tkinter_utility.label_factory(
+        self.tl_data["label_ed"] = customtkinter_utility.label_factory(
             self.tl_data["tl_frame_days"],
             tv_label="End Date:"
         )
         self.tl_data["var_end_date_disabled"] = ctk.BooleanVar(self.tl_data[tl_name], value=False)
-        self.tl_data["btn_disable_end_date"] = tkinter_utility.button_factory(
+        self.tl_data["btn_disable_end_date"] = customtkinter_utility.button_factory(
             self.tl_data["tl_frame_days"],
             tv_btn="Disable 'End Date'",
             command=click_disable_end_date
         )
-        self.tl_data["frame_ed"] = CtkEntryDate(
+        self.tl_data["frame_ed"] = customtkinter_utility.CtkEntryDate(
             self.tl_data["tl_frame_days"]
         )
         # ed = f"{datetime.datetime.now() + datetime.timedelta(days=7):%Y-%m-%d}"
@@ -3293,68 +3419,86 @@ class App(ctk.CTk):
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
 
-        self.tl_data["combobox_lines"] = tkinter_utility.combo_factory(
-            self.tl_data[tl_name],
+        self.tl_data["tl_frame_left_widgets"] = ctk.CTkFrame(self.tl_data[tl_name])
+
+        self.tl_data["combobox_lines"] = customtkinter_utility.combo_factory(
+            self.tl_data["tl_frame_left_widgets"],
             tv_label="Line:",
-            values=self.list_prod_lines
+            values=["All"] + self.list_prod_lines
         )
 
         self.tl_data["var_slider_n_days"] = ctk.IntVar(self, value=1)
-        self.tl_data["slider_n_days"] = ttk.Scale(
-            self.tl_data[tl_name],
+        # self.tl_data["slider_n_days"] = ttk.Scale(
+        #     self.tl_data[tl_name],
+        #     from_=1,
+        #     to=7,
+        #     orient="horizontal",
+        #     variable=self.tl_data["var_slider_n_days"]
+        # )
+        self.tl_data["slider_n_days"] = ctk.CTkSlider(
+            self.tl_data["tl_frame_left_widgets"],
             from_=1,
             to=7,
-            orient="horizontal",
+            orientation="horizontal",
             variable=self.tl_data["var_slider_n_days"]
         )
 
         self.tl_data["tl_frame_btns"] = ctk.CTkFrame(
-            self.tl_data[tl_name]
+            self.tl_data["tl_frame_left_widgets"]
         )
-        self.tl_data["btn_cancel"] = tkinter_utility.button_factory(
+        self.tl_data["btn_cancel"] = customtkinter_utility.button_factory(
             self.tl_data["tl_frame_btns"],
             tv_btn="cancel",
             command=click_cancel
         )
-        self.tl_data["btn_submit"] = tkinter_utility.button_factory(
+        self.tl_data["btn_submit"] = customtkinter_utility.button_factory(
             self.tl_data["tl_frame_btns"],
             tv_btn="submit",
             command=click_submit
         )
 
         self.tl_data["label_shift_text"] = [
-            tkinter_utility.label_factory(
-                self.tl_data[tl_name],
-                tv_label=""
+            customtkinter_utility.label_factory(
+                self.tl_data["tl_frame_left_widgets"],
+                tv_label="",
+                kwargs_label={"font": ("Calibri", 20)}
             ),
-            tkinter_utility.label_factory(
-                self.tl_data[tl_name],
-                tv_label=""
+            customtkinter_utility.label_factory(
+                self.tl_data["tl_frame_left_widgets"],
+                tv_label="",
+                kwargs_label={"font": ("Calibri", 20)}
             )
         ]
 
+        # random_table = [[random.randint(-5, 15) for j in range(3)] for j in range(13)]
+        self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(self.tl_data[tl_name])
+        # self.tl_data["tl_frame_preview"].columnconfigure(0, weight=50)
+        # self.tl_data["tl_frame_preview"].columnconfigure(1, weight=50)
         self.tl_data["table_change_preview"] = CTkTable.CTkTable(
-            self.tl_data[tl_name],
-            values=[["Quote", "Current Date", "New Date"]]
+            self.tl_data["tl_frame_preview"],
+            values=[self.list_sl_preview_table_cols, ["", "No Data", ""]],
+            header_color=self.colour_tl_sl_preview_header.hex_code,
+            hover=True
         )
+
+        self.tl_data["tl_frame_warning"] = ctk.CTkFrame(self.tl_data[tl_name])
+        self.tl_data["tl_textbox_warning"] = ctk.CTkTextbox(
+            self.tl_data["tl_frame_warning"],
+            width=1000,
+            font=("Calibri", 18)
+        )
+        self.tl_data["tl_textbox_warning"].configure(state="disabled")
 
         self.tl_data["combobox_lines"][2].trace_variable("w", update_combobox_lines)
         self.tl_data["var_slider_n_days"].trace_variable("w", update_slider_n_days)
         self.tl_data["frame_sd"].var_date_entry.trace_variable("w", update_frame_sd)
         self.tl_data["frame_ed"].var_date_entry.trace_variable("w", update_frame_ed)
 
-        self.tl_data["tl_frame_days"].grid()
-        self.tl_data["tl_frame_days"].rowconfigure(0, weight=10)
-        self.tl_data["tl_frame_days"].rowconfigure(1, weight=90)
-        self.tl_data["tl_frame_days"].columnconfigure(0, weight=50)
-        self.tl_data["tl_frame_days"].columnconfigure(1, weight=50)
-        self.tl_data["tl_frame_days"].grid_propagate(False)
-        self.tl_data["combobox_lines"][1].grid()
-        self.tl_data["combobox_lines"][3].grid()
-        self.tl_data["slider_n_days"].grid()
-        self.tl_data["tl_frame_btns"].grid()
-        self.tl_data["label_shift_text"][0][1].grid()
-        self.tl_data["label_shift_text"][1][1].grid()
+        # tl_name
+        self.tl_data["tl_frame_days"].grid(row=0, column=0, columnspan=2)
+        self.tl_data["tl_frame_left_widgets"].grid(row=1, column=0)
+        self.tl_data["tl_frame_preview"].grid(row=1, column=1, sticky=ctk.EW)
+        self.tl_data["tl_frame_warning"].grid(row=2, column=0, columnspan=2, padx=20, pady=5)
 
         # tl_frame_days
         self.tl_data["label_sd"][1].grid(row=0, column=0, rowspan=1, columnspan=1, padx=10, pady=10)
@@ -3363,9 +3507,23 @@ class App(ctk.CTk):
         self.tl_data["btn_disable_end_date"][1].grid(row=0, column=2, rowspan=1, columnspan=1, padx=10, pady=10)
         self.tl_data["frame_ed"].grid(row=1, column=1, rowspan=1, columnspan=2, padx=10, pady=10)
 
+        # tl_frame_left_widgets
+        self.tl_data["combobox_lines"][1].grid()
+        self.tl_data["combobox_lines"][3].grid(padx=8)
+        self.tl_data["slider_n_days"].grid(padx=8)
+        self.tl_data["tl_frame_btns"].grid(padx=8)
+        self.tl_data["label_shift_text"][0][1].grid()
+        self.tl_data["label_shift_text"][1][1].grid()
+
         # tl_frame_btns
-        self.tl_data["btn_cancel"][1].grid(row=0, column=0, rowspan=1, columnspan=1)
-        self.tl_data["btn_submit"][1].grid(row=0, column=1, rowspan=1, columnspan=1)
+        self.tl_data["btn_cancel"][1].grid(row=0, column=0, rowspan=1, columnspan=1, padx=10, pady=10)
+        self.tl_data["btn_submit"][1].grid(row=0, column=1, rowspan=1, columnspan=1, padx=10, pady=10)
+
+        # tl_frame_preview
+        self.tl_data["table_change_preview"].grid(padx=20, pady=5)
+
+        # tl_frame_warning
+        self.tl_data["tl_textbox_warning"].grid(padx=20, pady=10)
 
         self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", on_closing_shift_lines)
         self.tl_data[tl_name].grab_set()
@@ -3421,7 +3579,7 @@ class App(ctk.CTk):
             self.tl_data["tl_colour_code"],
             width=total_width_dealers + (2 * m),
             height=total_height_dealers + (2 * m),
-            bg=bg_cc_main.darkened(0.25).hex_code
+            bg_color=bg_cc_main.darkened(0.25).hex_code
         )
 
         def click_bg(event=None):
