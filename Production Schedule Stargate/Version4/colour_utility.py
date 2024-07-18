@@ -3877,6 +3877,7 @@ def brighten(c, p: float, rgb=True, safe=False):
         nwp = nw / max_
         if abs(ogp - nwp) < p:
             # this colour is too dark to darken p, lighten it
+            print(f"Adjust")
             r, g, b = Colour(o_r, o_g, o_b).darken(p, safe=False)
 
     return (r, g, b) if rgb else rgb_to_hex((r, g, b))

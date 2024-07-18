@@ -385,6 +385,8 @@ class App(ctk.CTk):
         self.colour_test_dot = Colour("#AE3341")
 
         self.colour_tl_sl_preview_header = Colour("#003578")
+        self.colour_sl_fg_text_warnings_preview_warn = Colour("#AA1212")
+        self.colour_sl_fg_text_warnings_preview_no_warn = Colour("#FEFEFE")
 
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
@@ -424,6 +426,9 @@ class App(ctk.CTk):
         self.abcsh_no_hist_msg = f"Are you sure you want to exit?"
         self.msg_no_hist_on_save = f"You do not have any unsaved changes."
         self.msg_save_successful = f"Changes saved successfully!"
+        self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
+        self.msg_last_session_sql = f"Please submit the file 'last_session_sql.sql' to IT to salvage your work.{self.msg_please_do_not_rerun}"
+        self.msg_save_unsuccessful = f"An error occurred and your changes were not saved correctly. {self.msg_last_session_sql}"
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
         self.msg_no_units_on_holiday = f"There are currently no units scheduled on a holiday for this period."
 
@@ -610,27 +615,50 @@ class App(ctk.CTk):
 
             bg_color=self.colour_background_calendar_app.hex_code
         )
+
+        self.w_frame_multi_combobox, self.h_frame_multi_combobox = 690, 420
+        self.space_btwn_mc_qinfo = 20
+        self.w_tb_warranty, self.h_tb_warranty = 300, 40
         # multicombobox for searching
         self.frame_multi_combobox = ctk.CTkFrame(
-            self.frame_calendar
+            self.frame_calendar,
+            width=self.w_frame_multi_combobox,
+            height=self.h_frame_multi_combobox
         )
         self.frame_mc_inner = ctk.CTkFrame(
-            self.frame_multi_combobox
+            self.frame_multi_combobox,
+            width=self.w_frame_multi_combobox,
+            height=self.h_frame_multi_combobox - (2 * self.h_tb_warranty)
         )
+        # self.frame_multi_combobox.columnconfigure(0, weight=100)
+        self.frame_multi_combobox.grid_propagate(False)
+        self.frame_multi_combobox.pack_propagate(False)
+        self.frame_mc_inner.grid_propagate(False)
+        self.frame_mc_inner.pack_propagate(False)
+        self.frame_mc_inner.columnconfigure(0, weight=100)
 
         # multi-combobox selector for orders or warranties
-        self.toggle_warranty = tkinter_utility.ToggleCanvas(
+        # self.toggle_warranty = tkinter_utility.ToggleCanvas(
+        #     self.frame_multi_combobox,
+        #     option_a="Orders",
+        #     option_b="Warranty",
+        #     width=300,
+        #     height=40,
+        #     default_value="Orders",
+        #     auto_grid=False
+        # )
+        # self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
+        self.tv_toggle_warranty = ctk.StringVar(self, value="Orders")
+        self.tv_toggle_warranty.trace_variable("w", self.update_toggle_canvas_selection)
+        self.toggle_warranty = ctk.CTkSegmentedButton(
             self.frame_multi_combobox,
-            option_a="Orders",
-            option_b="Warranty",
-            width=300,
-            height=40,
-            default_value="Orders",
-            auto_grid=False
+            values=["Orders", "Warranty"],
+            variable=self.tv_toggle_warranty,
+            width=self.w_tb_warranty,
+            height=self.h_tb_warranty
         )
-        self.toggle_warranty.value.trace_variable("w", self.update_toggle_canvas_selection)
 
-        self.y_place_toggle_warranty = self.y_top_widgets + self.toggle_warranty.height
+        self.y_place_toggle_warranty = self.y_top_widgets + self.h_tb_warranty
 
         # multi-combobox now that data has been sorted
         self.multi_combobox_orders = tkinter_utility.MultiComboBox(
@@ -1086,7 +1114,7 @@ class App(ctk.CTk):
                 "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
             }
         )
-        self.tv_btn_if_goto, self.btn_if_goto = tkinter_utility.button_factory(
+        self.tv_btn_if_goto, self.btn_if_goto = customtkinter_utility.button_factory(
             self.info_frame.frame_header,
             tv_btn="Go To",
             command=self.click_if_goto
@@ -1306,6 +1334,9 @@ class App(ctk.CTk):
 
     def colour_code(self, date=None, line=None):
         cc = self.settings["colour_coding"]
+        ht = self.app_state["hovered"]
+        st = self.app_state["selected"]
+        dt = self.app_state["dragged"]
         if date is None or line is None:
             # colour code every tile
             date_to_check = [d for d in self.list_dates]
@@ -1333,34 +1364,48 @@ class App(ctk.CTk):
                             ou = kcc.get("width", None)
                             ft = kcc.get("font", None)
 
-                            bg_h = Colour(bg).brighten(0.15, safe=True).hex_code
-                            fg_h = Colour(fg).brighten(0.15, safe=True).hex_code
-                            bd_h = Colour(bd).brighten(0.15, safe=True).hex_code
+                            # bg_h = Colour(bg).brighten(0.15, safe=True).hex_code
+                            # fg_h = Colour(fg).brighten(0.15, safe=True).hex_code
+                            # bd_h = Colour(bd).brighten(0.15, safe=True).hex_code
+
+                            bg_h = Colour(bg).brighten(0.15, safe=False).hex_code
+                            fg_h = Colour(fg).brighten(0.15, safe=False).hex_code
+                            bd_h = Colour(bd).brighten(0.15, safe=False).hex_code
                             ou_h = ou
                             ft_h = ft
 
-                            style_k = ["bg", "fg", "outline", "width", "font"]
-                            style_v = [bg, fg, bd, ou, ft]
-                            style = dict(zip(style_k, style_v))
-                            for k in style_k:
-                                if style[k] is None:
-                                    del style[k]
+                            # style_k = ["bg", "fg", "outline", "width", "font"]
+                            # style_v = [bg, fg, bd, ou, ft]
+                            # style = dict(zip(style_k, style_v))
+                            # for k in style_k:
+                            #     if style[k] is None:
+                            #         del style[k]
 
+                            is_hovered = (date_, line_) in ht
+                            bg = bg_h if is_hovered else bg
+                            fg = fg_h if is_hovered else fg
+                            ou = ou_h if is_hovered else ou
+                            bd = bd_h if is_hovered else bd
+                            ft = ft_h if is_hovered else ft
+
+                            # print(f"{date_=}, {line_=}, {is_hovered=}")
                             # print(f"{style=}")
                             self.canvas.itemconfigure(
                                 tag,
                                 fill=bg,
                                 width=ou,
-                                outline=bd,
-                                activefill=bg_h,
-                                activeoutline=bd_h,
+                                outline=bd
+                                # ,
+                                # activefill=bg_h,
+                                # activeoutline=bd_h,
                             )
                             for t_tag in t_tags:
                                 self.canvas.itemconfigure(
                                     t_tag,
                                     fill=fg,
-                                    font=ft,
-                                    activefill=fg_h
+                                    font=ft
+                                    # ,
+                                    # activefill=fg_h
                                 )
                 #         else:
                 #             print(f"skipped {date_=}, {line_=} NO CC FOR '{dealer=}'")
@@ -1418,7 +1463,8 @@ class App(ctk.CTk):
         # self.frame_canvas.grid_propagate(False)
         self.canvas.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: "ew"})
-        is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        # is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        is_warranty = self.tv_toggle_warranty.get() == "Warranty"
 
         self.frame_canvas.place(
             x=self.x_place_frame_canvas,
@@ -1430,15 +1476,24 @@ class App(ctk.CTk):
 
         # self.frame_canvas.grid({r:0, c:2})
 
+        # self.frame_multi_combobox.place(
+        #     x=self.x_place_frame_multi_combobox,
+        #     y=self.y_place_frame_multi_combobox
+        # )
+        # self.frame_multi_combobox.grid(**{r: 0, c: 0})
         self.frame_multi_combobox.place(
             x=self.x_place_frame_multi_combobox,
             y=self.y_place_frame_multi_combobox
         )
-        self.frame_mc_inner.grid(**{r: 0, c: 0})
+        self.frame_mc_inner.grid(**{r: 0, c: 0, x: 10, y: 10})
 
+        # self.frame_info_frame.place(
+        #     x=self.x_top_widgets,
+        #     y=self.height_multi_combobox + 235
+        # )
         self.frame_info_frame.place(
             x=self.x_top_widgets,
-            y=self.height_multi_combobox + 235
+            y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
         )
 
         tm = self.settings["TEST_MODE"].get()
@@ -1724,7 +1779,8 @@ class App(ctk.CTk):
                 exist_war_job = self.df_multi_combobox_data_warranties.iloc[order_already_exists]["Job"]
                 ans = messagebox.askyesnocancel(
                     title=self.title_application_short,
-                    message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?"
+                    message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?",
+                    parent=self
                 )
                 if ans == ctk.YES:
                     # move existing unit to combobox, then place this new one
@@ -1737,7 +1793,8 @@ class App(ctk.CTk):
                 exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
                 ans = messagebox.askyesnocancel(
                     title=self.title_application_short,
-                    message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?"
+                    message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?",
+                    parent=self
                 )
                 if ans == ctk.YES:
                     # move existing unit to combobox, then place this new one
@@ -1882,7 +1939,8 @@ class App(ctk.CTk):
             # 1 of these units comes from warranty
             messagebox.showinfo(
                 title=self.title_application_short,
-                message=f"Cannot swap production units with warranty units"
+                message=f"Cannot swap production units with warranty units",
+                parent=self
             )
             self.flash_tile(date_line_2, mode="invalid")
             return
@@ -2112,7 +2170,8 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"drag_treeview_entry, {event=}")
-        is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        # is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        is_warranty = self.tv_toggle_warranty.get() == "Warranty"
         if tm:
             print(f"\t{is_warranty=}")
 
@@ -2237,7 +2296,8 @@ class App(ctk.CTk):
         if tm:
             print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
-        is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        # is_warranty = self.toggle_warranty.value.get() == "Warranty"
+        is_warranty = self.tv_toggle_warranty.get() == "Warranty"
         if tm:
             print(f"\t{is_warranty=}")
         # self.multi_combobox_orders.grid()
@@ -2307,7 +2367,8 @@ class App(ctk.CTk):
                             messagebox.showinfo(
                                 title=self.title_application_short,
                                 message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(
-                                    self.list_warranty_lines)
+                                    self.list_warranty_lines),
+                                parent=self
                             )
                             self.flash_tile(date_line, mode="invalid")
                             self.clear_master_drag_tile()
@@ -2338,7 +2399,8 @@ class App(ctk.CTk):
                             messagebox.showinfo(
                                 title=self.title_application_short,
                                 message=f"Production units can only be placed in production lines:\n\t" + "\n\t".join(
-                                    prod_lines)
+                                    prod_lines),
+                                parent=self
                             )
                             self.flash_tile(date_line, mode="invalid")
                             self.clear_master_drag_tile()
@@ -2555,7 +2617,7 @@ class App(ctk.CTk):
             self.clear_hover_tiles()
             return
         # self.canvas.itemcget()
-        # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
+        # print(f"{x=}, {y=}, {o_x=}, {o_y=}, {date=}, {line=}, {st=}, {dt=}, {event=}")
         # self.app_state["hovered"].clear()
 
         # don't overwrite the selected and dragging tiles with new hovers
@@ -2566,6 +2628,7 @@ class App(ctk.CTk):
 
     def update_hover_tiles(self) -> None:
         ht = self.app_state["hovered"]
+        st = self.app_state["selected"]
         ab = self.colour_tile_background_hover
         af = self.colour_tile_foreground_hover
         ao = self.colour_tile_outline_hover
@@ -2577,11 +2640,14 @@ class App(ctk.CTk):
         ao_w = self.colour_tile_outline_weekend_hover
         font_w = self.font_tile_weekend_hover
 
+        # print(f"UHT:: {ht=}, {st=}", end="")
+
         for date, prod_line in ht:
             is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
-            if tile:
+            if tile is not None:
+                # print(f" TIN", end="")
                 self.canvas.itemconfigure(
                     tile,
                     fill=(ab_w if is_weekend else ab).hex_code,
@@ -2589,12 +2655,15 @@ class App(ctk.CTk):
                     width=ow
                 )
             for text in texts:
+                # print(f", '{text}'", end="")
                 self.canvas.itemconfigure(
                     text,
                     fill=(af_w if is_weekend else af).hex_code,
                     font=(font_w if is_weekend else font)
                 )
+            # print(f"")
 
+            # if (date, prod_line) not in st:
             self.colour_code(date, prod_line)
 
     def clear_hover_tiles(self) -> None:
@@ -2617,11 +2686,12 @@ class App(ctk.CTk):
         # ensure that the selected and dragging tiles are not blanked
         sub_ht = [key for key in ht if key not in (st + dt)]
 
+        self.app_state["hovered"].clear()
         for date, prod_line in sub_ht:
             is_weekend = date.weekday() >= 5
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
-            if tile:
+            if tile is not None:
                 self.canvas.itemconfigure(
                     tile,
                     fill=(b_w if is_weekend else b).hex_code,
@@ -2637,7 +2707,6 @@ class App(ctk.CTk):
                 )
 
             self.colour_code(date, prod_line)
-        self.app_state["hovered"].clear()
 
     def clear_master_drag_tile(self):
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
@@ -2769,7 +2838,8 @@ class App(ctk.CTk):
         if n_mc_records:
             messagebox.showinfo(
                 title=self.title_application_short,
-                message=f"Please keep entering characters. There are still options in the combo-box below."
+                message=f"Please keep entering characters. There are still options in the combo-box below.",
+                parent=self
             )
             return
 
@@ -2796,7 +2866,8 @@ class App(ctk.CTk):
             else:
                 messagebox.showinfo(
                     title=self.title_application_short,
-                    message=f"Could not find anything matching '{quote}'."
+                    message=f"Could not find anything matching '{quote}'.",
+                    parent=self
                 )
 
     def multi_combobox_entry_update(self, *args):
@@ -3202,6 +3273,7 @@ class App(ctk.CTk):
 
                 warnings = []
                 if direction == "backward":
+                    # TODO
                     pass
                 else:
                     # for i, day in enumerate(days_of_interest[::-1]):
@@ -3243,11 +3315,18 @@ class App(ctk.CTk):
 
                 if not warnings:
                     self.tl_data["tl_textbox_warning"].insert(ctk.END, "No Issues found.\nClick submit to commit this shift.")
-
+                    font_colour = self.colour_sl_fg_text_warnings_preview_no_warn.hex_code
+                    self.tl_data["btn_submit"][1].configure(state="normal")
+                else:
+                    font_colour = self.colour_sl_fg_text_warnings_preview_warn.hex_code
+                    self.tl_data["btn_submit"][1].configure(state="disabled")
 
                 self.tl_data["tl_textbox_warning"].see(ctk.END)
                 print(f"{self.tl_data['tl_textbox_warning'].get('1.0', ctk.END)=}")
-                self.tl_data["tl_textbox_warning"].configure(state="disabled")
+                self.tl_data["tl_textbox_warning"].configure(
+                    state="disabled",
+                    text_color=font_colour
+                )
 
         def update_shift_text(*args):
             line = self.tl_data["combobox_lines"][2].get()
@@ -3349,6 +3428,102 @@ class App(ctk.CTk):
 
         def click_submit(*args):
             print(f"click_submit")
+            data = self.tl_data["table_change_preview"].get()[1:]
+            p_line = self.tl_data["combobox_lines"][2].get()
+            # n_days = self.tl_data["var_slider_n_days"].get()
+            # sd = self.tl_data["frame_sd"].var_date_entry.get()
+            # ed = self.tl_data["frame_ed"].var_date_entry.get()
+            # direction = "forward"
+            #
+            # if isinstance(sd, str):
+            #     sd = datetime.datetime.strptime(sd, "%Y-%m-%d")
+            #
+            # ed_disabled = self.tl_data["var_end_date_disabled"].get()
+            #
+            # min_date, max_date = self.list_dates[0], self.list_dates[-1]
+
+            if len(data) > 1:
+
+                # if ed_disabled:
+                #     ed = max_date
+                #
+                # if isinstance(ed, str):
+                #     ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+
+                sql_statements = f""
+                for row in data:
+
+                    if p_line == "All":
+                        quote, line_, curr_date_s, new_date_s = row
+                    else:
+                        quote, curr_date_s, new_date_s = row
+                        line_ = p_line
+
+                    sql_statements += f"/* Shifting quote '{quote}' */"
+
+                    # sql_statement = f"UPDATE "
+
+                    now = datetime.datetime.now()
+                    date = f"{now:%Y-%m-%d %H:%M:%S}"
+                    user = self.app_state["user_name"]
+                    rt1 = "[BWSdb].[dbo].[OrdersV2]"
+                    kd = "[Available Date]"
+                    kl = "[JobAvailableLine]"
+                    ks = "[JobAvailableScheduled]"
+                    kb = "[JobAvailableScheduledBy]"
+                    kq = "[SGQuote]"
+
+                    rt2 = "[Stargatedb].[dbo].[dtProductionScheduleV2]"
+                    kj = "[JobStartLine]"
+                    kk = "[JobFinishDate]"
+
+                    sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                    sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+
+                    dat_1 = {
+                        "KD": new_date_s,  # [Available Date]
+                        "KL": line_,  # [JobAvailableLine]
+                        "KS": date,  # [JobAvailableScheduled]
+                        "KB": user,  # [JobAvailableScheduledBy]
+                        "KQ": quote  # [SGQuote]
+                    }
+                    sql_statements += f"\n/* {rt1} */\n{sql_swap_1.format(**dat_1)}"
+
+                    dat_2 = {
+                        "KJ": line_,  # [JobStartLine]
+                        "KK": new_date_s,  # [JobFinishDate]
+                        "KQ": quote  # [SGQuote]
+                    }
+                    sql_statements += f"\n/* {rt2} */\n{sql_swap_2.format(**dat_2)}"
+
+                print(f"{sql_statements=}")
+                try:
+                    connect(sql_statements, do_show=True, do_exec=False, do_print=True)
+                except:
+                    messagebox.showerror(
+                        title=self.title_application_short,
+                        message=self.msg_save_unsuccessful,
+                        parent=self.tl_data[tl_name]
+                    )
+                else:
+                    if sql_statements:
+                        messagebox.showinfo(
+                            title=self.title_application_short,
+                            message=self.msg_save_successful,
+                            parent=self.tl_data[tl_name]
+                        )
+
+                on_closing_shift_lines()
+            else:
+                self.tl_data["label_shift_text"][0][0].set("Please choose different inputs.")
+                self.tl_data["label_shift_text"][1][0].set("No quotes were found in your specified range.")
+                self.tl_data["btn_submit"][1].configure(state="disabled")
+                return
+                # messagebox.showerror(
+                #     title=self.title_application_short,
+                #     message=self.
+                # )
+
 
         def click_disable_end_date(*args):
             disabled = self.tl_data["var_end_date_disabled"].get()
@@ -3456,6 +3631,7 @@ class App(ctk.CTk):
             tv_btn="submit",
             command=click_submit
         )
+        self.tl_data["btn_submit"][1].configure(state="disabled")
 
         self.tl_data["label_shift_text"] = [
             customtkinter_utility.label_factory(
@@ -3474,6 +3650,13 @@ class App(ctk.CTk):
         self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(self.tl_data[tl_name])
         # self.tl_data["tl_frame_preview"].columnconfigure(0, weight=50)
         # self.tl_data["tl_frame_preview"].columnconfigure(1, weight=50)
+        self.tl_data["label_change_preview"] = customtkinter_utility.label_factory(
+            self.tl_data["tl_frame_preview"],
+            tv_label="Quotes Affected:",
+            kwargs_label={
+                "font": ("Calibri", 20)
+            }
+        )
         self.tl_data["table_change_preview"] = CTkTable.CTkTable(
             self.tl_data["tl_frame_preview"],
             values=[self.list_sl_preview_table_cols, ["", "No Data", ""]],
@@ -3520,6 +3703,7 @@ class App(ctk.CTk):
         self.tl_data["btn_submit"][1].grid(row=0, column=1, rowspan=1, columnspan=1, padx=10, pady=10)
 
         # tl_frame_preview
+        self.tl_data["label_change_preview"][1].grid()
         self.tl_data["table_change_preview"].grid(padx=20, pady=5)
 
         # tl_frame_warning
@@ -3858,7 +4042,8 @@ class App(ctk.CTk):
             self.save_colour_coding()
             messagebox.showinfo(
                 title=self.title_application_short,
-                message=f"Changes applied successfully."
+                message=f"Changes applied successfully.",
+                parent=self.tl_data["tl_colour_code"]
             )
 
         def click_cancel(event=None):
@@ -3961,7 +4146,8 @@ class App(ctk.CTk):
             if changes:
                 ans = messagebox.askyesnocancel(
                     title=self.title_application_short,
-                    message=f"Would you like to save your changes?"
+                    message=f"Would you like to save your changes?",
+                    parent=self.tl_data["tl_colour_code"]
                 )
                 if ans == ctk.YES:
                     # save changes
@@ -3983,7 +4169,8 @@ class App(ctk.CTk):
                 # a tile is in the edit window now
                 ans = messagebox.askyesnocancel(
                     title=self.title_application_short,
-                    message=f"Save changes for '{dealer}'?"
+                    message=f"Save changes for '{dealer}'?",
+                    parent=self.tl_data["tl_colour_code"]
                 )
                 if ans == ctk.YES:
                     click_save()
@@ -3996,7 +4183,8 @@ class App(ctk.CTk):
             else:
                 messagebox.showinfo(
                     title=self.title_application_short,
-                    message=f"No changes to apply."
+                    message=f"No changes to apply.",
+                    parent=self.tl_data["tl_colour_code"]
                 )
 
         def click_go_back():
@@ -4008,7 +4196,8 @@ class App(ctk.CTk):
             if changes:
                 ans = messagebox.askyesnocancel(
                     title=self.title_application_short,
-                    message=f"Would you like to save your changes?"
+                    message=f"Would you like to save your changes?",
+                    parent=self.tl_data["tl_colour_code"]
                 )
                 if ans == ctk.YES:
                     # save changes
@@ -4218,7 +4407,7 @@ class App(ctk.CTk):
 
         self.colour_code()
 
-    def ask_before_close(self) -> Tuple[bool, bool]:
+    def ask_before_close(self, parent=None) -> Tuple[bool, bool]:
         print(f"ask_before_close")
         tm = self.settings["TEST_MODE"].get()
         if tm:
@@ -4233,12 +4422,16 @@ class App(ctk.CTk):
         if has_history:
             msg = self.abc_has_hist_msg
 
+        if parent is None:
+            parent = self
+
         return messagebox.askyesnocancel(
             title=self.title_application_short,
-            message=msg
+            message=msg,
+            parent=parent
         ), has_history
 
-    def ask_save_before_close(self) -> Tuple[bool, bool]:
+    def ask_save_before_close(self, parent=None) -> Tuple[bool, bool]:
         print(f"ask_save_before_close")
         # has_history = self.history
         has_history = self.history.get()
@@ -4247,9 +4440,13 @@ class App(ctk.CTk):
         if has_history:
             msg = self.abcsh_has_hist_msg
 
+        if parent is None:
+            parent=self
+
         return messagebox.askyesnocancel(
             title=self.title_application_short,
-            message=msg
+            message=msg,
+            parent=parent
         ), has_history
 
     # def click_mb_save(self, event=None):
@@ -4385,7 +4582,7 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_exit, {event=}")
-        ans_has_history = self.ask_save_before_close()
+        ans_has_history = self.ask_save_before_close(parent=self)
         ans, has_history = ans_has_history
         if ans == ctk.YES:
             # quit without saving
@@ -4413,9 +4610,9 @@ class App(ctk.CTk):
         if do_quit:
             # ans_has_history = self.ask_save_before_close()
             if history:
-                ans_has_history = self.ask_save_before_close()
+                ans_has_history = self.ask_save_before_close(parent=self)
             else:
-                ans_has_history = self.ask_before_close()
+                ans_has_history = self.ask_before_close(parent=self)
 
             ans, has_history = ans_has_history
         else:
@@ -4619,7 +4816,8 @@ class App(ctk.CTk):
                     connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
                     messagebox.showinfo(
                         title=self.title_application_short,
-                        message=self.msg_save_successful
+                        message=self.msg_save_successful,
+                        parent=self
                     )
                     # for stmt in stmts.split(";"):
                     #     st = stmt.replace("\t", " ").replace("\n", " ")
@@ -4630,7 +4828,8 @@ class App(ctk.CTk):
                     if tm:
                         messagebox.showinfo(
                             title=self.title_application_short,
-                            message=self.msg_no_commit_test_mode
+                            message=self.msg_no_commit_test_mode,
+                            parent=self
                         )
 
                 # # TODO async
@@ -4650,7 +4849,8 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_toggle_canvas_selection")
-        toggle_mode = self.toggle_warranty.value.get()
+        # toggle_mode = self.toggle_warranty.value.get()
+        toggle_mode = self.tv_toggle_warranty.get()
 
         self.toggle_warranty.grid_forget()
 
@@ -4721,12 +4921,15 @@ class App(ctk.CTk):
                 msg += f"\n{4*t}{l.rjust(5)}: {qn}"
             messagebox.showwarning(
                 title=self.title_application_short,
-                message=msg
+                message=msg,
+                parent=self
             )
         else:
+            ctk.CTkSegmentedButton
             messagebox.showinfo(
                 title=self.title_application_short,
-                message=self.msg_no_units_on_holiday
+                message=self.msg_no_units_on_holiday,
+                parent=self
             )
 
     def quit_cc_app(self):
