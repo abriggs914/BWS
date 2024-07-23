@@ -24,8 +24,8 @@ VERSION = \
     """	
     General Utility Functions
     ans class for customtkinter
-    Version................1.05
-    Date.............2024-07-18
+    Version................1.06
+    Date.............2024-07-19
     Author(s)......Avery Briggs
     """
 
@@ -686,11 +686,12 @@ class CalendarCanvas2(ctk.CTkCanvas):
             colour_active_background_canvas_selected: Colour = Colour("#2836A8"),
             colour_active_foreground_canvas_selected: Colour = Colour("#DDDDDD"),
             colour_foreground_canvas_selected: Colour = Colour("#FFFFFF"),
+            colour_outline: Colour = Colour("#000000"),
             colour_scheme_month: dict[int: Colour] = None,
             colour_scheme_day: dict[tuple[int, int]: Colour] = None,
             hover_style: Literal[None, "darken", "brighten"] = "brighten",
             invalid_style: Literal[None, "darken", "brighten", "invisible"] = None,
-            disabled_style: Literal[None, "darken", "brighten", ""] = None,
+            disabled_style: Literal["darken", "brighten"] = "darken",
             invalid_style_safe: bool = True,
             show_all_rows: bool = False,
             selectable: bool = False,
@@ -726,6 +727,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         self.colour_foreground_canvas_selected = colour_foreground_canvas_selected
         self.colour_active_background_canvas_selected = colour_active_background_canvas_selected
         self.colour_active_foreground_canvas_selected = colour_active_foreground_canvas_selected
+        self.colour_outline = colour_outline
         self.colour_scheme_month: dict[int: Colour] = self.validate_colour_scheme(
             colour_scheme_month) if colour_scheme_month is not None else dict()
         # self.colour_scheme_day: dict[tuple[int, int]: Colour] = self.validate_colour_scheme(colour_scheme_day) if colour_scheme_day is not None else dict()
@@ -733,6 +735,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
                                          int, int]: Colour] = colour_scheme_day if colour_scheme_day is not None else dict()
         self.hover_style = hover_style
         self.invalid_style = invalid_style
+        self.disabled_style = disabled_style
         self.invalid_style_safe = invalid_style_safe
         self.v_cell_ids_hovered = ctk.Variable(self, value=None)
         self.v_cell_ids_selected = ctk.Variable(self, value=None)
@@ -797,11 +800,14 @@ class CalendarCanvas2(ctk.CTkCanvas):
                 # col_wd_txt = cs.get("colour_foreground_canvas", col_wd.font_foreground_c())
                 # col_wd = self.get_colour("colour_background_canvas", i, j, do_show=((0 < i < 20) and (15 < j < 50)))
                 # col_wd_txt = self.get_colour("colour_foreground_canvas", i, j, do_show=((0 < i < 20) and (15 < j < 50)))
-                col_wd = self.get_colour("colour_background_canvas", i, j, do_show=(cal_idx == 2))
-                col_wd_txt = self.get_colour("colour_foreground_canvas", i, j, do_show=(cal_idx == 2))
+                col_wd = self.get_colour("colour_background_canvas", i, j)
+                col_wd_txt = self.get_colour("colour_foreground_canvas", i, j)
+                col_ou = self.get_colour("colour_outline", i, j)
                 # print(f"{i=}, {j=}, {cal_idx=}, {p_a=}, {p_ba=}, {p_bb=}, col_wd={col_wd.hex_code}, col_wd_txt={col_wd_txt.hex_code}, {cs=}")
                 tr = self.create_rectangle(
-                    x0, y0, x1, y1, fill=col_wd.hex_code
+                    x0, y0, x1, y1,
+                    fill=col_wd.hex_code,
+                    outline=col_ou.hex_code
                 )
                 tt = self.create_text(
                     x0 + ((x1 - x0) / 2), y0 + ((y1 - y0) / 2),
@@ -1081,7 +1087,9 @@ class CalendarCanvas2(ctk.CTkCanvas):
             "colour_foreground_header_month": iscolour,
 
             "colour_background_canvas_selected": iscolour,
-            "colour_foreground_canvas_selected": iscolour
+            "colour_foreground_canvas_selected": iscolour,
+
+            "colour_outline": iscolour
         }
 
         result = {}
@@ -1262,6 +1270,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         ds = self.colour_scheme_day
         ms = self.colour_scheme_month
 
+        ds_ = self.disabled_style
         is_ = self.invalid_style
         hs = self.hover_style
 
@@ -1271,7 +1280,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         dc = self.disabled_cells
         dtc = self.set_date_cells
 
-        print(f"{ds=}")
+        # print(f"{ds=}")
 
         def sub_get_colour(key_, i_=None, j_=None, default_=None, do_show_=False, depth=1):
             print(f"{key_=}, {i_=}, {j_=}, {default_=}, {do_show_=}, {depth=}")
@@ -1311,52 +1320,64 @@ class CalendarCanvas2(ctk.CTkCanvas):
                                 c_code += "i"
                                 val = ms[cal_idx].get(key_n)
                     if not val:
-                        c_code += "j"
                         try:
-                            c_code += "k"
-                            val = self.__getattribute__(key_)
+                            c_code += "j"
+                            if "_foreground" in key:
+                                val = self.get_colour(
+                                    key.replace("_foreground", "_background"),
+                                    i=i,
+                                    j=j,
+                                    do_show=do_show
+                                ).font_foreground_c(threshold=255/4)
+                            else:
+                                val = self.__getattribute__(key_)
                         except AttributeError:
-                            c_code += "l"
+                            c_code += "k"
                             val = fg if ("_foreground" in key) else bg
 
                 if is_invalid_cell:
-                    c_code += "m"
+                    c_code += "l"
                     if pos not in self.dict_canvas_tags[f"header_month_weekday"][cal_idx]:
-                        c_code += "n"
+                        c_code += "m"
                         print(f"invalid  {hovered=}")
                         if pos == hovered:
-                            c_code += "o"
+                            c_code += "n"
                             if is_:
-                                c_code += "p"
+                                c_code += "o"
                                 val = val.darkened(0.25, safe=self.invalid_style_safe) if (is_ == "darken") else (
                                     val.brightened(0.25, safe=self.invalid_style_safe) if (is_ == "brighten") else val)
 
                 elif pos in dc:
-                    c_code += "q"
+                    c_code += "p"
                     print(f"disabled")
+                    if "_foreground" in key:
+                        val = val.brightened(0.35, safe=True) if (ds_ == "darken") else (
+                            val.darkened(0.35, safe=True) if (ds_ == "brighten") else val)
+                    else:
+                        val = val.brightened(0.25, safe=True) if (ds_ == "brighten") else val.darkened(0.25, safe=True)
 
                 elif pos == selected:
-                    c_code += "r"
+                    c_code += "q"
                     print(f"selected")
                     key_s = key_.replace("_active", "").removesuffix("_selected") + "_selected"
                     if depth > 0:
                         val = sub_get_colour(key_s, i_, j_, do_show_=do_show_, depth=depth-1)
 
                 elif pos == hovered:
-                    c_code += "s"
+                    c_code += "r"
                     print(f"hovered")
                     if hs:
-                        c_code += "t"
+                        c_code += "s"
                         val = val.darkened(0.25) if (hs == "darken") else (
                             val.brightened(0.25) if (hs == "brighten") else val)
 
             else:
-                c_code += "u"
+                c_code += "t"
                 try:
-                    c_code += "v"
+                    c_code += "u"
                     val = self.__getattribute__(key_)
                 except AttributeError:
-                    c_code += "w"
+                    c_code += "v"
                     val = fg if ("_foreground" in key_) else bg
 
             print(f"CC={c_code.ljust(15)}, C='{val.hex_code}', ij=({i_}, {j_}), {key_=}")
@@ -3560,7 +3581,7 @@ def demo_2():
 
 def demo_3():
     win = ctk.CTk()
-    win.geometry(calc_geometry_tl(1.0, 1.0, largest=1))  # , parent=win, ask=True))
+    win.geometry(calc_geometry_tl(1.0, 1.0, largest=0))  # , parent=win, ask=True))
     win.title("CalendarCanvas Demo")
 
     colour_scheme_keys = {
@@ -3568,7 +3589,8 @@ def demo_3():
         "colour_background_owned_number_check": lambda c: c.brightened(0.25),
         "colour_background_header_month": lambda c: c.darkened(0.2),
         "colour_background_header_weekday": lambda c: c.darkened(0.1),
-        "colour_background_canvas_selected": lambda c: c.inverted().brightened(0.25, safe=True)
+        "colour_background_canvas_selected": lambda c: c.inverted().brightened(0.25, safe=True),
+        "colour_outline": lambda c: c.inverted().darkened(0.25, safe=True)
     }
     month_colours = {
         0: Colour("#1E90FF"),  # January
@@ -3590,6 +3612,7 @@ def demo_3():
         # 2: Colour("#66CDAA"),  # March - Medium Aquamarine
         2: Colour("#000000"),  # March - Medium Aquamarine
         # 3: Colour("#8FBC8F"),  # April - Dark Sea Green
+        3: Colour("#000000"),  # March - Medium Aquamarine
         # 4: Colour("#98FB98"),  # May - Pale Green
         5: Colour("#FFD700"),  # June - Gold
         # 6: Colour("#FFA500"),  # July - Orange
@@ -3626,6 +3649,8 @@ def demo_3():
     print(f"{colour_scheme_day=}")
 
     # colour_scheme_months[0]["colour_background_canvas"] = Colour("#319141")
+    colour_scheme_months[3]["colour_foreground_canvas"] = Colour("#319141")
+    colour_scheme_months[3]["colour_outline"] = Colour("#FFD700")
 
     frame = ctk.CTkFrame(win)
     calendar = CalendarCanvas2(
@@ -3647,9 +3672,45 @@ def demo_3():
     # calendar.disable_date(datetime.datetime(2024, 12, 25))  # holiday
     # calendar.disable_date(datetime.datetime(2024, 1, 25))
     calendar.disable_day(1, 25)
+    def random_date(year_range=(1995, datetime.datetime.now().year), month_range=(1, 12), day_range=(1, 31)):
+        l_year, t_year = year_range
+        l_month, t_month = month_range
+        l_day, t_day = day_range
+
+        rdate = None
+
+        while rdate is None:
+            ry = random.randint(l_year, t_year)
+            rm = random.randint(l_month, t_month)
+            rd = random.randint(l_day, t_day)
+            try:
+                rdate = datetime.datetime(ry, rm, rd)
+            except ValueError:
+                rdate = None
+
+        return rdate
+
+    random_disabled_dates = set()
+    while len(random_disabled_dates) < 10:
+        random_disabled_dates.add(random_date())
+
+    for date in random_disabled_dates:
+        calendar.disable_day(date.month, date.day)
+
     # win.after(2500, lambda: calendar.select_day(datetime.datetime.now()))
     # win.after(8500, lambda: calendar.deselect_day())
 
+    win.mainloop()
+
+
+def demo_4():
+    win = ctk.CTk()
+    win.geometry(f"600x350")
+    start_colour = "#560000"
+    can = ctk.CTkCanvas(win, width=100, height=100, bg=start_colour)
+    btn = ctk.CTkButton(win, text="brighten 12%", command=lambda : can.configure(bg=Colour(can.cget("bg")).brightened(0.12, safe=True).hex_code))
+    can.pack()
+    btn.pack()
     win.mainloop()
 
 
@@ -3657,3 +3718,4 @@ if __name__ == '__main__':
     # demo_1()
     # demo_2()
     demo_3()
+    # demo_4()
