@@ -12,9 +12,9 @@ from tkcalendar import Calendar
 
 from datetime_utility import is_date
 from colour_utility import Colour, iscolour
-from tkinter_utility import calc_geometry_tl
 from utility import grid_cells, clamp, isnumber
 import pandas as pd
+from screeninfo import get_monitors
 
 #######################################################################################################################
 #######################################################################################################################
@@ -24,8 +24,8 @@ VERSION = \
     """	
     General Utility Functions
     ans class for customtkinter
-    Version................1.06
-    Date.............2024-07-19
+    Version................1.07
+    Date.............2024-07-24
     Author(s)......Avery Briggs
     """
 
@@ -51,6 +51,230 @@ def VERSION_AUTHORS():
 #######################################################################################################################
 #######################################################################################################################
 #######################################################################################################################
+
+
+def calc_geometry_tl(
+        width: int | float,
+        height: int | float = None,
+        dims: Optional[tuple | list] = None,
+        largest: bool | int = True,
+        rtype: str | dict | list | tuple = str,
+        parent: ctk.CTkBaseClass | ctk.CTkToplevel | ctk.CTk = None,
+        do_print: bool = False,
+        ask: bool = False,
+        ask_title: str = "Select which monitor you would like to use:",
+        bypass_parent_withdraw: bool = False,  # use for customtkinter and windows that are problematic to re-display
+        # one_display_orient: Literal["horizontal", "vertical"]="horizontal",
+        colour_code: Optional[dict[str: str]] = None
+) -> str | dict | list | tuple:
+
+    x_off, y_off = 0, 0
+
+    if not isinstance(colour_code, dict):
+        colour_code = {}
+
+    bg_canvas = colour_code.get("bg_canvas", "#898989")
+    bg_colour = colour_code.get("bg_colour", "#454545")
+    fg_colour = colour_code.get("fg_colour", "#CCCCCC")
+    bg_hover_colour = colour_code.get("bg_hover_colour", "#DE9E9E")
+    fg_hover_colour = colour_code.get("fg_hover_colour", "#FFFFFF")
+
+    monitors = get_largest_monitors()
+
+    if dims is None:
+        # monitors_lr = sorted(list(monitors), key=lambda m: m.x)
+        if isinstance(largest, bool) and largest:
+            monitor = monitors[0]
+            largest = 1
+        else:
+            assert isinstance(largest, int), f"Error param 'largest' must be an integer."
+            assert -1 < largest < len(
+                monitors), f"Error param 'largest' must be in range {len(monitors)}. That is the maximum number of monitors you have."
+            monitor = monitors[largest]
+        x_, y_, width_, height_ = monitor.x, monitor.y, monitor.width, monitor.height
+
+        # if treat_as_one_display:
+        x_off = monitor.x
+        y_off = monitor.y
+        # if one_display_orient == "horizontal":
+        #    x_off = monitor.x  # sum([m.width for m in monitors_lr[:largest]])
+        # else:
+        #    y_off = monitor.y  #  sum([m.height for m in monitors_lr[:largest]])
+    else:
+        x_, y_, width_, height_ = dims
+
+    # print(f"{parent=}")
+    if parent is not None:
+        # a parent widget or window has been identified.
+        # calculate this new geometry
+        px, py = parent.winfo_rootx(), parent.winfo_rooty()
+        # print(f"{px=}, {py=}")
+        x_off = px
+        y_off = py
+
+        if len(monitors) > 1:
+            if ask:
+
+                idx = ctk.IntVar(parent, value=0)
+
+                def close_tl():
+                    tl.destroy()
+
+                def click(event, monitor_idx):
+                    # print(f"click {event=}, {idx=}")
+                    idx.set(monitor_idx)
+                    close_tl()
+
+                def motion(event):
+                    x, y = event.x, event.y
+                    found_one = False
+                    for i, m in enumerate(monitors):
+                        tr, tt = tags[i]
+                        x0, y0, x1, y1 = tl_canvas.bbox(tr)
+                        if not found_one and ((x0 <= x <= x1) and (y0 <= y <= y1)):
+                            tl_canvas.itemconfigure(tr, fill=bg_hover_colour)
+                            tl_canvas.itemconfigure(tt, fill=fg_hover_colour)
+                            found_one = True
+                        else:
+                            tl_canvas.itemconfigure(tr, fill=bg_colour)
+                            tl_canvas.itemconfigure(tt, fill=fg_colour)
+
+                tl = ctk.CTkToplevel(parent)
+                w_w, h_w = 600, 200
+                tl.geometry = calc_geometry_tl(w_w, h_w, parent=parent, ask=False)
+                tl_label_dat = label_factory(tl, tv_label=ask_title, kwargs_label={"font": ("Calibri", 18, "bold")})
+                tl_canvas = ctk.CTkCanvas(tl, width=w_w, height=h_w, background=bg_canvas)
+
+                # print(f"{monitors=}")
+                wx0 = monitors[0].x
+                wx1 = monitors[-1].x + monitors[-1].height
+                wy0 = min([m.y for m in monitors])
+                wy1 = max([m.y + m.height for m in monitors])
+                wwr = w_w / (wx1 - wx0)
+                whr = h_w / (wy1 - wy0)
+                tags = []
+                for i, m in enumerate(monitors):
+                    x0, y0 = (m.x - wx0), (m.y - wy0)
+                    x1, y1 = (x0 + m.width) * wwr, (y0 + m.height) * whr
+                    x0 *= wwr
+                    y0 *= wwr
+                    x0 = clamp(0, x0, w_w - ((len(monitors) - i) * 5))
+                    y0 = clamp(0, y0, h_w - ((len(monitors) - i) * 5))
+                    x1 = clamp(0, x1, w_w)
+                    y1 = clamp(0, y1, h_w)
+                    w, h = x1 - x0, y1 - y0
+                    tr = tl_canvas.create_rectangle(x0, y0, x1, y1, fill=bg_colour)
+                    tt = tl_canvas.create_text(x0 + (w / 2), y0 + (h / 2), fill=fg_colour, text=f"Monitor {i + 1}")
+                    tl_canvas.tag_bind(tr, "<Button-1>", lambda event, i_=i: click(event, i_))
+                    tl_canvas.tag_bind(tt, "<Button-1>", lambda event, i_=i: click(event, i_))
+                    tags.append((tr, tt))
+
+                # gc = grid_cells(w_w, len(monitors), h_w, 1, r_type=list, x_pad=10, y_pad=5)[0]
+                # print(f"{monitors=}")
+                # for i, m in enumerate(monitors):
+                #     tr = tl_canvas.create_rectangle(*gc[i], fill="#AEAEAE")
+                #     x0, y0, x1, y1 = gc[i]
+                #     w, h = x1 - x0, y1 - y0
+                #     tt = tl_canvas.create_text(x0 + (w/2), y0 + (h/2), fill="#000000", text=f"Monitor {i+1}")
+                #     tl_canvas.tag_bind(tr, "<Button-1>", lambda event, i_=i: click(event, i_))
+                #     tl_canvas.tag_bind(tt, "<Button-1>", lambda event, i_=i: click(event, i_))
+
+                tl_canvas.bind("<Motion>", motion)
+                tl_label_dat[1].grid(padx=25, pady=25)
+                tl_canvas.grid()
+                tl.protocol("WM_DELETE_WINDOW", close_tl)
+                tl.grab_set()
+                if not bypass_parent_withdraw:
+                    parent.withdraw()
+                parent.wait_window(tl)
+                if not bypass_parent_withdraw:
+                    parent.deiconify()
+
+                monitor = monitors[idx.get()]
+                x_, y_, width_, height_ = monitor.x, monitor.y, monitor.width, monitor.height
+                x_off = monitor.x
+                y_off = monitor.y
+
+    else:
+        if ask:
+            raise ValueError(f"Cannot use param 'ask' when 'parent' is not supplied. The 'ask' param is used to create a brief TopLevel to ask which monitor you want to use. Therefore, 'parent' must be a valid instance of (tkinter.BaseWidget | tkinter.Toplevel | tkinter.Tk)")
+
+    t_width, t_height = width_, height_
+
+    if height is None:
+        height = width
+
+    if isinstance(height, float):
+        assert 0 < height <= 1, "Error, if param 'height' is a float, it must be between 0 and 1."
+        height = int(height * height_)
+
+    if isinstance(width, float):
+        assert 0 < width <= 1, "Error, if param 'width' is a float, it must be between 0 and 1."
+        width = int(width * width_)
+
+    p_a = width == "zoomed"
+    p_b = height == "zoomed"
+    if p_a or p_b:
+        if do_print:
+            print(f"A, {p_a=}, {p_b=}")
+
+        if p_a:
+            height_o = height_ if p_b else height
+            x_ = 0
+            height_c = clamp(1, height_o, height_)
+            y_ = (height_ - height_c) // 2
+            height_ = height_c
+
+        if p_b:
+            width_o = width_ if p_a else width
+            y_ = 0
+            width_c = clamp(1, width_o, width_)
+            x_ = (width_ - width_c) // 2
+            width_ = width_c
+    else:
+        if do_print:
+            print(f"B")
+        width_c = clamp(1, width, width_)
+        height_c = clamp(1, height, height_)
+        x = (width_ - width_c) // 2
+        y = (height_ - height_c) // 2
+        x_, y_, width_, height_ = x, y, width_c, height_c
+
+    x_ += x_off
+    y_ += y_off
+
+    if width == height == "zoomed":
+        res = "zoomed"
+    else:
+        res = f"{width_}x{height_}+{x_}+{y_}"
+
+    if do_print:
+        print(f"x={x_}, y={y_}, w={width_}, h={height_}, {x_off=}, {y_off=}" + f" geo=({res})")
+    if rtype == str:
+        return res
+    elif rtype == dict:
+        return {
+            "x": x_,
+            "y": y_,
+            "w": width_,
+            "h": height_,
+            "width": width_,
+            "height": height_,
+            "x1": x_,
+            "y1": y_,
+            "x2": x_ + width_,
+            "y2": y_ + height_,
+            "str": res,
+            str: res,
+            "geometry": res,
+            "res": res
+        }
+    else:
+        return [x_, y_, width_, height_]
+
+
+def get_largest_monitors():
+    return sorted(get_monitors(), key=lambda m: (-m.width_mm, m.width_mm * m.height_mm))
 
 
 class CtkTableSortable(CTkTable):

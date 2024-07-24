@@ -1,4 +1,5 @@
 import datetime
+import io
 import random
 import threading
 import time
@@ -16,7 +17,7 @@ import tkinter_utility
 import datetime_utility
 from pyodbc_connection import connect
 from colour_utility import *
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageGrab
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
 import customtkinter_utility
@@ -479,7 +480,7 @@ class App(ctk.CTk):
         )
 
         # self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
-        self.calc_geometry = tkinter_utility.calc_geometry_tl(1.0, 1.0, parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
+        self.calc_geometry = customtkinter_utility.calc_geometry_tl(1.0, 1.0, parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
 
         if self.settings["TEST_MODE"].get():
             print(f"DIMS: {self.calc_geometry=}")
@@ -724,7 +725,7 @@ class App(ctk.CTk):
 
         self.calc_grid_cells = utility.grid_cells(
             self.canvas_width_scroll_region,
-            n_cols,
+            n_cols + 1,
             self.canvas_height_scroll_region,
             n_rows,
             r_type=list
@@ -1631,7 +1632,11 @@ class App(ctk.CTk):
         date, line = self.get_date_line_at_x_y(x, y)
         return self.tiles.get(date, {}).get(line, {})
 
-    def get_tile_bbox(self, date: pd.Timestamp, prod_line: str) -> tuple[float, float, float, float] | None:
+    def get_tile_bbox(self, date: pd.Timestamp | str, prod_line: str) -> tuple[float, float, float, float] | None:
+
+        if isinstance(date, str):
+            date = pd.Timestamp(date)
+
         try:
             i_line = self.list_prod_lines.index(prod_line) + 1
         except (IndexError, ValueError):
@@ -1645,6 +1650,7 @@ class App(ctk.CTk):
             return None
 
         # return self.calc_grid_cells[i_date][i_line]
+        print(f"{i_line=}, {i_date=}")
         return self.calc_grid_cells[i_line][i_date]
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
@@ -3019,7 +3025,7 @@ class App(ctk.CTk):
                                 x0_,
                                 y0_,
                                 x1_,
-                                y1_,
+                                y1_
                             ),
                             fill=self.tl_data["bg"].hex_code,
                             # ,
@@ -3083,7 +3089,7 @@ class App(ctk.CTk):
             if tm:
                 print(f"{w=}, {h=}")
 
-            tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict)
+            tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict)
             self.tl_data["tl_dataframe_choice"].title(self.title_application_full)
             self.tl_data["tl_dataframe_choice"].geometry(tl_geom["geometry"])
             self.tl_data["tl_dataframe_choice"].grab_set()
@@ -3170,7 +3176,8 @@ class App(ctk.CTk):
 
     def click_mb_shift_line(self, event=None):
 
-        w, h = 1400, 800
+        # w, h = 1400, 800
+        w, h = self.calc_geometry["w"], self.calc_geometry["h"]
         wm, hm = 5, 5
         tl_name = "tl_shift_lines"
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
@@ -3232,8 +3239,86 @@ class App(ctk.CTk):
             data = [header, *data]
             print(f"{data=}")
             print(f"# rows: {len(data)}")
+
             if len(data) <= 1:
                 data = [header, ["", "No Data", ""]]
+                self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
+            else:
+                self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
+                i_tag = self.tl_data.get("tl_canvas_preview_image")
+                if i_tag is not None:
+                    for tag in self.tl_data["tl_canvas_preview"].find_withtag(i_tag):
+                        self.tl_data["tl_canvas_preview"].delete(tag)
+
+                # x0, y0, x1, y1 = 0, 0, 350, 350
+                # data was built in reverse
+                # tl_date, br_date = data[-1][-2], data[1][-2]
+                tl_date, br_date = sd, ed
+                tl_line, br_line = self.list_prod_lines[0], self.list_prod_lines[-1]
+                if p_line == "All":
+                    # tl_line = data[-1][-3]
+                    # br_line = data[1][-3]
+                    print(f"A= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
+                    top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
+                    bot_right_bbox = self.get_tile_bbox(br_date, br_line)
+                else:
+                    # br_line = tl_line = p_line
+                    print(f"B= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
+                    top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
+                    bot_right_bbox = self.get_tile_bbox(br_date, br_line)
+                print(f"{top_left_bbox=}, {bot_right_bbox=}")
+
+
+                xv = self.canvas.xview()
+                x1, x2 = self.canvas.bbox("all")[0::2]
+                w = x2 - x1
+                vw = (xv[1] - xv[0]) * w
+                # print(f"{date=}, {line=}")
+                # print(f"{self.canvas.xview()=}")
+                # print(f"{self.canvas.bbox('all')=}")
+                bbox = top_left_bbox
+                # print(f"{bbox=}, {vw=}")
+                x = bbox[0] # - (vw / 2)
+                x = max(0, x)
+                p = x / w
+                self.canvas.xview_moveto(p)
+                self.redraw_legend()
+
+                # self.canvas.xview_moveto(self.canvas.canvasx(x0) / self.canvas.winfo_width())
+                # self.canvas.yview_moveto(self.canvas.canvasy(y0) / self.canvas.winfo_height())
+                # x0 /= 10
+                # y0 /= 10
+                # x1 /= 10
+                # y1 /= 10
+                # x0, y0, x1, y1 = top_left_bbox[:2] + bot_right_bbox[-2:]
+                x0, y0, x1, y1 = 0, 0, 500, 500
+                print(f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
+                ps = self.canvas.postscript(colormode='color')
+                # Convert PostScript to image
+                image = Image.open(io.BytesIO(ps.encode('utf-8')))
+                # Crop the image to the viewport
+                image = image.crop((x0, y0, x1, y1))
+                # Convert the cropped image to a format suitable for tkinter
+                canvas_image = ImageTk.PhotoImage(image)
+                # Display the captured image in the viewport canvas
+                self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
+                self.tl_data["tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
+
+                # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
+                # i_tag = self.tl_data.get("tl_canvas_preview_image")
+                # if i_tag is not None:
+                #     for tag in self.tl_data["tl_canvas_preview"].find_withtag(i_tag):
+                #         self.tl_data["tl_canvas_preview"].delete(tag)
+                #
+                # x0, y0, x1, y1 = 0, 0, 350, 350
+                # image = ImageGrab.grab().crop((x0, y0, x1, y1))
+                # # Convert the captured image to a format suitable for tkinter
+                # canvas_image = ImageTk.PhotoImage(image)
+                # # Display the captured image in the viewport canvas
+                # self.tl_data["tl_canvas_preview_image"] = self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
+                # self.tl_data["tl_canvas_preview"].image = canvas_image
+                # # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
+
             self.tl_data["table_change_preview"].columns = len(header)
             self.tl_data["table_change_preview"].rows = len(data)
             self.tl_data["table_change_preview"].update_values(data)
@@ -3547,7 +3632,7 @@ class App(ctk.CTk):
         def on_closing_shift_lines(*args):
             self.tl_data[tl_name].destroy()
 
-        tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
+        tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data[tl_name].geometry(tl_geom["geometry"])
 
         # line
@@ -3594,10 +3679,20 @@ class App(ctk.CTk):
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
 
-        self.tl_data["tl_frame_left_widgets"] = ctk.CTkFrame(self.tl_data[tl_name])
+        self.tl_data["tl_frame_middle_widgets"] = ctk.CTkFrame(
+            self.tl_data[tl_name]
+            # , bg_color="#127833"
+        )
+        # self.tl_data["tl_frame_middle_widgets"].columnconfigure(0, weight=20)
+        # self.tl_data["tl_frame_middle_widgets"].columnconfigure(1, weight=80)
+        # self.tl_data["tl_frame_middle_widgets"].rowconfigure(0, weight=30)
+        self.tl_data["tl_frame_right_widgets"] = ctk.CTkFrame(
+            self.tl_data["tl_frame_middle_widgets"]
+            # , bg_color="#781233"
+        )
 
         self.tl_data["combobox_lines"] = customtkinter_utility.combo_factory(
-            self.tl_data["tl_frame_left_widgets"],
+            self.tl_data["tl_frame_right_widgets"],
             tv_label="Line:",
             values=["All"] + self.list_prod_lines
         )
@@ -3611,7 +3706,7 @@ class App(ctk.CTk):
         #     variable=self.tl_data["var_slider_n_days"]
         # )
         self.tl_data["slider_n_days"] = ctk.CTkSlider(
-            self.tl_data["tl_frame_left_widgets"],
+            self.tl_data["tl_frame_right_widgets"],
             from_=1,
             to=7,
             orientation="horizontal",
@@ -3619,7 +3714,9 @@ class App(ctk.CTk):
         )
 
         self.tl_data["tl_frame_btns"] = ctk.CTkFrame(
-            self.tl_data["tl_frame_left_widgets"]
+            self.tl_data["tl_frame_right_widgets"]
+            # ,
+            # bg_color="#986614"
         )
         self.tl_data["btn_cancel"] = customtkinter_utility.button_factory(
             self.tl_data["tl_frame_btns"],
@@ -3635,19 +3732,37 @@ class App(ctk.CTk):
 
         self.tl_data["label_shift_text"] = [
             customtkinter_utility.label_factory(
-                self.tl_data["tl_frame_left_widgets"],
+                self.tl_data["tl_frame_right_widgets"],
                 tv_label="",
                 kwargs_label={"font": ("Calibri", 20)}
             ),
             customtkinter_utility.label_factory(
-                self.tl_data["tl_frame_left_widgets"],
+                self.tl_data["tl_frame_right_widgets"],
                 tv_label="",
                 kwargs_label={"font": ("Calibri", 20)}
             )
         ]
 
         # random_table = [[random.randint(-5, 15) for j in range(3)] for j in range(13)]
-        self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(self.tl_data[tl_name])
+        can_p_w, can_p_h = 500, 350
+        self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(
+            self.tl_data["tl_frame_middle_widgets"],
+            # bg_color="#123378",
+            width=1250,
+            height=400
+        )
+        self.tl_data["tl_canvas_preview"] = ctk.CTkCanvas(
+            self.tl_data["tl_frame_preview"],
+            width=can_p_w,
+            height=can_p_h
+        )
+        self.tl_data["tl_canvas_lbl_no_data"] = self.tl_data["tl_canvas_preview"].create_text(
+            can_p_w / 2,
+            can_p_h / 2,
+            text="No Data",
+            font=("Calibri", 16)
+        )
+
         # self.tl_data["tl_frame_preview"].columnconfigure(0, weight=50)
         # self.tl_data["tl_frame_preview"].columnconfigure(1, weight=50)
         self.tl_data["label_change_preview"] = customtkinter_utility.label_factory(
@@ -3679,8 +3794,7 @@ class App(ctk.CTk):
 
         # tl_name
         self.tl_data["tl_frame_days"].grid(row=0, column=0, columnspan=2)
-        self.tl_data["tl_frame_left_widgets"].grid(row=1, column=0)
-        self.tl_data["tl_frame_preview"].grid(row=1, column=1, sticky=ctk.EW)
+        self.tl_data["tl_frame_middle_widgets"].grid(row=1, column=0, columnspan=2, sticky=ctk.EW)
         self.tl_data["tl_frame_warning"].grid(row=2, column=0, columnspan=2, padx=20, pady=5)
 
         # tl_frame_days
@@ -3690,7 +3804,11 @@ class App(ctk.CTk):
         self.tl_data["btn_disable_end_date"][1].grid(row=0, column=2, rowspan=1, columnspan=1, padx=10, pady=10)
         self.tl_data["frame_ed"].grid(row=1, column=1, rowspan=1, columnspan=2, padx=10, pady=10)
 
-        # tl_frame_left_widgets
+        # tl_frame_middle_widgets
+        self.tl_data["tl_frame_preview"].grid(row=0, column=0, sticky=ctk.EW)
+        self.tl_data["tl_frame_right_widgets"].grid(row=0, column=1)
+
+        # tl_frame_right_widgets
         self.tl_data["combobox_lines"][1].grid()
         self.tl_data["combobox_lines"][3].grid(padx=8)
         self.tl_data["slider_n_days"].grid(padx=8)
@@ -3703,8 +3821,9 @@ class App(ctk.CTk):
         self.tl_data["btn_submit"][1].grid(row=0, column=1, rowspan=1, columnspan=1, padx=10, pady=10)
 
         # tl_frame_preview
-        self.tl_data["label_change_preview"][1].grid()
-        self.tl_data["table_change_preview"].grid(padx=20, pady=5)
+        self.tl_data["label_change_preview"][1].grid(row=0, column=0, rowspan=1, columnspan=2)
+        self.tl_data["table_change_preview"].grid(row=1, column=0, padx=20, pady=5)
+        self.tl_data["tl_canvas_preview"].grid(row=1, column=1, rowspan=1)
 
         # tl_frame_warning
         self.tl_data["tl_textbox_warning"].grid(padx=20, pady=10)
@@ -3729,7 +3848,7 @@ class App(ctk.CTk):
         self.tl_data["cc_changed"] = ctk.BooleanVar(self, value=False)
 
         w, h = 1400, 800
-        tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
+        tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data["tl_colour_code"].geometry(tl_geom["geometry"])
 
         bg_cc_main = Colour("#459001")
@@ -3833,7 +3952,7 @@ class App(ctk.CTk):
         def ask_colour(parent, title, curr_colour):
             alpha = False
             self.tl_data["tl_col"] = ColorPicker(parent, curr_colour, alpha, title)
-            tl_geom_cc = tkinter_utility.calc_geometry_tl(
+            tl_geom_cc = customtkinter_utility.calc_geometry_tl(
                 0.22, 0.35, parent=self, rtype=dict
             )
             self.tl_data["tl_col"].geometry(tl_geom_cc["geometry"])
@@ -3924,7 +4043,7 @@ class App(ctk.CTk):
                 "font"
             )
             self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
-            tl_geom_fc = tkinter_utility.calc_geometry_tl(
+            tl_geom_fc = customtkinter_utility.calc_geometry_tl(
                 0.2, 0.12, parent=self, rtype=dict
             )
             self.tl_data["tl_font_choice"].geometry(tl_geom_fc["geometry"])
@@ -4210,7 +4329,7 @@ class App(ctk.CTk):
         def click_app_theme():
             print(f"click_app_theme")
             self.tl_cc_app = ctk.CTkToplevel(self)
-            self.tl_cc_app.geometry(tkinter_utility.calc_geometry_tl(900, 600, parent=self))
+            self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
 
             # calendar row legend row and column
             tv_lbl, lbl = tkinter_utility.label_factory(
@@ -4549,7 +4668,7 @@ class App(ctk.CTk):
         self.tl_data[tl_name].title(self.title_application_full)
 
         w, h = 200, 120
-        tl_geom = tkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
+        tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data[tl_name].geometry(tl_geom["geometry"])
 
         message = f"Enter Testing Mode?" if (not in_tm) else f"Exit Testing Mode?"
