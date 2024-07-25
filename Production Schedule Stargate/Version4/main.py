@@ -291,6 +291,9 @@ for sql_data in (
         ,[AllowSunday]
         ,[ColourCoding]
         ,[InTestingMode]
+        ,[LightDarkTheme]
+        ,[AskMonitors]
+        ,[ShowCalendarOnly]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -331,6 +334,7 @@ class App(ctk.CTk):
             "allow_multi_select": False,
             "colour_coding": {},
             "TEST_MODE": ctk.BooleanVar(self, value=False),
+            "allowed_to_publish": ctk.BooleanVar(self, value=False),
             "min_font_size_tile": 8,
             "max_font_size_tile": 18,
             "start_at_first_of_month": True,
@@ -347,6 +351,10 @@ class App(ctk.CTk):
         self.x_top_widgets = 10
         self.y_top_widgets = 5
         self.margin_between_mc_and_calendar = 20
+
+        self.default_light_dark_theme = "Dark"
+        self.default_ask_monitors = "Yes"
+        self.default_show_left_widgets = "Yes"
 
         self.colour_foreground_testing_mode_label = Colour("#981415")
         self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
@@ -421,13 +429,15 @@ class App(ctk.CTk):
 
         self.title_application_full = f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}"
         self.title_application_short = "STG Prod Sched"
+        self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
+        self.msg_non_valid_pds_user = f"You do not have permission to use this app.{self.msg_please_do_not_rerun}"
+        self.msg_non_publish_user = f"You do not have permission to publish changes with this app.{self.msg_please_do_not_rerun}"
         self.abc_has_hist_msg = f"Are you sure you want to exit, you have unsaved work?"
         self.abc_no_hist_msg = f"Are you sure you want to exit?"
         self.abcsh_has_hist_msg = f"Save your work before quitting?"
         self.abcsh_no_hist_msg = f"Are you sure you want to exit?"
         self.msg_no_hist_on_save = f"You do not have any unsaved changes."
         self.msg_save_successful = f"Changes saved successfully!"
-        self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
         self.msg_last_session_sql = f"Please submit the file 'last_session_sql.sql' to IT to salvage your work.{self.msg_please_do_not_rerun}"
         self.msg_save_unsuccessful = f"An error occurred and your changes were not saved correctly. {self.msg_last_session_sql}"
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
@@ -463,6 +473,10 @@ class App(ctk.CTk):
             label="Testing Mode",
             command=self.click_mb_testing_mode
         )
+        self.mb_file.add_command(
+            label="Settings",
+            command=self.click_app_theme
+        )
         self.mb_file.add_separator()
         self.mb_file.add_command(
             label="Exit",
@@ -479,15 +493,40 @@ class App(ctk.CTk):
             background=self.colour_app_background.hex_code
         )
 
+        self.df_valid_updaters = None
+        self.frame_testing = None
+        self.tv_lbl_processing, self.lbl_processing = None, None
+        self.tl_tv_switch_dark = ctk.StringVar(self, value=self.default_light_dark_theme)
+        self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
+        self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
+        self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
+        self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
+        self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
+
+        self.is_valid_updater = self.check_valid_updater()
+        if not self.is_valid_updater:
+            messagebox.showerror(
+                title=self.title_application_short,
+                message=self.msg_non_valid_pds_user
+            )
+
+        print(f"{self.tl_tv_switch_ask_monitors.get()=}")
         # self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
-        self.calc_geometry = customtkinter_utility.calc_geometry_tl(1.0, 1.0, parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
+        self.calc_geometry = customtkinter_utility.calc_geometry_tl(
+            1.0,
+            1.0,
+            parent=self,
+            ask=self.tl_tv_switch_ask_monitors.get() == "Yes",
+            rtype=dict,
+            bypass_parent_withdraw=True
+        )
 
         if self.settings["TEST_MODE"].get():
             print(f"DIMS: {self.calc_geometry=}")
 
         self.total_width = self.calc_geometry["width"]
         self.total_height = self.calc_geometry["height"]
-        
+
         n_cols: int = self.days_forward + self.days_backward + 1  # +1 for today in the middle
 
         self.frame_calendar = ctk.CTkFrame(
@@ -500,7 +539,7 @@ class App(ctk.CTk):
         self.frame_testing = ctk.CTkFrame(
             self.frame_calendar,
             width=self.calc_geometry["width"],
-            height=self.calc_geometry["height"],
+            height=30,
             bg_color=self.colour_background_app.hex_code
         )
 
@@ -515,12 +554,6 @@ class App(ctk.CTk):
                 "font": self.font_foreground_testing_mode_label
             }
         )
-
-        self.df_valid_updaters = None
-        self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
-        self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
-        self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
-        self.check_valid_updater()
 
         tm = self.settings["TEST_MODE"].get()
         self.df_calendar = connect(**SQL_HOLIDAYS, do_show=tm, do_print=tm)
@@ -604,7 +637,6 @@ class App(ctk.CTk):
         self.x_place_frame_info_frame = self.x_top_widgets
         self.y_place_frame_info_frame = self.height_multi_combobox + 195
 
-        self.frame_info_frame = ctk.CTkFrame(self.frame_calendar)
         self.frame_canvas = ctk.CTkFrame(
             self.frame_calendar,
 
@@ -616,13 +648,19 @@ class App(ctk.CTk):
 
             bg_color=self.colour_background_calendar_app.hex_code
         )
+        self.frame_left_controls = ctk.CTkFrame(
+            self.frame_calendar,
+            height=self.canvas_height + self.height_calendar_scrollbar,  # scrollbar space
+            bg_color=self.colour_background_calendar_app.hex_code
+        )
+        self.frame_info_frame = ctk.CTkFrame(self.frame_left_controls)
 
         self.w_frame_multi_combobox, self.h_frame_multi_combobox = 690, 420
         self.space_btwn_mc_qinfo = 20
         self.w_tb_warranty, self.h_tb_warranty = 300, 40
         # multicombobox for searching
         self.frame_multi_combobox = ctk.CTkFrame(
-            self.frame_calendar,
+            self.frame_left_controls,
             width=self.w_frame_multi_combobox,
             height=self.h_frame_multi_combobox
         )
@@ -1166,7 +1204,7 @@ class App(ctk.CTk):
         ]
 
         # scrollable listbox for event history
-        self.frame_listbox_history = ctk.CTkFrame(self)
+        self.frame_listbox_history = ctk.CTkFrame(self.frame_left_controls)
         self.listbox_history = tkinter.Listbox(
             self.frame_listbox_history,
             width=110
@@ -1202,6 +1240,9 @@ class App(ctk.CTk):
         self.multi_combobox_orders.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
         self.multi_combobox_orders.trace_res_tv_entry = self.multi_combobox_orders.res_tv_entry.trace_add("write",
                                                                                                           self.multi_combobox_orders.update_entry)
+        self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
+        self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
+        self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
         self.bind("<Control-z>", self.undo)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.tv_update_test_mode()
@@ -1212,7 +1253,8 @@ class App(ctk.CTk):
         if self.settings["TEST_MODE"].get():
             print(f"{self.tiles=}")
 
-        in_test_mode = self.settings["TEST_MODE"]
+        in_test_mode = self.settings["TEST_MODE"].get()
+        print(f"{self.settings['TEST_MODE'].get()=}")
 
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
 
@@ -1243,17 +1285,82 @@ class App(ctk.CTk):
             print(f"{getattr(self, 'invisible_canvas', None)=}")
 
         if tm:
-            self.frame_testing.grid(row=0, column=0, columnspan=2, pady=3)
+            if self.frame_testing is not None:
+                print(f"SHOWING FRAME TESTING")
+                self.frame_testing.grid(row=0, column=0, columnspan=2, pady=3)
+                self.frame_calendar.rowconfigure(0, weight=5)
+            else:
+                print(f"TM & NOT FT")
             # self.lbl_testing_mode.grid(row=0, column=0, columnspan=2, pady=3)
             if getattr(self, "invisible_canvas", None) is not None:
                 self.invisible_canvas.itemconfigure(self.dot, state="normal")
         else:
-            self.frame_testing.grid_forget()
+            if getattr(self, "frame_calendar", None) is not None:
+                self.frame_calendar.rowconfigure(0, weight=0)
+            if self.frame_testing is not None:
+                self.frame_testing.grid_forget()
+                print(f"HIDING FRAME TESTING")
+            else:
+                print(f"NOT TM & NOT FT")
             # self.lbl_testing_mode.grid_forget()
             if getattr(self, "invisible_canvas", None) is not None:
                 self.invisible_canvas.itemconfigure(self.dot, state="hidden")
 
+        if getattr(self, "frame_calendar", None) is not None:
+            if tm:
+                print(f"W=2")
+                self.frame_calendar.rowconfigure(0, weight=2, minsize=8)
+                self.frame_calendar.rowconfigure(1, weight=98)
+                # self.frame_calendar.rowconfigure(2, weight=31)
+                # self.frame_calendar.rowconfigure(3, weight=31)
+            else:
+                print(f"W=0")
+                self.frame_calendar.rowconfigure(0, weight=0, minsize=0)
+                self.frame_calendar.rowconfigure(1, weight=100)
+        #         self.frame_calendar.rowconfigure(2, weight=33)
+        #         self.frame_calendar.rowconfigure(3, weight=33)
+
         self.reload_application()
+
+    def update_show_calendar_only(self, *args):
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
+        slw_u = 1 if (slw == 0) else 0  # logic is inverse for this column
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ShowCalendarOnly] = {slw_u} WHERE [UserName] = '{un}';"
+        sql = sql.format(slw_u=slw_u, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        if slw:
+            self.frame_left_controls.grid(row=1, column=0, rowspan=1, sticky=ctk.NSEW)
+        else:
+            self.frame_left_controls.grid_forget()
+
+    def update_ask_monitors(self, *args):
+        am = self.tl_tv_switch_ask_monitors.get()
+        am = 0 if (am == "No") else 1
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [AskMonitors] = {am} WHERE [UserName] = '{un}';"
+        sql = sql.format(am=am, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+    def update_light_dark_theme(self, *args):
+        ldt_o = self.tl_tv_switch_dark.get()
+        ldt = ldt_o
+        if ldt is None:
+            ldt = "NULL"
+            ldt_o = "System"
+        else:
+            if ldt not in ("Light", "Dark"):
+                ldt = "NULL"
+                ldt_o = "System"
+            else:
+                ldt = f"'{ldt}'"
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [LightDarkTheme] = {ldt} WHERE [UserName] = '{un}';"
+        sql = sql.format(ldt=ldt, un=un)
+        ctk.set_appearance_mode(ldt_o)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
     def tv_update_history(self, *args):
         tm = self.settings["TEST_MODE"].get()
@@ -1436,16 +1543,40 @@ class App(ctk.CTk):
         print(f"{user=}, {user_domain=}, {user_name=}", end="")
 
         if not df.empty:
-            print(f" FOUND!")
             # idx = df.index[0]
             # print(f"{df=}, {idx=}")
             df_pds_user = df.iloc[0]
             cc = df_pds_user["ColourCoding"]
             test_mode = df_pds_user["InTestingMode"]
+            light_dark_theme = df_pds_user["LightDarkTheme"]
+            if pd.isna(light_dark_theme):
+                light_dark_theme = get_windows_theme().title()
+                if light_dark_theme is None:
+                    light_dark_theme = self.default_light_dark_theme
+            ask_monitors = df_pds_user["AskMonitors"]
+            if pd.isna(ask_monitors):
+                ask_monitors = self.default_ask_monitors
+            else:
+                ask_monitors = "No" if (int(ask_monitors) == 0) else "Yes"
+            allowed_to_publish = bool(df_pds_user["AllowPublish"])
             cc = cc if not pd.isna(cc) else {}
             self.settings["colour_coding"] = eval(str(cc))
-            print(f"INIT TEST MODE {test_mode}")
+
+            show_left_widgets = df_pds_user["ShowCalendarOnly"]
+            if pd.isna(show_left_widgets):
+                show_left_widgets = self.default_show_left_widgets
+            else:
+                show_left_widgets = "No" if (int(show_left_widgets) == 1) else "Yes"
+
+            print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
+
+            # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
+            self.settings["allowed_to_publish"].set(allowed_to_publish)
+            ctk.set_appearance_mode(light_dark_theme)
+            self.tl_tv_switch_dark.set(light_dark_theme)
+            self.tl_tv_switch_ask_monitors.set(ask_monitors)
+            self.tl_tv_switch_show_left_widgets.set(show_left_widgets)
             return True
 
         print(f" NOT FOUND")
@@ -1456,6 +1587,77 @@ class App(ctk.CTk):
 
     def grid_widgets(self) -> None:
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        tm = self.settings["TEST_MODE"].get()
+        is_warranty = self.tv_toggle_warranty.get() == "Warranty"
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        print(f"{slw=}")
+        show_calendar_only = slw == "No"
+
+        # self
+        self.frame_calendar.grid(**{r: 0, c: 0, s: ctk.NSEW})
+        # self.frame_calendar.grid_propagate(False)
+
+        # frame_calendar
+        if tm:
+            self.frame_testing.grid(**{r: 0, c: 0, rs: 1, cs: 1})
+        self.frame_canvas.grid(**{r: 1, c: 1, rs: 1, s: ctk.NSEW})
+        self.frame_left_controls.grid(**{r: 1, c: 0, rs: 1, s: ctk.NSEW})
+
+        # frame_testing
+        self.lbl_testing_mode.grid()
+
+        # frame_canvas
+        self.canvas.grid(**{r: 0})
+        self.scroll_bar_x.grid(**{r: 1, s: ctk.EW})
+
+        # frame_left_controls
+        self.frame_multi_combobox.grid(**{r: 0, c: 0})
+        self.frame_info_frame.grid(**{r: 1, c: 0})
+        if tm:
+            self.frame_listbox_history.grid(**{r: 2, c: 0})
+
+        # frame_multi_combobox
+        self.frame_mc_inner.grid(**{r: 0, c: 0, x: 10, y: 10})
+
+        # frame_listbox_history
+        self.listbox_history.grid(**{r: 0, c: 0, cs: 1, rs: 1})
+        self.scroll_bar_history.grid(**{r: 0, c: 1, cs: 1, rs: 1, s: ctk.NS})
+
+        if tm:
+            print(f"GW W=2")
+            self.frame_calendar.rowconfigure(0, weight=2, minsize=8)
+            self.frame_calendar.rowconfigure(1, weight=98)
+        else:
+            print(f"GW W=0")
+            self.frame_calendar.rowconfigure(0, weight=0, minsize=0)
+            self.frame_calendar.rowconfigure(1, weight=100)
+
+        # self.frame_calendar.rowconfigure(0)
+        # fr: ctk.CTkFrame = self.frame_calendar
+        # fr.rowconfigure(0,)
+
+        self.frame_calendar.columnconfigure(0, weight=35)
+        self.frame_calendar.columnconfigure(1, weight=65)
+
+        if is_warranty:
+            self.multi_combobox_warranties.grid_widget()
+        else:
+            self.multi_combobox_orders.grid_widget()
+
+        self.toggle_warranty.grid(**{r: 1, c: 0})
+
+        if show_calendar_only:
+            self.frame_left_controls.grid_forget()
+
+        # frame_calendar
+        # goes on top of everything
+        self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
+
+        print(f"END Grid {tm=}, slw={show_calendar_only}")
+
+    def grid_widgets1(self) -> None:
+        r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
+        tm = self.settings["TEST_MODE"].get()
         # if self.settings["TEST_MODE"].get():
         #     self.lbl_testing_mode.grid()
         self.frame_calendar.grid(**{r: 0})
@@ -1467,44 +1669,64 @@ class App(ctk.CTk):
         # is_warranty = self.toggle_warranty.value.get() == "Warranty"
         is_warranty = self.tv_toggle_warranty.get() == "Warranty"
 
-        self.frame_canvas.place(
-            x=self.x_place_frame_canvas,
-            y=self.y_place_frame_canvas
-            # ,
-            # width=self.w_place_frame_canvas,
-            # height=self.h_place_frame_canvas
-        )
+        # self.frame_canvas.place(
+        #     x=self.x_place_frame_canvas,
+        #     y=self.y_place_frame_canvas
+        #     # ,
+        #     # width=self.w_place_frame_canvas,
+        #     # height=self.h_place_frame_canvas
+        # )
+        self.frame_canvas.grid(**{r: 1, c: 1, rs: 4})
 
         # self.frame_canvas.grid({r:0, c:2})
 
+        # # self.frame_multi_combobox.place(
+        # #     x=self.x_place_frame_multi_combobox,
+        # #     y=self.y_place_frame_multi_combobox
+        # # )
+        # # self.frame_multi_combobox.grid(**{r: 0, c: 0})
         # self.frame_multi_combobox.place(
         #     x=self.x_place_frame_multi_combobox,
         #     y=self.y_place_frame_multi_combobox
         # )
-        # self.frame_multi_combobox.grid(**{r: 0, c: 0})
-        self.frame_multi_combobox.place(
-            x=self.x_place_frame_multi_combobox,
-            y=self.y_place_frame_multi_combobox
-        )
+        self.frame_multi_combobox.grid(**{r: 1, c: 0})
+            # x=self.x_place_frame_multi_combobox,
+            # y=self.y_place_frame_multi_combobox
+        # )
         self.frame_mc_inner.grid(**{r: 0, c: 0, x: 10, y: 10})
 
+        # # self.frame_info_frame.place(
+        # #     x=self.x_top_widgets,
+        # #     y=self.height_multi_combobox + 235
+        # # )
         # self.frame_info_frame.place(
         #     x=self.x_top_widgets,
-        #     y=self.height_multi_combobox + 235
+        #     y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
         # )
-        self.frame_info_frame.place(
-            x=self.x_top_widgets,
-            y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
-        )
+        self.frame_info_frame.grid(**{r: 2, c: 0})
+            # x=self.x_top_widgets,
+            # y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
+        # )
 
-        tm = self.settings["TEST_MODE"].get()
         if tm:
             self.listbox_history.grid(row=0, column=0, columnspan=1, rowspan=1)
             self.scroll_bar_history.grid(row=0, column=1, columnspan=1, rowspan=1, sticky="ns")
-            self.frame_listbox_history.place(
-                x=self.x_top_widgets,
-                y=self.height_multi_combobox + 235 + 340
-            )
+            # self.frame_listbox_history.place(
+            #     x=self.x_top_widgets,
+            #     y=self.height_multi_combobox + 235 + 340
+            # )
+            self.frame_listbox_history.grid(**{r: 3, c: 0})
+            self.frame_calendar.rowconfigure(0, weight=8)
+            # self.frame_calendar.rowconfigure(1, weight=23)
+            # self.frame_calendar.rowconfigure(2, weight=23)
+            # self.frame_calendar.rowconfigure(3, weight=23)
+            # self.frame_calendar.rowconfigure(4, weight=23)
+        else:
+            self.frame_calendar.rowconfigure(0, weight=0)
+            # self.frame_calendar.rowconfigure(1, weight=25)
+            # self.frame_calendar.rowconfigure(2, weight=25)
+            # self.frame_calendar.rowconfigure(3, weight=25)
+            # self.frame_calendar.rowconfigure(4, weight=25)
 
         if is_warranty:
             self.multi_combobox_warranties.grid_widget()
@@ -1517,7 +1739,7 @@ class App(ctk.CTk):
 
         self.frame_testing.grid(**{r: 0})
         self.lbl_testing_mode.grid()
-        print(f"END Grid")
+        print(f"END Grid {tm=}")
 
     def scroll_x_calendar(self, *args) -> None:
         # change the canvas xview when the scrollbar is interacted with
@@ -2186,12 +2408,12 @@ class App(ctk.CTk):
         tv_dt = self.tv_multi_combobox_drag_tile.get()
         # self.multi_combobox_canvas_drag_tile.grid_forget()
         tw, th = self.tile_width, self.tile_height
-        h_multi_combobox_toggle = self.toggle_warranty.height
+        h_multi_combobox_toggle = self.h_tb_warranty
         e_x, e_y = event.x, event.y
         e_x1, e_y1 = self.invisible_canvas.canvasx(e_x), self.invisible_canvas.canvasy(e_y)
         bbf = self.multi_combobox_orders.bbox()
         mcy = self.multi_combobox_orders.winfo_y()
-        hmct = self.toggle_warranty.height
+        hmct = self.h_tb_warranty
         offy = 20
         if tm:
             print(f"{h_multi_combobox_toggle=}, {e_x=}, {e_y=}\n{e_x1=}, {e_y1=}\n\t{bbf=}\n\t{mcy=}")
@@ -3291,7 +3513,7 @@ class App(ctk.CTk):
                 # x1 /= 10
                 # y1 /= 10
                 # x0, y0, x1, y1 = top_left_bbox[:2] + bot_right_bbox[-2:]
-                x0, y0, x1, y1 = 0, 0, 500, 500
+                x0, y0, x1, y1 = 0, 0, 800, 800
                 print(f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
                 ps = self.canvas.postscript(colormode='color')
                 # Convert PostScript to image
@@ -4326,45 +4548,6 @@ class App(ctk.CTk):
                     pass
             quit_cc()
 
-        def click_app_theme():
-            print(f"click_app_theme")
-            self.tl_cc_app = ctk.CTkToplevel(self)
-            self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
-
-            # calendar row legend row and column
-            tv_lbl, lbl = tkinter_utility.label_factory(
-                self.tl_cc_app,
-                tv_label="Coming Soon"
-            )
-            lbl.pack()
-
-            self.tl_cc_app.protocol("WM_DELETE_WINDOW", self.quit_cc_app)
-            self.tl_cc_app.grab_set()
-            self.wait_window(self.tl_cc_app)
-
-            # print(f"{self.tl_data['tl_cc_btn_app'][0].get()=}")
-            # text_btn = self.tl_data["tl_cc_btn_app"][0].get()
-            #
-            # v_texts = ("App Theme", "Dealers")
-            #
-            # if text_btn == v_texts[0]:
-            #     # go to dealers
-            #     dealer_opt_tag_state = "hidden"
-            # else:
-            #     # go to app theme
-            #     dealer_opt_tag_state = "normal"
-            #
-            # self.tl_data["tl_cc_btn_app"][0].set(v_texts[(v_texts.index(text_btn) + 1) % 2])
-            #
-            # for i in opt_tags_dealers:
-            #     # tag = opt_tags_dealers[idx]["tile"]
-            #     # t_tag = opt_tags_dealers[idx]["text"]
-            #     for k in ("tile", "text"):
-            #         self.tl_data["tl_canvas"].itemconfigure(
-            #             opt_tags_dealers[i][k],
-            #             state=dealer_opt_tag_state
-            #         )
-
         idx = 0
         opt_tags_dealers = {}
         opt_tags_app = {}
@@ -4462,7 +4645,7 @@ class App(ctk.CTk):
             ("tl_cc_btn_go_back", "tl_frame", "Go Back", click_go_back),
             ("tl_cc_btn_apply", "tl_frame", "Apply", click_apply),
 
-            ("tl_cc_btn_app", "tl_frame", "App Theme", click_app_theme)
+            ("tl_cc_btn_app", "tl_frame", "App Theme", self.click_app_theme)
         ]
         self.tl_data["tl_cc_frame_btn_bar"] = ctk.CTkFrame(
             self.tl_data["tl_frame"],
@@ -4502,6 +4685,93 @@ class App(ctk.CTk):
         self.tl_data["tl_colour_code"].protocol("WM_DELETE_WINDOW", on_closing_cc)
         self.tl_data["tl_colour_code"].grab_set()
         self.wait_window(self.tl_data["tl_colour_code"])
+
+    def click_app_theme(self, *args):
+        print(f"click_app_theme")
+        self.tl_cc_app = ctk.CTkToplevel(self)
+        self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
+
+        kwargs_lbl = {
+            "font": ("Calibri", 18)
+        }
+
+        # Light and Dark Theme
+        tl_cc_app_frame_light_dark_theme = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_ldt, lbl_ldt = customtkinter_utility.label_factory(
+            tl_cc_app_frame_light_dark_theme,
+            tv_label="Theme:",
+            kwargs_label=kwargs_lbl
+        )
+        tl_at_switch_dark_mode = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_light_dark_theme,
+            values=["Light", "Dark"],
+            variable=self.tl_tv_switch_dark,
+            font=kwargs_lbl["font"]
+        )
+        tl_cc_app_frame_light_dark_theme.pack(padx=40, pady=25)
+        lbl_ldt.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_at_switch_dark_mode.pack(side=ctk.LEFT, padx=20, pady=25)
+
+        # Ask Monitors
+        tl_cc_app_frame_ask_monitors = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_am, lbl_am = customtkinter_utility.label_factory(
+            tl_cc_app_frame_ask_monitors,
+            tv_label="Ask Monitors on Start up:",
+            kwargs_label=kwargs_lbl
+        )
+        tl_at_switch_ask_monitors = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_ask_monitors,
+            values=["No", "Yes"],
+            variable=self.tl_tv_switch_ask_monitors,
+            font=kwargs_lbl["font"]
+        )
+        tl_cc_app_frame_ask_monitors.pack(padx=40, pady=25)
+        lbl_am.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_at_switch_ask_monitors.pack(side=ctk.LEFT, padx=20, pady=25)
+
+        # Show left Widgets
+        tl_cc_app_frame_show_left_widgets = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_slw, lbl_slw = customtkinter_utility.label_factory(
+            tl_cc_app_frame_show_left_widgets,
+            tv_label="Show Left Control Widgets:",
+            kwargs_label=kwargs_lbl
+        )
+        tl_at_switch_show_left_widgets = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_show_left_widgets,
+            values=["No", "Yes"],
+            variable=self.tl_tv_switch_show_left_widgets,
+            font=kwargs_lbl["font"]
+        )
+        tl_cc_app_frame_show_left_widgets.pack(padx=40, pady=25)
+        lbl_slw.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_at_switch_show_left_widgets.pack(side=ctk.LEFT, padx=20, pady=25)
+
+        self.tl_cc_app.protocol("WM_DELETE_WINDOW", self.quit_cc_app)
+        self.tl_cc_app.grab_set()
+        self.wait_window(self.tl_cc_app)
+
+        # print(f"{self.tl_data['tl_cc_btn_app'][0].get()=}")
+        # text_btn = self.tl_data["tl_cc_btn_app"][0].get()
+        #
+        # v_texts = ("App Theme", "Dealers")
+        #
+        # if text_btn == v_texts[0]:
+        #     # go to dealers
+        #     dealer_opt_tag_state = "hidden"
+        # else:
+        #     # go to app theme
+        #     dealer_opt_tag_state = "normal"
+        #
+        # self.tl_data["tl_cc_btn_app"][0].set(v_texts[(v_texts.index(text_btn) + 1) % 2])
+        #
+        # for i in opt_tags_dealers:
+        #     # tag = opt_tags_dealers[idx]["tile"]
+        #     # t_tag = opt_tags_dealers[idx]["text"]
+        #     for k in ("tile", "text"):
+        #         self.tl_data["tl_canvas"].itemconfigure(
+        #             opt_tags_dealers[i][k],
+        #             state=dealer_opt_tag_state
+        #         )
 
     def save_colour_coding(self):
         tm = self.settings["TEST_MODE"].get()
@@ -4651,13 +4921,13 @@ class App(ctk.CTk):
 
         def click_yes():
             if tm:
-                print(f"click_yes")
+                print(f"click_yes TM={in_tm}")
             on_closing_tm()
             self.set_pds_testing_mode(not in_tm)
 
         def click_no():
             if tm:
-                print(f"click_no")
+                print(f"click_no TM={in_tm}")
             on_closing_tm()
             self.set_pds_testing_mode(not in_tm)
 
@@ -4667,31 +4937,38 @@ class App(ctk.CTk):
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
         self.tl_data[tl_name].title(self.title_application_full)
 
-        w, h = 200, 120
+        w, h = 350, 160
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data[tl_name].geometry(tl_geom["geometry"])
 
         message = f"Enter Testing Mode?" if (not in_tm) else f"Exit Testing Mode?"
 
+        kwargs_btn = {
+            "font": ("Calibri", 16)
+        }
+
         # toplevel - testing mode - textvariable - label
-        self.tl_data[f"{tlsn}_tv_lbl_message"], self.tl_data[f"{tlsn}_lbl_message"] = tkinter_utility.label_factory(
+        self.tl_data[f"{tlsn}_tv_lbl_message"], self.tl_data[f"{tlsn}_lbl_message"] = customtkinter_utility.label_factory(
             self.tl_data[tl_name],
-            tv_label=message
+            tv_label=message,
+            kwargs_label=kwargs_btn.copy()
         )
-        self.tl_data[f"{tlsn}_tv_btn_yes"], self.tl_data[f"{tlsn}_btn_yes"] = tkinter_utility.button_factory(
+        self.tl_data[f"{tlsn}_tv_btn_yes"], self.tl_data[f"{tlsn}_btn_yes"] = customtkinter_utility.button_factory(
             self.tl_data[tl_name],
             tv_btn="yes",
-            command=click_yes
+            command=click_yes,
+            kwargs_btn=kwargs_btn.copy()
         )
-        self.tl_data[f"{tlsn}_tv_btn_no"], self.tl_data[f"{tlsn}_btn_no"] = tkinter_utility.button_factory(
+        self.tl_data[f"{tlsn}_tv_btn_no"], self.tl_data[f"{tlsn}_btn_no"] = customtkinter_utility.button_factory(
             self.tl_data[tl_name],
             tv_btn="no",
-            command=click_no
+            command=click_no,
+            kwargs_btn=kwargs_btn.copy()
         )
 
         self.tl_data[f"{tlsn}_lbl_message"].grid(row=0, column=0, columnspan=2, padx=20, pady=20)
-        self.tl_data[f"{tlsn}_btn_yes"].grid(row=1, column=0, columnspan=1, padx=5, pady=5)
-        self.tl_data[f"{tlsn}_btn_no"].grid(row=1, column=1, columnspan=1, padx=5, pady=5)
+        self.tl_data[f"{tlsn}_btn_no"].grid(row=1, column=0, columnspan=1, padx=5, pady=5)
+        self.tl_data[f"{tlsn}_btn_yes"].grid(row=1, column=1, columnspan=1, padx=5, pady=5)
 
         self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", on_closing_tm)
         self.tl_data[tl_name].grab_set()
@@ -4927,11 +5204,15 @@ class App(ctk.CTk):
                 if tm:
                     print(f"{'=' * 120}\n\ttran_stmts:\n{tran_stmts}{'=' * 120}")
 
+                if not self.settings["allowed_to_publish"].get():
+                    do_exec = False
+
+                out_file = self.file_last_session_sql.removesuffix(".sql")
+                out_file += f"{now:%Y%m%d%H%M}.sql"
+                with open(out_file, "w") as f:
+                    f.write(tran_stmts)
+
                 if do_exec:
-
-                    with open(self.file_last_session_sql, "w") as f:
-                        f.write(tran_stmts)
-
                     connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
                     messagebox.showinfo(
                         title=self.title_application_short,
@@ -4949,6 +5230,11 @@ class App(ctk.CTk):
                             title=self.title_application_short,
                             message=self.msg_no_commit_test_mode,
                             parent=self
+                        )
+                    elif not self.settings["allowed_to_publish"].get():
+                        messagebox.showerror(
+                            title=self.title_application_short,
+                            message=self.msg_non_publish_user
                         )
 
                 # # TODO async
