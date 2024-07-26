@@ -294,6 +294,7 @@ for sql_data in (
         ,[LightDarkTheme]
         ,[AskMonitors]
         ,[ShowCalendarOnly]
+        ,[ColourTheme]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -353,6 +354,7 @@ class App(ctk.CTk):
         self.margin_between_mc_and_calendar = 20
 
         self.default_light_dark_theme = "Dark"
+        self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
         self.default_show_left_widgets = "Yes"
 
@@ -442,6 +444,7 @@ class App(ctk.CTk):
         self.msg_save_unsuccessful = f"An error occurred and your changes were not saved correctly. {self.msg_last_session_sql}"
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
         self.msg_no_units_on_holiday = f"There are currently no units scheduled on a holiday for this period."
+        self.msg_please_restart_to_activate_colour_theme = f"Please restart the application in order for your new colour theme to be applied."
 
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
 
@@ -497,6 +500,7 @@ class App(ctk.CTk):
         self.frame_testing = None
         self.tv_lbl_processing, self.lbl_processing = None, None
         self.tl_tv_switch_dark = ctk.StringVar(self, value=self.default_light_dark_theme)
+        self.tl_tv_switch_colour = ctk.StringVar(self, value=self.default_colour_theme)
         self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
         self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
@@ -1240,6 +1244,7 @@ class App(ctk.CTk):
         self.multi_combobox_orders.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
         self.multi_combobox_orders.trace_res_tv_entry = self.multi_combobox_orders.res_tv_entry.trace_add("write",
                                                                                                           self.multi_combobox_orders.update_entry)
+        self.tl_tv_switch_colour.trace_variable("w", self.update_colour_theme)
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
         self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
@@ -1361,6 +1366,50 @@ class App(ctk.CTk):
         sql = sql.format(ldt=ldt, un=un)
         ctk.set_appearance_mode(ldt_o)
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+    def update_colour_theme(self, *args):
+        lc_o = self.tl_tv_switch_colour.get()
+        print(f"update_colour_theme 1 {lc_o=}")
+
+        lc = lc_o.replace(" ", "-").lower()
+        print(f"update_colour_theme 2 {lc=}")
+
+        ctk.set_default_color_theme(lc)
+
+        if lc is None:
+            lc = "NULL"
+        else:
+            lc = f"'{lc}'"
+
+        try:
+            c = Colour(lc_o)
+        except Colour.ColourCreationError:
+            c = self.colour_tl_sl_preview_header
+
+        self.colour_tl_sl_preview_header = c
+
+        # ldt = ldt_o
+        # if ldt is None:
+        #     ldt = "NULL"
+        #     ldt_o = "System"
+        # else:
+        #     if ldt not in ("Light", "Dark"):
+        #         ldt = "NULL"
+        #         ldt_o = "System"
+        #     else:
+        #         ldt = f"'{ldt}'"
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ColourTheme] = {lc} WHERE [UserName] = '{un}';"
+        sql = sql.format(lc=lc, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        # this wont take effect until program restart, inform the user.
+        parent = self.tl_cc_app if (self.tl_cc_app is not None) else self
+        messagebox.showinfo(
+            title=self.title_application_short,
+            message=self.msg_please_restart_to_activate_colour_theme,
+            parent=parent
+        )
 
     def tv_update_history(self, *args):
         tm = self.settings["TEST_MODE"].get()
@@ -1568,12 +1617,19 @@ class App(ctk.CTk):
             else:
                 show_left_widgets = "No" if (int(show_left_widgets) == 1) else "Yes"
 
+            colour_theme = df_pds_user["ColourTheme"]
+            if pd.isna(colour_theme):
+                colour_theme = self.default_colour_theme
+            else:
+                colour_theme = colour_theme.replace("-", " ").title()
+
             print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
 
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
             self.settings["allowed_to_publish"].set(allowed_to_publish)
             ctk.set_appearance_mode(light_dark_theme)
+            self.tl_tv_switch_colour.set(colour_theme)
             self.tl_tv_switch_dark.set(light_dark_theme)
             self.tl_tv_switch_ask_monitors.set(ask_monitors)
             self.tl_tv_switch_show_left_widgets.set(show_left_widgets)
@@ -4687,12 +4743,26 @@ class App(ctk.CTk):
         self.wait_window(self.tl_data["tl_colour_code"])
 
     def click_app_theme(self, *args):
-        print(f"click_app_theme")
+        print(f"click_app_theme / settings")
         self.tl_cc_app = ctk.CTkToplevel(self)
         self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
 
         kwargs_lbl = {
-            "font": ("Calibri", 18)
+            "font": ("Calibri", 18),
+            "justify": ctk.LEFT
+        }
+        grid_args_frame = {
+            "padx": 40,
+            "pady": 25,
+            "sticky": ctk.NSEW
+        }
+        grid_args_switch = {
+            "padx": 20,
+            "pady": 25
+        }
+        grid_args_label = {
+            "padx": 20,
+            "pady": 25
         }
 
         # Light and Dark Theme
@@ -4708,9 +4778,9 @@ class App(ctk.CTk):
             variable=self.tl_tv_switch_dark,
             font=kwargs_lbl["font"]
         )
-        tl_cc_app_frame_light_dark_theme.pack(padx=40, pady=25)
-        lbl_ldt.pack(side=ctk.LEFT, padx=20, pady=25)
-        tl_at_switch_dark_mode.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_cc_app_frame_light_dark_theme.grid(**grid_args_frame)
+        lbl_ldt.grid(row=0, column=0, **grid_args_label)
+        tl_at_switch_dark_mode.grid(row=0, column=1, **grid_args_switch)
 
         # Ask Monitors
         tl_cc_app_frame_ask_monitors = ctk.CTkFrame(self.tl_cc_app)
@@ -4725,9 +4795,9 @@ class App(ctk.CTk):
             variable=self.tl_tv_switch_ask_monitors,
             font=kwargs_lbl["font"]
         )
-        tl_cc_app_frame_ask_monitors.pack(padx=40, pady=25)
-        lbl_am.pack(side=ctk.LEFT, padx=20, pady=25)
-        tl_at_switch_ask_monitors.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_cc_app_frame_ask_monitors.grid(**grid_args_frame)
+        lbl_am.grid(row=0, column=0, **grid_args_label)
+        tl_at_switch_ask_monitors.grid(row=0, column=1, **grid_args_switch)
 
         # Show left Widgets
         tl_cc_app_frame_show_left_widgets = ctk.CTkFrame(self.tl_cc_app)
@@ -4742,9 +4812,37 @@ class App(ctk.CTk):
             variable=self.tl_tv_switch_show_left_widgets,
             font=kwargs_lbl["font"]
         )
-        tl_cc_app_frame_show_left_widgets.pack(padx=40, pady=25)
-        lbl_slw.pack(side=ctk.LEFT, padx=20, pady=25)
-        tl_at_switch_show_left_widgets.pack(side=ctk.LEFT, padx=20, pady=25)
+        tl_cc_app_frame_show_left_widgets.grid(**grid_args_frame)
+        lbl_slw.grid(row=0, column=0, **grid_args_label)
+        tl_at_switch_show_left_widgets.grid(row=0, column=1, **grid_args_switch)
+
+        # Colour Theme
+        tl_cc_app_frame_colour_theme = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_ct, lbl_ct = customtkinter_utility.label_factory(
+            tl_cc_app_frame_colour_theme,
+            tv_label="Show Left Control Widgets:",
+            kwargs_label=kwargs_lbl
+        )
+        tl_at_switch_colour_theme = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_colour_theme,
+            values=["Blue", "Green", "Dark Blue"],
+            variable=self.tl_tv_switch_colour,
+            font=kwargs_lbl["font"]
+        )
+        tl_cc_app_frame_colour_theme.grid(**grid_args_frame)
+        lbl_ct.grid(row=0, column=0, **grid_args_label)
+        tl_at_switch_colour_theme.grid(row=0, column=1, **grid_args_switch)
+
+        self.tl_cc_app.columnconfigure(0, weight=100)
+        self.tl_cc_app.rowconfigure(0, weight=100)
+        for f in [
+            tl_cc_app_frame_light_dark_theme,
+            tl_cc_app_frame_ask_monitors,
+            tl_cc_app_frame_show_left_widgets,
+            tl_cc_app_frame_colour_theme
+        ]:
+            f.columnconfigure(0, weight=65, minsize=220)
+            f.columnconfigure(1, weight=35, minsize=100)
 
         self.tl_cc_app.protocol("WM_DELETE_WINDOW", self.quit_cc_app)
         self.tl_cc_app.grab_set()
@@ -5200,7 +5298,7 @@ class App(ctk.CTk):
                 print(f"{do_exec=}")
                 print(f"{stmts=}")
                 # connect_stmts = " ".join([stmt.replace("\n", " ") for stmt in sql_statments[1:]])
-                tran_stmts = f"/* SQL */\n/* Date: {self.today:%Y-%m-%d %H:%M:%S} =*/\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
+                tran_stmts = f"/* SQL */\n/* Date: {date} =*/\n\nBEGIN TRAN;\n\n{stmts}\n\nROLLBACK;\nCOMMIT;"
                 if tm:
                     print(f"{'=' * 120}\n\ttran_stmts:\n{tran_stmts}{'=' * 120}")
 

@@ -7,3 +7,6 @@
 2024-07-25
     Add Dark / Light mode / Theme
 2024-07-25
+
+2024-07-26
+    Check for work days as well as holidays
