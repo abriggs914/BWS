@@ -17,7 +17,7 @@ import tkinter_utility
 import datetime_utility
 from pyodbc_connection import connect
 from colour_utility import *
-from PIL import Image, ImageTk, ImageGrab
+from PIL import Image, ImageTk, ImageGrab, ImageDraw, ImageFont
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
 import customtkinter_utility
@@ -516,13 +516,21 @@ class App(ctk.CTk):
 
         print(f"{self.tl_tv_switch_ask_monitors.get()=}")
         # self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
+        # self.calc_geometry = customtkinter_utility.calc_geometry_tl(
+        #     1.0,
+        #     1.0,
+        #     parent=self,
+        #     ask=self.tl_tv_switch_ask_monitors.get() == "Yes",
+        #     rtype=dict,
+        #     bypass_parent_withdraw=True
+        # )
         self.calc_geometry = customtkinter_utility.calc_geometry_tl(
-            1.0,
-            1.0,
+            "zoomed",
             parent=self,
             ask=self.tl_tv_switch_ask_monitors.get() == "Yes",
             rtype=dict,
-            bypass_parent_withdraw=True
+            bypass_parent_withdraw=True,
+            do_print=True
         )
 
         if self.settings["TEST_MODE"].get():
@@ -1171,8 +1179,10 @@ class App(ctk.CTk):
 
         if (geo := self.calc_geometry["str"]) == "zoomed":
             self.state(geo)
+            # self.attributes("-fullscreen", True)
         else:
             self.geometry(geo)
+        print(f"{geo=}")
 
         self.tv_multi_combobox_drag_tile = ctk.BooleanVar(self, value=False)
 
@@ -3467,7 +3477,7 @@ class App(ctk.CTk):
         bg_sl_btn_hover = bg_sl_btn.brightened(0.25)
         fg_sl_btn_hover = fg_sl_btn.brightened(0.25)
 
-        def update_quotes_affected(*args):
+        def update_quotes_affected(*args, do_snapshot_method: bool = False):
             print(f"update_quotes_affected")
 
             p_line = self.tl_data["combobox_lines"][2].get()
@@ -3482,35 +3492,82 @@ class App(ctk.CTk):
             if not ed_disabled:
                 if isinstance(ed, str):
                     ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
+                ed_a = ed + datetime.timedelta(days=n_days)
             else:
                 ed = self.list_dates[-1]
+                ed_a = ed
 
             # data = self.df_orders.loc[self.df_orders[""]]
+            print(f"{ed=}, {sd=}, {p_line=}")
             data = []
+            print(f"{self.tiles=}")
+            print(f"{self.list_dates=}")
+            self.tl_data["tl_sl_data"] = {}
             for i, date in enumerate(self.list_dates[::-1]):
-                if not (sd <= date <= ed):
-                    continue
-                for j, line in enumerate(self.list_prod_lines):
-                    if (p_line != "All") and (line != p_line):
-                        continue
-                    date_tile_data = self.tiles.get(date, {})
-                    date_line_data = date_tile_data.get(line)
-                    order = None
-                    if date_line_data:
-                        order = date_line_data.get("order")
-                        if order:
-                            # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
-                            df_o = self.df_orders.iloc[order]
-                            quote = df_o["OrdersV2_SGQuote"]
-                            date_fmt = "%Y-%m-%d"
-                            nth_date = calculate_nth_business_day(date, n_days)
-                            date = f"{date:{date_fmt}}"
-                            nth_date = f"{nth_date:{date_fmt}}"
-                            if p_line == "All":
-                                data.append([quote, line, date, nth_date])
-                            else:
-                                data.append([quote, date, nth_date])
-                    print(f"EFFECTED: ij=({i}, {j}) {date=}, {order=}")
+                # if not (sd <= date <= ed):
+                #     print(f"\tCONT{sd=}, {ed=}, {date=}")
+                #     continue
+                if sd <= date <= ed:
+                    for j, line in enumerate(self.list_prod_lines):
+                        if (p_line == "All") or (line == p_line):
+                            print(f"({i}, {j}), {line}, {date:%Y-%m-%d}, {p_line}")
+                            # continue
+                            date_tile_data = self.tiles.get(date, {})
+                            date_line_data = date_tile_data.get(line)
+                            order = None
+                            quote = None
+                            if date_line_data:
+                                order = date_line_data.get("order")
+                                if order:
+                                    # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
+                                    df_o = self.df_orders.iloc[order]
+                                    quote = df_o["OrdersV2_SGQuote"]
+                                    date_fmt = "%Y-%m-%d"
+                                    nth_date = calculate_nth_business_day(date, n_days)
+                                    date_f = f"{date:{date_fmt}}"
+                                    nth_date_f = f"{nth_date:{date_fmt}}"
+                                    print(f"-> {quote}")
+                                    self.tl_data["tl_sl_data"][quote] = {
+                                        "curr_date": date,
+                                        "new_date": nth_date,
+                                        "line": line,
+                                        "order": order
+                                    }
+                                    if p_line == "All":
+                                        data.append([quote, line, date_f, nth_date_f])
+                                    else:
+                                        data.append([quote, date_f, nth_date_f])
+                            #     else:
+                            #         print(f"\tCONT order is none {date_line_data=}, {date=}, {line=}")
+                            # else:
+                            #     print(f"\tCONT no date_line_data, {date=}, {line=}")
+                    # if (p_line != "All") and (line != p_line):
+                    #     print(f"\tCONT{line}, {p_line}")
+                    #     continue
+                    # date_tile_data = self.tiles.get(date, {})
+                    # date_line_data = date_tile_data.get(line)
+                    # order = None
+                    # quote = None
+                    # if date_line_data:
+                    #     order = date_line_data.get("order")
+                    #     if order:
+                    #         # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
+                    #         df_o = self.df_orders.iloc[order]
+                    #         quote = df_o["OrdersV2_SGQuote"]
+                    #         date_fmt = "%Y-%m-%d"
+                    #         nth_date = calculate_nth_business_day(date, n_days)
+                    #         date = f"{date:{date_fmt}}"
+                    #         nth_date = f"{nth_date:{date_fmt}}"
+                    #         if p_line == "All":
+                    #             data.append([quote, line, date, nth_date])
+                    #         else:
+                    #             data.append([quote, date, nth_date])
+                    #     else:
+                    #         print(f"\tCONT order is none {date_line_data=}, {date=}, {line=}")
+                    # else:
+                    #     print(f"\tCONT no date_line_data, {date=}, {line=}")
+
+                    # print(f"EFFECTED: ij=({i}, {j}), {line=}, {date=}, {order=}, {quote=}")
             header = [col for col in self.list_sl_preview_table_cols]
             if p_line == "All":
                 header.insert(1, "Line")
@@ -3521,6 +3578,8 @@ class App(ctk.CTk):
             if len(data) <= 1:
                 data = [header, ["", "No Data", ""]]
                 self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
+                if not do_snapshot_method:
+                    self.tl_data["tl_canvas_preview"].delete("all")
             else:
                 self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
                 i_tag = self.tl_data.get("tl_canvas_preview_image")
@@ -3533,69 +3592,257 @@ class App(ctk.CTk):
                 # tl_date, br_date = data[-1][-2], data[1][-2]
                 tl_date, br_date = sd, ed
                 tl_line, br_line = self.list_prod_lines[0], self.list_prod_lines[-1]
-                if p_line == "All":
-                    # tl_line = data[-1][-3]
-                    # br_line = data[1][-3]
-                    print(f"A= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
-                    top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
-                    bot_right_bbox = self.get_tile_bbox(br_date, br_line)
+                lines_in_use = [p_line] if p_line != "All" else self.list_prod_lines
+                dates_in_use = pd.date_range(sd, ed_a).to_list()
+
+                if do_snapshot_method:
+
+                    if p_line == "All":
+                        # tl_line = data[-1][-3]
+                        # br_line = data[1][-3]
+                        print(f"A= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
+                        top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
+                        bot_right_bbox = self.get_tile_bbox(br_date, br_line)
+                    else:
+                        # br_line = tl_line = p_line
+                        print(f"B= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
+                        top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
+                        bot_right_bbox = self.get_tile_bbox(br_date, br_line)
+                    print(f"{top_left_bbox=}, {bot_right_bbox=}")
+
+                    xv = self.canvas.xview()
+                    x1, x2 = self.canvas.bbox("all")[0::2]
+                    w = x2 - x1
+                    vw = (xv[1] - xv[0]) * w
+                    # print(f"{date=}, {line=}")
+                    # print(f"{self.canvas.xview()=}")
+                    # print(f"{self.canvas.bbox('all')=}")
+                    bbox = top_left_bbox
+                    # print(f"{bbox=}, {vw=}")
+                    x = bbox[0]  # - (vw / 2)
+                    x = max(0, x)
+                    p = x / w
+                    self.canvas.xview_moveto(p)
+                    self.redraw_legend()
+
+                    # self.canvas.xview_moveto(self.canvas.canvasx(x0) / self.canvas.winfo_width())
+                    # self.canvas.yview_moveto(self.canvas.canvasy(y0) / self.canvas.winfo_height())
+                    # x0 /= 10
+                    # y0 /= 10
+                    # x1 /= 10
+                    # y1 /= 10
+                    # x0, y0, x1, y1 = top_left_bbox[:2] + bot_right_bbox[-2:]
+                    x0, y0, x1, y1 = 0, 0, 800, 800
+                    print(f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
+                    ps = self.canvas.postscript(colormode='color')
+                    # Convert PostScript to image
+                    image = Image.open(io.BytesIO(ps.encode('utf-8')))
+                    # Crop the image to the viewport
+                    image = image.crop((x0, y0, x1, y1))
+                    # Convert the cropped image to a format suitable for tkinter
+                    canvas_image = ImageTk.PhotoImage(image)
+                    # Display the captured image in the viewport canvas
+                    self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
+                    self.tl_data["tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
+
+                    # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
+                    # i_tag = self.tl_data.get("tl_canvas_preview_image")
+                    # if i_tag is not None:
+                    #     for tag in self.tl_data["tl_canvas_preview"].find_withtag(i_tag):
+                    #         self.tl_data["tl_canvas_preview"].delete(tag)
+                    #
+                    # x0, y0, x1, y1 = 0, 0, 350, 350
+                    # image = ImageGrab.grab().crop((x0, y0, x1, y1))
+                    # # Convert the captured image to a format suitable for tkinter
+                    # canvas_image = ImageTk.PhotoImage(image)
+                    # # Display the captured image in the viewport canvas
+                    # self.tl_data["tl_canvas_preview_image"] = self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
+                    # self.tl_data["tl_canvas_preview"].image = canvas_image
+                    # # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
                 else:
-                    # br_line = tl_line = p_line
-                    print(f"B= {tl_date=}, {tl_line=}, {br_date=}, {br_line=}")
-                    top_left_bbox = self.get_tile_bbox(tl_date, tl_line)
-                    bot_right_bbox = self.get_tile_bbox(br_date, br_line)
-                print(f"{top_left_bbox=}, {bot_right_bbox=}")
+                    self.tl_data["tl_canvas_preview"].delete("all")
+                    nr, nc = len(lines_in_use) + 1, (ed_a - sd).days + 2
+                    # if p_line == "All":
+                    #     nr = 2
+                    gc = utility.grid_cells(can_p_w, nc, can_p_h, nr)
+                    self.tl_data["tl_sl_tags"] = list()
+                    for row in gc:
+                        row_tags = []
+                        for x0_, y0_, x1_, y1_ in row:
+                            row_tags.append({
+                                "rect": self.tl_data["tl_canvas_preview"].create_rectangle(
+                                    x0_, y0_, x1_, y1_,
+                                    fill=self.colour_tile_background.hex_code
+                                )
+                            })
+                        self.tl_data["tl_sl_tags"].append(row_tags)
 
+                    # print(f"{len(tags)=}, {len(tags[0])=}")
+                    # print(f"{tags=}")
 
-                xv = self.canvas.xview()
-                x1, x2 = self.canvas.bbox("all")[0::2]
-                w = x2 - x1
-                vw = (xv[1] - xv[0]) * w
-                # print(f"{date=}, {line=}")
-                # print(f"{self.canvas.xview()=}")
-                # print(f"{self.canvas.bbox('all')=}")
-                bbox = top_left_bbox
-                # print(f"{bbox=}, {vw=}")
-                x = bbox[0] # - (vw / 2)
-                x = max(0, x)
-                p = x / w
-                self.canvas.xview_moveto(p)
-                self.redraw_legend()
+                    self.tl_data["tl_canvas_preview"].itemconfigure(
+                        self.tl_data["tl_sl_tags"][0][0]["rect"],
+                        fill=self.colour_tile_header_row_background.hex_code
+                    )
 
-                # self.canvas.xview_moveto(self.canvas.canvasx(x0) / self.canvas.winfo_width())
-                # self.canvas.yview_moveto(self.canvas.canvasy(y0) / self.canvas.winfo_height())
-                # x0 /= 10
-                # y0 /= 10
-                # x1 /= 10
-                # y1 /= 10
-                # x0, y0, x1, y1 = top_left_bbox[:2] + bot_right_bbox[-2:]
-                x0, y0, x1, y1 = 0, 0, 800, 800
-                print(f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
-                ps = self.canvas.postscript(colormode='color')
-                # Convert PostScript to image
-                image = Image.open(io.BytesIO(ps.encode('utf-8')))
-                # Crop the image to the viewport
-                image = image.crop((x0, y0, x1, y1))
-                # Convert the cropped image to a format suitable for tkinter
-                canvas_image = ImageTk.PhotoImage(image)
-                # Display the captured image in the viewport canvas
-                self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
-                self.tl_data["tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
+                    for i in range(1):
+                        print(f"{i=}")
+                        for j, date in enumerate(dates_in_use, start=1):
+                            print(f"\t{j=}")
+                            self.tl_data["tl_sl_tags"][i][j].update({
+                                "text": self.tl_data["tl_canvas_preview"].create_text(
+                                    gc[i][j][0] + ((gc[i][j][2] - gc[i][j][0]) / 2),
+                                    gc[i][j][1] + ((gc[i][j][3] - gc[i][j][1]) / 2),
+                                    text=f"{date.day}",
+                                    fill=self.colour_tile_header_row_foreground.hex_code
+                                )
+                            })
+                            self.tl_data["tl_canvas_preview"].itemconfigure(
+                                self.tl_data["tl_sl_tags"][i][j]["rect"],
+                                fill=self.colour_tile_header_row_background.hex_code
+                            )
 
-                # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
-                # i_tag = self.tl_data.get("tl_canvas_preview_image")
-                # if i_tag is not None:
-                #     for tag in self.tl_data["tl_canvas_preview"].find_withtag(i_tag):
-                #         self.tl_data["tl_canvas_preview"].delete(tag)
-                #
-                # x0, y0, x1, y1 = 0, 0, 350, 350
-                # image = ImageGrab.grab().crop((x0, y0, x1, y1))
-                # # Convert the captured image to a format suitable for tkinter
-                # canvas_image = ImageTk.PhotoImage(image)
-                # # Display the captured image in the viewport canvas
-                # self.tl_data["tl_canvas_preview_image"] = self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
-                # self.tl_data["tl_canvas_preview"].image = canvas_image
-                # # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
+                    for i, line in enumerate(lines_in_use, start=1):
+                        # print(f"{i=}")
+                        for j in range(1):
+                            # print(f"\t{j=}")
+                            self.tl_data["tl_sl_tags"][i][j].update({
+                                "text": self.tl_data["tl_canvas_preview"].create_text(
+                                    gc[i][j][0] + ((gc[i][j][2] - gc[i][j][0]) / 2),
+                                    gc[i][j][1] + ((gc[i][j][3] - gc[i][j][1]) / 2),
+                                    text=f"{line}",
+                                    fill=self.colour_tile_header_col_foreground.hex_code
+                                )
+                            })
+                            self.tl_data["tl_canvas_preview"].itemconfigure(
+                                self.tl_data["tl_sl_tags"][i][j]["rect"],
+                                fill=self.colour_tile_header_col_background.hex_code
+                            )
+
+                    print(f"{lines_in_use=}")
+                    print(f"{dates_in_use=}")
+                    x_off_arrow = 10
+                    y_off_mult_line = 3
+                    angle = 45
+                    font_size = 16
+                    self.tl_data["tl_sl_data_count_thru"] = {}
+                    for i, line in enumerate(lines_in_use, start=1):
+                        for j, date in enumerate(dates_in_use, start=1):
+
+                            date_tile_data = self.tiles.get(date, {})
+                            date_line_data = date_tile_data.get(line)
+                            order = None
+                            quote = None
+                            if date_line_data:
+                                order = date_line_data.get("order")
+                                if order:
+                                    df_o = self.df_orders.iloc[order]
+                                    quote = df_o["OrdersV2_SGQuote"]
+                                    q_data = self.tl_data["tl_sl_data"].get(quote, {})
+                                    c_date = q_data.get("curr_date")
+                                    n_date = q_data.get("new_date")
+
+                                    # tags[i][j].update({
+                                    #     "text": self.tl_data["tl_canvas_preview"].create_text(
+                                    #         gc[i][j][0] + ((gc[i][j][2] - gc[i][j][0]) / 2),
+                                    #         gc[i][j][1] + ((gc[i][j][3] - gc[i][j][1]) / 2),
+                                    #         text=f"{quote}"
+                                    #     )
+                                    # })
+                                    text = f"{quote}"
+                                    font = ImageFont.truetype("calibri.ttf", font_size)
+                                    # text_width, text_height = font.getsize(text)
+                                    text_width, text_height = font.getbbox(text)[2:]
+                                    image = Image.new("RGBA", (text_width, text_height), (255, 255, 255, 0))
+                                    draw = ImageDraw.Draw(image)
+                                    draw.text((0, 0), text, font=font, fill="black")
+                                    rotated_image = image.rotate(angle, expand=1)
+                                    tk_image = ImageTk.PhotoImage(rotated_image)
+                                    cw, ch = gc[i][j][2] - gc[i][j][0], gc[i][j][3] - gc[i][j][1]
+                                    x = gc[i][j][0] + (cw / 2)
+                                    y = gc[i][j][1] + (ch / 2)
+                                    if (c_date is not None) and (n_date is not None):
+                                        d_days = (n_date - c_date).days
+                                    else:
+                                        d_days = -1
+
+                                    if (date, line) not in self.tl_data["tl_sl_data_count_thru"]:
+                                        self.tl_data["tl_sl_data_count_thru"][(date, line)] = 0
+
+                                    for k in range(d_days):
+                                        self.tl_data["tl_sl_data_count_thru"][(date, line)] += 1
+
+                                    print(f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}")
+
+                                    self.tl_data["tl_sl_tags"][i][j].update({
+                                        "text": self.tl_data["tl_canvas_preview"].create_image(
+                                            x, y,
+                                            image=tk_image
+                                        ),
+                                        "tk_image": tk_image,
+                                        "image": image,
+                                        "rot_image": rotated_image,
+
+                                        "arrow_m": self.tl_data["tl_canvas_preview"].create_line(
+                                            x + x_off_arrow,
+                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            x + (d_days * cw) - x_off_arrow,
+                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            width=2,
+                                            fill="#FF0000"
+                                        ),
+
+                                        "arrow_l": self.tl_data["tl_canvas_preview"].create_line(
+                                            x + (d_days * cw) - (2 * x_off_arrow),
+                                            y - 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            x + (d_days * cw) - x_off_arrow,
+                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            width=2,
+                                            fill="#FF0000"
+                                        ),
+
+                                        "arrow_r": self.tl_data["tl_canvas_preview"].create_line(
+                                            x + (d_days * cw) - (2 * x_off_arrow),
+                                            y + 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            x + (d_days * cw) - x_off_arrow,
+                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
+                                            width=2,
+                                            fill="#FF0000"
+                                        )
+                                    })
+
+                    for i, line in enumerate(lines_in_use, start=1):
+                        am = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_m")
+                        al = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_l")
+                        ar = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_r")
+                        for t in (am, al, ar):
+                            if t is not None:
+                                self.tl_data["tl_canvas_preview"].itemconfigure(
+                                    t,
+                                    state="hidden"
+                                )
+
+                            # # q = data[i][0]
+                            # # q_line = p_line if (p_line != "All") else data[i][1]
+                            # # cd = pd.Timestamp(data[i][-2])
+                            # # nd = pd.Timestamp(data[i][-1])
+                            # # j2 = dates_in_use.index(nd)
+                            # print(f"{i=}, {j=}, {date=}, {cd=}, {q_line}, {line}, {q}")
+                            # if (date == cd) and (q_line == line):
+                            #     tags[i][j].update({
+                            #         "text": self.tl_data["tl_canvas_preview"].create_text(
+                            #             gc[i][j][0] + ((gc[i][j][2] - gc[i][j][0]) / 2),
+                            #             gc[i][j][1] + ((gc[i][j][3] - gc[i][j][1]) / 2),
+                            #             text=f"{q}"
+                            #         )
+                            #     })
+                            # # self.tl_data["tl_canvas_preview"].itemconfigure(
+
+                    for i, row_dat in enumerate(self.tl_data["tl_sl_tags"][1:], start=1):
+                        for j, tag_data in enumerate(row_dat[1:], start=1):
+                            text_tag = tag_data.get("text")
+                            if text_tag is not None:
+                                self.tl_data["tl_canvas_preview"].tag_raise(text_tag)
 
             self.tl_data["table_change_preview"].columns = len(header)
             self.tl_data["table_change_preview"].rows = len(data)
