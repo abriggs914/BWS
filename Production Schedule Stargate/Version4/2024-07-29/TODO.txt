@@ -1,0 +1,12 @@
+2024-07-25
+    Complete 'shift-lines' functionality, currently pointed at nothing
+2024-07-25
+    correct the shift line preview canvas
+2024-07-25
+    Add Test mode back in
+2024-07-25
+    Add Dark / Light mode / Theme
+2024-07-25
+
+2024-07-26
+    Check for work days as well as holidays

@@ -3527,8 +3527,7 @@ class App(ctk.CTk):
                 ed = self.max_date
             # sd = clamp(self.min_date, sd, self.max_date)
             # ed = clamp(self.min_date, ed, self.max_date)
-            # ed_a = (ed + datetime.timedelta(days=n_days)) if (not ed_disabled) else ed
-            ed_a = calculate_nth_business_day(ed, n_days) if (not ed_disabled) else ed
+            ed_a = (ed + datetime.timedelta(days=n_days)) if (not ed_disabled) else ed
 
             # data = self.df_orders.loc[self.df_orders[""]]
             print(f"{self.min_date=}, {self.max_date=}")
@@ -3776,7 +3775,7 @@ class App(ctk.CTk):
                     print(f"{lines_in_use=}")
                     print(f"{dates_in_use=}")
                     x_off_arrow = 10
-                    y_off_mult_line = 5
+                    y_off_mult_line = 3
                     angle = 45
                     font_size = 16
                     self.tl_data["tl_sl_data_count_thru"] = {}
@@ -3824,17 +3823,9 @@ class App(ctk.CTk):
                                         self.tl_data["tl_sl_data_count_thru"][(date, line)] = 0
 
                                     for k in range(d_days):
-                                        date_ = date + datetime.timedelta(days=k)
+                                        self.tl_data["tl_sl_data_count_thru"][(date, line)] += 1
 
-                                        if (date_, line) not in self.tl_data["tl_sl_data_count_thru"]:
-                                            self.tl_data["tl_sl_data_count_thru"][(date_, line)] = 0
-
-                                        self.tl_data["tl_sl_data_count_thru"][(date_, line)] += 1
-                                    # self.tl_data["tl_sl_data_count_thru"][(date, line)] += 1
-
-                                    print(f"{self.tl_data['tl_sl_data_count_thru']=}")
-
-                                    print(f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}, {c_date=}, {n_date=}, {d_days=}")
+                                    print(f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}")
 
                                     self.tl_data["tl_sl_tags"][i][j].update({
                                         "text": self.tl_data["tl_canvas_preview"].create_image(
@@ -3874,16 +3865,15 @@ class App(ctk.CTk):
                                     })
 
                     for i, line in enumerate(lines_in_use, start=1):
-                        for j in range(n_days, 0, -1):
-                            am = self.tl_data["tl_sl_tags"][i][-j].get("arrow_m")
-                            al = self.tl_data["tl_sl_tags"][i][-j].get("arrow_l")
-                            ar = self.tl_data["tl_sl_tags"][i][-j].get("arrow_r")
-                            for t in (am, al, ar):
-                                if t is not None:
-                                    self.tl_data["tl_canvas_preview"].itemconfigure(
-                                        t,
-                                        state="hidden"
-                                    )
+                        am = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_m")
+                        al = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_l")
+                        ar = self.tl_data["tl_sl_tags"][i][len(dates_in_use)].get("arrow_r")
+                        for t in (am, al, ar):
+                            if t is not None:
+                                self.tl_data["tl_canvas_preview"].itemconfigure(
+                                    t,
+                                    state="hidden"
+                                )
 
                             # # q = data[i][0]
                             # # q_line = p_line if (p_line != "All") else data[i][1]
@@ -3910,7 +3900,6 @@ class App(ctk.CTk):
             self.tl_data["table_change_preview"].columns = len(header)
             self.tl_data["table_change_preview"].rows = len(data)
             self.tl_data["table_change_preview"].update_values(data)
-            self.tl_data["label_count_preview"][0].set(f"{len(data) - 1} Quote(s)")
             check_warnings()
 
         def check_warnings():
@@ -3946,7 +3935,6 @@ class App(ctk.CTk):
                 print(f"{days_of_interest=}")
 
                 warnings = []
-                warned_quotes = dict()
                 if direction == "backward":
                     # TODO
                     pass
@@ -3977,18 +3965,8 @@ class App(ctk.CTk):
                             if order is not None:
                                 # warn there is already an order here.
                                 e_quote = self.df_orders.iloc[order]["OrdersV2_SGQuote"]
-
                                 if e_quote not in quotes_new_dates:
-                                    warnings.append(f">  Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
-                                    warned_quotes[(new_date, line)] = quote
-                                else:
-                                    if (new_date, line) in warned_quotes:
-                                        o_quote = warned_quotes[(new_date, line)]
-                                        warnings.append(
-                                            f">  Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because you are already moving {o_quote} there.")
-                                    else:
-                                        warned_quotes[(new_date, line)] = quote
-
+                                    warnings.append(f"Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
 
                 print(f"{warnings=}")
                 self.tl_data["tl_textbox_warning"].configure(state="normal")
@@ -4248,6 +4226,9 @@ class App(ctk.CTk):
         )
         # self.tl_data["tl_frame_days"].rowconfigure(0, weight=10)
         # self.tl_data["tl_frame_days"].rowconfigure(1, weight=90)
+        # self.tl_data["tl_frame_days"].columnconfigure(0, weight=33)
+        # self.tl_data["tl_frame_days"].columnconfigure(1, weight=33)
+        # self.tl_data["tl_frame_days"].columnconfigure(2, weight=33)
         self.tl_data["tl_frame_days_sd"] = ctk.CTkScrollableFrame(
             self.tl_data["tl_frame_days"],
             width=400,
@@ -4258,6 +4239,7 @@ class App(ctk.CTk):
             width=400,
             height=300
         )
+        self.tl_data["tl_frame_days"].grid_propagate(False)
         # self.tl_data["tl_frame_days_sd"].grid_propagate(False)
         # self.tl_data["tl_frame_days_ed"].grid_propagate(False)
 
@@ -4288,22 +4270,15 @@ class App(ctk.CTk):
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
         # self.tl_data["frame_ed"].var_date_picker.set(self.tl_data["frame_ed"].date_picker.format_date(ed))
 
-        weight_tl = 35, 65
         self.tl_data["tl_frame_left"] = ctk.CTkFrame(
             self.tl_data[tl_name],
-            # bg_color="#12FF32",
-            width=self.total_width * (weight_tl[0] / 100),
-            height=600
+            bg_color="#12FF32",
+            width=self.total_width / 2
         )
         self.tl_data["tl_frame_right"] = ctk.CTkFrame(
             self.tl_data[tl_name],
-            # bg_color="#FF1232",
-            width=self.total_width * (weight_tl[1] / 100),
-            height=600
-        )
-        self.tl_data["tl_frame_left_scrollable"] = ctk.CTkScrollableFrame(
-            self.tl_data["tl_frame_left"],
-            width=550
+            bg_color="#FF1232",
+            width=self.total_width / 2
         )
         # self.tl_data["tl_frame_middle_widgets"] = ctk.CTkFrame(
         #     self.tl_data["tl_frame_left"]
@@ -4378,7 +4353,7 @@ class App(ctk.CTk):
         ]
 
         # random_table = [[random.randint(-5, 15) for j in range(3)] for j in range(13)]
-        can_p_w, can_p_h = 1000, 500
+        can_p_w, can_p_h = 500, 350
         # self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(
         #     self.tl_data["tl_frame_left"],
         #     # bg_color="#123378",
@@ -4407,25 +4382,17 @@ class App(ctk.CTk):
             }
         )
         self.tl_data["table_change_preview"] = CTkTable.CTkTable(
-            self.tl_data["tl_frame_left_scrollable"],
+            self.tl_data["tl_frame_left"],
             values=[self.list_sl_preview_table_cols, ["", "No Data", ""]],
             header_color=self.colour_tl_sl_preview_header.hex_code,
             hover=True
-        )
-        self.tl_data["label_count_preview"] = customtkinter_utility.label_factory(
-            self.tl_data["tl_frame_left"],
-            tv_label="0 Quotes(s)",
-            kwargs_label={
-                "font": ("Calibri", 20)
-            }
         )
 
         # self.tl_data["tl_frame_warning"] = ctk.CTkFrame(self.tl_data["tl_frame_left"])
         self.tl_data["tl_textbox_warning"] = ctk.CTkTextbox(
             self.tl_data["tl_frame_left"],
             width=500,
-            font=("Calibri", 18),
-            wrap="word"
+            font=("Calibri", 18)
         )
         self.tl_data["tl_textbox_warning"].configure(state="disabled")
 
@@ -4434,19 +4401,10 @@ class App(ctk.CTk):
         self.tl_data["frame_sd"].var_date_entry.trace_variable("w", update_frame_sd)
         self.tl_data["frame_ed"].var_date_entry.trace_variable("w", update_frame_ed)
 
-        self.tl_data["tl_frame_days"].columnconfigure(0, weight=33)
-        self.tl_data["tl_frame_days"].columnconfigure(1, weight=33)
-        self.tl_data["tl_frame_days"].columnconfigure(2, weight=33)
-        self.tl_data["tl_frame_days"].grid_propagate(False)
-        self.tl_data["tl_frame_left"].grid_propagate(False)
-        self.tl_data["tl_frame_right"].grid_propagate(False)
-        self.tl_data[tl_name].columnconfigure(0, weight=weight_tl[0])
-        self.tl_data[tl_name].columnconfigure(1, weight=weight_tl[1])
-
         # tl_name
         self.tl_data["tl_frame_days"].grid(row=0, column=0, columnspan=2)
-        self.tl_data["tl_frame_left"].grid(row=1, column=0, rowspan=1)
-        self.tl_data["tl_frame_right"].grid(row=1, column=1, rowspan=1)
+        self.tl_data["tl_frame_left"].grid(row=1, column=0, rowspan=1, columnspan=1)
+        self.tl_data["tl_frame_right"].grid(row=1, column=1, rowspan=1, columnspan=1)
 
         # tl_frame_days
         self.tl_data["tl_frame_days_sd"].grid(row=0, column=0, rowspan=1, columnspan=1, padx=5, pady=5)
@@ -4455,18 +4413,13 @@ class App(ctk.CTk):
 
         # tl_frame_left
         self.tl_data["tl_textbox_warning"].grid(padx=20, pady=10)
-        self.tl_data["tl_frame_left_scrollable"].grid(row=1, column=0, padx=20, pady=5)
-        self.tl_data["label_count_preview"][1].grid(row=2, column=0, padx=20, ipadx=20, pady=5, sticky=ctk.E)
-
+        self.tl_data["table_change_preview"].grid(row=1, column=0, padx=20, pady=5)
+        self.tl_data["tl_canvas_preview"].grid(row=1, column=1, rowspan=1)
         # self.tl_data["tl_frame_warning"].grid(row=0, column=0, columnspan=1, padx=20, pady=5)
         # self.tl_data["tl_frame_middle_widgets"].grid(row=1, column=0, columnspan=1)
 
-        # tl_frame_left_scrollable
-        self.tl_data["table_change_preview"].grid(row=0, column=1, rowspan=1, columnspan=1)
-
         # tl_frame_right
         self.tl_data["label_change_preview"][1].grid(row=0, column=0, rowspan=1, columnspan=2)
-        self.tl_data["tl_canvas_preview"].grid(row=1, column=1, rowspan=1)
         # self.tl_data["tl_frame_preview"].grid(row=0, column=0, sticky=ctk.EW)
 
         # tl_frame_days_sd
