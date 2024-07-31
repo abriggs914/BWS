@@ -3843,35 +3843,44 @@ class App(ctk.CTk):
                                         ),
                                         "tk_image": tk_image,
                                         "image": image,
-                                        "rot_image": rotated_image,
-
-                                        "arrow_m": self.tl_data["tl_canvas_preview"].create_line(
-                                            x + x_off_arrow,
-                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            x + (d_days * cw) - x_off_arrow,
-                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            width=2,
-                                            fill="#FF0000"
-                                        ),
-
-                                        "arrow_l": self.tl_data["tl_canvas_preview"].create_line(
-                                            x + (d_days * cw) - (2 * x_off_arrow),
-                                            y - 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            x + (d_days * cw) - x_off_arrow,
-                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            width=2,
-                                            fill="#FF0000"
-                                        ),
-
-                                        "arrow_r": self.tl_data["tl_canvas_preview"].create_line(
-                                            x + (d_days * cw) - (2 * x_off_arrow),
-                                            y + 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            x + (d_days * cw) - x_off_arrow,
-                                            y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][(date, line)]),
-                                            width=2,
-                                            fill="#FF0000"
-                                        )
+                                        "rot_image": rotated_image
                                     })
+
+                                    if sd <= date <= ed:
+                                        self.tl_data["tl_sl_tags"][i][j].update({
+                                            "arrow_m": self.tl_data["tl_canvas_preview"].create_line(
+                                                x + x_off_arrow,
+                                                y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                x + (d_days * cw) - x_off_arrow,
+                                                y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                width=2,
+                                                fill="#FF0000"
+                                            ),
+
+                                            "arrow_l": self.tl_data["tl_canvas_preview"].create_line(
+                                                x + (d_days * cw) - (2 * x_off_arrow),
+                                                y - 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                x + (d_days * cw) - x_off_arrow,
+                                                y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                width=2,
+                                                fill="#FF0000"
+                                            ),
+
+                                            "arrow_r": self.tl_data["tl_canvas_preview"].create_line(
+                                                x + (d_days * cw) - (2 * x_off_arrow),
+                                                y + 10 + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                x + (d_days * cw) - x_off_arrow,
+                                                y + (y_off_mult_line * self.tl_data["tl_sl_data_count_thru"][
+                                                    (date, line)]),
+                                                width=2,
+                                                fill="#FF0000"
+                                            )
+                                        })
 
                     for i, line in enumerate(lines_in_use, start=1):
                         for j in range(n_days, 0, -1):
