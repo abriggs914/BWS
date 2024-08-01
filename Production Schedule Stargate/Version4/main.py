@@ -1,9 +1,11 @@
+import copy
 import datetime
 import io
 import random
 import threading
 import time
 import tkinter
+import numpy as np
 from tkinter import messagebox, ttk
 from itertools import zip_longest
 from typing import Tuple, Optional
@@ -26,7 +28,6 @@ import win32gui
 import win32con
 import win32api
 
-
 # TODO shrink weekend tiles, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
 # TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
@@ -39,7 +40,6 @@ STARGATE_SQL_CREDS = {
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
-
 
 for sql_data in (
 
@@ -71,11 +71,24 @@ for sql_data in (
 
         SQL_HOLIDAYS := {
             "sql": """
-        SELECT
-            *
-        FROM
-            [Calendar]
-        ;
+SELECT
+	[C].[Date] AS [C_Date]
+	,[C].[Day] AS [C_Day]
+	,[C].[DayOfWeek] AS [C_DayOfWeek]
+	,[C].[SAT Holiday] AS [C_SATHoliday]
+	,[C].[STAT Holiday] AS [C_STATHoliday]
+	,[C].[HolidayName] AS [C_HolidayName]
+
+	,[vC].[CalendarDate] AS [vC_DateCalendar]
+	,[vC].[WorkDay] AS [vC_WorkDay]
+FROM
+	[BWSDB].[dbo].[Calendar] AS [C] WITH (NOLOCK)
+FULL OUTER JOIN
+	[SysproCompanyS].[dbo].[v_CalendarWorkDays] AS [vC] WITH (NOLOCK)
+ON
+	[C].[Date] = [vC].[CalendarDate]
+WHERE
+	[C].[Date] IS NOT NULL
         """,
             "database": "BWSDB",
             "uid": "user5",
@@ -357,6 +370,7 @@ class App(ctk.CTk):
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
         self.default_show_left_widgets = "Yes"
+        self.txt_non_prod_day = "Non-Prod Day"
 
         self.colour_foreground_testing_mode_label = Colour("#981415")
         self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
@@ -377,6 +391,7 @@ class App(ctk.CTk):
 
         self.colour_tile_background = Colour("#ecdddd")
         self.colour_tile_foreground = Colour("#090909")
+        self.colour_tile_background_non_prod = self.colour_tile_background.darkened(0.25)
         self.font_tile = "Arial 10"
         self.colour_tile_outline = Colour("#111111")
         self.width_tile_outline = 1
@@ -432,6 +447,7 @@ class App(ctk.CTk):
 
         self.title_application_full = f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}"
         self.title_application_short = "STG Prod Sched"
+        self.msg_no_movement_non_publish = f"No Movements allowed because you are a non-publish user"
         self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
         self.msg_non_valid_pds_user = f"You do not have permission to use this app.{self.msg_please_do_not_rerun}"
         self.msg_non_publish_user = f"You do not have permission to publish changes with this app.{self.msg_please_do_not_rerun}"
@@ -462,8 +478,16 @@ class App(ctk.CTk):
         #     command=self.click_mb_save
         # )
         self.mb_file.add_command(
-            label="Check Units Planned On Holiday",
-            command=self.check_for_units_on_holidays
+            label="Check Units Planned On Non Prod Day",
+            command=lambda: self.check_for_units_on_holidays(include_all_holidays=False)
+        )
+        self.mb_file.add_command(
+            label="Check Units Planned On Any Holiday",
+            command=lambda: self.check_for_units_on_holidays(include_all_holidays=True)
+        )
+        self.mb_file.add_command(
+            label="Go To Today",
+            command=self.click_mb_go_to_today
         )
         self.mb_file.add_command(
             label="Shift Line",
@@ -632,8 +656,10 @@ class App(ctk.CTk):
         self.tile_height_weekend = 110
         self.tile_width_legend_lines = 110
         self.tile_height_legend_lines = 110
-        self.canvas_width = self.total_width - self.width_multi_combobox
-        self.canvas_height = self.total_height - self.height_multi_combobox
+        self.canvas_width_og = self.total_width - self.width_multi_combobox
+        self.canvas_height_og = self.total_height - self.height_multi_combobox
+        self.canvas_width = self.canvas_width_og
+        self.canvas_height = self.canvas_height_og
 
         # adjust incase too few prod lines
         if (self.tile_height * n_rows) < self.total_height:
@@ -755,32 +781,54 @@ class App(ctk.CTk):
         self.tiles = {d: {pl: dict() for pl in self.list_prod_lines} for d in self.list_dates}
         self.tiles["home"] = dict()
         self.df_ids_to_date_line = {}
+        print(f"{len(self.list_dates)=}")
+        print(f"{len(self.tiles)=}")
+        print(f"{self.tiles=}")
         # print(f"{list(self.tiles)[:5]=}")
 
         self.df_calendar = self.df_calendar.loc[
-            (self.list_dates[0] <= self.df_calendar["Date"]) & (self.df_calendar["Date"] <= self.list_dates[-1])]
-        self.holidays = self.df_calendar.dropna(subset=["HolidayName"]).set_index("Date")["HolidayName"].to_dict()
+            (self.list_dates[0] <= self.df_calendar["C_Date"])
+            & (self.df_calendar["C_Date"] <= self.list_dates[-1])
+            #  & (self.df_calendar["STAT Holiday"] == 1)
+            ]
+        self.holidays = self.df_calendar.dropna(subset=["C_HolidayName"]).set_index("C_Date")["C_HolidayName"].to_dict()
+        self.work_holidays = self.df_calendar.loc[
+            self.df_calendar["C_STATHoliday"] == 1
+            ].dropna(subset=["C_HolidayName"]).set_index("C_Date")["C_HolidayName"].to_dict()
 
         if self.settings["TEST_MODE"].get():
             print(f"{self.df_calendar=}")
             print(f"{self.holidays=}")
+            print(f"{self.work_holidays=}")
 
-        list_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
-        n_weekend_days = len(list_weekend_days)
-        n_weekdays = n_cols - n_weekend_days
+        # list_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
+        # n_weekend_days = len(list_weekend_days)
+        # n_weekdays = n_cols - n_weekend_days
 
         # TODO fix variable column sizing
         canvas_width_scroll = self.tile_width * n_cols  # old method
         self.canvas_width_scroll_region = canvas_width_scroll
         self.canvas_height_scroll_region = self.tile_height * n_rows
 
-        self.calc_grid_cells = utility.grid_cells(
+        # self.calc_grid_cells = utility.grid_cells(
+        #     self.canvas_width_scroll_region,
+        #     n_cols + 1,
+        #     self.canvas_height_scroll_region,
+        #     n_rows,
+        #     r_type=list
+        # )
+
+        print(f"{n_cols=}, {n_rows=}")
+        self.date_is_weekend = list()
+        self.calc_grid_cells = self.calc_daily_grid_cells(
+            self.list_dates[0],
+            self.list_dates[-1],
+            self.df_calendar,
             self.canvas_width_scroll_region,
-            n_cols + 1,
             self.canvas_height_scroll_region,
-            n_rows,
-            r_type=list
+            n_rows=n_rows
         )
+        print(f"{self.calc_grid_cells=}")
 
         self.canvas = ctk.CTkCanvas(
             self.frame_canvas,
@@ -826,10 +874,13 @@ class App(ctk.CTk):
 
         # rest of the tiles
         for i, row in enumerate(self.calc_grid_cells[1:]):
+            print(f"{i=}, {row=}")
             for j, col in enumerate(row[1:]):
                 prod_line = self.list_prod_lines[i]
                 date = self.list_dates[j]
-                is_weekend = date.weekday() >= 5
+                # is_weekend = date.weekday() >= 5
+                is_weekend = self.is_valid_prod_date(date) == "weekend"
+                print(f"{date=}, {prod_line=}, {is_weekend=}")
                 if is_weekend:
                     tile_colour = self.colour_tile_background_weekend
                     tile_outline = self.colour_tile_outline_weekend
@@ -900,6 +951,8 @@ class App(ctk.CTk):
                         print(f"\tFITS")
 
                     tile_data = self.tiles[date][prod_line]
+                    if 'tile' not in tile_data:
+                        print(f"{tile_data=}")
                     col = self.canvas.bbox(tile_data["tile"])
                     # prev_texts = tile_data.get("texts", [])
                     tile_text_colour = self.colour_tile_foreground
@@ -1027,6 +1080,17 @@ class App(ctk.CTk):
                 ]
                 if holiday_name is not None:
                     to_do_texts.append(holiday_name)
+                    non_prod_day = self.is_valid_prod_date(date) == "holiday"
+                    # print(f"Check {date=} -- {non_prod_day=}")
+                    if non_prod_day:
+                        to_do_texts.append(self.txt_non_prod_day)
+                        tile_colour = tile_colour.darkened(0.1)
+                        for k, k_line in enumerate(self.list_prod_lines):
+                            # print(f"{k=}, {k_line=}")
+                            self.canvas.itemconfigure(
+                                self.tiles[date][k_line]["tile"],
+                                fill=self.colour_tile_background_non_prod.hex_code
+                            )
                 if key not in self.tiles[date]:
                     self.tiles[date][key] = dict()
                 self.tiles[date][key].update({
@@ -1055,7 +1119,12 @@ class App(ctk.CTk):
                     ]
                 })
                 if holiday_name is not None:
-                    self.canvas.itemconfigure(self.tiles[date][key]["texts"][-1], fill=self.colour_foreground_holiday.hex_code)
+                    self.canvas.itemconfigure(self.tiles[date][key]["texts"][-1],
+                                              fill=self.colour_foreground_holiday.hex_code)
+                    text = self.canvas.itemcget(self.tiles[date][key]["texts"][-1], "text")
+                    if text == self.txt_non_prod_day:
+                        self.canvas.itemconfigure(self.tiles[date][key]["texts"][-2],
+                                                  fill=self.colour_foreground_holiday.hex_code)
 
         # header columns
         for i, row in enumerate(self.calc_grid_cells[1:]):
@@ -1281,6 +1350,122 @@ class App(ctk.CTk):
 
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
 
+    def calc_daily_grid_cells(
+            self,
+            day_0: pd.Timestamp | datetime.datetime,
+            day_1: pd.Timestamp | datetime.datetime,
+            df_calendar: pd.DataFrame,
+            can_width: int,
+            can_height: int,
+            n_rows: int = 1,
+            weights: tuple[int, int] = (90, 10)):
+        # self.calc_grid_cells = utility.grid_cells(
+        #     self.canvas_width_scroll_region,
+        #     n_cols + 1,
+        #     self.canvas_height_scroll_region,
+        #     n_rows,
+        #     r_type=list
+        # )
+
+        weight_weekday, weight_weekend = weights
+
+        print(f"{day_0=}, {day_1=}, {n_rows=}")
+
+        list_dates = pd.date_range(day_0, day_1)[:-1]
+        weekdays = set()
+        weekend_days = set()
+        week_holidays = set()
+        unknown_days = set()
+        for i, date in enumerate([None, *list_dates]):
+            if date is None:
+                unknown_days.add(date)
+                date_is_weekend = 0
+            else:
+                df_date = df_calendar.loc[df_calendar["C_Date"] == date]
+                if not df_date.empty:
+                    date_data = df_date.iloc[0]
+                    dow_n = date_data["C_Day"]
+                    dow = date_data["C_DayOfWeek"]
+                    weekend_holiday = date_data["C_SATHoliday"]
+                    other_holiday = date_data["C_STATHoliday"]
+                    holiday_name = date_data["C_HolidayName"]
+                    work_day = date_data["vC_WorkDay"]
+                    if work_day == 1:
+                        weekdays.add(i)
+                        date_is_weekend = 0
+                    elif weekend_holiday == 1:
+                        weekend_days.add(i)
+                        date_is_weekend = 1
+                    else:
+                        week_holidays.add(i)
+                        date_is_weekend = 0
+                else:
+                    unknown_days.add(i)
+                    date_is_weekend = 0
+
+            self.date_is_weekend.append(date_is_weekend)
+
+        print(f"{weekdays=}")
+        print(f"{weekend_days=}")
+        print(f"{week_holidays=}")
+        print(f"{unknown_days=}")
+
+        n_weekend_days = len(weekend_days)
+        n_weekdays = len(weekdays) + len(week_holidays) + len(unknown_days)
+        n_cols = n_weekdays + n_weekend_days
+
+        print(f"{len(list_dates)=}")
+        print(f"{n_cols=}, {n_rows=}")
+        print(f"{n_weekdays=}")
+        print(f"{n_weekend_days=}")
+
+        space_w_wd = (can_width * (weight_weekday / 100)) * (n_weekdays / n_cols)
+        space_w_we = (can_width * (weight_weekend / 100)) * (n_weekend_days / n_cols)
+        w_wd = space_w_wd / n_weekdays
+        w_we = space_w_we / n_weekend_days
+        hc = can_height / n_rows
+        print(f"{w_wd=}, {w_we=}, {hc=}")
+
+        self.tile_width = w_wd
+        self.tile_width_weekend = w_we
+        self.tile_height = hc
+
+        xt = 0
+
+        res = [[] for _ in range(n_rows)]
+        for j in range(n_cols):
+            # date = list_dates[j]
+            wc = w_wd
+            if j in weekend_days:
+                print(f"WEEKEND {j=}")
+                wc = w_we
+            x0 = xt
+            x1 = x0 + wc
+            # col_lst = list()
+            for i in range(n_rows):
+                y0 = i * hc
+                y1 = y0 + hc
+                # col_lst.append([x0, y0, x1, y1])
+                res[i].insert(j, [x0, y0, x1, y1])
+            # res.append(copy.deepcopy(col_lst))
+            xt += wc
+        self.canvas_width_scroll_region = xt
+        if getattr(self, "canvas", None) is not None:
+            self.canvas.configure(
+                width=self.canvas_width_scroll_region
+            )
+        print(f"{res=}")
+        return res
+        # return np.transpose(res).tolist()
+
+        # return utility.grid_cells(
+        #     can_width,
+        #     (day_1 - day_0).days + 1,
+        #     can_height,
+        #     n_rows,
+        #     r_type=list
+        # )
+
     def set_invisible_canvas(self, mode="invisble"):
         print(f'set_invisible_canvas {mode=}, {self.settings['init_test_mode_done'].get()=}')
 
@@ -1322,6 +1507,8 @@ class App(ctk.CTk):
                 self.frame_calendar.rowconfigure(0, weight=0)
             if self.frame_testing is not None:
                 self.frame_testing.grid_forget()
+                self.listbox_history.grid_forget()
+                self.scroll_bar_history.grid_forget()
                 print(f"HIDING FRAME TESTING")
             else:
                 print(f"NOT TM & NOT FT")
@@ -1356,8 +1543,15 @@ class App(ctk.CTk):
 
         if slw:
             self.frame_left_controls.grid(row=1, column=0, rowspan=1, sticky=ctk.NSEW)
+            self.canvas_width = self.canvas_width_og
         else:
             self.frame_left_controls.grid_forget()
+
+            self.canvas_width = self.total_width
+
+        self.canvas.configure(
+            width=self.canvas_width
+        )
 
     def update_ask_monitors(self, *args):
         am = self.tl_tv_switch_ask_monitors.get()
@@ -1444,7 +1638,6 @@ class App(ctk.CTk):
             # self.listbox_history.insert(tkinter.END, str(new_item))
             new_code, *new_items = new_item
             date_2, line_2, order_2 = [None] * 3
-
 
             # TODO investigate here
             # Exception in Tkinter callback
@@ -1723,6 +1916,11 @@ class App(ctk.CTk):
         if show_calendar_only:
             self.frame_left_controls.grid_forget()
 
+            self.canvas_width = self.total_width
+            self.canvas.configure(
+                width=self.canvas_width
+            )
+
         # frame_calendar
         # goes on top of everything
         self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
@@ -1764,8 +1962,8 @@ class App(ctk.CTk):
         #     y=self.y_place_frame_multi_combobox
         # )
         self.frame_multi_combobox.grid(**{r: 1, c: 0})
-            # x=self.x_place_frame_multi_combobox,
-            # y=self.y_place_frame_multi_combobox
+        # x=self.x_place_frame_multi_combobox,
+        # y=self.y_place_frame_multi_combobox
         # )
         self.frame_mc_inner.grid(**{r: 0, c: 0, x: 10, y: 10})
 
@@ -1778,8 +1976,8 @@ class App(ctk.CTk):
         #     y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
         # )
         self.frame_info_frame.grid(**{r: 2, c: 0})
-            # x=self.x_top_widgets,
-            # y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
+        # x=self.x_top_widgets,
+        # y=self.h_frame_multi_combobox + self.y_place_frame_multi_combobox + self.space_btwn_mc_qinfo
         # )
 
         if tm:
@@ -1875,9 +2073,12 @@ class App(ctk.CTk):
         # print(f"{self.canvas.winfo_viewable()=}")
         # print(f"{self.canvas.xview()=}")
 
-    def is_valid_prod_date(self, date_in: datetime.datetime | pd.Timestamp) -> str:
+    def is_valid_prod_date(self, date_in: datetime.datetime | pd.Timestamp, include_all_holidays: bool = False) -> str:
         if date_in.weekday() < 5:
-            res = "valid" if (date_in not in self.holidays) else "holiday"
+            if include_all_holidays:
+                res = "holiday" if (date_in in self.holidays) else "valid"
+            else:
+                res = "holiday" if (date_in in self.work_holidays) else "valid"
         else:
             res = "weekend"
         return res
@@ -1897,16 +2098,31 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
         """
-        srw = self.canvas_width_scroll_region
-        dates = self.list_dates
-        p = min(x / srw, 0.999)  # prevent index out of bounds
-        # i = int(p * len(dates)) - 1
-        # i = int(p * (len(dates) + 1))
-        # include the legend in space calculations, but exclude for indexing
-        i = int(p * (len(dates) + 1)) - 1
-        # print(f"DB {x=}, {srw=}, {p=}, {len(dates)=}, {i=}")
-        # return dates[i] if i > 0 else dates[0]
-        return dates[i] if i >= 0 else None
+        # srw = self.canvas_width_scroll_region
+        # dates = self.list_dates
+        # p = min(x / srw, 0.999)  # prevent index out of bounds
+        # # i = int(p * len(dates)) - 1
+        # # i = int(p * (len(dates) + 1))
+        # # include the legend in space calculations, but exclude for indexing
+        # i = int(p * (len(dates) + 1)) - 1
+        # # print(f"DB {x=}, {srw=}, {p=}, {len(dates)=}, {i=}")
+        # # return dates[i] if i > 0 else dates[0]
+        # return dates[i] if i >= 0 else None
+
+        # srw = self.canvas_width_scroll_region
+        # dates = self.list_dates
+        # d_idx = dates.index()
+        # p = min(x / srw, 0.999)  # prevent index out of bounds
+        # sum_weekends =
+
+        # print(f"{x=}", end="")
+        for i, date in enumerate(self.list_dates[:-1]):
+            gc_top = self.calc_grid_cells[0][i + 1]
+            x0, y0, x1, y1 = gc_top
+            if x0 <= x <= x1:
+                # print(f" {i=}, {date=}", end="\n")
+                return date
+        # print(f" None", end="\n")
 
     def get_prod_line_bucket(self, y: int | float) -> str | None:
         """
@@ -1914,14 +2130,23 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
         """
-        srh = self.canvas_height_scroll_region
-        lines = self.list_prod_lines
-        p = min(y / srh, 0.999)  # prevent index out of bounds
-        # include the legend in space calculations, but exclude for indexing
-        i = int(p * (len(lines) + 1)) - 1
-        # print(f"PLB {y=}, {srh=}, {p=}, {len(lines)=}, {i=}")
-        # return lines[i] if i > 0 else lines[0]
-        return lines[i] if i >= 0 else None
+        # srh = self.canvas_height_scroll_region
+        # lines = self.list_prod_lines
+        # p = min(y / srh, 0.999)  # prevent index out of bounds
+        # # include the legend in space calculations, but exclude for indexing
+        # i = int(p * (len(lines) + 1)) - 1
+        # # print(f"PLB {y=}, {srh=}, {p=}, {len(lines)=}, {i=}")
+        # # return lines[i] if i > 0 else lines[0]
+        # return lines[i] if i >= 0 else None
+
+        # print(f"{y=}", end="")
+        for i, line in enumerate(self.list_prod_lines):
+            gc_top = self.calc_grid_cells[i + 1][0]
+            x0, y0, x1, y1 = gc_top
+            if y0 <= y <= y1:
+                # print(f" {i=}, {line=}", end="\n")
+                return line
+        # print(f" None", end="\n")
 
     def get_date_line_at_x_y(self, x: int | float, y: int | float) -> tuple[pd.Timestamp, str] | tuple[None, None]:
         """
@@ -1979,87 +2204,104 @@ class App(ctk.CTk):
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         # print(f"HOVER ({date=}, {prod_line=})")
-        self.app_state["hovered"].append((date, prod_line))
+        tm = self.settings["TEST_MODE"].get()
+        ap = self.settings["allowed_to_publish"].get()
+        if ap:
+            self.app_state["hovered"].append((date, prod_line))
+        else:
+            if tm:
+                print(self.msg_no_movement_non_publish)
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
-        self.app_state["dragged"].append((date, prod_line))
+        tm = self.settings["TEST_MODE"].get()
+        ap = self.settings["allowed_to_publish"].get()
+        if ap:
+            self.app_state["dragged"].append((date, prod_line))
+        else:
+            if tm:
+                print(self.msg_no_movement_non_publish)
 
     def delete_tile(self, date_line: tuple[pd.Timestamp, str], from_undo: bool = False) -> None:
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"DELETE TILE {date_line=}")
 
-        date, line = date_line
-        is_warranty = line in self.list_warranty_lines
-        order = self.tiles[date][line].get("order", None)
-        if order is not None:
+        ap = self.settings["allowed_to_publish"].get()
+        if ap:
+            date, line = date_line
+            is_warranty = line in self.list_warranty_lines
+            order = self.tiles[date][line].get("order", None)
+            if order is not None:
 
-            # remove from calendar
-            if tm:
-                print(f"texts_to_change == {self.tiles[date][line]['texts']=}")
-                print(
-                    f"texts_to_change == {[self.canvas.itemcget(txt, 'text') for txt in self.tiles[date][line]['texts']]=}")
-            for txt in self.tiles[date][line].get("texts", []):
-                self.canvas.itemconfigure(txt, text="")
-            self.tiles[date][line]["order"] = None
-
-            # add to combobox
-            if is_warranty:
+                # remove from calendar
                 if tm:
-                    print(f"{is_warranty=}")
-                data = self.df_multi_combobox_data_warranties.iloc[order]
-                dat_job = data.get("Job")
-                new_row_data = {
-                    k: [v]
-                    for k, v in zip(
-                        self.multi_combobox_warranties.tree_controller.viewable_column_names,
-                        [dat_job]
-                    )
-                }
-                if tm:
+                    print(f"texts_to_change == {self.tiles[date][line]['texts']=}")
                     print(
-                        f"self.multi_combobox_warranties.tree_controller.viewable_column_names=\n\t{self.multi_combobox_warranties.tree_controller.viewable_column_names}")
-                    print(f"{[dat_job]=}")
-            else:
-                if tm:
-                    print(f"{is_warranty=}")
-                data = self.df_orders.iloc[order]
+                        f"texts_to_change == {[self.canvas.itemcget(txt, 'text') for txt in self.tiles[date][line]['texts']]=}")
+                for txt in self.tiles[date][line].get("texts", []):
+                    self.canvas.itemconfigure(txt, text="")
+                self.tiles[date][line]["order"] = None
 
-                dat_quote = data.get("OrdersV2_SGQuote")
-                # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
-                dat_wo = data.get("OrdersV2_WO#")
-                dat_sn = data.get("Serial Number#")
-                dat_dealer = data.get("InputField2")
-                dat_galv = data.get("IsGalv")
-                dat_model = data.get("InputField1")
-                dat_cust_wo = data.get("Customer WO#")
-                # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
-                if tm:
-                    print(
-                        f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
-                    print(f"{[dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]=}")
-                    # print(f"zip(self.multi_combobox_orders.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
-                new_row_data = {
-                    k: [v]
-                    for k, v in zip(
-                        self.multi_combobox_orders.tree_controller.viewable_column_names,
-                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]
-                    )
-                }
+                # add to combobox
+                if is_warranty:
+                    if tm:
+                        print(f"{is_warranty=}")
+                    data = self.df_multi_combobox_data_warranties.iloc[order]
+                    dat_job = data.get("Job")
+                    new_row_data = {
+                        k: [v]
+                        for k, v in zip(
+                            self.multi_combobox_warranties.tree_controller.viewable_column_names,
+                            [dat_job]
+                        )
+                    }
+                    if tm:
+                        print(
+                            f"self.multi_combobox_warranties.tree_controller.viewable_column_names=\n\t{self.multi_combobox_warranties.tree_controller.viewable_column_names}")
+                        print(f"{[dat_job]=}")
+                else:
+                    if tm:
+                        print(f"{is_warranty=}")
+                    data = self.df_orders.iloc[order]
 
-            new_df = pd.DataFrame(new_row_data)
+                    dat_quote = data.get("OrdersV2_SGQuote")
+                    # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
+                    dat_wo = data.get("OrdersV2_WO#")
+                    dat_sn = data.get("Serial Number#")
+                    dat_dealer = data.get("InputField2")
+                    dat_galv = data.get("IsGalv")
+                    dat_model = data.get("InputField1")
+                    dat_cust_wo = data.get("Customer WO#")
+                    # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
+                    if tm:
+                        print(
+                            f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
+                        print(f"{[dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]=}")
+                        # print(f"zip(self.multi_combobox_orders.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
+                    new_row_data = {
+                        k: [v]
+                        for k, v in zip(
+                            self.multi_combobox_orders.tree_controller.viewable_column_names,
+                            [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]
+                        )
+                    }
+
+                new_df = pd.DataFrame(new_row_data)
+                if tm:
+                    print(f"new_df={new_df}")
+                if is_warranty:
+                    self.multi_combobox_warranties.add_new_item(val=new_df)
+                else:
+                    self.multi_combobox_orders.add_new_item(val=new_df)
+                self.df_ids_to_date_line[order] = (None, None)
+                if not from_undo:
+                    # self.history.append(("DELETE", order, date_line))
+                    hist = list(self.history.get())
+                    hist.append(("DELETE", order, date_line))
+                    self.history.set(hist)
+        else:
             if tm:
-                print(f"new_df={new_df}")
-            if is_warranty:
-                self.multi_combobox_warranties.add_new_item(val=new_df)
-            else:
-                self.multi_combobox_orders.add_new_item(val=new_df)
-            self.df_ids_to_date_line[order] = (None, None)
-            if not from_undo:
-                # self.history.append(("DELETE", order, date_line))
-                hist = list(self.history.get())
-                hist.append(("DELETE", order, date_line))
-                self.history.set(hist)
+                print(self.msg_no_movement_non_publish)
 
     def insert_tile(
             self,
@@ -2071,174 +2313,179 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"insert_tile")
+        ap = self.settings["allowed_to_publish"].get()
+        if ap:
 
-        date, line = date_line
-        is_warranty = line in self.list_warranty_lines
-        if tm:
-            print(f"{is_warranty=}")
-
-        if from_undo:
-            if is_warranty:
-                war_job = self.df_multi_combobox_data_warranties[df_orders_id]["Job"]
-            else:
-                quote = self.df_orders.iloc[df_orders_id]["OrdersV2_SGQuote"]
-        else:
-            if is_warranty:
-                war_job = self.multi_combobox_warranties.res_tv_entry.get()
-            else:
-                quote = self.multi_combobox_orders.res_tv_entry.get()
-        if isinstance(date, str):
-            date = pd.Timestamp(date)
-        order_already_exists = self.tiles[date][line].get("order", None)
-
-        if order_already_exists is not None:
-            # there is already a tile in this position.
-            if is_warranty:
-                exist_war_job = self.df_multi_combobox_data_warranties.iloc[order_already_exists]["Job"]
-                ans = messagebox.askyesnocancel(
-                    title=self.title_application_short,
-                    message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?",
-                    parent=self
-                )
-                if ans == ctk.YES:
-                    # move existing unit to combobox, then place this new one
-                    self.delete_tile(date_line)
-                else:
-                    # return the dragging tile to the combobox and stop
-                    self.clear_master_drag_tile()
-                    return
-            else:
-                exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
-                ans = messagebox.askyesnocancel(
-                    title=self.title_application_short,
-                    message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?",
-                    parent=self
-                )
-                if ans == ctk.YES:
-                    # move existing unit to combobox, then place this new one
-                    self.delete_tile(date_line)
-                else:
-                    # return the dragging tile to the combobox and stop
-                    self.clear_master_drag_tile()
-                    return
-
-        bbox = self.get_tile_bbox(date, line)
-        # order = self.tiles[date][line].get("order")
-        if is_warranty:
-            row = self.df_multi_combobox_data_warranties.iloc[df_orders_id]
-        else:
-            row = self.df_orders.iloc[df_orders_id]
-        texts = self.tiles[date][line].get("texts", [])
-        drag_texts = self.multi_combobox_drag_tile_texts
-
-        tile_text_colour = self.colour_tile_foreground
-        font = self.font_tile
-
-        if tm:
-            print(f"{df_orders_id=}\n{texts=}\n{row=}\n{type(row)=}\n{bbox=}")
-
-        # assert(isinstance(row, pd.core.frame.DataFrame))
-        # row = row.reset_index()
-        # row2 = row.iloc[0]
-        # print(f"{row2=}\n{type(row2)=}")
-
-        if not texts:
-            # create the texts
+            date, line = date_line
+            is_warranty = line in self.list_warranty_lines
             if tm:
-                print(f"create the texts")
+                print(f"{is_warranty=}")
+
+            if from_undo:
+                if is_warranty:
+                    war_job = self.df_multi_combobox_data_warranties[df_orders_id]["Job"]
+                else:
+                    quote = self.df_orders.iloc[df_orders_id]["OrdersV2_SGQuote"]
+            else:
+                if is_warranty:
+                    war_job = self.multi_combobox_warranties.res_tv_entry.get()
+                else:
+                    quote = self.multi_combobox_orders.res_tv_entry.get()
+            if isinstance(date, str):
+                date = pd.Timestamp(date)
+            order_already_exists = self.tiles[date][line].get("order", None)
+
+            if order_already_exists is not None:
+                # there is already a tile in this position.
+                if is_warranty:
+                    exist_war_job = self.df_multi_combobox_data_warranties.iloc[order_already_exists]["Job"]
+                    ans = messagebox.askyesnocancel(
+                        title=self.title_application_short,
+                        message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?",
+                        parent=self
+                    )
+                    if ans == ctk.YES:
+                        # move existing unit to combobox, then place this new one
+                        self.delete_tile(date_line)
+                    else:
+                        # return the dragging tile to the combobox and stop
+                        self.clear_master_drag_tile()
+                        return
+                else:
+                    exist_quote = self.df_orders.iloc[order_already_exists]["OrdersV2_SGQuote"]
+                    ans = messagebox.askyesnocancel(
+                        title=self.title_application_short,
+                        message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?",
+                        parent=self
+                    )
+                    if ans == ctk.YES:
+                        # move existing unit to combobox, then place this new one
+                        self.delete_tile(date_line)
+                    else:
+                        # return the dragging tile to the combobox and stop
+                        self.clear_master_drag_tile()
+                        return
+
             bbox = self.get_tile_bbox(date, line)
-
-            to_do_texts = [
-                self.invisible_canvas.itemcget(txt, "text")
-                for txt in self.multi_combobox_drag_tile_texts
-            ]
-            # if len(to_do_texts) == 1:
-            #     if to_do_texts[0] == self.multi_combobox_drag_tile_texts_placeholder:
-            #         to_do_texts.clear()
-
-            if tm:
-                print(f"{to_do_texts=}")
-
-            texts = [
-                self.canvas.create_text(
-                    int(bbox[0] + (self.tile_width * 0.5)),
-                    int(bbox[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
-                    text=txt,
-                    fill=tile_text_colour.hex_code,
-                    font=font
-                )
-                for k, txt, in enumerate(to_do_texts)
-            ]
-
-            tw, th = self.tile_width, self.tile_height
-            n_txts = len(texts)
-            bw = float(self.canvas.itemcget(self.tiles[date][line]["tile"], "width"))
-            y_t = bbox[1] + bw
-            for i, txts_ in enumerate(zip(texts, to_do_texts)):
-                txt, text = txts_
-                self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
-                self.canvas.itemconfigure(txt, text=text)
-
-        else:
-            # reconfigure the texts
-            if tm:
-                print(f"reconfigure the texts")
-            # order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
-            # quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
-            # print(f"{quote_data=}")
-
-            # data = row[0]
+            # order = self.tiles[date][line].get("order")
             if is_warranty:
-                mc_vals = [war_job]
+                row = self.df_multi_combobox_data_warranties.iloc[df_orders_id]
+            else:
+                row = self.df_orders.iloc[df_orders_id]
+            texts = self.tiles[date][line].get("texts", [])
+            drag_texts = self.multi_combobox_drag_tile_texts
+
+            tile_text_colour = self.colour_tile_foreground
+            font = self.font_tile
+
+            if tm:
+                print(f"{df_orders_id=}\n{texts=}\n{row=}\n{type(row)=}\n{bbox=}")
+
+            # assert(isinstance(row, pd.core.frame.DataFrame))
+            # row = row.reset_index()
+            # row2 = row.iloc[0]
+            # print(f"{row2=}\n{type(row2)=}")
+
+            if not texts:
+                # create the texts
+                if tm:
+                    print(f"create the texts")
+                bbox = self.get_tile_bbox(date, line)
+
+                to_do_texts = [
+                    self.invisible_canvas.itemcget(txt, "text")
+                    for txt in self.multi_combobox_drag_tile_texts
+                ]
+                # if len(to_do_texts) == 1:
+                #     if to_do_texts[0] == self.multi_combobox_drag_tile_texts_placeholder:
+                #         to_do_texts.clear()
+
+                if tm:
+                    print(f"{to_do_texts=}")
+
+                texts = [
+                    self.canvas.create_text(
+                        int(bbox[0] + (self.tile_width * 0.5)),
+                        int(bbox[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
+                        text=txt,
+                        fill=tile_text_colour.hex_code,
+                        font=font
+                    )
+                    for k, txt, in enumerate(to_do_texts)
+                ]
+
+                tw, th = self.tile_width, self.tile_height
+                n_txts = len(texts)
+                bw = float(self.canvas.itemcget(self.tiles[date][line]["tile"], "width"))
+                y_t = bbox[1] + bw
+                for i, txts_ in enumerate(zip(texts, to_do_texts)):
+                    txt, text = txts_
+                    self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
+                    self.canvas.itemconfigure(txt, text=text)
 
             else:
-                mc_quote = quote
-                # mc_wo = data["OrdersV2_WO#"]
-                # mc_model = data["Model No"]
-                # mc_dealer = data["InputField2"]
-                # mc_galv = data["IsGalv"]
-                mc_wo = row["OrdersV2_WO#"]
-                mc_model = row["Model No"]
-                mc_dealer = row["InputField2"]
-                mc_galv = row["IsGalv"]
-                mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
-            for txt, text in zip_longest(texts, mc_vals):
-                if text is not None:
-                    self.canvas.itemconfigure(txt, text=text)
+                # reconfigure the texts
+                if tm:
+                    print(f"reconfigure the texts")
+                # order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
+                # quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
+                # print(f"{quote_data=}")
+
+                # data = row[0]
+                if is_warranty:
+                    mc_vals = [war_job]
+
                 else:
-                    self.canvas.itemconfigure(txt, state="hidden")
+                    mc_quote = quote
+                    # mc_wo = data["OrdersV2_WO#"]
+                    # mc_model = data["Model No"]
+                    # mc_dealer = data["InputField2"]
+                    # mc_galv = data["IsGalv"]
+                    mc_wo = row["OrdersV2_WO#"]
+                    mc_model = row["Model No"]
+                    mc_dealer = row["InputField2"]
+                    mc_galv = row["IsGalv"]
+                    mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
+                for txt, text in zip_longest(texts, mc_vals):
+                    if text is not None:
+                        self.canvas.itemconfigure(txt, text=text)
+                    else:
+                        self.canvas.itemconfigure(txt, state="hidden")
 
-        # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
-        if is_warranty:
-            self.multi_combobox_warranties.delete_item(value=war_job, mode="all")
+            # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
+            if is_warranty:
+                self.multi_combobox_warranties.delete_item(value=war_job, mode="all")
+            else:
+                self.multi_combobox_orders.delete_item(value=quote, mode="all")
+
+            if tm:
+                print(f"SETTING {date=}, {line=} == {{'order': {df_orders_id}, 'texts': {texts}}}")
+            self.df_ids_to_date_line[df_orders_id] = date_line
+            self.tiles[date][line].update({
+                "order": df_orders_id,
+                "texts": texts
+            })
+            if not from_undo:
+                # self.history.append(
+                #     ("INSERT", df_orders_id, date_line)
+                # )
+
+                hist = list(self.history.get())
+                hist.append(("INSERT", df_orders_id, date_line))
+                self.history.set(hist)
+
+            self.colour_code(date, line)
+            if tm:
+                # print(f"\n\tPOST INSERT\n{self.history=}")
+                print(f"\n\tPOST INSERT\n{self.history.get()=}")
+            self.select_tile(date, line)
+            self.update_selected_tiles()
+            self.redraw_legend()
+            if do_animate is not None:
+                self.flash_tile(date_line, mode=do_animate)
         else:
-            self.multi_combobox_orders.delete_item(value=quote, mode="all")
-
-        if tm:
-            print(f"SETTING {date=}, {line=} == {{'order': {df_orders_id}, 'texts': {texts}}}")
-        self.df_ids_to_date_line[df_orders_id] = date_line
-        self.tiles[date][line].update({
-            "order": df_orders_id,
-            "texts": texts
-        })
-        if not from_undo:
-            # self.history.append(
-            #     ("INSERT", df_orders_id, date_line)
-            # )
-
-            hist = list(self.history.get())
-            hist.append(("INSERT", df_orders_id, date_line))
-            self.history.set(hist)
-
-        self.colour_code(date, line)
-        if tm:
-            # print(f"\n\tPOST INSERT\n{self.history=}")
-            print(f"\n\tPOST INSERT\n{self.history.get()=}")
-        self.select_tile(date, line)
-        self.update_selected_tiles()
-        self.redraw_legend()
-        if do_animate is not None:
-            self.flash_tile(date_line, mode=do_animate)
+            if tm:
+                print(self.msg_no_movement_non_publish)
 
     def swap_tiles(
             self,
@@ -2248,83 +2495,90 @@ class App(ctk.CTk):
             do_animate: None | str = None
     ) -> None:
         tm = self.settings["TEST_MODE"].get()
-        date_1, line_1 = date_line_1
-        date_2, line_2 = date_line_2
 
-        is_war_1 = line_1 in self.list_warranty_lines
-        is_war_2 = line_2 in self.list_warranty_lines
-        if (is_war_1 + is_war_2) % 2 != 0:
-            # 1 of these units comes from warranty
-            messagebox.showinfo(
-                title=self.title_application_short,
-                message=f"Cannot swap production units with warranty units",
-                parent=self
-            )
-            self.flash_tile(date_line_2, mode="invalid")
-            return
+        ap = self.settings["allowed_to_publish"].get()
+        if ap:
+            date_1, line_1 = date_line_1
+            date_2, line_2 = date_line_2
 
-        # TODO undo swap doesnt work
+            is_war_1 = line_1 in self.list_warranty_lines
+            is_war_2 = line_2 in self.list_warranty_lines
+            if (is_war_1 + is_war_2) % 2 != 0:
+                # 1 of these units comes from warranty
+                messagebox.showinfo(
+                    title=self.title_application_short,
+                    message=f"Cannot swap production units with warranty units",
+                    parent=self
+                )
+                self.flash_tile(date_line_2, mode="invalid")
+                return
 
-        if tm:
-            print(f"SWAP => {date_1=}, {date_2=}\n{type(date_1)=}, {type(date_2)=}\n{line_1=}, {line_2=}")
-        if isinstance(date_1, str) and date_1:
-            date_1 = pd.Timestamp(date_1)
-        if isinstance(date_2, str) and date_2:
-            date_2 = pd.Timestamp(date_2)
-
-        if (date_1 != date_2) or (line_1 != line_2):
-            # assert the tile being place in a NEW position, not the same one.
-            if tm:
-                print(f"New position")
-
-            bbox_1, bbox_2 = self.get_tile_bbox(date_1, line_1), self.get_tile_bbox(date_2, line_2)
-            order_1, order_2 = self.tiles[date_1][line_1].get("order"), self.tiles[date_2][line_2].get("order")
-            texts_1, texts_2 = self.tiles[date_1][line_1].get("texts"), self.tiles[date_2][line_2].get("texts")
-            tile_1, tile_2 = self.tiles[date_1][line_1].get("tile"), self.tiles[date_2][line_2].get("tile")
-            if tm:
-                print(f"{texts_1=}, {texts_2=}")
-
-            # swap df_ids_to_date_line
-            if order_1 is not None:
-                self.df_ids_to_date_line[order_1] = date_line_2
-            if order_2 is not None:
-                self.df_ids_to_date_line[order_2] = date_line_1
-
-            # swap df_orders indexes
-            self.tiles[date_1][line_1]["order"] = order_2
-            self.tiles[date_2][line_2]["order"] = order_1
-
-            # swap texts for rendering
-            self.tiles[date_1][line_1]["texts"] = texts_2
-            self.tiles[date_2][line_2]["texts"] = texts_1
-
-            # swap positions on canvas
-            self.canvas.coords(tile_1, *bbox_2)
-            self.canvas.coords(tile_2, *bbox_1)
-
-            # swap the tile ids
-            self.tiles[date_1][line_1]["tile"] = tile_2
-            self.tiles[date_2][line_2]["tile"] = tile_1
-
-            # animate success
-            if do_animate is not None:
-                self.flash_tile(date_line_1, mode=do_animate)
-                self.flash_tile(date_line_2, mode=do_animate)
-
-            if not from_undo:
-                if order_1 or order_2:
-                    # one of these tiles is an order, record in the history and allow undos.
-                    # self.history.append(
-                    #     ("SWAP", date_line_1, date_line_2)
-                    # )
-
-                    hist = list(self.history.get())
-                    hist.append(("SWAP", date_line_1, date_line_2))
-                    self.history.set(hist)
+            # TODO undo swap doesnt work
 
             if tm:
-                print(
-                    f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
+                print(f"SWAP => {date_1=}, {date_2=}\n{type(date_1)=}, {type(date_2)=}\n{line_1=}, {line_2=}")
+            if isinstance(date_1, str) and date_1:
+                date_1 = pd.Timestamp(date_1)
+            if isinstance(date_2, str) and date_2:
+                date_2 = pd.Timestamp(date_2)
+
+            if (date_1 != date_2) or (line_1 != line_2):
+                # assert the tile being place in a NEW position, not the same one.
+                if tm:
+                    print(f"New position")
+
+                bbox_1, bbox_2 = self.get_tile_bbox(date_1, line_1), self.get_tile_bbox(date_2, line_2)
+                order_1, order_2 = self.tiles[date_1][line_1].get("order"), self.tiles[date_2][line_2].get("order")
+                texts_1, texts_2 = self.tiles[date_1][line_1].get("texts"), self.tiles[date_2][line_2].get("texts")
+                tile_1, tile_2 = self.tiles[date_1][line_1].get("tile"), self.tiles[date_2][line_2].get("tile")
+                if tm:
+                    print(f"{texts_1=}, {texts_2=}")
+
+                # swap df_ids_to_date_line
+                if order_1 is not None:
+                    self.df_ids_to_date_line[order_1] = date_line_2
+                if order_2 is not None:
+                    self.df_ids_to_date_line[order_2] = date_line_1
+
+                # swap df_orders indexes
+                self.tiles[date_1][line_1]["order"] = order_2
+                self.tiles[date_2][line_2]["order"] = order_1
+
+                # swap texts for rendering
+                self.tiles[date_1][line_1]["texts"] = texts_2
+                self.tiles[date_2][line_2]["texts"] = texts_1
+
+                # swap positions on canvas
+                self.canvas.coords(tile_1, *bbox_2)
+                self.canvas.coords(tile_2, *bbox_1)
+
+                # swap the tile ids
+                self.tiles[date_1][line_1]["tile"] = tile_2
+                self.tiles[date_2][line_2]["tile"] = tile_1
+
+                # animate success
+                if do_animate is not None:
+                    self.flash_tile(date_line_1, mode=do_animate)
+                    self.flash_tile(date_line_2, mode=do_animate)
+
+                if not from_undo:
+                    if order_1 or order_2:
+                        # one of these tiles is an order, record in the history and allow undos.
+                        # self.history.append(
+                        #     ("SWAP", date_line_1, date_line_2)
+                        # )
+
+                        hist = list(self.history.get())
+                        hist.append(("SWAP", date_line_1, date_line_2))
+                        self.history.set(hist)
+
+                if tm:
+                    print(
+                        f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
+
+        else:
+            if tm:
+                print(self.msg_no_movement_non_publish)
 
     def on_right_click_calendar(self, event) -> None:
         tm = self.settings["TEST_MODE"].get()
@@ -2402,7 +2656,7 @@ class App(ctk.CTk):
             if tm:
                 print(f"DRAG")
             # something is being dragged, set it down
-            if date.weekday() < 5:
+            if self.is_valid_prod_date(date) != "weekend":
                 # weekday placement
                 stat_idx = self.tiles.get(date, {}).get(line, {}).get("order", None)
                 stat_tile = self.tiles.get(date, {}).get(line, {}).get("tile", None)
@@ -2607,7 +2861,7 @@ class App(ctk.CTk):
                     self.invisible_canvas.tag_raise(txt)
                 self.multi_combobox_drag_tile_texts = out_texts
 
-        self.invisible_canvas.coords(self.dot, e_x-10, e_y-10, e_x+10, e_y+10)
+        self.invisible_canvas.coords(self.dot, e_x - 10, e_y - 10, e_x + 10, e_y + 10)
 
     def release_treeview_entry(self, event):
         tm = self.settings["TEST_MODE"].get()
@@ -2665,7 +2919,7 @@ class App(ctk.CTk):
         #
         e_y += (th / 2)
 
-        self.invisible_canvas.coords(self.dot, e_x-10, e_y-10, e_x+10, e_y+10)
+        self.invisible_canvas.coords(self.dot, e_x - 10, e_y - 10, e_x + 10, e_y + 10)
 
         if tm:
             print(f"\n\t{e_x=}, {e_y=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
@@ -2998,6 +3252,8 @@ class App(ctk.CTk):
         o_w = self.colour_tile_outline_weekend
         font_w = self.font_tile_weekend
 
+        b_np = self.colour_tile_background_non_prod
+
         ow = self.width_tile_outline
         # print(f"{(st + dt)=}")
 
@@ -3006,13 +3262,16 @@ class App(ctk.CTk):
 
         self.app_state["hovered"].clear()
         for date, prod_line in sub_ht:
-            is_weekend = date.weekday() >= 5
+            # is_weekend = date.weekday() >= 5
+            valid_status = self.is_valid_prod_date(date)
+            is_weekend = valid_status == "weekend"
+            non_prod = valid_status == "holiday"
             tile = self.tiles[date][prod_line].get("tile", None)
             texts = self.tiles[date][prod_line].get("texts", [])
             if tile is not None:
                 self.canvas.itemconfigure(
                     tile,
-                    fill=(b_w if is_weekend else b).hex_code,
+                    fill=(b_w if is_weekend else (b_np if non_prod else b)).hex_code,
                     outline=(o_w if is_weekend else o).hex_code,
                     width=ow
                 )
@@ -3486,6 +3745,34 @@ class App(ctk.CTk):
 
         return parent.create_rectangle(*bbox, **args)
 
+    def click_mb_go_to_today(self, event=None):
+        tm = self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_go_to_today")
+        date = pd.Timestamp(self.today)
+        line = self.list_prod_lines[0]
+        tile_data = self.tiles[date][line]
+        tile = tile_data["tile"]
+
+        # movement work
+
+        bba = self.canvas.bbox("all")
+        bbaw = (bba[2] - bba[0])
+        cw = self.canvas_width
+        t_bbox = self.canvas.bbox(tile)
+        x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
+            t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
+        x /= bbaw
+        need_to_move = (bba[0] <= x <= bba[2])
+        # if tm:
+        #     print(f"{need_to_move=}")
+        if need_to_move:
+            self.canvas.xview_moveto(x)
+            self.redraw_legend()
+
+        for line_ in self.list_prod_lines:
+            self.flash_tile((date, line_), mode="attention")
+
     def click_mb_shift_line(self, event=None):
 
         # w, h = 1400, 800
@@ -3608,6 +3895,8 @@ class App(ctk.CTk):
             data = [header, *data]
             print(f"{data=}")
             print(f"# rows: {len(data)}")
+            lines_in_use = list()
+            dates_in_use = list()
 
             if len(data) <= 1:
                 data = [header, ["", "No Data", ""]]
@@ -3628,6 +3917,14 @@ class App(ctk.CTk):
                 tl_line, br_line = self.list_prod_lines[0], self.list_prod_lines[-1]
                 lines_in_use = [p_line] if p_line != "All" else self.list_prod_lines
                 dates_in_use = pd.date_range(sd, ed_a).to_list()
+
+                cw, ch = 100, 75
+                self.tl_data["tl_sl_can_p_w"] = (len(dates_in_use) + 1) * cw
+                self.tl_data["tl_sl_can_p_h"] = (len(lines_in_use) + 1) * ch
+                self.tl_data["tl_canvas_preview"].configure(
+                    width=self.tl_data["tl_sl_can_p_w"],
+                    height=self.tl_data["tl_sl_can_p_h"]
+                )
 
                 if do_snapshot_method:
 
@@ -3667,7 +3964,8 @@ class App(ctk.CTk):
                     # y1 /= 10
                     # x0, y0, x1, y1 = top_left_bbox[:2] + bot_right_bbox[-2:]
                     x0, y0, x1, y1 = 0, 0, 800, 800
-                    print(f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
+                    print(
+                        f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
                     ps = self.canvas.postscript(colormode='color')
                     # Convert PostScript to image
                     image = Image.open(io.BytesIO(ps.encode('utf-8')))
@@ -3677,7 +3975,8 @@ class App(ctk.CTk):
                     canvas_image = ImageTk.PhotoImage(image)
                     # Display the captured image in the viewport canvas
                     self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
-                    self.tl_data["tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
+                    self.tl_data[
+                        "tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
 
                     # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="hidden")
                     # i_tag = self.tl_data.get("tl_canvas_preview_image")
@@ -3700,7 +3999,13 @@ class App(ctk.CTk):
                     #     nr = 2
 
                     # create rectangle grid
-                    gc = utility.grid_cells(can_p_w, nc, can_p_h, nr)
+                    self.tl_data["tl_sl_gc"] = utility.grid_cells(
+                        self.tl_data["tl_sl_can_p_w"],
+                        nc,
+                        self.tl_data["tl_sl_can_p_h"],
+                        nr
+                    )
+                    gc = self.tl_data["tl_sl_gc"]
                     self.tl_data["tl_sl_tags"] = list()
                     for row in gc:
                         row_tags = []
@@ -3834,7 +4139,8 @@ class App(ctk.CTk):
 
                                     print(f"{self.tl_data['tl_sl_data_count_thru']=}")
 
-                                    print(f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}, {c_date=}, {n_date=}, {d_days=}")
+                                    print(
+                                        f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}, {c_date=}, {n_date=}, {d_days=}")
 
                                     self.tl_data["tl_sl_tags"][i][j].update({
                                         "text": self.tl_data["tl_canvas_preview"].create_image(
@@ -3882,17 +4188,18 @@ class App(ctk.CTk):
                                             )
                                         })
 
-                    for i, line in enumerate(lines_in_use, start=1):
-                        for j in range(n_days, 0, -1):
-                            am = self.tl_data["tl_sl_tags"][i][-j].get("arrow_m")
-                            al = self.tl_data["tl_sl_tags"][i][-j].get("arrow_l")
-                            ar = self.tl_data["tl_sl_tags"][i][-j].get("arrow_r")
-                            for t in (am, al, ar):
-                                if t is not None:
-                                    self.tl_data["tl_canvas_preview"].itemconfigure(
-                                        t,
-                                        state="hidden"
-                                    )
+                    if not ed_disabled:
+                        for i, line in enumerate(lines_in_use, start=1):
+                            for j in range(n_days, 0, -1):
+                                am = self.tl_data["tl_sl_tags"][i][-j].get("arrow_m")
+                                al = self.tl_data["tl_sl_tags"][i][-j].get("arrow_l")
+                                ar = self.tl_data["tl_sl_tags"][i][-j].get("arrow_r")
+                                for t in (am, al, ar):
+                                    if t is not None:
+                                        self.tl_data["tl_canvas_preview"].itemconfigure(
+                                            t,
+                                            state="hidden"
+                                        )
 
                             # # q = data[i][0]
                             # # q_line = p_line if (p_line != "All") else data[i][1]
@@ -3916,6 +4223,8 @@ class App(ctk.CTk):
                             if text_tag is not None:
                                 self.tl_data["tl_canvas_preview"].tag_raise(text_tag)
 
+            self.tl_data["tl_sl_dates_in_use"] = dates_in_use.copy()
+            self.tl_data["tl_sl_lines_in_use"] = lines_in_use.copy()
             self.tl_data["table_change_preview"].columns = len(header)
             self.tl_data["table_change_preview"].rows = len(data)
             self.tl_data["table_change_preview"].update_values(data)
@@ -3956,6 +4265,7 @@ class App(ctk.CTk):
 
                 warnings = []
                 warned_quotes = dict()
+                written_warned_quotes = dict()
                 if direction == "backward":
                     # TODO
                     pass
@@ -3988,17 +4298,22 @@ class App(ctk.CTk):
                                 e_quote = self.df_orders.iloc[order]["OrdersV2_SGQuote"]
 
                                 if e_quote not in quotes_new_dates:
-                                    warnings.append(f">  Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
-                                    warned_quotes[(new_date, line)] = quote
+                                    warnings.append(
+                                        f">  Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because {e_quote} is already there.")
+                                    warned_quotes[(curr_date, new_date, line)] = quote
+                                    written_warned_quotes[(curr_date, new_date, line)] = quote
                                 else:
                                     if (new_date, line) in warned_quotes:
-                                        o_quote = warned_quotes[(new_date, line)]
+                                        o_quote = warned_quotes[(curr_date, new_date, line)]
                                         warnings.append(
                                             f">  Cannot move {quote} on {line} to {new_date:%Y-%m-%d} from {curr_date:%Y-%m-%d} because you are already moving {o_quote} there.")
+                                        written_warned_quotes[(curr_date, new_date, line)] = o_quote
                                     else:
-                                        warned_quotes[(new_date, line)] = quote
+                                        warned_quotes[(curr_date, new_date, line)] = quote
 
-
+                print(f"{self.tl_data['tl_sl_dates_in_use']=}")
+                print(f"{self.tl_data['tl_sl_lines_in_use']=}")
+                print(f"{warned_quotes=}")
                 print(f"{warnings=}")
                 self.tl_data["tl_textbox_warning"].configure(state="normal")
                 self.tl_data["tl_textbox_warning"].delete("1.0", ctk.END)
@@ -4008,12 +4323,41 @@ class App(ctk.CTk):
                     self.tl_data["tl_textbox_warning"].insert(ctk.END, ("\n" if i != 0 else "") + warning)
 
                 if not warnings:
-                    self.tl_data["tl_textbox_warning"].insert(ctk.END, "No Issues found.\nClick submit to commit this shift.")
+                    self.tl_data["tl_textbox_warning"].insert(ctk.END,
+                                                              "No Issues found.\nClick submit to commit this shift.")
                     font_colour = self.colour_sl_fg_text_warnings_preview_no_warn.hex_code
                     self.tl_data["btn_submit"][1].configure(state="normal")
                 else:
                     font_colour = self.colour_sl_fg_text_warnings_preview_warn.hex_code
                     self.tl_data["btn_submit"][1].configure(state="disabled")
+
+                for od, nd, line in written_warned_quotes:
+                    quote = written_warned_quotes[(od, nd, line)]
+                    print(f"{od=}, {nd=}, {line=}, {quote=}, ", end="")
+                    try:
+                        ts_idx = self.tl_data["tl_sl_dates_in_use"].index(od)
+                    except (IndexError, ValueError):
+                        ts_idx = None
+                    print(f" {ts_idx=}, ", end="")
+                    try:
+                        l_idx = self.tl_data["tl_sl_lines_in_use"].index(line)
+                    except (IndexError, ValueError):
+                        l_idx = None
+                    print(f" {l_idx=}, ", end="")
+
+                    if (ts_idx is not None) and (l_idx is not None):
+                        rect = self.tl_data["tl_sl_tags"][l_idx + 1][ts_idx + 1].get("rect")
+                        print(f" {rect=}, ", end="")
+                        col = Colour(self.tl_data["tl_canvas_preview"].itemcget(
+                            rect, "fill"
+                        ))
+                        print(f" {col=}, ", end="\n")
+                        self.tl_data["tl_canvas_preview"].itemconfigure(
+                            rect,
+                            fill=col.reden_c(0.3).hex_code
+                        )
+                    else:
+                        print(f" ELSE ", end="\n")
 
                 self.tl_data["tl_textbox_warning"].see(ctk.END)
                 print(f"{self.tl_data['tl_textbox_warning'].get('1.0', ctk.END)=}")
@@ -4218,7 +4562,6 @@ class App(ctk.CTk):
                 #     message=self.
                 # )
 
-
         def click_disable_end_date(*args):
             disabled = self.tl_data["var_end_date_disabled"].get()
             widgets = [
@@ -4251,7 +4594,7 @@ class App(ctk.CTk):
 
         self.tl_data["tl_frame_days"] = ctk.CTkFrame(
             self.tl_data[tl_name],
-            width=w-(wm / 2),
+            width=w - (wm / 2),
             height=300,
             bg_color=bg_sl_main.hex_code
         )
@@ -4387,21 +4730,30 @@ class App(ctk.CTk):
         ]
 
         # random_table = [[random.randint(-5, 15) for j in range(3)] for j in range(13)]
-        can_p_w, can_p_h = 1000, 500
+        scan_p_w, scan_p_h = 1000, 500
+        self.tl_data["tl_sl_can_p_w"], self.tl_data["tl_sl_can_p_h"] = 5000, 500
         # self.tl_data["tl_frame_preview"] = ctk.CTkScrollableFrame(
         #     self.tl_data["tl_frame_left"],
         #     # bg_color="#123378",
         #     width=self.total_width,
         #     height=400
         # )
-        self.tl_data["tl_canvas_preview"] = ctk.CTkCanvas(
+
+        self.tl_data["tl_scroll_canvas"] = ctk.CTkScrollableFrame(
             self.tl_data["tl_frame_right"],
-            width=can_p_w,
-            height=can_p_h
+            width=scan_p_w,
+            height=scan_p_h,
+            orientation="horizontal"
+        )
+
+        self.tl_data["tl_canvas_preview"] = ctk.CTkCanvas(
+            self.tl_data["tl_scroll_canvas"],
+            width=self.tl_data["tl_sl_can_p_w"],
+            height=self.tl_data["tl_sl_can_p_h"]
         )
         self.tl_data["tl_canvas_lbl_no_data"] = self.tl_data["tl_canvas_preview"].create_text(
-            can_p_w / 2,
-            can_p_h / 2,
+            self.tl_data["tl_sl_can_p_w"] / 2,
+            self.tl_data["tl_sl_can_p_h"] / 2,
             text="No Data",
             font=("Calibri", 16)
         )
@@ -4475,8 +4827,11 @@ class App(ctk.CTk):
 
         # tl_frame_right
         self.tl_data["label_change_preview"][1].grid(row=0, column=0, rowspan=1, columnspan=2)
-        self.tl_data["tl_canvas_preview"].grid(row=1, column=1, rowspan=1)
+        self.tl_data["tl_scroll_canvas"].grid(row=1, column=1, rowspan=1)
         # self.tl_data["tl_frame_preview"].grid(row=0, column=0, sticky=ctk.EW)
+
+        # tl_scroll_canvas
+        self.tl_data["tl_canvas_preview"].grid(row=0, column=0, rowspan=1, sticky=ctk.NSEW)
 
         # tl_frame_days_sd
         self.tl_data["label_sd"][1].grid(row=0, column=0, rowspan=1, columnspan=1, padx=10, pady=10)
@@ -5329,7 +5684,7 @@ class App(ctk.CTk):
             msg = self.abcsh_has_hist_msg
 
         if parent is None:
-            parent=self
+            parent = self
 
         return messagebox.askyesnocancel(
             title=self.title_application_short,
@@ -5447,7 +5802,8 @@ class App(ctk.CTk):
         }
 
         # toplevel - testing mode - textvariable - label
-        self.tl_data[f"{tlsn}_tv_lbl_message"], self.tl_data[f"{tlsn}_lbl_message"] = customtkinter_utility.label_factory(
+        self.tl_data[f"{tlsn}_tv_lbl_message"], self.tl_data[
+            f"{tlsn}_lbl_message"] = customtkinter_utility.label_factory(
             self.tl_data[tl_name],
             tv_label=message,
             kwargs_label=kwargs_btn.copy()
@@ -5799,10 +6155,12 @@ class App(ctk.CTk):
             self.flash_tile((date, line), mode="attention")
             self.redraw_legend()
 
-    def check_for_units_on_holidays(self):
+    def check_for_units_on_holidays(self, include_all_holidays: bool = False):
+        day_str = "holiday" if include_all_holidays else self.txt_non_prod_day
         units_on_holiday = {}
         t = "  "
-        for d, hn in self.holidays.items():
+        data = self.holidays if include_all_holidays else self.work_holidays
+        for d, hn in data.items():
             print(f"{d=}, {hn=}")
             for line in self.list_prod_lines:
                 tile_data = self.tiles[d][line]
@@ -5814,15 +6172,15 @@ class App(ctk.CTk):
                     print(f"no order, {d=}, {line=}")
 
         if units_on_holiday:
-            msg = f"The following quotes were found to be scheduled on a holiday:\n"
+            msg = f"The following quotes were found to be scheduled on a {day_str}:\n"
             shown_dates = set()
             for d, l in units_on_holiday:
                 qn, order = units_on_holiday[(d, l)]
                 if d not in shown_dates:
-                    hn = self.holidays[d]
+                    hn = data[d]
                     msg += f"\n{(t if shown_dates else '')}{hn.center(18)} -- {datetime_utility.date_str_format(d, include_weekday=True, short_month=True, short_weekday=True).center(20)}"
                     shown_dates.add(d)
-                msg += f"\n{4*t}{l.rjust(5)}: {qn}"
+                msg += f"\n{4 * t}{l.rjust(5)}: {qn}"
             messagebox.showwarning(
                 title=self.title_application_short,
                 message=msg,
