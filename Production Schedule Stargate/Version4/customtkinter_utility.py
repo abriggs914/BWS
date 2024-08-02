@@ -2,6 +2,7 @@ import functools
 import random
 import tkinter
 from copy import deepcopy
+from tkinter import font
 from typing import List, Any, Literal, Optional
 import calendar
 
@@ -9,6 +10,7 @@ import datetime
 import customtkinter as ctk
 from CTkTable import CTkTable
 from tkcalendar import Calendar
+from ttkwidgets.font import FontFamilyDropdown, FontSizeDropdown, FontPropertiesFrame
 
 from datetime_utility import is_date
 from colour_utility import Colour, iscolour
@@ -3925,6 +3927,118 @@ def demo_3():
     # win.after(8500, lambda: calendar.deselect_day())
 
     win.mainloop()
+
+
+class FontSelectFrame(ctk.CTkFrame):
+    """
+    A frame to use in your own application to let the user choose a font.
+
+    For :class:`~font.Font` object, use :obj:`font` property.
+    """
+
+    def __init__(self, master=None, callback=None, **kwargs):
+        """
+        :param master: master widget
+        :type master: widget
+        :param callback: callback passed argument
+                         (`str` family, `int` size, `bool` bold, `bool` italic, `bool` underline)
+        :type callback: function
+        :param kwargs: keyword arguments passed on to the :class:`ttk.Frame` initializer
+        """
+        super().__init__(master, **kwargs)
+        self.__callback = callback
+        self._family = None
+        self._size = 11
+        self._bold = False
+        self._italic = False
+        self._underline = False
+        self._overstrike = False
+        self._family_dropdown = FontFamilyDropdown(self, callback=self._on_family)
+        self._size_dropdown = FontSizeDropdown(self, callback=self._on_size, width=4)
+        self._properties_frame = FontPropertiesFrame(self, callback=self._on_properties, label=False)
+        self._grid_widgets()
+        print(f"NEW FontSelectFrame {self._family=}, {self._size=}")
+
+    def _grid_widgets(self):
+        """
+        Puts all the widgets in the correct place.
+        """
+        self._family_dropdown.grid(row=0, column=0, sticky="nswe")
+        self._size_dropdown.grid(row=0, column=1, sticky="nswe")
+        self._properties_frame.grid(row=0, column=2, sticky="nswe")
+
+    def _on_family(self, name):
+        """
+        Callback if family is changed.
+
+        :param name: font family name
+        """
+        self._family = name
+        self._on_change()
+
+    def _on_size(self, size):
+        """
+        Callback if size is changed.
+
+        :param size: font size int
+        """
+        self._size = size
+        self._on_change()
+
+    def _on_properties(self, properties):
+        """
+        Callback if properties are changed
+
+        :param properties: tuple (bold, italic, underline, overstrike)
+        """
+        self._bold, self._italic, self._underline, self._overstrike = properties
+        self._on_change()
+
+    def _on_change(self):
+        """Call callback if any property is changed."""
+        if callable(self.__callback):
+            self.__callback((self._family, self._size, self._bold, self._italic, self._underline, self._overstrike))
+
+            print(f"_on_change {self._family=}, {self._size=}")
+
+    def __generate_font_tuple(self):
+        """
+        Generate a font tuple for tkinter widgets based on the user's entries.
+
+        :return: font tuple (family_name, size, *options)
+        """
+        if not self._family:
+            return None
+        font = [self._family, self._size]
+        if self._bold:
+            font.append("bold")
+        if self._italic:
+            font.append("italic")
+        if self._underline:
+            font.append("underline")
+        if self._overstrike:
+            font.append("overstrike")
+        return tuple(font)
+
+    @property
+    def font(self):
+        """
+        Font property.
+
+        :return: a :class:`~font.Font` object if family is set, else None
+        :rtype: :class:`~font.Font` or None
+        """
+        if not self._family:
+            return None, None
+        font_obj = ctk.CTkFont(family=self._family, size=self._size,
+                             weight=font.BOLD if self._bold else font.NORMAL,
+                             slant=font.ITALIC if self._italic else font.ROMAN,
+                             underline=bool(1 if self._underline else 0),
+                             overstrike=bool(1 if self._overstrike else 0)
+                            )
+        font_tuple = self.__generate_font_tuple()
+        return font_tuple, font_obj
+
 
 
 def demo_4():

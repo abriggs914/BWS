@@ -1,6 +1,7 @@
 import copy
 import datetime
 import io
+import math
 import random
 import threading
 import time
@@ -33,6 +34,12 @@ import win32api
 # TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
 #   The hovered tile is too far to the right of the pointer.
 # TODO 202406211312 Remove the data dictionary and declare all of the values as class attributes
+
+
+### ONLY FOR STARGATE AND ONLY TEMPORARILY
+# At some point a more modern calculation will be used
+# one that considers type of unit, Galvanization, etc...
+N_BUSINESS_DAYS_AVAIL_TO_DELIVERY = 3
 
 
 STARGATE_SQL_CREDS = {
@@ -96,7 +103,8 @@ WHERE
         },
 
         SQL_DATED_STG_UNITS := {
-            "sql": """SELECT
+            "sql": """
+    SELECT
         B.[ProdSchedV2ID#]
         ,[O].[SGQuote] AS [OrdersV2_SGQuote]
         ,B.[WO#] AS [OrdersV2_WO#]
@@ -418,7 +426,11 @@ class App(ctk.CTk):
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
 
-        self.default_font = ("Arial", 10)
+        # self.default_font = ("Arial", 10)
+        self.default_font = ctk.CTkFont(
+            family="Arial",
+            size=10
+        )
 
         self.colour_background_testing_mode_label = self.colour_background_app.brightened(0.15)
         self.colour_fill_multi_combobox_drag_tile = self.colour_tile_background.darkened(0.2)
@@ -473,10 +485,6 @@ class App(ctk.CTk):
             self.menubar,
             tearoff=False
         )
-        # self.mb_file.add_command(
-        #     label="Save",
-        #     command=self.click_mb_save
-        # )
         self.mb_file.add_command(
             label="Check Units Planned On Non Prod Day",
             command=lambda: self.check_for_units_on_holidays(include_all_holidays=False)
@@ -504,6 +512,10 @@ class App(ctk.CTk):
         self.mb_file.add_command(
             label="Settings",
             command=self.click_app_theme
+        )
+        self.mb_file.add_command(
+            label="Save",
+            command=self.click_mb_save
         )
         self.mb_file.add_separator()
         self.mb_file.add_command(
@@ -534,10 +546,16 @@ class App(ctk.CTk):
 
         self.is_valid_updater = self.check_valid_updater()
         if not self.is_valid_updater:
-            messagebox.showerror(
-                title=self.title_application_short,
-                message=self.msg_non_valid_pds_user
-            )
+            self.create_new_pds_user()
+
+            # messagebox.showerror(
+            #     title=self.title_application_short,
+            #     message=self.msg_create_new_pds_user
+            # )
+            # messagebox.showerror(
+            #     title=self.title_application_short,
+            #     message=self.msg_non_valid_pds_user
+            # )
 
         print(f"{self.tl_tv_switch_ask_monitors.get()=}")
         # self.calc_geometry = tkinter_utility.calc_geometry_tl("zoomed", parent=self, ask=True, rtype=dict, bypass_parent_withdraw=True)
@@ -600,7 +618,7 @@ class App(ctk.CTk):
         self.info_frame_columns = \
             ["US Sale"] \
             + self.multi_combobox_columns \
-            + ["Prod Date", "Delivery Date", "Sched Finish", "Sched Line"]
+            + ["Prod Date", "Delivery Date (Est)", "Sched Finish", "Sched Line"]
         self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.multi_combobox_columns)
         self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
         # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
@@ -1211,7 +1229,7 @@ class App(ctk.CTk):
 
         self.multi_combobox_orders.add_new_item(self.df_multi_combobox_data_orders)
 
-        bg_info_frame = Colour("SystemButtonFace")
+        self.bg_info_frame = Colour("SystemButtonFace")
         self.info_frame = tkinter_utility.InfoFrame(
             self.frame_info_frame,
             labels=self.info_frame_columns,
@@ -1220,25 +1238,25 @@ class App(ctk.CTk):
             key_width=16,
             val_width=50,
             width=150,
-            background=bg_info_frame.hex_code,
+            background=self.bg_info_frame.hex_code,
             padx=10,
             pady=10,
             cell_border=True,
             key_label_keywords={
                 "font": "Arial 12 bold",
-                "bg": bg_info_frame.brightened(0.25).hex_code
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
             },
             value_label_keywords={
                 "font": "Arial 12 bold",
-                "bg": bg_info_frame.brightened(0.25).hex_code
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
             },
             header_kwargs={
                 "font": "Arial 18 bold",
-                "bg": bg_info_frame.hex_code
+                "bg": self.bg_info_frame.hex_code
             },
             formats={
                 "Prod Date": lambda d: d.strftime("%Y-%m-%d"),
-                "Delivery Date": lambda d: d.strftime("%Y-%m-%d"),
+                # "Delivery Date (Est)": lambda d: d.strftime("%Y-%m-%d"),
                 "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
             }
         )
@@ -1782,12 +1800,34 @@ class App(ctk.CTk):
                 # else:
                 #     print(f"skipped {date_=}, {line_=} NO TD")
 
+    def create_new_pds_user(self):
+        tm = self.settings["TEST_MODE"].get()
+
+        # silently create new PDS user in 'view-only' mode
+        un = self.app_state["user_name"]
+        columns = ["UserName", "Active", "AllowPublish", "InTestingMode", "LightDarkTheme", "AskMonitors",
+                   "ShowCalendarOnly"]
+        sql = f"INSERT INTO [PDS Valid Updaters] ([{'], ['.join(columns)}]) VALUES "
+        sql += f"('{un}', 1, 0, 0, 'System', 0, 1);"
+
+        self.settings["TEST_MODE"].set(False)
+        self.settings["allowed_to_publish"].set(False)
+        ctk.set_appearance_mode("System")
+        self.tl_tv_switch_dark.set("System")
+        self.tl_tv_switch_ask_monitors.set("No")
+        self.tl_tv_switch_show_left_widgets.set("No")
+
+        if tm:
+            print(f"--\n{sql}")
+        else:
+            res = connect(sql, **STARGATE_SQL_CREDS, do_print=tm, do_exec=True, do_show=tm)
+
     def check_valid_updater(self):
         self.df_valid_updaters = connect(**SQL_VALID_UPDATERS)
 
         user = utility.get_windows_user(2)
         # use this for testing
-        # user = "bwsdomain.local\\cbg"
+        # user = "bwsdomain.local\\mguest"
         self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
         if not user_name:
@@ -2582,6 +2622,7 @@ class App(ctk.CTk):
 
     def on_right_click_calendar(self, event) -> None:
         tm = self.settings["TEST_MODE"].get()
+        ap = self.settings["allowed_to_publish"].get()
         if tm:
             print(f"on_right_click_calendar")
         ex, ey = event.x, event.y
@@ -2594,9 +2635,13 @@ class App(ctk.CTk):
             # delete tile
             if tm:
                 print(f"DELETE {date=}, {line=}")
-            self.delete_tile((date, line))
+            if ap:
+                self.delete_tile((date, line))
+            else:
+                self.show_quote_info_tl(date, line)
             # self.insert_tile(dfad)
-        self.clear_selected_tiles()
+        if not ap:
+            self.clear_selected_tiles()
 
     def on_left_click_calendar(self, event):
         tm = self.settings["TEST_MODE"].get()
@@ -3119,13 +3164,14 @@ class App(ctk.CTk):
                                                                      self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
+        tm = self.settings["TEST_MODE"].get()
+        ap = self.settings["allowed_to_publish"].get()
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
-        tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
             print(f"{ht=}, {st=}, {dt=}")
@@ -3142,40 +3188,41 @@ class App(ctk.CTk):
         if p_y is None:
             p_y = y
 
-        tw, th = self.tile_width, self.tile_height
-        tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
-        d_x, d_y = o_x - p_x, o_y - p_y
-        for date, line in (dt + st):
-            if date.weekday() < 5:
-                # only weekdays are allowed to move
-                td = self.tiles[date][line]
-                tile = td["tile"]
-                bw = float(self.canvas.itemcget(tile, "width"))
-                bbox = self.canvas.bbox(tile)
-                if tm:
-                    print(f"\n{self.canvas.type(tile)=}")
-                    print(f"{tile=}, {bbox=}")
-                t_x, t_y = bbox[0] + bw, bbox[1] + bw
-                if tm:
-                    print(f"{date=}, {line=}, {d_x=}, {d_y=}, {t_x=}, {t_y=}")
-                # self.canvas.move(tile, t_x + d_x, t_y + d_y)
-                self.canvas.coords(tile, o_x - (tw / 2), o_y - (th / 2), o_x + (tw / 2), o_y + (th / 2))
-                self.canvas.tag_raise(tile)
-                y_t = bbox[1] + bw
+        if ap:
+            tw, th = self.tile_width, self.tile_height
+            tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
+            d_x, d_y = o_x - p_x, o_y - p_y
+            for date, line in (dt + st):
+                if self.is_valid_prod_date(date) != "weekend":
+                    # only weekdays are allowed to move
+                    td = self.tiles[date][line]
+                    tile = td["tile"]
+                    bw = float(self.canvas.itemcget(tile, "width"))
+                    bbox = self.canvas.bbox(tile)
+                    if tm:
+                        print(f"\n{self.canvas.type(tile)=}")
+                        print(f"{tile=}, {bbox=}")
+                    t_x, t_y = bbox[0] + bw, bbox[1] + bw
+                    if tm:
+                        print(f"{date=}, {line=}, {d_x=}, {d_y=}, {t_x=}, {t_y=}")
+                    # self.canvas.move(tile, t_x + d_x, t_y + d_y)
+                    self.canvas.coords(tile, o_x - (tw / 2), o_y - (th / 2), o_x + (tw / 2), o_y + (th / 2))
+                    self.canvas.tag_raise(tile)
+                    y_t = bbox[1] + bw
 
-                txts = self.tiles[date][line].get("texts", [])
-                for i, txt in enumerate(txts):
-                    # self.canvas.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
-                    self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (len(txts) + 1))))
-                    self.canvas.tag_raise(txt)
+                    txts = self.tiles[date][line].get("texts", [])
+                    for i, txt in enumerate(txts):
+                        # self.canvas.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
+                        self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (len(txts) + 1))))
+                        self.canvas.tag_raise(txt)
 
-                if (date, line) not in dt:
-                    self.drag_tile(date, line)
+                    if (date, line) not in dt:
+                        self.drag_tile(date, line)
 
-                # self.get_tile_at_x_y()
-                self.hover_tile(date, line)
+                    # self.get_tile_at_x_y()
+                    self.hover_tile(date, line)
 
-        self.app_state["cursor_drag_pos"] = (o_x, o_y)
+            self.app_state["cursor_drag_pos"] = (o_x, o_y)
 
     def on_motion_calendar(self, event) -> None:
         st = self.app_state["selected"]
@@ -3678,6 +3725,8 @@ class App(ctk.CTk):
                 print(f"{tile=}")
             if order is not None:
                 series = self.df_orders.iloc[order]
+                delivery_date = calculate_nth_business_day(date, N_BUSINESS_DAYS_AVAIL_TO_DELIVERY)
+                days_between = (delivery_date - date).days
                 dat_1 = {
                     "KD": date,
                     "KL": prod_line,
@@ -3689,7 +3738,8 @@ class App(ctk.CTk):
                     "Serial#": series["Serial Number"],
                     "Customer WO#": series["Customer WO#"],
                     "Sched Finish": date,
-                    "Sched Line": prod_line
+                    "Sched Line": prod_line,
+                    "Delivery Date (Est)": f"{delivery_date:%Y-%m-%d} (+ {days_between} days)"
                 }
                 if tm:
                     print(f"{dat_1=}")
@@ -4870,18 +4920,38 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
 
         # open colour code TopLevel.
-        known_dealers = [d for d in self.df_orders["InputField2"].unique().tolist() if len(str(d))]
+        known_dealers = sorted([d for d in self.df_orders["InputField2"].unique().tolist() if len(str(d))])
+        known_models = sorted([m for m in self.df_orders["Model No"].unique().tolist() if len(str(m))])
         known_dealers.sort()
         known_colour_codes = self.settings.get("colour_coding", {})
+        known_colour_codes_d = known_colour_codes.get("dealers", {})
+        known_colour_codes_m = known_colour_codes.get("models", {})
+        print(f"{known_colour_codes=}")
+        print(f"{known_colour_codes_d=}")
+        print(f"{known_colour_codes_m=}")
         n_dealers = len(known_dealers)
+        n_models = len(known_models)
         if tm:
             print(f"{known_dealers=}, {known_colour_codes=}")
+            print(f"{known_colour_codes_d=}, {known_colour_codes_m=}")
         self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self)
         self.tl_data["tl_colour_code"].title(self.title_application_full)
 
         self.tl_data["cc_changed"] = ctk.BooleanVar(self, value=False)
 
-        w, h = 1400, 800
+        n_cols = 3
+        # n_btns_per_row = 25
+        # n_cols = (max(n_dealers, n_models) // n_btns_per_row) + 1
+        n_btns_per_row = round(max(n_dealers, n_models) / n_cols) + 2
+        tw, th, m = 325, 60, 15
+        total_width_dealers = n_cols * (tw + m)
+        # total_height_dealers = 600
+        total_height_dealers = n_btns_per_row * (th + m)
+        # total_width_dealers, total_height_dealers = (n_cols * (tw + m))
+
+        # w, h = 1400, 800
+        # w, h = total_width_dealers + 500, 800
+        w, h = 1.0, 1.0
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data["tl_colour_code"].geometry(tl_geom["geometry"])
 
@@ -4891,23 +4961,40 @@ class App(ctk.CTk):
         fg_cc_btn = Colour("#051001")
         bg_cc_btn_hover = bg_cc_btn.brightened(0.25)
         fg_cc_btn_hover = fg_cc_btn.brightened(0.25)
+        colour_bg_top_button = Colour("#52C5F2")
+        colour_fg_top_button = Colour("#022562")
+        colour_outline_top_button = Colour("#000000")
 
-        n_dealers_per_row = 14
-        n_cols = (n_dealers // n_dealers_per_row) + 1
-        tw, th, m = 350, 60, 15
-        total_width_dealers = n_cols * (tw + m)
-        total_height_dealers = n_dealers_per_row * (th + m)
+        print(f"{n_models=}, {n_dealers=}, rows={n_btns_per_row}, cols={n_cols}, width={total_width_dealers}, height={total_height_dealers}")
         grid_cells = utility.grid_cells(
             total_width_dealers,
             n_cols,
             total_height_dealers,
-            n_dealers_per_row,
+            n_btns_per_row,
             x_pad=m,
             y_pad=m,
             r_type=list
         )
-        self.tl_data["tl_canvas"] = ctk.CTkCanvas(
+        self.tl_data["tl_cc_tv_dm_option"] = ctk.StringVar(
             self.tl_data["tl_colour_code"],
+            value="Dealers"
+        )
+        self.tl_data["tl_cc_dm_option"] = ctk.CTkSegmentedButton(
+            self.tl_data["tl_colour_code"],
+            values=["Dealers", "Models"],
+            variable=self.tl_data["tl_cc_tv_dm_option"]
+        )
+
+        self.tl_data["tl_cc_scroll_canvas"] = ctk.CTkScrollableFrame(
+            self.tl_data["tl_colour_code"],
+            width=total_width_dealers + (2 * m),
+            height=750
+            # ,
+            # height=total_height_dealers + (2 * m)
+        )
+
+        self.tl_data["tl_canvas"] = ctk.CTkCanvas(
+            self.tl_data["tl_cc_scroll_canvas"],
             width=total_width_dealers + (2 * m),
             height=total_height_dealers + (2 * m),
             bg=bg_cc_main.hex_code
@@ -5004,21 +5091,32 @@ class App(ctk.CTk):
         def click_font_save(event=None):
             if tm:
                 print(f"click_font_save")
-            font = self.tl_data["tl_font_select_frame"].font
+            font = ctk.CTkFont(self.tl_data["tl_font_select_frame"].font)
+            if tm:
+                print(f"CHOSEN {font=}")
+                # ctk_font = ctk.CTkFont(font)
+                # print(f"CHOSEN {ctk_font=}")
             if font:
-                font_name_font_size, font_obj = font
-                if font_name_font_size is None:
-                    font_name_font_size = self.default_font
-                font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.settings["min_font_size_tile"],
-                                 min(font_size, self.settings["max_font_size_tile"]))
-                # print(f"1 {font_obj=}")
-                if font_size != font_size_:
-                    font_obj = (font_name, font_size_)
-                # print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
+                # font_name_font_size, font_obj = font
+                # if font_name_font_size is None:
+                #     font_name_font_size = self.default_font
+                # font_name, font_size, *rest = font_name_font_size
+                font_name = font.cget("family")
+                font_size = font.cget("size")
+                print(f"-1 {font_size=}")
+                # font_size_ = max(self.settings["min_font_size_tile"],
+                #                  min(font_size, self.settings["max_font_size_tile"]))
+                font_size_ = clamp(self.settings["min_font_size_tile"], font_size, self.settings["max_font_size_tile"])
+                font.configure(size=font_size_)
+                if tm:
+                    print(f"1 {font_name=}, {font_size_=}, {font=}")
+                # if font_size != font_size_:
+                #     font_obj = (font_name, font_size_)
+                # if tm:
+                #     print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
                 self.tl_data["tl_cc_view_canvas"].itemconfigure(
                     self.tl_data["tl_cc_vc_edit_text"],
-                    font=font_obj
+                    font=font
                 )
             # self.tl_data["tl_font_choice"].destroy()
             on_closing_cc_font()
@@ -5032,21 +5130,31 @@ class App(ctk.CTk):
         def update_font_choice(event=None):
             if tm:
                 print(f"update_font_choice, {event=}")
-            font = self.tl_data["tl_font_select_frame"].font
+            font = ctk.CTkFont(self.tl_data["tl_font_select_frame"].font)
             if tm:
                 print(f"CHOSEN {font=}")
+                # ctk_font = ctk.CTkFont(font)
+                # print(f"CHOSEN {ctk_font=}")
             if font:
-                font_name_font_size, font_obj = font
-                if font_name_font_size is None:
-                    font_name_font_size = self.default_font
-                font_name, font_size, *rest = font_name_font_size
-                font_size_ = max(self.settings["min_font_size_tile"],
-                                 min(font_size, self.settings["max_font_size_tile"]))
-                # print(f"1 {font_obj=}")
-                if font_size != font_size_:
-                    font_obj = (font_name, font_size_)
-                # print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
-                self.tl_data["tl_font_label_choice"][1].configure(font=font_obj)
+                # font_name_font_size, font_obj = font
+                font_name = font.cget("family")
+                font_size = font.cget("size")
+                # if font_name_font_size is None:
+                #     font_name_font_size = self.default_font
+                # print(f"{font_name_font_size=}")
+                # font_name, font_size, *rest = font_name_font_size
+                # font_size_ = max(self.settings["min_font_size_tile"],
+                #                  min(font_size, self.settings["max_font_size_tile"]))
+                print(f"-1 {font_size=}")
+                font_size_ = clamp(self.settings["min_font_size_tile"], font_size, self.settings["max_font_size_tile"])
+                font.configure(size=font_size_)
+                if tm:
+                    print(f"1 {font_name=}, {font_size_=}, {font=}")
+                # if font_size != font_size_:
+                #     font_obj = (font_name, font_size_)
+                # if tm:
+                #     print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
+                self.tl_data["tl_font_label_choice"][1].configure(font=font)
 
         def clear_vc_edit_tile():
             self.tl_data["tl_cc_view_canvas"].itemconfigure(
@@ -5076,40 +5184,46 @@ class App(ctk.CTk):
                 self.tl_data["tl_cc_vc_edit_text"],
                 "font"
             )
-            self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
+            # self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
+            self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = customtkinter_utility.calc_geometry_tl(
                 0.2, 0.12, parent=self, rtype=dict
             )
             self.tl_data["tl_font_choice"].geometry(tl_geom_fc["geometry"])
-            self.tl_data["tl_font_label_choice"] = tkinter_utility.label_factory(
+            self.tl_data["tl_font_label_choice"] = customtkinter_utility.label_factory(
                 self.tl_data["tl_font_choice"],
-                tv_label=f"Sample Text"
+                tv_label=f"Sample Text",
+                kwargs_label={
+                    "text_color": "#000000"
+                }
             )
-            self.tl_data["tl_font_select_frame"] = FontSelectFrame(
+            self.tl_data["tl_font_select_frame"] = customtkinter_utility.FontSelectFrame(
                 self.tl_data["tl_font_choice"],
                 callback=update_font_choice
             )
 
-            self.tl_data["tl_fc_btn_cancel"] = tkinter_utility.button_factory(
+            self.tl_data["tl_fc_btn_cancel"] = customtkinter_utility.button_factory(
                 self.tl_data["tl_font_choice"],
                 tv_btn=f"Cancel",
                 command=click_font_cancel,
                 kwargs_btn={
-                    "bg": bg_cc_btn.hex_code,
-                    "fg": fg_cc_btn.hex_code,
-                    "activebackground": bg_cc_btn_hover.hex_code,
-                    "activeforeground": fg_cc_btn_hover.hex_code,
+                    "bg_color": bg_cc_btn.hex_code,
+                    "fg_color": fg_cc_btn.hex_code
+                    # ,
+                    # "activebackground": bg_cc_btn_hover.hex_code,
+                    # "activeforeground": fg_cc_btn_hover.hex_code,
                 }
             )
-            self.tl_data["tl_fc_btn_save"] = tkinter_utility.button_factory(
+            self.tl_data["tl_fc_btn_save"] = customtkinter_utility.button_factory(
                 self.tl_data["tl_font_choice"],
                 tv_btn=f"Save",
                 command=click_font_save,
                 kwargs_btn={
-                    "bg": bg_cc_btn.hex_code,
-                    "fg": fg_cc_btn.hex_code,
-                    "activebackground": bg_cc_btn_hover.hex_code,
-                    "activeforeground": fg_cc_btn_hover.hex_code,
+                    "bg_color": bg_cc_btn.hex_code,
+                    "fg_color": fg_cc_btn.hex_code
+                    # ,
+                    # "activebackground": bg_cc_btn_hover.hex_code,
+                    # "activeforeground": fg_cc_btn_hover.hex_code,
                 }
             )
 
@@ -5130,7 +5244,11 @@ class App(ctk.CTk):
                     font=res_font
                 )
 
-        def click_dealer_tile(event, dealer_idx):
+        def click_top_btn(event):
+            # self.tl_data["tl_cc_scroll_canvas"].canvas.yview_moveto(0)
+            self.tl_data["tl_cc_scroll_canvas"]._parent_canvas.yview_moveto(0)
+
+        def click_dealer_tile(event, dealer_idx, dealer_model: str = "dealer"):
             clear_vc_edit_tile()
 
             visible = self.tl_data["tl_cc_view_canvas"].itemcget(
@@ -5148,14 +5266,19 @@ class App(ctk.CTk):
                 print(f"click_dealer_tile", end="")
             can_opts = self.tl_data["tl_canvas"]
             can_vc = self.tl_data["tl_cc_view_canvas"]
-            dealer = known_dealers[dealer_idx]
+            if dealer_model == "model":
+                dealer = known_models[dealer_idx]
+                tag = opt_tags_models[dealer_idx]["tile"]
+                t_tag = opt_tags_models[dealer_idx]["text"]
+            else:
+                dealer = known_dealers[dealer_idx]
+                tag = opt_tags_dealers[dealer_idx]["tile"]
+                t_tag = opt_tags_dealers[dealer_idx]["text"]
             if tm:
                 print(f" {dealer=}")
             bbox_vc = self.tl_data["tl_colour_code"].bbox(can_opts)
             if tm:
                 print(f"{bbox_vc=}")
-            tag = opt_tags_dealers[dealer_idx]["tile"]
-            t_tag = opt_tags_dealers[dealer_idx]["text"]
 
             cv_tag = self.tl_data["tl_cc_vc_edit_tile"]
             cv_t_tag = self.tl_data["tl_cc_vc_edit_text"]
@@ -5205,6 +5328,7 @@ class App(ctk.CTk):
         def click_default(event=None):
             if tm:
                 print(f"click_default")
+            dm = self.tl_data["tl_cc_tv_dm_option"].get().lower().removesuffix("s")
             can_opts = self.tl_data["tl_canvas"]
             can_vc = self.tl_data["tl_cc_view_canvas"]
             cv_tag = self.tl_data["tl_cc_vc_edit_tile"]
@@ -5212,10 +5336,18 @@ class App(ctk.CTk):
             dealer = can_vc.itemcget(cv_t_tag, "text")
 
             if dealer.strip():
-                dealer_idx = known_dealers.index(dealer)
+                dealer_idx, model_idx = None, None
+                if dm == "model":
+                    model_idx = known_models.index(dealer)
+                    tag = opt_tags_models[model_idx]["tile"]
+                    t_tag = opt_tags_models[model_idx]["text"]
+                else:
+                    dealer_idx = known_dealers.index(dealer)
+                    tag = opt_tags_dealers[dealer_idx]["tile"]
+                    t_tag = opt_tags_dealers[dealer_idx]["text"]
 
-                tag = opt_tags_dealers[dealer_idx]["tile"]
-                t_tag = opt_tags_dealers[dealer_idx]["text"]
+                if tm:
+                    print(f"{dealer_idx=}, {model_idx=}, {tag=}, {t_tag=}")
 
                 bg = self.colour_tile_background.hex_code
                 fg = self.colour_tile_foreground.hex_code
@@ -5242,6 +5374,7 @@ class App(ctk.CTk):
         def click_save(event=None):
             if tm:
                 print(f"click_save")
+            dm = self.tl_data["tl_cc_tv_dm_option"].get().lower().removesuffix("s")
             can_opts = self.tl_data["tl_canvas"]
             can_vc = self.tl_data["tl_cc_view_canvas"]
 
@@ -5252,12 +5385,18 @@ class App(ctk.CTk):
             if tm:
                 print(f"{dealer=} ", end="")
             if dealer:
-                dealer_idx = known_dealers.index(dealer)
+                dealer_idx, model_idx = None, None
+                if dm == "model":
+                    model_idx = known_models.index(dealer)
+                    tag = opt_tags_models[model_idx]["tile"]
+                    t_tag = opt_tags_models[model_idx]["text"]
+                else:
+                    dealer_idx = known_dealers.index(dealer)
+                    tag = opt_tags_dealers[dealer_idx]["tile"]
+                    t_tag = opt_tags_dealers[dealer_idx]["text"]
 
-                tag = opt_tags_dealers[dealer_idx]["tile"]
-                t_tag = opt_tags_dealers[dealer_idx]["text"]
                 if tm:
-                    print(f"{dealer_idx=}, {tag=}, {t_tag=}")
+                    print(f"{dealer_idx=}, {model_idx=}, {tag=}, {t_tag=}")
                     # print(f"{can_opts.get_children()=}")
 
                 bg = can_vc.itemcget(cv_tag, "fill")
@@ -5278,13 +5417,32 @@ class App(ctk.CTk):
                     fill=fg,
                     font=ft
                 )
-                known_colour_codes[dealer] = {
+                if dm not in known_colour_codes:
+                    known_colour_codes[dm] = {}
+                known_colour_codes[dm][dealer] = {
                     "bg": bg,
                     "fg": fg,
                     "outline": bd,
                     "width": ou,
                     "font": ft
                 }
+                if dm == "model":
+                    known_colour_codes_m[dealer] = {
+                        "bg": bg,
+                        "fg": fg,
+                        "outline": bd,
+                        "width": ou,
+                        "font": ft
+                    }
+                else:
+                    known_colour_codes_d[dealer] = {
+                        "bg": bg,
+                        "fg": fg,
+                        "outline": bd,
+                        "width": ou,
+                        "font": ft
+                    }
+
                 if tm:
                     print(f"{known_colour_codes=}")
                 clear_vc_edit_tile()
@@ -5360,73 +5518,187 @@ class App(ctk.CTk):
                     pass
             quit_cc()
 
+        def update_dealers_models_option(*args):
+            value = self.tl_data["tl_cc_tv_dm_option"].get().lower().removesuffix("s")
+            print(f"{value}")
+
+            values = []
+            if value == "model":
+                values.append(("normal", opt_tags_models))
+                values.append(("hidden", opt_tags_dealers))
+            else:
+                values.append(("normal", opt_tags_dealers))
+                values.append(("hidden", opt_tags_models))
+
+            for state, data in values:
+                for i, tag_data in data.items():
+                    tile = tag_data.get("tile")
+                    text = tag_data.get("text", [])
+                    self.tl_data["tl_canvas"].itemconfigure(
+                        tile,
+                        state=state
+                    )
+                    self.tl_data["tl_canvas"].itemconfigure(
+                        text,
+                        state=state
+                    )
+
         idx = 0
         opt_tags_dealers = {}
+        opt_tags_models = {}
         opt_tags_app = {}
         t_template = ["tile", "text"]
+        dm_ = self.tl_data["tl_cc_tv_dm_option"].get().lower().removesuffix("s")
         for i, gc_row in enumerate(grid_cells):
             for j, gc in enumerate(gc_row):
                 idx = ((i * len(gc_row)) + j)
                 if tm:
                     print(f"{i=}, {gc=}")
 
-                dealer = known_dealers[idx]
-                k_dealer = known_colour_codes.get(dealer, {})
-                k_bg = k_dealer.get("bg", self.colour_tile_background.hex_code)
-                k_fg = k_dealer.get("fg", self.colour_tile_foreground.hex_code)
-                k_bd = k_dealer.get("outline", self.colour_tile_outline.hex_code)
-                k_ou = k_dealer.get("width", self.width_tile_outline)
-                k_ft = k_dealer.get("font", self.font_tile)
+                if len(opt_tags_models) < len(known_models):
+                    model = known_models[idx]
 
-                tag = self.draw_rect(
-                    gc,
-                    fill=k_bg,
-                    outline=k_bd,
-                    width=k_ou,
-                    parent=self.tl_data["tl_canvas"]
-                )
-                t_tag = self.tl_data["tl_canvas"].create_text(
-                    # # int(gc[0] + (gc[2] / 2)),
-                    # # int(gc[1] + (gc[3] / 2)),
-                    # gc[0],
-                    # gc[1],
-                    int(gc[0] + (tw / 2)),
-                    int(gc[1] + (th / 2)),
-                    font=k_ft,
-                    fill=k_fg,
-                    text=f"{dealer}"
-                )
-                opt_tags_dealers[idx] = {}
-                opt_tags_dealers[idx]["tile"] = tag
-                opt_tags_dealers[idx]["text"] = t_tag
-                self.tl_data["tl_canvas"].tag_bind(
-                    tag,
-                    "<Button-1>",
-                    lambda event_=None, d_idx=idx:
-                    click_dealer_tile(event_, d_idx)
-                )
-                self.tl_data["tl_canvas"].tag_bind(
-                    t_tag,
-                    "<Button-1>",
-                    lambda event_=None, d_idx=idx:
-                    click_dealer_tile(event_, d_idx)
-                )
-                if tm:
-                    print(f"{dealer=}, {idx=}, {tag=}, {t_tag=}")
-                if (idx + 1) >= n_dealers:
+                    k_model = known_colour_codes.get(dm_, {}).get(model, {})
+                    k_bg = k_model.get("bg", self.colour_tile_background.hex_code)
+                    k_fg = k_model.get("fg", self.colour_tile_foreground.hex_code)
+                    k_bd = k_model.get("outline", self.colour_tile_outline.hex_code)
+                    k_ou = k_model.get("width", self.width_tile_outline)
+                    k_ft = k_model.get("font", self.font_tile)
+
+                    tag = self.draw_rect(
+                        gc,
+                        fill=k_bg,
+                        outline=k_bd,
+                        width=k_ou,
+                        parent=self.tl_data["tl_canvas"]
+                    )
+                    self.tl_data["tl_canvas"].itemconfigure(
+                        tag,
+                        state="hidden" if (dm_ == "dealer") else "normal"
+                    )
+                    t_tag = self.tl_data["tl_canvas"].create_text(
+                        # # int(gc[0] + (gc[2] / 2)),
+                        # # int(gc[1] + (gc[3] / 2)),
+                        # gc[0],
+                        # gc[1],
+                        int(gc[0] + (tw / 2)),
+                        int(gc[1] + (th / 2)),
+                        font=k_ft,
+                        fill=k_fg,
+                        text=f"{model}"
+                    )
+                    opt_tags_models[idx] = {}
+                    opt_tags_models[idx]["tile"] = tag
+                    opt_tags_models[idx]["text"] = t_tag
+                    self.tl_data["tl_canvas"].tag_bind(
+                        tag,
+                        "<Button-1>",
+                        lambda event_=None, d_idx=idx:
+                        click_dealer_tile(event_, d_idx, dealer_model="model")
+                    )
+                    self.tl_data["tl_canvas"].tag_bind(
+                        t_tag,
+                        "<Button-1>",
+                        lambda event_=None, d_idx=idx:
+                        click_dealer_tile(event_, d_idx, dealer_model="model")
+                    )
+                    if tm:
+                        print(f"{model=}, {idx=}, {tag=}, {t_tag=}")
+
+                if len(opt_tags_dealers) < len(known_dealers):
+                    dealer = known_dealers[idx]
+
+                    k_dealer = known_colour_codes.get(dm_, {}).get(dealer, {})
+                    k_bg = k_dealer.get("bg", self.colour_tile_background.hex_code)
+                    k_fg = k_dealer.get("fg", self.colour_tile_foreground.hex_code)
+                    k_bd = k_dealer.get("outline", self.colour_tile_outline.hex_code)
+                    k_ou = k_dealer.get("width", self.width_tile_outline)
+                    k_ft = k_dealer.get("font", self.font_tile)
+
+                    tag = self.draw_rect(
+                        gc,
+                        fill=k_bg,
+                        outline=k_bd,
+                        width=k_ou,
+                        parent=self.tl_data["tl_canvas"]
+                    )
+                    self.tl_data["tl_canvas"].itemconfigure(
+                        tag,
+                        state="hidden" if (dm_ == "model") else "normal"
+                    )
+                    t_tag = self.tl_data["tl_canvas"].create_text(
+                        # # int(gc[0] + (gc[2] / 2)),
+                        # # int(gc[1] + (gc[3] / 2)),
+                        # gc[0],
+                        # gc[1],
+                        int(gc[0] + (tw / 2)),
+                        int(gc[1] + (th / 2)),
+                        font=k_ft,
+                        fill=k_fg,
+                        text=f"{dealer}"
+                    )
+                    opt_tags_dealers[idx] = {}
+                    opt_tags_dealers[idx]["tile"] = tag
+                    opt_tags_dealers[idx]["text"] = t_tag
+                    self.tl_data["tl_canvas"].tag_bind(
+                        tag,
+                        "<Button-1>",
+                        lambda event_=None, d_idx=idx:
+                        click_dealer_tile(event_, d_idx)
+                    )
+                    self.tl_data["tl_canvas"].tag_bind(
+                        t_tag,
+                        "<Button-1>",
+                        lambda event_=None, d_idx=idx:
+                        click_dealer_tile(event_, d_idx)
+                    )
+                    if tm:
+                        print(f"{dealer=}, {idx=}, {tag=}, {t_tag=}")
+                if (idx + 1) >= max(n_models, n_dealers):
                     break
-            if (idx + 1) >= n_dealers:
+            if (idx + 1) >= max(n_models, n_dealers):
                 break
+
+        self.tl_data["tl_cc_tag_top_btn_rect"] = self.draw_rect(
+            grid_cells[-1][-1],
+            fill=colour_bg_top_button.hex_code,
+            outline=colour_outline_top_button.hex_code,
+            parent=self.tl_data["tl_canvas"]
+        )
+        self.tl_data["tl_cc_tag_top_btn_text"] = self.tl_data["tl_canvas"].create_text(
+            grid_cells[-1][-1][0] + ((grid_cells[-1][-1][2] - grid_cells[-1][-1][0]) / 2),
+            grid_cells[-1][-1][1] + ((grid_cells[-1][-1][3] - grid_cells[-1][-1][1]) / 2),
+            fill=colour_fg_top_button.hex_code,
+            text="^",
+            font=("Calibri", 24, "bold")
+        )
+
+        self.tl_data["tl_canvas"].tag_bind(
+            self.tl_data["tl_cc_tag_top_btn_rect"],
+            "<Button-1>",
+            click_top_btn
+        )
+
+        self.tl_data["tl_canvas"].tag_bind(
+            self.tl_data["tl_cc_tag_top_btn_text"],
+            "<Button-1>",
+            click_top_btn
+        )
+
+        w_pc = int(total_width_dealers * 0.6)
+        h_pc = int(total_height_dealers * 0.1)
 
         self.tl_data["tl_cc_view_canvas"] = ctk.CTkCanvas(
             self.tl_data["tl_frame"],
-            width=int(total_width_dealers * 0.75),
-            height=int(total_height_dealers * 0.12),
+            width=w_pc,
+            height=h_pc,
             bg=bg_cc_main.hex_code
         )
 
+        # x0_vc_et, y0_vc_et = 25, 25
+        # w_vc_et, h_vc_et = 500, 60
         x0_vc_et, y0_vc_et = 25, 25
-        w_vc_et, h_vc_et = 500, 60
+        w_vc_et, h_vc_et = w_pc - (2 * x0_vc_et), h_pc - (2 * y0_vc_et)
         self.tl_data["tl_cc_vc_edit_tile"] = self.draw_rect(
             (x0_vc_et, y0_vc_et, x0_vc_et + w_vc_et, y0_vc_et + h_vc_et),
             parent=self.tl_data["tl_cc_view_canvas"]
@@ -5472,12 +5744,19 @@ class App(ctk.CTk):
                 kwargs_btn={k: v for k, v in kwargs_btn.items()}
             )
 
+        self.tl_data["tl_cc_tv_dm_option"].trace_variable("w", update_dealers_models_option)
+        update_dealers_models_option()
+
         # self.tl_data["tl_colour_code"]
-        self.tl_data["tl_canvas"].grid(row=0, column=0, rowspan=3, sticky="ns")
-        self.tl_data["tl_frame"].grid(row=0, column=1, rowspan=3, sticky="ns")
+        self.tl_data["tl_cc_dm_option"].grid(row=0, column=0, rowspan=1, padx=20, pady=20)
+        self.tl_data["tl_cc_scroll_canvas"].grid(row=1, column=0, rowspan=2, sticky=ctk.NS)
+        self.tl_data["tl_frame"].grid(row=0, column=1, rowspan=3, sticky=ctk.NS)
+
+        # self.tl_data["tl_cc_scroll_canvas"]
+        self.tl_data["tl_canvas"].grid(sticky=ctk.NS)
 
         # self.tl_data["tl_frame"]
-        self.tl_data["tl_cc_view_canvas"].grid(row=0, column=0, columnspan=2, rowspan=1)
+        self.tl_data["tl_cc_view_canvas"].grid(row=0, column=0, columnspan=2, rowspan=1, pady=40)
         self.tl_data["tl_cc_btn_bg"][1].grid(row=1, column=0, columnspan=1, rowspan=1, padx=12, pady=12)
         self.tl_data["tl_cc_btn_fg"][1].grid(row=1, column=1, columnspan=1, rowspan=1, padx=12, pady=12)
         self.tl_data["tl_cc_btn_border"][1].grid(row=2, column=0, columnspan=1, rowspan=1, padx=12, pady=12)
@@ -5509,16 +5788,18 @@ class App(ctk.CTk):
         }
         grid_args_frame = {
             "padx": 40,
-            "pady": 25,
+            "pady": 15,
             "sticky": ctk.NSEW
         }
         grid_args_switch = {
-            "padx": 20,
-            "pady": 25
+            # "padx": 10,
+            "pady": 12,
+            "sticky": ctk.E
         }
         grid_args_label = {
-            "padx": 20,
-            "pady": 25
+            # "padx": 20,
+            "pady": 12,
+            "sticky": ctk.W
         }
 
         # Light and Dark Theme
@@ -5576,7 +5857,7 @@ class App(ctk.CTk):
         tl_cc_app_frame_colour_theme = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_ct, lbl_ct = customtkinter_utility.label_factory(
             tl_cc_app_frame_colour_theme,
-            tv_label="Show Left Control Widgets:",
+            tv_label="App Accent Colour:",
             kwargs_label=kwargs_lbl
         )
         tl_at_switch_colour_theme = ctk.CTkSegmentedButton(
@@ -5591,14 +5872,17 @@ class App(ctk.CTk):
 
         self.tl_cc_app.columnconfigure(0, weight=100)
         self.tl_cc_app.rowconfigure(0, weight=100)
-        for f in [
+        question_frames = [
             tl_cc_app_frame_light_dark_theme,
             tl_cc_app_frame_ask_monitors,
             tl_cc_app_frame_show_left_widgets,
             tl_cc_app_frame_colour_theme
-        ]:
+        ]
+        row_weight = math.floor(100 / len(question_frames))
+        for i, f in enumerate(question_frames):
             f.columnconfigure(0, weight=65, minsize=220)
             f.columnconfigure(1, weight=35, minsize=100)
+            self.tl_cc_app.rowconfigure(i, weight=row_weight)
 
         self.tl_cc_app.protocol("WM_DELETE_WINDOW", self.quit_cc_app)
         self.tl_cc_app.grab_set()
@@ -5629,6 +5913,8 @@ class App(ctk.CTk):
 
     def save_colour_coding(self):
         tm = self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"save_colour_coding")
         known_colour_codes = self.settings.get("colour_coding", {})
         un = self.app_state["user_name"]
         if tm:
@@ -5692,10 +5978,12 @@ class App(ctk.CTk):
             parent=parent
         ), has_history
 
-    # def click_mb_save(self, event=None):
-    #     tm = self.settings["TEST_MODE"].get()
-    #     if tm:
-    #         print(f"click_mb_save, {event=}")
+    def click_mb_save(self, event=None):
+        tm = self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_save, {event=}")
+        statements = self.on_closing(do_quit=False, do_commit=not tm)
+        print(f"{statements=}")
     #     test_mode = self.settings["TEST_MODE"].get()
     #     # history = self.history
     #
@@ -5842,12 +6130,12 @@ class App(ctk.CTk):
             # continue editing
             pass
 
-    def on_closing(self, do_quit: bool = True) -> None | list:
+    def on_closing(self, do_quit: bool = True, do_commit: bool = True) -> None | list:
         print(f"on_closing")
         tm = self.settings["TEST_MODE"].get()
         # history = self.history
         # do_exec = False  # automatically update server using generated sql statements.
-        do_exec = True  # automatically update server using generated sql statements.
+        do_exec = do_commit  # automatically update server using generated sql statements.
 
         # in_test_mode = self.settings["TEST_MODE"].get()
         print(f"TEST_MODE={'Y' if tm else 'N'}")
@@ -6187,7 +6475,7 @@ class App(ctk.CTk):
                 parent=self
             )
         else:
-            ctk.CTkSegmentedButton
+            # ctk.CTkSegmentedButton
             messagebox.showinfo(
                 title=self.title_application_short,
                 message=self.msg_no_units_on_holiday,
@@ -6197,6 +6485,88 @@ class App(ctk.CTk):
     def quit_cc_app(self):
         print(f"quit_cc_app")
         self.tl_cc_app.destroy()
+
+    def show_quote_info_tl(self, date, line):
+        tm = self.settings["TEST_MODE"].get()
+        # tile_data = self.tiles[date][line]
+        tl_name = "tl_qi"
+        self.tl_data[tl_name] = ctk.CTkToplevel(self)
+        self.tl_data[tl_name].title(self.title_application_short)
+        self.tl_data[tl_name].geometry(customtkinter_utility.calc_geometry_tl(
+            700, 350, parent=self
+        ))
+
+        def close_tl(*args):
+            self.tl_data[tl_name].destroy()
+
+        self.tl_data["tl_qi_info_frame"] = tkinter_utility.InfoFrame(
+            self.tl_data[tl_name],
+            labels=self.info_frame_columns,
+            auto_grid=True,
+            header="Quote Information:",
+            key_width=16,
+            val_width=50,
+            width=150,
+            background=self.bg_info_frame.hex_code,
+            padx=10,
+            pady=10,
+            cell_border=True,
+            key_label_keywords={
+                "font": "Arial 12 bold",
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
+            },
+            value_label_keywords={
+                "font": "Arial 12 bold",
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
+            },
+            header_kwargs={
+                "font": "Arial 18 bold",
+                "bg": self.bg_info_frame.hex_code
+            },
+            formats={
+                "Prod Date": lambda d: d.strftime("%Y-%m-%d"),
+                # "Delivery Date (Est)": lambda d: d.strftime("%Y-%m-%d"),
+                "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
+            }
+        )
+
+        if (date is not None) and (line is not None):
+            date_tile_data = self.tiles.get(date)
+            tile, order = None, None
+            if date_tile_data:
+                tile = date_tile_data[line]
+                order = date_tile_data[line].get("order")
+            if tm:
+                print(f"{tile=}")
+            if order is not None:
+                series = self.df_orders.iloc[order]
+                delivery_date = calculate_nth_business_day(date, N_BUSINESS_DAYS_AVAIL_TO_DELIVERY)
+                days_between = (delivery_date - date).days
+                dat_1 = {
+                    "KD": date,
+                    "KL": line,
+                    "US Sale": series["US Sale"],
+                    "SGQuote": series["OrdersV2_SGQuote"],
+                    "WO#": series["OrdersV2_WO#"],
+                    "Model No": series["Model No"],
+                    "Dealer": series["InputField2"],
+                    "Serial#": series["Serial Number"],
+                    "Customer WO#": series["Customer WO#"],
+                    "Sched Finish": date,
+                    "Sched Line": line,
+                    "Delivery Date (Est)": f"{delivery_date:%Y-%m-%d} (+ {days_between} days)"
+                }
+                if tm:
+                    print(f"{dat_1=}")
+                for k in self.info_frame_columns:
+                    v = dat_1.get(k, f"'{k}'=?")
+                    self.tl_data["tl_qi_info_frame"].change_value(k, v)
+        else:
+            self.tl_data["tl_qi_info_frame"].change_value("SGQuote", "?")
+
+        self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", close_tl)
+        self.tl_data[tl_name].grab_set()
+        self.wait_window(self.tl_data[tl_name])
 
 
 def test_canvas_window():
