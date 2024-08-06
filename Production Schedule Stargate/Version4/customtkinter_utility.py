@@ -26,8 +26,8 @@ VERSION = \
     """	
     General Utility Functions
     ans class for customtkinter
-    Version................1.07
-    Date.............2024-07-24
+    Version................1.08
+    Date.............2024-08-07
     Author(s)......Avery Briggs
     """
 
@@ -3953,8 +3953,16 @@ class FontSelectFrame(ctk.CTkFrame):
         self._italic = False
         self._underline = False
         self._overstrike = False
+
         self._family_dropdown = FontFamilyDropdown(self, callback=self._on_family)
+        # font_families = sorted(set(font.families()))
+        # self._family_dropdown = ctk.CTkComboBox(self, values=font_families, command=self._on_family)
+
         self._size_dropdown = FontSizeDropdown(self, callback=self._on_size, width=4)
+        # int_values = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
+        # size_values = [str(value) for value in int_values]
+        # self._size_dropdown = ctk.CTkComboBox(self, values=size_values, command=self._on_size, width=10)
+
         self._properties_frame = FontPropertiesFrame(self, callback=self._on_properties, label=False)
         self._grid_widgets()
         print(f"NEW FontSelectFrame {self._family=}, {self._size=}")

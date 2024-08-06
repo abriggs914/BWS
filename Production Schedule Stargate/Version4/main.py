@@ -5184,8 +5184,8 @@ class App(ctk.CTk):
                 self.tl_data["tl_cc_vc_edit_text"],
                 "font"
             )
-            # self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
-            self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
+            self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
+            # self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = customtkinter_utility.calc_geometry_tl(
                 0.2, 0.12, parent=self, rtype=dict
             )
@@ -5197,8 +5197,8 @@ class App(ctk.CTk):
                     "text_color": "#000000"
                 }
             )
-            self.tl_data["tl_font_select_frame"] = customtkinter_utility.FontSelectFrame(
-                self.tl_data["tl_font_choice"],
+            self.tl_data["tl_font_select_frame"] = FontSelectFrame(
+                master=self.tl_data["tl_font_choice"],
                 callback=update_font_choice
             )
 
