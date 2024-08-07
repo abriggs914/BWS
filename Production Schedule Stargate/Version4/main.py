@@ -316,6 +316,7 @@ WHERE
         ,[AskMonitors]
         ,[ShowCalendarOnly]
         ,[ColourTheme]
+        ,[ColourCodingPriority]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -374,6 +375,7 @@ class App(ctk.CTk):
         self.y_top_widgets = 5
         self.margin_between_mc_and_calendar = 20
 
+        self.default_colour_code_priority = ["dealer"]
         self.default_light_dark_theme = "Dark"
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
@@ -540,6 +542,7 @@ class App(ctk.CTk):
         self.tl_tv_switch_colour = ctk.StringVar(self, value=self.default_colour_theme)
         self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
         self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
+        self.tl_tv_colour_code_priority = ctk.Variable(self, value=self.default_colour_code_priority)
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
         self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
         self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
@@ -1723,6 +1726,9 @@ class App(ctk.CTk):
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
+        dcc = cc.get("dealer", dict())
+        mcc = cc.get("model", dict())
+        # print(f"{cc=}\n{dcc=}\n{mcc=}")
         if date is None or line is None:
             # colour code every tile
             date_to_check = [d for d in self.list_dates]
@@ -1742,8 +1748,14 @@ class App(ctk.CTk):
                         # print(f"{order} ", end="")
                         dealer = self.df_orders.iloc[order]["InputField2"]
                         # print(f"{dealer} ", end="")
-                        if dealer in cc:
-                            kcc = cc[dealer]
+                        if dealer in dcc:
+                            kcc = dcc[dealer]
+                        elif dealer in mcc:
+                            kcc = mcc[dealer]
+                        else:
+                            kcc = {}
+
+                        if kcc:
                             bg = kcc.get("bg", None)
                             fg = kcc.get("fg", None)
                             bd = kcc.get("outline", None)
@@ -1793,8 +1805,8 @@ class App(ctk.CTk):
                                     # ,
                                     # activefill=fg_h
                                 )
-                #         else:
-                #             print(f"skipped {date_=}, {line_=} NO CC FOR '{dealer=}'")
+                        else:
+                            print(f"skipped {date_=}, {line_=} NO CC FOR '{dealer=}'")
                 #     else:
                 #         print(f"skipped {date_=}, {line_=} NO ORDER")
                 # else:
@@ -1874,6 +1886,17 @@ class App(ctk.CTk):
             else:
                 colour_theme = colour_theme.replace("-", " ").title()
 
+            colour_code_priority = df_pds_user["ColourCodingPriority"]
+            if pd.isna(colour_code_priority):
+                colour_code_priority = self.default_colour_code_priority
+            else:
+                colour_code_priority = eval(colour_code_priority)
+                if not isinstance(colour_code_priority, (list, tuple)):
+                    if isinstance(colour_code_priority, str):
+                        colour_code_priority = [colour_code_priority]
+                    else:
+                        colour_code_priority = self.default_colour_code_priority
+
             print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
 
             # print(f"INIT TEST MODE {test_mode}")
@@ -1884,6 +1907,8 @@ class App(ctk.CTk):
             self.tl_tv_switch_dark.set(light_dark_theme)
             self.tl_tv_switch_ask_monitors.set(ask_monitors)
             self.tl_tv_switch_show_left_widgets.set(show_left_widgets)
+            self.tl_tv_colour_code_priority.set(colour_code_priority)
+
             return True
 
         print(f" NOT FOUND")
@@ -4926,12 +4951,12 @@ class App(ctk.CTk):
         known_colour_codes = self.settings.get("colour_coding", {})
         known_colour_codes_d = known_colour_codes.get("dealers", {})
         known_colour_codes_m = known_colour_codes.get("models", {})
-        print(f"{known_colour_codes=}")
-        print(f"{known_colour_codes_d=}")
-        print(f"{known_colour_codes_m=}")
         n_dealers = len(known_dealers)
         n_models = len(known_models)
         if tm:
+            print(f"{known_colour_codes=}")
+            print(f"{known_colour_codes_d=}")
+            print(f"{known_colour_codes_m=}")
             print(f"{known_dealers=}, {known_colour_codes=}")
             print(f"{known_colour_codes_d=}, {known_colour_codes_m=}")
         self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self)
@@ -5002,8 +5027,9 @@ class App(ctk.CTk):
         self.tl_data["tl_frame"] = ctk.CTkFrame(
             self.tl_data["tl_colour_code"],
             width=total_width_dealers + (2 * m),
-            height=total_height_dealers + (2 * m),
-            bg_color=bg_cc_main.darkened(0.25).hex_code
+            height=total_height_dealers + (2 * m)
+            # ,
+            # fg_color=bg_cc_main.darkened(0.25).hex_code
         )
 
         def click_bg(event=None):
@@ -5130,31 +5156,31 @@ class App(ctk.CTk):
         def update_font_choice(event=None):
             if tm:
                 print(f"update_font_choice, {event=}")
-            font = ctk.CTkFont(self.tl_data["tl_font_select_frame"].font)
-            if tm:
-                print(f"CHOSEN {font=}")
-                # ctk_font = ctk.CTkFont(font)
-                # print(f"CHOSEN {ctk_font=}")
-            if font:
-                # font_name_font_size, font_obj = font
-                font_name = font.cget("family")
-                font_size = font.cget("size")
-                # if font_name_font_size is None:
-                #     font_name_font_size = self.default_font
-                # print(f"{font_name_font_size=}")
-                # font_name, font_size, *rest = font_name_font_size
-                # font_size_ = max(self.settings["min_font_size_tile"],
-                #                  min(font_size, self.settings["max_font_size_tile"]))
-                print(f"-1 {font_size=}")
-                font_size_ = clamp(self.settings["min_font_size_tile"], font_size, self.settings["max_font_size_tile"])
-                font.configure(size=font_size_)
-                if tm:
-                    print(f"1 {font_name=}, {font_size_=}, {font=}")
-                # if font_size != font_size_:
-                #     font_obj = (font_name, font_size_)
-                # if tm:
-                #     print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
-                self.tl_data["tl_font_label_choice"][1].configure(font=font)
+            # font = ctk.CTkFont(self.tl_data["tl_font_select_frame"].font)
+            # if tm:
+            #     print(f"CHOSEN {font=}")
+            #     # ctk_font = ctk.CTkFont(font)
+            #     # print(f"CHOSEN {ctk_font=}")
+            # if font:
+            #     # font_name_font_size, font_obj = font
+            #     font_name = font.cget("family")
+            #     font_size = font.cget("size")
+            #     # if font_name_font_size is None:
+            #     #     font_name_font_size = self.default_font
+            #     # print(f"{font_name_font_size=}")
+            #     # font_name, font_size, *rest = font_name_font_size
+            #     # font_size_ = max(self.settings["min_font_size_tile"],
+            #     #                  min(font_size, self.settings["max_font_size_tile"]))
+            #     print(f"-1 {font_size=}")
+            #     font_size_ = clamp(self.settings["min_font_size_tile"], font_size, self.settings["max_font_size_tile"])
+            #     font.configure(size=font_size_)
+            #     if tm:
+            #         print(f"1 {font_name=}, {font_size_=}, {font=}")
+            #     # if font_size != font_size_:
+            #     #     font_obj = (font_name, font_size_)
+            #     # if tm:
+            #     #     print(f"2 {font_size=}, {font_size_=}, {font_obj=}")
+            #     # self.tl_data["tl_font_label_choice"][1].configure(font=font)
 
         def clear_vc_edit_tile():
             self.tl_data["tl_cc_view_canvas"].itemconfigure(
@@ -5165,6 +5191,9 @@ class App(ctk.CTk):
                 self.tl_data["tl_cc_vc_edit_text"],
                 text=f""
             )
+            for key, parent, text, command in btn_data:
+                if key != "tl_cc_btn_go_back":
+                    self.tl_data[key][1].configure(state=ctk.DISABLED)
             self.tl_data["tl_cc_frame_btn_bar"].grid_forget()
 
         def on_closing_cc_colour(event=None):
@@ -5187,17 +5216,21 @@ class App(ctk.CTk):
             self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
             # self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = customtkinter_utility.calc_geometry_tl(
-                0.2, 0.12, parent=self, rtype=dict
+                500, 200, parent=self, rtype=dict
             )
             self.tl_data["tl_font_choice"].geometry(tl_geom_fc["geometry"])
-            self.tl_data["tl_font_label_choice"] = customtkinter_utility.label_factory(
-                self.tl_data["tl_font_choice"],
-                tv_label=f"Sample Text",
-                kwargs_label={
-                    "text_color": "#000000"
-                }
-            )
-            self.tl_data["tl_font_select_frame"] = FontSelectFrame(
+            # self.tl_data["tl_font_label_choice"] = customtkinter_utility.label_factory(
+            #     self.tl_data["tl_font_choice"],
+            #     tv_label=f"Sample Text",
+            #     kwargs_label={
+            #         "text_color": "#000000"
+            #     }
+            # )
+            # self.tl_data["tl_font_select_frame"] = FontSelectFrame(
+            #     master=self.tl_data["tl_font_choice"],
+            #     callback=update_font_choice
+            # )
+            self.tl_data["tl_font_select_frame"] = customtkinter_utility.FontSelectFrame(
                 master=self.tl_data["tl_font_choice"],
                 callback=update_font_choice
             )
@@ -5227,8 +5260,8 @@ class App(ctk.CTk):
                 }
             )
 
-            self.tl_data["tl_font_label_choice"][1].grid(row=0, column=0, columnspan=2, rowspan=1, padx=5, pady=5)
-            self.tl_data["tl_font_select_frame"].grid(row=1, column=0, columnspan=2, rowspan=1, sticky="snew", padx=5,
+            # self.tl_data["tl_font_label_choice"][1].grid(row=0, column=0, columnspan=2, rowspan=1, padx=5, pady=5)
+            self.tl_data["tl_font_select_frame"].grid(row=0, column=0, columnspan=2, rowspan=1, sticky="snew", padx=5,
                                                       pady=5)
             self.tl_data["tl_fc_btn_cancel"][1].grid(row=2, column=0, columnspan=1, rowspan=1, padx=5, pady=5)
             self.tl_data["tl_fc_btn_save"][1].grid(row=2, column=1, columnspan=1, rowspan=1, padx=5, pady=5)
@@ -5255,12 +5288,16 @@ class App(ctk.CTk):
                 self.tl_data["tl_cc_vc_edit_tile"],
                 "state"
             )
-            if visible != "normal":
+            if visible != ctk.NORMAL:
                 self.tl_data["tl_cc_view_canvas"].itemconfigure(
                     self.tl_data["tl_cc_vc_edit_tile"],
-                    state="normal"
+                    state=ctk.NORMAL
                 )
                 self.tl_data["tl_cc_frame_btn_bar"].grid(row=3, column=0, columnspan=2, rowspan=1)
+
+                for key, parent, text, command in btn_data:
+                    if key != "tl_cc_btn_go_back":
+                        self.tl_data[key][1].configure(state=ctk.NORMAL)
 
             if tm:
                 print(f"click_dealer_tile", end="")
@@ -5710,10 +5747,10 @@ class App(ctk.CTk):
         )
 
         kwargs_btn = {
-            "bg": bg_cc_btn.hex_code,
-            "fg": fg_cc_btn.hex_code,
-            "activebackground": bg_cc_btn_hover.hex_code,
-            "activeforeground": fg_cc_btn_hover.hex_code,
+            "fg_color": bg_cc_btn.hex_code,
+            "text_color": fg_cc_btn.hex_code,
+            # "activebackground": bg_cc_btn_hover.hex_code,
+            # "activeforeground": fg_cc_btn_hover.hex_code,
             "width": 12
         }
         btn_data = [
@@ -5733,11 +5770,11 @@ class App(ctk.CTk):
         ]
         self.tl_data["tl_cc_frame_btn_bar"] = ctk.CTkFrame(
             self.tl_data["tl_frame"],
-            bg_color=bg_cc_main.hex_code
+            fg_color=bg_cc_main.hex_code
         )
 
         for btn_key, parent_frame, btn_text, callback in btn_data:
-            self.tl_data[btn_key] = tkinter_utility.button_factory(
+            self.tl_data[btn_key] = customtkinter_utility.button_factory(
                 self.tl_data[parent_frame],
                 tv_btn=btn_text,
                 command=callback,
@@ -5869,6 +5906,51 @@ class App(ctk.CTk):
         tl_cc_app_frame_colour_theme.grid(**grid_args_frame)
         lbl_ct.grid(row=0, column=0, **grid_args_label)
         tl_at_switch_colour_theme.grid(row=0, column=1, **grid_args_switch)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # Colour Coding Priority
+        tl_cc_app_frame_colour_code_priority = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_ccp, lbl_ccp = customtkinter_utility.label_factory(
+            tl_cc_app_frame_colour_code_priority,
+            tv_label="Colour-Coding Priority:",
+            kwargs_label=kwargs_lbl
+        )
+        # tl_at_switch_colour_code_priority = ctk.CTkSegmentedButton(
+        #     tl_cc_app_frame_colour_code_priority,
+        #     values=["Dealer", "Model"],
+        #     variable=self.tl_tv_switch_colour,
+        #     font=kwargs_lbl["font"]
+        # )
+        tl_cc_app_frame_colour_code_priority.grid(**grid_args_frame)
+        lbl_ccp.grid(row=0, column=0, **grid_args_label)
+        tl_at_switch_colour_code_priority.grid(row=0, column=1, **grid_args_switch)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         self.tl_cc_app.columnconfigure(0, weight=100)
         self.tl_cc_app.rowconfigure(0, weight=100)
