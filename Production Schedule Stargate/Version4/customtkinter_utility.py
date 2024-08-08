@@ -1,4 +1,5 @@
 import functools
+import math
 import random
 import tkinter
 from copy import deepcopy
@@ -26,8 +27,8 @@ VERSION = \
     """	
     General Utility Functions
     ans class for customtkinter
-    Version................1.08
-    Date.............2024-08-07
+    Version................1.09
+    Date.............2024-08-08
     Author(s)......Avery Briggs
     """
 
@@ -3686,6 +3687,8 @@ class PrioritySelection(ctk.CTkCanvas):
 
         self.n_rows = len(values)
         self.n_cols = 1
+        self.doing_animation = ctk.BooleanVar(self, value=False)
+        self.last_animated = ctk.Variable(self, value=None)
 
         if self.orientation == "horizontal":
             self.n_rows, self.n_cols = self.n_cols, self.n_rows
@@ -3711,7 +3714,7 @@ class PrioritySelection(ctk.CTkCanvas):
         for i, row in enumerate(self.gc):
             for j, bbox in enumerate(row):
                 idx = i if self.orientation == "vertical" else j
-                txt = self.values_og[]
+                txt = self.values_og[idx]
                 x0, y0, x1, y1 = bbox
                 w, h = x1 - x0, y1 - y0
                 fill = self.colour_bg_btns
@@ -3758,6 +3761,72 @@ class PrioritySelection(ctk.CTkCanvas):
 
         self.bind("<Button-1>", self.click_canvas)
         self.bind("<Button1-Motion>", self.motion_canvas)
+        self.bind("<ButtonRelease-1>", self.release_click_canvas)
+        self.doing_animation.trace_variable("w", self.update_doing_animation)
+
+    def update_doing_animation(self, *args):
+        print(f"DA Update -> {self.doing_animation.get()}")
+
+    def release_click_canvas(self, event):
+        x, y = event.x, event.y
+        dg_str = self.dragging.get()
+        print(f"RELEASE CLICK {x=}, {y=}, {dg_str=}")
+        dg = list() if not dg_str else list(dg_str)
+        la = self.last_animated.get()
+        print(f"RELEASE CLICK {x=}, {y=}, {dg=}, {la=}")
+        ori = self.orientation
+        t_anim_ms = 1250
+
+        bw, bh = self.width_btn, self.height_btn
+        bwh, bhh = bw / 2, bh / 2
+        # bbox_c = self.bbox("all")
+        bbox_c = (0, 0, self.width, self.height)
+        xc0, yc0, xc1, yc1 = bbox_c
+
+        for i, key in enumerate(dg):
+            i_, j_ = key
+            tag_rect = self.tags[key]["rect"]
+            tag_text = self.tags[key]["text"]
+            opt_idx = self.tags[key]["idx"]
+            txt = self.itemcget(tag_text, "text")
+            bbox = self.bbox(tag_rect)
+            mid_bbox = (
+                bbox[0] + ((bbox[2] - bbox[0]) / 2),
+                bbox[1] + ((bbox[3] - bbox[1]) / 2)
+            )
+            closest = None, None
+            for p, row in enumerate(self.gc):
+                for q, opt_bbox in enumerate(row):
+                    if (p, q) != key:
+                        mid_opt_bbox = (
+                            opt_bbox[0] + ((opt_bbox[2] - opt_bbox[0]) / 2),
+                            opt_bbox[1] + ((opt_bbox[3] - opt_bbox[1]) / 2)
+                        )
+                        d = math.sqrt(
+                            math.pow(mid_bbox[0] - mid_opt_bbox[0], 2)
+                            + math.pow(mid_bbox[1] - mid_opt_bbox[1], 2)
+                        )
+                        # print(f"{p=}, {q=}, {d=}")
+                        if (closest[0] is None) or (d < closest[1]):
+                            closest = (p, q), d
+
+            if closest[0]:
+                p_, q_ = closest[0]
+                opt_idx_new = p_ if ori == "vertical" else q_
+                txt_ = self.itemcget(self.tags[key]["text"], "text")
+                new_txt = self.itemcget(self.tags[closest[0]]["text"], "text")
+                print(f"SWAP WITH {opt_idx_new=}, drag_txt={txt_}, new_text={new_txt}")
+                # if (int(txt_), opt_idx) != la:
+                #     self.animate_swap(int(txt_), opt_idx, a_time_ms=t_anim_ms)
+                self.animate_swap(opt_idx, opt_idx_new, a_time_ms=t_anim_ms)
+
+            print(f"{opt_idx=}, {txt=}")
+            print(f"{closest=}")
+            print(f"CURR BBOX: {bbox}")
+            print(f"OG BBOX:   {self.gc[i_][j_]}")
+
+        self.dragging.set(list())
+        self.after(t_anim_ms, lambda: self.last_animated.set(""))
 
     def click_canvas(self, event):
         x, y = event.x, event.y
@@ -3787,6 +3856,8 @@ class PrioritySelection(ctk.CTkCanvas):
         x, y = event.x, event.y
         # dg_str = self.dragging.get()
         dg = self.dragging.get()
+        la = self.last_animated.get()
+        print(f"{la=}, {type(la)=}")
         ori = self.orientation
         # print(f"MOTION {x=}, {y=}, {dg_str=}")
         # dg = list() if not dg_str else list(dg_str)
@@ -3804,6 +3875,7 @@ class PrioritySelection(ctk.CTkCanvas):
             y + bhh
         )
         # print(f"{bbox_c=}, {bw=}, {bh=}")
+        print(f"{la=}")
 
         for i, key in enumerate(dg):
             i_, j_ = key
@@ -3837,19 +3909,88 @@ class PrioritySelection(ctk.CTkCanvas):
                 bbox_n[0] + bwh,
                 bbox_n[1] + bhh
             )
-            self.gc[i_][j_] = bbox_n.copy()
+            # self.gc[i_][j_] = bbox_n.copy()
 
+            print(f"{opt_idx=}, {bbox=}")
             if opt_idx > 0:
-                tag_left_div = self.tags[opt_idx - 1]["line"]
+                if (la is None) or (len(la) == 0):
+                    opt_idx_l = opt_idx - 1
+                else:
+                    opt_idx_l = la[0] - 1 if (la[0] != 1) else la[0]
+                print(f"{opt_idx_l=}")
+                tag_left_div = self.tags[opt_idx_l]["line"]
                 bbox_left = self.bbox(tag_left_div)
                 if ori == "horizontal":
-                    if x < bbox_left[0]:
+                    print(f"{x=}, {self.last_animated.get()=}")
+                    if x < (bbox_left[0] + bwh):
                         # crossed into other box
+                        if (not self.doing_animation.get()) and (la != (opt_idx_l, opt_idx_l + 1)):
+                            self.animate_swap(opt_idx_l, opt_idx_l + 1)
 
-
-            if opt_idx < len(self.values_og):
+            if opt_idx < (len(self.values_og) - 1):
                 tag_right_div = self.tags[opt_idx + 1]["line"]
                 bbox_right = self.bbox(tag_left_div)
+
+    def animate_swap(self, idx_0, idx_1, a_time_ms=1600, n_frames=60):
+        print(f"Animate {idx_0} -> {idx_1} in {n_frames} frames over {a_time_ms} ms")
+        # self.doing_animation.set(True)
+        self.last_animated.set((idx_0, idx_1))
+        ori = self.orientation
+
+        key0 = (idx_0, 0) if ori == "vertical" else (0, idx_0)
+        key1 = (idx_0, 0) if ori == "vertical" else (0, idx_1)
+        i0, j0 = key0
+        i1, j1 = key1
+
+        t_rect0 = self.tags[key0]["rect"]
+        t_text0 = self.tags[key0]["text"]
+        t_rect1 = self.tags[key1]["rect"]
+
+        bbox0 = self.gc[i0][j0]
+        bbox1 = self.gc[i1][j1]
+
+        bw, bh = self.width_btn, self.height_btn
+        bwh, bhh = bw / 2, bh / 2
+
+        mid0 = (bbox0[0] + bwh, bbox0[1] + bhh)
+        mid1 = (bbox1[0] + bwh, bbox1[1] + bhh)
+
+        xd = mid1[0] - mid0[0]
+        yd = 0  # assume no y change
+        xpf = xd / n_frames
+        ypf = yd / n_frames
+        spf = a_time_ms / n_frames
+
+        print(f"{key0=}, {key1=}, {xpf=}, {ypf=}, {spf=}")
+
+        print(f"{bbox0=}")
+        for i in range(n_frames):
+
+            bbox = [
+                bbox0[0] + (i * xpf),
+                bbox0[1] + (i * ypf),
+                bbox0[2] + (i * xpf),
+                bbox0[3] + (i * ypf)
+            ]
+            self.tag_raise(t_rect0)
+            self.tag_raise(t_text0)
+            self.after(
+                int((i + 1) * spf),
+                lambda: [
+                    self.coords(t_rect0, *bbox),
+                    self.coords(
+                        t_text0,
+                        *[
+                            bbox[0] + ((bbox[2] - bbox[0]) / 2),
+                            bbox[1] + ((bbox[3] - bbox[1]) / 2)
+                        ]
+                    )
+                ]
+            )
+
+            if i == (n_frames - 1):
+                print(f"{bbox=}")
+        self.after(int((n_frames + 1) * spf), lambda: self.doing_animation.set(False))
 
 
 
