@@ -317,6 +317,7 @@ WHERE
         ,[ShowCalendarOnly]
         ,[ColourTheme]
         ,[ColourCodingPriority]
+        ,[ColourCodingPriorityOnly]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -376,12 +377,19 @@ class App(ctk.CTk):
         self.margin_between_mc_and_calendar = 20
 
         self.default_colour_code_priority = ["dealer"]
+        self.default_colour_code_only_priority = True
         self.default_light_dark_theme = "Dark"
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
         self.default_show_left_widgets = "Yes"
         self.txt_non_prod_day = "Non-Prod Day"
 
+        self.colour_background_theme_green = Colour("#006940")
+        self.colour_background_theme_blue = Colour("#0066A9")
+        self.colour_background_theme_dark_blue = Colour("#003689")
+        self.colour_foreground_theme_green = Colour("#FFFFFF")
+        self.colour_foreground_theme_blue = Colour("#FFFFFF")
+        self.colour_foreground_theme_dark_blue = Colour("#FFFFFF")
         self.colour_foreground_testing_mode_label = Colour("#981415")
         self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
         self.colour_foreground_processing_label = Colour(JADE_GREEN)
@@ -543,6 +551,7 @@ class App(ctk.CTk):
         self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
         self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
         self.tl_tv_colour_code_priority = ctk.Variable(self, value=self.default_colour_code_priority)
+        self.tl_tv_colour_code_only_priority = ctk.BooleanVar(self, value=self.default_colour_code_only_priority)
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
         self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
         self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
@@ -768,8 +777,9 @@ class App(ctk.CTk):
             limit_to_list=False,
             allow_insert_ask=False,
             lock_result_col="SGQuote",
-            auto_grid=False,
-            show_index_column=False
+            auto_grid=False
+            # ,
+            # show_index_column=False
         )
         self.multi_combobox_orders.res_entry.unbind("<Return>", self.multi_combobox_orders.bind_return_res_entry)
         self.multi_combobox_orders.res_entry.bind("<Return>", self.submit_combobox_entry)
@@ -1066,6 +1076,15 @@ class App(ctk.CTk):
         if self.concats_multi_combobox_orders:
             self.concats_multi_combobox_orders = self.concats_rest_orders_to_multi_combobox + self.concats_multi_combobox_orders
             self.df_multi_combobox_data_orders = pd.concat(self.concats_multi_combobox_orders, ignore_index=True)
+            # self.df_multi_combobox_data_orders["Customer WO#"] = self.df_multi_combobox_data_orders[
+            #     "Customer WO#"].apply(lambda x: int(x) if not pd.isna(x) else x)
+            # self.df_multi_combobox_data_orders["Customer WO#"] = pd.to_numeric(self.df_multi_combobox_data_orders["Customer WO#"], errors='coerce').astype('Int64')
+            self.df_multi_combobox_data_orders["Customer WO#"] = (
+                self.df_multi_combobox_data_orders["Customer WO#"].apply(
+                    lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+                )
+            )
+            print(f"{self.df_multi_combobox_data_orders=}")
 
             # if mc_append_row:
             #     # add new row record to mc
@@ -1356,6 +1375,8 @@ class App(ctk.CTk):
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
         self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
+        self.tl_tv_colour_code_priority.trace_variable("w", self.update_switch_colour_code_priority)
+        self.tl_tv_colour_code_only_priority.trace_variable("w", self.update_switch_colour_code_only_priority)
         self.bind("<Control-z>", self.undo)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.tv_update_test_mode()
@@ -1553,6 +1574,32 @@ class App(ctk.CTk):
 
         self.reload_application()
 
+    def update_switch_colour_code_only_priority(self, *args):
+        prio = int(self.tl_tv_colour_code_only_priority.get())
+        # prio_s = 1 if (prio == 0) else 0  # logic is inverse for this column
+        prio_s = f"{prio}"
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ColourCodingPriorityOnly] = {prio_s} WHERE [UserName] = '{un}';"
+        sql = sql.format(prio_s=prio_s, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        self.colour_code()
+
+    def update_switch_colour_code_priority(self, *args):
+        tm = self.settings["TEST_MODE"].get()
+        pri = self.tl_tv_colour_code_priority.get()
+        pri_s = pri.lower()
+        # TODO 2024-08-13 1217 where this is a segmentedbutton, need to wrap the selection in a list
+        pri_s = str([pri_s]).replace("'", "\"")
+        if tm:
+            print(f"{pri=}")
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ColourCodingPriority] = '{pri_s}' WHERE [UserName] = '{un}';"
+        sql = sql.format(pri_s=pri_s, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        self.colour_code()
+
     def update_show_calendar_only(self, *args):
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
@@ -1567,7 +1614,6 @@ class App(ctk.CTk):
             self.canvas_width = self.canvas_width_og
         else:
             self.frame_left_controls.grid_forget()
-
             self.canvas_width = self.total_width
 
         self.canvas.configure(
@@ -1600,14 +1646,71 @@ class App(ctk.CTk):
         ctk.set_appearance_mode(ldt_o)
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
-    def update_colour_theme(self, *args):
+    def update_all_widgets_theme(self, parent=None):
+        tm = self.settings["TEST_MODE"].get()
         lc_o = self.tl_tv_switch_colour.get()
-        print(f"update_colour_theme 1 {lc_o=}")
+        if tm:
+            print(f"update_all_widgets_theme 1 {lc_o=}")
 
         lc = lc_o.replace(" ", "-").lower()
-        print(f"update_colour_theme 2 {lc=}")
+        if tm:
+            print(f"update_all_widgets_theme 2 {lc=}")
+
+        if lc == "dark-blue":
+            bg = self.colour_background_theme_dark_blue
+            fg = self.colour_foreground_theme_dark_blue
+        elif lc == "blue":
+            bg = self.colour_background_theme_blue
+            fg = self.colour_foreground_theme_blue
+        else:
+            bg = self.colour_background_theme_green
+            fg = self.colour_foreground_theme_green
+
+        for widget_name in [
+            "toggle_warranty",
+            "btn_if_goto"
+        ]:
+            widget = getattr(self, widget_name, None)
+            if widget is not None:
+                if tm:
+                    print(f"{widget=}")
+                    print(f"{self.nametowidget(widget)=}")
+                    print(f"{widget_name=}, fg={fg.hex_code}, bg={bg.hex_code}")
+                if isinstance(widget, ctk.CTkSegmentedButton):
+                    widget.configure(
+                        text_color=fg.hex_code,
+                        selected_color=bg.hex_code,
+                        selected_hover_color=bg.darkened(0.1).hex_code
+                    )
+                else:
+                    widget.configure(
+                        fg_color=bg.hex_code,
+                        text_color=fg.hex_code
+                    )
+
+
+        # if parent is None:
+        #     parent = self
+        #
+        # for child in parent.winfo_children():
+        #     # print(f"{child=}")
+        #     if isinstance(child, ctk.CTkBaseClass):  # Assuming all widgets inherit from CTkBaseClass
+        #         child.configure()  # Refresh widget appearance
+        #
+        #     self.update_all_widgets_theme(parent=child)
+
+    def update_colour_theme(self, *args):
+        tm = self.settings["TEST_MODE"].get()
+        lc_o = self.tl_tv_switch_colour.get()
+        if tm:
+            print(f"update_colour_theme 1 {lc_o=}")
+
+        lc = lc_o.replace(" ", "-").lower()
+        if tm:
+            print(f"update_colour_theme 2 {lc=}")
 
         ctk.set_default_color_theme(lc)
+        self.update_all_widgets_theme()
 
         if lc is None:
             lc = "NULL"
@@ -1637,12 +1740,12 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
         # this wont take effect until program restart, inform the user.
-        parent = self.tl_cc_app if (self.tl_cc_app is not None) else self
-        messagebox.showinfo(
-            title=self.title_application_short,
-            message=self.msg_please_restart_to_activate_colour_theme,
-            parent=parent
-        )
+        # parent = self.tl_cc_app if (self.tl_cc_app is not None) else self
+        # messagebox.showinfo(
+        #     title=self.title_application_short,
+        #     message=self.msg_please_restart_to_activate_colour_theme,
+        #     parent=parent
+        # )
 
     def tv_update_history(self, *args):
         tm = self.settings["TEST_MODE"].get()
@@ -1722,13 +1825,28 @@ class App(ctk.CTk):
             print(f"AFTER {list(self.history.get())=}")
 
     def colour_code(self, date=None, line=None):
+        tm = self.settings["TEST_MODE"].get()
         cc = self.settings["colour_coding"]
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         dcc = cc.get("dealer", dict())
         mcc = cc.get("model", dict())
-        # print(f"{cc=}\n{dcc=}\n{mcc=}")
+
+        default_cc = {
+            "bg": self.colour_tile_background.hex_code,
+            "fg": self.colour_tile_foreground.hex_code,
+            "outline": self.colour_tile_outline.hex_code,
+            "width": self.width_tile_outline,
+            "font": self.font_tile
+        }
+
+        pri_cc = self.tl_tv_colour_code_priority.get()
+        pri_cc_s = pri_cc.lower()
+        cc_if_not_top_priority = not self.tl_tv_colour_code_only_priority.get()
+
+        if tm:
+            print(f"\n{cc=}\n{dcc=}\n{mcc=}\n{pri_cc_s=}, {cc_if_not_top_priority=}")
         if date is None or line is None:
             # colour code every tile
             date_to_check = [d for d in self.list_dates]
@@ -1739,6 +1857,7 @@ class App(ctk.CTk):
 
         for date_ in date_to_check:
             for line_ in line_to_check:
+                kcc = dict()
                 tile_data = self.tiles.get(date_, {}).get(line_, {})
                 if tile_data:
                     tag = tile_data["tile"]
@@ -1746,14 +1865,38 @@ class App(ctk.CTk):
                     order = tile_data.get("order", None)
                     if order:
                         # print(f"{order} ", end="")
-                        dealer = self.df_orders.iloc[order]["InputField2"]
+                        df_i = self.df_orders.iloc[order]
+                        dealer = df_i["InputField2"]
+                        model = df_i["Model No"]
                         # print(f"{dealer} ", end="")
-                        if dealer in dcc:
-                            kcc = dcc[dealer]
-                        elif dealer in mcc:
-                            kcc = mcc[dealer]
+                        kcc_d = dcc.get(dealer, dict())
+                        kcc_m = mcc.get(model, dict())
+
+                        abc = f""
+                        if pri_cc_s == "model":
+                            abc += f"A"
+                            if kcc_m:
+                                abc += f"B"
+                                kcc = kcc_m
+                            elif cc_if_not_top_priority:
+                                abc += f"C"
+                                kcc = kcc_d
                         else:
-                            kcc = {}
+                            abc += f"D"
+                            if kcc_d:
+                                abc += f"E"
+                                kcc = kcc_d
+                            elif cc_if_not_top_priority:
+                                abc += f"F"
+                                kcc = kcc_m
+
+                        # if line_ == "ED1":
+                        if tm:
+                            print(f"{line_=}, {date_=}, {model=}, {dealer=}, {kcc=}")
+                            print(f"{abc=}, {kcc_m=}, {kcc_d=}")
+
+                        if not kcc:
+                            kcc = default_cc
 
                         if kcc:
                             bg = kcc.get("bg", None)
@@ -1828,6 +1971,8 @@ class App(ctk.CTk):
         self.tl_tv_switch_dark.set("System")
         self.tl_tv_switch_ask_monitors.set("No")
         self.tl_tv_switch_show_left_widgets.set("No")
+        self.tl_tv_colour_code_priority.set("model")
+        self.tl_tv_colour_code_only_priority.set(True)
 
         if tm:
             print(f"--\n{sql}")
@@ -1896,8 +2041,15 @@ class App(ctk.CTk):
                         colour_code_priority = [colour_code_priority]
                     else:
                         colour_code_priority = self.default_colour_code_priority
+            # TODO 2024-08-13 1207 where this is currently a segmented button, select only top priority
+            colour_code_priority = colour_code_priority[0]
+
+            colour_code_priority_only = df_pds_user["ColourCodingPriorityOnly"]
+            if pd.isna(colour_code_priority_only):
+                colour_code_priority_only = self.default_colour_code_only_priority
 
             print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
+            print(f"{colour_code_priority=}")
 
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
@@ -1907,7 +2059,9 @@ class App(ctk.CTk):
             self.tl_tv_switch_dark.set(light_dark_theme)
             self.tl_tv_switch_ask_monitors.set(ask_monitors)
             self.tl_tv_switch_show_left_widgets.set(show_left_widgets)
-            self.tl_tv_colour_code_priority.set(colour_code_priority)
+            self.tl_tv_colour_code_priority.set(colour_code_priority.title())
+            self.tl_tv_colour_code_only_priority.set(colour_code_priority_only)
+            self.update_colour_theme()
 
             return True
 
@@ -2648,6 +2802,9 @@ class App(ctk.CTk):
     def on_right_click_calendar(self, event) -> None:
         tm = self.settings["TEST_MODE"].get()
         ap = self.settings["allowed_to_publish"].get()
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
+        ap = ap and slw
         if tm:
             print(f"on_right_click_calendar")
         ex, ey = event.x, event.y
@@ -3603,6 +3760,7 @@ class App(ctk.CTk):
             print(f"CHOOSE FROM CHOICES\n{df=}")
         if not df.empty:
             self.tl_data["tl_dataframe_choice"] = ctk.CTkToplevel(self)
+            self.tl_data["tl_dataframe_choice"].title(self.title_application_short + " - Choose")
             self.tl_data["frame_tl"] = ctk.CTkFrame(self.tl_data["tl_dataframe_choice"])
             n_choices = df.shape[0]
             max_choices_per_col = 4
@@ -3855,6 +4013,7 @@ class App(ctk.CTk):
         wm, hm = 5, 5
         tl_name = "tl_shift_lines"
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
+        self.tl_data[tl_name].title(self.title_application_short + " - Shift Line")
 
         bg_sl_main = Colour("#153001")
         bg_sl_vc = Colour("#051001")
@@ -4960,7 +5119,7 @@ class App(ctk.CTk):
             print(f"{known_dealers=}, {known_colour_codes=}")
             print(f"{known_colour_codes_d=}, {known_colour_codes_m=}")
         self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self)
-        self.tl_data["tl_colour_code"].title(self.title_application_full)
+        self.tl_data["tl_colour_code"].title(self.title_application_short + " - Colour Code")
 
         self.tl_data["cc_changed"] = ctk.BooleanVar(self, value=False)
 
@@ -4990,7 +5149,9 @@ class App(ctk.CTk):
         colour_fg_top_button = Colour("#022562")
         colour_outline_top_button = Colour("#000000")
 
-        print(f"{n_models=}, {n_dealers=}, rows={n_btns_per_row}, cols={n_cols}, width={total_width_dealers}, height={total_height_dealers}")
+        if tm:
+            print(f"{n_models=}, {n_dealers=}, rows={n_btns_per_row}, cols={n_cols}, width={total_width_dealers}, height={total_height_dealers}")
+
         grid_cells = utility.grid_cells(
             total_width_dealers,
             n_cols,
@@ -5000,6 +5161,22 @@ class App(ctk.CTk):
             y_pad=m,
             r_type=list
         )
+
+        pri0 = self.tl_tv_colour_code_priority.get().title()
+        pri1 = "Dealer" if pri0 == "Model" else "Model"
+        cc_tp = self.tl_tv_colour_code_only_priority.get()
+        self.tl_data["tl_cc_cc_pri_lbl0"] = customtkinter_utility.label_factory(
+            self.tl_data["tl_colour_code"],
+            tv_label="Colour-Coding Priority:"
+        )
+        self.tl_data["tl_cc_cc_pri_lbl1"] = customtkinter_utility.label_factory(
+            self.tl_data["tl_colour_code"],
+            tv_label=f"{pri0}" if cc_tp else f"{pri0}, {pri1}",
+            kwargs_label={
+                "text_color": "#ABABAB"
+            }
+        )
+
         self.tl_data["tl_cc_tv_dm_option"] = ctk.StringVar(
             self.tl_data["tl_colour_code"],
             value="Dealers"
@@ -5117,9 +5294,11 @@ class App(ctk.CTk):
         def click_font_save(event=None):
             if tm:
                 print(f"click_font_save")
-            font = ctk.CTkFont(self.tl_data["tl_font_select_frame"].font)
-            if tm:
-                print(f"CHOSEN {font=}")
+            f1_tup, f1_obj = self.tl_data['tl_font_select_frame'].font
+            print(f"{f1_tup=}, {f1_obj=}")
+            font = ctk.CTkFont(*f1_tup)
+            # if tm:
+            print(f"CHOSEN {font=}")
                 # ctk_font = ctk.CTkFont(font)
                 # print(f"CHOSEN {ctk_font=}")
             if font:
@@ -5134,8 +5313,10 @@ class App(ctk.CTk):
                 #                  min(font_size, self.settings["max_font_size_tile"]))
                 font_size_ = clamp(self.settings["min_font_size_tile"], font_size, self.settings["max_font_size_tile"])
                 font.configure(size=font_size_)
-                if tm:
-                    print(f"1 {font_name=}, {font_size_=}, {font=}")
+                # if tm:
+                print(f"1 {font_name=}\n{font_size_=}\n{font=}")
+                print(f"{font.cget('family')=}")
+                print(f"{font.cget('size')=}")
                 # if font_size != font_size_:
                 #     font_obj = (font_name, font_size_)
                 # if tm:
@@ -5214,6 +5395,7 @@ class App(ctk.CTk):
                 "font"
             )
             self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
+            self.tl_data["tl_font_choice"].title(self.title_application_short + " - Font")
             # self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = customtkinter_utility.calc_geometry_tl(
                 500, 200, parent=self, rtype=dict
@@ -5234,6 +5416,8 @@ class App(ctk.CTk):
                 master=self.tl_data["tl_font_choice"],
                 callback=update_font_choice
             )
+            self.tl_data["tl_font_select_frame"].set_min_size(self.settings["min_font_size_tile"])
+            self.tl_data["tl_font_select_frame"].set_max_size(self.settings["max_font_size_tile"])
 
             self.tl_data["tl_fc_btn_cancel"] = customtkinter_utility.button_factory(
                 self.tl_data["tl_font_choice"],
@@ -5580,12 +5764,15 @@ class App(ctk.CTk):
                         state=state
                     )
 
+            click_top_btn(None)
+
         idx = 0
         opt_tags_dealers = {}
         opt_tags_models = {}
         opt_tags_app = {}
         t_template = ["tile", "text"]
         dm_ = self.tl_data["tl_cc_tv_dm_option"].get().lower().removesuffix("s")
+        # dm_ = self.tl_tv_colour_code_priority.get().lower()
         for i, gc_row in enumerate(grid_cells):
             for j, gc in enumerate(gc_row):
                 idx = ((i * len(gc_row)) + j)
@@ -5595,7 +5782,7 @@ class App(ctk.CTk):
                 if len(opt_tags_models) < len(known_models):
                     model = known_models[idx]
 
-                    k_model = known_colour_codes.get(dm_, {}).get(model, {})
+                    k_model = known_colour_codes.get("model", {}).get(model, {})
                     k_bg = k_model.get("bg", self.colour_tile_background.hex_code)
                     k_fg = k_model.get("fg", self.colour_tile_foreground.hex_code)
                     k_bd = k_model.get("outline", self.colour_tile_outline.hex_code)
@@ -5645,7 +5832,8 @@ class App(ctk.CTk):
                 if len(opt_tags_dealers) < len(known_dealers):
                     dealer = known_dealers[idx]
 
-                    k_dealer = known_colour_codes.get(dm_, {}).get(dealer, {})
+                    k_dealer = known_colour_codes.get("dealer", {}).get(dealer, {})
+                    print(f"{dm_=}, {dealer=}, {idx=}, {k_dealer=}")
                     k_bg = k_dealer.get("bg", self.colour_tile_background.hex_code)
                     k_fg = k_dealer.get("fg", self.colour_tile_foreground.hex_code)
                     k_bd = k_dealer.get("outline", self.colour_tile_outline.hex_code)
@@ -5785,9 +5973,15 @@ class App(ctk.CTk):
         update_dealers_models_option()
 
         # self.tl_data["tl_colour_code"]
-        self.tl_data["tl_cc_dm_option"].grid(row=0, column=0, rowspan=1, padx=20, pady=20)
-        self.tl_data["tl_cc_scroll_canvas"].grid(row=1, column=0, rowspan=2, sticky=ctk.NS)
-        self.tl_data["tl_frame"].grid(row=0, column=1, rowspan=3, sticky=ctk.NS)
+        self.tl_data["tl_colour_code"].columnconfigure(0, weight=15)
+        self.tl_data["tl_colour_code"].columnconfigure(1, weight=15)
+        self.tl_data["tl_colour_code"].columnconfigure(2, weight=35)
+        self.tl_data["tl_colour_code"].columnconfigure(3, weight=35)
+        self.tl_data["tl_cc_cc_pri_lbl0"][1].grid(row=0, column=0, rowspan=1, padx=20, pady=20, sticky=ctk.E)
+        self.tl_data["tl_cc_cc_pri_lbl1"][1].grid(row=0, column=1, rowspan=1, padx=20, pady=20, sticky=ctk.W)
+        self.tl_data["tl_cc_dm_option"].grid(row=0, column=2, rowspan=1, padx=20, pady=20)
+        self.tl_data["tl_cc_scroll_canvas"].grid(row=1, column=0, rowspan=2, columnspan=3, sticky=ctk.NS)
+        self.tl_data["tl_frame"].grid(row=0, column=3, rowspan=3, sticky=ctk.NS)
 
         # self.tl_data["tl_cc_scroll_canvas"]
         self.tl_data["tl_canvas"].grid(sticky=ctk.NS)
@@ -5817,6 +6011,7 @@ class App(ctk.CTk):
     def click_app_theme(self, *args):
         print(f"click_app_theme / settings")
         self.tl_cc_app = ctk.CTkToplevel(self)
+        self.tl_cc_app.title(self.title_application_short + " - Settings")
         self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
 
         kwargs_lbl = {
@@ -5928,15 +6123,50 @@ class App(ctk.CTk):
             tv_label="Colour-Coding Priority:",
             kwargs_label=kwargs_lbl
         )
-        # tl_at_switch_colour_code_priority = ctk.CTkSegmentedButton(
-        #     tl_cc_app_frame_colour_code_priority,
-        #     values=["Dealer", "Model"],
-        #     variable=self.tl_tv_switch_colour,
-        #     font=kwargs_lbl["font"]
-        # )
+        tl_at_switch_colour_code_priority = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_colour_code_priority,
+            values=["Dealer", "Model"],
+            variable=self.tl_tv_colour_code_priority,
+            font=kwargs_lbl["font"]
+        )
         tl_cc_app_frame_colour_code_priority.grid(**grid_args_frame)
         lbl_ccp.grid(row=0, column=0, **grid_args_label)
         tl_at_switch_colour_code_priority.grid(row=0, column=1, **grid_args_switch)
+
+        # Colour Coding Priority only switch
+        tl_cc_app_frame_colour_code_only_priority = ctk.CTkFrame(self.tl_cc_app)
+        tl_cc_lbl_colour_code_only_priority = customtkinter_utility.label_factory(
+            tl_cc_app_frame_colour_code_only_priority,
+            tv_label="Colour-code by top priority only:",
+            kwargs_label=kwargs_lbl
+        )
+        tl_cc_checkbox_colour_code_only_priority = customtkinter_utility.checkbox_factory(
+            tl_cc_app_frame_colour_code_only_priority,
+            tv_label="",
+            tv_checkbox=self.tl_tv_colour_code_only_priority
+        )
+        tl_cc_checkbox_colour_code_only_priority[2]._text_label.grid_forget()
+        tl_cc_checkbox_colour_code_only_priority[2]._bg_canvas.grid_forget()
+        tl_cc_checkbox_colour_code_only_priority[2]._canvas.grid_forget()
+        tl_cc_checkbox_colour_code_only_priority[2].grid_columnconfigure(0, weight=100)
+        tl_cc_checkbox_colour_code_only_priority[2].grid_columnconfigure(1, weight=0)
+        tl_cc_checkbox_colour_code_only_priority[2].grid_columnconfigure(2, weight=0)
+        tl_cc_checkbox_colour_code_only_priority[2]._bg_canvas.grid(row=0, column=0, columnspan=1, sticky=ctk.E)
+        tl_cc_checkbox_colour_code_only_priority[2]._canvas.grid(row=0, column=0, columnspan=1, sticky=ctk.E)
+        # tv_lbl_ccp, lbl_ccp = customtkinter_utility.label_factory(
+        #     tl_cc_app_frame_colour_code_only_priority,
+        #     tv_label="Colour-Coding Priority:",
+        #     kwargs_label=kwargs_lbl
+        # )
+        # tl_at_switch_colour_code_priority = ctk.CTkSegmentedButton(
+        #     tl_cc_app_frame_colour_code_only_priority,
+        #     values=["Dealer", "Model"],
+        #     variable=self.tl_tv_colour_code_priority,
+        #     font=kwargs_lbl["font"]
+        # )
+        tl_cc_app_frame_colour_code_only_priority.grid(**grid_args_frame)
+        tl_cc_lbl_colour_code_only_priority[1].grid(row=0, column=0, **grid_args_label)
+        tl_cc_checkbox_colour_code_only_priority[2].grid(row=0, column=1, **grid_args_switch)
 
 
 
@@ -5958,7 +6188,9 @@ class App(ctk.CTk):
             tl_cc_app_frame_light_dark_theme,
             tl_cc_app_frame_ask_monitors,
             tl_cc_app_frame_show_left_widgets,
-            tl_cc_app_frame_colour_theme
+            tl_cc_app_frame_colour_theme,
+            tl_cc_app_frame_colour_code_priority,
+            tl_cc_app_frame_colour_code_only_priority
         ]
         row_weight = math.floor(100 / len(question_frames))
         for i, f in enumerate(question_frames):
@@ -6159,7 +6391,7 @@ class App(ctk.CTk):
             self.tl_data[tl_name].destroy()
 
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
-        self.tl_data[tl_name].title(self.title_application_full)
+        self.tl_data[tl_name].title(self.title_application_short + " - Testing Mode")
 
         w, h = 350, 160
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
@@ -6573,7 +6805,7 @@ class App(ctk.CTk):
         # tile_data = self.tiles[date][line]
         tl_name = "tl_qi"
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
-        self.tl_data[tl_name].title(self.title_application_short)
+        self.tl_data[tl_name].title(self.title_application_short + " - Quote Info")
         self.tl_data[tl_name].geometry(customtkinter_utility.calc_geometry_tl(
             700, 350, parent=self
         ))
