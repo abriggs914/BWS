@@ -318,6 +318,7 @@ WHERE
         ,[ColourTheme]
         ,[ColourCodingPriority]
         ,[ColourCodingPriorityOnly]
+        ,[AdminPassword]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -345,6 +346,7 @@ class App(ctk.CTk):
         self.date_version = datetime.datetime(2024, 7, 16)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
         self.file_last_session_sql: str = "last_session_sql.sql"
+        self.default_admin_password = "trailer"
 
         self.app_state = {
             "hovered": [],
@@ -359,6 +361,8 @@ class App(ctk.CTk):
             "colour_coding": {},
             "TEST_MODE": ctk.BooleanVar(self, value=False),
             "allowed_to_publish": ctk.BooleanVar(self, value=False),
+            "admin_password": ctk.StringVar(self, value=self.default_admin_password),
+            "admin_password_entered": ctk.BooleanVar(self, value=False),
             "min_font_size_tile": 8,
             "max_font_size_tile": 18,
             "start_at_first_of_month": True,
@@ -375,14 +379,36 @@ class App(ctk.CTk):
         self.x_top_widgets = 10
         self.y_top_widgets = 5
         self.margin_between_mc_and_calendar = 20
+        self.max_tries_admin_password = 5
 
         self.default_colour_code_priority = ["dealer"]
         self.default_colour_code_only_priority = True
         self.default_light_dark_theme = "Dark"
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
+        self.default_allow_publish = "No"
         self.default_show_left_widgets = "Yes"
         self.txt_non_prod_day = "Non-Prod Day"
+
+        self.kwargs_lbl = {
+            "font": ("Calibri", 18),
+            "justify": ctk.LEFT
+        }
+        self.grid_args_frame = {
+            "padx": 40,
+            "pady": 15,
+            "sticky": ctk.NSEW
+        }
+        self.grid_args_switch = {
+            # "padx": 10,
+            "pady": 12,
+            "sticky": ctk.E
+        }
+        self.grid_args_label = {
+            # "padx": 20,
+            "pady": 12,
+            "sticky": ctk.W
+        }
 
         self.colour_background_theme_green = Colour("#006940")
         self.colour_background_theme_blue = Colour("#0066A9")
@@ -484,8 +510,17 @@ class App(ctk.CTk):
         self.msg_no_commit_test_mode = f"No changes saved because testing mode is enabled."
         self.msg_no_units_on_holiday = f"There are currently no units scheduled on a holiday for this period."
         self.msg_please_restart_to_activate_colour_theme = f"Please restart the application in order for your new colour theme to be applied."
+        self.msg_now_allowed_to_publish = f"You now have permission to publish your changes."
+        self.msg_now_not_allowed_to_publish = f"Your ability to publish has been deactivated."
+        self.msg_incorrect_admin_password_max_tries = f"You have reached the maximum number of attempts to login as an admin.{self.msg_please_do_not_rerun}."
+        self.msg_incorrect_admin_password = f"Incorrect admin password."
+        self.msg_blank_admin_password = f"Please enter a valid password."
 
+        self.tv_done_interact_tl = ctk.BooleanVar(self, value=True)
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
+        self.tl_ad: Optional[ctk.CTkToplevel] = None
+        self.tl_tu: Optional[ctk.CTkToplevel] = None
+        self.cb_admin_password_entered = None
 
         # print(f"{self.cget('bg')=}")
         self.menubar = tkinter.Menu(self)
@@ -495,46 +530,75 @@ class App(ctk.CTk):
             self.menubar,
             tearoff=False
         )
-        self.mb_file.add_command(
-            label="Check Units Planned On Non Prod Day",
-            command=lambda: self.check_for_units_on_holidays(include_all_holidays=False)
+        self.mb_tools = tkinter.Menu(
+            self.menubar,
+            tearoff=False
         )
-        self.mb_file.add_command(
-            label="Check Units Planned On Any Holiday",
-            command=lambda: self.check_for_units_on_holidays(include_all_holidays=True)
+        self.mb_help = tkinter.Menu(
+            self.menubar,
+            tearoff=False
         )
-        self.mb_file.add_command(
-            label="Go To Today",
-            command=self.click_mb_go_to_today
-        )
-        self.mb_file.add_command(
-            label="Shift Line",
-            command=self.click_mb_shift_line
-        )
-        self.mb_file.add_command(
-            label="Colour Code",
-            command=self.click_mb_colour_code
-        )
-        self.mb_file.add_command(
-            label="Testing Mode",
-            command=self.click_mb_testing_mode
-        )
-        self.mb_file.add_command(
-            label="Settings",
-            command=self.click_app_theme
-        )
-        self.mb_file.add_command(
-            label="Save",
-            command=self.click_mb_save
-        )
-        self.mb_file.add_separator()
-        self.mb_file.add_command(
-            label="Exit",
-            command=self.click_mb_exit
-        )
+        mb_tools = [
+            ("Check Units Planned On Non Prod Day", lambda: self.check_for_units_on_holidays(include_all_holidays=False)),
+            ("Check Units Planned On Any Holiday", lambda: self.check_for_units_on_holidays(include_all_holidays=True)),
+            ("Go To Today", self.click_mb_go_to_today),
+            ("Shift Line", self.click_mb_shift_line),
+            ("Colour Code", self.click_mb_colour_code)
+        ]
+        mb_tools.sort(key=lambda tup: tup[0])
+        for lbl, cmd in mb_tools:
+            if cmd is None:
+                self.mb_tools.add_separator()
+            else:
+                self.mb_tools.add_command(
+                    label=lbl,
+                    command=cmd
+                )
+
+        mb_file = [
+            ("Testing Mode", self.click_mb_testing_mode),
+            ("Settings", self.click_app_theme),
+            ("Save", self.click_mb_save),
+            ("Admin", self.click_mb_admin),
+            ("", None),
+            ("Exit", self.click_mb_exit)
+        ]
+        mb_file.sort(key=lambda tup: tup[0])
+        for lbl, cmd in mb_file:
+            if cmd is None:
+                self.mb_file.add_separator()
+            else:
+                self.mb_file.add_command(
+                    label=lbl,
+                    command=cmd
+                )
+
+        mb_help = [
+            ("Tutorial", self.click_mb_tutorial)
+        ]
+        mb_help.sort(key=lambda tup: tup[0])
+        for lbl, cmd in mb_help:
+            if cmd is None:
+                self.mb_help.add_separator()
+            else:
+                self.mb_help.add_command(
+                    label=lbl,
+                    command=cmd
+                )
+
         self.menubar.add_cascade(
             label="File",
             menu=self.mb_file,
+            underline=0
+        )
+        self.menubar.add_cascade(
+            label="Tools",
+            menu=self.mb_tools,
+            underline=0
+        )
+        self.menubar.add_cascade(
+            label="Help",
+            menu=self.mb_help,
             underline=0
         )
 
@@ -548,6 +612,10 @@ class App(ctk.CTk):
         self.tv_lbl_processing, self.lbl_processing = None, None
         self.tl_tv_switch_dark = ctk.StringVar(self, value=self.default_light_dark_theme)
         self.tl_tv_switch_colour = ctk.StringVar(self, value=self.default_colour_theme)
+        self.tl_tv_switch_allow_publish = ctk.StringVar(self, value=self.default_allow_publish)
+        self.tl_tv_count_tries_allow_publish = ctk.IntVar(self, value=0)
+        self.lbl_admin_password_attempts_remaining = (ctk.StringVar(self, value=f""), None)
+        self.entry_admin_password_attempts_remaining = None
         self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
         self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
         self.tl_tv_colour_code_priority = ctk.Variable(self, value=self.default_colour_code_priority)
@@ -1356,17 +1424,20 @@ class App(ctk.CTk):
         # # self.multi_combobox_window.lift()
 
         # bindings
+        self.bn_mousewheel_calendar = None
+        self.bn_motion_calendar = None
+        self.bn_lclickmotion_calendar = None
+        self.bn_lclickmotion_invisible_canvas = None
+        self.bn_lrelease_calendar = None
+        self.bn_lclick_calendar = None
+        self.bn_rrelease_calendar = None
+        self.bn_ctlz = None
+        self.bind_treeview_to_canvas()
+
+        # traces
+        self.tv_done_interact_tl.trace_variable("w", self.update_done_interact_tl)
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
         self.history.trace_variable("w", self.tv_update_history)
-        self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
-        self.canvas.bind("<Motion>", self.on_motion_calendar)
-        self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
-        self.invisible_canvas.bind("<B1-Motion>", self.on_left_click_root_canvas)
-        self.bind_treeview_to_canvas()
-        self.canvas.bind("<ButtonRelease-1>", self.on_left_click_release_calendar)
-        self.canvas.bind("<Button-1>", self.on_left_click_calendar)
-        self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
-        self.canvas.bind("<Control-z>", self.undo)
         self.multi_combobox_orders.res_tv_entry.trace_remove("write", self.multi_combobox_orders.trace_res_tv_entry)
         self.multi_combobox_orders.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
         self.multi_combobox_orders.trace_res_tv_entry = self.multi_combobox_orders.res_tv_entry.trace_add("write",
@@ -1374,10 +1445,13 @@ class App(ctk.CTk):
         self.tl_tv_switch_colour.trace_variable("w", self.update_colour_theme)
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
+        self.tl_tv_switch_allow_publish.trace_variable("w", self.update_allow_publish)
+        self.tl_tv_count_tries_allow_publish.trace_variable("w", self.update_count_tries_allow_publish)
         self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
         self.tl_tv_colour_code_priority.trace_variable("w", self.update_switch_colour_code_priority)
         self.tl_tv_colour_code_only_priority.trace_variable("w", self.update_switch_colour_code_only_priority)
-        self.bind("<Control-z>", self.undo)
+
+        self.tv_done_interact_tl.set(True)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.tv_update_test_mode()
         # self.bind("<Control-Z>", self.undo)
@@ -1619,6 +1693,67 @@ class App(ctk.CTk):
         self.canvas.configure(
             width=self.canvas_width
         )
+
+    def update_count_tries_allow_publish(self, *args):
+        na = self.max_tries_admin_password
+        count = self.tl_tv_count_tries_allow_publish.get()
+        if count >= na:
+            messagebox.showerror(
+                title=self.title_application_short,
+                message=self.msg_incorrect_admin_password_max_tries,
+                parent=(self.tl_ad if (self.tl_ad is not None) else self)
+            )
+            self.mb_file.entryconfig("Admin", state=ctk.DISABLED)
+            atl = 0
+        else:
+            atl = max(0, na - count)
+
+        self.lbl_admin_password_attempts_remaining[0].set(f"{atl} attempt{'' if atl == 1 else 's'} remaining")
+        col = gradient(min(na, count), na, "#EFEFEF", "#ED5858", rgb=False)
+        widget = self.lbl_admin_password_attempts_remaining[1]
+        if widget is not None:
+            print(f"{widget=}, {col=}")
+            try:
+                widget.configure(text_color=col)
+            except tkinter.TclError:
+                pass
+
+        if self.entry_admin_password_attempts_remaining is not None:
+            if atl == 0:
+                self.entry_admin_password_attempts_remaining[3].configure(state=ctk.DISABLED)
+
+    def update_allow_publish(self, *args):
+        ap = self.tl_tv_switch_allow_publish.get()
+        ap = 0 if (ap == "No") else 1
+        # ap = 0 if (ap == 1) else 0  # logic is inverse for this column
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [AllowPublish] = {ap} WHERE [UserName] = '{un}';"
+        sql = sql.format(ap=ap, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        if ap:
+            msg = self.msg_now_allowed_to_publish
+        else:
+            msg = self.msg_now_not_allowed_to_publish
+
+        messagebox.showinfo(
+            title=self.title_application_short,
+            message=msg,
+            parent=self.tl_ad if self.tl_ad is not None else self
+        )
+
+        if self.tl_ad is not None:
+            self.on_close_tl_ad()
+
+        if ap:
+            self.tl_tv_switch_show_left_widgets.set("Yes")
+            btn_state = ctk.NORMAL
+        else:
+            btn_state = ctk.DISABLED
+
+        self.mb_file.entryconfig("Save", state=btn_state)
+        self.mb_file.entryconfig("Settings", state=btn_state)
+        self.mb_tools.entryconfig("Shift Line", state=btn_state)
 
     def update_ask_monitors(self, *args):
         am = self.tl_tv_switch_ask_monitors.get()
@@ -1984,7 +2119,8 @@ class App(ctk.CTk):
 
         user = utility.get_windows_user(2)
         # use this for testing
-        # user = "bwsdomain.local\\mguest"
+        user = "bwsdomain.local\\mguest"
+        # user = "bwsdomain.local\\tmerrithew"
         self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
         if not user_name:
@@ -1992,6 +2128,10 @@ class App(ctk.CTk):
         self.app_state["user_domain"] = user_domain
         self.app_state["user_name"] = user_name[0] if isinstance(user_name, (list, tuple)) else user_name
         df = self.df_valid_updaters.loc[self.df_valid_updaters["UserName"].str.lower().str.strip() == user_name[0]]
+
+        df_admin = self.df_valid_updaters.loc[self.df_valid_updaters["UserName"].str.lower().str.strip() == "abriggs"].iloc[0]
+        admin_pwd = df_admin["AdminPassword"]
+        self.settings["admin_password"].set(admin_pwd)
 
         # valid_users = [un.lower().strip() for un in self.df_valid_updaters["UserName"].unique() if len(un)]
         if self.settings["TEST_MODE"].get():
@@ -2054,6 +2194,7 @@ class App(ctk.CTk):
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
             self.settings["allowed_to_publish"].set(allowed_to_publish)
+            self.tl_tv_switch_allow_publish.set("Yes" if allowed_to_publish else "No")
             ctk.set_appearance_mode(light_dark_theme)
             self.tl_tv_switch_colour.set(colour_theme)
             self.tl_tv_switch_dark.set(light_dark_theme)
@@ -2067,6 +2208,58 @@ class App(ctk.CTk):
 
         print(f" NOT FOUND")
         return False
+
+    def update_done_interact_tl(self, *args):
+        ditl = self.tv_done_interact_tl.get()
+
+        self.bind_widgets(ditl)
+
+        if not ditl:
+            # print(f"CHECK AGAIN")
+            self.after(250, self.update_done_interact_tl)
+
+        #
+        #     self.winfo_pointerxy()
+        #     state = self.winfo_pointerstate()
+        #
+        #     # Check if any mouse buttons are held down
+        #     if (state & 0x100) or (state & 0x200) or (state & 0x400):
+        #         print(f"CHECK AGAIN")
+        #         self.after(250, self.update_done_interact_tl)
+
+    def bind_widgets(self, do_bind: bool = True):
+        print(f"{do_bind=}")
+        if do_bind:
+            self.bn_mousewheel_calendar = self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
+            self.bn_motion_calendar = self.canvas.bind("<Motion>", self.on_motion_calendar)
+            self.bn_lclickmotion_calendar = self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
+            self.bn_lclickmotion_invisible_canvas = self.invisible_canvas.bind("<B1-Motion>",
+                                                                               self.on_left_click_root_canvas)
+            self.bn_lrelease_calendar = self.canvas.bind("<ButtonRelease-1>", self.on_left_click_release_calendar)
+            self.bn_lclick_calendar = self.canvas.bind("<Button-1>", self.on_left_click_calendar)
+            self.bn_rrelease_calendar = self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
+            self.bn_ctlz = self.bind("<Control-z>", self.undo)
+
+        else:
+            bindings = [
+                ("<MouseWheel>", "bn_mousewheel_calendar"),
+                ("<Motion>", "bn_motion_calendar"),
+                ("<B1-Motion>", "bn_lclickmotion_calendar"),
+                ("<ButtonRelease-1>", "bn_lrelease_calendar"),
+                ("<Button-1>", "bn_lclick_calendar"),
+                ("<ButtonRelease-3>", "bn_rrelease_calendar")
+            ]
+            for bind_seq, attr in bindings:
+                o_attr = getattr(self, attr, None)
+                if o_attr is not None:
+                    self.canvas.unbind(bind_seq, o_attr)
+                    setattr(self, attr, None)
+
+            if self.bn_ctlz is not None:
+                self.unbind("<Control-z>", self.bn_ctlz)
+                self.bn_ctlz = None
+
+        # print(f"{self.canvas.bind()=}")
 
     def grid_keys(self) -> tuple[str, str, str, str, str, str, str, str, str]:
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
@@ -2853,14 +3046,19 @@ class App(ctk.CTk):
                 print(f"NOTHING HOVERED")
 
     def on_left_click_release_calendar(self, event) -> None:
+        print(f"{event.widget=}")
+        if not self.tv_done_interact_tl.get():
+            print(f"NOT DONE WITH TL")
+            return
         tm = self.settings["TEST_MODE"].get()
+        st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
         date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
         # tile_data = self.get_tile_at_x_y(o_x, o_y)
-        if tm:
-            print(f"on_left_click_calendar, {dt=} {date=}, {line=}")
+        # if tm:
+        print(f"on_left_click_calendar, {dt=} {date=}, {line=}")
 
         if date is None or line is None:
             # print(f"NONE => {date=}, {line=}, {dt=}")
@@ -2903,6 +3101,11 @@ class App(ctk.CTk):
             self.clear_selected_tiles()
 
         else:
+
+            # if not st:
+            #     print(f"NOT SELECTED")
+            #     return
+
             if tm:
                 print(f"NOT DRAG")
             if date is None:
@@ -2930,17 +3133,19 @@ class App(ctk.CTk):
                     s_date, s_line = sel
                     o_id = self.tiles[s_date][s_line].get('order', None)
                     is_warranty = s_line in self.list_warranty_lines
-                    if is_warranty:
-                        war_job = self.df_multi_combobox_data_warranties[o_id]["Job"]
-                        if tm:
-                            print(f"\tSel: <{sel=}>, <{o_id=}>, <{war_job=}>")
-                    else:
-                        quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
-                        if tm:
-                            print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
-                    # self.app_state["selected"].append(sel)
                     if o_id:
+                        if is_warranty:
+                            war_job = self.df_multi_combobox_data_warranties[o_id]["Job"]
+                            if tm:
+                                print(f"\tSel: <{sel=}>, <{o_id=}>, <{war_job=}>")
+                        else:
+                            quote = self.df_orders.iloc[o_id]["OrdersV2_SGQuote"] if (o_id is not None) else None
+                            if tm:
+                                print(f"\tSel: <{sel=}>, <{o_id=}>, <{quote=}>")
+                        # self.app_state["selected"].append(sel)
                         orders.append(sel)
+                    else:
+                        print(f"no order")
                 self.update_selected_tiles()
                 if tm:
                     print(f"END SELECTED = {self.app_state['selected']=}")
@@ -3728,6 +3933,7 @@ class App(ctk.CTk):
             print(f"{event=}, {idx=}, {tag=}")
             print(f"{date=}, {line=}")
         self.tl_data["tl_dataframe_choice"].destroy()
+        self.grab_set()
         self.multi_combobox_orders.res_tv_entry.set(self.df_orders.iloc[idx]["OrdersV2_SGQuote"])
         self.flash_tile((date, line), mode="attention")
 
@@ -4817,6 +5023,7 @@ class App(ctk.CTk):
 
         def on_closing_shift_lines(*args):
             self.tl_data[tl_name].destroy()
+            self.grab_set()
 
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data[tl_name].geometry(tl_geom["geometry"])
@@ -6014,93 +6221,73 @@ class App(ctk.CTk):
         self.tl_cc_app.title(self.title_application_short + " - Settings")
         self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 600, parent=self))
 
-        kwargs_lbl = {
-            "font": ("Calibri", 18),
-            "justify": ctk.LEFT
-        }
-        grid_args_frame = {
-            "padx": 40,
-            "pady": 15,
-            "sticky": ctk.NSEW
-        }
-        grid_args_switch = {
-            # "padx": 10,
-            "pady": 12,
-            "sticky": ctk.E
-        }
-        grid_args_label = {
-            # "padx": 20,
-            "pady": 12,
-            "sticky": ctk.W
-        }
-
         # Light and Dark Theme
         tl_cc_app_frame_light_dark_theme = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_ldt, lbl_ldt = customtkinter_utility.label_factory(
             tl_cc_app_frame_light_dark_theme,
             tv_label="Theme:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_at_switch_dark_mode = ctk.CTkSegmentedButton(
             tl_cc_app_frame_light_dark_theme,
-            values=["Light", "Dark"],
+            values=["Light", "Dark", "System"],
             variable=self.tl_tv_switch_dark,
-            font=kwargs_lbl["font"]
+            font=self.kwargs_lbl["font"]
         )
-        tl_cc_app_frame_light_dark_theme.grid(**grid_args_frame)
-        lbl_ldt.grid(row=0, column=0, **grid_args_label)
-        tl_at_switch_dark_mode.grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_light_dark_theme.grid(**self.grid_args_frame)
+        lbl_ldt.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_dark_mode.grid(row=0, column=1, **self.grid_args_switch)
 
         # Ask Monitors
         tl_cc_app_frame_ask_monitors = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_am, lbl_am = customtkinter_utility.label_factory(
             tl_cc_app_frame_ask_monitors,
             tv_label="Ask Monitors on Start up:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_at_switch_ask_monitors = ctk.CTkSegmentedButton(
             tl_cc_app_frame_ask_monitors,
             values=["No", "Yes"],
             variable=self.tl_tv_switch_ask_monitors,
-            font=kwargs_lbl["font"]
+            font=self.kwargs_lbl["font"]
         )
-        tl_cc_app_frame_ask_monitors.grid(**grid_args_frame)
-        lbl_am.grid(row=0, column=0, **grid_args_label)
-        tl_at_switch_ask_monitors.grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_ask_monitors.grid(**self.grid_args_frame)
+        lbl_am.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_ask_monitors.grid(row=0, column=1, **self.grid_args_switch)
 
         # Show left Widgets
         tl_cc_app_frame_show_left_widgets = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_slw, lbl_slw = customtkinter_utility.label_factory(
             tl_cc_app_frame_show_left_widgets,
             tv_label="Show Left Control Widgets:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_at_switch_show_left_widgets = ctk.CTkSegmentedButton(
             tl_cc_app_frame_show_left_widgets,
             values=["No", "Yes"],
             variable=self.tl_tv_switch_show_left_widgets,
-            font=kwargs_lbl["font"]
+            font=self.kwargs_lbl["font"]
         )
-        tl_cc_app_frame_show_left_widgets.grid(**grid_args_frame)
-        lbl_slw.grid(row=0, column=0, **grid_args_label)
-        tl_at_switch_show_left_widgets.grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_show_left_widgets.grid(**self.grid_args_frame)
+        lbl_slw.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_show_left_widgets.grid(row=0, column=1, **self.grid_args_switch)
 
         # Colour Theme
         tl_cc_app_frame_colour_theme = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_ct, lbl_ct = customtkinter_utility.label_factory(
             tl_cc_app_frame_colour_theme,
             tv_label="App Accent Colour:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_at_switch_colour_theme = ctk.CTkSegmentedButton(
             tl_cc_app_frame_colour_theme,
             values=["Blue", "Green", "Dark Blue"],
             variable=self.tl_tv_switch_colour,
-            font=kwargs_lbl["font"]
+            font=self.kwargs_lbl["font"]
         )
-        tl_cc_app_frame_colour_theme.grid(**grid_args_frame)
-        lbl_ct.grid(row=0, column=0, **grid_args_label)
-        tl_at_switch_colour_theme.grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_colour_theme.grid(**self.grid_args_frame)
+        lbl_ct.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_colour_theme.grid(row=0, column=1, **self.grid_args_switch)
 
 
 
@@ -6121,24 +6308,24 @@ class App(ctk.CTk):
         tv_lbl_ccp, lbl_ccp = customtkinter_utility.label_factory(
             tl_cc_app_frame_colour_code_priority,
             tv_label="Colour-Coding Priority:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_at_switch_colour_code_priority = ctk.CTkSegmentedButton(
             tl_cc_app_frame_colour_code_priority,
             values=["Dealer", "Model"],
             variable=self.tl_tv_colour_code_priority,
-            font=kwargs_lbl["font"]
+            font=self.kwargs_lbl["font"]
         )
-        tl_cc_app_frame_colour_code_priority.grid(**grid_args_frame)
-        lbl_ccp.grid(row=0, column=0, **grid_args_label)
-        tl_at_switch_colour_code_priority.grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_colour_code_priority.grid(**self.grid_args_frame)
+        lbl_ccp.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_colour_code_priority.grid(row=0, column=1, **self.grid_args_switch)
 
         # Colour Coding Priority only switch
         tl_cc_app_frame_colour_code_only_priority = ctk.CTkFrame(self.tl_cc_app)
         tl_cc_lbl_colour_code_only_priority = customtkinter_utility.label_factory(
             tl_cc_app_frame_colour_code_only_priority,
             tv_label="Colour-code by top priority only:",
-            kwargs_label=kwargs_lbl
+            kwargs_label=self.kwargs_lbl
         )
         tl_cc_checkbox_colour_code_only_priority = customtkinter_utility.checkbox_factory(
             tl_cc_app_frame_colour_code_only_priority,
@@ -6164,9 +6351,9 @@ class App(ctk.CTk):
         #     variable=self.tl_tv_colour_code_priority,
         #     font=kwargs_lbl["font"]
         # )
-        tl_cc_app_frame_colour_code_only_priority.grid(**grid_args_frame)
-        tl_cc_lbl_colour_code_only_priority[1].grid(row=0, column=0, **grid_args_label)
-        tl_cc_checkbox_colour_code_only_priority[2].grid(row=0, column=1, **grid_args_switch)
+        tl_cc_app_frame_colour_code_only_priority.grid(**self.grid_args_frame)
+        tl_cc_lbl_colour_code_only_priority[1].grid(row=0, column=0, **self.grid_args_label)
+        tl_cc_checkbox_colour_code_only_priority[2].grid(row=0, column=1, **self.grid_args_switch)
 
 
 
@@ -6292,6 +6479,178 @@ class App(ctk.CTk):
             parent=parent
         ), has_history
 
+    def on_close_tl_ad(self, *args):
+        self.settings["admin_password_entered"].trace_remove("write", self.cb_admin_password_entered)
+        self.tl_ad.destroy()
+        self.grab_set()
+        self.after(250, lambda: self.tv_done_interact_tl.set(True))
+
+    def click_mb_admin(self, event=None):
+        self.tv_done_interact_tl.set(False)
+        self.entry_admin_password_attempts_remaining = None
+        self.tl_ad = ctk.CTkToplevel(self)
+        geom = customtkinter_utility.calc_geometry_tl(
+            800, 550, parent=self, rtype=dict
+        )
+        self.tl_ad.geometry(geom["str"])
+        self.tl_ad.title(self.title_application_short + " - Admin")
+
+        ad_pwd = self.settings["admin_password"].get()
+
+        def update_admin_pwd_entered(*args):
+            entered = self.settings["admin_password_entered"].get()
+            if entered:
+                tl_ad_frame_enter.grid_forget()
+                tl_ad_frame_entered.grid(row=1, column=0, **self.grid_args_frame, columnspan=2)
+
+            else:
+                tl_ad_frame_enter.grid(row=1, column=0, **self.grid_args_frame, columnspan=2)
+                tl_ad_frame_entered.grid_forget()
+
+                # self.tl_ad.rowconfigure(0, weight=33)
+                # self.tl_ad.rowconfigure(1, weight=33)
+                # self.tl_ad.rowconfigure(2, weight=33)
+
+        def click_cancel(*args):
+            self.on_close_tl_ad()
+
+        def click_submit(*args):
+            ma = self.max_tries_admin_password
+            ct = self.tl_tv_count_tries_allow_publish.get()
+            pwd = self.entry_admin_password_attempts_remaining[2].get()
+            print(f"{pwd=}, {ad_pwd=}")
+            if pwd:
+                if pwd == ad_pwd:
+                    self.settings["admin_password_entered"].set(True)
+                    print(f"accepted")
+                    ct -= 1
+                else:
+                    print(f"failure")
+                    if (ct + 1) < ma:
+                        messagebox.showerror(
+                            title=self.title_application_short,
+                            message=self.msg_incorrect_admin_password,
+                            parent=self.tl_ad
+                        )
+                    self.entry_admin_password_attempts_remaining[2].set("")
+                self.tl_tv_count_tries_allow_publish.set(ct + 1)
+            else:
+                messagebox.showerror(
+                    title=self.title_application_short,
+                    message=self.msg_blank_admin_password,
+                    parent=self.tl_ad
+                )
+
+        def entry_return(*args):
+            click_submit()
+
+        frame_top = ctk.CTkFrame(self.tl_ad)
+        frame_top.rowconfigure(0, weight=75)
+        frame_top.rowconfigure(1, weight=25)
+        frame_top.columnconfigure(0, weight=75)
+        frame_top.columnconfigure(1, weight=25)
+        lbl_title = customtkinter_utility.label_factory(
+            frame_top,
+            tv_label=f"Admin Menu",
+            kwargs_label={
+                "font": self.kwargs_lbl["font"]
+            }
+        )
+        self.update_count_tries_allow_publish()
+        self.lbl_admin_password_attempts_remaining = customtkinter_utility.label_factory(
+            frame_top,
+            tv_label=self.lbl_admin_password_attempts_remaining[0]
+        )
+        tl_ad_frame_enter = ctk.CTkFrame(self.tl_ad)
+        self.entry_admin_password_attempts_remaining = customtkinter_utility.entry_factory(
+            tl_ad_frame_enter,
+            tv_label=f"Enter password:",
+            kwargs_entry={
+                "show": "*",
+                "justify": ctk.CENTER
+            }
+        )
+        frame_btns = ctk.CTkFrame(tl_ad_frame_enter)
+        btn_cancel = customtkinter_utility.button_factory(
+            frame_btns,
+            tv_btn=f"cancel",
+            command=click_cancel
+        )
+        btn_submit = customtkinter_utility.button_factory(
+            frame_btns,
+            tv_btn=f"submit",
+            command=click_submit
+        )
+        self.cb_admin_password_entered = self.settings["admin_password_entered"].trace_variable("w", update_admin_pwd_entered)
+
+        # Allow Publish
+        tl_ad_frame_entered = ctk.CTkFrame(self.tl_ad)
+        tl_ad_frame_allow_publish = ctk.CTkFrame(tl_ad_frame_entered)
+        tv_lbl_ap, lbl_ap = customtkinter_utility.label_factory(
+            tl_ad_frame_allow_publish,
+            tv_label="Allow Publishing:",
+            kwargs_label=self.kwargs_lbl
+        )
+        tl_ad_switch_allow_publish = ctk.CTkSegmentedButton(
+            tl_ad_frame_allow_publish,
+            values=["No", "Yes"],
+            variable=self.tl_tv_switch_allow_publish,
+            font=self.kwargs_lbl["font"]
+        )
+
+        question_frames = [
+            tl_ad_frame_enter,
+            tl_ad_frame_entered,
+            tl_ad_frame_allow_publish
+        ]
+        row_weight = math.floor(100 / len(question_frames))
+        self.tl_ad.columnconfigure(0, weight=50)
+        self.tl_ad.columnconfigure(1, weight=50)
+        self.tl_ad.rowconfigure(0, weight=25)
+        self.tl_ad.rowconfigure(1, weight=75)
+        for i, f in enumerate(question_frames):
+            f.columnconfigure(0, weight=65, minsize=220)
+            f.columnconfigure(1, weight=35, minsize=100)
+            # self.tl_ad.rowconfigure(i, weight=row_weight)
+
+        # self.tl_ad
+        frame_top.grid(sticky=ctk.NSEW, columnspan=2)
+
+        # frame_top
+        lbl_title[1].grid(row=0, column=0, sticky=ctk.NSEW, columnspan=2)
+        self.lbl_admin_password_attempts_remaining[1].grid(row=1, column=1, sticky=ctk.SE, padx=12, pady=5)
+        # x_ = geom["w"] - (geom["w"] - 50)
+        # y_ = geom["h"] - (geom["h"] - 50)
+        # x_ = 5 + geom["x1"]
+        # y_ = 5 + geom["y1"]
+        # print(f"{x_=}, {y_=}, {geom=}")
+        # lbl_tries[1].place(x=x_, y=y_)
+
+        # tl_ad_frame_enter
+        self.entry_admin_password_attempts_remaining[1].grid(row=0, column=0, padx=12, pady=12, sticky=ctk.NSEW, columnspan=2)
+        self.entry_admin_password_attempts_remaining[3].grid(row=1, column=0, padx=12, pady=12, columnspan=2)
+        frame_btns.grid(row=2, column=0, padx=12, pady=12, columnspan=2)
+
+        # frame_btns
+        btn_cancel[1].grid(row=0, column=0, padx=12, pady=12)
+        btn_submit[1].grid(row=0, column=1, padx=12, pady=12)
+
+        # tl_ad_frame_entered
+        tl_ad_frame_allow_publish.grid(row=0, column=0, **self.grid_args_frame, columnspan=2)
+
+        # tl_ad_frame_allow_publish
+        lbl_ap.grid(row=0, column=0, **self.grid_args_label)
+        tl_ad_switch_allow_publish.grid(row=0, column=1, **self.grid_args_switch)
+
+        self.entry_admin_password_attempts_remaining[3].bind("<Return>", entry_return)
+        update_admin_pwd_entered()
+        self.tl_ad.grab_set()
+        # entry_pwd[3].focus_force()
+        self.tl_ad.protocol("WM_DELETE_WINDOW", self.on_close_tl_ad)
+        self.tl_ad.after(100, lambda: self.entry_admin_password_attempts_remaining[3].focus_force())
+        self.wait_window(self.tl_ad)
+        self.settings["admin_password_entered"].set(False)
+
     def click_mb_save(self, event=None):
         tm = self.settings["TEST_MODE"].get()
         if tm:
@@ -6389,6 +6748,7 @@ class App(ctk.CTk):
 
         def on_closing_tm(*args):
             self.tl_data[tl_name].destroy()
+            self.grab_set()
 
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
         self.tl_data[tl_name].title(self.title_application_short + " - Testing Mode")
@@ -6430,6 +6790,137 @@ class App(ctk.CTk):
         self.tl_data[tl_name].protocol("WM_DELETE_WINDOW", on_closing_tm)
         self.tl_data[tl_name].grab_set()
         self.wait_window(self.tl_data[tl_name])
+
+    def click_mb_tutorial(self, event=None):
+        self.tv_done_interact_tl.set(False)
+        self.tl_tu = ctk.CTkToplevel(self)
+        geom = customtkinter_utility.calc_geometry_tl(
+            800, 550, parent=self, rtype=dict
+        )
+        self.tl_tu.geometry(geom["str"])
+        self.tl_tu.title(self.title_application_short + " - Help")
+
+        # self.tl_tu.rowconfigure(0, weight=15)
+        self.tl_tu.rowconfigure(0, weight=85)
+        self.tl_tu.rowconfigure(1, weight=15)
+
+        self.tl_tu.columnconfigure(0, weight=15)
+        self.tl_tu.columnconfigure(1, weight=5)
+        self.tl_tu.columnconfigure(2, weight=80)
+
+        def update_showing(*args):
+            og = tv_showing_og.get()
+            new = tv_showing.get()
+            if og != new:
+                canvas_tile_contents.grid_forget()
+
+        tv_showing_og = ctk.StringVar(self.tl_tu, value="")
+        tv_showing = ctk.StringVar(self.tl_tu, value="")
+        tv_showing.trace_variable("w", update_showing)
+
+        def click_tile_contents(*args):
+            print(f"click_tile_contents")
+            tv_showing.set("click_tile_contents")
+            canvas_tile_contents.grid(row=0, column=0, sticky=ctk.NSEW)
+
+        def click_go_back(*args):
+            self.on_close_tl_tu(None)
+            return "break"
+
+        frame_btns = ctk.CTkFrame(self.tl_tu)
+        frame_window = ctk.CTkFrame(self.tl_tu)
+        btns = [
+            {"Tile Contents": {"btn": None, "cmd": click_tile_contents}}
+        ]
+        gc = tkinter_utility.grid_cells(
+            120, 1, geom["h"] * 0.6, len(btns)
+        )
+        for i, row in enumerate(gc):
+            for j, bbox in enumerate(row):
+                btn_lbl = list(btns[i].keys())[j]
+                btn_cmd = btns[i][btn_lbl]["cmd"]
+                btns[i][btn_lbl]["btn"] = customtkinter_utility.button_factory(
+                    frame_btns,
+                    tv_btn=btn_lbl,
+                    command=btn_cmd
+                )
+                btns[i][btn_lbl]["btn"][1].grid(row=i, column=0, sticky=ctk.NSEW)
+
+        canvas_tile_contents = ctk.CTkCanvas(
+            frame_window,
+            width=400,
+            height=400,
+            background="#C9C9C9"
+        )
+        tc_bbox_rect = (25, 50, 300, 300)
+        tc_tag_rect = self.draw_rect(
+            tc_bbox_rect,
+            fill=self.colour_tile_background.hex_code,
+            parent=canvas_tile_contents
+        )
+        tc_tags_rect = list()
+        tc_sample_texts = [
+            "SG101522",
+            "10001468",
+            "Pony Dump 3X17",
+            "Transit Trailer Limited",
+            "N"
+        ]
+        tc_gc_texts = tkinter_utility.grid_cells(
+            tc_bbox_rect[2] - tc_bbox_rect[0],
+            1,
+            tc_bbox_rect[3] - tc_bbox_rect[1],
+            len(tc_sample_texts),
+            x_0=tc_bbox_rect[0],
+            y_0=tc_bbox_rect[1]
+        )
+        for i, row in enumerate(tc_gc_texts):
+            for j, bbox in enumerate(row):
+                mx = bbox[0] + ((bbox[2] - bbox[0]) / 2)
+                my = bbox[1] + ((bbox[3] - bbox[1]) / 2)
+                tc_tags_rect.append(
+                    canvas_tile_contents.create_text(
+                        mx, my, text=tc_sample_texts[i],
+                        font=self.kwargs_lbl["font"]
+                    )
+                )
+
+        # TODO 2024-08-14 2103 add arrows to instruct what the texts mean
+
+        line_canvas = ctk.CTkCanvas(
+            self.tl_tu,
+            background="#FFFFFF",
+            width=4,
+            height=geom["h"] * 0.7,
+            borderwidth=0,
+            highlightcolor="#FFFFFF"
+        )
+
+        frame_ctl_btns = ctk.CTkFrame(self.tl_tu)
+        frame_ctl_btns.rowconfigure(0, weight=100)
+        frame_ctl_btns.columnconfigure(0, weight=100)
+        btn_go_back = customtkinter_utility.button_factory(
+            frame_ctl_btns,
+            tv_btn="go back",
+            command=click_go_back
+        )
+
+        frame_btns.grid(row=0, column=0)
+        line_canvas.grid(row=0, column=1)
+        frame_window.grid(row=0, column=2)
+        frame_ctl_btns.grid(row=1, column=0, columnspan=3, sticky=ctk.NSEW)
+        btn_go_back[1].grid(row=0, column=0, sticky=ctk.E, padx=20, pady=12)
+
+        self.tl_tu.grab_set()
+        self.tl_tu.protocol("WM_DELETE_WINDOW", self.on_close_tl_tu)
+        self.wait_window(self.tl_tu)
+
+    def on_close_tl_tu(self, event=None):
+        self.grab_release()
+        self.tl_tu.destroy()
+        # self.bind("<ButtonRelease-1>")
+        self.after(250, lambda: self.tv_done_interact_tl.set(True))
+        # return "break"
 
     def click_mb_exit(self, event=None):
         tm = self.settings["TEST_MODE"].get()
@@ -6691,7 +7182,8 @@ class App(ctk.CTk):
                     elif not self.settings["allowed_to_publish"].get():
                         messagebox.showerror(
                             title=self.title_application_short,
-                            message=self.msg_non_publish_user
+                            message=self.msg_non_publish_user,
+                            parent=self
                         )
 
                 # # TODO async
@@ -6799,6 +7291,7 @@ class App(ctk.CTk):
     def quit_cc_app(self):
         print(f"quit_cc_app")
         self.tl_cc_app.destroy()
+        self.grab_set()
 
     def show_quote_info_tl(self, date, line):
         tm = self.settings["TEST_MODE"].get()
@@ -6812,6 +7305,7 @@ class App(ctk.CTk):
 
         def close_tl(*args):
             self.tl_data[tl_name].destroy()
+            self.grab_set()
 
         self.tl_data["tl_qi_info_frame"] = tkinter_utility.InfoFrame(
             self.tl_data[tl_name],

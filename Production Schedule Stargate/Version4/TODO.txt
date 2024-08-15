@@ -36,3 +36,16 @@
     Add colour coding by model
 2024-08-02
     Correct Font selection in colour-coding menu
+
+2024-08-13
+    Admin Menu for non-publish viewers to gain permission if they know the password.
+2024-08-13
+    re-organize the menubar controls.
+2024-08-13
+    Add 'All' search radio back
+2024-08-13
+    Colour-coding by priority
+2024-08-13
+    Correct theme colour startup
+2024-08-13
+    Add 'System' back to light/dark mode switch
