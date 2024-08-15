@@ -1,6 +1,5 @@
 import copy
 import datetime
-import enum
 import io
 import math
 import random
@@ -108,7 +107,7 @@ WHERE
         B.[ProdSchedV2ID#]
         ,[O].[SGQuote] AS [OrdersV2_SGQuote]
         ,B.[WO#] AS [OrdersV2_WO#]
-        --,B.[JobStartDate]
+        ,B.[JobStartDate]
         ,B.[JobFinishDate]
         --,B.[dtprodschedv2ts]
         ,B.[JobStartLine]
@@ -338,21 +337,12 @@ def calculate_nth_business_day(date: datetime.datetime | pd.Timestamp, n_days: i
         return df.iloc[0]["NthDay"]
 
 
-class COMPANY(enum.Enum):
-    BWS: int = 0
-    STG: int = 1
-
-
-# Stargate units are scheduled from available date [Stargate].[dbo].[dtProductionScheduleV2].[JobFinishDate]
-# BWS units are scheduled by Start date 
-
-
 class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
 
-        self.date_version = datetime.datetime(2024, 8, 15)
+        self.date_version = datetime.datetime(2024, 7, 16)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
         self.file_last_session_sql: str = "last_session_sql.sql"
         self.default_admin_password = "trailer"
@@ -366,7 +356,6 @@ class App(ctk.CTk):
         self.history = ctk.Variable(value=list(), name="history")
         self.listbox_history = []
         self.settings = {
-            "mode_company": COMPANY.STG,
             "allow_multi_select": False,
             "colour_coding": {},
             "TEST_MODE": ctk.BooleanVar(self, value=False),
