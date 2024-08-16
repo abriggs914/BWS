@@ -1832,8 +1832,8 @@ class App(tkinter.Tk):
 
     # def scroll_calendar_surface(self, event):
     #     print(f"Scrolling: {event}")
-    #     first = self.calendar_surface.bbox(self.calendar_surface.tiles[0][0])
-    #     last = self.calendar_surface.bbox(self.calendar_surface.tiles[-1][-1])
+    #     first = self.calendar_surface.bbox(self.calendar_surface.tiles_stg[0][0])
+    #     last = self.calendar_surface.bbox(self.calendar_surface.tiles_stg[-1][-1])
     #     print(f"{first=}, {last=}")
     #     self.calendar_surface.xview_scroll(int(-1 * (event.delta / 120)), "units")
 

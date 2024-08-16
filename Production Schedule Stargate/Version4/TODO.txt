@@ -49,3 +49,7 @@
     Correct theme colour startup
 2024-08-13
     Add 'System' back to light/dark mode switch
+
+
+2024-08-16
+    BWS

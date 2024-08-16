@@ -394,10 +394,10 @@ def add_business_days(d, bd, holidays=None):
         holidays = []
     i = 0
     t = dt.datetime(d.year, d.month, d.day)
-    # print("holidays: " + str(holidays))
+    # print("holidays_stg: " + str(holidays_stg))
     while i < bd:
         t = t + dt.timedelta(days=1)
-        # print("t: " + str(t) + ", (t not in holidays): " + str(t not in holidays))
+        # print("t: " + str(t) + ", (t not in holidays_stg): " + str(t not in holidays_stg))
         if t.weekday() < 5 and t not in holidays:
             i += 1
     return t

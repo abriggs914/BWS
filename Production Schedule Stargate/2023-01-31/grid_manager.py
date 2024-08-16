@@ -127,7 +127,7 @@ class GridManager:
                     # widget.create_text(x, y + 10, text=str(ri))
                     # widget.create_text(x, y + 20, text=str(ci))
                     self.widgets_added.append((ri, ci, cs, rs))
-                    # print(f"\tIN {ri=}, {ci=}, rc={row_count}, cc={col_count}, nc={none_count}, {len(self.tiles)=}, {len(self.tiles[ri])=}, {args=}")
+                    # print(f"\tIN {ri=}, {ci=}, rc={row_count}, cc={col_count}, nc={none_count}, {len(self.tiles_stg)=}, {len(self.tiles_stg[ri])=}, {args=}")
                     for rii in range(ri, ri + rs):
                         for cii in range(ci, ci + cs):
                             # print(f"{rii=}, {cii=}")
@@ -140,13 +140,13 @@ class GridManager:
         self.row_idx += ri + 1
 
     def validate(self, r, c):
-        # print(f"A ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"A ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles_stg=}")
         self.max_rows = max(self.max_rows, r)
-        # print(f"B ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"B ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles_stg=}")
         self.max_cols = max(self.max_cols, c)
-        # print(f"C ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"C ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles_stg=}")
         self.max_rows = max(self.max_rows, r)
-        # print(f"D ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles=}")
+        # print(f"D ({r=}, {c=}), mr={self.max_rows}, mc={self.max_cols}, {self.tiles_stg=}")
         # self.grid_print()
 
     def grid_print(self):

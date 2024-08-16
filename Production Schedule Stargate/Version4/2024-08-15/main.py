@@ -29,7 +29,7 @@ import win32gui
 import win32con
 import win32api
 
-# TODO shrink weekend tiles, currently they are just exempt from placement actions. Takes too much space.
+# TODO shrink weekend tiles_stg, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
 # TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
 #   The hovered tile is too far to the right of the pointer.
@@ -704,18 +704,18 @@ class App(ctk.CTk):
             + ["Prod Date", "Delivery Date (Est)", "Sched Finish", "Sched Line"]
         self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.multi_combobox_columns)
         self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
-        # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
-        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
-        # print(f"{self.df_orders.dtypes=}")
+        # self.df_orders_stg = datetime_utility.replace_timestamp_datetime(self.df_orders_stg)
+        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders_stg)
+        # print(f"{self.df_orders_stg.dtypes=}")
 
         self.df_multi_combobox_data_warranties = connect(**SQL_WARRANTY_CLAIMS, do_show=tm, do_print=tm)
         self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.fillna("")
-        # # self.df_multi_combobox_data_warranties["WAR_WO"] = self.df_multi_combobox_data_warranties["WAR_WO"].apply(lambda val: int(val) if str(val).isnumeric() else val)
-        # self.df_multi_combobox_data_warranties["WAR_WO"] = self.df_multi_combobox_data_warranties["WAR_WO"].apply(
+        # # self.df_multi_combobox_data_warranties_stg["WAR_WO"] = self.df_multi_combobox_data_warranties_stg["WAR_WO"].apply(lambda val: int(val) if str(val).isnumeric() else val)
+        # self.df_multi_combobox_data_warranties_stg["WAR_WO"] = self.df_multi_combobox_data_warranties_stg["WAR_WO"].apply(
         #     lambda x:
         #     int(x) if str(x).isnumeric() else str(x)
         # )
-        # print(f"{self.df_multi_combobox_data_warranties['WAR_WO']=}")
+        # print(f"{self.df_multi_combobox_data_warranties_stg['WAR_WO']=}")
 
         if self.settings["TEST_MODE"].get():
             print(f"{self.df_multi_combobox_data_warranties['Job']=}")
@@ -737,7 +737,7 @@ class App(ctk.CTk):
         self.list_multi_combobox_warranties_viewable_col_widths = [
             self.list_multi_combobox_warranties_viewable_col_widths[k] for k in
             self.list_multi_combobox_warranties_viewable_cols.values()]
-        # self.df_multi_combobox_data_warranties = self.df_multi_combobox_data_warranties.rename(columns=self.list_multi_combobox_warranties_viewable_cols)
+        # self.df_multi_combobox_data_warranties_stg = self.df_multi_combobox_data_warranties_stg.rename(columns=self.list_multi_combobox_warranties_viewable_cols_stg)
 
         # TODO gracefully fail if DFs are empty
 
@@ -886,12 +886,12 @@ class App(ctk.CTk):
         print(f"{len(self.list_dates)=}")
         print(f"{len(self.tiles)=}")
         print(f"{self.tiles=}")
-        # print(f"{list(self.tiles)[:5]=}")
+        # print(f"{list(self.tiles_stg)[:5]=}")
 
         self.df_calendar = self.df_calendar.loc[
             (self.list_dates[0] <= self.df_calendar["C_Date"])
             & (self.df_calendar["C_Date"] <= self.list_dates[-1])
-            #  & (self.df_calendar["STAT Holiday"] == 1)
+            #  & (self.df_calendar_stg["STAT Holiday"] == 1)
             ]
         self.holidays = self.df_calendar.dropna(subset=["C_HolidayName"]).set_index("C_Date")["C_HolidayName"].to_dict()
         self.work_holidays = self.df_calendar.loc[
@@ -974,7 +974,7 @@ class App(ctk.CTk):
             }
         )
 
-        # rest of the tiles
+        # rest of the tiles_stg
         for i, row in enumerate(self.calc_grid_cells[1:]):
             print(f"{i=}, {row=}")
             for j, col in enumerate(row[1:]):
@@ -1105,9 +1105,9 @@ class App(ctk.CTk):
                     self.concats_rest_orders.append(new_df)
 
                     if self.settings["TEST_MODE"].get():
-                        # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
-                        # self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
-                        # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
+                        # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
+                        # self.df_rest_orders_stg = pd.concat([self.df_rest_orders_stg, new_df], ignore_index=True)
+                        # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
                         pass
 
                     if double:
@@ -1122,7 +1122,7 @@ class App(ctk.CTk):
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
-                # self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
+                # self.df_multi_combobox_data_orders_stg = pd.concat([self.df_multi_combobox_data_orders_stg, new_df], ignore_index=True)
                 self.concats_multi_combobox_orders.append(new_df)
 
         # TODO add self.concats_rest_orders to self.concats_multi_combobox_orders
@@ -1143,13 +1143,13 @@ class App(ctk.CTk):
                 new_df = pd.DataFrame(new_row_data)
                 self.concats_rest_orders_to_multi_combobox.append(new_df)
 
-        #     self.df_multi_combobox_data_orders = pd.concat(self.concats_rest_orders, ignore_index=True)
+        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders, ignore_index=True)
         if self.concats_multi_combobox_orders:
             self.concats_multi_combobox_orders = self.concats_rest_orders_to_multi_combobox + self.concats_multi_combobox_orders
             self.df_multi_combobox_data_orders = pd.concat(self.concats_multi_combobox_orders, ignore_index=True)
-            # self.df_multi_combobox_data_orders["Customer WO#"] = self.df_multi_combobox_data_orders[
+            # self.df_multi_combobox_data_orders_stg["Customer WO#"] = self.df_multi_combobox_data_orders_stg[
             #     "Customer WO#"].apply(lambda x: int(x) if not pd.isna(x) else x)
-            # self.df_multi_combobox_data_orders["Customer WO#"] = pd.to_numeric(self.df_multi_combobox_data_orders["Customer WO#"], errors='coerce').astype('Int64')
+            # self.df_multi_combobox_data_orders_stg["Customer WO#"] = pd.to_numeric(self.df_multi_combobox_data_orders_stg["Customer WO#"], errors='coerce').astype('Int64')
             self.df_multi_combobox_data_orders["Customer WO#"] = (
                 self.df_multi_combobox_data_orders["Customer WO#"].apply(
                     lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
@@ -1172,10 +1172,10 @@ class App(ctk.CTk):
         for i, row in enumerate(self.calc_grid_cells[:1]):
             for j, col in enumerate(row[1:]):
                 # print(f"{i=}, {j=}")
-                # prod_line = self.list_prod_lines[i]
+                # prod_line = self.list_prod_lines_stg[i]
                 key = "date_legend"
                 date = self.list_dates[j]
-                # is_holiday = date in self.holidays
+                # is_holiday = date in self.holidays_stg
                 holiday_name = self.holidays.get(date, None)
                 tile_colour = self.colour_tile_header_row_background
                 tile_text_colour = self.colour_tile_header_row_foreground
@@ -2513,7 +2513,7 @@ class App(ctk.CTk):
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
         col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
         # print(f"{col_legend=}")
-        # tiles = [dat["tile"] for dat in col_legend]
+        # tiles_stg = [dat["tile"] for dat in col_legend]
         home_tile = self.tiles["home"]["tile"]
 
         if self.stg_logo_image:
@@ -2553,7 +2553,7 @@ class App(ctk.CTk):
 
         # valid = date_in.weekday() < 5
         # if valid:
-        #     valid = date_in not in self.holidays
+        #     valid = date_in not in self.holidays_stg
         #     res = "valid" if valid else "holiday"
         # else:
         #     res = "weekend"
@@ -2599,7 +2599,7 @@ class App(ctk.CTk):
         Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
         """
         # srh = self.canvas_height_scroll_region
-        # lines = self.list_prod_lines
+        # lines = self.list_prod_lines_stg
         # p = min(y / srh, 0.999)  # prevent index out of bounds
         # # include the legend in space calculations, but exclude for indexing
         # i = int(p * (len(lines) + 1)) - 1
@@ -2740,12 +2740,12 @@ class App(ctk.CTk):
                     dat_galv = data.get("IsGalv")
                     dat_model = data.get("InputField1")
                     dat_cust_wo = data.get("Customer WO#")
-                    # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
+                    # new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_stg.columns,
                     if tm:
                         print(
                             f"self.multi_combobox_orders.tree_controller.viewable_column_names=\n\t{self.multi_combobox_orders.tree_controller.viewable_column_names}")
                         print(f"{[dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo]=}")
-                        # print(f"zip(self.multi_combobox_orders.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
+                        # print(f"zip(self.multi_combobox_orders_stg.tree_controller.viewable_column_names  [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])")
                     new_row_data = {
                         k: [v]
                         for k, v in zip(
@@ -2835,7 +2835,7 @@ class App(ctk.CTk):
                         return
 
             bbox = self.get_tile_bbox(date, line)
-            # order = self.tiles[date][line].get("order")
+            # order = self.tiles_stg[date][line].get("order")
             if is_warranty:
                 row = self.df_multi_combobox_data_warranties.iloc[df_orders_id]
             else:
@@ -2895,8 +2895,8 @@ class App(ctk.CTk):
                 # reconfigure the texts
                 if tm:
                     print(f"reconfigure the texts")
-                # order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
-                # quote_data = list(self.df_orders.iloc[order_id].iterrows())[0][1]
+                # order_id = self.df_orders_stg.loc[self.df_orders_stg["OrdersV2_SGQuote"] == quote].index
+                # quote_data = list(self.df_orders_stg.iloc[order_id].iterrows())[0][1]
                 # print(f"{quote_data=}")
 
                 # data = row[0]
@@ -2920,7 +2920,7 @@ class App(ctk.CTk):
                     else:
                         self.canvas.itemconfigure(txt, state="hidden")
 
-            # df_order_in_mc = self.multi_combobox_orders.tree_controller.df.loc[self.multi_combobox_orders.tree_controller.df["SGQuote"] == quote]
+            # df_order_in_mc = self.multi_combobox_orders_stg.tree_controller.df.loc[self.multi_combobox_orders_stg.tree_controller.df["SGQuote"] == quote]
             if is_warranty:
                 self.multi_combobox_warranties.delete_item(value=war_job, mode="all")
             else:
@@ -3002,13 +3002,13 @@ class App(ctk.CTk):
                 if tm:
                     print(f"{texts_1=}, {texts_2=}")
 
-                # swap df_ids_to_date_line
+                # swap df_ids_to_date_line_stg
                 if order_1 is not None:
                     self.df_ids_to_date_line[order_1] = date_line_2
                 if order_2 is not None:
                     self.df_ids_to_date_line[order_2] = date_line_1
 
-                # swap df_orders indexes
+                # swap df_orders_stg indexes
                 self.tiles[date_1][line_1]["order"] = order_2
                 self.tiles[date_2][line_2]["order"] = order_1
 
@@ -3031,7 +3031,7 @@ class App(ctk.CTk):
 
                 if not from_undo:
                     if order_1 or order_2:
-                        # one of these tiles is an order, record in the history and allow undos.
+                        # one of these tiles_stg is an order, record in the history and allow undos.
                         # self.history.append(
                         #     ("SWAP", date_line_1, date_line_2)
                         # )
@@ -3042,7 +3042,7 @@ class App(ctk.CTk):
 
                 if tm:
                     print(
-                        f"AFTER SWAP\n\tself.tiles[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
+                        f"AFTER SWAP\n\tself.tiles_stg[{date_1}][{line_1}]={self.tiles[date_1][line_1]}\n\tself.tiles_stg[{date_2}][{line_2}]={self.tiles[date_2][line_2]}")
 
         else:
             if tm:
@@ -3129,8 +3129,8 @@ class App(ctk.CTk):
 
         # TODO this does not support multi select
         drag_date, drag_line = dt[0] if dt else (None, None)
-        # drag_idx = self.tiles.get(drag_date, {}).get(drag_line, {}).get("order", None)
-        # drag_tile = self.tiles[dt[0][0]][dt[0][1]]["tile"]
+        # drag_idx = self.tiles_stg.get(drag_date, {}).get(drag_line, {}).get("order", None)
+        # drag_tile = self.tiles_stg[dt[0][0]][dt[0][1]]["tile"]
         orders = []
 
         if dt:
@@ -3170,7 +3170,7 @@ class App(ctk.CTk):
                 pass
             elif line is None:
                 # clicked the date select the entire column
-                # selected = [(date, line_) for line_ in self.list_prod_lines]
+                # selected = [(date, line_) for line_ in self.list_prod_lines_stg]
                 # TODO turned this off since multiselect is not supported.
                 pass
             elif date is None and line is None:
@@ -3360,7 +3360,7 @@ class App(ctk.CTk):
         is_warranty = self.tv_toggle_warranty.get() == "Warranty"
         if tm:
             print(f"\t{is_warranty=}")
-        # self.multi_combobox_orders.grid()
+        # self.multi_combobox_orders_stg.grid()
         self.tv_multi_combobox_drag_tile.set(False)
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         e_x, e_y = event.x, event.y
@@ -3379,7 +3379,7 @@ class App(ctk.CTk):
 
         # bbox_canvas = self.canvas.bbox()
         # bbox_if = self.info_frame.bbox()
-        # bbox_mc = self.multi_combobox_orders.bbox()
+        # bbox_mc = self.multi_combobox_orders_stg.bbox()
         bbox_canvas = list(self.frame_canvas.bbox(self.canvas))
         bbox_if = list(self.frame_info_frame.bbox(self.info_frame))
         bbox_mc = list(self.frame_multi_combobox.bbox(self.multi_combobox_orders))
@@ -3418,7 +3418,7 @@ class App(ctk.CTk):
                 date, line = date_line
                 if date.weekday() < 5:
                     # dropped in calendar and on a weekday
-                    # order_id = self.multi_combobox_orders.res_tv_entry.get()
+                    # order_id = self.multi_combobox_orders_stg.res_tv_entry.get()
 
                     if is_warranty:
 
@@ -3467,9 +3467,9 @@ class App(ctk.CTk):
                             return
 
                         quote = self.multi_combobox_orders.res_tv_entry.get()
-                        # order_id_1 = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index
-                        # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
-                        # order_id_2 = self.df_multi_combobox_data_orders.loc[self.df_multi_combobox_data_orders["SGQuote"] == quote].index
+                        # order_id_1 = self.df_orders_stg.loc[self.df_orders_stg["OrdersV2_SGQuote"] == quote].index
+                        # order_id_2 = self.df_multi_combobox_data_orders_stg.loc[self.df_multi_combobox_data_orders_stg["SGQuote"] == quote].index
+                        # order_id_2 = self.df_multi_combobox_data_orders_stg.loc[self.df_multi_combobox_data_orders_stg["SGQuote"] == quote].index
                         # order_id = order_id_2
                         order_id = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"] == quote].index[0]
                         if tm:
@@ -3682,7 +3682,7 @@ class App(ctk.CTk):
         # print(f"{x=}, {y=}, {o_x=}, {o_y=}, {date=}, {line=}, {st=}, {dt=}, {event=}")
         # self.app_state["hovered"].clear()
 
-        # don't overwrite the selected and dragging tiles with new hovers
+        # don't overwrite the selected and dragging tiles_stg with new hovers
         if (date, line) not in (st + dt):
             self.clear_hover_tiles()
             self.hover_tile(date, line)
@@ -3747,7 +3747,7 @@ class App(ctk.CTk):
         ow = self.width_tile_outline
         # print(f"{(st + dt)=}")
 
-        # ensure that the selected and dragging tiles are not blanked
+        # ensure that the selected and dragging tiles_stg are not blanked
         sub_ht = [key for key in ht if key not in (st + dt)]
 
         self.app_state["hovered"].clear()
@@ -3995,7 +3995,7 @@ class App(ctk.CTk):
 
     def motion_tl_tile(self, idx, tag, tidx=None, ttag=None):
         # a tile is being hovered, change its colour.
-        for tile in self.tl_data["tiles"]:
+        for tile in self.tl_data["tiles_stg"]:
             # print(f"{tile=}, {tag=}, {ttag=}")
             if tile == tag:
                 if ttag is not None:
@@ -4015,7 +4015,7 @@ class App(ctk.CTk):
 
         self.tl_data["bg"] = Colour("#006723")
         self.tl_data["fg"] = Colour("#101010")
-        self.tl_data["tiles"] = []
+        self.tl_data["tiles_stg"] = []
         self.tl_data["texts"] = []
 
         if tm:
@@ -4031,7 +4031,7 @@ class App(ctk.CTk):
             n_cols = choices_per_col
 
             if (n_rows < (n_cols / 2)) and (n_choices < (n_rows * n_cols)):
-                # too many tiles in 1 row, even it out
+                # too many tiles_stg in 1 row, even it out
                 n_cols -= 1
                 n_rows = (n_choices // n_cols) + 1
 
@@ -4064,7 +4064,7 @@ class App(ctk.CTk):
 
             idxs = df.index.tolist()
             if tm:
-                print(f"AA {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles']=}")
+                print(f"AA {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}")
                 print(f"{idxs=}")
             idx = 0
             for i in range(n_rows):
@@ -4082,7 +4082,7 @@ class App(ctk.CTk):
                     x0_, y0_, x1_, y1_, = gc[i][j]
                     if tm:
                         print(f"{w=}, {x0_=}, {y0_=}, {x1_=}, {y1_=}")
-                    self.tl_data["tiles"].append(
+                    self.tl_data["tiles_stg"].append(
                         self.draw_rect(
                             (
                                 x0_,
@@ -4114,7 +4114,7 @@ class App(ctk.CTk):
                         )
                         for k, txt in enumerate(texts_to_do)])
 
-                    tag = self.tl_data["tiles"][-1]
+                    tag = self.tl_data["tiles_stg"][-1]
                     tidx = len(self.tl_data["texts"]) - 1
                     self.tl_data["canvas_tl"].tag_bind(
                         tag,
@@ -4144,7 +4144,7 @@ class App(ctk.CTk):
                         break
 
             if tm:
-                print(f"BB {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles']=}")
+                print(f"BB {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}")
 
             self.tl_data["frame_tl"].pack()
             self.tl_data["canvas_tl"].pack()
@@ -4313,7 +4313,7 @@ class App(ctk.CTk):
             # ed_a = (ed + datetime.timedelta(days=n_days)) if (not ed_disabled) else ed
             ed_a = calculate_nth_business_day(ed, n_days) if (not ed_disabled) else ed
 
-            # data = self.df_orders.loc[self.df_orders[""]]
+            # data = self.df_orders_stg.loc[self.df_orders_stg[""]]
             print(f"{self.min_date=}, {self.max_date=}")
             print(f"{ed=}, {sd=}, {p_line=}")
             data = []
@@ -4336,7 +4336,7 @@ class App(ctk.CTk):
                             if date_line_data:
                                 order = date_line_data.get("order")
                                 if order:
-                                    # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
+                                    # df_o = self.df_orders_stg.loc[self.df_orders_stg["OrdersV2_SGQuote"]]
                                     df_o = self.df_orders.iloc[order]
                                     quote = df_o["OrdersV2_SGQuote"]
                                     date_fmt = "%Y-%m-%d"
@@ -4361,15 +4361,15 @@ class App(ctk.CTk):
                     # if (p_line != "All") and (line != p_line):
                     #     print(f"\tCONT{line}, {p_line}")
                     #     continue
-                    # date_tile_data = self.tiles.get(date, {})
+                    # date_tile_data = self.tiles_stg.get(date, {})
                     # date_line_data = date_tile_data.get(line)
                     # order = None
                     # quote = None
                     # if date_line_data:
                     #     order = date_line_data.get("order")
                     #     if order:
-                    #         # df_o = self.df_orders.loc[self.df_orders["OrdersV2_SGQuote"]]
-                    #         df_o = self.df_orders.iloc[order]
+                    #         # df_o = self.df_orders_stg.loc[self.df_orders_stg["OrdersV2_SGQuote"]]
+                    #         df_o = self.df_orders_stg.iloc[order]
                     #         quote = df_o["OrdersV2_SGQuote"]
                     #         date_fmt = "%Y-%m-%d"
                     #         nth_date = calculate_nth_business_day(date, n_days)
@@ -7443,7 +7443,7 @@ class App(ctk.CTk):
 
     def show_quote_info_tl(self, date, line):
         tm = self.settings["TEST_MODE"].get()
-        # tile_data = self.tiles[date][line]
+        # tile_data = self.tiles_stg[date][line]
         tl_name = "tl_qi"
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
         self.tl_data[tl_name].title(self.title_application_short + " - Quote Info")

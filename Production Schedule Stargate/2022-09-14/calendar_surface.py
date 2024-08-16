@@ -110,11 +110,11 @@ class CalendarSurface(tkinter.Canvas):
                         print(f"\t\t checking {unit=}")
                         if unit.SGQuote == quote_in:
                             return r, c
-        # print(f"Param 'quote_in' = <{quote_in}> not found in tiles.")
+        # print(f"Param 'quote_in' = <{quote_in}> not found in tiles_stg.")
         return None
 
     def init_tiles(self) -> list:
-        ts = self.tile_space  # space between tiles
+        ts = self.tile_space  # space between tiles_stg
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
         self.tile_width = tw
@@ -361,7 +361,7 @@ class CalendarSurface(tkinter.Canvas):
         return None
 
     def tile_to_rc(self, tag_in: int, extend=False) -> tuple[int, int] | None:
-        """Reverse look-up on self.tiles using canvas tag ids. Use extend to also search the text tags."""
+        """Reverse look-up on self.tiles_stg using canvas tag ids. Use extend to also search the text tags."""
         for r, tile_row in enumerate(self.tiles):
             for c, tile in enumerate(tile_row):
                 if tile == tag_in:
@@ -383,12 +383,12 @@ class CalendarSurface(tkinter.Canvas):
     def rc_bbox(self, rc):
         """Retrieve the bbox for the tile located at row r and column c."""
         return self.bbox(self.tiles[rc[0]][rc[1]])
-        # print(f"{self.tiles=}")
+        # print(f"{self.tiles_stg=}")
         # x, y = self.winfo_pointerxy()
         # print(f"{self.canvasx(x)=}, {self.canvasy(y)}")
         # x, y = xy
         # print(f"{self.bbox('all')=}, {x=}, {y=}, {self.canvasx(x)=}, {self.canvasy(y)=}")
-        # for tile_row in self.tiles:
+        # for tile_row in self.tiles_stg:
         #     # for col_idx in range(self.visible_cols.start, self.visible_cols.stop + 1):
         #     #     tile = tile_row[col_idx]
         #     for tile in tile_row:
@@ -463,7 +463,7 @@ class CalendarSurface(tkinter.Canvas):
             self.set_tile_with_unit(self.tiles[rc[0]][rc[1]], unit_in)
 
     def set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False, do_place: bool = True) -> None:
-        """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles."""
+        """Perform the same actions as self.set_tile_with_unit, but in addition it also maintains styling on tiles_stg."""
         print(f"set_tile_with_unit_from_tile(self, from_tag: int | str, to_tag: int | str, unit_in: Unit, do_assign: bool = False) -> None:")
         self.set_tile_with_unit(to_tag, unit_in, do_assign=do_assign, do_place=do_place)
         # old_r, old_c = self.tile_to_rc(from_tag)
@@ -572,7 +572,7 @@ class CalendarSurface(tkinter.Canvas):
                 # print(f"{rc=}")
                 if rc:
                     # r, c = rc
-                    # tag = self.tiles[r][c]
+                    # tag = self.tiles_stg[r][c]
                     new_avail_date = unit_o.Available_Date
                     line = unit_o.JobStartLine
                     # print(f"{new_avail_date=}")
@@ -654,7 +654,7 @@ class CalendarSurface(tkinter.Canvas):
 
                             # vs = [(vi[0].strftime("%X %f"), vi[1]) for vi in v]
                             print(f"HERE\t\t{unit_k}, {k=}, {len(v)=} {v=}, {t=}, {num=}, {val=}, {curr=}, {newest=}, {history['_init_placed'][-1][-1]=}")
-                            # # ignore tiles that have been placed by app.
+                            # # ignore tiles_stg that have been placed by app.
                             # if k == "_placed":
                             #     t2, tv = history["_init_placed"][-1]
                             #     if tv and (max(t, t2) - min(t, t2)).seconds < 1:

@@ -71,7 +71,7 @@ class CalendarSurface(tkinter.Canvas):
         return None
 
     def init_tiles(self) -> list:
-        ts = self.tile_space  # space between tiles
+        ts = self.tile_space  # space between tiles_stg
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
         self.tile_width = tw
@@ -199,7 +199,7 @@ class CalendarSurface(tkinter.Canvas):
         return tiles
 
     def init_tiles_nw(self) -> list:
-        ts = self.tile_space  # space between tiles
+        ts = self.tile_space  # space between tiles_stg
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
         self.tile_width = tw
@@ -328,7 +328,7 @@ class CalendarSurface(tkinter.Canvas):
         return tiles
 
     def shift_tiles(self):
-        ts = 3  # space between tiles
+        ts = 3  # space between tiles_stg
         tw = (self.canvas_width - ((self.n_visible_cols + 1) * ts)) / (self.n_visible_cols + 1)  # tile width
         th = (self.canvas_height - ((self.rows + 1) * ts)) / (self.rows + 1)  # tile height
 
@@ -338,7 +338,7 @@ class CalendarSurface(tkinter.Canvas):
         # col_offset = (vis_range.start * (tw + ts)) + ((tw + ts) / 2) + ts
         col_offset = (vis_range.start * (tw + ts)) + ts
 
-        # tiles = []
+        # tiles_stg = []
         for r in range(self.rows + 1):
             # row = []
             for c in range(self.cols + 1):
@@ -369,8 +369,8 @@ class CalendarSurface(tkinter.Canvas):
             #         text=f"{r=}, {c=}",
             #         fill="white"
             #     )
-            # tiles.append(row)
-        # return tiles
+            # tiles_stg.append(row)
+        # return tiles_stg
 
     def scroll_left(self) -> None:
         ts = self.tile_space
@@ -430,7 +430,7 @@ class CalendarSurface(tkinter.Canvas):
         print(f"{event}")
 
     def tile_at_xy(self, xy: tuple[int, int]) -> int | None:
-        # print(f"{self.tiles=}")
+        # print(f"{self.tiles_stg=}")
         # x, y = self.winfo_pointerxy()
         # print(f"{self.canvasx(x)=}, {self.canvasy(y)}")
         x, y = xy

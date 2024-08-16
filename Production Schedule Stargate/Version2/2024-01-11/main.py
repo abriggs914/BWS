@@ -331,13 +331,13 @@ class App(tkinter.Tk):
 
         self.df_prod_lines = connect(**SQL_USED_LINES)
         self.df_orders = connect(**SQL_DATED_STG_UNITS).fillna("")
-        self.data["multi_combobox_columns"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
-        self.data["info_frame_columns"] = ["US Sale"] + self.data["multi_combobox_columns"] + ["Prod Date", "Delivery Date"]
-        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.data["multi_combobox_columns"])
+        self.data["multi_combobox_columns_stg"] = ['SGQuote', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
+        self.data["info_frame_columns_stg"] = ["US Sale"] + self.data["multi_combobox_columns_stg"] + ["Prod Date", "Delivery Date"]
+        self.df_multi_combobox_data_orders = pd.DataFrame(columns=self.data["multi_combobox_columns_stg"])
         self.df_rest_orders = pd.DataFrame(columns=self.df_orders.columns)
-        # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
-        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
-        # print(f"{self.df_orders.dtypes=}")
+        # self.df_orders_stg = datetime_utility.replace_timestamp_datetime(self.df_orders_stg)
+        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders_stg)
+        # print(f"{self.df_orders_stg.dtypes=}")
 
         # TODO gracefully fail if DFs are empty
 
@@ -508,7 +508,7 @@ class App(tkinter.Tk):
 
         # print(f"{now=}\n{self.list_dates=}")
 
-        # rest of the tiles
+        # rest of the tiles_stg
         for i, row in enumerate(self.calc_grid_cells[1:]):
             for j, col in enumerate(row[1:]):
                 prod_line = self.list_prod_lines[i]
@@ -593,16 +593,16 @@ class App(tkinter.Tk):
                     new_row_data = {k: [v] for k, v in row.items()}
                     new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders.shape[0]])
                     concats_rest_orders.append(new_df)
-                    # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
-                    # self.df_rest_orders = pd.concat([self.df_rest_orders, new_df], ignore_index=True)
-                    # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders={self.df_rest_orders}")
+                    # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
+                    # self.df_rest_orders_stg = pd.concat([self.df_rest_orders_stg, new_df], ignore_index=True)
+                    # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
             else:
                 # add this order to the combobox for placing
                 print(f"\tCOMBOBOX")
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
-                # self.df_multi_combobox_data_orders = pd.concat([self.df_multi_combobox_data_orders, new_df], ignore_index=True)
+                # self.df_multi_combobox_data_orders_stg = pd.concat([self.df_multi_combobox_data_orders_stg, new_df], ignore_index=True)
                 concats_multi_combobox_orders.append(new_df)
 
         if concats_rest_orders:
@@ -622,7 +622,7 @@ class App(tkinter.Tk):
         for i, row in enumerate(self.calc_grid_cells[:1]):
             for j, col in enumerate(row[1:]):
                 # print(f"{i=}, {j=}")
-                # prod_line = self.list_prod_lines[i]
+                # prod_line = self.list_prod_lines_stg[i]
                 key = "date_legend"
                 date = self.list_dates[j]
                 tile_colour = self.data["colour_tile_header_row_background"]
@@ -744,7 +744,7 @@ class App(tkinter.Tk):
         # font="Arial 16 bold" key_width=20, val_width=40, width=80
         self.info_frame = tkinter_utility.InfoFrame(
             self.frame_info_frame,
-            labels=self.data["info_frame_columns"],
+            labels=self.data["info_frame_columns_stg"],
             auto_grid=True,
             header="Quote Information:",
             key_width=16,
@@ -765,8 +765,8 @@ class App(tkinter.Tk):
         # # multi-comb
         # mbobox.add_new_item(vals[0], keys[0], rest_values={k: v for k, v in zip(keys[1:], vals[1:])})
 
-        # self.data["width_multi_combobox"] = self.multi_combobox_orders.winfo_width()
-        # self.data["height_multi_combobox"] = self.multi_combobox_orders.winfo_height()
+        # self.data["width_multi_combobox"] = self.multi_combobox_orders_stg.winfo_width()
+        # self.data["height_multi_combobox"] = self.multi_combobox_orders_stg.winfo_height()
 
         if (geo := self.data["geometry"]["str"]) == "zoomed":
             self.state(geo)
@@ -888,7 +888,7 @@ class App(tkinter.Tk):
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
         col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
         # print(f"{col_legend=}")
-        # tiles = [dat["tile"] for dat in col_legend]
+        # tiles_stg = [dat["tile"] for dat in col_legend]
         home_tile = self.tiles["home"]["tile"]
 
         if self.data["stg_logo_image"]:
@@ -1011,7 +1011,7 @@ class App(tkinter.Tk):
         texts_1, texts_2 = self.tiles[date_1][line_1].get("texts"), self.tiles[date_2][line_2].get("texts")
         tile_1, tile_2 = self.tiles[date_1][line_1].get("tile"), self.tiles[date_2][line_2].get("tile")
 
-        # swap df_orders indexes
+        # swap df_orders_stg indexes
         self.tiles[date_1][line_1]["order"] = order_2
         self.tiles[date_2][line_2]["order"] = order_1
 
@@ -1029,7 +1029,7 @@ class App(tkinter.Tk):
 
         if not from_undo:
             if order_1 or order_2:
-                # one of these tiles is an order, record in the history and allow undos.
+                # one of these tiles_stg is an order, record in the history and allow undos.
                 self.data["history"].append(
                     ("SWAP", date_line_1, date_line_2)
                 )
@@ -1058,8 +1058,8 @@ class App(tkinter.Tk):
 
         # TODO this does not support multi select
         drag_date, drag_line = dt[0] if dt else (None, None)
-        # drag_idx = self.tiles.get(drag_date, {}).get(drag_line, {}).get("order", None)
-        # drag_tile = self.tiles[dt[0][0]][dt[0][1]]["tile"]
+        # drag_idx = self.tiles_stg.get(drag_date, {}).get(drag_line, {}).get("order", None)
+        # drag_tile = self.tiles_stg[dt[0][0]][dt[0][1]]["tile"]
 
         if dt:
             print(f"DRAG")
@@ -1075,36 +1075,36 @@ class App(tkinter.Tk):
             # if stat_idx:
             #     # an order is already in this spot, need to swap
             #     print(f"Swap")
-            #     # # stat_order_data = self.df_orders.iloc[stat_idx]
-            #     # # drag_order_data = self.df_orders.iloc[drag_idx]
+            #     # # stat_order_data = self.df_orders_stg.iloc[stat_idx]
+            #     # # drag_order_data = self.df_orders_stg.iloc[drag_idx]
             #     #
-            #     # # swap df_orders indexes
-            #     # self.tiles[date][line]["order"] = drag_idx
-            #     # self.tiles[drag_date][drag_line]["order"] = stat_idx
+            #     # # swap df_orders_stg indexes
+            #     # self.tiles_stg[date][line]["order"] = drag_idx
+            #     # self.tiles_stg[drag_date][drag_line]["order"] = stat_idx
             #     #
             #     # # swap texts for rendering
-            #     # self.tiles[date][line]["texts"] = drag_texts
-            #     # self.tiles[drag_date][drag_line]["texts"] = stat_texts
+            #     # self.tiles_stg[date][line]["texts"] = drag_texts
+            #     # self.tiles_stg[drag_date][drag_line]["texts"] = stat_texts
             #     #
             #     # # swap positions on canvas
             #     # self.canvas.coords(drag_tile, *stat_bbox)
             #     # self.canvas.coords(stat_tile, *drag_bbox)
             #     #
             #     # # swap the tile ids
-            #     # self.tiles[date][line]["tile"] = drag_tile
-            #     # self.tiles[drag_date][drag_line]["tile"] = stat_tile
+            #     # self.tiles_stg[date][line]["tile"] = drag_tile
+            #     # self.tiles_stg[drag_date][drag_line]["tile"] = stat_tile
             #     self.swap_tiles((drag_date, drag_line), (date, line))
             # else:
             #     # let go over a non-unit tile, place it here
             #     self.swap_tiles((drag_date, drag_line), (date, line))
-            #     # self.tiles[date][line]["order"] = drag_idx
-            #     # self.tiles[drag_date][drag_line]["order"] = stat_idx
-            #     # self.tiles[date][line]["texts"] = drag_texts
-            #     # self.tiles[drag_date][drag_line]["texts"] = stat_texts
+            #     # self.tiles_stg[date][line]["order"] = drag_idx
+            #     # self.tiles_stg[drag_date][drag_line]["order"] = stat_idx
+            #     # self.tiles_stg[date][line]["texts"] = drag_texts
+            #     # self.tiles_stg[drag_date][drag_line]["texts"] = stat_texts
             #     # self.canvas.coords(stat_tile, *drag_bbox)
             #     # self.canvas.coords(drag_tile, *stat_bbox)
-            #     # self.tiles[date][line]["tile"] = drag_tile
-            #     # self.tiles[drag_date][drag_line]["tile"] = stat_tile
+            #     # self.tiles_stg[date][line]["tile"] = drag_tile
+            #     # self.tiles_stg[drag_date][drag_line]["tile"] = stat_tile
 
             self.drag_tile(date, line)  # add the stationary tile for drag re-adjustment
             self.clear_drag_tiles()
@@ -1118,7 +1118,7 @@ class App(tkinter.Tk):
                 pass
             elif line is None:
                 # clicked the date select the entire column
-                # selected = [(date, line_) for line_ in self.list_prod_lines]
+                # selected = [(date, line_) for line_ in self.list_prod_lines_stg]
                 # TODO turned this off since multiselect is not supported.
                 pass
             elif date is None and line is None:
@@ -1171,7 +1171,7 @@ class App(tkinter.Tk):
                 # print(f"{region1=}, {column=}, {name=}, {bbox=}")
                 print(f"{region1=}, {bbox=}")
                 self.multi_combobox_canvas_drag_tile.configure(
-                    # width=self.multi_combobox_orders.winfo_screenwidth(),
+                    # width=self.multi_combobox_orders_stg.winfo_screenwidth(),
                     width=self.root_canvas.winfo_screenwidth(),
                     height=self.root_canvas.winfo_screenheight()
                 )
@@ -1265,7 +1265,7 @@ class App(tkinter.Tk):
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
         # self.data["state"]["hovered"].clear()
 
-        # don't overwrite the selected and dragging tiles with new hovers
+        # don't overwrite the selected and dragging tiles_stg with new hovers
         if (date, line) not in (st + dt):
             self.clear_hover_tiles()
             self.hover_tile(date, line)
@@ -1319,7 +1319,7 @@ class App(tkinter.Tk):
         ow = self.data["width_tile_outline"]
         # print(f"{(st + dt)=}")
 
-        # ensure that the selected and dragging tiles are not blanked
+        # ensure that the selected and dragging tiles_stg are not blanked
         sub_ht = [key for key in ht if key not in (st + dt)]
 
         for date, prod_line in sub_ht:
@@ -1456,7 +1456,7 @@ class App(tkinter.Tk):
                 "Customer WO#": series["Customer WO#"]
             }
             print(f"{dat_1=}")
-            for k in self.data["info_frame_columns"]:
+            for k in self.data["info_frame_columns_stg"]:
                 v = dat_1.get(k, f"'{k}'=?")
                 self.info_frame.change_value(k, v)
 

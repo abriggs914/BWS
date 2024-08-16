@@ -274,9 +274,9 @@ class App(tkinter.Tk):
 
         self.df_prod_lines = connect(**SQL_USED_LINES)
         self.df_orders = connect(**SQL_DATED_STG_UNITS)
-        # self.df_orders = datetime_utility.replace_timestamp_datetime(self.df_orders)
-        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders)
-        # print(f"{self.df_orders.dtypes=}")
+        # self.df_orders_stg = datetime_utility.replace_timestamp_datetime(self.df_orders_stg)
+        # dataframe_utility.convert_timestamp_to_datetime(self.df_orders_stg)
+        # print(f"{self.df_orders_stg.dtypes=}")
 
         # TODO gracefully fail if DFs are empty
 
@@ -398,7 +398,7 @@ class App(tkinter.Tk):
                     ]
                 })
 
-        # rest of the tiles
+        # rest of the tiles_stg
         for i, row in enumerate(gc[1:]):
             for j, col in enumerate(row[1:]):
                 prod_line = self.list_prod_lines[i]
@@ -433,8 +433,8 @@ class App(tkinter.Tk):
                 # self.canvas.tag_bind(tile, "<Motion>", self.on_motion)
 
 
-        # self.df_orders["Available Date"] = pd.to_datetime(self.df_orders["Available Date"], infer_datetime_format=True)
-        # self.df_orders["Available Date"] = pd.to_datetime(self.df_orders["Available Date"]).dt.to_pydatetime()
+        # self.df_orders_stg["Available Date"] = pd.to_datetime(self.df_orders_stg["Available Date"], infer_datetime_format=True)
+        # self.df_orders_stg["Available Date"] = pd.to_datetime(self.df_orders_stg["Available Date"]).dt.to_pydatetime()
 
         # loop orders and populate the calendar
         for i, row in self.df_orders.iterrows():
