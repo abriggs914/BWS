@@ -273,10 +273,10 @@ class PDF(FPDF):
     #                 else:
     #                     content_lst[i + 1].append(value)
     #
-    #     n_rows = len(contents)
+    #     n_rows_stg = len(contents)
     #     n_cols = len(header)
     #     # table_height = (2 * title_v_margin) + title_height + top_margin + bottom_margin + (
-    #     #             n_rows * cell_height) + header_height
+    #     #             n_rows_stg * cell_height) + header_height
     #
     #     # self.set_fill_color(*GREEN_2)
     #     # self.rect(x + table_count, y, w, table_height, "FD")
@@ -290,7 +290,7 @@ class PDF(FPDF):
     #         n_cols += 1
     #         header.insert(0, (row_name_col_lbl, 1))
     #         keys = [header[0]] + list(contents.keys())
-    #         for i in range(n_rows + 1):
+    #         for i in range(n_rows_stg + 1):
     #             if i == 0:
     #                 content_lst[0].insert(0, header[0][0])
     #             else:
@@ -352,7 +352,7 @@ class PDF(FPDF):
     #     i = 0
     #     rh = 0
     #     self.set_xy(ocx, ocy)
-    #     while i in range(n_rows + 1):
+    #     while i in range(n_rows_stg + 1):
     #
     #         if i == 0:
     #             self.set_font(*header_font)
@@ -579,7 +579,7 @@ class PDF(FPDF):
     #     print("self.w:", self.w, "width:", width)
     #     print("header:", header)
     #     # print("\n##\n" + "\n".join(list(map(str, content_lst))) + "\n##\n")
-    #     print("(N x M): ({} x {})".format(n_rows, n_cols))
+    #     print("(N x M): ({} x {})".format(n_rows_stg, n_cols))
     #     # print("(H x W): ({} x {})".format(height, width))
     #     print("(CH x CW): ({} x {})".format(cell_height, cell_width))
     #
@@ -686,7 +686,7 @@ class PDF(FPDF):
         n_rows = len(contents)
         n_cols = len(header)
         # table_height = (2 * title_v_margin) + title_height + top_margin + bottom_margin + (
-        #             n_rows * cell_height) + header_height
+        #             n_rows_stg * cell_height) + header_height
 
         # self.set_fill_color(*GREEN_2)
         # self.rect(x + table_count, y, w, table_height, "FD")

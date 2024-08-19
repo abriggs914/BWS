@@ -303,14 +303,14 @@ class App(tkinter.Tk):
 
         self.data.update({
             "canvas_width_scroll_region": self.data["tile_width"] * n_cols,
-            "canvas_height_scroll_region": self.data["tile_height"] * n_rows,
+            "canvas_height_scroll_region_stg": self.data["tile_height"] * n_rows,
         })
 
         canvas_background = self.data["colour_calendar_background"]
         self.calc_grid_cells = utility.grid_cells(
             self.data["canvas_width_scroll_region"],
             n_cols,
-            self.data["canvas_height_scroll_region"],
+            self.data["canvas_height_scroll_region_stg"],
             n_rows,
             r_type=list
         )
@@ -325,7 +325,7 @@ class App(tkinter.Tk):
                 0,
                 0,
                 self.data["canvas_width_scroll_region"],
-                self.data["canvas_height_scroll_region"]
+                self.data["canvas_height_scroll_region_stg"]
             )
         )
         self.scroll_bar_x = tkinter.Scrollbar(
@@ -445,7 +445,7 @@ class App(tkinter.Tk):
                     "tile": tile,
                     "texts": []
                     # "texts": [
-                    #     self.canvas.create_text(
+                    #     self.canvas_stg.create_text(
                     #         int(col[0] + (self.data["tile_width"] * 0.5)),
                     #         int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
                     #         text=txt,
@@ -455,7 +455,7 @@ class App(tkinter.Tk):
                     # ]
                 })
                 self.canvas.tag_bind(tile, "<Motion>", self.on_motion_calendar)
-                # self.canvas.tag_bind(tile, "<Motion>", self.on_motion)
+                # self.canvas_stg.tag_bind(tile, "<Motion>", self.on_motion)
 
         print(f"--C {self.tiles[pd.Timestamp(2023,12,27)]['ED1']=}")
         print(f"--C {self.tiles[pd.Timestamp(2023,12,28)]['ED1']=}")
@@ -538,12 +538,12 @@ class App(tkinter.Tk):
         self.scroll_bar_x.grid(**{s: "ew"})
 
     def scroll_x_calendar(self, *args):
-        # change the canvas xview when the scrollbar is interacted with
+        # change the canvas_stg xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
         self.canvas.xview(*args)
 
     def on_mousewheel_calendar(self, event):
-        # move the canvas xview when mousewheel scrolled
+        # move the canvas_stg xview when mousewheel scrolled
         self.canvas.xview_scroll(int(-1*(event.delta/120)), "units")
 
     def get_date_bucket(self, x):
@@ -559,7 +559,7 @@ class App(tkinter.Tk):
 
     def get_prod_line_bucket(self, y):
         """Return the CLOSEST date to a given x position on the calendar"""
-        srh = self.data["canvas_height_scroll_region"]
+        srh = self.data["canvas_height_scroll_region_stg"]
         lines = self.list_prod_lines
         p = min(y / srh, 0.999)  # prevent index out of bounds
         # include the legend in space calculations, but exclude for indexing
@@ -573,7 +573,7 @@ class App(tkinter.Tk):
         tile = self.canvas.find_closest(ox, oy)
         date = self.get_date_bucket(ox)
         line = self.get_prod_line_bucket(oy)
-        # self.canvas.itemcget()
+        # self.canvas_stg.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
         # self.data["state"]["hovered"].clear()
         self.clear_hover_tiles()
@@ -618,7 +618,7 @@ class App(tkinter.Tk):
                     outline=o.hex_code
                 )
             for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
+                # print(f"CONFIG: {self.canvas_stg.itemcget(text, 'text')=}")
                 self.canvas.itemconfigure(
                     text,
                     fill=f.hex_code,

@@ -54,7 +54,7 @@ class App(tkinter.Tk):
         self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
         self.tv_btn_export_sql, self.button_export_sql = button_factory(self.frame_top_bar, tv_btn="<", kwargs_btn={"command": self.click_undo})
 
-        # canvas and calendar objects
+        # canvas_stg and calendar objects
         can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
         self.frame_calendar_a = tkinter.Frame(self)
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)
@@ -174,7 +174,7 @@ class App(tkinter.Tk):
         tile = self.calendar_surface.tile_at_xy((x, y))
         print(f"\t{x=}, {y=}, {tile=}")
 
-        # drag tile, hover tile canvas tags and row columns
+        # drag tile, hover tile canvas_stg tags and row columns
         dt = self.drag_tile
         ddt = self.dragging_details
         ht = self.calendar_surface.tile_at_xy((x, y))

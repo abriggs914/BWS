@@ -12,7 +12,7 @@ from colour_utility import *
 
 
 # Main grid program for STG Production scheduling tool.
-# supports scrolling and the first attempt at hovering using canvas objects active listeners
+# supports scrolling and the first attempt at hovering using canvas_stg objects active listeners
 # Needs to apply a new method so as to not differentiate between tile and text.
 # Needs click and drag event handlers.
 
@@ -421,7 +421,7 @@ class App(tkinter.Tk):
                 self.tiles[date][prod_line].update({
                     "tile": tile  #,
                     # "texts": [
-                    #     self.canvas.create_text(
+                    #     self.canvas_stg.create_text(
                     #         int(col[0] + (self.data["tile_width"] * 0.5)),
                     #         int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
                     #         text=txt,
@@ -430,7 +430,7 @@ class App(tkinter.Tk):
                     #     for k, txt, in enumerate(to_do_texts)
                     # ]
                 })
-                # self.canvas.tag_bind(tile, "<Motion>", self.on_motion)
+                # self.canvas_stg.tag_bind(tile, "<Motion>", self.on_motion)
 
 
         # self.df_orders_stg["Available Date"] = pd.to_datetime(self.df_orders_stg["Available Date"], infer_datetime_format=True)
@@ -505,12 +505,12 @@ class App(tkinter.Tk):
         self.scroll_bar_x.grid(**{s: "ew"})
 
     def scroll_x_calendar(self, *args):
-        # change the canvas xview when the scrollbar is interacted with
+        # change the canvas_stg xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
         self.canvas.xview(*args)
 
     def on_mousewheel_calendar(self, event):
-        # move the canvas xview when mousewheel scrolled
+        # move the canvas_stg xview when mousewheel scrolled
         self.canvas.xview_scroll(int(-1*(event.delta/120)), "units")
 
     # def on_motion(self, event):

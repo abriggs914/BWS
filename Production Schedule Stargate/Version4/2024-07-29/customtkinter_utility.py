@@ -934,7 +934,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         self.weeks_per_month = 6 + 1  # for the month label
         self.weeks_per_month += (1 if self.show_weekdays else 0)  # offset for weekday labels
         self.weeks_per_month -= (1 if self.year is None else 0)  # offset for weekday labels
-        # self.n_rows: int = ((self.weeks_per_month + int(self.show_weekdays)) * (12 // self.months_per_row)) + 1
+        # self.n_rows_stg: int = ((self.weeks_per_month + int(self.show_weekdays)) * (12 // self.months_per_row)) + 1
         self.n_rows: int = (self.weeks_per_month * (12 // self.months_per_row)) + int(self.show_weekdays)
         self.n_cols: int = 7 * self.months_per_row
         self.w_canvas: int = width
@@ -1928,7 +1928,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         "FFBF90"
 
         # too slow
-        # for r in range(self.n_rows):
+        # for r in range(self.n_rows_stg):
         #     for c in range(self.n_cols):
         #         self.itemconfigure(
         #             self.dict_canvas_tags[(r, c)]["rect"],
@@ -3735,10 +3735,10 @@ def demo_2():
     # slider_rows = ctk.CTkSlider(
     #     win,
     #     from_=0,
-    #     to=n_rows,
+    #     to=n_rows_stg,
     #     variable=var_n_rows,
     #     command=update_slider_rows,
-    #     number_of_steps=n_rows
+    #     number_of_steps=n_rows_stg
     # )
     # btn_rows = ctk.CTkButton(
     #     win,

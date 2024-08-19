@@ -49,7 +49,7 @@ class App(tkinter.Tk):
         self.tv_btn_save_changes, self.button_save_changes = button_factory(self.frame_top_bar, tv_btn="save", kwargs_btn={"command": self.click_save_changes})
         self.tv_label_debug_app_state, self.debug_label_entry_app_state, self.tv_debug_app_state, self.debug_entry_app_state = entry_factory(self.frame_top_bar, tv_label="App State:", tv_entry=self.app_state, kwargs_entry={"state": "readonly"})
 
-        # canvas and calendar objects
+        # canvas_stg and calendar objects
         can_w, can_h = int(self.window_width * 0.75), int(self.window_height * 0.65)
         self.frame_calendar_a = tkinter.Frame(self)
         self.frame_calendar_b = tkinter.Frame(self.frame_calendar_a)

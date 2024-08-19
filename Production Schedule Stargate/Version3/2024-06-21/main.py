@@ -723,7 +723,7 @@ class App(tkinter.Tk):
                     tile_outline = self.colour_tile_outline
                     tile_outline_width = self.width_tile_outline
                     font = self.font_tile
-                # tile = self.canvas.create_rectangle(
+                # tile = self.canvas_stg.create_rectangle(
                 #     *col,
                 #     fill=tile_colour.hex_code,
                 #     outline=tile_outline.hex_code,
@@ -846,7 +846,7 @@ class App(tkinter.Tk):
                 # self.df_multi_combobox_data_orders_stg = pd.concat([self.df_multi_combobox_data_orders_stg, new_df], ignore_index=True)
                 self.concats_multi_combobox_orders.append(new_df)
 
-        # TODO add self.concats_rest_orders to self.concats_multi_combobox_orders
+        # TODO add self.concats_rest_orders_stg to self.concats_multi_combobox_orders_stg
         if self.concats_rest_orders:
             self.df_rest_orders = pd.concat(self.concats_rest_orders, ignore_index=True)
 
@@ -864,7 +864,7 @@ class App(tkinter.Tk):
                 new_df = pd.DataFrame(new_row_data)
                 self.concats_rest_orders_to_multi_combobox.append(new_df)
 
-        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders, ignore_index=True)
+        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
         if self.concats_multi_combobox_orders:
             self.concats_multi_combobox_orders = self.concats_rest_orders_to_multi_combobox + self.concats_multi_combobox_orders
             self.df_multi_combobox_data_orders = pd.concat(self.concats_multi_combobox_orders, ignore_index=True)
@@ -906,7 +906,7 @@ class App(tkinter.Tk):
                 if key not in self.tiles[date]:
                     self.tiles[date][key] = dict()
                 self.tiles[date][key].update({
-                    # "tile": self.canvas.create_rectangle(
+                    # "tile": self.canvas_stg.create_rectangle(
                     #     *col,
                     #     fill=tile_colour.hex_code,
                     #     outline=tile_outline.hex_code,
@@ -958,7 +958,7 @@ class App(tkinter.Tk):
                         print(f"ADDING SUB KEY {prod_line=}")
                     self.tiles[key][prod_line] = dict()
                 self.tiles[key][prod_line].update({
-                    # "tile": self.canvas.create_rectangle(
+                    # "tile": self.canvas_stg.create_rectangle(
                     #     *col,
                     #     fill=tile_colour.hex_code,
                     #     outline=tile_outline.hex_code,
@@ -1069,7 +1069,7 @@ class App(tkinter.Tk):
         self.tv_multi_combobox_drag_tile = tkinter.BooleanVar(self, value=False)
 
         # transparent method
-        # canvas
+        # canvas_stg
         # https://stackoverflow.com/questions/53021603/how-to-make-a-tkinter-canvas-background-transparent
         self.set_invisible_canvas()
 
@@ -1140,7 +1140,7 @@ class App(tkinter.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.tv_update_test_mode()
         # self.bind("<Control-Z>", self.undo)
-        # self.canvas.bind("<Control-z>", self.undo)
+        # self.canvas_stg.bind("<Control-z>", self.undo)
         # self.bind("<Ctrl-z>", self.undo)
 
         if self.settings["TEST_MODE"].get():
@@ -1417,13 +1417,13 @@ class App(tkinter.Tk):
         self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
 
     def scroll_x_calendar(self, *args) -> None:
-        # change the canvas xview when the scrollbar is interacted with
+        # change the canvas_stg xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
         self.canvas.xview(*args)
         self.redraw_legend()
 
     def on_mousewheel_calendar(self, event) -> None:
-        # move the canvas xview when mousewheel scrolled
+        # move the canvas_stg xview when mousewheel scrolled
         self.canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
         self.redraw_legend()
 
@@ -1464,23 +1464,23 @@ class App(tkinter.Tk):
             bbox = self.canvas.bbox(tile)
             y_t = bbox[1] + bw
             # print(f"{bbox=}, {x_1=}, {y_1=}, {x_2=}, {y_2=}, {x_1=}, {y_t=}, {x_1 + tw=}, {y_t + th=}")
-            # self.canvas.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
+            # self.canvas_stg.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
             self.canvas.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
             self.canvas.tag_raise(tile)
 
             for txt in dat.get("texts", []):
-                # print(f"{self.canvas.itemcget(txt, 'text')=}")
+                # print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
                 self.canvas.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
                 self.canvas.tag_raise(txt)
 
-        # print(f"{self.canvas.winfo_viewable()=}")
-        # print(f"{self.canvas.xview()=}")
+        # print(f"{self.canvas_stg.winfo_viewable()=}")
+        # print(f"{self.canvas_stg.xview()=}")
 
     def get_date_bucket(self, x: int | float) -> pd.Timestamp | None:
         """
         Return the CLOSEST date to a given x position on the calendar
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
         srw = self.canvas_width_scroll_region
         dates = self.list_dates
@@ -1497,7 +1497,7 @@ class App(tkinter.Tk):
         """
         Return the CLOSEST prod line to a given y position on the calendar
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
         srh = self.canvas_height_scroll_region
         lines = self.list_prod_lines
@@ -1510,22 +1510,22 @@ class App(tkinter.Tk):
 
     def get_date_line_at_x_y(self, x: int | float, y: int | float) -> tuple[pd.Timestamp, str] | tuple[None, None]:
         """
-        Get the date and line for a given x and y on the canvas.
+        Get the date and line for a given x and y on the canvas_stg.
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # tile = self.canvas.find_closest(x, y)
+        # tile = self.canvas_stg.find_closest(x, y)
         date = self.get_date_bucket(x)
         line = self.get_prod_line_bucket(y)
         return date, line
 
     def get_tile_at_x_y(self, x: int | float, y: int | float) -> dict:
         """
-        Get the tile data for a given x and y on the canvas.
+        Get the tile data for a given x and y on the canvas_stg.
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # tile = self.canvas.find_closest(x, y)
+        # tile = self.canvas_stg.find_closest(x, y)
         date, line = self.get_date_line_at_x_y(x, y)
         return self.tiles.get(date, {}).get(line, {})
 
@@ -1542,7 +1542,7 @@ class App(tkinter.Tk):
         if i_line is None or i_date is None:
             return None
 
-        # return self.calc_grid_cells[i_date][i_line]
+        # return self.calc_grid_cells_stg[i_date][i_line]
         return self.calc_grid_cells[i_line][i_date]
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
@@ -1875,7 +1875,7 @@ class App(tkinter.Tk):
             self.tiles[date_1][line_1]["texts"] = texts_2
             self.tiles[date_2][line_2]["texts"] = texts_1
 
-            # swap positions on canvas
+            # swap positions on canvas_stg
             self.canvas.coords(tile_1, *bbox_2)
             self.canvas.coords(tile_2, *bbox_1)
 
@@ -2210,8 +2210,8 @@ class App(tkinter.Tk):
         x_if = getattr(self, "x_place_frame_info_frame", 0)
         y_if = getattr(self, "y_place_frame_info_frame", 0)
 
-        # bbox_canvas = self.canvas.bbox()
-        # bbox_if = self.info_frame.bbox()
+        # bbox_canvas = self.canvas_stg.bbox()
+        # bbox_if = self.info_frame_stg.bbox()
         # bbox_mc = self.multi_combobox_orders_stg.bbox()
         bbox_canvas = list(self.frame_canvas.bbox(self.canvas))
         bbox_if = list(self.frame_info_frame.bbox(self.info_frame))
@@ -2246,7 +2246,7 @@ class App(tkinter.Tk):
             print(f"\n\t{e_x=}, {e_y=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
         if (bbox_canvas[0] <= e_x <= bbox_canvas[2]) and (bbox_canvas[1] <= e_y <= bbox_canvas[3]):
             date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x - x_fc), self.canvas.canvasy(e_y - y_fc))
-            # date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x), self.canvas.canvasy(e_y))
+            # date_line = self.get_date_line_at_x_y(self.canvas_stg.canvasx(e_x), self.canvas_stg.canvasy(e_y))
             if date_line:
                 date, line = date_line
                 if date.weekday() < 5:
@@ -2477,14 +2477,14 @@ class App(tkinter.Tk):
                 t_x, t_y = bbox[0] + bw, bbox[1] + bw
                 if tm:
                     print(f"{date=}, {line=}, {d_x=}, {d_y=}, {t_x=}, {t_y=}")
-                # self.canvas.move(tile, t_x + d_x, t_y + d_y)
+                # self.canvas_stg.move(tile, t_x + d_x, t_y + d_y)
                 self.canvas.coords(tile, o_x - (tw / 2), o_y - (th / 2), o_x + (tw / 2), o_y + (th / 2))
                 self.canvas.tag_raise(tile)
                 y_t = bbox[1] + bw
 
                 txts = self.tiles[date][line].get("texts", [])
                 for i, txt in enumerate(txts):
-                    # self.canvas.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
+                    # self.canvas_stg.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
                     self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (len(txts) + 1))))
                     self.canvas.tag_raise(txt)
 
@@ -2501,13 +2501,13 @@ class App(tkinter.Tk):
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
         o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
-        # tile = self.canvas.find_closest(ox, oy)
+        # tile = self.canvas_stg.find_closest(ox, oy)
         date = self.get_date_bucket(o_x)
         line = self.get_prod_line_bucket(o_y)
         if date is None or line is None:
             self.clear_hover_tiles()
             return
-        # self.canvas.itemcget()
+        # self.canvas_stg.itemcget()
         # print(f"{x=}, {y=}, {ox=}, {oy=}, {tile=}, {date=}, {line=}, {event=}")
         # self.app_state["hovered"].clear()
 
@@ -2582,7 +2582,7 @@ class App(tkinter.Tk):
                     width=ow
                 )
             for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
+                # print(f"CONFIG: {self.canvas_stg.itemcget(text, 'text')=}")
                 self.canvas.itemconfigure(
                     text,
                     fill=(f_w if is_weekend else f).hex_code,
@@ -2658,7 +2658,7 @@ class App(tkinter.Tk):
                     width=ow
                 )
             for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
+                # print(f"CONFIG: {self.canvas_stg.itemcget(text, 'text')=}")
                 self.canvas.itemconfigure(
                     text,
                     fill=(f_w if is_weekend else f).hex_code,
@@ -2780,7 +2780,7 @@ class App(tkinter.Tk):
             if not df.empty:
                 if tm:
                     print(f"QUOTE FOUND IN CALENDAR")
-                # if n_rows > 1:
+                # if n_rows_stg > 1:
                 #     # more than one possible entry found
                 #     # pass
                 #     self.choose_from_choices(df)
@@ -3974,7 +3974,7 @@ class App(tkinter.Tk):
                 sql_2 = f""
                 if tm:
                     print(f"\n\tON CLOSE\n{history=}")
-                # print(f"SHOULD MAKE SURE THESE ARE CLEAR\n\t{len(self.concats_double_entries)}\n\t{self.concats_double_entries=}")
+                # print(f"SHOULD MAKE SURE THESE ARE CLEAR\n\t{len(self.concats_double_entries_stg)}\n\t{self.concats_double_entries_stg=}")
 
                 for s_df in self.concats_double_entries:
                     stmt_1 = f""
@@ -4198,14 +4198,14 @@ class App(tkinter.Tk):
             w = x2 - x1
             vw = (xv[1] - xv[0]) * w
             # print(f"{date=}, {line=}")
-            # print(f"{self.canvas.xview()=}")
-            # print(f"{self.canvas.bbox('all')=}")
+            # print(f"{self.canvas_stg.xview()=}")
+            # print(f"{self.canvas_stg.bbox('all')=}")
             bbox = self.get_tile_bbox(date, line)
             # print(f"{bbox=}, {vw=}")
             x = bbox[0] - (vw / 2)
             x = max(0, x)
             p = x / w
-            # print(f"{x=}, {p=}, {self.canvas.canvasx(x)=}")
+            # print(f"{x=}, {p=}, {self.canvas_stg.canvasx(x)=}")
 
             self.canvas.xview_moveto(p)
             self.flash_tile((date, line), mode="attention")

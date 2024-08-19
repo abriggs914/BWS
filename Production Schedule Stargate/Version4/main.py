@@ -110,6 +110,17 @@ WHERE
 	[C].[Date] IS NOT NULL
         """
         },
+        SQL_WARRANTY_CLAIMS_BWS := {
+            "sql": """
+SELECT
+	[WO#]
+FROM
+	[BWSdb].[dbo].[Orders]
+WHERE
+	ISNULL([Warranty], 0) = 1
+;
+"""
+        },
         SQL_DATED_BWS_UNITS_1 := {
             "sql": "EXEC [BWSdb].[dbo].[sp_ProductionSchedule V4_Slots] {SD}, {ED};"
         },
@@ -601,6 +612,7 @@ class App(ctk.CTk):
         self.msg_incorrect_admin_password = f"Incorrect admin password."
         self.msg_blank_admin_password = f"Please enter a valid password."
         self.msg_no_company_to_switch = f"You do not have permission to change companies{self.msg_please_do_not_rerun}"
+        self.msg_invalid_company_to_switch = f"You do not have permission to enter company {{COMPANY}}.{self.msg_please_do_not_rerun}"
 
         self.tv_done_interact_tl = ctk.BooleanVar(self, value=True)
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
@@ -870,14 +882,10 @@ class App(ctk.CTk):
         # dataframe_utility.convert_timestamp_to_datetime(self.df_orders_stg)
         # print(f"{self.df_orders_stg.dtypes=}")
 
-        self.df_multi_combobox_data_warranties_stg = connect(**SQL_WARRANTY_CLAIMS_STG, do_show=tm, do_print=tm)
-        self.df_multi_combobox_data_warranties_stg = self.df_multi_combobox_data_warranties_stg.fillna("")
-
-        if self.settings["TEST_MODE"].get():
-            print(f"{self.df_multi_combobox_data_warranties_stg['Job']=}")
         self.list_multi_combobox_warranties_viewable_col_widths = {
             "Claim #": 60,
             "WO": 80,
+            "WO#": 80,
             "Model Name": 100,
             "Dealer": 85,
             "Serial Number": 110,
@@ -887,20 +895,39 @@ class App(ctk.CTk):
             "Parts & Labour": 90,
             "Job": 100
         }
+
+        self.df_multi_combobox_data_warranties_stg = connect(**SQL_WARRANTY_CLAIMS_STG, do_show=tm, do_print=tm)
+        self.df_multi_combobox_data_warranties_stg = self.df_multi_combobox_data_warranties_stg.fillna("")
+        if self.settings["TEST_MODE"].get():
+            print(f"{self.df_multi_combobox_data_warranties_stg['Job']=}")
         self.list_multi_combobox_warranties_viewable_cols_stg = {
             "Job": "Job"
         }
-        self.list_multi_combobox_warranties_viewable_col_widths = [
+        self.list_multi_combobox_warranties_viewable_col_widths_stg = [
             self.list_multi_combobox_warranties_viewable_col_widths[k] for k in
             self.list_multi_combobox_warranties_viewable_cols_stg.values()]
+        self.list_prod_lines_stg = self.df_prod_lines_stg["Prod Line"].to_list()
+        self.list_warranty_lines_stg = self.list_prod_lines_stg[-1:]  # currently only using the last line
+
+        self.df_multi_combobox_data_warranties_bws = connect(**SQL_WARRANTY_CLAIMS_BWS, do_show=tm, do_print=tm)
+        self.df_multi_combobox_data_warranties_bws = self.df_multi_combobox_data_warranties_bws.fillna("")
+        if self.settings["TEST_MODE"].get():
+            print(f"{self.df_multi_combobox_data_warranties_bws['WO#']=}")
+        self.list_multi_combobox_warranties_viewable_cols_bws = {
+            "WO#": "WO#"
+        }
+        self.list_multi_combobox_warranties_viewable_col_widths_bws = [
+            self.list_multi_combobox_warranties_viewable_col_widths[k] for k in
+            self.list_multi_combobox_warranties_viewable_cols_bws.values()]
+        self.list_prod_lines_bws = self.df_prod_lines_bws["Prod Line"].to_list()
+        # self.list_warranty_lines_bws = self.list_prod_lines_bws[-1:]  # currently only using the last line
+        self.list_warranty_lines_bws = []  # currently no lines allocated for warranty
         # self.df_multi_combobox_data_warranties_stg = self.df_multi_combobox_data_warranties_stg.rename(columns=self.list_multi_combobox_warranties_viewable_cols_stg)
 
         # TODO gracefully fail if DFs are empty
 
-        self.n_rows = self.df_prod_lines_stg.shape[0] + 1  # +1 for header row
-
-        self.list_prod_lines_stg = self.df_prod_lines_stg["Prod Line"].to_list()
-        self.list_warranty_lines_stg = self.list_prod_lines_stg[-1:]  # currently only using the last line
+        self.n_rows_stg = self.df_prod_lines_stg.shape[0] + 1  # +1 for header row
+        self.n_rows_bws = self.df_prod_lines_bws.shape[0] + 1  # +1 for header row
 
         self.width_multi_combobox = 725
         self.height_multi_combobox = 150
@@ -920,8 +947,10 @@ class App(ctk.CTk):
         self.canvas_height = self.canvas_height_og
 
         # adjust incase too few prod lines
-        if (self.tile_height * self.n_rows) < self.total_height:
-            self.tile_height = self.canvas_height / self.n_rows
+        if (self.tile_height * self.n_rows_stg) < self.total_height:
+            self.tile_height = self.canvas_height / self.n_rows_stg
+        if (self.tile_height * self.n_rows_bws) < self.total_height:
+            self.tile_height = self.canvas_height / self.n_rows_bws
 
         self.x_place_frame_canvas = self.width_multi_combobox - self.margin_between_mc_and_calendar
         self.y_place_frame_canvas = self.y_top_widgets
@@ -996,6 +1025,51 @@ class App(ctk.CTk):
 
         self.y_place_toggle_warranty = self.y_top_widgets + self.h_tb_warranty
 
+        ####################
+        # BWS WIDGETS #
+        ####################
+
+        # multi-combobox now that data has been sorted
+        self.multi_combobox_orders_bws = tkinter_utility.MultiComboBox(
+            self.frame_mc_inner,
+            data=self.df_multi_combobox_data_orders_bws,
+            include_aggregate_row=False,
+            include_drop_down_arrow=False,
+            limit_to_list=False,
+            allow_insert_ask=False,
+            lock_result_col="Quote#",
+            auto_grid=False
+            # ,
+            # show_index_column=False
+        )
+        self.multi_combobox_orders_bws.res_entry.unbind("<Return>",
+                                                        self.multi_combobox_orders_bws.bind_return_res_entry)
+        self.multi_combobox_orders_bws.res_entry.bind("<Return>", self.submit_combobox_entry)
+
+        # multi-combobox for warranty quotes
+        self.multi_combobox_warranties_bws = tkinter_utility.MultiComboBox(
+            self.frame_mc_inner,
+            data=self.df_multi_combobox_data_warranties_bws,
+            viewable_column_names=self.list_multi_combobox_warranties_viewable_cols_bws,
+            viewable_column_widths=self.list_multi_combobox_warranties_viewable_col_widths_bws,
+            include_aggregate_row=False,
+            include_drop_down_arrow=False,
+            limit_to_list=False,
+            allow_insert_ask=False,
+            lock_result_col="WO#",
+            auto_grid=False,
+            width=self.x_place_frame_canvas,
+            show_index_column=False
+        )
+
+        self.tiles_bws = {d: {pl: dict() for pl in self.list_prod_lines_bws} for d in self.list_dates}
+        self.tiles_bws["home"] = dict()
+        self.df_ids_to_date_line_bws = {}
+
+        ####################
+        # STARGATE WIDGETS #
+        ####################
+
         # multi-combobox now that data has been sorted
         self.multi_combobox_orders_stg = tkinter_utility.MultiComboBox(
             self.frame_mc_inner,
@@ -1018,7 +1092,7 @@ class App(ctk.CTk):
             self.frame_mc_inner,
             data=self.df_multi_combobox_data_warranties_stg,
             viewable_column_names=self.list_multi_combobox_warranties_viewable_cols_stg,
-            viewable_column_widths=self.list_multi_combobox_warranties_viewable_col_widths,
+            viewable_column_widths=self.list_multi_combobox_warranties_viewable_col_widths_stg,
             include_aggregate_row=False,
             include_drop_down_arrow=False,
             limit_to_list=False,
@@ -1048,10 +1122,25 @@ class App(ctk.CTk):
             self.df_calendar_stg["C_STATHoliday"] == 1
             ].dropna(subset=["C_HolidayName"]).set_index("C_Date")["C_HolidayName"].to_dict()
 
+        self.df_calendar_bws = self.df_calendar_bws.loc[
+            (self.list_dates[0] <= self.df_calendar_bws["C_Date"])
+            & (self.df_calendar_bws["C_Date"] <= self.list_dates[-1])
+            #  & (self.df_calendar_stg["STAT Holiday"] == 1)
+            ]
+        self.holidays_bws = self.df_calendar_bws.dropna(subset=["C_HolidayName"]).set_index("C_Date")[
+            "C_HolidayName"].to_dict()
+        self.work_holidays_bws = self.df_calendar_bws.loc[
+            self.df_calendar_bws["C_STATHoliday"] == 1
+            ].dropna(subset=["C_HolidayName"]).set_index("C_Date")["C_HolidayName"].to_dict()
+
         if self.settings["TEST_MODE"].get():
             print(f"{self.df_calendar_stg=}")
             print(f"{self.holidays_stg=}")
             print(f"{self.work_holidays_stg=}")
+
+            print(f"{self.df_calendar_bws=}")
+            print(f"{self.holidays_bws=}")
+            print(f"{self.work_holidays_bws=}")
 
         # list_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
         # n_weekend_days = len(list_weekend_days)
@@ -1060,29 +1149,40 @@ class App(ctk.CTk):
         # TODO fix variable column sizing
         canvas_width_scroll = self.tile_width * self.n_cols  # old method
         self.canvas_width_scroll_region = canvas_width_scroll
-        self.canvas_height_scroll_region = self.tile_height * self.n_rows
+        self.canvas_height_scroll_region_stg = self.tile_height * self.n_rows_stg
+        self.canvas_height_scroll_region_bws = self.tile_height * self.n_rows_bws
 
-        # self.calc_grid_cells = utility.grid_cells(
+        # self.calc_grid_cells_stg = utility.grid_cells(
         #     self.canvas_width_scroll_region,
         #     self.n_cols + 1,
-        #     self.canvas_height_scroll_region,
-        #     self.n_rows,
+        #     self.canvas_height_scroll_region_stg,
+        #     self.n_rows_stg,
         #     r_type=list
         # )
 
-        print(f"{self.n_cols=}, {self.n_rows=}")
+        print(f"{self.n_cols=}, {self.n_rows_stg=}")
+        print(f"{self.n_cols=}, {self.n_rows_bws=}")
         self.date_is_weekend = list()
-        self.calc_grid_cells = self.calc_daily_grid_cells(
+        self.calc_grid_cells_stg = self.calc_daily_grid_cells(
             self.list_dates[0],
             self.list_dates[-1],
             self.df_calendar_stg,
             self.canvas_width_scroll_region,
-            self.canvas_height_scroll_region,
-            n_rows=self.n_rows
+            self.canvas_height_scroll_region_stg,
+            n_rows=self.n_rows_stg
         )
-        print(f"{self.calc_grid_cells=}")
+        # print(f"{self.calc_grid_cells_stg=}")
+        self.calc_grid_cells_bws = self.calc_daily_grid_cells(
+            self.list_dates[0],
+            self.list_dates[-1],
+            self.df_calendar_bws,
+            self.canvas_width_scroll_region,
+            self.canvas_height_scroll_region_bws,
+            n_rows=self.n_rows_bws
+        )
+        # print(f"{self.calc_grid_cells_bws=}")
 
-        self.canvas = ctk.CTkCanvas(
+        self.canvas_stg = ctk.CTkCanvas(
             self.frame_canvas,
             width=self.canvas_width,
             height=self.canvas_height,
@@ -1091,7 +1191,19 @@ class App(ctk.CTk):
                 0,
                 0,
                 self.canvas_width_scroll_region,
-                self.canvas_height_scroll_region
+                self.canvas_height_scroll_region_stg
+            )
+        )
+        self.canvas_bws = ctk.CTkCanvas(
+            self.frame_canvas,
+            width=self.canvas_width,
+            height=self.canvas_height,
+            background=self.colour_calendar_background.hex_code,
+            scrollregion=(
+                0,
+                0,
+                self.canvas_width_scroll_region,
+                self.canvas_height_scroll_region_bws
             )
         )
         self.scroll_bar_x = ctk.CTkScrollbar(
@@ -1124,15 +1236,19 @@ class App(ctk.CTk):
             }
         )
 
+        ###################
+        # STARGATE ORDERS #
+        ###################
+
         # rest of the tiles_stg
-        for i, row in enumerate(self.calc_grid_cells[1:]):
-            print(f"{i=}, {row=}")
+        for i, row in enumerate(self.calc_grid_cells_stg[1:]):
+            # print(f"{i=}, {row=}")
             for j, col in enumerate(row[1:]):
                 prod_line = self.list_prod_lines_stg[i]
                 date = self.list_dates[j]
                 # is_weekend = date.weekday() >= 5
                 is_weekend = self.is_valid_prod_date(date) == "weekend"
-                print(f"{date=}, {prod_line=}, {is_weekend=}")
+                # print(f"{date=}, {prod_line=}, {is_weekend=}")
                 if is_weekend:
                     tile_colour = self.colour_tile_background_weekend
                     tile_outline = self.colour_tile_outline_weekend
@@ -1143,7 +1259,7 @@ class App(ctk.CTk):
                     tile_outline = self.colour_tile_outline
                     tile_outline_width = self.width_tile_outline
                     font = self.font_tile
-                # tile = self.canvas.create_rectangle(
+                # tile = self.canvas_stg.create_rectangle(
                 #     *col,
                 #     fill=tile_colour.hex_code,
                 #     outline=tile_outline.hex_code,
@@ -1154,7 +1270,7 @@ class App(ctk.CTk):
                     fill=tile_colour.hex_code,
                     outline=tile_outline.hex_code,
                     width=tile_outline_width,
-                    parent=self.canvas
+                    parent=self.canvas_stg
                 )
                 self.tiles_stg[date][prod_line].update({
                     "tile": tile,
@@ -1162,24 +1278,24 @@ class App(ctk.CTk):
                 })
 
         # loop orders and populate the calendar
-        self.concats_rest_orders = []
-        self.concats_multi_combobox_orders = []
-        self.concats_rest_orders_to_multi_combobox = []
-        self.concats_double_entries = []
-        self.min_date, self.max_date = None, None
-        self.min_line, self.max_line = None, None
+        self.concats_rest_orders_stg = []
+        self.concats_multi_combobox_orders_stg = []
+        self.concats_rest_orders_to_multi_combobox_stg = []
+        self.concats_double_entries_stg = []
+        self.min_date_stg, self.max_date_stg = None, None
+        self.min_line_stg, self.max_line_stg = None, None
         for i, row in self.df_orders_stg.iterrows():
             no_fit = False
             double = False
             # mc_append_row = None
-            dat_quote = row.get("OrdersV2_SGQuote", "QUOTE=____")
+            dat_quote = row.get(self.quote_key("quote"), "QUOTE=____")
             # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
-            dat_wo = row.get("OrdersV2_WO#", "WO=____")
-            dat_sn = row.get("Serial Number#", "")
-            dat_dealer = row.get("InputField2", "DEALER=____")
-            dat_galv = row.get("IsGalv", "GALV=____")
-            dat_model = row.get("InputField1", "MODEL=____")
-            dat_cust_wo = row.get("Customer WO#", "CUSTWO=____")
+            dat_wo = row.get(self.quote_key("wo"), "WO=____")
+            dat_sn = row.get(self.quote_key("sn"), "")
+            dat_dealer = row.get(self.quote_key("dealer"), "DEALER=____")
+            dat_galv = row.get(self.quote_key("galv"), "GALV=____")
+            dat_model = row.get(self.quote_key("model"), "MODEL=____")
+            dat_cust_wo = row.get(self.quote_key("Customer WO#"), "CUSTWO=____")
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
             self.df_ids_to_date_line_stg[i] = (date, prod_line)
@@ -1194,10 +1310,10 @@ class App(ctk.CTk):
                 if self.first_date <= date <= self.last_date:
                     # place this tile with date and prod_line
 
-                    if (self.min_date is None) or (date < self.min_date):
-                        self.min_date = date
-                    if (self.max_date is None) or (date > self.max_date):
-                        self.max_date = date
+                    if (self.min_date_stg is None) or (date < self.min_date_stg):
+                        self.min_date_stg = date
+                    if (self.max_date_stg is None) or (date > self.max_date_stg):
+                        self.max_date_stg = date
 
                     if self.settings["TEST_MODE"].get():
                         print(f"\tFITS")
@@ -1205,7 +1321,7 @@ class App(ctk.CTk):
                     tile_data = self.tiles_stg[date][prod_line]
                     if 'tile' not in tile_data:
                         print(f"{tile_data=}")
-                    col = self.canvas.bbox(tile_data["tile"])
+                    col = self.canvas_stg.bbox(tile_data["tile"])
                     # prev_texts = tile_data.get("texts", [])
                     tile_text_colour = self.colour_tile_foreground
                     font = self.font_tile
@@ -1230,7 +1346,7 @@ class App(ctk.CTk):
                         self.tiles_stg[date][prod_line].update({
                             "order": i,
                             "texts": [
-                                self.canvas.create_text(
+                                self.canvas_stg.create_text(
                                     int(col[0] + (self.tile_width * 0.5)),
                                     int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                                     text=txt,
@@ -1252,7 +1368,7 @@ class App(ctk.CTk):
                     # mc_append_row = []
                     new_row_data = {k: [v] for k, v in row.items()}
                     new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders_stg.shape[0]])
-                    self.concats_rest_orders.append(new_df)
+                    self.concats_rest_orders_stg.append(new_df)
 
                     if self.settings["TEST_MODE"].get():
                         # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
@@ -1262,7 +1378,7 @@ class App(ctk.CTk):
 
                     if double:
                         new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders_stg.shape[0]])
-                        self.concats_double_entries.append(new_df)
+                        self.concats_double_entries_stg.append(new_df)
             else:
                 # add this order to the combobox for placing
 
@@ -1273,11 +1389,11 @@ class App(ctk.CTk):
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
                 # self.df_multi_combobox_data_orders_stg = pd.concat([self.df_multi_combobox_data_orders_stg, new_df], ignore_index=True)
-                self.concats_multi_combobox_orders.append(new_df)
+                self.concats_multi_combobox_orders_stg.append(new_df)
 
-        # TODO add self.concats_rest_orders to self.concats_multi_combobox_orders
-        if self.concats_rest_orders:
-            self.df_rest_orders_stg = pd.concat(self.concats_rest_orders, ignore_index=True)
+        # TODO add self.concats_rest_orders_stg to self.concats_multi_combobox_orders_stg
+        if self.concats_rest_orders_stg:
+            self.df_rest_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
 
             for i, row in self.df_rest_orders_stg.iterrows():
                 dat_quote = row.get(self.quote_key("quote"), "QUOTE=____")
@@ -1291,12 +1407,12 @@ class App(ctk.CTk):
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_stg.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
-                self.concats_rest_orders_to_multi_combobox.append(new_df)
+                self.concats_rest_orders_to_multi_combobox_stg.append(new_df)
 
-        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders, ignore_index=True)
-        if self.concats_multi_combobox_orders:
-            self.concats_multi_combobox_orders = self.concats_rest_orders_to_multi_combobox + self.concats_multi_combobox_orders
-            self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_multi_combobox_orders, ignore_index=True)
+        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
+        if self.concats_multi_combobox_orders_stg:
+            self.concats_multi_combobox_orders_stg = self.concats_rest_orders_to_multi_combobox_stg + self.concats_multi_combobox_orders_stg
+            self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_multi_combobox_orders_stg, ignore_index=True)
             # self.df_multi_combobox_data_orders_stg["Customer WO#"] = self.df_multi_combobox_data_orders_stg[
             #     "Customer WO#"].apply(lambda x: int(x) if not pd.isna(x) else x)
             # self.df_multi_combobox_data_orders_stg["Customer WO#"] = pd.to_numeric(self.df_multi_combobox_data_orders_stg["Customer WO#"], errors='coerce').astype('Int64')
@@ -1312,6 +1428,7 @@ class App(ctk.CTk):
             #     pass
 
         if self.settings["TEST_MODE"].get():
+            print(f"STG")
             print(f"self.df_orders==\n{self.df_orders_stg}")
             print(f"self.df_rest_orders==\n{self.df_rest_orders_stg}")
             print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders_stg}")
@@ -1320,7 +1437,7 @@ class App(ctk.CTk):
                 f"self.df_multi_combobox_data_orders.columns==\n{list(self.df_multi_combobox_data_orders_stg.columns)}")
 
         # header row
-        for i, row in enumerate(self.calc_grid_cells[:1]):
+        for i, row in enumerate(self.calc_grid_cells_stg[:1]):
             for j, col in enumerate(row[1:]):
                 # print(f"{i=}, {j=}")
                 # prod_line = self.list_prod_lines_stg[i]
@@ -1349,14 +1466,14 @@ class App(ctk.CTk):
                         tile_colour = tile_colour.darkened(0.1)
                         for k, k_line in enumerate(self.list_prod_lines_stg):
                             # print(f"{k=}, {k_line=}")
-                            self.canvas.itemconfigure(
+                            self.canvas_stg.itemconfigure(
                                 self.tiles_stg[date][k_line]["tile"],
                                 fill=self.colour_tile_background_non_prod.hex_code
                             )
                 if key not in self.tiles_stg[date]:
                     self.tiles_stg[date][key] = dict()
                 self.tiles_stg[date][key].update({
-                    # "tile": self.canvas.create_rectangle(
+                    # "tile": self.canvas_stg.create_rectangle(
                     #     *col,
                     #     fill=tile_colour.hex_code,
                     #     outline=tile_outline.hex_code,
@@ -1367,10 +1484,10 @@ class App(ctk.CTk):
                         fill=tile_colour.hex_code,
                         outline=tile_outline.hex_code,
                         width=tile_outline_width,
-                        parent=self.canvas
+                        parent=self.canvas_stg
                     ),
                     "texts": [
-                        self.canvas.create_text(
+                        self.canvas_stg.create_text(
                             int(col[0] + (self.tile_width * 0.5)),
                             int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                             text=txt,
@@ -1381,15 +1498,15 @@ class App(ctk.CTk):
                     ]
                 })
                 if holiday_name is not None:
-                    self.canvas.itemconfigure(self.tiles_stg[date][key]["texts"][-1],
-                                              fill=self.colour_foreground_holiday.hex_code)
-                    text = self.canvas.itemcget(self.tiles_stg[date][key]["texts"][-1], "text")
-                    if text == self.txt_non_prod_day:
-                        self.canvas.itemconfigure(self.tiles_stg[date][key]["texts"][-2],
+                    self.canvas_stg.itemconfigure(self.tiles_stg[date][key]["texts"][-1],
                                                   fill=self.colour_foreground_holiday.hex_code)
+                    text = self.canvas_stg.itemcget(self.tiles_stg[date][key]["texts"][-1], "text")
+                    if text == self.txt_non_prod_day:
+                        self.canvas_stg.itemconfigure(self.tiles_stg[date][key]["texts"][-2],
+                                                      fill=self.colour_foreground_holiday.hex_code)
 
         # header columns
-        for i, row in enumerate(self.calc_grid_cells[1:]):
+        for i, row in enumerate(self.calc_grid_cells_stg[1:]):
             for j, col in enumerate(row[:1]):
                 # i, j = i + 1, j + 1  # enumeration from second element will offset the data
                 # print(f"{i=}, {j=}")
@@ -1413,7 +1530,7 @@ class App(ctk.CTk):
                         print(f"ADDING SUB KEY {prod_line=}")
                     self.tiles_stg[key][prod_line] = dict()
                 self.tiles_stg[key][prod_line].update({
-                    # "tile": self.canvas.create_rectangle(
+                    # "tile": self.canvas_stg.create_rectangle(
                     #     *col,
                     #     fill=tile_colour.hex_code,
                     #     outline=tile_outline.hex_code,
@@ -1424,10 +1541,10 @@ class App(ctk.CTk):
                         fill=tile_colour.hex_code,
                         outline=tile_outline.hex_code,
                         width=tile_outline_width,
-                        parent=self.canvas
+                        parent=self.canvas_stg
                     ),
                     "texts": [
-                        self.canvas.create_text(
+                        self.canvas_stg.create_text(
                             int(col[0] + (self.tile_width * 0.5)),
                             int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                             text=txt,
@@ -1437,6 +1554,370 @@ class App(ctk.CTk):
                         for k, txt, in enumerate(to_do_texts)
                     ]
                 })
+
+        ##############
+        # BWS ORDERS #
+        ##############
+        # rest of the tiles_stg
+        for i, row in enumerate(self.calc_grid_cells_bws[1:]):
+            # print(f"{i=}, {row=}")
+            for j, col in enumerate(row[1:]):
+                prod_line = self.list_prod_lines_bws[i]
+                date = self.list_dates[j]
+                # is_weekend = date.weekday() >= 5
+                is_weekend = self.is_valid_prod_date(date) == "weekend"
+                # print(f"{date=}, {prod_line=}, {is_weekend=}")
+                if is_weekend:
+                    tile_colour = self.colour_tile_background_weekend
+                    tile_outline = self.colour_tile_outline_weekend
+                    tile_outline_width = self.width_tile_outline_weekend
+                    font = self.font_tile_weekend
+                else:
+                    tile_colour = self.colour_tile_background
+                    tile_outline = self.colour_tile_outline
+                    tile_outline_width = self.width_tile_outline
+                    font = self.font_tile
+                # tile = self.canvas_stg.create_rectangle(
+                #     *col,
+                #     fill=tile_colour.hex_code,
+                #     outline=tile_outline.hex_code,
+                #     width=tile_outline_width
+                # )
+                tile = self.draw_rect(
+                    col,
+                    fill=tile_colour.hex_code,
+                    outline=tile_outline.hex_code,
+                    width=tile_outline_width,
+                    parent=self.canvas_bws
+                )
+                self.tiles_bws[date][prod_line].update({
+                    "tile": tile,
+                    "texts": []
+                })
+
+        # loop orders and populate the calendar
+        self.concats_rest_orders_bws = []
+        self.concats_multi_combobox_orders_bws = []
+        self.concats_rest_orders_to_multi_combobox_bws = []
+        self.concats_double_entries_bws = []
+        self.min_date_bws, self.max_date_bws = None, None
+        self.min_line_bws, self.max_line_bws = None, None
+        for i, row in self.df_orders_bws.iterrows():
+            no_fit = False
+            double = False
+            # mc_append_row = None
+            dat_quote = row.get(self.quote_key("quote", COMPANY.BWS.value), "QUOTE=____")
+            # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
+            dat_wo = row.get(self.quote_key("wo", COMPANY.BWS.value), "WO=____")
+            dat_sn = row.get(self.quote_key("sn", COMPANY.BWS.value), "")
+            dat_dealer = row.get(self.quote_key("dealer", COMPANY.BWS.value), "DEALER=____")
+            dat_galv = row.get(self.quote_key("galv", COMPANY.BWS.value), "GALV=____")
+            dat_model = row.get(self.quote_key("model", COMPANY.BWS.value), "MODEL=____")
+            dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.BWS.value), "CUSTWO=____")
+            date = row.get("Prod Date", None)
+            prod_line = row.get("Prod Line", None)
+            self.df_ids_to_date_line_bws[i] = (date, prod_line)
+            if prod_line == "":
+                prod_line = None
+
+            if self.settings["TEST_MODE"].get():
+                print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
+                # print(f"{dat_dealer=}")
+
+            if date is not None and prod_line is not None:
+                if self.first_date <= date <= self.last_date:
+                    # place this tile with date and prod_line
+
+                    if (self.min_date_bws is None) or (date < self.min_date_bws):
+                        self.min_date_bws = date
+                    if (self.max_date_bws is None) or (date > self.max_date_bws):
+                        self.max_date_bws = date
+
+                    if self.settings["TEST_MODE"].get():
+                        print(f"\tFITS")
+
+                    tile_data = self.tiles_bws[date][prod_line]
+                    if 'tile' not in tile_data:
+                        print(f"{tile_data=}")
+                    col = self.canvas_bws.bbox(tile_data["tile"])
+                    # prev_texts = tile_data.get("texts", [])
+                    tile_text_colour = self.colour_tile_foreground
+                    font = self.font_tile
+                    to_do_texts = [
+                        v for v in [
+                            dat_quote,
+                            dat_wo,
+                            dat_sn,
+                            dat_model,
+                            dat_dealer,
+                            dat_galv
+                        ] if v
+                    ]
+                    if self.tiles_bws[date][prod_line].get("order"):
+
+                        if self.settings["TEST_MODE"].get():
+                            print(f">>> {dat_quote=}, {date=}, {prod_line=} already has an order!!!!")
+
+                        no_fit = True
+                        double = True
+                    else:
+                        self.tiles_bws[date][prod_line].update({
+                            "order": i,
+                            "texts": [
+                                self.canvas_bws.create_text(
+                                    int(col[0] + (self.tile_width * 0.5)),
+                                    int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
+                                    text=txt,
+                                    fill=tile_text_colour.hex_code,
+                                    font=font
+                                )
+                                for k, txt, in enumerate(to_do_texts)
+                            ]
+                        })
+                else:
+                    # this order has already been placed and does not fit on this calendar
+                    no_fit = True
+
+                if no_fit:
+
+                    if self.settings["TEST_MODE"].get():
+                        print(f"\tDOESNT FIT")
+
+                    # mc_append_row = []
+                    new_row_data = {k: [v] for k, v in row.items()}
+                    new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders_bws.shape[0]])
+                    self.concats_rest_orders_bws.append(new_df)
+
+                    if self.settings["TEST_MODE"].get():
+                        # print(f"\n\tBEFORE\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
+                        # self.df_rest_orders_stg = pd.concat([self.df_rest_orders_stg, new_df], ignore_index=True)
+                        # print(f"\n\tAFTER\n\nnew_df={new_df}\n\nself.df_rest_orders_stg={self.df_rest_orders_stg}")
+                        pass
+
+                    if double:
+                        new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders_bws.shape[0]])
+                        self.concats_double_entries_bws.append(new_df)
+            else:
+                # add this order to the combobox for placing
+
+                if self.settings["TEST_MODE"].get():
+                    print(f"\tCOMBOBOX")
+
+                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_bws.columns,
+                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn,
+                                                        dat_cust_wo])}
+                new_df = pd.DataFrame(new_row_data)
+                # self.df_multi_combobox_data_orders_stg = pd.concat([self.df_multi_combobox_data_orders_stg, new_df], ignore_index=True)
+                self.concats_multi_combobox_orders_bws.append(new_df)
+
+        # TODO add self.concats_rest_orders_stg to self.concats_multi_combobox_orders_stg
+        if self.concats_rest_orders_bws:
+            self.df_rest_orders_bws = pd.concat(self.concats_rest_orders_bws, ignore_index=True)
+
+            for i, row in self.df_rest_orders_bws.iterrows():
+                dat_quote = row.get(self.quote_key("quote", COMPANY.BWS.value), "QUOTE=____")
+                # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
+                dat_wo = row.get(self.quote_key("wo", COMPANY.BWS.value), "WO=____")
+                dat_sn = row.get(self.quote_key("sn", COMPANY.BWS.value), "")
+                dat_dealer = row.get(self.quote_key("dealer", COMPANY.BWS.value), "DEALER=____")
+                dat_galv = row.get(self.quote_key("galv", COMPANY.BWS.value), "GALV=____")
+                dat_model = row.get(self.quote_key("model", COMPANY.BWS.value), "MODEL=____")
+                dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.BWS.value), "CUSTWO=____")
+                new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_bws.columns,
+                                                       [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn,
+                                                        dat_cust_wo])}
+                new_df = pd.DataFrame(new_row_data)
+                self.concats_rest_orders_to_multi_combobox_bws.append(new_df)
+
+        #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
+        if self.concats_multi_combobox_orders_bws:
+            self.concats_multi_combobox_orders_bws = self.concats_rest_orders_to_multi_combobox_bws + self.concats_multi_combobox_orders_bws
+            self.df_multi_combobox_data_orders_bws = pd.concat(self.concats_multi_combobox_orders_bws,
+                                                               ignore_index=True)
+            # self.df_multi_combobox_data_orders_stg["Customer WO#"] = self.df_multi_combobox_data_orders_stg[
+            #     "Customer WO#"].apply(lambda x: int(x) if not pd.isna(x) else x)
+            # self.df_multi_combobox_data_orders_stg["Customer WO#"] = pd.to_numeric(self.df_multi_combobox_data_orders_stg["Customer WO#"], errors='coerce').astype('Int64')
+            self.df_multi_combobox_data_orders_bws["Customer WO#"] = (
+                self.df_multi_combobox_data_orders_bws["Customer WO#"].apply(
+                    lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+                )
+            )
+            # print(f"{self.df_multi_combobox_data_orders_bws=}")
+
+            # if mc_append_row:
+            #     # add new row record to mc
+            #     pass
+
+        if self.settings["TEST_MODE"].get():
+            print(f"BWS")
+            print(f"self.df_orders==\n{self.df_orders_bws}")
+            print(f"self.df_rest_orders==\n{self.df_rest_orders_bws}")
+            print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders_bws}")
+            print(f"self.df_rest_orders.columns==\n{list(self.df_rest_orders_bws.columns)}")
+            print(
+                f"self.df_multi_combobox_data_orders.columns==\n{list(self.df_multi_combobox_data_orders_bws.columns)}")
+
+            print(f"{self.list_prod_lines_stg=}")
+            print(f"{self.list_prod_lines_bws=}")
+            print(f"{self.tiles_stg=}")
+            print(f"{self.tiles_bws=}")
+
+        # header row
+        for i, row in enumerate(self.calc_grid_cells_bws[:1]):
+            for j, col in enumerate(row[1:]):
+                print(f"{i=}, {j=}")
+                # prod_line = self.list_prod_lines_stg[i]
+                key = "date_legend"
+                date = self.list_dates[j]
+                # is_holiday = date in self.holidays_stg
+                holiday_name = self.holidays_bws.get(date, None)
+                tile_colour = self.colour_tile_header_row_background
+                tile_text_colour = self.colour_tile_header_row_foreground
+                font = self.font_tile
+                tile_outline = self.colour_tile_outline
+                tile_outline_width = self.width_tile_outline
+                to_do_texts = [
+                    f"{date:%A}",  # Day of Week
+                    f"{date:%B}",  # Month
+                    f"{date:%d}".removeprefix("0") + f"{utility.number_suffix(date.day)}",
+                    # Numerical month date
+                    f"{date:%Y}"  # Year
+                ]
+                if holiday_name is not None:
+                    to_do_texts.append(holiday_name)
+                    non_prod_day = self.is_valid_prod_date(date) == "holiday"
+                    print(f"Check {date=} -- {non_prod_day=}")
+                    if non_prod_day:
+                        to_do_texts.append(self.txt_non_prod_day)
+                        tile_colour = tile_colour.darkened(0.1)
+                        for k, k_line in enumerate(self.list_prod_lines_bws):
+                            print(f"{k=}, {k_line=}")
+                            self.canvas_bws.itemconfigure(
+                                self.tiles_bws[date][k_line]["tile"],
+                                fill=self.colour_tile_background_non_prod.hex_code
+                            )
+                if key not in self.tiles_bws[date]:
+                    self.tiles_bws[date][key] = dict()
+                self.tiles_bws[date][key].update({
+                    # "tile": self.canvas_stg.create_rectangle(
+                    #     *col,
+                    #     fill=tile_colour.hex_code,
+                    #     outline=tile_outline.hex_code,
+                    #     width=tile_outline_width
+                    # ),
+                    "tile": self.draw_rect(
+                        col,
+                        fill=tile_colour.hex_code,
+                        outline=tile_outline.hex_code,
+                        width=tile_outline_width,
+                        parent=self.canvas_bws
+                    ),
+                    "texts": [
+                        self.canvas_bws.create_text(
+                            int(col[0] + (self.tile_width * 0.5)),
+                            int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
+                            text=txt,
+                            fill=tile_text_colour.hex_code,
+                            font=font
+                        )
+                        for k, txt, in enumerate(to_do_texts)
+                    ]
+                })
+                if holiday_name is not None:
+                    self.canvas_bws.itemconfigure(self.tiles_bws[date][key]["texts"][-1],
+                                                  fill=self.colour_foreground_holiday.hex_code)
+                    text = self.canvas_bws.itemcget(self.tiles_bws[date][key]["texts"][-1], "text")
+                    if text == self.txt_non_prod_day:
+                        self.canvas_bws.itemconfigure(self.tiles_bws[date][key]["texts"][-2],
+                                                      fill=self.colour_foreground_holiday.hex_code)
+
+        # header columns
+        for i, row in enumerate(self.calc_grid_cells_bws[1:]):
+            for j, col in enumerate(row[:1]):
+                # i, j = i + 1, j + 1  # enumeration from second element will offset the data
+                # print(f"{i=}, {j=}")
+                prod_line = self.list_prod_lines_bws[i]
+                # date = self.list_dates[j]
+                key = "line_legend"
+                tile_colour = self.colour_tile_header_col_background
+                tile_text_colour = self.colour_tile_header_col_foreground
+                font = self.font_tile
+                tile_outline = self.colour_tile_outline
+                tile_outline_width = self.width_tile_outline
+                to_do_texts = [
+                    prod_line
+                ]
+                if key not in self.tiles_bws:
+                    if self.settings["TEST_MODE"].get():
+                        print(f"ADDING KEY {key=}")
+                    self.tiles_bws[key] = dict()
+                if prod_line not in self.tiles_bws:
+                    if self.settings["TEST_MODE"].get():
+                        print(f"ADDING SUB KEY {prod_line=}")
+                    self.tiles_bws[key][prod_line] = dict()
+                self.tiles_bws[key][prod_line].update({
+                    # "tile": self.canvas_stg.create_rectangle(
+                    #     *col,
+                    #     fill=tile_colour.hex_code,
+                    #     outline=tile_outline.hex_code,
+                    #     width=tile_outline_width
+                    # ),
+                    "tile": self.draw_rect(
+                        col,
+                        fill=tile_colour.hex_code,
+                        outline=tile_outline.hex_code,
+                        width=tile_outline_width,
+                        parent=self.canvas_bws
+                    ),
+                    "texts": [
+                        self.canvas_bws.create_text(
+                            int(col[0] + (self.tile_width * 0.5)),
+                            int(col[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
+                            text=txt,
+                            fill=tile_text_colour.hex_code,
+                            font=font
+                        )
+                        for k, txt, in enumerate(to_do_texts)
+                    ]
+                })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         # check colour coding
         self.colour_code()
@@ -1473,30 +1954,40 @@ class App(ctk.CTk):
             self.bws_logo_image = None
 
         if self.stg_logo_image and (self.settings["mode_company"] == COMPANY.STG.value):
-            self.tiles_stg["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.tile_width / 2),
-                self.calc_grid_cells[0][0][1] + (self.tile_height / 2),
+            self.tiles_stg["home"]["tile"] = self.canvas_stg.create_image(
+                self.calc_grid_cells_stg[0][0][0] + (self.tile_width / 2),
+                self.calc_grid_cells_stg[0][0][1] + (self.tile_height / 2),
                 anchor=ctk.CENTER,
                 image=self.stg_logo_image
             )
-        elif self.bws_logo_image and (self.settings["mode_company"] == COMPANY.BWS.value):
-            self.tiles_stg["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.tile_width / 2),
-                self.calc_grid_cells[0][0][1] + (self.tile_height / 2),
+        else:
+            self.tiles_stg["home"]["tile"] = self.draw_rect(
+                self.calc_grid_cells_stg[0][0],
+                fill=self.colour_tile_header_home_background.hex_code,
+                parent=self.canvas_stg
+            )
+
+        # print(f"{self.calc_grid_cells_bws=}")
+
+        if self.bws_logo_image and (self.settings["mode_company"] == COMPANY.BWS.value):
+            self.tiles_bws["home"]["tile"] = self.canvas_bws.create_image(
+                self.calc_grid_cells_bws[0][0][0] + (self.tile_width / 2),
+                self.calc_grid_cells_bws[0][0][1] + (self.tile_height / 2),
                 anchor=ctk.CENTER,
                 image=self.bws_logo_image
             )
         else:
-            self.tiles_stg["home"]["tile"] = self.draw_rect(
-                *self.calc_grid_cells[0][0],
+            self.tiles_bws["home"]["tile"] = self.draw_rect(
+                self.calc_grid_cells_bws[0][0],
                 fill=self.colour_tile_header_home_background.hex_code,
-                parent=self.canvas
+                parent=self.canvas_bws
             )
 
         self.multi_combobox_orders_stg.add_new_item(self.df_multi_combobox_data_orders_stg)
+        self.multi_combobox_orders_bws.add_new_item(self.df_multi_combobox_data_orders_bws)
 
         self.bg_info_frame = Colour("SystemButtonFace")
-        self.info_frame = tkinter_utility.InfoFrame(
+        self.info_frame_stg = tkinter_utility.InfoFrame(
             self.frame_info_frame,
             labels=self.info_frame_columns_stg,
             auto_grid=True,
@@ -1526,17 +2017,59 @@ class App(ctk.CTk):
                 "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
             }
         )
-        self.tv_btn_if_goto, self.btn_if_goto = customtkinter_utility.button_factory(
-            self.info_frame.frame_header,
+        self.info_frame_bws = tkinter_utility.InfoFrame(
+            self.frame_info_frame,
+            labels=self.info_frame_columns_bws,
+            auto_grid=True,
+            header="Quote Information:",
+            key_width=16,
+            val_width=50,
+            width=150,
+            background=self.bg_info_frame.hex_code,
+            padx=10,
+            pady=10,
+            cell_border=True,
+            key_label_keywords={
+                "font": "Arial 12 bold",
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
+            },
+            value_label_keywords={
+                "font": "Arial 12 bold",
+                "bg": self.bg_info_frame.brightened(0.25).hex_code
+            },
+            header_kwargs={
+                "font": "Arial 18 bold",
+                "bg": self.bg_info_frame.hex_code
+            },
+            formats={
+                "Prod Date": lambda d: d.strftime("%Y-%m-%d"),
+                # "Delivery Date (Est)": lambda d: d.strftime("%Y-%m-%d"),
+                "Sched Finish": lambda d: d.strftime("%Y-%m-%d")
+            }
+        )
+        self.tv_btn_if_goto_stg, self.btn_if_goto_stg = customtkinter_utility.button_factory(
+            self.info_frame_stg.frame_header,
             tv_btn="Go To",
             command=self.click_if_goto
         )
-        ga = {k: v for k, v in self.info_frame.grid_args["header"].items()}
+        ga = {k: v for k, v in self.info_frame_stg.grid_args["header"].items()}
         ga.update({"columnspan": 1, "column": 0})
-        self.info_frame.header[1].grid_forget()
-        self.info_frame.header[1].grid(**ga)
+        self.info_frame_stg.header[1].grid_forget()
+        self.info_frame_stg.header[1].grid(**ga)
         ga.update({"columnspan": 1, "column": 1, "padx": 110})
-        self.btn_if_goto.grid(**ga)
+        self.btn_if_goto_stg.grid(**ga)
+
+        self.tv_btn_if_goto_bws, self.btn_if_goto_bws = customtkinter_utility.button_factory(
+            self.info_frame_stg.frame_header,
+            tv_btn="Go To",
+            command=self.click_if_goto
+        )
+        ga = {k: v for k, v in self.info_frame_bws.grid_args["header"].items()}
+        ga.update({"columnspan": 1, "column": 0})
+        self.info_frame_bws.header[1].grid_forget()
+        self.info_frame_bws.header[1].grid(**ga)
+        ga.update({"columnspan": 1, "column": 1, "padx": 110})
+        self.btn_if_goto_bws.grid(**ga)
 
         if (geo := self.calc_geometry["str"]) == "zoomed":
             self.state(geo)
@@ -1548,7 +2081,7 @@ class App(ctk.CTk):
         self.tv_multi_combobox_drag_tile = ctk.BooleanVar(self, value=False)
 
         # transparent method
-        # canvas
+        # canvas_stg
         # https://stackoverflow.com/questions/53021603/how-to-make-a-tkinter-canvas-background-transparent
         self.set_invisible_canvas()
 
@@ -1612,14 +2145,21 @@ class App(ctk.CTk):
 
         # traces
         self.tv_done_interact_tl.trace_variable("w", self.update_done_interact_tl)
-        self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
+        self.canvas_stg.configure(xscrollcommand=self.scroll_bar_x.set)
+        self.canvas_bws.configure(xscrollcommand=self.scroll_bar_x.set)
         self.history.trace_variable("w", self.tv_update_history)
         self.multi_combobox_orders_stg.res_tv_entry.trace_remove("write",
                                                                  self.multi_combobox_orders_stg.trace_res_tv_entry)
+        self.multi_combobox_orders_bws.res_tv_entry.trace_remove("write",
+                                                                 self.multi_combobox_orders_bws.trace_res_tv_entry)
         self.multi_combobox_orders_stg.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
+        self.multi_combobox_orders_bws.res_tv_entry.trace_add("write", self.multi_combobox_entry_update)
         self.multi_combobox_orders_stg.trace_res_tv_entry = self.multi_combobox_orders_stg.res_tv_entry.trace_add(
             "write",
             self.multi_combobox_orders_stg.update_entry)
+        self.multi_combobox_orders_bws.trace_res_tv_entry = self.multi_combobox_orders_bws.res_tv_entry.trace_add(
+            "write",
+            self.multi_combobox_orders_bws.update_entry)
         self.tl_tv_switch_colour.trace_variable("w", self.update_colour_theme)
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
@@ -1638,21 +2178,32 @@ class App(ctk.CTk):
         self.tv_update_test_mode()
         self.update_allowed_comp_bws()
         self.update_allowed_comp_stg()
+        print(f"{self.settings['mode_company']=}, {self.default_allowed_companies=}")
+        self.switch_company(self.settings["mode_company"])
+        # if self.settings["mode_company"] != self.default_allowed_companies[0]:
+        #     # if not stargate on-load, then switch company
+        #     self.switch_company(self.settings["mode_company"])
         self.after(1200, self.click_mb_go_to_today())
         # self.bind("<Control-Z>", self.undo)
-        # self.canvas.bind("<Control-z>", self.undo)
+        # self.canvas_stg.bind("<Control-z>", self.undo)
         # self.bind("<Ctrl-z>", self.undo)
 
         if self.settings["TEST_MODE"].get():
             print(f"{self.tiles_stg=}")
+            print(f"{self.tiles_bws=}")
 
         in_test_mode = self.settings["TEST_MODE"].get()
         print(f"{self.settings['TEST_MODE'].get()=}")
 
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
+        companies = list(map(lambda c: c.name, COMPANY))
+        print(f"COMPANY={companies[self.settings['mode_company']]}")
 
-    def quote_key(self, attr: str = "quote") -> str:
-        mc = self.settings["mode_company"]
+    def quote_key(self, attr: str = "quote", comp_id: int = None) -> str:
+        if comp_id is None:
+            mc = self.settings["mode_company"]
+        else:
+            mc = comp_id
         # STG by default
         match attr.lower():
             case "dealer":
@@ -1696,11 +2247,11 @@ class App(ctk.CTk):
             can_height: int,
             n_rows: int = 1,
             weights: tuple[int, int] = (90, 10)):
-        # self.calc_grid_cells = utility.grid_cells(
+        # self.calc_grid_cells_stg = utility.grid_cells(
         #     self.canvas_width_scroll_region,
         #     n_cols + 1,
-        #     self.canvas_height_scroll_region,
-        #     n_rows,
+        #     self.canvas_height_scroll_region_stg,
+        #     n_rows_stg,
         #     r_type=list
         # )
 
@@ -1787,8 +2338,8 @@ class App(ctk.CTk):
             # res.append(copy.deepcopy(col_lst))
             xt += wc
         self.canvas_width_scroll_region = xt
-        if getattr(self, "canvas", None) is not None:
-            self.canvas.configure(
+        if getattr(self, "canvas_stg", None) is not None:
+            self.canvas_stg.configure(
                 width=self.canvas_width_scroll_region
             )
         print(f"{res=}")
@@ -1799,7 +2350,7 @@ class App(ctk.CTk):
         #     can_width,
         #     (day_1 - day_0).days + 1,
         #     can_height,
-        #     n_rows,
+        #     n_rows_stg,
         #     r_type=list
         # )
 
@@ -1889,6 +2440,7 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
     def update_allowed_comp_bws(self, *args):
+        print(f"update_allowed_comp_bws")
         tm = self.settings["TEST_MODE"].get()
         tm = True
         if tm:
@@ -1903,10 +2455,11 @@ class App(ctk.CTk):
             if comp_id in valid:
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
-        if tm:
-            print(f"ac={self.tv_allowed_companies.get()}")
+        # if tm:
+        print(f"update_allowed_comp_bws ac={self.tv_allowed_companies.get()}")
 
     def update_allowed_comp_stg(self, *args):
+        print(f"update_allowed_comp_stg")
         tm = self.settings["TEST_MODE"].get()
         tm = True
         if tm:
@@ -1921,8 +2474,8 @@ class App(ctk.CTk):
             if comp_id in valid:
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
-        if tm:
-            print(f"ac={self.tv_allowed_companies.get()}")
+        # if tm:
+        print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
 
     def update_show_galvanized(self, *args):
         tm = self.settings["TEST_MODE"].get()
@@ -1943,10 +2496,10 @@ class App(ctk.CTk):
                     t_tags = tile_data.get("texts", list())
 
                     if (tag is not None) and (t_tags is not None) and (order is not None):
-                        bbox = self.canvas.bbox(tag)
-                        to_do_texts = [self.canvas.itemcget(ttag, "text") for ttag in t_tags]
+                        bbox = self.canvas_stg.bbox(tag)
+                        to_do_texts = [self.canvas_stg.itemcget(ttag, "text") for ttag in t_tags]
                         for ttag in t_tags:
-                            self.canvas.delete(ttag)
+                            self.canvas_stg.delete(ttag)
                         if old_showing:
                             # remove galv
                             to_do_texts = to_do_texts[:-1]
@@ -1957,7 +2510,7 @@ class App(ctk.CTk):
 
                         self.tiles_stg[date][line].update({
                             "texts": [
-                                self.canvas.create_text(
+                                self.canvas_stg.create_text(
                                     int(bbox[0] + (self.tile_width * 0.5)),
                                     int(bbox[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                                     text=txt,
@@ -2018,7 +2571,7 @@ class App(ctk.CTk):
             self.frame_left_controls.grid_forget()
             self.canvas_width = self.total_width
 
-        self.canvas.configure(
+        self.canvas_stg.configure(
             width=self.canvas_width
         )
 
@@ -2133,7 +2686,7 @@ class App(ctk.CTk):
 
         for widget_name in [
             "toggle_warranty",
-            "btn_if_goto"
+            "btn_if_goto_stg"
         ]:
             widget = getattr(self, widget_name, None)
             if widget is not None:
@@ -2395,7 +2948,7 @@ class App(ctk.CTk):
 
                             # print(f"{date_=}, {line_=}, {is_hovered=}")
                             # print(f"{style=}")
-                            self.canvas.itemconfigure(
+                            self.canvas_stg.itemconfigure(
                                 tag,
                                 fill=bg,
                                 width=ou,
@@ -2405,7 +2958,7 @@ class App(ctk.CTk):
                                 # activeoutline=bd_h,
                             )
                             for t_tag in t_tags:
-                                self.canvas.itemconfigure(
+                                self.canvas_stg.itemconfigure(
                                     t_tag,
                                     fill=fg,
                                     font=ft
@@ -2554,16 +3107,26 @@ class App(ctk.CTk):
 
             print(f"END {valid_ac=}, {type(valid_ac)=}")
             for val in valid_ac:
+                print(f"{val=}")
                 if val == COMPANY.BWS.value:
                     print(f"j")
                     self.tv_allowed_comp_bws.set(True)
+                    self.update_allowed_comp_bws()
                 elif val == COMPANY.STG.value:
                     print(f"k")
                     self.tv_allowed_comp_stg.set(True)
+                    self.update_allowed_comp_stg()
             print(f"END {allowed_companies=}")
             print(f"{self.tv_allowed_comp_bws.get()=}")
             print(f"{self.tv_allowed_comp_stg.get()=}")
             print(f"{self.tv_allowed_companies.get()=}")
+
+            mode_company = df_pds_user["ModeCompany"]
+            if pd.isna(mode_company):
+                print(f"a")
+                valid_ac = self.default_allowed_companies[0]
+            else:
+                mode_company = int(mode_company)
 
             # self.tv_allowed_companies.set(valid_ac)
 
@@ -2582,6 +3145,8 @@ class App(ctk.CTk):
             self.tl_tv_colour_code_priority.set(colour_code_priority.title())
             self.tl_tv_colour_code_only_priority.set(colour_code_priority_only)
             self.update_colour_theme()
+            # if self.settings["mode_company"] != self.default_allowed_companies[0]:
+            # self.settings["mode_company"] = mode_company
 
             return True
 
@@ -2609,14 +3174,14 @@ class App(ctk.CTk):
     def bind_widgets(self, do_bind: bool = True):
         print(f"{do_bind=}")
         if do_bind:
-            self.bn_mousewheel_calendar = self.canvas.bind("<MouseWheel>", self.on_mousewheel_calendar)
-            self.bn_motion_calendar = self.canvas.bind("<Motion>", self.on_motion_calendar)
-            self.bn_lclickmotion_calendar = self.canvas.bind("<B1-Motion>", self.on_left_click_motion_calendar)
+            self.bn_mousewheel_calendar = self.canvas_stg.bind("<MouseWheel>", self.on_mousewheel_calendar)
+            self.bn_motion_calendar = self.canvas_stg.bind("<Motion>", self.on_motion_calendar)
+            self.bn_lclickmotion_calendar = self.canvas_stg.bind("<B1-Motion>", self.on_left_click_motion_calendar)
             self.bn_lclickmotion_invisible_canvas = self.invisible_canvas.bind("<B1-Motion>",
                                                                                self.on_left_click_root_canvas)
-            self.bn_lrelease_calendar = self.canvas.bind("<ButtonRelease-1>", self.on_left_click_release_calendar)
-            self.bn_lclick_calendar = self.canvas.bind("<Button-1>", self.on_left_click_calendar)
-            self.bn_rrelease_calendar = self.canvas.bind("<ButtonRelease-3>", self.on_right_click_calendar)
+            self.bn_lrelease_calendar = self.canvas_stg.bind("<ButtonRelease-1>", self.on_left_click_release_calendar)
+            self.bn_lclick_calendar = self.canvas_stg.bind("<Button-1>", self.on_left_click_calendar)
+            self.bn_rrelease_calendar = self.canvas_stg.bind("<ButtonRelease-3>", self.on_right_click_calendar)
             self.bn_ctlz = self.bind("<Control-z>", self.undo)
 
         else:
@@ -2631,14 +3196,14 @@ class App(ctk.CTk):
             for bind_seq, attr in bindings:
                 o_attr = getattr(self, attr, None)
                 if o_attr is not None:
-                    self.canvas.unbind(bind_seq, o_attr)
+                    self.canvas_stg.unbind(bind_seq, o_attr)
                     setattr(self, attr, None)
 
             if self.bn_ctlz is not None:
                 self.unbind("<Control-z>", self.bn_ctlz)
                 self.bn_ctlz = None
 
-        # print(f"{self.canvas.bind()=}")
+        # print(f"{self.canvas_stg.bind()=}")
 
     def grid_keys(self) -> tuple[str, str, str, str, str, str, str, str, str]:
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
@@ -2665,7 +3230,7 @@ class App(ctk.CTk):
         self.lbl_testing_mode.grid()
 
         # frame_canvas
-        self.canvas.grid(**{r: 0})
+        self.canvas_stg.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: ctk.EW})
 
         # frame_left_controls
@@ -2708,7 +3273,7 @@ class App(ctk.CTk):
             self.frame_left_controls.grid_forget()
 
             self.canvas_width = self.total_width
-            self.canvas.configure(
+            self.canvas_stg.configure(
                 width=self.canvas_width
             )
 
@@ -2727,7 +3292,7 @@ class App(ctk.CTk):
         self.frame_calendar.grid_propagate(False)
         # self.frame_canvas.grid(**{s: "nsew"})
         # self.frame_canvas.grid_propagate(False)
-        self.canvas.grid(**{r: 0})
+        self.canvas_stg.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: "ew"})
         # is_warranty = self.toggle_warranty.value.get() == "Warranty"
         is_warranty = self.tv_toggle_warranty.get() == "Warranty"
@@ -2805,21 +3370,31 @@ class App(ctk.CTk):
         print(f"END Grid {tm=}")
 
     def scroll_x_calendar(self, *args) -> None:
-        # change the canvas xview when the scrollbar is interacted with
+        # change the canvas_stg xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
-        self.canvas.xview(*args)
+        comp_id = self.settings["mode_company"]
+        print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        if comp_id == COMPANY.BWS.value:
+            self.canvas_bws.xview(*args)
+        else:
+            self.canvas_stg.xview(*args)
         self.redraw_legend()
 
     def on_mousewheel_calendar(self, event) -> None:
-        # move the canvas xview when mousewheel scrolled
-        self.canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        # move the canvas_stg xview when mousewheel scrolled
+        comp_id = self.settings["mode_company"]
+        print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        if comp_id == COMPANY.BWS.value:
+            self.canvas_bws.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        else:
+            self.canvas_stg.xview_scroll(int(-1 * (event.delta / 120)), "units")
         self.redraw_legend()
 
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
-        x_1, x_2 = self.canvas.xview()
-        y_1, y_2 = self.canvas.yview()
+        x_1, x_2 = self.canvas_stg.xview()
+        y_1, y_2 = self.canvas_stg.yview()
         srw = self.canvas_width_scroll_region
-        srh = self.canvas_height_scroll_region
+        srh = self.canvas_height_scroll_region_stg
         x_1 *= srw
         x_2 *= srw
         y_1 *= srh
@@ -2828,41 +3403,63 @@ class App(ctk.CTk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
+        ci = self.settings["mode_company"]
         tw_legend_lines = self.tile_width_legend_lines
         th_legend_lines = self.tile_height_legend_lines
         tw, th = self.tile_width, self.tile_height
         tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
-        col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
         # print(f"{col_legend=}")
         # tiles_stg = [dat["tile"] for dat in col_legend]
-        home_tile = self.tiles_stg["home"]["tile"]
 
-        if self.stg_logo_image:
+        if ci == COMPANY.BWS.value:
+            col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
+            home_tile = self.tiles_bws["home"]["tile"]
+            img = self.bws_logo_image
+            can = self.canvas_bws
+
+        else:
+            col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
+            home_tile = self.tiles_stg["home"]["tile"]
+            img = self.stg_logo_image
+            can = self.canvas_stg
+
+        if img:
             # move image
-            self.canvas.coords(home_tile, x_1 + (tw / 2), y_1 + (th / 2))
+            can.coords(
+                home_tile,
+                x_1 + (tw / 2),
+                y_1 + (th / 2)
+            )
+            # can.coords(
+            #     home_tile,
+            #     x_1,
+            #     y_1,
+            #     x_1 + tw,
+            #     y_1 + th
+            # )
         else:
             # move rectangle
-            self.canvas.coords(home_tile, x_1, y_1, x_1 + tw, y_1 + th)
+            can.coords(home_tile, x_1, y_1, x_1 + tw, y_1 + th)
 
         for dat in col_legend:
             tile = dat["tile"]
-            bw = float(self.canvas.itemcget(tile, "width"))
-            bbox = self.canvas.bbox(tile)
+            bw = float(can.itemcget(tile, "width"))
+            bbox = can.bbox(tile)
             y_t = bbox[1] + bw
             # print(f"{bbox=}, {x_1=}, {y_1=}, {x_2=}, {y_2=}, {x_1=}, {y_t=}, {x_1 + tw=}, {y_t + th=}")
-            # self.canvas.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
-            self.canvas.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
-            self.canvas.tag_raise(tile)
+            # self.canvas_stg.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
+            can.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
+            can.tag_raise(tile)
 
             for txt in dat.get("texts", []):
-                # print(f"{self.canvas.itemcget(txt, 'text')=}")
-                self.canvas.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
-                self.canvas.tag_raise(txt)
+                # print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
+                can.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
+                can.tag_raise(txt)
 
-        # print(f"{self.canvas.winfo_viewable()=}")
-        # print(f"{self.canvas.xview()=}")
+        # print(f"{self.canvas_stg.winfo_viewable()=}")
+        # print(f"{self.canvas_stg.xview()=}")
 
     def is_valid_prod_date(self, date_in: datetime.datetime | pd.Timestamp, include_all_holidays: bool = False) -> str:
         if date_in.weekday() < 5:
@@ -2887,7 +3484,7 @@ class App(ctk.CTk):
         """
         Return the CLOSEST date to a given x position on the calendar
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
         # srw = self.canvas_width_scroll_region
         # dates = self.list_dates
@@ -2908,7 +3505,7 @@ class App(ctk.CTk):
 
         # print(f"{x=}", end="")
         for i, date in enumerate(self.list_dates[:-1]):
-            gc_top = self.calc_grid_cells[0][i + 1]
+            gc_top = self.calc_grid_cells_stg[0][i + 1]
             x0, y0, x1, y1 = gc_top
             if x0 <= x <= x1:
                 # print(f" {i=}, {date=}", end="\n")
@@ -2919,9 +3516,9 @@ class App(ctk.CTk):
         """
         Return the CLOSEST prod line to a given y position on the calendar
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # srh = self.canvas_height_scroll_region
+        # srh = self.canvas_height_scroll_region_stg
         # lines = self.list_prod_lines_stg
         # p = min(y / srh, 0.999)  # prevent index out of bounds
         # # include the legend in space calculations, but exclude for indexing
@@ -2932,7 +3529,7 @@ class App(ctk.CTk):
 
         # print(f"{y=}", end="")
         for i, line in enumerate(self.list_prod_lines_stg):
-            gc_top = self.calc_grid_cells[i + 1][0]
+            gc_top = self.calc_grid_cells_stg[i + 1][0]
             x0, y0, x1, y1 = gc_top
             if y0 <= y <= y1:
                 # print(f" {i=}, {line=}", end="\n")
@@ -2941,22 +3538,22 @@ class App(ctk.CTk):
 
     def get_date_line_at_x_y(self, x: int | float, y: int | float) -> tuple[pd.Timestamp, str] | tuple[None, None]:
         """
-        Get the date and line for a given x and y on the canvas.
+        Get the date and line for a given x and y on the canvas_stg.
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # tile = self.canvas.find_closest(x, y)
+        # tile = self.canvas_stg.find_closest(x, y)
         date = self.get_date_bucket(x)
         line = self.get_prod_line_bucket(y)
         return date, line
 
     def get_tile_at_x_y(self, x: int | float, y: int | float) -> dict:
         """
-        Get the tile data for a given x and y on the canvas.
+        Get the tile data for a given x and y on the canvas_stg.
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
-        Use tkinter.canvas.canvasx and canvasy methods to convert before passing as params here.
+        Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # tile = self.canvas.find_closest(x, y)
+        # tile = self.canvas_stg.find_closest(x, y)
         date, line = self.get_date_line_at_x_y(x, y)
         return self.tiles_stg.get(date, {}).get(line, {})
 
@@ -2977,9 +3574,9 @@ class App(ctk.CTk):
         if i_line is None or i_date is None:
             return None
 
-        # return self.calc_grid_cells[i_date][i_line]
+        # return self.calc_grid_cells_stg[i_date][i_line]
         print(f"{i_line=}, {i_date=}")
-        return self.calc_grid_cells[i_line][i_date]
+        return self.calc_grid_cells_stg[i_line][i_date]
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
         # print(f"SEL {self.settings['allow_multi_select']=}")
@@ -3028,9 +3625,9 @@ class App(ctk.CTk):
                 if tm:
                     print(f"texts_to_change == {self.tiles_stg[date][line]['texts']=}")
                     print(
-                        f"texts_to_change == {[self.canvas.itemcget(txt, 'text') for txt in self.tiles_stg[date][line]['texts']]=}")
+                        f"texts_to_change == {[self.canvas_stg.itemcget(txt, 'text') for txt in self.tiles_stg[date][line]['texts']]=}")
                 for txt in self.tiles_stg[date][line].get("texts", []):
-                    self.canvas.itemconfigure(txt, text="")
+                    self.canvas_stg.itemconfigure(txt, text="")
                 self.tiles_stg[date][line]["order"] = None
 
                 # add to combobox
@@ -3195,7 +3792,7 @@ class App(ctk.CTk):
                     print(f"{to_do_texts=}")
 
                 texts = [
-                    self.canvas.create_text(
+                    self.canvas_stg.create_text(
                         int(bbox[0] + (self.tile_width * 0.5)),
                         int(bbox[1] + ((k + 1) * self.tile_height / (1 + len(to_do_texts)))),
                         text=txt,
@@ -3207,12 +3804,12 @@ class App(ctk.CTk):
 
                 tw, th = self.tile_width, self.tile_height
                 n_txts = len(texts)
-                bw = float(self.canvas.itemcget(self.tiles_stg[date][line]["tile"], "width"))
+                bw = float(self.canvas_stg.itemcget(self.tiles_stg[date][line]["tile"], "width"))
                 y_t = bbox[1] + bw
                 for i, txts_ in enumerate(zip(texts, to_do_texts)):
                     txt, text = txts_
-                    self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
-                    self.canvas.itemconfigure(txt, text=text)
+                    self.canvas_stg.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
+                    self.canvas_stg.itemconfigure(txt, text=text)
 
             else:
                 # reconfigure the texts
@@ -3239,9 +3836,9 @@ class App(ctk.CTk):
                     mc_vals = [mc_quote, mc_wo, mc_model, mc_dealer, mc_galv]
                 for txt, text in zip_longest(texts, mc_vals):
                     if text is not None:
-                        self.canvas.itemconfigure(txt, text=text)
+                        self.canvas_stg.itemconfigure(txt, text=text)
                     else:
-                        self.canvas.itemconfigure(txt, state="hidden")
+                        self.canvas_stg.itemconfigure(txt, state="hidden")
 
             # df_order_in_mc = self.multi_combobox_orders_stg.tree_controller.df.loc[self.multi_combobox_orders_stg.tree_controller.df["SGQuote"] == quote]
             if is_warranty:
@@ -3341,9 +3938,9 @@ class App(ctk.CTk):
                 self.tiles_stg[date_1][line_1]["texts"] = texts_2
                 self.tiles_stg[date_2][line_2]["texts"] = texts_1
 
-                # swap positions on canvas
-                self.canvas.coords(tile_1, *bbox_2)
-                self.canvas.coords(tile_2, *bbox_1)
+                # swap positions on canvas_stg
+                self.canvas_stg.coords(tile_1, *bbox_2)
+                self.canvas_stg.coords(tile_2, *bbox_1)
 
                 # swap the tile ids
                 self.tiles_stg[date_1][line_1]["tile"] = tile_2
@@ -3382,7 +3979,7 @@ class App(ctk.CTk):
         if tm:
             print(f"on_right_click_calendar")
         ex, ey = event.x, event.y
-        ex, ey = self.canvas.canvasx(ex), self.canvas.canvasy(ey)
+        ex, ey = self.canvas_stg.canvasx(ex), self.canvas_stg.canvasy(ey)
         date, line = self.get_date_line_at_x_y(ex, ey)
         order = self.tiles_stg[date][line].get("order", None)
         if tm:
@@ -3435,7 +4032,7 @@ class App(ctk.CTk):
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
+        o_x, o_y = self.canvas_stg.canvasx(x), self.canvas_stg.canvasy(y)
         date, line = self.get_date_bucket(o_x), self.get_prod_line_bucket(o_y)
         # tile_data = self.get_tile_at_x_y(o_x, o_y)
         # if tm:
@@ -3702,11 +4299,11 @@ class App(ctk.CTk):
         x_if = getattr(self, "x_place_frame_info_frame", 0)
         y_if = getattr(self, "y_place_frame_info_frame", 0)
 
-        # bbox_canvas = self.canvas.bbox()
-        # bbox_if = self.info_frame.bbox()
+        # bbox_canvas = self.canvas_stg.bbox()
+        # bbox_if = self.info_frame_stg.bbox()
         # bbox_mc = self.multi_combobox_orders_stg.bbox()
-        bbox_canvas = list(self.frame_canvas.bbox(self.canvas))
-        bbox_if = list(self.frame_info_frame.bbox(self.info_frame))
+        bbox_canvas = list(self.frame_canvas.bbox(self.canvas_stg))
+        bbox_if = list(self.frame_info_frame.bbox(self.info_frame_stg))
         bbox_mc = list(self.frame_multi_combobox.bbox(self.multi_combobox_orders_stg))
 
         bbox_canvas[0] += x_fc
@@ -3737,8 +4334,8 @@ class App(ctk.CTk):
         if tm:
             print(f"\n\t{e_x=}, {e_y=}\n\t{x_fc=}, {y_fc=}\n\t{bbox_canvas=}\n\t{bbox_if=}\n\t{bbox_mc=}")
         if (bbox_canvas[0] <= e_x <= bbox_canvas[2]) and (bbox_canvas[1] <= e_y <= bbox_canvas[3]):
-            date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x - x_fc), self.canvas.canvasy(e_y - y_fc))
-            # date_line = self.get_date_line_at_x_y(self.canvas.canvasx(e_x), self.canvas.canvasy(e_y))
+            date_line = self.get_date_line_at_x_y(self.canvas_stg.canvasx(e_x - x_fc), self.canvas_stg.canvasy(e_y - y_fc))
+            # date_line = self.get_date_line_at_x_y(self.canvas_stg.canvasx(e_x), self.canvas_stg.canvasy(e_y))
             if date_line:
                 date, line = date_line
                 if date.weekday() < 5:
@@ -3842,10 +4439,10 @@ class App(ctk.CTk):
 
         # movement work
 
-        bba = self.canvas.bbox("all")
+        bba = self.canvas_stg.bbox("all")
         bbaw = (bba[2] - bba[0])
         cw = self.canvas_width
-        t_bbox = self.canvas.bbox(tile)
+        t_bbox = self.canvas_stg.bbox(tile)
         x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
             t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
         x /= bbaw
@@ -3854,7 +4451,7 @@ class App(ctk.CTk):
             print(f"{need_to_move=}")
         # if do_move and need_to_move:
         if do_move:
-            self.canvas.xview_moveto(x)
+            self.canvas_stg.xview_moveto(x)
             self.redraw_legend()
 
         # flash work
@@ -3900,7 +4497,7 @@ class App(ctk.CTk):
             g_bg, g_fg, g_ol = grads
             self.after((i + 1) * s_per_flash,
                        lambda tile_=tile, g_bg_=g_bg, g_ol_=g_ol:
-                       self.canvas.itemconfigure(tile_, fill=g_bg_, outline=g_ol_))
+                       self.canvas_stg.itemconfigure(tile_, fill=g_bg_, outline=g_ol_))
 
         # after animation, check if the tile is selected, then restore.
         if (sel := self.app_state.get("selected", None)) is not None:
@@ -3939,7 +4536,7 @@ class App(ctk.CTk):
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
+        o_x, o_y = self.canvas_stg.canvasx(x), self.canvas_stg.canvasy(y)
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         if tm:
             print(f"{o_x=}, {o_y=}, {event.delta=}, {event=}")
@@ -3966,24 +4563,24 @@ class App(ctk.CTk):
                     # only weekdays are allowed to move
                     td = self.tiles_stg[date][line]
                     tile = td["tile"]
-                    bw = float(self.canvas.itemcget(tile, "width"))
-                    bbox = self.canvas.bbox(tile)
+                    bw = float(self.canvas_stg.itemcget(tile, "width"))
+                    bbox = self.canvas_stg.bbox(tile)
                     if tm:
-                        print(f"\n{self.canvas.type(tile)=}")
+                        print(f"\n{self.canvas_stg.type(tile)=}")
                         print(f"{tile=}, {bbox=}")
                     t_x, t_y = bbox[0] + bw, bbox[1] + bw
                     if tm:
                         print(f"{date=}, {line=}, {d_x=}, {d_y=}, {t_x=}, {t_y=}")
-                    # self.canvas.move(tile, t_x + d_x, t_y + d_y)
-                    self.canvas.coords(tile, o_x - (tw / 2), o_y - (th / 2), o_x + (tw / 2), o_y + (th / 2))
-                    self.canvas.tag_raise(tile)
+                    # self.canvas_stg.move(tile, t_x + d_x, t_y + d_y)
+                    self.canvas_stg.coords(tile, o_x - (tw / 2), o_y - (th / 2), o_x + (tw / 2), o_y + (th / 2))
+                    self.canvas_stg.tag_raise(tile)
                     y_t = bbox[1] + bw
 
                     txts = self.tiles_stg[date][line].get("texts", [])
                     for i, txt in enumerate(txts):
-                        # self.canvas.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
-                        self.canvas.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (len(txts) + 1))))
-                        self.canvas.tag_raise(txt)
+                        # self.canvas_stg.coords(txt, bbox[0] + (tw / 2), bbox[1] + (th / 2))
+                        self.canvas_stg.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (len(txts) + 1))))
+                        self.canvas_stg.tag_raise(txt)
 
                     if (date, line) not in dt:
                         self.drag_tile(date, line)
@@ -3997,14 +4594,14 @@ class App(ctk.CTk):
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
-        o_x, o_y = self.canvas.canvasx(x), self.canvas.canvasy(y)
-        # tile = self.canvas.find_closest(ox, oy)
+        o_x, o_y = self.canvas_stg.canvasx(x), self.canvas_stg.canvasy(y)
+        # tile = self.canvas_stg.find_closest(ox, oy)
         date = self.get_date_bucket(o_x)
         line = self.get_prod_line_bucket(o_y)
         if date is None or line is None:
             self.clear_hover_tiles()
             return
-        # self.canvas.itemcget()
+        # self.canvas_stg.itemcget()
         # print(f"{x=}, {y=}, {o_x=}, {o_y=}, {date=}, {line=}, {st=}, {dt=}, {event=}")
         # self.app_state["hovered"].clear()
 
@@ -4036,7 +4633,7 @@ class App(ctk.CTk):
             texts = self.tiles_stg[date][prod_line].get("texts", [])
             if tile is not None:
                 # print(f" TIN", end="")
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     tile,
                     fill=(ab_w if is_weekend else ab).hex_code,
                     outline=(ao_w if is_weekend else ao).hex_code,
@@ -4044,7 +4641,7 @@ class App(ctk.CTk):
                 )
             for text in texts:
                 # print(f", '{text}'", end="")
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     text,
                     fill=(af_w if is_weekend else af).hex_code,
                     font=(font_w if is_weekend else font)
@@ -4085,15 +4682,15 @@ class App(ctk.CTk):
             tile = self.tiles_stg[date][prod_line].get("tile", None)
             texts = self.tiles_stg[date][prod_line].get("texts", [])
             if tile is not None:
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     tile,
                     fill=(b_w if is_weekend else (b_np if non_prod else b)).hex_code,
                     outline=(o_w if is_weekend else o).hex_code,
                     width=ow
                 )
             for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
-                self.canvas.itemconfigure(
+                # print(f"CONFIG: {self.canvas_stg.itemcget(text, 'text')=}")
+                self.canvas_stg.itemconfigure(
                     text,
                     fill=(f_w if is_weekend else f).hex_code,
                     font=(font_w if is_weekend else font)
@@ -4127,14 +4724,14 @@ class App(ctk.CTk):
             tile = self.tiles_stg[date][prod_line].get("tile", None)
             texts = self.tiles_stg[date][prod_line].get("texts", [])
             if tile:
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     tile,
                     fill=(ab_w if is_weekend else ab).hex_code,
                     outline=(ao_w if is_weekend else ao).hex_code,
                     width=ow
                 )
             for text in texts:
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     text,
                     fill=(af_w if is_weekend else af).hex_code,
                     font=(font_w if is_weekend else font)
@@ -4160,15 +4757,15 @@ class App(ctk.CTk):
             tile = self.tiles_stg[date][prod_line].get("tile", None)
             texts = self.tiles_stg[date][prod_line].get("texts", [])
             if tile:
-                self.canvas.itemconfigure(
+                self.canvas_stg.itemconfigure(
                     tile,
                     fill=(b_w if is_weekend else b).hex_code,
                     outline=(o_w if is_weekend else o).hex_code,
                     width=ow
                 )
             for text in texts:
-                # print(f"CONFIG: {self.canvas.itemcget(text, 'text')=}")
-                self.canvas.itemconfigure(
+                # print(f"CONFIG: {self.canvas_stg.itemcget(text, 'text')=}")
+                self.canvas_stg.itemconfigure(
                     text,
                     fill=(f_w if is_weekend else f).hex_code,
                     font=(font_w if is_weekend else font)
@@ -4186,12 +4783,12 @@ class App(ctk.CTk):
             bbox = self.get_tile_bbox(date, line)
             tile = self.tiles_stg[date][line]["tile"]
             # print(f"{date=}, {line=}, {tile=}, {bbox=}")
-            self.canvas.coords(tile, *bbox)
+            self.canvas_stg.coords(tile, *bbox)
 
             texts = self.tiles_stg[date][line].get("texts", [])
             for i, txt in enumerate(texts):
                 tx, ty = int(bbox[0] + (tw * 0.5)), int(bbox[1] + ((i + 1) * th / (1 + len(texts))))
-                self.canvas.coords(txt, tx, ty)
+                self.canvas_stg.coords(txt, tx, ty)
             self.colour_code(date, line)
 
         self.app_state["dragged"].clear()
@@ -4291,7 +4888,7 @@ class App(ctk.CTk):
             if not df.empty:
                 if tm:
                     print(f"QUOTE FOUND IN CALENDAR")
-                # if n_rows > 1:
+                # if n_rows_stg > 1:
                 #     # more than one possible entry found
                 #     # pass
                 #     self.choose_from_choices(df)
@@ -4516,13 +5113,13 @@ class App(ctk.CTk):
                     print(f"{dat_1=}")
                 for k in self.info_frame_columns_stg:
                     v = dat_1.get(k, f"'{k}'=?")
-                    self.info_frame.change_value(k, v)
+                    self.info_frame_stg.change_value(k, v)
         else:
-            self.info_frame.change_value("SGQuote", "?")
+            self.info_frame_stg.change_value("SGQuote", "?")
 
     def clear_info_frame(self):
         for k in self.info_frame_columns_stg:
-            self.info_frame.change_value(k, "")
+            self.info_frame_stg.change_value(k, "")
 
     def draw_rect(
             self,
@@ -4536,7 +5133,7 @@ class App(ctk.CTk):
             default_all: bool = False
     ):
         if parent is None:
-            parent = self.canvas
+            parent = self.canvas_stg
 
         kwarg_keys = ["fill", "activefill", "outline", "activeoutline", "width"]
         kwarg_vals = [
@@ -4562,7 +5159,7 @@ class App(ctk.CTk):
             if args[k] is None:
                 del args[k]
 
-        print(f"{args=}")
+        # print(f"{args=}")
 
         return parent.create_rectangle(*bbox, **args)
 
@@ -4577,10 +5174,10 @@ class App(ctk.CTk):
 
         # movement work
 
-        bba = self.canvas.bbox("all")
+        bba = self.canvas_stg.bbox("all")
         bbaw = (bba[2] - bba[0])
         cw = self.canvas_width
-        t_bbox = self.canvas.bbox(tile)
+        t_bbox = self.canvas_stg.bbox(tile)
         x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
             t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
         x /= bbaw
@@ -4588,7 +5185,7 @@ class App(ctk.CTk):
         # if tm:
         #     print(f"{need_to_move=}")
         if need_to_move:
-            self.canvas.xview_moveto(x)
+            self.canvas_stg.xview_moveto(x)
             self.redraw_legend()
 
         for line_ in self.list_prod_lines_stg:
@@ -4630,17 +5227,17 @@ class App(ctk.CTk):
                 ed = self.list_dates[-1]
                 # ed_a = ed
 
-            if sd < self.min_date:
-                sd = self.min_date
-            if ed > self.max_date:
-                ed = self.max_date
-            # sd = clamp(self.min_date, sd, self.max_date)
-            # ed = clamp(self.min_date, ed, self.max_date)
+            if sd < self.min_date_stg:
+                sd = self.min_date_stg
+            if ed > self.max_date_stg:
+                ed = self.max_date_stg
+            # sd = clamp(self.min_date_stg, sd, self.max_date_stg)
+            # ed = clamp(self.min_date_stg, ed, self.max_date_stg)
             # ed_a = (ed + datetime.timedelta(days=n_days)) if (not ed_disabled) else ed
             ed_a = self.calculate_nth_business_day(ed, n_days) if (not ed_disabled) else ed
 
             # data = self.df_orders_stg.loc[self.df_orders_stg[""]]
-            print(f"{self.min_date=}, {self.max_date=}")
+            print(f"{self.min_date_stg=}, {self.max_date_stg=}")
             print(f"{ed=}, {sd=}, {p_line=}")
             data = []
             print(f"{self.tiles_stg=}")
@@ -4763,23 +5360,23 @@ class App(ctk.CTk):
                         bot_right_bbox = self.get_tile_bbox(br_date, br_line)
                     print(f"{top_left_bbox=}, {bot_right_bbox=}")
 
-                    xv = self.canvas.xview()
-                    x1, x2 = self.canvas.bbox("all")[0::2]
+                    xv = self.canvas_stg.xview()
+                    x1, x2 = self.canvas_stg.bbox("all")[0::2]
                     w = x2 - x1
                     vw = (xv[1] - xv[0]) * w
                     # print(f"{date=}, {line=}")
-                    # print(f"{self.canvas.xview()=}")
-                    # print(f"{self.canvas.bbox('all')=}")
+                    # print(f"{self.canvas_stg.xview()=}")
+                    # print(f"{self.canvas_stg.bbox('all')=}")
                     bbox = top_left_bbox
                     # print(f"{bbox=}, {vw=}")
                     x = bbox[0]  # - (vw / 2)
                     x = max(0, x)
                     p = x / w
-                    self.canvas.xview_moveto(p)
+                    self.canvas_stg.xview_moveto(p)
                     self.redraw_legend()
 
-                    # self.canvas.xview_moveto(self.canvas.canvasx(x0) / self.canvas.winfo_width())
-                    # self.canvas.yview_moveto(self.canvas.canvasy(y0) / self.canvas.winfo_height())
+                    # self.canvas_stg.xview_moveto(self.canvas_stg.canvasx(x0) / self.canvas_stg.winfo_width())
+                    # self.canvas_stg.yview_moveto(self.canvas_stg.canvasy(y0) / self.canvas_stg.winfo_height())
                     # x0 /= 10
                     # y0 /= 10
                     # x1 /= 10
@@ -4788,14 +5385,14 @@ class App(ctk.CTk):
                     x0, y0, x1, y1 = 0, 0, 800, 800
                     print(
                         f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
-                    ps = self.canvas.postscript(colormode='color')
+                    ps = self.canvas_stg.postscript(colormode='color')
                     # Convert PostScript to image
                     image = Image.open(io.BytesIO(ps.encode('utf-8')))
                     # Crop the image to the viewport
                     image = image.crop((x0, y0, x1, y1))
                     # Convert the cropped image to a format suitable for tkinter
                     canvas_image = ImageTk.PhotoImage(image)
-                    # Display the captured image in the viewport canvas
+                    # Display the captured image in the viewport canvas_stg
                     self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
                     self.tl_data[
                         "tl_canvas_preview"].image = canvas_image  # Keep a reference to avoid garbage collection
@@ -4810,7 +5407,7 @@ class App(ctk.CTk):
                     # image = ImageGrab.grab().crop((x0, y0, x1, y1))
                     # # Convert the captured image to a format suitable for tkinter
                     # canvas_image = ImageTk.PhotoImage(image)
-                    # # Display the captured image in the viewport canvas
+                    # # Display the captured image in the viewport canvas_stg
                     # self.tl_data["tl_canvas_preview_image"] = self.tl_data["tl_canvas_preview"].create_image(0, 0, image=canvas_image, anchor=ctk.NW)
                     # self.tl_data["tl_canvas_preview"].image = canvas_image
                     # # self.tl_data["tl_canvas_preview"].itemconfigure(self.tl_data["tl_canvas_lbl_no_data"], state="normal")
@@ -5300,12 +5897,12 @@ class App(ctk.CTk):
             #
             # ed_disabled = self.tl_data["var_end_date_disabled"].get()
             #
-            # min_date, max_date = self.list_dates[0], self.list_dates[-1]
+            # min_date_stg, max_date_stg = self.list_dates[0], self.list_dates[-1]
 
             if len(data) > 1:
 
                 # if ed_disabled:
-                #     ed = max_date
+                #     ed = max_date_stg
                 #
                 # if isinstance(ed, str):
                 #     ed = datetime.datetime.strptime(ed, "%Y-%m-%d")
@@ -6052,7 +6649,7 @@ class App(ctk.CTk):
                 )
 
         def click_top_btn(event):
-            # self.tl_data["tl_cc_scroll_canvas"].canvas.yview_moveto(0)
+            # self.tl_data["tl_cc_scroll_canvas"].canvas_stg.yview_moveto(0)
             self.tl_data["tl_cc_scroll_canvas"]._parent_canvas.yview_moveto(0)
 
         def click_dealer_tile(event, dealer_idx, dealer_model: str = "dealer"):
@@ -6878,9 +7475,65 @@ class App(ctk.CTk):
             parent=parent
         ), has_history
 
+    def switch_company(self, comp_id):
+        tm = self.settings["TEST_MODE"].get()
+        ac = self.tv_allowed_companies.get()
+        curr_company = self.settings["mode_company"]
+        companies = list(map(lambda c: getattr(c, "name"), COMPANY))
+        print(f"-> SWITCH COMPANY {curr_company=}, {comp_id=}")
+        print(f"{ac=}")
+        if comp_id not in ac:
+            messagebox.showerror(
+                title=self.title_application_short + " - Switch Companies",
+                message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
+                parent=(self if (self.tl_sc is None) else self.tl_sc)
+            )
+        else:
+            if comp_id != curr_company:
+                print(f"SWITCH TO {companies[comp_id]=}")
+                if comp_id == COMPANY.BWS.value:
+                    grid_bws = True
+                    grid_stg = False
+                else:
+                    grid_bws = False
+                    grid_stg = True
+
+                # bws widgets
+                self.multi_combobox_orders_bws.grid_widget(grid_bws)
+                self.multi_combobox_warranties_bws.grid_widget(grid_bws)
+
+                # stg widgets
+                self.multi_combobox_orders_stg.grid_widget(grid_stg)
+                self.multi_combobox_warranties_stg.grid_widget(grid_stg)
+
+                if not grid_stg:
+                    self.canvas_stg.grid_forget()
+                else:
+                    self.canvas_stg.grid(row=0)
+
+                if not grid_bws:
+                    self.canvas_bws.grid_forget()
+                else:
+                    self.canvas_bws.grid(row=0)
+
+                print(f"{grid_bws=}, {grid_stg=}")
+
+                self.settings["mode_company"] = comp_id
+                mc_s = f"{comp_id}" if (comp_id != -1) else ""
+                if not mc_s:
+                    mc_s = "NULL"
+                if tm:
+                    print(f"{mc_s=}")
+
+                un = self.app_state["user_name"]
+                sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ModeCompany] = {mc_s} WHERE [UserName] = '{un}';"
+                sql = sql.format(mc_s=mc_s, un=un)
+                connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
     def click_mb_switch_companies(self, *args):
         tm = self.settings["TEST_MODE"].get()
         ac = self.tv_allowed_companies.get()
+        tv_selected_company = ctk.IntVar(self, value=-1)
         print(f"{ac=}, {type(ac)=}")
         if len(ac) < 2:
             messagebox.showinfo(
@@ -6908,8 +7561,42 @@ class App(ctk.CTk):
                 comp_lbl = btns[idx]["lbl"]
                 if comp_id != self.settings["mode_company"]:
                     print(f"NEED TO SWITCH COMPANIES")
+                    tl_sc_lbl[0].set(f"Switch to {comp_lbl}?")
                 else:
                     print(f"STAY ON {comp_lbl}")
+
+                tv_selected_company.set(idx)
+
+                for i in range(len(btns)):
+                    state = ctk.HIDDEN if i != idx else ctk.NORMAL
+                    print(f"{i=}, {state=}")
+                    tl_sc_canvas.itemconfigure(
+                        btns[i]["bd_tag"],
+                        state=state
+                    )
+
+            def click_ays_no(*args):
+                print(f"click_ays_no")
+                on_close_tl_sc()
+
+            def click_ays_yes(*args):
+                print(f"click_ays_yes")
+                # on_close_tl_sc()
+                idx = tv_selected_company.get()
+                if idx == -1:
+                    idx = self.default_allowed_companies[0]
+                comp_id = btns[idx]["comp_id"]
+                comp_lbl = btns[idx]["lbl"]
+                print(f"SWITCHING TO {comp_lbl}")
+                self.switch_company(comp_id)
+                on_close_tl_sc()
+
+            def update_selected_company(*args):
+                comp = tv_selected_company.get()
+                sel = comp != self.settings["mode_company"]
+                print(f"{comp=}, {sel=}, {self.settings['mode_company']=}")
+                state = ctk.NORMAL if sel else ctk.HIDDEN
+                tl_sc_canvas.itemconfigure(tl_sc_tag_btns, state=state)
 
             w_can, h_can = 600, 400
             tl_sc_canvas = ctk.CTkCanvas(
@@ -6917,10 +7604,18 @@ class App(ctk.CTk):
                 width=w_can,
                 height=h_can
             )
+            # gc_btns = tkinter_utility.grid_cells(
+            #     w_can,
+            #     len(ac),
+            #     h_can,
+            #     1,
+            #     x_pad=25,
+            #     y_pad=25
+            # )
             gc_btns = tkinter_utility.grid_cells(
-                w_can,
+                (len(ac) * self.tile_width) + ((len(ac) + 1) * 20) + 50,
                 len(ac),
-                h_can,
+                self.tile_height + 20 + 50,
                 1,
                 x_pad=25,
                 y_pad=25
@@ -6934,6 +7629,20 @@ class App(ctk.CTk):
                     data = btns[j]
                     lbl_txt = data["lbl"]
                     img = data["img"]
+
+                    mg = 2
+                    bbox_bd = (
+                        bbox[0] - mg,
+                        bbox[1] - mg,
+                        bbox[2] + mg,
+                        bbox[3] + mg
+                    )
+                    print(f"{bbox=}, {bbox_bd=}")
+                    bd_tag = tl_sc_canvas.create_rectangle(
+                        *bbox_bd,
+                        fill="#CCBB55"
+                    )
+
                     if img is not None:
                         tag = tl_sc_canvas.create_image(
                             bbox[0] + ((bbox[2] - bbox[0]) / 2),
@@ -6948,14 +7657,53 @@ class App(ctk.CTk):
                             text=lbl_txt
                         )
 
-                    btns[j].update({"tag": tag})
+                    btns[j].update({"tag": tag, "bd_tag": bd_tag})
                     tl_sc_canvas.tag_bind(
                         tag,
                         "<Button-1>",
                         lambda event, idx_=j: on_click_company(event, idx_)
                     )
 
+            tl_sc_frame_ays = ctk.CTkFrame(self.tl_sc, width=200, height=100)
+            tl_sc_frame_ays.rowconfigure(0, weight=20)
+            tl_sc_frame_ays.rowconfigure(1, weight=80)
+            tl_sc_frame_ays.columnconfigure(0, weight=50)
+            tl_sc_frame_ays.columnconfigure(1, weight=50)
+            tl_sc_btn_cancel = customtkinter_utility.button_factory(
+                tl_sc_frame_ays,
+                tv_btn="no",
+                command=click_ays_no
+            )
+            tl_sc_btn_submit = customtkinter_utility.button_factory(
+                tl_sc_frame_ays,
+                tv_btn="yes",
+                command=click_ays_yes
+            )
+            tl_sc_lbl = customtkinter_utility.label_factory(
+                tl_sc_frame_ays,
+                tv_label="",
+                kwargs_label={
+                    "font": self.kwargs_lbl["font"]
+                }
+            )
+
             tl_sc_canvas.grid(row=0, column=0, sticky=ctk.NSEW)
+            tl_sc_lbl[1].grid(row=0, column=0, columnspan=2, padx=16, pady=12)
+            tl_sc_btn_cancel[1].grid(row=1, column=0, padx=16, pady=12)
+            tl_sc_btn_submit[1].grid(row=1, column=1, padx=16, pady=12)
+
+            tl_sc_tag_btns = tl_sc_canvas.create_window(
+                w_can / 2,
+                gc_btns[-1][-1][-1] + 80,
+                anchor=ctk.CENTER,
+                width=200,
+                height=100,
+                window=tl_sc_frame_ays
+            )
+
+            tv_selected_company.trace_variable("w", update_selected_company)
+            on_click_company(None, self.settings["mode_company"])
+            tv_selected_company.set(self.settings["mode_company"])
 
             self.tl_sc.grab_set()
             # entry_pwd[3].focus_force()
@@ -7231,7 +7979,7 @@ class App(ctk.CTk):
             if tm:
                 print(f"click_no TM={in_tm}")
             on_closing_tm()
-            self.set_pds_testing_mode(not in_tm)
+            self.set_pds_testing_mode(in_tm)
 
         def on_closing_tm(*args):
             self.tl_data[tl_name].destroy()
@@ -7585,9 +8333,9 @@ class App(ctk.CTk):
                 sql_2 = f""
                 if tm:
                     print(f"\n\tON CLOSE\n{history=}")
-                # print(f"SHOULD MAKE SURE THESE ARE CLEAR\n\t{len(self.concats_double_entries)}\n\t{self.concats_double_entries=}")
+                # print(f"SHOULD MAKE SURE THESE ARE CLEAR\n\t{len(self.concats_double_entries_stg)}\n\t{self.concats_double_entries_stg=}")
 
-                for s_df in self.concats_double_entries:
+                for s_df in self.concats_double_entries_stg:
                     stmt_1 = f""
                     if tm:
                         print(f"{s_df[['OrdersV2_SGQuote', 'Available Date', 'JobAvailableLine']]=}")
@@ -7813,28 +8561,28 @@ class App(ctk.CTk):
             print(f"click_if_goto")
 
         # before = self.tv_entry_unit_scroll_search.get()
-        quote = self.info_frame.get_value("SGQuote")
+        quote = self.info_frame_stg.get_value("SGQuote")
         if tm:
             print(f"{quote=}")
         if quote:
-            date = pd.Timestamp(self.info_frame.get_value("Sched Finish"))
-            line = self.info_frame.get_value("Sched Line")
-            bbox = self.canvas.bbox("all")
-            xv = self.canvas.xview()
+            date = pd.Timestamp(self.info_frame_stg.get_value("Sched Finish"))
+            line = self.info_frame_stg.get_value("Sched Line")
+            bbox = self.canvas_stg.bbox("all")
+            xv = self.canvas_stg.xview()
             x1, x2 = bbox[0::2]
             w = x2 - x1
             vw = (xv[1] - xv[0]) * w
             # print(f"{date=}, {line=}")
-            # print(f"{self.canvas.xview()=}")
-            # print(f"{self.canvas.bbox('all')=}")
+            # print(f"{self.canvas_stg.xview()=}")
+            # print(f"{self.canvas_stg.bbox('all')=}")
             bbox = self.get_tile_bbox(date, line)
             # print(f"{bbox=}, {vw=}")
             x = bbox[0] - (vw / 2)
             x = max(0, x)
             p = x / w
-            # print(f"{x=}, {p=}, {self.canvas.canvasx(x)=}")
+            # print(f"{x=}, {p=}, {self.canvas_stg.canvasx(x)=}")
 
-            self.canvas.xview_moveto(p)
+            self.canvas_stg.xview_moveto(p)
             self.flash_tile((date, line), mode="attention")
             self.redraw_legend()
 

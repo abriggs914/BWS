@@ -1084,7 +1084,7 @@ class Slider(tkinter.Frame):
         self.canvas = tkinter.Canvas(self, width=self.c_width, height=self.c_height,
                                      background=self.background_colour.hex_code)
 
-        # bbox = self.canvas.bbox("all")
+        # bbox = self.canvas_stg.bbox("all")
         # x1, y1, x2, y2 = bbox
         bbox = 0, 0, 400, 50
         x1, y1, x2, y2 = bbox
@@ -3248,8 +3248,8 @@ class ArrowButton(tkinter.Canvas):
 # Usage:
 # from tkinter import *
 # root = Tk()
-# canvas = Canvas(root, width = 1000, height = 1000)
-# canvas.pack()
+# canvas_stg = Canvas(root, width = 1000, height = 1000)
+# canvas_stg.pack()
 # my_rectangle = roundPolygon([50, 350, 350, 50], [50, 50, 350, 350], 10 , width=5, outline="#82B366", fill="#D5E8D4")
 # my_triangle = roundPolygon([50, 650, 50], [400, 700, 1000], 8 , width=5, outline="#82B366", fill="#D5E8D4")
 #
@@ -3300,13 +3300,13 @@ def round_polygon(canvas, x, y, sharpness, **kwargs):
 # Usage:
 # import tkinter
 # root = tkinter.Tk()
-# canvas = tkinter.Canvas(root)
-# canvas.pack()
-# rounded_rect(canvas, 20, 20, 60, 40, 10)
+# canvas_stg = tkinter.Canvas(root)
+# canvas_stg.pack()
+# rounded_rect(canvas_stg, 20, 20, 60, 40, 10)
 # root.mainloop()
 def rounded_rect(canvas, x, y, w, h, c):
     assert isinstance(canvas,
-                      tkinter.Canvas), f"Error param 'canvas' must be a tkinter.Canvas object. Got '{canvas}', {type(canvas)=}"
+                      tkinter.Canvas), f"Error param 'canvas_stg' must be a tkinter.Canvas object. Got '{canvas}', {type(canvas)=}"
     return [
         canvas.create_arc(x, y, x + 2 * c, y + 2 * c, start=90, extent=90, style="arc"),
         canvas.create_arc(x + w - 2 * c, y + h - 2 * c, x + w, y + h, start=270, extent=90, style="arc"),
@@ -3497,7 +3497,7 @@ class ToggleButton(tkinter.Frame):
             "self.label": {"row": 0, "column": 0},
             "self.frame_canvas": {"row": 0, "column": 1},
             "self.state": {},
-            "self.canvas": {"row": 0, "column": 0}
+            "self.canvas_stg": {"row": 0, "column": 0}
         }
 
         if self.auto_grid is not None and self.auto_grid:
@@ -3510,7 +3510,7 @@ class ToggleButton(tkinter.Frame):
         # self.grid()
         # self.label.grid(row=0, column=0)
         # self.frame_canvas.grid(row=0, column=1)
-        # self.canvas.grid(row=0, column=0)
+        # self.canvas_stg.grid(row=0, column=0)
         # dictionary = self.__dict__
         # print(f"{dictionary=}")
         for k, v in self.grid_args.items():
@@ -3589,7 +3589,7 @@ class ToggleButton(tkinter.Frame):
             self.state.set(not self.state.get())
 
     def get_objects(self):
-        # Button, (Label_var, Label), canvas_frame, (State, canvas)
+        # Button, (Label_var, Label), canvas_frame, (State, canvas_stg)
         return (
             self,
             (self.tv_label, self.label),

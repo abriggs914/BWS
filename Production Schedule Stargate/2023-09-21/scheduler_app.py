@@ -490,7 +490,7 @@ class App(tkinter.Tk):
         )
         # self.tv_entry_unit_scroll_search.trace_variable("w", self.unit_search_update)
 
-        # canvas and calendar objects
+        # canvas_stg and calendar objects
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
@@ -505,7 +505,7 @@ class App(tkinter.Tk):
         # line shifter
         dates = self.calendar_surface.dates_list
         min_date, max_date = utility.minmax(dates)
-        # print(f"{min_date=}, {max_date=}")
+        # print(f"{min_date_stg=}, {max_date_stg=}")
         self.line_shifter = LineShifter(self.frame_top_bar_e, lines=["All"] + self.calendar_surface.lines,
                                         min_date=min_date, max_date=max_date, disabled=self.line_shifter_is_disabled)
         self.tv_ls_start_date = self.line_shifter.odp_start_date.tv_date
@@ -879,12 +879,12 @@ class App(tkinter.Tk):
         lines = self.calendar_surface.lines
         contents = {l: {d: self.calendar_surface.tile_properties[i][j]["unit_in"] for j, d in enumerate(dates) if
                         self.calendar_surface.tile_properties[i][j]["unit_in"]} for i, l in enumerate(lines)}
-        # min_date, max_date = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
+        # min_date_stg, max_date_stg = utility.minmax(flatten([list(contents[line].keys()) for line in contents]))
         # content = {line: {} for line in lines}
         #
-        # dd = (max_date - min_date).days
+        # dd = (max_date_stg - min_date_stg).days
         # for d in range(dd):
-        #     t_date = min_date + datetime.timedelta(days=d)
+        #     t_date = min_date_stg + datetime.timedelta(days=d)
         #     found = False
         #     for j, l in enumerate(lines):
         #         value = self.calendar_surface.tile_properties[j][d]["unit_in"]
@@ -894,7 +894,7 @@ class App(tkinter.Tk):
         #     if not found:
         #         content[lines[0]][t_date] = None
         #
-        # print(f"\n{min_date=}\n{max_date=}\n")
+        # print(f"\n{min_date_stg=}\n{max_date_stg=}\n")
         # for k, v in content.items():
         #     print(f"{k=}\t{len(v)=}\t{v=}")
         # # raise Exception("STOP!!!")
@@ -917,7 +917,7 @@ class App(tkinter.Tk):
         td = relativedelta(max_date, min_date).months + (12 * relativedelta(max_date, min_date).years)
 
         print(f"1 {dates=}")
-        # dates = [d for d in dates if min_date <= d and d <= max_date]
+        # dates = [d for d in dates if min_date_stg <= d and d <= max_date_stg]
 
         print(f"{min_date=}, {max_date=}")
         print(f"{xd=}, {nd=}, {td=}")
@@ -929,7 +929,7 @@ class App(tkinter.Tk):
         errmsg = "ERROR"
         for i, d in enumerate(dates):
             if (d.isoweekday() % 7 not in [0, 6]):
-                # t_date = min_date + datetime.timedelta(days=)
+                # t_date = min_date_stg + datetime.timedelta(days=)
                 f_date = d.strftime("%Y-%m-%d")
                 mi = (d.month + (12 * d.year)) - nd
                 print(f"{i=}, {f_date=}, {mi=}")
@@ -1045,9 +1045,9 @@ class App(tkinter.Tk):
         # #
         # # # print(f"\n\tBEFORE\n{content=}\n")
         # #
-        # # dd = (max_date - min_date).days
+        # # dd = (max_date_stg - min_date_stg).days
         # # for d in range(dd):
-        # #     t_date = min_date + datetime.timedelta(days=d)
+        # #     t_date = min_date_stg + datetime.timedelta(days=d)
         # #     f_date = t_date.strftime("%Y-%m-%d")
         # #     mi = (t_date.month + (12 * t_date.year)) - nd
         # #     print(f"{d=}, {mi=}, {f_date=}")
@@ -1063,7 +1063,7 @@ class App(tkinter.Tk):
         # #
         # # # print(f"\n\tAFTER\n{content=}\n")
         # #
-        # # # print(f"\n{min_date=}\n{max_date=}\n")
+        # # # print(f"\n{min_date_stg=}\n{max_date_stg=}\n")
         # # for k, v in content.items():
         # #     print(f"\n\t{k=}\n\t{len(v)=}\n")
         # #     for k1, v1 in v.items():
@@ -1925,7 +1925,7 @@ class App(tkinter.Tk):
         tile = self.calendar_surface.tile_at_xy((x, y))
         # print(f"\t{x=}, {y=}, {tile=}")
 
-        # drag tile, hover tile canvas tags and row columns
+        # drag tile, hover tile canvas_stg tags and row columns
         dt = self.drag_tile
         ddt = self.dragging_details
         ht = self.calendar_surface.tile_at_xy((x, y))

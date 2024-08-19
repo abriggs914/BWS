@@ -1761,7 +1761,7 @@ def grid_cells(
         r_type: list | dict = list,
         r_int: bool = False
 ) -> list | dict:
-    """Calculate grid cell dimensions given W, H, n_rows, n_cols, x and y padding, x and y offset. Choose to return list or dictionary using r_type."""
+    """Calculate grid cell dimensions given W, H, n_rows_stg, n_cols, x and y padding, x and y offset. Choose to return list or dictionary using r_type."""
     assert isnumber(t_width), f"Error param 't_width' needs to be a number. Got {t_width=}"
     assert isnumber(n_cols), f"Error param 'n_cols' needs to be a number. Got {n_cols=}"
     assert isnumber(x_pad), f"Error param 'x_pad' needs to be a number. Got {x_pad=}"

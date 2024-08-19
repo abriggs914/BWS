@@ -804,7 +804,7 @@ class Slider(tkinter.Frame):
         self.canvas = tkinter.Canvas(self, width=self.c_width, height=self.c_height,
                                      background=self.background_colour.hex_code)
 
-        # bbox = self.canvas.bbox("all")
+        # bbox = self.canvas_stg.bbox("all")
         # x1, y1, x2, y2 = bbox
         bbox = 0, 0, 400, 50
         x1, y1, x2, y2 = bbox

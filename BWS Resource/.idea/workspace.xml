@@ -25,22 +25,22 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2b8HhDtACuotQpc2Xjdx2l3Abdi" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.search tables (1).executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/abriggs/Documents/BWS/BWS Resource"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.search tables (1).executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/abriggs/Documents/BWS/BWS Resource&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ABriggs\Documents\BWS\BWS Resource\Server3 Search Tables By Column Or Value" />
@@ -203,13 +203,13 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.main" />
-      <item itemvalue="Python.info_frame_canvas_demo" />
-      <item itemvalue="Python.search tables (1)" />
+      <item itemvalue="Python.Update Databases" />
       <item itemvalue="Python.colour_demo" />
+      <item itemvalue="Python.info_frame_canvas_demo" />
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python.search tables (1)" />
       <item itemvalue="Python.search tables" />
       <item itemvalue="Python.test_pyodbc_connection_mass_updates" />
-      <item itemvalue="Python.Update Databases" />
     </list>
     <recent_temporary>
       <list>

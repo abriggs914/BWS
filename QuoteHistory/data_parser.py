@@ -894,6 +894,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
         , "2024-07-26"
 		, "2024-08-09"
 		, "2024-08-12"
+        , "2024-09-04"
         , "2024-10-03"
         , "2024-10-04"
 	]

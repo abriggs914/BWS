@@ -96,7 +96,7 @@ class CalendarSurface(tkinter.Canvas):
         self.tile_height = None
         # self.texts = []
         self.tile_properties = []  # list of dictionaries containing the rest of the required tile data (text id and tvs)
-        self.tiles = self.init_tiles()  # list of canvas tags for the cells len = n_rows * n_cols
+        self.tiles = self.init_tiles()  # list of canvas_stg tags for the cells len = n_rows_stg * n_cols
         self.units = {None: None, "": None}  # dictionary of Stargate quote numbers.
         self.tiles_beyond = {line: {"left": [], "right": []} for line in self.lines}
         # self.undo_actions = 0
@@ -368,7 +368,7 @@ class CalendarSurface(tkinter.Canvas):
         return None
 
     def tile_to_rc(self, tag_in: int, extend=False) -> tuple[int, int] | None:
-        """Reverse look-up on self.tiles_stg using canvas tag ids. Use extend to also search the text tags."""
+        """Reverse look-up on self.tiles_stg using canvas_stg tag ids. Use extend to also search the text tags."""
         for r, tile_row in enumerate(self.tiles):
             for c, tile in enumerate(tile_row):
                 if tile == tag_in:

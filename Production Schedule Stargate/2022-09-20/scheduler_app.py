@@ -75,7 +75,7 @@ class App(tkinter.Tk):
 
         self.debug_tv_show_history, self.debug_show_history = button_factory(self.frame_top_bar, tv_btn="show history", kwargs_btn={"command": self.click_debug_show_history})
 
-        # canvas and calendar objects
+        # canvas_stg and calendar objects
         # self.tv_btn_scroll_left, self.button_scroll_left = button_factory(self.frame_calendar_a, tv_btn="left", kwargs_btn={"command": self.click_left_scroll})
         # self.tv_btn_scroll_right, self.button_scroll_right = button_factory(self.frame_calendar_a, tv_btn="right", kwargs_btn={"command": self.click_right_scroll})
 
@@ -217,7 +217,7 @@ class App(tkinter.Tk):
         tile = self.calendar_surface.tile_at_xy((x, y))
         print(f"\t{x=}, {y=}, {tile=}")
 
-        # drag tile, hover tile canvas tags and row columns
+        # drag tile, hover tile canvas_stg tags and row columns
         dt = self.drag_tile
         ddt = self.dragging_details
         ht = self.calendar_surface.tile_at_xy((x, y))
