@@ -305,26 +305,26 @@ class App(tkinter.Tk):
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
 
         self.data.update({
-            "tile_width": 175,
-            "tile_height": 110,
+            "tile_width_stg": 175,
+            "tile_height_stg": 110,
             "canvas_width": self.data["total_width"] * 0.75,
             "canvas_height": self.data["total_height"] * 0.75
         })
 
         # adjust incase too few prod lines
-        if (self.data["tile_height"] * n_rows) < self.data["total_height"]:
+        if (self.data["tile_height_stg"] * n_rows) < self.data["total_height"]:
             self.data.update({
-                "tile_height": self.data["canvas_height"] / n_rows
+                "tile_height_stg": self.data["canvas_height"] / n_rows
             })
 
         self.data.update({
-            "canvas_width_scroll_region": self.data["tile_width"] * n_cols,
-            "canvas_height_scroll_region_stg": self.data["tile_height"] * n_rows,
+            "canvas_width_scroll_region_stg": self.data["tile_width_stg"] * n_cols,
+            "canvas_height_scroll_region_stg": self.data["tile_height_stg"] * n_rows,
         })
 
         canvas_background = self.data["colour_calendar_background"]
         self.calc_grid_cells = utility.grid_cells(
-            self.data["canvas_width_scroll_region"],
+            self.data["canvas_width_scroll_region_stg"],
             n_cols,
             self.data["canvas_height_scroll_region_stg"],
             n_rows,
@@ -340,7 +340,7 @@ class App(tkinter.Tk):
             scrollregion=(
                 0,
                 0,
-                self.data["canvas_width_scroll_region"],
+                self.data["canvas_width_scroll_region_stg"],
                 self.data["canvas_height_scroll_region_stg"]
             )
         )
@@ -416,8 +416,8 @@ class App(tkinter.Tk):
                         "order": i,
                         "texts": [
                             self.canvas.create_text(
-                                int(col[0] + (self.data["tile_width"] * 0.5)),
-                                int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                                int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                                int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                                 text=txt,
                                 fill=tile_text_colour.hex_code,
                                 font=font
@@ -462,8 +462,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -503,8 +503,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -519,8 +519,8 @@ class App(tkinter.Tk):
             self.data["stg_logo_image"] = ImageTk.PhotoImage(
                 self.data["stg_logo_image"].resize(
                     (
-                        int(self.data["tile_width"]),
-                        int(self.data["tile_height"])
+                        int(self.data["tile_width_stg"]),
+                        int(self.data["tile_height_stg"])
                     ),
                     Image.ANTIALIAS
                 )
@@ -530,8 +530,8 @@ class App(tkinter.Tk):
 
         if self.data["stg_logo_image"]:
             self.tiles["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.data["tile_width"] / 2),
-                self.calc_grid_cells[0][0][1] + (self.data["tile_height"] / 2),
+                self.calc_grid_cells[0][0][0] + (self.data["tile_width_stg"] / 2),
+                self.calc_grid_cells[0][0][1] + (self.data["tile_height_stg"] / 2),
                 anchor=tkinter.CENTER,
                 image=self.data["stg_logo_image"]
             )
@@ -585,7 +585,7 @@ class App(tkinter.Tk):
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
         x_1, x_2 = self.canvas.xview()
         y_1, y_2 = self.canvas.yview()
-        srw = self.data["canvas_width_scroll_region"]
+        srw = self.data["canvas_width_scroll_region_stg"]
         srh = self.data["canvas_height_scroll_region_stg"]
         x_1 *= srw
         x_2 *= srw
@@ -595,7 +595,7 @@ class App(tkinter.Tk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
         col_legend = [dat for prod_line, dat in self.tiles["line_legend"].items()]
@@ -627,7 +627,7 @@ class App(tkinter.Tk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        srw = self.data["canvas_width_scroll_region"]
+        srw = self.data["canvas_width_scroll_region_stg"]
         dates = self.list_dates
         p = min(x / srw, 0.999)  # prevent index out of bounds
         # i = int(p * len(dates)) - 1
@@ -856,7 +856,7 @@ class App(tkinter.Tk):
         if p_y is None:
             p_y = y
 
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         d_x, d_y = o_x - p_x, o_y - p_y
         for date, line in (dt + st):
             td = self.tiles[date][line]
@@ -1016,7 +1016,7 @@ class App(tkinter.Tk):
 
     def reset_drag_tiles(self):
         print(f"RESETTING DRAG TILES")
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         for date, line in self.data["state"]["dragged"]:
             bbox = self.get_tile_bbox(date, line)
             tile = self.tiles[date][line]["tile"]

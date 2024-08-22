@@ -210,8 +210,8 @@ class CalendarSurface(tkinter.Canvas):
     #     illegal_sat = self.illegal_saturday.get()
     #     tw_we = self.tile_width_weekend
     #     th_we = self.tile_height_weekend
-    #     tw = self.tile_width
-    #     th = self.tile_height
+    #     tw = self.tile_width_stg
+    #     th = self.tile_height_stg
     #     ntw = tw if not illegal_sat else tw_we
     #     n_weekends = sum([d.weekday() > 4 for d in self.dates_list])
     #     # gd = (tw - tw_we) if illegal_sat else (tw_we - tw)

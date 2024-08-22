@@ -468,8 +468,8 @@ class App(tkinter.Tk):
         print(f"{self.data['width_multi_combobox']=}\n{self.data['height_multi_combobox']=}")
 
         self.data.update({
-            "tile_width": 175,
-            "tile_height": 110,
+            "tile_width_stg": 175,
+            "tile_height_stg": 110,
             "tile_width_weekend": 60,
             "tile_height_weekend": 110,
             "canvas_width": self.data["total_width"] - self.data["width_multi_combobox"],
@@ -477,9 +477,9 @@ class App(tkinter.Tk):
         })
 
         # adjust incase too few prod lines
-        if (self.data["tile_height"] * n_rows) < self.data["total_height"]:
+        if (self.data["tile_height_stg"] * n_rows) < self.data["total_height"]:
             self.data.update({
-                "tile_height": self.data["canvas_height"] / n_rows
+                "tile_height_stg": self.data["canvas_height"] / n_rows
             })
 
         self.data.update({
@@ -558,16 +558,16 @@ class App(tkinter.Tk):
 
         n_weekend_days = [d for d in self.list_dates if (d.weekday() >= 5)]
         self.data.update({
-            "canvas_width_scroll_region":
-            # ((n_cols - n_weekend_days) * self.data["tile_width"])
+            "canvas_width_scroll_region_stg":
+            # ((n_cols - n_weekend_days) * self.data["tile_width_stg"])
             # + (n_weekend_days * self.data["tile_width_weekend"]),
-                self.data["tile_width"] * n_cols,
-            "canvas_height_scroll_region_stg": self.data["tile_height"] * n_rows,
+                self.data["tile_width_stg"] * n_cols,
+            "canvas_height_scroll_region_stg": self.data["tile_height_stg"] * n_rows,
         })
 
         # canvas_background = self.data["colour_calendar_background"]
         self.calc_grid_cells = utility.grid_cells(
-            self.data["canvas_width_scroll_region"],
+            self.data["canvas_width_scroll_region_stg"],
             n_cols,
             self.data["canvas_height_scroll_region_stg"],
             n_rows,
@@ -623,7 +623,7 @@ class App(tkinter.Tk):
             scrollregion=(
                 0,
                 0,
-                self.data["canvas_width_scroll_region"],
+                self.data["canvas_width_scroll_region_stg"],
                 self.data["canvas_height_scroll_region_stg"]
             )
         )
@@ -732,8 +732,8 @@ class App(tkinter.Tk):
                             "order": i,
                             "texts": [
                                 self.canvas.create_text(
-                                    int(col[0] + (self.data["tile_width"] * 0.5)),
-                                    int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                                    int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                                    int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                                     text=txt,
                                     fill=tile_text_colour.hex_code,
                                     font=font
@@ -841,8 +841,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -891,8 +891,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code,
                             font=font
@@ -914,8 +914,8 @@ class App(tkinter.Tk):
             self.data["stg_logo_image"] = ImageTk.PhotoImage(
                 self.data["stg_logo_image"].resize(
                     (
-                        int(self.data["tile_width"]),
-                        int(self.data["tile_height"])
+                        int(self.data["tile_width_stg"]),
+                        int(self.data["tile_height_stg"])
                     ),
                     Image.ANTIALIAS
                 )
@@ -925,8 +925,8 @@ class App(tkinter.Tk):
 
         if self.data["stg_logo_image"]:
             self.tiles["home"]["tile"] = self.canvas.create_image(
-                self.calc_grid_cells[0][0][0] + (self.data["tile_width"] / 2),
-                self.calc_grid_cells[0][0][1] + (self.data["tile_height"] / 2),
+                self.calc_grid_cells[0][0][0] + (self.data["tile_width_stg"] / 2),
+                self.calc_grid_cells[0][0][1] + (self.data["tile_height_stg"] / 2),
                 anchor=tkinter.CENTER,
                 image=self.data["stg_logo_image"]
             )
@@ -957,8 +957,8 @@ class App(tkinter.Tk):
         #
         #             self.tiles_stg[holiday][line]["texts"].append([
         #                 self.canvas_stg.create_text(
-        #                     x0_ + (self.data["tile_width"] / 2),
-        #                     y0_ + ym + ((k + 1) * (self.data["tile_width"] / (1 + len(texts_to_do)))),
+        #                     x0_ + (self.data["tile_width_stg"] / 2),
+        #                     y0_ + ym + ((k + 1) * (self.data["tile_width_stg"] / (1 + len(texts_to_do)))),
         #                     text=txt,
         #                     fill="#000000"
         #                 )
@@ -1041,8 +1041,8 @@ class App(tkinter.Tk):
 
         # self.multi_combobox_canvas_drag_tile = tkinter.Canvas(
         #     self.frame_multi_combobox,
-        #     width=100 + self.data["tile_width"],
-        #     height=100 + self.data["tile_height"],
+        #     width=100 + self.data["tile_width_stg"],
+        #     height=100 + self.data["tile_height_stg"],
         #     bg=self.data["colour_fill_multi_combobox_drag_tile"].hex_code
         #     # ,
         #     # outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code
@@ -1082,8 +1082,8 @@ class App(tkinter.Tk):
 
         # self.multi_combobox_drag_tile = self.multi_combobox_canvas_drag_tile.create_rectangle(
         #     200, 400,
-        #     100 + self.data["tile_width"],
-        #     100 + self.data["tile_height"],
+        #     100 + self.data["tile_width_stg"],
+        #     100 + self.data["tile_height_stg"],
         #     fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
         #     outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code
         # )
@@ -1091,16 +1091,16 @@ class App(tkinter.Tk):
         drag_tile_start_pos = 200, 400
         # self.multi_combobox_drag_tile = self.invisible_canvas.create_rectangle(
         #     *drag_tile_start_pos,
-        #     100 + self.data["tile_width"],
-        #     100 + self.data["tile_height"],
+        #     100 + self.data["tile_width_stg"],
+        #     100 + self.data["tile_height_stg"],
         #     fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
         #     outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code
         # )
         self.multi_combobox_drag_tile = self.draw_rect(
             (
                 *drag_tile_start_pos,
-                100 + self.data["tile_width"],
-                100 + self.data["tile_height"]
+                100 + self.data["tile_width_stg"],
+                100 + self.data["tile_height_stg"]
             ),
             fill=self.data["colour_fill_multi_combobox_drag_tile"].hex_code,
             outline=self.data["colour_outline_multi_combobox_drag_tile"].hex_code,
@@ -1109,8 +1109,8 @@ class App(tkinter.Tk):
         self.multi_combobox_drag_tile_texts_placeholder = "PLACEHOLDER"
         self.multi_combobox_drag_tile_texts = [
             self.root_canvas.create_text(
-                (drag_tile_start_pos[0] + ((100 + self.data["tile_width"]) / 2)),
-                (drag_tile_start_pos[1] + ((100 + self.data["tile_height"]) / 2)),
+                (drag_tile_start_pos[0] + ((100 + self.data["tile_width_stg"]) / 2)),
+                (drag_tile_start_pos[1] + ((100 + self.data["tile_height_stg"]) / 2)),
                 text=self.multi_combobox_drag_tile_texts_placeholder,
                 fill=self.data["colour_tile_foreground"].hex_code,
                 font=self.data["font_tile"]
@@ -1131,8 +1131,8 @@ class App(tkinter.Tk):
         # self.drag_tile_garbage_tile = {
         #     "tile": self.invisible_canvas.create_rectangle(
         #         self.data["x_place_frame_info_frame"] + 10,
-        #         self.data["canvas_height"] - (self.data["tile_height"] + 20),
-        #         self.data["x_place_frame_info_frame"] + (self.data["tile_width"] + 10),
+        #         self.data["canvas_height"] - (self.data["tile_height_stg"] + 20),
+        #         self.data["x_place_frame_info_frame"] + (self.data["tile_width_stg"] + 10),
         #         self.data["canvas_height"] - 20,
         #         fill=self.data["colour_garbage_background"].hex_code,
         #         outline=self.data["colour_garbage_outline"].hex_code,
@@ -1142,8 +1142,8 @@ class App(tkinter.Tk):
         #         activeoutline=self.data["colour_garbage_outline"].brightened(0.25).hex_code
         #     ),
         #     "text": self.invisible_canvas.create_text(
-        #         (self.data["x_place_frame_info_frame"] + 10) + (self.data["tile_width"] / 2),
-        #         (self.data["canvas_height"] + 35) - (self.data["tile_height"] + 50) + (self.data["tile_width"] / 2),
+        #         (self.data["x_place_frame_info_frame"] + 10) + (self.data["tile_width_stg"] / 2),
+        #         (self.data["canvas_height"] + 35) - (self.data["tile_height_stg"] + 50) + (self.data["tile_width_stg"] / 2),
         #         text="X",
         #         font="Arial 90 bold",
         #         fill=self.data["colour_garbage_foreground"].hex_code,
@@ -1391,7 +1391,7 @@ class App(tkinter.Tk):
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
         x_1, x_2 = self.canvas.xview()
         y_1, y_2 = self.canvas.yview()
-        srw = self.data["canvas_width_scroll_region"]
+        srw = self.data["canvas_width_scroll_region_stg"]
         srh = self.data["canvas_height_scroll_region_stg"]
         x_1 *= srw
         x_2 *= srw
@@ -1401,7 +1401,7 @@ class App(tkinter.Tk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
         # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
@@ -1441,7 +1441,7 @@ class App(tkinter.Tk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        srw = self.data["canvas_width_scroll_region"]
+        srw = self.data["canvas_width_scroll_region_stg"]
         dates = self.list_dates
         p = min(x / srw, 0.999)  # prevent index out of bounds
         # i = int(p * len(dates)) - 1
@@ -1626,8 +1626,8 @@ class App(tkinter.Tk):
 
             texts = [
                 self.canvas.create_text(
-                    int(bbox[0] + (self.data["tile_width"] * 0.5)),
-                    int(bbox[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                    int(bbox[0] + (self.data["tile_width_stg"] * 0.5)),
+                    int(bbox[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                     text=txt,
                     fill=tile_text_colour.hex_code,
                     font=font
@@ -1635,7 +1635,7 @@ class App(tkinter.Tk):
                 for k, txt, in enumerate(to_do_texts)
             ]
 
-            tw, th = self.data["tile_width"], self.data["tile_height"]
+            tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
             n_txts = len(texts)
             bw = float(self.canvas.itemcget(self.tiles[date][line]["tile"], "width"))
             y_t = bbox[1] + bw
@@ -1921,7 +1921,7 @@ class App(tkinter.Tk):
         vcn = self.multi_combobox.tree_controller.viewable_column_names
         tv_dt = self.tv_multi_combobox_drag_tile.get()
         # self.multi_combobox_canvas_drag_tile.grid_forget()
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
 
         # print(f"DRAG TREEVIEW ENTRY, {tv_dt=}")
 
@@ -2200,7 +2200,7 @@ class App(tkinter.Tk):
         if p_y is None:
             p_y = y
 
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         d_x, d_y = o_x - p_x, o_y - p_y
         for date, line in (dt + st):
@@ -2404,7 +2404,7 @@ class App(tkinter.Tk):
 
     def clear_drag_tiles(self):
         print(f"RESETTING DRAG TILES")
-        tw, th = self.data["tile_width"], self.data["tile_height"]
+        tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
         tw_w, th_w = self.data["tile_width_weekend"], self.data["tile_height_weekend"]
         for date, line in self.data["state"]["dragged"]:
             bbox = self.get_tile_bbox(date, line)
@@ -2574,7 +2574,7 @@ class App(tkinter.Tk):
                 n_cols -= 1
                 n_rows = (n_choices // n_cols) + 1
 
-            tw, th = self.data["tile_width"], self.data["tile_height"]
+            tw, th = self.data["tile_width_stg"], self.data["tile_height_stg"]
             x0, y0 = 0, 0
             xm, ym = 10, 10
             m = 2

@@ -913,7 +913,7 @@ class App(ctk.CTk):
         self.canvas_height_scroll_region = self.tile_height * n_rows
 
         # self.calc_grid_cells_stg = utility.grid_cells(
-        #     self.canvas_width_scroll_region,
+        #     self.canvas_width_scroll_region_stg,
         #     n_cols + 1,
         #     self.canvas_height_scroll_region_stg,
         #     n_rows_stg,
@@ -1480,7 +1480,7 @@ class App(ctk.CTk):
             n_rows: int = 1,
             weights: tuple[int, int] = (90, 10)):
         # self.calc_grid_cells_stg = utility.grid_cells(
-        #     self.canvas_width_scroll_region,
+        #     self.canvas_width_scroll_region_stg,
         #     n_cols + 1,
         #     self.canvas_height_scroll_region_stg,
         #     n_rows_stg,
@@ -2566,7 +2566,7 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
-        # srw = self.canvas_width_scroll_region
+        # srw = self.canvas_width_scroll_region_stg
         # dates = self.list_dates
         # p = min(x / srw, 0.999)  # prevent index out of bounds
         # # i = int(p * len(dates)) - 1
@@ -2577,7 +2577,7 @@ class App(ctk.CTk):
         # # return dates[i] if i > 0 else dates[0]
         # return dates[i] if i >= 0 else None
 
-        # srw = self.canvas_width_scroll_region
+        # srw = self.canvas_width_scroll_region_stg
         # dates = self.list_dates
         # d_idx = dates.index()
         # p = min(x / srw, 0.999)  # prevent index out of bounds

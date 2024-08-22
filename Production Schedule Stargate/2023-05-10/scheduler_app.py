@@ -1642,12 +1642,12 @@ class App(tkinter.Tk):
             # cx, cy, cw, ch = self.calendar_surface.winfo_rootx(), self.calendar_surface.winfo_rooty(), self.calendar_surface.winfo_width(), self.calendar_surface.winfo_height()
             # # xe, ye = event
             #
-            # # xe = event.x - (self.calendar_surface.tile_width / 2)
-            # # ye = event.y - (self.calendar_surface.tile_height / 2)
-            # # # mx = self.winfo_width() - (2 * self.calendar_surface.tile_width) - cx - (self.calendar_surface.tile_width / 1.5)
-            # # # my = self.winfo_height() - (2 * self.calendar_surface.tile_height) - cy - (self.calendar_surface.tile_height / 1.5)
-            # # mx = cx + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width / 1)
-            # # my = cy + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height / 1)
+            # # xe = event.x - (self.calendar_surface.tile_width_stg / 2)
+            # # ye = event.y - (self.calendar_surface.tile_height_stg / 2)
+            # # # mx = self.winfo_width() - (2 * self.calendar_surface.tile_width_stg) - cx - (self.calendar_surface.tile_width_stg / 1.5)
+            # # # my = self.winfo_height() - (2 * self.calendar_surface.tile_height_stg) - cy - (self.calendar_surface.tile_height_stg / 1.5)
+            # # mx = cx + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width_stg / 1)
+            # # my = cy + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height_stg / 1)
             # # print(f"{bbox=}, {cx=}, {cy=}, {cw=}, {ch=}, {mx=}, {my=}, {xe=}, {ye=}")
             # # xe = clamp(0, xe, mx)
             # # ye = clamp(0, ye, my)
@@ -1657,8 +1657,8 @@ class App(tkinter.Tk):
             # bbox = [
             #     self.calendar_surface.winfo_x(),
             #     self.calendar_surface.winfo_y(),
-            #     self.calendar_surface.winfo_x() + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width / 2),
-            #     self.calendar_surface.winfo_y() + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height / 2)
+            #     self.calendar_surface.winfo_x() + self.calendar_surface.winfo_width() - (self.calendar_surface.tile_width_stg / 2),
+            #     self.calendar_surface.winfo_y() + self.calendar_surface.winfo_height() - (self.calendar_surface.tile_height_stg / 2)
             # ]
 
             bbox = self.calendar_surface.bbox("all")
@@ -1669,12 +1669,12 @@ class App(tkinter.Tk):
             #
             # x, y = event.x, event.y
             # bbox = self.calendar_surface.bbox("all")
-            # new_rect = clamp_rect([x, y, self.calendar_surface.tile_width, self.calendar_surface.tile_height], bbox, maintain_inner_dims=True)
+            # new_rect = clamp_rect([x, y, self.calendar_surface.tile_width_stg, self.calendar_surface.tile_height_stg], bbox, maintain_inner_dims=True)
             # self.calendar_surface.moveto(self.drag_tile, new_rect[0], new_rect[1])
             #
             #
-            # xe, ye = event.x - (self.calendar_surface.tile_width / 2), event.y - (self.calendar_surface.tile_height / 2)
-            # mx, my = self.winfo_width() - (2 * self.calendar_surface.tile_width) - cx - (self.calendar_surface.tile_width / 1.5), self.winfo_height() - (2 * self.calendar_surface.tile_height) - cy - (self.calendar_surface.tile_height / 1.5)
+            # xe, ye = event.x - (self.calendar_surface.tile_width_stg / 2), event.y - (self.calendar_surface.tile_height_stg / 2)
+            # mx, my = self.winfo_width() - (2 * self.calendar_surface.tile_width_stg) - cx - (self.calendar_surface.tile_width_stg / 1.5), self.winfo_height() - (2 * self.calendar_surface.tile_height_stg) - cy - (self.calendar_surface.tile_height_stg / 1.5)
             # print(f"{bbox=}, {cx=}, {cy=}, {cw=}, {ch=}, {mx=}, {my=}, {xe=}, {ye=}")
             # xe = clamp(0, xe, mx)
             # ye = clamp(0, ye, my)
@@ -1749,7 +1749,7 @@ class App(tkinter.Tk):
             t5_x1, t5_y1 = tp["t5_x1"], tp["t5_y1"]
             t6_x1, t6_y1 = tp["t6_x1"], tp["t6_y1"]
 
-            # tw = self.calendar_surface.tile_width
+            # tw = self.calendar_surface.tile_width_stg
             # x = self.calendar_surface.canvasx(0 - tw)
             # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
             # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1771,7 +1771,7 @@ class App(tkinter.Tk):
                     self.calendar_surface.coords(tp[f"t{j}_tag"], x + (tw / 2), eval(f"t{j}_y1"))
 
         # xvi = self.calendar_surface.xview()
-        # tw = self.calendar_surface.tile_width
+        # tw = self.calendar_surface.tile_width_stg
         # a = int(self.calendar_surface["width"])
         # # b = self.calendar_surface.winfo_width()
         # visible_width = a
@@ -1786,7 +1786,7 @@ class App(tkinter.Tk):
         #     tp = self.calendar_surface.tile_properties[i][0]
         #     tile = tp["tag_rect"]
         #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        #     # tw = self.calendar_surface.tile_width
+        #     # tw = self.calendar_surface.tile_width_stg
         #     # x = self.calendar_surface.canvasx(0 - tw)
         #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1803,7 +1803,7 @@ class App(tkinter.Tk):
         #         self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
         #
         # # xvi = self.calendar_surface.xview()
-        # # tw = self.calendar_surface.tile_width
+        # # tw = self.calendar_surface.tile_width_stg
         # # a = int(self.calendar_surface["width"])
         # # # b = self.calendar_surface.winfo_width()
         # # visible_width = a
@@ -1818,7 +1818,7 @@ class App(tkinter.Tk):
         # #     tp = self.calendar_surface.tile_properties[i][0]
         # #     tile = tp["tag_rect"]
         # #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        # #     # tw = self.calendar_surface.tile_width
+        # #     # tw = self.calendar_surface.tile_width_stg
         # #     # x = self.calendar_surface.canvasx(0 - tw)
         # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1835,7 +1835,7 @@ class App(tkinter.Tk):
         # #         self.calendar_surface.coords(tp[f"t{i}_tag"], x, bbox[1])
         # #
         # # # xvi = self.calendar_surface.xview()
-        # # # tw = self.calendar_surface.tile_width
+        # # # tw = self.calendar_surface.tile_width_stg
         # # # a = int(self.calendar_surface["width"])
         # # # b = self.calendar_surface.winfo_width()
         # # # visible_width = a - b
@@ -1847,7 +1847,7 @@ class App(tkinter.Tk):
         # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # #     tile = tp["tag_rect"]
         # # #     # bbox = self.calendar_surface.rc_bbox((i, 0))
-        # # #     # tw = self.calendar_surface.tile_width
+        # # #     # tw = self.calendar_surface.tile_width_stg
         # # #     # x = self.calendar_surface.canvasx(0 - tw)
         # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1867,7 +1867,7 @@ class App(tkinter.Tk):
         # # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # # #     tile = tp["tag_rect"]
         # # # #     # bbox = self.calendar_surface.rc_bbox((i, 0))
-        # # # #     # tw = self.calendar_surface.tile_width
+        # # # #     # tw = self.calendar_surface.tile_width_stg
         # # # #     # x = self.calendar_surface.canvasx(0 - tw)
         # # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1896,7 +1896,7 @@ class App(tkinter.Tk):
         # # # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # # # #     tile = tp["tag_rect"]
         # # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        # # # # #     tw = self.calendar_surface.tile_width
+        # # # # #     tw = self.calendar_surface.tile_width_stg
         # # # # #     # x = self.calendar_surface.canvasx(0 - tw)
         # # # # #     # x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # # # # #     # print(f"{tile=}, {x=}, sp={scroll_pos}, sa={scroll_amount}, {bbox=}")
@@ -1914,7 +1914,7 @@ class App(tkinter.Tk):
         # # # # # #     tp = self.calendar_surface.tile_properties[i][0]
         # # # # # #     tile = tp["tag_rect"]
         # # # # # #     bbox = self.calendar_surface.rc_bbox((i, 0))
-        # # # # # #     tw = self.calendar_surface.tile_width
+        # # # # # #     tw = self.calendar_surface.tile_width_stg
         # # # # # #     x = self.calendar_surface.canvasx(0 - tw)
         # # # # # #     x = self.calendar_surface.canvasx(0) - (xv[0] * self.calendar_surface.canvas_width)
         # # # # # #     print(f"{tile=}, {x=}, {bbox=}")

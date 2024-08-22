@@ -1,0 +1,200 @@
+USE [SysproCompanyA]
+GO
+
+
+BEGIN TRAN;
+
+
+
+--DECLARE @wo1 NVARCHAR(MAX) = 10016896;
+DECLARE @wo1 NVARCHAR(MAX) = 10016986;
+DECLARE @wo2 NVARCHAR(MAX) = 10017163;
+
+/*
+DELETE FROM	
+	[SysproCompanyA].[dbo].[WipJobAllMat]
+WHERE
+	[Job] = @wo2
+*/
+
+SELECT
+           [Job]
+           ,[StockCode]
+           ,[Warehouse]
+           ,[Line]
+           ,[StockDescription]
+           ,[UnitQtyReqd]
+           ,[UnitCost]
+           ,[OperationOffset]
+           ,[OpOffsetFlag]
+           ,[Uom]
+           ,[Bin]
+           ,[QtyIssued]
+           ,[ValueIssued]
+           ,[QtyBilled]
+           ,[ValueBilled]
+           ,[Decimals]
+           ,[AllocCompleted]
+           ,[SequenceNum]
+           ,[AutoNarrCode]
+           ,[PhantomParent]
+           ,[NonConformFlag]
+           ,[ApplyCostUom]
+           ,[CostUom]
+           ,[BulkIssueItem]
+           ,[ScrapPercentage]
+           ,[ScrapQuantity]
+           ,[InclScrapOnDoc]
+           ,[DockToStock]
+           ,[HierarchyJob1]
+           ,[HierarchyJob2]
+           ,[HierarchyJob3]
+           ,[HierarchyJob4]
+           ,[HierarchyJob5]
+           ,[KitIssueItem]
+           ,[CompletedJobFlag]
+           ,[Version]
+           ,[Release]
+           ,[EccConsumption]
+           ,[SubJob]
+           ,[FixedQtyPerFlag]
+           ,[FixedQtyPer]
+           ,[NetUnitQtyReqd]
+           ,[ReservedLotSerFlag]
+           ,[RollUpCostFlag]
+           ,[CoProductCostVal]
+           ,[ReservedLotQty]
+           ,[ReservedSerQty]
+           ,[ConvFactUom]
+           ,[ConvMulDiv]
+           ,[UnitQtyReqdEnt]
+           ,[QtyIssuedEnt]
+           ,[QtyBilledEnt]
+           ,[ScrapQuantityEnt]
+           ,[NetUnitQtyReqdEnt]
+           ,[FixedQtyPerEnt]
+           ,[RefDesignator]
+           ,[AssemblyPlace]
+           ,[ItemNumber]
+           ,[ComponentType]
+           ,[QtyTotRequired]
+           ,[QtyTotRequiredEnt]
+           ,[QtyOutstanding]
+           ,[QtyOutstandingEnt]
+           ,[QtyToIssue]
+           ,[QtyToIssueEnt]
+           ,[QtyReserved]
+           ,[QtyReservedEnt]
+           ,[LineStatus]
+           ,[SalesOrderInitLine]
+           ,[CreatedBy]
+           ,[ProductCode]
+           ,[LibraryCode]
+           ,[FirstSeq]
+           ,[SecondSeq]
+           ,[OvrEccSpecIss]
+           ,[JobNest]
+FROM
+	[SysproCompanyA].[dbo].[WipJobAllMat]
+WHERE
+	[Job] = @wo2;
+
+;
+	UPDATE
+			[SysproCompanyA].[dbo].[WipJobAllMat]
+		 SET
+			[QtyIssued] = 0.0,
+			[AllocCompleted] = '',
+			[QtyIssuedEnt] = 0.0,
+			[ValueIssued] = 0.0,
+			[CompletedJobFlag] = ''
+WHERE
+	[Job] = @wo2
+;
+
+SELECT
+           [Job]
+           ,[StockCode]
+           ,[Warehouse]
+           ,[Line]
+           ,[StockDescription]
+           ,[UnitQtyReqd]
+           ,[UnitCost]
+           ,[OperationOffset]
+           ,[OpOffsetFlag]
+           ,[Uom]
+           ,[Bin]
+           ,[QtyIssued]
+           ,[ValueIssued]
+           ,[QtyBilled]
+           ,[ValueBilled]
+           ,[Decimals]
+           ,[AllocCompleted]
+           ,[SequenceNum]
+           ,[AutoNarrCode]
+           ,[PhantomParent]
+           ,[NonConformFlag]
+           ,[ApplyCostUom]
+           ,[CostUom]
+           ,[BulkIssueItem]
+           ,[ScrapPercentage]
+           ,[ScrapQuantity]
+           ,[InclScrapOnDoc]
+           ,[DockToStock]
+           ,[HierarchyJob1]
+           ,[HierarchyJob2]
+           ,[HierarchyJob3]
+           ,[HierarchyJob4]
+           ,[HierarchyJob5]
+           ,[KitIssueItem]
+           ,[CompletedJobFlag]
+           ,[Version]
+           ,[Release]
+           ,[EccConsumption]
+           ,[SubJob]
+           ,[FixedQtyPerFlag]
+           ,[FixedQtyPer]
+           ,[NetUnitQtyReqd]
+           ,[ReservedLotSerFlag]
+           ,[RollUpCostFlag]
+           ,[CoProductCostVal]
+           ,[ReservedLotQty]
+           ,[ReservedSerQty]
+           ,[ConvFactUom]
+           ,[ConvMulDiv]
+           ,[UnitQtyReqdEnt]
+           ,[QtyIssuedEnt]
+           ,[QtyBilledEnt]
+           ,[ScrapQuantityEnt]
+           ,[NetUnitQtyReqdEnt]
+           ,[FixedQtyPerEnt]
+           ,[RefDesignator]
+           ,[AssemblyPlace]
+           ,[ItemNumber]
+           ,[ComponentType]
+           ,[QtyTotRequired]
+           ,[QtyTotRequiredEnt]
+           ,[QtyOutstanding]
+           ,[QtyOutstandingEnt]
+           ,[QtyToIssue]
+           ,[QtyToIssueEnt]
+           ,[QtyReserved]
+           ,[QtyReservedEnt]
+           ,[LineStatus]
+           ,[SalesOrderInitLine]
+           ,[CreatedBy]
+           ,[ProductCode]
+           ,[LibraryCode]
+           ,[FirstSeq]
+           ,[SecondSeq]
+           ,[OvrEccSpecIss]
+           ,[JobNest]
+FROM
+	[SysproCompanyA].[dbo].[WipJobAllMat]
+WHERE
+	[Job] = @wo2
+
+ROLLBACK;
+COMMIT;
+
+

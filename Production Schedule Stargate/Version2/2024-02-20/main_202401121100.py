@@ -284,23 +284,23 @@ class App(tkinter.Tk):
         self.list_prod_lines = self.df_prod_lines["Prod Line"].to_list()
 
         self.data.update({
-            "tile_width": 175,
-            "tile_height": 110,
+            "tile_width_stg": 175,
+            "tile_height_stg": 110,
             "canvas_width": self.data["total_width"] * 0.75,
             "canvas_height": self.data["total_height"] * 0.75
         })
 
         # adjust incase too few prod lines
-        if (self.data["tile_height"] * n_rows) < self.data["total_height"]:
+        if (self.data["tile_height_stg"] * n_rows) < self.data["total_height"]:
             self.data.update({
-                "tile_height": self.data["canvas_height"] / n_rows
+                "tile_height_stg": self.data["canvas_height"] / n_rows
             })
 
         canvas_background = self.data["colour_calendar_background"]
         gc = utility.grid_cells(
-            self.data["tile_width"] * n_cols,
+            self.data["tile_width_stg"] * n_cols,
             n_cols,
-            self.data["tile_height"] * n_rows,
+            self.data["tile_height_stg"] * n_rows,
             n_rows,
             r_type=list
         )
@@ -314,8 +314,8 @@ class App(tkinter.Tk):
             scrollregion=(
                 0,
                 0,
-                self.data["tile_width"] * n_cols,
-                self.data["tile_height"] * n_rows
+                self.data["tile_width_stg"] * n_cols,
+                self.data["tile_height_stg"] * n_rows
             )
         )
         self.scroll_bar_x = tkinter.Scrollbar(
@@ -362,8 +362,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code
                         )
@@ -389,8 +389,8 @@ class App(tkinter.Tk):
                     ),
                     "texts": [
                         self.canvas.create_text(
-                            int(col[0] + (self.data["tile_width"] * 0.5)),
-                            int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                            int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                            int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                             text=txt,
                             fill=tile_text_colour.hex_code
                         )
@@ -422,8 +422,8 @@ class App(tkinter.Tk):
                     "tile": tile  #,
                     # "texts": [
                     #     self.canvas_stg.create_text(
-                    #         int(col[0] + (self.data["tile_width"] * 0.5)),
-                    #         int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                    #         int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                    #         int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                     #         text=txt,
                     #         fill=tile_text_colour.hex_code
                     #     )
@@ -470,8 +470,8 @@ class App(tkinter.Tk):
                         "order": i,
                         "texts": [
                             self.canvas.create_text(
-                                int(col[0] + (self.data["tile_width"] * 0.5)),
-                                int(col[1] + ((k + 1) * self.data["tile_height"] / (1 + len(to_do_texts)))),
+                                int(col[0] + (self.data["tile_width_stg"] * 0.5)),
+                                int(col[1] + ((k + 1) * self.data["tile_height_stg"] / (1 + len(to_do_texts)))),
                                 text=txt,
                                 fill=tile_text_colour.hex_code
                             )
