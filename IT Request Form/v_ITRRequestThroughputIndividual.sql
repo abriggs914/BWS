@@ -1,16 +1,27 @@
---SELECT[RequestedBy[ FROM (SELECT DISTINCT ITRequests.RequestedBy
---FROM ITRequests LEFT JOIN [ITR Personnel] ON ITRequests.RequestedBy = [ITR Personnel].Name) AS [Src]
---ORDER BY IIF([Name] IS NULL, 0, 1), [ITRequests].[RequestedBy];
-
 USE BWSdb
 GO
 
+
+ALTER VIEW [dbo].[v_ITRRequestThroughputIndividual]
+AS
+
+
 SELECT
-	*
+	*,
+	ROW_NUMBER() OVER(
+		ORDER BY
+			[Open] + [Closed] DESC,
+			LEN([Thru]) DESC,
+			[Thru] DESC, 
+			[isITPerson] DESC,
+			[Name]
+	) AS [RowN]
 FROM (
+
 	SELECT
-		--[IT Requests].[RequestedBy],
 		[ITR Customers].[Name],
+		MIN([IT Requests].[ITRequestID#]) AS [FirstRequestID],
+		MAX([IT Requests].[ITRequestID#]) AS [LastRequestID],
 		(CASE WHEN ISNULL([IT Personnel].[ITPersonID#], -1) >= 0 THEN 'Y' ELSE 'N' END) AS [IsITPerson],
 		(CASE WHEN ISNULL([IT Personnel].[Active], 0) = 1 THEN 'Y' ELSE 'N' END) AS [StillWorksInIT],
 		(CASE WHEN ISNULL([ITR Customers].[Active], 0) = 1 THEN 'Y' ELSE 'N' END) AS [StillWorksHere],
@@ -34,84 +45,15 @@ FROM (
 		, [ITR Customers].[Name]
 		, [IT Personnel].[Active]
 		, [ITR Customers].[Active]
-	) AS [Src]
+
+) AS [Src]
+/*
 ORDER BY
-	--(CASE WHEN [Name] IS NOT NULL THEN 0 ELSE 1 END),
 	[Open] + [Closed] DESC,
 	LEN([Thru]) DESC,
 	[Thru] DESC, 
 	[isITPerson] DESC,
 	[Name]
---	IIF([Name] IS NULL, 0, 1), [ITRequests].[RequestedBy];
-
-/*
-
--- Clearing customers that have since left
-
-BEGIN TRAN;
-
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[ITR Customers]
-
-
-
-DECLARE	@invalidIDs202408231333 AS TABLE ([ID] INT);
-INSERT INTO @invalidIDs202408231333 ([ID]) VALUES
-(10),
-(11),
-(17),
-(22),
-(23),
-(28),
-(29),
-(32),
-(37),
-(39),
-(42),
-(44),
-(46),
-(48),
-(50),
-(52),
-(54),
-(58),
-(60),
-(63),
-(65),
-(67),
-(83),
-(99),
-(101),
-(139),
-(141),
-(152),
-(168),
-(176),
-(177),
-(188),
-(192),
-(193)
-;
-
-UPDATE
-	[BWSdb].[dbo].[ITR Customers]
-SET
-	[Active] = 0
-FROM
-	[BWSdb].[dbo].[ITR Customers] [C]
-INNER JOIN
-	@invalidIDs202408231333 [I]
-ON
-	[C].[CustomerID] = [I].[ID]
-
-
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[ITR Customers]
-
-ROLLBACK;
-COMMIT;
 */
+
+GO

@@ -56,3 +56,5 @@
 
 2024-08-22
     BWS Delivery Date has a different formula
+2024-08-23
+    Move Allowed Companies buttons to admin menu
