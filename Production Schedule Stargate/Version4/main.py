@@ -455,6 +455,7 @@ WHERE
         ,[AdminPassword]
         ,[ModeCompany]
         ,[AllowedCompanies]
+        ,[AllowPublishBWS]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -529,7 +530,8 @@ class App(ctk.CTk):
         self.default_light_dark_theme = "Dark"
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
-        self.default_allow_publish = "No"
+        self.default_allow_publish_stg = "No"
+        self.default_allow_publish_bws = "No"
         self.default_show_left_widgets = "Yes"
         self.txt_non_prod_day = "Non-Prod Day"
 
@@ -762,7 +764,8 @@ class App(ctk.CTk):
         self.tv_lbl_processing, self.lbl_processing = None, None
         self.tl_tv_switch_dark = ctk.StringVar(self, value=self.default_light_dark_theme)
         self.tl_tv_switch_colour = ctk.StringVar(self, value=self.default_colour_theme)
-        self.tl_tv_switch_allow_publish = ctk.StringVar(self, value=self.default_allow_publish)
+        self.tl_tv_switch_allow_publish_stg = ctk.StringVar(self, value=self.default_allow_publish_stg)
+        self.tl_tv_switch_allow_publish_bws = ctk.StringVar(self, value=self.default_allow_publish_bws)
         self.tl_tv_count_tries_allow_publish = ctk.IntVar(self, value=0)
         self.lbl_admin_password_attempts_remaining = (ctk.StringVar(self, value=f""), None)
         self.entry_admin_password_attempts_remaining = None
@@ -1013,7 +1016,7 @@ class App(ctk.CTk):
 
         self.tile_width_stg = 175
         self.tile_height_stg = 110
-        self.tile_width_bws = 175
+        self.tile_width_bws = 225
         self.tile_height_bws = 110
         # self.tile_width_weekend = 60
         # self.tile_height_weekend = 110
@@ -1300,6 +1303,11 @@ class App(ctk.CTk):
             orientation="horizontal",
             command=self.scroll_x_calendar
         )
+        self.scroll_bar_y = ctk.CTkScrollbar(
+            self.frame_canvas,
+            orientation="vertical",
+            command=self.scroll_y_calendar
+        )
 
         self.invisible_canvas = ctk.CTkCanvas(
             self.frame_calendar,
@@ -1493,12 +1501,12 @@ class App(ctk.CTk):
             for i, row in self.df_rest_orders_stg.iterrows():
                 dat_quote = row.get(self.quote_key("quote"), "QUOTE=____")
                 # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
-                dat_wo = row.get(self.quote_key("wo"), "WO=____")
-                dat_sn = row.get(self.quote_key("sn"), "")
-                dat_dealer = row.get(self.quote_key("dealer"), "DEALER=____")
-                dat_galv = row.get(self.quote_key("galv"), "GALV=____")
-                dat_model = row.get(self.quote_key("model"), "MODEL=____")
-                dat_cust_wo = row.get(self.quote_key("Customer WO#"), "CUSTWO=____")
+                dat_wo = row.get(self.quote_key("wo", COMPANY.STG.value), "WO=____")
+                dat_sn = row.get(self.quote_key("sn", COMPANY.STG.value), "")
+                dat_dealer = row.get(self.quote_key("dealer", COMPANY.STG.value), "DEALER=____")
+                dat_galv = row.get(self.quote_key("galv", COMPANY.STG.value), "GALV=____")
+                dat_model = row.get(self.quote_key("model", COMPANY.STG.value), "MODEL=____")
+                dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.STG.value), "CUSTWO=____")
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_stg.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
@@ -1832,6 +1840,7 @@ class App(ctk.CTk):
                 self.concats_rest_orders_to_multi_combobox_bws.append(new_df)
 
         #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
+        print(f"{self.concats_multi_combobox_orders_bws=}")
         if self.concats_multi_combobox_orders_bws:
             self.concats_multi_combobox_orders_bws = self.concats_rest_orders_to_multi_combobox_bws + self.concats_multi_combobox_orders_bws
             self.df_multi_combobox_data_orders_bws = pd.concat(self.concats_multi_combobox_orders_bws,
@@ -2094,6 +2103,12 @@ class App(ctk.CTk):
         self.multi_combobox_orders_stg.add_new_item(self.df_multi_combobox_data_orders_stg)
         self.multi_combobox_orders_bws.add_new_item(self.df_multi_combobox_data_orders_bws)
 
+        print(f"==>")
+        print(f"{self.df_multi_combobox_data_orders_bws=}")
+        print(f"{self.df_rest_orders_bws=}")
+        print(f"{self.df_multi_combobox_data_orders_stg=}")
+        print(f"{self.df_rest_orders_stg=}")
+
         self.bg_info_frame = Colour("SystemButtonFace")
         self.info_frame_stg = tkinter_utility.InfoFrame(
             self.frame_info_frame,
@@ -2255,6 +2270,8 @@ class App(ctk.CTk):
         self.tv_done_interact_tl.trace_variable("w", self.update_done_interact_tl)
         self.canvas_stg.configure(xscrollcommand=self.scroll_bar_x.set)
         self.canvas_bws.configure(xscrollcommand=self.scroll_bar_x.set)
+        self.canvas_stg.configure(yscrollcommand=self.scroll_bar_y.set)
+        self.canvas_bws.configure(yscrollcommand=self.scroll_bar_y.set)
         self.history.trace_variable("w", self.tv_update_history)
         self.multi_combobox_orders_stg.res_tv_entry.trace_remove("write",
                                                                  self.multi_combobox_orders_stg.trace_res_tv_entry)
@@ -2271,7 +2288,8 @@ class App(ctk.CTk):
         self.tl_tv_switch_colour.trace_variable("w", self.update_colour_theme)
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
-        self.tl_tv_switch_allow_publish.trace_variable("w", self.update_allow_publish)
+        self.tl_tv_switch_allow_publish_stg.trace_variable("w", self.update_allow_publish_stg)
+        self.tl_tv_switch_allow_publish_bws.trace_variable("w", self.update_allow_publish_bws)
         self.tl_tv_count_tries_allow_publish.trace_variable("w", self.update_count_tries_allow_publish)
         self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
         self.tl_tv_colour_code_priority.trace_variable("w", self.update_switch_colour_code_priority)
@@ -2575,6 +2593,7 @@ class App(ctk.CTk):
         if inc_bws:
             valid.add(comp_id)
         else:
+            self.tl_tv_switch_allow_publish_bws.set("No")
             if comp_id in valid:
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
@@ -2594,6 +2613,7 @@ class App(ctk.CTk):
         if inc_stg:
             valid.add(comp_id)
         else:
+            self.tl_tv_switch_allow_publish_stg.set("No")
             if comp_id in valid:
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
@@ -2636,7 +2656,7 @@ class App(ctk.CTk):
                             to_do_texts = to_do_texts[:-1]
                         else:
                             # add galv
-                            galv = df_orders.iloc[order]["IsGalv"]
+                            galv = df_orders.iloc[order][self.quote_key("IsGalv")]
                             to_do_texts.append(galv)
 
                         tiles[date][line].update({
@@ -2742,16 +2762,16 @@ class App(ctk.CTk):
             if atl == 0:
                 self.entry_admin_password_attempts_remaining[3].configure(state=ctk.DISABLED)
 
-    def update_allow_publish(self, *args):
-        ap = self.tl_tv_switch_allow_publish.get()
-        ap = 0 if (ap == "No") else 1
-        # ap = 0 if (ap == 1) else 0  # logic is inverse for this column
+    def update_allow_publish_stg(self, *args):
+        ap_s = self.tl_tv_switch_allow_publish_stg.get()
+        ap_s = 0 if (ap_s == "No") else 1
+        # ap_s = 0 if (ap_s == 1) else 0  # logic is inverse for this column
         un = self.app_state["user_name"]
-        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [AllowPublish] = {ap} WHERE [UserName] = '{un}';"
-        sql = sql.format(ap=ap, un=un)
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [AllowPublish] = {ap_s} WHERE [UserName] = '{un}';"
+        sql = sql.format(ap_s=ap_s, un=un)
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
-        if ap:
+        if ap_s:
             msg = self.msg_now_allowed_to_publish
         else:
             msg = self.msg_now_not_allowed_to_publish
@@ -2762,10 +2782,43 @@ class App(ctk.CTk):
             parent=self.tl_ad if self.tl_ad is not None else self
         )
 
-        if self.tl_ad is not None:
-            self.on_close_tl_ad()
+        # if self.tl_ad is not None:
+        #     self.on_close_tl_ad()
 
-        if ap:
+        if ap_s:
+            self.tl_tv_switch_show_left_widgets.set("Yes")
+            btn_state = ctk.NORMAL
+        else:
+            btn_state = ctk.DISABLED
+
+        self.mb_file.entryconfig("Save", state=btn_state)
+        self.mb_file.entryconfig("Settings", state=btn_state)
+        self.mb_tools.entryconfig("Shift Line", state=btn_state)
+
+    def update_allow_publish_bws(self, *args):
+        ap_b = self.tl_tv_switch_allow_publish_bws.get()
+        ap_b = 0 if (ap_b == "No") else 1
+        # ap_s = 0 if (ap_s == 1) else 0  # logic is inverse for this column
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [AllowPublishBWS] = {ap_b} WHERE [UserName] = '{un}';"
+        sql = sql.format(ap_b=ap_b, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        if ap_b:
+            msg = self.msg_now_allowed_to_publish
+        else:
+            msg = self.msg_now_not_allowed_to_publish
+
+        messagebox.showinfo(
+            title=self.title_application_short,
+            message=msg,
+            parent=self.tl_ad if self.tl_ad is not None else self
+        )
+
+        # if self.tl_ad is not None:
+        #     self.on_close_tl_ad()
+
+        if ap_b:
             self.tl_tv_switch_show_left_widgets.set("Yes")
             btn_state = ctk.NORMAL
         else:
@@ -3188,6 +3241,7 @@ class App(ctk.CTk):
             else:
                 ask_monitors = "No" if (int(ask_monitors) == 0) else "Yes"
             allowed_to_publish = bool(df_pds_user["AllowPublish"])
+            allowed_to_publish_bws = bool(df_pds_user["AllowPublishBWS"])
             cc = cc if not pd.isna(cc) else {}
             self.settings["colour_coding"] = eval(str(cc))
 
@@ -3287,7 +3341,8 @@ class App(ctk.CTk):
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
             self.settings["allowed_to_publish"].set(allowed_to_publish)
-            self.tl_tv_switch_allow_publish.set("Yes" if allowed_to_publish else "No")
+            self.tl_tv_switch_allow_publish_stg.set("Yes" if allowed_to_publish else "No")
+            self.tl_tv_switch_allow_publish_bws.set("Yes" if allowed_to_publish_bws else "No")
             ctk.set_appearance_mode(light_dark_theme)
             self.tl_tv_switch_colour.set(colour_theme)
             self.tl_tv_switch_dark.set(light_dark_theme)
@@ -3331,6 +3386,7 @@ class App(ctk.CTk):
         if do_bind:
 
             self.bn_mousewheel_calendar = can.bind("<MouseWheel>", self.on_mousewheel_calendar)
+            self.bn_shift_mousewheel_calendar = can.bind("<Shift-MouseWheel>", self.on_shift_mousewheel_calendar)
             self.bn_motion_calendar = can.bind("<Motion>", self.on_motion_calendar)
             self.bn_lclickmotion_calendar = can.bind("<B1-Motion>", self.on_left_click_motion_calendar)
 
@@ -3394,6 +3450,7 @@ class App(ctk.CTk):
         else:
             self.canvas_stg.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: ctk.EW})
+        self.scroll_bar_y.grid(**{r: 0, c: 1, s: ctk.NS})
 
         # frame_left_controls
         self.frame_multi_combobox.grid(**{r: 0, c: 0})
@@ -3460,21 +3517,42 @@ class App(ctk.CTk):
         # change the canvas_stg xview when the scrollbar is interacted with
         # print(f"scroll_x: {args=}")
         comp_id = self.settings["mode_company"]
-        print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        # print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
         if comp_id == COMPANY.BWS.value:
             self.canvas_bws.xview(*args)
         else:
             self.canvas_stg.xview(*args)
         self.redraw_legend()
 
+    def scroll_y_calendar(self, *args) -> None:
+        # change the canvas_stg yview when the scrollbar is interacted with
+        # print(f"scroll_y: {args=}")
+        comp_id = self.settings["mode_company"]
+        # print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        if comp_id == COMPANY.BWS.value:
+            self.canvas_bws.yview(*args)
+        else:
+            self.canvas_stg.yview(*args)
+        self.redraw_legend()
+
     def on_mousewheel_calendar(self, event) -> None:
         # move the canvas_stg xview when mousewheel scrolled
         comp_id = self.settings["mode_company"]
-        print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        # print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
         if comp_id == COMPANY.BWS.value:
             self.canvas_bws.xview_scroll(int(-1 * (event.delta / 120)), "units")
         else:
             self.canvas_stg.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        self.redraw_legend()
+
+    def on_shift_mousewheel_calendar(self, event) -> None:
+        # move the canvas_stg xview when mousewheel scrolled
+        comp_id = self.settings["mode_company"]
+        # print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
+        if comp_id == COMPANY.BWS.value:
+            self.canvas_bws.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        else:
+            self.canvas_stg.yview_scroll(int(-1 * (event.delta / 120)), "units")
         self.redraw_legend()
 
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
@@ -3508,17 +3586,35 @@ class App(ctk.CTk):
         # print(f"{col_legend=}")
         # tiles_stg = [dat["tile"] for dat in col_legend]
 
+        # print(f"{self.tiles_bws=}")
+        # print(f"{self.tiles_stg=}")
+
+        # print(f"{self.first_date=}")
+        # print(f"{self.last_date=}")
+        # for d in self.list_dates:
+        #     if "date_legend" not in self.tiles_bws[d]:
+        #         print(f"BWS SKIP {d}")
+        #     if "date_legend" not in self.tiles_stg[d]:
+        #         print(f"STG SKIP {d}")
+
         if ci == COMPANY.BWS.value:
             col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
+            row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if (self.first_date <= date <= self.last_date)]
             home_tile = self.tiles_bws["home"]["tile"]
             img = self.bws_logo_image
             can = self.canvas_bws
+            # tiles = self.tiles_bws
 
         else:
             col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
+            row_legend = [self.tiles_stg[date]["date_legend"] for date in self.list_dates[:-1] if (self.first_date <= date <= self.last_date)]
             home_tile = self.tiles_stg["home"]["tile"]
             img = self.stg_logo_image
             can = self.canvas_stg
+            # tiles = self.tiles_stg
+
+        # print(f"{col_legend=}")
+        # print(f"{row_legend=}")
 
         if img:
             # move image
@@ -3552,6 +3648,39 @@ class App(ctk.CTk):
                 # print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
                 can.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
                 can.tag_raise(txt)
+
+        for dat in row_legend:
+            tile = dat["tile"]
+            bw = float(can.itemcget(tile, "width"))
+            bbox = can.bbox(tile)
+            bbox = (
+                bbox[0] + bw,
+                y_1,
+                bbox[2] - bw,
+                y_1 + th
+            )
+            # y_t = bbox[1] + bw
+            # print(f"{bbox=}, {x_1=}, {y_1=}, {x_2=}, {y_2=}, {x_1=}, {y_t=}, {x_1 + tw=}, {y_t + th=}")
+            # self.canvas_stg.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
+            # can.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
+            can.tag_raise(tile)
+            can.coords(tile, *bbox)
+
+            # for i, txt in enumerate():
+            #     print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
+                # can.coords(txt, x_1 + (tw / 2), y_t + (th / 2) + i * th)
+                # can.tag_raise(txt)
+
+            texts = dat.get("texts", [])
+            n_txts = len(texts)
+            # bw = float(can.itemcget(tiles[date][line]["tile"], "width"))
+            y_t = bbox[1] + bw
+            for i, txt in enumerate(texts):
+                can.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
+                can.tag_raise(txt)
+                # can.itemconfigure(txt, text=text)
+
+        can.tag_raise(home_tile)
 
         # print(f"{self.canvas_stg.winfo_viewable()=}")
         # print(f"{self.canvas_stg.xview()=}")
@@ -7770,35 +7899,6 @@ class App(ctk.CTk):
         tl_lbl_show_galvanized[1].grid(row=0, column=0, **self.grid_args_label)
         tl_checkbox_show_galvanized[2].grid(row=0, column=1, **self.grid_args_switch)
 
-        # Allowed Companies
-        tl_frame_allowed_companies = ctk.CTkFrame(self.tl_cc_app)
-        tl_lbl_allowed_companies = customtkinter_utility.label_factory(
-            tl_frame_allowed_companies,
-            tv_label="Allowed Companies:",
-            kwargs_label=self.kwargs_lbl
-        )
-        tl_frame_allowed_companies_sel = ctk.CTkFrame(
-            tl_frame_allowed_companies
-        )
-        tl_frame_allowed_companies_sel.rowconfigure(0, weight=100)
-        tl_frame_allowed_companies_sel.columnconfigure(0, weight=50)
-        tl_frame_allowed_companies_sel.columnconfigure(1, weight=50)
-        tl_checkbox_allowed_comp_bws = customtkinter_utility.checkbox_factory(
-            tl_frame_allowed_companies_sel,
-            tv_label="BWS",
-            tv_checkbox=self.tv_allowed_comp_bws
-        )
-        tl_checkbox_allowed_comp_stg = customtkinter_utility.checkbox_factory(
-            tl_frame_allowed_companies_sel,
-            tv_label="STG",
-            tv_checkbox=self.tv_allowed_comp_stg
-        )
-        tl_frame_allowed_companies.grid(**self.grid_args_frame)
-        tl_lbl_allowed_companies[1].grid(row=0, column=0, **self.grid_args_label)
-        tl_frame_allowed_companies_sel.grid(row=0, column=1, sticky=ctk.E)
-        tl_checkbox_allowed_comp_bws[2].grid(row=0, column=0, **self.grid_args_switch)
-        tl_checkbox_allowed_comp_stg[2].grid(row=0, column=1, **self.grid_args_switch)
-
         self.tl_cc_app.columnconfigure(0, weight=100)
         self.tl_cc_app.rowconfigure(0, weight=100)
         question_frames = [
@@ -7808,8 +7908,9 @@ class App(ctk.CTk):
             tl_cc_app_frame_colour_theme,
             tl_cc_app_frame_colour_code_priority,
             tl_cc_app_frame_colour_code_only_priority,
-            tl_frame_show_galvanized,
-            tl_frame_allowed_companies
+            tl_frame_show_galvanized
+            # ,
+            # tl_frame_allowed_companies
         ]
         row_weight = math.floor(100 / len(question_frames))
         for i, f in enumerate(question_frames):
@@ -8285,23 +8386,61 @@ class App(ctk.CTk):
 
         # Allow Publish
         tl_ad_frame_entered = ctk.CTkFrame(self.tl_ad)
-        tl_ad_frame_allow_publish = ctk.CTkFrame(tl_ad_frame_entered)
-        tv_lbl_ap, lbl_ap = customtkinter_utility.label_factory(
-            tl_ad_frame_allow_publish,
-            tv_label="Allow Publishing:",
+        tl_ad_frame_allow_publish_stg = ctk.CTkFrame(tl_ad_frame_entered)
+        tl_ad_frame_allow_publish_bws = ctk.CTkFrame(tl_ad_frame_entered)
+        tv_lbl_ap_s, lbl_ap_s = customtkinter_utility.label_factory(
+            tl_ad_frame_allow_publish_stg,
+            tv_label="Allow Publishing STG:",
             kwargs_label=self.kwargs_lbl
         )
-        tl_ad_switch_allow_publish = ctk.CTkSegmentedButton(
-            tl_ad_frame_allow_publish,
+        tl_ad_switch_allow_publish_stg = ctk.CTkSegmentedButton(
+            tl_ad_frame_allow_publish_stg,
             values=["No", "Yes"],
-            variable=self.tl_tv_switch_allow_publish,
+            variable=self.tl_tv_switch_allow_publish_stg,
             font=self.kwargs_lbl["font"]
+        )
+        tv_lbl_ap_b, lbl_ap_b = customtkinter_utility.label_factory(
+            tl_ad_frame_allow_publish_bws,
+            tv_label="Allow Publishing BWS:",
+            kwargs_label=self.kwargs_lbl
+        )
+        tl_ad_switch_allow_publish_bws = ctk.CTkSegmentedButton(
+            tl_ad_frame_allow_publish_bws,
+            values=["No", "Yes"],
+            variable=self.tl_tv_switch_allow_publish_bws,
+            font=self.kwargs_lbl["font"]
+        )
+
+        # Allowed Companies
+        tl_frame_allowed_companies = ctk.CTkFrame(tl_ad_frame_entered)
+        tl_lbl_allowed_companies = customtkinter_utility.label_factory(
+            tl_frame_allowed_companies,
+            tv_label="Allowed Companies:",
+            kwargs_label=self.kwargs_lbl
+        )
+        tl_frame_allowed_companies_sel = ctk.CTkFrame(
+            tl_frame_allowed_companies
+        )
+        tl_frame_allowed_companies_sel.rowconfigure(0, weight=100)
+        tl_frame_allowed_companies_sel.columnconfigure(0, weight=50)
+        tl_frame_allowed_companies_sel.columnconfigure(1, weight=50)
+        tl_checkbox_allowed_comp_bws = customtkinter_utility.checkbox_factory(
+            tl_frame_allowed_companies_sel,
+            tv_label="BWS",
+            tv_checkbox=self.tv_allowed_comp_bws
+        )
+        tl_checkbox_allowed_comp_stg = customtkinter_utility.checkbox_factory(
+            tl_frame_allowed_companies_sel,
+            tv_label="STG",
+            tv_checkbox=self.tv_allowed_comp_stg
         )
 
         question_frames = [
             tl_ad_frame_enter,
             tl_ad_frame_entered,
-            tl_ad_frame_allow_publish
+            tl_ad_frame_allow_publish_stg,
+            tl_ad_frame_allow_publish_bws,
+            tl_frame_allowed_companies
         ]
         row_weight = math.floor(100 / len(question_frames))
         self.tl_ad.columnconfigure(0, weight=50)
@@ -8337,11 +8476,23 @@ class App(ctk.CTk):
         btn_submit[1].grid(row=0, column=1, padx=12, pady=12)
 
         # tl_ad_frame_entered
-        tl_ad_frame_allow_publish.grid(row=0, column=0, **self.grid_args_frame, columnspan=2)
+        tl_ad_frame_allow_publish_stg.grid(row=0, column=0, **self.grid_args_frame, columnspan=2)
+        tl_ad_frame_allow_publish_bws.grid(row=1, column=0, **self.grid_args_frame, columnspan=2)
+        tl_frame_allowed_companies.grid(row=2, column=0, **self.grid_args_frame, columnspan=2)
 
-        # tl_ad_frame_allow_publish
-        lbl_ap.grid(row=0, column=0, **self.grid_args_label)
-        tl_ad_switch_allow_publish.grid(row=0, column=1, **self.grid_args_switch)
+        # tl_ad_frame_allow_publish_stg
+        lbl_ap_s.grid(row=0, column=0, **self.grid_args_label)
+        tl_ad_switch_allow_publish_stg.grid(row=0, column=1, **self.grid_args_switch)
+
+        # tl_ad_frame_allow_publish_bws
+        lbl_ap_b.grid(row=0, column=0, **self.grid_args_label)
+        tl_ad_switch_allow_publish_bws.grid(row=0, column=1, **self.grid_args_switch)
+
+        # tl_frame_allowed_companies
+        tl_lbl_allowed_companies[1].grid(row=0, column=0, **self.grid_args_label)
+        tl_frame_allowed_companies_sel.grid(row=0, column=1, sticky=ctk.E)
+        tl_checkbox_allowed_comp_bws[2].grid(row=0, column=0, **self.grid_args_switch)
+        tl_checkbox_allowed_comp_stg[2].grid(row=0, column=1, **self.grid_args_switch)
 
         self.entry_admin_password_attempts_remaining[3].bind("<Return>", entry_return)
         update_admin_pwd_entered()
