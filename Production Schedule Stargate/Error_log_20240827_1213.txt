@@ -1,0 +1,14 @@
+2024-08-27 12:13:51.684407:
+	<class 'KeyError'>: 'T3'
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\site-packages\customtkinter\windows\widgets\ctk_button.py", line 554, in _clicked
+    self._command()
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 8169, in click_ays_yes
+    self.switch_company(comp_id)
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 8102, in switch_company
+    self.clear_selected_tiles()
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 5201, in clear_selected_tiles
+    tile = tiles[date][prod_line].get("tile", None)
+           ~~~~~~~~~~~^^^^^^^^^^^

@@ -1,34 +1,35 @@
-import copy
-import datetime
 import enum
 import io
 import math
-import random
+import os.path
+import shutil
 import threading
 import time
 import tkinter
-import numpy as np
-from tkinter import messagebox, ttk
-from itertools import zip_longest
-from typing import Tuple, Optional
+import traceback
+
+import win32gui
+import win32con
+import win32api
+import winsound
 
 import CTkTable
 import customtkinter as ctk
+from tkinter import messagebox, ttk
+from itertools import zip_longest
+
 import pandas as pd
+from typing import Tuple, Optional, Literal, Any
+
+from ttkwidgets.color import ColorPicker
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 import utility
 import tkinter_utility
 import datetime_utility
 from pyodbc_connection import connect
 from colour_utility import *
-from PIL import Image, ImageTk, ImageGrab, ImageDraw, ImageFont
-from ttkwidgets.color import askcolor, ColorPicker
-from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
 import customtkinter_utility
-
-import win32gui
-import win32con
-import win32api
 
 # TODO shrink weekend tiles_stg, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
@@ -482,23 +483,39 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.date_version = datetime.datetime(2024, 8, 22)
+        self.date_version = datetime.datetime(2024, 8, 27)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
-        self.file_last_session_sql: str = "last_session_sql.sql"
+
+        self.file_last_session_sql: str = r"C:\Access\last_session_sql.sql"
+        self.dir_path_resources = r"C:\Access\Stargate Production Schedule"
+
+        self.file_icon_logo_bws = "BWS Chrome Final WO Manufacturing.jpg"
+        self.file_icon_logo_stg = "Stargate Logo 50%.jpg"
+        self.file_icon_calendar_pop_up = "icon_calendar1.png"
+        self.file_icon_calendar_app = "icon_calendar2.png"
+        self.file_icon_error = "icon_error.png"
+        # self.file_icon_information = "icon_information1.png"
+        self.file_icon_information = "icon_information2.png"
+        self.file_icon_question = "icon_question1.png"
+        # self.file_icon_question = "icon_question2.png"
+        self.file_icon_search = "icon_search.png"
+        self.file_icon_warning = "icon_warning.png"
+
         self.default_admin_password = "trailer"
 
         self.app_state = {
-            "hovered": [],
-            "selected": [],
-            "dragged": [],
+            "hovered": list(),
+            "selected": list(),
+            "dragged": list(),
             "cursor_drag_pos": [None, None]
         }
         self.history = ctk.Variable(value=list(), name="history")
-        self.listbox_history = []
+        self.error_log = dict()
+        self.listbox_history = list()
         self.settings = {
             "mode_company": COMPANY.STG.value,
             "allow_multi_select": False,
-            "colour_coding": {},
+            "colour_coding": dict(),
             "TEST_MODE": ctk.BooleanVar(self, value=False),
             "allowed_to_publish": ctk.BooleanVar(self, value=False),
             "admin_password": ctk.StringVar(self, value=self.default_admin_password),
@@ -509,7 +526,7 @@ class App(ctk.CTk):
             "end_at_end_of_month": True
         }
         self.list_sl_preview_table_cols = ["Quote", "Current Date", "New Date"]
-        self.tl_data: dict = {}
+        self.tl_data: dict = dict()
 
         # default values
         self.days_backward = 3 * 7
@@ -537,7 +554,8 @@ class App(ctk.CTk):
 
         self.kwargs_lbl = {
             "font": ("Calibri", 18),
-            "justify": ctk.LEFT
+            "justify": ctk.LEFT,
+            "wraplength": 350
         }
         self.grid_args_frame = {
             "padx": 40,
@@ -640,6 +658,7 @@ class App(ctk.CTk):
 
         self.title_application_full = f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}"
         self.title_application_short = "STG Prod Sched"
+        self.msg_default_messagebox_text = f"Please enter a valid message to display."
         self.msg_no_movement_non_publish = f"No Movements allowed because you are a non-publish user"
         self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
         self.msg_non_valid_pds_user = f"You do not have permission to use this app.{self.msg_please_do_not_rerun}"
@@ -663,13 +682,62 @@ class App(ctk.CTk):
         self.msg_no_company_to_switch = f"You do not have permission to change companies{self.msg_please_do_not_rerun}"
         self.msg_invalid_company_to_switch = f"You do not have permission to enter company {{COMPANY}}.{self.msg_please_do_not_rerun}"
         self.msg_feature_coming_soon = f"Feature Coming Soon"
+        self.msg_report_error = f"Application encountered an internal error:\n\n{{err}}"
+        self.msg_want_to_continue = f"Do you want to continue?"
 
-        self.tv_done_interact_tl = ctk.BooleanVar(self, value=True)
+        self.tv_done_interact_tl = ctk.BooleanVar(self, value=True, name="tv_done_interact_tl")
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
         self.tl_ad: Optional[ctk.CTkToplevel] = None
         self.tl_tu: Optional[ctk.CTkToplevel] = None
         self.tl_sc: Optional[ctk.CTkToplevel] = None
         self.cb_admin_password_entered = None
+
+        self.tl_msgbox_value = None
+        # self.tl_msgbox = ctk.CTkToplevel(self, name="tl_msgbox")
+        self.tl_msgbox = ctk.CTkToplevel(self)
+        self.tl_msgbox.wm_iconphoto(
+            False,
+            ImageTk.PhotoImage(
+                file=os.path.join(
+                    self.dir_path_resources,
+                    self.file_icon_calendar_pop_up
+                )
+            )
+        )
+        # Enter new topLevels here to be considered for error log pop-up
+        self.dict_top_levels = {
+            "tl_ad": self.tl_ad,
+            "tl_cc_app": self.tl_cc_app,
+            "tl_sc": self.tl_sc,
+            "tl_tu": self.tl_tu,
+            "tl_dataframe_choice": self.tl_data.get("tl_dataframe_choice"),
+            "tl_shift_lines": self.tl_data.get("tl_shift_lines"),
+            "tl_colour_code": self.tl_data.get("tl_colour_code"),
+            "tl_font_choice": self.tl_data.get("tl_font_choice"),
+            "tl_testing_mode": self.tl_data.get("tl_testing_mode"),
+            "tl_col": self.tl_data.get("tl_col"),
+            "tl_qi": self.tl_data.get("tl_qi"),
+            "tl_msgbox": self.tl_msgbox
+        }
+
+        self.messagebox(
+            message="Yes, No, or Cancel.\n\nChoose Now:"
+        )
+
+        self.messagebox(
+            message="Error1",
+            mode="error"
+        )
+
+        self.messagebox(
+            message="Warn1",
+            mode="warn"
+        )
+
+        self.messagebox(
+            message="info1",
+            mode="info"
+        )
 
         # print(f"{self.cget('bg')=}")
         self.menubar = tkinter.Menu(self)
@@ -923,26 +991,32 @@ class App(ctk.CTk):
         print(f"B {sorted(list(self.df_orders_bws_2.columns))=}")
         print(f"{sorted(list(self.df_orders_bws_3.columns))=}")
 
+        print(f"AA{self.df_orders_bws_1.loc[self.df_orders_bws_1['WO#'] == '10017085']=}")
         self.df_orders_bws = self.df_orders_bws_1.merge(
             self.df_orders_bws_2,
             on="Quote#",
             how="outer"
         )
+        print(f"BB{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
         self.df_orders_bws = self.df_orders_bws.merge(
             self.df_orders_bws_3,
             on="Quote#",
             how="outer"
         )
+        print(f"CC{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
         self.df_orders_bws["WO#"] = (
             self.df_orders_bws["WO#"].apply(
                 lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
             )
         )
+        print(f"DD{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
         self.df_orders_bws["Quote#"] = (
             self.df_orders_bws["Quote#"].apply(
                 lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
             )
         )
+
+        print(f"EE{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
 
         if self.settings["TEST_MODE"].get():
             print(f"{self.df_orders_bws=}")
@@ -1262,7 +1336,7 @@ class App(ctk.CTk):
             self.list_dates[0],
             self.list_dates[-1],
             self.df_calendar_bws,
-            self.canvas_width_scroll_region_stg,
+            self.canvas_width_scroll_region_bws,
             self.canvas_height_scroll_region_bws,
             n_rows=self.n_rows_bws,
             company=COMPANY.BWS.value
@@ -1724,11 +1798,11 @@ class App(ctk.CTk):
             if prod_line == "":
                 prod_line = None
 
-            if self.settings["TEST_MODE"].get():
-                print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
+            # if self.settings["TEST_MODE"].get():
+            print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
                 # print(f"{dat_dealer=}")
 
-            if date is not None and prod_line is not None:
+            if not pd.isna(date) and not pd.isna(prod_line):
                 if self.first_date <= date <= self.last_date:
                     # place this tile with date and prod_line
 
@@ -1743,8 +1817,8 @@ class App(ctk.CTk):
                     if (self.max_line_bws is None) or (idx_pl > self.max_line_bws):
                         self.max_line_bws = idx_pl
 
-                    if self.settings["TEST_MODE"].get():
-                        print(f"\tFITS")
+                    # if self.settings["TEST_MODE"].get():
+                    print(f"\tFITS")
 
                     tile_data = self.tiles_bws[date][prod_line]
                     if 'tile' not in tile_data:
@@ -1765,8 +1839,8 @@ class App(ctk.CTk):
                     ]
                     if self.tiles_bws[date][prod_line].get("order"):
 
-                        if self.settings["TEST_MODE"].get():
-                            print(f">>> {dat_quote=}, {date=}, {prod_line=} already has an order!!!!")
+                        # if self.settings["TEST_MODE"].get():
+                        print(f">>> {dat_quote=}, {date=}, {prod_line=} already has an order!!!!")
 
                         no_fit = True
                         double = True
@@ -1790,8 +1864,8 @@ class App(ctk.CTk):
 
                 if no_fit:
 
-                    if self.settings["TEST_MODE"].get():
-                        print(f"\tDOESNT FIT")
+                    # if self.settings["TEST_MODE"].get():
+                    print(f"\tDOESNT FIT")
 
                     # mc_append_row = []
                     new_row_data = {k: [v] for k, v in row.items()}
@@ -1840,7 +1914,11 @@ class App(ctk.CTk):
                 self.concats_rest_orders_to_multi_combobox_bws.append(new_df)
 
         #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
+
+        print(f"{list(self.df_multi_combobox_data_orders_bws.columns)=}")
         print(f"{self.concats_multi_combobox_orders_bws=}")
+        print(f"{self.concats_rest_orders_bws=}")
+
         if self.concats_multi_combobox_orders_bws:
             self.concats_multi_combobox_orders_bws = self.concats_rest_orders_to_multi_combobox_bws + self.concats_multi_combobox_orders_bws
             self.df_multi_combobox_data_orders_bws = pd.concat(self.concats_multi_combobox_orders_bws,
@@ -2004,31 +2082,28 @@ class App(ctk.CTk):
 
 
 
+        if not os.path.isdir(self.dir_path_resources):
+            os.makedirs(self.dir_path_resources)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        for file in (
+            self.file_icon_logo_bws,
+            self.file_icon_logo_stg,
+            self.file_icon_calendar_pop_up,
+            self.file_icon_calendar_app,
+            self.file_icon_error,
+            self.file_icon_information,
+            self.file_icon_question,
+            self.file_icon_search,
+            self.file_icon_warning
+        ):
+            path = os.path.join(self.dir_path_resources, file)
+            if not os.path.exists(path):
+                src = os.path.join(r"\\server3\production", file)
+                if not os.path.exists(src):
+                    src = os.path.join(r"\\server3\Production\Stargate Production Schedule", file)
+                shutil.copyfile(src, path)
 
 
 
@@ -2039,7 +2114,7 @@ class App(ctk.CTk):
 
         # top left 'home' cell
         try:
-            self.stg_logo_image = Image.open(r"C:\Access\Stargate Logo 50%.jpg")
+            self.stg_logo_image = Image.open(os.path.join(self.dir_path_resources, self.file_icon_logo_stg))
             self.stg_logo_image = ImageTk.PhotoImage(
                 self.stg_logo_image.resize(
                     (
@@ -2056,7 +2131,7 @@ class App(ctk.CTk):
             self.stg_logo_image = None
 
         try:
-            self.bws_logo_image = Image.open(r"C:\Access\BWS Chrome Final WO Manufacturing.jpg")
+            self.bws_logo_image = Image.open(os.path.join(self.dir_path_resources, self.file_icon_logo_bws))
             self.bws_logo_image = ImageTk.PhotoImage(
                 self.bws_logo_image.resize(
                     (
@@ -3211,6 +3286,11 @@ class App(ctk.CTk):
             user_name = user
         self.app_state["user_domain"] = user_domain
         self.app_state["user_name"] = user_name[0] if isinstance(user_name, (list, tuple)) else user_name
+
+        # update [LastAccess]
+        sql = f"UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [LastAccess] = '{datetime.datetime.now():%x %X}' WHERE [UserName] = '{self.app_state['user_name']}';"
+        connect(sql, **STARGATE_SQL_CREDS)
+
         df = self.df_valid_updaters.loc[self.df_valid_updaters["UserName"].str.lower().str.strip() == user_name[0]]
 
         df_admin = \
@@ -3378,7 +3458,7 @@ class App(ctk.CTk):
         #         self.after(250, self.update_done_interact_tl)
 
     def bind_widgets(self, do_bind: bool = True):
-        print(f"{do_bind=}")
+        # print(f"{do_bind=}")
 
         company = self.settings["mode_company"]
         can = self.canvas_bws if (company == COMPANY.BWS.value) else self.canvas_stg
@@ -3822,6 +3902,8 @@ class App(ctk.CTk):
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
         # print(f"SEL {self.settings['allow_multi_select']=}")
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
         if not select:
             # self.app_state["selected"].clear()
             self.clear_selected_tiles()
@@ -3830,12 +3912,15 @@ class App(ctk.CTk):
                 self.select_tile(date, prod_line, False)
             if (date is not None) and (prod_line is not None):
                 self.update_info_frame(date, prod_line)
-                self.app_state["selected"].append((date, prod_line))
+                if slw:
+                    self.app_state["selected"].append((date, prod_line))
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         # print(f"HOVER ({date=}, {prod_line=})")
         tm = self.settings["TEST_MODE"].get()
         ap = self.settings["allowed_to_publish"].get()
+        # slw = self.tl_tv_switch_show_left_widgets.get()
+        # slw = 0 if (slw == "No") else 1
         if ap:
             self.app_state["hovered"].append((date, prod_line))
         else:
@@ -3845,7 +3930,9 @@ class App(ctk.CTk):
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         tm = self.settings["TEST_MODE"].get()
         ap = self.settings["allowed_to_publish"].get()
-        if ap:
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
+        if ap and slw:
             self.app_state["dragged"].append((date, prod_line))
         else:
             if tm:
@@ -4560,7 +4647,7 @@ class App(ctk.CTk):
                     quote = combobox_orders.res_tv_entry.get()
                     order_id = df_orders.loc[df_orders[self.quote_key("quote")] == quote].index
                     quote_data = list(df_orders.iloc[order_id].iterrows())[0][1]
-                    # print(f"{quote_data=}")
+                    print(f"{quote_data=}")
 
                     mc_quote = quote
                     mc_wo = quote_data[self.quote_key("WO#")]
@@ -4864,7 +4951,7 @@ class App(ctk.CTk):
 
         # after animation, check if the tile is selected, then restore.
         if (sel := self.app_state.get("selected", None)) is not None:
-            # print(f"{sel=}, {type(sel)=}")
+            print(f"{sel=}, {type(sel)=}")
             for s_date, s_line in sel:
                 # s_date, s_line = sel
                 self.after(
@@ -5082,16 +5169,16 @@ class App(ctk.CTk):
         comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
-        lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
-        warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
-        df_warranties = self.df_multi_combobox_data_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
-        df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
-        info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
+        # lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
+        # warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
+        # df_warranties = self.df_multi_combobox_data_warranties_bws if (
+        #             comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+        # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
+        # combobox_warranties = self.multi_combobox_warranties_bws if (
+        #             comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        # combobox_orders = self.multi_combobox_orders_bws if (
+        #             comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        # info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
 
         b_np = self.colour_tile_background_non_prod
 
@@ -5239,6 +5326,10 @@ class App(ctk.CTk):
         self.app_state["dragged"].clear()
 
     def undo(self, event):
+
+        print(f"UNDO RETURN")
+        return
+
         tm = self.settings["TEST_MODE"].get()
         if tm:
             # print(f"undo {self.history=}")
@@ -5399,6 +5490,7 @@ class App(ctk.CTk):
             print(f"{event=}, {idx=}, {tag=}")
             print(f"{date=}, {line=}")
         self.tl_data["tl_dataframe_choice"].destroy()
+        self.dict_top_levels["tl_dataframe_choice"] = None
         self.grab_set()
         combobox_orders.res_tv_entry.set(df_orders.iloc[idx][self.quote_key("quote")])
         self.flash_tile((date, line), mode="attention")
@@ -5437,7 +5529,9 @@ class App(ctk.CTk):
         if tm:
             print(f"CHOOSE FROM CHOICES\n{df=}")
         if not df.empty:
+            # self.tl_data["tl_dataframe_choice"] = ctk.CTkToplevel(self, name="tl_dataframe_choice")
             self.tl_data["tl_dataframe_choice"] = ctk.CTkToplevel(self)
+            self.dict_top_levels["tl_dataframe_choice"] = self.tl_data["tl_dataframe_choice"]
             self.tl_data["tl_dataframe_choice"].title(self.title_application_short + " - Choose")
             self.tl_data["frame_tl"] = ctk.CTkFrame(self.tl_data["tl_dataframe_choice"])
             n_choices = df.shape[0]
@@ -5711,7 +5805,7 @@ class App(ctk.CTk):
         x /= bbaw
         need_to_move = (bba[0] <= x <= bba[2])
         # if tm:
-        #     print(f"{need_to_move=}")
+        print(f"{need_to_move=}")
         if need_to_move:
             can.xview_moveto(x)
             self.redraw_legend()
@@ -5725,7 +5819,9 @@ class App(ctk.CTk):
         w, h = self.calc_geometry["w"], self.calc_geometry["h"]
         wm, hm = 5, 5
         tl_name = "tl_shift_lines"
+        # self.tl_data[tl_name] = ctk.CTkToplevel(self, name="tl_shift_lines")
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
+        self.dict_top_levels[tl_name] = self.tl_data[tl_name]
         self.tl_data[tl_name].title(self.title_application_short + " - Shift Line")
         comp = self.settings["mode_company"]
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
@@ -6551,6 +6647,7 @@ class App(ctk.CTk):
 
         def on_closing_shift_lines(*args):
             self.tl_data[tl_name].destroy()
+            self.dict_top_levels[tl_name] = None
             self.grab_set()
 
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
@@ -6868,7 +6965,9 @@ class App(ctk.CTk):
             print(f"{known_colour_codes_m=}")
             print(f"{known_dealers=}, {known_colour_codes=}")
             print(f"{known_colour_codes_d=}, {known_colour_codes_m=}")
+        # self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self, name="tl_colour_code")
         self.tl_data["tl_colour_code"] = ctk.CTkToplevel(self)
+        self.dict_top_levels["tl_colour_code"] = self.tl_data["tl_colour_code"]
         self.tl_data["tl_colour_code"].title(self.title_application_short + " - Colour Code")
 
         self.tl_data["cc_changed"] = ctk.BooleanVar(self, value=False)
@@ -7027,6 +7126,7 @@ class App(ctk.CTk):
         def ask_colour(parent, title, curr_colour):
             alpha = False
             self.tl_data["tl_col"] = ColorPicker(parent, curr_colour, alpha, title)
+            self.dict_top_levels["tl_col"] = self.tl_data["tl_col"]
             tl_geom_cc = customtkinter_utility.calc_geometry_tl(
                 0.22, 0.35, parent=self, rtype=dict
             )
@@ -7130,11 +7230,13 @@ class App(ctk.CTk):
 
         def on_closing_cc_colour(event=None):
             self.tl_data["tl_col"].destroy()
+            self.dict_top_levels["tl_col"] = None
             self.tl_data["tl_colour_code"].grab_set()
             self.wait_window(self.tl_data["tl_colour_code"])
 
         def on_closing_cc_font(event=None):
             self.tl_data["tl_font_choice"].destroy()
+            self.dict_top_levels["tl_font_choice"] = None
             self.tl_data["tl_colour_code"].grab_set()
             self.wait_window(self.tl_data["tl_colour_code"])
 
@@ -7145,7 +7247,9 @@ class App(ctk.CTk):
                 self.tl_data["tl_cc_vc_edit_text"],
                 "font"
             )
+            # self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"], name="tl_font_choice")
             self.tl_data["tl_font_choice"] = ctk.CTkToplevel(self.tl_data["tl_colour_code"])
+            self.dict_top_levels["tl_font_choice"] = self.tl_data["tl_font_choice"]
             self.tl_data["tl_font_choice"].title(self.title_application_short + " - Font")
             # self.tl_data["tl_font_choice"] = tkinter.Toplevel(self.tl_data["tl_colour_code"])
             tl_geom_fc = customtkinter_utility.calc_geometry_tl(
@@ -7279,6 +7383,7 @@ class App(ctk.CTk):
 
         def quit_cc():
             self.tl_data["tl_colour_code"].destroy()
+            self.dict_top_levels["tl_colour_code"] = None
             self.grab_set()
 
         def save_changes():
@@ -7762,7 +7867,9 @@ class App(ctk.CTk):
 
     def click_app_theme(self, *args):
         print(f"click_app_theme / settings")
+        # self.tl_cc_app = ctk.CTkToplevel(self, name="tl_cc_app")
         self.tl_cc_app = ctk.CTkToplevel(self)
+        self.dict_top_levels["tl_cc_app"] = self.tl_cc_app
         self.tl_cc_app.title(self.title_application_short + " - Settings")
         self.tl_cc_app.geometry(customtkinter_utility.calc_geometry_tl(900, 750, parent=self))
 
@@ -8006,10 +8113,17 @@ class App(ctk.CTk):
         if parent is None:
             parent = self
 
-        return messagebox.askyesnocancel(
+        # return messagebox.askyesnocancel(
+        #     title=self.title_application_short,
+        #     message=msg,
+        #     parent=parent
+        # ), has_history
+
+        return self.messagebox(
             title=self.title_application_short,
             message=msg,
-            parent=parent
+            parent=parent,
+            mode="askyesnocancel"
         ), has_history
 
     def switch_company(self, comp_id):
@@ -8017,6 +8131,8 @@ class App(ctk.CTk):
         ac = self.tv_allowed_companies.get()
         curr_company = self.settings["mode_company"]
         companies = list(map(lambda c: getattr(c, "name"), COMPANY))
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
         print(f"-> SWITCH COMPANY {curr_company=}, {comp_id=}")
         print(f"{ac=}")
         if comp_id not in ac:
@@ -8045,6 +8161,12 @@ class App(ctk.CTk):
                     100 + self.tile_height_stg
                 )
 
+            self.clear_info_frame()
+            self.clear_drag_tiles()
+            self.clear_hover_tiles()
+            self.clear_selected_tiles()
+            self.clear_master_drag_tile()
+
             self.invisible_canvas.coords(
                 self.multi_combobox_drag_tile,
                 *bbox_mc_drag_tile
@@ -8055,7 +8177,7 @@ class App(ctk.CTk):
                 bbox_mc_drag_tile[1] + ((bbox_mc_drag_tile[3] - bbox_mc_drag_tile[1]) / 2)
             )
 
-                # bws widgets
+            # bws widgets
             self.multi_combobox_orders_bws.grid_widget(grid_bws)
             self.multi_combobox_warranties_bws.grid_widget(grid_bws)
 
@@ -8092,15 +8214,15 @@ class App(ctk.CTk):
                 sql = sql.format(mc_s=mc_s, un=un)
                 connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
-        self.bind_widgets()
-        self.colour_code()
+        self.click_mb_go_to_today()
+        self.resume()
 
     def click_mb_switch_companies(self, *args):
         tm = self.settings["TEST_MODE"].get()
         ac = self.tv_allowed_companies.get()
         comp = self.settings["mode_company"]
-        tw = self.tile_width_bws if (comp == COMPANY.BWS.value) else self.tile_width_stg
-        th = self.tile_height_bws if (comp == COMPANY.BWS.value) else self.tile_height_stg
+        tw = max(self.tile_width_bws, self.tile_width_stg)
+        th = max(self.tile_height_bws, self.tile_height_stg)
         tv_selected_company = ctk.IntVar(self, value=-1)
         print(f"{ac=}, {type(ac)=}")
         if len(ac) < 2:
@@ -8110,7 +8232,9 @@ class App(ctk.CTk):
                 parent=self
             )
         else:
+            # self.tl_sc = ctk.CTkToplevel(self, name="tl_sc")
             self.tl_sc = ctk.CTkToplevel(self)
+            self.dict_top_levels["tl_sc"] = self.tl_sc
             geom = customtkinter_utility.calc_geometry_tl(
                 800, 550, parent=self, rtype=dict
             )
@@ -8122,6 +8246,7 @@ class App(ctk.CTk):
 
             def on_close_tl_sc(*args):
                 self.tl_sc.destroy()
+                self.dict_top_levels["tl_sc"] = None
 
             def on_click_company(event, idx):
                 print(f"{idx=}, {btns[idx]['lbl']=}")
@@ -8282,13 +8407,16 @@ class App(ctk.CTk):
     def on_close_tl_ad(self, *args):
         self.settings["admin_password_entered"].trace_remove("write", self.cb_admin_password_entered)
         self.tl_ad.destroy()
+        self.dict_top_levels["tl_ad"] = None
         self.grab_set()
         self.after(250, lambda: self.tv_done_interact_tl.set(True))
 
     def click_mb_admin(self, event=None):
         self.tv_done_interact_tl.set(False)
         self.entry_admin_password_attempts_remaining = None
+        # self.tl_ad = ctk.CTkToplevel(self, name="tl_ad")
         self.tl_ad = ctk.CTkToplevel(self)
+        self.dict_top_levels["tl_ad"] = self.tl_ad
         geom = customtkinter_utility.calc_geometry_tl(
             800, 550, parent=self, rtype=dict
         )
@@ -8601,9 +8729,12 @@ class App(ctk.CTk):
 
         def on_closing_tm(*args):
             self.tl_data[tl_name].destroy()
+            self.dict_top_levels[tl_name] = None
             self.grab_set()
 
+        # self.tl_data[tl_name] = ctk.CTkToplevel(self, name="tl_testing_mode")
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
+        self.dict_top_levels[tl_name] = self.tl_data[tl_name]
         self.tl_data[tl_name].title(self.title_application_short + " - Testing Mode")
 
         w, h = 350, 160
@@ -8650,7 +8781,9 @@ class App(ctk.CTk):
             sample_texts_in: Optional[dict[dict[str: str]]] = None
     ):
         self.tv_done_interact_tl.set(False)
+        # self.tl_tu = ctk.CTkToplevel(self, name="tl_tu")
         self.tl_tu = ctk.CTkToplevel(self)
+        self.dict_top_levels["tl_tu"] = self.tl_tu
         geom = customtkinter_utility.calc_geometry_tl(
             1500, 900, parent=self, rtype=dict
         )
@@ -8873,6 +9006,7 @@ class App(ctk.CTk):
     def on_close_tl_tu(self, event=None):
         self.grab_release()
         self.tl_tu.destroy()
+        self.dict_top_levels["tl_tu"] = None
         # self.bind("<ButtonRelease-1>")
         self.after(250, lambda: self.tv_done_interact_tl.set(True))
         # return "break"
@@ -8885,7 +9019,7 @@ class App(ctk.CTk):
         ans, has_history = ans_has_history
         if ans == ctk.YES:
             # quit without saving
-            self.destroy()
+            self.master_destroy()
         else:
             # continue editing
             pass
@@ -9126,6 +9260,7 @@ class App(ctk.CTk):
                         )
 
                     connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
+                    self.history.set(list())
                     messagebox.showinfo(
                         title=self.title_application_short,
                         message=self.msg_save_successful,
@@ -9159,7 +9294,7 @@ class App(ctk.CTk):
                 do_quit = False
 
         if do_quit:
-            self.destroy()
+            self.master_destroy()
         else:
             return sql_statments
 
@@ -9277,6 +9412,7 @@ class App(ctk.CTk):
     def quit_cc_app(self):
         print(f"quit_cc_app")
         self.tl_cc_app.destroy()
+        self.dict_top_levels["tl_cc_app"] = None
         self.grab_set()
 
     def show_quote_info_tl(self, date, line):
@@ -9284,7 +9420,9 @@ class App(ctk.CTk):
         comp = self.settings["mode_company"]
         # tile_data = self.tiles_stg[date][line]
         tl_name = "tl_qi"
+        # self.tl_data[tl_name] = ctk.CTkToplevel(self, name="tl_qi")
         self.tl_data[tl_name] = ctk.CTkToplevel(self)
+        self.dict_top_levels[tl_name] = self.tl_data[tl_name]
         self.tl_data[tl_name].title(self.title_application_short + " - Quote Info")
         self.tl_data[tl_name].geometry(customtkinter_utility.calc_geometry_tl(
             700, 350, parent=self
@@ -9292,17 +9430,19 @@ class App(ctk.CTk):
 
         def close_tl(*args):
             self.tl_data[tl_name].destroy()
+            self.dict_top_levels[tl_name] = None
             self.grab_set()
 
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         info_frame_columns = self.info_frame_columns_bws if (comp == COMPANY.BWS.value) else self.info_frame_columns_stg
+        comp_s = [c.name for c in COMPANY if c.value == comp][0]
 
         self.tl_data["tl_qi_info_frame"] = tkinter_utility.InfoFrame(
             self.tl_data[tl_name],
             labels=info_frame_columns,
             auto_grid=True,
-            header="Quote Information:",
+            header=f"{comp_s} Quote Information:",
             key_width=16,
             val_width=50,
             width=150,
@@ -9339,10 +9479,10 @@ class App(ctk.CTk):
                 print(f"{tile=}")
             if order is not None:
                 series = df_orders.iloc[order]
-                if pd.isna(df_orders[self.quote_key("delivery date")]):
+                if pd.isna(series[self.quote_key("delivery date")]):
                     delivery_date = self.calculate_nth_business_day(date, N_BUSINESS_DAYS_AVAIL_TO_DELIVERY)
                 else:
-                    delivery_date = df_orders[self.quote_key("delivery date")]
+                    delivery_date = series[self.quote_key("delivery date")]
                 days_between = (delivery_date - date).days
                 dat_1 = {
                     "KD": date,
@@ -9370,6 +9510,356 @@ class App(ctk.CTk):
         self.tl_data[tl_name].grab_set()
         self.wait_window(self.tl_data[tl_name])
 
+    def master_destroy(self):
+        for tl_name, tl in self.dict_top_levels.items():
+            if isinstance(tl, ctk.CTkToplevel) and tl.winfo_exists():
+                print(f"CLOSE TL: {tl.winfo_name()}")
+                tl.destroy()
+        if self.winfo_exists():
+            print(f"CLOSE SELF")
+            self.destroy()
+
+    def resume(self):
+        self.clear_info_frame()
+        self.clear_drag_tiles()
+        self.clear_hover_tiles()
+        self.clear_selected_tiles()
+        self.clear_master_drag_tile()
+
+        self.bind_widgets()
+        self.colour_code()
+        self.update_show_calendar_only()
+
+    def log_error(self, exception) -> None:
+        t = datetime.datetime.now()
+        self.error_log[t] = exception
+
+        print(f"LOGGING ERROR {t:%x %X}\n\t{exception=}")
+
+        # Enter new topLevels here to be considered for error log pop-up
+
+        parent = self
+        for par in (
+            self.tl_ad,
+            self.tl_cc_app,
+            self.tl_sc,
+            self.tl_tu
+        ):
+            if par is not None:
+                if isinstance(par, ctk.CTkToplevel) and par.winfo_exists():
+                    parent = par
+                    break
+
+        if self.winfo_exists():
+            self.messagebox(
+                title=self.title_application_short,
+                message=self.msg_report_error.format(err=str(exception)),
+                parent=parent,
+                mode="showerror"
+            )
+        else:
+            messagebox.showerror(
+                title=self.title_application_short,
+                message=self.msg_report_error.format(err=str(exception)),
+                parent=parent
+            )
+
+        ans = ctk.NO
+        if self.winfo_exists():
+            # ans = messagebox.askyesno(
+            #     title=self.title_application_short,
+            #     message=self.msg_want_to_continue
+            # )
+            ans = self.messagebox(
+                title=self.title_application_short,
+                message=self.msg_want_to_continue,
+                mode="askyesno"
+            )
+        if ans == ctk.YES:
+            self.resume()
+        else:
+            self.master_destroy()
+
+    def get_error_log(self) -> str:
+        el = getattr(self, "error_log", dict())
+        res = ""
+        for k, v in el.items():
+            res += f"{k}:\n\t{v}"
+        return res
+
+    def messagebox(
+            self,
+            title: str = None,
+            message: str = None,
+            mode: Literal[
+                0, 1, 2, 3, 4,
+                "yesnocancel", "yesNoCancel", "askyesnocancel", "askYesNoCancel",
+                "yesno", "yesNo", "askyesno", "askYesNo",
+                "info", "showinfo", "showInfo",
+                "warn", "warning", "showwarning", "showWarning",
+                "error", "showerror", "showError"
+            ] = 0,
+            parent: ctk.CTk | ctk.CTkToplevel = None,
+            search_parents: bool = False,
+            width: int = 900,
+            height: int = 600,
+            allow_shrink: bool = True
+    ) -> Any:
+
+        print(f"MESSAGEBOX!")
+        # default == ync
+
+        # yn
+        # ync
+        # err
+        # info
+        # warn
+
+        bg = Colour("#FFFFFF")
+        fg = Colour("#000000")
+        bg_f_btns = Colour("#DFDFDF")
+        bg_btns = Colour("#AFAFAF")
+        bg_h_btn = Colour("#CFCFCF")
+
+        self.tv_done_interact_tl.set(False)
+
+        mode_translator = {
+            0: ["yesnocancel", "yesNoCancel", "askyesnocancel", "askYesNoCancel"],
+            1: ["yesno", "yesNo", "askyesno", "askYesNo"],
+            2: ["info", "showinfo", "showInfo"],
+            3: ["warn", "warning", "showwarning", "showWarning"],
+            4: ["error", "showerror", "showError"]
+        }
+        if not isinstance(mode, int):
+            for k, vals in mode_translator.items():
+                if mode in vals:
+                    mode = k
+                    break
+        if not isinstance(mode, int) or not (0 <= mode <= 4):
+            mode = 0
+
+        if title is None:
+            title = self.title_application_short
+
+        if message is None:
+            message = self.msg_default_messagebox_text
+
+        if parent is None:
+            parent = self
+            if search_parents:
+
+                # Enter new topLevels here to be considered for error log pop-up
+                for par_name, par in self.dict_top_levels.items():
+                    if par != self.tl_msgbox:
+                        if par is not None:
+                            if isinstance(par, ctk.CTkToplevel) and par.winfo_exists():
+                                parent = par
+                                break
+
+        if (width < 0) or (width > 2000):
+            width = 900
+        if (height < 0) or (height > 2000):
+            height = 600
+        i_w, i_h = 80, 80
+
+        # if icon_path is None:
+        #     icon_path = self.default_image_icon
+
+        self.tl_msgbox_value = None
+        self.tl_msgbox.configure(
+            fg_color=bg.hex_code
+        )
+        self.tl_msgbox.children.clear()
+        self.tl_msgbox.title(title)
+        self.tl_msgbox.geometry(
+            customtkinter_utility.calc_geometry_tl(
+                width,
+                height,
+                parent=parent
+            )
+        )
+        self.tl_msgbox.rowconfigure(0, weight=90)
+        self.tl_msgbox.rowconfigure(1, weight=10)
+        self.tl_msgbox.columnconfigure(0, weight=100)
+
+        def on_close_msgbox(*args):
+            print(f"PRE HIDE")
+            if self.tl_msgbox_value is None:
+                self.tl_msgbox_value = "cancel"
+            self.tl_msgbox.withdraw()
+            self.tv_done_interact_tl.set(True)
+            parent.grab_set()
+
+        def click_ok(*args):
+            print(f"OK")
+            self.tl_msgbox_value = "ok"
+            on_close_msgbox()
+
+        def click_yes(*args):
+            print(f"YES")
+            self.tl_msgbox_value = ctk.YES
+            on_close_msgbox()
+
+        def click_no(*args):
+            print(f"NO")
+            self.tl_msgbox_value = ctk.NO
+            on_close_msgbox()
+
+        def click_cancel(*args):
+            print(f"CANCEL")
+            self.tl_msgbox_value = "cancel"
+            on_close_msgbox()
+
+        frame_lbl = ctk.CTkFrame(
+            self.tl_msgbox,
+            fg_color=bg.hex_code
+        )
+        frame_lbl.rowconfigure(0, weight=100)
+        frame_lbl.columnconfigure(0, weight=10)
+        frame_lbl.columnconfigure(1, weight=90)
+        frame_msg = ctk.CTkScrollableFrame(
+            frame_lbl,
+            fg_color=bg.hex_code,
+            width=int(width*0.75),
+            height=int(height*0.8)
+        )
+        frame_msg.rowconfigure(0, weight=100)
+        frame_msg.columnconfigure(0, weight=100)
+        lbl_msg = customtkinter_utility.label_factory(
+            frame_msg,
+            tv_label=message,
+            kwargs_label={
+                "font": self.kwargs_lbl["font"],
+                "text_color": fg.hex_code,
+                "wraplength": self.kwargs_lbl["wraplength"],
+                "width": int(width*0.75),
+                "height": int(height*0.8)
+            }
+        )
+
+        if allow_shrink:
+            x0, y0, x1, y1 = lbl_msg[1].bbox()
+            # print(f"{tw=}, {th=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
+            print(f"{x0=}, {y0=}, {x1=}, {y1=}, {width=}, {height=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
+
+        frame_btns = ctk.CTkFrame(
+            self.tl_msgbox,
+            fg_color=bg_f_btns.hex_code
+        )
+        kwargs_btn = {
+            "fg_color": bg_btns.hex_code,
+            "text_color": fg.hex_code,
+            "hover_color": bg_h_btn.hex_code
+        }
+        btns = [
+            customtkinter_utility.button_factory(
+                frame_btns,
+                tv_btn=f"ok",
+                command=click_ok,
+                kwargs_btn=kwargs_btn.copy()
+            ),
+            customtkinter_utility.button_factory(
+                frame_btns,
+                tv_btn=f"yes",
+                command=click_yes,
+                kwargs_btn=kwargs_btn.copy()
+            ),
+            customtkinter_utility.button_factory(
+                frame_btns,
+                tv_btn=f"no",
+                command=click_no,
+                kwargs_btn=kwargs_btn.copy()
+            ),
+            customtkinter_utility.button_factory(
+                frame_btns,
+                tv_btn=f"cancel",
+                command=click_cancel,
+                kwargs_btn=kwargs_btn.copy()
+            )
+        ]
+
+        img_path = self.file_icon_question
+        if mode == 4:
+            # error
+            # pop all but 'ok'
+            btns = btns[:1]
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+            img_path = self.file_icon_error
+        elif mode == 3:
+            # warning
+            # pop all but 'ok'
+            btns = btns[:1]
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+            img_path = self.file_icon_warning
+        elif mode == 2:
+            # info
+            # pop all but 'ok'
+            btns = btns[:1]
+            img_path = self.file_icon_information
+        elif mode == 1:
+            # yn
+            # pop 'ok'
+            btns.pop(0)
+            # pop 'cancel'
+            btns.pop(-1)
+        else:
+            # ync
+            # pop 'ok'
+            btns.pop(0)
+
+        # img = ctk.CTkImage(
+        #     ImageTk.Image.open(os.path.join(self.dir_path_resources, "icon_calendar2.png"))
+        # )
+        img = None
+        if os.path.exists(self.dir_path_resources):
+            img_path = os.path.join(self.dir_path_resources, img_path)
+            if os.path.exists(img_path):
+                img_obj = Image.open(img_path)
+                img = ImageTk.PhotoImage(
+                    img_obj.resize(
+                        (i_w, i_h),
+                        Image.LANCZOS
+                    )
+                )
+
+        frame_lbl.grid(row=0, column=0, rowspan=1, columnspan=1, sticky=ctk.NSEW)
+        frame_btns.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=ctk.NSEW)
+
+        # frame_lbl
+        can = ctk.CTkCanvas(self.tl_msgbox, width=i_w, height=i_h)
+        if img is not None:
+            can.create_image(0, 0, image=img, anchor=ctk.NW)
+        else:
+            can.create_text(20, 20, text="NO IMAGE")
+        can.grid(row=0, column=0, rowspan=1, columnspan=1, padx=15, pady=20, sticky=ctk.NW)
+        # img.grid(row=0, column=0, rowspan=1, columnspan=1, padx=15, pady=20, sticky=ctk.NW)
+        frame_msg.grid(row=0, column=1, rowspan=1, columnspan=1, padx=5, pady=10, sticky=ctk.N)
+
+        # frame_msg
+        lbl_msg[1].grid(row=0, column=0, rowspan=1, columnspan=1, padx=5, pady=10, sticky=ctk.N)
+
+        frame_btns.rowconfigure(0, weight=100)
+        for i in range(len(btns)):
+            frame_btns.columnconfigure(i, weight=int(100/len(btns)))
+            if len(btns) == 1:
+                # when only 1 button, set it to the bottom right
+                btns[i][1].grid(row=0, column=i, rowspan=1, columnspan=1, padx=10, pady=10, sticky=ctk.E)
+            else:
+                btns[i][1].grid(row=0, column=i, rowspan=1, columnspan=1, padx=10, pady=10)
+
+        print(f"PRE SHOW")
+        self.tl_msgbox.deiconify()
+        self.tl_msgbox.grab_set()
+        self.tl_msgbox.protocol("WM_DELETE_WINDOW", on_close_msgbox)
+        print(f"PRE WAIT")
+        # self.wait_window(self.tl_msgbox)
+        # self.wait_visibility(self.tl_msgbox)
+        self.wait_variable("tv_done_interact_tl")
+        print(f"POST WAIT 1")
+        print(f"POST WAIT 2")
+
+        return self.tl_msgbox_value
+
 
 def test_canvas_window():
     app = ctk.CTk()
@@ -9386,7 +9876,33 @@ def test_canvas_window():
     app.mainloop()
 
 
+def custom_error_handler(self, exc, val, tb):
+    # Log the exception using your App's log_error method
+    app.log_error(f"{exc}: {val}\n{''.join(traceback.format_tb(tb))}")
+
+
 if __name__ == '__main__':
     # test_canvas_window()
-    app = App()
-    app.mainloop()
+
+    app = None
+
+    try:
+        app = App()
+        tkinter.Tk.report_callback_exception = custom_error_handler
+        app.mainloop()
+    except Exception as e:
+        print(f"\n\n>>>>> HERE\n\n")
+        if isinstance(app, App):
+            app.log_error(e)
+        else:
+            raise e
+    else:
+        # no errors
+        pass
+    finally:
+        t = datetime.datetime.now()
+        with open(f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt", "w") as f:
+            if isinstance(app, App):
+                f.write(app.get_error_log())
+            else:
+                f.write(f"Critical failure {t:%x %X}")

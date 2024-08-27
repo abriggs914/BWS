@@ -1315,7 +1315,7 @@ class App(ctk.CTk):
             )
         else:
             self.tiles["home"]["tile"] = self.draw_rect(
-                *self.calc_grid_cells[0][0],
+                self.calc_grid_cells[0][0],
                 fill=self.colour_tile_header_home_background.hex_code,
                 parent=self.canvas
             )
