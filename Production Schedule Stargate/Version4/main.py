@@ -9253,18 +9253,30 @@ class App(ctk.CTk):
                 if do_exec:
 
                     if comp == COMPANY.BWS.value:
-                        messagebox.showinfo(
+                        # messagebox.showinfo(
+                        #     title=self.title_application_short,
+                        #     message=self.msg_feature_coming_soon,
+                        #     parent=self
+                        # )
+                        self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_feature_coming_soon,
-                            parent=self
+                            parent=self,
+                            mode="showinfo"
                         )
 
                     connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
                     self.history.set(list())
-                    messagebox.showinfo(
+                    # messagebox.showinfo(
+                    #     title=self.title_application_short,
+                    #     message=self.msg_save_successful,
+                    #     parent=self
+                    # )
+                    self.messagebox(
                         title=self.title_application_short,
                         message=self.msg_save_successful,
-                        parent=self
+                        parent=self,
+                        mode="showinfo"
                     )
                     # for stmt in stmts.split(";"):
                     #     st = stmt.replace("\t", " ").replace("\n", " ")
@@ -9273,16 +9285,28 @@ class App(ctk.CTk):
                     #         connect(st)
                 else:
                     if tm:
-                        messagebox.showinfo(
+                        # messagebox.showinfo(
+                        #     title=self.title_application_short,
+                        #     message=self.msg_no_commit_test_mode,
+                        #     parent=self
+                        # )
+                        self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_no_commit_test_mode,
-                            parent=self
+                            parent=self,
+                            mode="showinfo"
                         )
                     elif not self.settings["allowed_to_publish"].get():
-                        messagebox.showerror(
+                        # messagebox.showerror(
+                        #     title=self.title_application_short,
+                        #     message=self.msg_non_publish_user,
+                        #     parent=self
+                        # )
+                        self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_non_publish_user,
-                            parent=self
+                            parent=self,
+                            mode="showerror"
                         )
 
                 # # TODO async
@@ -9396,17 +9420,29 @@ class App(ctk.CTk):
                     msg += f"\n{(t if shown_dates else '')}{hn.center(18)} -- {datetime_utility.date_str_format(d, include_weekday=True, short_month=True, short_weekday=True).center(20)}"
                     shown_dates.add(d)
                 msg += f"\n{4 * t}{l.rjust(5)}: {qn}"
-            messagebox.showwarning(
+            # messagebox.showwarning(
+            #     title=self.title_application_short,
+            #     message=msg,
+            #     parent=self
+            # )
+            self.messagebox(
                 title=self.title_application_short,
                 message=msg,
-                parent=self
+                parent=self,
+                mode="showwarning"
             )
         else:
             # ctk.CTkSegmentedButton
-            messagebox.showinfo(
+            # messagebox.showinfo(
+            #     title=self.title_application_short,
+            #     message=self.msg_no_units_on_holiday,
+            #     parent=self
+            # )
+            self.messagebox(
                 title=self.title_application_short,
                 message=self.msg_no_units_on_holiday,
-                parent=self
+                parent=self,
+                mode="showinfo"
             )
 
     def quit_cc_app(self):

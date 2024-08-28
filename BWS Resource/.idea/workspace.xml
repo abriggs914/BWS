@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31e54beb-d316-4ebb-a0e2-e142e4c71ec6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version4/TODO.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Production Schedule Stargate/Version4/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Production Schedule Stargate/Version4/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -203,10 +203,10 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.Update Databases" />
-      <item itemvalue="Python.colour_demo" />
       <item itemvalue="Python.info_frame_canvas_demo" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.Update Databases" />
+      <item itemvalue="Python.colour_demo" />
       <item itemvalue="Python.search tables (1)" />
       <item itemvalue="Python.search tables" />
       <item itemvalue="Python.test_pyodbc_connection_mass_updates" />
