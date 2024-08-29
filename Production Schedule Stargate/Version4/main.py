@@ -517,7 +517,8 @@ class App(ctk.CTk):
             "allow_multi_select": False,
             "colour_coding": dict(),
             "TEST_MODE": ctk.BooleanVar(self, value=False),
-            "allowed_to_publish": ctk.BooleanVar(self, value=False),
+            "allowed_to_publish_stg": ctk.BooleanVar(self, value=False, name="ap_stg"),
+            "allowed_to_publish_bws": ctk.BooleanVar(self, value=False, name="ap_bws"),
             "admin_password": ctk.StringVar(self, value=self.default_admin_password),
             "admin_password_entered": ctk.BooleanVar(self, value=False),
             "min_font_size_tile": 8,
@@ -720,24 +721,24 @@ class App(ctk.CTk):
             "tl_msgbox": self.tl_msgbox
         }
 
-        self.messagebox(
-            message="Yes, No, or Cancel.\n\nChoose Now:"
-        )
-
-        self.messagebox(
-            message="Error1",
-            mode="error"
-        )
-
-        self.messagebox(
-            message="Warn1",
-            mode="warn"
-        )
-
-        self.messagebox(
-            message="info1",
-            mode="info"
-        )
+        # self.messagebox(
+        #     message="Yes, No, or Cancel.\n\nChoose Now:"
+        # )
+        #
+        # self.messagebox(
+        #     message="Error1",
+        #     mode="error"
+        # )
+        #
+        # self.messagebox(
+        #     message="Warn1",
+        #     mode="warn"
+        # )
+        #
+        # self.messagebox(
+        #     message="info1",
+        #     mode="info"
+        # )
 
         # print(f"{self.cget('bg')=}")
         self.menubar = tkinter.Menu(self)
@@ -2812,10 +2813,16 @@ class App(ctk.CTk):
         na = self.max_tries_admin_password
         count = self.tl_tv_count_tries_allow_publish.get()
         if count >= na:
-            messagebox.showerror(
+            # messagebox.showerror(
+            #     title=self.title_application_short,
+            #     message=self.msg_incorrect_admin_password_max_tries,
+            #     parent=(self.tl_ad if (self.tl_ad is not None) else self)
+            # )
+            self.messagebox(
                 title=self.title_application_short,
                 message=self.msg_incorrect_admin_password_max_tries,
-                parent=(self.tl_ad if (self.tl_ad is not None) else self)
+                parent=(self.tl_ad if (self.tl_ad is not None) else self),
+                mode="showerror"
             )
             self.mb_file.entryconfig("Admin", state=ctk.DISABLED)
             atl = 0
@@ -2851,10 +2858,16 @@ class App(ctk.CTk):
         else:
             msg = self.msg_now_not_allowed_to_publish
 
-        messagebox.showinfo(
+        # messagebox.showinfo(
+        #     title=self.title_application_short,
+        #     message=msg,
+        #     parent=self.tl_ad if self.tl_ad is not None else self
+        # )
+        self.messagebox(
             title=self.title_application_short,
             message=msg,
-            parent=self.tl_ad if self.tl_ad is not None else self
+            parent=self.tl_ad if self.tl_ad is not None else self,
+            mode="showinfo"
         )
 
         # if self.tl_ad is not None:
@@ -2884,10 +2897,16 @@ class App(ctk.CTk):
         else:
             msg = self.msg_now_not_allowed_to_publish
 
-        messagebox.showinfo(
+        # messagebox.showinfo(
+        #     title=self.title_application_short,
+        #     message=msg,
+        #     parent=self.tl_ad if self.tl_ad is not None else self
+        # )
+        self.messagebox(
             title=self.title_application_short,
             message=msg,
-            parent=self.tl_ad if self.tl_ad is not None else self
+            parent=self.tl_ad if self.tl_ad is not None else self,
+            mode="showinfo"
         )
 
         # if self.tl_ad is not None:
@@ -3259,7 +3278,8 @@ class App(ctk.CTk):
         sql += f"('{un}', 1, 0, 0, 'System', 0, 1);"
 
         self.settings["TEST_MODE"].set(False)
-        self.settings["allowed_to_publish"].set(False)
+        self.settings["allowed_to_publish_stg"].set(False)
+        self.settings["allowed_to_publish_bws"].set(False)
         ctk.set_appearance_mode("System")
         self.tl_tv_switch_dark.set("System")
         self.tl_tv_switch_ask_monitors.set("No")
@@ -3420,7 +3440,8 @@ class App(ctk.CTk):
 
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
-            self.settings["allowed_to_publish"].set(allowed_to_publish)
+            self.settings["allowed_to_publish_stg"].set(allowed_to_publish)
+            self.settings["allowed_to_publish_bws"].set(allowed_to_publish_bws)
             self.tl_tv_switch_allow_publish_stg.set("Yes" if allowed_to_publish else "No")
             self.tl_tv_switch_allow_publish_bws.set("Yes" if allowed_to_publish_bws else "No")
             ctk.set_appearance_mode(light_dark_theme)
@@ -3918,7 +3939,10 @@ class App(ctk.CTk):
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         # print(f"HOVER ({date=}, {prod_line=})")
         tm = self.settings["TEST_MODE"].get()
-        ap = self.settings["allowed_to_publish"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        comp = self.settings["mode_company"]
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         # slw = self.tl_tv_switch_show_left_widgets.get()
         # slw = 0 if (slw == "No") else 1
         if ap:
@@ -3929,7 +3953,10 @@ class App(ctk.CTk):
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         tm = self.settings["TEST_MODE"].get()
-        ap = self.settings["allowed_to_publish"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        comp = self.settings["mode_company"]
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
         if ap and slw:
@@ -3952,7 +3979,9 @@ class App(ctk.CTk):
         combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
-        ap = self.settings["allowed_to_publish"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         if ap:
             date, line = date_line
             is_warranty = line in warranty_lines
@@ -4044,9 +4073,11 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"insert_tile")
-        ap = self.settings["allowed_to_publish"].get()
-
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
         comp = self.settings["mode_company"]
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
+
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
@@ -4080,10 +4111,16 @@ class App(ctk.CTk):
                 # there is already a tile in this position.
                 if is_warranty:
                     exist_war_job = df_warranties.iloc[order_already_exists]["Job"]
-                    ans = messagebox.askyesnocancel(
+                    # ans = messagebox.askyesnocancel(
+                    #     title=self.title_application_short,
+                    #     message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?",
+                    #     parent=self
+                    # )
+                    ans = self.messagebox(
                         title=self.title_application_short,
                         message=f"'{exist_war_job}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{war_job}' here instead?",
-                        parent=self
+                        parent=self,
+                        mode="askyesnocancel"
                     )
                     if ans == ctk.YES:
                         # move existing unit to combobox, then place this new one
@@ -4094,10 +4131,16 @@ class App(ctk.CTk):
                         return
                 else:
                     exist_quote = df_orders.iloc[order_already_exists][self.quote_key("quote")]
-                    ans = messagebox.askyesnocancel(
+                    # ans = messagebox.askyesnocancel(
+                    #     title=self.title_application_short,
+                    #     message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?",
+                    #     parent=self
+                    # )
+                    ans = self.messagebox(
                         title=self.title_application_short,
                         message=f"'{exist_quote}' already scheduled for {datetime_utility.date_str_format(date)} on '{line}'.\nAre you sure you want to place '{quote}' here instead?",
-                        parent=self
+                        parent=self,
+                        mode="askyesnocancel"
                     )
                     if ans == ctk.YES:
                         # move existing unit to combobox, then place this new one
@@ -4241,9 +4284,11 @@ class App(ctk.CTk):
     ) -> None:
         tm = self.settings["TEST_MODE"].get()
 
-        ap = self.settings["allowed_to_publish"].get()
-
         comp = self.settings["mode_company"]
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
+
         # can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
@@ -4260,10 +4305,16 @@ class App(ctk.CTk):
             is_war_2 = line_2 in warranty_lines
             if (is_war_1 + is_war_2) % 2 != 0:
                 # 1 of these units comes from warranty
-                messagebox.showinfo(
+                # messagebox.showinfo(
+                #     title=self.title_application_short,
+                #     message=f"Cannot swap production units with warranty units",
+                #     parent=self
+                # )
+                self.messagebox(
                     title=self.title_application_short,
                     message=f"Cannot swap production units with warranty units",
-                    parent=self
+                    parent=self,
+                    mode="showinfo"
                 )
                 self.flash_tile(date_line_2, mode="invalid")
                 return
@@ -4422,6 +4473,10 @@ class App(ctk.CTk):
             print(f"NOT DONE WITH TL")
             return
 
+
+        ap = self.settings["allowed_to_publish"].get()
+        slw = self.tl_tv_switch_show_left_widgets.get()
+        slw = 0 if (slw == "No") else 1
         comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
@@ -4510,6 +4565,8 @@ class App(ctk.CTk):
                     if tm:
                         print(f"CLEARING SELECTED")
                     self.clear_selected_tiles()
+
+                print(f"{selected=}")
 
                 for sel in selected:
                     self.select_tile(*sel)
@@ -4780,11 +4837,18 @@ class App(ctk.CTk):
 
                         if line not in warranty_lines:
                             # return the dragging tile to the combobox and stop
-                            messagebox.showinfo(
+                            # messagebox.showinfo(
+                            #     title=self.title_application_short,
+                            #     message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(
+                            #         warranty_lines),
+                            #     parent=self
+                            # )
+                            self.messagebox(
                                 title=self.title_application_short,
                                 message=f"Warranty units can only be placed in warranty lines:\n\t" + "\n\t".join(
                                     warranty_lines),
-                                parent=self
+                                parent=self,
+                                mode="showinfo"
                             )
                             self.flash_tile(date_line, mode="invalid")
                             self.clear_master_drag_tile()
@@ -4812,11 +4876,18 @@ class App(ctk.CTk):
                             prod_lines = [l for l in lines]
                             for l in warranty_lines:
                                 prod_lines.remove(l)
-                            messagebox.showinfo(
+                            # messagebox.showinfo(
+                            #     title=self.title_application_short,
+                            #     message=f"Production units can only be placed in production lines:\n\t" + "\n\t".join(
+                            #         prod_lines),
+                            #     parent=self
+                            # )
+                            self.messagebox(
                                 title=self.title_application_short,
                                 message=f"Production units can only be placed in production lines:\n\t" + "\n\t".join(
                                     prod_lines),
-                                parent=self
+                                parent=self,
+                                mode="showinfo"
                             )
                             self.flash_tile(date_line, mode="invalid")
                             self.clear_master_drag_tile()
@@ -5367,10 +5438,16 @@ class App(ctk.CTk):
         n_mc_records = len(combobox_orders.tree_treeview.get_children())
 
         if n_mc_records:
-            messagebox.showinfo(
+            # messagebox.showinfo(
+            #     title=self.title_application_short,
+            #     message=f"Please keep entering characters. There are still options in the combo-box below.",
+            #     parent=self
+            # )
+            self.messagebox(
                 title=self.title_application_short,
                 message=f"Please keep entering characters. There are still options in the combo-box below.",
-                parent=self
+                parent=self,
+                mode="showinfo"
             )
             return
 
@@ -5395,10 +5472,16 @@ class App(ctk.CTk):
                     # pass
                     self.choose_from_choices(df)
             else:
-                messagebox.showinfo(
+                # messagebox.showinfo(
+                #     title=self.title_application_short,
+                #     message=f"Could not find anything matching '{quote}'.",
+                #     parent=self
+                # )
+                self.messagebox(
                     title=self.title_application_short,
                     message=f"Could not find anything matching '{quote}'.",
-                    parent=self
+                    parent=self,
+                    mode="showinfo"
                 )
 
     def multi_combobox_entry_update(self, *args):
@@ -6524,9 +6607,14 @@ class App(ctk.CTk):
             print(f"click_submit")
 
             if comp == COMPANY.BWS.value:
-                messagebox.showinfo(
+                # messagebox.showinfo(
+                #     title=self.title_application_short + f" - Shift Line",
+                #     message=self.msg_feature_coming_soon
+                # )
+                self.messagebox(
                     title=self.title_application_short + f" - Shift Line",
-                    message=self.msg_feature_coming_soon
+                    message=self.msg_feature_coming_soon,
+                    mode="showinfo"
                 )
                 return
 
@@ -6602,17 +6690,29 @@ class App(ctk.CTk):
                 try:
                     connect(sql_statements, do_show=True, do_exec=False, do_print=True)
                 except:
-                    messagebox.showerror(
+                    # messagebox.showerror(
+                    #     title=self.title_application_short,
+                    #     message=self.msg_save_unsuccessful,
+                    #     parent=self.tl_data[tl_name]
+                    # )
+                    self.messagebox(
                         title=self.title_application_short,
                         message=self.msg_save_unsuccessful,
-                        parent=self.tl_data[tl_name]
+                        parent=self.tl_data[tl_name],
+                        mode="showerror"
                     )
                 else:
                     if sql_statements:
-                        messagebox.showinfo(
+                        # messagebox.showinfo(
+                        #     title=self.title_application_short,
+                        #     message=self.msg_save_successful,
+                        #     parent=self.tl_data[tl_name]
+                        # )
+                        self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_save_successful,
-                            parent=self.tl_data[tl_name]
+                            parent=self.tl_data[tl_name],
+                            mode="showinfo"
                         )
 
                 on_closing_shift_lines()
@@ -7393,10 +7493,16 @@ class App(ctk.CTk):
             if tm:
                 print(f"{self.settings['colour_coding']=}")
             self.save_colour_coding()
-            messagebox.showinfo(
+            # messagebox.showinfo(
+            #     title=self.title_application_short,
+            #     message=f"Changes applied successfully.",
+            #     parent=self.tl_data["tl_colour_code"]
+            # )
+            self.messagebox(
                 title=self.title_application_short,
                 message=f"Changes applied successfully.",
-                parent=self.tl_data["tl_colour_code"]
+                parent=self.tl_data["tl_colour_code"],
+                mode="showinfo"
             )
 
         def click_cancel(event=None):
@@ -7533,10 +7639,16 @@ class App(ctk.CTk):
             if tm:
                 print(f"\t{changes}")
             if changes:
-                ans = messagebox.askyesnocancel(
+                # ans = messagebox.askyesnocancel(
+                #     title=self.title_application_short,
+                #     message=f"Would you like to save your changes?",
+                #     parent=self.tl_data["tl_colour_code"]
+                # )
+                ans = self.messagebox(
                     title=self.title_application_short,
                     message=f"Would you like to save your changes?",
-                    parent=self.tl_data["tl_colour_code"]
+                    parent=self.tl_data["tl_colour_code"],
+                    mode="askyesnocancel"
                 )
                 if ans == ctk.YES:
                     # save changes
@@ -7556,10 +7668,16 @@ class App(ctk.CTk):
             dealer = can_vc.itemcget(cv_t_tag, "text")
             if dealer.strip():
                 # a tile is in the edit window now
-                ans = messagebox.askyesnocancel(
+                # ans = messagebox.askyesnocancel(
+                #     title=self.title_application_short,
+                #     message=f"Save changes for '{dealer}'?",
+                #     parent=self.tl_data["tl_colour_code"]
+                # )
+                ans = self.messagebox(
                     title=self.title_application_short,
                     message=f"Save changes for '{dealer}'?",
-                    parent=self.tl_data["tl_colour_code"]
+                    parent=self.tl_data["tl_colour_code"],
+                    mode="askyesnocancel"
                 )
                 if ans == ctk.YES:
                     click_save()
@@ -7570,10 +7688,16 @@ class App(ctk.CTk):
             if changes:
                 save_changes()
             else:
-                messagebox.showinfo(
+                # messagebox.showinfo(
+                #     title=self.title_application_short,
+                #     message=f"No changes to apply.",
+                #     parent=self.tl_data["tl_colour_code"]
+                # )
+                self.messagebox(
                     title=self.title_application_short,
                     message=f"No changes to apply.",
-                    parent=self.tl_data["tl_colour_code"]
+                    parent=self.tl_data["tl_colour_code"],
+                    mode="showinfo"
                 )
 
         def click_go_back():
@@ -7583,10 +7707,16 @@ class App(ctk.CTk):
             if tm:
                 print(f"\t{changes}")
             if changes:
-                ans = messagebox.askyesnocancel(
+                # ans = messagebox.askyesnocancel(
+                #     title=self.title_application_short,
+                #     message=f"Would you like to save your changes?",
+                #     parent=self.tl_data["tl_colour_code"]
+                # )
+                ans = self.messagebox(
                     title=self.title_application_short,
                     message=f"Would you like to save your changes?",
-                    parent=self.tl_data["tl_colour_code"]
+                    parent=self.tl_data["tl_colour_code"],
+                    mode="askyesnocancel"
                 )
                 if ans == ctk.YES:
                     # save changes
@@ -8095,10 +8225,17 @@ class App(ctk.CTk):
         if parent is None:
             parent = self
 
-        return messagebox.askyesnocancel(
+        # return messagebox.askyesnocancel(
+        #     title=self.title_application_short,
+        #     message=msg,
+        #     parent=parent
+        # ), has_history
+
+        return self.messagebox(
             title=self.title_application_short,
             message=msg,
-            parent=parent
+            parent=parent,
+            mode="askyesnocancel"
         ), has_history
 
     def ask_save_before_close(self, parent=None) -> Tuple[bool, bool]:
@@ -8136,10 +8273,16 @@ class App(ctk.CTk):
         print(f"-> SWITCH COMPANY {curr_company=}, {comp_id=}")
         print(f"{ac=}")
         if comp_id not in ac:
-            messagebox.showerror(
+            # messagebox.showerror(
+            #     title=self.title_application_short + " - Switch Companies",
+            #     message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
+            #     parent=(self if (self.tl_sc is None) else self.tl_sc)
+            # )
+            self.messagebox(
                 title=self.title_application_short + " - Switch Companies",
                 message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
-                parent=(self if (self.tl_sc is None) else self.tl_sc)
+                parent=(self if (self.tl_sc is None) else self.tl_sc),
+                mode="showerror"
             )
         else:
             # if comp_id != curr_company:
@@ -8226,10 +8369,16 @@ class App(ctk.CTk):
         tv_selected_company = ctk.IntVar(self, value=-1)
         print(f"{ac=}, {type(ac)=}")
         if len(ac) < 2:
-            messagebox.showinfo(
+            # messagebox.showinfo(
+            #     title=self.title_application_short + " - Switch Companies",
+            #     message=self.msg_no_company_to_switch,
+            #     parent=self
+            # )
+            self.messagebox(
                 title=self.title_application_short + " - Switch Companies",
                 message=self.msg_no_company_to_switch,
-                parent=self
+                parent=self,
+                mode="showinfo"
             )
         else:
             # self.tl_sc = ctk.CTkToplevel(self, name="tl_sc")
@@ -8455,18 +8604,30 @@ class App(ctk.CTk):
                 else:
                     print(f"failure")
                     if (ct + 1) < ma:
-                        messagebox.showerror(
+                        # messagebox.showerror(
+                        #     title=self.title_application_short,
+                        #     message=self.msg_incorrect_admin_password,
+                        #     parent=self.tl_ad
+                        # )
+                        self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_incorrect_admin_password,
-                            parent=self.tl_ad
+                            parent=self.tl_ad,
+                            mode="showerror"
                         )
                     self.entry_admin_password_attempts_remaining[2].set("")
                 self.tl_tv_count_tries_allow_publish.set(ct + 1)
             else:
-                messagebox.showerror(
+                # messagebox.showerror(
+                #     title=self.title_application_short,
+                #     message=self.msg_blank_admin_password,
+                #     parent=self.tl_ad
+                # )
+                self.messagebox(
                     title=self.title_application_short,
                     message=self.msg_blank_admin_password,
-                    parent=self.tl_ad
+                    parent=self.tl_ad,
+                    mode="showerror"
                 )
 
         def entry_return(*args):
@@ -9594,6 +9755,7 @@ class App(ctk.CTk):
                 mode="showerror"
             )
         else:
+            # show traditional messagebox if self is unavailable
             messagebox.showerror(
                 title=self.title_application_short,
                 message=self.msg_report_error.format(err=str(exception)),
@@ -9642,7 +9804,7 @@ class App(ctk.CTk):
             allow_shrink: bool = True
     ) -> Any:
 
-        print(f"MESSAGEBOX!")
+        # print(f"MESSAGEBOX!")
         # default == ync
 
         # yn
