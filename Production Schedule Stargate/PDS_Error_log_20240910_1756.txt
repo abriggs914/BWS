@@ -1,0 +1,14 @@
+2024-09-10 17:56:38.589420:
+	<class 'TypeError'>: unsupported operand type(s) for -: 'NoneType' and 'Timestamp'
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 4952, in release_treeview_entry
+    self.insert_tile(order_id, date_line, do_animate="valid")
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 4309, in insert_tile
+    self.select_tile(date, line)
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 3973, in select_tile
+    self.update_info_frame(date, prod_line)
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 5841, in update_info_frame
+    days_between = (delivery_date - date).days
+                    ~~~~~~~~~~~~~~^~~~~~

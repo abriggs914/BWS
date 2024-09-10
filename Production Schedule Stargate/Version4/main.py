@@ -1,3 +1,4 @@
+import datetime
 import enum
 import io
 import math
@@ -177,6 +178,17 @@ WHERE
     OR ([Other Off] BETWEEN {SD} AND {ED})
 ;
 """
+        },
+
+        SQL_PROD_SCHED_VERSION_BWS := {
+            "sql": """
+SELECT
+    [Version#]
+    ,[VDate]
+FROM
+    [Prod Sched Version#]
+;
+    """
         }
 ):
     for cred_k, cred_v in BWS_SQL_CREDS.items():
@@ -461,6 +473,17 @@ WHERE
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
     """
+        },
+
+        SQL_PROD_SCHED_VERSION_STG := {
+            "sql": """
+SELECT
+    [Version#]
+    ,[VDate]
+FROM
+    [Prod Sched Version#]
+;
+    """
         }
 
 ):
@@ -482,6 +505,8 @@ class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+
+        self.tv_done_setup = ctk.BooleanVar(self, value=False)
 
         self.date_version = datetime.datetime(2024, 8, 27)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
@@ -659,10 +684,14 @@ class App(ctk.CTk):
 
         self.title_application_full = f"Stargate Production Scheduler -- {self.date_version:%Y-%m-%d}"
         self.title_application_short = "STG Prod Sched"
+        self.email_it = "it@bwstrailers.com"
+        self.email_avery = "avery.briggs@bwstrailers.com"
+        self.msg_bws_note_unfinished_20240910 = f"\n**NOTE**\nBWS company is a work-in-progress. Functionality is subject to change.\nFor further information contact {self.email_it} or {self.email_avery}"
         self.msg_default_messagebox_text = f"Please enter a valid message to display."
         self.msg_no_movement_non_publish = f"No Movements allowed because you are a non-publish user"
         self.msg_please_do_not_rerun = f"\n\nPlease do not re-run the application until you have consulted IT."
-        self.msg_non_valid_pds_user = f"You do not have permission to use this app.{self.msg_please_do_not_rerun}"
+        self.msg_please_contact_for_help = f"\n\nPlease contact IT for further assistance:\n{self.email_it}\n{self.email_avery}"
+        self.msg_non_valid_pds_user = f"You do not have permission to use this app.{self.msg_please_contact_for_help}"
         self.msg_non_publish_user = f"You do not have permission to publish changes with this app.{self.msg_please_do_not_rerun}"
         self.abc_has_hist_msg = f"Are you sure you want to exit, you have unsaved work?"
         self.abc_no_hist_msg = f"Are you sure you want to exit?"
@@ -677,14 +706,15 @@ class App(ctk.CTk):
         self.msg_please_restart_to_activate_colour_theme = f"Please restart the application in order for your new colour theme to be applied."
         self.msg_now_allowed_to_publish = f"You now have permission to publish your changes."
         self.msg_now_not_allowed_to_publish = f"Your ability to publish has been deactivated."
-        self.msg_incorrect_admin_password_max_tries = f"You have reached the maximum number of attempts to login as an admin.{self.msg_please_do_not_rerun}."
+        self.msg_incorrect_admin_password_max_tries = f"You have reached the maximum number of attempts to login as an admin.{self.msg_please_do_not_rerun}"
         self.msg_incorrect_admin_password = f"Incorrect admin password."
         self.msg_blank_admin_password = f"Please enter a valid password."
-        self.msg_no_company_to_switch = f"You do not have permission to change companies{self.msg_please_do_not_rerun}"
-        self.msg_invalid_company_to_switch = f"You do not have permission to enter company {{COMPANY}}.{self.msg_please_do_not_rerun}"
+        self.msg_no_company_to_switch = f"You do not have permission to change companies{self.msg_please_contact_for_help}\n{self.msg_bws_note_unfinished_20240910}"
+        self.msg_invalid_company_to_switch = f"You do not have permission to enter company {{COMPANY}}.{self.msg_please_contact_for_help}"
         self.msg_feature_coming_soon = f"Feature Coming Soon"
         self.msg_report_error = f"Application encountered an internal error:\n\n{{err}}"
         self.msg_want_to_continue = f"Do you want to continue?"
+        self.msg_inc_prod_sched = "Access schedule version number incremented to {VNUM}\n\n\t{VDATE}"
 
         self.tv_done_interact_tl = ctk.BooleanVar(self, value=True, name="tv_done_interact_tl")
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
@@ -694,17 +724,18 @@ class App(ctk.CTk):
         self.cb_admin_password_entered = None
 
         self.tl_msgbox_value = None
+        # self.tl_msgbox: ctk.CTkToplevel = None
         # self.tl_msgbox = ctk.CTkToplevel(self, name="tl_msgbox")
         self.tl_msgbox = ctk.CTkToplevel(self)
-        self.tl_msgbox.wm_iconphoto(
-            False,
-            ImageTk.PhotoImage(
-                file=os.path.join(
-                    self.dir_path_resources,
-                    self.file_icon_calendar_pop_up
-                )
-            )
-        )
+        # self.tl_msgbox.wm_iconphoto(
+        #     False,
+        #     ImageTk.PhotoImage(
+        #         file=os.path.join(
+        #             self.dir_path_resources,
+        #             self.file_icon_calendar_pop_up
+        #         )
+        #     )
+        # )
         # Enter new topLevels here to be considered for error log pop-up
         self.dict_top_levels = {
             "tl_ad": self.tl_ad,
@@ -1089,7 +1120,7 @@ class App(ctk.CTk):
         if self.settings["TEST_MODE"].get():
             print(f"{self.width_multi_combobox=}\n{self.height_multi_combobox=}")
 
-        self.tile_width_stg = 175
+        self.tile_width_stg = 200
         self.tile_height_stg = 110
         self.tile_width_bws = 225
         self.tile_height_bws = 110
@@ -1324,22 +1355,24 @@ class App(ctk.CTk):
             print(f"{self.n_cols=}, {self.n_rows_bws=}")
         self.date_is_weekend = list()
         self.calc_grid_cells_stg = self.calc_daily_grid_cells(
-            self.list_dates[0],
-            self.list_dates[-1],
-            self.df_calendar_stg,
-            self.canvas_width_scroll_region_stg,
-            self.canvas_height_scroll_region_stg,
+            day_0=self.list_dates[0],
+            day_1=self.list_dates[-1],
+            df_calendar=self.df_calendar_stg,
+            # self.canvas_width_scroll_region_stg,
+            # self.canvas_height_scroll_region_stg,
             n_rows=self.n_rows_stg,
+            widths=(self.tile_width_stg, 12),
             company=COMPANY.STG.value
         )
         # print(f"{self.calc_grid_cells_stg=}")
         self.calc_grid_cells_bws = self.calc_daily_grid_cells(
-            self.list_dates[0],
-            self.list_dates[-1],
-            self.df_calendar_bws,
-            self.canvas_width_scroll_region_bws,
-            self.canvas_height_scroll_region_bws,
+            day_0=self.list_dates[0],
+            day_1=self.list_dates[-1],
+            df_calendar=self.df_calendar_bws,
+            # can_width=self.canvas_width_scroll_region_bws,
+            # can_height=self.canvas_height_scroll_region_bws,
             n_rows=self.n_rows_bws,
+            widths=(self.tile_width_bws, 12),
             company=COMPANY.BWS.value
         )
         if self.settings["TEST_MODE"].get():
@@ -1369,7 +1402,7 @@ class App(ctk.CTk):
             scrollregion=(
                 0,
                 0,
-                self.canvas_width_scroll_region_stg,
+                self.canvas_width_scroll_region_bws,
                 self.canvas_height_scroll_region_bws
             )
         )
@@ -2375,7 +2408,6 @@ class App(ctk.CTk):
         self.tv_allowed_comp_stg.trace_variable("w", self.update_allowed_comp_stg)
         self.tv_allowed_companies.trace_variable("w", self.update_allowed_companies)
 
-        self.tv_done_interact_tl.set(True)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.tv_update_test_mode()
         self.update_allowed_comp_bws()
@@ -2400,6 +2432,12 @@ class App(ctk.CTk):
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
         companies = list(map(lambda c: c.name, COMPANY))
         print(f"COMPANY={companies[self.settings['mode_company']]}")
+
+        print(f"{self.canvas_width=}, {self.canvas_height=}, {self.canvas_width_scroll_region_bws=}, {self.canvas_height_scroll_region_bws=}")
+        print(f"{self.canvas_width=}, {self.canvas_height=}, {self.canvas_width_scroll_region_stg=}, {self.canvas_height_scroll_region_stg=}")
+
+        self.grab_set()
+        self.tv_done_setup.set(True)
 
     def quote_key(self, attr: str = "quote", comp_id: int = None) -> str:
         if comp_id is None:
@@ -2432,13 +2470,21 @@ class App(ctk.CTk):
             date: datetime.datetime | pd.Timestamp,
             n_days: int
     ):
+
+        tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'calculate_nth_business_day'")
+        if tm:
+            print(f"calculate_nth_business_day {date=}, {n_days=}")
         mc = self.settings["mode_company"]
         if mc == COMPANY.BWS.value:
             sql = f"SELECT [SysproCompanyA].[dbo].[GetNthBusinessDay]('{date:%Y-%m-%d}', {n_days}) AS [NthDay]"
-            df = connect(sql, **BWS_SQL_CREDS)
+            df = connect(sql, **BWS_SQL_CREDS, do_show=tm, do_print=tm)
         else:
             sql = f"SELECT [SysproCompanyS].[dbo].[GetNthBusinessDay]('{date:%Y-%m-%d}', {n_days}) AS [NthDay]"
-            df = connect(sql, **STARGATE_SQL_CREDS)
+            df = connect(sql, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
+        if tm:
+            print(f"{df=}")
         if not df.empty:
             return df.iloc[0]["NthDay"]
 
@@ -2447,10 +2493,11 @@ class App(ctk.CTk):
             day_0: pd.Timestamp | datetime.datetime,
             day_1: pd.Timestamp | datetime.datetime,
             df_calendar: pd.DataFrame,
-            can_width: int,
-            can_height: int,
+            # can_width: int,
+            # can_height: int,
             n_rows: int = 1,
-            weights: tuple[int, int] = (90, 10),
+            # weights: tuple[int, int] = (90, 10),
+            widths: tuple[int, int] = (100, 12),
             company: int = COMPANY.STG.value
     ):
         # self.calc_grid_cells_stg = utility.grid_cells(
@@ -2461,7 +2508,8 @@ class App(ctk.CTk):
         #     r_type=list
         # )
 
-        weight_weekday, weight_weekend = weights
+        # weight_weekday, weight_weekend = weights
+        w_wd, w_we = widths
 
         print(f"{day_0=}, {day_1=}, {n_rows=}")
 
@@ -2513,21 +2561,29 @@ class App(ctk.CTk):
         print(f"{n_weekdays=}")
         print(f"{n_weekend_days=}")
 
-        space_w_wd = (can_width * (weight_weekday / 100)) * (n_weekdays / n_cols)
-        space_w_we = (can_width * (weight_weekend / 100)) * (n_weekend_days / n_cols)
-        w_wd = space_w_wd / n_weekdays
-        w_we = space_w_we / n_weekend_days
+        # space_w_wd = (can_width * (weight_weekday / 100)) * (n_weekdays / n_cols)
+        # space_w_we = (can_width * (weight_weekend / 100)) * (n_weekend_days / n_cols)
+        # w_wd = space_w_wd / n_weekdays
+        # w_we = space_w_we / n_weekend_days
+        # hc = can_height / n_rows
+        # print(f"{w_wd=}, {w_we=}, {hc=}")
+
+        can_width = (n_weekend_days * w_we) + (n_weekdays * w_wd)
+        can_height = self.canvas_height_scroll_region_bws if (company == COMPANY.BWS.value) else self.canvas_height_scroll_region_stg
         hc = can_height / n_rows
-        print(f"{w_wd=}, {w_we=}, {hc=}")
+
+        print(f"{company=}\n{w_wd=}\n{w_we=}\n{can_width=}\n{can_height=}\n{hc=}")
 
         if company == COMPANY.BWS.value:
             self.tile_width_bws = w_wd
             # self.tile_width_weekend = w_we
             self.tile_height_bws = hc
+            self.canvas_width_scroll_region_bws = can_width
         else:
             self.tile_width_stg = w_wd
             # self.tile_width_weekend = w_we
             self.tile_height_stg = hc
+            self.canvas_width_scroll_region_stg = can_width
 
         xt = 0
 
@@ -2536,7 +2592,7 @@ class App(ctk.CTk):
             # date = list_dates[j]
             wc = w_wd
             if j in weekend_days:
-                print(f"WEEKEND {j=}")
+                # print(f"WEEKEND {j=}")
                 wc = w_we
             x0 = xt
             x1 = x0 + wc
@@ -2548,18 +2604,19 @@ class App(ctk.CTk):
                 res[i].insert(j, [x0, y0, x1, y1])
             # res.append(copy.deepcopy(col_lst))
             xt += wc
-        self.canvas_width_scroll_region_stg = xt
+        # self.canvas_width_scroll_region_stg = xt
+        print(f"{xt=}")
         if company == COMPANY.BWS.value:
             if getattr(self, "canvas_bws", None) is not None:
                 self.canvas_bws.configure(
-                    width=self.canvas_width_scroll_region_stg
+                    width=self.canvas_width_scroll_region_bws
                 )
         else:
             if getattr(self, "canvas_stg", None) is not None:
                 self.canvas_stg.configure(
                     width=self.canvas_width_scroll_region_stg
                 )
-        print(f"{res=}")
+        # print(f"{res=}")
         return res
         # return np.transpose(res).tolist()
 
@@ -2640,6 +2697,7 @@ class App(ctk.CTk):
     def update_allowed_companies(self, *args):
         tm = self.settings["TEST_MODE"].get()
         tm = True
+        print(f"WARNING TM IS TRUE 'update_allowed_companies'")
         if tm:
             print(f"update_allowed_companies")
         ac = self.tv_allowed_companies.get()
@@ -2660,6 +2718,7 @@ class App(ctk.CTk):
         print(f"update_allowed_comp_bws")
         tm = self.settings["TEST_MODE"].get()
         tm = True
+        print(f"WARNING TM IS TRUE 'update_allowed_comp_bws'")
         if tm:
             print(f"update_allowed_comp_bws")
         ac = self.tv_allowed_companies.get()
@@ -2680,6 +2739,7 @@ class App(ctk.CTk):
         print(f"update_allowed_comp_stg")
         tm = self.settings["TEST_MODE"].get()
         tm = True
+        print(f"WARNING TM IS TRUE 'update_allowed_comp_stg'")
         if tm:
             print(f"update_allowed_comp_stg")
         ac = self.tv_allowed_companies.get()
@@ -2796,7 +2856,7 @@ class App(ctk.CTk):
             self.canvas_width = self.canvas_width_og
         else:
             self.frame_left_controls.grid_forget()
-            self.canvas_width = self.total_width
+            self.dcanvas_width = self.total_width
 
         comp = self.settings["mode_company"]
         if comp == COMPANY.BWS.value:
@@ -2845,6 +2905,7 @@ class App(ctk.CTk):
                 self.entry_admin_password_attempts_remaining[3].configure(state=ctk.DISABLED)
 
     def update_allow_publish_stg(self, *args):
+        comp = self.settings["mode_company"]
         ap_s = self.tl_tv_switch_allow_publish_stg.get()
         ap_s = 0 if (ap_s == "No") else 1
         # ap_s = 0 if (ap_s == 1) else 0  # logic is inverse for this column
@@ -2863,12 +2924,13 @@ class App(ctk.CTk):
         #     message=msg,
         #     parent=self.tl_ad if self.tl_ad is not None else self
         # )
-        self.messagebox(
-            title=self.title_application_short,
-            message=msg,
-            parent=self.tl_ad if self.tl_ad is not None else self,
-            mode="showinfo"
-        )
+        if self.tv_done_setup.get():
+            self.messagebox(
+                title=self.title_application_short,
+                message=msg,
+                parent=self.tl_ad if self.tl_ad is not None else self,
+                mode="showinfo"
+            )
 
         # if self.tl_ad is not None:
         #     self.on_close_tl_ad()
@@ -2879,11 +2941,13 @@ class App(ctk.CTk):
         else:
             btn_state = ctk.DISABLED
 
-        self.mb_file.entryconfig("Save", state=btn_state)
-        self.mb_file.entryconfig("Settings", state=btn_state)
-        self.mb_tools.entryconfig("Shift Line", state=btn_state)
+        if (not ap_s) and (comp == COMPANY.STG.value):
+            self.mb_file.entryconfig("Save", state=btn_state)
+            self.mb_file.entryconfig("Settings", state=btn_state)
+            self.mb_tools.entryconfig("Shift Line", state=btn_state)
 
     def update_allow_publish_bws(self, *args):
+        comp = self.settings["mode_company"]
         ap_b = self.tl_tv_switch_allow_publish_bws.get()
         ap_b = 0 if (ap_b == "No") else 1
         # ap_s = 0 if (ap_s == 1) else 0  # logic is inverse for this column
@@ -2902,12 +2966,13 @@ class App(ctk.CTk):
         #     message=msg,
         #     parent=self.tl_ad if self.tl_ad is not None else self
         # )
-        self.messagebox(
-            title=self.title_application_short,
-            message=msg,
-            parent=self.tl_ad if self.tl_ad is not None else self,
-            mode="showinfo"
-        )
+        if self.tv_done_setup.get():
+            self.messagebox(
+                title=self.title_application_short,
+                message=msg,
+                parent=self.tl_ad if self.tl_ad is not None else self,
+                mode="showinfo"
+            )
 
         # if self.tl_ad is not None:
         #     self.on_close_tl_ad()
@@ -2918,9 +2983,10 @@ class App(ctk.CTk):
         else:
             btn_state = ctk.DISABLED
 
-        self.mb_file.entryconfig("Save", state=btn_state)
-        self.mb_file.entryconfig("Settings", state=btn_state)
-        self.mb_tools.entryconfig("Shift Line", state=btn_state)
+        if (not ap_b) and (comp == COMPANY.BWS.value):
+            self.mb_file.entryconfig("Save", state=btn_state)
+            self.mb_file.entryconfig("Settings", state=btn_state)
+            self.mb_tools.entryconfig("Shift Line", state=btn_state)
 
     def update_ask_monitors(self, *args):
         am = self.tl_tv_switch_ask_monitors.get()
@@ -3295,11 +3361,19 @@ class App(ctk.CTk):
     def check_valid_updater(self):
         self.df_valid_updaters = connect(**SQL_VALID_UPDATERS)
 
-        user = utility.get_windows_user(2)
-        # use this for testing
-        # user = "bwsdomain.local\\gf"
+        # init
+        user = None
+
+        # use this for testing, as long as 'user' exists, program will not fetch username
+        user = "bwsdomain.local\\gf"
         # user = "bwsdomain.local\\mguest"
         # user = "bwsdomain.local\\tmerrithew"
+
+        if not user:
+            user = utility.get_windows_user(2)
+        else:
+            print(f"WARNING HARDCODED 'user' in 'check_valid_updater'")
+
         self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
         if not user_name:
@@ -3498,6 +3572,7 @@ class App(ctk.CTk):
             self.bn_lclickmotion_invisible_canvas = self.invisible_canvas.bind("<B1-Motion>",
                                                                                self.on_left_click_root_canvas)
             self.bn_ctlz = self.bind("<Control-z>", self.undo)
+            self.bind_treeview_to_canvas()
 
         else:
             bindings = [
@@ -3657,7 +3732,8 @@ class App(ctk.CTk):
         self.redraw_legend()
 
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
-        srw = self.canvas_width_scroll_region_stg
+        comp = self.settings["mode_company"]
+        srw = self.canvas_width_scroll_region_bws if (comp == COMPANY.BWS.value) else self.canvas_width_scroll_region_stg
         comp_id = self.settings["mode_company"]
         if comp_id == COMPANY.BWS.value:
             x_1, x_2 = self.canvas_bws.xview()
@@ -3675,36 +3751,17 @@ class App(ctk.CTk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
-        ci = self.settings["mode_company"]
-        # tw_legend_lines = self.tile_width_legend_lines
-        # th_legend_lines = self.tile_height_legend_lines
         comp = self.settings["mode_company"]
-        tw = self.tile_width_bws if (comp == COMPANY.BWS.value) else self.tile_width_stg
-        th = self.tile_height_bws if (comp == COMPANY.BWS.value) else self.tile_height_stg
-        # tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
-        # print(f"{x_1=}, {x_2}, {y_1}, {y_2}")
-        # print(f"{col_legend=}")
-        # tiles_stg = [dat["tile"] for dat in col_legend]
 
-        # print(f"{self.tiles_bws=}")
-        # print(f"{self.tiles_stg=}")
-
-        # print(f"{self.first_date=}")
-        # print(f"{self.last_date=}")
-        # for d in self.list_dates:
-        #     if "date_legend" not in self.tiles_bws[d]:
-        #         print(f"BWS SKIP {d}")
-        #     if "date_legend" not in self.tiles_stg[d]:
-        #         print(f"STG SKIP {d}")
-
-        if ci == COMPANY.BWS.value:
+        if comp == COMPANY.BWS.value:
             col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
             row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if (self.first_date <= date <= self.last_date)]
             home_tile = self.tiles_bws["home"]["tile"]
             img = self.bws_logo_image
             can = self.canvas_bws
-            # tiles = self.tiles_bws
+            tw = self.tile_width_bws
+            th = self.tile_height_bws
 
         else:
             col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
@@ -3712,9 +3769,11 @@ class App(ctk.CTk):
             home_tile = self.tiles_stg["home"]["tile"]
             img = self.stg_logo_image
             can = self.canvas_stg
-            # tiles = self.tiles_stg
+            tw = self.tile_width_stg
+            th = self.tile_height_stg
 
         # print(f"{col_legend=}")
+        # print(f"{x_1=}, {x_2}, {y_1}, {y_2}, {tw=}, {th=}")
         # print(f"{row_legend=}")
 
         if img:
@@ -4071,6 +4130,8 @@ class App(ctk.CTk):
             do_animate: None | str = None
     ) -> None:
         tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'insert_tile'")
         if tm:
             print(f"insert_tile")
         ap_stg = self.settings["allowed_to_publish_stg"].get()
@@ -4413,11 +4474,13 @@ class App(ctk.CTk):
 
     def on_right_click_calendar(self, event) -> None:
         tm = self.settings["TEST_MODE"].get()
-        ap = self.settings["allowed_to_publish"].get()
+        comp = self.settings["mode_company"]
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
         ap = ap and slw
-        comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         if tm:
@@ -4473,11 +4536,12 @@ class App(ctk.CTk):
             print(f"NOT DONE WITH TL")
             return
 
-
-        ap = self.settings["allowed_to_publish"].get()
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
         comp = self.settings["mode_company"]
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -4704,7 +4768,7 @@ class App(ctk.CTk):
                     quote = combobox_orders.res_tv_entry.get()
                     order_id = df_orders.loc[df_orders[self.quote_key("quote")] == quote].index
                     quote_data = list(df_orders.iloc[order_id].iterrows())[0][1]
-                    print(f"{quote_data=}")
+                    # print(f"{quote_data=}")
 
                     mc_quote = quote
                     mc_wo = quote_data[self.quote_key("WO#")]
@@ -4746,9 +4810,12 @@ class App(ctk.CTk):
                 self.multi_combobox_drag_tile_texts = out_texts
 
         self.invisible_canvas.coords(self.dot, e_x - 10, e_y - 10, e_x + 10, e_y + 10)
+        # print(f"END DRAG")
 
     def release_treeview_entry(self, event):
         tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'release_treeview_entry'")
         if tm:
             print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
@@ -4829,7 +4896,7 @@ class App(ctk.CTk):
             if date_line:
                 date, line = date_line
                 # if date.weekday() < 5:
-                if self.is_valid_prod_date(date) == "weekend":
+                if self.is_valid_prod_date(date) != "weekend":
                     # dropped in calendar and on a weekday
                     # order_id = self.multi_combobox_orders_stg.res_tv_entry.get()
 
@@ -4915,6 +4982,11 @@ class App(ctk.CTk):
                 else:
                     # weekend placement not supported
                     self.flash_tile(date_line, mode="invalid_we")
+                    if tm:
+                        print(f"weekend placement not supported")
+            else:
+                if tm:
+                    print(f"not date_line")
         elif (bbox_if[0] <= e_x <= bbox_if[2]) and (bbox_if[1] <= e_y <= bbox_if[3]):
             # dropped in info frame
             if tm:
@@ -5067,13 +5139,15 @@ class App(ctk.CTk):
 
     def on_left_click_motion_calendar(self, event) -> None:
         tm = self.settings["TEST_MODE"].get()
-        ap = self.settings["allowed_to_publish"].get()
+        comp = self.settings["mode_company"]
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
 
-        comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         # lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
@@ -5754,7 +5828,9 @@ class App(ctk.CTk):
 
     def update_info_frame(self, date, prod_line):
         tm = self.settings["TEST_MODE"].get()
-        print(f"update_info_frame")
+        tm = True
+        if tm:
+            print(f"update_info_frame")
 
         comp = self.settings["mode_company"]
         # can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -5770,6 +5846,8 @@ class App(ctk.CTk):
         #             comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         # info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
 
+        print(f"{date=}, {prod_line=}")
+
         if (date is not None) and (prod_line is not None):
             date_tile_data = tiles.get(date)
             tile, order = None, None
@@ -5781,7 +5859,12 @@ class App(ctk.CTk):
             if order is not None:
                 series = df_orders.iloc[order]
                 delivery_date = self.calculate_nth_business_day(date, N_BUSINESS_DAYS_AVAIL_TO_DELIVERY)
-                days_between = (delivery_date - date).days
+                if delivery_date is None:
+                    days_between = "?"
+                    s_delivery_date = f"?"
+                else:
+                    days_between = (delivery_date - date).days
+                    s_delivery_date = f"{delivery_date:%Y-%m-%d}"
                 dat_1 = {
                     "KD": date,
                     "KL": prod_line,
@@ -5794,7 +5877,7 @@ class App(ctk.CTk):
                     "Customer WO#": series[self.quote_key("Customer WO#")],
                     "Sched Finish": date,
                     "Sched Line": prod_line,
-                    "Delivery Date (Est)": f"{delivery_date:%Y-%m-%d} (+ {days_between} days)"
+                    "Delivery Date (Est)": f"{s_delivery_date} (+ {days_between} days)"
                 }
                 # if tm:
                 print(f"{dat_1=}", end="")
@@ -5810,6 +5893,7 @@ class App(ctk.CTk):
                     print(f" STG")
         else:
             self.info_frame_stg.change_value("Quote#", "?")
+        print(f"END update_info_frame")
 
     def clear_info_frame(self):
         print(f"clear_info_frame")
@@ -5896,6 +5980,45 @@ class App(ctk.CTk):
         for line_ in prod_lines:
             self.flash_tile((date, line_), mode="attention")
 
+    def set_prod_sched_version(self, num: int, date: datetime.datetime):
+        tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'set_prod_sched_version'")
+        if tm:
+            print(f"set_prod_sched_version {num=}, {date=}")
+        comp = self.settings["mode_company"]
+        if comp == COMPANY.STG.value:
+            sql = f"UPDATE\n\t[Prod Sched Version #]\nSET\n\t[Version#]={num}\n\t, [VDate] = '{date:%Y-%m-%d %H:%M:%S}'\n;"
+            df = connect(sql, **STARGATE_SQL_CREDS, do_print=tm, do_show=tm)
+        else:
+            print(f"This is tracked in access.")
+        if tm:
+            print(f"END set_prod_sched_version")
+
+    def get_prod_sched_version(self) -> tuple[int, datetime.datetime]:
+        tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'get_prod_sched_version'")
+        if tm:
+            print(f"get_prod_sched_version")
+        comp = self.settings["mode_company"]
+        sql_data = SQL_PROD_SCHED_VERSION_BWS if (comp == COMPANY.BWS.value) else SQL_PROD_SCHED_VERSION_STG
+        df = connect(**sql_data)
+
+        # default values
+        version_num = 1
+        version_date = datetime.datetime.now()
+
+        if not df.empty:
+            version_num, version_date = df.iloc[0].values.tolist()
+            if not pd.isna(version_num):
+                version_num = int(version_num)
+            if not pd.isna(version_date):
+                version_date = datetime.datetime(*version_date.timetuple())
+
+        print(f"END get_prod_sched_version {version_num=}, {version_date=}")
+        return version_num, version_date
+
     def click_mb_shift_line(self, event=None):
 
         # w, h = 1400, 800
@@ -5953,6 +6076,8 @@ class App(ctk.CTk):
             # ed = clamp(self.min_date_stg, ed, self.max_date_stg)
             # ed_a = (ed + datetime.timedelta(days=n_days)) if (not ed_disabled) else ed
             ed_a = self.calculate_nth_business_day(ed, n_days) if (not ed_disabled) else ed
+            if ed_a is None:
+                ed_a = self.max_date_bws if (comp == COMPANY.BWS.value) else self.max_date_stg
 
             # data = self.df_orders_stg.loc[self.df_orders_stg[""]]
             print(f"{self.min_date_bws=}, {self.max_date_bws=}")
@@ -5984,6 +6109,8 @@ class App(ctk.CTk):
                                     quote = df_o[self.quote_key("quote")]
                                     date_fmt = "%Y-%m-%d"
                                     nth_date = self.calculate_nth_business_day(date, n_days)
+                                    if nth_date is None:
+                                        nth_date = self.max_date_bws if (comp == COMPANY.BWS.value) else self.max_date_stg
                                     date_f = f"{date:{date_fmt}}"
                                     nth_date_f = f"{nth_date:{date_fmt}}"
                                     print(f"-> {quote}")
@@ -6711,6 +6838,22 @@ class App(ctk.CTk):
                         self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_save_successful,
+                            parent=self.tl_data[tl_name],
+                            mode="showinfo"
+                        )
+
+                        current_version_num, current_version_date = self.get_prod_sched_version()
+                        current_version_num += 1
+                        current_version_date = datetime.datetime.now()
+
+                        self.set_prod_sched_version(current_version_num, current_version_date)
+
+                        self.messagebox(
+                            title=self.title_application_short,
+                            message=self.msg_inc_prod_sched.format(
+                                VNUM=current_version_num,
+                                VDATE=f"{current_version_date:%Y-%m-%d %H:%M:%S}"
+                            ),
                             parent=self.tl_data[tl_name],
                             mode="showinfo"
                         )
@@ -8796,6 +8939,17 @@ class App(ctk.CTk):
         tm = self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_save, {event=}")
+
+        has_history = self.history.get()
+        if not has_history:
+            self.messagebox(
+                title=self.title_application_short,
+                message=self.msg_no_hist_on_save,
+                parent=self,
+                mode="warn"
+            )
+            return
+
         statements = self.on_closing(do_quit=False, do_commit=not tm)
         print(f"{statements=}")
 
@@ -9119,6 +9273,12 @@ class App(ctk.CTk):
             x_0=tc_bbox_rect[0],
             y_0=tc_bbox_rect[1]
         )
+        canvas_tile_contents.create_text(
+            tc_w_can / 2,
+            20,
+            text=f"Hover an element for details:",
+            font=self.kwargs_lbl["font"]
+        )
         for i, row in enumerate(tc_gc_texts):
             for j, bbox in enumerate(row):
                 mx = bbox[0] + ((bbox[2] - bbox[0]) / 2)
@@ -9189,6 +9349,9 @@ class App(ctk.CTk):
         print(f"on_closing")
         comp = self.settings["mode_company"]
         tm = self.settings["TEST_MODE"].get()
+        ap_bws = self.settings["allowed_to_publish_bws"].get()
+        ap_stg = self.settings["allowed_to_publish_stg"].get()
+        ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
         # history = self.history
         # do_exec = False  # automatically update server using generated sql statements.
         do_exec = do_commit  # automatically update server using generated sql statements.
@@ -9403,7 +9566,7 @@ class App(ctk.CTk):
                 if tm:
                     print(f"{'=' * 120}\n\ttran_stmts:\n{tran_stmts}{'=' * 120}")
 
-                if not self.settings["allowed_to_publish"].get():
+                if not ap:
                     do_exec = False
 
                 out_file = self.file_last_session_sql.removesuffix(".sql")
@@ -9457,7 +9620,7 @@ class App(ctk.CTk):
                             parent=self,
                             mode="showinfo"
                         )
-                    elif not self.settings["allowed_to_publish"].get():
+                    elif not ap:
                         # messagebox.showerror(
                         #     title=self.title_application_short,
                         #     message=self.msg_non_publish_user,
@@ -9680,6 +9843,14 @@ class App(ctk.CTk):
                     delivery_date = self.calculate_nth_business_day(date, N_BUSINESS_DAYS_AVAIL_TO_DELIVERY)
                 else:
                     delivery_date = series[self.quote_key("delivery date")]
+
+                if delivery_date is None:
+                    days_between = "?"
+                    s_delivery_date = f"?"
+                else:
+                    days_between = (delivery_date - date).days
+                    s_delivery_date = f"{delivery_date:%Y-%m-%d}"
+
                 days_between = (delivery_date - date).days
                 dat_1 = {
                     "KD": date,
@@ -9693,7 +9864,7 @@ class App(ctk.CTk):
                     "Customer WO#": series[self.quote_key("Customer WO#")],
                     "Sched Finish": date,
                     "Sched Line": line,
-                    "Delivery Date (Est)": f"{delivery_date:%Y-%m-%d} (+ {days_between} days)"
+                    "Delivery Date (Est)": f"{s_delivery_date} (+ {days_between} days)"
                 }
                 if tm:
                     print(f"{dat_1=}")
@@ -9853,6 +10024,11 @@ class App(ctk.CTk):
                             if isinstance(par, ctk.CTkToplevel) and par.winfo_exists():
                                 parent = par
                                 break
+
+        if self.tl_msgbox is None:
+            self.tl_msgbox = ctk.CTkToplevel(parent)
+        elif not self.tl_msgbox.winfo_exists():
+            self.tl_msgbox = ctk.CTkToplevel(parent)
 
         if (width < 0) or (width > 2000):
             width = 900

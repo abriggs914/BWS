@@ -1,0 +1,16 @@
+2024-09-10 18:32:13.866421:
+	<class 'TypeError'>: 'NoneType' object is not iterable
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 9551, in on_closing
+    # messagebox.showinfo(
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\pyodbc_connection.py", line 159, in connect
+    df = pd.DataFrame(pd.read_sql_query(sql, conn))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 526, in read_sql_query
+    return pandas_sql.read_query(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 2739, in read_query
+    columns = [col_desc[0] for col_desc in cursor.description]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

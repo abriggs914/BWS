@@ -1,0 +1,8 @@
+2024-09-10 12:24:36.761928:
+	<class 'KeyError'>: 'allowed_to_publish'
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 4501, in on_left_click_release_calendar
+    ap = self.settings["allowed_to_publish"].get()
+         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,2 @@
+2024-09-10 17:03:02.231786:
+	'NoneType' object has no attribute 'configure'
