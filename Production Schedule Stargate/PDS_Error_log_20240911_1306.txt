@@ -1,0 +1,17 @@
+2024-09-11 12:53:41.900225:
+	<class '_tkinter.TclError'>: wrong # coordinates: expected 0 or 2, got 6
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\site-packages\customtkinter\windows\widgets\ctk_button.py", line 554, in _clicked
+    self._command()
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 8656, in click_ays_yes
+    print(f"SWITCHING TO {comp_lbl}")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 8540, in switch_company
+    )
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\site-packages\customtkinter\windows\widgets\core_rendering\ctk_canvas.py", line 99, in coords
+    super().coords(tag_or_id, *args)
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 2851, in coords
+    self.tk.call((self._w, 'coords') + args))]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,8 @@
+2024-09-11 16:14:57.762730:
+	<class 'KeyError'>: 'T12'
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 9551, in on_closing
+    order_1 = self.tiles_stg[date_1][line_1].get("order")
+              ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^

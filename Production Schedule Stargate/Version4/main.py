@@ -616,9 +616,11 @@ class App(ctk.CTk):
         self.colour_app_background = Colour(self.cget("bg"))
         # "colour_app_background" = Colour("#F0F0F0"),
         self.colour_calendar_background = Colour("#101060")
+        self.colour_fg_calendar_hyperlinks = Colour("#4242FF")
         self.colour_tile_header_home_background = Colour("#181210")
         self.colour_tile_header_row_background = Colour("#321116")
         self.colour_tile_header_row_foreground = Colour("#e4e4ff")
+        self.colour_tile_header_row_today_foreground = Colour("#FF8989")
         self.colour_tile_header_col_background = Colour("#321116")
         self.colour_tile_header_col_foreground = Colour("#e4e4ff")
 
@@ -714,7 +716,7 @@ class App(ctk.CTk):
         self.msg_feature_coming_soon = f"Feature Coming Soon"
         self.msg_report_error = f"Application encountered an internal error:\n\n{{err}}"
         self.msg_want_to_continue = f"Do you want to continue?"
-        self.msg_inc_prod_sched = "Access schedule version number incremented to {VNUM}\n\n\t{VDATE}"
+        self.msg_inc_prod_sched = "Access schedule version number incremented to {VNUM}\n\n{VDATE}"
 
         self.tv_done_interact_tl = ctk.BooleanVar(self, value=True, name="tv_done_interact_tl")
         self.tl_cc_app: Optional[ctk.CTkToplevel] = None
@@ -1416,6 +1418,49 @@ class App(ctk.CTk):
             orientation="vertical",
             command=self.scroll_y_calendar
         )
+        self.frame_bottom_calendar = ctk.CTkFrame(
+            self.frame_canvas,
+            width=self.canvas_width,
+            height=40
+        )
+        self.frame_bottom_calendar.grid_propagate(False)
+        self.frame_bottom_calendar.rowconfigure(0, weight=100)
+        for i in range(3):
+            self.frame_bottom_calendar.columnconfigure(i, weight=33)
+        self.btn_go_first_date = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            tv_btn=f"{self.list_dates[0]:%Y-%m-%d}",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=self.list_dates[0]: self.click_go_to_date(d)
+        )
+        self.btn_go_to_today = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            # tv_btn=f"{self.today:%Y-%m-%d}",
+            tv_btn=f"Today",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=self.today: self.click_go_to_date(d)
+        )
+        self.btn_go_last_date = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            tv_btn=f"{self.list_dates[-2]:%Y-%m-%d}",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=self.list_dates[-2]: self.click_go_to_date(d)
+        )
 
         self.invisible_canvas = ctk.CTkCanvas(
             self.frame_calendar,
@@ -1669,6 +1714,9 @@ class App(ctk.CTk):
                     # Numerical month date
                     f"{date:%Y}"  # Year
                 ]
+                if date == self.today:
+                    to_do_texts.append("Today")
+                    tile_text_colour = self.colour_tile_header_row_today_foreground
                 if holiday_name is not None:
                     to_do_texts.append(holiday_name)
                     non_prod_day = self.is_valid_prod_date(date) == "holiday"
@@ -3365,14 +3413,14 @@ class App(ctk.CTk):
         user = None
 
         # use this for testing, as long as 'user' exists, program will not fetch username
-        user = "bwsdomain.local\\gf"
+        # user = "bwsdomain.local\\gf"
         # user = "bwsdomain.local\\mguest"
         # user = "bwsdomain.local\\tmerrithew"
 
         if not user:
             user = utility.get_windows_user(2)
         else:
-            print(f"WARNING HARDCODED 'user' in 'check_valid_updater'")
+            print(f"WARNING HARDCODED {user=} in 'check_valid_updater'")
 
         self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
@@ -3627,6 +3675,7 @@ class App(ctk.CTk):
             self.canvas_stg.grid(**{r: 0})
         self.scroll_bar_x.grid(**{r: 1, s: ctk.EW})
         self.scroll_bar_y.grid(**{r: 0, c: 1, s: ctk.NS})
+        self.frame_bottom_calendar.grid(**{r: 2, c: 0, s: ctk.EW})
 
         # frame_left_controls
         self.frame_multi_combobox.grid(**{r: 0, c: 0})
@@ -3640,6 +3689,11 @@ class App(ctk.CTk):
         # frame_listbox_history
         self.listbox_history.grid(**{r: 0, c: 0, cs: 1, rs: 1})
         self.scroll_bar_history.grid(**{r: 0, c: 1, cs: 1, rs: 1, s: ctk.NS})
+
+        # frame_bottom_calendar
+        self.btn_go_first_date[1].grid(**{r: 0, c: 0, s: ctk.W})
+        self.btn_go_to_today[1].grid(**{r: 0, c: 1})
+        self.btn_go_last_date[1].grid(**{r: 0, c: 2, s: ctk.E})
 
         if tm:
             print(f"GW W=2")
@@ -4767,22 +4821,26 @@ class App(ctk.CTk):
                 else:
                     quote = combobox_orders.res_tv_entry.get()
                     order_id = df_orders.loc[df_orders[self.quote_key("quote")] == quote].index
-                    quote_data = list(df_orders.iloc[order_id].iterrows())[0][1]
-                    # print(f"{quote_data=}")
+                    df_order_id = df_orders.iloc[order_id]
+                    if not df_order_id.empty:
+                        quote_data = list(df_order_id.iterrows())[0][1]
+                        # print(f"{quote_data=}")
 
-                    mc_quote = quote
-                    mc_wo = quote_data[self.quote_key("WO#")]
-                    mc_model = quote_data[self.quote_key("Model No")]
-                    mc_dealer = quote_data[self.quote_key("dealer")]
-                    mc_galv = quote_data[self.quote_key("galv")]
+                        mc_quote = quote
+                        mc_wo = quote_data[self.quote_key("WO#")]
+                        mc_model = quote_data[self.quote_key("Model No")]
+                        mc_dealer = quote_data[self.quote_key("dealer")]
+                        mc_galv = quote_data[self.quote_key("galv")]
 
-                    new_texts = [
-                        mc_quote,
-                        mc_wo,
-                        mc_model,
-                        mc_dealer,
-                        mc_galv
-                    ]
+                        new_texts = [
+                            mc_quote,
+                            mc_wo,
+                            mc_model,
+                            mc_dealer,
+                            mc_galv
+                        ]
+                    else:
+                        new_texts = []
 
                 if tm:
                     print(f"{txts=}, {new_texts=}")
@@ -5001,7 +5059,7 @@ class App(ctk.CTk):
 
         self.clear_master_drag_tile()
 
-    def flash_tile(self, date_line: tuple[pd.Timestamp, str], mode: str = "invalid", do_move: bool = True):
+    def flash_tile(self, date_line: tuple[pd.Timestamp, str], mode: str = "invalid", do_move: bool = True) -> int:
 
         # before = self.tv_entry_unit_scroll_search.get()
         # before = self.scroll_bar_x.get()
@@ -5093,7 +5151,8 @@ class App(ctk.CTk):
                        can.itemconfigure(tile_, fill=g_bg_, outline=g_ol_))
 
         # after animation, check if the tile is selected, then restore.
-        if (sel := self.app_state.get("selected", None)) is not None:
+        sel = self.app_state.get("selected", [])
+        if sel:
             print(f"{sel=}, {type(sel)=}")
             for s_date, s_line in sel:
                 # s_date, s_line = sel
@@ -5106,6 +5165,8 @@ class App(ctk.CTk):
                 ttl_anim_time,
                 lambda: self.update_selected_tiles()
             )
+
+        return ttl_anim_time
 
     def bind_treeview_to_canvas(self):
         tm = self.settings["TEST_MODE"].get()
@@ -5949,36 +6010,56 @@ class App(ctk.CTk):
 
         return parent.create_rectangle(*bbox, **args)
 
-    def click_mb_go_to_today(self, event=None):
+    def click_go_to_date(self, date: datetime.datetime | pd.Timestamp):
         tm = self.settings["TEST_MODE"].get()
+        tm = True
+        print(f"WARNING TM IS TRUE 'click_go_to_date'")
         if tm:
             print(f"click_mb_go_to_today")
         comp = self.settings["mode_company"]
-        date = pd.Timestamp(self.today)
+
+        date = pd.Timestamp(date) if not isinstance(date, pd.Timestamp) else date
+
         prod_lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         line = prod_lines[0]
-        tile_data = (self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg)[date][line]
-        tile = tile_data["tile"]
+        tile_data = (self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg).get(date, {}).get(line, {})
 
-        # movement work
+        if tile_data and ("tile" in tile_data):
+            tile = tile_data["tile"]
 
-        bba = can.bbox("all")
-        bbaw = (bba[2] - bba[0])
-        cw = self.canvas_width
-        t_bbox = can.bbox(tile)
-        x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
-            t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
-        x /= bbaw
-        need_to_move = (bba[0] <= x <= bba[2])
-        # if tm:
-        print(f"{need_to_move=}")
-        if need_to_move:
-            can.xview_moveto(x)
-            self.redraw_legend()
+            # movement work
+            bba = can.bbox("all")
+            bbaw = (bba[2] - bba[0])
+            cw = self.canvas_width
+            t_bbox = can.bbox(tile)
+            x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
+                t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
+            x /= bbaw
+            need_to_move = (bba[0] <= x <= bba[2])
+            if tm:
+                print(f"{need_to_move=}")
+            if need_to_move:
+                can.xview_moveto(x)
+                self.redraw_legend()
 
-        for line_ in prod_lines:
-            self.flash_tile((date, line_), mode="attention")
+            ttl_anim_time = 1
+            for line_ in prod_lines:
+                ttl_anim_time = self.flash_tile((date, line_), mode="attention")
+                self.after(
+                    ttl_anim_time + 10,
+                    lambda date_=date, line__=line_:
+                        self.colour_code(date=date_, line=line__)
+                )
+
+            print(f"{ttl_anim_time=}")
+            # self.colour_code(date=date)
+        else:
+            if tm:
+                print(f"No tile_data for {comp=}, {date=}, {line=}, {tile_data=}")
+
+    def click_mb_go_to_today(self, event=None):
+        self.click_go_to_date(self.today)
 
     def set_prod_sched_version(self, num: int, date: datetime.datetime):
         tm = self.settings["TEST_MODE"].get()
@@ -5988,7 +6069,7 @@ class App(ctk.CTk):
             print(f"set_prod_sched_version {num=}, {date=}")
         comp = self.settings["mode_company"]
         if comp == COMPANY.STG.value:
-            sql = f"UPDATE\n\t[Prod Sched Version #]\nSET\n\t[Version#]={num}\n\t, [VDate] = '{date:%Y-%m-%d %H:%M:%S}'\n;"
+            sql = f"UPDATE\n\t[Prod Sched Version#]\nSET\n\t[Version#]={num}\n\t, [VDate] = '{date:%Y-%m-%d %H:%M:%S}'\n;"
             df = connect(sql, **STARGATE_SQL_CREDS, do_print=tm, do_show=tm)
         else:
             print(f"This is tracked in access.")
@@ -6014,7 +6095,7 @@ class App(ctk.CTk):
             if not pd.isna(version_num):
                 version_num = int(version_num)
             if not pd.isna(version_date):
-                version_date = datetime.datetime(*version_date.timetuple())
+                version_date = datetime.datetime(*version_date.timetuple()[:6])
 
         print(f"END get_prod_sched_version {version_num=}, {version_date=}")
         return version_num, version_date
@@ -9379,6 +9460,18 @@ class App(ctk.CTk):
         print(f"{ans=}, {has_history=}")
         if ans == ctk.YES:
 
+            units_on_holiday, msg = self.check_for_units_on_holidays(include_all_holidays=False, do_warn=False)
+            if units_on_holiday:
+                ans = self.messagebox(
+                    title=self.title_application_short,
+                    message=msg + "\nDo you want to go back and correct before saving?",
+                    parent=self,
+                    mode="askyesno"
+                )
+                if ans == ctk.YES:
+                    do_quit = False
+                    has_history = False
+
             if has_history:
 
                 # need the date, line, and Quote # for SQL update query
@@ -9602,6 +9695,23 @@ class App(ctk.CTk):
                         parent=self,
                         mode="showinfo"
                     )
+
+                    current_version_num, current_version_date = self.get_prod_sched_version()
+                    current_version_num += 1
+                    current_version_date = datetime.datetime.now()
+
+                    self.set_prod_sched_version(current_version_num, current_version_date)
+
+                    self.messagebox(
+                        title=self.title_application_short,
+                        message=self.msg_inc_prod_sched.format(
+                            VNUM=current_version_num,
+                            VDATE=f"{current_version_date:%Y-%m-%d %H:%M:%S}"
+                        ),
+                        parent=self,
+                        mode="showinfo"
+                    )
+
                     # for stmt in stmts.split(";"):
                     #     st = stmt.replace("\t", " ").replace("\n", " ")
                     #     if st and (not st.startswith("--")):
@@ -9708,7 +9818,7 @@ class App(ctk.CTk):
             self.flash_tile((date, line), mode="attention")
             self.redraw_legend()
 
-    def check_for_units_on_holidays(self, include_all_holidays: bool = False):
+    def check_for_units_on_holidays(self, include_all_holidays: bool = False, do_warn: bool = True) -> tuple[dict[tuple[datetime.datetime, str]: tuple[int, int]], str]:
         tm = self.settings["TEST_MODE"].get()
         comp = self.settings["mode_company"]
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
@@ -9733,7 +9843,6 @@ class App(ctk.CTk):
                 else:
                     if tm:
                         print(f"no order, {d=}, {line=}")
-
         if units_on_holiday:
             msg = f"The following quotes were found to be scheduled on a {day_str}:\n"
             shown_dates = set()
@@ -9744,30 +9853,26 @@ class App(ctk.CTk):
                     msg += f"\n{(t if shown_dates else '')}{hn.center(18)} -- {datetime_utility.date_str_format(d, include_weekday=True, short_month=True, short_weekday=True).center(20)}"
                     shown_dates.add(d)
                 msg += f"\n{4 * t}{l.rjust(5)}: {qn}"
-            # messagebox.showwarning(
-            #     title=self.title_application_short,
-            #     message=msg,
-            #     parent=self
-            # )
-            self.messagebox(
-                title=self.title_application_short,
-                message=msg,
-                parent=self,
-                mode="showwarning"
-            )
         else:
-            # ctk.CTkSegmentedButton
-            # messagebox.showinfo(
-            #     title=self.title_application_short,
-            #     message=self.msg_no_units_on_holiday,
-            #     parent=self
-            # )
-            self.messagebox(
-                title=self.title_application_short,
-                message=self.msg_no_units_on_holiday,
-                parent=self,
-                mode="showinfo"
-            )
+            msg = self.msg_no_units_on_holiday
+
+        if do_warn:
+            if units_on_holiday:
+                self.messagebox(
+                    title=self.title_application_short,
+                    message=msg,
+                    parent=self,
+                    mode="showwarning"
+                )
+            else:
+                self.messagebox(
+                    title=self.title_application_short,
+                    message=msg,
+                    parent=self,
+                    mode="showinfo"
+                )
+
+        return units_on_holiday, msg
 
     def quit_cc_app(self):
         print(f"quit_cc_app")
@@ -10034,7 +10139,7 @@ class App(ctk.CTk):
             width = 900
         if (height < 0) or (height > 2000):
             height = 600
-        i_w, i_h = 80, 80
+        i_w, i_h = 90, 90
 
         # if icon_path is None:
         #     icon_path = self.default_image_icon
@@ -10275,8 +10380,10 @@ if __name__ == '__main__':
         pass
     finally:
         t = datetime.datetime.now()
-        with open(f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt", "w") as f:
-            if isinstance(app, App):
-                f.write(app.get_error_log())
-            else:
-                f.write(f"Critical failure {t:%x %X}")
+        errors = app.get_error_log()
+        if errors:
+            with open(f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt", "w") as f:
+                if isinstance(app, App):
+                    f.write(errors)
+                else:
+                    f.write(f"Critical failure {t:%x %X}")

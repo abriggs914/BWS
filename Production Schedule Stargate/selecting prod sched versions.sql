@@ -1,20 +1,12 @@
-USE [Stargatedb]
-GO
-
 SELECT 
 	[Version#]
 	,[VDate]
 FROM
-	[dbo].[Prod Sched Version#]
-
-
-USE [BWSdb]
-GO
+	[Stargatedb].[dbo].[Prod Sched Version#]
+;
 SELECT 
 	[Version#]
 	,[VDate]
 FROM
-	[dbo].[Prod Sched Version#]
-
-
-
+	[BWSdb].[dbo].[Prod Sched Version#]
+;
