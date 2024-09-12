@@ -179,7 +179,6 @@ WHERE
 ;
 """
         },
-
         SQL_PROD_SCHED_VERSION_BWS := {
             "sql": """
 SELECT
@@ -210,7 +209,6 @@ for sql_data in (
     ;
         """
         },
-
         SQL_WARRANTY_CLAIMS_STG := {
             "sql": """SELECT
         [ID]
@@ -222,7 +220,6 @@ for sql_data in (
     FROM
         [PDS_WarrantyUnits]"""
         },
-
         SQL_HOLIDAYS_STG := {
             "sql": """
 SELECT
@@ -248,7 +245,6 @@ WHERE
             "uid": "user5",
             "pwd": "M@gic456"
         },
-
         SQL_DATED_STG_UNITS := {
             "sql": """
     SELECT
@@ -444,7 +440,6 @@ WHERE
         [B].[JobFinishDate]
     ;"""
         },
-
         SQL_VALID_UPDATERS := {
             "sql": """
     SELECT
@@ -474,7 +469,6 @@ WHERE
     ;
     """
         },
-
         SQL_PROD_SCHED_VERSION_STG := {
             "sql": """
 SELECT
@@ -526,7 +520,13 @@ class App(ctk.CTk):
         self.file_icon_search = "icon_search.png"
         self.file_icon_warning = "icon_warning.png"
 
+        # Admin Menu Defaults
         self.default_admin_password = "trailer"
+        self.default_allowed_companies = [1]  # stargate only by default
+        self.default_allowed_comp_bws = False
+        self.default_allowed_comp_stg = False
+        self.default_allow_publish_stg = "No"
+        self.default_allow_publish_bws = "No"
 
         self.app_state = {
             "hovered": list(),
@@ -536,20 +536,22 @@ class App(ctk.CTk):
         }
         self.history = ctk.Variable(value=list(), name="history")
         self.error_log = dict()
-        self.listbox_history = list()
+        # self.listbox_history = list()
         self.settings = {
             "mode_company": COMPANY.STG.value,
             "allow_multi_select": False,
             "colour_coding": dict(),
             "TEST_MODE": ctk.BooleanVar(self, value=False),
-            "allowed_to_publish_stg": ctk.BooleanVar(self, value=False, name="ap_stg"),
-            "allowed_to_publish_bws": ctk.BooleanVar(self, value=False, name="ap_bws"),
+            "allowed_to_publish_stg": ctk.BooleanVar(self, value=self.default_allow_publish_stg == "Yes", name="ap_stg"),
+            "allowed_to_publish_bws": ctk.BooleanVar(self, value=self.default_allow_publish_bws == "Yes", name="ap_bws"),
             "admin_password": ctk.StringVar(self, value=self.default_admin_password),
             "admin_password_entered": ctk.BooleanVar(self, value=False),
             "min_font_size_tile": 8,
             "max_font_size_tile": 18,
             "start_at_first_of_month": True,
-            "end_at_end_of_month": True
+            "end_at_end_of_month": True,
+            "tm_true_functions": {
+            }
         }
         self.list_sl_preview_table_cols = ["Quote", "Current Date", "New Date"]
         self.tl_data: dict = dict()
@@ -564,17 +566,13 @@ class App(ctk.CTk):
         self.margin_between_mc_and_calendar = 20
         self.max_tries_admin_password = 5
 
-        self.default_allowed_companies = [1]  # stargate only by default
-        self.default_allowed_comp_bws = False
-        self.default_allowed_comp_stg = False
+        # Others settings defaults
         self.default_colour_code_priority = ["dealer"]
         self.default_colour_code_only_priority = True
         self.default_show_galvanized = True
         self.default_light_dark_theme = "Dark"
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
-        self.default_allow_publish_stg = "No"
-        self.default_allow_publish_bws = "No"
         self.default_show_left_widgets = "Yes"
         self.txt_non_prod_day = "Non-Prod Day"
 
@@ -649,6 +647,20 @@ class App(ctk.CTk):
         self.colour_tl_sl_preview_header = Colour("#003578")
         self.colour_sl_fg_text_warnings_preview_warn = Colour("#FF7777")
         self.colour_sl_fg_text_warnings_preview_no_warn = Colour("#FEFEFE")
+
+        self.bg_info_frame = Colour("SystemButtonFace")
+        self.colour_flash_valid_background = Colour("#A2F9A3")
+        self.colour_flash_valid_foreground = Colour("#024003")
+        self.colour_flash_valid_outline = Colour("#024003")
+        self.colour_flash_invalid_background = Colour("#791213")
+        self.colour_flash_invalid_foreground = Colour("#400203")
+        self.colour_flash_invalid_outline = Colour("#400203")
+        self.colour_flash_invalid_we_background = Colour("#791213")
+        self.colour_flash_invalid_we_foreground = Colour("#400203")
+        self.colour_flash_invalid_we_outline = Colour("#400203")
+        self.colour_flash_attention_background = Colour("#9293e9")
+        self.colour_flash_attention_foreground = Colour("#020340")
+        self.colour_flash_attention_outline = Colour("#020340")
 
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
@@ -2266,7 +2278,6 @@ class App(ctk.CTk):
         print(f"{self.df_multi_combobox_data_orders_stg=}")
         print(f"{self.df_rest_orders_stg=}")
 
-        self.bg_info_frame = Colour("SystemButtonFace")
         self.info_frame_stg = tkinter_utility.InfoFrame(
             self.frame_info_frame,
             labels=self.info_frame_columns_stg,
@@ -2488,6 +2499,12 @@ class App(ctk.CTk):
         self.tv_done_setup.set(True)
 
     def quote_key(self, attr: str = "quote", comp_id: int = None) -> str:
+        tm = bool(self.settings["tm_true_functions"].get("quote_key"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'quote_key'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"quote_key")
         if comp_id is None:
             mc = self.settings["mode_company"]
         else:
@@ -2519,9 +2536,13 @@ class App(ctk.CTk):
             n_days: int
     ):
 
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'calculate_nth_business_day'")
+        tm = bool(self.settings["tm_true_functions"].get("calculate_nth_business_day"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'calculate_nth_business_day'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"calculate_nth_business_day")
+
         if tm:
             print(f"calculate_nth_business_day {date=}, {n_days=}")
         mc = self.settings["mode_company"]
@@ -2555,6 +2576,12 @@ class App(ctk.CTk):
         #     n_rows_stg,
         #     r_type=list
         # )
+        tm = bool(self.settings["tm_true_functions"].get("calc_daily_grid_cells"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'calc_daily_grid_cells'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"calc_daily_grid_cells")
 
         # weight_weekday, weight_weekend = weights
         w_wd, w_we = widths
@@ -2677,6 +2704,12 @@ class App(ctk.CTk):
         # )
 
     def set_invisible_canvas(self, mode="invisble"):
+        tm = bool(self.settings["tm_true_functions"].get("set_invisible_canvas"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'set_invisible_canvas'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"set_invisible_canvas")
         print(f'set_invisible_canvas {mode=}, {self.settings['init_test_mode_done'].get()=}')
 
         if mode == "gray":
@@ -2697,7 +2730,10 @@ class App(ctk.CTk):
             win32gui.SetLayeredWindowAttributes(hwnd, colorkey, 255, win32con.LWA_COLORKEY)
 
     def tv_update_test_mode(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("tv_update_test_mode"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'tv_update_test_mode'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"tv_update_test_mode")
             print(f"{getattr(self, 'invisible_canvas', None)=}")
@@ -2717,7 +2753,7 @@ class App(ctk.CTk):
                 self.frame_calendar.rowconfigure(0, weight=0)
             if self.frame_testing is not None:
                 self.frame_testing.grid_forget()
-                self.listbox_history.grid_forget()
+                self.frame_listbox_history.grid_forget()
                 self.scroll_bar_history.grid_forget()
                 print(f"HIDING FRAME TESTING")
             else:
@@ -2743,9 +2779,10 @@ class App(ctk.CTk):
         self.reload_application()
 
     def update_allowed_companies(self, *args):
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'update_allowed_companies'")
+        tm = bool(self.settings["tm_true_functions"].get("update_allowed_companies"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_allowed_companies'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_allowed_companies")
         ac = self.tv_allowed_companies.get()
@@ -2763,10 +2800,10 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
     def update_allowed_comp_bws(self, *args):
-        print(f"update_allowed_comp_bws")
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'update_allowed_comp_bws'")
+        tm = bool(self.settings["tm_true_functions"].get("update_allowed_comp_bws"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_allowed_comp_bws'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_allowed_comp_bws")
         ac = self.tv_allowed_companies.get()
@@ -2784,10 +2821,10 @@ class App(ctk.CTk):
         print(f"update_allowed_comp_bws ac={self.tv_allowed_companies.get()}")
 
     def update_allowed_comp_stg(self, *args):
-        print(f"update_allowed_comp_stg")
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'update_allowed_comp_stg'")
+        tm = bool(self.settings["tm_true_functions"].get("update_allowed_comp_stg"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_allowed_comp_stg'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_allowed_comp_stg")
         ac = self.tv_allowed_companies.get()
@@ -2805,7 +2842,12 @@ class App(ctk.CTk):
         print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
 
     def update_show_galvanized(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_show_galvanized"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_show_galvanized'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_show_galvanized")
         old_showing = self.tl_tv_showing_galvanized.get()
         new_showing = self.tl_tv_show_galvanized.get()
         do_switch = old_showing != new_showing
@@ -2864,7 +2906,12 @@ class App(ctk.CTk):
         # f
 
     def update_switch_colour_code_only_priority(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_switch_colour_code_only_priority"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_switch_colour_code_only_priority'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_switch_colour_code_only_priority")
         prio = int(self.tl_tv_colour_code_only_priority.get())
         # prio_s = 1 if (prio == 0) else 0  # logic is inverse for this column
         prio_s = f"{prio}"
@@ -2876,7 +2923,12 @@ class App(ctk.CTk):
         self.colour_code()
 
     def update_switch_colour_code_priority(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_switch_colour_code_priority"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_switch_colour_code_priority'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_switch_colour_code_priority")
         pri = self.tl_tv_colour_code_priority.get()
         pri_s = pri.lower()
         # TODO 2024-08-13 1217 where this is a segmentedbutton, need to wrap the selection in a list
@@ -2891,6 +2943,12 @@ class App(ctk.CTk):
         self.colour_code()
 
     def update_show_calendar_only(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_show_calendar_only"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_show_calendar_only'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_show_calendar_only")
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
         slw_u = 1 if (slw == 0) else 0  # logic is inverse for this column
@@ -2917,7 +2975,12 @@ class App(ctk.CTk):
             )
 
     def update_count_tries_allow_publish(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_count_tries_allow_publish"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_count_tries_allow_publish'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_count_tries_allow_publish")
         na = self.max_tries_admin_password
         count = self.tl_tv_count_tries_allow_publish.get()
         if count >= na:
@@ -2953,6 +3016,12 @@ class App(ctk.CTk):
                 self.entry_admin_password_attempts_remaining[3].configure(state=ctk.DISABLED)
 
     def update_allow_publish_stg(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_allow_publish_stg"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_allow_publish_stg'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_allow_publish_stg")
         comp = self.settings["mode_company"]
         ap_s = self.tl_tv_switch_allow_publish_stg.get()
         ap_s = 0 if (ap_s == "No") else 1
@@ -2995,6 +3064,12 @@ class App(ctk.CTk):
             self.mb_tools.entryconfig("Shift Line", state=btn_state)
 
     def update_allow_publish_bws(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_allow_publish_bws"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_allow_publish_bws'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_allow_publish_bws")
         comp = self.settings["mode_company"]
         ap_b = self.tl_tv_switch_allow_publish_bws.get()
         ap_b = 0 if (ap_b == "No") else 1
@@ -3037,6 +3112,12 @@ class App(ctk.CTk):
             self.mb_tools.entryconfig("Shift Line", state=btn_state)
 
     def update_ask_monitors(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_ask_monitors"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_ask_monitors'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_ask_monitors")
         am = self.tl_tv_switch_ask_monitors.get()
         am = 0 if (am == "No") else 1
         un = self.app_state["user_name"]
@@ -3045,6 +3126,12 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
     def update_light_dark_theme(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_light_dark_theme"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_light_dark_theme'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_light_dark_theme")
         ldt_o = self.tl_tv_switch_dark.get()
         ldt = ldt_o
         if ldt is None:
@@ -3063,7 +3150,12 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
     def update_all_widgets_theme(self, parent=None):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_all_widgets_theme"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_all_widgets_theme'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_all_widgets_theme")
         lc_o = self.tl_tv_switch_colour.get()
         if tm:
             print(f"update_all_widgets_theme 1 {lc_o=}")
@@ -3116,7 +3208,12 @@ class App(ctk.CTk):
         #     self.update_all_widgets_theme(parent=child)
 
     def update_colour_theme(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_colour_theme"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_colour_theme'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_colour_theme")
         lc_o = self.tl_tv_switch_colour.get()
         if tm:
             print(f"update_colour_theme 1 {lc_o=}")
@@ -3164,7 +3261,12 @@ class App(ctk.CTk):
         # )
 
     def tv_update_history(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("tv_update_history"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'tv_update_history'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"tv_update_history")
         hist = self.history.get()
         if tm:
             print(f"History update: {hist=}")
@@ -3245,7 +3347,12 @@ class App(ctk.CTk):
             print(f"AFTER {list(self.history.get())=}")
 
     def colour_code(self, date=None, line=None):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("colour_code"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'colour_code'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"colour_code")
         cc = self.settings["colour_coding"]
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
@@ -3382,7 +3489,12 @@ class App(ctk.CTk):
                 #     print(f"skipped {date_=}, {line_=} NO TD")
 
     def create_new_pds_user(self):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("create_new_pds_user"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'create_new_pds_user'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"create_new_pds_user")
 
         # silently create new PDS user in 'view-only' mode
         un = self.app_state["user_name"]
@@ -3407,6 +3519,12 @@ class App(ctk.CTk):
             res = connect(sql, **STARGATE_SQL_CREDS, do_print=tm, do_exec=True, do_show=tm)
 
     def check_valid_updater(self):
+        tm = bool(self.settings["tm_true_functions"].get("check_valid_updater"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'check_valid_updater'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"check_valid_updater")
         self.df_valid_updaters = connect(**SQL_VALID_UPDATERS)
 
         # init
@@ -3583,6 +3701,12 @@ class App(ctk.CTk):
         return False
 
     def update_done_interact_tl(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_done_interact_tl"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_done_interact_tl'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_done_interact_tl")
         ditl = self.tv_done_interact_tl.get()
 
         self.bind_widgets(ditl)
@@ -3601,6 +3725,12 @@ class App(ctk.CTk):
         #         self.after(250, self.update_done_interact_tl)
 
     def bind_widgets(self, do_bind: bool = True):
+        tm = bool(self.settings["tm_true_functions"].get("bind_widgets"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'bind_widgets'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"bind_widgets")
         # print(f"{do_bind=}")
 
         company = self.settings["mode_company"]
@@ -3644,11 +3774,22 @@ class App(ctk.CTk):
         # print(f"{self.canvas_stg.bind()=}")
 
     def grid_keys(self) -> tuple[str, str, str, str, str, str, str, str, str]:
+        tm = bool(self.settings["tm_true_functions"].get("grid_keys"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'grid_keys'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"grid_keys")
         return "row", "column", "rowspan", "columnspan", "ipadx", "ipady", "padx", "pady", "sticky"
 
     def grid_widgets(self) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("grid_widgets"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'grid_widgets'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"grid_widgets")
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
-        tm = self.settings["TEST_MODE"].get()
         is_warranty = self.tv_toggle_warranty.get() == "Warranty"
         slw = self.tl_tv_switch_show_left_widgets.get()
         print(f"{slw=}")
@@ -3744,7 +3885,13 @@ class App(ctk.CTk):
         print(f"END Grid {tm=}, slw={show_calendar_only}")
 
     def scroll_x_calendar(self, *args) -> None:
-        # change the canvas_stg xview when the scrollbar is interacted with
+        """change the canvas_stg xview when the scrollbar is interacted with"""
+        tm = bool(self.settings["tm_true_functions"].get("scroll_x_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'scroll_x_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"scroll_x_calendar")
         # print(f"scroll_x: {args=}")
         comp_id = self.settings["mode_company"]
         # print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
@@ -3755,7 +3902,13 @@ class App(ctk.CTk):
         self.redraw_legend()
 
     def scroll_y_calendar(self, *args) -> None:
-        # change the canvas_stg yview when the scrollbar is interacted with
+        """change the canvas_stg yview when the scrollbar is interacted with"""
+        tm = bool(self.settings["tm_true_functions"].get("scroll_y_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'scroll_y_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"scroll_y_calendar")
         # print(f"scroll_y: {args=}")
         comp_id = self.settings["mode_company"]
         # print(f"SX {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
@@ -3766,7 +3919,13 @@ class App(ctk.CTk):
         self.redraw_legend()
 
     def on_mousewheel_calendar(self, event) -> None:
-        # move the canvas_stg xview when mousewheel scrolled
+        """move the canvas_stg xview when mousewheel scrolled"""
+        tm = bool(self.settings["tm_true_functions"].get("on_mousewheel_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_mousewheel_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_mousewheel_calendar")
         comp_id = self.settings["mode_company"]
         # print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
         if comp_id == COMPANY.BWS.value:
@@ -3776,7 +3935,13 @@ class App(ctk.CTk):
         self.redraw_legend()
 
     def on_shift_mousewheel_calendar(self, event) -> None:
-        # move the canvas_stg xview when mousewheel scrolled
+        """move the canvas_stg xview when mousewheel scrolled"""
+        tm = bool(self.settings["tm_true_functions"].get("on_shift_mousewheel_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_shift_mousewheel_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_shift_mousewheel_calendar")
         comp_id = self.settings["mode_company"]
         # print(f"MW {comp_id=}, BWS={COMPANY.BWS.value}, STG={COMPANY.STG.value}")
         if comp_id == COMPANY.BWS.value:
@@ -3786,6 +3951,12 @@ class App(ctk.CTk):
         self.redraw_legend()
 
     def get_current_canvas_view(self) -> tuple[float, float, float, float]:
+        tm = bool(self.settings["tm_true_functions"].get("get_current_canvas_view"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_current_canvas_view'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_current_canvas_view")
         comp = self.settings["mode_company"]
         srw = self.canvas_width_scroll_region_bws if (comp == COMPANY.BWS.value) else self.canvas_width_scroll_region_stg
         comp_id = self.settings["mode_company"]
@@ -3805,6 +3976,12 @@ class App(ctk.CTk):
 
     def redraw_legend(self):
         """Ensure that the left legend containing line names is visible after scrolling."""
+        tm = bool(self.settings["tm_true_functions"].get("redraw_legend"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'redraw_legend'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"redraw_legend")
         comp = self.settings["mode_company"]
         x_1, y_1, x_2, y_2 = self.get_current_canvas_view()
 
@@ -3900,6 +4077,12 @@ class App(ctk.CTk):
         # print(f"{self.canvas_stg.xview()=}")
 
     def is_valid_prod_date(self, date_in: datetime.datetime | pd.Timestamp, include_all_holidays: bool = False) -> str:
+        tm = bool(self.settings["tm_true_functions"].get("is_valid_prod_date"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'is_valid_prod_date'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"is_valid_prod_date")
         comp = self.settings["mode_company"]
         holidays = self.holidays_bws if (comp == COMPANY.BWS.value) else self.holidays_stg
         work_holidays = self.work_holidays_bws if (comp == COMPANY.BWS.value) else self.work_holidays_stg
@@ -3927,6 +4110,12 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
+        tm = bool(self.settings["tm_true_functions"].get("get_date_bucket"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_date_bucket'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_date_bucket")
         # srw = self.canvas_width_scroll_region_stg
         # dates = self.list_dates
         # p = min(x / srw, 0.999)  # prevent index out of bounds
@@ -3962,6 +4151,12 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
+        tm = bool(self.settings["tm_true_functions"].get("get_prod_line_bucket"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_prod_line_bucket'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_prod_line_bucket")
         # srh = self.canvas_height_scroll_region_stg
         # lines = self.list_prod_lines_stg
         # p = min(y / srh, 0.999)  # prevent index out of bounds
@@ -3990,6 +4185,12 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
+        tm = bool(self.settings["tm_true_functions"].get("get_date_line_at_x_y"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_date_line_at_x_y'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_date_line_at_x_y")
         # tile = self.canvas_stg.find_closest(x, y)
         date = self.get_date_bucket(x)
         line = self.get_prod_line_bucket(y)
@@ -4001,6 +4202,12 @@ class App(ctk.CTk):
         Assumes the coordinates are absolute to the scroll region and not the viewable area.
         Use tkinter.canvas_stg.canvasx and canvasy methods to convert before passing as params here.
         """
+        tm = bool(self.settings["tm_true_functions"].get("get_tile_at_x_y"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_tile_at_x_y'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_tile_at_x_y")
         # tile = self.canvas_stg.find_closest(x, y)
         date, line = self.get_date_line_at_x_y(x, y)
         comp = self.settings["mode_company"]
@@ -4010,6 +4217,12 @@ class App(ctk.CTk):
             return self.tiles_stg.get(date, {}).get(line, {})
 
     def get_tile_bbox(self, date: pd.Timestamp | str, prod_line: str) -> tuple[float, float, float, float] | None:
+        tm = bool(self.settings["tm_true_functions"].get("get_tile_bbox"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_tile_bbox'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_tile_bbox")
 
         comp = self.settings["mode_company"]
         lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
@@ -4035,6 +4248,12 @@ class App(ctk.CTk):
         return gc[i_line][i_date]
 
     def select_tile(self, date: pd.Timestamp, prod_line: str, select: bool = True) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("select_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'select_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"select_tile")
         # print(f"SEL {self.settings['allow_multi_select']=}")
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
@@ -4051,7 +4270,12 @@ class App(ctk.CTk):
 
     def hover_tile(self, date: pd.Timestamp, prod_line: str) -> None:
         # print(f"HOVER ({date=}, {prod_line=})")
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("hover_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'hover_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"hover_tile")
         ap_stg = self.settings["allowed_to_publish_stg"].get()
         ap_bws = self.settings["allowed_to_publish_bws"].get()
         comp = self.settings["mode_company"]
@@ -4065,7 +4289,12 @@ class App(ctk.CTk):
                 print(self.msg_no_movement_non_publish)
 
     def drag_tile(self, date: pd.Timestamp, prod_line: str) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("drag_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'drag_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"drag_tile")
         ap_stg = self.settings["allowed_to_publish_stg"].get()
         ap_bws = self.settings["allowed_to_publish_bws"].get()
         comp = self.settings["mode_company"]
@@ -4079,7 +4308,10 @@ class App(ctk.CTk):
                 print(self.msg_no_movement_non_publish)
 
     def delete_tile(self, date_line: tuple[pd.Timestamp, str], from_undo: bool = False) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("delete_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'delete_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"DELETE TILE {date_line=}")
 
@@ -4183,9 +4415,10 @@ class App(ctk.CTk):
             from_undo: bool = False,
             do_animate: None | str = None
     ) -> None:
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'insert_tile'")
+        tm = bool(self.settings["tm_true_functions"].get("insert_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'insert_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"insert_tile")
         ap_stg = self.settings["allowed_to_publish_stg"].get()
@@ -4397,7 +4630,12 @@ class App(ctk.CTk):
             from_undo: bool = False,
             do_animate: None | str = None
     ) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("swap_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'swap_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"swap_tiles")
 
         comp = self.settings["mode_company"]
         ap_stg = self.settings["allowed_to_publish_stg"].get()
@@ -4527,7 +4765,12 @@ class App(ctk.CTk):
                 print(self.msg_no_movement_non_publish)
 
     def on_right_click_calendar(self, event) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("on_right_click_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_right_click_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_right_click_calendar")
         comp = self.settings["mode_company"]
         ap_bws = self.settings["allowed_to_publish_bws"].get()
         ap_stg = self.settings["allowed_to_publish_stg"].get()
@@ -4558,7 +4801,10 @@ class App(ctk.CTk):
             self.clear_selected_tiles()
 
     def on_left_click_calendar(self, event):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("on_left_click_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_left_click_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"on_left_click_calendar_ {event=}")
         ht = self.app_state["hovered"]
@@ -4585,7 +4831,14 @@ class App(ctk.CTk):
                 print(f"NOTHING HOVERED")
 
     def on_left_click_release_calendar(self, event) -> None:
-        print(f"{event.widget=}")
+        tm = bool(self.settings["tm_true_functions"].get("on_left_click_release_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_left_click_release_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_left_click_release_calendar")
+            print(f"{event.widget=}")
+
         if not self.tv_done_interact_tl.get():
             print(f"NOT DONE WITH TL")
             return
@@ -4606,7 +4859,6 @@ class App(ctk.CTk):
         combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
-        tm = self.settings["TEST_MODE"].get()
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
@@ -4713,24 +4965,36 @@ class App(ctk.CTk):
             self.clear_info_frame()
 
     def on_left_click_root_canvas(self, event) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("on_left_click_root_canvas"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_left_click_root_canvas'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"on_left_click_root_canvas {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
     def drag_treeview_warranty_entry(self, event):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("drag_treeview_warranty_entry"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'drag_treeview_warranty_entry'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"drag_treeview_warranty_entry {event=}")
         self.drag_treeview_entry(event)
 
     def release_treeview_warranty_entry(self, event):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("release_treeview_warranty_entry"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'release_treeview_warranty_entry'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"release_treeview_warranty_entry {event=}")
         self.release_treeview_entry(event)
 
     def drag_treeview_entry(self, event):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("drag_treeview_entry"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'drag_treeview_entry'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"drag_treeview_entry, {event=}")
         # is_warranty = self.toggle_warranty.value.get() == "Warranty"
@@ -4871,9 +5135,10 @@ class App(ctk.CTk):
         # print(f"END DRAG")
 
     def release_treeview_entry(self, event):
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'release_treeview_entry'")
+        tm = bool(self.settings["tm_true_functions"].get("release_treeview_entry"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'release_treeview_entry'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"release_treeview_entry")
         # self.multi_combobox_canvas_drag_tile.grid_forget()
@@ -5064,7 +5329,10 @@ class App(ctk.CTk):
         # before = self.tv_entry_unit_scroll_search.get()
         # before = self.scroll_bar_x.get()
 
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("flash_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'flash_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"FLASH TILE {date_line=}, {mode=} ", end="")
         date, line = date_line
@@ -5114,13 +5382,13 @@ class App(ctk.CTk):
                 self.colour_tile_outline
         match mode:
             case "valid":
-                bg_f = Colour("#A2F9A3")
-                fg_f = Colour("#024003")
-                outline_f = Colour("#024003")
+                bg_f = self.colour_flash_valid_background
+                fg_f = self.colour_flash_valid_foreground
+                outline_f = self.colour_flash_valid_outline
             case "invalid":
-                bg_f = Colour("#791213")
-                fg_f = Colour("#400203")
-                outline_f = Colour("#400203")
+                bg_f = self.colour_flash_invalid_background
+                fg_f = self.colour_flash_invalid_foreground
+                outline_f = self.colour_flash_invalid_outline
             case "invalid_we":
                 # invalid placement, tile cant be placed on the weekend
                 bg, fg, outline = \
@@ -5128,13 +5396,13 @@ class App(ctk.CTk):
                         self.colour_tile_foreground_weekend, \
                         self.colour_tile_outline_weekend
 
-                bg_f = Colour("#791213")
-                fg_f = Colour("#400203")
-                outline_f = Colour("#400203")
+                bg_f = self.colour_flash_invalid_we_background
+                fg_f = self.colour_flash_invalid_we_foreground
+                outline_f = self.colour_flash_invalid_we_outline
             case "attention":
-                bg_f = Colour("#9293e9")
-                fg_f = Colour("#020340")
-                outline_f = Colour("#020340")
+                bg_f = self.colour_flash_attention_background
+                fg_f = self.colour_flash_attention_foreground
+                outline_f = self.colour_flash_attention_outline
             case _:
                 raise ValueError(f"Unknown mode '{mode}'")
 
@@ -5169,7 +5437,12 @@ class App(ctk.CTk):
         return ttl_anim_time
 
     def bind_treeview_to_canvas(self):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("bind_treeview_to_canvas"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'bind_treeview_to_canvas'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"bind_treeview_to_canvas")
 
         comp = self.settings["mode_company"]
         # can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -5199,7 +5472,12 @@ class App(ctk.CTk):
                                                                          self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("on_left_click_motion_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_left_click_motion_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_left_click_motion_calendar")
         comp = self.settings["mode_company"]
         ap_bws = self.settings["allowed_to_publish_bws"].get()
         ap_stg = self.settings["allowed_to_publish_stg"].get()
@@ -5278,6 +5556,12 @@ class App(ctk.CTk):
             self.app_state["cursor_drag_pos"] = (o_x, o_y)
 
     def on_motion_calendar(self, event) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("on_motion_calendar"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_motion_calendar'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_motion_calendar")
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
         x, y = event.x, event.y
@@ -5303,6 +5587,12 @@ class App(ctk.CTk):
             self.update_hover_tiles()
 
     def update_hover_tiles(self) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("update_hover_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_hover_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_hover_tiles")
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         ab = self.colour_tile_background_hover
@@ -5359,6 +5649,12 @@ class App(ctk.CTk):
             self.colour_code(date, prod_line)
 
     def clear_hover_tiles(self) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("clear_hover_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'clear_hover_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"clear_hover_tiles")
         ht = self.app_state["hovered"]
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
@@ -5420,12 +5716,24 @@ class App(ctk.CTk):
             self.colour_code(date, prod_line)
 
     def clear_master_drag_tile(self):
+        tm = bool(self.settings["tm_true_functions"].get("clear_master_drag_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'clear_master_drag_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"clear_master_drag_tile")
         self.invisible_canvas.itemconfigure(self.multi_combobox_drag_tile, state="hidden")
         for txt in self.multi_combobox_drag_tile_texts:
             self.invisible_canvas.itemconfigure(txt, state="hidden")
 
     def update_selected_tiles(self) -> None:
         # print(f"update_selected_tiles")
+        tm = bool(self.settings["tm_true_functions"].get("update_selected_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_selected_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_selected_tiles {st=}")
         st = self.app_state["selected"]
         ab = self.colour_tile_background_selected
         af = self.colour_tile_foreground_selected
@@ -5442,9 +5750,6 @@ class App(ctk.CTk):
         font_w = self.font_tile_weekend_selected
 
         ow = self.width_tile_outline_selected
-        tm = self.settings["TEST_MODE"].get()
-        if tm:
-            print(f"{st=}")
         for date, prod_line in st:
             # is_weekend = date.weekday() >= 5
             is_weekend = self.is_valid_prod_date(date) == "weekend"
@@ -5467,6 +5772,12 @@ class App(ctk.CTk):
             # self.colour_code(date, prod_line)
 
     def clear_selected_tiles(self) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("clear_selected_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'clear_selected_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"clear_selected_tiles")
         st = self.app_state["selected"]
         b = self.colour_tile_background
         f = self.colour_tile_foreground
@@ -5506,7 +5817,10 @@ class App(ctk.CTk):
         self.app_state["selected"].clear()
 
     def clear_drag_tiles(self):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("clear_drag_tiles"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'clear_drag_tiles'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"RESETTING DRAG TILES")
         # tw_w, th_w = self.tile_width_weekend, self.tile_height_weekend
@@ -5536,9 +5850,12 @@ class App(ctk.CTk):
         print(f"UNDO RETURN")
         return
 
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("undo"))
         if tm:
-            # print(f"undo {self.history=}")
+            print(f"WARNING TM IS TRUE 'undo'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"undo")
             print(f"undo {self.history.get()=}")
         # if self.history:
         if self.history.get():
@@ -5560,7 +5877,10 @@ class App(ctk.CTk):
                     raise ValueError("Cant undo")
 
     def submit_combobox_entry(self, event):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("submit_combobox_entry"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'submit_combobox_entry'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"submit_combobox_entry")
 
@@ -5620,7 +5940,12 @@ class App(ctk.CTk):
                 )
 
     def multi_combobox_entry_update(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("multi_combobox_entry_update"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'multi_combobox_entry_update'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"multi_combobox_entry_update")
 
         comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -5683,7 +6008,12 @@ class App(ctk.CTk):
 
     def click_tl_tile(self, event, idx, tag):
         # select this tile, and flash it on the calendar
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_tl_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_tl_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_tl_tile")
 
         comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -5714,7 +6044,13 @@ class App(ctk.CTk):
         self.flash_tile((date, line), mode="attention")
 
     def motion_tl_tile(self, idx, tag, tidx=None, ttag=None):
-        # a tile is being hovered, change its colour.
+        """a tile is being hovered, change its colour."""
+        tm = bool(self.settings["tm_true_functions"].get("motion_tl_tile"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'motion_tl_tile'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"motion_tl_tile")
 
         comp = self.settings["mode_company"]
 
@@ -5734,11 +6070,16 @@ class App(ctk.CTk):
                 self.tl_data["canvas_tl"].itemconfigure(tile, fill=self.tl_data["bg"].hex_code)
 
     def choose_from_choices(self, df: pd.DataFrame) -> None:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("choose_from_choices"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'choose_from_choices'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"choose_from_choices")
 
         comp = self.settings["mode_company"]
 
-        self.tl_data["bg"] = Colour("#006723")
+        self.tl_data["bg"] = self.colour_background
         self.tl_data["fg"] = Colour("#101010")
         self.tl_data["tiles_stg"] = []
         self.tl_data["tiles_bws"] = []
@@ -5888,8 +6229,10 @@ class App(ctk.CTk):
             self.wait_window(self.tl_data["tl_dataframe_choice"])
 
     def update_info_frame(self, date, prod_line):
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
+        tm = bool(self.settings["tm_true_functions"].get("update_info_frame"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_info_frame'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_info_frame")
 
@@ -5943,11 +6286,13 @@ class App(ctk.CTk):
                 # if tm:
                 print(f"{dat_1=}", end="")
                 if comp == COMPANY.BWS.value:
+                    self.btn_if_goto_bws.configure(state=ctk.NORMAL)
                     for k in self.info_frame_columns_bws:
                         v = dat_1.get(k, f"'{k}'=?")
                         self.info_frame_bws.change_value(k, v)
                     print(f" BWS")
                 else:
+                    self.btn_if_goto_stg.configure(state=ctk.NORMAL)
                     for k in self.info_frame_columns_stg:
                         v = dat_1.get(k, f"'{k}'=?")
                         self.info_frame_stg.change_value(k, v)
@@ -5957,13 +6302,20 @@ class App(ctk.CTk):
         print(f"END update_info_frame")
 
     def clear_info_frame(self):
-        print(f"clear_info_frame")
+        tm = bool(self.settings["tm_true_functions"].get("clear_info_frame"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'clear_info_frame'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"clear_info_frame")
         comp = self.settings["mode_company"]
 
         if comp == COMPANY.BWS.value:
+            self.btn_if_goto_bws.configure(state=ctk.DISABLED)
             for k in self.info_frame_columns_bws:
                 self.info_frame_bws.change_value(k, "")
         else:
+            self.btn_if_goto_stg.configure(state=ctk.DISABLED)
             for k in self.info_frame_columns_stg:
                 self.info_frame_stg.change_value(k, "")
 
@@ -5978,6 +6330,12 @@ class App(ctk.CTk):
             parent: None | ctk.CTkCanvas = None,
             default_all: bool = False
     ):
+        tm = bool(self.settings["tm_true_functions"].get("draw_rect"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'draw_rect'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"draw_rect")
         comp = self.settings["mode_company"]
         if parent is None:
             parent = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -6011,11 +6369,12 @@ class App(ctk.CTk):
         return parent.create_rectangle(*bbox, **args)
 
     def click_go_to_date(self, date: datetime.datetime | pd.Timestamp):
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'click_go_to_date'")
+        tm = bool(self.settings["tm_true_functions"].get("click_go_to_date"))
         if tm:
-            print(f"click_mb_go_to_today")
+            print(f"WARNING TM IS TRUE 'click_go_to_date'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_go_to_date")
         comp = self.settings["mode_company"]
 
         date = pd.Timestamp(date) if not isinstance(date, pd.Timestamp) else date
@@ -6059,12 +6418,19 @@ class App(ctk.CTk):
                 print(f"No tile_data for {comp=}, {date=}, {line=}, {tile_data=}")
 
     def click_mb_go_to_today(self, event=None):
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_go_to_today"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_go_to_today'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_go_to_today")
         self.click_go_to_date(self.today)
 
     def set_prod_sched_version(self, num: int, date: datetime.datetime):
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'set_prod_sched_version'")
+        tm = bool(self.settings["tm_true_functions"].get("set_prod_sched_version"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'set_prod_sched_version'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"set_prod_sched_version {num=}, {date=}")
         comp = self.settings["mode_company"]
@@ -6077,9 +6443,10 @@ class App(ctk.CTk):
             print(f"END set_prod_sched_version")
 
     def get_prod_sched_version(self) -> tuple[int, datetime.datetime]:
-        tm = self.settings["TEST_MODE"].get()
-        tm = True
-        print(f"WARNING TM IS TRUE 'get_prod_sched_version'")
+        tm = bool(self.settings["tm_true_functions"].get("get_prod_sched_version"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_prod_sched_version'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"get_prod_sched_version")
         comp = self.settings["mode_company"]
@@ -6097,10 +6464,17 @@ class App(ctk.CTk):
             if not pd.isna(version_date):
                 version_date = datetime.datetime(*version_date.timetuple()[:6])
 
-        print(f"END get_prod_sched_version {version_num=}, {version_date=}")
+        if tm:
+            print(f"END get_prod_sched_version {version_num=}, {version_date=}")
         return version_num, version_date
 
     def click_mb_shift_line(self, event=None):
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_shift_line"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_shift_line'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_shift_line")
 
         # w, h = 1400, 800
         w, h = self.calc_geometry["w"], self.calc_geometry["h"]
@@ -7257,8 +7631,12 @@ class App(ctk.CTk):
         self.wait_window(self.tl_data[tl_name])
 
     def click_mb_colour_code(self, event=None):
-        tm = self.settings["TEST_MODE"].get()
-
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_colour_code"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_colour_code'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_colour_code")
 
         comp = self.settings["mode_company"]
         # can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -8220,7 +8598,12 @@ class App(ctk.CTk):
         self.wait_window(self.tl_data["tl_colour_code"])
 
     def click_app_theme(self, *args):
-        print(f"click_app_theme / settings")
+        tm = bool(self.settings["tm_true_functions"].get("click_app_theme"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_app_theme'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_app_theme / settings")
         # self.tl_cc_app = ctk.CTkToplevel(self, name="tl_cc_app")
         self.tl_cc_app = ctk.CTkToplevel(self)
         self.dict_top_levels["tl_cc_app"] = self.tl_cc_app
@@ -8407,7 +8790,10 @@ class App(ctk.CTk):
         #         )
 
     def save_colour_coding(self):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("save_colour_coding"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'save_colour_coding'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"save_colour_coding")
         known_colour_codes = self.settings.get("colour_coding", {})
@@ -8432,8 +8818,10 @@ class App(ctk.CTk):
         self.colour_code()
 
     def ask_before_close(self, parent=None) -> Tuple[bool, bool]:
-        print(f"ask_before_close")
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("ask_before_close"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'ask_before_close'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"ask_before_close")
         # has_history = self.history
@@ -8463,7 +8851,12 @@ class App(ctk.CTk):
         ), has_history
 
     def ask_save_before_close(self, parent=None) -> Tuple[bool, bool]:
-        print(f"ask_save_before_close")
+        tm = bool(self.settings["tm_true_functions"].get("ask_save_before_close"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'ask_save_before_close'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"ask_save_before_close")
         # has_history = self.history
         has_history = self.history.get()
         print(f"{has_history=}")
@@ -8488,7 +8881,12 @@ class App(ctk.CTk):
         ), has_history
 
     def switch_company(self, comp_id):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("switch_company"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'switch_company'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"switch_company")
         ac = self.tv_allowed_companies.get()
         curr_company = self.settings["mode_company"]
         companies = list(map(lambda c: getattr(c, "name"), COMPANY))
@@ -8585,7 +8983,12 @@ class App(ctk.CTk):
         self.resume()
 
     def click_mb_switch_companies(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_switch_companies"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_switch_companies'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_switch_companies")
         ac = self.tv_allowed_companies.get()
         comp = self.settings["mode_company"]
         tw = max(self.tile_width_bws, self.tile_width_stg)
@@ -8778,6 +9181,12 @@ class App(ctk.CTk):
             self.wait_window(self.tl_sc)
 
     def on_close_tl_ad(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("on_close_tl_ad"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_close_tl_ad'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_close_tl_ad")
         self.settings["admin_password_entered"].trace_remove("write", self.cb_admin_password_entered)
         self.tl_ad.destroy()
         self.dict_top_levels["tl_ad"] = None
@@ -8785,6 +9194,12 @@ class App(ctk.CTk):
         self.after(250, lambda: self.tv_done_interact_tl.set(True))
 
     def click_mb_admin(self, event=None):
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_admin"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_admin'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_admin")
         self.tv_done_interact_tl.set(False)
         self.entry_admin_password_attempts_remaining = None
         # self.tl_ad = ctk.CTkToplevel(self, name="tl_ad")
@@ -9017,7 +9432,10 @@ class App(ctk.CTk):
         self.settings["admin_password_entered"].set(False)
 
     def click_mb_save(self, event=None):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_save"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_save'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_save, {event=}")
 
@@ -9060,7 +9478,10 @@ class App(ctk.CTk):
     #     )
 
     def reload_application(self, reload_time=4000):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("reload_application"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'reload_application'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"begin reload_application {self.settings['init_test_mode_done'].get()=}")
         if self.lbl_processing is not None:
@@ -9090,8 +9511,12 @@ class App(ctk.CTk):
             print(f"end reload_application")
 
     def set_pds_testing_mode(self, in_testing_mode: bool):
-
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("set_pds_testing_mode"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'set_pds_testing_mode'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"set_pds_testing_mode")
         domain_un = self.app_state["user_full"]
         *domain, un = domain_un.split("\\")
         sql = f"UPDATE [PDS Valid Updaters] SET [InTestingMode] = {int(in_testing_mode)} WHERE [UserName] = '{un}';"
@@ -9103,7 +9528,10 @@ class App(ctk.CTk):
         self.settings["TEST_MODE"].set(in_testing_mode)
 
     def click_mb_testing_mode(self, event=None):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_testing_mode"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_testing_mode'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_testing_mode")
 
@@ -9176,6 +9604,12 @@ class App(ctk.CTk):
             event=None,
             sample_texts_in: Optional[dict[dict[str: str]]] = None
     ):
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_tutorial"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_tutorial'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_mb_tutorial")
         self.tv_done_interact_tl.set(False)
         # self.tl_tu = ctk.CTkToplevel(self, name="tl_tu")
         self.tl_tu = ctk.CTkToplevel(self)
@@ -9406,6 +9840,12 @@ class App(ctk.CTk):
         self.wait_window(self.tl_tu)
 
     def on_close_tl_tu(self, event=None):
+        tm = bool(self.settings["tm_true_functions"].get("on_close_tl_tu"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_close_tl_tu'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_close_tl_tu")
         self.grab_release()
         self.tl_tu.destroy()
         self.dict_top_levels["tl_tu"] = None
@@ -9414,7 +9854,10 @@ class App(ctk.CTk):
         # return "break"
 
     def click_mb_exit(self, event=None):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_mb_exit"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_mb_exit'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_mb_exit, {event=}")
         ans_has_history = self.ask_save_before_close(parent=self)
@@ -9429,7 +9872,12 @@ class App(ctk.CTk):
     def on_closing(self, do_quit: bool = True, do_commit: bool = True) -> None | list:
         print(f"on_closing")
         comp = self.settings["mode_company"]
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("on_closing"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'on_closing'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"on_closing")
         ap_bws = self.settings["allowed_to_publish_bws"].get()
         ap_stg = self.settings["allowed_to_publish_stg"].get()
         ap = ap_bws if (comp == COMPANY.BWS.value) else ap_stg
@@ -9757,7 +10205,10 @@ class App(ctk.CTk):
             return sql_statments
 
     def update_toggle_canvas_selection(self, *args):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("update_toggle_canvas_selection"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_toggle_canvas_selection'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_toggle_canvas_selection")
         # toggle_mode = self.toggle_warranty.value.get()
@@ -9785,7 +10236,10 @@ class App(ctk.CTk):
         self.toggle_warranty.grid(row=1, column=0)
 
     def click_if_goto(self):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("click_if_goto"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_if_goto'")
+        tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"click_if_goto")
         comp = self.settings["mode_company"]
@@ -9819,7 +10273,12 @@ class App(ctk.CTk):
             self.redraw_legend()
 
     def check_for_units_on_holidays(self, include_all_holidays: bool = False, do_warn: bool = True) -> tuple[dict[tuple[datetime.datetime, str]: tuple[int, int]], str]:
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("check_for_units_on_holidays"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'check_for_units_on_holidays'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"check_for_units_on_holidays")
         comp = self.settings["mode_company"]
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
@@ -9875,13 +10334,23 @@ class App(ctk.CTk):
         return units_on_holiday, msg
 
     def quit_cc_app(self):
-        print(f"quit_cc_app")
+        tm = bool(self.settings["tm_true_functions"].get("quit_cc_app"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'quit_cc_app'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"quit_cc_app")
         self.tl_cc_app.destroy()
         self.dict_top_levels["tl_cc_app"] = None
         self.grab_set()
 
     def show_quote_info_tl(self, date, line):
-        tm = self.settings["TEST_MODE"].get()
+        tm = bool(self.settings["tm_true_functions"].get("show_quote_info_tl"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'show_quote_info_tl'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"show_quote_info_tl")
         comp = self.settings["mode_company"]
         # tile_data = self.tiles_stg[date][line]
         tl_name = "tl_qi"
@@ -9984,6 +10453,12 @@ class App(ctk.CTk):
         self.wait_window(self.tl_data[tl_name])
 
     def master_destroy(self):
+        tm = bool(self.settings["tm_true_functions"].get("master_destroy"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'master_destroy'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"master_destroy")
         for tl_name, tl in self.dict_top_levels.items():
             if isinstance(tl, ctk.CTkToplevel) and tl.winfo_exists():
                 print(f"CLOSE TL: {tl.winfo_name()}")
@@ -9993,6 +10468,12 @@ class App(ctk.CTk):
             self.destroy()
 
     def resume(self):
+        tm = bool(self.settings["tm_true_functions"].get("resume"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'resume'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"resume")
         self.clear_info_frame()
         self.clear_drag_tiles()
         self.clear_hover_tiles()
@@ -10004,6 +10485,12 @@ class App(ctk.CTk):
         self.update_show_calendar_only()
 
     def log_error(self, exception) -> None:
+        tm = bool(self.settings["tm_true_functions"].get("log_error"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'log_error'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"log_error")
         t = datetime.datetime.now()
         self.error_log[t] = exception
 
@@ -10055,6 +10542,12 @@ class App(ctk.CTk):
             self.master_destroy()
 
     def get_error_log(self) -> str:
+        tm = bool(self.settings["tm_true_functions"].get("get_error_log"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'get_error_log'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"get_error_log")
         el = getattr(self, "error_log", dict())
         res = ""
         for k, v in el.items():
@@ -10079,6 +10572,12 @@ class App(ctk.CTk):
             height: int = 600,
             allow_shrink: bool = True
     ) -> Any:
+        tm = bool(self.settings["tm_true_functions"].get("messagebox"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'messagebox'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"messagebox")
 
         # print(f"MESSAGEBOX!")
         # default == ync
