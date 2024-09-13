@@ -502,7 +502,7 @@ class App(ctk.CTk):
 
         self.tv_done_setup = ctk.BooleanVar(self, value=False)
 
-        self.date_version = datetime.datetime(2024, 8, 27)
+        self.date_version = datetime.datetime(2024, 9, 13)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
 
         self.file_last_session_sql: str = r"C:\Access\last_session_sql.sql"
@@ -551,7 +551,13 @@ class App(ctk.CTk):
             "start_at_first_of_month": True,
             "end_at_end_of_month": True,
             "tm_true_functions": {
-            }
+            },
+
+            # use this for testing, as long as 'user' exists, program will not fetch username
+            "test_user": None
+            # "test_user": "bwsdomain.local\\gf"
+            # "test_user": "bwsdomain.local\\mguest"
+            # "test_user": "bwsdomain.local\\tmerrithew"
         }
         self.list_sl_preview_table_cols = ["Quote", "Current Date", "New Date"]
         self.tl_data: dict = dict()
@@ -612,6 +618,7 @@ class App(ctk.CTk):
         # "colour_app_background" = Colour("#C3C3C3"),
         # "colour_app_background" = Colour("#941186"),
         self.colour_app_background = Colour(self.cget("bg"))
+        self.colour_app_foreground = Colour("#101010")
         # "colour_app_background" = Colour("#F0F0F0"),
         self.colour_calendar_background = Colour("#101060")
         self.colour_fg_calendar_hyperlinks = Colour("#4242FF")
@@ -634,7 +641,7 @@ class App(ctk.CTk):
         self.colour_garbage_outline = Colour("#632234")
         self.colour_garbage_border_width = 4
 
-        self.colour_background_app = Colour("#777797")
+        # self.colour_background_app = Colour("#777797")
         self.colour_background_calendar_app = Colour("#777797")
         self.colour_tile_background_selected = Colour("#DC4245")
         self.colour_tile_foreground_selected = Colour("#090909")
@@ -662,6 +669,25 @@ class App(ctk.CTk):
         self.colour_flash_attention_foreground = Colour("#020340")
         self.colour_flash_attention_outline = Colour("#020340")
 
+        self.colour_sl_background = Colour("#153001")
+        self.colour_sl_foreground = Colour("#051001")
+        self.colour_sl_btn_background = Colour("#E0E0FF")
+        self.colour_sl_btn_foreground = Colour("#051001")
+
+        self.colour_cc_background = Colour("#459001")
+        self.colour_cc_foreground = Colour("#051001")
+        self.colour_cc_btn_background = Colour("#E0E0FF")
+        self.colour_cc_btn_foreground = Colour("#051001")
+        self.colour_cc_top_btn_background = Colour("#52C5F2")
+        self.colour_cc_top_btn_foreground = Colour("#022562")
+        self.colour_cc_top_btn_outline = Colour("#000000")
+
+        self.colour_messagebox_background = Colour("#FFFFFF")
+        self.colour_messagebox_foreground = Colour("#000000")
+        self.colour_messagebox_frame_btns_background = Colour("#DFDFDF")
+        self.colour_messagebox_btns_background = Colour("#AFAFAF")
+        self.colour_messagebox_hover_btns_background = Colour("#CFCFCF")
+
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
 
@@ -671,7 +697,7 @@ class App(ctk.CTk):
             size=10
         )
 
-        self.colour_background_testing_mode_label = self.colour_background_app.brightened(0.15)
+        self.colour_background_testing_mode_label = self.colour_app_background.brightened(0.15)
         self.colour_fill_multi_combobox_drag_tile = self.colour_tile_background.darkened(0.2)
         self.colour_outline_multi_combobox_drag_tile = self.colour_tile_foreground.darkened(0.2)
         self.colour_tile_background_hover = self.colour_tile_background.brightened(0.25)
@@ -940,14 +966,14 @@ class App(ctk.CTk):
             self,
             width=self.calc_geometry["width"],
             height=self.calc_geometry["height"],
-            bg_color=self.colour_background_app.hex_code
+            bg_color=self.colour_app_background.hex_code
         )
 
         self.frame_testing = ctk.CTkFrame(
             self.frame_calendar,
             width=self.calc_geometry["width"],
             height=30,
-            bg_color=self.colour_background_app.hex_code
+            bg_color=self.colour_app_background.hex_code
         )
 
         self.tv_lbl_processing, self.lbl_processing = None, None
@@ -1240,12 +1266,20 @@ class App(ctk.CTk):
             allow_insert_ask=False,
             lock_result_col="Quote#",
             auto_grid=False
-            # ,
-            # show_index_column=False
+            ,
+            show_index_column=False
         )
         self.multi_combobox_orders_bws.res_entry.unbind("<Return>",
                                                         self.multi_combobox_orders_bws.bind_return_res_entry)
         self.multi_combobox_orders_bws.res_entry.bind("<Return>", self.submit_combobox_entry)
+        self.multi_combobox_orders_bws.btn_clear.grid_forget()
+        self.multi_combobox_orders_bws.btn_clear_ctk = customtkinter_utility.button_factory(
+            self.multi_combobox_orders_bws.frame_top_most,
+            tv_btn="x",
+            kwargs_btn={"width": 35},
+            command=self.multi_combobox_orders_bws.click_btn_clear
+        )
+        self.multi_combobox_orders_bws.btn_clear_ctk[1].grid(row=0, column=1)
 
         # multi-combobox for warranty quotes
         self.multi_combobox_warranties_bws = tkinter_utility.MultiComboBox(
@@ -1262,6 +1296,14 @@ class App(ctk.CTk):
             width=self.x_place_frame_canvas,
             show_index_column=False
         )
+        self.multi_combobox_warranties_bws.btn_clear.grid_forget()
+        self.multi_combobox_warranties_bws.btn_clear_ctk = customtkinter_utility.button_factory(
+            self.multi_combobox_warranties_bws.frame_top_most,
+            tv_btn="x",
+            kwargs_btn={"width": 35},
+            command=self.multi_combobox_warranties_bws.click_btn_clear
+        )
+        self.multi_combobox_warranties_bws.btn_clear_ctk[1].grid(row=0, column=1)
 
         self.tiles_bws = {d: {pl: dict() for pl in self.list_prod_lines_bws} for d in self.list_dates}
         self.tiles_bws["home"] = dict()
@@ -1281,12 +1323,20 @@ class App(ctk.CTk):
             allow_insert_ask=False,
             lock_result_col="Quote#",
             auto_grid=False
-            # ,
-            # show_index_column=False
+            ,
+            show_index_column=False
         )
         self.multi_combobox_orders_stg.res_entry.unbind("<Return>",
                                                         self.multi_combobox_orders_stg.bind_return_res_entry)
         self.multi_combobox_orders_stg.res_entry.bind("<Return>", self.submit_combobox_entry)
+        self.multi_combobox_orders_stg.btn_clear.grid_forget()
+        self.multi_combobox_orders_stg.btn_clear_ctk = customtkinter_utility.button_factory(
+            self.multi_combobox_orders_stg.frame_top_most,
+            tv_btn="x",
+            kwargs_btn={"width": 35},
+            command=self.multi_combobox_orders_stg.click_btn_clear
+        )
+        self.multi_combobox_orders_stg.btn_clear_ctk[1].grid(row=0, column=1)
 
         # multi-combobox for warranty quotes
         self.multi_combobox_warranties_stg = tkinter_utility.MultiComboBox(
@@ -1303,6 +1353,14 @@ class App(ctk.CTk):
             width=self.x_place_frame_canvas,
             show_index_column=False
         )
+        self.multi_combobox_warranties_stg.btn_clear.grid_forget()
+        self.multi_combobox_warranties_stg.btn_clear_ctk = customtkinter_utility.button_factory(
+            self.multi_combobox_warranties_stg.frame_top_most,
+            tv_btn="x",
+            kwargs_btn={"width": 35},
+            command=self.multi_combobox_warranties_stg.click_btn_clear
+        )
+        self.multi_combobox_warranties_stg.btn_clear_ctk[1].grid(row=0, column=1)
 
         self.tiles_stg = {d: {pl: dict() for pl in self.list_prod_lines_stg} for d in self.list_dates}
         self.tiles_stg["home"] = dict()
@@ -1558,6 +1616,7 @@ class App(ctk.CTk):
             dat_galv = row.get(self.quote_key("galv"), "GALV=____")
             dat_model = row.get(self.quote_key("model"), "MODEL=____")
             dat_cust_wo = row.get(self.quote_key("Customer WO#"), "CUSTWO=____")
+            dat_unit_is_scheduled_out_calendar = False
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
             self.df_ids_to_date_line_stg[i] = (date, prod_line)
@@ -1626,6 +1685,9 @@ class App(ctk.CTk):
                         })
                 else:
                     # this order has already been placed and does not fit on this calendar
+                    if (date < self.first_date) or (self.last_date > date):
+                        dat_unit_is_scheduled_out_calendar = True
+
                     no_fit = True
 
                 if no_fit:
@@ -1635,6 +1697,7 @@ class App(ctk.CTk):
 
                     # mc_append_row = []
                     new_row_data = {k: [v] for k, v in row.items()}
+                    new_row_data.update({"unit_scheduled_out_calendar": dat_unit_is_scheduled_out_calendar})
                     new_df = pd.DataFrame(new_row_data, index=[self.df_rest_orders_stg.shape[0]])
                     self.concats_rest_orders_stg.append(new_df)
 
@@ -1672,6 +1735,7 @@ class App(ctk.CTk):
                 dat_galv = row.get(self.quote_key("galv", COMPANY.STG.value), "GALV=____")
                 dat_model = row.get(self.quote_key("model", COMPANY.STG.value), "MODEL=____")
                 dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.STG.value), "CUSTWO=____")
+                dat_scheduled =
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_stg.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
@@ -3528,12 +3592,7 @@ class App(ctk.CTk):
         self.df_valid_updaters = connect(**SQL_VALID_UPDATERS)
 
         # init
-        user = None
-
-        # use this for testing, as long as 'user' exists, program will not fetch username
-        # user = "bwsdomain.local\\gf"
-        # user = "bwsdomain.local\\mguest"
-        # user = "bwsdomain.local\\tmerrithew"
+        user = self.settings.get("test_user", None)
 
         if not user:
             user = utility.get_windows_user(2)
@@ -6079,8 +6138,8 @@ class App(ctk.CTk):
 
         comp = self.settings["mode_company"]
 
-        self.tl_data["bg"] = self.colour_background
-        self.tl_data["fg"] = Colour("#101010")
+        self.tl_data["bg"] = self.colour_app_background
+        self.tl_data["fg"] = self.colour_app_foreground
         self.tl_data["tiles_stg"] = []
         self.tl_data["tiles_bws"] = []
         self.tl_data["texts"] = []
@@ -6490,10 +6549,10 @@ class App(ctk.CTk):
         prod_lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
 
-        bg_sl_main = Colour("#153001")
-        bg_sl_vc = Colour("#051001")
-        bg_sl_btn = Colour("#E0E0FF")
-        fg_sl_btn = Colour("#051001")
+        bg_sl_main = self.colour_sl_background
+        bg_sl_vc = self.colour_sl_foreground
+        bg_sl_btn = self.colour_sl_btn_background
+        fg_sl_btn = self.colour_sl_btn_foreground
         bg_sl_btn_hover = bg_sl_btn.brightened(0.25)
         fg_sl_btn_hover = fg_sl_btn.brightened(0.25)
 
@@ -7690,15 +7749,15 @@ class App(ctk.CTk):
         tl_geom = customtkinter_utility.calc_geometry_tl(w, h, largest=True, rtype=dict, parent=self)
         self.tl_data["tl_colour_code"].geometry(tl_geom["geometry"])
 
-        bg_cc_main = Colour("#459001")
-        bg_cc_vc = Colour("#051001")
-        bg_cc_btn = Colour("#E0E0FF")
-        fg_cc_btn = Colour("#051001")
+        bg_cc_main = self.colour_cc_background
+        bg_cc_vc = self.colour_cc_foreground
+        bg_cc_btn = self.colour_cc_btn_background
+        fg_cc_btn = self.colour_cc_btn_foreground
         bg_cc_btn_hover = bg_cc_btn.brightened(0.25)
         fg_cc_btn_hover = fg_cc_btn.brightened(0.25)
-        colour_bg_top_button = Colour("#52C5F2")
-        colour_fg_top_button = Colour("#022562")
-        colour_outline_top_button = Colour("#000000")
+        colour_bg_top_button = self.colour_cc_top_btn_background
+        colour_fg_top_button = self.colour_cc_top_btn_foreground
+        colour_outline_top_button = self.colour_cc_top_btn_outline
 
         if tm:
             print(
@@ -9628,7 +9687,7 @@ class App(ctk.CTk):
         self.tl_tu.columnconfigure(1, weight=5)
         self.tl_tu.columnconfigure(2, weight=80)
 
-        tc_colour_fg_text = Colour("#000000")
+        tc_colour_fg_text = self.colour_app_foreground
 
         if sample_texts_in is None:
             sample_texts_in = {
@@ -10588,11 +10647,11 @@ class App(ctk.CTk):
         # info
         # warn
 
-        bg = Colour("#FFFFFF")
-        fg = Colour("#000000")
-        bg_f_btns = Colour("#DFDFDF")
-        bg_btns = Colour("#AFAFAF")
-        bg_h_btn = Colour("#CFCFCF")
+        bg = self.colour_messagebox_background
+        fg = self.colour_messagebox_foreground
+        bg_f_btns = self.colour_messagebox_frame_btns_background
+        bg_btns = self.colour_messagebox_btns_background
+        bg_h_btn = self.colour_messagebox_hover_btns_background
 
         self.tv_done_interact_tl.set(False)
 
