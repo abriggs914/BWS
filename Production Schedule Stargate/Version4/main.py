@@ -464,6 +464,9 @@ WHERE
         ,[ModeCompany]
         ,[AllowedCompanies]
         ,[AllowPublishBWS]
+        ,[LastAccess]
+        ,[LastModified]
+        ,[ShowAlreadyScheduledCombobox]
     FROM
         [Stargatedb].[dbo].[PDS Valid Updaters]
     ;
@@ -551,6 +554,8 @@ class App(ctk.CTk):
             "start_at_first_of_month": True,
             "end_at_end_of_month": True,
             "tm_true_functions": {
+                "release_treeview_entry": True,
+                "update_multicombobox_already_scheduled": True
             },
 
             # use this for testing, as long as 'user' exists, program will not fetch username
@@ -580,6 +585,7 @@ class App(ctk.CTk):
         self.default_colour_theme = "Dark Blue"
         self.default_ask_monitors = "Yes"
         self.default_show_left_widgets = "Yes"
+        self.default_show_already_scheduled = "Yes"
         self.txt_non_prod_day = "Non-Prod Day"
 
         self.kwargs_lbl = {
@@ -636,10 +642,10 @@ class App(ctk.CTk):
         self.colour_tile_outline = Colour("#111111")
         self.width_tile_outline = 1
 
-        self.colour_garbage_background = Colour("#A32234")
-        self.colour_garbage_foreground = Colour("#632234")
-        self.colour_garbage_outline = Colour("#632234")
-        self.colour_garbage_border_width = 4
+        # self.colour_garbage_background = Colour("#A32234")
+        # self.colour_garbage_foreground = Colour("#632234")
+        # self.colour_garbage_outline = Colour("#632234")
+        # self.colour_garbage_border_width = 4
 
         # self.colour_background_app = Colour("#777797")
         self.colour_background_calendar_app = Colour("#777797")
@@ -911,6 +917,7 @@ class App(ctk.CTk):
         self.entry_admin_password_attempts_remaining = None
         self.tl_tv_switch_ask_monitors = ctk.StringVar(self, value=self.default_ask_monitors)
         self.tl_tv_switch_show_left_widgets = ctk.StringVar(self, value=self.default_show_left_widgets)
+        self.tl_tv_switch_show_already_scheduled = ctk.StringVar(self, value=self.default_show_already_scheduled)
         self.tl_tv_colour_code_priority = ctk.Variable(self, value=self.default_colour_code_priority)
         self.tl_tv_colour_code_only_priority = ctk.BooleanVar(self, value=self.default_colour_code_only_priority)
         self.tl_tv_show_galvanized = ctk.BooleanVar(self, value=self.default_show_galvanized)
@@ -989,6 +996,8 @@ class App(ctk.CTk):
         )
 
         tm = self.settings["TEST_MODE"].get()
+        als = self.tl_tv_switch_show_already_scheduled.get() == "Yes"
+        print(f"{als=}")
         self.df_calendar_stg = connect(**SQL_HOLIDAYS_STG, do_show=tm, do_print=tm)
         self.df_prod_lines_stg = connect(**SQL_USED_LINES_STG, do_show=tm, do_print=tm)
         self.df_orders_stg = connect(**SQL_DATED_STG_UNITS, do_show=tm, do_print=tm).fillna("")
@@ -1617,8 +1626,11 @@ class App(ctk.CTk):
             dat_model = row.get(self.quote_key("model"), "MODEL=____")
             dat_cust_wo = row.get(self.quote_key("Customer WO#"), "CUSTWO=____")
             dat_unit_is_scheduled_out_calendar = False
+
+            # TODO These are Stargate lookup keys
             date = row.get("Available Date", None)
             prod_line = row.get("JobStartLine", None)
+
             self.df_ids_to_date_line_stg[i] = (date, prod_line)
             if prod_line == "":
                 prod_line = None
@@ -1735,7 +1747,9 @@ class App(ctk.CTk):
                 dat_galv = row.get(self.quote_key("galv", COMPANY.STG.value), "GALV=____")
                 dat_model = row.get(self.quote_key("model", COMPANY.STG.value), "MODEL=____")
                 dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.STG.value), "CUSTWO=____")
-                dat_scheduled =
+                dat_scheduled = row.get(self.quote_key("AvailableDate", COMPANY.STG.value))
+                # print(f"STG >> {dat_quote=}, {dat_scheduled=}, {list(row.keys())=}")
+                print(f"STG >> {dat_quote=}, {dat_scheduled=}")
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_stg.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn, dat_cust_wo])}
                 new_df = pd.DataFrame(new_row_data)
@@ -1743,7 +1757,8 @@ class App(ctk.CTk):
 
         #     self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
         if self.concats_multi_combobox_orders_stg:
-            self.concats_multi_combobox_orders_stg = self.concats_rest_orders_to_multi_combobox_stg + self.concats_multi_combobox_orders_stg
+            if als:
+                self.concats_multi_combobox_orders_stg += self.concats_rest_orders_to_multi_combobox_stg
             self.df_multi_combobox_data_orders_stg = pd.concat(self.concats_multi_combobox_orders_stg, ignore_index=True)
             # self.df_multi_combobox_data_orders_stg["Customer WO#"] = self.df_multi_combobox_data_orders_stg[
             #     "Customer WO#"].apply(lambda x: int(x) if not pd.isna(x) else x)
@@ -2336,6 +2351,8 @@ class App(ctk.CTk):
         self.multi_combobox_orders_stg.add_new_item(self.df_multi_combobox_data_orders_stg)
         self.multi_combobox_orders_bws.add_new_item(self.df_multi_combobox_data_orders_bws)
 
+        self.update_multicombobox_already_scheduled()
+
         print(f"==>")
         print(f"{self.df_multi_combobox_data_orders_bws=}")
         print(f"{self.df_rest_orders_bws=}")
@@ -2517,6 +2534,13 @@ class App(ctk.CTk):
         self.multi_combobox_orders_bws.trace_res_tv_entry = self.multi_combobox_orders_bws.res_tv_entry.trace_add(
             "write",
             self.multi_combobox_orders_bws.update_entry)
+        self.multi_combobox_orders_stg.trace_res_tv_entry_tags = self.multi_combobox_orders_stg.res_tv_entry.trace_add(
+            "write",
+            self.update_multicombobox_already_scheduled)
+        self.multi_combobox_orders_bws.trace_res_tv_entry_tags = self.multi_combobox_orders_bws.res_tv_entry.trace_add(
+            "write",
+            self.update_multicombobox_already_scheduled)
+
         self.tl_tv_switch_colour.trace_variable("w", self.update_colour_theme)
         self.tl_tv_switch_dark.trace_variable("w", self.update_light_dark_theme)
         self.tl_tv_switch_ask_monitors.trace_variable("w", self.update_ask_monitors)
@@ -2524,6 +2548,7 @@ class App(ctk.CTk):
         self.tl_tv_switch_allow_publish_bws.trace_variable("w", self.update_allow_publish_bws)
         self.tl_tv_count_tries_allow_publish.trace_variable("w", self.update_count_tries_allow_publish)
         self.tl_tv_switch_show_left_widgets.trace_variable("w", self.update_show_calendar_only)
+        self.tl_tv_switch_show_already_scheduled.trace_variable("w", self.update_show_already_scheduled)
         self.tl_tv_colour_code_priority.trace_variable("w", self.update_switch_colour_code_priority)
         self.tl_tv_colour_code_only_priority.trace_variable("w", self.update_switch_colour_code_only_priority)
         self.tl_tv_show_galvanized.trace_variable("w", self.update_show_galvanized)
@@ -2591,6 +2616,10 @@ class App(ctk.CTk):
                 return "Orders_US Sale" if (mc == COMPANY.BWS.value) else "US Sale"  # same for both companies
             case "delivery date":
                 return "Orders_Delivery Date" if (mc == COMPANY.BWS.value) else "Delivery Date"
+            case "available date" | "availabledate":
+                return "Available Date"
+            case "line" | "prod line" | "prodline":
+                return "JobAvailableLine"
             case _:
                 return "Quote#" if (mc == COMPANY.BWS.value) else "OrdersV2_SGQuote"
 
@@ -3005,6 +3034,113 @@ class App(ctk.CTk):
         connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
         self.colour_code()
+
+    def update_show_already_scheduled(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_show_already_scheduled"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_show_already_scheduled'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_show_already_scheduled")
+
+        als = self.tl_tv_switch_show_already_scheduled.get()
+        als = 0 if (als == "No") else 1
+
+        un = self.app_state["user_name"]
+        sql = "UPDATE [Stargatedb].[dbo].[PDS Valid Updaters] SET [ShowAlreadyScheduledCombobox] = {als} WHERE [UserName] = '{un}';"
+        sql = sql.format(als=als, un=un)
+        connect(sql, **STARGATE_SQL_CREDS, do_show=True)
+
+        comp = self.settings["mode_company"]
+        combobox = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        columns = self.multi_combobox_columns_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_columns_stg
+        combobox_war = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        df_orders = self.df_rest_orders_bws if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
+        # df_war = self.df_rest_warran if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
+
+        # TODO add or remove the already scheduled units from the combobox, company appropriate
+
+        # tl = ctk.CTkToplevel(self.tl_cc_app)
+        # var = ctk.DoubleVar(tl, value=0)
+        #
+        # def release_tl(*args):
+        #     if tl.winfo_exists():
+        #         tl.destroy()
+        #         self.grab_set()
+        #
+        # pb = ctk.CTkProgressBar(tl, width=100, variable=var)
+        # pb.grid()
+        # tl.protocol("WM_DELETE_WINDOW", release_tl)
+        # tl.grab_set()
+        # self.after(4500, lambda: tl.destroy())
+
+        if als:
+
+            cols = {
+                self.quote_key("quote"): "QUOTE=____",
+                self.quote_key("wo"): "WO=____",
+                self.quote_key("sn"): "SM=____",
+                self.quote_key("dealer"): "DEALER=____",
+                self.quote_key("model"): "MODEL=____",
+                self.quote_key("Customer WO#"): "CUSTWO=____"
+            }
+            # cols = [k if k else v for k, v in cols.items()]
+            cols = list(cols.keys())
+            # print(f"{cols=}")
+            # print(f"{columns=}")
+            sel_df = df_orders[cols]
+            # print(f"{sel_df=}")
+            # print(f"{list(sel_df.keys())=}")
+            sel_df = sel_df.rename(columns=dict(zip(cols, columns)))
+            # print(f"{sel_df=}")
+            # print(f"{list(sel_df.keys())=}")
+
+            combobox.add_new_item(sel_df)
+
+            # pg_p_r = sel_df.shape[0] / 100
+            self.update_multicombobox_already_scheduled()
+
+        else:
+            combobox.delete_item(value=df_orders[self.quote_key("quote")].values.tolist(), error_on_not_found=False)
+            # for i, row in df_orders.iterrows():
+            #     combobox.delete_item(value=row.get(self.quote_key("quote")))
+
+        # self.wait_window(tl)
+
+    def update_multicombobox_already_scheduled(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_multicombobox_already_scheduled"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_multicombobox_already_scheduled'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_multicombobox_already_scheduled")
+
+        als = self.tl_tv_switch_show_already_scheduled.get()
+        als = 0 if (als == "No") else 1
+
+        comp = self.settings["mode_company"]
+        combobox = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        df_orders = self.df_rest_orders_bws if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
+        # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_bws
+        # df_orders = self.multi_combobox_orders_bws.data if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg.data
+        # df_orders = self.df_multi_combobox_data_orders_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+
+        # for i, row in sel_df.iterrows():
+        for i, row in df_orders.iterrows():
+            quote = row.get(self.quote_key("quote"))
+            # f_quote = False
+            for j, child in enumerate(combobox.tree_treeview.get_children()):
+                chi = combobox.tree_treeview.item(child, "values")
+                if quote in chi:
+                    print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
+                    # f_quote = True
+                    # tags = list(combobox.tree_treeview.item(child, "tags"))
+                    tags = list(combobox.tree_treeview.item(str(j), "tags"))
+                    tags.append("scheduled")
+                    combobox.tree_treeview.item(str(j), tags=tags)
+                    break
+            # var.set(var.get() + pg_p_r)
+        combobox.tree_treeview.tag_configure('scheduled', foreground='gray')  # Grayed out text for disabled rows
 
     def update_show_calendar_only(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_show_calendar_only"))
@@ -3650,6 +3786,13 @@ class App(ctk.CTk):
             else:
                 show_left_widgets = "No" if (int(show_left_widgets) == 1) else "Yes"
 
+            show_already_scheduled = df_pds_user["ShowAlreadyScheduledCombobox"]
+            if pd.isna(show_already_scheduled):
+                show_already_scheduled = self.default_show_already_scheduled
+            else:
+                show_already_scheduled = "No" if (int(show_already_scheduled) == 0) else "Yes"
+            print(f"{show_already_scheduled=}")
+
             colour_theme = df_pds_user["ColourTheme"]
             if pd.isna(colour_theme):
                 colour_theme = self.default_colour_theme
@@ -3748,6 +3891,7 @@ class App(ctk.CTk):
             self.tl_tv_switch_dark.set(light_dark_theme)
             self.tl_tv_switch_ask_monitors.set(ask_monitors)
             self.tl_tv_switch_show_left_widgets.set(show_left_widgets)
+            self.tl_tv_switch_show_already_scheduled.set(show_already_scheduled)
             self.tl_tv_colour_code_priority.set(colour_code_priority.title())
             self.tl_tv_colour_code_only_priority.set(colour_code_priority_only)
             self.update_colour_theme()
@@ -5217,6 +5361,7 @@ class App(ctk.CTk):
         combobox_orders = self.multi_combobox_orders_bws if (
                     comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
+        fd, ld = (self.min_date_bws, self.max_date_bws) if (comp == COMPANY.BWS.value) else (self.min_date_stg, self.max_date_stg)
 
         if tm:
             print(f"\t{is_warranty=}")
@@ -5311,6 +5456,7 @@ class App(ctk.CTk):
                             # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
                             print(f"{war_job=}, {war_job_id=}")
                             print(f"dropped in calendar {date_line=}")
+
                         self.insert_tile(war_job_id, date_line, do_animate="valid")
                         try:
                             combobox_warranties.delete_item(value=war_job)
@@ -5347,20 +5493,39 @@ class App(ctk.CTk):
                         # order_id_2 = self.df_multi_combobox_data_orders_stg.loc[self.df_multi_combobox_data_orders_stg["SGQuote"] == quote].index
                         # order_id_2 = self.df_multi_combobox_data_orders_stg.loc[self.df_multi_combobox_data_orders_stg["SGQuote"] == quote].index
                         # order_id = order_id_2
-                        order_id = df_orders.loc[df_orders[self.quote_key("Quote")] == quote].index[0]
+                        df_order = df_orders.loc[df_orders[self.quote_key("Quote")] == quote]
+                        order_id = df_order.index[0]
                         if tm:
                             # print(f"{quote=}, {order_id_1=}, {order_id_2=}, {order_id=}")
                             print(f"{quote=}, {order_id=}")
                             print(f"dropped in calendar {date_line=}")
-                        self.insert_tile(order_id, date_line, do_animate="valid")
-                        try:
+                        est_ad, est_line = df_order.iloc[0][[self.quote_key("available date"), self.quote_key("line")]]
+                        if tm:
+                            print(f"{est_ad=}, {est_line=}")
+                        ans = ctk.YES
+                        if not pd.isna(est_ad):
+                            if not (fd <= est_ad <= ld):
+                                if tm:
+                                    print(f"THIS UNIT HAS ALREADY BEEN SCHEDULED!!")
+                                ans = self.messagebox(
+                                    title=self.title_application_short,
+                                    message=f"Quote '{quote}' was already scheduled once on line {est_line} for '{est_ad:%Y-%m-%d}'.\nAre you sure you want to move it to line {line} on {date:%Y-%m-%d}?",
+                                    mode="askyesno"
+                                )
 
-                            combobox_orders.delete_item(value=quote)
-                        except ValueError as ve:
-                            # quote not found in multi-combobox
-                            pass
+                        if ans == ctk.YES:
+                            self.insert_tile(order_id, date_line, do_animate="valid")
 
-                        combobox_orders.res_tv_entry.set("")
+                            try:
+
+                                combobox_orders.delete_item(value=quote)
+                            except ValueError as ve:
+                                # quote not found in multi-combobox
+                                pass
+
+                            combobox_orders.res_tv_entry.set("")
+                        else:
+                            self.flash_tile(date_line, mode="invalid")
                 else:
                     # weekend placement not supported
                     self.flash_tile(date_line, mode="invalid_we")
@@ -5787,17 +5952,17 @@ class App(ctk.CTk):
 
     def update_selected_tiles(self) -> None:
         # print(f"update_selected_tiles")
+        st = self.app_state["selected"]
+        ab = self.colour_tile_background_selected
+        af = self.colour_tile_foreground_selected
+        ao = self.colour_tile_outline_selected
+        font = self.font_tile_selected
         tm = bool(self.settings["tm_true_functions"].get("update_selected_tiles"))
         if tm:
             print(f"WARNING TM IS TRUE 'update_selected_tiles'")
         tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_selected_tiles {st=}")
-        st = self.app_state["selected"]
-        ab = self.colour_tile_background_selected
-        af = self.colour_tile_foreground_selected
-        ao = self.colour_tile_outline_selected
-        font = self.font_tile_selected
 
         comp = self.settings["mode_company"]
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
@@ -8720,6 +8885,25 @@ class App(ctk.CTk):
         lbl_slw.grid(row=0, column=0, **self.grid_args_label)
         tl_at_switch_show_left_widgets.grid(row=0, column=1, **self.grid_args_switch)
 
+
+        # Show already scheduled units in combobox
+        tl_cc_app_frame_show_already_scheduled = ctk.CTkFrame(self.tl_cc_app)
+        tv_lbl_als, lbl_als = customtkinter_utility.label_factory(
+            tl_cc_app_frame_show_already_scheduled,
+            tv_label="Show Already Scheduled Units in Combobox:",
+            kwargs_label=self.kwargs_lbl
+        )
+        tl_at_switch_show_already_scheduled = ctk.CTkSegmentedButton(
+            tl_cc_app_frame_show_already_scheduled,
+            values=["No", "Yes"],
+            variable=self.tl_tv_switch_show_already_scheduled,
+            font=self.kwargs_lbl["font"]
+        )
+        tl_cc_app_frame_show_already_scheduled.grid(**self.grid_args_frame)
+        lbl_als.grid(row=0, column=0, **self.grid_args_label)
+        tl_at_switch_show_already_scheduled.grid(row=0, column=1, **self.grid_args_switch)
+
+
         # Colour Theme
         tl_cc_app_frame_colour_theme = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_ct, lbl_ct = customtkinter_utility.label_factory(
@@ -8808,6 +8992,7 @@ class App(ctk.CTk):
             tl_cc_app_frame_light_dark_theme,
             tl_cc_app_frame_ask_monitors,
             tl_cc_app_frame_show_left_widgets,
+            tl_cc_app_frame_show_already_scheduled,
             tl_cc_app_frame_colour_theme,
             tl_cc_app_frame_colour_code_priority,
             tl_cc_app_frame_colour_code_only_priority,
@@ -9038,8 +9223,188 @@ class App(ctk.CTk):
                 sql = sql.format(mc_s=mc_s, un=un)
                 connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
+        self.update_multicombobox_already_scheduled()
+        self.adjust_colours()
+        self.colour_code()
         self.click_mb_go_to_today()
         self.resume()
+
+    def adjust_colours(self):
+
+        comp = self.settings["mode_company"]
+
+        # Default scheme for Stargate:
+        self.colour_background_theme_green = Colour("#006940")
+        self.colour_background_theme_blue = Colour("#0066A9")
+        self.colour_background_theme_dark_blue = Colour("#003689")
+        self.colour_foreground_theme_green = Colour("#FFFFFF")
+        self.colour_foreground_theme_blue = Colour("#FFFFFF")
+        self.colour_foreground_theme_dark_blue = Colour("#FFFFFF")
+        self.colour_foreground_testing_mode_label = Colour("#981415")
+        self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
+        self.colour_foreground_processing_label = Colour(JADE_GREEN)
+        self.colour_background_processing_label = Colour("#083712")
+        self.font_foreground_processing_label = ("Arial", 32, "bold")
+        self.colour_background_root_canvas = Colour("#12CC16")
+        # "colour_app_background" = Colour("#C3C3C3"),
+        # "colour_app_background" = Colour("#941186"),
+        self.colour_app_background = Colour(self.cget("bg"))
+        self.colour_app_foreground = Colour("#101010")
+        # "colour_app_background" = Colour("#F0F0F0"),
+        self.colour_calendar_background = Colour("#101060")
+        self.colour_fg_calendar_hyperlinks = Colour("#4242FF")
+        self.colour_tile_header_home_background = Colour("#181210")
+        self.colour_tile_header_row_background = Colour("#111632")
+        self.colour_tile_header_row_foreground = Colour("#e4e4ff")
+        self.colour_tile_header_row_today_foreground = Colour("#8989FF")
+        self.colour_tile_header_col_background = Colour("#111632")
+        self.colour_tile_header_col_foreground = Colour("#e4e4ff")
+
+        self.colour_tile_background = Colour("#ecdddd")
+        self.colour_tile_foreground = Colour("#090909")
+        self.colour_tile_background_non_prod = self.colour_tile_background.darkened(0.25)
+        self.font_tile = "Arial 10"
+        self.colour_tile_outline = Colour("#111111")
+        self.width_tile_outline = 1
+
+        # self.colour_garbage_background = Colour("#A32234")
+        # self.colour_garbage_foreground = Colour("#632234")
+        # self.colour_garbage_outline = Colour("#632234")
+        # self.colour_garbage_border_width = 4
+
+        # self.colour_background_app = Colour("#777797")
+        self.colour_background_calendar_app = Colour("#777797")
+        self.colour_tile_background_selected = Colour("#DC4245")
+        self.colour_tile_foreground_selected = Colour("#090909")
+        self.font_tile_selected = "Arial 12 bold"
+        self.colour_tile_outline_selected = Colour("#DDA911")
+        self.colour_background_holiday = Colour("#AABBFD")
+        self.colour_foreground_holiday = Colour("#A44000")
+        self.colour_test_dot = Colour("#AE3341")
+
+        self.colour_tl_sl_preview_header = Colour("#003578")
+        self.colour_sl_fg_text_warnings_preview_warn = Colour("#FF7777")
+        self.colour_sl_fg_text_warnings_preview_no_warn = Colour("#FEFEFE")
+
+        self.bg_info_frame = Colour("SystemButtonFace")
+        self.colour_flash_valid_background = Colour("#A2F9A3")
+        self.colour_flash_valid_foreground = Colour("#024003")
+        self.colour_flash_valid_outline = Colour("#024003")
+        self.colour_flash_invalid_background = Colour("#791213")
+        self.colour_flash_invalid_foreground = Colour("#400203")
+        self.colour_flash_invalid_outline = Colour("#400203")
+        self.colour_flash_invalid_we_background = Colour("#791213")
+        self.colour_flash_invalid_we_foreground = Colour("#400203")
+        self.colour_flash_invalid_we_outline = Colour("#400203")
+        self.colour_flash_attention_background = Colour("#9293e9")
+        self.colour_flash_attention_foreground = Colour("#020340")
+        self.colour_flash_attention_outline = Colour("#020340")
+
+        self.colour_sl_background = Colour("#153001")
+        self.colour_sl_foreground = Colour("#051001")
+        self.colour_sl_btn_background = Colour("#E0E0FF")
+        self.colour_sl_btn_foreground = Colour("#051001")
+
+        self.colour_cc_background = Colour("#459001")
+        self.colour_cc_foreground = Colour("#051001")
+        self.colour_cc_btn_background = Colour("#E0E0FF")
+        self.colour_cc_btn_foreground = Colour("#051001")
+        self.colour_cc_top_btn_background = Colour("#52C5F2")
+        self.colour_cc_top_btn_foreground = Colour("#022562")
+        self.colour_cc_top_btn_outline = Colour("#000000")
+
+        self.colour_messagebox_background = Colour("#FFFFFF")
+        self.colour_messagebox_foreground = Colour("#000000")
+        self.colour_messagebox_frame_btns_background = Colour("#DFDFDF")
+        self.colour_messagebox_btns_background = Colour("#AFAFAF")
+        self.colour_messagebox_hover_btns_background = Colour("#CFCFCF")
+
+        if comp != COMPANY.BWS.value:
+            # BWS Values
+            self.colour_background_theme_green = Colour("#006940")
+            self.colour_background_theme_blue = Colour("#0066A9")
+            self.colour_background_theme_dark_blue = Colour("#003689")
+            self.colour_foreground_theme_green = Colour("#FFFFFF")
+            self.colour_foreground_theme_blue = Colour("#FFFFFF")
+            self.colour_foreground_theme_dark_blue = Colour("#FFFFFF")
+            self.colour_foreground_testing_mode_label = Colour("#981415")
+            self.font_foreground_testing_mode_label = ("Arial", 12, "bold")
+            self.colour_foreground_processing_label = Colour(JADE_GREEN)
+            self.colour_background_processing_label = Colour("#083712")
+            self.font_foreground_processing_label = ("Arial", 32, "bold")
+            self.colour_background_root_canvas = Colour("#12CC16")
+            # "colour_app_background" = Colour("#C3C3C3"),
+            # "colour_app_background" = Colour("#941186"),
+            self.colour_app_background = Colour(self.cget("bg"))
+            self.colour_app_foreground = Colour("#101010")
+            # "colour_app_background" = Colour("#F0F0F0"),
+            self.colour_calendar_background = Colour("#101060")
+            self.colour_fg_calendar_hyperlinks = Colour("#4242FF")
+            self.colour_tile_header_home_background = Colour("#181210")
+            self.colour_tile_header_row_background = Colour("#321116")
+            self.colour_tile_header_row_foreground = Colour("#e4e4ff")
+            self.colour_tile_header_row_today_foreground = Colour("#FF8989")
+            self.colour_tile_header_col_background = Colour("#321116")
+            self.colour_tile_header_col_foreground = Colour("#e4e4ff")
+
+            self.colour_tile_background = Colour("#ecdddd")
+            self.colour_tile_foreground = Colour("#090909")
+            self.colour_tile_background_non_prod = self.colour_tile_background.darkened(0.25)
+            self.font_tile = "Arial 10"
+            self.colour_tile_outline = Colour("#111111")
+            self.width_tile_outline = 1
+
+            # self.colour_garbage_background = Colour("#A32234")
+            # self.colour_garbage_foreground = Colour("#632234")
+            # self.colour_garbage_outline = Colour("#632234")
+            # self.colour_garbage_border_width = 4
+
+            # self.colour_background_app = Colour("#777797")
+            self.colour_background_calendar_app = Colour("#777797")
+            self.colour_tile_background_selected = Colour("#DC4245")
+            self.colour_tile_foreground_selected = Colour("#090909")
+            self.font_tile_selected = "Arial 12 bold"
+            self.colour_tile_outline_selected = Colour("#DDA911")
+            self.colour_background_holiday = Colour("#AABBFD")
+            self.colour_foreground_holiday = Colour("#A44000")
+            self.colour_test_dot = Colour("#AE3341")
+
+            self.colour_tl_sl_preview_header = Colour("#003578")
+            self.colour_sl_fg_text_warnings_preview_warn = Colour("#FF7777")
+            self.colour_sl_fg_text_warnings_preview_no_warn = Colour("#FEFEFE")
+
+            self.bg_info_frame = Colour("SystemButtonFace")
+            self.colour_flash_valid_background = Colour("#A2F9A3")
+            self.colour_flash_valid_foreground = Colour("#024003")
+            self.colour_flash_valid_outline = Colour("#024003")
+            self.colour_flash_invalid_background = Colour("#791213")
+            self.colour_flash_invalid_foreground = Colour("#400203")
+            self.colour_flash_invalid_outline = Colour("#400203")
+            self.colour_flash_invalid_we_background = Colour("#791213")
+            self.colour_flash_invalid_we_foreground = Colour("#400203")
+            self.colour_flash_invalid_we_outline = Colour("#400203")
+            self.colour_flash_attention_background = Colour("#9293e9")
+            self.colour_flash_attention_foreground = Colour("#020340")
+            self.colour_flash_attention_outline = Colour("#020340")
+
+            self.colour_sl_background = Colour("#153001")
+            self.colour_sl_foreground = Colour("#051001")
+            self.colour_sl_btn_background = Colour("#E0E0FF")
+            self.colour_sl_btn_foreground = Colour("#051001")
+
+            self.colour_cc_background = Colour("#459001")
+            self.colour_cc_foreground = Colour("#051001")
+            self.colour_cc_btn_background = Colour("#E0E0FF")
+            self.colour_cc_btn_foreground = Colour("#051001")
+            self.colour_cc_top_btn_background = Colour("#52C5F2")
+            self.colour_cc_top_btn_foreground = Colour("#022562")
+            self.colour_cc_top_btn_outline = Colour("#000000")
+
+            self.colour_messagebox_background = Colour("#FFFFFF")
+            self.colour_messagebox_foreground = Colour("#000000")
+            self.colour_messagebox_frame_btns_background = Colour("#DFDFDF")
+            self.colour_messagebox_btns_background = Colour("#AFAFAF")
+            self.colour_messagebox_hover_btns_background = Colour("#CFCFCF")
 
     def click_mb_switch_companies(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("click_mb_switch_companies"))

@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.80
-    Date...........2024-07-16
+    Version..............1.81
+    Date...........2024-09-16
     Author(s)....Avery Briggs
     """
 
@@ -2570,9 +2570,9 @@ class MultiComboBox(tkinter.Frame):
         self.indexable_column = col
         self.update_typed_in(None)
 
-    def delete_item(self, iid=None, value="|/|/||NONE||/|/|", mode="first" | Literal["first", "all", "ask"]):
-        print(f"delete_item: {iid=}, {value=}, {mode=}")
-        print(f"A self.data=\n{self.data}")
+    def delete_item(self, iid=None, value="|/|/||NONE||/|/|", mode="first" | Literal["first", "all", "ask"], error_on_not_found: bool = True):
+        # print(f"delete_item: {iid=}, {value=}, {mode=}")
+        # print(f"A self.data=\n{self.data}")
         delete_code = "|/|/||NONE||/|/|"
         if iid is None and value == delete_code:
             self.tree_treeview.delete(*self.tree_treeview.get_children())
@@ -2595,19 +2595,52 @@ class MultiComboBox(tkinter.Frame):
                 else:
                     delete_multi = mode == "all"
                 to_delete = []
-                for i, row in self.data.iterrows():
-                    for j, x in enumerate(row.values):
-                        if value == x:
-                            to_delete.append(i)
+                if not isinstance(value, (list, tuple)):
+                    value = [value]
+                value = value.copy()
+                # # if not delete_multi:
+                # #     value = value[:1]
+                # print(f"{value=}")
+
+                while value:
+                    val = value.pop(0)
+                    val_found = False
+                    for i, row in self.data.iterrows():
+                        if i in to_delete:
+                            continue
+                        for j, x in enumerate(row.values):
+                            if val == x:
+                                to_delete.append(i)
+                                val_found = True
+                                break
+                            elif self.use_str_dtype and (str(val) == x):
+                                to_delete.append(i)
+                                val_found = True
+                                break
+                        if val_found:
                             break
-                        elif self.use_str_dtype and (str(value) == x):
-                            to_delete.append(i)
-                            break
-                    if to_delete and not delete_multi:
-                        break
+
+                # for val in value:
+                #     val_found = False
+                #     # print(f"{val=}")
+                #     for i, row in self.data.iterrows():
+                #         for j, x in enumerate(row.values):
+                #             if val == x:
+                #                 to_delete.append(i)
+                #                 val_found = True
+                #                 break
+                #             elif self.use_str_dtype and (str(val) == x):
+                #                 to_delete.append(i)
+                #                 val_found = True
+                #                 break
+                #         if val_found:
+                #             break
+                #
+                #         # if to_delete and not delete_multi:
+                #         #     break
 
                 if to_delete:
-                    # print(f"DROPPING {to_delete=}")
+                    # print(f"DROPPING #{len(to_delete)}, {to_delete=}")
                     # print(f"PRE  SHAPE: {self.data.shape=}")
                     # print(f"{self.data.head(5)}")
                     # print(f"{self.data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
@@ -2617,10 +2650,11 @@ class MultiComboBox(tkinter.Frame):
                     # print(f"{self.data.head(5)}")
                     # print(f"{self.data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
                 else:
-                    raise ValueError(
-                        f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
+                    if error_on_not_found:
+                        raise ValueError(
+                            f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
 
-        print(f"B self.data=\n{self.data}")
+        # print(f"B self.data=\n{self.data}")
         self.update_treeview()
 
     def add_new_item(self, val, col=None, rest_values=None, rest_tags=None):
@@ -4885,6 +4919,48 @@ class ToggleCanvas(tkinter.Canvas):
         )
 
 
+def test_multi_combobox():
+    def col_label(c):
+        result = ""
+        while c >= 0:
+            result = result + chr((c % 26) + ord('A'))
+            c = c // 26 - 1
+            if c < 0:
+                break
+        return result
+
+    def random_table(rows, cols, low=-8, high=20):
+        return [[col_label(i) for i in range(cols)]] + [[random.randint(low, high) for j in range(cols)] for i in
+                                                        range(rows)]
+
+    def delete_some():
+        unlucky = random.sample(random_data["A"].values.tolist(), 180)
+        print(f"{unlucky=}")
+        # for unl in unlucky:
+        #     mc.delete_item(value=unl)
+        mc.delete_item(value=unlucky)
+
+    app = tkinter.Tk()
+    app.geometry(calc_geometry_tl(800, 800, rtype=str))
+    app.title("Test MultiCombobox")
+
+    random_data = random_table(600, 16)
+    print(f"{random_data=}")
+    random_data = pd.DataFrame(random_data[1:], columns=random_data[0])
+    print(f"{random_data=}")
+
+    mc = MultiComboBox(
+        app,
+        data=random_data
+    )
+
+    app.after(2500, lambda: delete_some())
+
+    mc.grid()
+    app.mainloop()
+
+
+
 if __name__ == '__main__':
     print(f"\n\tVersion:\n{VERSION}\n")
     print(f"Details: {VERSION_DETAILS()}.")
@@ -4892,18 +4968,20 @@ if __name__ == '__main__':
     print(f"{VERSION_DATE()=}.")
     print(f"{VERSION_AUTHORS()=}.")
 
-    app = tkinter.Tk()
-    app.geometry(calc_geometry_tl(800, 800, parent=app, ask=True))
-    tb = ToggleCanvas(
-        app,
-        width=600,
-        height=200
-        # ,
-        # colour_option_a="#874556",
-        # colour_option_b="#455687",
-        ,font_text_option_a="CourierNew 18"
-        ,font_text_option_b="Arial 32",
-        option_a=["PART 1", "PART 2"],
-        p_bright=0.25
-    )
-    app.mainloop()
+    # app = tkinter.Tk()
+    # app.geometry(calc_geometry_tl(800, 800, parent=app, ask=True))
+    # tb = ToggleCanvas(
+    #     app,
+    #     width=600,
+    #     height=200
+    #     # ,
+    #     # colour_option_a="#874556",
+    #     # colour_option_b="#455687",
+    #     ,font_text_option_a="CourierNew 18"
+    #     ,font_text_option_b="Arial 32",
+    #     option_a=["PART 1", "PART 2"],
+    #     p_bright=0.25
+    # )
+    # app.mainloop()
+
+    test_multi_combobox()
