@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.81
-    Date...........2024-09-16
+    Version..............1.82
+    Date...........2024-09-17
     Author(s)....Avery Briggs
     """
 

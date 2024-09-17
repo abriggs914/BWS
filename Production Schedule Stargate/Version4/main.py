@@ -3108,6 +3108,7 @@ class App(ctk.CTk):
         # self.wait_window(tl)
 
     def update_multicombobox_already_scheduled(self, *args):
+        # return
         tm = bool(self.settings["tm_true_functions"].get("update_multicombobox_already_scheduled"))
         if tm:
             print(f"WARNING TM IS TRUE 'update_multicombobox_already_scheduled'")
@@ -3126,21 +3127,35 @@ class App(ctk.CTk):
         # df_orders = self.df_multi_combobox_data_orders_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
 
         # for i, row in sel_df.iterrows():
-        for i, row in df_orders.iterrows():
-            quote = row.get(self.quote_key("quote"))
-            # f_quote = False
-            for j, child in enumerate(combobox.tree_treeview.get_children()):
-                chi = combobox.tree_treeview.item(child, "values")
+        print(f"{len(combobox.tree_treeview.get_children())=}")
+        print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
+        quote_of_interest = "SG101301"
+        quotes = df_orders[self.quote_key("quote")].values.tolist()
+        for j, child in enumerate(combobox.tree_treeview.get_children()):
+            chi = combobox.tree_treeview.item(child, "values")
+            to_rem = []
+            for i, quote in enumerate(quotes):
+
                 if quote in chi:
-                    print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
+                    if quote == quote_of_interest:
+                        print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
+                    # if tm:
+                    #     print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
                     # f_quote = True
-                    # tags = list(combobox.tree_treeview.item(child, "tags"))
-                    tags = list(combobox.tree_treeview.item(str(j), "tags"))
-                    tags.append("scheduled")
-                    combobox.tree_treeview.item(str(j), tags=tags)
+                    tags = list(combobox.tree_treeview.item(child, "tags"))
+                    # tags = list(combobox.tree_treeview.item(str(j), "tags"))
+                    tags.insert(0, "scheduled")
+                    # combobox.tree_treeview.item(str(j), tags=tags)
+                    if quote == quote_of_interest:
+                        print(f"new_tags: {tags=}")
+                    combobox.tree_treeview.item(child, tags=tags)
+                    to_rem.append(quote)
                     break
+            for i, quote in enumerate(to_rem):
+                quotes.remove(quote)
             # var.set(var.get() + pg_p_r)
-        combobox.tree_treeview.tag_configure('scheduled', foreground='gray')  # Grayed out text for disabled rows
+        print(f"CONFIG = {combobox.tree_treeview.tag_configure('scheduled')}")  # Grayed out text for disabled rows
+        combobox.tree_treeview.tag_configure("scheduled", foreground='gray')  # Grayed out text for disabled rows
 
     def update_show_calendar_only(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_show_calendar_only"))
