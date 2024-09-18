@@ -1,0 +1,11 @@
+2024-09-18 10:51:33.662379:
+	<class '_tkinter.TclError'>: PRIMARY selection doesn't exist or form "STRING" not defined
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 5410, in release_treeview_entry
+    for i, sel in enumerate(combobox_orders.selection_get()):
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1030, in selection_get
+    return self.tk.call(('selection', 'get') + self._options(kw))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

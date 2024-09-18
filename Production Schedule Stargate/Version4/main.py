@@ -539,6 +539,7 @@ class App(ctk.CTk):
         }
         self.history = ctk.Variable(value=list(), name="history")
         self.error_log = dict()
+        self.mc_tag_already_scheduled = "scheduled"
         # self.listbox_history = list()
         self.settings = {
             "mode_company": COMPANY.STG.value,
@@ -554,8 +555,8 @@ class App(ctk.CTk):
             "start_at_first_of_month": True,
             "end_at_end_of_month": True,
             "tm_true_functions": {
-                "release_treeview_entry": True,
-                "update_multicombobox_already_scheduled": True
+                "release_treeview_entry": False,
+                "update_multicombobox_already_scheduled": False
             },
 
             # use this for testing, as long as 'user' exists, program will not fetch username
@@ -635,7 +636,7 @@ class App(ctk.CTk):
         self.colour_tile_header_col_background = Colour("#321116")
         self.colour_tile_header_col_foreground = Colour("#e4e4ff")
 
-        self.colour_tile_background = Colour("#ecdddd")
+        self.colour_tile_background = Colour("#ddddec")
         self.colour_tile_foreground = Colour("#090909")
         self.colour_tile_background_non_prod = self.colour_tile_background.darkened(0.25)
         self.font_tile = "Arial 10"
@@ -693,6 +694,9 @@ class App(ctk.CTk):
         self.colour_messagebox_frame_btns_background = Colour("#DFDFDF")
         self.colour_messagebox_btns_background = Colour("#AFAFAF")
         self.colour_messagebox_hover_btns_background = Colour("#CFCFCF")
+
+        self.colour_mc_already_scheduled_foreground = Colour("#9C9C9C")
+        self.colour_mc_already_scheduled_background = Colour("#FAFAFA")
 
         self.width_tile_outline_selected = 4
         self.height_calendar_scrollbar = 20
@@ -1276,7 +1280,9 @@ class App(ctk.CTk):
             lock_result_col="Quote#",
             auto_grid=False
             ,
-            show_index_column=False
+            show_index_column=False,
+            # width=self.total_width - self.canvas_width
+            width=150
         )
         self.multi_combobox_orders_bws.res_entry.unbind("<Return>",
                                                         self.multi_combobox_orders_bws.bind_return_res_entry)
@@ -1289,6 +1295,11 @@ class App(ctk.CTk):
             command=self.multi_combobox_orders_bws.click_btn_clear
         )
         self.multi_combobox_orders_bws.btn_clear_ctk[1].grid(row=0, column=1)
+        self.multi_combobox_orders_bws.tree_treeview.tag_configure(
+            self.mc_tag_already_scheduled,
+            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+            background=self.colour_mc_already_scheduled_background.hex_code
+        )
 
         # multi-combobox for warranty quotes
         self.multi_combobox_warranties_bws = tkinter_utility.MultiComboBox(
@@ -1302,8 +1313,10 @@ class App(ctk.CTk):
             allow_insert_ask=False,
             lock_result_col="WO#",
             auto_grid=False,
-            width=self.x_place_frame_canvas,
-            show_index_column=False
+            # width=self.x_place_frame_canvas,
+            show_index_column=False,
+            # width=self.total_width - self.canvas_width
+            width=150
         )
         self.multi_combobox_warranties_bws.btn_clear.grid_forget()
         self.multi_combobox_warranties_bws.btn_clear_ctk = customtkinter_utility.button_factory(
@@ -1313,6 +1326,11 @@ class App(ctk.CTk):
             command=self.multi_combobox_warranties_bws.click_btn_clear
         )
         self.multi_combobox_warranties_bws.btn_clear_ctk[1].grid(row=0, column=1)
+        self.multi_combobox_warranties_bws.tree_treeview.tag_configure(
+            self.mc_tag_already_scheduled,
+            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+            background=self.colour_mc_already_scheduled_background.hex_code
+        )
 
         self.tiles_bws = {d: {pl: dict() for pl in self.list_prod_lines_bws} for d in self.list_dates}
         self.tiles_bws["home"] = dict()
@@ -1346,6 +1364,11 @@ class App(ctk.CTk):
             command=self.multi_combobox_orders_stg.click_btn_clear
         )
         self.multi_combobox_orders_stg.btn_clear_ctk[1].grid(row=0, column=1)
+        self.multi_combobox_orders_stg.tree_treeview.tag_configure(
+            self.mc_tag_already_scheduled,
+            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+            background=self.colour_mc_already_scheduled_background.hex_code
+        )
 
         # multi-combobox for warranty quotes
         self.multi_combobox_warranties_stg = tkinter_utility.MultiComboBox(
@@ -1370,6 +1393,11 @@ class App(ctk.CTk):
             command=self.multi_combobox_warranties_stg.click_btn_clear
         )
         self.multi_combobox_warranties_stg.btn_clear_ctk[1].grid(row=0, column=1)
+        self.multi_combobox_warranties_stg.tree_treeview.tag_configure(
+            self.mc_tag_already_scheduled,
+            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+            background=self.colour_mc_already_scheduled_background.hex_code
+        )
 
         self.tiles_stg = {d: {pl: dict() for pl in self.list_prod_lines_stg} for d in self.list_dates}
         self.tiles_stg["home"] = dict()
@@ -2351,7 +2379,8 @@ class App(ctk.CTk):
         self.multi_combobox_orders_stg.add_new_item(self.df_multi_combobox_data_orders_stg)
         self.multi_combobox_orders_bws.add_new_item(self.df_multi_combobox_data_orders_bws)
 
-        self.update_multicombobox_already_scheduled()
+        self.mark_already_scheduled_units()
+        # self.update_multicombobox_already_scheduled()
 
         print(f"==>")
         print(f"{self.df_multi_combobox_data_orders_bws=}")
@@ -3107,8 +3136,63 @@ class App(ctk.CTk):
 
         # self.wait_window(tl)
 
+    def mark_already_scheduled_units(self):
+        tm = bool(self.settings["tm_true_functions"].get("mark_already_scheduled_units"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'mark_already_scheduled_units'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"mark_already_scheduled_units")
+
+        # als = self.tl_tv_switch_show_already_scheduled.get()
+        # als = 0 if (als == "No") else 1
+
+        def loop_company(comp: int):
+            combobox = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+            df_orders = self.df_rest_orders_bws if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
+            # # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_bws
+            # # df_orders = self.multi_combobox_orders_bws.data if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg.data
+            # # df_orders = self.df_multi_combobox_data_orders_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+            # #
+            # # for i, row in sel_df.iterrows():
+            # print(f"{len(combobox.tree_treeview.get_children())=}")
+            # print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
+            quote_of_interest = {}  # {"SG101301"}
+            quotes = df_orders[self.quote_key("quote", comp_id=comp)].values.tolist()
+            for j, child in enumerate(combobox.tree_treeview.get_children()):
+                child_vals = combobox.tree_treeview.item(child, "values")
+                to_rem = []
+                for i, quote in enumerate(quotes):
+
+                    if quote in child_vals:
+                        if tm and (quote in quote_of_interest):
+                            print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
+                        # if tm:
+                        #     print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
+                        # f_quote = True
+                        tags = list(combobox.tree_treeview.item(child, "tags"))
+                        if self.mc_tag_already_scheduled not in tags:
+                            tags.insert(0, self.mc_tag_already_scheduled)
+                            print(f"{list(combobox.tag_history)=}")
+                            if self.mc_tag_already_scheduled not in combobox.tag_history[child]:
+                                combobox.tag_history[child].append(self.mc_tag_already_scheduled)
+                        # tags = list(combobox.tree_treeview.item(str(j), "tags"))
+                        # combobox.tree_treeview.item(str(j), tags=tags)
+                        if tm and (quote in quote_of_interest):
+                            print(f"new_tags: {tags=}")
+                        combobox.tree_treeview.item(child, tags=tags)
+                        to_rem.append(quote)
+                        break
+                for i, quote in enumerate(to_rem):
+                    quotes.remove(quote)
+
+        loop_company(COMPANY.BWS.value)
+        loop_company(COMPANY.STG.value)
+
     def update_multicombobox_already_scheduled(self, *args):
-        # return
+        # combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled,
+        #                                      foreground='gray')  # Grayed out text for disabled rows
+        return
         tm = bool(self.settings["tm_true_functions"].get("update_multicombobox_already_scheduled"))
         if tm:
             print(f"WARNING TM IS TRUE 'update_multicombobox_already_scheduled'")
@@ -3122,40 +3206,46 @@ class App(ctk.CTk):
         comp = self.settings["mode_company"]
         combobox = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         df_orders = self.df_rest_orders_bws if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
-        # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_bws
-        # df_orders = self.multi_combobox_orders_bws.data if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg.data
-        # df_orders = self.df_multi_combobox_data_orders_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
-
-        # for i, row in sel_df.iterrows():
-        print(f"{len(combobox.tree_treeview.get_children())=}")
-        print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
-        quote_of_interest = "SG101301"
+        # # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_bws
+        # # df_orders = self.multi_combobox_orders_bws.data if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg.data
+        # # df_orders = self.df_multi_combobox_data_orders_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+        # #
+        # # for i, row in sel_df.iterrows():
+        # print(f"{len(combobox.tree_treeview.get_children())=}")
+        # print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
+        quote_of_interest = {}  # {"SG101301"}
         quotes = df_orders[self.quote_key("quote")].values.tolist()
         for j, child in enumerate(combobox.tree_treeview.get_children()):
-            chi = combobox.tree_treeview.item(child, "values")
+            child_vals = combobox.tree_treeview.item(child, "values")
             to_rem = []
             for i, quote in enumerate(quotes):
 
-                if quote in chi:
-                    if quote == quote_of_interest:
-                        print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
+                if quote in child_vals:
+                    if tm and (quote in quote_of_interest):
+                        print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                     # if tm:
-                    #     print(f"{i=}, {j=}, {quote=}, {child=}, {chi=}, {combobox.tree_treeview.item(child)=}")
+                    #     print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                     # f_quote = True
                     tags = list(combobox.tree_treeview.item(child, "tags"))
+                    if self.mc_tag_already_scheduled not in tags:
+                        tags.insert(0, self.mc_tag_already_scheduled)
+                        print(f"{list(combobox.tag_history)=}")
+                        if self.mc_tag_already_scheduled not in combobox.tag_history[child]:
+                            combobox.tag_history[child].append(self.mc_tag_already_scheduled)
                     # tags = list(combobox.tree_treeview.item(str(j), "tags"))
-                    tags.insert(0, "scheduled")
                     # combobox.tree_treeview.item(str(j), tags=tags)
-                    if quote == quote_of_interest:
+                    if tm and (quote in quote_of_interest):
                         print(f"new_tags: {tags=}")
                     combobox.tree_treeview.item(child, tags=tags)
                     to_rem.append(quote)
                     break
             for i, quote in enumerate(to_rem):
                 quotes.remove(quote)
-            # var.set(var.get() + pg_p_r)
-        print(f"CONFIG = {combobox.tree_treeview.tag_configure('scheduled')}")  # Grayed out text for disabled rows
-        combobox.tree_treeview.tag_configure("scheduled", foreground='gray')  # Grayed out text for disabled rows
+        # print(f"CONFIG = {combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled)}")  # Grayed out text for disabled rows
+        curr_fg = combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled, "foreground")
+        # print(f"{curr_fg=}")
+        if not curr_fg:
+            combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled, foreground='gray')  # Grayed out text for disabled rows
 
     def update_show_calendar_only(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_show_calendar_only"))
@@ -4243,8 +4333,10 @@ class App(ctk.CTk):
             # move rectangle
             can.coords(home_tile, x_1, y_1, x_1 + tw, y_1 + th)
 
-        for dat in col_legend:
+        # header row for dates
+        for j, dat in enumerate(col_legend):
             tile = dat["tile"]
+            date = self.list_dates[j]
             bw = float(can.itemcget(tile, "width"))
             bbox = can.bbox(tile)
             y_t = bbox[1] + bw
@@ -4252,12 +4344,58 @@ class App(ctk.CTk):
             # self.canvas_stg.coords(tile, x_1 + (tw / 2), y_t + (th / 2))
             can.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
             can.tag_raise(tile)
+            bg = self.colour_tile_header_row_background
+            fg = self.colour_tile_header_row_foreground
+            fg_w = self.colour_tile_foreground_weekend
+            fg_np = self.colour_foreground_holiday
+            can.itemconfigure(tile, fill=bg.hex_code)
+
+            if date == self.today:
+                fg = self.colour_tile_header_row_today_foreground
+
+
+
+
+            valid_status = self.is_valid_prod_date(date, include_all_holidays=False)
+            is_weekend = valid_status == "weekend"
+            non_prod = valid_status == "holiday"
+            # print(f"{date=}, {valid_status=}, {is_weekend=}, {non_prod=}")
+            # tile = tiles[date][line].get("tile", None)
+            texts = dat.get("texts", [])
+            # if tile:
+            #     can.itemconfigure(
+            #         tile,
+            #         fill=(bg_w if is_weekend else (bg_np if non_prod else bg)).hex_code
+            #     )
+
+            for k, txt in enumerate(texts):
+                can.itemconfigure(
+                    txt,
+                    fill=(fg_w if is_weekend else fg).hex_code
+                )
+                # if non_prod and (k > ):
+            if non_prod and texts:
+                can.itemconfigure(
+                    texts[-1],
+                    fill=self.colour_foreground_holiday.hex_code
+                )
+
+
+
+
+
+
+
+
+
 
             for txt in dat.get("texts", []):
                 # print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
                 can.coords(txt, x_1 + (tw / 2), y_t + (th / 2))
                 can.tag_raise(txt)
+                can.itemconfigure(txt, fill=fg.hex_code)
 
+        # header column for prod lines
         for dat in row_legend:
             tile = dat["tile"]
             bw = float(can.itemcget(tile, "width"))
@@ -4274,6 +4412,9 @@ class App(ctk.CTk):
             # can.coords(tile, x_1, y_t, x_1 + tw, y_t + th)
             can.tag_raise(tile)
             can.coords(tile, *bbox)
+            bg = self.colour_tile_header_col_background
+            fg = self.colour_tile_header_col_foreground
+            can.itemconfigure(tile, fill=bg.hex_code)
 
             # for i, txt in enumerate():
             #     print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
@@ -4287,6 +4428,7 @@ class App(ctk.CTk):
             for i, txt in enumerate(texts):
                 can.coords(txt, bbox[0] + (tw / 2), y_t + ((i + 1) * (th / (n_txts + 1))))
                 can.tag_raise(txt)
+                can.itemconfigure(txt, fill=fg.hex_code)
                 # can.itemconfigure(txt, text=text)
 
         can.tag_raise(home_tile)
@@ -4311,6 +4453,8 @@ class App(ctk.CTk):
                 res = "holiday" if (date_in in work_holidays) else "valid"
         else:
             res = "weekend"
+        if tm:
+            print(f"{date_in=}, {res=}")
         return res
 
         # valid = date_in.weekday() < 5
@@ -5405,6 +5549,12 @@ class App(ctk.CTk):
         bbox_if = list(self.frame_info_frame.bbox(info_frame))
         bbox_mc = list(self.frame_multi_combobox.bbox(combobox_orders))
 
+        if tm:
+            print(
+                f"CONFIG = {combobox_orders.tree_treeview.tag_configure(self.mc_tag_already_scheduled)}")  # Grayed out text for disabled rows
+            for i, sel in enumerate(combobox_orders.tree_treeview.selection()):
+                print(f"{i=}, {sel=}, {combobox_orders.tree_treeview.item(sel)}")
+
         bbox_canvas[0] += x_fc
         bbox_canvas[1] += y_fc
         bbox_canvas[2] += x_fc
@@ -5515,6 +5665,9 @@ class App(ctk.CTk):
                             print(f"{quote=}, {order_id=}")
                             print(f"dropped in calendar {date_line=}")
                         est_ad, est_line = df_order.iloc[0][[self.quote_key("available date"), self.quote_key("line")]]
+                        est_ad = f"{est_ad:%Y-%m-%d}" if est_ad else "?"
+                        est_line = est_line if est_line else "?"
+
                         if tm:
                             print(f"{est_ad=}, {est_line=}")
                         ans = ctk.YES
@@ -5524,7 +5677,7 @@ class App(ctk.CTk):
                                     print(f"THIS UNIT HAS ALREADY BEEN SCHEDULED!!")
                                 ans = self.messagebox(
                                     title=self.title_application_short,
-                                    message=f"Quote '{quote}' was already scheduled once on line {est_line} for '{est_ad:%Y-%m-%d}'.\nAre you sure you want to move it to line {line} on {date:%Y-%m-%d}?",
+                                    message=f"Quote '{quote}' was already scheduled once on line {est_line} for {est_ad}.\nAre you sure you want to move it to line {line} on {date:%Y-%m-%d}?",
                                     mode="askyesno"
                                 )
 
@@ -5932,9 +6085,10 @@ class App(ctk.CTk):
         self.app_state["hovered"].clear()
         for date, prod_line in sub_ht:
             # is_weekend = date.weekday() >= 5
-            valid_status = self.is_valid_prod_date(date)
+            valid_status = self.is_valid_prod_date(date, include_all_holidays=False)
             is_weekend = valid_status == "weekend"
             non_prod = valid_status == "holiday"
+            # print(f"{date=}, {valid_status=}, {is_weekend=}, {non_prod=}")
             tile = tiles[date][prod_line].get("tile", None)
             texts = tiles[date][prod_line].get("texts", [])
             if tile is not None:
@@ -9168,6 +9322,16 @@ class App(ctk.CTk):
         else:
             # if comp_id != curr_company:
             print(f"SWITCH TO {companies[comp_id]=}")
+
+            self.clear_info_frame()
+            self.clear_drag_tiles()
+            self.clear_hover_tiles()
+            self.clear_selected_tiles()
+            self.clear_master_drag_tile()
+
+            self.settings["mode_company"] = comp_id
+            self.adjust_colours()
+
             if comp_id == COMPANY.BWS.value:
                 grid_bws = True
                 grid_stg = False
@@ -9176,6 +9340,12 @@ class App(ctk.CTk):
                     100 + self.tile_width_bws,
                     100 + self.tile_height_bws
                 )
+                can = self.canvas_bws
+                tiles =  self.tiles_bws
+                lines = self.list_prod_lines_bws
+                col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
+                row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if
+                              (self.first_date <= date <= self.last_date)]
             else:
                 grid_bws = False
                 grid_stg = True
@@ -9184,12 +9354,81 @@ class App(ctk.CTk):
                     100 + self.tile_width_stg,
                     100 + self.tile_height_stg
                 )
+                can = self.canvas_stg
+                tiles =  self.tiles_stg
+                lines = self.list_prod_lines_stg
+                col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
+                row_legend = [self.tiles_stg[date]["date_legend"] for date in self.list_dates[:-1] if
+                              (self.first_date <= date <= self.last_date)]
 
-            self.clear_info_frame()
-            self.clear_drag_tiles()
-            self.clear_hover_tiles()
-            self.clear_selected_tiles()
-            self.clear_master_drag_tile()
+            dates = self.list_dates
+
+            # header row for dates
+            bg = self.colour_tile_header_row_background
+            fg = self.colour_tile_header_row_foreground
+            fg_w = self.colour_tile_foreground_weekend
+            for j, dat in enumerate(col_legend):
+                tile = dat["tile"]
+                date = self.list_dates[j]
+                can.tag_raise(tile)
+                can.itemconfigure(tile, fill=bg.hex_code)
+                valid_status = self.is_valid_prod_date(date, include_all_holidays=False)
+                is_weekend = valid_status == "weekend"
+                non_prod = valid_status == "holiday"
+                texts = dat.get("texts", [])
+                if is_weekend:
+                    fg = fg_w
+                for txt in texts:
+                    can.tag_raise(txt)
+                    can.itemconfigure(txt, fill=fg.hex_code)
+                if non_prod and texts:
+                    can.itemconfigure(texts[-1], fill=self.colour_foreground_holiday.hex_code)
+                if date == self.today:
+                    fg = self.colour_tile_header_row_today_foreground
+
+            # header column for prod lines
+            bg = self.colour_tile_header_col_background
+            fg = self.colour_tile_header_col_foreground
+            for dat in row_legend:
+                tile = dat["tile"]
+                can.tag_raise(tile)
+                can.itemconfigure(tile, fill=bg.hex_code)
+                texts = dat.get("texts", [])
+                for i, txt in enumerate(texts):
+                    can.tag_raise(txt)
+                    can.itemconfigure(txt, fill=fg.hex_code)
+
+            # Change rest of tile backgrounds
+            bg = self.colour_tile_background
+            bg_w = self.colour_tile_background_weekend
+            bg_np = self.colour_tile_background_non_prod
+            fg = self.colour_tile_foreground
+            for i, date in enumerate(dates):
+                for j, line in enumerate(lines):
+                    tile_data = tiles[date][line]
+                    # print(f"ij=({i}, {j}), {date=}, {line=}, {tile_data=}")
+                    valid_status = self.is_valid_prod_date(date, include_all_holidays=False)
+                    is_weekend = valid_status == "weekend"
+                    non_prod = valid_status == "holiday"
+                    # print(f"{date=}, {valid_status=}, {is_weekend=}, {non_prod=}")
+                    tile = tiles[date][line].get("tile", None)
+                    texts = tiles[date][line].get("texts", [])
+                    if tile:
+                        can.itemconfigure(
+                            tile,
+                            fill=(bg_w if is_weekend else (bg_np if non_prod else bg)).hex_code
+                        )
+                        for k, txt in enumerate(texts):
+                            can.itemconfigure(
+                                txt,
+                                fill=(fg_w if is_weekend else fg).hex_code
+                            )
+                            # if non_prod and (k > ):
+                        if non_prod and texts:
+                            can.itemconfigure(
+                                texts[-1],
+                                fill=self.colour_foreground_holiday.hex_code
+                            )
 
             self.invisible_canvas.coords(
                 self.multi_combobox_drag_tile,
@@ -9225,7 +9464,6 @@ class App(ctk.CTk):
 
             print(f"{grid_bws=}, {grid_stg=}")
 
-            self.settings["mode_company"] = comp_id
             mc_s = f"{comp_id}" if (comp_id != -1) else ""
             if not mc_s:
                 mc_s = "NULL"
@@ -9239,7 +9477,6 @@ class App(ctk.CTk):
                 connect(sql, **STARGATE_SQL_CREDS, do_show=True)
 
         self.update_multicombobox_already_scheduled()
-        self.adjust_colours()
         self.colour_code()
         self.click_mb_go_to_today()
         self.resume()
@@ -9275,7 +9512,7 @@ class App(ctk.CTk):
         self.colour_tile_header_col_background = Colour("#111632")
         self.colour_tile_header_col_foreground = Colour("#e4e4ff")
 
-        self.colour_tile_background = Colour("#ecdddd")
+        self.colour_tile_background = Colour("#ddddec")
         self.colour_tile_foreground = Colour("#090909")
         self.colour_tile_background_non_prod = self.colour_tile_background.darkened(0.25)
         self.font_tile = "Arial 10"
@@ -9334,7 +9571,7 @@ class App(ctk.CTk):
         self.colour_messagebox_btns_background = Colour("#AFAFAF")
         self.colour_messagebox_hover_btns_background = Colour("#CFCFCF")
 
-        if comp != COMPANY.BWS.value:
+        if comp == COMPANY.BWS.value:
             # BWS Values
             self.colour_background_theme_green = Colour("#006940")
             self.colour_background_theme_blue = Colour("#0066A9")
