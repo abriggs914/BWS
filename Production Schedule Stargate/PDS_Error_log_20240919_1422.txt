@@ -1,0 +1,8 @@
+2024-09-19 13:21:53.329669:
+	<class 'TypeError'>: '<=' not supported between instances of 'Timestamp' and 'str'
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\Documents\BWS\Production Schedule Stargate\Version4\main.py", line 5675, in release_treeview_entry
+    if not (fd <= est_ad <= ld):
+            ^^^^^^^^^^^^^^^^^^

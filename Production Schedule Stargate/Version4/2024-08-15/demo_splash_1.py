@@ -4,7 +4,7 @@ from customtkinter_utility import *
 from colour_utility import *
 
 
-class App(ctk.CTk):
+class Splash(ctk.CTkToplevel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -234,29 +234,29 @@ class App(ctk.CTk):
 
         # self.moving_points =
 
-        self.frame_controls = ctk.CTkFrame(self)
-        self.btn_start = button_factory(
-            self.frame_controls,
-            tv_btn="start",
-            command=self.start
-        )
-        self.btn_run_once = button_factory(
-            self.frame_controls,
-            tv_btn="run once",
-            command=self.run_once
-        )
-        self.btn_end = button_factory(
-            self.frame_controls,
-            tv_btn="end",
-            command=self.end
-        )
+        # self.frame_controls = ctk.CTkFrame(self)
+        # self.btn_start = button_factory(
+        #     self.frame_controls,
+        #     tv_btn="start",
+        #     command=self.start
+        # )
+        # self.btn_run_once = button_factory(
+        #     self.frame_controls,
+        #     tv_btn="run once",
+        #     command=self.run_once
+        # )
+        # self.btn_end = button_factory(
+        #     self.frame_controls,
+        #     tv_btn="end",
+        #     command=self.end
+        # )
 
         self.canvas.grid(row=0, column=0)
-        self.frame_controls.grid(row=1, column=0)
-        self.frame_controls.rowconfigure(0, weight=100)
-        self.btn_start[1].grid(row=0, column=0)
-        self.btn_run_once[1].grid(row=0, column=1)
-        self.btn_end[1].grid(row=0, column=2)
+        # self.frame_controls.grid(row=1, column=0)
+        # self.frame_controls.rowconfigure(0, weight=100)
+        # self.btn_start[1].grid(row=0, column=0)
+        # self.btn_run_once[1].grid(row=0, column=1)
+        # self.btn_end[1].grid(row=0, column=2)
         self.rowconfigure(0, weight=90)
         self.rowconfigure(1, weight=10)
         self.columnconfigure(0, weight=100)
@@ -269,15 +269,18 @@ class App(ctk.CTk):
         print(f"CLICK {x=}, {y=}")
 
     def run_once(self):
-        t_anim_time = self.start(times=1)
+        t_anim_time = self.start(times=1, skip_reset=True)
         self.after_ids_run.append(self.after(t_anim_time + 1000, self.end))
 
-    def start(self, times: bool | int = True, carry_anim_time: int = 0) -> int:
+    def start(self, times: bool | int = True, carry_anim_time: int = 0, skip_reset: bool = False) -> int:
         print(f"start")
 
-        self.reset(keep_re_runs=True)
+        if skip_reset:
+            t_reset = 0
+        else:
+            t_reset = self.reset(keep_re_runs=True)
 
-        s_off = 0
+        s_off = t_reset
 
         for i, row in enumerate(self.texts_to_do):
             for j, txt in enumerate(row):
@@ -422,10 +425,10 @@ class App(ctk.CTk):
                 self.after(
                     int(tps * i),
                     lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
-                        self.canvas.coords(
-                            self.tag_oval,
-                            x0_, y0_, x1_, y1_
-                        )
+                    self.canvas.coords(
+                        self.tag_oval,
+                        x0_, y0_, x1_, y1_
+                    )
                 )
             )
             # x0 = pts[0] - (wt / 2)
@@ -441,10 +444,10 @@ class App(ctk.CTk):
                 self.after(
                     int(tps * i),
                     lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
-                        self.canvas.coords(
-                            self.tag_moving_rect,
-                            x0_, y0_, x1_, y1_
-                        )
+                    self.canvas.coords(
+                        self.tag_moving_rect,
+                        x0_, y0_, x1_, y1_
+                    )
                 )
             )
         # for i in range(self.n_slices * 2):
@@ -465,7 +468,8 @@ class App(ctk.CTk):
         #         )
         #     )
 
-        print(f"{t_anim=}, {new_t_anim=}, {times=}, {tps=}, {xps=}, {s_off=}, wt={self.width_text}, ns={self.n_slices}, bbox={self.bbox_og_border}")
+        print(
+            f"{t_anim=}, {new_t_anim=}, {times=}, {tps=}, {xps=}, {s_off=}, wt={self.width_text}, ns={self.n_slices}, bbox={self.bbox_og_border}")
         if isinstance(times, int) and not isinstance(times, bool):
             if times <= 0:
                 print(f"HERE A")
@@ -488,9 +492,9 @@ class App(ctk.CTk):
         t_val = 18
         return (
             x0,
-            y0-t_val,
-            x1+t_val,
-            y1-t_val
+            y0 - t_val,
+            x1 + t_val,
+            y1 - t_val
         )
 
     def moving_point(self, l: float, reverse: bool = False) -> tuple[float, float]:
@@ -499,13 +503,13 @@ class App(ctk.CTk):
         # x0 = 0
         # x1 = self.width_text - (2 * self.width_background_border)
 
-        fn = lambda x: -0.1 * (x**3)
-        fn = lambda x: (((0.0292*x) - 5.85)**3) + 200
-        fn = lambda x: (((0.022*x) - 5.85)**3) + 200
-        fn = lambda x: (((0.027*x) - 5.85)**3) + 200
-        fn = lambda x: (((0.027*x) - 6.3)**3) + 250
+        fn = lambda x: -0.1 * (x ** 3)
+        fn = lambda x: (((0.0292 * x) - 5.85) ** 3) + 200
+        fn = lambda x: (((0.022 * x) - 5.85) ** 3) + 200
+        fn = lambda x: (((0.027 * x) - 5.85) ** 3) + 200
+        fn = lambda x: (((0.027 * x) - 6.3) ** 3) + 250
         # # fn = lambda x: (((0.019*x) - 7.1)**3) + 270
-        fn = lambda x: (((0.028*x) - 6.8)**3) + 250
+        fn = lambda x: (((0.028 * x) - 6.8) ** 3) + 250
         xp = l
         fx = fn(xp)
 
@@ -513,7 +517,8 @@ class App(ctk.CTk):
         return xp, fx
 
     # def letter_config(self, t_tag, fill_g):
-    def letter_config(self, i: int, j: int, k: int, tag_key: str, l: int, attr_name: Literal["fill", "outline"] = "fill", reverse: bool = False):
+    def letter_config(self, i: int, j: int, k: int, tag_key: str, l: int,
+                      attr_name: Literal["fill", "outline"] = "fill", reverse: bool = False):
         # print(f"tag_0, {i_=}, {j_=}, {k_=}, {l_=}, {txt_=}, {let_=}, {gradient(l_, n_slices, f_s, f_e, rgb=False)}")
 
         txt = self.texts_to_do[i][j]
@@ -566,18 +571,118 @@ class App(ctk.CTk):
                 self.after_cancel(id_)
             self.after_ids_run.clear()
 
-    def reset(self, keep_re_runs: bool = False):
-        self.clear_after_ids(keep_re_runs=keep_re_runs)
+    def change_letter(self, i: int, j: int, k: int, tag_key: str, l: int, fos: int, col: str | Colour, ec: str | Colour):
+        tag = self.tags[i][j][k][tag_key]
+        let = self.canvas.itemcget(tag, "text")
+        fill = gradient(l, fos, col, ec, rgb=False)
+        print(f"{i=}, {j=}, {k=}, {tag=}, {let=}, {l=}, {fos=}, col={col.hex_code}, ec={ec.hex_code}, {fill=}")
+        self.canvas.itemconfigure(
+            tag,
+            fill=fill
+        )
+
+    def fade_out(self) -> int:
+        ec = self.default_canvas_background
+        tpl = 10
+        fos = 250
+        t = 0
         for i, row in enumerate(self.texts_to_do):
             for j, txt in enumerate(row):
                 for k, let in enumerate(txt):
-                    txt = self.texts_to_do[i][j]
-                    kwargs = self.kwargs_texts.get(txt, {})
-                    fill_start = kwargs.get("fill_start", self.default_text_fill_start)
-                    self.canvas.itemconfigure(
-                        self.tags[i][j][k]["tag_1"],
-                        fill=fill_start.hex_code
-                    )
+                    t = (i * 185) + (k * 40)
+                    # txt = self.texts_to_do[i][j]
+                    # kwargs = self.kwargs_texts.get(txt, {})
+                    # fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+                    tag_1 = self.tags[i][j][k]["tag_1"]
+                    tag_0 = self.tags[i][j][k]["tag_0"]
+                    col_f = Colour(self.canvas.itemcget(tag_1, "fill"))
+                    col_ou = Colour(self.canvas.itemcget(tag_0, "fill"))
+                    for l in range(fos):
+                        t += 40
+                        self.after(
+                            t,
+                            lambda
+                                i_=i,
+                                j_=j,
+                                k_=k,
+                                l_=l,
+                                key="tag_1",
+                                fos_=fos,
+                                col_=col_f,
+                                ec_=ec:
+                            self.change_letter(
+                                i=i_,
+                                j=j_,
+                                k=k_,
+                                tag_key=key,
+                                l=l_,
+                                fos=fos_,
+                                col=col_,
+                                ec=ec_
+                            )
+                        )
+                        self.after(
+                            t,
+                            lambda
+                                i_=i,
+                                j_=j,
+                                k_=k,
+                                l_=l,
+                                key="tag_0",
+                                fos_=fos,
+                                col_=col_ou,
+                                ec_=ec:
+                            self.change_letter(
+                                i=i_,
+                                j=j_,
+                                k=k_,
+                                tag_key=key,
+                                l=l_,
+                                fos=fos_,
+                                col=col_,
+                                ec=ec_
+                            )
+                        )
+                            #print(f"{tag_=}, {fill_=}")
+
+                            # lambda l_=l, col_=col, tag_=tag:
+                            #     self.canvas.itemconfigure(
+                            #         tag_,
+                            #         fill=gradient(l_, fos, col_, ec, rgb=False)
+                            #     )
+                        print(f">>{t=}")
+                        t += tpl
+
+        print(f"FADE-OUT {t=}")
+        return t + tpl
+
+    def reset(self, keep_re_runs: bool = False) -> int:
+        t_anim = self.fade_out()
+        t_reset = 0
+        self.clear_after_ids(keep_re_runs=keep_re_runs)
+        # for i, row in enumerate(self.texts_to_do):
+        #     for j, txt in enumerate(row):
+        #         for k, let in enumerate(txt):
+        #             txt = self.texts_to_do[i][j]
+        #             kwargs = self.kwargs_texts.get(txt, {})
+        #             fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+        #             t_reset = t_anim + i + j + (20 * k)
+        #             self.after(
+        #                 t_reset,
+        #                 lambda
+        #                     i_=i,
+        #                     j_=j,
+        #                     k_=k,
+        #                     fill_=fill_start:
+        #                 self.canvas.itemconfigure(
+        #                     self.tags[i_][j_][k_]["tag_1"],
+        #                     fill=fill_.hex_code
+        #                 )
+        #             )
+
+        t_anim += t_reset
+        print(f"RESET {t_anim=}")
+        return t_anim
 
     def end(self):
         print(f"end")
@@ -586,7 +691,19 @@ class App(ctk.CTk):
 
 if __name__ == '__main__':
 
-    app = App()
+    def kill():
+        print(f"Time to die")
+        if tl.winfo_exists():
+            tl.destroy()
+        app.destroy()
+
+
+    app = ctk.CTk()
+    app.after(120000, kill)
+
+    tl = Splash()
+    tl.start(skip_reset=True)
+    tl.grab_set()
+    tl.protocol("WM_DELETE_WINDOW", kill)
+
     app.mainloop()
-
-
