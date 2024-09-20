@@ -586,7 +586,7 @@ class Splash(ctk.CTkToplevel):
         tag = self.tags[i][j][k][tag_key]
         let = self.canvas.itemcget(tag, "text")
         fill = gradient(l, fos, col, ec, rgb=False)
-        print(f"{i=}, {j=}, {k=}, {tag=}, {let=}, {l=}, {fos=}, col={col.hex_code}, ec={ec.hex_code}, {fill=}")
+        # print(f"{i=}, {j=}, {k=}, {tag=}, {let=}, {l=}, {fos=}, col={col.hex_code}, ec={ec.hex_code}, {fill=}")
         self.canvas.itemconfigure(
             tag,
             fill=fill
@@ -658,14 +658,15 @@ class Splash(ctk.CTkToplevel):
 
         new_t_anim = ((self.n_slices + 2) * self.sec_per_slice) + t
 
+        wmr = (self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0])
         wt = math.ceil(self.bbox_og_border[2] - self.bbox_og_border[0])
         # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 2)))
         # xps = self.width_text / ((self.n_slices + 1) * 2)
         # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 1)))
         # tps = math.ceil(new_t_anim) / ((self.n_slices + 1) * 1)
-        tps = math.ceil(new_t_anim) / (wt + (wt // 2))
         xps = wt / ((self.n_slices + 1) * 1)
         swt = wt + (wt // 2)
+        tps = math.ceil(new_t_anim) / swt
         for i in range(swt - 1, -1, -1):
             pts = self.moving_point(i, reverse=False)
             # pts = self.moving_point(i * xps, reverse=False)
@@ -690,10 +691,10 @@ class Splash(ctk.CTkToplevel):
             # x1 = pts[0] + (wt / 2)
             # y1 = pts[1] + (wt / 2)
             # x0, y0, x1, y1 = self.twist_rect(x0, y0, x1, y1)
-            x0 = pts[0] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
-            y0 = pts[1] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
-            x1 = pts[0] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
-            y1 = pts[1] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            x0 = (wmr / 2) + pts[0] - (wmr / 2)
+            y0 = (wmr / 2) + pts[1] - (wmr / 2)
+            x1 = (wmr / 2) + pts[0] + (wmr / 2)
+            y1 = (wmr / 2) + pts[1] + (wmr / 2)
             self.after_ids_reset.append(
                 self.after(
                     int(tps * (swt - i)),
