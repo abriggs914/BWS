@@ -28,6 +28,7 @@ class Splash(ctk.CTkToplevel):
         self.sec_per_slice = int(25 // 5)
         self.after_ids = []
         self.after_ids_run = []
+        self.after_ids_reset = []
 
         self.texts_to_do = [
             ["STARGATE"],
@@ -273,14 +274,16 @@ class Splash(ctk.CTkToplevel):
         self.after_ids_run.append(self.after(t_anim_time + 1000, self.end))
 
     def start(self, times: bool | int = True, carry_anim_time: int = 0, skip_reset: bool = False) -> int:
-        print(f"start")
+        print(f"start {times=}, {carry_anim_time=}, {skip_reset=}")
 
         if skip_reset:
             t_reset = 0
         else:
             t_reset = self.reset(keep_re_runs=True)
+            print(f"ADDING {t_reset=}")
 
         s_off = t_reset
+        print(f"USING {s_off=}")
 
         for i, row in enumerate(self.texts_to_do):
             for j, txt in enumerate(row):
@@ -423,7 +426,7 @@ class Splash(ctk.CTkToplevel):
             print(f"{i=}, {x0=}, {y0=}, {x1=}, {y1=}")
             self.after_ids.append(
                 self.after(
-                    int(tps * i),
+                    int(tps * i) + t_reset,
                     lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
                     self.canvas.coords(
                         self.tag_oval,
@@ -442,7 +445,7 @@ class Splash(ctk.CTkToplevel):
             y1 = pts[1] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
             self.after_ids.append(
                 self.after(
-                    int(tps * i),
+                    int(tps * i) + t_reset,
                     lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
                     self.canvas.coords(
                         self.tag_moving_rect,
@@ -484,8 +487,16 @@ class Splash(ctk.CTkToplevel):
         t_anim += self.time_between_re_runs
         new_t_anim += self.time_between_re_runs
         print(f"{self.n_slices=},  {tps=}")
-        print(f"rerun in {t_anim=}, {times=}, {self.bbox_og_border=}")
-        self.after_ids_run.append(self.after(new_t_anim, lambda r=times: self.start(times=r, carry_anim_time=t_anim)))
+        print(f"rerun in {t_anim=}, {new_t_anim=}, {times=}, {self.bbox_og_border=}")
+        self.after_ids_run.append(
+            self.after(
+                new_t_anim,
+                lambda
+                    r=times,
+                    ta=t_anim:
+                self.start(times=r, carry_anim_time=ta)
+            )
+        )
         return t_anim
 
     def twist_rect(self, x0, y0, x1, y1):
@@ -599,48 +610,40 @@ class Splash(ctk.CTkToplevel):
                     col_ou = Colour(self.canvas.itemcget(tag_0, "fill"))
                     for l in range(fos):
                         t += 40
-                        self.after(
-                            t,
-                            lambda
-                                i_=i,
-                                j_=j,
-                                k_=k,
-                                l_=l,
-                                key="tag_1",
-                                fos_=fos,
-                                col_=col_f,
-                                ec_=ec:
-                            self.change_letter(
-                                i=i_,
-                                j=j_,
-                                k=k_,
-                                tag_key=key,
-                                l=l_,
-                                fos=fos_,
-                                col=col_,
-                                ec=ec_
+                        self.after_ids_reset.append(
+                            self.after(
+                                t,
+                                lambda
+                                    i_=i, j_=j, k_=k, l_=l,
+                                    key="tag_1",
+                                    fos_=fos,
+                                    col_=col_f,
+                                    ec_=ec:
+                                self.change_letter(
+                                    i=i_, j=j_, k=k_, l=l_,
+                                    tag_key=key,
+                                    fos=fos_,
+                                    col=col_,
+                                    ec=ec_
+                                )
                             )
                         )
-                        self.after(
-                            t,
-                            lambda
-                                i_=i,
-                                j_=j,
-                                k_=k,
-                                l_=l,
-                                key="tag_0",
-                                fos_=fos,
-                                col_=col_ou,
-                                ec_=ec:
-                            self.change_letter(
-                                i=i_,
-                                j=j_,
-                                k=k_,
-                                tag_key=key,
-                                l=l_,
-                                fos=fos_,
-                                col=col_,
-                                ec=ec_
+                        self.after_ids_reset.append(
+                            self.after(
+                                t,
+                                lambda
+                                    i_=i, j_=j, k_=k, l_=l,
+                                    key="tag_0",
+                                    fos_=fos,
+                                    col_=col_ou,
+                                    ec_=ec:
+                                self.change_letter(
+                                    i=i_, j=j_, k=k_, l=l_,
+                                    tag_key=key,
+                                    fos=fos_,
+                                    col=col_,
+                                    ec=ec_
+                                )
                             )
                         )
                             #print(f"{tag_=}, {fill_=}")
@@ -650,11 +653,60 @@ class Splash(ctk.CTkToplevel):
                             #         tag_,
                             #         fill=gradient(l_, fos, col_, ec, rgb=False)
                             #     )
-                        print(f">>{t=}")
+                        # print(f">>{t=}")
                         t += tpl
 
+        new_t_anim = ((self.n_slices + 2) * self.sec_per_slice) + t
+
+        wt = math.ceil(self.bbox_og_border[2] - self.bbox_og_border[0])
+        # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 2)))
+        # xps = self.width_text / ((self.n_slices + 1) * 2)
+        # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 1)))
+        # tps = math.ceil(new_t_anim) / ((self.n_slices + 1) * 1)
+        tps = math.ceil(new_t_anim) / (wt + (wt // 2))
+        xps = wt / ((self.n_slices + 1) * 1)
+        swt = wt + (wt // 2)
+        for i in range(swt - 1, -1, -1):
+            pts = self.moving_point(i, reverse=False)
+            # pts = self.moving_point(i * xps, reverse=False)
+            # pts = self.moving_point(i * self.width_text, reverse=False)
+            x0 = self.bbox_og_border[2] + pts[0] - 5
+            y0 = self.bbox_og_border[3] + pts[1] - 5
+            x1 = self.bbox_og_border[2] + pts[0] + 5
+            y1 = self.bbox_og_border[3] + pts[1] + 5
+            print(f"FO {i=}, {x0=}, {y0=}, {x1=}, {y1=}")
+            self.after_ids_reset.append(
+                self.after(
+                    int(tps * (swt - i)),
+                    lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
+                    self.canvas.coords(
+                        self.tag_oval,
+                        x0_, y0_, x1_, y1_
+                    )
+                )
+            )
+            # x0 = pts[0] - (wt / 2)
+            # y0 = pts[1] - (wt / 2)
+            # x1 = pts[0] + (wt / 2)
+            # y1 = pts[1] + (wt / 2)
+            # x0, y0, x1, y1 = self.twist_rect(x0, y0, x1, y1)
+            x0 = pts[0] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            y0 = pts[1] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            x1 = pts[0] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            y1 = pts[1] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            self.after_ids_reset.append(
+                self.after(
+                    int(tps * (swt - i)),
+                    lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
+                    self.canvas.coords(
+                        self.tag_moving_rect,
+                        x0_, y0_, x1_, y1_
+                    )
+                )
+            )
+        t = new_t_anim + tpl
         print(f"FADE-OUT {t=}")
-        return t + tpl
+        return t
 
     def reset(self, keep_re_runs: bool = False) -> int:
         t_anim = self.fade_out()
