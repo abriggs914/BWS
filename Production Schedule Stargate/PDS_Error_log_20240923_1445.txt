@@ -1,0 +1,9 @@
+2024-09-23 14:44:15.705764:
+	<class '_tkinter.TclError'>: bad window path name ".!splash"
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 862, in callit
+    func(*args)
+  File "C:\Users\abriggs\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 788, in focus_set
+    self.tk.call('focus', self._w)

@@ -24,6 +24,7 @@ from PIL import Image, ImageTk, ImageGrab, ImageDraw, ImageFont
 from ttkwidgets.color import askcolor, ColorPicker
 from ttkwidgets.font import askfont, FontChooser, FontSelectFrame
 import customtkinter_utility
+from demo_splash_3 import Splash
 
 import win32gui
 import win32con
@@ -358,6 +359,8 @@ class App(ctk.CTk):
         self.settings = {
             "allow_multi_select": False,
             "colour_coding": {},
+            "init_done": ctk.BooleanVar(self, value=False),
+            "init_test_mode_done": ctk.BooleanVar(self, value=False),
             "TEST_MODE": ctk.BooleanVar(self, value=False),
             "allowed_to_publish": ctk.BooleanVar(self, value=False),
             "admin_password": ctk.StringVar(self, value=self.default_admin_password),
@@ -367,6 +370,7 @@ class App(ctk.CTk):
             "start_at_first_of_month": True,
             "end_at_end_of_month": True
         }
+
         self.list_sl_preview_table_cols = ["Quote", "Current Date", "New Date"]
         self.tl_data: dict = {}
 
@@ -624,7 +628,6 @@ class App(ctk.CTk):
         self.tl_tv_show_galvanized = ctk.BooleanVar(self, value=self.default_show_galvanized)
         self.tl_tv_showing_galvanized = ctk.BooleanVar(self, value=self.default_show_galvanized)
         self.settings["TEST_MODE"].trace_variable("w", self.tv_update_test_mode)
-        self.settings["init_test_mode_done"] = ctk.BooleanVar(self, value=False)
         self.settings["count_application_reloads"] = ctk.IntVar(self, value=0)
 
         self.is_valid_updater = self.check_valid_updater()
@@ -1427,7 +1430,6 @@ class App(ctk.CTk):
         # # self.multi_combobox_window.lift()
 
         # bindings
-        self.bn_mousewheel_calendar = None
         self.bn_motion_calendar = None
         self.bn_lclickmotion_calendar = None
         self.bn_lclickmotion_invisible_canvas = None
@@ -1438,6 +1440,7 @@ class App(ctk.CTk):
         self.bind_treeview_to_canvas()
 
         # traces
+        self.settings["init_done"].trace_variable("write", self.update_done_init)
         self.tv_done_interact_tl.trace_variable("w", self.update_done_interact_tl)
         self.canvas.configure(xscrollcommand=self.scroll_bar_x.set)
         self.history.trace_variable("w", self.tv_update_history)
@@ -1465,10 +1468,29 @@ class App(ctk.CTk):
         if self.settings["TEST_MODE"].get():
             print(f"{self.tiles=}")
 
+        self.settings["init_done"].set(True)
+        self.splash.end()
+        self.splash.destroy()
+
         in_test_mode = self.settings["TEST_MODE"].get()
         print(f"{self.settings['TEST_MODE'].get()=}")
 
         print(f"TEST_MODE={'Y' if in_test_mode else 'N'}")
+
+    def update_done_init(self, *args):
+        val = self.settings["init_done"].get()
+        print(f"update_done_init, {val=}")
+        if val:
+            self.quit_splash()
+
+    def quit_splash(self):
+        print(f"quit_splash")
+        done_init = self.settings["init_done"].get()
+        if not done_init:
+            return
+        else:
+            if self.splash.winfo_exists():
+                self.splash.destroy()
 
     def calc_daily_grid_cells(
             self,

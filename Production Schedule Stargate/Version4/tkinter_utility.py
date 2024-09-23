@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.83
-    Date...........2024-09-18
+    Version..............1.84
+    Date...........2024-09-23
     Author(s)....Avery Briggs
     """
 
@@ -2472,7 +2472,7 @@ class MultiComboBox(tkinter.Frame):
             else:
                 if self.tv_tree_is_hidden.get():
                     self.click_canvas_dropdown_button(None)
-        print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
+        # print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
 
     def click_btn_clear(self):
         self.res_tv_entry.set("")
@@ -4461,7 +4461,7 @@ class InfoFrame(tkinter.Frame):
     def get_objects(self):
         return self, *self.info_labels
 
-    def change_value(self, key, value):
+    def change_value(self, key, value, show_exception: bool = False):
         if key not in self.info_labels:
             # print(f"de-keying")
             ke = self.de_keyify(key)
@@ -4474,7 +4474,8 @@ class InfoFrame(tkinter.Frame):
             try:
                 val = fmt(value)
             except Exception as e:
-                print(f"FAILED TO FORMAT key='{key}'.")
+                if show_exception:
+                    print(f"FAILED TO FORMAT key='{key}'.")
                 val = value
 
         self.info_labels[ke]["v_tv"].set(val)
