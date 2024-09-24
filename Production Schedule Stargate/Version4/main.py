@@ -25,6 +25,7 @@ from typing import Tuple, Optional, Literal, Any
 from ttkwidgets.color import ColorPicker
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
+import warnings
 import utility
 import tkinter_utility
 import datetime_utility
@@ -38,6 +39,10 @@ import customtkinter_utility
 # TODO 202403251934 - the date and line bucket functions seem to have some "drift". when scrolling to the other end of the calendar
 #   The hovered tile is too far to the right of the pointer.
 # TODO 202406211312 Remove the data dictionary and declare all of the values as class attributes
+
+
+# Block warnings for not using SQLAlchemy in calls to pyodbc_connection.connect
+warnings.filterwarnings("ignore")
 
 
 ### ONLY FOR STARGATE AND ONLY TEMPORARILY
@@ -506,9 +511,8 @@ class App(ctk.CTk):
 
         self.tv_done_setup = ctk.BooleanVar(self, value=False)
 
-        print(f"CREATE SPLASH")
         self.splash = Splash(self, auto_run=True)
-        self.date_version = datetime.datetime(2024, 9, 13)
+        self.date_version = datetime.datetime(2024, 9, 24)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
 
         self.file_last_session_sql: str = r"C:\Access\last_session_sql.sql"
@@ -563,8 +567,17 @@ class App(ctk.CTk):
                 "release_treeview_entry": False,
                 "redraw_legend": False,
                 "get_current_canvas_view": False,
-                "update_multicombobox_already_scheduled": False
+                "update_multicombobox_already_scheduled": False,
+                "mark_already_scheduled_units": False
             },
+            # warning Test Mode must be enabled for this to work.
+            "quotes_of_interest": {
+                "SG100027",
+                "SG100028",
+                "SG100030",
+                "SG101301"
+            }
+            ,
 
             # use this for testing, as long as 'user' exists, program will not fetch username
             # "test_user": None
@@ -971,8 +984,7 @@ class App(ctk.CTk):
             parent=self,
             ask=self.tl_tv_switch_ask_monitors.get() == "Yes",
             rtype=dict,
-            bypass_parent_withdraw=True,
-            do_print=True
+            bypass_parent_withdraw=True
         )
 
         if tm:
@@ -1010,7 +1022,8 @@ class App(ctk.CTk):
         )
 
         als = self.tl_tv_switch_show_already_scheduled.get() == "Yes"
-        print(f"{als=}")
+        if tm:
+            print(f"{als=}")
         self.df_calendar_stg = connect(**SQL_HOLIDAYS_STG, do_show=tm, do_print=tm)
         self.df_calendar_stg["C_HolidayName"] = self.df_calendar_stg["C_HolidayName"].replace("Christmas is coming!")
         self.df_prod_lines_stg = connect(**SQL_USED_LINES_STG, do_show=tm, do_print=tm)
@@ -1609,6 +1622,8 @@ class App(ctk.CTk):
             }
         )
 
+        tm = True
+
         ###################
         # STARGATE ORDERS #
         ###################
@@ -1657,6 +1672,7 @@ class App(ctk.CTk):
         self.concats_double_entries_stg = []
         self.min_date_stg, self.max_date_stg = None, None
         self.min_line_stg, self.max_line_stg = None, None
+        print(f"COLS_STG={sorted(list(self.df_orders_stg.columns))}")
         for i, row in self.df_orders_stg.iterrows():
             no_fit = False
             double = False
@@ -1678,6 +1694,10 @@ class App(ctk.CTk):
             self.df_ids_to_date_line_stg[i] = (date, prod_line)
             if prod_line == "":
                 prod_line = None
+
+            if tm and (dat_quote in self.settings.get("quotes_of_interest", set())):
+                print(f"{list(row)=}")
+                print(f">>>>> {dat_quote=}")
 
             if tm:
                 print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
@@ -1823,12 +1843,14 @@ class App(ctk.CTk):
 
         if tm:
             print(f"STG")
-            print(f"self.df_orders==\n{self.df_orders_stg}")
-            print(f"self.df_rest_orders==\n{self.df_rest_orders_stg}")
-            print(f"self.df_multi_combobox_data_orders==\n{self.df_multi_combobox_data_orders_stg}")
-            print(f"self.df_rest_orders.columns==\n{list(self.df_rest_orders_stg.columns)}")
+            print(f"self.df_orders_stg==\n{self.df_orders_stg}")
+            print(f"self.df_rest_orders_stg==\n{self.df_rest_orders_stg.sort_values(by='OrdersV2_SGQuote')}")
+            print(f"self.df_multi_combobox_data_orders_stg==\n{self.df_multi_combobox_data_orders_stg}")
+            print(f"self.df_rest_orders.columns_stg==\n{list(self.df_rest_orders_stg.columns)}")
             print(
-                f"self.df_multi_combobox_data_orders.columns==\n{list(self.df_multi_combobox_data_orders_stg.columns)}")
+                f"self.df_multi_combobox_data_orders_stg.columns==\n{list(self.df_multi_combobox_data_orders_stg.columns)}")
+
+        tm = False
 
         # header row
         for i, row in enumerate(self.calc_grid_cells_stg[:1]):
@@ -2293,10 +2315,11 @@ class App(ctk.CTk):
                     ]
                 })
 
-        print(f"{self.min_date_stg=}, {self.max_date_stg=}")
-        print(f"{self.list_prod_lines_stg[self.min_line_stg]=}, {self.list_prod_lines_stg[self.max_line_stg]=}")
-        print(f"{self.min_date_bws=}, {self.max_date_bws=}")
-        print(f"{self.list_prod_lines_bws[self.min_line_bws]=}, {self.list_prod_lines_bws[self.max_line_bws]=}")
+        if tm:
+            print(f"{self.min_date_stg=}, {self.max_date_stg=}")
+            print(f"{self.list_prod_lines_stg[self.min_line_stg]=}, {self.list_prod_lines_stg[self.max_line_stg]=}")
+            print(f"{self.min_date_bws=}, {self.max_date_bws=}")
+            print(f"{self.list_prod_lines_bws[self.min_line_bws]=}, {self.list_prod_lines_bws[self.max_line_bws]=}")
 
         if not os.path.isdir(self.dir_path_resources):
             os.makedirs(self.dir_path_resources)
@@ -2487,7 +2510,8 @@ class App(ctk.CTk):
             # self.attributes("-fullscreen", True)
         else:
             self.geometry(geo)
-        print(f"{geo=}")
+        if tm:
+            print(f"{geo=}")
 
         self.tv_multi_combobox_drag_tile = ctk.BooleanVar(self, value=False)
 
@@ -2603,7 +2627,8 @@ class App(ctk.CTk):
         self.tv_update_test_mode()
         self.update_allowed_comp_bws()
         self.update_allowed_comp_stg()
-        print(f"{self.settings['mode_company']=}, {self.default_allowed_companies=}")
+        if tm:
+            print(f"{self.settings['mode_company']=}, {self.default_allowed_companies=}")
         self.switch_company(self.settings["mode_company"])
         # if self.settings["mode_company"] != self.default_allowed_companies[0]:
         #     # if not stargate on-load, then switch company
@@ -2613,7 +2638,7 @@ class App(ctk.CTk):
         # self.canvas_stg.bind("<Control-z>", self.undo)
         # self.bind("<Ctrl-z>", self.undo)
 
-        if self.settings["TEST_MODE"].get():
+        if tm:
             print(f"{self.tiles_stg=}")
             print(f"{self.tiles_bws=}")
 
@@ -2622,7 +2647,8 @@ class App(ctk.CTk):
 
         print(f"TEST_MODE={'Y' if tm else 'N'}")
         companies = list(map(lambda c: c.name, COMPANY))
-        print(f"COMPANY={companies[self.settings['mode_company']]}")
+        if tm:
+            print(f"COMPANY={companies[self.settings['mode_company']]}")
 
         if tm:
             print(
@@ -2635,15 +2661,28 @@ class App(ctk.CTk):
         self.splash.destroy()
 
         self.grab_set()
+        print(f"READY")
 
     def update_done_init(self, *args):
+        tm = bool(self.settings["tm_true_functions"].get("update_done_init"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'update_done_init'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"update_done_init")
         val = self.tv_done_setup.get()
-        print(f"update_done_init, {val=}")
+        if tm:
+            print(f"update_done_init, {val=}")
         if val:
             self.quit_splash()
 
     def quit_splash(self):
-        print(f"quit_splash")
+        tm = bool(self.settings["tm_true_functions"].get("quit_splash"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'quit_splash'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"quit_splash")
         done_init = self.tv_done_setup.get()
         if not done_init:
             return
@@ -2872,7 +2911,7 @@ class App(ctk.CTk):
         tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"set_invisible_canvas")
-        print(f'set_invisible_canvas {mode=}, {self.settings['init_test_mode_done'].get()=}')
+            print(f'set_invisible_canvas {mode=}, {self.settings['init_test_mode_done'].get()=}')
 
         if mode == "gray":
             if self.settings["init_test_mode_done"].get():
@@ -2962,6 +3001,13 @@ class App(ctk.CTk):
         sql = sql.format(ac_s=ac_s, un=un)
         connect(sql, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
 
+        all_comps = {c.value: c.name for c in COMPANY}
+        if tm:
+            # print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
+            for comp in self.tv_allowed_companies.get():
+                name = all_comps.get(comp, "?")
+                print(f"\tAllowed company: '{name}'")
+
     def update_allowed_comp_bws(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_allowed_comp_bws"))
         if tm:
@@ -2969,6 +3015,7 @@ class App(ctk.CTk):
         tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_allowed_comp_bws")
+        all_comps = {c.value: c.name for c in COMPANY}
         ac = self.tv_allowed_companies.get()
         inc_bws = self.tv_allowed_comp_bws.get()
         comp_id = COMPANY.BWS.value
@@ -2981,7 +3028,12 @@ class App(ctk.CTk):
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
         # if tm:
-        print(f"update_allowed_comp_bws ac={self.tv_allowed_companies.get()}")
+        # print(f"update_allowed_comp_bws ac={self.tv_allowed_companies.get()}")
+        if tm:
+            # print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
+            for comp in self.tv_allowed_companies.get():
+                name = all_comps.get(comp, "?")
+                print(f"\tAllowed company: '{name}'")
 
     def update_allowed_comp_stg(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_allowed_comp_stg"))
@@ -2990,6 +3042,7 @@ class App(ctk.CTk):
         tm = tm or self.settings["TEST_MODE"].get()
         if tm:
             print(f"update_allowed_comp_stg")
+        all_comps = {c.value: c.name for c in COMPANY}
         ac = self.tv_allowed_companies.get()
         inc_stg = self.tv_allowed_comp_stg.get()
         comp_id = COMPANY.STG.value
@@ -3001,8 +3054,11 @@ class App(ctk.CTk):
             if comp_id in valid:
                 valid.remove(comp_id)
         self.tv_allowed_companies.set(list(valid))
-        # if tm:
-        print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
+        if tm:
+            # print(f"update_allowed_comp_stg ac={self.tv_allowed_companies.get()}")
+            for comp in self.tv_allowed_companies.get():
+                name = all_comps.get(comp, "?")
+                print(f"\tAllowed company: '{name}'")
 
     def update_show_galvanized(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_show_galvanized"))
@@ -3198,15 +3254,17 @@ class App(ctk.CTk):
             # # for i, row in sel_df.iterrows():
             # print(f"{len(combobox.tree_treeview.get_children())=}")
             # print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
-            quote_of_interest = {}  # {"SG101301"}
+            quotes_of_interest = self.settings.get("quotes_of_interest", set())
             quotes = df_orders[self.quote_key("quote", comp_id=comp)].values.tolist()
+            if tm:
+                print(f"{quotes=}")
             for j, child in enumerate(combobox.tree_treeview.get_children()):
                 child_vals = combobox.tree_treeview.item(child, "values")
                 to_rem = []
                 for i, quote in enumerate(quotes):
 
                     if quote in child_vals:
-                        if tm and (quote in quote_of_interest):
+                        if tm and (quote in quotes_of_interest):
                             print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                         # if tm:
                         #     print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
@@ -3219,7 +3277,7 @@ class App(ctk.CTk):
                                 combobox.tag_history[child].append(self.mc_tag_already_scheduled)
                         # tags = list(combobox.tree_treeview.item(str(j), "tags"))
                         # combobox.tree_treeview.item(str(j), tags=tags)
-                        if tm and (quote in quote_of_interest):
+                        if tm and (quote in quotes_of_interest):
                             print(f"new_tags: {tags=}")
                         combobox.tree_treeview.item(child, tags=tags)
                         to_rem.append(quote)
@@ -3254,15 +3312,17 @@ class App(ctk.CTk):
         # # for i, row in sel_df.iterrows():
         # print(f"{len(combobox.tree_treeview.get_children())=}")
         # print(f"F10 {combobox.tree_treeview.get_children()[:10]}\nL10 {combobox.tree_treeview.get_children()[-10:]}")
-        quote_of_interest = {}  # {"SG101301"}
+        quotes_of_interest = self.settings.get("quotes_of_interest", set())
         quotes = df_orders[self.quote_key("quote")].values.tolist()
+        if tm:
+            print(f"{quotes=}")
         for j, child in enumerate(combobox.tree_treeview.get_children()):
             child_vals = combobox.tree_treeview.item(child, "values")
             to_rem = []
             for i, quote in enumerate(quotes):
 
                 if quote in child_vals:
-                    if tm and (quote in quote_of_interest):
+                    if tm and (quote in quotes_of_interest):
                         print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                     # if tm:
                     #     print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
@@ -3270,12 +3330,13 @@ class App(ctk.CTk):
                     tags = list(combobox.tree_treeview.item(child, "tags"))
                     if self.mc_tag_already_scheduled not in tags:
                         tags.insert(0, self.mc_tag_already_scheduled)
-                        print(f"{list(combobox.tag_history)=}")
+                        if tm:
+                            print(f"{list(combobox.tag_history)=}")
                         if self.mc_tag_already_scheduled not in combobox.tag_history[child]:
                             combobox.tag_history[child].append(self.mc_tag_already_scheduled)
                     # tags = list(combobox.tree_treeview.item(str(j), "tags"))
                     # combobox.tree_treeview.item(str(j), tags=tags)
-                    if tm and (quote in quote_of_interest):
+                    if tm and (quote in quotes_of_interest):
                         print(f"new_tags: {tags=}")
                     combobox.tree_treeview.item(child, tags=tags)
                     to_rem.append(quote)
@@ -3675,21 +3736,21 @@ class App(ctk.CTk):
 
             self.listbox_history.insert(ctk.END, msg)
 
-            if self.settings["TEST_MODE"].get():
+            if tm:
                 print(f"Inserted {new_item=}\n{hist=}")
         elif lh < lkh:
             # deleted a history event
             del_item = known_hist[-1]
             idx = known_hist.index(str(del_item))
             self.listbox_history.delete(idx)
-            if self.settings["TEST_MODE"].get():
+            if tm:
                 print(f"deleted {del_item=}")
         else:
             # no change
-            if self.settings["TEST_MODE"].get():
+            if tm:
                 print(f"No Change")
         # self.listbox_history
-        if self.settings["TEST_MODE"].get():
+        if tm:
             print(f"AFTER {list(self.history.get())=}")
 
     def colour_code(self, date=None, line=None):
@@ -3879,7 +3940,13 @@ class App(ctk.CTk):
         if not user:
             user = utility.get_windows_user(2)
         else:
-            print(f"WARNING HARDCODED {user=} in 'check_valid_updater'")
+            message = f"WARNING HARDCODED {user=} in 'check_valid_updater'"
+            self.messagebox(
+                title=self.title_application_short,
+                message=message,
+                mode="warn"
+            )
+            print(message)
 
         self.app_state["user_full"] = user
         user_domain, *user_name = user.lower().split("\\")
@@ -3900,10 +3967,10 @@ class App(ctk.CTk):
         self.settings["admin_password"].set(admin_pwd)
 
         # valid_users = [un.lower().strip() for un in self.df_valid_updaters["UserName"].unique() if len(un)]
-        if self.settings["TEST_MODE"].get():
+        if tm:
             print(f"{df=}")
-
-        print(f"{user=}, {user_domain=}, {user_name=}", end="")
+            print(f"{user=}, {user_domain=}, user_name={self.app_state['user_name']}")
+        print(f"USER={self.app_state['user_name']}")
 
         if not df.empty:
             # idx = df.index[0]
@@ -3937,7 +4004,9 @@ class App(ctk.CTk):
                 show_already_scheduled = self.default_show_already_scheduled
             else:
                 show_already_scheduled = "No" if (int(show_already_scheduled) == 0) else "Yes"
-            print(f"{show_already_scheduled=}")
+
+            if tm:
+                print(f"{show_already_scheduled=}")
 
             colour_theme = df_pds_user["ColourTheme"]
             if pd.isna(colour_theme):
@@ -3963,68 +4032,85 @@ class App(ctk.CTk):
                 colour_code_priority_only = self.default_colour_code_only_priority
 
             allowed_companies = df_pds_user["AllowedCompanies"]
-            print(f"START {allowed_companies=}")
+            if tm:
+                print(f"START {allowed_companies=}")
             if pd.isna(allowed_companies):
-                print(f"a")
+                if tm:
+                    print(f"a")
                 valid_ac = self.default_allowed_companies
             else:
                 allowed_companies = eval(allowed_companies)
-                print(f"b")
+                if tm:
+                    print(f"b")
                 if not isinstance(allowed_companies, (tuple, list)):
-                    print(f"c")
+                    if tm:
+                        print(f"c")
                     if isinstance(allowed_companies, str):
-                        print(f"d")
+                        if tm:
+                            print(f"d")
                         valid_ac = [allowed_companies]
                     else:
-                        print(f"e")
+                        if tm:
+                            print(f"e")
                         valid_ac = self.default_allowed_companies
                 else:
-                    print(f"f")
+                    if tm:
+                        print(f"f")
                     valid_ac = list()
                     for i, val in enumerate(allowed_companies):
-                        print(f"{i=}, {val=}, {COMPANY.BWS.value=}, {COMPANY.STG.value=}")
+                        if tm:
+                            print(f"{i=}, {val=}, {COMPANY.BWS.value=}, {COMPANY.STG.value=}")
                         if val == COMPANY.BWS.value:
                             # self.tv_allowed_comp_bws.set(True)
-                            print(f"g")
+                            if tm:
+                                print(f"g")
                             valid_ac.append(val)
                         elif val == COMPANY.STG.value:
                             # self.tv_allowed_comp_stg.set(True)
-                            print(f"h")
+                            if tm:
+                                print(f"h")
                             valid_ac.append(val)
                     if not valid_ac:
-                        print(f"i")
+                        if tm:
+                            print(f"i")
                         valid_ac = self.default_allowed_companies
 
-            print(f"END {valid_ac=}, {type(valid_ac)=}")
+            if tm:
+                print(f"END {valid_ac=}, {type(valid_ac)=}")
             for val in valid_ac:
-                print(f"{val=}")
+                if tm:
+                    print(f"{val=}")
                 if val == COMPANY.BWS.value:
-                    print(f"j")
+                    if tm:
+                        print(f"j")
                     self.tv_allowed_comp_bws.set(True)
                     self.update_allowed_comp_bws()
                 elif val == COMPANY.STG.value:
-                    print(f"k")
+                    if tm:
+                        print(f"k")
                     self.tv_allowed_comp_stg.set(True)
                     self.update_allowed_comp_stg()
-            print(f"END {allowed_companies=}")
-            print(f"{self.tv_allowed_comp_bws.get()=}")
-            print(f"{self.tv_allowed_comp_stg.get()=}")
-            print(f"{self.tv_allowed_companies.get()=}")
+            if tm:
+                print(f"END {allowed_companies=}")
+                print(f"{self.tv_allowed_comp_bws.get()=}")
+                print(f"{self.tv_allowed_comp_stg.get()=}")
+                print(f"{self.tv_allowed_companies.get()=}")
 
             mode_company = df_pds_user["ModeCompany"]
             if pd.isna(mode_company):
-                print(f"a")
+                if tm:
+                    print(f"a")
                 valid_ac = self.default_allowed_companies[0]
             else:
                 mode_company = int(mode_company)
             self.settings["mode_company"] = mode_company
 
             # self.tv_allowed_companies.set(valid_ac)
-            print(f"{mode_company=}")
-            print(f"{self.settings['mode_company']=}")
-
-            print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
-            print(f"{colour_code_priority=}")
+            if tm:
+                print(f"{mode_company=}")
+                print(f"{self.settings['mode_company']=}")
+                print(f" FOUND! TM={bool(test_mode)}, AP={allowed_to_publish}")
+                print(f"{colour_code_priority=}")
 
             # print(f"INIT TEST MODE {test_mode}")
             self.settings["TEST_MODE"].set(bool(test_mode))
@@ -4046,7 +4132,8 @@ class App(ctk.CTk):
 
             return True
 
-        print(f" NOT FOUND")
+        if tm:
+            print(f" NOT FOUND")
         return False
 
     def update_done_interact_tl(self, *args):
@@ -4141,7 +4228,8 @@ class App(ctk.CTk):
         r, c, rs, cs, ix, iy, x, y, s = self.grid_keys()
         is_warranty = self.tv_toggle_warranty.get() == "Warranty"
         slw = self.tl_tv_switch_show_left_widgets.get()
-        print(f"{slw=}")
+        if tm:
+            print(f"{slw=}")
         show_calendar_only = slw == "No"
         comp = self.settings["mode_company"]
 
@@ -4186,11 +4274,11 @@ class App(ctk.CTk):
         self.btn_go_last_date[1].grid(**{r: 0, c: 2, s: ctk.E})
 
         if tm:
-            print(f"GW W=2")
+            # print(f"GW W=2")
             self.frame_calendar.rowconfigure(0, weight=2, minsize=8)
             self.frame_calendar.rowconfigure(1, weight=98)
         else:
-            print(f"GW W=0")
+            # print(f"GW W=0")
             self.frame_calendar.rowconfigure(0, weight=0, minsize=0)
             self.frame_calendar.rowconfigure(1, weight=100)
 
@@ -4231,7 +4319,8 @@ class App(ctk.CTk):
         # goes on top of everything
         self.invisible_canvas.grid(**{r: 0, c: 0, cs: 2, rs: 2, s: "nsew"})
 
-        print(f"END Grid {tm=}, slw={show_calendar_only}")
+        if tm:
+            print(f"END Grid {tm=}, slw={show_calendar_only}")
 
     def scroll_x_calendar(self, *args) -> None:
         """change the canvas_stg xview when the scrollbar is interacted with"""
@@ -5726,7 +5815,8 @@ class App(ctk.CTk):
                         if tm:
                             print(f"{est_ad=}, {type(est_ad)=}")
                             print(f"{est_line=}, {type(est_line)=}")
-                        est_ad = f"{est_ad:%Y-%m-%d}" if (est_ad and (not pd.isna(est_ad))) else unk_val
+                        # est_ad = f"{est_ad:%Y-%m-%d}" if (est_ad and (not pd.isna(est_ad))) else unk_val
+                        est_ad = est_ad if (est_ad and (not pd.isna(est_ad))) else unk_val
                         est_line = est_line if est_line else unk_val
 
                         if tm:
@@ -9383,14 +9473,17 @@ class App(ctk.CTk):
         companies = list(map(lambda c: getattr(c, "name"), COMPANY))
         slw = self.tl_tv_switch_show_left_widgets.get()
         slw = 0 if (slw == "No") else 1
-        print(f"-> SWITCH COMPANY {curr_company=}, {comp_id=}")
-        print(f"{ac=}")
+        if tm:
+            print(f"{ac=}")
+        # print(f"** SWITCH COMPANY {curr_company} => {comp_id} ", end="")
+        print(f"** SWITCH COMPANY ", end="")
         if comp_id not in ac:
             # messagebox.showerror(
             #     title=self.title_application_short + " - Switch Companies",
             #     message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
             #     parent=(self if (self.tl_sc is None) else self.tl_sc)
             # )
+            print(f"ERROR")
             self.messagebox(
                 title=self.title_application_short + " - Switch Companies",
                 message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
@@ -9399,7 +9492,7 @@ class App(ctk.CTk):
             )
         else:
             # if comp_id != curr_company:
-            print(f"SWITCH TO {companies[comp_id]=}")
+            print(f"=> '{companies[comp_id]}'")
 
             self.clear_info_frame()
             self.clear_drag_tiles()
@@ -9540,7 +9633,8 @@ class App(ctk.CTk):
                 self.canvas_bws.grid(row=0)
                 self.info_frame_bws.grid()
 
-            print(f"{grid_bws=}, {grid_stg=}")
+            if tm:
+                print(f"{grid_bws=}, {grid_stg=}")
 
             mc_s = f"{comp_id}" if (comp_id != -1) else ""
             if not mc_s:
@@ -11330,6 +11424,8 @@ class App(ctk.CTk):
             width: int = 900,
             height: int = 600,
             allow_shrink: bool = True
+            # ,
+            # bind_return: Optional[int] = None
     ) -> Any:
         tm = bool(self.settings["tm_true_functions"].get("messagebox"))
         if tm:
@@ -11420,7 +11516,8 @@ class App(ctk.CTk):
         self.tl_msgbox.columnconfigure(0, weight=100)
 
         def on_close_msgbox(*args):
-            print(f"PRE HIDE")
+            if tm:
+                print(f"PRE HIDE")
             if self.tl_msgbox_value is None:
                 self.tl_msgbox_value = "cancel"
             self.tl_msgbox.withdraw()
@@ -11428,22 +11525,26 @@ class App(ctk.CTk):
             parent.grab_set()
 
         def click_ok(*args):
-            print(f"OK")
+            if tm:
+                print(f"OK")
             self.tl_msgbox_value = "ok"
             on_close_msgbox()
 
         def click_yes(*args):
-            print(f"YES")
+            if tm:
+                print(f"YES")
             self.tl_msgbox_value = ctk.YES
             on_close_msgbox()
 
         def click_no(*args):
-            print(f"NO")
+            if tm:
+                print(f"NO")
             self.tl_msgbox_value = ctk.NO
             on_close_msgbox()
 
         def click_cancel(*args):
-            print(f"CANCEL")
+            if tm:
+                print(f"CANCEL")
             self.tl_msgbox_value = "cancel"
             on_close_msgbox()
 
@@ -11477,7 +11578,8 @@ class App(ctk.CTk):
         if allow_shrink:
             x0, y0, x1, y1 = lbl_msg[1].bbox()
             # print(f"{tw=}, {th=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
-            print(f"{x0=}, {y0=}, {x1=}, {y1=}, {width=}, {height=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
+            if tm:
+                print(f"{x0=}, {y0=}, {x1=}, {y1=}, {width=}, {height=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
 
         frame_btns = ctk.CTkFrame(
             self.tl_msgbox,
@@ -11584,16 +11686,30 @@ class App(ctk.CTk):
             else:
                 btns[i][1].grid(row=0, column=i, rowspan=1, columnspan=1, padx=10, pady=10)
 
-        print(f"PRE SHOW")
+        # if bind_return is not None:
+        #     if not isinstance(bind_return, int):
+        #         raise ValueError(f"'bind_return' must be in an integer, got: {bind_return}.")
+        #     elif (bind_return < 0) or (bind_return >= len(btns)):
+        #         raise ValueError(f"'bind_return' must be in an integer between 0 and {len(btns)}, got: {bind_return}.")
+        #     else:
+        #         self.bind(
+        #             "<Return>",
+        #             lambda: print(f"{btns[bind_return][1].bind()=}")
+        #         )
+
+        if tm:
+            print(f"PRE SHOW")
         self.tl_msgbox.deiconify()
         self.tl_msgbox.grab_set()
         self.tl_msgbox.protocol("WM_DELETE_WINDOW", on_close_msgbox)
-        print(f"PRE WAIT")
+        if tm:
+            print(f"PRE WAIT")
         # self.wait_window(self.tl_msgbox)
         # self.wait_visibility(self.tl_msgbox)
         self.wait_variable("tv_done_interact_tl")
-        print(f"POST WAIT 1")
-        print(f"POST WAIT 2")
+        if tm:
+            print(f"POST WAIT 1")
+            print(f"POST WAIT 2")
 
         return self.tl_msgbox_value
 

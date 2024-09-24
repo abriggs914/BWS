@@ -7,8 +7,10 @@ from colour_utility import *
 
 class Splash(ctk.CTkToplevel):
 
-    def __init__(self, *args, title: str = "STG Prod Sched", auto_run: bool = False, **kwargs):
+    def __init__(self, *args, title: str = "STG Prod Sched", auto_run: bool = False, test_mode: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.test_mode = test_mode
 
         self.width: int = 500
         self.height: int = 500
@@ -259,7 +261,8 @@ class Splash(ctk.CTkToplevel):
 
     def click(self, event):
         x, y = event.x, event.y
-        print(f"CLICK {x=}, {y=}")
+        if self.test_mode:
+            print(f"CLICK {x=}, {y=}")
 
     def run_once(self):
         t_anim_time = self.start(times=1)
@@ -267,7 +270,8 @@ class Splash(ctk.CTkToplevel):
 
     def start(self, times: bool | int = True, carry_anim_time: int = 0) -> int:
         self.splash_start_time = datetime.datetime.now()
-        print(f"start splash {self.splash_start_time:%Y-%m-%d %X}")
+        if self.test_mode:
+            print(f"start splash {self.splash_start_time:%Y-%m-%d %X}")
 
         self.reset(keep_re_runs=True)
 
@@ -479,9 +483,11 @@ class Splash(ctk.CTkToplevel):
         t_anim += self.time_between_re_runs
         new_t_anim += self.time_between_re_runs
         # print(f"{self.n_slices=},  {tps=}")
-        print(f"rerun in {t_anim=}, {new_t_anim=}, {times=}, {self.bbox_og_border=}")
+        if self.test_mode:
+            print(f"rerun in {t_anim=}, {new_t_anim=}, {times=}, {self.bbox_og_border=}")
         self.after_ids_run.append(self.after(new_t_anim, lambda r=times: self.start(times=r, carry_anim_time=t_anim)))
-        self.after(new_t_anim, lambda n=self.n_cycles.get(): print(f"BEGIN RERUN #{n}!!"))
+        if self.test_mode:
+            self.after(new_t_anim, lambda n=self.n_cycles.get(): print(f"BEGIN RERUN #{n}!!"))
         return t_anim
 
     def twist_rect(self, x0, y0, x1, y1):
@@ -558,7 +564,8 @@ class Splash(ctk.CTkToplevel):
         #     )
 
     def clear_after_ids(self, keep_re_runs: bool = False):
-        print(f"clear_after_ids {keep_re_runs=}")
+        if self.test_mode:
+            print(f"clear_after_ids {keep_re_runs=}")
         for id_ in self.after_ids:
             self.after_cancel(id_)
         self.after_ids.clear()

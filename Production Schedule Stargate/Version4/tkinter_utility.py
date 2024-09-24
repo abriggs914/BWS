@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.84
-    Date...........2024-09-23
+    Version..............1.85
+    Date...........2024-09-24
     Author(s)....Avery Briggs
     """
 
@@ -2900,7 +2900,7 @@ class MultiComboBox(tkinter.Frame):
             self.data = self.data.fillna(self.nan_repr)
 
         # # print(f"END==\n{self.data=}")
-        print(f"## {len(self.tag_history)}, TH={list(self.tag_history)}")
+        # print(f"## {len(self.tag_history)}, TH={list(self.tag_history)}")
         # for i, key in enumerate(self.tag_history):
         #     print(f"{i=}, {key=}, data={self.tag_history[key]}")
 
