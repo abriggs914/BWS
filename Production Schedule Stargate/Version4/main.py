@@ -29,10 +29,601 @@ import warnings
 import utility
 import tkinter_utility
 import datetime_utility
-from Version4.demo_splash_3 import Splash
 from pyodbc_connection import connect
 from colour_utility import *
 import customtkinter_utility
+
+
+class Splash(ctk.CTkToplevel):
+
+    def __init__(self, *args, title: str = "STG Prod Sched", auto_run: bool = False, test_mode: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.test_mode = test_mode
+
+        self.width: int = 500
+        self.height: int = 500
+
+        self.title(title)
+        self.geometry(customtkinter_utility.calc_geometry_tl(self.width, self.height, parent=self.master, rtype=str))
+
+        self.default_font: tuple[str, int] = "Arial", 12
+        self.default_text_fill_start: Colour = Colour("#000000")
+        self.default_text_fill_end: Colour = Colour("#696969")
+        self.default_text_outline_start: Colour = Colour("#FFFFFF")
+        self.default_text_outline_end: Colour = Colour("#BBBBBB")
+        self.default_text_outline_width: int = 1
+        self.default_text_anchor: str = ctk.CENTER
+        self.default_text_anchor_outline: str = ctk.CENTER
+        self.default_canvas_background: Colour = Colour("#242424")
+        self.default_canvas_background_border: Colour = Colour("#ECA420")
+
+        self.max_cycles = ctk.IntVar(self, value=45)
+        self.n_cycles = ctk.IntVar(self, value=0)
+        self.splash_start_time = None
+        self.splash_end_time = None
+        # self.n_slices: int = 250
+        # self.time_between_re_runs: int = 100
+        # self.sec_per_slice = int(25 // 5)
+        # self.n_slices: int = 125
+        # self.time_between_re_runs: int = 180
+        # self.sec_per_slice = int(25 // 5)
+        self.n_slices: int = 180
+        self.time_between_re_runs: int = 180
+        self.sec_per_slice = int(25 // 5)
+        self.after_ids = []
+        self.after_ids_run = []
+
+        self.texts_to_do = [
+            ["STARGATE"],
+            ["BWS"]
+        ]
+        self.kwargs_texts = {
+            "STARGATE": {
+                "font": ("Verdana", 40, "bold"),
+                "fill_start": Colour(STARGATE_BLUE),
+                "outline_start": Colour("#FFFFFF"),
+                "fill_end": Colour(STARGATE_BLUE).darkened(0.25),
+                "outline_end": Colour("#FFFFFF"),
+                "anchor": ctk.N,
+                "anchor_outline": ctk.N,
+                "outline_width": 2
+            },
+            "LEWIS": {
+                "font": ("Impact", 40, "bold"),
+                "fill_start": Colour(GREENISH_BLUE),
+                "outline_start": Colour(BWS_GREY),
+                "fill_end": Colour(GREENISH_BLUE).darkened(0.25),
+                "outline_end": Colour(BWS_GREY).darkened(0.25),
+                "anchor": ctk.S,
+                "anchor_outline": ctk.S,
+                "outline_width": 3
+            },
+            "BWS": {
+                "font": ("Impact", 112, "bold"),
+                "fill_start": Colour(BWS_RED),
+                "outline_start": Colour(BWS_GREY),
+                "fill_end": Colour(BWS_RED).darkened(0.25),
+                "outline_end": Colour(BWS_GREY).darkened(0.25),
+                "anchor": ctk.S,
+                "anchor_outline": ctk.S,
+                "outline_width": 3
+            }
+        }
+        self.tags = {}
+
+        self.width_text = int(self.width * 0.85)
+        self.height_text = int(self.height * 0.85)
+        self.height_text_row = self.height_text / len(self.texts_to_do)
+        self.width_background_border = 10
+        self.width_moving_background = 2 * self.width_text
+
+        self.configure(
+            background=self.default_canvas_background.hex_code,
+            borderwidth=0
+        )
+
+        self.canvas = ctk.CTkCanvas(
+            self,
+            width=self.width,
+            height=self.height,
+            background=self.default_canvas_background.hex_code,
+            border=0,
+            borderwidth=0
+        )
+        self.tag_background_0 = self.canvas.create_rectangle(
+            0,
+            0,
+            self.width,
+            self.height,
+            fill=self.default_canvas_background.hex_code,
+            outline=self.default_canvas_background.hex_code
+        )
+        self.bbox_og_border = (
+            ((self.width - self.width_text) / 2) - (self.width_background_border / 2),
+            ((self.height - self.height_text) / 2) - (self.width_background_border / 2),
+            ((self.width - self.width_text) / 2) + self.width_text + (self.width_background_border / 2),
+            ((self.height - self.height_text) / 2) + self.width_text + (self.width_background_border / 2)
+        )
+        w = 2
+        self.tag_background_1 = self.canvas.create_rectangle(
+            self.bbox_og_border[0] - w,
+            self.bbox_og_border[1] - w,
+            self.bbox_og_border[2] + w,
+            self.bbox_og_border[3] + w,
+            fill="#CCCCCC",
+            outline=self.default_canvas_background_border.hex_code
+        )
+        self.tag_background_1 = self.canvas.create_rectangle(
+            *self.bbox_og_border,
+            fill=self.default_canvas_background_border.hex_code,
+            outline=self.default_canvas_background_border.hex_code
+        )
+
+        self.bbox_og_moving_rect = (
+            ((self.width - self.width_text) / 2) - (self.width_moving_background / 2),
+            ((self.height - self.height_text) / 2) - (self.width_moving_background / 2),
+            ((self.width - self.width_text) / 2) + self.width_text + (self.width_moving_background / 2),
+            ((self.height - self.height_text) / 2) + self.width_text + (self.width_moving_background / 2)
+        )
+        # goes between the border and the top-most background rectangle
+        # self.tag_moving_rect = self.canvas.create_rectangle(
+        #     0,
+        #     0,
+        #     self.width,
+        #     self.height,
+        #     fill=self.default_canvas_background.hex_code,
+        #     outline=self.default_canvas_background.hex_code
+        # )
+        self.tag_moving_rect = self.canvas.create_oval(
+            *self.bbox_og_moving_rect,
+            fill=self.default_canvas_background.hex_code,
+            outline=self.default_canvas_background.hex_code
+        )
+
+        self.width_oval = 10
+        self.height_oval = 10
+        self.tag_oval = self.canvas.create_oval(
+            self.bbox_og_border[0],
+            self.bbox_og_border[1],
+            self.bbox_og_border[0] + self.width_oval,
+            self.bbox_og_border[1] + self.height_oval,
+            fill="#12FF34",
+            outline="#12FF34"
+        )
+
+        self.tag_background_2 = self.canvas.create_rectangle(
+            (self.width - self.width_text) / 2,
+            (self.height - self.height_text) / 2,
+            ((self.width - self.width_text) / 2) + self.width_text,
+            ((self.height - self.height_text) / 2) + self.width_text,
+            fill=self.default_canvas_background.hex_code,
+            outline=self.default_canvas_background.hex_code
+        )
+
+        xpls = []
+        # min_xpl, max_xpl = float("inf"), -1
+        # min_n_let, max_n_let = float("inf"), -1
+        for row in self.texts_to_do:
+            n_let = 0
+            for txt in row:
+                n_let += len(txt)
+            n_let += len(row) - 1
+            xpl = self.width_text / n_let
+            xpls.append({
+                "xpl": xpl,
+                "n_let": n_let
+            })
+            # min_xpl = min(min_xpl, xpl)
+            # min_n_let = min(min_n_let, n_let)
+            # max_xpl = max(max_xpl, xpl)
+            # max_n_let = max(max_n_let, n_let)
+
+        # min_xpl, max_xpl = min([xpl["xpl"] for xpl in xpls]), max([xpl["xpl"] for xpl in xpls])
+
+        # print(f"{xpls=}")
+        # print(f"{min_xpl=}, {max_xpl=}\n{min_n_let=}, {max_n_let=}\nhpr={self.height_text_row}")
+
+        x0 = (self.width - self.width_text) / 2
+        y0 = (self.height - self.height_text) / 2
+        for i, row in enumerate(self.texts_to_do):
+            self.tags.setdefault(i, {})
+            xpl = xpls[i]["xpl"]
+            for j, txt in enumerate(row):
+                self.tags[i].setdefault(j, {})
+                for k, let in enumerate(txt):
+                    if let:
+                        x = x0 + ((k + 0.5) * xpl)
+                        y = y0 + ((i + 0.5) * self.height_text_row)  # + (self.height_text_row / 2)
+                        kwargs = self.kwargs_texts.get(txt, {})
+                        fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+                        outline_start = kwargs.get("outline_start", self.default_text_outline_start)
+                        # fill_end = kwargs.get("fill_start", self.default_text_fill_end)
+                        # outline_end = kwargs.get("outline_start", self.default_text_outline_end)
+                        anchor_0 = kwargs.get("anchor", self.default_text_anchor)
+                        anchor_1 = kwargs.get("anchor_outline", self.default_text_anchor_outline)
+                        outline_width = kwargs.get("outline_width", self.default_text_outline_width)
+                        font_0 = kwargs.get("font", self.default_font)
+                        font_1 = [font_0[0], font_0[1] - outline_width]
+                        if len(font_0) == 3:
+                            font_1.append(font_0[2])
+                        self.tags[i][j].setdefault(k, {
+                            "rect": self.canvas.create_rectangle(
+                                x0 + (k * xpl),
+                                y0 + (i * self.height_text_row),
+                                x0 + ((k + 1) * xpl),
+                                y0 + ((i + 1) * self.height_text_row),
+                                fill=random_colour(rgb=False)
+                            ),
+                            "tag_0": self.canvas.create_text(
+                                x, y,
+                                text=let,
+                                font=font_0,
+                                fill=outline_start.hex_code,
+                                anchor=anchor_0
+                            ),
+                            "tag_1": self.canvas.create_text(
+                                x, y,
+                                text=let,
+                                font=font_1,
+                                fill=fill_start.hex_code,
+                                anchor=anchor_1
+                            ),
+                            "text": let
+                        })
+                        self.canvas.itemconfigure(
+                            self.tags[i][j][k]["rect"],
+                            state=ctk.HIDDEN
+                        )
+
+        self.canvas.grid(row=0, column=0)
+        self.rowconfigure(0, weight=90)
+        self.rowconfigure(1, weight=10)
+        self.columnconfigure(0, weight=100)
+
+        self.canvas.tag_raise(self.tag_oval)
+        self.canvas.itemconfigure(self.tag_oval, state=ctk.HIDDEN)
+        self.canvas.bind("<Button-1>", self.click)
+
+        if auto_run:
+            self.start()
+
+    def click(self, event):
+        x, y = event.x, event.y
+        if self.test_mode:
+            print(f"CLICK {x=}, {y=}")
+
+    def run_once(self):
+        t_anim_time = self.start(times=1)
+        self.after_ids_run.append(self.after(t_anim_time + 1000, self.end))
+
+    def start(self, times: bool | int = True, carry_anim_time: int = 0) -> int:
+        self.splash_start_time = datetime.datetime.now()
+        if self.test_mode:
+            print(f"start splash {self.splash_start_time:%Y-%m-%d %X}")
+
+        self.reset(keep_re_runs=True)
+
+        self.n_cycles.set(self.n_cycles.get() + 1)
+
+        if self.n_cycles.get() >= self.max_cycles.get():
+            return -1
+
+        s_off = 0
+
+        for i, row in enumerate(self.texts_to_do):
+            for j, txt in enumerate(row):
+                kwargs = self.kwargs_texts.get(txt, {})
+                fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+                fill_end = kwargs.get("fill_start", self.default_text_fill_end)
+                outline_start = kwargs.get("outline_start", self.default_text_outline_start)
+                outline_end = kwargs.get("outline_start", self.default_text_outline_end)
+                # grad_fill = [gradient(k, n_slices, fill_start, fill_end) for k in range(n_slices + 1)]
+                # grad_outline = [gradient(k, n_slices, outline_start, outline_end) for k in range(n_slices + 1)]
+                for k, let in enumerate(txt):
+                    for l in range(self.n_slices + 1):
+                        # print(f"{i=}, {j=}, {k=}, {l=}, {txt=}, {let=}, {s_off=}, {(l*sps)+s_off=}")
+                        self.after_ids.append(
+                            self.after(
+                                (l * self.sec_per_slice) + s_off,
+                                lambda
+                                    i_=i, j_=j, k_=k, t_k="tag_0", l_=l, a_n="outline":
+                                self.letter_config(i_, j_, k_, t_k, l_, a_n)
+                            )
+                        )
+                        self.after_ids.append(
+                            self.after(
+                                (l * self.sec_per_slice) + s_off,
+                                lambda
+                                    i_=i, j_=j, k_=k, t_k="tag_1", l_=l, a_n="fill":
+                                self.letter_config(i_, j_, k_, t_k, l_, a_n)
+                            )
+                        )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda
+                        #         t_tag=self.tags[i][j][k]["tag_0"],
+                        #         fill_g=gradient(l, self.n_slices, outline_start, outline_end, rgb=False):
+                        #     self.letter_config(t_tag, fill_g)
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda t_tag=self.tags[i][j][k]["tag_0"], fill_g=gradient(l, n_slices, outline_start, outline_end, rgb=False):
+                        #         self.canvas.itemconfigure(
+                        #             t_tag,
+                        #             fill=fill_g
+                        #         )
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda i_=i, j_=j, k_=k, l_=l, o_s=outline_start, o_e=outline_end:
+                        #         self.canvas.itemconfigure(
+                        #             self.tags[i_][j_][k_]["tag_0"],
+                        #             fill=gradient(l_, n_slices, o_s, o_e, rgb=False)
+                        #         )
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda i_=i, j_=j, k_=k, l_=l, o_s=outline_start, o_e=outline_end, txt_=txt, let_=let:
+                        #         print(f"tag_0, {i_=}, {j_=}, {k_=}, {l_=}, {txt_=}, {let_=}, {gradient(l_, n_slices, o_s, o_e, rgb=False)}")
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda i_=i, j_=j, k_=k, l_=l, f_s=fill_start, f_e=fill_end:
+                        #         self.canvas.itemconfigure(
+                        #             self.tags[i_][j_][k_]["tag_1"],
+                        #             fill=gradient(l_, n_slices, f_s, f_e, rgb=False)
+                        #         )
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda i_=i, j_=j, k_=k, l_=l, f_s=fill_start, f_e=fill_end, txt_=txt, let_=let:
+                        #         print(f"tag_0, {i_=}, {j_=}, {k_=}, {l_=}, {txt_=}, {let_=}, {gradient(l_, n_slices, f_s, f_e, rgb=False)}")
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda t_tag=self.tags[i][j][k]["tag_1"], fill_g=gradient(l, n_slices, fill_start, fill_end, rgb=False):
+                        #         self.canvas.itemconfigure(
+                        #             t_tag,
+                        #             fill=fill_g
+                        #         )
+                        # )
+
+                        # self.after(
+                        #     (l * sps) + s_off,
+                        #     lambda
+                        #         t_tag=self.tags[i][j][k]["tag_1"],
+                        #         fill_g=gradient(l, self.n_slices, fill_start, fill_end, rgb=False):
+                        #     self.letter_config(t_tag, fill_g)
+                        # )
+
+                    for l in range(self.n_slices + 1):
+                        # print(f"{i=}, {j=}, {k=}, {l=}, {txt=}, {let=}, {s_off=}, {(l*sps)+s_off=}")
+
+                        self.after_ids.append(
+                            self.after(
+                                (l * self.sec_per_slice) + s_off + ((self.n_slices + 1) * self.sec_per_slice),
+                                lambda
+                                    i_=i, j_=j, k_=k, t_k="tag_0", l_=l, a_n="outline":
+                                self.letter_config(i_, j_, k_, t_k, l_, a_n, reverse=True)
+                            )
+                        )
+                        self.after_ids.append(
+                            self.after(
+                                (l * self.sec_per_slice) + s_off + ((self.n_slices + 1) * self.sec_per_slice),
+                                lambda
+                                    i_=i, j_=j, k_=k, t_k="tag_1", l_=l, a_n="fill":
+                                self.letter_config(i_, j_, k_, t_k, l_, a_n, reverse=True)
+                            )
+                        )
+
+                    # tspl = (n_slices + 1) * sps
+                    s_off += (self.n_slices + 1) * self.sec_per_slice
+                    # s_off *= 0.75
+                    s_off -= 90 * len(txt)
+                    # s_off = int(s_off)
+                s_off -= 200 * len(row)
+                s_off = max(s_off, 0)
+        new_t_anim = ((self.n_slices + 2) * self.sec_per_slice) + s_off
+        t_anim = carry_anim_time + new_t_anim
+
+        wt = math.ceil(self.bbox_og_border[2] - self.bbox_og_border[0])
+        # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 2)))
+        # xps = self.width_text / ((self.n_slices + 1) * 2)
+        # tps = int(math.ceil(new_t_anim / ((self.n_slices + 1) * 1)))
+        # tps = math.ceil(new_t_anim) / ((self.n_slices + 1) * 1)
+        tps = math.ceil(new_t_anim) / (wt + (wt // 2))
+        xps = wt / ((self.n_slices + 1) * 1)
+        for i in range(wt + (wt // 2)):
+            pts = self.moving_point(i, reverse=False)
+            # pts = self.moving_point(i * xps, reverse=False)
+            # pts = self.moving_point(i * self.width_text, reverse=False)
+            x0 = self.bbox_og_border[0] + pts[0] - 5
+            y0 = self.bbox_og_border[1] + pts[1] - 5
+            x1 = self.bbox_og_border[0] + pts[0] + 5
+            y1 = self.bbox_og_border[1] + pts[1] + 5
+            # print(f"{i=}, {x0=}, {y0=}, {x1=}, {y1=}")
+            self.after_ids.append(
+                self.after(
+                    int(tps * i),
+                    lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
+                        self.canvas.coords(
+                            self.tag_oval,
+                            x0_, y0_, x1_, y1_
+                        )
+                )
+            )
+            # x0 = pts[0] - (wt / 2)
+            # y0 = pts[1] - (wt / 2)
+            # x1 = pts[0] + (wt / 2)
+            # y1 = pts[1] + (wt / 2)
+            # x0, y0, x1, y1 = self.twist_rect(x0, y0, x1, y1)
+            x0 = pts[0] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            y0 = pts[1] - ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            x1 = pts[0] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            y1 = pts[1] + ((self.bbox_og_moving_rect[2] - self.bbox_og_moving_rect[0]) / 2)
+            self.after_ids.append(
+                self.after(
+                    int(tps * i),
+                    lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
+                        self.canvas.coords(
+                            self.tag_moving_rect,
+                            x0_, y0_, x1_, y1_
+                        )
+                )
+            )
+        # for i in range(self.n_slices * 2):
+        #     pts = self.moving_point(i * (self.width_text / (self.n_slices * 2)), reverse=False)
+        #     # pts = self.moving_point(i * self.width_text, reverse=False)
+        #     x0 = self.bbox_og_border[0] + pts[0] - 5
+        #     y0 = self.bbox_og_border[1] + pts[1] - 5
+        #     x1 = self.bbox_og_border[0] + pts[0] + 5
+        #     y1 = self.bbox_og_border[1] + pts[1] + 5
+        #     self.after_ids.append(
+        #         self.after(
+        #             tps * i,
+        #             lambda x0_=x0, y0_=y0, x1_=x1, y1_=y1:
+        #                 self.canvas.coords(
+        #                     self.tag_oval,
+        #                     x0_, y0_, x1_, y1_
+        #                 )
+        #         )
+        #     )
+
+        # print(f"{t_anim=}, {new_t_anim=}, {times=}, {tps=}, {xps=}, {s_off=}, wt={self.width_text}, ns={self.n_slices}, bbox={self.bbox_og_border}")
+        if isinstance(times, int) and not isinstance(times, bool):
+            if times <= 0:
+                # print(f"HERE A")
+                return t_anim
+            else:
+                # print(f"HERE B")
+                times = times - 1
+        if not times:
+            # print(f"HERE C")
+            return t_anim
+
+        t_anim += self.time_between_re_runs
+        new_t_anim += self.time_between_re_runs
+        # print(f"{self.n_slices=},  {tps=}")
+        if self.test_mode:
+            print(f"rerun in {t_anim=}, {new_t_anim=}, {times=}, {self.bbox_og_border=}")
+        self.after_ids_run.append(self.after(new_t_anim, lambda r=times: self.start(times=r, carry_anim_time=t_anim)))
+        if self.test_mode:
+            self.after(new_t_anim, lambda n=self.n_cycles.get(): print(f"BEGIN RERUN #{n}!!"))
+        return t_anim
+
+    def twist_rect(self, x0, y0, x1, y1):
+        t_val = 18
+        return (
+            x0,
+            y0-t_val,
+            x1+t_val,
+            y1-t_val
+        )
+
+    def moving_point(self, l: float, reverse: bool = False) -> tuple[float, float]:
+        # n_s = 2 * (self.n_slices + 1)
+        # p = (l + ((self.n_slices + 1) if reverse else 0)) / n_s
+        # x0 = 0
+        # x1 = self.width_text - (2 * self.width_background_border)
+
+        fn = lambda x: -0.1 * (x**3)
+        fn = lambda x: (((0.0292*x) - 5.85)**3) + 200
+        fn = lambda x: (((0.022*x) - 5.85)**3) + 200
+        fn = lambda x: (((0.027*x) - 5.85)**3) + 200
+        fn = lambda x: (((0.027*x) - 6.3)**3) + 250
+        # # fn = lambda x: (((0.019*x) - 7.1)**3) + 270
+        fn = lambda x: (((0.028*x) - 6.8)**3) + 250
+        xp = l
+        fx = fn(xp)
+
+        # print(f"x={xp:.2f}, y={fx:.2f}")
+        return xp, fx
+
+    # def letter_config(self, t_tag, fill_g):
+    def letter_config(self, i: int, j: int, k: int, tag_key: str, l: int, attr_name: Literal["fill", "outline"] = "fill", reverse: bool = False):
+        # print(f"tag_0, {i_=}, {j_=}, {k_=}, {l_=}, {txt_=}, {let_=}, {gradient(l_, n_slices, f_s, f_e, rgb=False)}")
+
+        txt = self.texts_to_do[i][j]
+        kwargs = self.kwargs_texts.get(txt, {})
+
+        fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+        fill_end = kwargs.get("fill_end", self.default_text_fill_end)
+        outline_start = kwargs.get("outline_start", self.default_text_outline_start)
+        outline_end = kwargs.get("outline_end", self.default_text_outline_end)
+
+        if attr_name == "outline":
+            c_s = outline_start
+            c_e = outline_end
+        else:
+            c_s = fill_start
+            c_e = fill_end
+
+        if reverse:
+            c_s, c_e = c_e, c_s
+
+        if c_s == c_e:
+            return
+
+        t_tag = self.tags[i][j][k][tag_key]
+        fill_g = gradient(l, self.n_slices, c_s, c_e, rgb=False)
+        let = self.canvas.itemcget(t_tag, "text")
+        # print(f"{t_tag=}, {let=}, {fill_g=}, {i=}, {j=}, {k=}, {l=}, ns={self.n_slices}, tk={tag_key}, an={attr_name}, cs={c_s.hex_code}, ce={c_e.hex_code}")
+        self.canvas.itemconfigure(
+            t_tag,
+            fill=fill_g
+        )
+
+        # if (i == 0) and (j == 0) and (k == 0):
+        #     print(f"{l=}, {reverse=}")
+        #     pts = self.moving_point(l, reverse=reverse)
+        #     self.canvas.coords(
+        #         self.tag_oval,
+        #         pts[0] - 5,
+        #         pts[1] - 5,
+        #         pts[0] + 5,
+        #         pts[1] + 5
+        #     )
+
+    def clear_after_ids(self, keep_re_runs: bool = False):
+        if self.test_mode:
+            print(f"clear_after_ids {keep_re_runs=}")
+        for id_ in self.after_ids:
+            self.after_cancel(id_)
+        self.after_ids.clear()
+        if not keep_re_runs:
+            self.n_cycles.set(0)
+            for id_ in self.after_ids_run:
+                self.after_cancel(id_)
+            self.after_ids_run.clear()
+
+    def reset(self, keep_re_runs: bool = False):
+        self.clear_after_ids(keep_re_runs=keep_re_runs)
+        for i, row in enumerate(self.texts_to_do):
+            for j, txt in enumerate(row):
+                for k, let in enumerate(txt):
+                    txt = self.texts_to_do[i][j]
+                    kwargs = self.kwargs_texts.get(txt, {})
+                    fill_start = kwargs.get("fill_start", self.default_text_fill_start)
+                    self.canvas.itemconfigure(
+                        self.tags[i][j][k]["tag_1"],
+                        fill=fill_start.hex_code
+                    )
+
+    def end(self):
+        # print(f"end")
+        self.splash_end_time = datetime.datetime.now()
+        rt = (self.splash_end_time - self.splash_start_time).total_seconds()
+        # print(f"end splash\n{rt=}\nST = {self.splash_start_time:%Y-%m-%d %X}\nET = {self.splash_end_time:%Y-%m-%d %X}")
+        self.clear_after_ids()
+
 
 # TODO shrink weekend tiles_stg, currently they are just exempt from placement actions. Takes too much space.
 # TODO add slight animation for successful placement. 'Ripple' the row and column once complete.  -- CHECK 202404161806
@@ -43,7 +634,6 @@ import customtkinter_utility
 
 # Block warnings for not using SQLAlchemy in calls to pyodbc_connection.connect
 warnings.filterwarnings("ignore")
-
 
 ### ONLY FOR STARGATE AND ONLY TEMPORARILY
 # At some point a more modern calculation will be used
@@ -135,9 +725,14 @@ WHERE
         SQL_DATED_BWS_UNITS_2 := {
             "sql": """
 SELECT
-    *
+    [O].*,
+    [D].*
 FROM
-    [BWSdb].[dbo].[Orders]
+    [BWSdb].[dbo].[Orders] [O]
+LEFT JOIN
+	[BWSdb].[dbo].[Dealers] [D]
+ON
+	[O].[DealerID] = [D].[ID]
 WHERE
     ([Order Date] BETWEEN {SD} AND {ED})
     OR ([Quote Date] BETWEEN {SD} AND {ED}) 
@@ -572,16 +1167,17 @@ class App(ctk.CTk):
             },
             # warning Test Mode must be enabled for this to work.
             "quotes_of_interest": {
-                "SG100027",
-                "SG100028",
-                "SG100030",
-                "SG101301"
+                # round of testing 2024-09-24
+                # "SG100027",
+                # "SG100028",
+                # "SG100030",
+                # "SG101301"
             }
             ,
 
             # use this for testing, as long as 'user' exists, program will not fetch username
             # "test_user": None
-            "test_user": "bwsdomain.local\\gf"
+            # "test_user": "bwsdomain.local\\gf"
             # "test_user": "bwsdomain.local\\mguest"
             # "test_user": "bwsdomain.local\\tmerrithew"
         }
@@ -1622,8 +2218,6 @@ class App(ctk.CTk):
             }
         )
 
-        tm = True
-
         ###################
         # STARGATE ORDERS #
         ###################
@@ -1672,19 +2266,20 @@ class App(ctk.CTk):
         self.concats_double_entries_stg = []
         self.min_date_stg, self.max_date_stg = None, None
         self.min_line_stg, self.max_line_stg = None, None
-        print(f"COLS_STG={sorted(list(self.df_orders_stg.columns))}")
+        if tm:
+            print(f"COLS_STG={sorted(list(self.df_orders_stg.columns))}")
         for i, row in self.df_orders_stg.iterrows():
             no_fit = False
             double = False
             # mc_append_row = None
-            dat_quote = row.get(self.quote_key("quote"), "QUOTE=____")
+            dat_quote = row.get(self.quote_key("quote", COMPANY.STG.value), "QUOTE=____")
             # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
-            dat_wo = row.get(self.quote_key("wo"), "WO=____")
-            dat_sn = row.get(self.quote_key("sn"), "")
-            dat_dealer = row.get(self.quote_key("dealer"), "DEALER=____")
-            dat_galv = row.get(self.quote_key("galv"), "GALV=____")
-            dat_model = row.get(self.quote_key("model"), "MODEL=____")
-            dat_cust_wo = row.get(self.quote_key("Customer WO#"), "CUSTWO=____")
+            dat_wo = row.get(self.quote_key("wo", COMPANY.STG.value), "WO=____")
+            dat_sn = row.get(self.quote_key("sn", COMPANY.STG.value), "")
+            dat_dealer = row.get(self.quote_key("dealer", COMPANY.STG.value), "DEALER=____")
+            dat_galv = row.get(self.quote_key("galv", COMPANY.STG.value), "GALV=____")
+            dat_model = row.get(self.quote_key("model", COMPANY.STG.value), "MODEL=____")
+            dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.STG.value), "CUSTWO=____")
             dat_unit_is_scheduled_out_calendar = False
 
             # TODO These are Stargate lookup keys
@@ -1803,7 +2398,7 @@ class App(ctk.CTk):
             self.df_rest_orders_stg = pd.concat(self.concats_rest_orders_stg, ignore_index=True)
 
             for i, row in self.df_rest_orders_stg.iterrows():
-                dat_quote = row.get(self.quote_key("quote"), "QUOTE=____")
+                dat_quote = row.get(self.quote_key("quote", COMPANY.STG.value), "QUOTE=____")
                 # print(f"{dat_quote=}, {row['InputField2'].tolist()=}")
                 dat_wo = row.get(self.quote_key("wo", COMPANY.STG.value), "WO=____")
                 dat_sn = row.get(self.quote_key("sn", COMPANY.STG.value), "")
@@ -1849,8 +2444,6 @@ class App(ctk.CTk):
             print(f"self.df_rest_orders.columns_stg==\n{list(self.df_rest_orders_stg.columns)}")
             print(
                 f"self.df_multi_combobox_data_orders_stg.columns==\n{list(self.df_multi_combobox_data_orders_stg.columns)}")
-
-        tm = False
 
         # header row
         for i, row in enumerate(self.calc_grid_cells_stg[:1]):
@@ -1977,7 +2570,7 @@ class App(ctk.CTk):
         ##############
         # BWS ORDERS #
         ##############
-        # rest of the tiles_stg
+        # rest of the tiles_bws
         for i, row in enumerate(self.calc_grid_cells_bws[1:]):
             # print(f"{i=}, {row=}")
             for j, col in enumerate(row[1:]):
@@ -2040,7 +2633,7 @@ class App(ctk.CTk):
                 prod_line = None
 
             if tm:
-                print(f"{dat_quote=}, {date=}, {prod_line=}", end="")
+                print(f"{dat_quote=}, {date=}, {prod_line=}, {dat_model=}", end="")
             # print(f"{dat_dealer=}")
 
             if not pd.isna(date) and not pd.isna(prod_line):
@@ -2148,6 +2741,10 @@ class App(ctk.CTk):
                 dat_galv = row.get(self.quote_key("galv", COMPANY.BWS.value), "GALV=____")
                 dat_model = row.get(self.quote_key("model", COMPANY.BWS.value), "MODEL=____")
                 dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.BWS.value), "CUSTWO=____")
+
+                if tm:
+                    print(f"BWS >> {dat_quote=}, {dat_model=}, {dat_wo=}")
+
                 new_row_data = {k: [v] for k, v in zip(self.df_multi_combobox_data_orders_bws.columns,
                                                        [dat_quote, dat_wo, dat_model, dat_dealer, dat_sn,
                                                         dat_cust_wo])}
@@ -2190,8 +2787,8 @@ class App(ctk.CTk):
 
             print(f"{self.list_prod_lines_stg=}")
             print(f"{self.list_prod_lines_bws=}")
-            print(f"{self.tiles_stg=}")
-            print(f"{self.tiles_bws=}")
+            # print(f"{self.tiles_stg=}")
+            # print(f"{self.tiles_bws=}")
 
         # header row
         for i, row in enumerate(self.calc_grid_cells_bws[:1]):
@@ -2525,9 +3122,9 @@ class App(ctk.CTk):
             (
                 *self.drag_tile_start_pos,
                 100 + (self.tile_width_bws if (
-                            self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_width_stg),
+                        self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_width_stg),
                 100 + (self.tile_height_bws if (
-                            self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_height_stg)
+                        self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_height_stg)
             ),
             fill=self.colour_fill_multi_combobox_drag_tile.hex_code,
             outline=self.colour_outline_multi_combobox_drag_tile.hex_code,
@@ -2541,9 +3138,9 @@ class App(ctk.CTk):
         self.multi_combobox_drag_tile_texts = [
             self.invisible_canvas.create_text(
                 (self.drag_tile_start_pos[0] + ((100 + (self.tile_width_bws if (
-                            self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_width_stg)) / 2)),
+                        self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_width_stg)) / 2)),
                 (self.drag_tile_start_pos[1] + ((100 + (self.tile_height_bws if (
-                            self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_height_stg)) / 2)),
+                        self.settings["mode_company"] == COMPANY.BWS.value) else self.tile_height_stg)) / 2)),
                 text=self.multi_combobox_drag_tile_texts_placeholder,
                 fill=self.colour_tile_foreground.hex_code,
                 font=self.font_tile
@@ -2704,7 +3301,8 @@ class App(ctk.CTk):
         # STG by default
         match attr.lower():
             case "dealer" | "inputfield2":
-                return "InputField2"  # same for both companies
+                # return "InputField2"  # same for both companies
+                return "Orders_COMPANY NAME" if (mc == COMPANY.BWS.value) else "InputField2"
             case "galv" | "galvanized" | "isgalv":
                 return "IsGalvanized" if (mc == COMPANY.BWS.value) else "IsGalv"
             case "wo" | "wo#":
@@ -2712,7 +3310,8 @@ class App(ctk.CTk):
             case "cust_wo" | "custwo" | "customer wo#":
                 return "WO#" if (mc == COMPANY.BWS.value) else "Customer WO#"
             case "model" | "model no" | "inputfield1":
-                return "InputField1"  # same for both companies
+                # return "InputField1"  # same for both companies
+                return "Orders_Model No" if (mc == COMPANY.BWS.value) else "Model No"
             case "serial" | "sn":
                 return "Orders_Serial Number" if (mc == COMPANY.BWS.value) else "Serial Number"
             case "ussale" | "us sale" | "us":
@@ -2843,7 +3442,8 @@ class App(ctk.CTk):
         # print(f"{w_wd=}, {w_we=}, {hc=}")
 
         can_width = (n_weekend_days * w_we) + (n_weekdays * w_wd)
-        can_height = self.canvas_height_scroll_region_bws if (company == COMPANY.BWS.value) else self.canvas_height_scroll_region_stg
+        can_height = self.canvas_height_scroll_region_bws if (
+                    company == COMPANY.BWS.value) else self.canvas_height_scroll_region_stg
         hc = can_height / n_rows
 
         if tm:
@@ -3180,7 +3780,8 @@ class App(ctk.CTk):
         comp = self.settings["mode_company"]
         combobox = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         columns = self.multi_combobox_columns_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_columns_stg
-        combobox_war = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        combobox_war = self.multi_combobox_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         df_orders = self.df_rest_orders_bws if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
         # df_war = self.df_rest_warran if (comp == COMPANY.BWS.value) else self.df_rest_orders_stg
 
@@ -3210,6 +3811,7 @@ class App(ctk.CTk):
                 self.quote_key("model"): "MODEL=____",
                 self.quote_key("Customer WO#"): "CUSTWO=____"
             }
+            print(f"als {cols=}")
             # cols = [k if k else v for k, v in cols.items()]
             cols = list(cols.keys())
             # print(f"{cols=}")
@@ -3265,7 +3867,8 @@ class App(ctk.CTk):
 
                     if quote in child_vals:
                         if tm and (quote in quotes_of_interest):
-                            print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
+                            print(
+                                f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                         # if tm:
                         #     print(f"{i=}, {j=}, {quote=}, {child=}, {child_vals=}, {combobox.tree_treeview.item(child)=}")
                         # f_quote = True
@@ -3347,7 +3950,8 @@ class App(ctk.CTk):
         curr_fg = combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled, "foreground")
         # print(f"{curr_fg=}")
         if not curr_fg:
-            combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled, foreground='gray')  # Grayed out text for disabled rows
+            combobox.tree_treeview.tag_configure(self.mc_tag_already_scheduled,
+                                                 foreground='gray')  # Grayed out text for disabled rows
 
     def update_show_calendar_only(self, *args):
         tm = bool(self.settings["tm_true_functions"].get("update_show_calendar_only"))
@@ -3369,7 +3973,7 @@ class App(ctk.CTk):
             self.canvas_width = self.canvas_width_og
         else:
             self.frame_left_controls.grid_forget()
-            self.dcanvas_width = self.total_width
+            self.canvas_width = self.total_width
 
         comp = self.settings["mode_company"]
         if comp == COMPANY.BWS.value:
@@ -4430,7 +5034,8 @@ class App(ctk.CTk):
 
         if comp == COMPANY.BWS.value:
             col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
-            row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if (self.first_date <= date <= self.last_date)]
+            row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if
+                          (self.first_date <= date <= self.last_date)]
             home_tile = self.tiles_bws["home"]["tile"]
             img = self.bws_logo_image
             can = self.canvas_bws
@@ -4439,7 +5044,8 @@ class App(ctk.CTk):
 
         else:
             col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
-            row_legend = [self.tiles_stg[date]["date_legend"] for date in self.list_dates[:-1] if (self.first_date <= date <= self.last_date)]
+            row_legend = [self.tiles_stg[date]["date_legend"] for date in self.list_dates[:-1] if
+                          (self.first_date <= date <= self.last_date)]
             home_tile = self.tiles_stg["home"]["tile"]
             img = self.stg_logo_image
             can = self.canvas_stg
@@ -4555,8 +5161,8 @@ class App(ctk.CTk):
 
                 # for i, txt in enumerate():
                 #     print(f"{self.canvas_stg.itemcget(txt, 'text')=}")
-                    # can.coords(txt, x_1 + (tw / 2), y_t + (th / 2) + i * th)
-                    # can.tag_raise(txt)
+                # can.coords(txt, x_1 + (tw / 2), y_t + (th / 2) + i * th)
+                # can.tag_raise(txt)
 
                 texts = dat.get("texts", [])
                 n_txts = len(texts)
@@ -4575,7 +5181,6 @@ class App(ctk.CTk):
                     if last_txt == self.txt_non_prod_day:
                         can.itemconfigure(texts[-2], fill=self.colour_foreground_holiday.hex_code)
                         can.itemconfigure(texts[-1], fill=self.colour_foreground_holiday.hex_code)
-
 
         can.tag_raise(home_tile)
 
@@ -4827,10 +5432,13 @@ class App(ctk.CTk):
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
-        df_warranties = self.df_multi_combobox_data_warranties_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+        df_warranties = self.df_multi_combobox_data_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        combobox_warranties = self.multi_combobox_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        combobox_orders = self.multi_combobox_orders_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         ap_stg = self.settings["allowed_to_publish_stg"].get()
         ap_bws = self.settings["allowed_to_publish_bws"].get()
@@ -4937,10 +5545,13 @@ class App(ctk.CTk):
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
-        df_warranties = self.df_multi_combobox_data_warranties_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+        df_warranties = self.df_multi_combobox_data_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        combobox_warranties = self.multi_combobox_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        combobox_orders = self.multi_combobox_orders_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         if ap:
 
@@ -5362,10 +5973,13 @@ class App(ctk.CTk):
         can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         tiles = self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
-        df_warranties = self.df_multi_combobox_data_warranties_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+        df_warranties = self.df_multi_combobox_data_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        combobox_warranties = self.multi_combobox_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        combobox_orders = self.multi_combobox_orders_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
@@ -5514,8 +6128,10 @@ class App(ctk.CTk):
         # warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
         # df_warranties = self.df_multi_combobox_data_warranties_bws if (comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        combobox_warranties = self.multi_combobox_warranties_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        combobox_orders = self.multi_combobox_orders_bws if (
+                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         if tm:
             print(f"\t{is_warranty=}")
@@ -5660,14 +6276,15 @@ class App(ctk.CTk):
         lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
         df_warranties = self.df_multi_combobox_data_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+                comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
-        fd, ld = (self.min_date_bws, self.max_date_bws) if (comp == COMPANY.BWS.value) else (self.min_date_stg, self.max_date_stg)
+        fd, ld = (self.min_date_bws, self.max_date_bws) if (comp == COMPANY.BWS.value) else (
+        self.min_date_stg, self.max_date_stg)
 
         if tm:
             print(f"\t{is_warranty=}")
@@ -5997,9 +6614,9 @@ class App(ctk.CTk):
         #             comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         # df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         # info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
 
         old_bind = combobox_orders.tree_controller.binding_treeview_b1_motion
@@ -6011,9 +6628,9 @@ class App(ctk.CTk):
 
         old_bind_war = combobox_warranties.tree_controller.binding_treeview_b1_motion
         combobox_warranties.tree_controller.treeview.bind("<B1-Motion>",
-                                                                         self.drag_treeview_warranty_entry)
+                                                          self.drag_treeview_warranty_entry)
         combobox_warranties.tree_controller.treeview.bind("<ButtonRelease-1>",
-                                                                         self.release_treeview_warranty_entry)
+                                                          self.release_treeview_warranty_entry)
 
     def on_left_click_motion_calendar(self, event) -> None:
         tm = bool(self.settings["tm_true_functions"].get("on_left_click_motion_calendar"))
@@ -6432,7 +7049,7 @@ class App(ctk.CTk):
         comp = self.settings["mode_company"]
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         quote = combobox_orders.res_tv_entry.get().lower()
         n_mc_records = len(combobox_orders.tree_treeview.get_children())
@@ -6498,12 +7115,12 @@ class App(ctk.CTk):
         lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
         df_warranties = self.df_multi_combobox_data_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+                comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
 
         quote = combobox_orders.res_tv_entry.get().lower()
@@ -6566,12 +7183,12 @@ class App(ctk.CTk):
         lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
         warranty_lines = self.list_warranty_lines_bws if (comp == COMPANY.BWS.value) else self.list_warranty_lines_stg
         df_warranties = self.df_multi_combobox_data_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
+                comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
         combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
         combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+                comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
         info_frame = self.info_frame_bws if (comp == COMPANY.BWS.value) else self.info_frame_stg
 
         if comp == COMPANY.BWS.value:
@@ -6679,7 +7296,8 @@ class App(ctk.CTk):
 
             idxs = df.index.tolist()
             if tm:
-                print(f"AA {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}, {self.tl_data['tiles_bws']=}")
+                print(
+                    f"AA {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}, {self.tl_data['tiles_bws']=}")
                 print(f"{idxs=}")
             idx = 0
             for i in range(n_rows):
@@ -6759,7 +7377,8 @@ class App(ctk.CTk):
                         break
 
             if tm:
-                print(f"BB {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}, {self.tl_data['tiles_bws']=}")
+                print(
+                    f"BB {n_rows=}, {n_cols=}, {choices_per_col=}, {self.tl_data['tiles_stg']=}, {self.tl_data['tiles_bws']=}")
 
             self.tl_data["frame_tl"].pack()
             self.tl_data["canvas_tl"].pack()
@@ -6953,7 +7572,7 @@ class App(ctk.CTk):
                 self.after(
                     ttl_anim_time + 10,
                     lambda date_=date, line__=line_:
-                        self.colour_code(date=date_, line=line__)
+                    self.colour_code(date=date_, line=line__)
                 )
 
             if tm:
@@ -7113,7 +7732,8 @@ class App(ctk.CTk):
                                     date_fmt = "%Y-%m-%d"
                                     nth_date = self.calculate_nth_business_day(date, n_days)
                                     if nth_date is None:
-                                        nth_date = self.max_date_bws if (comp == COMPANY.BWS.value) else self.max_date_stg
+                                        nth_date = self.max_date_bws if (
+                                                    comp == COMPANY.BWS.value) else self.max_date_stg
                                     date_f = f"{date:{date_fmt}}"
                                     nth_date_f = f"{nth_date:{date_fmt}}"
                                     if tm:
@@ -7241,7 +7861,7 @@ class App(ctk.CTk):
                     x0, y0, x1, y1 = 0, 0, 800, 800
                     if tm:
                         print(
-                        f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
+                            f"{x0:.2f}, {y0:.2f}, {x1:.2f}, {y1:.2f}, tl_date={tl_date:%Y-%m-%d}, {tl_line=}, br_date={br_date:%Y-%m-%d}, {br_line=}")
                     ps = can.postscript(colormode='color')
                     # Convert PostScript to image
                     image = Image.open(io.BytesIO(ps.encode('utf-8')))
@@ -7422,7 +8042,7 @@ class App(ctk.CTk):
                                         print(f"{self.tl_data['tl_sl_data_count_thru']=}")
 
                                         print(
-                                        f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}, {c_date=}, {n_date=}, {d_days=}")
+                                            f"{x=:.2f}, {y=:.2f}, {text_width=:.2f}, {text_height=:.2f}, {text=}, {c_date=}, {n_date=}, {d_days=}")
 
                                     self.tl_data["tl_sl_tags"][i][j].update({
                                         "text": self.tl_data["tl_canvas_preview"].create_image(
@@ -9222,7 +9842,6 @@ class App(ctk.CTk):
         lbl_slw.grid(row=0, column=0, **self.grid_args_label)
         tl_at_switch_show_left_widgets.grid(row=0, column=1, **self.grid_args_switch)
 
-
         # Show already scheduled units in combobox
         tl_cc_app_frame_show_already_scheduled = ctk.CTkFrame(self.tl_cc_app)
         tv_lbl_als, lbl_als = customtkinter_utility.label_factory(
@@ -9239,7 +9858,6 @@ class App(ctk.CTk):
         tl_cc_app_frame_show_already_scheduled.grid(**self.grid_args_frame)
         lbl_als.grid(row=0, column=0, **self.grid_args_label)
         tl_at_switch_show_already_scheduled.grid(row=0, column=1, **self.grid_args_switch)
-
 
         # Colour Theme
         tl_cc_app_frame_colour_theme = ctk.CTkFrame(self.tl_cc_app)
@@ -9512,7 +10130,7 @@ class App(ctk.CTk):
                     100 + self.tile_height_bws
                 )
                 can = self.canvas_bws
-                tiles =  self.tiles_bws
+                tiles = self.tiles_bws
                 lines = self.list_prod_lines_bws
                 col_legend = [dat for prod_line, dat in self.tiles_bws["line_legend"].items()]
                 row_legend = [self.tiles_bws[date]["date_legend"] for date in self.list_dates[:-1] if
@@ -9526,7 +10144,7 @@ class App(ctk.CTk):
                     100 + self.tile_height_stg
                 )
                 can = self.canvas_stg
-                tiles =  self.tiles_stg
+                tiles = self.tiles_stg
                 lines = self.list_prod_lines_stg
                 col_legend = [dat for prod_line, dat in self.tiles_stg["line_legend"].items()]
                 row_legend = [self.tiles_stg[date]["date_legend"] for date in self.list_dates[:-1] if
@@ -9877,16 +10495,18 @@ class App(ctk.CTk):
                 comp_id = btns[idx]["comp_id"]
                 comp_lbl = btns[idx]["lbl"]
                 if comp_id != self.settings["mode_company"]:
-                    print(f"NEED TO SWITCH COMPANIES")
+                    if tm:
+                        print(f"NEED TO SWITCH COMPANIES")
                     tl_sc_lbl[0].set(f"Switch to {comp_lbl}?")
                 else:
-                    print(f"STAY ON {comp_lbl}")
+                    if tm:
+                        print(f"STAY ON {comp_lbl}")
 
                 tv_selected_company.set(idx)
 
                 for i in range(len(btns)):
                     state = ctk.HIDDEN if i != idx else ctk.NORMAL
-                    print(f"{i=}, {state=}")
+                    # print(f"{i=}, {state=}")
                     tl_sc_canvas.itemconfigure(
                         btns[i]["bd_tag"],
                         state=state
@@ -9911,7 +10531,8 @@ class App(ctk.CTk):
             def update_selected_company(*args):
                 comp = tv_selected_company.get()
                 sel = comp != self.settings["mode_company"]
-                print(f"{comp=}, {sel=}, {self.settings['mode_company']=}")
+                if tm:
+                    print(f"{comp=}, {sel=}, {self.settings['mode_company']=}")
                 state = ctk.NORMAL if sel else ctk.HIDDEN
                 tl_sc_canvas.itemconfigure(tl_sc_tag_btns, state=state)
 
@@ -9954,7 +10575,8 @@ class App(ctk.CTk):
                         bbox[2] + mg,
                         bbox[3] + mg
                     )
-                    print(f"{bbox=}, {bbox_bd=}")
+                    if tm:
+                        print(f"{bbox=}, {bbox_bd=}")
                     bd_tag = tl_sc_canvas.create_rectangle(
                         *bbox_bd,
                         fill="#CCBB55"
@@ -11125,7 +11747,8 @@ class App(ctk.CTk):
             self.flash_tile((date, line), mode="attention")
             self.redraw_legend()
 
-    def check_for_units_on_holidays(self, include_all_holidays: bool = False, do_warn: bool = True) -> tuple[dict[tuple[datetime.datetime, str]: tuple[int, int]], str]:
+    def check_for_units_on_holidays(self, include_all_holidays: bool = False, do_warn: bool = True) -> tuple[
+        dict[tuple[datetime.datetime, str]: tuple[int, int]], str]:
         tm = bool(self.settings["tm_true_functions"].get("check_for_units_on_holidays"))
         if tm:
             print(f"WARNING TM IS TRUE 'check_for_units_on_holidays'")
@@ -11353,10 +11976,10 @@ class App(ctk.CTk):
 
         parent = self
         for par in (
-            self.tl_ad,
-            self.tl_cc_app,
-            self.tl_sc,
-            self.tl_tu
+                self.tl_ad,
+                self.tl_cc_app,
+                self.tl_sc,
+                self.tl_tu
         ):
             if par is not None:
                 if isinstance(par, ctk.CTkToplevel) and par.winfo_exists():
@@ -11558,8 +12181,8 @@ class App(ctk.CTk):
         frame_msg = ctk.CTkScrollableFrame(
             frame_lbl,
             fg_color=bg.hex_code,
-            width=int(width*0.75),
-            height=int(height*0.8)
+            width=int(width * 0.75),
+            height=int(height * 0.8)
         )
         frame_msg.rowconfigure(0, weight=100)
         frame_msg.columnconfigure(0, weight=100)
@@ -11570,8 +12193,8 @@ class App(ctk.CTk):
                 "font": self.kwargs_lbl["font"],
                 "text_color": fg.hex_code,
                 "wraplength": self.kwargs_lbl["wraplength"],
-                "width": int(width*0.75),
-                "height": int(height*0.8)
+                "width": int(width * 0.75),
+                "height": int(height * 0.8)
             }
         )
 
@@ -11579,7 +12202,8 @@ class App(ctk.CTk):
             x0, y0, x1, y1 = lbl_msg[1].bbox()
             # print(f"{tw=}, {th=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
             if tm:
-                print(f"{x0=}, {y0=}, {x1=}, {y1=}, {width=}, {height=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
+                print(
+                    f"{x0=}, {y0=}, {x1=}, {y1=}, {width=}, {height=}, {lbl_msg[1].winfo_width()=}, {lbl_msg[1].winfo_height()=}")
 
         frame_btns = ctk.CTkFrame(
             self.tl_msgbox,
@@ -11679,7 +12303,7 @@ class App(ctk.CTk):
 
         frame_btns.rowconfigure(0, weight=100)
         for i in range(len(btns)):
-            frame_btns.columnconfigure(i, weight=int(100/len(btns)))
+            frame_btns.columnconfigure(i, weight=int(100 / len(btns)))
             if len(btns) == 1:
                 # when only 1 button, set it to the bottom right
                 btns[i][1].grid(row=0, column=i, rowspan=1, columnspan=1, padx=10, pady=10, sticky=ctk.E)
@@ -11737,6 +12361,18 @@ def custom_error_handler(self, exc, val, tb):
 if __name__ == '__main__':
     # test_canvas_window()
 
+    root_run_folder = r"C:\Access\Stargate Production Schedule"
+    spl = os.path.split(root_run_folder)
+
+    for i, part_path in enumerate(spl):
+        path = os.path.join(*spl[:i + 1])
+        if not os.path.isdir(path):
+            print(f"making folder: '{path}'")
+            os.makedirs(path)
+        else:
+            pass
+            # print(f"already exists {path}")
+
     app = None
 
     try:
@@ -11744,7 +12380,7 @@ if __name__ == '__main__':
         tkinter.Tk.report_callback_exception = custom_error_handler
         app.mainloop()
     except Exception as e:
-        print(f"\n\n>>>>> HERE\n\n")
+        print(f"\n\nEXCEPTION HERE\n\n")
         if isinstance(app, App):
             app.log_error(e)
         else:
@@ -11756,7 +12392,9 @@ if __name__ == '__main__':
         t = datetime.datetime.now()
         errors = app.get_error_log()
         if errors:
-            with open(f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt", "w") as f:
+            file_name = f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt"
+            out_file = os.path.join(root_run_folder, file_name)
+            with open(out_file, "w") as f:
                 if isinstance(app, App):
                     f.write(errors)
                 else:

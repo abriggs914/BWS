@@ -3,16 +3,53 @@ SELECT
 	*
 FROM
 	[BWSdb].[dbo].[Payroll]
-WHERE
+ORDER BY
+	[RaiseID]
+;
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Employees - Salary]
+ORDER BY
+	[2nd Name] ASC
+	,[1st Name] ASC
+	,[Date Hired] DESC
+	,[Terminated] ASC
+;
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Employees]
+ORDER BY
+	[2nd Name] ASC
+	,[1st Name] ASC
+	,[Date Hired] DESC
+	,[Terminated] ASC
+;
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Employees]
+ORDER BY
+	[2nd Name] ASC
+	,[1st Name] ASC
+	,[Date Hired] DESC
+	,[Terminated] ASC
+;
+
+--WHERE
 	--(
 	--(([1st Name] LIKE '%aver%') OR [2nd Name] LIKE '%aver%')
 	--OR 
 	/*(([1st Name] LIKE '%josh%') AND [2nd Name] LIKE '%hath%')
 	OR */
-	(([1st Name] LIKE '%caleb%') AND [2nd Name] LIKE '%g%')
+	--(([1st Name] LIKE '%caleb%') AND [2nd Name] LIKE '%g%')
 ORDER BY
 	[Date] DESC
-
+;
 
 SELECT
 	[Src1].[RaiseID],
@@ -21,8 +58,9 @@ SELECT
 	[Src1].[2nd Name],
 	[P].[Annual],
 	[P].[Salary],
-	[P].[Hourly/Salary],
-	[P].
+	[P].[Hourly/Salary]
+	--,
+	--[P].
 FROM (
 	SELECT
 		ROW_NUMBER() OVER(
