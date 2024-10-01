@@ -2,57 +2,24 @@ import datetime
 
 import pandas as pd
 import streamlit as st
-from st_click_detector import click_detector
 from streamlit.components.v1 import components
 from streamlit_autorefresh import st_autorefresh
 from streamlit_extras.add_vertical_space import add_vertical_space
 
 from pyodbc_connection import connect
-from utility import flatten
-
-print(f"RERUN")
 
 BWS = 0
 STG = 1
 
-E_ASC_SORT = ":small_red_triangle:"
-E_DESC_SORT = ":small_red_triangle_down:"
-E_NO_SORT = ":black_medium_small_square:"
-E_INFORMATION = ":information_source:"
-E_WORKING = ":wrench:"
-E_EXPAND = ":heavy_plus_sign:"
-E_SHRINK = ":heavy_minus_sign:"
-
-cols_rename = {
-    "NumOpenTransactions": E_WORKING,
-    "Expand": E_INFORMATION,
-    "JobDescription": "Desc",
-    "Model No": "Model",
-    "COMPANY NAME": "Company",
-    "JobDeliveryDate": "Delivery Date",
-    "ProgressOps": "OPs Prog.",
-    "ProgressTotalBudget": "Bud. Prog."
-}
-
-cols_lookup = {k: v for k, v in cols_rename.items()}
-cols_lookup.update({v: k for k, v in cols_rename.items()})
+print(f"RERUN")
 
 st.set_page_config(layout="wide")
+st.session_state.setdefault(BWS, {})
+st.session_state.setdefault(STG, {})
 
-
-default_session_state = {
-    BWS: {},
-    STG: {},
-    "sort_col": cols_rename["ProgressOps"],
-    "sort_style": E_DESC_SORT,
-    "expanded_index": None
-}
-for k, v in default_session_state.items():
-    st.session_state.setdefault(k, v)
 
 
 def click():
-    print(f"CLICK")
     for i, row in df_production_data_by_op.iterrows():
         job = row["Job"]
         if job in SG_QUOTES_OF_INTEREST:
@@ -83,7 +50,7 @@ st.button(
 
 
 # time_cache_prod_data_by_op_stg = 60*60*1000  # 1 hour
-time_cache_prod_data_by_op_stg = 3*60*1000  # 3 minutes
+time_cache_prod_data_by_op_stg = 30*1000  # 30 seconds
 time_app_refresh = 30*1000  # every 30 seconds
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
@@ -120,7 +87,6 @@ def load_prod_data_by_op_stg() -> pd.DataFrame:
 -- 2 - Complete ("COMPLETED OPERATION" check mark legend from Vishal's "WORKFLOW STARGATE" spreadsheet)
 -- ====================================
 
-
 SELECT
 	[Job]
     , [JobDescription]
@@ -168,14 +134,13 @@ SELECT
 		+ (CASE WHEN ISNULL([Operation19Status], 0) = 2 THEN 1 WHEN [Operation19Status] = 1 THEN 0.5 ELSE 0 END)
 	) AS [ProgressOps]
 	, [NumOpenTransactions]
-	, [TotalRunTimeAct]
-	, [TotalRunTimeEst]
+	--, 19 AS [TotalOps]
 FROM (
 	SELECT
 		[Job]
 		, [JobDescription]
-		, [O2].[Model No]
-		, [D2].[COMPANY NAME]
+		, [OrdersV2].[Model No]
+		, [DealersV2].[COMPANY NAME]
 		, [JobDeliveryDate]
 		, MAX(CASE WHEN [Operation] = 1 AND ([OperCompleted] = 'Y' OR [numCompleteTransaction] > 0) THEN 2
 					WHEN [Operation] = 1 AND ([RunTimeIssued] > 0 OR [numInProgressTransaction] > 0) THEN 1
@@ -272,62 +237,60 @@ FROM (
 					WHEN [Operation] = 19 AND ([RunTimeIssued] = 0 AND [numInProgressTransaction] = 0) THEN 0
 					ELSE 0
 					END) AS [Operation19Status]
-		, SUM([NumOpenTransactions]) AS [NumOpenTransactions]
-		, SUM([RunTimeIssued]) AS [TotalRunTimeAct]
-		, SUM([IExpUnitRunTim]) AS [TotalRunTimeEst]
-	FROM (
-		SELECT
-			[Master].[Job]
-			, [Master].[JobDescription]
-			, [Master].[JobDeliveryDate]
-			, [Lab].[Operation]
-			, [Lab].[RunTimeIssued]
-			, [Lab].[IExpUnitRunTim]
-			, [subClkTransactionCount].[numInProgressTransaction]
-			, [Lab].[OperCompleted]
-			, [subClkTransactionCount].[numCompleteTransaction]
-			, ISNULL([subClkTransactionCount].[NumOpenTransactions], 0) AS [NumOpenTransactions]
-		FROM
-			[SysproCompanyS].[dbo].[WipJobAllLab] [Lab] WITH (NOLOCK)
-		INNER JOIN
-			[SysproCompanyS].[dbo].[WipMaster] [Master] WITH (NOLOCK)
-		ON
-			[Lab].[Job] = [Master].[Job]
-		LEFT OUTER JOIN (
-			SELECT 
-				[C].[JobNumber]
-				, [C].[Operation]
-				, COUNT(CASE WHEN [C].[OperationComplete] = 0 THEN [C].[TransactionID] END) AS [numInProgressTransaction]
-				, COUNT(CASE WHEN [C].[OperationComplete] = 1 THEN [C].[TransactionID] END) AS [numCompleteTransaction]
-				, SUM((CASE WHEN [C].[LoggedOff] IS NULL THEN 1 ELSE 0 END)) AS [NumOpenTransactions]
+		, [NumOpenTransactions]
+	FROM
+		(
+			SELECT [WipMaster].[Job]
+				, [WipMaster].[JobDescription]
+				, [WipMaster].[JobDeliveryDate]
+				, [WipJobAllLab].[Operation]
+				, [WipJobAllLab].[RunTimeIssued]
+				, [subClkTransactionCount].[numInProgressTransaction]
+				, [WipJobAllLab].[OperCompleted]
+				, [subClkTransactionCount].[numCompleteTransaction]
+				, ISNULL([subClkTransactionCount].[NumOpenTransactions], 0) AS [NumOpenTransactions]
 			FROM
-				[SysproCompanyS].[dbo].[ClkTransaction] [C] WITH (NOLOCK)
+				[SysproCompanyS].[dbo].[WipJobAllLab] WITH (NOLOCK)
+			INNER JOIN
+				[SysproCompanyS].[dbo].[WipMaster] WITH (NOLOCK)
+			ON
+				[WipJobAllLab].[Job] = [WipMaster].[Job]
+			LEFT OUTER JOIN
+				(
+					SELECT [JobNumber]
+						, [Operation]
+						, COUNT(CASE WHEN [OperationComplete] = 0 THEN [TransactionID] END) AS [numInProgressTransaction]
+						, COUNT(CASE WHEN [OperationComplete] = 1 THEN [TransactionID] END) AS [numCompleteTransaction]
+						, SUM((CASE WHEN [LoggedOff] IS NULL THEN 1 ELSE 0 END)) AS [NumOpenTransactions]
+					FROM
+						[SysproCompanyS].[dbo].[ClkTransaction] WITH (NOLOCK)
+					WHERE
+						[JobNumber] <> ''
+					GROUP BY
+						[JobNumber]
+						, [Operation]
+				) AS [subClkTransactionCount]
+			ON
+				[WipJobAllLab].[Job] = [subClkTransactionCount].[JobNumber]
+				AND [WipJobAllLab].[Operation] = [subClkTransactionCount].[Operation]
 			WHERE
-				[C].[JobNumber] <> ''
-			GROUP BY
-				[C].[JobNumber]
-				, [C].[Operation]
-		) AS [subClkTransactionCount]
-		ON
-			[Lab].[Job] = [subClkTransactionCount].[JobNumber]
-			AND [Lab].[Operation] = [subClkTransactionCount].[Operation]
-		WHERE
-			[ActCompleteDate] IS NULL
-	) AS [mainsub]
+				[ActCompleteDate] IS NULL
+		) AS [mainsub]
 	INNER JOIN
-		[BWSdb].[dbo].[OrdersV2] [O2] WITH (NOLOCK)
+		[BWSdb].[dbo].[OrdersV2] WITH (NOLOCK)
 	ON
-		[mainsub].[Job] = CAST([O2].[WO#] AS VARCHAR(20))
+		[mainsub].[Job] = CAST([OrdersV2].[WO#] AS VARCHAR(20))
 	INNER JOIN
-		[BWSdb].[dbo].[DealersV2] [D2] WITH (NOLOCK)
+		[BWSdb].[dbo].[DealersV2] WITH (NOLOCK)
 	ON
-		[O2].[DealerID] = [D2].[ID]
+		[OrdersV2].[DealerID] = [DealersV2].[ID]
 	GROUP BY
-		[mainsub].[Job]
-		, [mainsub].[JobDescription]
-		, [O2].[Model No]
-		, [D2].[COMPANY NAME]
-		, [mainsub].[JobDeliveryDate]
+		[Job]
+		, [JobDescription]
+		, [OrdersV2].[Model No]
+		, [DealersV2].[COMPANY NAME]
+		, [JobDeliveryDate]
+		, [NumOpenTransactions]
 ) AS [Src]
 GROUP BY
 	[Job]
@@ -355,10 +318,6 @@ GROUP BY
 	, [Operation18Status]
 	, [Operation19Status]
 	, [NumOpenTransactions]
-	, [TotalRunTimeAct]
-	, [TotalRunTimeEst]
-ORDER BY
-	[Job]
 ;
     """
     connection_data = {
@@ -387,7 +346,6 @@ def load_prod_data_by_op_bws() -> pd.DataFrame:
 -- 2 - Complete ("COMPLETED OPERATION" check mark legend from Vishal's "WORKFLOW STARGATE" spreadsheet)
 -- ====================================
 
-
 SELECT
 	[Job]
     , [JobDescription]
@@ -435,14 +393,13 @@ SELECT
 		+ (CASE WHEN ISNULL([Operation19Status], 0) = 2 THEN 1 WHEN [Operation19Status] = 1 THEN 0.5 ELSE 0 END)
 	) AS [ProgressOps]
 	, [NumOpenTransactions]
-	, [TotalRunTimeAct]
-	, [TotalRunTimeEst]
+	--, 19 AS [TotalOps]
 FROM (
 	SELECT
 		[Job]
 		, [JobDescription]
-		, [O].[Model No]
-		, [D].[COMPANY NAME]
+		, [Orders].[Model No]
+		, [Dealers].[COMPANY NAME]
 		, [JobDeliveryDate]
 		, MAX(CASE WHEN [Operation] = 1 AND ([OperCompleted] = 'Y' OR [numCompleteTransaction] > 0) THEN 2
 					WHEN [Operation] = 1 AND ([RunTimeIssued] > 0 OR [numInProgressTransaction] > 0) THEN 1
@@ -539,62 +496,60 @@ FROM (
 					WHEN [Operation] = 19 AND ([RunTimeIssued] = 0 AND [numInProgressTransaction] = 0) THEN 0
 					ELSE 0
 					END) AS [Operation19Status]
-		, SUM([NumOpenTransactions]) AS [NumOpenTransactions]
-		, SUM([RunTimeIssued]) AS [TotalRunTimeAct]
-		, SUM([IExpUnitRunTim]) AS [TotalRunTimeEst]
-	FROM (
-		SELECT
-			[Master].[Job]
-			, [Master].[JobDescription]
-			, [Master].[JobDeliveryDate]
-			, [Lab].[Operation]
-			, [Lab].[RunTimeIssued]
-			, [Lab].[IExpUnitRunTim]
-			, [subClkTransactionCount].[numInProgressTransaction]
-			, [Lab].[OperCompleted]
-			, [subClkTransactionCount].[numCompleteTransaction]
-			, ISNULL([subClkTransactionCount].[NumOpenTransactions], 0) AS [NumOpenTransactions]
-		FROM
-			[SysproCompanyA].[dbo].[WipJobAllLab] [Lab] WITH (NOLOCK)
-		INNER JOIN
-			[SysproCompanyA].[dbo].[WipMaster] [Master] WITH (NOLOCK)
-		ON
-			[Lab].[Job] = [Master].[Job]
-		LEFT OUTER JOIN (
-			SELECT 
-				[C].[JobNumber]
-				, [C].[Operation]
-				, COUNT(CASE WHEN [C].[OperationComplete] = 0 THEN [C].[TransactionID] END) AS [numInProgressTransaction]
-				, COUNT(CASE WHEN [C].[OperationComplete] = 1 THEN [C].[TransactionID] END) AS [numCompleteTransaction]
-				, SUM((CASE WHEN [C].[LoggedOff] IS NULL THEN 1 ELSE 0 END)) AS [NumOpenTransactions]
+		, [NumOpenTransactions]
+	FROM
+		(
+			SELECT [WipMaster].[Job]
+				, [WipMaster].[JobDescription]
+				, [WipMaster].[JobDeliveryDate]
+				, [WipJobAllLab].[Operation]
+				, [WipJobAllLab].[RunTimeIssued]
+				, [subClkTransactionCount].[numInProgressTransaction]
+				, [WipJobAllLab].[OperCompleted]
+				, [subClkTransactionCount].[numCompleteTransaction]
+				, ISNULL([subClkTransactionCount].[NumOpenTransactions], 0) AS [NumOpenTransactions]
 			FROM
-				[SysproCompanyA].[dbo].[ClkTransaction] [C] WITH (NOLOCK)
+				[SysproCompanyA].[dbo].[WipJobAllLab] WITH (NOLOCK)
+			INNER JOIN
+				[SysproCompanyA].[dbo].[WipMaster] WITH (NOLOCK)
+			ON
+				[WipJobAllLab].[Job] = [WipMaster].[Job]
+			LEFT OUTER JOIN
+				(
+					SELECT [JobNumber]
+						, [Operation]
+						, COUNT(CASE WHEN [OperationComplete] = 0 THEN [TransactionID] END) AS [numInProgressTransaction]
+						, COUNT(CASE WHEN [OperationComplete] = 1 THEN [TransactionID] END) AS [numCompleteTransaction]
+						, SUM((CASE WHEN [LoggedOff] IS NULL THEN 1 ELSE 0 END)) AS [NumOpenTransactions]
+					FROM
+						[SysproCompanyA].[dbo].[ClkTransaction] WITH (NOLOCK)
+					WHERE
+						[JobNumber] <> ''
+					GROUP BY
+						[JobNumber]
+						, [Operation]
+				) AS [subClkTransactionCount]
+			ON
+				[WipJobAllLab].[Job] = [subClkTransactionCount].[JobNumber]
+				AND [WipJobAllLab].[Operation] = [subClkTransactionCount].[Operation]
 			WHERE
-				[C].[JobNumber] <> ''
-			GROUP BY
-				[C].[JobNumber]
-				, [C].[Operation]
-		) AS [subClkTransactionCount]
-		ON
-			[Lab].[Job] = [subClkTransactionCount].[JobNumber]
-			AND [Lab].[Operation] = [subClkTransactionCount].[Operation]
-		WHERE
-			[ActCompleteDate] IS NULL
-	) AS [mainsub]
+				[ActCompleteDate] IS NULL
+		) AS [mainsub]
 	INNER JOIN
-		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+		[BWSdb].[dbo].[Orders] WITH (NOLOCK)
 	ON
-		[mainsub].[Job] = CAST([O].[WO#] AS VARCHAR(20))
+		[mainsub].[Job] = CAST([Orders].[WO#] AS VARCHAR(20))
 	INNER JOIN
-		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+		[BWSdb].[dbo].[Dealers] WITH (NOLOCK)
 	ON
-		[O].[DealerID] = [D].[ID]
+		[Orders].[DealerID] = [Dealers].[ID]
 	GROUP BY
-		[mainsub].[Job]
-		, [mainsub].[JobDescription]
-		, [O].[Model No]
-		, [D].[COMPANY NAME]
-		, [mainsub].[JobDeliveryDate]
+		[Job]
+		, [JobDescription]
+		, [Orders].[Model No]
+		, [Dealers].[COMPANY NAME]
+		, [JobDeliveryDate]
+		, [NumOpenTransactions]
 ) AS [Src]
 GROUP BY
 	[Job]
@@ -622,10 +577,6 @@ GROUP BY
 	, [Operation18Status]
 	, [Operation19Status]
 	, [NumOpenTransactions]
-	, [TotalRunTimeAct]
-	, [TotalRunTimeEst]
-ORDER BY
-	[Job]
 ;
     """
     connection_data = {
@@ -635,72 +586,6 @@ ORDER BY
         "pwd": "M@gic456"
     }
     return connect(**connection_data)
-
-
-def click_column_header(j, col):
-    print(f"click_column_header {j=}, {col=}")
-    prev_sc = st.session_state.get("sort_col")
-    prev_ss = st.session_state.get("sort_style")
-    if col == prev_sc:
-        if prev_ss == E_NO_SORT:
-            ss = E_DESC_SORT
-        elif prev_ss == E_DESC_SORT:
-            ss = E_ASC_SORT
-        else:
-            ss = E_NO_SORT
-            col = None
-    else:
-        ss = E_ASC_SORT
-    st.session_state.update({
-        "sort_col": col,
-        "sort_style": ss
-    })
-
-    print(f"\n")
-    for k, v in st.session_state.items():
-        print(f"{k=}, {v=}")
-    print(f"\n")
-
-
-def click_expand_order(i, j):
-    print(f"click_expand_order {i=}, {j=}")
-    prev_exp = st.session_state.get("expanded_index")
-    df_data = df_production_data_by_op.iloc[i]
-    if i != prev_exp:
-        print(f"NEW")
-        st.session_state["expanded_index"] = i
-    else:
-        # shrink:
-        st.session_state["expanded_index"] = None
-
-
-# # Add custom CSS to create a sticky header
-# st.markdown(
-#     """
-#     <style>
-#     .sticky-header {
-#         position: -webkit-sticky; /* For Safari */
-#         position: sticky;
-#         top: 0;
-#         padding: 10px;
-#         font-size: 24px;
-#         z-index: 1000;
-#         border-bottom: 2px solid #ddd;
-#     }
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
-
-st.markdown("""
-    <style>
-    .selected-job {
-        background-color: #FF0000; 
-    }
-    </style>
-""",
-            unsafe_allow_html=True
-)
 
 
 # options_radio_company_choice = [
@@ -714,8 +599,7 @@ options_radio_company_choice = [
 radio_company_choice = st.radio(
     "Company:",
     options_radio_company_choice,
-    key="radio_company_choice",
-    horizontal=True
+    key="radio_company_choice"
 )
 
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
@@ -735,52 +619,17 @@ else:
     df_production_data_status_codes = load_prod_data_status_codes_stg()
     df_production_data_by_op = load_prod_data_by_op_stg()
 
-
-# print(f"{df_production_data_by_op.shape=}")
-# print(f"{df_production_data_by_op['Job'].unique().shape=}")
-
-# print(f"{df_production_data_by_op.loc[df_production_data_by_op['Job'] == '10001546']}")
-
-
-# # st.dataframe(df_production_data_status_codes)
-# # st.dataframe(df_production_data_by_op)
-#
-# tmpl_column_config_df_production_data_by_op = {
-#     "lbl": lambda num: f"OP {num}",
-#     "help": lambda num: f"Unit has entered operation {num}",
-#     "default": False
-# }
-# column_config_df_production_data_by_op = {}
-# # column_config_df_production_data_by_op = {
-# #     "Operation1Status": st.column_config.CheckboxColumn(
-# #         "OP 1",
-# #         help="Unit has entered operation 1.",
-# #         default=False,
-# #     )
-# # }
-
-
-df_production_data_by_op["ProgressTotalBudget"] = df_production_data_by_op["TotalRunTimeAct"] / df_production_data_by_op["TotalRunTimeEst"]
-df_production_data_by_op["Expand"] = 1
 og_columns = list(df_production_data_by_op.columns)
 
-for new_pos, col_name in [
-    (0, "NumOpenTransactions"),
-    (1, "Expand"),
-    (6, "ProgressOps"),
-    (6, "ProgressTotalBudget")
-]:
-    og_columns.remove(col_name)
-    og_columns.insert(new_pos, col_name)
+og_columns.remove("NumOpenTransactions")
+og_columns.insert(0, "NumOpenTransactions")
+og_columns.remove("ProgressOps")
+og_columns.insert(6, "ProgressOps")
 
 cols_production_og_translator = {col: f"F_{col}" for col in list(df_production_data_by_op.columns) if all(["operation" in col.lower(), "status" in col.lower()])}
 cols_production = list(cols_production_og_translator.keys())
 cols_production = {int(col.lower().removeprefix("operation").removesuffix("status")): col for col in cols_production}
-cols_lookup.update({k: v for k, v in cols_production_og_translator.items()})
-cols_lookup.update({v: k for k, v in cols_production_og_translator.items()})
-cols_lookup.update({str(k): v for k, v in cols_production.items()})
 
-# cell_formatter = lambda status_val: f":heavy_check_mark:" if status_val == 2 else (f":wrench:" if status_val == 1 else f":red_circle:")
 cell_formatter = lambda status_val: f":large_green_circle:" if status_val == 2 else (f":large_yellow_circle:" if status_val == 1 else f":red_circle:")
 for i, col in cols_production.items():
     # # column_config_df_production_data_by_op.update({
@@ -808,35 +657,7 @@ for i, col in cols_production.items():
 
 df_production_data_by_op["JobDeliveryDate"] = df_production_data_by_op["JobDeliveryDate"].apply(lambda val: f"{val:%Y-%m-%d}" if not pd.isna(val) else "-")
 df_production_data_by_op["NumOpenTransactions"] = df_production_data_by_op["NumOpenTransactions"].apply(lambda val: ":wrench:" if val >= 1 else "")
-del df_production_data_by_op["TotalRunTimeAct"]
-del df_production_data_by_op["TotalRunTimeEst"]
-og_columns.remove("TotalRunTimeAct")
-og_columns.remove("TotalRunTimeEst")
-
-# header_columns = []
-# for col in og_columns:
-#     header_columns += [col, E_NO_SORT]
-
-# # df_production_data_by_op.sort_values(by="ProgressOps", ascending=False, inplace=True)
-# print(f"{cols_lookup=}")
-# print(f"SORTING BY: SC={st.session_state.get('sort_col')}")
-# print(f"NC={cols_lookup[st.session_state.get('sort_col')]}")
-df_production_data_by_op.sort_values(
-    by=cols_lookup[st.session_state.get("sort_col")],
-    ascending=st.session_state.get("sort_style") != E_DESC_SORT,
-    inplace=True
-)
-
-# df_production_data_by_op.sort_values(by="Job", ascending=False, inplace=True)
-# st.dataframe(df_production_data_by_op)
-# st.data_editor(
-#     df_production_data_by_op,
-#     column_config=column_config_df_production_data_by_op,
-#     hide_index=True,
-# )
-
-# print(f"{cols_production=}")
-# col_widths = [0.75, 1, 1.5, 1.5, 0.75] + [1 / len(cols_production) for _ in cols_production]
+df_production_data_by_op.sort_values(by="ProgressOps", ascending=False, inplace=True)
 
 
 table_styles = [
@@ -850,71 +671,30 @@ table_styles = [
 
 
 title_cols = st.columns([1, 0.15])
+with title_cols[0]:
+    st.write("### Stargate Production Data")
 with title_cols[1]:
     st.markdown(f"###### as of: :red[{datetime.datetime.now():%x %X}]")
 
 add_vertical_space(3)
-width_cols_production = [0.22 for _ in cols_production]
-col_order = {
-    "NumOpenTransactions": 0.15,
-    "Expand": 0.16,
-    "Job": 0.4,
-    "JobDescription": 0.5,
-    "Model No": 0.95,
-    "COMPANY NAME": 0.95,
-    "JobDeliveryDate": 0.48,
-    "ProgressTotalBudget": 0.5,
-    "ProgressOps": 0.5
-}
-col_order.update({
-    c: w for c, w in zip(cols_production, width_cols_production)
-})
 
-if COMP == STG:
-    COMP_NAME = "Stargate"
-else:
-    COMP_NAME = "BWS"
-    col_order["JobDescription"] = 0.6
-    col_order["Model No"] = 0.6
-
-with title_cols[0]:
-    st.write(f"### {COMP_NAME} Production Data")
-
-col_widths = [val for col, val in col_order.items()]
-header_col_widths = flatten([[0.55 * cw, 0.45 * cw] for cw in col_widths])
-
-# print(f"{len(col_widths)=}")
-# print(f"{len(header_col_widths)=}")
-# print(f"{col_widths=}")
-# print(f"{header_col_widths=}")
-# # grid = [st.columns(header_col_widths, vertical_alignment="bottom")]
-rows_per_expansion = 3
-header_grid = [st.columns(col_widths, vertical_alignment="bottom")]
-grid = []
+col_widths = [0.15] + [0.36, 0.5, 0.95, 0.95, 0.6] + [0.5] + [0.18 for _ in cols_production]
+grid = [st.columns(col_widths, vertical_alignment="bottom")]
 # grid.append(st.divider())
-for i in range(df_production_data_by_op.shape[0]):
-    grid.append(st.columns(col_widths))
-    if st.session_state.get("expanded_index") == i:
-        grid.append(st.divider())
-        grid.append(st.columns(1))
-        grid.append(st.divider())
-
+grid += [
+    st.columns(col_widths)
+    for _ in range(df_production_data_by_op.shape[0])
+]
 # print(f"{len(grid)=}")
 
-for i, row in enumerate(grid):
-    if isinstance(row, (tuple, list)):
-        print(f"{i=} {row[0]._block_type}")
-    else:
-        print(f"{i=} {row._block_type} DIV")
-    # ty = row[0][0]._block_type
-    # print(f"{i=} {ty=}")
-
-# print(f"{grid[:10]=}")
-# print(f"{dir(grid[0])=}")
-# print(f"{type(grid[0])=}")
-# print(f"{len(grid[0])=}")
-# print(f"{grid[0][0]._block_type=}")
-
+cols_rename = {
+    "NumOpenTransactions": ":wrench:",
+    "JobDescription": "Desc",
+    "Model No": "Model",
+    "COMPANY NAME": "Company",
+    "JobDeliveryDate": "Delivery Date",
+    "ProgressOps": "Progress"
+}
 df_production_data_by_op.rename(
     columns=cols_rename,
     inplace=True
@@ -923,231 +703,37 @@ cols_description = [col for col in og_columns if col not in cols_production_og_t
 
 
 # Header row
-clicked_col_content = {}
-# for j, col in enumerate(header_columns):
-for j, col in enumerate(col_order):
-    # print(f"{j=}, {col=}")
-
-    ss = ""
-    m = ""
-
-    col = f"{j - len(cols_description) + 1}" if (col in cols_production_og_translator) else col
+for j, col in enumerate(og_columns):
+    if col in cols_production_og_translator:
+        col = f"{j - len(cols_description) + 1}"
     col = cols_rename.get(col, col)
-    ss = ":black_medium_small_square:"
-    if col == st.session_state.get("sort_col"):
-        m += "B"
-        ss = f" {st.session_state.get('sort_style')}"
+    # print(f"HEAD {j=}, {col=}")
+    with grid[0][j]:
+        st.write(col)
+        # st.markdown(f'<div class="sticky-header">{col}</div>', unsafe_allow_html=True)
 
-    # if col in cols_production_og_translator:
-    #     m += "A"
-    #     # col = f"{len(cols_description) - j}"
-    #     col = f"{j - len(cols_description) + 1}"
-    #     col = cols_rename.get(col, col)
-    #     ss = ":black_medium_small_square:"
-    #     if col == st.session_state.get("sort_col"):
-    #         m += "B"
-    #         ss = f" {st.session_state.get('sort_style')}"
-    # else:
-    #     m += "C"
-    #     col = cols_rename.get(col, col)
-    #     ss = ":black_medium_small_square:"
 
-    lbl = f"{col}{ss}"
-    # print(f"HEAD {j=}, {col=}, {ss=}, {lbl=}, {m=}")
-    with header_grid[0][j]:
-        # if j % 2 == 0:
-        #     # text
-        #     st.write(col)
-        # else:
-        st.button(
-            label=lbl,
-            on_click=lambda j_=j, col_=col: click_column_header(j_, col_),
-            key=f"CD_{COMP}_{j}_{col}",
-            use_container_width=True
-        )
-            # sort button
-            # st.write(col)
-#             clicked_col_content[(j, col)] = click_detector(
-#                 f"<p>{col}</p>",
-#                 key=f"CD_{COMP}_{j}_{col}"
-#             )
-#         # st.markdown(f'<div class="sticky-header">{col}</div>', unsafe_allow_html=True)
-#
-# for k, v in clicked_col_content.items():
-#     print(f"{k=}, {v=}")
-
-# # print(f"{len(cols_description)=}")
-# # print(f"{len(cols_production)=}")
-# for j, col in enumerate(og_columns):
-#     if col in cols_production_og_translator:
-#         # col = f"{len(cols_description) - j}"
-#         col = f"{j - len(cols_description) + 1}"
-#     col = cols_rename.get(col, col)
-#     # print(f"HEAD {j=}, {col=}")
-#     with grid[0][j]:
-#         st.write(col)
-#         # st.markdown(f'<div class="sticky-header">{col}</div>', unsafe_allow_html=True)
-
-# print(f"{cols_lookup=}")
-# print(f"{cols_rename=}")
-# print(f"cols={list(df_production_data_by_op.columns)}")
-
-print(f"\nBEGIN POP TABLE")
-print(f'{st.session_state.get("expanded_index")=}')
-exp_count = 0
-
-# for i_row in df_production_data_by_op.itertuples():
 for i, row in df_production_data_by_op.iterrows():
-    # print(f"{i_row=}")
-    # job_num = row["Job"]
-    # job_desc = row["JobDescription"]
-    # model_no = row["Model No"]
-    # comp_name = row["COMPANY NAME"]
-    # job_delivery_date = row["JobDeliveryDate"]h
-    # i = i_row[0]
-    # # print(f"{i=}")
-    # job = i_row[1]
     job = row["Job"]
-    # print(f"{i=}, {job=}")
-    # old = st.session_state.setdefault(job, {}).setdefault("ops_sum", 0)
 
-    # print(f"C={COMP}, J={job}, {st.session_state[COMP].get(job, {})=}")
-    new = row[cols_rename["ProgressOps"]]
-    # if st.session_state.get(COMP, {}).get(job, {}).get(cols_rename["ProgressOps"], None) is None:
-    #     old_is_none = True
-    old = st.session_state.setdefault(COMP, {}).setdefault(job, {}).setdefault(cols_rename["ProgressOps"], None)
-
-    key_done_showing = f"DS_{COMP}_{i}"
-    show_count = st.session_state.setdefault(key_done_showing, 0)
-    rsv_show_count = 6
-    done_showing = show_count <= -1
-
-    msg = ""
-
-    if old is None:
-        # was not previously known
-        msg += "A"
-        changed = False
-        done_showing = True
-        st.session_state[COMP][job][cols_rename["ProgressOps"]] = new
-        new = old
-    else:
-        msg += "B"
-        changed = new != old
-
-        if show_count <= -1:
-            msg += "C"
-            # if changed:
-            #     msg += "D"
-            #     show_count = rsv_show_count
-            #     done_showing = False
-            done_showing = True
-        else:
-            msg += "E"
-            st.session_state.update({key_done_showing: show_count - 1})
-            done_showing = False
-
-    # print(f"{new=}, {old=}, {done_showing=}, {show_count=}, {changed=}, {key_done_showing=}")
-    if changed:
-        print(f"\t\tCHANGED {datetime.datetime.now():%Y-%m-%d %X}")
-        print(f"{msg=}")
-        print(f"{i=}, {job=}")
-        print(f"{new=}, {old=}")
-        print(f"DS={done_showing}, SC={show_count}, CNGD={changed}, K_DS={key_done_showing}")
-        st.session_state[COMP][job][cols_rename["ProgressOps"]] = new
-
-    row_is_expanded = st.session_state.get("expanded_index") == i
-
-    print(f"\nBEGIN ROW POP {i=}, EC={exp_count}, RIP={row_is_expanded}")
-
-    for j, col in enumerate(col_order):
-        og_col = str(col)
-        # if i == 10:
-        #     print(f"{i=}, {j=}, {og_col=}, {col=} ", end="")
-        col = cols_rename.get(str(col), str(col))
-        # if i == 10:
-        #     print(f"{col=} ", end="")
-        if col == og_col:
-            col = cols_lookup.get(col, col)
-        # if i == 10:
-        #     print(f"{col=} ", end="")
-        # print(f"-> {col}")
+    for j, col in enumerate(og_columns):
+        col = cols_rename.get(col, col)
         val = df_production_data_by_op.iloc[i][col]
-        # if i == 10:
-        #     print(f"{val=}")
-        print(f"{i=}, {j=}, EC={exp_count}, {col=}, {val=}")
         if col in cols_production_og_translator:
             # draw circles
             new_key = cols_production_og_translator[col]
             val = df_production_data_by_op.iloc[i][new_key]
-            with grid[i+exp_count][j]:
+            with grid[i+1][j]:
                 st.write(val)
                 # st.markdown(f'<div class="selected-job">{val}</div>', unsafe_allow_html=True)
         else:
             # other labels and progress bars
-            with grid[i+exp_count][j]:
+            with grid[i+1][j]:
                 if col == cols_rename["ProgressOps"]:
                     val /= N_OPERATIONS
-                    # print(f"=> {val=}, {type(val)=}")
                     st.progress(val, text=f"{val*100:.2f}%")
-                elif col == cols_rename["ProgressTotalBudget"]:
-                    # print(f"{col=}, {val=}, {j=}")
-                    val = 0 if pd.isna(val) else val
-                    if val > 1:
-                        st.write(":red[OVER BUDGET!]")
-                    else:
-                        st.progress(val, text=f"{val*100:.2f}%")
-                elif col == E_INFORMATION:
-                    st.button(
-                        label=E_SHRINK if st.session_state.get("expanded_index") == i else E_EXPAND,
-                        on_click=lambda i_=i, j_=j: click_expand_order(i_, j_),
-                        key=f"BTN_EXP_{COMP}_{i}_{j}",
-                        use_container_width=True
-                    )
                 else:
-                    if (new == old) and done_showing:
-                        st.write(val)
-                    else:
-                        st.markdown(f'<div class="selected-job">{val}</div>', unsafe_allow_html=True)
-                    # st.write(row[j])
-    if row_is_expanded:
-        # for k in range(1, row_is_expanded + 1):
-        with grid[i + exp_count + 2][0]:  #(rows_per_expansion - 1)]:
-            st.write(f"EXPANDED")
-
-        exp_count += rows_per_expansion
+                    st.write(val)
 
 
-
-
-# # On exit save states
-# st.session_state.update({
-#     "df_production_data_status_codes": df_production_data_status_codes,
-#     "df_production_data_by_op": df_production_data_by_op
-# })
-
-
-# refresh_js = """
-#     <script type="text/javascript">
-#         setTimeout(function() { location.reload(); }, 300000);  // Reload every 5 minutes
-#     </script>
-# """
-# refresh_js = """
-#     <script type="text/javascript">
-#         setTimeout(() => { location.reload(); }, 10000);  // Reload every 10 seconds
-#     </script>
-# """
-# st.html(refresh_js)
-
-count = st_autorefresh(interval=time_app_refresh, limit=None, key="ProductionOverview")
-# print(f"{count=}")
-
-# print(f"{df_production_data_by_op.loc[df_production_data_by_op['Job'] == '10001546']}")
-
-for i, row in df_production_data_by_op.iterrows():
-    job = row.get("Job")
-    # if job is not None:
-    ops_sum = row.get(cols_rename["ProgressOps"], 0)
-    if job in SG_QUOTES_OF_INTEREST:
-        print(f"QoI {job=}, {ops_sum=}")
-    st.session_state[COMP].update({job: {"i": i, "ops_sum": ops_sum}})
+count = st_autorefresh(interval=time_app_refresh, limit=None, key="fizzbuzzcounter")
