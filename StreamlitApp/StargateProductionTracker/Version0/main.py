@@ -1,4 +1,5 @@
 import datetime
+import warnings
 
 import pandas as pd
 import streamlit as st
@@ -6,11 +7,14 @@ from st_click_detector import click_detector
 from streamlit.components.v1 import components
 from streamlit_autorefresh import st_autorefresh
 from streamlit_extras.add_vertical_space import add_vertical_space
+from streamlit_extras.dataframe_explorer import dataframe_explorer
 
 from pyodbc_connection import connect
 from utility import flatten
 
 print(f"RERUN")
+
+warnings.filterwarnings("ignore")
 
 BWS = 0
 STG = 1
@@ -22,6 +26,9 @@ E_INFORMATION = ":information_source:"
 E_WORKING = ":wrench:"
 E_EXPAND = ":heavy_plus_sign:"
 E_SHRINK = ":heavy_minus_sign:"
+E_OP_COMPLETE = ":large_green_circle:"
+E_OP_STARTED = ":large_yellow_circle:"
+E_OP_NOT_STARTED = ":red_circle:"
 
 cols_rename = {
     "NumOpenTransactions": E_WORKING,
@@ -45,7 +52,8 @@ default_session_state = {
     STG: {},
     "sort_col": cols_rename["ProgressOps"],
     "sort_style": E_DESC_SORT,
-    "expanded_index": None
+    "expanded_index": None,
+    "expanded_index_reverse_lookup": None
 }
 for k, v in default_session_state.items():
     st.session_state.setdefault(k, v)
@@ -76,15 +84,26 @@ def click():
 
 
 SG_QUOTES_OF_INTEREST = ["10001546"]
-st.button(
-    label="Add",
-    on_click=click
-)
+# st.button(
+#     label="Add",
+#     on_click=click
+# )
 
 
 # time_cache_prod_data_by_op_stg = 60*60*1000  # 1 hour
 time_cache_prod_data_by_op_stg = 3*60*1000  # 3 minutes
-time_app_refresh = 30*1000  # every 30 seconds
+time_app_refresh = 45*1000  # every 45 seconds
+
+
+CREDS_BWS = {
+    "uid": "user5",
+    "pwd": "M@gic456"
+}
+CREDS_STG = {
+    "uid": "SGeu1",
+    "pwd": "Pupplies-Hagard->Rio0"
+}
+
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_prod_data_status_codes_stg() -> pd.DataFrame:
@@ -104,10 +123,11 @@ SELECT
     connection_data = {
         "sql": sql,
         "database": "SysproCompanyS",
-        "uid": "SGeu1",
-        "pwd": "Pupplies-Hagard->Rio0"
+        "uid": CREDS_STG["uid"],
+        "pwd": CREDS_STG["pwd"]
     }
     return connect(**connection_data)
+
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_prod_data_by_op_stg() -> pd.DataFrame:
@@ -364,8 +384,8 @@ ORDER BY
     connection_data = {
         "sql": sql,
         "database": "SysproCompanyS",
-        "uid": "SGeu1",
-        "pwd": "Pupplies-Hagard->Rio0"
+        "uid": CREDS_STG["uid"],
+        "pwd": CREDS_STG["pwd"]
     }
 
     result = connect(**connection_data)
@@ -375,6 +395,7 @@ ORDER BY
     # print(f"{result.loc[result['Job'].isin(SG_QUOTES_OF_INTEREST)]=}")
 
     return result
+
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_prod_data_by_op_bws() -> pd.DataFrame:
@@ -631,9 +652,87 @@ ORDER BY
     connection_data = {
         "sql": sql,
         "database": "SysproCompanyA",
-        "uid": "user5",
-        "pwd": "M@gic456"
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
     }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
+def load_WipJobAllMat_data(job) -> pd.DataFrame:
+    db_name = f"SysproCompany{COMP_LETTER}"
+    sql = f"""
+    SELECT
+        *
+    FROM
+        [{db_name}].[dbo].[WipJobAllMat]
+    WHERE
+        [Job] = '{job}'
+    ;
+        """
+    connection_data = {
+        "sql": sql,
+        "database": db_name,
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    if COMP == STG:
+        connection_data.update({
+            "uid": CREDS_STG["uid"],
+            "pwd": CREDS_STG["pwd"]
+        })
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
+def load_WipJobAllLab_data(job) -> pd.DataFrame:
+    db_name = f"SysproCompany{COMP_LETTER}"
+    sql = f"""
+    SELECT
+        *
+    FROM
+        [{db_name}].[dbo].[WipJobAllLab]
+    WHERE
+        [Job] = '{job}'
+    ;
+        """
+    connection_data = {
+        "sql": sql,
+        "database": db_name,
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    if COMP == STG:
+        connection_data.update({
+            "uid": CREDS_STG["uid"],
+            "pwd": CREDS_STG["pwd"]
+        })
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
+def load_ClkTransaction_data(job) -> pd.DataFrame:
+    db_name = f"SysproCompany{COMP_LETTER}"
+    sql = f"""
+SELECT
+    *
+FROM
+    [{db_name}].[dbo].[ClkTransaction]
+WHERE
+    [JobNumber] = '{job}'
+;
+    """
+    connection_data = {
+        "sql": sql,
+        "database": db_name,
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    if COMP == STG:
+        connection_data.update({
+            "uid": CREDS_STG["uid"],
+            "pwd": CREDS_STG["pwd"]
+        })
     return connect(**connection_data)
 
 
@@ -641,25 +740,40 @@ def click_column_header(j, col):
     print(f"click_column_header {j=}, {col=}")
     prev_sc = st.session_state.get("sort_col")
     prev_ss = st.session_state.get("sort_style")
+    m = ""
     if col == prev_sc:
+        m += "A"
         if prev_ss == E_NO_SORT:
+            m += "B"
             ss = E_DESC_SORT
         elif prev_ss == E_DESC_SORT:
+            m += "C"
             ss = E_ASC_SORT
         else:
+            m += "D"
             ss = E_NO_SORT
             col = None
     else:
-        ss = E_ASC_SORT
+        m += "E"
+        ss = E_DESC_SORT
+
+    print(f"{m=}")
+
+    old_expanded_idx = st.session_state.get("expanded_index")
+    if old_expanded_idx is not None:
+        df_job = df_production_data_by_op.iloc[old_expanded_idx]
+        job = df_job["Job"]
+        st.session_state.update({"expanded_index_reverse_lookup": job})
+
     st.session_state.update({
         "sort_col": col,
         "sort_style": ss
     })
 
-    print(f"\n")
-    for k, v in st.session_state.items():
-        print(f"{k=}, {v=}")
-    print(f"\n")
+    # print(f"\n")
+    # for k, v in st.session_state.items():
+    #     print(f"{k=}, {v=}")
+    # print(f"\n")
 
 
 def click_expand_order(i, j):
@@ -703,20 +817,23 @@ st.markdown("""
 )
 
 
-# options_radio_company_choice = [
-#     ":#AB2328[BWS]",
-#     ":#1B4581[STARGATE]"
-# ]
 options_radio_company_choice = [
     ":red[BWS]",
     ":blue[STARGATE]"
 ]
-radio_company_choice = st.radio(
-    "Company:",
-    options_radio_company_choice,
-    key="radio_company_choice",
-    horizontal=True
-)
+title_cols = st.columns([1, 0.15])
+with title_cols[0]:
+    radio_company_choice = st.radio(
+        "Company:",
+        options_radio_company_choice,
+        key="radio_company_choice",
+        horizontal=True
+    )
+
+# options_radio_company_choice = [
+#     ":#AB2328[BWS]",
+#     ":#1B4581[STARGATE]"
+# ]
 
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
 
@@ -781,7 +898,7 @@ cols_lookup.update({v: k for k, v in cols_production_og_translator.items()})
 cols_lookup.update({str(k): v for k, v in cols_production.items()})
 
 # cell_formatter = lambda status_val: f":heavy_check_mark:" if status_val == 2 else (f":wrench:" if status_val == 1 else f":red_circle:")
-cell_formatter = lambda status_val: f":large_green_circle:" if status_val == 2 else (f":large_yellow_circle:" if status_val == 1 else f":red_circle:")
+cell_formatter = lambda status_val: E_OP_COMPLETE if status_val == 2 else (E_OP_STARTED if status_val == 1 else E_OP_NOT_STARTED)
 for i, col in cols_production.items():
     # # column_config_df_production_data_by_op.update({
     # #     col: st.column_config.CheckboxColumn(
@@ -821,11 +938,27 @@ og_columns.remove("TotalRunTimeEst")
 # print(f"{cols_lookup=}")
 # print(f"SORTING BY: SC={st.session_state.get('sort_col')}")
 # print(f"NC={cols_lookup[st.session_state.get('sort_col')]}")
+
+# Sort the main plotting data
+if st.session_state.get("sort_col") is None:
+    sort_by = cols_lookup[default_session_state["sort_col"]]
+    sort_style = default_session_state["sort_style"]
+else:
+    sort_by = cols_lookup[st.session_state.get("sort_col")]
 df_production_data_by_op.sort_values(
-    by=cols_lookup[st.session_state.get("sort_col")],
+    by=sort_by,
     ascending=st.session_state.get("sort_style") != E_DESC_SORT,
-    inplace=True
+    inplace=True,
+    ignore_index=True
 )
+
+# If sorting would change the expanded index, update it by reverse-looking-up the index by job.
+if (old_expanded_job := st.session_state.get("expanded_index_reverse_lookup")) is not None:
+    new_expanded_index = df_production_data_by_op.loc[df_production_data_by_op["Job"] == old_expanded_job].index
+    st.session_state.update({
+        "expanded_index_reverse_lookup": None,
+        "expanded_index": new_expanded_index
+    })
 
 # df_production_data_by_op.sort_values(by="Job", ascending=False, inplace=True)
 # st.dataframe(df_production_data_by_op)
@@ -849,10 +982,6 @@ table_styles = [
 ]
 
 
-title_cols = st.columns([1, 0.15])
-with title_cols[1]:
-    st.markdown(f"###### as of: :red[{datetime.datetime.now():%x %X}]")
-
 add_vertical_space(3)
 width_cols_production = [0.22 for _ in cols_production]
 col_order = {
@@ -872,13 +1001,23 @@ col_order.update({
 
 if COMP == STG:
     COMP_NAME = "Stargate"
+    COMP_LETTER = "S"
 else:
     COMP_NAME = "BWS"
+    COMP_LETTER = "A"
     col_order["JobDescription"] = 0.6
     col_order["Model No"] = 0.6
 
 with title_cols[0]:
     st.write(f"### {COMP_NAME} Production Data")
+    st.markdown(f"###### as of: :red[{datetime.datetime.now():%x %X}]")
+
+with title_cols[1]:
+    with st.container():
+        st.write(f"Operation Status Legend")
+        st.write(f"{E_OP_NOT_STARTED} -- Not Started")
+        st.write(f"{E_OP_STARTED} -- In Progress")
+        st.write(f"{E_OP_COMPLETE} -- Complete")
 
 col_widths = [val for col, val in col_order.items()]
 header_col_widths = flatten([[0.55 * cw, 0.45 * cw] for cw in col_widths])
@@ -901,13 +1040,14 @@ for i in range(df_production_data_by_op.shape[0]):
 
 # print(f"{len(grid)=}")
 
-for i, row in enumerate(grid):
-    if isinstance(row, (tuple, list)):
-        print(f"{i=} {row[0]._block_type}")
-    else:
-        print(f"{i=} {row._block_type} DIV")
-    # ty = row[0][0]._block_type
-    # print(f"{i=} {ty=}")
+# # Inspect the grid I've created.
+# for i, row in enumerate(grid):
+#     if isinstance(row, (tuple, list)):
+#         print(f"{i=} {row[0]._block_type}")
+#     else:
+#         print(f"{i=} {row._block_type} DIV")
+#     # ty = row[0][0]._block_type
+#     # print(f"{i=} {ty=}")
 
 # print(f"{grid[:10]=}")
 # print(f"{dir(grid[0])=}")
@@ -933,10 +1073,13 @@ for j, col in enumerate(col_order):
 
     col = f"{j - len(cols_description) + 1}" if (col in cols_production_og_translator) else col
     col = cols_rename.get(col, col)
-    ss = ":black_medium_small_square:"
+    ss = E_NO_SORT
     if col == st.session_state.get("sort_col"):
         m += "B"
         ss = f" {st.session_state.get('sort_style')}"
+
+    if col == E_INFORMATION:
+        ss = ""
 
     # if col in cols_production_og_translator:
     #     m += "A"
@@ -992,8 +1135,8 @@ for j, col in enumerate(col_order):
 # print(f"{cols_rename=}")
 # print(f"cols={list(df_production_data_by_op.columns)}")
 
-print(f"\nBEGIN POP TABLE")
-print(f'{st.session_state.get("expanded_index")=}')
+# print(f"\nBEGIN POP TABLE")
+# print(f'{st.session_state.get("expanded_index")=}')
 exp_count = 0
 
 # for i_row in df_production_data_by_op.itertuples():
@@ -1057,8 +1200,12 @@ for i, row in df_production_data_by_op.iterrows():
         st.session_state[COMP][job][cols_rename["ProgressOps"]] = new
 
     row_is_expanded = st.session_state.get("expanded_index") == i
+    if row_is_expanded:
+        df_ClkTransaction_job_data = load_ClkTransaction_data(job)
+        df_WipJobAllMat_job_data = load_WipJobAllMat_data(job)
+        df_WipJobAllLab_job_data = load_WipJobAllLab_data(job)
 
-    print(f"\nBEGIN ROW POP {i=}, EC={exp_count}, RIP={row_is_expanded}")
+    # print(f"\nBEGIN ROW POP {i=}, EC={exp_count}, RIP={row_is_expanded}")
 
     for j, col in enumerate(col_order):
         og_col = str(col)
@@ -1073,9 +1220,9 @@ for i, row in df_production_data_by_op.iterrows():
         #     print(f"{col=} ", end="")
         # print(f"-> {col}")
         val = df_production_data_by_op.iloc[i][col]
-        # if i == 10:
-        #     print(f"{val=}")
-        print(f"{i=}, {j=}, EC={exp_count}, {col=}, {val=}")
+        # # if i == 10:
+        # #     print(f"{val=}")
+        # print(f"{i=}, {j=}, EC={exp_count}, {col=}, {val=}")
         if col in cols_production_og_translator:
             # draw circles
             new_key = cols_production_og_translator[col]
@@ -1113,7 +1260,65 @@ for i, row in df_production_data_by_op.iterrows():
     if row_is_expanded:
         # for k in range(1, row_is_expanded + 1):
         with grid[i + exp_count + 2][0]:  #(rows_per_expansion - 1)]:
-            st.write(f"EXPANDED")
+            # st.write(f"EXPANDED")
+            options = ["ShopClk Data", "Syspro Labour", "Syspro Material"]
+            df_explorer_radio = st.radio(
+                label="Select some data to investigate:",
+                options=options,
+                horizontal=True
+            )
+            if df_explorer_radio == options[0]:
+                with st.expander("ClkTransaction Data:"):
+                    if not df_ClkTransaction_job_data.empty:
+                        # st.dataframe(df_ClkTransaction_job_data)
+                        filtered = dataframe_explorer(df_ClkTransaction_job_data, case=False)
+                        st.dataframe(filtered, use_container_width=True)
+                    else:
+                        st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+            elif df_explorer_radio == options[1]:
+                with st.expander("Syspro Labour Data:"):
+                    if not df_WipJobAllLab_job_data.empty:
+                        # st.dataframe(df_ClkTransaction_job_data)
+                        filtered = dataframe_explorer(df_WipJobAllLab_job_data, case=False)
+                        st.dataframe(filtered, use_container_width=True)
+                    else:
+                        st.write(f"Could not retrieve any Syspro Labour data for {job=}.")
+            elif df_explorer_radio == options[2]:
+                with st.expander("Syspro Material Data:"):
+                    if not df_WipJobAllMat_job_data.empty:
+                        # st.dataframe(df_WipJobAllMat_job_data)
+                        filtered = dataframe_explorer(df_WipJobAllMat_job_data, case=False)
+                        st.dataframe(filtered, use_container_width=True)
+                    else:
+                        st.write(f"Could not retrieve any Syspro Material data for {job=}.")
+
+            # with st.expander("ClkTransaction Data:"):
+            #     if not df_ClkTransaction_job_data.empty:
+            #         # st.dataframe(df_ClkTransaction_job_data)
+            #         dataframe_explorer(
+            #             df_ClkTransaction_job_data,
+            #             key=f"{COMP}_{i}_clkTransaction"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+            # with st.expander("Syspro Labour Data:"):
+            #     if not df_WipJobAllLab_job_data.empty:
+            #         # st.dataframe(df_WipJobAllLab_job_data)
+            #         dataframe_explorer(
+            #             df_WipJobAllLab_job_data,
+            #             key=f"{COMP}_{i}_wipJobAllLab"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+            # with st.expander("Syspro Material Data:"):
+            #     if not df_WipJobAllMat_job_data.empty:
+            #         # st.dataframe(df_WipJobAllMat_job_data)
+            #         dataframe_explorer(
+            #             df_WipJobAllMat_job_data,
+            #             key=f"{COMP}_{i}_wipJobAllMat"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any Syspro Material data for {job=}.")
 
         exp_count += rows_per_expansion
 
