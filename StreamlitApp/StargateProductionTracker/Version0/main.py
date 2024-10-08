@@ -10,9 +10,9 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_extras.dataframe_explorer import dataframe_explorer
 
 from pyodbc_connection import connect
-from utility import flatten
+from utility import flatten, get_windows_user
 
-print(f"RERUN")
+print(f"RERUN for {st.session_state.get('session_user', 'NO NAME YET')} {datetime.datetime.now():%x %X}")
 
 warnings.filterwarnings("ignore")
 
@@ -103,6 +103,10 @@ CREDS_STG = {
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
+
+
+if "session_user" not in st.session_state:
+    st.session_state["session_user"] = get_windows_user()
 
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)

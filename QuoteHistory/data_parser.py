@@ -883,25 +883,39 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		
 		, "2024-01-02"
 		, "2024-01-03"
+        
+        # Robert's Bachelors
 		, "2024-03-01"
 		
+        # Robert's Baby Shower
 		, "2024-06-13"
 		, "2024-06-14"
+        
+        # Robert's Wedding
 		, "2024-07-12"
 		, "2024-07-15"
+        
+        # Pat's Bachelors
 		, "2024-07-19"
 		, "2024-07-22"
+        
+        # Mount Carleton
         , "2024-07-26"
+        
+        # Pat's Wedding
 		, "2024-08-09"
 		, "2024-08-12"
 		
+        # Gram's Funeral
 		, "2024-09-03"
         , "2024-09-04"
 		, "2024-09-05"
 		, "2024-09-06"
 		
+        # Quebec Trip
         , "2024-10-03"
         , "2024-10-04"
+        , "2024-10-07"
 	]
 	sick_days = [
 		"2023-05-23",
