@@ -112,7 +112,7 @@ if "session_user" not in st.session_state:
     st.session_state["session_user"] = get_windows_user()
 
 
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg):
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_itr_customers_data() -> pd.DataFrame:
     sql = """
 SELECT
@@ -130,7 +130,7 @@ FROM
     return connect(**connection_data)
 
 
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg):
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_itstr_app_directory() -> pd.DataFrame:
     sql = """
 SELECT
@@ -148,7 +148,7 @@ FROM
     return connect(**connection_data)
 
 
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg):
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_itstr_user_directory() -> pd.DataFrame:
     sql = """
 SELECT
@@ -867,12 +867,12 @@ def click_expand_order(i, j):
 #     unsafe_allow_html=True
 # )
 
-df_itstr_app_directory = load_itstr_app_directory()
-df_itstr_user_directory = load_itstr_user_directory()
-df_itr_customers = load_itr_customers_data()
+# df_itstr_app_directory = load_itstr_app_directory()
+# df_itstr_user_directory = load_itstr_user_directory()
+# df_itr_customers = load_itr_customers_data()
 
 if REQUIRES_PASSWORD:
-
+    pass
 
 st.markdown("""
     <style>
