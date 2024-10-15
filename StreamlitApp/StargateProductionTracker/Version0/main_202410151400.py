@@ -3,14 +3,12 @@ import warnings
 
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 from st_click_detector import click_detector
 from streamlit.components.v1 import components
 from streamlit_autorefresh import st_autorefresh
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_extras.dataframe_explorer import dataframe_explorer
 
-from colour_utility import gradient
 from pyodbc_connection import connect
 from utility import flatten, get_windows_user
 
@@ -20,6 +18,7 @@ warnings.filterwarnings("ignore")
 
 REQUIRES_PASSWORD = True
 CIRCLES_NOT_SQUARES = True
+
 
 BWS = 0
 STG = 1
@@ -55,6 +54,7 @@ cols_lookup = {k: v for k, v in cols_rename.items()}
 cols_lookup.update({v: k for k, v in cols_rename.items()})
 
 st.set_page_config(layout="wide")
+
 
 default_session_state = {
     BWS: {},
@@ -100,8 +100,9 @@ SG_QUOTES_OF_INTEREST = ["10001546"]
 
 
 # time_cache_prod_data_by_op_stg = 60*60*1000  # 1 hour
-time_cache_prod_data_by_op_stg = 3 * 60 * 1000  # 3 minutes
-time_app_refresh = 45 * 1000  # every 45 seconds
+time_cache_prod_data_by_op_stg = 3*60*1000  # 3 minutes
+time_app_refresh = 45*1000  # every 45 seconds
+
 
 CREDS_BWS = {
     "uid": "user5",
@@ -111,6 +112,7 @@ CREDS_STG = {
     "uid": "SGeu1",
     "pwd": "Pupplies-Hagard->Rio0"
 }
+
 
 if "session_user" not in st.session_state:
     st.session_state["session_user"] = get_windows_user()
@@ -728,6 +730,7 @@ def load_bws_prod_ops():
     print(f"NEW BWS PROD OPS")
     sql = """
 SELECT * FROM [SysproCompanyA].[dbo].[v_ProdOperationNames] ORDER BY [Operation];
+;
     """
     connection_data = {
         "sql": sql,
@@ -736,82 +739,6 @@ SELECT * FROM [SysproCompanyA].[dbo].[v_ProdOperationNames] ORDER BY [Operation]
         "pwd": CREDS_BWS["pwd"]
     }
     return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
-def load_stg_prod_ops():
-    print(f"NEW STG PROD OPS")
-    sql = """
-SELECT * FROM [SysproCompanyS].[dbo].[v_ProdOperationNames] ORDER BY [Operation];
-    """
-    connection_data = {
-        "sql": sql,
-        "database": "SysproCompanyS",
-        "uid": CREDS_STG["uid"],
-        "pwd": CREDS_STG["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
-def load_order_options_bws():
-    print(f"NEW BWS ORDER OPTIONS")
-    sql = """
-SELECT * FROM [BWSdb].[dbo].[Order Options];
-    """
-    connection_data = {
-        "sql": sql,
-        "database": "BWSdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
-def load_order_options_stg():
-    print(f"NEW STG ORDER OPTIONS")
-    sql = """
-SELECT * FROM [BWSdb].[dbo].[Order OptionsV2];
-    """
-    connection_data = {
-        "sql": sql,
-        "database": "BWSdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
-def load_custom_work_bws():
-    print(f"NEW BWS Custom Work")
-    sql = """
-SELECT * FROM [BWSdb].[dbo].[Custom Work];
-    """
-    connection_data = {
-        "sql": sql,
-        "database": "BWSdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
-def load_custom_work_stg():
-    print(f"NEW STG Custom Work")
-    sql = """
-SELECT * FROM [BWSdb].[dbo].[Custom WorkV2];
-    """
-    connection_data = {
-        "sql": sql,
-        "database": "BWSdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
 
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
@@ -944,28 +871,41 @@ def click_expand_order(i, j):
         st.session_state["expanded_index"] = None
 
 
+# # Add custom CSS to create a sticky header
+# st.markdown(
+#     """
+#     <style>
+#     .sticky-header {
+#         position: -webkit-sticky; /* For Safari */
+#         position: sticky;
+#         top: 0;
+#         padding: 10px;
+#         font-size: 24px;
+#         z-index: 1000;
+#         border-bottom: 2px solid #ddd;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
 df_itstr_app_directory = load_itstr_app_directory()
 df_itstr_user_directory = load_itstr_user_directory()
 df_itr_customers = load_itr_customers_data()
 df_operation_names_bws = load_bws_prod_ops()
-df_operation_names_stg = load_stg_prod_ops()
-df_order_options_bws = load_order_options_bws()
-df_order_options_stg = load_order_options_bws()
-df_npos_bws = load_custom_work_bws()
-df_npos_stg = load_custom_work_stg()
 
 if REQUIRES_PASSWORD:
     pass
 
-# st.markdown("""
-#     <style>
-#     .selected-job {
-#         background-color: #FF0000;
-#     }
-#     </style>
-# """,
-#             unsafe_allow_html=True
-# )
+st.markdown("""
+    <style>
+    .selected-job {
+        background-color: #FF0000; 
+    }
+    </style>
+""",
+            unsafe_allow_html=True
+)
 
 
 options_radio_company_choice = [
@@ -981,28 +921,54 @@ with title_cols[0]:
         horizontal=True
     )
 
+# options_radio_company_choice = [
+#     ":#AB2328[BWS]",
+#     ":#1B4581[STARGATE]"
+# ]
+
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
-COLOUR_OPERATIONS: list = list()
 
 if COMP == BWS:
     # BWS
 
     N_OPERATIONS = 19
-    COLOUR_OPERATIONS = ["#650808", "#086508"]
     df_production_data_status_codes = load_prod_data_status_codes_stg()
     df_production_data_by_op = load_prod_data_by_op_bws()
 else:
     # STG
 
     N_OPERATIONS = 19
-    COLOUR_OPERATIONS = ["#650808", "#086508"]
     # df_production_data_status_codes = st.session_state.setdefault("df_production_data_status_codes", load_prod_data_status_codes_stg())
     # df_production_data_by_op = st.session_state.setdefault("df_production_data_by_op", load_prod_data_by_op_stg())
     df_production_data_status_codes = load_prod_data_status_codes_stg()
     df_production_data_by_op = load_prod_data_by_op_stg()
 
-df_production_data_by_op["ProgressTotalBudget"] = df_production_data_by_op["TotalRunTimeAct"] / \
-                                                  df_production_data_by_op["TotalRunTimeEst"]
+
+# print(f"{df_production_data_by_op.shape=}")
+# print(f"{df_production_data_by_op['Job'].unique().shape=}")
+
+# print(f"{df_production_data_by_op.loc[df_production_data_by_op['Job'] == '10001546']}")
+
+
+# # st.dataframe(df_production_data_status_codes)
+# # st.dataframe(df_production_data_by_op)
+#
+# tmpl_column_config_df_production_data_by_op = {
+#     "lbl": lambda num: f"OP {num}",
+#     "help": lambda num: f"Unit has entered operation {num}",
+#     "default": False
+# }
+# column_config_df_production_data_by_op = {}
+# # column_config_df_production_data_by_op = {
+# #     "Operation1Status": st.column_config.CheckboxColumn(
+# #         "OP 1",
+# #         help="Unit has entered operation 1.",
+# #         default=False,
+# #     )
+# # }
+
+
+df_production_data_by_op["ProgressTotalBudget"] = df_production_data_by_op["TotalRunTimeAct"] / df_production_data_by_op["TotalRunTimeEst"]
 df_production_data_by_op["Expand"] = 1
 og_columns = list(df_production_data_by_op.columns)
 
@@ -1015,8 +981,7 @@ for new_pos, col_name in [
     og_columns.remove(col_name)
     og_columns.insert(new_pos, col_name)
 
-cols_production_og_translator = {col: f"F_{col}" for col in list(df_production_data_by_op.columns) if
-                                 all(["operation" in col.lower(), "status" in col.lower()])}
+cols_production_og_translator = {col: f"F_{col}" for col in list(df_production_data_by_op.columns) if all(["operation" in col.lower(), "status" in col.lower()])}
 cols_production = list(cols_production_og_translator.keys())
 cols_production = {int(col.lower().removeprefix("operation").removesuffix("status")): col for col in cols_production}
 cols_lookup.update({k: v for k, v in cols_production_og_translator.items()})
@@ -1025,27 +990,54 @@ cols_lookup.update({str(k): v for k, v in cols_production.items()})
 cols_lookup.update({k: v for k, v in cols_production.items()})
 
 # cell_formatter = lambda status_val: f":heavy_check_mark:" if status_val == 2 else (f":wrench:" if status_val == 1 else f":red_circle:")
-cell_formatter = lambda status_val: E_OP_COMPLETE if status_val == 2 else (
-    E_OP_STARTED if status_val == 1 else E_OP_NOT_STARTED)
+cell_formatter = lambda status_val: E_OP_COMPLETE if status_val == 2 else (E_OP_STARTED if status_val == 1 else E_OP_NOT_STARTED)
 for i, col in cols_production.items():
+    # # column_config_df_production_data_by_op.update({
+    # #     col: st.column_config.CheckboxColumn(
+    # #         label=tmpl_column_config_df_production_data_by_op["lbl"](i),
+    # #         help=tmpl_column_config_df_production_data_by_op["help"](i),
+    # #         default=tmpl_column_config_df_production_data_by_op["default"],
+    # #     )
+    # # })
+    # column_config_df_production_data_by_op.update({
+    #     col: st.column_config.TextColumn(
+    #         label=tmpl_column_config_df_production_data_by_op["lbl"](i),
+    #         help=tmpl_column_config_df_production_data_by_op["help"](i)
+    #         # ,
+    #         # validate=
+    #         # ,
+    #         # cell_formatter=cell_formatter
+    #         # ,
+    #         # default=tmpl_column_config_df_production_data_by_op["default"]
+    #
+    #     )
+    # })
+
     df_production_data_by_op[f"F_{col}"] = df_production_data_by_op[col].apply(lambda val: cell_formatter(val))
 
-df_production_data_by_op["JobDeliveryDate"] = df_production_data_by_op["JobDeliveryDate"].apply(
-    lambda val: f"{val:%Y-%m-%d}" if not pd.isna(val) else "-")
-df_production_data_by_op["NumOpenTransactions"] = df_production_data_by_op["NumOpenTransactions"].apply(
-    lambda val: ":wrench:" if val >= 1 else "")
+df_production_data_by_op["JobDeliveryDate"] = df_production_data_by_op["JobDeliveryDate"].apply(lambda val: f"{val:%Y-%m-%d}" if not pd.isna(val) else "-")
+df_production_data_by_op["NumOpenTransactions"] = df_production_data_by_op["NumOpenTransactions"].apply(lambda val: ":wrench:" if val >= 1 else "")
 del df_production_data_by_op["TotalRunTimeAct"]
 del df_production_data_by_op["TotalRunTimeEst"]
 og_columns.remove("TotalRunTimeAct")
 og_columns.remove("TotalRunTimeEst")
+
+# header_columns = []
+# for col in og_columns:
+#     header_columns += [col, E_NO_SORT]
+
+# # df_production_data_by_op.sort_values(by="ProgressOps", ascending=False, inplace=True)
+# print(f"{cols_lookup=}")
+# print(f"SORTING BY: SC={st.session_state.get('sort_col')}")
+# print(f"NC={cols_lookup[st.session_state.get('sort_col')]}")
 
 # Sort the main plotting data
 if st.session_state.get("sort_col") is None:
     sort_by = cols_lookup[default_session_state["sort_col"]]
     sort_style = default_session_state["sort_style"]
 else:
-    # print(f"{cols_lookup=}")
-    # print(f"{st.session_state.get('sort_col')=}, {type(st.session_state.get('sort_col'))=}")
+    print(f"{cols_lookup=}")
+    print(f"{st.session_state.get('sort_col')=}, {type(st.session_state.get('sort_col'))=}")
     sort_by = cols_lookup[st.session_state.get("sort_col")]
 df_production_data_by_op.sort_values(
     by=sort_by,
@@ -1056,12 +1048,23 @@ df_production_data_by_op.sort_values(
 
 # If sorting would change the expanded index, update it by reverse-looking-up the index by job.
 if (old_expanded_job := st.session_state.get("expanded_index_reverse_lookup")) is not None:
-    print(f"{old_expanded_job=}")
     new_expanded_index = df_production_data_by_op.loc[df_production_data_by_op["Job"] == old_expanded_job].index
     st.session_state.update({
         "expanded_index_reverse_lookup": None,
         "expanded_index": new_expanded_index
     })
+
+# df_production_data_by_op.sort_values(by="Job", ascending=False, inplace=True)
+# st.dataframe(df_production_data_by_op)
+# st.data_editor(
+#     df_production_data_by_op,
+#     column_config=column_config_df_production_data_by_op,
+#     hide_index=True,
+# )
+
+# print(f"{cols_production=}")
+# col_widths = [0.75, 1, 1.5, 1.5, 0.75] + [1 / len(cols_production) for _ in cols_production]
+
 
 table_styles = [
     {
@@ -1071,6 +1074,7 @@ table_styles = [
         "fg": "#FFFFFF"
     }
 ]
+
 
 add_vertical_space(3)
 width_cols_production = [0.22 for _ in cols_production]
@@ -1112,6 +1116,11 @@ with title_cols[1]:
 col_widths = [val for col, val in col_order.items()]
 header_col_widths = flatten([[0.55 * cw, 0.45 * cw] for cw in col_widths])
 
+# print(f"{len(col_widths)=}")
+# print(f"{len(header_col_widths)=}")
+# print(f"{col_widths=}")
+# print(f"{header_col_widths=}")
+# # grid = [st.columns(header_col_widths, vertical_alignment="bottom")]
 rows_per_expansion = 3
 header_grid = [st.columns(col_widths, vertical_alignment="bottom")]
 grid = []
@@ -1123,13 +1132,31 @@ for i in range(df_production_data_by_op.shape[0]):
         grid.append(st.columns(1))
         grid.append(st.divider())
 
+# print(f"{len(grid)=}")
+
+# # Inspect the grid I've created.
+# for i, row in enumerate(grid):
+#     if isinstance(row, (tuple, list)):
+#         print(f"{i=} {row[0]._block_type}")
+#     else:
+#         print(f"{i=} {row._block_type} DIV")
+#     # ty = row[0][0]._block_type
+#     # print(f"{i=} {ty=}")
+
+# print(f"{grid[:10]=}")
+# print(f"{dir(grid[0])=}")
+# print(f"{type(grid[0])=}")
+# print(f"{len(grid[0])=}")
+# print(f"{grid[0][0]._block_type=}")
+
 df_production_data_by_op.rename(
     columns=cols_rename,
     inplace=True
 )
 cols_description = [col for col in og_columns if col not in cols_production_og_translator]
 
-# print(f"{cols_rename=}")
+
+print(f"{cols_rename=}")
 # Header row
 clicked_col_content = {}
 # for j, col in enumerate(header_columns):
@@ -1150,10 +1177,21 @@ for j, col in enumerate(col_order):
     if col == E_INFORMATION:
         ss = ""
 
-    if COMP == BWS:
-        df_col = df_operation_names_bws.loc[df_operation_names_bws["Operation"] == col]
-    else:
-        df_col = df_operation_names_stg.loc[df_operation_names_stg["Operation"] == col]
+    # if col in cols_production_og_translator:
+    #     m += "A"
+    #     # col = f"{len(cols_description) - j}"
+    #     col = f"{j - len(cols_description) + 1}"
+    #     col = cols_rename.get(col, col)
+    #     ss = ":black_medium_small_square:"
+    #     if col == st.session_state.get("sort_col"):
+    #         m += "B"
+    #         ss = f" {st.session_state.get('sort_style')}"
+    # else:
+    #     m += "C"
+    #     col = cols_rename.get(col, col)
+    #     ss = ":black_medium_small_square:"
+
+    df_col = df_operation_names_bws.loc[df_operation_names_bws["Operation"] == col]
     col_n = col
     if not df_col.empty:
         # col = f"{col_n} :heavy_minus_sign: {df_col.iloc[0]['OperationDescription']}"
@@ -1171,23 +1209,56 @@ for j, col in enumerate(col_order):
             key=f"CD_{COMP}_{j}_{col}",
             use_container_width=True
         )
+            # sort button
+            # st.write(col)
+#             clicked_col_content[(j, col)] = click_detector(
+#                 f"<p>{col}</p>",
+#                 key=f"CD_{COMP}_{j}_{col}"
+#             )
+#         # st.markdown(f'<div class="sticky-header">{col}</div>', unsafe_allow_html=True)
+#
+# for k, v in clicked_col_content.items():
+#     print(f"{k=}, {v=}")
 
+# # print(f"{len(cols_description)=}")
+# # print(f"{len(cols_production)=}")
+# for j, col in enumerate(og_columns):
+#     if col in cols_production_og_translator:
+#         # col = f"{len(cols_description) - j}"
+#         col = f"{j - len(cols_description) + 1}"
+#     col = cols_rename.get(col, col)
+#     # print(f"HEAD {j=}, {col=}")
+#     with grid[0][j]:
+#         st.write(col)
+#         # st.markdown(f'<div class="sticky-header">{col}</div>', unsafe_allow_html=True)
+
+# print(f"{cols_lookup=}")
+# print(f"{cols_rename=}")
+# print(f"cols={list(df_production_data_by_op.columns)}")
+
+# print(f"\nBEGIN POP TABLE")
+# print(f'{st.session_state.get("expanded_index")=}')
 exp_count = 0
-# operation_colour_map = {
-#     i: gradient(i, N_OPERATIONS, COLOUR_OPERATIONS[0], COLOUR_OPERATIONS[-1], rgb=False)
-#     for i in range(1, N_OPERATIONS + 1)
-# }
-# operation_colour_map.update({
-#     str(k): v for k, v in operation_colour_map.items()
-# })
-# print(f"{operation_colour_map=}")
 
 # for i_row in df_production_data_by_op.itertuples():
 for i, row in df_production_data_by_op.iterrows():
     # print(f"{i_row=}")
+    # job_num = row["Job"]
+    # job_desc = row["JobDescription"]
+    # model_no = row["Model No"]
+    # comp_name = row["COMPANY NAME"]
+    # job_delivery_date = row["JobDeliveryDate"]h
+    # i = i_row[0]
+    # # print(f"{i=}")
+    # job = i_row[1]
     job = row["Job"]
     # print(f"{i=}, {job=}")
+    # old = st.session_state.setdefault(job, {}).setdefault("ops_sum", 0)
+
+    # print(f"C={COMP}, J={job}, {st.session_state[COMP].get(job, {})=}")
     new = row[cols_rename["ProgressOps"]]
+    # if st.session_state.get(COMP, {}).get(job, {}).get(cols_rename["ProgressOps"], None) is None:
+    #     old_is_none = True
     old = st.session_state.setdefault(COMP, {}).setdefault(job, {}).setdefault(cols_rename["ProgressOps"], None)
 
     key_done_showing = f"DS_{COMP}_{i}"
@@ -1257,23 +1328,23 @@ for i, row in df_production_data_by_op.iterrows():
             # draw circles
             new_key = cols_production_og_translator[col]
             val = df_production_data_by_op.iloc[i][new_key]
-            with grid[i + exp_count][j]:
+            with grid[i+exp_count][j]:
                 st.write(val)
                 # st.markdown(f'<div class="selected-job">{val}</div>', unsafe_allow_html=True)
         else:
             # other labels and progress bars
-            with grid[i + exp_count][j]:
+            with grid[i+exp_count][j]:
                 if col == cols_rename["ProgressOps"]:
                     val /= N_OPERATIONS
                     # print(f"=> {val=}, {type(val)=}")
-                    st.progress(val, text=f"{val * 100:.2f}%")
+                    st.progress(val, text=f"{val*100:.2f}%")
                 elif col == cols_rename["ProgressTotalBudget"]:
                     # print(f"{col=}, {val=}, {j=}")
                     val = 0 if pd.isna(val) else val
                     if val > 1:
                         st.write(":red[OVER BUDGET!]")
                     else:
-                        st.progress(val, text=f"{val * 100:.2f}%")
+                        st.progress(val, text=f"{val*100:.2f}%")
                 elif col == E_INFORMATION:
                     st.button(
                         label=E_SHRINK if st.session_state.get("expanded_index") == i else E_EXPAND,
@@ -1291,69 +1362,7 @@ for i, row in df_production_data_by_op.iterrows():
         # for k in range(1, row_is_expanded + 1):
         with grid[i + exp_count + 2][0]:  #(rows_per_expansion - 1)]:
             # st.write(f"EXPANDED")
-
-            # Production Movements
             options = ["ShopClk Data", "Syspro Labour", "Syspro Material"]
-            cols_timeline_clk = ["JobNumber", "LoggedOn", "LoggedOff", "EmployeeNumber", "EmployeeName", "Operation"]
-
-            df_timeline_clk = df_ClkTransaction_job_data[cols_timeline_clk]
-            df_timeline_clk = df_timeline_clk.loc[df_timeline_clk["JobNumber"] == job]
-            df_timeline_clk["Operation"] = df_timeline_clk["Operation"].astype(int)
-
-            df_timeline_clk["Category"] = df_timeline_clk.apply(
-                lambda row:
-                row["Operation"]
-                , axis=1
-            )
-
-            del df_timeline_clk["Operation"]
-            df_timeline_clk = df_timeline_clk.rename(columns={
-                "LoggedOn": "Start Date",
-                "LoggedOff": "End Date",
-                "Category": "Operation"
-            })
-            df_timeline_clk["End Date"] = df_timeline_clk["End Date"].fillna(datetime.datetime.now())
-            df_timeline_clk['Start Date'] = pd.to_datetime(df_timeline_clk['Start Date'])
-            df_timeline_clk['End Date'] = pd.to_datetime(df_timeline_clk['End Date'])
-            df_timeline_clk["Event"] = df_timeline_clk.apply(
-                lambda row:
-                # f"OP{row['Operation']} - {row['EmployeeNumber']}"
-                # f"{row['EmployeeNumber']}"
-                f"{row['EmployeeName']} {((row['End Date'] - row['Start Date']).total_seconds() / 3600):.3f} Hrs"
-                , axis=1
-            )
-            df_timeline_clk.sort_values(
-                by=["Operation", "Start Date"],
-                inplace=True
-            )
-            # st.dataframe(df_timeline_clk)
-
-            # Create a Gantt-like timeline using Plotly
-            print(f"{df_timeline_clk['Operation']=}")
-            height_timeline_clk = max(500, 12 * df_timeline_clk.shape[0])
-            print(f"{height_timeline_clk=}")
-            fig_timeline_clk = px.timeline(
-                df_timeline_clk,
-                x_start='Start Date',
-                x_end='End Date',
-                y='Event',
-                title='Operation Transactions by Employee',
-                color='Operation'
-                # ,
-                # color_discrete_map=operation_colour_map
-            )
-
-            # Update layout to make it more readable
-            fig_timeline_clk.update_layout(
-                xaxis_title="Date",
-                yaxis_title="Employee Hrs By OP",
-                height=height_timeline_clk
-            )
-
-            # Display in Streamlit
-            st.plotly_chart(fig_timeline_clk)
-
-            # Radios and Expanders
             df_explorer_radio = st.radio(
                 label="Select some data to investigate:",
                 options=options,
@@ -1380,30 +1389,66 @@ for i, row in df_production_data_by_op.iterrows():
                     if not df_WipJobAllMat_job_data.empty:
                         # st.dataframe(df_WipJobAllMat_job_data)
                         filtered = dataframe_explorer(df_WipJobAllMat_job_data, case=False)
-                        st.dataframe(filtered, use_container_width=True, hide_index=True)
+                        st.dataframe(filtered, use_container_width=True)
                     else:
                         st.write(f"Could not retrieve any Syspro Material data for {job=}.")
 
-            with st.expander(f"Options + NPOs:"):
-                st.write(f"#### Options")
-                df_options = df_order_options_bws if COMP == BWS else df_order_options_stg
-                df_options = df_options.loc[df_options["WO#"] == int(job)]
-                st.dataframe(df_options, use_container_width=True, hide_index=True)
-
-                st.write(f"#### NPOs")
-                df_npos = df_npos_bws if COMP == BWS else df_npos_stg
-                df_npos = df_npos.loc[df_npos["WO#"] == int(job)]
-                st.dataframe(df_npos, use_container_width=True, hide_index=True)
-
-                # for j, op in enumerate(df_timeline_clk["Operation"]):
-                #     # st.write(f"{j=}, {op=}, {operation_colour_map[op]=}")
-                #     st.write(f"""<p style="color:{operation_colour_map[op]};">{j=}, {op=}, {operation_colour_map[op]=}</p>""", unsafe_allow_html=True)
-
+            # with st.expander("ClkTransaction Data:"):
+            #     if not df_ClkTransaction_job_data.empty:
+            #         # st.dataframe(df_ClkTransaction_job_data)
+            #         dataframe_explorer(
+            #             df_ClkTransaction_job_data,
+            #             key=f"{COMP}_{i}_clkTransaction"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+            # with st.expander("Syspro Labour Data:"):
+            #     if not df_WipJobAllLab_job_data.empty:
+            #         # st.dataframe(df_WipJobAllLab_job_data)
+            #         dataframe_explorer(
+            #             df_WipJobAllLab_job_data,
+            #             key=f"{COMP}_{i}_wipJobAllLab"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+            # with st.expander("Syspro Material Data:"):
+            #     if not df_WipJobAllMat_job_data.empty:
+            #         # st.dataframe(df_WipJobAllMat_job_data)
+            #         dataframe_explorer(
+            #             df_WipJobAllMat_job_data,
+            #             key=f"{COMP}_{i}_wipJobAllMat"
+            #         )
+            #     else:
+            #         st.write(f"Could not retrieve any Syspro Material data for {job=}.")
 
         exp_count += rows_per_expansion
 
+
+
+
+# # On exit save states
+# st.session_state.update({
+#     "df_production_data_status_codes": df_production_data_status_codes,
+#     "df_production_data_by_op": df_production_data_by_op
+# })
+
+
+# refresh_js = """
+#     <script type="text/javascript">
+#         setTimeout(function() { location.reload(); }, 300000);  // Reload every 5 minutes
+#     </script>
+# """
+# refresh_js = """
+#     <script type="text/javascript">
+#         setTimeout(() => { location.reload(); }, 10000);  // Reload every 10 seconds
+#     </script>
+# """
+# st.html(refresh_js)
+
 count = st_autorefresh(interval=time_app_refresh, limit=None, key="ProductionOverview")
 # print(f"{count=}")
+
+# print(f"{df_production_data_by_op.loc[df_production_data_by_op['Job'] == '10001546']}")
 
 for i, row in df_production_data_by_op.iterrows():
     job = row.get("Job")
@@ -1412,4 +1457,3 @@ for i, row in df_production_data_by_op.iterrows():
     if job in SG_QUOTES_OF_INTEREST:
         print(f"QoI {job=}, {ops_sum=}")
     st.session_state[COMP].update({job: {"i": i, "ops_sum": ops_sum}})
-
