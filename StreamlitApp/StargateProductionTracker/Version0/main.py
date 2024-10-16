@@ -943,7 +943,7 @@ def click_expand_order(i, j):
         # shrink:
         st.session_state["expanded_index"] = None
 
-
+# slow
 df_itstr_app_directory = load_itstr_app_directory()
 df_itstr_user_directory = load_itstr_user_directory()
 df_itr_customers = load_itr_customers_data()

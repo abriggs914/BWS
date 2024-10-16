@@ -3,6 +3,7 @@ SELECT * FROM [BWSdb].[dbo].[Employees - Salary] WHERE [1st Name] LIKE '%RAN%';
 
 SELECT * FROM [SysproCompanyA].[dbo].[v_TLWRAllOperations];
 SELECT * FROM [SysproCompanyA].[dbo].[v_ProdOperationNames];
+SELECT * FROM [SysproCompanyA].[dbo].[];
 SELECt * FROM [BWSdb].[dbo].[ITSTR_AppDirectory];
 
 
@@ -149,7 +150,7 @@ ON
 WHERE
 	([M].[Job] = @wo)
 	AND (([P].[Job] IS NULL) OR ([P].[MStockCode] IS NULL))
-	AND ([TrnType] <> 'L')
+	AND ([TrnType] IS NULL)
 ;
 	--AND CAST([P].[LOperation] AS INT) = CAST([M].[OperationOffset] AS INT)
 /*
