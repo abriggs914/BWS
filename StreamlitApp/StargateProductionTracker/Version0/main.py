@@ -725,13 +725,34 @@ ORDER BY
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_bws_prod_ops():
+#     print(f"NEW BWS PROD OPS")
+#     sql = """
+# SELECT * FROM [SysproCompanyA].[dbo].[v_ProdOperationNames] ORDER BY [Operation];
+#     """
+#     connection_data = {
+#         "sql": sql,
+#         "database": "SysproCompanyA",
+#         "uid": CREDS_BWS["uid"],
+#         "pwd": CREDS_BWS["pwd"]
+#     }
+#     return connect(**connection_data)
     print(f"NEW BWS PROD OPS")
     sql = """
-SELECT * FROM [SysproCompanyA].[dbo].[v_ProdOperationNames] ORDER BY [Operation];
-    """
+SELECT 
+	*
+FROM
+	[BWSdb].[dbo].[ProductionOperations] 
+WHERE
+	([CompanyID] = 0)
+	AND ([Active] = 1) 
+ORDER BY
+	(CASE WHEN [OperationNum] = 0 THEN 1 ELSE 0 END),
+	[OperationNum]
+;
+            """
     connection_data = {
         "sql": sql,
-        "database": "SysproCompanyA",
+        "database": "BWSdb",
         "uid": CREDS_BWS["uid"],
         "pwd": CREDS_BWS["pwd"]
     }
@@ -751,6 +772,27 @@ SELECT * FROM [SysproCompanyS].[dbo].[v_ProdOperationNames] ORDER BY [Operation]
         "pwd": CREDS_STG["pwd"]
     }
     return connect(**connection_data)
+    # print(f"NEW BWS PROD OPS")
+    # sql = """
+    #     SELECT
+    #         *
+    #     FROM
+    #         [BWSdb].[dbo].[ProductionOperations]
+    #     WHERE
+    #         ([CompanyID] = 1)
+    #         AND ([Active] = 1)
+    #     ORDER BY
+    #         (CASE WHEN [OperationNum] = 0 THEN 1 ELSE 0 END),
+    #         [OperationNum]
+    #     ;
+    #                 """
+    # connection_data = {
+    #     "sql": sql,
+    #     "database": "BWSdb",
+    #     "uid": CREDS_BWS["uid"],
+    #     "pwd": CREDS_BWS["pwd"]
+    # }
+    # return connect(**connection_data)
 
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
@@ -1151,13 +1193,18 @@ for j, col in enumerate(col_order):
         ss = ""
 
     if COMP == BWS:
-        df_col = df_operation_names_bws.loc[df_operation_names_bws["Operation"] == col]
+        df_col = df_operation_names_bws.loc[df_operation_names_bws["OperationNum"] == col]
     else:
         df_col = df_operation_names_stg.loc[df_operation_names_stg["Operation"] == col]
     col_n = col
     if not df_col.empty:
         # col = f"{col_n} :heavy_minus_sign: {df_col.iloc[0]['OperationDescription']}"
-        col = f"{col_n} - {df_col.iloc[0]['OperationDescription']}"
+        if COMP == STG:
+            col = f"{col_n} - {df_col.iloc[0]['OperationDescription']}"
+        else:
+            col = df_col.iloc[0]["MachineCodeDescription"]
+        if pd.isna(col) and (df_col.shape[0] > 1):
+            col = df_col.iloc[1]["MachineCodeDescription"]
     lbl = f"{col}{ss}"
     # print(f"HEAD {j=}, {col=}, {ss=}, {lbl=}, {m=}")
     with header_grid[0][j]:
