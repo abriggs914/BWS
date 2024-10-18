@@ -25,7 +25,7 @@ title = "PO List File Copier"
 # root_destination = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\dont delete me"  # old 202403271957
 read_file_root = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files"
 read_file = r"PO LIST.xlsx"
-read_file = r"PO LIST_testfile.xlsx"
+# read_file = r"PO LIST_testfile.xlsx"
 root_location_pdfs = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
 root_location_stg_pdfs = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS\STARGATE PDF"
 root_location_dwg_dxf = r"\\server4.bwsdomain.local\Design\DRAWINGS"
@@ -180,6 +180,8 @@ if __name__ == '__main__':
         )
         print(e)
         quit_program()
+
+    print(f"{df=}")
 
     if df.empty:
         messagebox.showerror(
