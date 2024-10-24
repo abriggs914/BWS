@@ -1,9 +1,5 @@
 
--- 2024-10-22 2142 Avery Briggs
--- Gather WOs for 'Frameless End Dump 2X' and 'Frameless End Dump 3X' models in Stargte sales system.
--- Report margin data, as the WO final costing report does not exist yet for Stargate.
-
-
+--- Main Margin Data STG
 SELECT
 	[Quote Date]
 	,[Delivery Date]
@@ -13,8 +9,6 @@ SELECT
 	,[Dealer]
 	,[US Sale]
 	,[OrderBasePrice]
-	--,[ProductBasePrice]
-	--,[ProductBasePriceUS]
 	,[SumOfValueIssued_MadeIn]
 	,[SumOfValueIssued_BoughtOut]
 	,[SumOfValueIssued_SubContract]
@@ -24,11 +18,10 @@ SELECT
 	,[SalePrice]
 	,[ExchangeRate]
 	,[Completed]
+	,[ActCompleteDate]
+	,[JobStartDate]
 	,[SalePriceCDN]
 	,[TotalCostSoFar]
-	--,[SalePrice] - [TotalCostSoFar] AS [Margin$]
-	--,(CASE WHEN [TotalCostSoFar] = 0 THEN 0 ELSE [SalePrice] / [TotalCostSoFar] END) AS [RatioSaleToCost]
-	--,(CASE WHEN [TotalCostSoFar] = 0 THEN 0 ELSE (([SalePrice] / [TotalCostSoFar]) - 1) * 100 END) AS [Margin%]
 	,[SalePriceCDN] - [TotalCostSoFar] AS [MarginCDN$]
 	,(CASE WHEN [TotalCostSoFar] = 0 THEN 0 ELSE [SalePriceCDN] / [TotalCostSoFar] END) AS [RatioSaleToCostCDN]
 	,(CASE WHEN [TotalCostSoFar] = 0 THEN 0 ELSE (([SalePriceCDN] / [TotalCostSoFar]) - 1) END) AS [MarginCDN%]
@@ -53,6 +46,8 @@ FROM (
 		,[SalePrice]
 		,[ExchangeRate]
 		,[Completed]
+		,[ActCompleteDate]
+		,[JobStartDate]
 		,[SalePriceCDN]
 		,[SumOfValueIssued_MadeIn] + [SumOfValueIssued_BoughtOut] + [SumOfValueIssued_SubContract] + [SumOfLabourAct] AS [TotalCostSoFar]
 	FROM (
@@ -67,17 +62,17 @@ FROM (
 			,[WL].[OrderPrice] AS [OrderBasePrice]
 			,[WL].[ProductPrice] AS [ProductBasePrice]
 			,[WL].[ProductPriceUS] AS [ProductBasePriceUS]
-			--,[JP].[PartCategory]
 			,SUM(CASE WHEN [JP].[PartCategory] = 'M' THEN [JP].[ValueIssued] ELSE 0 END) AS [SumOfValueIssued_MadeIn]
 			,SUM(CASE WHEN [JP].[PartCategory] = 'B' THEN [JP].[ValueIssued] ELSE 0 END) AS [SumOfValueIssued_BoughtOut]
 			,SUM(CASE WHEN [JP].[PartCategory] = 'G' THEN [JP].[ValueIssued] ELSE 0 END) AS [SumOfValueIssued_SubContract]
 			,ISNULL([Lab].[SumOfLabourAct], 0) AS [SumOfLabourAct]
 			,ISNULL([Lab].[SumOfLabourBud], 0) AS [SumOfLabourBud]
 			,ISNULL([Lab].[SumOfLabourBud], 0) - ISNULL([Lab].[SumOfLabourAct], 0) AS [SumOfLabourOverUnder]
-			--,SUM([Lab].[ValueIssued]) AS [SumOfValueIssued_Labour]
 			,ISNULL([OP2].[NetCost], 0) AS [SalePrice]
 			,[WL].[ExchangeRate]
 			,[WL].[Completed]
+			,[WL].[ActCompleteDate]
+			,[WL].[JobStartDate]
 			,ISNULL([OP2].[NetCostCDN], 0) AS [SalePriceCDN]
 		FROM (
 			SELECT
@@ -92,43 +87,38 @@ FROM (
 				,[P2].[Price] AS [ProductPrice]
 				,[P2].[US Price] AS [ProductPriceUS]
 				,[SM].[ExchangeRate]
-				,(CASE WHEN [CJ].[Job] IS NOT NULL THEN 1 ELSE 0 END) AS [Completed]
+				--,(CASE WHEN [CJ].[Job] IS NOT NULL THEN 1 ELSE 0 END) AS [Completed]
+				,[WM].[JobStartDate]
+				,[WM].[ActCompleteDate]
+				,(CASE WHEN [WM].[ActCompleteDate] IS NULL THEN 0 ELSE 1 END) AS [Completed]
 			FROM
 				[BWSdb].[dbo].[OrdersV2] [O2] WITH (NOLOCK)
 			INNER JOIN
 				[BWSdb].[dbo].[ProductsV2] [P2] WITH (NOLOCK)
 			ON
 				[O2].[ProductID] = [P2].[IDTrailer]
-				--[O2].[Model No] = [P2].[Model No]
 			LEFT JOIN
 				[BWSdb].[dbo].[DealersV2] [D2] WITH (NOLOCK)
 			ON
 				[O2].[DealerID] = [D2].[ID]
-			LEFT JOIN
-				[SysproCompanyS].[dbo].[v_CompletedJobInfo] [CJ] WITH (NOLOCK)
-			ON
-				--(CAST([O2].[WO#] AS NVARCHAR(MAX)) = [CJ].[Job])
-				--AND (
-				[O2].[Sales Order#] = CAST([CJ].[Sales Order#] AS INT)
-				--)
+			--LEFT JOIN
+			--	[SysproCompanyS].[dbo].[v_CompletedJobInfo] [CJ] WITH (NOLOCK)
+			--ON
+			--	[O2].[Sales Order#] = CAST([CJ].[Sales Order#] AS INT)
 			LEFT JOIN
 				[SysproCompanyS].[dbo].[SorMaster] [SM] WITH (NOLOCK)
 			ON
 				[O2].[Sales Order#] = CAST([SM].[SalesOrder] AS INT)
-			WHERE
-				--([P2].[CompanyID] = 1)
-				--AND 
-				--(
-					([P2].[Model No] = 'Frameless End Dump 2X')
-					OR
-					([P2].[Model No] = 'Frameless End Dump 3X')
-					OR
-					([O2].[WO#] = 10001577)
-				--)
-				--AND 
-				--([P2].[Class] = 'End Dumps')
-				--AND 
-				--([O2].[WO#] IS NOT NULL)
+			LEFT JOIN
+				[SysproCompanyS].[dbo].[WipMaster] [WM] WITH (NOLOCK)
+			ON
+				[O2].[WO#] = CAST([WM].[Job] AS INT)
+			--WHERE
+			--	([P2].[Model No] = 'Frameless End Dump 2X')
+			--	OR
+			--	([P2].[Model No] = 'Frameless End Dump 3X')
+			--	OR
+			--	([O2].[WO#] = 10001577)
 			GROUP BY
 				CAST([O2].[WO#] AS NVARCHAR(MAX))
 				,[O2].[Quote Date]
@@ -141,7 +131,8 @@ FROM (
 				,[P2].[Price]
 				,[P2].[US Price]
 				,[SM].[ExchangeRate]
-				,[CJ].[Job]
+				,[WM].[ActCompleteDate]
+				,[WM].[JobStartDate]
 		) AS [WL]
 		LEFT JOIN
 			[SysproCompanyS].[dbo].[v_WorkOrderStatus] [JP]
@@ -163,13 +154,6 @@ FROM (
 			[BWSdb].[dbo].[v_SAL_OrdersPricingV2] [OP2]
 		ON
 			[WL].[SGQuote] = [OP2].[SGQuote]
-		/*
-			AND ([Lab].[Operation] = [JP].[OperationOffset])
-		LEFT JOIN
-			[SysproCompanyS].[dbo].[BomMachine] [BM]
-		ON
-			[Lab].[IMachine] = [BM].[Machine]
-		*/
 		GROUP BY
 			[WL].[WO#]
 			,[WL].[Quote Date]
@@ -183,7 +167,8 @@ FROM (
 			,[WL].[ProductPriceUS]
 			,[WL].[ExchangeRate]
 			,[WL].[Completed]
-			--,[Jp].[PartCategory]
+			,[WL].[ActCompleteDate]
+			,[WL].[JobStartDate]
 			,[Lab].[SumOfLabourAct]
 			,[Lab].[SumOfLabourBud]
 			,[OP2].[NetCost]
@@ -192,5 +177,22 @@ FROM (
 ) AS [Step2]
 ORDER BY
 	[WO#]
-	--,[Jp].[PartCategory]
 ;
+
+
+
+
+--SELECT
+--	[P2].[Grouping]
+--	,[P2].[Class]
+--	,[P2].[Model No]
+--FROM
+--	[BWSdb].[dbo].[ProductsV2] [P2]
+--WHERE (
+--	([P2].[Non-Current] = 0)
+--	AND ([P2].[Proposed] = 0)
+--)
+--GROUP BY
+--	[P2].[Grouping]
+--	,[P2].[Class]
+--	,[P2].[Model No]
