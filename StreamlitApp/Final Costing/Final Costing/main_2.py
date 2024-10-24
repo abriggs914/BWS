@@ -259,6 +259,11 @@ def multiselect_model_no_on_change():
     print(f"New Models: {models_in}")
 
 
+def multiselect_wo_omit_on_change():
+    wos_out = st.session_state.get("multiselect_omit_wo", list())
+    print(f"New WOs: {wos_out}")
+
+
 def toggle_completed_only_on_change():
     completed_only = st.session_state.get("toggle_completed_only", list())
     print(f"New Completed Only: {completed_only}")
@@ -347,16 +352,6 @@ show_cols = {
     "ActCompleteDate": "End Date"
 }
 
-# # df_margin_data_stg["WO#"] = df_margin_data_stg["WO#"].apply(lambda w: str(w) if w else "")
-# df_margin_data_stg["OrderBasePrice"] = df_margin_data_stg["OrderBasePrice"].apply(lambda w: money(w) if w else "")
-# df_margin_data_stg["SumOfValueIssued_MadeIn"] = df_margin_data_stg["SumOfValueIssued_MadeIn"].apply(lambda w: money(w) if w else "")
-# # df_margin_data_stg["Quote Date"] = pd.to_datetime(df_margin_data_stg["Quote Date"])
-# # df_margin_data_stg["Delivery Date"] = pd.to_datetime(df_margin_data_stg["Delivery Date"])
-# # df_margin_data_stg["Quote Date"] = df_margin_data_stg["Quote Date"].fillna("")
-# # df_margin_data_stg["Delivery Date"] = df_margin_data_stg["Quote Date"].fillna("")
-# df_margin_data_stg["Quote Date"] = df_margin_data_stg["Quote Date"].apply(lambda d: "" if pd.isna(d) else f"{d:%Y-%m-%d}")
-# df_margin_data_stg["Delivery Date"] = df_margin_data_stg["Delivery Date"].apply(lambda d: "" if pd.isna(d) else f"{d:%Y-%m-%d}")
-
 
 ctl_columns = st.columns(3)
 
@@ -396,12 +391,25 @@ ms_models = st.multiselect(
 selected_models = st.session_state.get("multiselect_model_no", list())
 if selected_models:
     # filtered = dataframe_explorer(df_margin_data_stg, case=False)
-    filtered = df_margin_data_stg[
+    filtered: pd.DataFrame = df_margin_data_stg[
         (df_margin_data_stg["Model No"].isin(selected_models))
         & (df_margin_data_stg["Completed"] == int(tg_completed))
         & (df_margin_data_stg["JobStartDate_d"] >= date_to_datetime(di_start))
         & (df_margin_data_stg["JobStartDate_d"] <= date_to_datetime(di_end))
     ]
+
+    list_wos = filtered["WO#"].dropna().unique().tolist()
+    ms_models = st.multiselect(
+        label="Select WO(s) to omit from graph",
+        options=list_wos,
+        key="multiselect_omit_wo",
+        help="Select some WO numbers that you want to exclude from the dataset.",
+        on_change=multiselect_wo_omit_on_change
+    )
+    wos_to_omit = st.session_state.get("multiselect_omit_wo", list())
+
+    filtered = filtered.loc[~filtered["WO#"].isin(wos_to_omit)]
+
     # print(f"{filtered['JobStartDate'].min()=}")
     # print(f"{filtered['JobStartDate'].max()=}")
 
@@ -419,36 +427,6 @@ if selected_models:
         use_container_width=True,
         hide_index=True
     )
-    # column_config = {}
-    # column_config.update({
-    #     "Quote Date": st.column_config.DateColumn(
-    #         "Quote Date",
-    #         format="YYYY-MM-DD",
-    #         # step=1,
-    #     ),
-    #     "Delivery Date": st.column_config.DateColumn(
-    #         "Delivery Date",
-    #         format="YYYY-MM-DD",
-    #         # step=1,
-    #     )
-    # })
-    # st.data_editor(
-    #     filtered,
-    #     column_config=column_config,
-    #     hide_index=True,
-    # )
-
-    # chart = alt.Chart(filtered).mark_circle().encode(
-    #     x='Quote Date',
-    #     y='MarginCDN%_#'
-    # ).interactive()
-    # st.altair_chart(chart, theme=None, use_container_width=True)
-    #
-    # # chart = ff.create_distplot(
-    # #     filtered["MarginCDN%_#"],
-    # #     ["JobStartDate"],
-    # #     bin_size=[.1, .25, .5]
-    # # )
 
     filtered["HoverData"] = ""
     for i, row in filtered.iterrows():
