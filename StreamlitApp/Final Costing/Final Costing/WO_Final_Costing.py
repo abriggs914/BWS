@@ -43,12 +43,16 @@ CREDS_STG: dict[str: Any] = {
 
 
 st.set_page_config(layout="wide")
-for k, v in {
+DEFAULT_SESSION_STATE = {
     "multiselect_model_no": list(),
     "toggle_completed_only": True,
+    "toggle_include_proposed": False,
+    "toggle_include_non_current": False,
+    "toggle_prod_year_month": False,
     "di_start": DEF_START_DATE,
     "di_end": DEF_END_DATE
-}.items():
+}
+for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
 
 
@@ -64,17 +68,18 @@ SELECT
 	[P2].[Grouping]
 	,[P2].[Class]
 	,[P2].[Model No]
+	,[P2].[Non-Current]
+	,[P2].[Proposed]
 FROM
 	[BWSdb].[dbo].[ProductsV2] [P2] WITH (NOLOCK)
-WHERE (
-	([P2].[Non-Current] = 0)
-	AND ([P2].[Proposed] = 0)
-	AND ([P2].[CompanyID] = 1)
-)
+WHERE
+    [P2].[CompanyID] = 1
 GROUP BY
 	[P2].[Grouping]
 	,[P2].[Class]
 	,[P2].[Model No]
+	,[P2].[Non-Current]
+	,[P2].[Proposed]
     """
     connection_data = {
         "sql": sql,
@@ -92,17 +97,18 @@ SELECT
 	[P].[Grouping]
 	,[P].[Class]
 	,[P].[Model No]
+	,[P].[Non-Current]
+	,[P].[Proposed]
 FROM
 	[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
-WHERE (
-	([P].[Non-Current] = 0)
-	AND ([P].[Proposed] = 0)
-	AND ([P].[CompanyID] = 0)
-)
+WHERE
+    [P].[CompanyID] = 0
 GROUP BY
 	[P].[Grouping]
 	,[P].[Class]
 	,[P].[Model No]
+	,[P].[Non-Current]
+	,[P].[Proposed]
     """
     connection_data = {
         "sql": sql,
@@ -766,6 +772,21 @@ def toggle_completed_only_on_change():
     print(f"New Completed Only: {completed_only}")
 
 
+def toggle_include_proposed_on_change():
+    proposed = st.session_state.get("toggle_include_proposed", list())
+    print(f"New Include Proposed: {proposed}")
+
+
+def toggle_include_non_current_on_change():
+    non_current = st.session_state.get("toggle_include_non_current", list())
+    print(f"New Exclude Non-Current: {non_current}")
+
+
+def toggle_prod_year_month_on_change():
+    year_month = st.session_state.get("toggle_prod_year_month", list())
+    print(f"New Year / Month: {year_month}")
+
+
 def di_start_on_change():
     start_date = st.session_state.get("di_start", DEF_START_DATE)
     print(f"New Start Date: {start_date:%Y-%m-%d}")
@@ -807,14 +828,53 @@ radio_company_choice = st.radio(
     horizontal=True
 )
 
+
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
 COLOUR_OPERATIONS: list = list()
 QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
+
 
 ###################################
 # Prep Data Based on Company Choice
 ###################################
 
+
+# st.dataframe(df_product_data_bws)
+# st.dataframe(df_product_data_stg)
+
+inc_tg_nc = st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current"))
+inc_tg_pp = st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed"))
+if inc_tg_nc:
+    if inc_tg_pp:
+        pass
+    else:
+        df_product_data_stg = df_product_data_stg.loc[
+            df_product_data_stg["Proposed"] == st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed"))
+        ]
+        df_product_data_bws = df_product_data_bws.loc[
+            df_product_data_bws["Proposed"] == st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed"))
+        ]
+else:
+    if inc_tg_pp:
+        df_product_data_stg = df_product_data_stg.loc[
+            df_product_data_stg["Non-Current"] == st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current"))
+        ]
+        df_product_data_bws = df_product_data_bws.loc[
+            df_product_data_bws["Non-Current"] == st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current"))
+        ]
+    else:
+        df_product_data_stg = df_product_data_stg.loc[
+            (df_product_data_stg["Proposed"] == st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed")))
+            & (df_product_data_stg["Non-Current"] == st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current")))
+        ]
+        df_product_data_bws = df_product_data_bws.loc[
+            (df_product_data_bws["Proposed"] == st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed")))
+            & (df_product_data_bws["Non-Current"] == st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current")))
+        ]
+# st.write(st.session_state.get("toggle_include_non_current", DEFAULT_SESSION_STATE.get("toggle_include_non_current")))
+# st.write(st.session_state.get("toggle_include_proposed", DEFAULT_SESSION_STATE.get("toggle_include_proposed")))
+# st.dataframe(df_product_data_bws)
+# st.dataframe(df_product_data_stg)
 
 df_margin_data = df_margin_data_stg if COMP == STG else df_margin_data_bws
 df_product_data = df_product_data_stg if COMP == STG else df_product_data_bws
@@ -823,7 +883,6 @@ df_job_counts_in_wip = df_job_counts_in_wip_stg if COMP == STG else df_job_count
 
 df_margin_data["WO#"] = df_margin_data["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
 df_jobs_in_wip["WO#"] = df_jobs_in_wip["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
-df_jobs_in_wip["ProdDate"] = df_jobs_in_wip['ProdYear'].astype(str) + "-" + df_jobs_in_wip['ProdMonth'].astype(str).str.zfill(2)
 
 for col, sf_func in {
     "WO#": ("#", lambda w: str(w) if w else ""),
@@ -901,6 +960,16 @@ with ctl_columns[0]:
         label="Completed units Only",
         key="toggle_completed_only",
         on_change=toggle_completed_only_on_change
+    )
+    tg_proposed = st.toggle(
+        label="Include Proposed",
+        key="toggle_include_proposed",
+        on_change=toggle_include_proposed_on_change
+    )
+    tg_non_current = st.toggle(
+        label="Include Non-Current",
+        key="toggle_include_non_current",
+        on_change=toggle_include_non_current_on_change
     )
 
 with ctl_columns[1]:
@@ -1013,7 +1082,21 @@ else:
     st.write("Please select some models first.")
 
 add_vertical_space(7)
-df_job_counts_in_wip["ProdDate"] = df_job_counts_in_wip['ProdYear'].astype(str) + "-" + df_job_counts_in_wip['ProdMonth'].astype(str).str.zfill(2)
+tg_prod_year_month = st.toggle(
+    label="View Annually",
+    key="toggle_prod_year_month",
+    on_change=toggle_prod_year_month_on_change
+)
+if tg_prod_year_month:
+    df_jobs_in_wip["ProdDate"] = df_jobs_in_wip['ProdYear'].astype(str)
+    df_job_counts_in_wip["ProdDate"] = df_job_counts_in_wip['ProdYear'].astype(str)
+    prod_date_label = 'Production Year'
+else:
+    df_jobs_in_wip["ProdDate"] = df_jobs_in_wip['ProdYear'].astype(str) + "-" + df_jobs_in_wip['ProdMonth'].astype(str).str.zfill(2)
+    df_job_counts_in_wip["ProdDate"] = df_job_counts_in_wip['ProdYear'].astype(str) + "-" + df_job_counts_in_wip['ProdMonth'].astype(str).str.zfill(2)
+    prod_date_label = 'Production Month-Year'
+
+# st.dataframe(df_job_counts_in_wip)
 
 # Jobs In Wip -- Grouping
 with st.expander("Jobs in Wip By Grouping"):
@@ -1053,7 +1136,7 @@ with st.expander("Jobs in Wip By Grouping"):
         barmode='group',
         color="Grouping",
         labels={
-            'ProdDate': 'Production Date (Month Year)'
+            'ProdDate': prod_date_label
         },
         height=700
         # trendline="ols"
