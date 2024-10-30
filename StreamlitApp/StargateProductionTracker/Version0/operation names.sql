@@ -33,6 +33,8 @@ SELECT
 	[P].[LWorkCentre]
 	,[P].[LWorkCentreDesc]
 	,[P].[LOperation]
+	,[P].[LMachine]
+	,COUNT(*) AS [Freq]
 	--,*
 FROM
 	[SysproCompanyA].[dbo].[WipJobPost] [P]
@@ -46,8 +48,36 @@ GROUP BY
 	[P].[LWorkCentre]
 	,[P].[LWorkCentreDesc]
 	,[P].[LOperation]
+	,[P].[LMachine]
 ORDER BY
 	[P].[LOperation]
+	,[Freq] DESC
+	,[P].[LWorkCentreDesc]
+
+
+SELECT
+	[P].[LWorkCentre]
+	,[P].[LWorkCentreDesc]
+	,[P].[LOperation]
+	,[P].[LMachine]
+	,COUNT(*) AS [Freq]
+	--,*
+FROM
+	[SysproCompanyS].[dbo].[WipJobPost] [P]
+WHERE
+	ISNULL([P].[LWorkCentre], '') <> ''
+	AND ISNULL([P].[LWorkCentreDesc], '') <> ''
+	AND ISNULL([P].[LOperation], -1) <> -1
+	AND LEFT(ISNULL([P].[Job], ''), 1) = '1'
+	AND (YEAR([P].[TrnDate]) >= (YEAR(GETDATE()) - 1))
+GROUP BY
+	[P].[LWorkCentre]
+	,[P].[LWorkCentreDesc]
+	,[P].[LOperation]
+	,[P].[LMachine]
+ORDER BY
+	[P].[LOperation]
+	,[Freq] DESC
 	,[P].[LWorkCentreDesc]
 
 --------------------------------------------------------------------------

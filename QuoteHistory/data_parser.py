@@ -916,6 +916,9 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
         , "2024-10-03"
         , "2024-10-04"
         , "2024-10-07"
+        
+        , "2025-02-06"
+        , "2025-02-07"
 	]
 	sick_days = [
 		"2023-05-23",
