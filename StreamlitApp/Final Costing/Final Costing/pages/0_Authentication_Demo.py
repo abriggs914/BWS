@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import streamlit as st
@@ -44,10 +44,17 @@ DEFAULT_SESSION_STATE = {
     "sign_in_date": None,
     "n_attempts_password_reset": 5,
     "n_attempts_password": 0,
-    "app_short_name": "Authentication Demo"
+    "app_short_name": "Authentication Demo",
+    "date_input_birthdate": None,
+    "select_shirt_size": None
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
+
+
+######################
+# Data Fetch Functions
+######################
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
@@ -86,6 +93,58 @@ def load_itstr_user_directory() -> pd.DataFrame:
     return connect(**connection_data)
 
 
+#################
+# Event Listeners
+#################
+
+
+def birthdate_on_change():
+    dob = st.session_state.get("date_input_birthdate")
+    print(f"NEW DOB {dob}")
+
+
+#################
+# Helper Functions
+#################
+
+
+def submit_form(form_key):
+    print(f"SUBMIT {form_key} FORM")
+    sql = ""
+    match form_key:
+        case "Customer":
+            sql = "UPDATE [BWSdb].[dbo].[ITR Customers] SET "
+            dob: Optional[datetime.datetime] = st.session_state.get("date_input_birthdate")
+            shirt_size: Optional[str] = st.session_state.get("select_shirt_size")
+            cust_id = st.session_state.get("itr_customer_id")
+            print(f"NEW DOB {dob}")
+            if dob:
+                dob_y: int = dob.year
+                dob_m: int = dob.month
+                dob_d: int = dob.day
+                print(f"y={dob_y}, m={dob_m}, d={dob_d} ", end="")
+                sql += f"[BirthYear] = {dob_y}, "
+                sql += f"[BirthMonth] = {dob_m}, "
+                sql += f"[BirthDay] = {dob_d}, "
+            if shirt_size:
+                print(f"ss={shirt_size}", end="")
+                sql += f"[ShirtSize] = '{shirt_size}', "
+
+            sql = sql.removesuffix(", ")
+            sql += f" WHERE [CustomerID] = {cust_id};"
+            print(f"")
+        case _:
+            raise KeyError(f"This {form_key=} is unrecognized.")
+
+    if sql:
+        print(f"{sql=}")
+
+
+####################
+# Fetch Data SLOW...
+####################
+
+
 df_itr_customers: pd.DataFrame = load_itr_customers()
 df_app_directory: pd.DataFrame = load_itstr_app_directory()
 df_user_directory: pd.DataFrame = load_itstr_user_directory()
@@ -99,6 +158,7 @@ app_id: int = df_app_directory.iloc[0]["ID"] if not df_app_directory.empty else 
 df_user_directory: pd.DataFrame = df_user_directory.loc[df_user_directory["ITSTRAppID"] == app_id]
 df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.lower()
 
+list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().unique().tolist())
 
 grid = {
     "top_bar": st.columns([0.6, 0.2, 0.2]),
@@ -203,5 +263,45 @@ else:
             add_vertical_space(4)
             st.write(f"Thank you for trying out our BWS Streamlit sign-in service!")
             st.write(f"More coming soon, Please check back later.")
+
+            user_name = st.session_state.get("user_name")
+            df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user_name]
+            cust_id: int = df_user.iloc[0]["ITRCustomerID"]
+            df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id].iloc[0]
+
+            cust_dob_y: int = df_cust["BirthYear"]
+            cust_dob_m: int = df_cust["BirthMonth"]
+            cust_dob_d: int = df_cust["BirthDay"]
+            cust_dob: Optional[datetime.datetime] = None
+            # print(f"{cust_dob_y=}, {cust_dob_m=}, {cust_dob_d=}")
+
+            cust_shirt_size = df_cust["ShirtSize"]
+
+            if not any([pd.isna(cust_dob_y), pd.isna(cust_dob_m), pd.isna(cust_dob_d)]):
+                cust_dob = datetime.datetime(int(cust_dob_y), int(cust_dob_m), int(cust_dob_d))
+
+            if not pd.isna(cust_shirt_size):
+                st.session_state.update({"select_shirt_size": cust_shirt_size})
+
+            with st.expander(":pencil2: Edit Personal Data"):
+                with st.form(key="Customer"):
+                    st.date_input(
+                        label="Change your Birthdate:",
+                        value=cust_dob,
+                        min_value=datetime.datetime(1935, 1, 1),
+                        max_value=datetime.datetime.now() + datetime.timedelta(days=-int(round((18*365.25)))),
+                        key="date_input_birthdate"
+                        # ,
+                        # on_change=birthdate_on_change
+                    )
+                    st.selectbox(
+                        label="Shirt-Size:",
+                        key="select_shirt_size",
+                        options=list_shirt_sizes
+                    )
+                    st.form_submit_button(
+                        label="Update",
+                        on_click=lambda: submit_form("Customer")
+                    )
 
 # st.write(st.session_state)

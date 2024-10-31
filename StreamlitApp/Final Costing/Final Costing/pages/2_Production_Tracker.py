@@ -14,7 +14,7 @@ from colour_utility import gradient
 from pyodbc_connection import connect
 from utility import flatten, get_windows_user
 
-print(f"RERUN for {st.session_state.get('session_user', 'NO NAME YET')} {datetime.datetime.now():%x %X}")
+# print(f"RERUN for {st.session_state.get('session_user', 'NO NAME YET')} {datetime.datetime.now():%x %X}")
 
 warnings.filterwarnings("ignore")
 
@@ -112,8 +112,8 @@ CREDS_STG = {
     "pwd": "Pupplies-Hagard->Rio0"
 }
 
-if "session_user" not in st.session_state:
-    st.session_state["session_user"] = get_windows_user()
+# if "session_user" not in st.session_state:
+#     st.session_state["session_user"] = get_windows_user()
 
 
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)

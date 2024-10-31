@@ -830,8 +830,8 @@ radio_company_choice = st.radio(
 
 
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
-COLOUR_OPERATIONS: list = list()
 QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
+COLOUR_OPERATIONS: list = list()
 
 
 ###################################
