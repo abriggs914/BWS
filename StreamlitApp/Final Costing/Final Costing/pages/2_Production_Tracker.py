@@ -14,6 +14,10 @@ from colour_utility import gradient
 from pyodbc_connection import connect
 from utility import flatten, get_windows_user
 
+
+# version 202411041146
+
+
 # print(f"RERUN for {st.session_state.get('session_user', 'NO NAME YET')} {datetime.datetime.now():%x %X}")
 
 warnings.filterwarnings("ignore")
@@ -855,7 +859,6 @@ SELECT * FROM [BWSdb].[dbo].[Custom WorkV2];
     return connect(**connection_data)
 
 
-
 @st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
 def load_WipJobAllMat_data(job) -> pd.DataFrame:
     db_name = f"SysproCompany{COMP_LETTER}"
@@ -934,6 +937,66 @@ WHERE
     return connect(**connection_data)
 
 
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
+def load_material_bws():
+    sql = """
+SELECT
+	[Src].[ValueRequired] - [Src].[ValueIssued] AS [ValueLeftToIssue]
+	,([Src].[ValueRequired] - [Src].[ValueIssued]) / (CASE WHEN [QtyLeftToIssue] = 0 THEN 1 ELSE [QtyLeftToIssue] END) AS [ValueLeftToIssuePerPart]
+	,[Src].*
+FROM (
+	SELECT
+		([Mat].[UnitCost] * [Mat].[UnitQtyReqd]) AS [ValueRequired]
+		,([Mat].[UnitQtyReqd] - [Mat].[QtyIssued]) AS [QtyLeftToIssue]
+		,*
+	FROM
+		[SysproCompanyA].[dbo].[WipJobAllMat] [Mat] WITH (NOLOCK)
+	WHERE
+		LEFT([Job], 1) = '1'
+		AND (LEN([Job]) = 8)
+		AND (([Mat].[Warehouse] = '01')
+		OR ([Mat].[Warehouse] = '02'))
+) AS [Src]
+"""
+    connection_data = {
+        "sql": sql,
+        "database": "BWSdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=True, ttl=time_cache_prod_data_by_op_stg)
+def load_material_stg():
+    sql = """
+SELECT
+	[Src].[ValueRequired] - [Src].[ValueIssued] AS [ValueLeftToIssue]
+	,([Src].[ValueRequired] - [Src].[ValueIssued]) / (CASE WHEN [QtyLeftToIssue] = 0 THEN 1 ELSE [QtyLeftToIssue] END) AS [ValueLeftToIssuePerPart]
+	,[Src].*
+FROM (
+	SELECT
+		([Mat].[UnitCost] * [Mat].[UnitQtyReqd]) AS [ValueRequired]
+		,([Mat].[UnitQtyReqd] - [Mat].[QtyIssued]) AS [QtyLeftToIssue]
+		,*
+	FROM
+		[SysproCompanyS].[dbo].[WipJobAllMat] [Mat] WITH (NOLOCK)
+	WHERE
+		LEFT([Job], 1) = '1'
+		AND (LEN([Job]) = 8)
+		AND (([Mat].[Warehouse] = '01')
+		OR ([Mat].[Warehouse] = '02'))
+) AS [Src]
+"""
+    connection_data = {
+        "sql": sql,
+        "database": "BWSdb",
+        "uid": CREDS_STG["uid"],
+        "pwd": CREDS_STG["pwd"]
+    }
+    return connect(**connection_data)
+
+
 def click_column_header(j, col):
     print(f"click_column_header {j=}, {col=}")
     prev_sc = st.session_state.get("sort_col")
@@ -995,6 +1058,8 @@ df_order_options_bws = load_order_options_bws()
 df_order_options_stg = load_order_options_bws()
 df_npos_bws = load_custom_work_bws()
 df_npos_stg = load_custom_work_stg()
+df_material_bws = load_material_bws()
+df_material_stg = load_material_stg()
 
 if REQUIRES_PASSWORD:
     pass
@@ -1033,6 +1098,7 @@ if COMP == BWS:
     COLOUR_OPERATIONS = ["#650808", "#086508"]
     df_production_data_status_codes = load_prod_data_status_codes_stg()
     df_production_data_by_op = load_prod_data_by_op_bws()
+    df_material = df_material_bws
 else:
     # STG
 
@@ -1042,6 +1108,7 @@ else:
     # df_production_data_by_op = st.session_state.setdefault("df_production_data_by_op", load_prod_data_by_op_stg())
     df_production_data_status_codes = load_prod_data_status_codes_stg()
     df_production_data_by_op = load_prod_data_by_op_stg()
+    df_material = df_material_stg
 
 df_production_data_by_op["ProgressTotalBudget"] = df_production_data_by_op["TotalRunTimeAct"] / \
                                                   df_production_data_by_op["TotalRunTimeEst"]
@@ -1234,6 +1301,14 @@ exp_count = 0
 for i, row in df_production_data_by_op.iterrows():
     # print(f"{i_row=}")
     job = row["Job"]
+    df_job_material = df_material.loc[df_material["Job"] == job]
+    df_job_material.sort_values(
+        by="ValueLeftToIssue",
+        ascending=False,
+        inplace=True
+    )
+    # st.write("df_job_material")
+    # st.dataframe(df_job_material)
     # print(f"{i=}, {job=}")
     new = row[cols_rename["ProgressOps"]]
     old = st.session_state.setdefault(COMP, {}).setdefault(job, {}).setdefault(cols_rename["ProgressOps"], None)
@@ -1298,6 +1373,18 @@ for i, row in df_production_data_by_op.iterrows():
         #     print(f"{col=} ", end="")
         # print(f"-> {col}")
         val = df_production_data_by_op.iloc[i][col]
+        df_job_material_op = df_job_material.loc[
+            df_job_material["OperationOffset"] == j
+        ]
+        df_job_material_op = df_job_material_op.loc[df_job_material_op["ValueLeftToIssue"] > 0]
+        top_un_iss_parts = ""
+        for k, row_j_o in df_job_material_op.iterrows():
+            top_un_iss_parts += f"{row_j_o['StockCode']}, "
+        top_un_iss_parts = top_un_iss_parts.removesuffix(", ")
+        if not top_un_iss_parts:
+            top_un_iss_parts = "All parts issued"
+        # st.write("df_job_material_op")
+        # st.dataframe(df_job_material_op)
         # # if i == 10:
         # #     print(f"{val=}")
         # print(f"{i=}, {j=}, EC={exp_count}, {col=}, {val=}")
@@ -1306,7 +1393,13 @@ for i, row in df_production_data_by_op.iterrows():
             new_key = cols_production_og_translator[col]
             val = df_production_data_by_op.iloc[i][new_key]
             with grid[i + exp_count][j]:
-                st.write(val)
+                # st.write(val)
+                st.button(
+                    label=val,
+                    key=f"btn_{job}_op_{j}",
+                    use_container_width=False,
+                    help=top_un_iss_parts
+                )
                 # st.markdown(f'<div class="selected-job">{val}</div>', unsafe_allow_html=True)
         else:
             # other labels and progress bars
@@ -1446,6 +1539,14 @@ for i, row in df_production_data_by_op.iterrows():
                 # for j, op in enumerate(df_timeline_clk["Operation"]):
                 #     # st.write(f"{j=}, {op=}, {operation_colour_map[op]=}")
                 #     st.write(f"""<p style="color:{operation_colour_map[op]};">{j=}, {op=}, {operation_colour_map[op]=}</p>""", unsafe_allow_html=True)
+
+            with st.expander("Unallocated Parts"):
+                df_job_material.sort_values(
+                    by=["OperationOffset", "ValueLeftToIssue"],
+                    ascending=[True, False],
+                    inplace=True
+                )
+                st.dataframe(df_job_material, hide_index=True, use_container_width=True)
 
 
         exp_count += rows_per_expansion

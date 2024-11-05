@@ -1,7 +1,9 @@
+import datetime
 from typing import Any
 
 import pandas as pd
 import streamlit as st
+from geopy.exc import GeocoderUnavailable
 from streamlit_extras.add_vertical_space import add_vertical_space
 
 from location_utility import address_to_coords
@@ -16,6 +18,7 @@ from utility import percent
 APP_SHORT_NAME = "Monitoring Schedule"
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 6  # 6 hours
+HOLD_FOREVER: float = float("inf")
 SHOW_SPINNERS: bool = True
 BWS: int = 0
 STG: int = 1
@@ -52,7 +55,8 @@ DEFAULT_SESSION_STATE = {
     "n_attempts_password": 0,
     "app_short_name": APP_SHORT_NAME,
     "radio_sort_col_choice": "None",
-    "radio_sort_order_choice": "Descending"
+    "radio_sort_order_choice": "Descending",
+    "prep_df_start_time": None
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
@@ -218,9 +222,17 @@ FROM (
 #################
 
 
-#################
+##################
 # Helper Functions
-#################
+##################
+
+
+@st.cache_data(show_spinner=False, ttl=HOLD_FOREVER)
+def query_lat_long(str_address) -> tuple[float, float]:
+    try:
+        return address_to_coords(str_address)
+    except GeocoderUnavailable:
+        return None, None
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
@@ -229,13 +241,15 @@ def add_lat_long(df: pd.DataFrame) -> pd.DataFrame:
         value=0,
         text="Loading..."
     )
-    df[["latitude", "longitude"]] = (None, None)
+    df[["strAddress", "latitude", "longitude"]] = (None, None, None)
     total = df.shape[0]
     for i, row in df.iterrows():
+        str_address = f"{row['ShippedCity']}, {row['ShippedProvince']}"
+        # st.write(f"{i=}, {str_address=}")
         progress_lat_long.progress(
-            value=i /total,
+            value=i / total,
             text=f"{percent(i / total)} - {i} / {total}")
-        df.iloc[i][["latitude", "longitude"]] = address_to_coords(f"{row['ShippedCity']}, {row['ShippedProvince']}")
+        df.loc[i, ["strAddress", "latitude", "longitude"]] = str_address, *query_lat_long(str_address)
 
     progress_lat_long.progress(1, "Complete!")
     progress_lat_long.empty()
@@ -287,14 +301,41 @@ QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
 
 df_sales = df_bws
 # FOR TESTING
-df_sales = df_sales.loc[df_sales["Quote#"] > 29999].reset_index()
-df_sales = add_lat_long(df_sales)
+# df_sales = df_sales.loc[df_sales["Quote#"] > 30800].reset_index()
+# df_sales = add_lat_long(df_sales)
 
+progress_lat_long = st.progress(
+    value=0,
+    text="Loading..."
+)
+df_sales["strAddress"] = df_sales.apply(lambda row: f"{row['ShippedCity']}, {row['ShippedProvince']}", axis=1)
+df_sales[["latitude", "longitude"]] = (None, None)
+st.write(f"df_sales")
+st.dataframe(df_sales, hide_index=True)
+unique_addresses = df_sales["strAddress"].str.lower().dropna().unique()
+# total = df_sales.shape[0]
+total = len(unique_addresses)
+st.session_state["prep_df_start_time"] = datetime.datetime.now()
+for i, address in enumerate(unique_addresses):
+    # st.write(f"{i=}, {address_lines=}")
+    s_past = (datetime.datetime.now() - st.session_state.get("prep_df_start_time")).total_seconds()
+    progress_lat_long.progress(
+        value=i / total,
+        text=f"{percent(i / total)} - {i} / {total} - {s_past} s")
+    df_sales.loc[df_sales["strAddress"].str.lower() == address, ["latitude", "longitude"]] = query_lat_long(address)
+# for i, row in df_sales.iterrows():
+#     # st.write(f"{i=}, {str_address=}")
+#     progress_lat_long.progress(
+#         value=i / total,
+#         text=f"{percent(i / total)} - {i} / {total}")
+#     df_sales.loc[i, ["strAddress", "latitude", "longitude"]] = str_address, *query_lat_long(str_address)
+progress_lat_long.progress(1, "Complete!")
+progress_lat_long.empty()
 
 #######################
 # Begin Widget Creation
 #######################
-st.dataframe(df_sales)
+st.dataframe(df_sales, hide_index=True)
 
 lat_long_cols = ["latitude", "longitude"]
 st.map(

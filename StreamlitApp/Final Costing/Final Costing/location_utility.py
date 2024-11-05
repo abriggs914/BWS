@@ -75,29 +75,29 @@ def get_ip_coords():
 def coords_to_location(lat, lng):
     """Using GeoPy, reverse look-up a Latitude and Longitude, returning a Location object.
 
-    # attributes: 'address', 'latitude', 'longitude', 'altitude', 'point', 'raw'
-    # use raw["address"] for a dict of keys ['road', 'county', 'state', 'ISO3166-2-lvl4', 'country', 'country_code']
+    # attributes: 'address_lines', 'latitude', 'longitude', 'altitude', 'point', 'raw'
+    # use raw["address_lines"] for a dict of keys ['road', 'county', 'state', 'ISO3166-2-lvl4', 'country', 'country_code']
     """
     return Nominatim(user_agent="GetLoc").reverse(f"{lat}, {lng}")
 
 
 def coords_to_address(lat, lng):
-    """Using GeoPy, reverse look-up a Latitude and Longitude, returning a string representation of the address."""
-    return Nominatim(user_agent="GetLoc").reverse(f"{lat}, {lng}").address
+    """Using GeoPy, reverse look-up a Latitude and Longitude, returning a string representation of the address_lines."""
+    return Nominatim(user_agent="GetLoc").reverse(f"{lat}, {lng}").address_lines
 
 
 def company_from_location(location_in=None, quit_on_fail=True):
     """Based on device's GPS location, return the company for that province.
     Pass a geoPy.Location object to bypass async call.
-    Pass quit_on_fail param as a string representing a default address."""
+    Pass quit_on_fail param as a string representing a default address_lines."""
     try:
         if location_in is None:
             lat, lng = get_device_gps_coords()
             location = coords_to_location(lat, lng)
-            province = location.raw["address"]["state"]
+            province = location.raw["address_lines"]["state"]
         else:
             assert isinstance(location_in, geopy.Location), f"Error, param 'location_in' must be a geoPy.Location object. Got '{location_in}', {type(location_in)=}"
-            province = location_in.raw["address"]["state"]
+            province = location_in.raw["address_lines"]["state"]
         match province:
             case 'New Brunswick / Nouveau-Brunswick':
                 return "BWS"
@@ -135,8 +135,8 @@ if __name__ == '__main__':
     # print(f"{get_device_gps_coords()=}")
     # print(f"{coords_to_location(*get_ip_coords())=}")
     # print(f"{coords_to_location(*get_device_gps_coords())=}")
-    # print(f"{coords_to_location(*get_device_gps_coords()).raw['address']=}")
-    # print(f"{list(coords_to_location(*get_device_gps_coords()).raw['address'].keys())=}")
+    # print(f"{coords_to_location(*get_device_gps_coords()).raw['address_lines']=}")
+    # print(f"{list(coords_to_location(*get_device_gps_coords()).raw['address_lines'].keys())=}")
     # print(f"{coords_to_address(*get_ip_coords())=}")
     # print(f"{coords_to_address(*get_device_gps_coords())=}")
 
