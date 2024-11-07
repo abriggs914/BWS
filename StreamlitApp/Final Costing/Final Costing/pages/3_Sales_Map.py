@@ -168,6 +168,9 @@ SELECT
 	,ISNULL([CustCity], [DealerCity]) AS [ShippedCity]
 	,ISNULL([CustProvince], [DealerProvince]) AS [ShippedProvince]
 	,ISNULL([CustPostal], [DealerPostal]) AS [ShippedPostal]
+    ,[ShippedAddressString]
+    ,[ShippedLatitude]
+    ,[ShippedLongitude]
 FROM (
 	SELECT
 		[O].[Quote#]
@@ -183,6 +186,9 @@ FROM (
 		,[D].[City] AS [DealerCity]
 		,[D].[PROVINCE] AS [DealerProvince]
 		,[D].[POSTAL CODE] AS [DealerPostal]
+		,[C].[ShippedAddressString]
+		,[C].[ShippedLatitude]
+		,[C].[ShippedLongitude]
 	FROM
 		[BWSdb].[dbo].[Orders] [O]
 	LEFT JOIN
@@ -300,42 +306,44 @@ QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
 
 
 df_sales = df_bws
+
+df_sales = df_sales.rename(columns={"ShippedLatitude": "latitude", "ShippedLongitude": "longitude"})
 # FOR TESTING
 # df_sales = df_sales.loc[df_sales["Quote#"] > 30800].reset_index()
 # df_sales = add_lat_long(df_sales)
 
-progress_lat_long = st.progress(
-    value=0,
-    text="Loading..."
-)
-df_sales["strAddress"] = df_sales.apply(lambda row: f"{row['ShippedCity']}, {row['ShippedProvince']}", axis=1)
-df_sales[["latitude", "longitude"]] = (None, None)
-st.write(f"df_sales")
-st.dataframe(df_sales, hide_index=True)
-unique_addresses = df_sales["strAddress"].str.lower().dropna().unique()
-# total = df_sales.shape[0]
-total = len(unique_addresses)
-st.session_state["prep_df_start_time"] = datetime.datetime.now()
-for i, address in enumerate(unique_addresses):
-    # st.write(f"{i=}, {address_lines=}")
-    s_past = (datetime.datetime.now() - st.session_state.get("prep_df_start_time")).total_seconds()
-    progress_lat_long.progress(
-        value=i / total,
-        text=f"{percent(i / total)} - {i} / {total} - {s_past} s")
-    df_sales.loc[df_sales["strAddress"].str.lower() == address, ["latitude", "longitude"]] = query_lat_long(address)
-# for i, row in df_sales.iterrows():
-#     # st.write(f"{i=}, {str_address=}")
+# progress_lat_long = st.progress(
+#     value=0,
+#     text="Loading..."
+# )
+# df_sales["strAddress"] = df_sales.apply(lambda row: f"{row['ShippedCity']}, {row['ShippedProvince']}", axis=1)
+# df_sales[["latitude", "longitude"]] = (None, None)
+# st.dataframe(df_sales, hide_index=True, use_container_width=True)
+# unique_addresses = df_sales["strAddress"].str.lower().dropna().unique()
+# # total = df_sales.shape[0]
+# total = len(unique_addresses)
+# st.session_state["prep_df_start_time"] = datetime.datetime.now()
+# for i, address in enumerate(unique_addresses):
+#     # st.write(f"{i=}, {address_lines=}")
+#     s_past = (datetime.datetime.now() - st.session_state.get("prep_df_start_time")).total_seconds()
 #     progress_lat_long.progress(
 #         value=i / total,
-#         text=f"{percent(i / total)} - {i} / {total}")
-#     df_sales.loc[i, ["strAddress", "latitude", "longitude"]] = str_address, *query_lat_long(str_address)
-progress_lat_long.progress(1, "Complete!")
-progress_lat_long.empty()
+#         text=f"{percent(i / total)} - {i} / {total} - {s_past} s")
+#     df_sales.loc[df_sales["strAddress"].str.lower() == address, ["latitude", "longitude"]] = query_lat_long(address)
+# # for i, row in df_sales.iterrows():
+# #     # st.write(f"{i=}, {str_address=}")
+# #     progress_lat_long.progress(
+# #         value=i / total,
+# #         text=f"{percent(i / total)} - {i} / {total}")
+# #     df_sales.loc[i, ["strAddress", "latitude", "longitude"]] = str_address, *query_lat_long(str_address)
+# progress_lat_long.progress(1, "Complete!")
+# progress_lat_long.empty()
 
 #######################
 # Begin Widget Creation
 #######################
-st.dataframe(df_sales, hide_index=True)
+st.write(f"df_sales")
+st.dataframe(df_sales, hide_index=True, use_container_width=True)
 
 lat_long_cols = ["latitude", "longitude"]
 st.map(

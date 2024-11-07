@@ -917,8 +917,6 @@ df_product_data = df_product_data_stg if COMP == STG else df_product_data_bws
 df_jobs_in_wip = df_jobs_in_wip_stg if COMP == STG else df_jobs_in_wip_bws
 df_job_counts_in_wip = df_job_counts_in_wip_stg if COMP == STG else df_job_counts_in_wip_bws
 
-st.dataframe(df_margin_data)
-
 df_margin_data["WO#"] = df_margin_data["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
 df_jobs_in_wip["WO#"] = df_jobs_in_wip["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
 

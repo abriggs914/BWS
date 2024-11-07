@@ -92,8 +92,8 @@ def click():
 
             print(f"NOW >> {job} {st.session_state[COMP][job]=}")
 
-    # df = df_production_data_by_op.loc[df_production_data_by_op['Job'].isin(SG_QUOTES_OF_INTEREST), ["Job", "Progress"]]
-    # print(f"NOW >>{df}")
+    # df_1 = df_production_data_by_op.loc[df_production_data_by_op['Job'].isin(SG_QUOTES_OF_INTEREST), ["Job", "Progress"]]
+    # print(f"NOW >>{df_1}")
 
 
 SG_QUOTES_OF_INTEREST = ["10001546"]
