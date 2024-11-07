@@ -120,7 +120,7 @@ GROUP BY
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_stargate_data(where_criteria: str = None) -> pd.DataFrame:
+def load_stargate_data_20241106(where_criteria: str = None) -> pd.DataFrame:
     # if where_criteria is None:
     #     where_criteria = " WHERE 1=1 "
     # if "WHERE" not in where_criteria:
@@ -310,7 +310,7 @@ ORDER BY
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_bws_data(where_criteria: str = None) -> pd.DataFrame:
+def load_bws_data_20241106(where_criteria: str = None) -> pd.DataFrame:
     # if where_criteria is None:
     #     where_criteria = " WHERE 1=1 "
     # if "WHERE" not in where_criteria:
@@ -496,6 +496,42 @@ ORDER BY
 ;
     """
     # sql = sql.format(WHERE_CRITERIA=where_criteria)
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_stargate_data() -> pd.DataFrame:
+    sql = """
+    SELECT
+        *
+    FROM
+        [BWSdb].[dbo].[v_SAL_OrdersMarginV2]
+    ;
+        """
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_bws_data() -> pd.DataFrame:
+    sql = """
+SELECT
+    *
+FROM
+    [BWSdb].[dbo].[v_SAL_OrdersMargin]
+;
+    """
     connection_data = {
         "sql": sql,
         "database": "bwsdb",
@@ -880,6 +916,8 @@ df_margin_data = df_margin_data_stg if COMP == STG else df_margin_data_bws
 df_product_data = df_product_data_stg if COMP == STG else df_product_data_bws
 df_jobs_in_wip = df_jobs_in_wip_stg if COMP == STG else df_jobs_in_wip_bws
 df_job_counts_in_wip = df_job_counts_in_wip_stg if COMP == STG else df_job_counts_in_wip_bws
+
+st.dataframe(df_margin_data)
 
 df_margin_data["WO#"] = df_margin_data["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
 df_jobs_in_wip["WO#"] = df_jobs_in_wip["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
