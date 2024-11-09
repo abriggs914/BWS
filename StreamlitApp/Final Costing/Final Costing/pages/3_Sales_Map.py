@@ -6,9 +6,11 @@ import streamlit as st
 from geopy.exc import GeocoderUnavailable
 from streamlit_extras.add_vertical_space import add_vertical_space
 
+import location_utility
 from location_utility import address_to_coords
 from pyodbc_connection import connect
 from utility import percent
+import pydeck as pdk
 
 #####################
 # Company Boilerplate
@@ -56,7 +58,8 @@ DEFAULT_SESSION_STATE = {
     "app_short_name": APP_SHORT_NAME,
     "radio_sort_col_choice": "None",
     "radio_sort_order_choice": "Descending",
-    "prep_df_start_time": None
+    "prep_df_start_time": None,
+    "tg_show_hexagons": False
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
@@ -307,7 +310,41 @@ QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
 
 df_sales = df_bws
 
+lat_long_cols = ["latitude", "longitude"]
 df_sales = df_sales.rename(columns={"ShippedLatitude": "latitude", "ShippedLongitude": "longitude"})
+df_sales = df_sales.dropna(subset=lat_long_cols)
+df_sales["Size"] = 2000
+df_sales_addr_counts: pd.DataFrame = df_sales.groupby(by=lat_long_cols).agg({"Size": "count"}).reset_index()
+
+st.dataframe(df_sales)
+st.dataframe(df_sales_addr_counts)
+
+total_addr_counts: int = df_sales_addr_counts["Size"].sum()
+for i, row in df_sales.iterrows():
+    lat: float = row["latitude"]
+    long: float = row["longitude"]
+    if not any([pd.isna(lat), pd.isna(long)]):
+        # st.write(f"{i=}, {lat=}, {long=}")
+        count: int = df_sales_addr_counts.loc[
+            (df_sales_addr_counts["latitude"] == lat)
+            & (df_sales_addr_counts["longitude"] == long)
+        ].iloc[0]["Size"]
+        # st.write(f"  => {count=}")
+        df_sales.loc[i, ["Size", "SizeN"]] = count * 50, count
+# df_sales["Size"] = df_sales.apply(
+#     lambda row:
+#         df_sales_addr_counts.loc[
+#             (df_sales_addr_counts["latitude"] == row["latitude"])
+#             & (df_sales_addr_counts["longitude"] == row["longitude"]),
+#             "Size"
+#         ] * 20,
+#     axis=1
+# )
+
+st.dataframe(df_sales)
+st.dataframe(df_sales_addr_counts)
+
+
 # FOR TESTING
 # df_sales = df_sales.loc[df_sales["Quote#"] > 30800].reset_index()
 # df_sales = add_lat_long(df_sales)
@@ -345,10 +382,70 @@ df_sales = df_sales.rename(columns={"ShippedLatitude": "latitude", "ShippedLongi
 st.write(f"df_sales")
 st.dataframe(df_sales, hide_index=True, use_container_width=True)
 
-lat_long_cols = ["latitude", "longitude"]
 st.map(
     df_sales[lat_long_cols].dropna(subset=lat_long_cols)
 )
+
+here = location_utility.get_ip_coords()
+default_here = [37.76, -122.4]
+if here is None:
+    here = default_here
+elif here[0] is None:
+    here = default_here
+
+view_state = pdk.ViewState(
+    latitude=here[0], longitude=here[1], controller=True, zoom=2.4, pitch=30
+)
+
+toggle_show_hexagons = st.toggle(
+    label="Hexagons",
+    key="tg_show_hexagons"
+)
+
+if st.session_state.get("tg_show_hexagons"):
+    chart = pdk.Deck(
+        map_style=None,
+        height=1000,
+        initial_view_state=view_state,
+        layers=[pdk.Layer(
+        "HexagonLayer",
+            data=df_sales,
+            get_position="[longitude, latitude]",
+            radius=10000,
+            elevation_scale=200,
+            elevation_range=[0, 5000],
+            pickable=True,
+            extruded=True,
+            id="sales_by_address_hexagons"
+        )]
+    )
+else:
+    chart = pdk.Deck(
+        map_style=None,
+        height=1000,
+        initial_view_state=view_state,
+        layers=[pdk.Layer(
+        "ScatterplotLayer",
+            data=df_sales,
+            get_position="[longitude, latitude]",
+            get_color="[200, 30, 0, 160]",
+            get_radius="Size",
+            pickable=True,
+            id="sales_by_address_points"
+        )],
+        tooltip={"text": "{SizeN}x {ShippedAddressString}"}
+    )
+
+event = st.pydeck_chart(
+    chart
+    # ,
+    # on_select="rerun",
+    # selection_mode="multi-object"
+)
+st.write(event.selection)
+# st.write(event.selection())  # error
+# for k, v in event.selection.items():  # error
+#     st.write(f"{k=}, {v=}")
 
 
 # grid = {

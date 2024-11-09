@@ -1378,8 +1378,12 @@ for i, row in df_production_data_by_op.iterrows():
         ]
         df_job_material_op = df_job_material_op.loc[df_job_material_op["ValueLeftToIssue"] > 0]
         top_un_iss_parts = ""
+        ik = 0
         for k, row_j_o in df_job_material_op.iterrows():
             top_un_iss_parts += f"{row_j_o['StockCode']}, "
+            ik += 1
+            if ik == 10:
+                break
         top_un_iss_parts = top_un_iss_parts.removesuffix(", ")
         if not top_un_iss_parts:
             top_un_iss_parts = "All parts issued"
