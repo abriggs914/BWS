@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 
 import pandas as pd
 import streamlit as st
@@ -50,6 +50,8 @@ DEFAULT_SESSION_STATE = {
     # "date_input_birthdate": None,
     # "select_shirt_size": None,
 
+    "toggle_is_admin": False,
+
     "date_input_due": datetime.datetime.now().date(),
     "selectbox_company": "",
     "selectbox_department": "",
@@ -64,6 +66,112 @@ DEFAULT_SESSION_STATE = {
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
+
+
+#  Potential Functions for Utility Files
+
+def create_sql(
+    table: str,
+    where: str = "",
+    group:
+        tuple[tuple[str]] |
+        tuple[list[str]] |
+        list[tuple[str]] |
+        list[list[str]] |
+        list[str] |
+        tuple[str] |
+        str = "",
+    order:
+        tuple[tuple[str]] |
+        tuple[list[str]] |
+        list[tuple[str]] |
+        list[list[str]] |
+        list[str] |
+        tuple[str] |
+        str = "",
+    default_order: str = "ASC",
+    mode: Literal["select", "insert"] = "select",
+    data: dict[str: Any] | list[str] | tuple[str] | str = None,
+    database: str = "BWSdb"
+):
+
+    def wrap(val: Any, is_col: bool = True) -> str:
+        print(f"wrap: {val}")
+        if is_col:
+            return f"[{str(val).removeprefix('[').removesuffix(']')}]"
+        else:
+            if isinstance(val, str) and val != "NULL":
+                return f"'{val}'"
+            elif isinstance(val, datetime.date):
+                return f"'{val:%Y-%m-%d}'"
+            elif isinstance(val, datetime.datetime):
+                return f"'{val:%Y-%m-%d %H:%M:%S}'"
+            else:
+                return str(val)
+
+    table = wrap(table)
+    if database:
+        table = f"{wrap(database)}.[dbo].{table}"
+    sql = ""
+    if data is None:
+        data = {}
+    elif isinstance(data, str):
+        data = [wrap(data)]
+    elif (mode == "select") and isinstance(data, (list, tuple)):
+        if data and not isinstance(data[0], str):
+            raise ValueError(f"You can only pass a list of data line(s) for insertion method.")
+    if data:
+        # cols = "[" + "], [".join(data) + "]"
+        if (mode == "insert") and isinstance(data, (list, tuple)):
+            cols: str = ", ".join(map(wrap, data[0]))
+        else:
+            cols: str = ", ".join(map(wrap, data))
+    else:
+        if group:
+            raise ValueError(f"You must specify columns for the select statement when addind a 'GROUP BY' clause.")
+        if mode != "select":
+            raise ValueError(f"You must specify columns when not performing a generic select.")
+        cols: str = "*"
+
+    if mode == "select":
+        sql = f"SELECT {cols} FROM {table}"
+        if where:
+            sql += f" WHERE {where}"
+
+        if group:
+            if not isinstance(group, (list, tuple)):
+                group = [group]
+            group = ", ".join([wrap(col) for col in group])
+            sql += f" GROUP BY {group}"
+
+        if order:
+            if isinstance(order, (list, tuple)):
+                if len(order) == 2:
+                    order = f"{wrap(order[0])} {order[1]}"
+                else:
+                    order = ", ".join([
+                        f"{wrap(col[0])} {(col[1] if len(col) == 2 else default_order).upper()}"
+                        if isinstance(col, (list, tuple))
+                        else f"{wrap(col)} {default_order}"
+                        for col in order
+                    ])
+            else:
+                order = wrap(order)
+            sql += f" ORDER BY {order}"
+    elif mode == "insert":
+        if not data or not isinstance(data, (dict, list, tuple)):
+            raise ValueError(f"You must specify key-value pairs in the 'data' param, indicating which columns and values to insert.")
+        if isinstance(data, dict):
+            vals: list[str] = [wrap(val, False) for val in data.values()]
+        else:
+            vals: list[str] = [("(" * min(i, 1)) + ", ".join([wrap(val, False) for val in dat.values()]) + (")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
+        vals: str = ", ".join(vals)
+        sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+
+    sql += ";"
+    return sql
+
+
 
 
 ######################
@@ -116,6 +224,11 @@ def load_itr_customers() -> pd.DataFrame:
         "pwd": CREDS_BWS["pwd"]
     }
     return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_itr_personnel() -> pd.DataFrame:
+    return connect(create_sql("IT Personnel", where="[Active] = 1"))
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
@@ -202,6 +315,7 @@ default_request_sub_type: str = "Other"
 
 df_itr_requests: pd.DataFrame = load_it_requests()
 df_departments: pd.DataFrame = load_departments()
+df_itr_personnel: pd.DataFrame = load_itr_personnel()
 df_itr_customers: pd.DataFrame = load_itr_customers()
 df_app_directory: pd.DataFrame = load_itstr_app_directory()
 df_user_directory: pd.DataFrame = load_itstr_user_directory()
@@ -209,6 +323,7 @@ df_user_directory: pd.DataFrame = load_itstr_user_directory()
 df_itr_requests_og: pd.DataFrame = df_itr_requests.copy()
 df_departments_og: pd.DataFrame = df_departments.copy()
 df_itr_customers_og: pd.DataFrame = df_itr_customers.copy()
+df_itr_personnel_og: pd.DataFrame = df_itr_personnel.copy()
 df_app_directory_og: pd.DataFrame = df_app_directory.copy()
 df_user_directory_og: pd.DataFrame = df_user_directory.copy()
 
@@ -232,13 +347,13 @@ st.session_state.update({
 # st.write(f"pwd_reqd={st.session_state.get('app_requires_password')}")
 # st.write(f"master_pwd={st.session_state.get('app_master_password')}")
 
-list_companies: list[str] = sorted(df_itr_requests["Company"].dropna().unique().tolist())
-list_departments: list[str] = sorted(df_departments["Dept"].dropna().unique().tolist())
-list_request_types: list[str] = sorted(df_itr_requests["RequestType"].dropna().unique().tolist())
+list_companies: list[str] = sorted(df_itr_requests["Company"].dropna().str.upper().unique().tolist())
+list_departments: list[str] = sorted(df_departments["Dept"].dropna().str.title().unique().tolist())
+list_request_types: list[str] = sorted(df_itr_requests["RequestType"].dropna().str.title().unique().tolist())
 rt: str = st.session_state.get("selectbox_request_type", [])
 rb: str = st.session_state.get("user_full_name", [])
-list_request_sub_types: list[str] = sorted(df_itr_requests.loc[df_itr_requests["RequestType"] == rt, "RequestSubType"].dropna().unique().tolist())
-list_customers: list[str] = sorted(df_itr_customers.loc[df_itr_customers["Active"] == 1, "Name"].dropna().unique().tolist())
+list_request_sub_types: list[str] = sorted(df_itr_requests.loc[df_itr_requests["RequestType"].str.title() == rt, "RequestSubType"].dropna().str.title().unique().tolist())
+list_customers: list[str] = sorted(df_itr_customers.loc[df_itr_customers["Active"] == 1, "Name"].dropna().str.title().unique().tolist())
 
 list_companies.insert(0, "")
 list_departments.insert(0, "")
@@ -250,7 +365,7 @@ list_customers.insert(0, "")
 # st.dataframe(df_app_directory, use_container_width=True)
 # st.dataframe(df_user_directory, use_container_width=True)
 
-unique_app_users: list[str] = df_user_directory_og["AppUserName"].dropna().unique().tolist()
+unique_app_users: list[str] = df_user_directory_og["AppUserName"].dropna().str.title().unique().tolist()
 df_user_directory: pd.DataFrame = df_user_directory.loc[df_user_directory["ITSTRAppID"] == app_id]
 if df_user_directory.empty:
     if st.session_state.get("app_requires_user_name"):
@@ -264,13 +379,13 @@ if df_user_directory.empty:
         #         }
         #     )
         # ])
-df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.lower()
+df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.title()
 
 # st.write(f"AFTER")
 # st.write(df_user_directory)
 # st.write(df_itr_customers)
 
-list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().unique().tolist())
+list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().str.title().unique().tolist())
 
 grid = {
     "top_bar": st.columns([0.6, 0.2, 0.2]),
@@ -304,7 +419,7 @@ def check_password():
 
         if df_user.empty:
             if df_app_directory.iloc[0]["MasterPassword"] == pswd:
-                df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"].str.lower() == user]
+                df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"].str.title() == user]
         if df_user.empty:
             df_cust: pd.DataFrame = df_itr_customers.loc[
                 (df_itr_customers["WindowsUser"].str.lower() == user)
@@ -391,6 +506,22 @@ def check_password():
 def input_new_request():
 
     form = grid["content_row_1"].container()
+    cust_id: int = -1
+    personnel_id: int = -1
+    df_customer: pd.DataFrame = df_itr_customers_og.loc[df_itr_customers_og["Name"].str.lower() == rb.lower()]
+    df_personnel: pd.DataFrame = pd.DataFrame()
+    if not df_customer.empty:
+        df_customer: pd.DataFrame = df_customer.iloc[0]
+        cust_id: int = df_customer["CustomerID"]
+        df_personnel: pd.DataFrame = df_itr_personnel_og.loc[df_itr_personnel_og["ITRCustomerID"] == cust_id]
+        if not df_personnel.empty:
+            df_personnel: pd.DataFrame = df_personnel.iloc[0]
+            personnel_id: int = df_personnel["ITPersonID#"]
+
+    is_admin: bool = personnel_id >= 0
+    st.session_state.update({"toggle_is_admin": is_admin})
+
+    file_uploader = None
 
     form_grid = {
         "title": form.columns(1, vertical_alignment="center"),
@@ -398,6 +529,7 @@ def input_new_request():
         "text": form.columns(1, vertical_alignment="center"),
         "followup": form.columns(1, vertical_alignment="center"),
         "info": form.columns(1, vertical_alignment="center"),
+        "admin": form.columns(1, vertical_alignment="center"),
         "btns": form.columns(3, vertical_alignment="center")
     }
 
@@ -429,6 +561,57 @@ def input_new_request():
         priority: int = st.session_state.get("slider_priority", 1)
         text: str = st.session_state.get("text_request", "").strip()
         follow_up: list[str] = st.session_state.get("multiselect_followup", [])
+        # st.write(file_uploader)
+        attachments: list[dict] = []
+        if file_uploader:
+            cols = [
+                "name",
+                "type",
+                "size",
+                "close",
+                "closed",
+                "detach",
+                "file_id",
+                "fileno",
+                "flush",
+                "getbuffer",
+                "getvalue",
+                "isatty",
+                "read",
+                "read1",
+                "readable",
+                "readinto",
+                "readinto1",
+                "readline",
+                "readlines",
+                "seek",
+                "seekable",
+                "size",
+                "tell",
+                "truncate",
+                "writable",
+                "write",
+                "writelines"
+                # ,
+                # "_file_urls",
+                # "_checkWritable",
+                # "_checkSeekable",
+                # "_checkReadable",
+                # "_checkClosed"
+            ]
+            attachments = [
+                {
+                    f"file_{key}": getattr(file, key)
+                    for key in cols
+                    if not callable(getattr(file, key))
+                }
+                for file in file_uploader
+            ]
+
+        st.write("attachments")
+        st.write(attachments)
+
+        follow_up: str = ";".join(follow_up)
 
         valid: bool = True
 
@@ -448,8 +631,79 @@ def input_new_request():
             form_grid["info"][0].info("Please describe your issue first.")
             valid = False
 
+        dept_id: str = "NULL"
+        df_dept: pd.DataFrame = df_departments_og.loc[df_departments_og["Dept"].str.lower() == dept.lower()].reset_index()
+        if not df_dept.empty:
+            dept_id = df_dept.iloc[0]["MinOfDeptID"]
+
+        # sub_priority: int = 0
+        df_priority: pd.DataFrame = df_itr_requests_og.loc[
+            (df_itr_requests_og["RequestedBy"].str.lower() == requester.lower())
+            & (df_itr_requests_og["Priority"] == priority)
+        ]
+        sub_priority: int = df_priority["Priority"].count() + 1
+        # if not df_priority.empty:
+
         if valid:
             st.write("VALID SUBMISSION")
+            sql: str = f"INSERT INTO [BWSdb].[dbo].[IT Requests] ()"
+            st.write(create_sql(
+                "IT Requests",
+                data={
+                    "Request": text,
+                    "DueDate": due_date,
+                    "Company": comp,
+                    "Department": dept_id,
+                    "Priority": priority,
+                    "SubPriority": sub_priority,
+                    "RequestType": req_type,
+                    "RequestSubType": req_sub_type,
+                    "RequestedBy": requester,
+                    "RequestFollowUpPersonnel": follow_up,
+                    "RequestDate": datetime.datetime.now(),
+                    "Status": "Queued",
+                    "RequestDateOriginal": datetime.datetime.now()
+                },
+                mode="insert"
+            ))
+
+            # TODO
+            #  calculate [Directory]
+
+            # st.write(create_sql(
+            #     "IT Requests",
+            #     data=[
+            #         {
+            #             "Request": text + "_0",
+            #             "DueDate": due_date,
+            #             "Company": comp,
+            #             "Department": dept_id
+            #         },
+            #         {
+            #             "Request": text + "_1",
+            #             "DueDate": due_date,
+            #             "Company": comp,
+            #             "Department": dept_id
+            #         }
+            #     ],
+            #     mode="insert"
+            # ))
+            # st.write(create_sql("IT Requests", data=["Status"]))
+            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'"))
+            # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'"))
+            # st.write(create_sql("IT Requests", order="Status"))
+            # st.write(create_sql("IT Requests", order=("Status", "ASC")))
+            # st.write(create_sql("IT Requests", data=["Status"], order="Status"))
+            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status"))
+            # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status"))
+            #
+            # st.write(create_sql("IT Requests", order=("Status", "DESC")))
+            # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"]))
+            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+            #
+            # st.write(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status"))
+            # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"]))
+            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
 
     def change_request_type(*args):
         print(f"change_request_type")
@@ -495,6 +749,12 @@ def input_new_request():
                 options=list_request_sub_types
             )
         with form_grid["inputs"][2]:
+            if is_admin:
+                st.toggle(
+                    label="Admin",
+                    key="toggle_is_admin",
+                    disabled=True
+                )
             st.slider(
                 label="Priority:",
                 key="slider_priority",
@@ -502,7 +762,7 @@ def input_new_request():
                 min_value=1,
                 step=1
             )
-            st.file_uploader(
+            file_uploader = st.file_uploader(
                 label="Attachments",
                 accept_multiple_files=True,
                 key="files_uploaded"
