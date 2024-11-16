@@ -17,7 +17,7 @@ import pydeck as pdk
 #####################
 
 
-APP_SHORT_NAME = "Monitoring Schedule"
+APP_SHORT_NAME = "Sales Map"
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 6  # 6 hours
 HOLD_FOREVER: float = float("inf")
@@ -382,6 +382,7 @@ st.dataframe(df_sales_addr_counts)
 st.write(f"df_sales")
 st.dataframe(df_sales, hide_index=True, use_container_width=True)
 
+st.write(f"## :red[BWS data only on maps - Stargate coming soon]")
 st.map(
     df_sales[lat_long_cols].dropna(subset=lat_long_cols)
 )
