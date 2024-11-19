@@ -1,4 +1,6 @@
 import datetime
+import os.path
+import re
 from typing import Any, Optional, Literal
 
 import pandas as pd
@@ -15,6 +17,7 @@ MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
 SHOW_SPINNERS: bool = True
 BWS: int = 0
 STG: int = 1
+ROOT_DIRECTORY_REQUESTS = r"\\bwsfp01.bwsdomain.local\Public\IT\Requests"
 CREDS_BWS: dict[str: Any] = {
     "uid": "user5",
     "pwd": "M@gic456",
@@ -30,6 +33,10 @@ CREDS_STG: dict[str: Any] = {
 #######################
 # Prep st.session_state
 #######################
+
+
+if not os.path.exists(ROOT_DIRECTORY_REQUESTS):
+    raise ValueError(f"Error cannot locate requests root directory '{ROOT_DIRECTORY_REQUESTS}'.")
 
 
 st.set_page_config(layout="wide")
@@ -72,6 +79,7 @@ for k, v in DEFAULT_SESSION_STATE.items():
 
 def create_sql(
     table: str,
+    mode: Literal["select", "insert", "update", "delete"] = "select",
     where: str = "",
     group:
         tuple[tuple[str]] |
@@ -90,26 +98,53 @@ def create_sql(
         tuple[str] |
         str = "",
     default_order: str = "ASC",
-    mode: Literal["select", "insert"] = "select",
     data: dict[str: Any] | list[str] | tuple[str] | str = None,
-    database: str = "BWSdb"
+    sanitize: Literal["all", "none"] | list[str] | tuple[str] = "all",
+    database: str = "BWSdb",
+    ignore_no_where: bool = False
 ):
 
-    def wrap(val: Any, is_col: bool = True) -> str:
-        print(f"wrap: {val}")
+    if isinstance(sanitize, (list, tuple)):
+        sanitize = [str(s).lower() for s in sanitize]
+    else:
+        sanitize = sanitize.lower()
+
+    def wrap(val: Any, is_col: bool = True, sanitize: bool = True) -> str:
+        # print(f"wrap: {val}")
         if is_col:
-            return f"[{str(val).removeprefix('[').removesuffix(']')}]"
+            v: str = f"[{str(val).removeprefix('[').removesuffix(']')}]"
         else:
             if isinstance(val, str) and val != "NULL":
-                return f"'{val}'"
-            elif isinstance(val, datetime.date):
-                return f"'{val:%Y-%m-%d}'"
+                v: str = f"'{val}'"
             elif isinstance(val, datetime.datetime):
-                return f"'{val:%Y-%m-%d %H:%M:%S}'"
+                v: str = f"'{val:%Y-%m-%d %H:%M:%S}'"
+            elif isinstance(val, datetime.date):
+                v: str = f"'{val:%Y-%m-%d}'"
             else:
-                return str(val)
+                v: str = str(val)
+        if sanitize:
+            v = v.strip()
+            v = v[0] + re.sub(r"[;'\\\"]", "", v[1:-1]) + v[-1]
+        return v
+
+    def do_sanitize(val: Any) -> bool:
+        if sanitize == "all":
+            return True
+        if sanitize == "none":
+            return False
+        if isinstance(sanitize, (list, tuple)):
+            return val.lower() in sanitize
+        return True
+
+    if mode in ("update", "delete"):
+        if not where and not ignore_no_where:
+            raise ValueError(f"Highly recommend including a where clause when updating or deleting. If you don't want to include a where clause, set 'ignore_no_where' to True. ")
+    if mode == "update":
+        if not isinstance(data, dict):
+            raise ValueError(f"When updating, data must be a dictionary where keys are table column names.")
 
     table = wrap(table)
+    where = where.replace("==", "=")
     if database:
         table = f"{wrap(database)}.[dbo].{table}"
     sql = ""
@@ -162,16 +197,20 @@ def create_sql(
         if not data or not isinstance(data, (dict, list, tuple)):
             raise ValueError(f"You must specify key-value pairs in the 'data' param, indicating which columns and values to insert.")
         if isinstance(data, dict):
-            vals: list[str] = [wrap(val, False) for val in data.values()]
+            vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
         else:
-            vals: list[str] = [("(" * min(i, 1)) + ", ".join([wrap(val, False) for val in dat.values()]) + (")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
+            vals: list[str] = [("(" * min(i, 1)) + ", ".join([wrap(val, False, sanitize=do_sanitize(key)) for key, val in dat.items()]) + (")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
         vals: str = ", ".join(vals)
         sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+    elif mode == "update":
+        sql = f"UPDATE {table} SET "
+        sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
+        # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
+        if where:
+            sql += f" WHERE {where}"
 
     sql += ";"
     return sql
-
-
 
 
 ######################
@@ -255,6 +294,28 @@ def load_itstr_user_directory() -> pd.DataFrame:
     return connect(**connection_data)
 
 
+def get_next_it_request_number() -> int:
+    # this function needs to be called as close to the insert as possible to reduce race condition
+    # bugs caused by a faster user claiming a pre-distributed ITR ID #.
+    sql = """
+SELECT
+	MAX([R].[ITRequestID#]) AS [LastID]
+FROM
+	[BWSdb].[dbo].[IT Requests] [R]
+;
+    """
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    df: pd.DataFrame = connect(**connection_data)
+    if df.empty:
+        raise ValueError(f"Critical Error could not retrieve a new IT Request ID Number for this input. Please try again later.")
+    return df.iloc[0]["LastID"] + 1
+
+
 #################
 # Event Listeners
 #################
@@ -270,36 +331,162 @@ def birthdate_on_change():
 #################
 
 
-def submit_form(form_key):
-    print(f"SUBMIT {form_key} FORM")
-    sql = ""
-    match form_key:
-        case "Customer":
-            sql = "UPDATE [BWSdb].[dbo].[ITR Customers] SET "
-            dob: Optional[datetime.datetime] = st.session_state.get("date_input_birthdate")
-            shirt_size: Optional[str] = st.session_state.get("select_shirt_size")
-            cust_id = st.session_state.get("itr_customer_id")
-            print(f"NEW DOB {dob}")
-            if dob:
-                dob_y: int = dob.year
-                dob_m: int = dob.month
-                dob_d: int = dob.day
-                print(f"y={dob_y}, m={dob_m}, d={dob_d} ", end="")
-                sql += f"[BirthYear] = {dob_y}, "
-                sql += f"[BirthMonth] = {dob_m}, "
-                sql += f"[BirthDay] = {dob_d}, "
-            if shirt_size:
-                print(f"ss={shirt_size}", end="")
-                sql += f"[ShirtSize] = '{shirt_size}', "
+def submit_mac_request(req_id: int, personnel_id: int):
+    print(f"submit_mac_request")
+    comments: float = st.session_state.get("text_area_request_comments", "")
+    lab_est: float = st.session_state.get("slider_labour_estimate", 1)
+    lab_act: float = st.session_state.get("slider_labour_actual", 1)
+    update_data = {
+        "Status": "In Progress",
+        "ITPersonAssignedID": personnel_id,
+        "LabourEstimate": lab_est,
+        "LabourActual": lab_act,
+        "Comments": comments
+    }
+    st.write(create_sql(
+        "IT Requests",
+        data=update_data,
+        mode="update",
+        sanitize=["Comments"],
+        where=f"[ITRequestID#] == {req_id}"
+    ))
+    update_data = {
+        "Status": "Complete",
+        "CompletionDate": datetime.datetime.now()
+    }
+    st.write(create_sql(
+        "IT Requests",
+        data=update_data,
+        mode="update",
+        where=f"[ITRequestID#] == {req_id}"
+    ))
 
-            sql = sql.removesuffix(", ")
-            sql += f" WHERE [CustomerID] = {cust_id};"
-            print(f"")
-        case _:
-            raise KeyError(f"This {form_key=} is unrecognized.")
 
-    if sql:
-        print(f"{sql=}")
+@st.dialog("Mark request as complete")
+def mark_as_complete_input(req_id, personnel_id):
+
+    def click_date_stamp():
+        text = st.session_state.get("text_area_request_comments", "")
+        text = f"{text.strip()}\n{datetime.datetime.now():%Y-%m-%d - %H:%M:%S} - {st.session_state.get('user_name')}: "
+        st.session_state.update({
+            "text_area_request_comments": text
+        })
+
+    def click_cancel():
+        click_clear()
+
+    def click_clear():
+        st.session_state.update({
+            "slider_labour_estimate": 1,
+            "slider_labour_actual": 1,
+            "text_area_request_comments": "",
+            "mark_as_complete_submitted": False
+        })
+
+    def click_submit():
+        print(f"click_submit MAC")
+        st.session_state.update({
+            "mark_as_complete_submitted": True
+        })
+
+    st.write(f"Add labour:")
+    cols0 = st.columns(2)
+    cols1 = st.columns(3)
+    with cols0[0]:
+        # st.write()
+        st.slider(
+            label=f"Estimate (Hrs)",
+            key=f"slider_labour_estimate",
+            min_value=0,
+            max_value=30
+        )
+    with cols0[1]:
+        # st.write(f"Actual (Hrs)")
+        st.slider(
+            label=f"Actual (Hrs)",
+            key=f"slider_labour_actual",
+            min_value=0,
+            max_value=30
+        )
+    st.button(
+        label="Time Stamp",
+        key="button_time_stamp_comments",
+        on_click=click_date_stamp
+    )
+    st.text_area(
+        label="Comments:",
+        key=f"text_area_request_comments"
+    )
+    with cols1[0]:
+        if st.button(
+            label="cancel",
+            key="button_mac_cancel"
+                # ,
+            # on_click=click_cancel
+        ):
+            st.session_state.update({
+                "slider_labour_estimate": 1,
+                "slider_labour_actual": 1,
+                "text_area_request_comments": "",
+                "mark_as_complete_submitted": False
+            })
+    with cols1[1]:
+        if st.button(
+            label="clear",
+            key="button_mac_clear"
+                # ,
+            # on_click=click_clear
+        ):
+            st.session_state.update({
+                "slider_labour_estimate": 1,
+                "slider_labour_actual": 1,
+                "text_area_request_comments": "",
+                "mark_as_complete_submitted": False
+            })
+    with cols1[2]:
+        if st.button(
+            label="submit",
+            key="button_mac_submit"
+                # ,
+            # on_click=click_submit
+        ):
+            print(f"click_submit MAC")
+            st.session_state.update({
+                "mark_as_complete_submitted": True
+            })
+            submit_mac_request(req_id, personnel_id)
+            st.rerun()
+
+# def submit_form(form_key):
+#     print(f"SUBMIT {form_key} FORM")
+#     sql = ""
+#     match form_key:
+#         case "Customer":
+#             sql = "UPDATE [BWSdb].[dbo].[ITR Customers] SET "
+#             dob: Optional[datetime.datetime] = st.session_state.get("date_input_birthdate")
+#             shirt_size: Optional[str] = st.session_state.get("select_shirt_size")
+#             cust_id = st.session_state.get("itr_customer_id")
+#             print(f"NEW DOB {dob}")
+#             if dob:
+#                 dob_y: int = dob.year
+#                 dob_m: int = dob.month
+#                 dob_d: int = dob.day
+#                 print(f"y={dob_y}, m={dob_m}, d={dob_d} ", end="")
+#                 sql += f"[BirthYear] = {dob_y}, "
+#                 sql += f"[BirthMonth] = {dob_m}, "
+#                 sql += f"[BirthDay] = {dob_d}, "
+#             if shirt_size:
+#                 print(f"ss={shirt_size}", end="")
+#                 sql += f"[ShirtSize] = '{shirt_size}', "
+#
+#             sql = sql.removesuffix(", ")
+#             sql += f" WHERE [CustomerID] = {cust_id};"
+#             print(f"")
+#         case _:
+#             raise KeyError(f"This {form_key=} is unrecognized.")
+#
+#     if sql:
+#         print(f"{sql=}")
 
 
 ####################
@@ -392,8 +579,17 @@ grid = {
     "title_row": st.container(),
     "credentials_row": st.container(),
     "content_row_0": st.container(),
-    "content_row_1": st.container()
+    "content_row_1": st.container(),
+    "tab_new_request": None,
+    "tab_edit_request": None
 }
+
+if st.session_state.get("signed_in", False):
+    tab_new_request, tab_edit_request = grid["content_row_1"].tabs([":star2: New", ":pencil2: Edit"])
+    grid.update({
+        "tab_new_request": tab_new_request,
+        "tab_edit_request": tab_edit_request
+    })
 
 
 def check_password():
@@ -503,11 +699,42 @@ def check_password():
     return False
 
 
+def edit_request():
+
+    form = grid["tab_edit_request"].container()
+    with form:
+        st.header("Edit Request")
+
+
 def input_new_request():
 
-    form = grid["content_row_1"].container()
-    cust_id: int = -1
-    personnel_id: int = -1
+    form = grid["tab_new_request"].container()
+    with form:
+        st.header("New Request")
+
+    def click_test_input():
+        # Demo request helping Gary Thomas with the public drive
+        st.session_state.update({
+            "date_input_due": datetime.datetime.now().date(),
+            "selectbox_company": "BWS",
+            "selectbox_department": "Sales",
+            "text_input_requested_by": rb.strip(),
+            "selectbox_request_type": "Software",
+            "selectbox_request_sub_type": "Other",
+            "slider_priority": 3,
+            "text_request": "Help Gary Thomas access the NAS1 Engineering Jobs folder for some resources.;".strip(),
+            "multiselect_followup": ["Avery Briggs", "James Crawford", "Jamie Merrithew", "Austin Broad"]
+        })
+
+    with form:
+        st.button(
+            label="Test_0",
+            key="TEST_INPUT_BUTTON",
+            on_click=click_test_input
+        )
+
+    cust_id: int = 1
+    personnel_id: int = 1
     df_customer: pd.DataFrame = df_itr_customers_og.loc[df_itr_customers_og["Name"].str.lower() == rb.lower()]
     df_personnel: pd.DataFrame = pd.DataFrame()
     if not df_customer.empty:
@@ -519,7 +746,8 @@ def input_new_request():
             personnel_id: int = df_personnel["ITPersonID#"]
 
     is_admin: bool = personnel_id >= 0
-    st.session_state.update({"toggle_is_admin": is_admin})
+    st.session_state.setdefault("toggle_is_admin", is_admin)
+    st.session_state.setdefault("toggle_mark_as_complete", False)
 
     file_uploader = None
 
@@ -552,6 +780,7 @@ def input_new_request():
 
     def click_submit():
         print(f"submit")
+        mark_as_complete = st.session_state.get("toggle_mark_as_complete", False)
         due_date: datetime.date = st.session_state.get("date_input_due", datetime.datetime.now().date())
         comp: str = st.session_state.get("selectbox_company", default_company).strip()
         dept: str = st.session_state.get("selectbox_department", default_department).strip()
@@ -608,10 +837,15 @@ def input_new_request():
                 for file in file_uploader
             ]
 
-        st.write("attachments")
-        st.write(attachments)
+        # st.write("attachments")
+        # st.write(attachments)
 
-        follow_up: str = ";".join(follow_up)
+        follow_up_emails: list[str] = []
+        for name in follow_up:
+            df_customer: pd.DataFrame = df_itr_customers_og.loc[df_itr_customers_og["Name"].str.lower() == name.lower()].reset_index()
+            if not df_customer.empty:
+                follow_up_emails.append(df_customer.iloc[0]["Email"].strip() if not pd.isna(df_customer.iloc[0]["Email"]) else "")
+        follow_up: str = ";".join([email for email in follow_up_emails if email.strip()])
 
         valid: bool = True
 
@@ -646,26 +880,75 @@ def input_new_request():
 
         if valid:
             st.write("VALID SUBMISSION")
-            sql: str = f"INSERT INTO [BWSdb].[dbo].[IT Requests] ()"
+
+            # BEWARE ARTIFICIALLY 'CLAIMED' A SQL SERVER TABLE ID
+            # Call insert statement ASAP to ensure that you actually get this ID
+            my_id: int = get_next_it_request_number()
+            st.write(f"MY ID# == {my_id}")
+            dir_name: str = f"REQID#{str(my_id).rjust(6, '0')}"
+            directory: str = os.path.join(ROOT_DIRECTORY_REQUESTS, dir_name)
+
+            if not os.path.exists(directory):
+                os.mkdir(directory)
+
+            for file in file_uploader:
+                file_name = getattr(file, "name")
+                file_path = os.path.join(directory, file_name)
+                with open(file_path, "wb") as f:
+                    f.write(file.getbuffer())
+
+            directory = "\\\\" + directory.removeprefix("\\")
+            insert_data: dict[str: Any] = {
+                "Request": text,
+                "DueDate": due_date,
+                "Company": comp,
+                "Department": dept_id,
+                "Priority": priority,
+                "SubPriority": sub_priority,
+                "RequestType": req_type,
+                "RequestSubType": req_sub_type,
+                "RequestedBy": requester,
+                "RequestFollowUpPersonnel": follow_up,
+                "RequestDate": datetime.datetime.now(),
+                "Status": "Queued",
+                "RequestDateOriginal": datetime.datetime.now(),
+                "Directory": directory
+            }
+            sanitize_cols = list(insert_data.keys())
+            sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
+            sanitize_cols.remove("Directory")  # preserve backslashes in path
             st.write(create_sql(
                 "IT Requests",
-                data={
-                    "Request": text,
-                    "DueDate": due_date,
-                    "Company": comp,
-                    "Department": dept_id,
-                    "Priority": priority,
-                    "SubPriority": sub_priority,
-                    "RequestType": req_type,
-                    "RequestSubType": req_sub_type,
-                    "RequestedBy": requester,
-                    "RequestFollowUpPersonnel": follow_up,
-                    "RequestDate": datetime.datetime.now(),
-                    "Status": "Queued",
-                    "RequestDateOriginal": datetime.datetime.now()
-                },
-                mode="insert"
+                data=insert_data,
+                mode="insert",
+                sanitize=sanitize_cols
             ))
+
+            # verify the id claimed
+            my_id_after: int = get_next_it_request_number() - 1
+            my_id = my_id_after
+
+            st.session_state.update({
+                "slider_labour_estimate": 1,
+                "slider_labour_actual": 1,
+                "text_area_request_comments": "",
+                "mark_as_complete_submitted": False
+            })
+            print(f"MARK AS COMPLETE {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
+            if mark_as_complete:
+                if not st.session_state.get("mark_as_complete_submitted", False):
+                    mark_as_complete_input(my_id, personnel_id)
+                else:
+                    print(f"ALREADY HANDLED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
+            dialog_mac_submitted_correctly: bool = st.session_state.get("mark_as_complete_submitted", False)
+            if dialog_mac_submitted_correctly:
+                print(f"UPDATING MAC DETAILS {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+            else:
+                st.write("MAC not submitted")
+                print(f"MAC NOT SUBMITTED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
 
             # TODO
             #  calculate [Directory]
@@ -755,6 +1038,10 @@ def input_new_request():
                     key="toggle_is_admin",
                     disabled=True
                 )
+                st.toggle(
+                    label="Mark Complete?",
+                    key="toggle_mark_as_complete"
+                )
             st.slider(
                 label="Priority:",
                 key="slider_priority",
@@ -825,7 +1112,41 @@ else:
     else:
         un = st.session_state.get('user_full_name')
         st.session_state.update({"text_input_requested_by": un})
-        input_new_request()
+
+        with grid["tab_new_request"]:
+            input_new_request()
+
+        with grid["tab_edit_request"]:
+            edit_request()
+
+        # st.write(create_sql(
+        #     "IT Requests",
+        #     data={
+        #         "Request": "sample_0",
+        #         "DueDate": datetime.datetime.now(),
+        #         "Company": "Stargate",
+        #         "Priority": 3
+        #     },
+        #     mode="update",
+        #     where="[ITRequestID#] == 1"
+        # ))
+        # st.write(create_sql("IT Requests", data=["Status"]))
+        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'"))
+        # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'"))
+        # st.write(create_sql("IT Requests", order="Status"))
+        # st.write(create_sql("IT Requests", order=("Status", "ASC")))
+        # st.write(create_sql("IT Requests", data=["Status"], order="Status"))
+        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status"))
+        # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status"))
+        #
+        # st.write(create_sql("IT Requests", order=("Status", "DESC")))
+        # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"]))
+        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+        #
+        # st.write(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status"))
+        # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"]))
+        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+
     # if not check_password():
     #     # st.write(f"## Invalid Credentials.")
     #     # st.write("##### Please contact IT for further assistance with this app.")
