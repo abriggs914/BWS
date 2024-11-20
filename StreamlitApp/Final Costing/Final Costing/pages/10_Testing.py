@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_autorefresh import st_autorefresh
+from streamlit_pills import pills
 
 from pyodbc_connection import connect
 from streamlit_utility import coloured_text
@@ -67,7 +68,11 @@ DEFAULT_SESSION_STATE = {
     "selectbox_request_sub_type": "",
     "slider_priority": 1,
     "text_request": "",
-    "multiselect_followup": []
+    "multiselect_followup": [],
+    "itr_edit_id": None,
+    "multiselect_status": [],
+    "multiselect_it_personnel": [],
+    "multiselect_requested_by": []
     # ,
     # "files_uploaded": ""  # This cannot be set using session_state
 }
@@ -361,6 +366,20 @@ def submit_mac_request(req_id: int, personnel_id: int):
         where=f"[ITRequestID#] == {req_id}"
     ))
 
+    # st.session_state.update({
+    #     "mark_as_complete_submitted": False
+    #     # ,
+    # #     "selectbox_company": "",
+    # # "selectbox_department": "Sales",
+    # # "text_input_requested_by": rb.strip(),
+    # # "selectbox_request_type": "Software",
+    # # "selectbox_request_sub_type": "Other",
+    # # "slider_priority": 3,
+    # # "text_request": "Help Gary Thomas access the NAS1 Engineering Jobs folder for some resources.;".strip(),
+    # # "multiselect_followup
+    # })
+    click_clear_input_form()
+
 
 @st.dialog("Mark request as complete")
 def mark_as_complete_input(req_id, personnel_id):
@@ -455,7 +474,143 @@ def mark_as_complete_input(req_id, personnel_id):
                 "mark_as_complete_submitted": True
             })
             submit_mac_request(req_id, personnel_id)
-            st.rerun()
+            st.rerun()\
+
+
+@st.dialog("ITR Edit Params", width="large")
+def itr_edit_params():
+
+    if st.button(
+        label="Edit Requests"
+    ):
+        # requested_by = st.session_state.get("multiselect_requested_by", [])
+        # it_personnel = st.session_state.get("multiselect_it_personnel", [])
+        # status = st.session_state.get("multiselect_status", [])
+        # is_complete = st.session_state.get("radio_is_complete", None)
+        # is_internal = st.session_state.get("radio_is_internal", None)
+
+        df_itr_requests = df_itr_requests_og.copy()
+
+        # requested_by = st.session_state.get("multiselect_requested_by", [])
+        requested_by = st.session_state["multiselect_requested_by"]
+        it_personnel = st.session_state.get("multiselect_it_personnel", [])
+        status = st.session_state.get("multiselect_status", [])
+        use_is_complete = st.session_state.get("toggle_use_is_complete", False)
+        use_is_internal = st.session_state.get("toggle_use_is_internal", False)
+        is_complete = st.session_state.get("radio_is_complete", None)
+        is_internal = st.session_state.get("radio_is_internal", None)
+
+        it_personnel = df_itr_personnel_og.loc[
+            df_itr_personnel_og["Name"].isin(it_personnel), "ITPersonID#"].dropna().unique().tolist()
+        internal_it = df_itr_personnel_og.loc[df_itr_personnel_og["Active"] == 1, "Name"].dropna().unique().tolist()
+
+        print(f"ITR_EP {st.session_state.get('multiselect_requested_by', [])=}")
+        print("ITR_EP requested_by")
+        print(requested_by)
+        print("ITR_EP it_personnel")
+        print(it_personnel)
+        print("ITR_EP status")
+        print(status)
+
+        print(f"A df={df_itr_requests.shape}")
+
+        if requested_by:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["RequestedBy"].isin(requested_by)]
+        print(f"B df={df_itr_requests.shape}")
+        if it_personnel:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["ITPersonAssignedID"].isin(it_personnel)]
+        print(f"C df={df_itr_requests.shape}")
+        if status:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["Status"].isin(status)]
+        print(f"D df={df_itr_requests.shape}")
+        if use_is_complete:
+            if is_complete:
+                df_itr_requests = df_itr_requests.loc[
+                    df_itr_requests["Status"].isin(["Complete", "Declined", "Incomplete"])]
+            else:
+                df_itr_requests = df_itr_requests.loc[
+                    ~df_itr_requests["Status"].isin(["Complete", "Declined", "Incomplete"])]
+        print(f"E df={df_itr_requests.shape}")
+        if use_is_internal:
+            if is_internal:
+                df_itr_requests = df_itr_requests.loc[df_itr_requests["RequestedBy"].isin(internal_it)]
+            else:
+                df_itr_requests = df_itr_requests.loc[~df_itr_requests["RequestedBy"].isin(internal_it)]
+
+        print(f"F df={df_itr_requests.shape}")
+        if not df_itr_requests.empty:
+            st.session_state.update({
+                # by default go the last available request
+                "itr_edit_id": df_itr_requests.iloc[-1]["ITRequestID#"],
+                "multiselect_requested_by": requested_by,
+                "multiselect_it_personnel": it_personnel,
+                "multiselect_status": status
+            })
+        else:
+            st.info("No requests match criteria")
+        print(f"LEAVING ITR_EP")
+        for k, v in st.session_state.items():
+            print(f"{k=}, {v=}")
+        st.rerun()
+
+    itr_ms_requested_by = st.multiselect(
+        label=f"Requested By:",
+        key=f"multiselect_requested_by",
+        options=df_itr_requests_og["RequestedBy"].dropna().unique().tolist()
+    )
+
+    itr_ms_personnel = st.multiselect(
+        label=f"IT Personnel:",
+        key=f"multiselect_it_personnel",
+        options=df_itr_personnel_og["Name"].dropna().unique().tolist()
+    )
+
+    itr_ms_status = st.multiselect(
+        label=f"Status:",
+        key=f"multiselect_status",
+        options=df_itr_requests_og["Status"].dropna().unique().tolist()
+    )
+
+    cols_is_complete = st.columns([0.6, 0.4])
+    cols_is_internal = st.columns([0.6, 0.4])
+    cols_is_complete[0].toggle(
+        label="Enable / Disable Is Complete",
+        key="toggle_use_is_complete"
+    )
+    is_complete = cols_is_complete[1].radio(
+        label="Is complete",
+        options=["Yes", "No"],
+        key="radio_is_complete",
+        horizontal=True,
+        label_visibility="hidden",
+        disabled=not st.session_state.get("toggle_use_is_complete")
+    )
+
+    cols_is_internal[0].toggle(
+        label="Enable / Disable Is Internal",
+        key="toggle_use_is_internal"
+    )
+    is_internal = cols_is_internal[1].radio(
+        label="Is internal",
+        options=["Yes", "No"],
+        key="radio_is_internal",
+        horizontal=True,
+        label_visibility="hidden",
+        disabled=not st.session_state.get("toggle_use_is_internal")
+    )
+
+    if st.button(
+        label="reset"
+    ):
+        print(f"ITR_EP RESET")
+        st.session_state.update({
+            "multiselect_requested_by": [],
+            "multiselect_it_personnel": [],
+            "multiselect_status": [],
+            "radio_is_complete": None,
+            "radio_is_internal": None
+        })
+
 
 # def submit_form(form_key):
 #     print(f"SUBMIT {form_key} FORM")
@@ -580,15 +735,42 @@ grid = {
     "credentials_row": st.container(),
     "content_row_0": st.container(),
     "content_row_1": st.container(),
-    "tab_new_request": None,
-    "tab_edit_request": None
+    "content_row_2": st.container()
+    # ,
+    # "tab_new_request": None,
+    # "tab_edit_request": None
 }
 
+tab_names = [":star2: New", ":pencil2: Edit"]
 if st.session_state.get("signed_in", False):
-    tab_new_request, tab_edit_request = grid["content_row_1"].tabs([":star2: New", ":pencil2: Edit"])
+    # tab_new_request, tab_edit_request = grid["content_row_1"].tabs(tab_names)
+    # grid.update({
+    #     "tab_new_request": tab_new_request,
+    #     "tab_edit_request": tab_edit_request
+    # })
+    with grid["content_row_1"]:
+        tab_choice = pills("Options:", tab_names)
+    # grid.update({
+    #     "tab_new_request": tab_new_request,
+    #     "tab_edit_request": tab_edit_request
+    # })
     grid.update({
-        "tab_new_request": tab_new_request,
-        "tab_edit_request": tab_edit_request
+        "tab_choice": tab_choice
+    })
+
+
+def click_clear_input_form():
+    st.session_state.update({
+        "date_input_due": datetime.datetime.now().date(),
+        "selectbox_company": "",
+        "selectbox_department": "",
+        "text_input_requested_by": "",
+        "selectbox_request_type": "",
+        "selectbox_request_sub_type": "",
+        "slider_priority": 1,
+        "text_request": "",
+        "multiselect_followup": [],
+        "mark_as_complete_submitted": False
     })
 
 
@@ -699,18 +881,7 @@ def check_password():
     return False
 
 
-def edit_request():
-
-    form = grid["tab_edit_request"].container()
-    with form:
-        st.header("Edit Request")
-
-
-def input_new_request():
-
-    form = grid["tab_new_request"].container()
-    with form:
-        st.header("New Request")
+def request_form(form, mode: Literal["new", "edit"]):
 
     def click_test_input():
         # Demo request helping Gary Thomas with the public drive
@@ -726,12 +897,13 @@ def input_new_request():
             "multiselect_followup": ["Avery Briggs", "James Crawford", "Jamie Merrithew", "Austin Broad"]
         })
 
-    with form:
-        st.button(
-            label="Test_0",
-            key="TEST_INPUT_BUTTON",
-            on_click=click_test_input
-        )
+    if mode == "new":
+        with form:
+            st.button(
+                label="Test_0",
+                key="TEST_INPUT_BUTTON",
+                on_click=click_test_input
+            )
 
     cust_id: int = 1
     personnel_id: int = 1
@@ -749,6 +921,51 @@ def input_new_request():
     st.session_state.setdefault("toggle_is_admin", is_admin)
     st.session_state.setdefault("toggle_mark_as_complete", False)
 
+    if mode == "edit":
+        my_id: int = st.session_state.get("itr_edit_id")
+        df_req: pd.DataFrame = df_itr_requests_og.loc[df_itr_requests_og["ITRequestID#"] == my_id].iloc[0]
+        directory = df_req["Directory"]
+        due_date = df_req["DueDate"]
+        company = df_req["Company"].upper()
+        department = df_req["Department"]
+        # st.write("department V")
+        # st.write(department)
+        # st.write("department OG V")
+        # st.write(df_departments_og)
+        department_name = df_departments_og.loc[df_departments_og["MinOfDeptID"] == department].iloc[0]["Dept"].title() if not pd.isna(
+            department) else [""]
+        # st.write("department_name")
+        # st.write(department_name)
+        requester: str = df_req["RequestedBy"]
+        request_type: str = df_req["RequestType"]
+        request_sub_type: str = df_req["RequestSubType"]
+        priority: str = df_req["Priority"]
+        request: str = df_req["Request"]
+        comments: str = df_req["Comments"]
+        follow_up: str = df_req["RequestFollowUpPersonnel"]
+        follow_up_emails = follow_up.split(";") if not pd.isna(follow_up) else []
+        follow_up_names = []
+        for i, email in enumerate(follow_up_emails):
+            if email:
+                df_cust: pd.DataFrame = df_itr_customers_og.loc[
+                    df_itr_customers_og["Email"].str.lower() == email.lower()]
+                if not df_cust.empty:
+                    follow_up_names.append(df_cust.iloc[0]["Name"])
+        st.session_state.update({
+            "date_input_due": due_date,
+            "selectbox_company": company,
+            "selectbox_department": department_name,
+            "text_input_requested_by": requester,
+            "selectbox_request_type": request_type,
+            "selectbox_request_sub_type": request_sub_type,
+            "slider_priority": priority,
+            "text_request": request,
+            "text_comments": comments,
+            "multiselect_followup": follow_up_names,
+            "mark_as_complete_submitted": False
+        })
+        list_request_sub_types = sorted(df_itr_requests.loc[df_itr_requests["RequestType"].str.title() == request_type.title(), "RequestSubType"].dropna().str.title().unique().tolist())
+
     file_uploader = None
 
     form_grid = {
@@ -761,22 +978,18 @@ def input_new_request():
         "btns": form.columns(3, vertical_alignment="center")
     }
 
+    with form_grid["title"][0]:
+        if mode == "new":
+            st.header("New Request")
+        else:
+            st.header("Edit Request")
+
     def click_cancel():
         print(f"cancel")
 
     def click_clear():
         print(f"clear")
-        st.session_state.update({
-            "date_input_due": datetime.datetime.now().date(),
-            "selectbox_company": "",
-            "selectbox_department": "",
-            "text_input_requested_by": "",
-            "selectbox_request_type": "",
-            "selectbox_request_sub_type": "",
-            "slider_priority": 1,
-            "text_request": "",
-            "multiselect_followup": []
-        })
+        click_clear_input_form()
 
     def click_submit():
         print(f"submit")
@@ -881,12 +1094,48 @@ def input_new_request():
         if valid:
             st.write("VALID SUBMISSION")
 
-            # BEWARE ARTIFICIALLY 'CLAIMED' A SQL SERVER TABLE ID
-            # Call insert statement ASAP to ensure that you actually get this ID
-            my_id: int = get_next_it_request_number()
-            st.write(f"MY ID# == {my_id}")
-            dir_name: str = f"REQID#{str(my_id).rjust(6, '0')}"
-            directory: str = os.path.join(ROOT_DIRECTORY_REQUESTS, dir_name)
+            if mode == "new":
+                # BEWARE ARTIFICIALLY 'CLAIMED' A SQL SERVER TABLE ID
+                # Call insert statement ASAP to ensure that you actually get this ID
+                my_id: int = get_next_it_request_number()
+                st.write(f"MY ID# == {my_id}")
+                dir_name: str = f"REQID#{str(my_id).rjust(6, '0')}"
+                directory: str = os.path.join(ROOT_DIRECTORY_REQUESTS, dir_name)
+                print(f"mode==new")
+            else:
+                my_id: int = st.session_state.get("itr_edit_id")
+                df_req: pd.DataFrame = df_itr_requests_og.iloc[my_id]
+                directory = df_req["Directory"]
+                due_date = df_req["DueDate"]
+                company = df_req["Company"]
+                department = df_req["Department"]
+                department_name = df_departments_og.loc[df_departments["MinOfDeptID"] == department] if not pd.isna(department) else ""
+                requester: str = df_req["RequestedBy"]
+                request_type: str = df_req["RequestedType"]
+                request_sub_type: str = df_req["RequestedSubType"]
+                priority: str = df_req["Priority"]
+                request: str = df_req["Request"]
+                follow_up: str = df_req["RequestFollowUpPersonnel"]
+                follow_up_emails = follow_up.split(";") if not pd.isna(follow_up) else []
+                follow_up_names = []
+                for i, email in enumerate(follow_up_emails):
+                    if email:
+                        df_cust: pd.DataFrame = df_itr_customers_og.loc[df_itr_customers_og["Email"].str.lower() == email.lower()]
+                        if not df_cust.empty:
+                            follow_up_names.append(df_cust.iloc[0]["Name"])
+                st.session_state.update({
+                    "date_input_due": due_date,
+                    "selectbox_company": company,
+                    "selectbox_department": department_name,
+                    "text_input_requested_by": requester,
+                    "selectbox_request_type": request_type,
+                    "selectbox_request_sub_type": request_sub_type,
+                    "slider_priority": priority,
+                    "text_request": request,
+                    "multiselect_followup": follow_up_names,
+                    "mark_as_complete_submitted": False
+                })
+                print(f"mode==edit")
 
             if not os.path.exists(directory):
                 os.mkdir(directory)
@@ -924,9 +1173,10 @@ def input_new_request():
                 sanitize=sanitize_cols
             ))
 
-            # verify the id claimed
-            my_id_after: int = get_next_it_request_number() - 1
-            my_id = my_id_after
+            if mode == "new":
+                # verify the id claimed
+                my_id_after: int = get_next_it_request_number() - 1
+                my_id = my_id_after
 
             st.session_state.update({
                 "slider_labour_estimate": 1,
@@ -936,57 +1186,19 @@ def input_new_request():
             })
             print(f"MARK AS COMPLETE {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
-            if mark_as_complete:
+            if (mode == "new") and mark_as_complete:
                 if not st.session_state.get("mark_as_complete_submitted", False):
                     mark_as_complete_input(my_id, personnel_id)
                 else:
                     print(f"ALREADY HANDLED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
-            dialog_mac_submitted_correctly: bool = st.session_state.get("mark_as_complete_submitted", False)
-            if dialog_mac_submitted_correctly:
-                print(f"UPDATING MAC DETAILS {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-            else:
-                st.write("MAC not submitted")
-                print(f"MAC NOT SUBMITTED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-
-
-            # TODO
-            #  calculate [Directory]
-
-            # st.write(create_sql(
-            #     "IT Requests",
-            #     data=[
-            #         {
-            #             "Request": text + "_0",
-            #             "DueDate": due_date,
-            #             "Company": comp,
-            #             "Department": dept_id
-            #         },
-            #         {
-            #             "Request": text + "_1",
-            #             "DueDate": due_date,
-            #             "Company": comp,
-            #             "Department": dept_id
-            #         }
-            #     ],
-            #     mode="insert"
-            # ))
-            # st.write(create_sql("IT Requests", data=["Status"]))
-            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'"))
-            # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'"))
-            # st.write(create_sql("IT Requests", order="Status"))
-            # st.write(create_sql("IT Requests", order=("Status", "ASC")))
-            # st.write(create_sql("IT Requests", data=["Status"], order="Status"))
-            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status"))
-            # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status"))
-            #
-            # st.write(create_sql("IT Requests", order=("Status", "DESC")))
-            # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"]))
-            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
-            #
-            # st.write(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status"))
-            # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"]))
-            # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+            if mode == "new":
+                dialog_mac_submitted_correctly: bool = st.session_state.get("mark_as_complete_submitted", False)
+                if dialog_mac_submitted_correctly:
+                    print(f"UPDATING MAC DETAILS {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+                else:
+                    st.write("MAC not submitted")
+                    print(f"MAC NOT SUBMITTED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
     def change_request_type(*args):
         print(f"change_request_type")
@@ -994,11 +1206,11 @@ def input_new_request():
     # click_clear()
     with form:
 
-        with form_grid["title"][0]:
-            st.markdown(
-                "# Request Input",
-                unsafe_allow_html=True
-            )
+        # with form_grid["title"][0]:
+        #     st.markdown(
+        #         "# Request Input",
+        #         unsafe_allow_html=True
+        #     )
         with form_grid["inputs"][0]:
             st.date_input(
                 label="Due Date:",
@@ -1026,6 +1238,9 @@ def input_new_request():
                 options=list_request_types,
                 on_change=change_request_type
             )
+            print("list_request_sub_types")
+            print(f"{st.session_state.get('selectbox_request_sub_type')=}")
+            print(list_request_sub_types)
             st.selectbox(
                 label="Sub-Type:",
                 key="selectbox_request_sub_type",
@@ -1038,10 +1253,11 @@ def input_new_request():
                     key="toggle_is_admin",
                     disabled=True
                 )
-                st.toggle(
-                    label="Mark Complete?",
-                    key="toggle_mark_as_complete"
-                )
+                if mode == "new":
+                    st.toggle(
+                        label="Mark Complete?",
+                        key="toggle_mark_as_complete"
+                    )
             st.slider(
                 label="Priority:",
                 key="slider_priority",
@@ -1060,6 +1276,12 @@ def input_new_request():
                 key="text_request",
                 placeholder="Describe your issue, include as many details as possible and any supporting documentation you can provide. Screenshots are helpful."
             )
+            if mode == "edit":
+                st.text_area(
+                    label="Comments",
+                    key="text_comments",
+                    placeholder="Describe your issue, include as many details as possible and any supporting documentation you can provide. Screenshots are helpful."
+                )
         with form_grid["followup"][0]:
             st.multiselect(
                 label="Follow-up with:",
@@ -1078,7 +1300,7 @@ def input_new_request():
             st.button(
                 label="clear",
                 key="btn_clear",
-                on_click=click_cancel,
+                on_click=click_clear,
                 use_container_width=True
             )
         with form_grid["btns"][2]:
@@ -1087,6 +1309,136 @@ def input_new_request():
                 on_click=click_submit,
                 use_container_width=True
             )
+
+
+def edit_request():
+
+    if st.session_state.get("itr_edit_id") is None:
+        itr_edit_params()
+    else:
+
+        print(f"RESUMING ER")
+        for k, v in st.session_state.items():
+            print(f"{k=}, {v=}")
+
+        form = grid["content_row_2"].container()
+        with form:
+            if st.button(
+                label="filter",
+                key="button_filter_edit"
+            ):
+                st.session_state.update({"itr_edit_id": None})
+                st.rerun()
+
+        df_itr_requests = df_itr_requests_og.copy()
+
+        # requested_by = st.session_state.get("multiselect_requested_by", [])
+        requested_by = st.session_state["multiselect_requested_by"]
+        it_personnel = st.session_state.get("multiselect_it_personnel", [])
+        status = st.session_state.get("multiselect_status", [])
+        use_is_complete = st.session_state.get("toggle_use_is_complete", False)
+        use_is_internal = st.session_state.get("toggle_use_is_internal", False)
+        is_complete = st.session_state.get("radio_is_complete", None)
+        is_internal = st.session_state.get("radio_is_internal", None)
+
+        it_personnel = df_itr_personnel_og.loc[df_itr_personnel_og["Name"].isin(it_personnel), "ITPersonID#"].dropna().unique().tolist()
+        internal_it = df_itr_personnel_og.loc[df_itr_personnel_og["Active"] == 1, "Name"].dropna().unique().tolist()
+
+        print(f"{st.session_state.get('multiselect_requested_by', [])=}")
+        print("requested_by")
+        print(requested_by)
+        print("it_personnel")
+        print(it_personnel)
+        print("status")
+        print(status)
+        st.write(f"A")
+        st.write(df_itr_requests)
+        if requested_by:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["RequestedBy"].isin(requested_by)]
+        st.write(f"B")
+        st.write(df_itr_requests)
+        if it_personnel:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["ITPersonAssignedID"].isin(it_personnel)]
+        st.write(f"C")
+        st.write(df_itr_requests)
+        if status:
+            df_itr_requests = df_itr_requests.loc[df_itr_requests["Status"].isin(status)]
+        st.write(f"D")
+        st.write(df_itr_requests)
+        if use_is_complete:
+            if is_complete:
+                df_itr_requests = df_itr_requests.loc[df_itr_requests["Status"].isin(["Complete", "Declined", "Incomplete"])]
+            else:
+                df_itr_requests = df_itr_requests.loc[~df_itr_requests["Status"].isin(["Complete", "Declined", "Incomplete"])]
+        st.write(f"E")
+        st.write(df_itr_requests)
+        if use_is_internal:
+            if is_internal:
+                df_itr_requests = df_itr_requests.loc[df_itr_requests["RequestedBy"].isin(internal_it)]
+            else:
+                df_itr_requests = df_itr_requests.loc[~df_itr_requests["RequestedBy"].isin(internal_it)]
+
+        st.write(f"F")
+        st.write(df_itr_requests)
+
+        req_id: int = st.session_state.get("itr_edit_id")
+        t_reqs: int = df_itr_requests.shape[0]
+        filtered_ids: list[int] = [row["ITRequestID#"] for i, row in df_itr_requests.iterrows()]
+        filtered_idx: int = filtered_ids.index(req_id)
+        # # req_idx_off: int = st.session_state.get("itr_edit_id_offset")
+        # # req_idx: int = df_itr_requests.loc[df_itr_requests["ITRequestID#"] == req_id].name
+        # st.write("filtered_ids")
+        # st.write(filtered_ids)
+        prev_id: int = filtered_ids[max(0, filtered_idx - 1)]
+        next_id: int = filtered_ids[min(filtered_idx + 1, len(filtered_ids) - 1)]
+        first_id: int = filtered_ids[0]
+        last_id: int = filtered_ids[-1]
+        # df_request: pd.DataFrame = df_itr_requests_og.loc[df_itr_requests_og["ITRequestID#"] == req_id].iloc[0]
+
+        # # req_id: int = df_request["ITRequestID#"]
+        # last_req_id: int = df_request.iloc[req_idx].name
+        req_str: str = str(req_id).rjust(6, "0")
+
+        with form:
+            st.header(f"Edit Request #{req_str}")
+            st.write(f"{req_id=}, {t_reqs=}, {filtered_idx=}, {prev_id=}, {next_id=}, {first_id=}, {last_id=}")
+            st.write("filtered_ids")
+            st.write(filtered_ids)
+            nav_button_cols = st.columns([0.1, 0.1, 0.6, 0.1, 0.1])
+
+            with st.expander("Filtered Requests"):
+                st.dataframe(df_itr_requests)
+
+            if nav_button_cols[0].button(":black_left_pointing_double_triangle_with_vertical_bar:", key="button_nav_first_request"):
+                print(f"First")
+                st.session_state.update({
+                    "itr_edit_id": first_id
+                })
+            if nav_button_cols[1].button(":rewind:", key="button_nav_back_request"):
+                st.session_state.update({
+                    "itr_edit_id": prev_id
+                })
+            with nav_button_cols[2]:
+                st.write(f"{filtered_idx + 1} / {t_reqs}")
+            if nav_button_cols[3].button(":fast_forward:", key="button_nav_next_request"):
+                print(f"Next")
+                st.session_state.update({
+                    "itr_edit_id": next_id
+                })
+            if nav_button_cols[4].button(":black_right_pointing_double_triangle_with_vertical_bar:", key="button_nav_last_request"):
+                print(f"Last")
+                st.session_state.update({
+                    "itr_edit_id": last_id
+                })
+
+        request_form(form=form, mode="edit")
+
+
+def input_new_request():
+
+    # form = grid["tab_new_request"].container()
+    form = grid["content_row_2"].container()
+    request_form(form=form, mode="new")
 
 
 un = st.session_state.get('user_full_name')
@@ -1113,10 +1465,12 @@ else:
         un = st.session_state.get('user_full_name')
         st.session_state.update({"text_input_requested_by": un})
 
-        with grid["tab_new_request"]:
+        # with grid["tab_new_request"]:
+        if tab_choice == tab_names[0]:
             input_new_request()
 
-        with grid["tab_edit_request"]:
+        # with grid["tab_edit_request"]:
+        if tab_choice == tab_names[1]:
             edit_request()
 
         # st.write(create_sql(
