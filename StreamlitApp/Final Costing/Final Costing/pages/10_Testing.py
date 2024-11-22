@@ -82,10 +82,31 @@ for k, v in DEFAULT_SESSION_STATE.items():
 
 #  Potential Functions for Utility Files
 
+def wrap(val: Any, is_col: bool = True, sanitize: bool = True) -> str:
+    # print(f"wrap: {val}")
+    if is_col:
+        v: str = f"[{str(val).removeprefix('[').removesuffix(']')}]"
+    else:
+        if isinstance(val, str) and val != "NULL":
+            v: str = f"'{val}'"
+        elif isinstance(val, datetime.datetime):
+            v: str = f"'{val:%Y-%m-%d %H:%M:%S}'"
+        elif isinstance(val, datetime.date):
+            v: str = f"'{val:%Y-%m-%d}'"
+        else:
+            v: str = str(val)
+    if sanitize:
+        v = v.strip()
+        if v:
+            v_first, *v_end = v
+            v = v_first + re.sub(r"[;'\\\"]", "", v[1:-1]) + "".join(v_end[-1:])
+    return v
+
+
 def create_sql(
     table: str,
     mode: Literal["select", "insert", "update", "delete"] = "select",
-    where: str = "",
+    where: str | dict[str: dict[str: Any]] = "",
     group:
         tuple[tuple[str]] |
         tuple[list[str]] |
@@ -106,31 +127,19 @@ def create_sql(
     data: dict[str: Any] | list[str] | tuple[str] | str = None,
     sanitize: Literal["all", "none"] | list[str] | tuple[str] = "all",
     database: str = "BWSdb",
-    ignore_no_where: bool = False
+    ignore_no_where: bool = False,
+    include_no_lock: bool = False,
+    in_line: bool = False,
+    transaction_wrap: bool = False
 ):
+
+    sql_lines = []
+    sql = ""
 
     if isinstance(sanitize, (list, tuple)):
         sanitize = [str(s).lower() for s in sanitize]
     else:
         sanitize = sanitize.lower()
-
-    def wrap(val: Any, is_col: bool = True, sanitize: bool = True) -> str:
-        # print(f"wrap: {val}")
-        if is_col:
-            v: str = f"[{str(val).removeprefix('[').removesuffix(']')}]"
-        else:
-            if isinstance(val, str) and val != "NULL":
-                v: str = f"'{val}'"
-            elif isinstance(val, datetime.datetime):
-                v: str = f"'{val:%Y-%m-%d %H:%M:%S}'"
-            elif isinstance(val, datetime.date):
-                v: str = f"'{val:%Y-%m-%d}'"
-            else:
-                v: str = str(val)
-        if sanitize:
-            v = v.strip()
-            v = v[0] + re.sub(r"[;'\\\"]", "", v[1:-1]) + v[-1]
-        return v
 
     def do_sanitize(val: Any) -> bool:
         if sanitize == "all":
@@ -141,6 +150,61 @@ def create_sql(
             return val.lower() in sanitize
         return True
 
+    # def parse_where(clauses: Any) -> list[str]:
+    #     where_clause = ""
+    #
+    #     def op_process(var, ops_dict: dict[str: Any]) -> list[str]:
+    #         ops_clause = []
+    #         # for op, value_s in ops_dict.items():
+    #         #     op_s = "="
+    #         #     match op.lower():
+    #         #         case "!=":
+    #         #             op_s = "<>"
+    #         #         case "<" | ">" | "<=" | ">=":
+    #         #             op_s = op
+    #         #
+    #         #     test = []
+    #         #     print(f"OP {op=}, {value_s=}")
+    #         #     if not isinstance(value_s, (list, tuple)):
+    #         #         value_s = [value_s]
+    #         #     for i, val in enumerate(value_s):
+    #         #         if isinstance(val, (list, tuple)):
+    #         #             if op_s == "between":
+    #         #                 v0, v1 = val
+    #         #                 test.append(f"{v0} AND {v1}")
+    #         #             else:
+    #         #                 for j, val
+    #         #         else:
+    #         #
+    #         #             test.append(f" {val}")
+    #         #         # test = value_s
+    #         #         print(f"OP {test=}")
+    #         #
+    #         #         # ops_clause.append(f"{var} {op_s} {test}")
+    #         # print(f"OP {ops_clause=}")
+    #         return ops_clause
+    #
+    #     for i in range(0, len(clauses), 2):
+    #         var = clauses[i]
+    #         if isinstance(var, (list, tuple)):
+    #             # var_data = ''
+    #             for j, v_data in enumerate(var):
+    #                 print(f"{i=}, {j=}, {var=}, {v_data=}")
+    #                 if isinstance(v_data, dict):
+    #                     o_p = op_process(var, v_data)
+    #                     print(f"{o_p=}")
+    #                 #     for op, value_s in v_data.items():
+    #                 #         print(f"97 {i=}, {j=}, {var=}, {op=}, {value_s=}")
+    #                 else:
+    #                 #     op =
+    #                 #     value_s
+    #                     print(f"98 {i=}, {j=}, {var=}, {v_data=}")
+    #         else:
+    #             var_data = clauses[i + 1]
+    #             print(f"99 {i=}, {var=}, {var_data=}")
+    #     # return where_clause
+    #     return [str(where_clause)]
+
     if mode in ("update", "delete"):
         if not where and not ignore_no_where:
             raise ValueError(f"Highly recommend including a where clause when updating or deleting. If you don't want to include a where clause, set 'ignore_no_where' to True. ")
@@ -149,10 +213,21 @@ def create_sql(
             raise ValueError(f"When updating, data must be a dictionary where keys are table column names.")
 
     table = wrap(table)
-    where = where.replace("==", "=")
+    if include_no_lock:
+        if mode != "select":
+            raise ValueError("Cannot include 'WITH (NOLOCK)' when not performing a generic select.")
+        else:
+            table = f"{table} WITH (NOLOCK)"
+    if transaction_wrap:
+        if mode == "select":
+            raise ValueError(f"Shouldn't wrap select statements with Transaction.")
+    if isinstance(where, str):
+        where = where.replace("==", "=")
+    else:
+        print(f"{where=}")
+        where = parse_where(where, in_line=in_line)
     if database:
         table = f"{wrap(database)}.[dbo].{table}"
-    sql = ""
     if data is None:
         data = {}
     elif isinstance(data, str):
@@ -163,41 +238,59 @@ def create_sql(
     if data:
         # cols = "[" + "], [".join(data) + "]"
         if (mode == "insert") and isinstance(data, (list, tuple)):
-            cols: str = ", ".join(map(wrap, data[0]))
+            cols = list(map(wrap, data[0]))
+            if in_line:
+                cols = ", ".join(cols)
         else:
-            cols: str = ", ".join(map(wrap, data))
+            cols = list(map(wrap, data))
+            if in_line:
+                cols = ", ".join(cols)
     else:
         if group:
             raise ValueError(f"You must specify columns for the select statement when addind a 'GROUP BY' clause.")
-        if mode != "select":
-            raise ValueError(f"You must specify columns when not performing a generic select.")
+        if mode not in ("select", "delete"):
+            raise ValueError(f"You must specify columns when not performing a generic select or delete.")
         cols: str = "*"
 
     if mode == "select":
-        sql = f"SELECT {cols} FROM {table}"
+        # sql = f"SELECT {cols} FROM {table}"
+        sql_lines.append(f"SELECT")
+        sql_lines.append(cols)
+        sql_lines.append(f"FROM")
+        sql_lines.append(f"{table}")
         if where:
-            sql += f" WHERE {where}"
+            # sql += f" WHERE {where}"
+            sql_lines.append(f"WHERE")
+            sql_lines.append(f"{where}")
 
         if group:
             if not isinstance(group, (list, tuple)):
                 group = [group]
-            group = ", ".join([wrap(col) for col in group])
-            sql += f" GROUP BY {group}"
+            group = [wrap(col) for col in group]
+            if in_line:
+                group = ", ".join(group)
+            # sql += f" GROUP BY {group}"
+            sql_lines.append(f"GROUP BY")
+            sql_lines.append(group)
 
         if order:
             if isinstance(order, (list, tuple)):
                 if len(order) == 2:
                     order = f"{wrap(order[0])} {order[1]}"
                 else:
-                    order = ", ".join([
+                    order = [
                         f"{wrap(col[0])} {(col[1] if len(col) == 2 else default_order).upper()}"
                         if isinstance(col, (list, tuple))
                         else f"{wrap(col)} {default_order}"
                         for col in order
-                    ])
+                    ]
+                    if in_line:
+                        order = ", ".join(order)
             else:
                 order = wrap(order)
-            sql += f" ORDER BY {order}"
+            # sql += f" ORDER BY {order}"
+            sql_lines.append(f"ORDER BY")
+            sql_lines.append(order)
     elif mode == "insert":
         if not data or not isinstance(data, (dict, list, tuple)):
             raise ValueError(f"You must specify key-value pairs in the 'data' param, indicating which columns and values to insert.")
@@ -205,16 +298,117 @@ def create_sql(
             vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
         else:
             vals: list[str] = [("(" * min(i, 1)) + ", ".join([wrap(val, False, sanitize=do_sanitize(key)) for key, val in dat.items()]) + (")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
-        vals: str = ", ".join(vals)
-        sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+        if in_line:
+            vals: str = ", ".join(vals)
+        # sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+        sql_lines.append(f"INSERT INTO")
+        sql_lines.append(f"{table}")
+        sql_lines.append(f"(")
+        sql_lines.append(cols)
+        sql_lines.append(")")
+        sql_lines.append("VALUES")
+        sql_lines.append("(")
+        sql_lines.append(vals)
+        sql_lines.append(f")")
     elif mode == "update":
-        sql = f"UPDATE {table} SET "
-        sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
+        # sql = f"UPDATE {table} SET "
+        # sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
+        sql_lines.append(f"UPDATE")
+        sql_lines.append(f"{table}")
+        sql_lines.append("SET")
+        if in_line:
+            sql_lines.append(", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()]))
+        else:
+            sql_lines.append([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
+
         # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
         if where:
-            sql += f" WHERE {where}"
+            # sql += f" WHERE {where}"
+            sql_lines.append(f"WHERE ")
+            sql_lines.append(f"{where}")
+    elif mode == "delete":
+        # sql = f"DELETE FROM {table}"
+        sql_lines.append(f"DELETE FROM")
+        sql_lines.append(f"{table}")
+        if where:
+            # sql += f" WHERE {where}"
+            sql_lines.append(f"WHERE")
+            sql_lines.append(f"{where}")
 
-    sql += ";"
+    sc = "\n" if not in_line else " "
+    sql = sc.join(map(
+        lambda line:
+            # f",{sc}".join(line) if isinstance(line, (list, tuple)) else line.strip()
+            f"WW" if isinstance(line, (list, tuple)) else line.strip()
+        , sql_lines
+    ))
+    if transaction_wrap:
+        sql = f"BEGIN TRAN;{sc}{sql}"
+    sql += "\n;" if not in_line else ";"
+    if transaction_wrap:
+        sql += f"{sc}ROLLBACK;{sc}COMMIT;"
+    if not in_line:
+        tbs: bool = False
+        keywords = {
+            "BEGIN TRAN",
+            "ROLLBACK",
+            "COMMIT",
+            "DELETE FROM",
+            "SELECT",
+            "INSERT INTO",
+            "VALUES",
+            "UPDATE",
+            "SET",
+            "(",
+            ")",
+            "FROM",
+            "WHERE",
+            "GROUP BY",
+            "ORDER BY"
+        }
+        sql = ""
+        if transaction_wrap:
+            sql = "BEGIN TRAN;\n\n"
+        # shrink: bool = False
+        print(f"{sql_lines=}")
+        for i, sql_line in enumerate(sql_lines):
+            print(f"{i=}, {sql_line=}")
+            if isinstance(sql_line, (list, tuple)):
+                for j, line in enumerate(sql_line):
+                    # print(f"{i=}, {j=}, {line=}")
+                    sql += f"{'\t' * int(tbs)}{line},\n"
+                sql = sql.rstrip().removesuffix(",") + "\n"
+            else:
+                sql += f"{'\t' * int(tbs)}{sql_line}\n"
+            if i < (len(sql_lines) - 1):
+                # prev_line = sql_lines[i - 1].strip().upper()
+                next_line = str(sql_lines[i + 1]).strip().upper()
+                print(f"{next_line=}")
+                for kwd in keywords:
+                    if tbs or (sql_line == "VALUES"):
+                        if next_line.strip().upper().startswith(kwd):
+                            tbs = False
+                            break
+                    else:
+                        # if sql_line != "VALUES":
+                        if sql_line.strip().upper().startswith(kwd):
+                            if ((sql_line != ")") and (next_line != "VALUES")):
+                                tbs = True
+                                break
+                    # if prev_line.startswith(kwd):
+                    #     tbs = True
+                    #     break
+                    # # elif tbs and any([s_line.strip().upper() for s_line in keywords])
+                    # elif tbs and sql_line.strip().upper().startswith(kwd):
+                    #     tbs = False
+                    #     break
+            # if shrink:
+            #     tbs -= 1
+        sql = sql.strip()
+        sql += f"\n;\n"
+        if transaction_wrap:
+            sql += "\nROLLBACK;\nCOMMIT;"
+
     return sql
 
 
@@ -1451,6 +1645,185 @@ print(f"RERUN for '{un}'")
 # with grid["title_row"]:
 #     st.markdown(coloured_text("Streamlit Authentication Demo", "#653131", html_tags="h1"), unsafe_allow_html=True)
 
+# def op_process(var, ops_dict: dict[str: Any]) -> str:
+#     ops_clause = []
+#     for op, value_s in ops_dict.items():
+#         # op_s = "="
+#         op = op.lower()
+#         match op:
+#             case "!=":
+#                 op = "<>"
+#             case "<" | ">" | "<=" | ">=":
+#                 op = op
+#             case "in" | "not in" | "between":
+#                 op = op.upper()
+#             case _:
+#                 op = "="
+#         # op = op_s
+#         test = ""
+#         # if not isinstance(value_s, (list, tuple)):
+#         value_s = [value_s]
+#         for i, val in enumerate(value_s):
+#             if op == "BETWEEN":
+#                 v0, v1 = val
+#                 ops_clause.append(f"{var} {op} {wrap(v0, is_col=False)} AND {wrap(v1, is_col=False)}")
+#             else:
+#                 if isinstance(val, (list, tuple)):
+#                     if op in ("IN", "NOT IN"):
+#                         in_mem = []
+#                         for j, val_ in enumerate(val):
+#                             in_mem.append(wrap(val_, is_col=False))
+#                         ops_clause.append(f"{var} {op} ({', '.join(in_mem)})")
+#                     else:
+#                         for j, val_ in enumerate(val):
+#                             ops_clause.append(f"{var} {op} {wrap(val_, is_col=False)}")
+#                 else:
+#                     ops_clause.append(f"{var} {op} {val}")
+#         # test = []
+#         # print(f"OP {op=}, {value_s=}")
+#         # if not isinstance(value_s, (list, tuple)):
+#         #     value_s = [value_s]
+#         # for i, val in enumerate(value_s):
+#         #     if isinstance(val, (list, tuple)):
+#         #         if op_s == "between":
+#         #             v0, v1 = val
+#         #             test.append(f"{v0} AND {v1}")
+#         #         else:
+#         #             for j, val
+#         #     else:
+#         #
+#         #         test.append(f" {val}")
+#         #     # test = value_s
+#         #     print(f"OP {test=}")
+#
+#             # ops_clause.append(f"{var} {op_s} {test}")
+#     ops_clause = "(" + ") AND (".join(ops_clause) + ")"
+#     print(f"OP {ops_clause=}")
+#     return ops_clause
+
+
+def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
+    where_clause = ""
+
+    print(f"PW type={type(clauses)}, {clauses=}")
+
+    def op_process(var, ops_dict: dict[str: Any]) -> str:
+
+        print(f"{var=}, {ops_dict=}")
+
+        ops_clause = []
+        for op, value_s in ops_dict.items():
+            # op_s = "="
+            op = op.lower()
+            match op:
+                case "!=":
+                    op = "<>"
+                case "<" | ">" | "<=" | ">=":
+                    op = op
+                case "in" | "not in" | "between":
+                    op = op.upper()
+                case _:
+                    op = "="
+            # op = op_s
+            test = ""
+            # if not isinstance(value_s, (list, tuple)):
+            value_s = [value_s]
+            for i, val in enumerate(value_s):
+                if op == "BETWEEN":
+                    v0, v1 = val
+                    ops_clause.append(f"{var} {op} {wrap(v0, is_col=False)} AND {wrap(v1, is_col=False)}")
+                else:
+                    if isinstance(val, (list, tuple)):
+                        if op in ("IN", "NOT IN"):
+                            in_mem = []
+                            for j, val_ in enumerate(val):
+                                in_mem.append(wrap(val_, is_col=False))
+                            ops_clause.append(f"{var} {op} ({', '.join(in_mem)})")
+                        else:
+                            for j, val_ in enumerate(val):
+                                ops_clause.append(f"{var} {op} {wrap(val_, is_col=False)}")
+                    else:
+                        ops_clause.append(f"{var} {op} {wrap(val, is_col=False)}")
+            # test = []
+            # print(f"OP {op=}, {value_s=}")
+            # if not isinstance(value_s, (list, tuple)):
+            #     value_s = [value_s]
+            # for i, val in enumerate(value_s):
+            #     if isinstance(val, (list, tuple)):
+            #         if op_s == "between":
+            #             v0, v1 = val
+            #             test.append(f"{v0} AND {v1}")
+            #         else:
+            #             for j, val
+            #     else:
+            #
+            #         test.append(f" {val}")
+            #     # test = value_s
+            #     print(f"OP {test=}")
+
+            # ops_clause.append(f"{var} {op_s} {test}")
+        ops_clause = "(" + ") AND (".join(ops_clause) + ")"
+        print(f"OP type={type(ops_clause)}, {ops_clause=}")
+        return ops_clause
+
+    def help_parse(clause_stmt, logic="AND") -> str:  # list[str]:
+
+        print(f"HP type={type(clause_stmt)}, {clause_stmt=}")
+
+        if isinstance(clause_stmt, str):
+            return f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()
+
+        if isinstance(clause_stmt, (list, tuple)) and (len(clause_stmt) == 2):
+            var, stmt_data_s = clause_stmt
+            if (isinstance(var, str) and isinstance(stmt_data_s, dict)):
+
+            # else:
+                return f" {logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()
+            # else:
+            #     for
+
+        res_clauses = []
+        for i, clause_data in enumerate(clause_stmt):
+            if isinstance(clause_stmt, dict):
+                var = clause_data
+                clause_data = clause_stmt[clause_data]
+                if not isinstance(clause_data, dict):
+                    res_clauses.extend(help_parse(clause_data))
+                else:
+                    res_clauses.append(op_process(var, clause_data))
+            else:
+                if isinstance(clause_data, (list, tuple)):
+                    res_clauses.extend([help_parse(clause_data, logic=("OR" if logic == "AND" else "OR"))])
+                else:
+                    if isinstance(clause_data, dict):
+                        res_clauses.extend([help_parse(clause_data, logic=("OR" if logic == "AND" else "OR"))])
+        return f" {logic} ".join(res_clauses).strip().removesuffix(logic).strip()
+
+    return help_parse(clauses)
+
+
+    # for i in range(0, len(clauses), 2):
+    #     var = clauses[i]
+    #     if isinstance(var, (list, tuple)):
+    #         # var_data = ''
+    #         for j, v_data in enumerate(var):
+    #             print(f" {i=}, {j=}, {var=}, {v_data=}")
+    #             if isinstance(v_data, dict):
+    #                 o_p = op_process(var, v_data)
+    #                 print(f"  {o_p=}")
+    #             #     for op, value_s in v_data.items():
+    #             #         print(f"97 {i=}, {j=}, {var=}, {op=}, {value_s=}")
+    #             else:
+    #             #     op =
+    #             #     value_s
+    #                 print(f"    98 {i=}, {j=}, {var=}, {v_data=}")
+    #     else:
+    #         var_data = clauses[i + 1]
+    #         print(f"     99 {i=}, {var=}, {var_data=}")
+    # # return where_clause
+    # return [str(where_clause)]
+
+
 if df_app_directory.empty:
     with grid["content_row_0"]:
         st.write(f"## This Streamlit application '{st.session_state.get('app_short_name')}' is not recognized.")
@@ -1462,18 +1835,127 @@ else:
         # st.write("##### Please contact IT for further assistance with this app.")
         st.stop()
     else:
-        un = st.session_state.get('user_full_name')
-        st.session_state.update({"text_input_requested_by": un})
+        # un = st.session_state.get('user_full_name')
+        # st.session_state.update({"text_input_requested_by": un})
+        #
+        # # with grid["tab_new_request"]:
+        # if tab_choice == tab_names[0]:
+        #     input_new_request()
+        #
+        # # with grid["tab_edit_request"]:
+        # if tab_choice == tab_names[1]:
+        #     edit_request()
 
-        # with grid["tab_new_request"]:
-        if tab_choice == tab_names[0]:
-            input_new_request()
 
-        # with grid["tab_edit_request"]:
-        if tab_choice == tab_names[1]:
-            edit_request()
+        insert_data: dict[str: Any] = {
+            "Request": "Request Text",
+            "DueDate": datetime.datetime.now(),
+            "Company": "BWS",
+            "Department": 87,
+            "Priority": 3,
+            "SubPriority": 1,
+            "RequestType": "Hardware",
+            "RequestSubType": "Computer",
+            "RequestedBy": "Avery Briggs",
+            "RequestFollowUpPersonnel": "avery.briggs@bwstrailers.com;abriggs914@gmail.com",
+            "RequestDate": datetime.datetime.now(),
+            "Status": "Queued",
+            "RequestDateOriginal": "2024-11-21 17:01:59",
+            "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
+        }
+        sanitize_cols = list(insert_data.keys())
+        sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
+        sanitize_cols.remove("Directory")  # preserve backslashes in path
 
-        # st.write(create_sql(
+        test_sqls = [
+            create_sql(
+                "IT Requests",
+                data={
+                    "Request": "sample_0",
+                    "DueDate": datetime.datetime.now(),
+                    "Company": "Stargate",
+                    "Priority": 3
+                },
+                mode="update",
+                where="[ITRequestID#] == 1",
+                transaction_wrap=True
+            ),
+            create_sql("IT Requests", data=["Status"], include_no_lock=True),
+            create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True),
+            create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
+            create_sql("IT Requests", order="Status", include_no_lock=True),
+            create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True),
+            create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True),
+            create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True),
+            create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status",
+                               include_no_lock=True),
+
+            create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True),
+            create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+                               order=["Status", "Company", "RequestedBy"], include_no_lock=True),
+            create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+                               order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
+
+            create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status",
+                               include_no_lock=True),
+            create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+                               order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"],
+                               include_no_lock=True),
+            create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+                               order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
+
+            create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True),
+            create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}),
+                               transaction_wrap=True),
+            create_sql(
+                "IT Requests",
+                mode="delete",
+                where=(
+                    ("[ITRequestID#]", {"between": [105445, 235564]}),
+                    ("[RequestedBy]", {"=": "Darth Vader"})
+                ),
+                transaction_wrap=True
+            ),
+            
+            # should be or
+            create_sql(
+                "IT Requests",
+                mode="delete",
+                where=(
+                    (("[ITRequestID#]", {"between": [105445, 235564]})),
+                    (("[RequestedBy]", {"=": "Darth Vader"}))
+                ),
+                transaction_wrap=True
+            ),
+
+            create_sql(
+                "IT Requests",
+                mode="delete",
+                where=(
+                    (
+                        ("[ITRequestID#]", {"between": [105445, 235564]}),
+                        ("[RequestedBy]", {"=": "Darth Vader"})
+                    ),
+                    ({"between": ["2050-01-01", "2051-01-01"]})
+                ),
+                transaction_wrap=True
+            ),
+
+            create_sql(
+                "IT Requests",
+                data=insert_data,
+                mode="insert",
+                sanitize=sanitize_cols,
+                transaction_wrap=True
+            )
+        ]
+
+        for i, sql in enumerate(test_sqls):
+            # print(f"{sql}")
+            st.text(sql)
+            st.write("---")
+
+        # st.text(create_sql(
         #     "IT Requests",
         #     data={
         #         "Request": "sample_0",
@@ -1482,24 +1964,100 @@ else:
         #         "Priority": 3
         #     },
         #     mode="update",
-        #     where="[ITRequestID#] == 1"
+        #     where="[ITRequestID#] == 1",
+        #     transaction_wrap=True
         # ))
-        # st.write(create_sql("IT Requests", data=["Status"]))
-        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'"))
-        # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'"))
-        # st.write(create_sql("IT Requests", order="Status"))
-        # st.write(create_sql("IT Requests", order=("Status", "ASC")))
-        # st.write(create_sql("IT Requests", data=["Status"], order="Status"))
-        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status"))
-        # st.write(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status"))
+        # st.text(create_sql("IT Requests", data=["Status"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True))
+        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
+        # st.text(create_sql("IT Requests", order="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True))
+        # st.text(create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
         #
-        # st.write(create_sql("IT Requests", order=("Status", "DESC")))
-        # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"]))
-        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+        # st.text(create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True))
+        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
         #
-        # st.write(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status"))
-        # st.write(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"]))
-        # st.write(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"]))
+        # st.text(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        #
+        # st.text(create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True))
+        # st.text(create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}), transaction_wrap=True))
+        # st.text(create_sql(
+        #     "IT Requests",
+        #     mode="delete",
+        #     where=(
+        #         ("[ITRequestID#]", {"=": [105445, 235564]}),
+        #         ("[RequestedBy]", {"=": "Darth Vader"})
+        #     ),
+        #     transaction_wrap=True
+        # ))
+        # insert_data: dict[str: Any] = {
+        #     "Request": "Request Text",
+        #     "DueDate": datetime.datetime.now(),
+        #     "Company": "BWS",
+        #     "Department": 87,
+        #     "Priority": 3,
+        #     "SubPriority": 1,
+        #     "RequestType": "Hardware",
+        #     "RequestSubType": "Computer",
+        #     "RequestedBy": "Avery Briggs",
+        #     "RequestFollowUpPersonnel": "avery.briggs@bwstrailers.com;abriggs914@gmail.com",
+        #     "RequestDate": datetime.datetime.now(),
+        #     "Status": "Queued",
+        #     "RequestDateOriginal": "2024-11-21 17:01:59",
+        #     "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
+        # }
+        # sanitize_cols = list(insert_data.keys())
+        # sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
+        # sanitize_cols.remove("Directory")  # preserve backslashes in path
+        # st.text(create_sql(
+        #     "IT Requests",
+        #     data=insert_data,
+        #     mode="insert",
+        #     sanitize=sanitize_cols,
+        #     transaction_wrap=True
+        # ))
+        #
+        # # # st.text(
+        # # #     op_process("[ITRequestID#]", {"=": [105445,235567]})
+        # # # )
+        # # # st.text(
+        # # #     op_process("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
+        # # # )
+        # # # st.text(
+        # # #     op_process("[ITRequestID#]", {"!=": "15444"})
+        # # # )
+        # # # st.text(
+        # # #     op_process("[ITRequestID#]", {"in": [6565, 454848, 454481]})
+        # # # )
+        # # # st.text(
+        # # #     op_process("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
+        # # # )
+        # #
+        # # st.text(
+        # #     parse_where((
+        # #         ("[ITRequestID#]", {"between": [105445, 235564]}),
+        # #         ("[RequestedBy]", {"=": "Darth Vader"})
+        # #     ))
+        # # )
+        # # st.text(parse_where("[ITRequestID#] = 105445"))
+        # # st.text(parse_where(("[ITRequestID#]", {"=": 1054789})))
+        # # # st.text(
+        # # #     parse_where("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
+        # # # )
+        # # # st.text(
+        # # #     parse_where("[ITRequestID#]", {"!=": "15444"})
+        # # # )
+        # # # st.text(
+        # # #     parse_where("[ITRequestID#]", {"in": [6565, 454848, 454481]})
+        # # # )
+        # # # st.text(
+        # # #     parse_where("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
+        # # # )
 
     # if not check_password():
     #     # st.write(f"## Invalid Credentials.")
