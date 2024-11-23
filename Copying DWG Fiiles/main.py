@@ -696,8 +696,8 @@ ON
 #     found = {}
 #     if len(u_pns) > 0:
 #         print(f"About to search DWG and DXF directory.")
-#         walked_dwg_folder = os.walk(root_location_dwg_dxf)
-#         for dir_path, dir_names, file_names in walked_dwg_folder:
+#         walked_dwg_dxf_folder = os.walk(root_location_dwg_dxf)
+#         for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
 #             for file in file_names:
 #                 if file in pns:
 #                     file_dwg, file_dxf = None, None
