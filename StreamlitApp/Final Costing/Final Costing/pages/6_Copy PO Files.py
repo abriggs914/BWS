@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 
@@ -115,13 +116,21 @@ result_cols[0].write(f"{df.shape[0]} part{'' if (df.shape[0] == 1) else 's'} loa
 
 if (not df.empty) and st.session_state.get("button_run_part_data"):
 
+    progress_fetching = st.progress(value=0, text=f"fetching files... {percent(0)}")
     progress_walking = st.progress(value=0, text=f"searching... {percent(0)}")
     progress_copying = st.progress(value=0, text=f"copying... {percent(0)}")
 
+    t_fetching = datetime.datetime.now(), None
     walked_pdf_folder = hold_walk_pdf()
+    progress_fetching.progress(value=0.25, text=f"fetching files... {percent(0.25)}")
     walked_pdf_stg_folder = hold_walk_pdf_stg()
+    progress_fetching.progress(value=0.5, text=f"fetching files... {percent(0.5)}")
     walked_dwg_dxf_folder = hold_walk_dwg_dxf()
+    progress_fetching.progress(value=0.75, text=f"fetching files... {percent(0.75)}")
     walked_stp_folder = hold_walk_stp()
+    t_fetching = t_fetching[0], datetime.datetime.now()
+    tt_fetching = (t_fetching[1] - t_fetching[0]).total_seconds()
+    progress_fetching.progress(100, f"fetching files... {percent(1)} -- results in {tt_fetching:.2f} seconds")
 
     for fe in file_extensions:
         df[f"{fe}_F"] = df.apply(lambda row: f"{row['PN']}.{fe.lower()}", axis=1)
@@ -143,6 +152,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     not_found = []
     found = {}
 
+    t_walking = datetime.datetime.now(), None
     # pdfs
     for dir_path, dir_names, file_names in walked_pdf_folder:
         # print(f"{len(file_names)=}, {file_names[:5]:}")
@@ -203,7 +213,9 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
                     df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
                     progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
 
-    progress_walking.progress(100, f"searching... {percent(1)}")
+    t_walking = t_walking[0], datetime.datetime.now()
+    tt_walking = (t_walking[1] - t_walking[0]).total_seconds()
+    progress_walking.progress(100, f"searching... {percent(1)} -- results in {tt_walking:.2f} seconds")
 
     result_cols[0 if st.session_state.get("has_run", False) else 1].dataframe(
         df[["PN", *file_extensions, "COMP"]],
@@ -215,6 +227,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     sub_results_cols = st.columns(len(file_extensions))
     kpfe = 1 / len(file_extensions)
     k = 0
+    t_copying = datetime.datetime.now(), None
     progress_copying.progress(k, percent(k))
     for i, fe in enumerate(file_extensions):
         root = file_extensions[fe]
@@ -244,9 +257,11 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
             "" if not df_nf.shape[0] else f", missing {df_nf.shape[0]}"))
         with sub_results_cols[i].popover(label="show missing part #s"):
             st.write(missing_file_parts)
-    progress_copying.progress(100, f"copying... {percent(1)}")
+    t_copying = t_copying[0], datetime.datetime.now()
+    tt_copying = (t_copying[1] - t_copying[0]).total_seconds()
+    progress_copying.progress(100, f"copying... {percent(1)} -- results in {tt_copying:.2f} seconds")
 
-    st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
-    st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
-    st.link_button(label="Folder", url=output_location)
-    st.markdown("<p><a href = \"" + output_location + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
+    # st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
+    # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
+    # st.link_button(label="Folder", url=output_location)
+    # st.markdown("<p><a href = \"" + output_location + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)

@@ -1722,6 +1722,8 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
                     op = op
                 case "in" | "not in" | "between":
                     op = op.upper()
+                case "like":
+                    op = "LIKE"
                 case _:
                     op = "="
             # op = op_s
@@ -1762,49 +1764,94 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
             #     print(f"OP {test=}")
 
             # ops_clause.append(f"{var} {op_s} {test}")
-        ops_clause = "(" + ") AND (".join(ops_clause) + ")"
+        ops_clause = "(" + (") AND (".join(ops_clause)) + ")"
         print(f"OP type={type(ops_clause)}, {ops_clause=}")
         return ops_clause
 
-    def help_parse(clause_stmt, logic="AND") -> str:  # list[str]:
+    def help_parse(clause_stmt, logic="AND", nest_level: int = 1) -> str:  # list[str]:
 
-        print(f"HP type={type(clause_stmt)}, {clause_stmt=}")
+        if not clause_stmt:
+            return ""
+
+        # ts = ("####" * nest_level)
+        nl = "" if in_line else "\n"
+        ts = "\t"
+        ts1 = ("\t" * (nest_level + 0))
+        # a = ts + ("(" if in_line else f"A(")
+        a = ("(" if in_line else f"(")
+        # b = ts + (f" {logic} " if in_line else f"\n{ts1}{logic}Z")
+        b = (f" {logic} " if in_line else f"\n{ts1}{logic}Z")
+        c = ")" if in_line else f")"
+
+        print(f"HP, LG={logic}, type={type(clause_stmt)}, {clause_stmt=}")
 
         if isinstance(clause_stmt, str):
-            return f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()
+            return "=0=" + nl + ts + a + (b.join([clause_stmt]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
+            # if in_line:
+            #     return "(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
+            # else:
+            #     return "\t(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
 
         if isinstance(clause_stmt, (list, tuple)) and (len(clause_stmt) == 2):
             var, stmt_data_s = clause_stmt
             if (isinstance(var, str) and isinstance(stmt_data_s, dict)):
+                return nl + ts + a + (b.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
+                # return "=1=" + ts + a + (b.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
+                # return a + (b.join([op_process(var, stmt_data_s)]).strip().removesuffix(logic)) + c
 
-            # else:
-                return f" {logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()
-            # else:
-            #     for
+            # # else:
+            #     if in_line:
+            #         return "(" + (f" {logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()) + ")"
+            #     else:
+            #         return "\t(" + (f"\n\t{logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()) + ")"
+            # # else:
+            # #     for
         if isinstance(clause_stmt, dict):
-            return f" {logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])
+            return "=2=" + nl + ts + a + (b.join([op_process(k, v).removeprefix("(").removesuffix(")") for k, v in clause_stmt.items()])) + c
+            # if in_line:
+            #     return "(" + (f" {logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])) + ")"
+            # else:
+            #     return "\t(" + (f"\n\t{logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])) + ")"
 
         res_clauses = []
         for i, clause_data in enumerate(clause_stmt):
+            print(f"HP LOOP {i=}, type={type(clause_data)}, {clause_data=}")
             if isinstance(clause_stmt, dict):
                 var = clause_data
                 clause_data = clause_stmt[clause_data]
                 if not isinstance(clause_data, dict):
-                    res_clauses.extend([help_parse(cd) for cd in clause_data])
-                    res_clauses += ["A"]
+                    res_clauses.extend(["=4=" + help_parse(cd, nest_level=nest_level+1) for cd in clause_data])
+                    # res_clauses += ["A"]
                 else:
                     res_clauses.append(op_process(var, clause_data))
-                    res_clauses += ["B"]
+                    # res_clauses += ["B"]
             else:
                 if isinstance(clause_data, (list, tuple)):
-                    res_clauses.extend([help_parse(clause_data, logic=("OR" if logic == "AND" else "OR"))])
+                    res_clauses.append(
+                        "(" + help_parse(
+                                clause_data,
+                                logic=("OR" if logic == "AND" else "AND"),
+                                    nest_level=0
+
+                            ).strip().removeprefix("(").removesuffix(")").strip() + ")"
+                    )
                     # res_clauses.append(op_process(var, clause_data))
-                    res_clauses += ["C"]
+                    # res_clauses += ["C"]
+                elif isinstance(clause_data, str):
+                    res_clauses.append(clause_data)
                 else:
                     if isinstance(clause_data, dict):
-                        res_clauses.extend([help_parse(clause_data, logic=("OR" if logic == "AND" else "OR"))])
-                        res_clauses += ["D"]
-        return f" {logic} ".join(res_clauses).strip().removesuffix(logic).strip()
+                        res_clauses.extend(["=6=" + help_parse(clause_data, logic=("OR" if logic == "AND" else "AND"), nest_level=nest_level+1)])
+                        # res_clauses += ["D"]
+                    else:
+                        res_clauses += [f"INVESTIGATE THIS CLAUSE_DATA {type(clause_data)=}"]
+        # return a + (b.join(res_clauses)) + c
+        # return b.join(res_clauses)
+        return f"{nl}\t" + f"{nl}\t{logic} ".join(res_clauses)
+        # if in_line:
+        #     return "(" + (f" {logic} ".join(res_clauses).strip().removesuffix(logic).strip()) + ")"
+        # else:
+        #     return "\t(" + (f"\n\t{logic} ".join(res_clauses).strip().removesuffix(logic).strip()) + ")"
 
     return help_parse(clauses)
 
@@ -1888,15 +1935,43 @@ else:
                     ("[ITRequestID#]", {"between": [105445, 235564]}),
                     ("[RequestedBy]", {"=": "Darth Vader"})
                 ),
-                ({"between": ["2050-01-01", "2051-01-01"]})
+                ("[RequestedDate]", {"between": ["2050-01-01", "2051-01-01"]})
             ),
             "[ITRequestID#] == 1",
             ("[Status] = 'Complete'"),
             ("[Status] = 'Complete'",),
-            ("[ITRequestID#]", {"=": 1054789})
+            ("[ITRequestID#]", {"=": 1054789}),
+            (
+                (("RequestedBy", {"like": "%avery%"}),),
+                (("RequestDate"), {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
+            ),
+            (
+                (("RequestedBy", {"like": "%avery%"}),),
+                (("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}),)
+            ),
+            (
+                ("RequestedBy", {"like": "%avery%"}),
+                ("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
+            ),
+            (
+                (
+                    ("RequestedBy", {"like": "%avery%"}),
+                    ("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
+                )
+            ),
+            (
+                tuple(),
+                (
+                    (("RequestedBy", {"like": "%avery%"})),
+                    (("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}))
+                )
+            )
         ]
-        for wh in wheres:
-            st.text(parse_where(wh))
+        for i, wh in enumerate(wheres):
+            # st.text(f"{i=}, {wh}")
+            st.text(f"WHERE{parse_where(wh, in_line=False)}")
+            st.write(f"---")
+            # print(f"SUCCESS {i=}")
 
         # test_sqls = [
         #     create_sql(
