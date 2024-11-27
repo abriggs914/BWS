@@ -57,7 +57,7 @@ for k, v in DEFAULT_SESSION_STATE.items():
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_inventory_view_bws() -> pd.DataFrame:
+def load_inventory_view_bws_20241125() -> pd.DataFrame:
     sql = """v_InventoryItems_ExpensedAndIssued"""
     connection_data = {
         "sql": sql,
@@ -69,7 +69,7 @@ def load_inventory_view_bws() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_inventory_view_stg() -> pd.DataFrame:
+def load_inventory_view_stg_20241125() -> pd.DataFrame:
     sql = """v_InventoryItems_ExpensedAndIssued"""
     connection_data = {
         "sql": sql,
@@ -80,16 +80,80 @@ def load_inventory_view_stg() -> pd.DataFrame:
     return connect(**connection_data)
 
 
-df_inv_bws: pd.DataFrame = load_inventory_view_bws()
-df_inv_stg: pd.DataFrame = load_inventory_view_stg()
-df_inv_bws_og: pd.DataFrame = df_inv_bws.copy()
-df_inv_stg_og: pd.DataFrame = df_inv_stg.copy()
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_inventory_view_bws_20241126() -> pd.DataFrame:
+    sql = """
+SELECT
+    *
+    , [UnitCost] * [QtyOnHand] as [ValueOnHand]
+FROM
+    [SysproCompanyA].[dbo].[InvWarehouse] WITH (NOLOCK)
+;"""
+    connection_data = {
+        "sql": sql,
+        "database": "SysproCompanyA",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_inventory_view_stg_20241126() -> pd.DataFrame:
+    sql = """
+SELECT 
+    *
+    , [UnitCost] * [QtyOnHand] as [ValueOnHand]
+FROM
+    [SysproCompanyS].[dbo].[InvWarehouse] WITH (NOLOCK)
+;"""
+    connection_data = {
+        "sql": sql,
+        "database": "SysproCompanyS",
+        "uid": CREDS_STG["uid"],
+        "pwd": CREDS_STG["pwd"]
+    }
+    return connect(**connection_data)
+
+
+options_radio_dataset_choice = [
+    "Dataset 20241125",
+    "Dataset 20241126"
+]
+radio_company_choice = st.radio(
+    "Company:",
+    options_radio_dataset_choice,
+    key="radio_dataset_choice",
+    horizontal=True
+)
+
+df_inv_bws_20241125: pd.DataFrame = pd.DataFrame()
+df_inv_stg_20241125: pd.DataFrame = pd.DataFrame()
+df_inv_bws_20241126: pd.DataFrame = pd.DataFrame()
+df_inv_stg_20241126: pd.DataFrame = pd.DataFrame()
+
+old_data: bool = st.session_state.get("radio_dataset_choice") == options_radio_dataset_choice[0]
+
+if old_data:
+    df_inv_bws_20241125: pd.DataFrame = load_inventory_view_bws_20241125()
+    df_inv_stg_20241125: pd.DataFrame = load_inventory_view_stg_20241125()
+else:
+    df_inv_bws_20241126: pd.DataFrame = load_inventory_view_bws_20241126()
+    df_inv_stg_20241126: pd.DataFrame = load_inventory_view_stg_20241126()
+
+# df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
+# df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
+# df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
+# df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
+
+df_bws: pd.DataFrame = df_inv_bws_20241125 if old_data else df_inv_bws_20241126
+df_stg: pd.DataFrame = df_inv_stg_20241125 if old_data else df_inv_stg_20241126
 
 
 st.write("## BWS")
-st.dataframe(df_inv_bws, use_container_width=True, hide_index=True)
+st.dataframe(df_bws, use_container_width=True, hide_index=True)
 st.write("## Stargate")
-st.dataframe(df_inv_stg, use_container_width=True, hide_index=True)
+st.dataframe(df_stg, use_container_width=True, hide_index=True)
 
 
 options_radio_company_choice = [
@@ -106,7 +170,7 @@ radio_company_choice = st.radio(
 
 COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
 
-df = df_inv_bws if COMP == BWS else df_inv_stg
+df = df_bws if COMP == BWS else df_stg
 
 pyg_html = pyg.walk(df).to_html()
 components.html(pyg_html, height=1000, scrolling=True)

@@ -1077,6 +1077,8 @@ def check_password():
 
 def request_form(form, mode: Literal["new", "edit"]):
 
+    global list_request_sub_types
+
     def click_test_input():
         # Demo request helping Gary Thomas with the public drive
         st.session_state.update({
@@ -1703,6 +1705,7 @@ print(f"RERUN for '{un}'")
 
 
 def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
+    trace: bool = False
     where_clause = ""
 
     print(f"PW type={type(clauses)}, {clauses=}")
@@ -1768,34 +1771,37 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
         print(f"OP type={type(ops_clause)}, {ops_clause=}")
         return ops_clause
 
-    def help_parse(clause_stmt, logic="AND", nest_level: int = 1) -> str:  # list[str]:
+    def help_parse(clause_stmt, logic="OR", nest_level: int = 1) -> str:  # list[str]:
 
         if not clause_stmt:
             return ""
 
         # ts = ("####" * nest_level)
+        ologic: str = "OR" if logic == "AND" else "AND"
         nl = "" if in_line else "\n"
         ts = "\t"
         ts1 = ("\t" * (nest_level + 0))
         # a = ts + ("(" if in_line else f"A(")
         a = ("(" if in_line else f"(")
         # b = ts + (f" {logic} " if in_line else f"\n{ts1}{logic}Z")
-        b = (f" {logic} " if in_line else f"\n{ts1}{logic}Z")
+        b = (f" {logic} " if in_line else f"\n{ts1}{logic} ")
         c = ")" if in_line else f")"
 
-        print(f"HP, LG={logic}, type={type(clause_stmt)}, {clause_stmt=}")
+        if trace:
+            print(f"HP, LG={logic}, type={type(clause_stmt)}, {clause_stmt=}")
 
         if isinstance(clause_stmt, str):
-            return "=0=" + nl + ts + a + (b.join([clause_stmt]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
+            return ("=0=" if trace else "") + nl + ts + a + (b.join([clause_stmt]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
             # if in_line:
             #     return "(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
             # else:
             #     return "\t(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
 
-        if isinstance(clause_stmt, (list, tuple)) and (len(clause_stmt) == 2):
+        if isinstance(clause_stmt, (list, tuple)) and (len(clause_stmt) == 2) and isinstance(clause_stmt[1], dict):
             var, stmt_data_s = clause_stmt
             if (isinstance(var, str) and isinstance(stmt_data_s, dict)):
-                return nl + ts + a + (b.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
+                d = (f" {ologic} " if in_line else f"\n{ts1}{ologic}Z")
+                return ("=1=" if trace else "") + nl + ts + a + (d.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
                 # return "=1=" + ts + a + (b.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
                 # return a + (b.join([op_process(var, stmt_data_s)]).strip().removesuffix(logic)) + c
 
@@ -1807,7 +1813,7 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
             # # else:
             # #     for
         if isinstance(clause_stmt, dict):
-            return "=2=" + nl + ts + a + (b.join([op_process(k, v).removeprefix("(").removesuffix(")") for k, v in clause_stmt.items()])) + c
+            return ("=2=" if trace else "") + nl + ts + a + (b.join([op_process(k, v).removeprefix("(").removesuffix(")") for k, v in clause_stmt.items()])) + c
             # if in_line:
             #     return "(" + (f" {logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])) + ")"
             # else:
@@ -1815,36 +1821,41 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
 
         res_clauses = []
         for i, clause_data in enumerate(clause_stmt):
-            print(f"HP LOOP {i=}, type={type(clause_data)}, {clause_data=}")
+            if trace:
+                print(f"HP LOOP {i=}, type={type(clause_data)}, {clause_data=}")
             if isinstance(clause_stmt, dict):
                 var = clause_data
                 clause_data = clause_stmt[clause_data]
                 if not isinstance(clause_data, dict):
-                    res_clauses.extend(["=4=" + help_parse(cd, nest_level=nest_level+1) for cd in clause_data])
+                    res_clauses.extend([("=4=" if trace else "") + help_parse(cd, nest_level=nest_level+1) for cd in clause_data])
                     # res_clauses += ["A"]
                 else:
-                    res_clauses.append(op_process(var, clause_data))
+                    res_clauses.append(("=5=" if trace else "") + op_process(var, clause_data))
                     # res_clauses += ["B"]
             else:
                 if isinstance(clause_data, (list, tuple)):
-                    res_clauses.append(
-                        "(" + help_parse(
-                                clause_data,
-                                logic=("OR" if logic == "AND" else "AND"),
-                                    nest_level=0
+                    ret_val = help_parse(
+                        clause_data,
+                        logic=ologic,
+                        nest_level=0
+                    ).strip().removeprefix("(").removesuffix(")").strip()
 
-                            ).strip().removeprefix("(").removesuffix(")").strip() + ")"
+                    res_clauses.append(
+                        ("=6=" if trace else "") + "(" + ret_val + ")"
                     )
                     # res_clauses.append(op_process(var, clause_data))
                     # res_clauses += ["C"]
                 elif isinstance(clause_data, str):
-                    res_clauses.append(clause_data)
+                    res_clauses.append(("7" if trace else "") + clause_data)
                 else:
                     if isinstance(clause_data, dict):
-                        res_clauses.extend(["=6=" + help_parse(clause_data, logic=("OR" if logic == "AND" else "AND"), nest_level=nest_level+1)])
+                        res_clauses.extend([("=8=" if trace else "") + help_parse(clause_data, logic=ologic, nest_level=nest_level+1)])
                         # res_clauses += ["D"]
                     else:
                         res_clauses += [f"INVESTIGATE THIS CLAUSE_DATA {type(clause_data)=}"]
+        if res_clauses:
+            res_clauses[0] = f"({res_clauses[0]}"
+            res_clauses[-1] = f"{res_clauses[-1]})"
         # return a + (b.join(res_clauses)) + c
         # return b.join(res_clauses)
         return f"{nl}\t" + f"{nl}\t{logic} ".join(res_clauses)
@@ -1889,218 +1900,18 @@ else:
         # st.write("##### Please contact IT for further assistance with this app.")
         st.stop()
     else:
-        # un = st.session_state.get('user_full_name')
-        # st.session_state.update({"text_input_requested_by": un})
-        #
-        # # with grid["tab_new_request"]:
-        # if tab_choice == tab_names[0]:
-        #     input_new_request()
-        #
-        # # with grid["tab_edit_request"]:
-        # if tab_choice == tab_names[1]:
-        #     edit_request()
+        un = st.session_state.get('user_full_name')
+        st.session_state.update({"text_input_requested_by": un})
+
+        # with grid["tab_new_request"]:
+        if tab_choice == tab_names[0]:
+            input_new_request()
+
+        # with grid["tab_edit_request"]:
+        if tab_choice == tab_names[1]:
+            edit_request()
 
 
-        insert_data: dict[str: Any] = {
-            "Request": "Request Text",
-            "DueDate": datetime.datetime.now(),
-            "Company": "BWS",
-            "Department": 87,
-            "Priority": 3,
-            "SubPriority": 1,
-            "RequestType": "Hardware",
-            "RequestSubType": "Computer",
-            "RequestedBy": "Avery Briggs",
-            "RequestFollowUpPersonnel": "avery.briggs@bwstrailers.com;abriggs914@gmail.com",
-            "RequestDate": datetime.datetime.now(),
-            "Status": "Queued",
-            "RequestDateOriginal": "2024-11-21 17:01:59",
-            "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
-        }
-        sanitize_cols = list(insert_data.keys())
-        sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
-        sanitize_cols.remove("Directory")  # preserve backslashes in path
-
-        wheres = [
-            (
-                ("[ITRequestID#]", {"between": [105445, 235564]}),
-                ("[RequestedBy]", {"=": "Darth Vader"})
-            ),
-            (
-                (("[ITRequestID#]", {"between": [105445, 235564]})),
-                (("[RequestedBy]", {"=": "Darth Vader"}))
-            ),
-            (
-                (
-                    ("[ITRequestID#]", {"between": [105445, 235564]}),
-                    ("[RequestedBy]", {"=": "Darth Vader"})
-                ),
-                ("[RequestedDate]", {"between": ["2050-01-01", "2051-01-01"]})
-            ),
-            "[ITRequestID#] == 1",
-            ("[Status] = 'Complete'"),
-            ("[Status] = 'Complete'",),
-            ("[ITRequestID#]", {"=": 1054789}),
-            (
-                (("RequestedBy", {"like": "%avery%"}),),
-                (("RequestDate"), {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
-            ),
-            (
-                (("RequestedBy", {"like": "%avery%"}),),
-                (("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}),)
-            ),
-            (
-                ("RequestedBy", {"like": "%avery%"}),
-                ("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
-            ),
-            (
-                (
-                    ("RequestedBy", {"like": "%avery%"}),
-                    ("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]})
-                )
-            ),
-            (
-                tuple(),
-                (
-                    (("RequestedBy", {"like": "%avery%"})),
-                    (("RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}))
-                )
-            )
-        ]
-        for i, wh in enumerate(wheres):
-            # st.text(f"{i=}, {wh}")
-            st.text(f"WHERE{parse_where(wh, in_line=False)}")
-            st.write(f"---")
-            # print(f"SUCCESS {i=}")
-
-        # test_sqls = [
-        #     create_sql(
-        #         "IT Requests",
-        #         data={
-        #             "Request": "sample_0",
-        #             "DueDate": datetime.datetime.now(),
-        #             "Company": "Stargate",
-        #             "Priority": 3
-        #         },
-        #         mode="update",
-        #         where="[ITRequestID#] == 1",
-        #         transaction_wrap=True
-        #     ),
-        #     create_sql("IT Requests", data=["Status"], include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
-        #     create_sql("IT Requests", order="Status", include_no_lock=True),
-        #     create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status",
-        #                        include_no_lock=True),
-        #
-        #     create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
-        #                        order=["Status", "Company", "RequestedBy"], include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
-        #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
-        #
-        #     create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status",
-        #                        include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
-        #                        order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"],
-        #                        include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
-        #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
-        #
-        #     create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True),
-        #     create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}),
-        #                        transaction_wrap=True),
-        #     create_sql(
-        #         "IT Requests",
-        #         mode="delete",
-        #         where=(
-        #             ("[ITRequestID#]", {"between": [105445, 235564]}),
-        #             ("[RequestedBy]", {"=": "Darth Vader"})
-        #         ),
-        #         transaction_wrap=True
-        #     ),
-        #
-        #     # should be or
-        #     create_sql(
-        #         "IT Requests",
-        #         mode="delete",
-        #         where=(
-        #             (("[ITRequestID#]", {"between": [105445, 235564]})),
-        #             (("[RequestedBy]", {"=": "Darth Vader"}))
-        #         ),
-        #         transaction_wrap=True
-        #     ),
-        #
-        #     create_sql(
-        #         "IT Requests",
-        #         mode="delete",
-        #         where=(
-        #             (
-        #                 ("[ITRequestID#]", {"between": [105445, 235564]}),
-        #                 ("[RequestedBy]", {"=": "Darth Vader"})
-        #             ),
-        #             ({"between": ["2050-01-01", "2051-01-01"]})
-        #         ),
-        #         transaction_wrap=True
-        #     ),
-        #
-        #     create_sql(
-        #         "IT Requests",
-        #         data=insert_data,
-        #         mode="insert",
-        #         sanitize=sanitize_cols,
-        #         transaction_wrap=True
-        #     )
-        # ]
-        #
-        # for i, sql in enumerate(test_sqls):
-        #     # print(f"{sql}")
-        #     st.text(sql)
-        #     st.write("---")
-
-        # st.text(create_sql(
-        #     "IT Requests",
-        #     data={
-        #         "Request": "sample_0",
-        #         "DueDate": datetime.datetime.now(),
-        #         "Company": "Stargate",
-        #         "Priority": 3
-        #     },
-        #     mode="update",
-        #     where="[ITRequestID#] == 1",
-        #     transaction_wrap=True
-        # ))
-        # st.text(create_sql("IT Requests", data=["Status"], include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
-        # st.text(create_sql("IT Requests", order="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
-        #
-        # st.text(create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
-        #
-        # st.text(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
-        #
-        # st.text(create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True))
-        # st.text(create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}), transaction_wrap=True))
-        # st.text(create_sql(
-        #     "IT Requests",
-        #     mode="delete",
-        #     where=(
-        #         ("[ITRequestID#]", {"=": [105445, 235564]}),
-        #         ("[RequestedBy]", {"=": "Darth Vader"})
-        #     ),
-        #     transaction_wrap=True
-        # ))
         # insert_data: dict[str: Any] = {
         #     "Request": "Request Text",
         #     "DueDate": datetime.datetime.now(),
@@ -2120,50 +1931,266 @@ else:
         # sanitize_cols = list(insert_data.keys())
         # sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
         # sanitize_cols.remove("Directory")  # preserve backslashes in path
-        # st.text(create_sql(
-        #     "IT Requests",
-        #     data=insert_data,
-        #     mode="insert",
-        #     sanitize=sanitize_cols,
-        #     transaction_wrap=True
-        # ))
         #
-        # # # st.text(
-        # # #     op_process("[ITRequestID#]", {"=": [105445,235567]})
-        # # # )
-        # # # st.text(
-        # # #     op_process("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
-        # # # )
-        # # # st.text(
-        # # #     op_process("[ITRequestID#]", {"!=": "15444"})
-        # # # )
-        # # # st.text(
-        # # #     op_process("[ITRequestID#]", {"in": [6565, 454848, 454481]})
-        # # # )
-        # # # st.text(
-        # # #     op_process("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
-        # # # )
+        # wheres = [
+        #     [
+        #         ["[ITRequestID#]", {"between": [105445, 235564]}],
+        #         ["[RequestedBy]", {"=": "Darth Vader"}]
+        #     ],
+        #     [
+        #         [["[ITRequestID#]", {"between": [105445, 235564]}]],
+        #         [["[RequestedBy]", {"=": "Darth Vader"}]]
+        #     ],
+        #     [
+        #         [
+        #             ["[ITRequestID#]", {"between": [105445, 235564]}],
+        #             ["[RequestedBy]", {"=": "Darth Vader"}]
+        #         ],
+        #         ["[RequestedDate]", {"between": ["2050-01-01", "2051-01-01"]}]
+        #     ],
+        #     "[ITRequestID#] == 1",
+        #     ["[Status] = 'Complete'"],
+        #     ["[Status] = 'Complete'",],
+        #     ["[ITRequestID#]", {"=": 1054789}],
+        #     [
+        #         [["RequestedBy", {"like": "%avery%"}]],
+        #         [["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]]
+        #     ],
+        #     [
+        #         [["RequestedBy", {"like": "%avery%"}],],
+        #         [["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}],]
+        #     ],
+        #     [
+        #         ["RequestedBy", {"like": "%avery%"}],
+        #         ["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]
+        #     ],
+        #     [
+        #         [
+        #             ["RequestedBy", {"like": "%avery%"}],
+        #             ["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]
+        #         ]
+        #     ],
+        #     [
+        #         [
+        #             [["RequestedBy", {"like": "%avery%"}]],
+        #             [["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]]
+        #         ]
+        #     ],
+        #     [
+        #         [
+        #             ["RequestedBy", {"like": "%avery%"}],
+        #             ["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]
+        #         ]
+        #     ],
+        #     [
+        #         [
+        #             ["RequestedBy", {"like": "%avery%"}],
+        #             ["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]
+        #         ],
+        #         [
+        #             ["RequestedBy", {"like": "%james%"}],
+        #             ["RequestDate", {"between": ["2024-11-01", "2024-11-30 23:59:59"]}]
+        #         ]
+        #
+        #     ]
+        # ]
+        # for i, wh in enumerate(wheres):
+        #     st.text(f"{i=}, {wh}")
+        #     st.text(f"WHERE{parse_where(wh, in_line=True)}")
+        #     st.write(f"---")
+        #     # print(f"SUCCESS {i=}")
+        #
+        # # test_sqls = [
+        # #     create_sql(
+        # #         "IT Requests",
+        # #         data={
+        # #             "Request": "sample_0",
+        # #             "DueDate": datetime.datetime.now(),
+        # #             "Company": "Stargate",
+        # #             "Priority": 3
+        # #         },
+        # #         mode="update",
+        # #         where="[ITRequestID#] == 1",
+        # #         transaction_wrap=True
+        # #     ),
+        # #     create_sql("IT Requests", data=["Status"], include_no_lock=True),
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True),
+        # #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
+        # #     create_sql("IT Requests", order="Status", include_no_lock=True),
+        # #     create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True),
+        # #     create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True),
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True),
+        # #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status",
+        # #                        include_no_lock=True),
         # #
-        # # st.text(
-        # #     parse_where((
-        # #         ("[ITRequestID#]", {"between": [105445, 235564]}),
+        # #     create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True),
+        # #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        # #                        order=["Status", "Company", "RequestedBy"], include_no_lock=True),
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        # #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
+        # #
+        # #     create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status",
+        # #                        include_no_lock=True),
+        # #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        # #                        order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"],
+        # #                        include_no_lock=True),
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        # #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
+        # #
+        # #     create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True),
+        # #     create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}),
+        # #                        transaction_wrap=True),
+        # #     create_sql(
+        # #         "IT Requests",
+        # #         mode="delete",
+        # #         where=(
+        # #             ("[ITRequestID#]", {"between": [105445, 235564]}),
+        # #             ("[RequestedBy]", {"=": "Darth Vader"})
+        # #         ),
+        # #         transaction_wrap=True
+        # #     ),
+        # #
+        # #     # should be or
+        # #     create_sql(
+        # #         "IT Requests",
+        # #         mode="delete",
+        # #         where=(
+        # #             (("[ITRequestID#]", {"between": [105445, 235564]})),
+        # #             (("[RequestedBy]", {"=": "Darth Vader"}))
+        # #         ),
+        # #         transaction_wrap=True
+        # #     ),
+        # #
+        # #     create_sql(
+        # #         "IT Requests",
+        # #         mode="delete",
+        # #         where=(
+        # #             (
+        # #                 ("[ITRequestID#]", {"between": [105445, 235564]}),
+        # #                 ("[RequestedBy]", {"=": "Darth Vader"})
+        # #             ),
+        # #             ({"between": ["2050-01-01", "2051-01-01"]})
+        # #         ),
+        # #         transaction_wrap=True
+        # #     ),
+        # #
+        # #     create_sql(
+        # #         "IT Requests",
+        # #         data=insert_data,
+        # #         mode="insert",
+        # #         sanitize=sanitize_cols,
+        # #         transaction_wrap=True
+        # #     )
+        # # ]
+        # #
+        # # for i, sql in enumerate(test_sqls):
+        # #     # print(f"{sql}")
+        # #     st.text(sql)
+        # #     st.write("---")
+        #
+        # # st.text(create_sql(
+        # #     "IT Requests",
+        # #     data={
+        # #         "Request": "sample_0",
+        # #         "DueDate": datetime.datetime.now(),
+        # #         "Company": "Stargate",
+        # #         "Priority": 3
+        # #     },
+        # #     mode="update",
+        # #     where="[ITRequestID#] == 1",
+        # #     transaction_wrap=True
+        # # ))
+        # # st.text(create_sql("IT Requests", data=["Status"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", order="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True))
+        # # st.text(create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
+        # #
+        # # st.text(create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True))
+        # # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # #
+        # # st.text(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # #
+        # # st.text(create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True))
+        # # st.text(create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}), transaction_wrap=True))
+        # # st.text(create_sql(
+        # #     "IT Requests",
+        # #     mode="delete",
+        # #     where=(
+        # #         ("[ITRequestID#]", {"=": [105445, 235564]}),
         # #         ("[RequestedBy]", {"=": "Darth Vader"})
-        # #     ))
-        # # )
-        # # st.text(parse_where("[ITRequestID#] = 105445"))
-        # # st.text(parse_where(("[ITRequestID#]", {"=": 1054789})))
+        # #     ),
+        # #     transaction_wrap=True
+        # # ))
+        # # insert_data: dict[str: Any] = {
+        # #     "Request": "Request Text",
+        # #     "DueDate": datetime.datetime.now(),
+        # #     "Company": "BWS",
+        # #     "Department": 87,
+        # #     "Priority": 3,
+        # #     "SubPriority": 1,
+        # #     "RequestType": "Hardware",
+        # #     "RequestSubType": "Computer",
+        # #     "RequestedBy": "Avery Briggs",
+        # #     "RequestFollowUpPersonnel": "avery.briggs@bwstrailers.com;abriggs914@gmail.com",
+        # #     "RequestDate": datetime.datetime.now(),
+        # #     "Status": "Queued",
+        # #     "RequestDateOriginal": "2024-11-21 17:01:59",
+        # #     "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
+        # # }
+        # # sanitize_cols = list(insert_data.keys())
+        # # sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
+        # # sanitize_cols.remove("Directory")  # preserve backslashes in path
+        # # st.text(create_sql(
+        # #     "IT Requests",
+        # #     data=insert_data,
+        # #     mode="insert",
+        # #     sanitize=sanitize_cols,
+        # #     transaction_wrap=True
+        # # ))
+        # #
+        # # # # st.text(
+        # # # #     op_process("[ITRequestID#]", {"=": [105445,235567]})
+        # # # # )
+        # # # # st.text(
+        # # # #     op_process("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
+        # # # # )
+        # # # # st.text(
+        # # # #     op_process("[ITRequestID#]", {"!=": "15444"})
+        # # # # )
+        # # # # st.text(
+        # # # #     op_process("[ITRequestID#]", {"in": [6565, 454848, 454481]})
+        # # # # )
+        # # # # st.text(
+        # # # #     op_process("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
+        # # # # )
+        # # #
         # # # st.text(
-        # # #     parse_where("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
+        # # #     parse_where((
+        # # #         ("[ITRequestID#]", {"between": [105445, 235564]}),
+        # # #         ("[RequestedBy]", {"=": "Darth Vader"})
+        # # #     ))
         # # # )
-        # # # st.text(
-        # # #     parse_where("[ITRequestID#]", {"!=": "15444"})
-        # # # )
-        # # # st.text(
-        # # #     parse_where("[ITRequestID#]", {"in": [6565, 454848, 454481]})
-        # # # )
-        # # # st.text(
-        # # #     parse_where("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
-        # # # )
+        # # # st.text(parse_where("[ITRequestID#] = 105445"))
+        # # # st.text(parse_where(("[ITRequestID#]", {"=": 1054789})))
+        # # # # st.text(
+        # # # #     parse_where("[RequestDate]", {"between": ['2024-11-20', '2024-11-21 23:59:59']})
+        # # # # )
+        # # # # st.text(
+        # # # #     parse_where("[ITRequestID#]", {"!=": "15444"})
+        # # # # )
+        # # # # st.text(
+        # # # #     parse_where("[ITRequestID#]", {"in": [6565, 454848, 454481]})
+        # # # # )
+        # # # # st.text(
+        # # # #     parse_where("[Status#]", {"not in": ["Complete", "Declined", "Incomplete"]})
+        # # # # )
 
     # if not check_password():
     #     # st.write(f"## Invalid Credentials.")

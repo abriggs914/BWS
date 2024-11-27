@@ -5,6 +5,9 @@ import shutil
 import pandas as pd
 import streamlit as st
 
+# from tkinter import filedialog
+# import wx
+# from wx import DirDialog, ID_OK, DD_DEFAULT_STYLE, DD_NEW_DIR_BUTTON
 from utility import next_available_file_name, percent, number_suffix
 
 st.set_page_config(layout="wide")
@@ -36,8 +39,8 @@ def hold_walk_stp():
 
 read_file_root: str = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files"
 read_file: str = r"PO LIST.xlsx"
-output_location: str = next_available_file_name("output")
-output_location: str = os.path.join(read_file_root, output_location)
+output_location_default: str = next_available_file_name("output")
+output_location_default: str = os.path.join(read_file_root, output_location_default)
 read_file_path: str = os.path.join(read_file_root, read_file)
 root_location_pdfs: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
 root_location_stg_pdfs: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS\STARGATE PDF"
@@ -65,6 +68,31 @@ necessery_files = [
 for pth in necessery_files:
     if not os.path.exists(pth):
         raise ValueError(f"File '{pth}' does not exist.")
+
+# if st.button(
+#     label="choose output folder"
+# ):
+#     # ol = filedialog.askdirectory()
+#     #
+#     # dialog = DirDialog(None,"Select a Folder", style=DD_DEFAULT_STYLE | DD_NEW_DIR_BUTTON)
+#     # if dialog.ShowModal() == ID_OK:
+#     #     ol = dialog.GetPath()
+#     # else:
+#     #     ol = output_location_default
+#     #
+#     st.file_uploader()
+#     st.session_state.update({
+#         "output_location": ol
+#     })
+# st.text_input(
+#     "Output Location:",
+#     key="output_location",
+#     disabled=True
+# )
+
+output_location = st.session_state.get("output_location", output_location_default)
+if not output_location.strip():
+    output_location = output_location_default
 
 if not os.path.exists(output_location):
     os.makedirs(output_location)
@@ -229,6 +257,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     k = 0
     t_copying = datetime.datetime.now(), None
     progress_copying.progress(k, percent(k))
+    t_copied = 0
     for i, fe in enumerate(file_extensions):
         root = file_extensions[fe]
         df_nf: pd.DataFrame = df.loc[~df[fe]]
@@ -255,11 +284,14 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
         missing_file_parts: list[str] = df_nf["PN"].values.tolist()
         sub_results_cols[i].write(f"{df.shape[0] - df_nf.shape[0]} {fe} files copied" + (
             "" if not df_nf.shape[0] else f", missing {df_nf.shape[0]}"))
+        t_copied += df_f.shape[0]
         with sub_results_cols[i].popover(label="show missing part #s"):
             st.write(missing_file_parts)
     t_copying = t_copying[0], datetime.datetime.now()
     tt_copying = (t_copying[1] - t_copying[0]).total_seconds()
     progress_copying.progress(100, f"copying... {percent(1)} -- results in {tt_copying:.2f} seconds")
+
+    st.write(f"{t_copied} File{'' if t_copied == 1 else 's'} copied to '{output_location}'")
 
     # st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
     # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
