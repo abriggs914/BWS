@@ -773,6 +773,94 @@ ORDER BY
     return connect(**connection_data)
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_quotes_orders_by_date():
+    sql = """
+    SELECT
+	[Cal].[Date]
+	,[Cal].[HolidayName]
+	,SUM([NumNewQuotesBWS]) AS [NumNewQuotesBWS]
+	,SUM([NumNewOrdersBWS]) AS [NumNewOrdersBWS]
+	,MIN([FirstQuoteBWS]) AS [FirstQuoteBWS]
+	,MAX([LastQuoteBWS]) AS [LastQuoteBWS]
+	,SUM([FirstWOBWS]) AS [FirstWOBWS]
+	,SUM([LastWOBWS]) AS [LastWOBWS]
+
+	,SUM([NumNewQuotesSTG]) AS [NumNewQuotesSTG]
+	,SUM([NumNewOrdersSTG]) AS [NumNewOrdersSTG]
+	,MIN([FirstQuoteSTG]) AS [FirstQuoteSTG]
+	,MAX([LastQuoteSTG]) AS [LastQuoteSTG]
+	,SUM([FirstWOSTG]) AS [FirstWOSTG]
+	,SUM([LastWOSTG]) AS [LastWOSTG]
+	
+	,SUM([NumNewQuotesBWS]) + SUM([NumNewQuotesSTG]) AS [TotalNewQuotes]
+	,SUM([NumNewOrdersBWS]) + SUM([NumNewOrdersSTG]) AS [TotalNewOrders]
+FROM
+	[BWSdb].[dbo].[Calendar] [Cal] WITH (NOLOCK)
+LEFT JOIN (
+	SELECT
+		[Quote Date]
+		,COUNT([Quote Date]) AS [NumNewQuotesBWS]
+		,COUNT([Order Date]) AS [NumNewOrdersBWS]
+		,MIN([Quote#]) AS [FirstQuoteBWS]
+		,MAX([Quote#]) AS [LastQuoteBWS]
+		,MIN([WO#]) AS [FirstWOBWS]
+		,MAX([WO#]) AS [LastWOBWS]
+
+		,NULL AS [NumNewQuotesSTG]
+		,NULL AS [NumNewOrdersSTG]
+		,NULL AS [FirstQuoteSTG]
+		,NULL AS [LastQuoteSTG]
+		,NULL AS [FirstWOSTG]
+		,NULL AS [LastWOSTG]
+	FROM
+		[BWSdb].[dbo].[Orders] WITH (NOLOCK)
+	GROUP BY
+		[Quote Date]
+
+	UNION ALL
+
+	SELECT
+		[Quote Date]
+		,NULL AS [NumNewQuotesBWS]
+		,NULL AS [NumNewOrdersBWS]
+		,NULL AS [FirstQuoteBWS]
+		,NULL AS [LastQuoteBWS]
+		,NULL AS [FirstWOBWS]
+		,NULL AS [LastWOBWS]
+
+		,COUNT([Quote Date]) AS [NumNewQuotesSTG]
+		,COUNT([Order Date]) AS [NumNewOrdersSTG]
+		,MIN(CAST(RIGHT([SGQuote], LEN([SGQuote]) - 2) AS INT)) AS [FirstQuoteSTG]
+		,MAX(CAST(RIGHT([SGQuote], LEN([SGQuote]) - 2) AS INT)) AS [LastQuoteSTG]
+		,MIN([WO#]) AS [FirstWOSTG]
+		,MAX([WO#]) AS [LastWOSTG]
+	FROM
+		[BWSdb].[dbo].[OrdersV2] WITH (NOLOCK)
+	GROUP BY
+		[Quote Date]
+
+) AS [OrderSrc]
+ON
+	[Cal].[Date] = [OrderSrc].[Quote Date]
+WHERE
+	[Cal].[Date] BETWEEN '2006-01-01' AND DATEADD(YEAR, 2, GETDATE())
+GROUP BY
+	[Cal].[Date]
+	,[Cal].[HolidayName]
+ORDER BY
+	[Cal].[Date]
+;
+"""
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
 #################
 # Event Listeners
 #################
@@ -847,6 +935,7 @@ df_jobs_in_wip_bws = load_bws_jobs_in_wip()
 df_jobs_in_wip_stg = load_stg_jobs_in_wip()
 df_job_counts_in_wip_bws = load_bws_job_counts_in_wip()
 df_job_counts_in_wip_stg = load_stg_job_counts_in_wip()
+df_quotes_orders_by_date_bws = load_quotes_orders_by_date()
 
 ###################################################
 # Company Choice is critical for further processing
@@ -916,6 +1005,7 @@ df_margin_data = df_margin_data_stg if COMP == STG else df_margin_data_bws
 df_product_data = df_product_data_stg if COMP == STG else df_product_data_bws
 df_jobs_in_wip = df_jobs_in_wip_stg if COMP == STG else df_jobs_in_wip_bws
 df_job_counts_in_wip = df_job_counts_in_wip_stg if COMP == STG else df_job_counts_in_wip_bws
+df_quotes_orders_by_date = df_quotes_orders_by_date_bws.copy()
 
 df_margin_data["WO#"] = df_margin_data["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
 df_jobs_in_wip["WO#"] = df_jobs_in_wip["WO#"].apply(lambda wo: "" if pd.isna(wo) else str(int(wo)))
@@ -1133,6 +1223,86 @@ else:
     prod_date_label = 'Production Month-Year'
 
 # st.dataframe(df_job_counts_in_wip)
+
+with st.expander(":new: Quotes and Orders By Date"):
+    filtered_melted: pd.DataFrame = df_quotes_orders_by_date.loc[
+        (df_quotes_orders_by_date["Date"] >= date_to_datetime(di_start))
+        & (df_quotes_orders_by_date["Date"] <= date_to_datetime(di_end))
+    ]
+    filtered_melted["Date"] = filtered_melted["Date"].apply(lambda d: d.date())
+    sel_cols = [
+        "NumNewQuotes",
+        "NumNewOrders",
+        "FirstQuote",
+        "LastQuote",
+        "FirstWO",
+        "LastWO",
+    ]
+    suf: str = 'STG' if COMP == STG else 'BWS'
+    sel_cols = [f"{sc}{suf}" for sc in sel_cols]
+    sel_cols.insert(0, "Date")
+    filtered_melted = filtered_melted[sel_cols]
+    st.dataframe(filtered_melted, hide_index=True, use_container_width=True)
+    # filtered_melted = filtered_melted.melt(
+    #     id_vars="Date",
+    #     value_vars=["NumNewQuotesBWS", "NumNewQuotesSTG"],
+    #     var_name="Category",
+    #     value_name="Count"
+    # )
+    # chart = px.bar(
+    #     filtered_melted,
+    #     barmode="stack",
+    #     x="Date",
+    #     y="Count",
+    #     color="Category",
+    #     title="Count of new Quotes & WOs for BWS & Stargate",
+    #     labels={"Date": "Date", "Count": "Num New Quotes"}
+    # )
+    filtered_melted: pd.DataFrame = filtered_melted.melt(
+        id_vars="Date",
+        value_vars=[f"NumNewQuotes{suf}", f"NumNewOrders{suf}"],
+        var_name="Category",
+        value_name="Count"
+    )
+    chart = px.bar(
+        filtered_melted,
+        barmode="stack",
+        x="Date",
+        y="Count",
+        color="Category",
+        title=f"Count of new Quotes & WOs {suf}",
+        labels={"Date": "Date", "Count": "Count"}
+    )
+
+    # filtered_melted: pd.DataFrame = filtered_melted.melt(
+    #     id_vars="Date",
+    #     value_vars=["NumNewQuotesBWS", "NumNewQuotesSTG", "NumNewOrdersBWS", "NumNewOrdersSTG"],
+    #     var_name="CategoryQuotesOrders",
+    #     value_name="CountQuotesOrders"
+    # )
+    # # filtered_melted_o: pd.DataFrame = filtered_melted.melt(
+    # #     id_vars="Date",
+    # #     value_vars=["NumNewOrdersBWS", "NumNewOrdersSTG"],
+    # #     var_name="CategoryOrders",
+    # #     value_name="CountOrders"
+    # # )
+    # # filtered_melted = filtered_melted_q.merge(
+    # #     filtered_melted_o,
+    # #     how="outer",
+    # #     on="Date"
+    # # )
+    #
+    # chart = px.bar(
+    #     filtered_melted,
+    #     barmode="stack",
+    #     x="Date",
+    #     y="CountQuotesOrders",
+    #     color="CategoryQuotesOrders",
+    #     title="Count of new Quotes & WOs for BWS & Stargate",
+    #     labels={"Date": "Date", "CountQuotesOrders": "Num New Quotes Orders"}
+    # )
+    st.plotly_chart(chart, theme=None, use_container_width=True)
+
 
 # Jobs In Wip -- Grouping
 with st.expander("Jobs in Wip By Grouping"):
