@@ -44,7 +44,7 @@ output_location_default: str = os.path.join(read_file_root, output_location_defa
 read_file_path: str = os.path.join(read_file_root, read_file)
 root_location_pdfs: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
 root_location_stg_pdfs: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS\STARGATE PDF"
-root_location_dwg_dxf: str = r"\\server4.bwsdomain.local\Design\DRAWINGS"
+root_location_dwg_dxf: str = r"\\server4.bwsdomain.local\Design\DRAWINGS\STANDARDS"
 root_location_stp: str = r"\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_"
 instructions: str = f"The file must contain a single column of part numbers.\nDo not add headers or any other columns.\nIt must be called '{read_file}'.\nPlease contact IT for any additional help with this program."
 # quit_message: str = "\nHit enter to quit."
@@ -166,7 +166,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
         df[f"{fe}_P"] = ""
     df["COMP"] = ""
 
-    u_pns = set(df["PN"].unique().tolist())
+    u_pns = set(map(str, df["PN"].unique().tolist()))
     n_parts = len(u_pns)
     pns = set(df["DXF_F"].unique().tolist()).union(
         set(df["DWG_F"].unique().tolist()).union(set(df["PDF_F"].unique().tolist())))
@@ -214,7 +214,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     # st.write(parts_with_found_pdfs)
 
     for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
-        # print(f"{len(file_names)=}, {file_names[:5]:}")
+        print(f"{len(file_names)=}, {file_names[:5]:}")
         for file in file_names:
             i += 1
             is_dxf: bool = file.endswith(".dxf")
@@ -227,6 +227,9 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
                 if pn in u_pns:
                     df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
                     progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+                # else:
+                #     if len(pn) < 12:
+                #         st.write(f"skipped {pn=}")
 
     for dir_path, dir_names, file_names in walked_stp_folder:
         # print(f"{len(file_names)=}, {file_names[:5]:}")
@@ -263,7 +266,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
         df_nf: pd.DataFrame = df.loc[~df[fe]]
         df_f: pd.DataFrame = df.loc[df[fe]]
         t_to_check: int = df_f.shape[0]
-        kpc = kpfe / t_to_check
+        kpc = kpfe / (1 if t_to_check == 0 else t_to_check)
         print(f"{k=}, {kpfe=}, {kpc=}")
         for j, row in df_f.iterrows():
             k += kpc
