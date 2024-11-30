@@ -4,12 +4,14 @@ import re
 from typing import Any, Optional, Literal
 
 import pandas as pd
+import pyautogui
 import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
 
 from pyodbc_connection import connect
+from sql_utility import create_sql
 from streamlit_utility import coloured_text
 
 
@@ -41,6 +43,7 @@ if not os.path.exists(ROOT_DIRECTORY_REQUESTS):
 
 
 st.set_page_config(layout="wide")
+# st.write(dict(st.session_state))
 DEFAULT_SESSION_STATE = {
     "auto_refresh": None,
     "text_input_username": "",
@@ -59,6 +62,7 @@ DEFAULT_SESSION_STATE = {
     # "select_shirt_size": None,
 
     "toggle_is_admin": False,
+    "toggle_submit_requests": True,
 
     "date_input_due": datetime.datetime.now().date(),
     "selectbox_company": "",
@@ -72,344 +76,14 @@ DEFAULT_SESSION_STATE = {
     "itr_edit_id": None,
     "multiselect_status": [],
     "multiselect_it_personnel": [],
-    "multiselect_requested_by": []
+    "multiselect_requested_by": [],
+    "session_sqls": {}
     # ,
     # "files_uploaded": ""  # This cannot be set using session_state
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
-
-
-#  Potential Functions for Utility Files
-
-def wrap(val: Any, is_col: bool = True, sanitize: bool = True) -> str:
-    # print(f"wrap: {val}")
-    if is_col:
-        v: str = f"[{str(val).removeprefix('[').removesuffix(']')}]"
-    else:
-        if isinstance(val, str) and val != "NULL":
-            v: str = f"'{val}'"
-        elif isinstance(val, datetime.datetime):
-            v: str = f"'{val:%Y-%m-%d %H:%M:%S}'"
-        elif isinstance(val, datetime.date):
-            v: str = f"'{val:%Y-%m-%d}'"
-        else:
-            v: str = str(val)
-    if sanitize:
-        v = v.strip()
-        if v:
-            v_first, *v_end = v
-            v = v_first + re.sub(r"[;'\\\"]", "", v[1:-1]) + "".join(v_end[-1:])
-    return v
-
-
-def create_sql(
-    table: str,
-    mode: Literal["select", "insert", "update", "delete"] = "select",
-    where: str | dict[str: dict[str: Any]] = "",
-    group:
-        tuple[tuple[str]] |
-        tuple[list[str]] |
-        list[tuple[str]] |
-        list[list[str]] |
-        list[str] |
-        tuple[str] |
-        str = "",
-    order:
-        tuple[tuple[str]] |
-        tuple[list[str]] |
-        list[tuple[str]] |
-        list[list[str]] |
-        list[str] |
-        tuple[str] |
-        str = "",
-    default_order: str = "ASC",
-    data: dict[str: Any] | list[str] | tuple[str] | str = None,
-    sanitize: Literal["all", "none"] | list[str] | tuple[str] = "all",
-    database: str = "BWSdb",
-    ignore_no_where: bool = False,
-    include_no_lock: bool = False,
-    in_line: bool = False,
-    transaction_wrap: bool = False
-):
-
-    sql_lines = []
-    sql = ""
-
-    if isinstance(sanitize, (list, tuple)):
-        sanitize = [str(s).lower() for s in sanitize]
-    else:
-        sanitize = sanitize.lower()
-
-    def do_sanitize(val: Any) -> bool:
-        if sanitize == "all":
-            return True
-        if sanitize == "none":
-            return False
-        if isinstance(sanitize, (list, tuple)):
-            return val.lower() in sanitize
-        return True
-
-    # def parse_where(clauses: Any) -> list[str]:
-    #     where_clause = ""
-    #
-    #     def op_process(var, ops_dict: dict[str: Any]) -> list[str]:
-    #         ops_clause = []
-    #         # for op, value_s in ops_dict.items():
-    #         #     op_s = "="
-    #         #     match op.lower():
-    #         #         case "!=":
-    #         #             op_s = "<>"
-    #         #         case "<" | ">" | "<=" | ">=":
-    #         #             op_s = op
-    #         #
-    #         #     test = []
-    #         #     print(f"OP {op=}, {value_s=}")
-    #         #     if not isinstance(value_s, (list, tuple)):
-    #         #         value_s = [value_s]
-    #         #     for i, val in enumerate(value_s):
-    #         #         if isinstance(val, (list, tuple)):
-    #         #             if op_s == "between":
-    #         #                 v0, v1 = val
-    #         #                 test.append(f"{v0} AND {v1}")
-    #         #             else:
-    #         #                 for j, val
-    #         #         else:
-    #         #
-    #         #             test.append(f" {val}")
-    #         #         # test = value_s
-    #         #         print(f"OP {test=}")
-    #         #
-    #         #         # ops_clause.append(f"{var} {op_s} {test}")
-    #         # print(f"OP {ops_clause=}")
-    #         return ops_clause
-    #
-    #     for i in range(0, len(clauses), 2):
-    #         var = clauses[i]
-    #         if isinstance(var, (list, tuple)):
-    #             # var_data = ''
-    #             for j, v_data in enumerate(var):
-    #                 print(f"{i=}, {j=}, {var=}, {v_data=}")
-    #                 if isinstance(v_data, dict):
-    #                     o_p = op_process(var, v_data)
-    #                     print(f"{o_p=}")
-    #                 #     for op, value_s in v_data.items():
-    #                 #         print(f"97 {i=}, {j=}, {var=}, {op=}, {value_s=}")
-    #                 else:
-    #                 #     op =
-    #                 #     value_s
-    #                     print(f"98 {i=}, {j=}, {var=}, {v_data=}")
-    #         else:
-    #             var_data = clauses[i + 1]
-    #             print(f"99 {i=}, {var=}, {var_data=}")
-    #     # return where_clause
-    #     return [str(where_clause)]
-
-    if mode in ("update", "delete"):
-        if not where and not ignore_no_where:
-            raise ValueError(f"Highly recommend including a where clause when updating or deleting. If you don't want to include a where clause, set 'ignore_no_where' to True. ")
-    if mode == "update":
-        if not isinstance(data, dict):
-            raise ValueError(f"When updating, data must be a dictionary where keys are table column names.")
-
-    table = wrap(table)
-    if include_no_lock:
-        if mode != "select":
-            raise ValueError("Cannot include 'WITH (NOLOCK)' when not performing a generic select.")
-        else:
-            table = f"{table} WITH (NOLOCK)"
-    if transaction_wrap:
-        if mode == "select":
-            raise ValueError(f"Shouldn't wrap select statements with Transaction.")
-    if isinstance(where, str):
-        where = where.replace("==", "=")
-    else:
-        print(f"{where=}")
-        where = parse_where(where, in_line=in_line)
-    if database:
-        table = f"{wrap(database)}.[dbo].{table}"
-    if data is None:
-        data = {}
-    elif isinstance(data, str):
-        data = [wrap(data)]
-    elif (mode == "select") and isinstance(data, (list, tuple)):
-        if data and not isinstance(data[0], str):
-            raise ValueError(f"You can only pass a list of data line(s) for insertion method.")
-    if data:
-        # cols = "[" + "], [".join(data) + "]"
-        if (mode == "insert") and isinstance(data, (list, tuple)):
-            cols = list(map(wrap, data[0]))
-            if in_line:
-                cols = ", ".join(cols)
-        else:
-            cols = list(map(wrap, data))
-            if in_line:
-                cols = ", ".join(cols)
-    else:
-        if group:
-            raise ValueError(f"You must specify columns for the select statement when addind a 'GROUP BY' clause.")
-        if mode not in ("select", "delete"):
-            raise ValueError(f"You must specify columns when not performing a generic select or delete.")
-        cols: str = "*"
-
-    if mode == "select":
-        # sql = f"SELECT {cols} FROM {table}"
-        sql_lines.append(f"SELECT")
-        sql_lines.append(cols)
-        sql_lines.append(f"FROM")
-        sql_lines.append(f"{table}")
-        if where:
-            # sql += f" WHERE {where}"
-            sql_lines.append(f"WHERE")
-            sql_lines.append(f"{where}")
-
-        if group:
-            if not isinstance(group, (list, tuple)):
-                group = [group]
-            group = [wrap(col) for col in group]
-            if in_line:
-                group = ", ".join(group)
-            # sql += f" GROUP BY {group}"
-            sql_lines.append(f"GROUP BY")
-            sql_lines.append(group)
-
-        if order:
-            if isinstance(order, (list, tuple)):
-                if len(order) == 2:
-                    order = f"{wrap(order[0])} {order[1]}"
-                else:
-                    order = [
-                        f"{wrap(col[0])} {(col[1] if len(col) == 2 else default_order).upper()}"
-                        if isinstance(col, (list, tuple))
-                        else f"{wrap(col)} {default_order}"
-                        for col in order
-                    ]
-                    if in_line:
-                        order = ", ".join(order)
-            else:
-                order = wrap(order)
-            # sql += f" ORDER BY {order}"
-            sql_lines.append(f"ORDER BY")
-            sql_lines.append(order)
-    elif mode == "insert":
-        if not data or not isinstance(data, (dict, list, tuple)):
-            raise ValueError(f"You must specify key-value pairs in the 'data' param, indicating which columns and values to insert.")
-        if isinstance(data, dict):
-            vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
-        else:
-            vals: list[str] = [("(" * min(i, 1)) + ", ".join([wrap(val, False, sanitize=do_sanitize(key)) for key, val in dat.items()]) + (")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
-        if in_line:
-            vals: str = ", ".join(vals)
-        # sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
-        sql_lines.append(f"INSERT INTO")
-        sql_lines.append(f"{table}")
-        sql_lines.append(f"(")
-        sql_lines.append(cols)
-        sql_lines.append(")")
-        sql_lines.append("VALUES")
-        sql_lines.append("(")
-        sql_lines.append(vals)
-        sql_lines.append(f")")
-    elif mode == "update":
-        # sql = f"UPDATE {table} SET "
-        # sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
-        sql_lines.append(f"UPDATE")
-        sql_lines.append(f"{table}")
-        sql_lines.append("SET")
-        if in_line:
-            sql_lines.append(", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()]))
-        else:
-            sql_lines.append([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
-
-        # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
-        if where:
-            # sql += f" WHERE {where}"
-            sql_lines.append(f"WHERE ")
-            sql_lines.append(f"{where}")
-    elif mode == "delete":
-        # sql = f"DELETE FROM {table}"
-        sql_lines.append(f"DELETE FROM")
-        sql_lines.append(f"{table}")
-        if where:
-            # sql += f" WHERE {where}"
-            sql_lines.append(f"WHERE")
-            sql_lines.append(f"{where}")
-
-    sc = "\n" if not in_line else " "
-    sql = sc.join(map(
-        lambda line:
-            # f",{sc}".join(line) if isinstance(line, (list, tuple)) else line.strip()
-            f"WW" if isinstance(line, (list, tuple)) else line.strip()
-        , sql_lines
-    ))
-    if transaction_wrap:
-        sql = f"BEGIN TRAN;{sc}{sql}"
-    sql += "\n;" if not in_line else ";"
-    if transaction_wrap:
-        sql += f"{sc}ROLLBACK;{sc}COMMIT;"
-    if not in_line:
-        tbs: bool = False
-        keywords = {
-            "BEGIN TRAN",
-            "ROLLBACK",
-            "COMMIT",
-            "DELETE FROM",
-            "SELECT",
-            "INSERT INTO",
-            "VALUES",
-            "UPDATE",
-            "SET",
-            "(",
-            ")",
-            "FROM",
-            "WHERE",
-            "GROUP BY",
-            "ORDER BY"
-        }
-        sql = ""
-        if transaction_wrap:
-            sql = "BEGIN TRAN;\n\n"
-        # shrink: bool = False
-        print(f"{sql_lines=}")
-        for i, sql_line in enumerate(sql_lines):
-            print(f"{i=}, {sql_line=}")
-            if isinstance(sql_line, (list, tuple)):
-                for j, line in enumerate(sql_line):
-                    # print(f"{i=}, {j=}, {line=}")
-                    sql += f"{'\t' * int(tbs)}{line},\n"
-                sql = sql.rstrip().removesuffix(",") + "\n"
-            else:
-                sql += f"{'\t' * int(tbs)}{sql_line}\n"
-            if i < (len(sql_lines) - 1):
-                # prev_line = sql_lines[i - 1].strip().upper()
-                next_line = str(sql_lines[i + 1]).strip().upper()
-                print(f"{next_line=}")
-                for kwd in keywords:
-                    if tbs or (sql_line == "VALUES"):
-                        if next_line.strip().upper().startswith(kwd):
-                            tbs = False
-                            break
-                    else:
-                        # if sql_line != "VALUES":
-                        if sql_line.strip().upper().startswith(kwd):
-                            if ((sql_line != ")") and (next_line != "VALUES")):
-                                tbs = True
-                                break
-                    # if prev_line.startswith(kwd):
-                    #     tbs = True
-                    #     break
-                    # # elif tbs and any([s_line.strip().upper() for s_line in keywords])
-                    # elif tbs and sql_line.strip().upper().startswith(kwd):
-                    #     tbs = False
-                    #     break
-            # if shrink:
-            #     tbs -= 1
-        sql = sql.strip()
-        sql += f"\n;\n"
-        if transaction_wrap:
-            sql += "\nROLLBACK;\nCOMMIT;"
-
-    return sql
+# st.write(dict(st.session_state))
 
 
 ######################
@@ -431,6 +105,42 @@ def load_departments() -> pd.DataFrame:
         [Dept].[Dept] <> ''
     ;
     """
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_itr_hardware() -> pd.DataFrame:
+    sql = "[BWSdb].[dbo].[ITR Hardware]"
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_itr_software() -> pd.DataFrame:
+    sql = "[BWSdb].[dbo].[ITR Software]"
+    connection_data = {
+        "sql": sql,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_itr_training() -> pd.DataFrame:
+    sql = "[BWSdb].[dbo].[ITR Training]"
     connection_data = {
         "sql": sql,
         "database": "bwsdb",
@@ -542,23 +252,31 @@ def submit_mac_request(req_id: int, personnel_id: int):
         "LabourActual": lab_act,
         "Comments": comments
     }
-    st.write(create_sql(
+    sql = create_sql(
         "IT Requests",
         data=update_data,
         mode="update",
         sanitize=["Comments"],
         where=f"[ITRequestID#] == {req_id}"
-    ))
+    )
+    if st.session_state.get("toggle_submit_requests", True):
+        connect(sql)
+    # st.write(sql)
+    st.session_state["session_sqls"][f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S %f}"] = sql
     update_data = {
         "Status": "Complete",
         "CompletionDate": datetime.datetime.now()
     }
-    st.write(create_sql(
+    sql = create_sql(
         "IT Requests",
         data=update_data,
         mode="update",
         where=f"[ITRequestID#] == {req_id}"
-    ))
+    )
+    if st.session_state.get("toggle_submit_requests", True):
+        connect(sql)
+    # st.write(sql)
+    st.session_state["session_sqls"][f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S %f}"] = sql
 
     # st.session_state.update({
     #     "mark_as_complete_submitted": False
@@ -579,8 +297,8 @@ def submit_mac_request(req_id: int, personnel_id: int):
 def mark_as_complete_input(req_id, personnel_id):
 
     def click_date_stamp():
-        text = st.session_state.get("text_area_request_comments", "")
-        text = f"{text.strip()}\n{datetime.datetime.now():%Y-%m-%d - %H:%M:%S} - {st.session_state.get('user_name')}: "
+        text = (st.session_state.get("text_area_request_comments", "").rstrip() + "\n").lstrip()
+        text = f"{text}{datetime.datetime.now():%Y-%m-%d - %H:%M:%S} - {st.session_state.get('user_name')}: "
         st.session_state.update({
             "text_area_request_comments": text
         })
@@ -806,6 +524,25 @@ def itr_edit_params():
         })
 
 
+def get_request_sub_types(rt_in: str = None) -> list[str]:
+    if rt_in is None:
+        rt_ = st.session_state.get("selectbox_request_type", "").title()
+    else:
+        rt_ = rt_in
+    used = df_itr_requests.loc[
+               df_itr_requests["RequestType"].str.title() == rt_, "RequestSubType"
+           ].dropna().str.title().unique().tolist()
+    if rt_ == "Hardware":
+        used += df_itr_hardware["Hardware"].values.tolist()
+    elif rt_ == "Software":
+        used += df_itr_software["Software"].values.tolist()
+    elif rt_ == "Training":
+        used += df_itr_training["Training"].values.tolist()
+    else:
+        used = []
+    return sorted(set(used))
+
+
 # def submit_form(form_key):
 #     print(f"SUBMIT {form_key} FORM")
 #     sql = ""
@@ -847,6 +584,22 @@ default_company: str = "BWS"
 default_department: str = "IT"
 default_request_type: str = "Training"
 default_request_sub_type: str = "Other"
+list_valid_file_attachment_types: list[str] = [
+    # images
+    "jpg", "jpeg", "png", "gif", "webp", "heic",
+
+    # audio video
+    "mp3", "mp4",
+
+    # Office
+    "docx", "xlsx", "xlsm", "pptx",
+
+    # misc
+     "txt", "msg", "pdf",
+    
+    # code
+    "py", "sql", "json", "csv"
+]
 
 
 df_itr_requests: pd.DataFrame = load_it_requests()
@@ -855,6 +608,9 @@ df_itr_personnel: pd.DataFrame = load_itr_personnel()
 df_itr_customers: pd.DataFrame = load_itr_customers()
 df_app_directory: pd.DataFrame = load_itstr_app_directory()
 df_user_directory: pd.DataFrame = load_itstr_user_directory()
+df_itr_hardware: pd.DataFrame = load_itr_hardware()
+df_itr_software: pd.DataFrame = load_itr_software()
+df_itr_training: pd.DataFrame = load_itr_training()
 
 df_itr_requests_og: pd.DataFrame = df_itr_requests.copy()
 df_departments_og: pd.DataFrame = df_departments.copy()
@@ -885,10 +641,10 @@ st.session_state.update({
 
 list_companies: list[str] = sorted(df_itr_requests["Company"].dropna().str.upper().unique().tolist())
 list_departments: list[str] = sorted(df_departments["Dept"].dropna().str.title().unique().tolist())
-list_request_types: list[str] = sorted(df_itr_requests["RequestType"].dropna().str.title().unique().tolist())
+list_request_types: list[str] = sorted(["Hardware", "Software", "Training"])
 rt: str = st.session_state.get("selectbox_request_type", [])
 rb: str = st.session_state.get("user_full_name", [])
-list_request_sub_types: list[str] = sorted(df_itr_requests.loc[df_itr_requests["RequestType"].str.title() == rt, "RequestSubType"].dropna().str.title().unique().tolist())
+list_request_sub_types: list[str] = get_request_sub_types()
 list_customers: list[str] = sorted(df_itr_customers.loc[df_itr_customers["Active"] == 1, "Name"].dropna().str.title().unique().tolist())
 
 list_companies.insert(0, "")
@@ -922,6 +678,35 @@ df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.title()
 # st.write(df_itr_customers)
 
 list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().str.title().unique().tolist())
+
+
+def clear_cache():
+    st.cache_data.clear()
+    st.cache_resource.clear()
+
+
+def rerun():
+    # st.rerun()  # no op
+    pyautogui.hotkey("ctrl", "F5")
+
+
+def clear_cache_and_rerun():
+    clear_cache()
+    rerun()
+
+
+button_clear_cache_and_rerun = st.button(
+    label="Clear Cache & Rerun",
+    on_click=clear_cache_and_rerun
+)
+
+# if st.button(
+#     label="Clear Cache & Rerun"
+# ):
+#     st.cache_data.clear()
+#     st.cache_resource.clear()
+#     st.rerun()
+
 
 grid = {
     "top_bar": st.columns([0.6, 0.2, 0.2]),
@@ -1113,8 +898,12 @@ def request_form(form, mode: Literal["new", "edit"]):
             df_personnel: pd.DataFrame = df_personnel.iloc[0]
             personnel_id: int = df_personnel["ITPersonID#"]
 
-    is_admin: bool = personnel_id >= 0
-    st.session_state.setdefault("toggle_is_admin", is_admin)
+    is_admin: bool = personnel_id > 1
+    submit_requests: bool = st.session_state.get("toggle_submit_requests", True)
+    st.write(f"{personnel_id=}, {is_admin=}, {submit_requests=}")
+    st.session_state.update({"toggle_is_admin": is_admin})
+    # st.session_state.update({"toggle_mark_as_complete": False})
+    # st.session_state.setdefault("toggle_is_admin", is_admin)
     st.session_state.setdefault("toggle_mark_as_complete", False)
 
     if mode == "edit":
@@ -1160,9 +949,10 @@ def request_form(form, mode: Literal["new", "edit"]):
             "multiselect_followup": follow_up_names,
             "mark_as_complete_submitted": False
         })
-        list_request_sub_types = sorted(df_itr_requests.loc[df_itr_requests["RequestType"].str.title() == request_type.title(), "RequestSubType"].dropna().str.title().unique().tolist())
+        # list_request_sub_types = sorted(df_itr_requests.loc[df_itr_requests["RequestType"].str.title() == request_type.title(), "RequestSubType"].dropna().str.title().unique().tolist())
+        list_request_sub_types = get_request_sub_types(request_type)
 
-    file_uploader = None
+    # file_uploader = None
 
     form_grid = {
         "title": form.columns(1, vertical_alignment="center"),
@@ -1200,54 +990,54 @@ def request_form(form, mode: Literal["new", "edit"]):
         text: str = st.session_state.get("text_request", "").strip()
         follow_up: list[str] = st.session_state.get("multiselect_followup", [])
         # st.write(file_uploader)
-        attachments: list[dict] = []
-        if file_uploader:
-            cols = [
-                "name",
-                "type",
-                "size",
-                "close",
-                "closed",
-                "detach",
-                "file_id",
-                "fileno",
-                "flush",
-                "getbuffer",
-                "getvalue",
-                "isatty",
-                "read",
-                "read1",
-                "readable",
-                "readinto",
-                "readinto1",
-                "readline",
-                "readlines",
-                "seek",
-                "seekable",
-                "size",
-                "tell",
-                "truncate",
-                "writable",
-                "write",
-                "writelines"
-                # ,
-                # "_file_urls",
-                # "_checkWritable",
-                # "_checkSeekable",
-                # "_checkReadable",
-                # "_checkClosed"
-            ]
-            attachments = [
-                {
-                    f"file_{key}": getattr(file, key)
-                    for key in cols
-                    if not callable(getattr(file, key))
-                }
-                for file in file_uploader
-            ]
-
-        # st.write("attachments")
-        # st.write(attachments)
+        # attachments: list[dict] = []
+        # if file_uploader:
+        #     cols = [
+        #         "name",
+        #         "type",
+        #         "size",
+        #         "close",
+        #         "closed",
+        #         "detach",
+        #         "file_id",
+        #         "fileno",
+        #         "flush",
+        #         "getbuffer",
+        #         "getvalue",
+        #         "isatty",
+        #         "read",
+        #         "read1",
+        #         "readable",
+        #         "readinto",
+        #         "readinto1",
+        #         "readline",
+        #         "readlines",
+        #         "seek",
+        #         "seekable",
+        #         "size",
+        #         "tell",
+        #         "truncate",
+        #         "writable",
+        #         "write",
+        #         "writelines"
+        #         # ,
+        #         # "_file_urls",
+        #         # "_checkWritable",
+        #         # "_checkSeekable",
+        #         # "_checkReadable",
+        #         # "_checkClosed"
+        #     ]
+        #     attachments = [
+        #         {
+        #             f"file_{key}": getattr(file, key)
+        #             for key in cols
+        #             if not callable(getattr(file, key))
+        #         }
+        #         for file in file_uploader
+        #     ]
+        #
+        # # st.write("attachments")
+        # # st.write(attachments)
 
         follow_up_emails: list[str] = []
         for name in follow_up:
@@ -1337,12 +1127,16 @@ def request_form(form, mode: Literal["new", "edit"]):
                 os.mkdir(directory)
 
             for file in file_uploader:
-                file_name = getattr(file, "name")
-                file_path = os.path.join(directory, file_name)
-                with open(file_path, "wb") as f:
-                    f.write(file.getbuffer())
+                try:
+                    file_name = getattr(file, "name")
+                    file_path = os.path.join(directory, file_name)
+                    with open(file_path, "wb") as f:
+                        f.write(file.getbuffer())
+                except Exception as e:
+                    st.write(f"Error copying file {file}.\n{e}")
+                    continue
 
-            directory = "\\\\" + directory.removeprefix("\\")
+            directory = "\\\\" + directory.removeprefix("\\\\").removeprefix("\\")
             insert_data: dict[str: Any] = {
                 "Request": text,
                 "DueDate": due_date,
@@ -1362,12 +1156,16 @@ def request_form(form, mode: Literal["new", "edit"]):
             sanitize_cols = list(insert_data.keys())
             sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
             sanitize_cols.remove("Directory")  # preserve backslashes in path
-            st.write(create_sql(
+            sql = create_sql(
                 "IT Requests",
                 data=insert_data,
                 mode="insert",
                 sanitize=sanitize_cols
-            ))
+            )
+            if st.session_state.get("toggle_submit_requests", True):
+                connect(sql)
+            st.session_state["session_sqls"][f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S %f}"] = sql
+            # st.write(sql)
 
             if mode == "new":
                 # verify the id claimed
@@ -1387,6 +1185,9 @@ def request_form(form, mode: Literal["new", "edit"]):
                     mark_as_complete_input(my_id, personnel_id)
                 else:
                     print(f"ALREADY HANDLED {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
+            if not mark_as_complete:
+                st.session_state.update({"mark_as_complete_submitted": True})
 
             if mode == "new":
                 dialog_mac_submitted_correctly: bool = st.session_state.get("mark_as_complete_submitted", False)
@@ -1444,14 +1245,24 @@ def request_form(form, mode: Literal["new", "edit"]):
             )
         with form_grid["inputs"][2]:
             if is_admin:
-                st.toggle(
+                toggle_is_admin = st.toggle(
                     label="Admin",
+                    # value=st.session_state.get("toggle_is_admin"),
                     key="toggle_is_admin",
                     disabled=True
                 )
+                # st.write(f"AA {st.session_state.get('toggle_submit_requests')=}")
+                # st.write(f"AA {type(st.session_state.get('toggle_submit_requests'))=}")
+                # I don't know why this toggle needs to have a 'value', the session_state value is accurate above...?
+                toggle_submit_requests = st.toggle(
+                    label="Submit Requests?",
+                    value=st.session_state.get("toggle_submit_requests"),
+                    key="toggle_submit_requests"
+                )
                 if mode == "new":
-                    st.toggle(
+                    toggle_mark_as_complete = st.toggle(
                         label="Mark Complete?",
+                        # value=st.session_state.get("toggle_mark_as_complete"),
                         key="toggle_mark_as_complete"
                     )
             st.slider(
@@ -1465,14 +1276,33 @@ def request_form(form, mode: Literal["new", "edit"]):
                 label="Attachments",
                 accept_multiple_files=True,
                 key="files_uploaded"
+                # ,
+                # type=list_valid_file_attachment_types.copy()
             )
         with form_grid["text"][0]:
+            st.button(
+                label="Date Stamp",
+                key="button_text_request_date_stamp",
+                on_click=lambda: st.session_state.update({
+                    "text_request":
+                        (st.session_state.get("text_request", "").rstrip() + "\n").lstrip() + f"{datetime.datetime.now():%Y-%m-%d - %H:%M:%S} - {st.session_state.get('user_name')}: "
+                })
+            )
             st.text_area(
                 label="Request",
                 key="text_request",
                 placeholder="Describe your issue, include as many details as possible and any supporting documentation you can provide. Screenshots are helpful."
             )
             if mode == "edit":
+                st.button(
+                    label="Date Stamp",
+                    key="button_text_comments_date_stamp",
+                    on_click=lambda: st.session_state.update({
+                        "text_comments":
+                            (st.session_state.get("text_comments",
+                                                  "").rstrip() + "\n").lstrip() + f"{datetime.datetime.now():%Y-%m-%d - %H:%M:%S} - {st.session_state.get('user_name')}: "
+                    })
+                )
                 st.text_area(
                     label="Comments",
                     key="text_comments",
@@ -1702,191 +1532,6 @@ print(f"RERUN for '{un}'")
 #     ops_clause = "(" + ") AND (".join(ops_clause) + ")"
 #     print(f"OP {ops_clause=}")
 #     return ops_clause
-
-
-def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
-    trace: bool = False
-    where_clause = ""
-
-    print(f"PW type={type(clauses)}, {clauses=}")
-
-    def op_process(var, ops_dict: dict[str: Any]) -> str:
-
-        print(f"{var=}, {ops_dict=}")
-
-        ops_clause = []
-        for op, value_s in ops_dict.items():
-            # op_s = "="
-            op = op.lower()
-            match op:
-                case "!=":
-                    op = "<>"
-                case "<" | ">" | "<=" | ">=":
-                    op = op
-                case "in" | "not in" | "between":
-                    op = op.upper()
-                case "like":
-                    op = "LIKE"
-                case _:
-                    op = "="
-            # op = op_s
-            test = ""
-            # if not isinstance(value_s, (list, tuple)):
-            value_s = [value_s]
-            for i, val in enumerate(value_s):
-                if op == "BETWEEN":
-                    v0, v1 = val
-                    ops_clause.append(f"{var} {op} {wrap(v0, is_col=False)} AND {wrap(v1, is_col=False)}")
-                else:
-                    if isinstance(val, (list, tuple)):
-                        if op in ("IN", "NOT IN"):
-                            in_mem = []
-                            for j, val_ in enumerate(val):
-                                in_mem.append(wrap(val_, is_col=False))
-                            ops_clause.append(f"{var} {op} ({', '.join(in_mem)})")
-                        else:
-                            for j, val_ in enumerate(val):
-                                ops_clause.append(f"{var} {op} {wrap(val_, is_col=False)}")
-                    else:
-                        ops_clause.append(f"{var} {op} {wrap(val, is_col=False)}")
-            # test = []
-            # print(f"OP {op=}, {value_s=}")
-            # if not isinstance(value_s, (list, tuple)):
-            #     value_s = [value_s]
-            # for i, val in enumerate(value_s):
-            #     if isinstance(val, (list, tuple)):
-            #         if op_s == "between":
-            #             v0, v1 = val
-            #             test.append(f"{v0} AND {v1}")
-            #         else:
-            #             for j, val
-            #     else:
-            #
-            #         test.append(f" {val}")
-            #     # test = value_s
-            #     print(f"OP {test=}")
-
-            # ops_clause.append(f"{var} {op_s} {test}")
-        ops_clause = "(" + (") AND (".join(ops_clause)) + ")"
-        print(f"OP type={type(ops_clause)}, {ops_clause=}")
-        return ops_clause
-
-    def help_parse(clause_stmt, logic="OR", nest_level: int = 1) -> str:  # list[str]:
-
-        if not clause_stmt:
-            return ""
-
-        # ts = ("####" * nest_level)
-        ologic: str = "OR" if logic == "AND" else "AND"
-        nl = "" if in_line else "\n"
-        ts = "\t"
-        ts1 = ("\t" * (nest_level + 0))
-        # a = ts + ("(" if in_line else f"A(")
-        a = ("(" if in_line else f"(")
-        # b = ts + (f" {logic} " if in_line else f"\n{ts1}{logic}Z")
-        b = (f" {logic} " if in_line else f"\n{ts1}{logic} ")
-        c = ")" if in_line else f")"
-
-        if trace:
-            print(f"HP, LG={logic}, type={type(clause_stmt)}, {clause_stmt=}")
-
-        if isinstance(clause_stmt, str):
-            return ("=0=" if trace else "") + nl + ts + a + (b.join([clause_stmt]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
-            # if in_line:
-            #     return "(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
-            # else:
-            #     return "\t(" + (f" {logic} ".join([clause_stmt]).strip().removesuffix(logic).strip()) + ")"
-
-        if isinstance(clause_stmt, (list, tuple)) and (len(clause_stmt) == 2) and isinstance(clause_stmt[1], dict):
-            var, stmt_data_s = clause_stmt
-            if (isinstance(var, str) and isinstance(stmt_data_s, dict)):
-                d = (f" {ologic} " if in_line else f"\n{ts1}{ologic}Z")
-                return ("=1=" if trace else "") + nl + ts + a + (d.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
-                # return "=1=" + ts + a + (b.join([op_process(var, stmt_data_s)]).removesuffix(logic).removeprefix("(").removesuffix(")")) + c
-                # return a + (b.join([op_process(var, stmt_data_s)]).strip().removesuffix(logic)) + c
-
-            # # else:
-            #     if in_line:
-            #         return "(" + (f" {logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()) + ")"
-            #     else:
-            #         return "\t(" + (f"\n\t{logic} ".join([op_process(var, stmt_data_s)]).strip().removesuffix(logic).strip()) + ")"
-            # # else:
-            # #     for
-        if isinstance(clause_stmt, dict):
-            return ("=2=" if trace else "") + nl + ts + a + (b.join([op_process(k, v).removeprefix("(").removesuffix(")") for k, v in clause_stmt.items()])) + c
-            # if in_line:
-            #     return "(" + (f" {logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])) + ")"
-            # else:
-            #     return "\t(" + (f"\n\t{logic} ".join([op_process(k, v) for k, v in clause_stmt.items()])) + ")"
-
-        res_clauses = []
-        for i, clause_data in enumerate(clause_stmt):
-            if trace:
-                print(f"HP LOOP {i=}, type={type(clause_data)}, {clause_data=}")
-            if isinstance(clause_stmt, dict):
-                var = clause_data
-                clause_data = clause_stmt[clause_data]
-                if not isinstance(clause_data, dict):
-                    res_clauses.extend([("=4=" if trace else "") + help_parse(cd, nest_level=nest_level+1) for cd in clause_data])
-                    # res_clauses += ["A"]
-                else:
-                    res_clauses.append(("=5=" if trace else "") + op_process(var, clause_data))
-                    # res_clauses += ["B"]
-            else:
-                if isinstance(clause_data, (list, tuple)):
-                    ret_val = help_parse(
-                        clause_data,
-                        logic=ologic,
-                        nest_level=0
-                    ).strip().removeprefix("(").removesuffix(")").strip()
-
-                    res_clauses.append(
-                        ("=6=" if trace else "") + "(" + ret_val + ")"
-                    )
-                    # res_clauses.append(op_process(var, clause_data))
-                    # res_clauses += ["C"]
-                elif isinstance(clause_data, str):
-                    res_clauses.append(("7" if trace else "") + clause_data)
-                else:
-                    if isinstance(clause_data, dict):
-                        res_clauses.extend([("=8=" if trace else "") + help_parse(clause_data, logic=ologic, nest_level=nest_level+1)])
-                        # res_clauses += ["D"]
-                    else:
-                        res_clauses += [f"INVESTIGATE THIS CLAUSE_DATA {type(clause_data)=}"]
-        if res_clauses:
-            res_clauses[0] = f"({res_clauses[0]}"
-            res_clauses[-1] = f"{res_clauses[-1]})"
-        # return a + (b.join(res_clauses)) + c
-        # return b.join(res_clauses)
-        return f"{nl}\t" + f"{nl}\t{logic} ".join(res_clauses)
-        # if in_line:
-        #     return "(" + (f" {logic} ".join(res_clauses).strip().removesuffix(logic).strip()) + ")"
-        # else:
-        #     return "\t(" + (f"\n\t{logic} ".join(res_clauses).strip().removesuffix(logic).strip()) + ")"
-
-    return help_parse(clauses)
-
-
-    # for i in range(0, len(clauses), 2):
-    #     var = clauses[i]
-    #     if isinstance(var, (list, tuple)):
-    #         # var_data = ''
-    #         for j, v_data in enumerate(var):
-    #             print(f" {i=}, {j=}, {var=}, {v_data=}")
-    #             if isinstance(v_data, dict):
-    #                 o_p = op_process(var, v_data)
-    #                 print(f"  {o_p=}")
-    #             #     for op, value_s in v_data.items():
-    #             #         print(f"97 {i=}, {j=}, {var=}, {op=}, {value_s=}")
-    #             else:
-    #             #     op =
-    #             #     value_s
-    #                 print(f"    98 {i=}, {j=}, {var=}, {v_data=}")
-    #     else:
-    #         var_data = clauses[i + 1]
-    #         print(f"     99 {i=}, {var=}, {var_data=}")
-    # # return where_clause
-    # return [str(where_clause)]
 
 
 if df_app_directory.empty:
@@ -2250,3 +1895,5 @@ else:
     #                 )
 
 # st.write(st.session_state)
+if not st.session_state.get("toggle_submit_requests", True):
+    st.write(st.session_state.get("session_sqls", {}))
