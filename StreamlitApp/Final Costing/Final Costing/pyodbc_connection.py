@@ -8,8 +8,8 @@ VERSION = \
     """
     General Pyodbc connection handler.
     Geared towards BWS connections.
-    Version...............2.3
-    Date...........2024-09-10
+    Version...............2.4
+    Date...........2024-12-02
     Author(s)....Avery Briggs
     """
 
@@ -139,12 +139,20 @@ def connect(
         ])
         for stmt in ["EXEC "]
     ])
+    has_delete = all([
+        any([
+            stmt in sql.upper(),
+            f"{stmt.rstrip()}\n" in sql.upper(),
+            f"{stmt.rstrip()}\t" in sql.upper()
+        ])
+        for stmt in ["DELETE ", "FROM "]
+    ])
 
     if all([
         n_distinct_queries == 1,
         "SELECT" not in sql.upper(),
         "FROM" not in sql.upper(),
-        not any([has_update, has_insert, has_exec])
+        not any([has_update, has_insert, has_exec, has_delete])
     ]):
         # single table name passed
         tbl = sql.removeprefix("[").removesuffix("]")
@@ -170,7 +178,7 @@ def connect(
                 print(f"NO-EXEC SQL: ", end="")
             print(sql)
 
-        if has_insert or has_update:
+        if has_insert or has_update or has_delete:
             # no return value
             if do_exec:
                 crsr.execute(sql)
