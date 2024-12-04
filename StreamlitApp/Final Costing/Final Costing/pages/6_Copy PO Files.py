@@ -37,6 +37,20 @@ def hold_walk_stp():
     return list(os.walk(root_location_stp))
 
 
+def check_folder_exists():
+    folder_name = st.session_state.get("text_input_output_folder", "").strip()
+    if folder_name:
+        dir_name = os.path.dirname(output_location_default)
+        path = os.path.join(dir_name, folder_name)
+        path_exists = os.path.exists(path)
+        has_files = os.listdir(path) if path_exists else []
+        if has_files:
+            st.info(body=f"{len(has_files)} file{'' if len(has_files) == 1 else 's'} already exists in this folder")
+        elif path_exists:
+            st.info(body="This folder already exists, and is empty")
+
+
+
 read_file_root: str = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files"
 read_file: str = r"PO LIST.xlsx"
 output_location_default: str = next_available_file_name("output")
@@ -91,6 +105,11 @@ for pth in necessery_files:
 # )
 
 output_location = st.session_state.get("output_location", output_location_default)
+output_folder = st.session_state.get("text_input_output_folder", "output").strip()
+if not output_folder:
+    output_folder = "output"
+if output_folder != "output":
+    output_location = os.path.join(os.path.dirname(output_location), output_folder)
 if not output_location.strip():
     output_location = output_location_default
 
@@ -116,7 +135,7 @@ button_reset_part_data = button_cols[1].button(
     label="reset parts",
     key="button_reset_part_data",
     on_click=lambda: st.session_state.update({
-        "df": pd.DataFrame(),
+        "df": pd.DataFrame(columns=["PN"]),
         "has_run": False
     })
 )
@@ -128,18 +147,26 @@ button_run_part_data = button_cols[2].button(
     })
 )
 
-df: pd.DataFrame = st.session_state.get("df", pd.DataFrame())
+text_input_output_folder = st.text_input(
+    label="Enter a PO Number to save the copied files into as a folder.",
+    placeholder=os.path.basename(output_location_default),
+    key="text_input_output_folder",
+    on_change=check_folder_exists
+)
+
+df: pd.DataFrame = st.session_state.get("df", pd.DataFrame(columns=["PN"]))
 
 if not df.empty:
     df = df.rename(columns={
         0: "PN"
     })
+    df["PN"] = df["PN"].astype(str)
 else:
     st.write(f"Enter your part numbers in this excel first: '{read_file}'")
     st.write(instructions)
 
 if not st.session_state.get("has_run", False):
-    result_cols[0].dataframe(df, use_container_width=True, hide_index=True)
+    result_cols[0].dataframe(df["PN"], use_container_width=True, hide_index=True)
 result_cols[0].write(f"{df.shape[0]} part{'' if (df.shape[0] == 1) else 's'} loaded")
 
 if (not df.empty) and st.session_state.get("button_run_part_data"):
@@ -294,7 +321,8 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     tt_copying = (t_copying[1] - t_copying[0]).total_seconds()
     progress_copying.progress(100, f"copying... {percent(1)} -- results in {tt_copying:.2f} seconds")
 
-    st.write(f"{t_copied} File{'' if t_copied == 1 else 's'} copied to '{output_location}'")
+    st.write(f"{t_copied} File{'' if t_copied == 1 else 's'} copied to:")
+    st.code(output_location)
 
     # st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
     # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)

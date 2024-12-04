@@ -13,8 +13,8 @@ import datetime
 VERSION = \
     """	
     General SQL Utility Functions
-    Version..............1.01
-    Date...........2024-11-29
+    Version..............1.02
+    Date...........2024-12-03
     Author(s)....Avery Briggs
     """
 
@@ -581,6 +581,10 @@ def parse_connection_data(data: dict | str) -> dict:
         "unipoint_live": {
             "uid": "SRS",
             "pwd": ""
+        },
+        "companyh": {
+            "uid": "user5",
+            "pwd": "M@gic456"
         }
     }
 
