@@ -1,0 +1,12 @@
+{
+    "Orders": {
+        "otype": "table",
+        "pk": [
+            "ID"
+        ],
+        "fk": {},
+        "columns": {
+            "a": ""
+        }
+    }
+}

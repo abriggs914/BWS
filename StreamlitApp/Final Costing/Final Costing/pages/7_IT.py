@@ -11,7 +11,7 @@ from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
 
 from pyodbc_connection import connect
-from sql_utility import create_sql, parse_connection_data
+from sql_utility import *
 from streamlit_utility import coloured_text
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
@@ -74,7 +74,11 @@ DEFAULT_SESSION_STATE = {
     "multiselect_status": [],
     "multiselect_it_personnel": [],
     "multiselect_requested_by": [],
-    "session_sqls": {}
+    "session_sqls": {},
+
+    "toggle_use_alias": True,
+    "radio_query_type": "SELECT",
+    "toggle_use_join_0": False
     # ,
     # "files_uploaded": ""  # This cannot be set using session_state
 }
@@ -200,6 +204,17 @@ def load_itstr_user_directory() -> pd.DataFrame:
         "pwd": CREDS_BWS["pwd"]
     }
     return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def get_tables(db: str) -> pd.DataFrame:
+    return get_database_tables(db)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def get_cols(table: str, database: str):
+    # st.write(f"GET_COLS -> {table=}, {database=}")
+    return get_table_cols(table, database, use_streamlit_cache=True)
 
 
 def get_next_it_request_number() -> int:
@@ -679,6 +694,7 @@ list_valid_file_attachment_types: list[str] = [
 list_databases = [
     "BWSdb",
     "StargateDB",
+    "CompanyH",
     "SysproCompanyA",
     "SysproCompanyS",
     "SysproCompanyL",
@@ -814,7 +830,7 @@ grid = {
 }
 
 tab_names = ["New", "Edit", "Server"]
-sm_tab_names = ["Search Tables", "Coming Soon"]
+sm_tab_names = ["Search Tables", "SQL Creator", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
         tab_choice = pills("Options:", tab_names)
@@ -1621,34 +1637,172 @@ def server_maintenance():
                 use_container_width=True
             )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         if sm_tabs == sm_tab_names[1]:
+            # SQL Creator
+
+            list_query_types: list[str] = ["SELECT", "UPDATE", "INSERT", "DELETE"]
+            list_join_options: list[str] = ["INNER", "LEFT", "RIGHT", "CROSS", "FULL"]
+
+            input_db_cols = st.columns(len(list_databases) + 1)
+            input_table_cols = st.columns(1)
+            input_join_cols = st.columns([0.35, 0.65])
+            radio_query_type = input_db_cols[0].radio(
+                label="Query Type:",
+                key="radio_query_type",
+                options=list_query_types,
+                disabled=True
+            )
+            toggles_dbs = []
+            db_options_0 = []
+            for i, db in enumerate(list_databases):
+                k = f"toggle_db_{db}"
+                toggles_dbs.append(
+                    input_db_cols[i + 1].toggle(
+                        label=db,
+                        key=k
+                    )
+                )
+                v = st.session_state.get(k, False)
+                if v:
+                    df_tables = get_tables(db)
+                    for j, table_name in enumerate(df_tables["TABLE_NAME"].dropna().unique()):
+                        db_options_0.append(f"{wrap(db)}.[dbo].{wrap(table_name)}")
+
+                # table_catalog = row["TABLE_CATALOG"]
+                # table_name = row["TABLE_NAME"]
+                # col_name = row["COLUMN_NAME"]
+                # p_key = row["PRIMARY_KEY"]
+                # d_type = row["DATA_TYPE"]
+                # char_max_len = row["CHARACTER_MAXIMUM_LENGTH"]
+
+            selectbox_table_0 = input_table_cols[0].selectbox(
+                label="Select a table:",
+                key="selectbox_table_0",
+                options=db_options_0
+            )
+
+            toggle_use_alias = input_table_cols[0].toggle(
+                label="Use Aliasing?",
+                key="toggle_use_alias"
+            )
+
+            if st.session_state.get("toggle_use_alias", True):
+                text_input_alias_0 = input_table_cols[0].text_input(
+                    label="Alias: (SELECT * FROM [Table] AS #ALIAS#)",
+                    key="text_input_alias_0",
+                    placeholder="If left blank, the first letter of the table will be used."
+                )
+
+                toggle_use_join_0 = input_join_cols[0].toggle(
+                    label="Add a JOIN?",
+                    key="toggle_use_join_0"
+                )
+
+                if st.session_state.get("toggle_use_join_0", False):
+                    db_options_1 = db_options_0.copy()
+                    db_options_1.remove(selectbox_table_0)
+                    cols_table_0 = get_cols(selectbox_table_0, selectbox_table_0)["COLUMN_NAME"].values.tolist()
+                    radio_join_type_1 = input_join_cols[0].radio(
+                        label="Join type:",
+                        key="radio_join_type_1",
+                        options=list_join_options,
+                        horizontal=True
+                    )
+                    if st.session_state.get("radio_join_type_1") in ("LEFT", "RIGHT", "FULL"):
+                        toggle_join_type_is_outer = input_join_cols[0].toggle(
+                            label="OUTER",
+                            key="toggle_join_type_is_outer"
+                        )
+                        input_join_cols[0].write(f":red[WARNING - OUTER JOINS are missing an appropriate WHERE CLAUSE. Coming soon -- 2024-12-04]")
+                    if st.session_state.get("radio_join_type_1") != "CROSS":
+                        selectbox_table_0_pk = input_join_cols[0].selectbox(
+                            label="Primary Key(s)",
+                            key="selectbox_table_0_pk",
+                            options=cols_table_0
+                        )
+                    selectbox_table_1 = input_join_cols[1].selectbox(
+                        label="Select a table:",
+                        key="selectbox_table_1",
+                        options=db_options_1
+                    )
+                    text_input_alias_1 = input_join_cols[1].text_input(
+                        label="Alias for 1st JOINED Table",
+                        key="text_input_alias_1",
+                        placeholder="If left blank, the first letter of the table will be used."
+                    )
+                    cols_table_1 = get_cols(selectbox_table_1, selectbox_table_1)["COLUMN_NAME"].values.tolist()
+                    if st.session_state.get("radio_join_type_1") != "CROSS":
+                        selectbox_table_1_pk = input_join_cols[1].selectbox(
+                            label="Primary Key(s)",
+                            key="selectbox_table_1_pk",
+                            options=cols_table_1
+                        )
+
+            else:
+                text_input_alias_0 = None
+
+            if st.button(
+                label="RUN"
+            ) and selectbox_table_0:
+                # st.write(schema_parse("Orders"))
+                # st.write(schema_parse("[Orders]"))
+                # st.write(schema_parse("[dbo].[Orders]"))
+                # st.write(schema_parse("dbo.[Orders]"))
+                # st.write(schema_parse("dbo.Orders"))
+                # st.write(schema_parse("[dbo].Orders"))
+                # st.write(schema_parse("BWSdb.dbo.Orders"))
+                # st.write(schema_parse("[BWSdb].dbo.Orders"))
+                # st.write(schema_parse("BWSdb.[dbo].Orders"))
+                # st.write(schema_parse("BWSdb.dbo.[Orders]"))
+                # st.write(schema_parse("BWSdb.[dbo].[Orders]"))
+                # st.write(schema_parse("[BWSdb].[dbo].Orders"))
+                # st.write(schema_parse("[BWSdb].dbo.[Orders]"))
+                # st.write(schema_parse("[BWSdb].[dbo].[Orders]"))
+                # st.write(get_table_cols("Orders", "BWSdb"))
+                if text_input_alias_0 is not None:
+                    # text_input_alias_0 = selectbox_table_0.split(".")[-1].removeprefix("[").removesuffix("]")
+                    if not text_input_alias_0:
+                        text_input_alias_0 = schema_parse(selectbox_table_0)[1][0]
+                    if not selectbox_table_1:
+                        code = select_with_alias(
+                            selectbox_table_0,
+                            alias=text_input_alias_0,
+                        )
+                    else:
+                        if not text_input_alias_1:
+                            text_input_alias_1 = schema_parse(selectbox_table_1)[1][0]
+                        if radio_join_type_1 != "CROSS":
+                            code = select_with_alias(
+                                [
+                                    (selectbox_table_0, text_input_alias_0),
+                                    (selectbox_table_1, text_input_alias_1)
+                                ],
+                                f_keys=(
+                                    radio_join_type_1 + f" {'OUTER' if st.session_state.get('toggle_join_type_is_outer', False) else ''}".rstrip(),
+                                    selectbox_table_0_pk,
+                                    selectbox_table_1_pk
+                                )
+                            )
+                        else:
+                            code = select_with_alias(
+                                [
+                                    (selectbox_table_0, text_input_alias_0),
+                                    (selectbox_table_1, text_input_alias_1)
+                                ]
+                            )
+                else:
+                    code = create_sql(
+                        selectbox_table_0,
+                        in_line=False,
+                        fetch_cols=True
+                    )
+                st.code(
+                    code,
+                    language="sql",
+                    line_numbers=True
+                )
+
+        if sm_tabs == sm_tab_names[-1]:
             st.write("Coming Soon!")
 
 

@@ -3945,8 +3945,8 @@ def inverse(c, rgb=True):
     #     raise ValueError(f"Error, cannot invert non-colour param '{c}', it is not a colour.")
     # col = Colour(c)
     # r, g, b = map(lambda x: x + 1, col.rgb_code)
-    # dr, dg, db = 128 - r, 128 - g, 128 - b
-    # nc = Colour((128 + dr if (dr < 0) else 128 - dr), (128 + dg if (dg < 0) else 128 - dg), (128 + db if (db < 0) else 128 - db))
+    # dr, dg, database = 128 - r, 128 - g, 128 - b
+    # nc = Colour((128 + dr if (dr < 0) else 128 - dr), (128 + dg if (dg < 0) else 128 - dg), (128 + database if (database < 0) else 128 - database))
     # return nc.rgb_code if rgb else nc.hex_code
 
 
