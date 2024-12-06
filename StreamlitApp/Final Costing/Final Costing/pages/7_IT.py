@@ -16,6 +16,7 @@ from streamlit_utility import coloured_text
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
+MAX_FILE_HOLD_TIME: int = 1000 * 60 * 6  # 6 hours
 SHOW_SPINNERS: bool = True
 BWS: int = 0
 STG: int = 1
@@ -215,6 +216,23 @@ def get_tables(db: str) -> pd.DataFrame:
 def get_cols(table: str, database: str):
     # st.write(f"GET_COLS -> {table=}, {database=}")
     return get_table_cols(table, database, use_streamlit_cache=True)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_FILE_HOLD_TIME)
+def load_production_file(file_name: str):
+    dn = os.path.dirname(file_name)
+    bn = os.path.basename(file_name)
+    if not dn:
+        dn = r"\\server3.bwsdomain.local\Production"
+    path = os.path.join(dn, bn)
+    if not os.path.exists(path):
+        raise ValueError(f"Could not find file '{path}'.")
+
+    print(f"## LPD ## {path=}")
+    with open(path, "rb") as f:
+        content = f.read()
+
+    return content
 
 
 def get_next_it_request_number() -> int:
@@ -477,11 +495,10 @@ def mark_as_complete_input(req_id, personnel_id):
                 "mark_as_complete_submitted": True
             })
             submit_mac_request(req_id, personnel_id)
-            st.rerun() \
- \
-            @ st.dialog("ITR Edit Params", width="large")
+            st.rerun()
 
 
+@ st.dialog("ITR Edit Params", width="large")
 def itr_edit_params():
     if st.button(
             label="Edit Requests"
@@ -829,7 +846,7 @@ grid = {
     # "tab_edit_request": None
 }
 
-tab_names = ["New", "Edit", "Server"]
+tab_names = ["New", "Edit", "Server", "Access"]
 sm_tab_names = ["Search Tables", "SQL Creator", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
@@ -852,6 +869,9 @@ def click_clear_request_input_form():
         "multiselect_followup": [],
         "mark_as_complete_submitted": False
     })
+
+    # forbidden
+    # st.session_state.update({"files_uploaded": None})
 
 
 def check_password():
@@ -1737,6 +1757,8 @@ def server_maintenance():
                             key="selectbox_table_1_pk",
                             options=cols_table_1
                         )
+                else:
+                    selectbox_table_1 = ""
 
             else:
                 text_input_alias_0 = None
@@ -1744,6 +1766,14 @@ def server_maintenance():
             if st.button(
                 label="RUN"
             ) and selectbox_table_0:
+                # st.code(
+                #     create_sql(
+                #         "Orders",
+                #         mode="update",
+                #         data={"Comments": None},
+                #         where="[Apples] = [Oranges]"
+                #     )
+                # )
                 # st.write(schema_parse("Orders"))
                 # st.write(schema_parse("[Orders]"))
                 # st.write(schema_parse("[dbo].[Orders]"))
@@ -1806,6 +1836,43 @@ def server_maintenance():
             st.write("Coming Soon!")
 
 
+def access_maintenance():
+    # databases = {
+    #     "SysproCompanyA": {
+    #         "key": "db_file_sysprocompanya"
+    #         "data": st.session_state.get(""),
+    #         "name": "SysproCompanyA.accdb"
+    #     }
+    # }
+    # databases[]
+    with grid["content_row_2"]:
+        st.subheader("access_maintenance")
+
+    databases = [
+        "SysproCompanyA.accdb",
+        "SysproCompanyS.accdb",
+        "BWS-SalesV4.mdb"
+    ]
+
+    download_buttons = []
+    for i, db in enumerate(databases):
+        db_spl = db.split(".")
+        name = "".join(db_spl[:-1])
+        key = f"db_file_{name.lower()}"
+        data = st.session_state.get(key)
+        if data is None:
+            st.session_state.update({key: load_production_file(db)})
+        # print(f"{i=}, {db=}, {name=}, {key=}")
+
+        if data is not None:
+            download_buttons.append(st.download_button(
+                label=name,
+                data=data,
+                file_name=db,
+                mime="application/octet-stream"
+            ))
+
+
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
@@ -1843,6 +1910,8 @@ else:
         if tab_choice == tab_names[2]:
             server_maintenance()
 
+        if tab_choice == tab_names[3]:
+            access_maintenance()
 
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
