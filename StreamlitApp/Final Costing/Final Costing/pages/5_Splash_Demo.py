@@ -5,6 +5,12 @@ from typing import Any, Literal, List, Optional
 from streamlit_autorefresh import st_autorefresh
 
 
+@st.cache_data(show_spinner=True)
+def load_drone_video():
+    with open(r"\\bwsfp01.bwsdomain.local\public\SALES OFFICE\Shows\2019 Trade shows\World of Asphalt February 12 - 14\VideoScreenSlideShow\BWS_Facility drone video 2016.mp4", "rb") as f:
+        return f.read()
+
+
 colour_fg_bws: Colour = Colour("#891523")
 colour_fg_stg: Colour = Colour("#152389")
 key_html_style: str = "key_shimmer_style_written"
@@ -87,6 +93,12 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(aligned_text("&", tag_style="h4", font_size=16, colour="#CCCCCC"), unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(shimmer_text("Stargate", text_colour=colour_fg_stg, font_size=86, w_proportion_off=1/2), unsafe_allow_html=True)
+
+# st.video(
+#     data=load_drone_video(),
+#     format="mp4",
+#     autoplay=True
+# )
 
 
 # count = st_autorefresh(interval=1000*15, limit=None, key="SplashDemo")

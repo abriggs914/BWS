@@ -120,6 +120,7 @@ def coloured_text(
 
 def rerun():
     # https://discuss.streamlit.io/t/is-it-possible-to-create-a-button-to-reset-relaod-the-whole-dashboard/6615/3
+    import pyautogui
     pyautogui.hotkey("ctrl", "F5")
 
 
