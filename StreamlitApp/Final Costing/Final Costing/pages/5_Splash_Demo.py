@@ -1,19 +1,43 @@
 import datetime
+import pyautogui
 import streamlit as st
 from colour_utility import *
 from typing import Any, Literal, List, Optional
 from streamlit_autorefresh import st_autorefresh
+from moviepy import VideoFileClip
+
+
+st.set_page_config(layout="wide")
 
 
 @st.cache_data(show_spinner=True)
-def load_drone_video():
-    with open(r"\\bwsfp01.bwsdomain.local\public\SALES OFFICE\Shows\2019 Trade shows\World of Asphalt February 12 - 14\VideoScreenSlideShow\BWS_Facility drone video 2016.mp4", "rb") as f:
-        return f.read()
+def load_video(path):
+    with open(path, "rb") as f:
+        return f.read(), get_video_length(path)
+
+
+@st.cache_data(show_spinner=True)
+def get_video_length(video_path):
+    """
+    Calculate the length of a video file
+    :param video_path: str
+    :return: duration in millis
+    """
+    # Extract video duration using MoviePy
+    try:
+        clip = VideoFileClip(video_path)
+        duration = clip.duration  # Duration in seconds
+        clip.close()
+        return duration * 1000
+    except Exception as e:
+        st.error(f"Error reading video duration: {e}")
+        return None
 
 
 colour_fg_bws: Colour = Colour("#891523")
 colour_fg_stg: Colour = Colour("#152389")
 key_html_style: str = "key_shimmer_style_written"
+key_state: str = "key_state"
 
 
 def aligned_text(
@@ -79,27 +103,57 @@ def shimmer_text(
     """
     # st.write(html)
     return html
-    
-
-# Render the shimmer text in Streamlit
-# st.write(datetime.datetime.now())
-st.markdown("<br>", unsafe_allow_html=True)
-# st.markdown("<h1>Welcome To</h1>", unsafe_allow_html=True)
-st.markdown(aligned_text("Welcome to", tag_style="h1", font_size=22, colour="#CCCCCC"), unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown(shimmer_text("BWS", text_colour=colour_fg_bws, font_size=124, w_proportion_off=3/8), unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
-# st.markdown("<h4>&</h4>", unsafe_allow_html=True)
-st.markdown(aligned_text("&", tag_style="h4", font_size=16, colour="#CCCCCC"), unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown(shimmer_text("Stargate", text_colour=colour_fg_stg, font_size=86, w_proportion_off=1/2), unsafe_allow_html=True)
-
-# st.video(
-#     data=load_drone_video(),
-#     format="mp4",
-#     autoplay=True
-# )
 
 
-# count = st_autorefresh(interval=1000*15, limit=None, key="SplashDemo")
-# st.session_state[key_html_style] = False
+video_data = {
+    "drone_video": load_video(r"\\bwsfp01.bwsdomain.local\public\SALES OFFICE\Shows\2019 Trade shows\World of Asphalt February 12 - 14\VideoScreenSlideShow\BWS_Facility drone video 2016.mp4"),
+    "loading_equipment": load_video(r"G:\SALES OFFICE\DUMP FILE - DO NOT DELETE REFERENCE TO OLD FILES\Dealer Product Training Modules\Videos\Paver Equipment Trailer .mp4")
+}
+video_keys = list(video_data)
+
+refresh_time = 15 * 1000
+if key_state not in st.session_state:
+    state = 0
+    st.session_state.update({key_state: state})
+else:
+    state = st.session_state.get(key_state, 0)
+# st.write(f"{state=}")
+
+# st.write(f"{state=}")
+if state % 2 == 1:
+    video_key = video_keys[state // 2]
+    # st.write(f", {video_key=}")
+    # st.write(f"{state=}, {video_key=}")
+    video, duration = video_data[video_key]
+    duration += 1000  # add 1 second
+    # st.write(f"Enjoy the video! ({duration/1000} s)")
+    widget_video = st.video(
+        data=video,
+        format="mp4",
+        autoplay=True
+    )
+    # print(f"about to click")
+    # # pyautogui.click(600, 600)
+    # print(f"done clicking")
+    # # pyautogui.hotkey("space")
+    # print(f"done space")
+    refresh_time = duration
+else:
+    # Render the shimmer text in Streamlit
+    # st.write(datetime.datetime.now())
+    st.markdown("<br>", unsafe_allow_html=True)
+    # st.markdown("<h1>Welcome To</h1>", unsafe_allow_html=True)
+    st.markdown(aligned_text("Welcome to", tag_style="h1", font_size=22, colour="#CCCCCC"), unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(shimmer_text("BWS", text_colour=colour_fg_bws, font_size=124, w_proportion_off=3/8), unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    # st.markdown("<h4>&</h4>", unsafe_allow_html=True)
+    st.markdown(aligned_text("&", tag_style="h4", font_size=16, colour="#CCCCCC"), unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(shimmer_text("Stargate", text_colour=colour_fg_stg, font_size=86, w_proportion_off=1/2), unsafe_allow_html=True)
+
+
+st.session_state.update({key_state: (int(state) + 1) % (len(video_data) * 2)})
+count = st_autorefresh(interval=refresh_time, limit=None, key="SplashDemo")
+# st.write(f"RERUN AT {datetime.datetime.now() + datetime.timedelta(seconds=refresh_time/1000)}")
+# # st.session_state[key_html_style] = False

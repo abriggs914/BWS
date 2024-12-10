@@ -269,20 +269,34 @@ def check_password(app_short_name: str = None):
     for k, v in DEFAULT_SESSION_STATE.items():
         st.session_state.setdefault(k, v)
 
+    st.session_state.update({"radios_choose_user": False})
+
     # df_user_directory = st.session_state.setdefault("df_user_directory", load_itstr_user_directory())
     # df_app_directory = st.session_state.setdefault("df_app_directory", load_itstr_app_directory())
     df_user_directory = load_itstr_user_directory()
     df_app_directory = load_itstr_app_directory()
     df_itr_customers = load_itr_customers()
 
+    df_app_directory: pd.DataFrame = df_app_directory.loc[
+        df_app_directory["AppShortName"] == st.session_state.get("app_short_name")]
+    app_found: bool = not df_app_directory.empty
+    app_id: int = df_app_directory.iloc[0]["ID"] if app_found else -1
+    st.session_state.update({
+        "app_requires_password": (
+            True if pd.isna(df_app_directory.iloc[0]["PasswordRequired"]) else
+            df_app_directory.iloc[0]["PasswordRequired"]) if app_found else True,
+        "app_requires_user_name": (
+            True if pd.isna(df_app_directory.iloc[0]["UserNameRequired"]) else
+            df_app_directory.iloc[0]["UserNameRequired"]) if app_found else True,
+        "app_master_password": (
+            None if pd.isna(df_app_directory.iloc[0]["MasterPassword"]) else
+            df_app_directory.iloc[0]["MasterPassword"]) if app_found else None
+    })
+
     if app_short_name is None:
         app_short_name = st.session_state.get("app_short_name", "UNKNOWN")
     st.write(f"{app_short_name=}")
-
-    df_app_directory: pd.DataFrame = df_app_directory.loc[
-        df_app_directory["AppShortName"] == app_short_name]
-    app_found: bool = not df_app_directory.empty
-    app_id: int = df_app_directory.iloc[0]["ID"] if app_found else -1
+    st.write(f"app_requires_password={st.session_state.get('app_requires_password')}")
 
     grid = {
         "title_row": st.container(),
@@ -291,7 +305,9 @@ def check_password(app_short_name: str = None):
 
     def login_form():
         """Form with widgets to collect user information"""
-        with grid["title_row"].form("Credentials"):
+        n = datetime.datetime.now()
+        # with grid["title_row"].form(f"Credentials_{n:%x %X}"):
+        with grid["title_row"].form(f"Credentials"):
             st.write(f"### Please Sign in:")
             st.text_input("Username", key="text_input_username")
             if st.session_state.get("app_requires_password", True):
@@ -306,18 +322,55 @@ def check_password(app_short_name: str = None):
         matp: int = DEFAULT_SESSION_STATE["n_attempts_password_reset"]
         # st.dataframe(df_user_directory)
         df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user]
+        df_user_l = df_user.copy()
+        names = []
 
-        st.session_state.update({"radios_choose_user": True})
+
+        cust_id: int = 1
+        cust_key: str = "ITRCustomerID"
+
+        radio_toggles = []
+
+        def check_others(i_, k_):
+            print(f"check_others {i_=}, {k_=}")
+            # i = -1
+            # check = True
+            # is_on = st.session_state.get(k_, False)
+            # while check:
+            #     i += 1
+            #     key = f"radio_toggle_{i}"
+            #     found = key in st.session_state
+            #     if is_on and found and (i_ != (i)):
+            #         st.session_state.update({key: False})
+            #     check = found
+            # print(f"check_others {i_=}, {k_=}, {i=}, {is_on=}")
+            # if is_on:
+            st.session_state.update({
+                "radios_choose_user": i_,
+                "handled_radios_choose_user": True
+            })
+            st.rerun()
+
+        trc = ""
+        st.session_state.update({
+            "handled_radios_choose_user": True,
+            "radios_choose_user": None
+        })
 
         if df_user.empty:
+            trc += "A"
             if df_app_directory.iloc[0]["MasterPassword"] == pswd:
+                trc += "B"
                 df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"].str.lower() == user]
+                df_user_l = df_user.copy()
         if df_user.empty:
+            trc += "C"
             df_cust: pd.DataFrame = df_itr_customers.loc[
                 (df_itr_customers["WindowsUser"].str.lower() == user)
                 | (df_itr_customers["Name"].str.lower() == user)
                 ].reset_index()
             if not df_cust.empty:
+                trc += "D"
                 cust_id: int = df_cust.iloc[0]["CustomerID"]
                 # st.write(f"{cust_id}")
                 # st.write(f"{app_id}")
@@ -326,7 +379,10 @@ def check_password(app_short_name: str = None):
                     (df_user_directory["ITSTRAppID"] == app_id)
                     & (df_user_directory["ITRCustomerID"] == cust_id)
                     ]
+                df_user_l = df_user.copy()
+                # names = df_user_l["Name"].dropna().unique().tolist()
                 if df_user.empty:
+                    trc += "E"
                     df_user = pd.concat([
                         pd.DataFrame(columns=df_user.columns),
                         pd.DataFrame(data={
@@ -334,59 +390,127 @@ def check_password(app_short_name: str = None):
                             "ITRCustomerID": cust_id
                         })
                     ])
+                    df_user_l = df_user.copy()
+                    # names = df_user_l["Name"].dropna().unique().tolist()
                     st.write(
                         f"Need to add this person from [ITR Customers]. '{user}' ({cust_id=}) does not have an entry for Streanlit app ID={app_id}")
                     if not st.session_state.get("app_requires__password"):
+                        trc += "F"
                         st.write("Access granted as no password is needed.")
                 else:
+                    trc += "G"
                     st.write(f"Found by FullName in [ITSTR_UserDirectory]")
         if df_user.empty:
+            trc += "H"
             df_user_l: pd.DataFrame = df_itr_customers.loc[
                 df_itr_customers["Name"].str.lower().str.contains(user)
             ]
+            names = df_user_l["Name"].dropna().unique().tolist()
+            grid["credentials_row"].write("df_user_l")
+            grid["credentials_row"].dataframe(df_user_l)
             sh = df_user_l.shape
+            cust_key = "CustomerID"
             if sh[0] == 1:
                 # 1 match
+                trc += "I"
                 df_user = df_user_l
+                # st.session_state.update({"handled_radios_choose_user": True})
             elif sh[0] > 1:
                 # st.write()
-                names = df_user_l["Name"].unique().dropna().tolist()
+                trc += "J"
+                # if not st.session_state.get("handled_radios_choose_user"):
+                # trc += "K"
                 del st.session_state["radios_choose_user"]
-                radios_choose_user = st.radio(
-                    label=f"Found {sh[0]} name({'' if sh[0] == 1 else 's'}), please tell me who you are:",
-                    key="radios_choose_user",
-                    options=names
-                )
-                df_user = pd.concat([
-                    pd.DataFrame(columns=df_user.columns),
-                    pd.DataFrame(data={
-                        "AppUserName": [user],
-                        "ITRCustomerID": cust_id
-                    })
-                ])
-            else:
-                pass
+                st.session_state.update({"handled_radios_choose_user": False})
+                # radios_choose_user = grid["credentials_row"].radio(
+                #     label=f"Found {sh[0]} name({'' if sh[0] == 1 else 's'}), please tell me who you are:",
+                #     key="radios_choose_user",
+                #     options=names
+                # )
+                for i, name in enumerate(names):
+                    key = f"radio_toggle_{i}"
+                    if key in st.session_state:
+                        del st.session_state[key]
+                    if grid["credentials_row"].button(
+                        label=name,
+                        key=key
+                    ):
+                        print(f"HELLO THERE")
+                        trc += "L"
+                        st.session_state.update({
+                            "radios_choose_user": i,
+                            "handled_radios_choose_user": True
+                        })
+                        raise ValueError("HEY!")
+                    # radio_toggles.append(
+                    #     grid["credentials_row"].button(
+                    #         label=name,
+                    #         key=key,
+                    #
+                    #         # on_change=lambda i_=i, k_=key: check_others(i_, k_)
+                    #     )
+                    # )
+                    # if radio_toggles[-1]:
+                    #     trc += "L"
+                    #     st.session_state.update({
+                    #         "radios_choose_user": i,
+                    #         "handled_radios_choose_user": True
+                    #     })
+                    #     # st.rerun()
 
-        # st.write(f"{user=}, {pswd=}, {atpt=}, {matp=}")
+                # else:
+            else:
+                trc += "Q"
+
+        hrcu = st.session_state.get("handled_radios_choose_user", False)
+        st.write(f"{user=}, {pswd=}, {atpt=}, {matp=}, {hrcu=}")
+        print(f"{trc=}, {user=}, {pswd=}, {atpt=}, {matp=}, {hrcu=}, {df_user.empty=}")
+        print(f"COLS={list(df_user.columns)}")
+        for k, v in st.session_state.items():
+            print(f"{k=}, {v=}")
         # st.write(f"B")
         # st.dataframe(df_user)
-        if st.session_state.get("radios_choose_user", False):
+        if st.session_state.get("handled_radios_choose_user", False):
+
+            if st.session_state.get("radios_choose_user") is not None:
+                trc += "M"
+                user_name_idx = st.session_state.get('radios_choose_user')
+                print(f"{user_name_idx=}")
+                if user_name_idx is not None:
+                    trc += "N"
+                    user_name = names[user_name_idx]
+                else:
+                    trc += "O"
+                    user_name = ""
+                print(f"I AM name #{user_name_idx} -> '{user_name}'")
+                if user_name:
+                    trc += "P"
+                    df_user = df_user_l.loc[df_user_l["Name"] == user_name]
+                    cust_id = df_user.iloc[0][cust_key]
+                    df_user = pd.concat([
+                        pd.DataFrame(columns=df_user.columns),
+                        pd.DataFrame(data={
+                            "AppUserName": [user],
+                            cust_key: cust_id
+                        })
+                    ])
+
             with grid["credentials_row"]:
                 if not df_user.empty:
                     # found user
                     if st.session_state.get("app_requires_password", True):
                         df_user: pd.DataFrame = df_user.loc[df_user["AppPassword"] == pswd].reset_index()
-                    # st.write("DF_USER: ->")
-                    # st.dataframe(df_user)
+                    st.write(" > > DF_USER: ->")
+                    st.dataframe(df_user)
                     if not df_user.empty:
                         # valid user and valid password
-                        cust_id: int = df_user.iloc[0]["ITRCustomerID"]
-                        # st.write(f"{cust_id=}")
+                        cust_id: int = df_user.iloc[0][cust_key]
+                        st.write(f"{cust_id=}")
                         df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id]
                         # st.write("DF_CUST:")
                         # st.dataframe(df_cust)
                         full_name = df_cust.iloc[0]["Name"]
-                        # st.write(f"{full_name=}")
+                        st.write(f"{full_name=}")
                         st.session_state.update({
                             "signed_in": True,
                             "user_name": user,
@@ -405,8 +529,10 @@ def check_password(app_short_name: str = None):
         st.session_state.update({
             "n_attempts_password": atpt + 1
         })
+        # check_password()
 
     # valid sign in
+    print(f"AAA {st.session_state.get('signed_in')=}")
     if st.session_state.get("signed_in", False):
         # return True
         st.rerun()
@@ -415,6 +541,7 @@ def check_password(app_short_name: str = None):
     if st.session_state.get("app_requires_user_name"):
         # st.write("USER REQUIRED")
         if st.session_state.get("n_attempts_password") < st.session_state.get("n_attempts_password_reset"):
+            # if not st.session_state.get("handled_radios_choose_user"):
             login_form()
         else:
             st.write("TOO MANY ATTEMPTS")
