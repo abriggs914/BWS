@@ -8,7 +8,8 @@ from streamlit_autorefresh import st_autorefresh
 
 from pyodbc_connection import connect
 from streamlit_utility import coloured_text
-
+from streamlit_utility_bws import load_itr_customers, load_itstr_app_directory, load_itstr_user_directory, \
+    load_itp_phone_lines
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -25,6 +26,8 @@ CREDS_STG: dict[str: Any] = {
     "pwd": "Pupplies-Hagard->Rio0",
     "quote_key": "SGQuote"
 }
+
+N_PER_FRAME = 50
 
 
 #######################
@@ -46,7 +49,10 @@ DEFAULT_SESSION_STATE = {
     "n_attempts_password": 0,
     "app_short_name": "Authentication Demo",
     "date_input_birthdate": None,
-    "select_shirt_size": None
+    "select_shirt_size": None,
+
+    "toggle_admin_mode": False,
+    "frame_idx": 0
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
@@ -57,40 +63,40 @@ for k, v in DEFAULT_SESSION_STATE.items():
 ######################
 
 
-@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_itr_customers() -> pd.DataFrame:
-    sql = "[BWSdb].[dbo].[ITR Customers]"
-    connection_data = {
-        "sql": sql,
-        "database": "bwsdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_itstr_app_directory() -> pd.DataFrame:
-    sql = "[BWSdb].[dbo].[ITSTR_AppDirectory]"
-    connection_data = {
-        "sql": sql,
-        "database": "bwsdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
-
-
-@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_itstr_user_directory() -> pd.DataFrame:
-    sql = "[BWSdb].[dbo].[ITSTR_UserDirectory]"
-    connection_data = {
-        "sql": sql,
-        "database": "bwsdb",
-        "uid": CREDS_BWS["uid"],
-        "pwd": CREDS_BWS["pwd"]
-    }
-    return connect(**connection_data)
+# @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+# def load_itr_customers() -> pd.DataFrame:
+#     sql = "[BWSdb].[dbo].[ITR Customers]"
+#     connection_data = {
+#         "sql": sql,
+#         "database": "bwsdb",
+#         "uid": CREDS_BWS["uid"],
+#         "pwd": CREDS_BWS["pwd"]
+#     }
+#     return connect(**connection_data)
+#
+#
+# @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+# def load_itstr_app_directory() -> pd.DataFrame:
+#     sql = "[BWSdb].[dbo].[ITSTR_AppDirectory]"
+#     connection_data = {
+#         "sql": sql,
+#         "database": "bwsdb",
+#         "uid": CREDS_BWS["uid"],
+#         "pwd": CREDS_BWS["pwd"]
+#     }
+#     return connect(**connection_data)
+#
+#
+# @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+# def load_itstr_user_directory() -> pd.DataFrame:
+#     sql = "[BWSdb].[dbo].[ITSTR_UserDirectory]"
+#     connection_data = {
+#         "sql": sql,
+#         "database": "bwsdb",
+#         "uid": CREDS_BWS["uid"],
+#         "pwd": CREDS_BWS["pwd"]
+#     }
+#     return connect(**connection_data)
 
 
 #################
@@ -148,12 +154,26 @@ def submit_form(form_key):
 df_itr_customers: pd.DataFrame = load_itr_customers()
 df_app_directory: pd.DataFrame = load_itstr_app_directory()
 df_user_directory: pd.DataFrame = load_itstr_user_directory()
+df_itp_phone_lines: pd.DataFrame = load_itp_phone_lines()
 df_app_directory: pd.DataFrame = df_app_directory.loc[df_app_directory["AppShortName"] == st.session_state.get("app_short_name")]
 app_id: int = df_app_directory.iloc[0]["ID"] if not df_app_directory.empty else -1
 
 # st.write(f"{app_id=}, {type(app_id)=}")
 # st.dataframe(df_app_directory, use_container_width=True)
 # st.dataframe(df_user_directory, use_container_width=True)
+
+df_itr_customers = pd.merge(
+    df_itr_customers,
+    df_itp_phone_lines[["Extension", "DisplayName", "AssignedTo"]],
+    left_on="CustomerID",
+    right_on="AssignedTo",
+    how="left"
+)
+
+n_customers = df_itr_customers.shape[0]
+last_frame_idx = (n_customers - (N_PER_FRAME + 1)) / N_PER_FRAME
+
+st.dataframe(df_itr_customers)
 
 df_user_directory: pd.DataFrame = df_user_directory.loc[df_user_directory["ITSTRAppID"] == app_id]
 df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.lower()
@@ -230,11 +250,21 @@ def check_password():
     return False
 
 
-un = st.session_state.get('user_full_name')
-if not un:
-    un = "NO NAME YET"
-print(f"RERUN for '{un}'")
-count = st_autorefresh(interval=TIME_APP_REFRESH, limit=None, key="auto_refresh")
+def change_frame_idx(offset):
+    f_idx = st.session_state.get("frame_idx", 0)
+    print(f"A {f_idx=}")
+    f_idx = min(max(0, f_idx + (offset * N_PER_FRAME)), (last_frame_idx * N_PER_FRAME))
+    print(f"B {f_idx=}")
+    st.session_state.update({
+        "frame_idx": f_idx
+    })
+
+
+# un = st.session_state.get('user_full_name')
+# if not un:
+#     un = "NO NAME YET"
+# print(f"RERUN for '{un}'")
+# count = st_autorefresh(interval=TIME_APP_REFRESH, limit=None, key="auto_refresh")
 
 
 with grid["title_row"]:
@@ -265,43 +295,208 @@ else:
             st.write(f"More coming soon, Please check back later.")
 
             user_name = st.session_state.get("user_name")
-            df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user_name]
-            cust_id: int = df_user.iloc[0]["ITRCustomerID"]
-            df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id].iloc[0]
 
-            cust_dob_y: int = df_cust["BirthYear"]
-            cust_dob_m: int = df_cust["BirthMonth"]
-            cust_dob_d: int = df_cust["BirthDay"]
-            cust_dob: Optional[datetime.datetime] = None
-            # print(f"{cust_dob_y=}, {cust_dob_m=}, {cust_dob_d=}")
+            toggle_admin_mode = st.toggle(
+                label="Admin Mode",
+                key="toggle_admin_mode"
+            )
 
-            cust_shirt_size = df_cust["ShirtSize"]
+            if st.session_state.get("toggle_admin_mode"):
 
-            if not any([pd.isna(cust_dob_y), pd.isna(cust_dob_m), pd.isna(cust_dob_d)]):
-                cust_dob = datetime.datetime(int(cust_dob_y), int(cust_dob_m), int(cust_dob_d))
+                frame_idx = st.session_state.get("frame_idx")
+                first_idx = frame_idx
+                last_idx = first_idx + N_PER_FRAME - 1
 
-            if not pd.isna(cust_shirt_size):
-                st.session_state.update({"select_shirt_size": cust_shirt_size})
+                cols_controls = st.columns([0.15, 0.15, 0.15, 0.55])
+                button_back = cols_controls[0].button(
+                    label="prev",
+                    key="button_frame_back",
+                    on_click=lambda: change_frame_idx(-1),
+                    disabled=frame_idx == 0
+                )
 
-            with st.expander(":pencil2: Edit Personal Data"):
-                with st.form(key="Customer"):
-                    st.date_input(
-                        label="Change your Birthdate:",
-                        value=cust_dob,
-                        min_value=datetime.datetime(1935, 1, 1),
-                        max_value=datetime.datetime.now() + datetime.timedelta(days=-int(round((18*365.25)))),
-                        key="date_input_birthdate"
-                        # ,
-                        # on_change=birthdate_on_change
+                cols_controls[1].write(
+                    f"{frame_idx=}, {first_idx=}, {last_idx=}, {last_frame_idx*N_PER_FRAME=}"
+                )
+
+                button_forward = cols_controls[2].button(
+                    label="next",
+                    key="button_frame_forward",
+                    on_click=lambda: change_frame_idx(1),
+                    disabled=frame_idx == (last_frame_idx * N_PER_FRAME)
+                )
+
+                data_grid = []
+                edit_columns = [
+                    {
+                        "name": "Name",
+                        "weight": 0.2
+                    },
+                    {
+                        "name": "Display Name",
+                        "weight": 0.2
+                    },
+                    {
+                        "name": "DoB",
+                        "weight": 0.15
+                    },
+                    {
+                        "name": "ShirtSize",
+                        "weight": 0.15
+                    },
+                    {
+                        "name": "Ext",
+                        "weight": 0.15
+                    },
+                    {
+                        "name": "Cell",
+                        "weight": 0.15
+                    }
+                ]
+                weights = [col["weight"] for col in edit_columns]
+                cols_names = [col["name"] for col in edit_columns]
+                data_grid.append(st.columns(weights))
+                for i, col in enumerate(cols_names):
+                    data_grid[0][i].write(col)
+
+                df_itr_cust_filt = df_itr_customers.loc[
+                    (df_itr_customers.index >= first_idx)
+                    & (df_itr_customers.index <= last_idx)
+                ].reset_index()
+
+                # st.dataframe(df_itr_cust_filt)
+
+                for i, row in df_itr_cust_filt.iterrows():
+                    data_grid.append(st.columns(weights))
+                    name = row["Name"]
+                    print(f"{i=}, {name=}")
+                    dob_y: int = row["BirthYear"]
+                    dob_m: int = row["BirthMonth"]
+                    dob_d: int = row["BirthDay"]
+                    dob: Optional[datetime.datetime] = None
+                    shirt_size: str = row["ShirtSize"]
+                    cell_phone: str = row["CellPhone"]
+                    display_name: str = row.get("DisplayName", "")
+                    ext: str = row.get("Extension", "")
+
+                    k_name: str = f"text_input_name_{i}"
+                    k_dob: str = f"date_input_dob_{i}"
+                    k_shirt_size: str = f"selectbox_shirtsize_{i}"
+                    k_display_name: str = f"text_input_display_name_{i}"
+
+                    if not any([pd.isna(dob_y), pd.isna(dob_m), pd.isna(dob_d)]):
+                        dob = datetime.datetime(int(dob_y), int(dob_m), int(dob_d))
+
+                    if pd.isna(display_name):
+                        display_name = ""
+
+                    if pd.isna(ext):
+                        ext = ""
+
+                    st.session_state.update({
+                        k_name: name,
+                        k_dob: dob,
+                        k_shirt_size: shirt_size,
+                        k_display_name: display_name
+                    })
+
+                    # data_grid[i + 1][cols_names.index("Name")].write(name)
+                    data_grid[i + 1][cols_names.index("Name")].text_input(
+                        label="Name",
+                        key=k_name,
+                        label_visibility="hidden",
+                        disabled=True
                     )
-                    st.selectbox(
-                        label="Shirt-Size:",
-                        key="select_shirt_size",
-                        options=list_shirt_sizes
+                    # data_grid[i + 1][cols_names.index("Display Name")].write(display_name)
+                    data_grid[i + 1][cols_names.index("Display Name")].text_input(
+                        label="Display Name",
+                        key=k_display_name,
+                        label_visibility="hidden"
                     )
-                    st.form_submit_button(
-                        label="Update",
-                        on_click=lambda: submit_form("Customer")
+                    data_grid[i + 1][cols_names.index("DoB")].date_input(
+                        label="DoB",
+                        key=k_dob,
+                        label_visibility="hidden",
+                        format="YYYY-MM-DD"
                     )
+                    # selectbox
+                    data_grid[i + 1][cols_names.index("ShirtSize")].selectbox(
+                        label="ShirtSize",
+                        key=k_shirt_size,
+                        options=list_shirt_sizes,
+                        label_visibility="hidden"
+                    )
+                    data_grid[i + 1][cols_names.index("Ext")].write(ext)
+                    data_grid[i + 1][cols_names.index("Cell")].write(cell_phone)
+
+
+                # # Sample data
+                # data = [
+                #     {"Name": "Alice", "Role": "Admin", "Department": "HR"},
+                #     {"Name": "Bob", "Role": "User", "Department": "Engineering"},
+                #     {"Name": "Charlie", "Role": "User", "Department": "Sales"}
+                # ]
+                #
+                # # Define selectable options for each column
+                # role_options = ["Admin", "User", "Guest"]
+                # department_options = ["HR", "Engineering", "Sales", "Marketing"]
+                #
+                # # Streamlit data editor with column configuration
+                # edited_data = st.data_editor(
+                #     data,
+                #     column_config={
+                #         "Role": st.column_config.SelectboxColumn(
+                #             "Role",
+                #             options=role_options
+                #         ),
+                #         "Department": st.column_config.SelectboxColumn(
+                #             "Department",
+                #             options=department_options
+                #         )
+                #     },
+                #     key="editable_table_multi"
+                # )
+                #
+                # # Display edited data
+                # st.write("Edited Table:", edited_data)
+            else:
+                df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user_name]
+                cust_id: int = df_user.iloc[0]["ITRCustomerID"]
+                df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id].iloc[0]
+
+                cust_dob_y: int = df_cust["BirthYear"]
+                cust_dob_m: int = df_cust["BirthMonth"]
+                cust_dob_d: int = df_cust["BirthDay"]
+                cust_dob: Optional[datetime.datetime] = None
+                # print(f"{cust_dob_y=}, {cust_dob_m=}, {cust_dob_d=}")
+
+                cust_shirt_size = df_cust["ShirtSize"]
+
+                if not any([pd.isna(cust_dob_y), pd.isna(cust_dob_m), pd.isna(cust_dob_d)]):
+                    cust_dob = datetime.datetime(int(cust_dob_y), int(cust_dob_m), int(cust_dob_d))
+
+                if not pd.isna(cust_shirt_size):
+                    st.session_state.update({"select_shirt_size": cust_shirt_size})
+
+                with st.expander(":pencil2: Edit Personal Data"):
+                    with st.form(key="Customer"):
+                        st.date_input(
+                            label="Change your Birthdate:",
+                            value=cust_dob,
+                            min_value=datetime.datetime(1935, 1, 1),
+                            max_value=datetime.datetime.now() + datetime.timedelta(days=-int(round((18*365.25)))),
+                            key="date_input_birthdate"
+                            # ,
+                            # on_change=birthdate_on_change
+                        )
+                        st.selectbox(
+                            label="Shirt-Size:",
+                            key="select_shirt_size",
+                            options=list_shirt_sizes
+                        )
+                        st.form_submit_button(
+                            label="Update",
+                            on_click=lambda: submit_form("Customer")
+                        )
 
 # st.write(st.session_state)

@@ -221,6 +221,11 @@ def load_production_file(file_name: str):
     return content
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_itp_phone_lines():
+    return connect(create_sql("ITP PhoneLines", where="[Active] = 1"))
+
+
 def get_next_it_request_number() -> int:
     """
     this function needs to be called as close to the insert as possible to reduce race condition
@@ -245,6 +250,15 @@ FROM
         raise ValueError(
             f"Critical Error could not retrieve a new IT Request ID Number for this input. Please try again later.")
     return df.iloc[0]["LastID"] + 1
+
+
+@st.dialog(title="Who are you?", width="large")
+def who_are_you():
+    if st.button(
+        label="quit",
+        key="who_are_you_quit"
+    ):
+        st.rerun()
 
 
 @st.dialog(title="Sign in", width="large")
@@ -303,16 +317,72 @@ def check_password(app_short_name: str = None):
         "credentials_row": st.container()
     }
 
+    def validate_name(*args):
+        print(f"VN {args=}")
+        name = st.session_state.get("text_input_username", "").lower()
+        if not name:
+            return
+        dfs: list[pd.DataFrame] = [
+            df_itr_customers.loc[df_itr_customers["Name"].str.lower() == name],
+            df_itr_customers.loc[df_itr_customers["Name"].str.lower().str.contains(name)],
+            df_user_directory.loc[df_user_directory["AppUserName"].str.lower() == name],
+            df_user_directory.loc[df_user_directory["AppUserName"].str.lower().str.contains(name)]
+        ]
+
+        for i, df in enumerate(dfs):
+            nk = "AppUserName" if "AppUserName" in df.columns else "Name"
+            uk = "ITRCustomerID" if "ITRCustomerID" in df.columns else "CustomerID"
+            names = df[nk].dropna().unique()
+            if len(names) > 1:
+                for j, name in enumerate(names):
+                    key = f"choose_user_{j}"
+                    if key in st.session_state:
+                        del st.session_state[key]
+                    if grid["credentials_row"].button(
+                        label=name.title(),
+                        key=key
+                    ):
+                        print(f"HELLO THERE")
+                        cust_id: int = df.iloc[0][uk]
+                        st.write(f"{cust_id=}")
+                        df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id]
+                        # st.write("DF_CUST:")
+                        # st.dataframe(df_cust)
+                        full_name = df_cust.iloc[0]["Name"]
+                        st.session_state.update({
+                            "radios_choose_user": i,
+                            "handled_radios_choose_user": True,
+                            "signed_in": True,
+                            "user_name": name,
+                            "itr_customer_id": cust_id,
+                            "user_full_name": full_name,
+                            "sign_in_date": datetime.datetime.now()
+                        })
+                        password_entered()
+
+                break
+
+        print(f"{name=}")
+
     def login_form():
         """Form with widgets to collect user information"""
         n = datetime.datetime.now()
         # with grid["title_row"].form(f"Credentials_{n:%x %X}"):
-        with grid["title_row"].form(f"Credentials"):
+        # with grid["title_row"].form(f"Credentials"):
+        with grid["title_row"].container():
+            st.dataframe(df_itr_customers)
+            st.dataframe(df_user_directory)
+            st.dataframe(df_app_directory)
             st.write(f"### Please Sign in:")
-            st.text_input("Username", key="text_input_username")
+            st.text_input(
+                label="Username",
+                key="text_input_username",
+                on_change=validate_name
+            )
             if st.session_state.get("app_requires_password", True):
                 st.text_input("Password", type="password", key="text_input_password")
-            st.form_submit_button("Log in", on_click=password_entered)
+            # st.form_submit_button("Log in", on_click=password_entered)
+            st.button("Log in", on_click=password_entered)
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
@@ -324,6 +394,8 @@ def check_password(app_short_name: str = None):
         df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user]
         df_user_l = df_user.copy()
         names = []
+
+        print(f"PE:: {user=}, {pswd=}, {atpt=}, {matp=}")
 
 
         cust_id: int = 1
@@ -420,45 +492,64 @@ def check_password(app_short_name: str = None):
                 trc += "J"
                 # if not st.session_state.get("handled_radios_choose_user"):
                 # trc += "K"
-                del st.session_state["radios_choose_user"]
-                st.session_state.update({"handled_radios_choose_user": False})
+                del st.session_state[" "]
+                st.session_state.update({
+                    "handled_radios_choose_user": False,
+                    "req_handled_radios_choose_user": True
+                })
                 # radios_choose_user = grid["credentials_row"].radio(
                 #     label=f"Found {sh[0]} name({'' if sh[0] == 1 else 's'}), please tell me who you are:",
                 #     key="radios_choose_user",
                 #     options=names
                 # )
-                for i, name in enumerate(names):
-                    key = f"radio_toggle_{i}"
-                    if key in st.session_state:
-                        del st.session_state[key]
-                    if grid["credentials_row"].button(
-                        label=name,
-                        key=key
-                    ):
-                        print(f"HELLO THERE")
-                        trc += "L"
-                        st.session_state.update({
-                            "radios_choose_user": i,
-                            "handled_radios_choose_user": True
-                        })
-                        raise ValueError("HEY!")
-                    # radio_toggles.append(
-                    #     grid["credentials_row"].button(
-                    #         label=name,
-                    #         key=key,
-                    #
-                    #         # on_change=lambda i_=i, k_=key: check_others(i_, k_)
-                    #     )
-                    # )
-                    # if radio_toggles[-1]:
-                    #     trc += "L"
-                    #     st.session_state.update({
-                    #         "radios_choose_user": i,
-                    #         "handled_radios_choose_user": True
-                    #     })
-                    #     # st.rerun()
+                # for i, name in enumerate(names):
+                #     key = f"radio_toggle_{i}"
+                #     if key in st.session_state:
+                #         del st.session_state[key]
+                #     if grid["credentials_row"].button(
+                #         label=name,
+                #         key=key
+                #     ):
+                #         print(f"HELLO THERE")
+                #         trc += "L"
+                #         cust_id: int = df_user.iloc[0][cust_key]
+                #         st.write(f"{cust_id=}")
+                #         df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id]
+                #         # st.write("DF_CUST:")
+                #         # st.dataframe(df_cust)
+                #         full_name = df_cust.iloc[0]["Name"]
+                #         st.session_state.update({
+                #             "radios_choose_user": i,
+                #             "handled_radios_choose_user": True,
+                #             "signed_in": True,
+                #             "user_name": user,
+                #             "itr_customer_id": cust_id,
+                #             "user_full_name": full_name,
+                #             "sign_in_date": datetime.datetime.now()
+                #         })
+                #         # raise ValueError("HEY!")
+                #         # return True
+                #         st.rerun()
+                #     else:
+                #         print(f"{i=}, {name=}, ELSE")
+                #     # radio_toggles.append(
+                #     #     grid["credentials_row"].button(
+                #     #         label=name,
+                #     #         key=key,
+                #     #
+                #     #         # on_change=lambda i_=i, k_=key: check_others(i_, k_)
+                #     #     )
+                #     # )
+                #     # if radio_toggles[-1]:
+                #     #     trc += "L"
+                #     #     st.session_state.update({
+                #     #         "radios_choose_user": i,
+                #     #         "handled_radios_choose_user": True
+                #     #     })
+                #     #     # st.rerun()
+                #
+                # # else:\
 
-                # else:
             else:
                 trc += "Q"
 
@@ -494,6 +585,8 @@ def check_password(app_short_name: str = None):
                             cust_key: cust_id
                         })
                     ])
+            else:
+                print("radios_choose_user IS NONE")
 
             with grid["credentials_row"]:
                 if not df_user.empty:

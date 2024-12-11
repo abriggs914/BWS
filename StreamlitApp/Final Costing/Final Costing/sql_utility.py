@@ -13,8 +13,8 @@ import datetime
 VERSION = \
     """	
     General SQL Utility Functions
-    Version..............1.04
-    Date...........2024-12-05
+    Version..............1.05
+    Date...........2024-12-10
     Author(s)....Avery Briggs
     """
 
@@ -123,11 +123,13 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
     trace: bool = False
     where_clause = ""
 
-    print(f"PW type={type(clauses)}, {clauses=}")
+    if trace:
+        print(f"PW type={type(clauses)}, {clauses=}")
 
     def op_process(var, ops_dict: dict[str: Any]) -> str:
 
-        print(f"{var=}, {ops_dict=}")
+        if trace:
+            print(f"{var=}, {ops_dict=}")
 
         ops_clause = []
         for op, value_s in ops_dict.items():
@@ -183,7 +185,7 @@ def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
 
             # ops_clause.append(f"{var} {op_s} {test}")
         ops_clause = "(" + (") AND (".join(ops_clause)) + ")"
-        print(f"OP type={type(ops_clause)}, {ops_clause=}")
+        # print(f"OP type={type(ops_clause)}, {ops_clause=}")
         return ops_clause
 
     def help_parse(clause_stmt, logic="OR", nest_level: int = 1) -> str:  # list[str]:
@@ -543,9 +545,9 @@ def create_sql(
         if transaction_wrap:
             sql = "BEGIN TRAN;\n\n"
         # shrink: bool = False
-        print(f"{sql_lines=}")
+        # print(f"{sql_lines=}")
         for i, sql_line in enumerate(sql_lines):
-            print(f"{i=}, {sql_line=}")
+            # print(f"{i=}, {sql_line=}")
             if isinstance(sql_line, (list, tuple)):
                 for j, line in enumerate(sql_line):
                     # print(f"{i=}, {j=}, {line=}")
@@ -556,7 +558,7 @@ def create_sql(
             if i < (len(sql_lines) - 1):
                 # prev_line = sql_lines[i - 1].strip().upper()
                 next_line = str(sql_lines[i + 1]).strip().upper()
-                print(f"{next_line=}")
+                # print(f"{next_line=}")
                 for kwd in keywords:
                     if tbs or (sql_line == "VALUES"):
                         if next_line.strip().upper().startswith(kwd):
