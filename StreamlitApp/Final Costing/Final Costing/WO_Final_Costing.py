@@ -1,6 +1,7 @@
 import datetime
 from typing import Any
 
+import pyautogui
 import streamlit as st
 import altair as alt
 
@@ -1074,9 +1075,31 @@ show_cols = {
     "ActCompleteDate": "End Date"
 }
 
+
+def clear_cache():
+    st.cache_data.clear()
+    st.cache_resource.clear()
+
+
+def rerun():
+    # st.rerun()  # no op
+    pyautogui.hotkey("ctrl", "F5")
+
+
+def clear_cache_and_rerun():
+    clear_cache()
+    rerun()
+
+
 ######################################
 # Begin Streamlit Widgets & Page Setup
 ######################################
+
+
+button_clear_cache_and_rerun = st.sidebar.button(
+    label="Clear Cache & Rerun",
+    on_click=clear_cache_and_rerun
+)
 
 
 ctl_columns = st.columns(3)

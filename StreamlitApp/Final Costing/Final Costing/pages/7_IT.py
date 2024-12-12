@@ -628,26 +628,6 @@ df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.title()
 list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().str.title().unique().tolist())
 
 
-def clear_cache():
-    st.cache_data.clear()
-    st.cache_resource.clear()
-
-
-def rerun():
-    # st.rerun()  # no op
-    pyautogui.hotkey("ctrl", "F5")
-
-
-def clear_cache_and_rerun():
-    clear_cache()
-    rerun()
-
-
-button_clear_cache_and_rerun = st.button(
-    label="Clear Cache & Rerun",
-    on_click=clear_cache_and_rerun
-)
-
 # if st.button(
 #     label="Clear Cache & Rerun"
 # ):
