@@ -1651,28 +1651,111 @@ def access_maintenance():
         st.subheader("access_maintenance")
 
     databases = [
-        "SysproCompanyA.accdb",
-        "SysproCompanyS.accdb",
-        "BWS-SalesV4.mdb"
+        'AccessOfDoom.accdb',
+        'BWS Bunk Order Form.accdb',
+        'BWS-CARs.accdb',
+        'BWS-Defects.accdb',
+        'BWS-Defects_BPF.accdb',
+        'BWS-Defects_Parts_Snags.accdb',
+        'BWS-Defects_Print.accdb',
+        'BWS-Defects_Receiving.accdb',
+        'BWS-Defects_Snags.accdb',
+        'BWS-Direct Sales.mdb',
+        'BWS-Eng v2.mdb',
+        'BWS-Gen v2.mdb',
+        'BWS-Jigs.accdb',
+        'BWS-Prod v2.mdb',
+        'BWS-Pur v2.mdb',
+        'BWS-SalesV2.mdb',
+        'BWS-SalesV3 (Standalone).mdb',
+        'BWS-SalesV3.mdb',
+        'BWS-SalesV4-RestoredNov23.mdb',
+        'BWS-SalesV4.mdb',
+        'BWS-SalesWOEmailHL.accdb',
+        'BWS-SalesWOFCEmailHL.accdb',
+        'BWS-Warranty.accdb',
+        'BWSAdmin - Prod.accdb',
+        'BWSAdmin Input.accdb',
+        'BWSAdmin.accdb',
+        'BWSSV5_Reports.accdb',
+        'Defects_Receiving.accdb',
+        'IT.accdb',
+        'Jamie-HudTemplate V1.accdb',
+        'SCStat_ExportWOPDF.accdb',
+        'Security V1.accdb',
+        'Stargate-SalesWOFCEmailHL.accdb',
+        'Stargate-Warranty.accdb',
+        'SYSPRO MRP Supplier Forecast.accdb',
+        'SYSPRO Stock Code Lookup (Backflushing).accdb',
+        'SysproCompanyA Branched May 2023.accdb',
+        'SysproCompanyA Operation19 -- 202402121230.accdb',
+        'SysproCompanyA.accdb',
+        'SysproCompanyL.accdb',
+        'SysproCompanyL_F2018.accdb',
+        'SysproCompanyS.accdb',
+        'SysproCompanyS_Backup.accdb',
+        'SysproMultipleWOs_Live.accdb',
+        'SysproMultipleWOs_Stargate_Live.accdb',
+        'SysproMultipleWOs_Stargate_Test.accdb',
+        'SysproMultipleWOs_Test.accdb',
+        'SysproWOs_Live.accdb',
+        'SysproWOs_Live_Backup.accdb',
+        'SysproWOs_Live_Jamie.accdb',
+        'SysproWOs_Live_Jeff.accdb',
+        'SysproWOs_Live_Stargate.accdb',
+        'SysproWOs_Stargate_Live.accdb',
+        'SysproWOs_Stargate_Test.accdb',
+        'SysproWOs_Test.accdb',
+        'TaskTracker.accdb'
     ]
+    databases = os.listdir(r"\\server3.bwsdomain.local\production")
+    databases = [fn for fn in databases if any([fn.endswith(".mdb"), fn.endswith(".accdb")])]
 
-    download_buttons = []
+    grid_db_btns = []
+
+    # download_buttons = []
     for i, db in enumerate(databases):
         db_spl = db.split(".")
         name = "".join(db_spl[:-1])
         key = f"db_file_{name.lower()}"
+        toggle_key = f"toggle_db_{i}"
         data = st.session_state.get(key)
         if data is None:
             st.session_state.update({key: load_production_file(db)})
         # print(f"{i=}, {db=}, {name=}, {key=}")
 
         if data is not None:
-            download_buttons.append(st.download_button(
+            grid_db_btns.append(st.columns([0.25, 0.25, 0.5]))
+            grid_db_btns[i][0].toggle(
+                label="select",
+                key=toggle_key,
+                label_visibility="hidden"
+            )
+            grid_db_btns[i][1].download_button(
                 label=name,
                 data=data,
                 file_name=db,
                 mime="application/octet-stream"
-            ))
+            )
+
+    if st.button(
+        label="Create 'Update Access.bat' file",
+        key="button_create_update_bat_file"
+    ):
+        out_lines = []
+        for i, db in enumerate(databases):
+            toggle_key = f"toggle_db_{i}"
+            if st.session_state.get(toggle_key, False):
+                out_lines.append(fr'xcopy "\\SERVER3.bwsdomain.local\Production\{db}" c:\Access\*.* /Y')
+
+
+        st.download_button(
+            label="download file",
+            data="\n".join(out_lines),
+            file_name="Update Access.txt"
+        )
+        st.write(f":red[Please save this output file as '.bat' in order to execute it.]")
+        st.write(f":red[This file type triggers suspicious download protocols, so .txt is the best delivery method.]")
 
 
 un = st.session_state.get('user_full_name')

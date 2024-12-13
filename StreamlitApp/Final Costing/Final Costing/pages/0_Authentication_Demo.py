@@ -164,14 +164,15 @@ app_id: int = df_app_directory.iloc[0]["ID"] if not df_app_directory.empty else 
 
 df_itr_customers = pd.merge(
     df_itr_customers,
-    df_itp_phone_lines[["Extension", "DisplayName", "AssignedTo"]],
+    df_itp_phone_lines[["Extension", "DisplayName", "AssignedTo", "ID"]],
     left_on="CustomerID",
     right_on="AssignedTo",
     how="left"
 )
 
 n_customers = df_itr_customers.shape[0]
-last_frame_idx = (n_customers - (N_PER_FRAME + 1)) / N_PER_FRAME
+# last_frame_idx = (n_customers - (N_PER_FRAME + 1)) / N_PER_FRAME
+last_frame_idx = n_customers - (n_customers % N_PER_FRAME)
 
 st.dataframe(df_itr_customers)
 
@@ -251,10 +252,15 @@ def check_password():
 
 
 def change_frame_idx(offset):
-    f_idx = st.session_state.get("frame_idx", 0)
-    print(f"A {f_idx=}")
-    f_idx = min(max(0, f_idx + (offset * N_PER_FRAME)), (last_frame_idx * N_PER_FRAME))
-    print(f"B {f_idx=}")
+    if offset == 0:
+        f_idx = 0
+    elif offset is None:
+        f_idx = last_frame_idx
+    else:
+        f_idx = st.session_state.get("frame_idx", 0)
+        print(f"A {f_idx=}")
+        f_idx = min(max(0, f_idx + (offset * N_PER_FRAME)), (last_frame_idx))
+        print(f"B {f_idx=}")
     st.session_state.update({
         "frame_idx": f_idx
     })
@@ -307,24 +313,53 @@ else:
                 first_idx = frame_idx
                 last_idx = first_idx + N_PER_FRAME - 1
 
-                cols_controls = st.columns([0.15, 0.15, 0.15, 0.55])
-                button_back = cols_controls[0].button(
+                cols_controls = st.columns([0.1, 0.1, 0.15, 0.1, 0.1, 0.45])
+
+                button_start = cols_controls[0].button(
+                    label="start",
+                    key="button_frame_start",
+                    on_click=lambda: change_frame_idx(0),
+                    disabled=frame_idx == 0
+                )
+
+                button_back = cols_controls[1].button(
                     label="prev",
                     key="button_frame_back",
                     on_click=lambda: change_frame_idx(-1),
                     disabled=frame_idx == 0
                 )
 
-                cols_controls[1].write(
-                    f"{frame_idx=}, {first_idx=}, {last_idx=}, {last_frame_idx*N_PER_FRAME=}"
+                cols_controls[2].write(
+                    f"{frame_idx=}, {first_idx=}, {last_idx=}, npf={N_PER_FRAME}, {last_frame_idx=}"
                 )
 
-                button_forward = cols_controls[2].button(
+                button_forward = cols_controls[3].button(
                     label="next",
                     key="button_frame_forward",
                     on_click=lambda: change_frame_idx(1),
-                    disabled=frame_idx == (last_frame_idx * N_PER_FRAME)
+                    disabled=frame_idx == last_frame_idx
                 )
+
+                button_end = cols_controls[4].button(
+                    label="end",
+                    key="button_frame_end",
+                    on_click=lambda: change_frame_idx(None),
+                    disabled=frame_idx == last_frame_idx
+                )
+
+                df_pl_in_use: pd.DataFrame = df_itr_customers.loc[
+                    (df_itr_customers["Active"] == 1)
+                    & ~pd.isna(df_itr_customers["Extension"])
+                ]
+                df_pl_free: pd.DataFrame = df_itp_phone_lines.loc[
+                    (df_itp_phone_lines["Active"] == 1)
+                    & pd.isna(df_itp_phone_lines["AssignedTo"])
+                ]
+
+                st.write(df_itr_customers.columns.tolist())
+                st.write(df_itp_phone_lines.columns.tolist())
+                st.write(df_pl_in_use)
+                st.write(df_pl_free)
 
                 data_grid = []
                 edit_columns = [

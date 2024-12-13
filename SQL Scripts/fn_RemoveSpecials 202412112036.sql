@@ -69,7 +69,7 @@ BEGIN
 			('|'),
 			(';'),
 			(':'),
-			(''''),
+			(CHAR(39)),
 			('"'),
 			(','),
 			('<'),
@@ -261,7 +261,7 @@ BEGIN
 
 		SELECT
 			@i = 0,
-			@c = LEN(@strText)
+			@c = LEN(@strText) + 1
 		;
 
 		--SELECT * FROM @validTable

@@ -3,39 +3,208 @@
 -- Review the frequency of wording for options
 -- 2024-12-11
 
+SET NOCOUNT ON;
 
 DECLARE @tq INT = NULL
---SELECT @tq = 26121;
+DECLARE @tp NVARCHAR(MAX) = NULL
+--SELECT @t6q = 26121;
+--SELECT @tq = 25924
+--SELECT @tp = 'mudflaps'
 
+IF @tq IS NOT NULL BEGIN
+	SELECT
+		*
+	FROM
+		[BWSdb].[dbo].[Order Options]
+	WHERE
+		[Quote#] = @tq
+	;
 
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[Order Options_FactoryLines]
-WHERE
-	[Quote#] = @tq
-;
+	SELECT
+		*
+	FROM
+		[BWSdb].[dbo].[Order Options_FactoryLines]
+	WHERE
+		[Quote#] = @tq
+	;
 
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[Order Options_SpecLines]
-WHERE
-	[Quote#] = @tq
-;
-
+	SELECT
+		*
+	FROM
+		[BWSdb].[dbo].[Order Options_SpecLines]
+	WHERE
+		[Quote#] = @tq
+	;
+END
 
 DECLARE @descFreq AS TABLE ([ID] INT IDENTITY(0, 1), [Desc] NVARCHAR(MAX), [Freq] INT, [FirstQ] INT, [LastQ] INT);
-DECLARE @wordFreq AS TABLE ([ID] INT IDENTITY(0, 1), [Word] NVARCHAR(60), [Freq] INT);
-DECLARE @spltFreq AS TABLE ([ID] INT IDENTITY(0, 1), [Split] NVARCHAR(60), [Freq] INT);
+DECLARE @wordFreq AS TABLE ([ID] INT IDENTITY(0, 1), [Word] NVARCHAR(MAX), [Freq] INT, [FirstDFID] INT, [LastDFID] INT);
+DECLARE @spltFreq AS TABLE ([ID] INT IDENTITY(0, 1), [Split] NVARCHAR(MAX), [Freq] INT);
 DECLARE @p NVARCHAR(MAX);
+DECLARE @sI NVARCHAR(MAX) = '.-\/"';
+DECLARE @pf INT;
+DECLARE @dfID0 INT;
+DECLARE @dfID1 INT;
 DECLARE @i INT;
 DECLARE @c INT;
+
+IF @tp IS NOT NULL BEGIN
+	SELECT
+		LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], @sI, DEFAULT, DEFAULT)))
+		,SUM([SubFreq]) AS [Freq]
+		,MIN([FirstQ]) AS [FirstQ]
+		,MIN([LastQ]) AS [LastQ]
+	FROM (
+		SELECT
+			[Description]
+			,COUNT([Description]) AS [SubFreq]
+			,MIN([OO].[Quote#]) AS [FirstQ]
+			,MAX([OO].[Quote#]) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order Options] [OO]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [OO].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[Description]
+			,COUNT([Description]) AS [SubFreq]
+			,MIN([FL].[Quote#]) AS [FirstQ]
+			,MAX([FL].[Quote#]) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order Options_FactoryLines] [FL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[SpecDescription]
+			,COUNT([SpecDescription])
+			,MIN([FL].[Quote#]) AS [FirstQ]
+			,MAX([FL].[Quote#]) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order Options_FactoryLines] [FL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[SpecDescription]
+		UNION ALL
+		SELECT
+			[Description]
+			,COUNT([Description])
+			,MIN([SL].[Quote#]) AS [FirstQ]
+			,MAX([SL].[Quote#]) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order Options_SpecLines] [SL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[SpecDescription]
+			,COUNT([SpecDescription])
+			,MIN([SL].[Quote#]) AS [FirstQ]
+			,MAX([SL].[Quote#]) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order Options_SpecLines] [SL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[SpecDescription]
+
+		-- Stargate
+
+		UNION ALL
+
+		SELECT
+			[Description]
+			,COUNT([Description]) AS [SubFreq]
+			,MIN(CAST(RIGHT([OO2].[SGQuote], 6) AS INT)) AS [FirstQ]
+			,MAX(CAST(RIGHT([OO2].[SGQuote], 6) AS INT)) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order OptionsV2] [OO2]
+		WHERE
+			(CASE 
+				WHEN @tp IS NULL THEN 1 
+				ELSE (CASE
+					WHEN [OO2].[Description] LIKE '%' + @tp + '%' THEN 1
+					ELSE 0
+				END)
+			END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[Description]
+			,COUNT([Description]) AS [SubFreq]
+			,MIN(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [FirstQ]
+			,MAX(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order OptionsV2_FactoryLines] [FL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[SpecDescription]
+			,COUNT([SpecDescription])
+			,MIN(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [FirstQ]
+			,MAX(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order OptionsV2_FactoryLines] [FL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[SpecDescription]
+		UNION ALL
+		SELECT
+			[Description]
+			,COUNT([Description])
+			,MIN(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [FirstQ]
+			,MAX(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order OptionsV2_SpecLines] [SL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[Description]
+		UNION ALL
+		SELECT
+			[SpecDescription]
+			,COUNT([SpecDescription])
+			,MIN(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [FirstQ]
+			,MAX(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [LastQ]
+		FROM
+			[BWSdb].[dbo].[Order OptionsV2_SpecLines] [SL]
+		WHERE
+			(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+			--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+		GROUP BY
+			[SpecDescription]
+
+	) AS [Src]
+	GROUP BY
+		LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], @sI, DEFAULT, DEFAULT)))
+	;
+END
 
 
 INSERT INTO @descFreq ([Desc], [Freq], [FirstQ], [LastQ])
 SELECT
-	LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], DEFAULT, DEFAULT, DEFAULT)))
+	LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], @sI, DEFAULT, DEFAULT)))
 	,SUM([SubFreq]) AS [Freq]
 	,MIN([FirstQ]) AS [FirstQ]
 	,MIN([LastQ]) AS [LastQ]
@@ -87,9 +256,84 @@ FROM (
 		(CASE WHEN @tq IS NULL THEN 1 ELSE (CASE WHEN @tq = [SL].[Quote#] THEN 1 ELSE 0 END) END) = 1
 	GROUP BY
 		[SpecDescription]
+	
+	-- Stargate
+
+	UNION ALL
+
+	SELECT
+		[Description]
+		,COUNT([Description]) AS [SubFreq]
+		,MIN(CAST(RIGHT([OO2].[SGQuote], 6) AS INT)) AS [FirstQ]
+		,MAX(CAST(RIGHT([OO2].[SGQuote], 6) AS INT)) AS [LastQ]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2] [OO2]
+	WHERE
+		(CASE 
+			WHEN @tp IS NULL THEN 1 
+			ELSE (CASE
+				WHEN [OO2].[Description] LIKE '%' + @tp + '%' THEN 1
+				ELSE 0
+			END)
+		END) = 1
+		--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+	GROUP BY
+		[Description]
+	UNION ALL
+	SELECT
+		[Description]
+		,COUNT([Description]) AS [SubFreq]
+		,MIN(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [FirstQ]
+		,MAX(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [LastQ]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2_FactoryLines] [FL]
+	WHERE
+		(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+		--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+	GROUP BY
+		[Description]
+	UNION ALL
+	SELECT
+		[SpecDescription]
+		,COUNT([SpecDescription])
+		,MIN(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [FirstQ]
+		,MAX(CAST(RIGHT([FL].[SGQuote], 6) AS INT)) AS [LastQ]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2_FactoryLines] [FL]
+	WHERE
+		(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [FL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+		--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+	GROUP BY
+		[SpecDescription]
+	UNION ALL
+	SELECT
+		[Description]
+		,COUNT([Description])
+		,MIN(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [FirstQ]
+		,MAX(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [LastQ]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2_SpecLines] [SL]
+	WHERE
+		(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[Description] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+		--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+	GROUP BY
+		[Description]
+	UNION ALL
+	SELECT
+		[SpecDescription]
+		,COUNT([SpecDescription])
+		,MIN(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [FirstQ]
+		,MAX(CAST(RIGHT([SL].[SGQuote], 6) AS INT)) AS [LastQ]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2_SpecLines] [SL]
+	WHERE
+		(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN [SL].[SpecDescription] LIKE '%' + @tp + '%' THEN 1 ELSE 0 END) END) = 1
+		--(CASE WHEN @tp IS NULL THEN 1 ELSE (CASE WHEN ([FL].[Description] LIKE '%' + @tp + '%' AND LEN([FL].[Description]) = LEN(@tp)) THEN 1 ELSE 0 END) END) = 1
+	GROUP BY
+		[SpecDescription]
 ) AS [Src]
 GROUP BY
-	LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], DEFAULT, DEFAULT, DEFAULT)))
+	LTRIM(RTRIM([BWSdb].[dbo].[fn_RemoveSpecials]([Description], @sI, DEFAULT, DEFAULT)))
 ;
 
 SELECT
@@ -111,6 +355,9 @@ WHILE @i < @c BEGIN
 
 	SELECT
 		@p = [DF].[Desc]
+		,@pf = [DF].[Freq]
+		,@dfID0 = [DF].[ID]
+		--,@dfID1 = [DF].[ID]
 	FROM
 		@descFreq [DF]
 	WHERE
@@ -132,7 +379,8 @@ WHILE @i < @c BEGIN
 	INSERT INTO @spltFreq ([Split], [Freq])
 	SELECT
 		LTRIM(RTRIM([SS].[splited_data])),
-		COUNT(*)
+		--COUNT(*) +
+		@pf
 	FROM
 		[BWSdb].[dbo].[split_string_idx](@p, ' ') [SS]
 	WHERE
@@ -148,11 +396,16 @@ WHILE @i < @c BEGIN
 		FROM
 			@spltFreq
 	END
-
+	
 	UPDATE
 		@wordFreq
 	SET
-		[Freq] = ISNULL([WF].[Freq], 0) + ISNULL([SF].[Freq], 1)
+		--[Freq] = ISNULL([WF].[Freq], 1) + (ISNULL([SF].[Freq], 1) * @pf)
+		--[Freq] = ISNULL([WF].[Freq] + 1, 1) + ISNULL([SF].[Freq], 1)
+		--[Freq] = ISNULL([WF].[Freq], 0) + ISNULL([SF].[Freq], 1)
+		[Freq] = ISNULL([WF].[Freq], 0) + ISNULL([SF].[Freq], 0),
+		[FirstDFID] = (CASE WHEN [WF].[FirstDFID] <= @dfID0 THEN [WF].[FirstDFID] ELSE @dfID0 END),
+		[LastDFID] = (CASE WHEN [WF].[LastDFID] >= @dfID0 THEN [WF].[LastDFID] ELSE @dfID0 END)
 	FROM
 		@wordFreq [WF]
 	INNER JOIN
@@ -161,10 +414,12 @@ WHILE @i < @c BEGIN
 		LTRIM(RTRIM([WF].[Word])) = LTRIM(RTRIM([SF].[Split]))
 	;
 
-	INSERT INTO @wordFreq ([Word], [Freq])
+	INSERT INTO @wordFreq ([Word], [Freq], [FirstDFID], [LastDFID])
 	SELECT
 		LTRIM(RTRIM([SF].[Split])),
-		COUNT(*)
+		COUNT(*) * @pf,
+		@dfID0,
+		@dfID0
 	FROM
 		@spltFreq [SF]
 	LEFT JOIN
@@ -192,16 +447,18 @@ ORDER BY
 	[Desc]
 ;
 
-SELECT
-	'DF-' AS [T]
-	,*
-FROM
-	@descFreq
-WHERE
-	[Desc] LIKE '% Kinedyne%'
-ORDER BY
-	[Desc]
-;
+IF @tp IS NOT NULL BEGIN
+	SELECT
+		'DF-' AS [T]
+		,*
+	FROM
+		@descFreq
+	WHERE
+		[Desc] LIKE '%' + @tp + '%'
+	ORDER BY
+		[Desc]
+	;
+END
 
 SELECT
 	'WF' AS [T]
@@ -211,6 +468,34 @@ FROM
 ORDER BY
 	[Word]
 ;
+
+SELECT
+	'WF' AS [T]
+	,[WF].*
+	,[DF].*
+FROM
+	@wordFreq [WF]
+LEFT JOIN
+	@descFreq [DF]
+ON
+	[WF].[FirstDFID] = [DF].[ID]
+ORDER BY
+	[Word]
+;
+
+IF @tp IS NOT NULL BEGIN
+	SELECT
+		'WF-' AS [T]
+		,*
+	FROM
+		@wordFreq
+	WHERE
+		[Word] = @tp
+	ORDER BY
+		[Word]
+	;
+END
+
 /*
 SELECT
 	*
