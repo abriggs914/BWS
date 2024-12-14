@@ -52,7 +52,8 @@ DEFAULT_SESSION_STATE = {
     "select_shirt_size": None,
 
     "toggle_admin_mode": False,
-    "frame_idx": 0
+    "frame_idx": 0,
+    "dirty": False
 }
 for k, v in DEFAULT_SESSION_STATE.items():
     st.session_state.setdefault(k, v)
@@ -151,35 +152,69 @@ def submit_form(form_key):
 ####################
 
 
-df_itr_customers: pd.DataFrame = load_itr_customers()
-df_app_directory: pd.DataFrame = load_itstr_app_directory()
-df_user_directory: pd.DataFrame = load_itstr_user_directory()
-df_itp_phone_lines: pd.DataFrame = load_itp_phone_lines()
-df_app_directory: pd.DataFrame = df_app_directory.loc[df_app_directory["AppShortName"] == st.session_state.get("app_short_name")]
-app_id: int = df_app_directory.iloc[0]["ID"] if not df_app_directory.empty else -1
+if "df_itr_customers" not in st.session_state:
+    st.session_state.update({
+        "df_itr_customers": load_itr_customers()
+    })
+if "df_app_directory" not in st.session_state:
+    st.session_state.update({
+        "df_app_directory": load_itstr_app_directory()
+    })
+if "df_user_directory" not in st.session_state:
+    st.session_state.update({
+        "df_user_directory": load_itstr_user_directory()
+    })
+if "df_itp_phone_lines" not in st.session_state:
+    st.session_state.update({
+        "df_itp_phone_lines": load_itp_phone_lines()
+    })
+
+st.session_state.update({
+    "df_app_directory": st.session_state.get("df_app_directory").loc[
+        st.session_state.get("df_app_directory")["AppShortName"] == st.session_state.get("app_short_name")
+    ]
+})
+app_id: int = st.session_state.get("df_app_directory").iloc[0]["ID"] if not st.session_state.get("df_app_directory").empty else -1
 
 # st.write(f"{app_id=}, {type(app_id)=}")
 # st.dataframe(df_app_directory, use_container_width=True)
 # st.dataframe(df_user_directory, use_container_width=True)
 
-df_itr_customers = pd.merge(
-    df_itr_customers,
-    df_itp_phone_lines[["Extension", "DisplayName", "AssignedTo", "ID"]],
-    left_on="CustomerID",
-    right_on="AssignedTo",
-    how="left"
-)
+st.session_state.update({
+    "df_itr_customers": st.session_state.get("df_itr_customers").loc[
+        st.session_state.get("df_itr_customers")["Company"] == "BWS"
+    ]
+})
 
-n_customers = df_itr_customers.shape[0]
+merge_cols = ["Extension", "DisplayName", "AssignedTo", "ID"]
+for col in merge_cols:
+    if col in st.session_state.get("df_itr_customers").columns:
+        st.session_state.update({
+            "df_itr_customers": st.session_state.get("df_itr_customers").drop(columns=[col])
+        })
+
+st.session_state.update({
+    "df_itr_customers": pd.merge(
+        st.session_state.get("df_itr_customers"),
+        st.session_state.get("df_itp_phone_lines")[merge_cols],
+        left_on="CustomerID",
+        right_on="AssignedTo",
+        how="left"
+    )
+})
+
+n_customers = st.session_state.get("df_itr_customers").shape[0]
 # last_frame_idx = (n_customers - (N_PER_FRAME + 1)) / N_PER_FRAME
 last_frame_idx = n_customers - (n_customers % N_PER_FRAME)
 
-st.dataframe(df_itr_customers)
+st.dataframe(st.session_state.get("df_itr_customers"))
 
-df_user_directory: pd.DataFrame = df_user_directory.loc[df_user_directory["ITSTRAppID"] == app_id]
+df_user_directory: pd.DataFrame = st.session_state.get("df_user_directory").loc[
+    st.session_state.get("df_user_directory")["ITSTRAppID"] == app_id
+]
 df_user_directory["AppUserName"] = df_user_directory["AppUserName"].str.lower()
 
-list_shirt_sizes: list[str] = sorted(df_itr_customers["ShirtSize"].dropna().unique().tolist())
+list_shirt_sizes: list[str] = sorted(st.session_state.get("df_itr_customers")["ShirtSize"].dropna().unique().tolist())
 
 grid = {
     "top_bar": st.columns([0.6, 0.2, 0.2]),
@@ -217,7 +252,9 @@ def check_password():
                     # valid user and valid password
                     cust_id: int = df_user.iloc[0]["ITRCustomerID"]
                     # st.write(f"{cust_id=}")
-                    df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id]
+                    df_cust: pd.DataFrame = st.session_state.get("df_itr_customers").loc[
+                        st.session_state.get("df_itr_customers")["CustomerID"] == cust_id
+                    ]
                     # st.write("DF_CUST:")
                     # st.dataframe(df_cust)
                     full_name = df_cust.iloc[0]["Name"]
@@ -266,6 +303,26 @@ def change_frame_idx(offset):
     })
 
 
+def assign_ext(idx):
+    k_ext: str = f"selectbox_extension_{idx}"
+    ext = st.session_state.get(k_ext, "")
+    if ext:
+        ext_id = st.session_state.get("df_itp_phone_lines").loc[st.session_state.get("df_itp_phone_lines")["Extension"] == ext]
+        if not ext_id.empty:
+            ext_id = ext_id.index
+            df_cust: pd.DataFrame = st.session_state.get("df_itr_customers").iloc[idx]
+            if df_cust.empty:
+                cust_id = None
+            else:
+                cust_id = df_cust["CustomerID"]
+            print(f"{idx=}, {k_ext=}, {ext=}, {ext_id=}, {cust_id=}")
+            st.session_state.get("df_itp_phone_lines").loc[ext_id, "AssignedTo"] = cust_id
+            st.session_state.update({
+                "dirty": True
+            })
+    # df_itr_customers.iloc[idx, "Assigned"]
+
+
 # un = st.session_state.get('user_full_name')
 # if not un:
 #     un = "NO NAME YET"
@@ -277,7 +334,7 @@ with grid["title_row"]:
     st.markdown(coloured_text("Streamlit Authentication Demo", "#653131", html_tags="h1"), unsafe_allow_html=True)
 
 
-if df_app_directory.empty:
+if st.session_state.get("df_app_directory").empty:
     with grid["content_row_0"]:
         st.write(f"## This Streamlit application '{st.session_state.get('app_short_name')}' is not recognized.")
         st.write("##### Please contact IT for further assistance with this app.")
@@ -347,19 +404,24 @@ else:
                     disabled=frame_idx == last_frame_idx
                 )
 
-                df_pl_in_use: pd.DataFrame = df_itr_customers.loc[
-                    (df_itr_customers["Active"] == 1)
-                    & ~pd.isna(df_itr_customers["Extension"])
+                df_pl_in_use: pd.DataFrame = st.session_state.get("df_itr_customers").loc[
+                    (st.session_state.get("df_itr_customers")["Active"] == 1)
+                    & ~pd.isna(st.session_state.get("df_itr_customers")["Extension"])
                 ]
-                df_pl_free: pd.DataFrame = df_itp_phone_lines.loc[
-                    (df_itp_phone_lines["Active"] == 1)
-                    & pd.isna(df_itp_phone_lines["AssignedTo"])
+                df_pl_free: pd.DataFrame = st.session_state.get("df_itp_phone_lines").loc[
+                    (st.session_state.get("df_itp_phone_lines")["Active"] == 1)
+                    & pd.isna(st.session_state.get("df_itp_phone_lines")["AssignedTo"])
+                ]
+                df_ic_free: pd.DataFrame = st.session_state.get("df_itr_customers").loc[
+                    (st.session_state.get("df_itr_customers")["Active"] == 1)
+                    & pd.isna(st.session_state.get("df_itr_customers")["Extension"])
                 ]
 
-                st.write(df_itr_customers.columns.tolist())
-                st.write(df_itp_phone_lines.columns.tolist())
+                st.write(st.session_state.get("df_itr_customers").columns.tolist())
+                st.write(st.session_state.get("df_itp_phone_lines").columns.tolist())
                 st.write(df_pl_in_use)
                 st.write(df_pl_free)
+                st.write(df_ic_free)
 
                 data_grid = []
                 edit_columns = [
@@ -394,9 +456,9 @@ else:
                 for i, col in enumerate(cols_names):
                     data_grid[0][i].write(col)
 
-                df_itr_cust_filt = df_itr_customers.loc[
-                    (df_itr_customers.index >= first_idx)
-                    & (df_itr_customers.index <= last_idx)
+                df_itr_cust_filt = st.session_state.get("df_itr_customers").loc[
+                    (st.session_state.get("df_itr_customers").index >= first_idx)
+                    & (st.session_state.get("df_itr_customers").index <= last_idx)
                 ].reset_index()
 
                 # st.dataframe(df_itr_cust_filt)
@@ -404,7 +466,7 @@ else:
                 for i, row in df_itr_cust_filt.iterrows():
                     data_grid.append(st.columns(weights))
                     name = row["Name"]
-                    print(f"{i=}, {name=}")
+                    # print(f"{i=}, {name=}")
                     dob_y: int = row["BirthYear"]
                     dob_m: int = row["BirthMonth"]
                     dob_d: int = row["BirthDay"]
@@ -418,6 +480,7 @@ else:
                     k_dob: str = f"date_input_dob_{i}"
                     k_shirt_size: str = f"selectbox_shirtsize_{i}"
                     k_display_name: str = f"text_input_display_name_{i}"
+                    k_ext: str = f"selectbox_extension_{i}"
 
                     if not any([pd.isna(dob_y), pd.isna(dob_m), pd.isna(dob_d)]):
                         dob = datetime.datetime(int(dob_y), int(dob_m), int(dob_d))
@@ -428,11 +491,19 @@ else:
                     if pd.isna(ext):
                         ext = ""
 
+                    available_extensions: list[str]
+                    available_extensions = df_pl_free["Extension"].values.tolist()
+                    if ext:
+                        ext = str(int(ext))
+                        available_extensions.insert(0, ext)
+                    available_extensions.insert(0, "")
+
                     st.session_state.update({
                         k_name: name,
                         k_dob: dob,
                         k_shirt_size: shirt_size,
-                        k_display_name: display_name
+                        k_display_name: display_name,
+                        k_ext: ext
                     })
 
                     # data_grid[i + 1][cols_names.index("Name")].write(name)
@@ -461,7 +532,14 @@ else:
                         options=list_shirt_sizes,
                         label_visibility="hidden"
                     )
-                    data_grid[i + 1][cols_names.index("Ext")].write(ext)
+                    # data_grid[i + 1][cols_names.index("Ext")].write(ext)
+                    data_grid[i + 1][cols_names.index("Ext")].selectbox(
+                        label="Extension",
+                        key=k_ext,
+                        options=available_extensions,
+                        label_visibility="hidden",
+                        on_change=lambda i_=i: assign_ext(i_)
+                    )
                     data_grid[i + 1][cols_names.index("Cell")].write(cell_phone)
 
 
@@ -497,7 +575,9 @@ else:
             else:
                 df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user_name]
                 cust_id: int = df_user.iloc[0]["ITRCustomerID"]
-                df_cust: pd.DataFrame = df_itr_customers.loc[df_itr_customers["CustomerID"] == cust_id].iloc[0]
+                df_cust: pd.DataFrame = st.session_state.get("df_itr_customers").loc[
+                    st.session_state.get("df_itr_customers")["CustomerID"] == cust_id
+                ].iloc[0]
 
                 cust_dob_y: int = df_cust["BirthYear"]
                 cust_dob_m: int = df_cust["BirthMonth"]
