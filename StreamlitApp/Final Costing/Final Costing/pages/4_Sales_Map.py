@@ -232,17 +232,35 @@ FROM (
 def load_model_freq_data() -> pd.DataFrame:
     sql: str = """
 SELECT
-	[ModelSrc].[Class]
+	[ModelSrc].[C_M] AS [CompID]
+	, [ModelSrc].[ProductID]
+	, [ModelSrc].[Class]
 	, [ModelSrc].[Model No]
-	, [ModelSrc].[C_M]
-	, [OrderSrc].[C_O]
-	, ISNULL([OrderSrc].[NQuotes], 0) AS [NQuotes]
-	, ISNULL([OrderSrc].[NOrders], 0) AS [NOrders]
-	, [OrderSrc].[FirstQuote]
-	, [OrderSrc].[LastQuote]
+	, ISNULL([OrderSrc].[NQuotes], 0) AS [NQuotes_Model]
+	, ISNULL([OrderSrc].[NOrders], 0) AS [NOrders_Model]
+	, ISNULL([ClassSrc].[NQuotes], 0) AS [NQuotes_Class]
+	, ISNULL([ClassSrc].[NOrders], 0) AS [NOrders_Class]
+	, ISNULL([CompSrc].[NQuotes], 0) AS [NQuotes_Company]
+	, ISNULL([CompSrc].[NOrders], 0) AS [NOrders_Company]
+	, [OrderSrc].[FirstQuote] AS [FirstQuote_Model]
+	, [OrderSrc].[LastQuote] AS [LastQuote_Model]
+	, [ClassSrc].[FirstQuote] AS [FirstQuote_Class]
+	, [ClassSrc].[LastQuote] AS [LastQuote_Class]
+	, [CompSrc].[FirstQuote] AS [FirstQuote_Company]
+	, [CompSrc].[LastQuote] AS [LastQuote_Company]
+	, ISNULL([OrderSrc].[NOrders], 0) / CAST((CASE WHEN ISNULL([OrderSrc].[NQuotes], 0) = 0 THEN 1 ELSE [OrderSrc].[NQuotes] END) AS DECIMAL(18, 8)) AS [CaptureRate_Model]
+	, ISNULL([ClassSrc].[NOrders], 0) / CAST((CASE WHEN ISNULL([ClassSrc].[NQuotes], 0) = 0 THEN 1 ELSE [ClassSrc].[NQuotes] END) AS DECIMAL(18, 8)) AS [CaptureRate_Class]
+	, ISNULL([CompSrc].[NOrders], 0) / CAST((CASE WHEN ISNULL([CompSrc].[NQuotes], 0) = 0 THEN 1 ELSE [CompSrc].[NQuotes] END) AS DECIMAL(18, 8)) AS [CaptureRate_Company]
+	, [OrderSrc].[FirstDateQuote] AS [FirstDateQuote_Model]
+	, [OrderSrc].[LastDateQuote] AS [LastDateQuote_Model]
+	, [ClassSrc].[FirstDateQuote] AS [FirstDateQuote_Class]
+	, [ClassSrc].[LastDateQuote] AS [LastDateQuote_Class]
+	, [CompSrc].[FirstDateQuote] AS [FirstDateQuote_Company]
+	, [CompSrc].[LastDateQuote] AS [LastDateQuote_Company]
 FROM (
 	SELECT
-		[P].[Class]
+		[P].[IDTrailer] AS [ProductID]
+		, [P].[Class]
 		, [P].[Model No]
 		, 0 AS [C_M]
 	FROM
@@ -253,7 +271,8 @@ FROM (
 		AND ([P].[CompanyID] = 0)
 	UNION ALL
 	SELECT
-		[P2].[Class]
+		[P2].[IDTrailer] AS [ProductID]
+		, [P2].[Class]
 		, [P2].[Model No]
 		, 1 AS [C_M]
 	FROM
@@ -266,33 +285,141 @@ FROM (
 LEFT JOIN (
 	SELECT
 		0 AS [C_O]
+		, [O].[ProductID]
 		, [O].[Model No]
-		--COUNT((CASE WHEN THEN ELSE END)) AS [NQuotes]
 		, COUNT(*) AS [NQuotes]
 		, SUM((CASE WHEN [O].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
 		, MIN([O].[Quote#]) AS [FirstQuote]
 		, MAX([O].[Quote#]) AS [LastQuote]
+		, MIN([O].[Quote Date]) AS [FirstDateQuote]
+		, MAX([O].[Quote Date]) AS [LastDateQuote]
 	FROM
 		[BWSdb].[dbo].[Orders] [O]
 	GROUP BY
-		[O].[Model No]
+		[O].[ProductID]
+		, [O].[Model No]
 	UNION ALL
 	SELECT
 		1 AS [C_O]
+		, [O2].[ProductID]
 		, [O2].[Model No]
-		--COUNT((CASE WHEN THEN ELSE END)) AS [NQuotes]
 		, COUNT(*) AS [NQuotes]
 		, SUM((CASE WHEN [O2].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
 		, MIN(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [FirstQuote]
 		, MAX(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [LastQuote]
+		, MIN([O2].[Quote Date]) AS [FirstDateQuote]
+		, MAX([O2].[Quote Date]) AS [LastDateQuote]
 	FROM
 		[BWSdb].[dbo].[OrdersV2] [O2]
 	GROUP BY
-		[O2].[Model No]
+		[O2].[ProductID]
+		, [O2].[Model No]
 ) AS [OrderSrc]
 ON
-	([ModelSrc].[Model No] = [OrderSrc].[Model No])
+	([ModelSrc].[ProductID] = [OrderSrc].[ProductID])
 	AND ([ModelSrc].[C_M] = [OrderSrc].[C_O])
+LEFT JOIN (
+	SELECT
+		[ModelSrc].[C_M] AS [CompID]
+		, [ModelSrc].[Class]
+		, ISNULL(SUM([OrderSrc].[NQuotes]), 0) AS [NQuotes]
+		, ISNULL(SUM([OrderSrc].[NOrders]), 0) AS [NOrders]
+		, MIN([OrderSrc].[FirstQuote]) AS [FirstQuote]
+		, MAX([OrderSrc].[LastQuote]) AS [LastQuote]
+		, MIN([OrderSrc].[FirstDateQuote]) AS [FirstDateQuote]
+		, MAX([OrderSrc].[LastDateQuote]) AS [LastDateQuote]
+	FROM (
+		SELECT
+			[P].[IDTrailer] AS [ProductID]
+			, [P].[Class]
+			, [P].[Model No]
+			, 0 AS [C_M]
+		FROM
+			[BWSdb].[dbo].[Products] [P]
+		WHERE
+			([P].[Proposed] = 0)
+			AND ([P].[Non-Current] = 0)
+			AND ([P].[CompanyID] = 0)
+		UNION ALL
+		SELECT
+			[P2].[IDTrailer] AS [ProductID]
+			, [P2].[Class]
+			, [P2].[Model No]
+			, 1 AS [C_M]
+		FROM
+			[BWSdb].[dbo].[ProductsV2] [P2]
+		WHERE
+			([P2].[Proposed] = 0)
+			AND ([P2].[Non-Current] = 0)
+			AND ([P2].[CompanyID] = 1)
+	) AS [ModelSrc]
+	LEFT JOIN (
+		SELECT
+			0 AS [C_O]
+			, [O].[ProductID]
+			, [O].[Model No]
+			, COUNT(*) AS [NQuotes]
+			, SUM((CASE WHEN [O].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
+			, MIN([O].[Quote#]) AS [FirstQuote]
+			, MAX([O].[Quote#]) AS [LastQuote]
+			, MIN([O].[Quote Date]) AS [FirstDateQuote]
+			, MAX([O].[Quote Date]) AS [LastDateQuote]
+		FROM
+			[BWSdb].[dbo].[Orders] [O]
+		GROUP BY
+			[O].[ProductID]
+			, [O].[Model No]
+		UNION ALL
+		SELECT
+			1 AS [C_O]
+			, [O2].[ProductID]
+			, [O2].[Model No]
+			, COUNT(*) AS [NQuotes]
+			, SUM((CASE WHEN [O2].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
+			, MIN(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [FirstQuote]
+			, MAX(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [LastQuote]
+			, MIN([O2].[Quote Date]) AS [FirstDateQuote]
+			, MAX([O2].[Quote Date]) AS [LastDateQuote]
+		FROM
+			[BWSdb].[dbo].[OrdersV2] [O2]
+		GROUP BY
+			[O2].[ProductID]
+			, [O2].[Model No]
+	) AS [OrderSrc]
+	ON
+		([ModelSrc].[ProductID] = [OrderSrc].[ProductID])
+		AND ([ModelSrc].[C_M] = [OrderSrc].[C_O])
+	GROUP BY
+		[ModelSrc].[C_M]
+		,[ModelSrc].[Class]
+) AS [ClassSrc]
+ON
+	[ModelSrc].[Class] = [ClassSrc].[Class]
+LEFT JOIN (
+	SELECT
+		0 AS [C_C]
+		, COUNT(*) AS [NQuotes]
+		, SUM((CASE WHEN [O].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
+		, MIN([O].[Quote#]) AS [FirstQuote]
+		, MAX([O].[Quote#]) AS [LastQuote]
+		, MIN([O].[Quote Date]) AS [FirstDateQuote]
+		, MAX([O].[Quote Date]) AS [LastDateQuote]
+	FROM
+		[BWSdb].[dbo].[Orders] [O]
+	UNION ALL
+	SELECT
+		1 AS [C_C]
+		, COUNT(*) AS [NQuotes]
+		, SUM((CASE WHEN [O2].[Decline/Rejected] = 4 THEN 1 ELSE 0 END)) AS [NOrders]
+		, MIN(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [FirstQuote]
+		, MAX(CAST(RIGHT([O2].[SGQuote], 6) AS INT)) AS [LastQuote]
+		, MIN([O2].[Quote Date]) AS [FirstDateQuote]
+		, MAX([O2].[Quote Date]) AS [LastDateQuote]
+	FROM
+		[BWSdb].[dbo].[OrdersV2] [O2]
+) AS [CompSrc]
+ON
+	[ModelSrc].[C_M] = [CompSrc].[C_C]
 ORDER BY
 	[ModelSrc].[Model No]
     """
@@ -573,42 +700,78 @@ if tab_choice == tab_names[1]:
 else:
 
     df_model_freq_data: pd.DataFrame = load_model_freq_data()
-    total = df_model_freq_data["NOrders"].sum()
-    df_model_freq_data["Value"] = df_model_freq_data.apply(
+    total = df_model_freq_data["NOrders_Model"].sum()
+    df_model_freq_data["Value_Model"] = df_model_freq_data.apply(
         lambda row:
-            50000 * (row.get("NOrders", 0) if not pd.isna(row["NOrders"]) else 0) / total
+            50000 * (row.get("NOrders_Model", 0) if not pd.isna(row["NOrders_Model"]) else 0) / total
             # 50000 * sigmoid((row.get("NOrders", 0) if not pd.isna(row["NOrders"]) else 0) / total)
         , axis=1
     )
+    df_model_freq_data["Value_Class"] = df_model_freq_data.apply(
+        lambda row:
+            50000 * (row.get("NOrders_Class", 0) if not pd.isna(row["NOrders_Class"]) else 0) / total
+            # 50000 * sigmoid((row.get("NOrders", 0) if not pd.isna(row["NOrders"]) else 0) / total)
+        , axis=1
+    )
+    st.write(df_model_freq_data.columns.tolist())
     st.dataframe(df_model_freq_data)
 
-    words_bws = [
+    words_bws_model = [
         {
             "text": row["Model No"],
-            "value": row["Value"],
-            "value_": row["NOrders"],
+            "value": row["Value_Model"],
+            "value_": row["NOrders_Model"],
             "class": row["Class"]
         }
         for i, row in df_model_freq_data.loc[
-            (df_model_freq_data["C_M"] == 0)
-            & (df_model_freq_data["NOrders"] > 0)
+            (df_model_freq_data["CompID"] == 0)
+            & (df_model_freq_data["NOrders_Model"] > 0)
         ].iterrows()
     ]
-    words_stg = [
+    words_stg_model = [
         {
             "text": row["Model No"],
-            "value": row["Value"],
-            "value_": row["NOrders"],
+            "value": row["Value_Model"],
+            "value_": row["NOrders_Model"],
             "class": row["Class"]
         }
         for i, row in df_model_freq_data.loc[
-            (df_model_freq_data["C_M"] == 1)
-            & (df_model_freq_data["NOrders"] > 0)
+            (df_model_freq_data["CompID"] == 1)
+            & (df_model_freq_data["NOrders_Model"] > 0)
         ].iterrows()
     ]
 
-    words_bws = sorted(words_bws, key=lambda d: d["value"], reverse=True)
-    words_stg = sorted(words_stg, key=lambda d: d["value"], reverse=True)
+    words_bws_class = [
+        {
+            "text": row["Class"],
+            "value": row["Value_Class"],
+            "value_": row["NOrders_Class"]
+        }
+        for i, row in df_model_freq_data.loc[
+            (df_model_freq_data["CompID"] == 0)
+            & (df_model_freq_data["NOrders_Class"] > 0)
+        ].iterrows()
+    ]
+    words_stg_class = [
+        {
+            "text": row["Class"],
+            "value": row["Value_Class"],
+            "value_": row["NOrders_Class"]
+        }
+        for i, row in df_model_freq_data.loc[
+            (df_model_freq_data["CompID"] == 1)
+            & (df_model_freq_data["NOrders_Class"] > 0)
+        ].iterrows()
+    ]
+    words_bws_model = list(map(eval, list(set(map(str, words_bws_model)))))
+    words_stg_model = list(map(eval, list(set(map(str, words_stg_model)))))
+    words_bws_class = list(map(eval, list(set(map(str, words_bws_class)))))
+    words_stg_class = list(map(eval, list(set(map(str, words_stg_class)))))
+
+    words_bws_model = sorted(words_bws_model, key=lambda d: d["value"], reverse=True)
+    words_stg_model = sorted(words_stg_model, key=lambda d: d["value"], reverse=True)
+    words_bws_class = sorted(words_bws_class, key=lambda d: d["value"], reverse=True)
+    words_stg_class = sorted(words_stg_class, key=lambda d: d["value"], reverse=True)
 
     # st.write(words)
     # st.write(f"{len(words)=}")
@@ -627,7 +790,7 @@ else:
     #     dict(text="Plaid", value=5600, color="#b5de2b", country="US", industry="FinTech"),
     # ]
 
-    max_words: int = max(len(words_bws), len(words_stg))
+    max_words: int = max(len(words_bws_model), len(words_stg_model))
     st.session_state.setdefault("slider_show_number_models", max_words)
     slider_show_number_models = st.slider(
         label="Show # Models",
@@ -641,39 +804,83 @@ else:
     # st.write(f"Try hovering over a model")
     # st.write("<br>")
 
-    st.write(f":red[Data represents all Orders from BWS system for All-time.]")
 
-    wordcloud_bws = wordcloud.visualize(
-        words_bws,
-        width="1400px",
-        height="1000px",
-        tooltip_data_fields={
-            'text': 'Model Name',
-            'value_': '# Orders',
-            'value': 'per. value',
-            'class': 'Model Class'
-        },
-        per_word_coloring=False,
-        ignore_hover=True,
-        max_words=st.session_state.get("slider_show_number_models")
-    )
+    st.write("Models:")
+    model_cols = st.columns(2)
+    st.write("Classes:")
+    class_cols = st.columns(2)
 
-    st.write(f":red[Data represents all Orders from Stargate system for All-time.]")
+    st.write(f":red[Data represents all Orders from BWS & Stargate systems for All-time.]")
 
-    wordcloud_stg = wordcloud.visualize(
-        words_stg,
-        width="750px",
-        height="400px",
-        tooltip_data_fields={
-            'text': 'Model Name',
-            'value_': '# Orders',
-            'value': 'per. value',
-            'class': 'Model Class'
-        },
-        per_word_coloring=False,
-        ignore_hover=True,
-        max_words=st.session_state.get("slider_show_number_models")
-    )
+    w, h = "800px", "600px"
 
-    st.write(f"{wordcloud_bws=}")
-    st.write(f"{wordcloud_stg=}")
+    with model_cols[0]:
+        st.write(":red[BWS]")
+        wordcloud_bws_model = wordcloud.visualize(
+            words_bws_model,
+            width=w,
+            height=h,
+            tooltip_data_fields={
+                'text': 'Model Name',
+                'value_': '# Orders',
+                'value': 'per. value',
+                'class': 'Model Class'
+            },
+            per_word_coloring=False,
+            ignore_hover=True,
+            max_words=st.session_state.get("slider_show_number_models")
+        )
+
+    with model_cols[1]:
+        st.write(":blue[Stargate]")
+        wordcloud_stg_model = wordcloud.visualize(
+            words_stg_model,
+            width=w,
+            height=h,
+            tooltip_data_fields={
+                'text': 'Model Name',
+                'value_': '# Orders',
+                'value': 'per. value',
+                'class': 'Model Class'
+            },
+            per_word_coloring=False,
+            ignore_hover=True,
+            max_words=st.session_state.get("slider_show_number_models")
+        )
+
+    with class_cols[0]:
+        st.write(":red[BWS]")
+        wordcloud_bws_class = wordcloud.visualize(
+            words_bws_class,
+            width=w,
+            height=h,
+            tooltip_data_fields={
+                'text': 'Class',
+                'value_': '# Orders',
+                'value': 'per. value'
+            },
+            per_word_coloring=False,
+            ignore_hover=True,
+            max_words=st.session_state.get("slider_show_number_models")
+        )
+
+    with class_cols[1]:
+        st.write(":blue[Stargate]")
+        wordcloud_stg_class = wordcloud.visualize(
+            words_stg_class,
+            width=w,
+            height=h,
+            tooltip_data_fields={
+                'text': 'Class',
+                'value_': '# Orders',
+                'value': 'per. value'
+            },
+            per_word_coloring=False,
+            ignore_hover=True,
+            max_words=st.session_state.get("slider_show_number_models")
+        )
+
+    st.write(f"{wordcloud_bws_model=}")
+    st.write(f"{wordcloud_stg_model=}")
+    st.write(f"{wordcloud_bws_class=}")
+    st.write(f"{wordcloud_stg_class=}")

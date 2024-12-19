@@ -22,6 +22,7 @@ def hold_walk_dwg_dxf():
 @st.cache_data(ttl=60*60)
 def hold_walk_pdf():
     # SUPER SLOW
+    # return []
     return list(os.walk(root_location_pdfs))
 
 
@@ -188,9 +189,10 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     progress_fetching.progress(100, f"fetching files... {percent(1)} -- results in {tt_fetching:.2f} seconds")
 
     for fe in file_extensions:
-        df[f"{fe}_F"] = df.apply(lambda row: f"{row['PN']}.{fe.lower()}", axis=1)
-        df[fe] = False
-        df[f"{fe}_P"] = ""
+        # df[f"{fe}_F"] = df.apply(lambda row: f"{row['PN']}.{fe.upper()}", axis=1)
+        df[f"{fe}_F".upper()] = df.apply(lambda row: f"{row['PN']}.{fe}".upper(), axis=1)
+        df[fe.upper()] = False
+        df[f"{fe}_P".upper()] = ""
     df["COMP"] = ""
 
     u_pns = set(map(str, df["PN"].unique().tolist()))
@@ -210,27 +212,35 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     t_walking = datetime.datetime.now(), None
     # pdfs
     for dir_path, dir_names, file_names in walked_pdf_folder:
-        # print(f"{len(file_names)=}, {file_names[:5]:}")
+        # st.write(f"{len(file_names)=}, {file_names[:5]:}")
         for file in file_names:
+            file = file.upper()
             i += 1
             if file in pns:
+                # st.write(f"BWS {file=}")
                 spl = file.split(".")
                 pn = ".".join(spl[:-1])
                 suffix = spl[-1].upper()
                 df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "BWS"
                 progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+    # st.write(pns)
+    # st.write(f"A = {i=}")
     if i < n_parts:
         # search stargate too
         for dir_path, dir_names, file_names in walked_pdf_stg_folder:
             # print(f"{len(file_names)=}, {file_names[:5]:}")
+            # st.write(f"{len(file_names)=}, {file_names[:5]:}")
             for file in file_names:
+                file = file.upper()
                 i += 1
                 if file in pns:
+                    # st.write(f"STG {file=}")
                     spl = file.split(".")
                     pn = ".".join(spl[:-1])
                     suffix = spl[-1].upper()
-                    df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, "STG"
+                    df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "STG"
                     progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+        # st.write(f"B = {i=}")
     else:
         # all parts were found in bws directory
         i += t_pdfs_stg
@@ -241,11 +251,13 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     # st.write(parts_with_found_pdfs)
 
     for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
-        print(f"{len(file_names)=}, {file_names[:5]:}")
+        # print(f"{len(file_names)=}, {file_names[:5]:}")
         for file in file_names:
+            file = file.upper()
+            # st.write(f"DXF -> {file=}")
             i += 1
-            is_dxf: bool = file.endswith(".dxf")
-            is_dwg: bool = file.endswith(".dwg")
+            is_dxf: bool = file.endswith(".DXF")
+            is_dwg: bool = file.endswith(".DWG")
             if is_dxf or is_dwg:
                 spl = file.split(".")
                 pn = ".".join(spl[:-1])
@@ -261,8 +273,9 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     for dir_path, dir_names, file_names in walked_stp_folder:
         # print(f"{len(file_names)=}, {file_names[:5]:}")
         for file in file_names:
+            file = file.upper()
             i += 1
-            if file.endswith(".stp"):
+            if file.endswith(".STP"):
                 spl = file.split(".")
                 pn = ".".join(spl[:-1])
                 suffix = spl[-1].upper()
@@ -294,7 +307,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
         df_f: pd.DataFrame = df.loc[df[fe]]
         t_to_check: int = df_f.shape[0]
         kpc = kpfe / (1 if t_to_check == 0 else t_to_check)
-        print(f"{k=}, {kpfe=}, {kpc=}")
+        # print(f"{k=}, {kpfe=}, {kpc=}")
         for j, row in df_f.iterrows():
             k += kpc
             pn: str = row["PN"]
