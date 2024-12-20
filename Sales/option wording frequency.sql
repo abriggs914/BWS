@@ -471,8 +471,16 @@ ORDER BY
 
 SELECT
 	'WF' AS [T]
-	,[WF].*
-	,[DF].*
+	,[WF].[ID]
+	,[WF].[Word]
+	,[WF].[Freq] AS [WordFreq]
+	,[WF].[FirstDFID]
+	,[WF].LastDFID
+	,[DF].[ID]
+	,[DF].[Desc]
+	,[DF].[Freq] AS [DescFreq]
+	,[DF].[FirstQ]
+	,[DF].[LastQ]
 FROM
 	@wordFreq [WF]
 LEFT JOIN
