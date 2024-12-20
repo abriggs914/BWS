@@ -1,5 +1,10 @@
 
 import os.path
+import cv2
+
+from PIL import Image
+# from pyzbar.pyzbar import decode
+import pyzbar.pyzbar as pyz
 
 import pyautogui
 import streamlit as st
@@ -648,7 +653,7 @@ grid = {
     # "tab_edit_request": None
 }
 
-tab_names = ["New", "Edit", "Server", "Access"]
+tab_names = ["New", "Edit", "Server", "Access", "Inventory"]
 sm_tab_names = ["Search Tables", "SQL Creator", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
@@ -1758,6 +1763,199 @@ def access_maintenance():
         st.write(f":red[This file type triggers suspicious download protocols, so .txt is the best delivery method.]")
 
 
+def inventory_maintenance():
+    def preprocess_image(image_path, alpha, beta, threshold):
+        img = cv2.imread(image_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        bright_contrast_img = cv2.convertScaleAbs(gray, alpha=alpha, beta=beta)
+        _, thresholded = cv2.threshold(bright_contrast_img, threshold, 255, cv2.THRESH_BINARY)
+        return bright_contrast_img, thresholded
+
+    # File uploader
+    uploaded_file = st.file_uploader("Upload a barcode image", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file:
+        # Convert the uploaded file to an image
+        image = Image.open(uploaded_file)
+        width = 600
+        st.image(image, caption="Original Image", use_column_width=True, width=width)
+
+        temp_image_path = "temp_uploaded_image.jpg"
+        image.save(temp_image_path)
+
+        cols = st.columns(2)
+        # Slider for tuning parameters
+        alpha = cols[0].slider("Adjust Contrast (Alpha)", min_value=1.0, max_value=3.0, value=1.8, step=0.1)
+        beta = cols[0].slider("Adjust Brightness (Beta)", min_value=0, max_value=100, value=40, step=5)
+        threshold = cols[0].slider("Threshold Value", min_value=0, max_value=255, value=75, step=5)
+
+        # Preprocess image
+        bright_contrast_img, thresholded_img = preprocess_image(temp_image_path, alpha, beta, threshold)
+
+        # Display preprocessed images
+        cols[1].image(bright_contrast_img, caption="Brightness/Contrast Adjusted Image", use_column_width=True,
+                 channels="GRAY", width=width)
+        cols[1].image(thresholded_img, caption="Thresholded Image", use_column_width=True, channels="GRAY", width=width)
+
+        if st.button(label="read"):
+
+            # Decode the barcode
+            barcodes_og = pyz.decode(image)
+            barcodes_bc = pyz.decode(bright_contrast_img)
+            barcodes_ti = pyz.decode(thresholded_img)
+            if barcodes_og:
+                st.write("Original Image:")
+                for barcode in barcodes_og:
+                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_type = barcode.type
+                    st.write(f"**Barcode Data**: {barcode_data}")
+                    st.write(f"**Barcode Type**: {barcode_type}")
+            if barcodes_bc:
+                st.write("Bright Image:")
+                for barcode in barcodes_bc:
+                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_type = barcode.type
+                    st.write(f"**Barcode Data**: {barcode_data}")
+                    st.write(f"**Barcode Type**: {barcode_type}")
+            if barcodes_ti:
+                st.write("Threshold Image:")
+                for barcode in barcodes_ti:
+                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_type = barcode.type
+                    st.write(f"**Barcode Data**: {barcode_data}")
+                    st.write(f"**Barcode Type**: {barcode_type}")
+            if not any([barcodes_og, barcodes_bc, barcodes_ti]):
+                st.error("No barcodes detected in any of the images.")
+
+    # def isolate_black_on_red(image_path):
+    #     """
+    #     Preprocess an image to enhance contrast and brightness in grayscale for better barcode decoding.
+    #
+    #     Args:
+    #         image_path (str): Path to the image file.
+    #
+    #     Returns:
+    #         np.ndarray: Preprocessed grayscale image for barcode decoding.
+    #     """
+    #     # Load the image
+    #     img = cv2.imread(image_path)
+    #
+    #     # Convert to grayscale
+    #     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #
+    #     # Increase brightness and contrast
+    #     bright_contrast_img = cv2.convertScaleAbs(gray, alpha=1.8, beta=40)
+    #
+    #     # Apply Gaussian blur to reduce noise
+    #     blurred = cv2.GaussianBlur(bright_contrast_img, (5, 5), 0)
+    #
+    #     return blurred
+    # # # def isolate_black_on_red(image_path):
+    # # #     """
+    # # #     Enhance an image to isolate black text on red background for better barcode decoding.
+    # # #
+    # # #     Args:
+    # # #         image_path (str): Path to the image file.
+    # # #
+    # # #     Returns:
+    # # #         np.ndarray: Preprocessed image for barcode decoding.
+    # # #     """
+    # # #     # Load the image
+    # # #     img = cv2.imread(image_path)
+    # # #
+    # # #     # Split the image into BGR channels
+    # # #     blue, green, red = cv2.split(img)
+    # # #
+    # # #     # Enhance black text on red by subtracting blue and green from red
+    # # #     enhanced = cv2.subtract(red, cv2.add(blue, green))
+    # # #
+    # # #     # Normalize brightness to increase visibility
+    # # #     brightened = cv2.convertScaleAbs(enhanced, alpha=1.5, beta=30)
+    # # #
+    # # #     # Apply Gaussian blur to smoothen the image
+    # # #     blurred = cv2.GaussianBlur(brightened, (5, 5), 0)
+    # # #
+    # # #     # Convert to grayscale
+    # # #     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # # #
+    # # #     # Combine enhanced red channel and grayscale for better contrast
+    # # #     combined = cv2.addWeighted(blurred, 0.8, gray, 0.2, 0)
+    # # #
+    # # #     # Apply a lower threshold for binarization
+    # # #     _, thresholded = cv2.threshold(combined, 75, 255, cv2.THRESH_BINARY)
+    # # #
+    # # #     return thresholded
+    # # def isolate_black_on_red(image_path):
+    # #     """
+    # #     Enhance an image to isolate black text on red background for better barcode decoding.
+    # #
+    # #     Args:
+    # #         image_path (str): Path to the image file.
+    # #
+    # #     Returns:
+    # #         np.ndarray: Preprocessed image for barcode decoding.
+    # #     """
+    # #     img = cv2.imread(image_path)
+    # #
+    # #     # Split the image into BGR channels
+    # #     blue, green, red = cv2.split(img)
+    # #
+    # #     # Enhance black text on red by subtracting blue and green from red
+    # #     enhanced = cv2.subtract(red, cv2.add(blue, green))
+    # #
+    # #     # Convert to grayscale
+    # #     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # #
+    # #     # Combine enhanced and grayscale for better contrast
+    # #     combined = cv2.addWeighted(enhanced, 0.7, gray, 0.3, 0)
+    # #
+    # #     # Apply thresholding to binarize
+    # #     _, thresholded = cv2.threshold(combined, 128, 255, cv2.THRESH_BINARY)
+    # #
+    # #     return thresholded
+    #
+    #
+    # # Step 1: Upload the image
+    # uploaded_file = st.file_uploader("Upload a barcode image", type=["jpg", "jpeg", "png"])
+    #
+    # if uploaded_file:
+    #     st.write("Processing..")
+    #     # Step 2: Open the image
+    #     image = Image.open(uploaded_file)
+    #     st.image(image, caption="Original Image", use_column_width=True)
+    #
+    #     # Save uploaded file to a temporary location for OpenCV processing
+    #     temp_image_path = fr"C:\Access\Streamlit\barcode_test_images\temp_uploaded_image_{datetime.datetime.now():%Y%m%d%H%M%S}.jpg"
+    #     image.save(temp_image_path)
+    #
+    #     # Step 2: Preprocess the image to enhance black on red
+    #     preprocessed_image = isolate_black_on_red(temp_image_path)
+    #
+    #     # Display the preprocessed image
+    #     st.image(preprocessed_image, caption="Preprocessed Image", use_column_width=True)
+    #
+    #     # Step 3: Decode the barcode
+    #     barcodes_og = pyz.decode(image)
+    #     barcodes_pp = pyz.decode(preprocessed_image)
+    #
+    #     if barcodes_og:
+    #         st.write("Original Image parsed barcodes:")
+    #         for barcode in barcodes_og:
+    #             barcode_data = barcode.data.decode('utf-8')  # Decode the barcode data
+    #             barcode_type = barcode.type
+    #             st.write(f"**Barcode Data**: {barcode_data}")
+    #             st.write(f"**Barcode Type**: {barcode_type}")
+    #     if barcodes_pp:
+    #         st.write("Processed Image parsed barcodes:")
+    #         for barcode in barcodes_pp:
+    #             barcode_data = barcode.data.decode('utf-8')  # Decode the barcode data
+    #             barcode_type = barcode.type
+    #             st.write(f"**Barcode Data**: {barcode_data}")
+    #             st.write(f"**Barcode Type**: {barcode_type}")
+    #     if (not barcodes_og) and (not barcodes_pp):
+    #         st.error("No barcode detected in either the original nor the processed image.")
+
+
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
@@ -1797,6 +1995,9 @@ else:
 
         if tab_choice == tab_names[3]:
             access_maintenance()
+
+        if tab_choice == tab_names[4]:
+            inventory_maintenance()
 
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
