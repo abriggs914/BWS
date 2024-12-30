@@ -1897,3 +1897,138 @@ else:
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
     st.write(st.session_state.get("session_sqls", {}))
+
+
+from st_mui_multiselect import st_mui_multiselect
+
+options = ["Mayo", "Lettuce", "Pickles", "Tomatoes", "Onions", "Mushrooms", "Ketchup", "Jalapeños"]
+selections = st_mui_multiselect(options, size=5)
+st.markdown("You selected %s" % ", ".join(selections))
+
+
+from streamlit_tree_select import tree_select
+
+st.title("🐙 Streamlit-tree-select")
+st.subheader("A simple and elegant checkbox tree for Streamlit.")
+
+# Create nodes to display
+nodes = [
+    {"label": "Folder A", "value": "folder_a"},
+    {
+        "label": "Folder B",
+        "value": "folder_b",
+        "children": [
+            {"label": "Sub-folder A", "value": "sub_a"},
+            {"label": "Sub-folder B", "value": "sub_b"},
+            {"label": "Sub-folder C", "value": "sub_c"},
+        ],
+    },
+    {
+        "label": "Folder C",
+        "value": "folder_c",
+        "children": [
+            {"label": "Sub-folder D", "value": "sub_d"},
+            {
+                "label": "Sub-folder E",
+                "value": "sub_e",
+                "children": [
+                    {"label": "Sub-sub-folder A", "value": "sub_sub_a"},
+                    {"label": "Sub-sub-folder B", "value": "sub_sub_b"},
+                ],
+            },
+            {"label": "Sub-folder F", "value": "sub_f"},
+        ],
+    },
+]
+
+with st.container(border=True):
+    return_select = tree_select(nodes)
+with st.container(border=True):
+    st.color_picker(
+        "pick a colour"
+    )
+with st.container(border=True):
+    st.write(return_select)
+
+
+# [theme]
+primaryColor="#4b58ff"
+backgroundColor="#0c0c0c"
+secondaryBackgroundColor="#7085b9"
+textColor="#f5f5f5"
+
+# [theme]
+primaryColor="#FF4B4B"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F0F2F6"
+textColor="#31333F"
+font="sans serif"
+
+
+st.write(f"{st.session_state.get('primaryColor')=}")
+st.write(f"{st.session_state.get('backgroundColor')=}")
+st.write(f"{st.session_state.get('secondaryBackgroundColor')=}")
+st.write(f"{st.session_state.get('textColor')=}")
+
+
+# st.write(dir(st.config))
+# st.write(st.components)
+# st.toast(body="TOAST")
+# st.write(st.user_info)
+# st.write(dir(st.user_info))
+# for k, v in st.session_state.items():
+#     st.write(f"{k=}, {v=}")
+
+
+import toml
+default_theme = toml.load("./streamlit/config.toml")
+st.write(default_theme)
+st.session_state.setdefault("theme", {})
+new_config: bool = False
+for k, v in default_theme["theme"].items():
+    if st.session_state["theme"].get(k) != v:
+        st.config.set_option(f"theme.{k}", v)
+        new_config = True
+    st.session_state["theme"][k] = v
+if new_config:
+    st.rerun()
+
+b1 = st.button(label="b1", type="primary")
+b2 = st.button(label="b2", type="secondary")
+b3 = st.button(label="b3", type="tertiary")
+
+CONFIG_TEMPLATE = """
+[theme]
+primaryColor = "{}"
+backgroundColor = "{}"
+secondaryBackgroundColor = "{}"
+textColor = "{}"
+font = "sans serif"
+"""
+config = CONFIG_TEMPLATE.format(
+    st.session_state.theme.get("primaryColor"),
+    st.session_state.theme.get("backgroundColor"),
+    st.session_state.theme.get("secondaryBackgroundColor"),
+    st.session_state.theme.get("textColor"),
+)
+st.write(config)
+if b1:
+    data = {
+        "theme": {
+            "primaryColor": st.config.get_option("theme.primaryColor"),
+            "backgroundColor": st.config.get_option("theme.backgroundColor"),
+            "secondaryBackgroundColor": st.config.get_option("theme.secondaryBackgroundColor"),
+            "textColor": st.config.get_option("theme.textColor")
+        }
+    }
+    st.write(data)
+
+# st.write(st.user_info._get_user_info())
+# rtc = st.runtime.get_instance()
+# rtc = st.runtime.runtime.RuntimeConfig
+# st.write(f"{rtc.session_manager_class.num_sessions()=}")
+# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.num_active_sessions()=}")
+# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_sessions()=}")
+# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_active_sessions()=}")
+# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_session_info()=}")
+# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_active_session_info()=}")
