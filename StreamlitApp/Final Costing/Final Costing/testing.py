@@ -247,10 +247,13 @@ def convert_phone_number(phone: str) -> str:
             pn_o = pn
             if country_code_parse:
                 # s_idx: int = area_code_idx + len(country_code_parse) + len(area_code_parse)
-                pn = pn[area_code_idx + len(area_code_parse) - (swp + b):]
+                # pn = pn[area_code_idx + len(area_code_parse) - (swp + b):]
+                # pn = pn[len(pn)-(len(area_code_parse) - (swp + b)):]
+                a = swp + b
+                pn = pn[a:]
                 if len(pn) != 7:
                     # return f"E3 Invalid format '{pn}'"
-                    raise ValueError(f"E3 Invalid format '{pn}', {country_code_idx=}, {country_code_parse=}, {area_code_idx=}, {area_code_parse=}, {ifd=}, {pn_o=}, {b=}")
+                    raise ValueError(f"E3 Invalid format '{pn}', {country_code_idx=}, {country_code_parse=}, {area_code_idx=}, {area_code_parse=}, {ifd=}, {pn_o=}, {a=}, {b=}, {swp=}")
                 # return f"F1 <{pn}> <{s_idx}> {country_code_parse} ({area_code_parse}) {pn[s_idx + 1: s_idx + 4]}-{pn[s_idx + 4: s_idx:8]}{pn[s_idx + 8:]}"
                 print(f"F1 <{pn}> {'+' if swp else ''}{country_code_parse} ({area_code_parse.removeprefix('(').removesuffix(')')}) {pn[:3]}-{pn[3: 7]}{pn[7:]}")
                 # return f"{'+' if swp else ''}{country_code_parse} ({area_code_parse}) {pn[:3]}-{pn[3: 7]}{pn[7:]}"
@@ -260,11 +263,13 @@ def convert_phone_number(phone: str) -> str:
                     # return "E2 Invalid format: '+' can only be included in a phone number when the country code is also specified. (ex: '+1(123)......')"
                     raise ValueError("E2 Invalid format: '+' can only be included in a phone number when the country code is also specified. (ex: '+1(123)......')")
                 # s_idx: int = area_code_idx + len(area_code_parse)
-                pn = pn[area_code_idx + len(area_code_parse) - (swp + b):]
+                # pn = pn[area_code_idx + len(area_code_parse) - (swp + b):]
+                a = swp + b
+                pn = pn[a:]
                 # area_code_parse = area_code_parse.removeprefix("(").removesuffix(")")
                 if len(pn) != 7:
                     # return f"E4 Invalid format '{pn}' <{area_code_idx}> {area_code_parse=}"
-                    raise ValueError(f"E4 Invalid format '{pn=}' <{area_code_idx=}> {area_code_parse=}, {b=}, {ifd=}, {pn_o=}")
+                    raise ValueError(f"E4 Invalid format '{pn=}' <{area_code_idx=}> {area_code_parse=}, {a=}, {b=}, {ifd=}, {pn_o=}, {swp=}")
                 # return f"F2 <{pn}> <{s_idx}> ({area_code_parse}) {pn[s_idx: s_idx + 3]}-{pn[s_idx + 3: s_idx + 7]}{pn[s_idx + 7:]}"
                 print(f"F2 <{pn}> ({area_code_parse.removeprefix('(').removesuffix(')')}) {pn[:3]}-{pn[3: 7]}{pn[7:]}")
                 # return f"({area_code_parse}) {pn[:3]}-{pn[3: 7]}{pn[7:]}"

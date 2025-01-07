@@ -110,6 +110,7 @@ for k, v in DEFAULT_SESSION_STATE.items():
 
 
 def convert_phone_number(phone: str) -> str:
+    return phone
     og_phone: str = phone
     s_phone: str = og_phone
     try:
