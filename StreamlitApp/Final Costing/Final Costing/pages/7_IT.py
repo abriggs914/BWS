@@ -618,7 +618,7 @@ if df_user_directory.empty:
         # df_user_directory = pd.concat([
         #     df_user_directory,
         #     pd.DataFrame(
-        #         data={
+        #         path_data={
         #             "AppUserName": unique_app_users,
         #             "ITSTRAppID": [app_id for _ in unique_app_users]
         #         }
@@ -1577,7 +1577,7 @@ def server_maintenance():
                 #     create_sql(
                 #         "Orders",
                 #         mode="update",
-                #         data={"Comments": None},
+                #         path_data={"Comments": None},
                 #         where="[Apples] = [Oranges]"
                 #     )
                 # )
@@ -1647,7 +1647,7 @@ def access_maintenance():
     # databases = {
     #     "SysproCompanyA": {
     #         "key": "db_file_sysprocompanya"
-    #         "data": st.session_state.get(""),
+    #         "path_data": st.session_state.get(""),
     #         "name": "SysproCompanyA.accdb"
     #     }
     # }
@@ -1806,21 +1806,21 @@ def inventory_maintenance():
             if barcodes_og:
                 st.write("Original Image:")
                 for barcode in barcodes_og:
-                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_data = barcode.path_data.decode('utf-8')
                     barcode_type = barcode.type
                     st.write(f"**Barcode Data**: {barcode_data}")
                     st.write(f"**Barcode Type**: {barcode_type}")
             if barcodes_bc:
                 st.write("Bright Image:")
                 for barcode in barcodes_bc:
-                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_data = barcode.path_data.decode('utf-8')
                     barcode_type = barcode.type
                     st.write(f"**Barcode Data**: {barcode_data}")
                     st.write(f"**Barcode Type**: {barcode_type}")
             if barcodes_ti:
                 st.write("Threshold Image:")
                 for barcode in barcodes_ti:
-                    barcode_data = barcode.data.decode('utf-8')
+                    barcode_data = barcode.path_data.decode('utf-8')
                     barcode_type = barcode.type
                     st.write(f"**Barcode Data**: {barcode_data}")
                     st.write(f"**Barcode Type**: {barcode_type}")
@@ -1941,14 +1941,14 @@ def inventory_maintenance():
     #     if barcodes_og:
     #         st.write("Original Image parsed barcodes:")
     #         for barcode in barcodes_og:
-    #             barcode_data = barcode.data.decode('utf-8')  # Decode the barcode data
+    #             barcode_data = barcode.path_data.decode('utf-8')  # Decode the barcode path_data
     #             barcode_type = barcode.type
     #             st.write(f"**Barcode Data**: {barcode_data}")
     #             st.write(f"**Barcode Type**: {barcode_type}")
     #     if barcodes_pp:
     #         st.write("Processed Image parsed barcodes:")
     #         for barcode in barcodes_pp:
-    #             barcode_data = barcode.data.decode('utf-8')  # Decode the barcode data
+    #             barcode_data = barcode.path_data.decode('utf-8')  # Decode the barcode path_data
     #             barcode_type = barcode.type
     #             st.write(f"**Barcode Data**: {barcode_data}")
     #             st.write(f"**Barcode Type**: {barcode_type}")

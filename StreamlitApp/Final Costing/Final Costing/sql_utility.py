@@ -59,7 +59,7 @@ def no_specials(text: str, r_char: str = "") -> str:
 
 def date_first(msg: str, keyword="date") -> str:
     """
-        Ensure that a column name that specifies data follows the 'date-first' noming convention
+        Ensure that a column name that specifies path_data follows the 'date-first' noming convention
         1 pass only! If the keyword appears
         EX: date_first("Quote Date") => "DateQuote"
     """
@@ -116,7 +116,7 @@ def wrap(val: Any, is_col: bool = True, sanitize: bool = True) -> str:
 
 def parse_where(clauses: Any, in_line: bool = True) -> str | list[str]:
     """
-        Function to read a data structure of clauses and column names to output appropriate SQL WHERE clause
+        Function to read a path_data structure of clauses and column names to output appropriate SQL WHERE clause
 
         see tests below in test_create_sql_parse_where_wrap()
     """
@@ -350,7 +350,7 @@ def create_sql(
                 f"Highly recommend including a where clause when updating or deleting. If you don't want to include a where clause, set 'ignore_no_where' to True. ")
     if mode == "update":
         if not isinstance(data, dict):
-            raise ValueError(f"When updating, data must be a dictionary where keys are table column names.")
+            raise ValueError(f"When updating, path_data must be a dictionary where keys are table column names.")
 
     # if table.lower().count(".dbo.") == 1:
     #     table = table.split(".dbo.")[-1]
@@ -384,9 +384,9 @@ def create_sql(
         data = [wrap(data)]
     elif (mode == "select") and isinstance(data, (list, tuple)):
         if data and not isinstance(data[0], str):
-            raise ValueError(f"You can only pass a list of data line(s) for insertion method.")
+            raise ValueError(f"You can only pass a list of path_data line(s) for insertion method.")
     if data:
-        # cols = "[" + "], [".join(data) + "]"
+        # cols = "[" + "], [".join(path_data) + "]"
         if (mode == "insert") and isinstance(data, (list, tuple)):
             cols = list(map(wrap, data[0]))
             if in_line:
@@ -464,7 +464,7 @@ def create_sql(
     elif mode == "insert":
         if not data or not isinstance(data, (dict, list, tuple)):
             raise ValueError(
-                f"You must specify key-value pairs in the 'data' param, indicating which columns and values to insert.")
+                f"You must specify key-value pairs in the 'path_data' param, indicating which columns and values to insert.")
         if isinstance(data, dict):
             vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
         else:
@@ -485,7 +485,7 @@ def create_sql(
         sql_lines.append(f")")
     elif mode == "update":
         # sql = f"UPDATE {table} SET "
-        # sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
+        # sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in path_data.items()])
         sql_lines.append(f"UPDATE")
         sql_lines.append(f"{table}")
         sql_lines.append("SET")
@@ -496,7 +496,7 @@ def create_sql(
             sql_lines.append(
                 [f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in data.items()])
 
-        # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in data.items()]
+        # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in path_data.items()]
         if where:
             # sql += f" WHERE {where}"
             sql_lines.append(f"WHERE ")
@@ -589,7 +589,7 @@ def create_sql(
 
 def parse_connection_data(data: dict | str) -> dict:
     """
-        Given a dictionary of ODBC connection data, verify that the user and password are pre-verified.
+        Given a dictionary of ODBC connection path_data, verify that the user and password are pre-verified.
         Optionally pass a single string matching the key for a known valid ODBC connection (BWSdb).
     """
 
@@ -671,7 +671,7 @@ def select_with_alias(
             'INNER', 'LEFT', 'RIGHT', 'FULL', 'LEFT OUTER', 'RIGHT OUTER', 'FULL OUTER'] = "INNER"
 ) -> str:
     """
-        Select table data from an SQL Server using a table alias and column-prefixes.
+        Select table path_data from an SQL Server using a table alias and column-prefixes.
         Use 'alias' to set an alias for the selecting table.
         Use 'prefix' to add a prefix to each of the columns being selected.
         'no_spaces' and 'specials_replace' modify the column names to be without spaces and specials respectively.
@@ -768,7 +768,7 @@ def select_with_alias(
         if f_keys:
             fk = f_keys[i]
         if not a:
-            # no prefix | connection data | foreign key given
+            # no prefix | connection path_data | foreign key given
             a = ta
         else:
             if isinstance(a, (list, tuple)) and (len(a) > 1):
@@ -963,7 +963,7 @@ def create_history_table_202302161335(
 
     if df.empty:
         raise ValueError(
-            f"Couldn't find any data on table '{table}' for this database. Please check spelling and connection data settings.\n{connection_data=}")
+            f"Couldn't find any path_data on table '{table}' for this database. Please check spelling and connection path_data settings.\n{connection_data=}")
 
     df_pk = df.loc[(df["TABLE_NAME"] == table) & (df["IS_NULLABLE"] == "NO") & (df["DATA_TYPE"] == "int")]
     if df_pk.empty:
@@ -1313,7 +1313,7 @@ def create_history_table(
 
     if df.empty:
         raise ValueError(
-            f"Couldn't find any data on table '{table}' for this database. Please check spelling and connection data settings.\n{connection_data=}")
+            f"Couldn't find any path_data on table '{table}' for this database. Please check spelling and connection path_data settings.\n{connection_data=}")
 
     df_pk = df.loc[(df["TABLE_NAME"] == table) & (df["IS_NULLABLE"] == "NO") & (df["DATA_TYPE"] == "int")]
     if df_pk.empty:
@@ -1950,7 +1950,7 @@ if __name__ == '__main__':
         # test_sqls = [
         #     create_sql(
         #         "IT Requests",
-        #         data={
+        #         path_data={
         #             "Request": "sample_0",
         #             "DueDate": datetime.datetime.now(),
         #             "Company": "Stargate",
@@ -1960,28 +1960,28 @@ if __name__ == '__main__':
         #         where="[ITRequestID#] == 1",
         #         transaction_wrap=True
         #     ),
-        #     create_sql("IT Requests", data=["Status"], include_no_lock=True),
+        #     create_sql("IT Requests", path_data=["Status"], include_no_lock=True),
         #     create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
+        #     create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
         #     create_sql("IT Requests", order="Status", include_no_lock=True),
         #     create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True),
+        #     create_sql("IT Requests", path_data=["Status"], order="Status", include_no_lock=True),
         #     create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status",
+        #     create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", order="Status",
         #                        include_no_lock=True),
         #
         #     create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        #     create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"],
         #                        order=["Status", "Company", "RequestedBy"], include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        #     create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"],
         #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
         #
-        #     create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status",
+        #     create_sql("IT Requests", path_data="Status", order=("Status", "DESC"), group="Status",
         #                        include_no_lock=True),
-        #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        #     create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"],
         #                        order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"],
         #                        include_no_lock=True),
-        #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        #     create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"],
         #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
         #
         #     create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True),
@@ -2023,7 +2023,7 @@ if __name__ == '__main__':
         #
         #     create_sql(
         #         "IT Requests",
-        #         data=insert_data,
+        #         path_data=insert_data,
         #         mode="insert",
         #         sanitize=sanitize_cols,
         #         transaction_wrap=True
@@ -2037,7 +2037,7 @@ if __name__ == '__main__':
 
         # st.text(create_sql(
         #     "IT Requests",
-        #     data={
+        #     path_data={
         #         "Request": "sample_0",
         #         "DueDate": datetime.datetime.now(),
         #         "Company": "Stargate",
@@ -2047,22 +2047,22 @@ if __name__ == '__main__':
         #     where="[ITRequestID#] == 1",
         #     transaction_wrap=True
         # ))
-        # st.text(create_sql("IT Requests", data=["Status"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status"], include_no_lock=True))
         # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
         # st.text(create_sql("IT Requests", order="Status", include_no_lock=True))
         # st.text(create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status"], order="Status", include_no_lock=True))
         # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
         #
         # st.text(create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
         #
-        # st.text(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
-        # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
+        # st.text(create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
         #
         # st.text(create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True))
         # st.text(create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}), transaction_wrap=True))
@@ -2096,7 +2096,7 @@ if __name__ == '__main__':
         # sanitize_cols.remove("Directory")  # preserve backslashes in path
         # st.text(create_sql(
         #     "IT Requests",
-        #     data=insert_data,
+        #     path_data=insert_data,
         #     mode="insert",
         #     sanitize=sanitize_cols,
         #     transaction_wrap=True

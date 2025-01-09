@@ -56,7 +56,7 @@ def load_departments() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itr_hardware() -> pd.DataFrame:
     """
-    Load all data from [ITR Hardware]
+    Load all path_data from [ITR Hardware]
     :return: pd.DataFrame() # columns unknown
     """
     sql = "[BWSdb].[dbo].[ITR Hardware]"
@@ -72,7 +72,7 @@ def load_itr_hardware() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itr_software() -> pd.DataFrame:
     """
-    Load all data from [ITR Software]
+    Load all path_data from [ITR Software]
     :return: pd.DataFrame() # columns unknown
     """
     sql = "[BWSdb].[dbo].[ITR Software]"
@@ -88,7 +88,7 @@ def load_itr_software() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itr_training() -> pd.DataFrame:
     """
-    Load all data from [ITR Training]
+    Load all path_data from [ITR Training]
     :return: pd.DataFrame() # columns unknown
     """
     sql = "[BWSdb].[dbo].[ITR Training]"
@@ -104,7 +104,7 @@ def load_itr_training() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_it_requests() -> pd.DataFrame:
     """
-    Load all data from [IT Requests]
+    Load all path_data from [IT Requests]
     :return: pd.DataFrame() # columns unknown
     """
     sql = "[BWSdb].[dbo].[IT Requests]"
@@ -120,7 +120,7 @@ def load_it_requests() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itr_customers() -> pd.DataFrame:
     """
-    Load all data from [ITR Customers]
+    Load all path_data from [ITR Customers]
     :return: pd.DataFrame() # columns unknown
     """
     # sql = "[BWSdb].[dbo].[ITR Customers]"
@@ -137,7 +137,7 @@ def load_itr_customers() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itr_personnel() -> pd.DataFrame:
     """
-    Load all data from [IT Personnel]
+    Load all path_data from [IT Personnel]
     :return: pd.DataFrame() # columns unknown
     """
     return connect(create_sql("IT Personnel", where="[Active] = 1"))
@@ -146,7 +146,7 @@ def load_itr_personnel() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itstr_app_directory() -> pd.DataFrame:
     """
-    Load all data from [ITSTR_AppDirectory]
+    Load all path_data from [ITSTR_AppDirectory]
     :return: pd.DataFrame() # columns unknown
     """
     # sql = "[BWSdb].[dbo].[ITSTR_AppDirectory]"
@@ -163,7 +163,7 @@ def load_itstr_app_directory() -> pd.DataFrame:
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_itstr_user_directory() -> pd.DataFrame:
     """
-    Load all data from [ITSTR_UserDirectory]
+    Load all path_data from [ITSTR_UserDirectory]
     :return: pd.DataFrame() # columns unknown
     """
     # sql = "[BWSdb].[dbo].[ITSTR_UserDirectory]"

@@ -665,7 +665,7 @@ if df_user_directory.empty:
         # df_user_directory = pd.concat([
         #     df_user_directory,
         #     pd.DataFrame(
-        #         data={
+        #         path_data={
         #             "AppUserName": unique_app_users,
         #             "ITSTRAppID": [app_id for _ in unique_app_users]
         #         }
@@ -1648,7 +1648,7 @@ else:
         # # test_sqls = [
         # #     create_sql(
         # #         "IT Requests",
-        # #         data={
+        # #         path_data={
         # #             "Request": "sample_0",
         # #             "DueDate": datetime.datetime.now(),
         # #             "Company": "Stargate",
@@ -1658,28 +1658,28 @@ else:
         # #         where="[ITRequestID#] == 1",
         # #         transaction_wrap=True
         # #     ),
-        # #     create_sql("IT Requests", data=["Status"], include_no_lock=True),
+        # #     create_sql("IT Requests", path_data=["Status"], include_no_lock=True),
         # #     create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True),
-        # #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
+        # #     create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", include_no_lock=True),
         # #     create_sql("IT Requests", order="Status", include_no_lock=True),
         # #     create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True),
-        # #     create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True),
+        # #     create_sql("IT Requests", path_data=["Status"], order="Status", include_no_lock=True),
         # #     create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True),
-        # #     create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status",
+        # #     create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", order="Status",
         # #                        include_no_lock=True),
         # #
         # #     create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True),
-        # #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        # #     create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"],
         # #                        order=["Status", "Company", "RequestedBy"], include_no_lock=True),
-        # #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"],
         # #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
         # #
-        # #     create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status",
+        # #     create_sql("IT Requests", path_data="Status", order=("Status", "DESC"), group="Status",
         # #                        include_no_lock=True),
-        # #     create_sql("IT Requests", data=["Status", "Company", "RequestedBy"],
+        # #     create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"],
         # #                        order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"],
         # #                        include_no_lock=True),
-        # #     create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"],
+        # #     create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"],
         # #                        order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True),
         # #
         # #     create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True),
@@ -1721,7 +1721,7 @@ else:
         # #
         # #     create_sql(
         # #         "IT Requests",
-        # #         data=insert_data,
+        # #         path_data=insert_data,
         # #         mode="insert",
         # #         sanitize=sanitize_cols,
         # #         transaction_wrap=True
@@ -1735,7 +1735,7 @@ else:
         #
         # # st.text(create_sql(
         # #     "IT Requests",
-        # #     data={
+        # #     path_data={
         # #         "Request": "sample_0",
         # #         "DueDate": datetime.datetime.now(),
         # #         "Company": "Stargate",
@@ -1745,22 +1745,22 @@ else:
         # #     where="[ITRequestID#] == 1",
         # #     transaction_wrap=True
         # # ))
-        # # st.text(create_sql("IT Requests", data=["Status"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status"], include_no_lock=True))
         # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", include_no_lock=True))
-        # # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", include_no_lock=True))
         # # st.text(create_sql("IT Requests", order="Status", include_no_lock=True))
         # # st.text(create_sql("IT Requests", order=("Status", "ASC"), include_no_lock=True))
-        # # st.text(create_sql("IT Requests", data=["Status"], order="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status"], order="Status", include_no_lock=True))
         # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", order="Status", include_no_lock=True))
-        # # st.text(create_sql("IT Requests", data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status"], where="[Status] = 'Complete'", order="Status", include_no_lock=True))
         # #
         # # st.text(create_sql("IT Requests", order=("Status", "DESC"), include_no_lock=True))
-        # # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
         # #
-        # # st.text(create_sql("IT Requests", data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
-        # # st.text(create_sql("IT Requests", data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
-        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data="Status", order=("Status", "DESC"), group="Status", include_no_lock=True))
+        # # st.text(create_sql("IT Requests", path_data=["Status", "Company", "RequestedBy"], order=["Status", "Company", "RequestedBy"], group=["Status", "Company", "RequestedBy"], include_no_lock=True))
+        # # st.text(create_sql("IT Requests", where="[Status] = 'Complete'", path_data=["Status", "Company", "RequestedBy"], order=[["Status", "asc"], ["Company", "desc"], "RequestedBy"], include_no_lock=True))
         # #
         # # st.text(create_sql("IT Requests", mode="delete", where="[ITRequestID#] = 105445", transaction_wrap=True))
         # # st.text(create_sql("IT Requests", mode="delete", where=("[ITRequestID#]", {"=": 1054789}), transaction_wrap=True))
@@ -1794,7 +1794,7 @@ else:
         # # sanitize_cols.remove("Directory")  # preserve backslashes in path
         # # st.text(create_sql(
         # #     "IT Requests",
-        # #     data=insert_data,
+        # #     path_data=insert_data,
         # #     mode="insert",
         # #     sanitize=sanitize_cols,
         # #     transaction_wrap=True

@@ -674,7 +674,7 @@ ms_models = st.multiselect(
     label="Select Model(s)",
     options=sorted(df_product_data["Model No"].unique().tolist()),
     key="multiselect_model_no",
-    help="Select some models to view margin data.",
+    help="Select some models to view margin path_data.",
     on_change=multiselect_model_no_on_change
 )
 

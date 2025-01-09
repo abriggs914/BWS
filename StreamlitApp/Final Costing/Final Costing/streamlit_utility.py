@@ -79,7 +79,7 @@ def center_fullscreen_images():
     st.markdown(
         """
         <style>
-            button[title^=Exit]+div [data-testid=stImage]{
+            button[title^=Exit]+div [path_data-testid=stImage]{
                 text-align: center;
                 display: block;
                 margin-left: auto;

@@ -1346,7 +1346,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         ri = 2 if self.year is not None else 1
         is_ = self.invalid_style
         if self.year is not None:
-            # for i, data in enumerate(self.dict_canvas_tags["header_month"]):
+            # for i, path_data in enumerate(self.dict_canvas_tags["header_month"]):
 
             for cal_i in range(12):
                 day_one = datetime.datetime(self.year, cal_i + 1, 1)
@@ -2521,7 +2521,7 @@ class TreeviewController(ctk.CTkScrollableFrame):
         self.aggregate_data.update(to_add)
 
         order_d = order_s.difference(checked)
-        # print(utility.dict_print(self.aggregate_data, "Aggregate data"))
+        # print(utility.dict_print(self.aggregate_data, "Aggregate path_data"))
         # print(f'A {order_a=}')
         # print(f'{order_s=}')
         # print(f'{checked=}')
@@ -2834,7 +2834,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                 "values" in kwargs_combo)) else True, f"Cannot pass values as a keyword argument here. Pass all data in the data param as a pandas.DataFrame."
         # assert auto_pack + auto_grid <= 1, f"Error parameters 'auto_pack'={auto_pack} and 'auto_grid'={auto_grid} must be in a configuration where both params are not True.\nCannot grid and pack child widgets. (1 or None)"
 
-        # print(f"{lock_result_col=}\n{viewable_column_names=}\n{data.columns=}")
+        # print(f"{lock_result_col=}\n{viewable_column_names=}\n{path_data.columns=}")
         if lock_result_col is not None:
             assert (
                 (lock_result_col in viewable_column_names) if isinstance(viewable_column_names, (list, tuple)) else (
@@ -2846,12 +2846,12 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         self.use_str_dtype = use_str_dtype
         self.nan_repr = nan_repr
 
-        # print(f"PRE\n{self.data=}")
+        # print(f"PRE\n{self.path_data=}")
 
         if self.nan_repr is not None:
             self.data = self.data.fillna(self.nan_repr)
 
-        # print(f"POST\n{self.data=}")
+        # print(f"POST\n{self.path_data=}")
 
         # convert the datatypes to string for all columns
         if self.use_str_dtype:
@@ -2861,9 +2861,9 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         if viewable_column_names is None:
             viewable_column_names = list(data.columns)
         else:
-            # print(f"PRE=RENAME\n{self.data=}")
+            # print(f"PRE=RENAME\n{self.path_data=}")
             self.data = self.data.rename(columns=viewable_column_names)
-            # print(f"POST=RENAME\n{self.data=}")
+            # print(f"POST=RENAME\n{self.path_data=}")
 
         if None in viewable_column_names:
             raise ValueError(
@@ -2923,9 +2923,9 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         self.frame_top_most = ctk.CTkFrame(self, name="ftm")
         self.frame_tree = ctk.CTkFrame(self, name="ft")
 
-        # print(f"{data.shape=}")
-        # print(f"PRE-TREE-CONTROLLER\n{self.data=}")
-        # print(f"PRE-TREE-CONTROLLER\n{data=}")
+        # print(f"{path_data.shape=}")
+        # print(f"PRE-TREE-CONTROLLER\n{self.path_data=}")
+        # print(f"PRE-TREE-CONTROLLER\n{path_data=}")
         self.tree_controller = treeview_factory(
             self.frame_tree,
             data,
@@ -3042,9 +3042,9 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         # else:
         #     print(f"is hidden")
 
-        # print(f"Multicombobox created with dimensions (r x c)=({self.data.shape[0]} x {self.data.shape[1]})")
+        # print(f"Multicombobox created with dimensions (r x c)=({self.path_data.shape[0]} x {self.path_data.shape[1]})")
 
-        # print(f"END SETUP {self.data=}")
+        # print(f"END SETUP {self.path_data=}")
         # print(f"END SETUP {self.tree_controller.df_1=}")
 
     def grid_widget(self, do_grid: bool = True):
@@ -3101,13 +3101,13 @@ class MultiComboBox(ctk.CTkScrollableFrame):
 
             row_id = int(self.tree_treeview.selection()[0])
             # print(f"{row_id=}")
-            # print(f"{self.data.shape=}")
+            # print(f"{self.path_data.shape=}")
             # print(f"{self.tree_treeview.get_children()=}")
 
             # print(f"{row_id[0]=}")
-            # print(f"{self.data=}")
-            # data = self.data.iloc[[row_id[0]]]
-            # print(f"{data=}")
+            # print(f"{self.path_data=}")
+            # path_data = self.path_data.iloc[[row_id[0]]]
+            # print(f"{path_data=}")
 
             # x = self.res_tv_entry.get()
             # self.res_tv_entry.set(str(1 + int(x if x else 0)))
@@ -3210,14 +3210,14 @@ class MultiComboBox(ctk.CTkScrollableFrame):
 
                 if to_delete:
                     # print(f"DROPPING {to_delete=}")
-                    # print(f"PRE  SHAPE: {self.data.shape=}")
-                    # print(f"{self.data.head(5)}")
-                    # print(f"{self.data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
+                    # print(f"PRE  SHAPE: {self.path_data.shape=}")
+                    # print(f"{self.path_data.head(5)}")
+                    # print(f"{self.path_data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
                     self.data.drop(to_delete, inplace=True)
                     self.data.reset_index(drop=True, inplace=True)
-                    # print(f"POST SHAPE: {self.data.shape=}")
-                    # print(f"{self.data.head(5)}")
-                    # print(f"{self.data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
+                    # print(f"POST SHAPE: {self.path_data.shape=}")
+                    # print(f"{self.path_data.head(5)}")
+                    # print(f"{self.path_data.iloc[to_delete[0] - 3: to_delete[0] + 3]}")
                 else:
                     raise ValueError(
                         f"Cannot delete row(s) containing value '{value}' from this dataframe. The value was not found was not Found.")
@@ -3229,7 +3229,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         # TODO support multiple values to be passed in iterable or dictionary fashion.
 
         cn = self.tree_controller.viewable_column_names
-        # print(f"{self.data=}, {cn=}, {val=}, {col=}, {rest_values=}, {rest_tags=}")
+        # print(f"{self.path_data=}, {cn=}, {val=}, {col=}, {rest_values=}, {rest_tags=}")
 
         tags = set()
         i = self.data.shape[0]
@@ -3356,26 +3356,26 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                     if isinstance(rest_values, list) or isinstance(rest_values, tuple):
                         row = list(rest_values)
                         row.insert(idx, val)
-                        # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                        # self.path_data = self.path_data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
                         new_dfs.append((pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), [row], [tags]))
-                        # print(f"\nB\t{self.data=}").0
+                        # print(f"\nB\t{self.path_data=}").0
                         # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tuple(tags))
                         # self.res_entry.config(foreground="black")
                     else:
                         row = dict(rest_values)
                         row.update({col: val})
                         print(f"\n\trow:\n{row}\n\n\tcn\n{cn}\n>")
-                        # self.data = self.data.append(pandas.DataFrame(row))
+                        # self.path_data = self.path_data.append(pandas.DataFrame(row))
                         print(f"A\n\tData\n{self.data}\n{type(self.data)=}")
                         print(f"\n\tcols\n{self.data.columns}")
                         # print(f"DF 2:{pandas.DataFrame(row)}")
                         df1 = pandas.DataFrame([row], columns=list(row.keys()))
                         print(f"DF 1:{df1}\n{type(df1)=}")
-                        # self.data = self.data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
-                        # self.data = self.data.append(df1, ignore_index=True)
-                        # self.data = pd.concat([self.data, df1], ignore_index=True)
-                        # print(f"B\n\tData\n{self.data}\n{type(self.data)=}")
-                        # self.data = self.data.append(pandas.DataFrame(row))
+                        # self.path_data = self.path_data.append(pandas.DataFrame([row], columns=row.keys()), ignore_index=True)
+                        # self.path_data = self.path_data.append(df1, ignore_index=True)
+                        # self.path_data = pd.concat([self.path_data, df1], ignore_index=True)
+                        # print(f"B\n\tData\n{self.path_data}\n{type(self.path_data)=}")
+                        # self.path_data = self.path_data.append(pandas.DataFrame(row))
                         row_vals = [row.get(c, self.default_null_char) for c in cn]
                         new_dfs.append((df1, [row_vals], [tags]))
                         cdvd = {k: [v] for k, v in zip(cn, row)}.values()
@@ -3415,21 +3415,21 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                                 row.append(val)
 
                         # row = [(self.new_entry_defaults[col] if col in self.new_entry_defaults else self.ask_value(col)) for col in column_names]
-                        # print(f"\nA\t{self.data=}")
+                        # print(f"\nA\t{self.path_data=}")
                         # print(f"{pandas.DataFrame({k: [v] for k, v in zip(cn, row)})}")
-                        # self.data = self.data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
-                        # self.data = pd.concat([self.data, (pandas.DataFrame({k: [v] for k, v in zip(cn, row)}))],
+                        # self.path_data = self.path_data.append(pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), ignore_index=True)
+                        # self.path_data = pd.concat([self.path_data, (pandas.DataFrame({k: [v] for k, v in zip(cn, row)}))],
                         #                       ignore_index=True)
-                        # print(f"\nB\t{self.data=}")
+                        # print(f"\nB\t{self.path_data=}")
                         new_dfs.append((pandas.DataFrame({k: [v] for k, v in zip(cn, row)}), [row], [tags]))
                         # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row), tags=tuple(tags))
                         self.res_entry.config(foreground="black")
 
-                        # i = self.data.shape[0]
+                        # i = self.path_data.shape[0]
                         # for df_1, vals, tags in new_dfs:
                         #     self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=vals, tags=tuple(tags))
                         #     i += 1
-                        # self.data = pd.concat(new_dfs, ignore_index=True)
+                        # self.path_data = pd.concat(new_dfs, ignore_index=True)
                     else:
                         self.res_entry.config(foreground="red")
                 elif len(self.tree_controller.viewable_column_names) == 1:
@@ -3442,7 +3442,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         # print(f"PRE-INSERT")
         # print(f"{new_dfs=}")
         # print(f"{tags=}")
-        # print(f"self.data={self.data}")
+        # print(f"self.path_data={self.path_data}")
         k = self.data.shape[0]
         for df, vals, tags in new_dfs:
             if self.nan_repr is not None:
@@ -3460,7 +3460,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
             self.tree_controller.df = self.tree_controller.df.fillna(self.nan_repr)
             self.data = self.data.fillna(self.nan_repr)
 
-        # print(f"END==\n{self.data=}")
+        # print(f"END==\n{self.path_data=}")
 
     def throw_fit(self, code):
         raise ValueError(f"You cannot use code='{code}'. It is a keyword.")
@@ -3493,7 +3493,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
 
     # def update_treeview(self):
     #     self.tree_treeview.delete(*self.tree_treeview.get_children())
-    #     for i, row in self.data.iterrows():
+    #     for i, row in self.path_data.iterrows():
     #         # print(f"{i=}, {row=}")
     #         tags =[self.tree_controller.gen_row_tag(i)]
     #         self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(row), tags=tags)
@@ -3502,9 +3502,9 @@ class MultiComboBox(ctk.CTkScrollableFrame):
     def update_treeview(self):
         self.tree_treeview.delete(*self.tree_treeview.get_children())
         # sic = self.show_index_column
-        # for i, row in enumerate(self.data.itertuples(), 0):
+        # for i, row in enumerate(self.path_data.itertuples(), 0):
         for i, data in self.data.iterrows():
-            # print(f"{i=}, {data=}, {self.tree_controller.viewable_column_names=}")
+            # print(f"{i=}, {path_data=}, {self.tree_controller.viewable_column_names=}")
             row = [data[k] for k in self.tree_controller.viewable_column_names]
             # print(f"{i=}, {row=}, {self.tree_controller.viewable_column_names=}")
             tags = [self.tree_controller.gen_row_tag(i)]
@@ -3514,7 +3514,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
             # print(f"{tags=}")
 
     def filter_treeview(self):
-        # print(f"filter_treeview: {self.typed_in.get()}\n\n\tDATA\n{self.data}")
+        # print(f"filter_treeview: {self.typed_in.get()}\n\n\tDATA\n{self.path_data}")
         if self.typed_in.get():
             val = self.res_tv_entry.get().lower()
             # print(f"SUBMISSION VAL {val=}")
@@ -3543,7 +3543,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                     # print(f"\t\t{i=}, {value=}")
                     if val in str(value).lower():
                         some = True
-                        # row = self.data.iloc[[i]].values
+                        # row = self.path_data.iloc[[i]].values
                         row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
                         # print(f"A {row=}")
                         # print(f"\t\t{i=}, {value=}, {row=}")
@@ -3593,7 +3593,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                     # # self.tree_treeview.delete(*self.tree_treeview.get_children())
                     # # do_break = False
                     # if col != 0 and col != "All":
-                    #     for j, value in enumerate(self.data[].tolist()):
+                    #     for j, value in enumerate(self.path_data[].tolist()):
                     #         # print(f"\t\t{i=}, {value=}")
                     #         if val in str(value).lower():
                     #             self.rg_btns[0].flash()
@@ -3602,7 +3602,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                     # # if do_break:
                     # #     break
                     #         # some = True
-                    #         # row = self.data.iloc[[i]].values
+                    #         # row = self.path_data.iloc[[i]].values
                     #         # print(f"\t\t{i=}, {value=}, {row=}")
                     #         # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=list(*row))
 

@@ -289,7 +289,7 @@ QUOTE_KEY = CREDS_STG["quote_key"] if COMP == STG else CREDS_BWS["quote_key"]
 # Prep Data
 ###########
 
-# Select company appropriate data
+# Select company appropriate path_data
 MonitoringSchedulesqlquerydf = df_bws if COMP == BWS else df_stg
 
 # Reformat WO# column as int

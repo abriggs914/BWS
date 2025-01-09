@@ -1141,7 +1141,7 @@ ms_models = st.multiselect(
     label="Select Model(s)",
     options=sorted(df_product_data["Model No"].unique().tolist()),
     key="multiselect_model_no",
-    help="Select some models to view margin data.",
+    help="Select some models to view margin path_data.",
     on_change=multiselect_model_no_on_change
 )
 
@@ -1478,17 +1478,17 @@ with st.expander("Jobs in Wip By Grouping"):
 #     <script>
 #         // Parse the Plotly figure JSON and render the chart
 #         const fig = {chart_json};
-#         Plotly.newPlot('plotly-chart', fig.data, fig.layout);
+#         Plotly.newPlot('plotly-chart', fig.path_data, fig.layout);
 #
 #         // Capture plotly_click event
-#         document.getElementById('plotly-chart').on('plotly_click', function(data) {{
-#             const point = data.points[0];
+#         document.getElementById('plotly-chart').on('plotly_click', function(path_data) {{
+#             const point = path_data.points[0];
 #             const clickedData = {{
 #                 x: point.x,
 #                 y: point.y,
-#                 group: point.data.name
+#                 group: point.path_data.name
 #             }};
-#             // Send clicked data back to Streamlit using custom event
+#             // Send clicked path_data back to Streamlit using custom event
 #             window.parent.postMessage(clickedData, "*");
 #         }});
 #     </script>
@@ -1498,7 +1498,7 @@ with st.expander("Jobs in Wip By Grouping"):
 # # clicked_data = components.html(html_code, height=600, scrolling=True)
 # clicked_data = components.html(html_code, height=600, scrolling=True)
 #
-# # Receive the clicked data from the JavaScript custom event
+# # Receive the clicked path_data from the JavaScript custom event
 # clicked_result = st.session_state.get("clicked_data")
 #
 # # Display information about the clicked bar

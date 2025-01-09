@@ -1880,7 +1880,7 @@ def clamp_rect(rect_bounds, out_bounds, maintain_inner_dims=False):
 def restart_program():
     """Restarts the current program.
     Note: this function does not return. Any cleanup action (like
-    saving data) must be done before calling this function.
+    saving path_data) must be done before calling this function.
     https://stackoverflow.com/questions/41655618/restart-program-tkinter
     https://www.daniweb.com/programming/software-development/code/260268/restart-your-python-program
 

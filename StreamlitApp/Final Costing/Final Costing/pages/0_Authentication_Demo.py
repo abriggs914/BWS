@@ -1204,8 +1204,8 @@ else:
 #                     data_grid[i + 1][cols_names.index("Cell")].write(cell_phone)
 #
 #
-#                 # # Sample data
-#                 # data = [
+#                 # # Sample path_data
+#                 # path_data = [
 #                 #     {"Name": "Alice", "Role": "Admin", "Department": "HR"},
 #                 #     {"Name": "Bob", "Role": "User", "Department": "Engineering"},
 #                 #     {"Name": "Charlie", "Role": "User", "Department": "Sales"}
@@ -1215,9 +1215,9 @@ else:
 #                 # role_options = ["Admin", "User", "Guest"]
 #                 # department_options = ["HR", "Engineering", "Sales", "Marketing"]
 #                 #
-#                 # # Streamlit data editor with column configuration
+#                 # # Streamlit path_data editor with column configuration
 #                 # edited_data = st.data_editor(
-#                 #     data,
+#                 #     path_data,
 #                 #     column_config={
 #                 #         "Role": st.column_config.SelectboxColumn(
 #                 #             "Role",
@@ -1231,7 +1231,7 @@ else:
 #                 #     key="editable_table_multi"
 #                 # )
 #                 #
-#                 # # Display edited data
+#                 # # Display edited path_data
 #                 # st.write("Edited Table:", edited_data)
 #             else:
 #                 df_user: pd.DataFrame = df_user_directory.loc[df_user_directory["AppUserName"] == user_name]

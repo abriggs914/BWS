@@ -4021,12 +4021,12 @@ def get_colour_name(hx, name_only=True, r_type=dict, rgb=False, certainty_as_per
     """Given an input, hex or return the closest name for that colour.
     Modified from: https://stackoverflow.com/questions/2453344/find-the-colour-name-from-a-hexadecimal-colour-code
     :param hx - colour value to determine the colour name of. Can be hex colour, RGB colour, or known name.
-    :param name_only - default True for simple string name result, otherwise, it will include data on its search.
+    :param name_only - default True for simple string name result, otherwise, it will include path_data on its search.
     :param r_type - control whether you get a list, tuple, or a dict result
-    :param rgb - returned colour representation in the data, default hex
-    :param certainty_as_percent - convert certainty number to a percentage when returning data.
+    :param rgb - returned colour representation in the path_data, default hex
+    :param certainty_as_percent - convert certainty number to a percentage when returning path_data.
     :param default_colour - if the colour name cannot be determined, then return the default value.
-    :return string name for the colour, or an iterable of data collected while deciphering this input.
+    :return string name for the colour, or an iterable of path_data collected while deciphering this input.
     :raises Assertion Error if r_type not recognized, ValueError if the input is not recognized as a colour via Colour class"""
 
     assert r_type in [dict, list, tuple], f"Error, r_type must be one of; list, tuple, or dict. Got '{r_type}'."

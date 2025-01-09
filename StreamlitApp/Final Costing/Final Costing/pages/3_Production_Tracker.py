@@ -1148,7 +1148,7 @@ del df_production_data_by_op["TotalRunTimeEst"]
 og_columns.remove("TotalRunTimeAct")
 og_columns.remove("TotalRunTimeEst")
 
-# Sort the main plotting data
+# Sort the main plotting path_data
 if st.session_state.get("sort_col") is None:
     sort_by = cols_lookup[default_session_state["sort_col"]]
     sort_style = default_session_state["sort_style"]
@@ -1500,7 +1500,7 @@ for i, row in df_production_data_by_op.iterrows():
 
             # Radios and Expanders
             df_explorer_radio = st.radio(
-                label="Select some data to investigate:",
+                label="Select some path_data to investigate:",
                 options=options,
                 horizontal=True
             )
@@ -1511,7 +1511,7 @@ for i, row in df_production_data_by_op.iterrows():
                         filtered = dataframe_explorer(df_ClkTransaction_job_data, case=False)
                         st.dataframe(filtered, use_container_width=True)
                     else:
-                        st.write(f"Could not retrieve any ShopClk Labour data for {job=}.")
+                        st.write(f"Could not retrieve any ShopClk Labour path_data for {job=}.")
             elif df_explorer_radio == options[1]:
                 with st.expander("Syspro Labour Data:"):
                     if not df_WipJobAllLab_job_data.empty:
@@ -1519,7 +1519,7 @@ for i, row in df_production_data_by_op.iterrows():
                         filtered = dataframe_explorer(df_WipJobAllLab_job_data, case=False)
                         st.dataframe(filtered, use_container_width=True)
                     else:
-                        st.write(f"Could not retrieve any Syspro Labour data for {job=}.")
+                        st.write(f"Could not retrieve any Syspro Labour path_data for {job=}.")
             elif df_explorer_radio == options[2]:
                 with st.expander("Syspro Material Data:"):
                     if not df_WipJobAllMat_job_data.empty:
@@ -1527,7 +1527,7 @@ for i, row in df_production_data_by_op.iterrows():
                         filtered = dataframe_explorer(df_WipJobAllMat_job_data, case=False)
                         st.dataframe(filtered, use_container_width=True, hide_index=True)
                     else:
-                        st.write(f"Could not retrieve any Syspro Material data for {job=}.")
+                        st.write(f"Could not retrieve any Syspro Material path_data for {job=}.")
 
             with st.expander(f"Options + NPOs:"):
                 st.write(f"#### Options")
