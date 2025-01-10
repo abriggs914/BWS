@@ -124,7 +124,7 @@ INSERT INTO
         ,[I].[Notes]
         ,[I].[EngNotes V2]
         ,[I].[AdditionalPricingInfo]
-        ,[I].[InternalSalesComment]
+        ,NULL AS [InternalSalesComment]
         ,[I].[Price]
         ,[I].[US Sale]
         ,[I].[HighRiskUnit]

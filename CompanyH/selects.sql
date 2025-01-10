@@ -1,3 +1,12 @@
+
+-- CompanyH Selects
+SELECT * FROM [CompanyH].[dbo].[Orders];
+SELECT * FROM [CompanyH].[dbo].[Products];
+SELECT * FROM [CompanyH].[dbo].[Employees];
+
+
+
+
 DECLARE @nR INT = 1000000;
 SELECT @nR = 25
 
