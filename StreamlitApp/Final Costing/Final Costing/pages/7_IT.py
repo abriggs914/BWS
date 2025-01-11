@@ -653,7 +653,7 @@ grid = {
     # "tab_edit_request": None
 }
 
-tab_names = ["New", "Edit", "Server", "Access", "Inventory"]
+tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples"]
 sm_tab_names = ["Search Tables", "SQL Creator", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
@@ -1956,6 +1956,401 @@ def inventory_maintenance():
     #         st.error("No barcode detected in either the original nor the processed image.")
 
 
+def code_samples():
+
+    LISTS: str = "lists"
+    DATES: str = "date"
+    PYTHON: str = "python"
+    SHELL: str = "shell"
+    BUILT_IN: str = "built_in"
+    LOOKUP: str = "lookup"
+    RECORDSET: str = "recordset"
+    ARRAY_UTILITY: str = "array_utility"
+    DICTIONARY_UTILITY: str = "dictionary_utility"
+    RECORDSET_UTILITY: str = "recordset_utility"
+    PYTHON_UTILITY: str = "python_utility"
+    DATE_UTILITY: str = "date_utility"
+
+
+    # TEMPLATE
+    # {
+    #     "name": """""",
+    #     "code": """""",
+    #     "desc": """""",
+    #     "warn": """""",
+    #     "tags": [],
+    # }
+
+    access_samples = [
+        {
+            "name": """DLookup""",
+            "code": """
+' Example 1  => Returns the [Name] value from table [ITRCustomers] where the [CustomerID] = 4 => 'Avery Briggs'
+MsgBox DLookup("[Name]", "[ITRCustomers]", "[CustomerID] = 4")
+
+' Example 2 => Runtime Error because [Name2] is not a valid column name in table [ITRCustomers]
+MsgBox DLookup("[Name2]", "[ITRCustomers]", "[CustomerID] = 4")
+            """,
+            "desc": """
+Use DLookup to retrieve a single value from a table given some criteria (Optional).
+            """,
+            "warn": """
+This function only returns a single value. If you need more than 1 value from that record it is best to use a Recordset object, or another method.
+            """,
+            "tags": [BUILT_IN, LOOKUP]
+        },
+        {
+            "name": """RSFetch""",
+            "code": """
+Dim rs As DAO.Recordset
+Set rs = CurrentDb.OpenRecordset("ITPersonnel", dbOpenSnapshot)
+
+' Use FindFirst to navigate to a desired record.
+' This criteria will filter for a [Name] matching "avery"
+rs.FindFirst "[Name] = 'avery'"
+
+Dim useAccessAlias As Boolean
+Dim accessAliasFullName As String
+Dim accessAliasWindowsUser As String
+
+' Best practice to ensure you have a valid record after calling FindFirst
+If Not rs.NoMatch Then
+    
+    ' Cast [UseAccessAlias] as a boolean using castType, supports strings and function names ("int", "cint", "cdate", vbdate, etc...)
+    useAccessAlias = RSFetch(rs, "UseAccessAlias", castType:=vbBoolean)
+    
+    ' use wrapStrings set to False to 'unwrap' the strings returned. By default rsfetch will place '"' characters around strings.
+    accessAliasFullName = RSFetch(rs, "AccessAliasFullName", wrapStrings:=False)
+    accessAliasWindowsUser = RSFetch(rs, "AccessAliasWindowsUser", wrapStrings:=False)
+
+.
+.
+.
+            """,
+            "desc": """
+Return the value for a given column in a recordset.
+Similar in function to using native DAO.Recordset(0) or DAO.Recordset(COLUMN_NAME)
+Optionally supports indexed positional lookup if an integer is passed as 'ColName' param.
+    Optional features:
+    Value-casting,
+    Null-value replacement,
+    String-wrapping,
+    Empty string considered Null
+    Errors when values not found
+            """,
+            "warn": """""",
+            "tags": [LOOKUP, RECORDSET, RECORDSET_UTILITY],
+        },
+        {
+            "name": """ExecPython""",
+            "code": r"""
+' This python script is designed to read a text file with an address as it's contents, then write another text file with the calculated GPS coordinates for the given address.
+#######################################################################################################################
+        Contents of 'read_location_demo_txt.py'
+#######################################################################################################################
+from location_utility import address_to_coords
+
+address_file = r"C:\Access\location_output_demo.txt"
+coords_file = r"C:\Access\location_output_demo_coords.txt"
+
+
+if __name__ == '__main__':
+
+    with open(address_file, "r") as f:
+        address_lines = f.readlines()
+        addresses = {}
+        for i, line in enumerate(address_lines):
+            print(f"{i=}, {line=}")
+            address = line.strip()
+            addresses[address] = address_to_coords(address)
+
+    with open(coords_file, "w") as f:
+        for address, coords in addresses.items():
+            f.write(str(coords))
+#######################################################################################################################
+
+
+Dim strPath As String
+Dim Loc As String
+' Ask for an address
+Loc = InputBox("Enter an address")
+strPath = "C:\Access\location_output_demo.txt"
+
+If Loc = "" Then
+    MsgBox "Please enter a valid address."
+    Exit Sub
+End If
+
+Printf "Address <" & Loc & ">"
+' Write the address to a file to be read in python
+Call WriteFile(Loc, strPath)
+    
+Dim sCoords As String
+Dim scriptPath As String
+scriptPath = "C:\Users\abriggs\Documents\BWS\StreamlitApp\Final Costing\Final Costing\read_location_demo_txt.py"
+Call ExecPython(scriptPath)
+
+' Read the output file from the python program
+sCoords = ReadFile(coordsPath)
+Printf "CONTENTS <" & sCoords & ">"
+            """,
+            "desc": """
+Function designed to facilitate Shell commands when interacting with python interpreters and files.
+Pass the absolute file path of a python script to have its contents executed.
+            """,
+            "warn": """
+Use absolute paths for parameters
+Ensure all paths in python script are using absolute pathing.
+Optionally pass the absolute path to an interpreter, or have it looked up using a naive approach (see FindPythonPath)
+Also choose how the terminal window is displayed. By default it will have normal focus. 
+            """,
+            "tags": [PYTHON, SHELL, PYTHON_UTILITY],
+        },
+        {
+            "name": """Scripting.Dictionary""",
+            "code": """
+Set q = Dictionary("a", 1, "b", 2)
+Printf(q) ' => {'a': 1, 'b': 2}
+            
+Set w = Dictionary()
+w(0) = "Avery"
+w(1) = "is"
+w(2) = "cool"
+w(3) = "!"
+Set teams = Dictionary()
+teams("A") = 1
+teams("B") = Array(-2, -1)
+teams("C") = Array(-2, "-1")
+teams("D") = "15"
+teams("E") = True
+teams("F") = -9.992
+teams("G") = &H12
+' ' teams("H") = w  ' failure, no nested dictionaries
+
+Call PrintDict(teams, inLine:=False)
+' {
+'   'A': 1,
+'   'B': [-2, -1],
+'   'C': [-2, '-1'],
+'   'D': '15',
+'   'E': True,
+'   'F': -9.992,
+'   'G': 18
+' }
+            """,
+            "desc": """
+Wrapper 'class' for a sudo-dictionary in VBA.
+            
+' https://stackoverflow.com/questions/46013120/whats-a-very-simple-way-to-enter-key-value-pairs-in-vba
+' We then add items to the dictionary using the 'Add' method,
+'   where each item consists of a key-value pair.
+'   We can access the values by providing the corresponding keys.
+' The 'Exists' method is used to check if a specific key exists in the dictionary.
+'   We can loop through all the keys using the Keys property and access the
+'   corresponding values using the keys.
+' The 'Remove' method allows us to remove a specific item from the dictionary,
+'   and the 'Count' property gives us the number of items in the dictionary.
+' Finally, we can clear all items from the dictionary using the 'RemoveAll' method.
+' Remember to add a reference to the "Microsoft Scripting Runtime" library
+'   in your VBA project for the Scripting.Dictionary object to be available.
+            """,
+            "warn": """""",
+            "tags": [DICTIONARY_UTILITY],
+        },
+        {
+            "name": """DateFormat""",
+            "code": """
+dateformat(#2024-06-12#)              ' => "Wednesday June 12th 2024"
+dateformat(#2024-06-12#, 1)           ' => "Wednesday, June 12th, 2024"
+dateformat(#2024-06-12#, 2)           ' => "Wednesday, June 12th"
+dateformat(#2024-06-12#, 3)           ' => "Wednesday June 12th"
+printf(dateformat(#2024-06-12#, -1))  ' => "['Wednesday', 'June', '12th', 2024]"
+            """,
+            "desc": """
+Retrieve a date formatted as a string.
+You may also just return the values.
+
+Supports 5 modes using integer codes [-1, 0, 1, 2, 3]
+            """,
+            "warn": """""",
+            "tags": [DATES, DATE_UTILITY],
+        },
+        {
+            "name": """Array Utility""",
+            "code": """
+
+Dim q As Variant
+Dim r As Variant
+Dim t As Variant
+q = Array(True, True, True)
+r = Array(True, True, True, False)
+t = Array(True, True, True, Array())
+
+' Appending one array to another, by default this will place every element in 'r' into 'q'
+Call Append(q, r)  ' [True, True, True, True, True, True, False] NOT [True, True, True, [True, True, True, False]]
+
+printf "ALL q => T <" & All(q) & ">"  ' True
+printf "ALL r => F <" & All(r) & ">"  ' True
+printf "ALL q => F <" & All(q) & ">"  ' False
+printf "ALL t => F <" & All(t) & ">"  ' False
+
+printf "ANY q => T <" & Any_(q) & ">"  ' True
+printf "ANY r => F <" & Any_(r) & ">"  ' True
+printf "ANY q => F <" & Any_(q) & ">"  ' True
+printf "ANY t => F <" & Any_(t) & ">"  ' True
+
+
+printarr ifori("a", 10)  ' => ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a']
+printarr ifori(array(), 10)  ' => [[], [], [], [], [], [], [], [], [], []]
+printf ifori("randomhex()", 5, isfunc:=true)  ' ['#B48894', '#4A4DC6', '#04C2D0', '#B50C6A', '#DCCA5F']
+
+' Function 'Slice' is used as a work-around for array slicing.
+q = Array(1, 6, 7, 2, 9, 4, 3, 8, 5, 6, 1, 2, 1, 7, 8, 4, 6, 5, 3, 2, 1, 5, 4, 6, 9, 7, 8, 4, 5, 1, 2, 5, 4, 6, 7)
+r = map("cstr", Array(1, 6, 7, 2, 9, 4, 3, 8, 5, 6, 1, 2, 1, 7, 8, 4, 6, 5, 3, 2, 1, 5, 4, 6, 9, 7, 8, 4, 5, 1, 2, 5, 4, 6, 7))
+t = append(q, -1)
+p = Array(-5, -6, -7)
+w = append(q, p)
+Call printArr(Slice(q, 4, 0, -1), name:="Slice Test1")  ' => [9, 2, 7, 6]
+Call printArr(Slice(q, 0, 4, 2), name:="Slice Test2", inLine:=False)  ' => [1, 7, 9]
+Call printArr(Slice(q, -1, 14, 3), name:="Slice Test3")  ' => []
+Call printArr(Slice(q, 1, 14, 3), name:="Slice Test4")  ' => [6, 9, 8, 1, 7]
+Call printArr(Slice(q), name:="Slice Test5")  ' => [1, 6, 7, 2, 9, 4, 3, 8, 5, 6, 1, 2, 1, 7, 8, 4, 6, 5, 3, 2, 1, 5, 4, 6, 9, 7, 8, 4, 5, 1, 2, 5, 4, 6, 7, -5, -6, -7]
+Call printArr(Slice(q), name:="Slice Test6")  ' => [1, 6, 7, 2, 9, 4, 3, 8, 5, 6, 1, 2, 1, 7, 8, 4, 6, 5, 3, 2, 1, 5, 4, 6, 9, 7, 8, 4, 5, 1, 2, 5, 4, 6, 7, -5, -6, -7]
+Call printArr(Slice(q, start_:=5), name:="Slice Test6")  ' => [1, 6, 7, 2, 9]
+Call printArr(Slice(q, end_:=5), name:="Slice Test7")  ' => [4, 3, 8, 5, 6, 1, 2, 1, 7, 8, 4, 6, 5, 3, 2, 1, 5, 4, 6, 9, 7, 8, 4, 5, 1, 2, 5, 4, 6, 7, -5, -6]
+Call printArr(Slice(q, step_:=5), name:="Slice Test8")  ' => [1, 4, 1, 4, 1, 7, 2, -5]
+            """,
+            "desc": """
+The Array Utility file was created to mimic several list-oriented functions that exist in python.
+These functions are designed to work EXACTLY as the python versions do.
+There will be an inherent weakness compared to python's implementations as I cannot take advantage of lazy-processing like generators.
+These functions do work well for small to medium sized lists.
+
+Functions List:
+
+'   All                     -   Returns True if all elements are condisdered true values.
+'   Any_                    -   Returns True if any element is condisdered a true value. Uses short-circuiting.
+'   Append                  -   Adds an element to an array in place, also returns the array.
+'   ArrayEqual              -   Determine if two arrays have matching elements in value, type, and order.
+'   Average                 -   Determine the average of numerical arrays.
+'   Copy                    -   Return a copy of an array.
+'   Count                   -   Count how many occurences of an element occur in an array, string or dictionary object.
+'   Enumerate               -   Return a 2D array of list elements with their indexes. Think Python's enumerate function.
+'   IForI                   -   Return a quick array of n elements of value v.
+'   Insert                  -   Insert an element into an array using an index.
+'   Index                   -   Return the index of element, or a list of elements in an array.
+'   IsArrayEmpty            -   Determine if array is empty, uses error block and ubound.
+'   IsIn                    -   Determine whether an element exists in an array. Optionally return it's index.
+'   Map                     -   Return an array after calling a function on each element using eval.
+'   Max                     -   Determine the maximum from an array or a list of arguments.
+'   Min                     -   Determine the minimum from an array or a list of arguments.
+'   Mode                    -   Determine the most common elements in an array.
+'   PrintArr                -   Print and or obtain a string representation for an array.
+'   Range                   -   Return an array of integers in sequence using bounds and a step.
+'   Remove                  -   Removes an element from an in array in place, also returns the array. Optionally fails if target not found.
+'   Reverse                 -   Return a copy of an array in reverse.
+'   Slice                   -   Return a slice of an array using indices and a step. Modeled after python's slicing approach.
+'   Sorted                  -   Return a sorted array or string. Modeled after python's sorted function.
+'   Str2Array               -   Convert a string to an array.
+'   Sum                     -   Determine the sum from an array or a list of arguments.
+'   Zip                     -   Take 2 arrays and return a zipped list of elements at the same indexes.
+            """,
+            "warn": """Please see the source file for more examples.""",
+            "tags": [ARRAY_UTILITY, PYTHON, LISTS],
+        },
+        {
+            "name": """Eval""",
+            "code": """""",
+            "desc": """
+Rules for Eval:
+The EXPRESSION MUST BE ABLE TO CONVERT TO A STRING object.
+The expression being evaluated will be treated as generic VBA code - NO NESTED NON-NATIVE FUNCTION CALLING
+Eval does not work properly in the immediate window. You must test using Script.
+            """,
+            "warn": """""",
+            "tags": [BUILT_IN],
+        }
+    ]
+
+    list_of_tags = [
+        DATES,
+        LISTS,
+        PYTHON,
+        SHELL,
+        BUILT_IN,
+        LOOKUP,
+        RECORDSET,
+        ARRAY_UTILITY,
+        DICTIONARY_UTILITY,
+        RECORDSET_UTILITY,
+        PYTHON_UTILITY,
+        DATE_UTILITY
+    ]
+
+    samples = {
+        "vba": access_samples
+    }
+
+    for k in samples:
+        list_of_tags.insert(0, k)
+        for sample in samples[k]:
+            sample["tags"].insert(0, k)
+
+    key = f"ms_tag_choices"
+    st.session_state.setdefault(key, list_of_tags)
+    st.session_state.setdefault("samples_expanded", False)
+
+    cols_tags = st.columns([0.15, 0.85], border=True)
+
+    with cols_tags[0]:
+        if st.button(
+            label="all",
+            key=f"btn_add_all_tags"
+        ):
+            st.session_state.update({key: list_of_tags})
+        if st.button(
+            label="none",
+            key=f"btn_remove_all_tags"
+        ):
+            st.session_state.update({key: []})
+        if st.button(
+            label="expand all",
+            key=f"btn_expand_all_samples"
+        ):
+            st.session_state.update({"samples_expanded": True})
+        if st.button(
+            label="collapse all",
+            key=f"btn_collapse_all_samples"
+        ):
+            st.session_state.update({"samples_expanded": False})
+    with cols_tags[1]:
+        ms_tag_choices = st.multiselect(
+            label="Tags",
+            key=key,
+            options=list_of_tags
+        )
+
+    for lang, samples_list in samples.items():
+        for i, data in enumerate(samples_list):
+            name = data["name"]
+            code = data["code"]
+            desc = data["desc"]
+            warn = data["warn"]
+            tags = data["tags"]
+            # if any tag in 'ms_tags_choices' are in 'tags', then show sample
+            if len(set(tags).difference(set(ms_tag_choices))) != len(tags):
+                with st.expander(name, expanded=st.session_state.get("samples_expanded", False)):
+                    st.write(desc)
+                    st.code(code, language=lang, line_numbers=True)
+                    if warn:
+                        st.warning(warn)
+                    if tags:
+                        tag_cols = st.columns(len(tags), border=True)
+                        for j, tag in enumerate(tags):
+                            with tag_cols[j]:
+                                st.write(tag)
+
+
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
@@ -1998,6 +2393,9 @@ else:
 
         if tab_choice == tab_names[4]:
             inventory_maintenance()
+
+        if tab_choice == tab_names[5]:
+            code_samples()
 
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
