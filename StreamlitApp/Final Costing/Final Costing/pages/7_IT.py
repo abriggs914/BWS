@@ -12,6 +12,7 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
 
+from html_utility import list_to_html
 from pyodbc_connection import connect
 from sql_utility import *
 from streamlit_utility import coloured_text
@@ -2340,7 +2341,16 @@ Eval does not work properly in the immediate window. You must test using Script.
             # if any tag in 'ms_tags_choices' are in 'tags', then show sample
             if len(set(tags).difference(set(ms_tag_choices))) != len(tags):
                 with st.expander(name, expanded=st.session_state.get("samples_expanded", False)):
-                    st.write(desc)
+                    if "\n" in desc:
+                        lines = list_to_html(
+                            desc.lstrip().rstrip().split("\n"),
+                            is_ordered=False,
+                            is_raw=True
+                        )
+                        st.markdown(lines[0], unsafe_allow_html=True)
+                        st.markdown(lines[1], unsafe_allow_html=True)
+                    else:
+                        st.write(desc)
                     st.code(code, language=lang, line_numbers=True)
                     if warn:
                         st.warning(warn)
