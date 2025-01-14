@@ -299,12 +299,12 @@ def replace_timestamp_datetime(str_in, col_in_question=None):
 
 def is_date_dtype(df, col_name):
     """
-    Check if the path_data type of a column in a Pandas DataFrame is a date or time path_data type.
+    Check if the data type of a column in a Pandas DataFrame is a date or time data type.
     Args:
         df (pandas.DataFrame): The DataFrame containing the column to check.
         col_name (str): The name of the column to check.
     Returns:
-        bool: True if the column path_data type is a date or time path_data type, False otherwise.
+        bool: True if the column data type is a date or time data type, False otherwise.
     """
     dtype = df.dtypes[col_name]
     return np.issubdtype(dtype, np.datetime64) or np.issubdtype(dtype, np.timedelta64)
