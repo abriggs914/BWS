@@ -154,6 +154,10 @@ else:
 
 
 st.session_state.update({key_state: (int(state) + 1) % (len(video_data) * 2)})
-count = st_autorefresh(interval=refresh_time, limit=None, key="SplashDemo")
+count = st_autorefresh(
+    interval=refresh_time,
+    limit=1,
+    key="SplashDemo"
+)
 # st.write(f"RERUN AT {datetime.datetime.now() + datetime.timedelta(seconds=refresh_time/1000)}")
 # # st.session_state[key_html_style] = False
