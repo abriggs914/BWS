@@ -75,20 +75,23 @@ s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
 
 
 pages_per_render = 10
+checklist_float_pos = 50, 60
 
 
 # column_pdf, column = st.columns([50, 50])
 cols_main = st.columns([0.75, 0.25])
 container_pdf = cols_main[0].container(border=1)
-container_pdf_ctls = st.container(border=1)
+container_pdf_ctls = st.container(border=1, height=25)
 # container_pdf_ctls.float()
 container_pdf_ctls.float("bottom: 0;background-color: grey;")
 
-cols_main[1].float()
+cols_main[1].float(f"right: {checklist_float_pos[0]}px; top: {checklist_float_pos[1]}px;")
 
 st.write(f"Screen width is '{s_w}'")
 st.write(f"Screen height is '{s_h}'")
 pdf_render_pages = st.session_state.setdefault("pdf_render_pages", list(range(pages_per_render)))
+iss_log = []
+valid_log = []
 
 with container_pdf:
 	pdf_file = st.file_uploader(
@@ -277,6 +280,19 @@ with cols_main[1]:
 			):
 				for i, check_key in enumerate(return_select["checked"]):
 					*key, quote = check_key.rsplit("_", 1)
-					key = "".join(key)
+					key = "".join(key).removeprefix("_").removesuffix("_")
 					print(f"Quote: '{quote}', ISS: '{key}'")
+					if key == ch.removeprefix("_").removesuffix("_"):
+						# checked Tag
+						valid_log.append(quote)
+					else:
+						if quote not in valid_log:
+							iss_log.append(quote)
+
+with st.expander("RESULTS"):
+	st.write("Checked")
+	st.write(valid_log)
+	st.write("---")
+	st.write("Issues")
+	st.write(iss_log)
 
