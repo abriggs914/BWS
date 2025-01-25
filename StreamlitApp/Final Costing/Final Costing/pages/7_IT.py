@@ -1409,6 +1409,123 @@ def input_new_request():
     request_form(form=form, mode="new")
 
 
+@st.dialog(title="Select an existing table", width="large")
+def import_existing_table_cols():
+
+    def click_df():
+        # df_sel: dict = st.session_state.get("stdf_df_tables", {})
+        # st.write(df_sel)
+        pass
+
+    def validate_chosen():
+        df_chosen = st.session_state.get("data_editor_cols", pd.DataFrame())
+        st.write("VALIDATING...")
+
+    st.toggle(
+        label="Views",
+        key=f"toggle_sel_table_views"
+    )
+
+    st.session_state.setdefault("selectbox_sel_table", "BWSdb")
+    st.selectbox(
+        label="Database",
+        key=f"selectbox_sel_table",
+        options=list_databases
+    )
+
+    df_cols = st.columns([2/5, 3/5], gap="small")
+
+    db_name = st.session_state.get("selectbox_sel_table", "BWSdb")
+    count_col = "COLUMN_NAME"
+    df_tables_og = get_tables(db_name)
+    show_cols = [
+        "COLUMN_NAME",
+        "PRIMARY_KEY",
+        "DATA_TYPE",
+        "CHARACTER_MAXIMUM_LENGTH"
+    ]
+    list_data_types = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
+    # join_cols = ["TABLE_NAME"]
+    # join_suffixes = ("_x", "_y")
+    # col_names = df_tables.columns.tolist()
+    #
+    # for col1 in join_cols:
+    #     for i in range(len(col_names)):
+    #         col2 = col_names[i]
+    #         if col1 == col2:
+    #             col_names[i] = col_names[i] + join_suffixes[0]
+
+    df_tables = df_tables_og.groupby(
+        by="TABLE_NAME"
+    ).agg({
+        count_col: "count"
+    }).rename(columns={count_col: "COL_COUNT"})
+
+    with df_cols[0]:
+        st.write("### Select a table:")
+        st.dataframe(
+            data=df_tables,
+            key=f"stdf_df_tables",
+            on_select=click_df,
+            selection_mode="single-row"
+        )
+
+    with df_cols[1]:
+        if st.session_state.get("stdf_df_tables"):
+            # this works because the table selection st.dataframe is in selection_mode="single-row"
+            selected_rows = st.session_state.get("stdf_df_tables")["selection"]["rows"]
+            if selected_rows:
+                table_name = df_tables.iloc[selected_rows[0]].name
+                st.write(table_name)
+                df_columns = get_cols(table_name, db_name)
+                st.dataframe(
+                    df_columns[show_cols],
+                    key=f"stdf_df_table_columns",
+                    on_select=lambda: 1,
+                    hide_index=True
+                )
+
+    with st.container(border=True):
+        selected_table_rows = st.session_state.get("stdf_df_tables")["selection"]["rows"]
+        if selected_table_rows:
+            table_name = df_tables.iloc[selected_table_rows[0]].name
+            selected_column_rows = st.session_state.get("stdf_df_table_columns")["selection"]["rows"]
+            if selected_column_rows:
+                column_names: pd.DataFrame = df_tables_og.loc[
+                    df_tables_og["TABLE_NAME"] == table_name
+                ].reset_index().iloc[
+                    selected_column_rows
+                ][show_cols].reset_index()
+                st.data_editor(
+                    column_names,
+                    column_config={
+                        "DATA_TYPE": st.column_config.SelectboxColumn(
+                            label="DATA_TYPE",
+                            options=list_data_types
+                        ),
+                        "PRIMARY_KEY": st.column_config.CheckboxColumn(
+                            label="PK",
+                            width=50
+                        )
+                    },
+                    key=f"data_editor_cols",
+                    on_change=validate_chosen,
+                    hide_index=True
+                )
+
+    if st.button(
+        label="submit",
+        key=f"btn_sel_table_submit"
+    ):
+        st.rerun()
+
+    if st.button(
+        label="cancel",
+        key=f"btn_sel_table_cancel"
+    ):
+        st.rerun()
+
+
 def server_maintenance():
     with grid["content_row_2"]:
 
@@ -1587,7 +1704,7 @@ def server_maintenance():
                                 line_numbers=True
                                 )
                     if st.button(
-                            label="Add 6 Boilerplate cols"
+                        label="Add 6 Boilerplate cols"
                     ):
                         df_ct_nc = pd.DataFrame(
                             data=records,
@@ -1598,6 +1715,11 @@ def server_maintenance():
                             "ct_data": df_ct_nc
                         })
                         st.rerun()
+                    if st.button(
+                        label="Import Existing Table",
+                        key=f"btn_import_existing_table"
+                    ):
+                        import_existing_table_cols()
 
                 with cols_ct_control[1].container(border=1):
                     # # [Name], [Comments], [LastModifiedBy], [Price], [Description], [ModelName]
@@ -1679,6 +1801,9 @@ def server_maintenance():
                 if "ct_data" not in st.session_state:
                     ct_data = pd.DataFrame(columns=ct_column_names)
                     st.session_state.update({"ct_data": ct_data})
+                elif not (imported_data := st.session_state.get("data_editor_cols", pd.DataFrame())).empty:
+                    # TODO this dataframe doesnt match the expected columns.
+                    ct_data = imported_data
                 else:
                     ct_data = st.session_state.get("ct_data")
 
@@ -2007,16 +2132,12 @@ BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
-
-    -- Prevent recursive calls
-    IF TRIGGER_NESTLEVEL() > 1 BEGIN
-        RETURN;
-    END
                         """).strip()
-                        sql_hist_trig += """
+                        sql_hist_trig += "\n\n\t" + (f"""
     INSERT INTO
         [{db_name}].[dbo].[hist_{table_name}]
     (
+        [NestLevel],
         [ModifiedID],
         [ModifiedBy],
         [ModifiedColumn],
@@ -2024,23 +2145,27 @@ BEGIN
         [ValueBefore],
         [ValueAfter]
     )
+                        """).strip()
+
+                        union_template: str = """
     SELECT
+        TRIGGER_NESTLEVEL(),
         [C].[ID],
         NULL,
         (CASE
-            WHEN ([D].[Name] IS NULL) AND ([C].[Name] IS NOT NULL) THEN 'Name'
-            WHEN ([I].[Name] IS NULL) AND ([D].[Name] IS NOT NULL) THEN 'Name'
-            WHEN [D].[Name] <> [C].[Name] THEN 'Name'
+            WHEN ([D].[{col}] IS NULL) AND ([C].[{col}] IS NOT NULL) THEN '{col}'
+            WHEN ([I].[{col}] IS NULL) AND ([D].[{col}] IS NOT NULL) THEN '{col}'
+            WHEN [D].[{col}] <> [C].[{col}] THEN '{col}'
             ELSE NULL
         END) AS [ModifiedColumn],
         (CASE
-            WHEN ([D].[Name] IS NULL) AND ([C].[Name] IS NOT NULL) THEN 'INSERT'
-            WHEN ([I].[Name] IS NULL) AND ([D].[Name] IS NOT NULL) THEN 'DELETE'
-            WHEN [D].[Name] <> [C].[Name] THEN 'UPDATE'
+            WHEN ([D].[{col}] IS NULL) AND ([C].[{col}] IS NOT NULL) THEN 'INSERT'
+            WHEN ([I].[{col}] IS NULL) AND ([D].[{col}] IS NOT NULL) THEN 'DELETE'
+            WHEN [D].[{col}] <> [C].[{col}] THEN 'UPDATE'
             ELSE NULL
         END) AS [Modification],
-        [D].[Name] AS [ValueBefore],
-        [D].[Name] AS [ValueAfter]
+        CAST([D].[{col}] AS NVARCHAR(MAX)) AS [ValueBefore],
+        CAST([I].[{col}] AS NVARCHAR(MAX)) AS [ValueAfter]
     FROM
         [{db_name}].[dbo].[{table_name}] [C]
     INNER JOIN
@@ -2053,14 +2178,13 @@ BEGIN
         [C].[ID] = [D].[ID]
     WHERE 
         (CASE
-            WHEN ([D].[Name] IS NULL) AND ([C].[Name] IS NOT NULL) THEN 1
-            WHEN ([I].[Name] IS NULL) AND ([D].[Name] IS NOT NULL) THEN 1
-            WHEN [D].[Name] <> [C].[Name] THEN 1
+            WHEN ([D].[{col}] IS NULL) AND ([C].[{col}] IS NOT NULL) THEN 1
+            WHEN ([I].[{col}] IS NULL) AND ([D].[{col}] IS NOT NULL) THEN 1
+            WHEN [D].[{col}] <> [I].[{col}] THEN 1
             ELSE 0
-        END) > 0
-    ;
-END
-                                    """.strip()
+        END) > 0                        
+                        """
+                        sql_hist_trig_lines = []
 
                         pk_col = None
                         default_values = []
@@ -2126,6 +2250,14 @@ END
 
                             sql += f"\n\t{l_sql.strip()},"
 
+                            sql_hist_trig_lines.append(
+                                union_template.format(
+                                    db_name=db_name,
+                                    table_name=table_name,
+                                    col=ct_nc_name
+                                )
+                            )
+
                         #                     sql += """
                         # [ID] [int] IDENTITY(0,1) NOT NULL,
                         # [DateCreated] [datetime] NULL,
@@ -2142,14 +2274,17 @@ END
 
                         sql = sql.removesuffix(",")
 
+                        sql_hist_trig += "\n\tUNION ALL\n".join(sql_hist_trig_lines) + "\n\nEND"
+
                         # custom columns list for history table
                         sql_hist += "\n\t" + ("""
     [ID] [int] IDENTITY(0, 1) NOT NULL,
     [DateCreated] [datetime] NULL,
+    [NestLevel] [int] NULL,
     [ModifiedID] [int] NULL,
     [ModifiedBy] [nvarchar](50) NULL,
-    [ModifiedColumn] [nvarchar(512)] NULL,
-    [Modification] [nvarchar(50)] NULL,
+    [ModifiedColumn] [nvarchar](512) NULL,
+    [Modification] [nvarchar](50) NULL,
     [ValueBefore] [nvarchar](max) NULL, 
     [ValueAfter] [nvarchar](max) NULL
                                     """).strip()
@@ -2248,11 +2383,6 @@ BEGIN
 -- SET NOCOUNT ON added to prevent extra result sets from
 -- interfering with SELECT statements.
 SET NOCOUNT ON;
-
--- Prevent recursive calls
-IF TRIGGER_NESTLEVEL() > 1 BEGIN
-    RETURN;
-END
 
 UPDATE
     [{db_name}].[dbo].[{table_name}]
