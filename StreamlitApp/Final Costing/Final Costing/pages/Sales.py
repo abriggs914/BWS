@@ -1,4 +1,4 @@
-
+import json
 # Version 2025-01-27 1800
 # import PyPDF2
 import os
@@ -17,6 +17,8 @@ from streamlit_float import float_init
 from streamlit_scroll_navigation import scroll_navbar
 from streamlit_pills import pills
 
+from colour_utility import random_colour, gradient, RED, GREEN, Colour
+from json_utility import jsonify
 from pyodbc_connection import connect
 
 st.set_page_config(
@@ -280,7 +282,7 @@ FROM
         @r
 ;
 	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
-	print(sql)
+	# print(sql)
 	return connect(sql, returns_records=True)
 
 
@@ -292,26 +294,96 @@ def load_pdf_binary(pdf_file):
 
 @st.cache_data(ttl=None, show_spinner=True)
 def load_pdf_annotations(pdf_file):
-	print(f"{pdf_file=}")
 	highlighted_texts = []
+	# print(f"{pdf_file=}")
+	# highlighted_texts = {
+	# 	"annots": [],
+	# 	"texts": []
+	# }
+	max_width = 0
+	# unique = set()
 	with pdfplumber.open(pdf_file) as f:
-		for page_num, page in enumerate(f.pages):
-			for i, char in enumerate(page.chars):
-				# if i < 750:
-				if (page_num == 1) and (250 <= i <= 300):
-					print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}', {char=}")
-					# print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}'")
-				# if "non_stroking_color" in char and char["non_stroking_color"]:
-				# 	color = char["non_stroking_color"]
-				# 	print(f"{color=}")
-				# 	# Check for highlight-like colors (e.g., yellow shades)
-				# 	if isinstance(color, (list, tuple)) and 0.8 <= color[1] <= 1 and color[0] < 0.5 and color[2] < 0.5:
-				# 		highlighted_texts.append({
-				# 			"page": page_num + 1,
-				# 			"text": char["text"],
-				# 			"bbox": char["bbox"],
-				# 			"color": color
-				# 		})
+		for page_num, page in enumerate(f.pages, start=1):
+			# st.write("page.annots")
+			# st.write(page.annots)
+			# st.write("page.lines")
+			# st.write(page.lines)
+			# st.write("page.extract_text_lines()")
+			# st.write(page.extract_text_lines()[:8])
+			for i, rect in enumerate(page.rects):
+				# X and Y points are calculated from the bottom left of the page????
+				x_r = rect.get("x0")
+				# y_r = rect.get("y0")
+				# x_r = rect.get("x1")
+				y_r = rect.get("y1")
+				# x_r = rect.get("top")
+				# y_r = rect.get("bottom")
+				w_r = rect.get("width")
+				h_r = rect.get("height")
+				# w_r = rect.get("x1") - rect.get("x0")
+				# h_r = rect.get("y1") - rect.get("y0")
+				x_r_c, y_r_c = page.point2coord((x_r, y_r))
+				# x_r_c, y_r_c = x_r, y_r
+				# h_r /= 3
+
+				# bbox = (x_r, y_r, x_r + w_r, y_r + h_r)
+				# unique.add(jsonify(rect))
+				if w_r >= max_width:
+					if rect["non_stroking_color"] != (1,):
+						max_width = w_r
+						# bbox = (rect.get("x0"), rect.get("y0"), rect.get("x1"), rect.get("y1"))
+						bbox = (
+							x_r_c,
+							y_r_c,
+							*page.point2coord((
+								rect.get("x1"),
+								rect.get("y0")
+							))
+						)
+						# texts = page.within_bbox(bbox).extract_text_lines()
+						texts = page.within_bbox(bbox).extract_text()
+						highlighted_texts.append({
+							"page": page_num,
+							"x": x_r_c,
+							"y": y_r_c,
+							"height": h_r,
+							"width": w_r,
+							"color": "#AA1111",
+							"text": texts
+						})
+						# print(f"\n{page_num=}, {i=}, {rect=}")
+						# print(f"WW => {page.within_bbox(bbox).extract_text()}")
+			# for i, char in enumerate(page.chars):
+			# 	# if i < 750:
+			# 	if (page_num == 1) and (250 <= i <= 300):
+			# 		print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}', {char=}")
+			# 		# print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}'")
+			# 	# if "non_stroking_color" in char and char["non_stroking_color"]:
+			# 	# 	color = char["non_stroking_color"]
+			# 	# 	print(f"{color=}")
+			# 	# 	# Check for highlight-like colors (e.g., yellow shades)
+			# 	# 	if isinstance(color, (list, tuple)) and 0.8 <= color[1] <= 1 and color[0] < 0.5 and color[2] < 0.5:
+			# 	# 		highlighted_texts.append({
+			# 	# 			"page": page_num + 1,
+			# 	# 			"text": char["text"],
+			# 	# 			"bbox": char["bbox"],
+			# 	# 			"color": color
+			# 	# 		})
+		highlighted_texts = [annot for annot in highlighted_texts if (annot["width"] == max_width)]
+		# highlighted_texts.sort(key=lambda annot: (annot["page"], annot["y"]))
+		# # grads = [gradient(i, len(highlighted_texts) - 1, GREEN, RED, rgb=False) for i in range(len(highlighted_texts))]
+		# print(f"\n\nPARSED OPTIONS:")
+		# for i, data in enumerate(highlighted_texts):
+		# 	print(f"\n{i=}, {data=}")
+		# 	bbox = (data["x"], data["y"], data["x"] + data["width"], data["y"] + data["height"])
+		# 	print(f"WW => {page.within_bbox(bbox).extract_text()}")
+		# # 	highlighted_texts[i]["color"] = grads[i]
+		# # 	highlighted_texts[i]["color_n"] = str(Colour(grads[i]))
+		#
+		# # print("unique")
+		# # print(unique)
+		# # st.write(list(map(lambda v: json.loads(v), unique)))
+
 		return highlighted_texts
 
 	# highlighted_regions = []
@@ -329,6 +401,27 @@ def load_pdf_annotations(pdf_file):
 	# 					highlighted_regions.append({"page": page_num + 1, "bbox": bbox})
 	#
 	# 	return highlighted_regions
+
+
+@st.dialog(title="WO Meeting Review Details")
+def ask_details(selected_quote, annotation):
+	st.subheader(f"Describe the issue with quote {selected_quote}")
+	st.subheader(f"{annotation['text']}")
+	key = f"issues_{selected_quote}"  # TODO CONSIDER THE OPTION LINE
+	issues = st.session_state.setdefault(key, [])
+	st.text_area(
+		label="Known Issues:",
+		value="\n".join(issues),
+		disabled=True
+	)
+	if st.button(
+		label="save"
+	):
+		issues.append(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+		st.session_state.update({
+			key: issues
+		})
+		st.rerun()
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
@@ -487,15 +580,34 @@ if selected_directory:
 					}
 				]
 				def my_custom_annotation_handler(annotation):
-					print(f"Annotation {annotation} clicked.")
+					# print(f"Annotation {annotation} clicked.")
+					idx = annotation.get("index")
+					page = annotation.get("page")
+					x = annotation.get("x")
+					y = annotation.get("y")
+					w = annotation.get("width")
+					h = annotation.get("height")
+					c = annotation.get("color")
+					bbox = (x, y, x + w, y + h)
+					et = annotation.get("text")
+					# line_texts = ';; '.join([line['text'] for line in et])
+					# print(f"{line_texts=}")
+					text = annotation.get("text")
+					print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+					ask_details(selected_quote, annotation)
 
 				parsed_annotations = load_pdf_annotations(pdf_file)
-				st.write(parsed_annotations)
+				# st.write(parsed_annotations)
+				st.write(f"{len(parsed_annotations)=}")
+				st.write(f"{(len(parsed_annotations) == 15)=}")
+				# st.write(f"Parsed Annotation Texts:")
+				# st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
 
 				pdf_viewer = pdf_viewer(
 					input=load_pdf_binary(pdf_file),
 					width=s_w,
-					annotations=annotations,
+					# annotations=annotations,
+					annotations=parsed_annotations,
 					on_annotation_click=my_custom_annotation_handler
 				)
 
