@@ -18,8 +18,10 @@ from streamlit_scroll_navigation import scroll_navbar
 from streamlit_pills import pills
 
 from colour_utility import random_colour, gradient, RED, GREEN, Colour
+from datetime_utility import is_date
 from json_utility import jsonify
 from pyodbc_connection import connect
+from streamlit_utility import aligned_text
 
 st.set_page_config(
 	layout="wide",
@@ -71,224 +73,225 @@ def load_orders():
 
 @st.cache_data(ttl=None, show_spinner=True)
 def check_similar_quotes():
-	sql = """
-SET NOCOUNT ON;
-DECLARE @sd DATETIME = '{SD}';
-DECLARE @ed DATETIME = '{ED}';
-
-DECLARE @t TABLE (
-        [ID] INT IDENTITY(0, 1),
-        [Q] INT
-);
-DECLARE @r TABLE (
-        [ID] INT IDENTITY(0, 1),
-        [Q] INT,
-        [SimQ] INT
-);
-INSERT INTO @t ([Q])
-SELECT
-        [Orders].[Quote#]
-FROM (
-        [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
-INNER JOIN
-        [BWSdb].[dbo].[Orders] WITH (NOLOCK)
-ON
-        [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
-)
-INNER JOIN
-        [BWSdb].[dbo].[Production] WITH (NOLOCK)
-ON
-        [Orders].[Quote#]=[Production].[Quote#]
-WHERE (
-        (
-                ([Production].[Prod Date]) Between @sd And @ed
-        )
-        And (
-                ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
-        )
-)
-/*
-ORDER BY
-        [Orders].[Model No]
-        ,[Production].[Prod Date]
-        ,[Orders].[Quote#]
-*/
-;
-
-DECLARE @i INT;
-DECLARE @c INT;
-declare @modelno NVARCHAR(255);
-declare @quote INT;
-
-SELECT
-        @i = 0,
-        @c = COUNT(*)
-FROM
-        @t
-;
-
-WHILE @i < @c BEGIN
-
-        SELECT
-                @quote = [Q]
-        FROM
-                @t
-        WHERE
-                [ID] = @i
-        ;
-
-    -- Insert statements for procedure here
-        --Grab Model No for future referencing
-        SELECT 
-			@modelno = (select [Model No]
-		from
-			[BWSdb].[dbo].Orders with (nolock) 
-		where
-			Quote# = @quote);
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
-			DROP TABLE #QuoteOptions
-		END
-
-        create table #QuoteOptions
-        (
-                #Options int,
-                [Option No] nvarchar(255),
-        [Price] money,
-        [Qty] int,
-        [Sections] nvarchar(255),
-        [Description] nvarchar(max)
-        );
-
-        --Grab Quotes with same Model No and Options as @quote parameter
-        insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
-        select [Option No], Price, Qty, Sections, Description
-        from [BWSdb].[dbo].[Order Options] with (nolock)
-        where Quote# = @quote
-		;
-
-        update #QuoteOptions
-        set #Options = NoOptions
-        from (select count(*) as NoOptions
-                  from [BWSdb].[dbo].[Order Options] with (nolock)
-                  where Quote# = @quote) as subCountOptions
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
-			DROP TABLE #QuoteswithsameOptions
-		END
-
-        create table #QuoteswithsameOptions
-        (
-                [Quote#] int,
-                [WO#] int,
-                [Quote Date] datetime,
-                [Prod Date] datetime
-        );
-
-        insert into #QuoteswithsameOptions
-        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        from [BWSdb].[dbo].[Order Options] as main with (nolock)
-        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-        inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
-                                                                                                and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)       
-                                                                                                and main.Description = QuoteOptions.Description
-                                                                                                AND main.[Qty] = [QuoteOptions].[Qty]
-        where main.Quote# in (select Quote#
-                                                  from [BWSdb].[dbo].[Order Options] with (nolock)
-                                                  group by Quote#
-                                                  having count(*) in (select #Options from #QuoteOptions))
-        and Orders.[Model No] = @modelno
-        and [Date Declined] is null
-        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        having count(*) = (select distinct #Options from #QuoteOptions)
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
-			DROP TABLE #QuoteNPOs
-		END
-
-        create table #QuoteNPOs
-        (
-                #NPOs int,
-        [Description] nvarchar(max)
-        );
-
-        --Grab Quotes with same NPOs
-        insert into #QuoteNPOs (Description)
-        select Description
-        from [BWSdb].[dbo].[Custom Work] with (nolock)
-        where Quote# = @quote
-		;
-
-        update #QuoteNPOs
-        set #NPOs = NoNPOs
-        from (select count(*) as NoNPOs
-                  from [BWSdb].[dbo].[Custom Work] with (nolock)
-                  where Quote# = @quote) as subCountNPOs
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
-			DROP TABLE #QuoteswithsameNPOs
-		END
-
-        create table #QuoteswithsameNPOs
-        (
-                [Quote#] int,
-                [WO#] int,
-                [Quote Date] datetime,
-                [Prod Date] datetime
-        );
-
-        insert into #QuoteswithsameNPOs
-        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        from [BWSdb].[dbo].[Custom Work] as main with (nolock)
-        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-        inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
-        where main.Quote# in (select Quote#
-                                                  from [BWSdb].[dbo].[Custom Work] with (nolock)
-                                                  group by Quote#
-                                                  having count(*) in (select #NPOs from #QuoteNPOs))
-        and Orders.[Model No] = @modelno
-        and [Date Declined] is null
-        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        having count(*) = (select distinct #NPOs from #QuoteNPOs)
-		;
-
-        --Final select statement
-        INSERT INTO @r ([Q], [SimQ])
-        select @quote, Options.Quote#
-        from #QuoteswithsameOptions as Options
-        inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
-        LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
-        where Options.Quote# <> @quote
-		;
-
-
-        SELECT @i = @i + 1;
-
-END
-/*
-SELECT
-        *
-FROM
-        @t
-*/
-
-SELECT
-        *
-FROM
-        @r
-;
-	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
-	# print(sql)
-	return connect(sql, returns_records=True)
+	return connect("SELECT 30001 AS [Quote#], 30001 AS [Q], 30001 AS [SimQ]")
+# 	sql = """
+# SET NOCOUNT ON;
+# DECLARE @sd DATETIME = '{SD}';
+# DECLARE @ed DATETIME = '{ED}';
+#
+# DECLARE @t TABLE (
+#         [ID] INT IDENTITY(0, 1),
+#         [Q] INT
+# );
+# DECLARE @r TABLE (
+#         [ID] INT IDENTITY(0, 1),
+#         [Q] INT,
+#         [SimQ] INT
+# );
+# INSERT INTO @t ([Q])
+# SELECT
+#         [Orders].[Quote#]
+# FROM (
+#         [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
+# INNER JOIN
+#         [BWSdb].[dbo].[Orders] WITH (NOLOCK)
+# ON
+#         [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
+# )
+# INNER JOIN
+#         [BWSdb].[dbo].[Production] WITH (NOLOCK)
+# ON
+#         [Orders].[Quote#]=[Production].[Quote#]
+# WHERE (
+#         (
+#                 ([Production].[Prod Date]) Between @sd And @ed
+#         )
+#         And (
+#                 ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
+#         )
+# )
+# /*
+# ORDER BY
+#         [Orders].[Model No]
+#         ,[Production].[Prod Date]
+#         ,[Orders].[Quote#]
+# */
+# ;
+#
+# DECLARE @i INT;
+# DECLARE @c INT;
+# declare @modelno NVARCHAR(255);
+# declare @quote INT;
+#
+# SELECT
+#         @i = 0,
+#         @c = COUNT(*)
+# FROM
+#         @t
+# ;
+#
+# WHILE @i < @c BEGIN
+#
+#         SELECT
+#                 @quote = [Q]
+#         FROM
+#                 @t
+#         WHERE
+#                 [ID] = @i
+#         ;
+#
+#     -- Insert statements for procedure here
+#         --Grab Model No for future referencing
+#         SELECT
+# 			@modelno = (select [Model No]
+# 		from
+# 			[BWSdb].[dbo].Orders with (nolock)
+# 		where
+# 			Quote# = @quote);
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteOptions
+# 		END
+#
+#         create table #QuoteOptions
+#         (
+#                 #Options int,
+#                 [Option No] nvarchar(255),
+#         [Price] money,
+#         [Qty] int,
+#         [Sections] nvarchar(255),
+#         [Description] nvarchar(max)
+#         );
+#
+#         --Grab Quotes with same Model No and Options as @quote parameter
+#         insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
+#         select [Option No], Price, Qty, Sections, Description
+#         from [BWSdb].[dbo].[Order Options] with (nolock)
+#         where Quote# = @quote
+# 		;
+#
+#         update #QuoteOptions
+#         set #Options = NoOptions
+#         from (select count(*) as NoOptions
+#                   from [BWSdb].[dbo].[Order Options] with (nolock)
+#                   where Quote# = @quote) as subCountOptions
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteswithsameOptions
+# 		END
+#
+#         create table #QuoteswithsameOptions
+#         (
+#                 [Quote#] int,
+#                 [WO#] int,
+#                 [Quote Date] datetime,
+#                 [Prod Date] datetime
+#         );
+#
+#         insert into #QuoteswithsameOptions
+#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         from [BWSdb].[dbo].[Order Options] as main with (nolock)
+#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+#         inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
+#                                                                                                 and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)
+#                                                                                                 and main.Description = QuoteOptions.Description
+#                                                                                                 AND main.[Qty] = [QuoteOptions].[Qty]
+#         where main.Quote# in (select Quote#
+#                                                   from [BWSdb].[dbo].[Order Options] with (nolock)
+#                                                   group by Quote#
+#                                                   having count(*) in (select #Options from #QuoteOptions))
+#         and Orders.[Model No] = @modelno
+#         and [Date Declined] is null
+#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         having count(*) = (select distinct #Options from #QuoteOptions)
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteNPOs
+# 		END
+#
+#         create table #QuoteNPOs
+#         (
+#                 #NPOs int,
+#         [Description] nvarchar(max)
+#         );
+#
+#         --Grab Quotes with same NPOs
+#         insert into #QuoteNPOs (Description)
+#         select Description
+#         from [BWSdb].[dbo].[Custom Work] with (nolock)
+#         where Quote# = @quote
+# 		;
+#
+#         update #QuoteNPOs
+#         set #NPOs = NoNPOs
+#         from (select count(*) as NoNPOs
+#                   from [BWSdb].[dbo].[Custom Work] with (nolock)
+#                   where Quote# = @quote) as subCountNPOs
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteswithsameNPOs
+# 		END
+#
+#         create table #QuoteswithsameNPOs
+#         (
+#                 [Quote#] int,
+#                 [WO#] int,
+#                 [Quote Date] datetime,
+#                 [Prod Date] datetime
+#         );
+#
+#         insert into #QuoteswithsameNPOs
+#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         from [BWSdb].[dbo].[Custom Work] as main with (nolock)
+#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+#         inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
+#         where main.Quote# in (select Quote#
+#                                                   from [BWSdb].[dbo].[Custom Work] with (nolock)
+#                                                   group by Quote#
+#                                                   having count(*) in (select #NPOs from #QuoteNPOs))
+#         and Orders.[Model No] = @modelno
+#         and [Date Declined] is null
+#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         having count(*) = (select distinct #NPOs from #QuoteNPOs)
+# 		;
+#
+#         --Final select statement
+#         INSERT INTO @r ([Q], [SimQ])
+#         select @quote, Options.Quote#
+#         from #QuoteswithsameOptions as Options
+#         inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
+#         LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
+#         where Options.Quote# <> @quote
+# 		;
+#
+#
+#         SELECT @i = @i + 1;
+#
+# END
+# /*
+# SELECT
+#         *
+# FROM
+#         @t
+# */
+#
+# SELECT
+#         *
+# FROM
+#         @r
+# ;
+# 	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
+# 	print(sql)
+# 	return connect(sql, returns_records=True)
 
 
 @st.cache_data(ttl=None, show_spinner=True)
@@ -439,10 +442,29 @@ def ask_details(key, selected_quote, annotation):
 		st.rerun()
 
 
-@st.dialog(title="Create New Meeting", width="large")
-def create_new_meeting():
+@st.dialog(title="Meeting Details", width="large")
+def meeting_input_menu(mode: str = "new"):
 	k_date_input_meeting = "k_date_input_meeting"
-	st.session_state.setdefault(k_date_input_meeting, datetime.datetime.now().date())
+	k_multiselect_attendance = "k_multiselect_attendance"
+	k_time_input_meeting = "k_time_input_meeting"
+	k_selectbox_directory = "k_selectbox_directory"
+
+	if mode == "new":
+		st.session_state.setdefault(k_date_input_meeting, datetime.datetime.now())
+		st.session_state.setdefault(k_multiselect_attendance, [])
+		st.session_state.setdefault(k_time_input_meeting, datetime.datetime.now())
+		st.session_state.setdefault(k_selectbox_directory, "Create New")
+		date_input_min_value = df_meetings["DateMeeting"].max() + datetime.timedelta(days=4)
+		date_input_max_value = datetime.datetime.now() + datetime.timedelta(days=7)
+
+		m_thresh = 0
+	else:
+		m_id = st.session_state.get("meeting_id")
+		st.header(f"Edit Meeting #{m_id}")
+		date_input_min_value = None
+		date_input_max_value = None
+
+		m_thresh = 1
 
 	usual_suspects = [
 		{"name": "Avery Briggs", "email": "avery.briggs@bwstrailers.com"},
@@ -458,25 +480,41 @@ def create_new_meeting():
 
 	cont = st.container(border=1, height=500)
 	cols = cont.columns(2, border=1)
-	k_multiselect_attendance = "k_multiselect_attendance"
+	list_directories = df_meetings["MeetingDirectory"].dropna().apply(
+		lambda d: os.path.basename(d)
+	).unique().tolist() + list_meeting_folders
+	n = datetime.datetime.now()
+	list_directories = [f"{d} - {(n - is_date(d)).days} day(s) ago" for d in list_directories]
+	list_directories = ["Create New"] + sorted(list(set(list_directories)), reverse=True)
 	multiselect_attendance = cols[1].multiselect(
 		label="Attendance",
 		key=k_multiselect_attendance,
 		options=[s["name"] for s in usual_suspects]
 	)
 	date_input_meeting = cols[0].date_input(
-		label="Meeting Date",
+		label="Meeting Date:",
 		key=k_date_input_meeting,
 		format="YYYY-MM-DD",
-		min_value=df_meetings["DateMeeting"].max() + datetime.timedelta(days=4),
-		max_value=datetime.datetime.now() + datetime.timedelta(days=7)
+		min_value=date_input_min_value,
+		max_value=date_input_max_value
 	)
-	k_time_input_meeting = "k_time_input_meeting"
-	st.session_state.setdefault(k_time_input_meeting, datetime.datetime.now())
+	if date_input_meeting:
+		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.date() == date_input_meeting.date()]
+		if df_c.shape[0] > m_thresh:
+			st.markdown(
+				body=aligned_text(
+					f"This date is already used in {df_c.shape[0]} other Meeting Record(s)"
+				),
+				unsafe_allow_html=True
+			)
 	time_input_meeting = cols[0].time_input(
-		label="Meeting Time",
-		key=k_time_input_meeting,
-		label_visibility="hidden"
+		label="Time:",
+		key=k_time_input_meeting
+	)
+	selectbox_directory = cols[0].selectbox(
+		label="Directory",
+		key=k_selectbox_directory,
+		options=list_directories
 	)
 	if date_input_meeting:
 		if len(multiselect_attendance) > 1:
@@ -489,11 +527,14 @@ def create_new_meeting():
 				time_input_meeting.second
 			)
 			attendance = ";".join(multiselect_attendance)
+
 			if st.button(
-				label="save",
-				key="k_btn_save_new_meeting"
+					label="save",
+					key="k_btn_save_new_meeting"
 			):
-				sql = (f"""
+				if mode == "new":
+					# Create new meeting record
+					sql = (f"""
 INSERT INTO 
 	[BWSdb].[dbo].[WSOM_Meetings]
 (
@@ -502,14 +543,79 @@ INSERT INTO
 )
 VALUES
 ('{mt:%Y-%m-%d %H:%M:%S}', '{attendance}')
-;
-				""").strip()
+		;
+						""").strip()
+				else:
+					# Update existing meeting record
+					sql = (f"""
+UPDATE
+	[BWSdb].[dbo].[WSOM_Meetings]
+SET
+	[DateMeeting] = '{mt:%Y-%m-%d %H:%M:%S}',
+	[Attendance] = '{attendance}'
+					""").strip()
+					# connect(sql, do_exec=False, do_print=False, do_show=False)
+
 				# st.code(sql, language="sql", line_numbers=True)
-				print(sql)
+				connect(sql, do_exec=False, do_print=False, do_show=False)
 				load_meetings.clear()
 				df_meetings_new = load_meetings()
-				st.session_state.update({"meeting_id": df_meetings_new["ID"].max()})
+				if mode == "new":
+					st.session_state.update({"meeting_id": df_meetings_new["ID"].max()})
 				st.rerun()
+
+	if st.button(
+		label=f"cancel",
+		key=f"k_btn_cancel_input"
+	):
+		if any([date_input_meeting, time_input_meeting, selectbox_directory]):
+			st.markdown(
+				body=aligned_text(
+					txt=f"Are you sure?",
+					tag_style="span",
+					colour="#9F3434"
+				),
+				unsafe_allow_html=True
+			)
+			btn_cols = st.columns(2)
+			if btn_cols[0].button(
+				label=f"no",
+				key=f"k_btn_ays_cancel_no"
+			):
+				pass
+			if btn_cols[1].button(
+				label=f"yes",
+				key=f"k_btn_ays_cancel_yes"
+			):
+				st.rerun()
+
+
+def edit_meeting():
+	k_date_input_meeting = "k_date_input_meeting"
+	k_multiselect_attendance = "k_multiselect_attendance"
+	k_time_input_meeting = "k_time_input_meeting"
+	m_id = st.session_state.get("meeting_id")
+	ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
+	meeting_attendance = ser_meeting["Attendance"]
+	meeting_date = ser_meeting["DateMeeting"]
+	st.session_state.update({
+		k_date_input_meeting: meeting_date,
+		k_multiselect_attendance: meeting_attendance.split(";"),
+		k_time_input_meeting: meeting_date
+	})
+	meeting_input_menu(mode="edit")
+
+
+def create_new_meeting():
+	k_date_input_meeting = "k_date_input_meeting"
+	k_multiselect_attendance = "k_multiselect_attendance"
+	k_time_input_meeting = "k_time_input_meeting"
+	st.session_state.update({
+		k_date_input_meeting: datetime.datetime.now(),
+		k_multiselect_attendance: [],
+		k_time_input_meeting: datetime.datetime.now()
+	})
+	meeting_input_menu(mode="new")
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
@@ -521,7 +627,7 @@ if s_w is None or not s_w:
 	s_w = 1600
 
 root_path = r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings"
-list_meetings = [d for d in os.listdir(root_path) if d != "Scripts"]
+list_meeting_folders = [d for d in os.listdir(root_path) if d != "Scripts"]
 
 df_meetings = load_meetings()
 df_meeting_notes = load_meeting_notes()
@@ -531,14 +637,22 @@ st.dataframe(df_meetings)
 st.write("df_meeting_notes")
 st.dataframe(df_meeting_notes)
 
-st.session_state.setdefault("selected_directory", list_meetings[-1])
+st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
 selected_directory = st.selectbox(
 	label="SELECT",
-	options=list_meetings,
+	options=list_meeting_folders,
 	key="selected_directory"
 )
 
 if "meeting_id" not in st.session_state:
+
+	if st.button(
+		label="Edit Last Meeting",
+		key=f"k_btn_edit_last_meeting"
+	):
+		st.session_state.setdefault("meeting_id", df_meetings["ID"].max())
+		edit_meeting()
+
 	if st.button(
 		label="New Meeting",
 		key='k_btn_new_meeting'
@@ -553,6 +667,11 @@ if "meeting_id" not in st.session_state:
 else:
 	m_id = st.session_state.get("meeting_id")
 	st.header(f"Editing Meeting ID#{m_id}")
+	if st.button(
+		label=f"Edit Meeting #{m_id}",
+		key="k_btn_edit_meeting"
+	):
+		edit_meeting()
 
 
 if selected_directory:
@@ -1355,10 +1474,10 @@ if selected_directory:
 # # )
 # #
 # #
-# # list_meetings = [d for d in os.listdir(r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings") if d != "Scripts"]
+# # list_meeting_folders = [d for d in os.listdir(r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings") if d != "Scripts"]
 # # st.multiselect(
 # # 	label="SELECT",
-# # 	options=list_meetings,
+# # 	options=list_meeting_folders,
 # # 	key="selected_directory"
 # # )
 # # # import wx
