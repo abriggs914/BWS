@@ -1,0 +1,58 @@
+DECLARE @Q NVARCHAR(MAX) = 'SG101853'
+--'2025-01'
+
+/*
+ED1
+jaN 29
+*/
+
+SELECT
+	[O2].[WO Review Date]
+	,[O2].[WO Reviewed]
+FROM
+	[BWSdb].[dbo].[OrdersV2] [O2]
+WHERE
+	[SGQuote] = @Q
+
+/*
+BEGIN TRAN;
+	UPDATE
+	[BWSdb].[dbo].[Orders]
+SET
+	[WO Reviewed] = 1,
+	[WO Review Date] = '2025-01-28 14:17:52'
+WHERE
+	[Quote#] IN (
+		30983,
+	31111,
+	31124,
+	30875,
+	31005,
+	31011,
+	30757,
+	31039,
+	31040,
+	31044,
+	31045,
+	31046,
+	31047,
+	30921,
+	31053,
+	31055,
+	31056,
+	31058,
+	31059,
+	31061,
+	31062,
+	31073,
+	30947,
+	31080,
+	31083,
+	31084,
+	31096,
+	31102,
+	31103
+	)
+ROLLBACK;
+COMMIT;
+*/

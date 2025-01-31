@@ -50,6 +50,11 @@ def parse_quotes_list(pdf_file, column_name="Quote #") -> list[str]:
 
 
 @st.cache_data(ttl=None, show_spinner=True)
+def load_meetings():
+	return connect("WSOM_Meetings")
+
+
+@st.cache_data(ttl=None, show_spinner=True)
 def load_meeting_notes():
 	return connect("WSOM_MeetingNotes")
 
@@ -404,10 +409,9 @@ def load_pdf_annotations(pdf_file):
 
 
 @st.dialog(title="WO Meeting Review Details")
-def ask_details(selected_quote, annotation):
+def ask_details(key, selected_quote, annotation):
 	st.subheader(f"Describe the issue with quote {selected_quote}")
 	st.subheader(f"{annotation['text']}")
-	key = f"issues_{selected_quote}"  # TODO CONSIDER THE OPTION LINE
 	issues = st.session_state.setdefault(key, [])
 	st.text_area(
 		label="Known Issues:",
@@ -421,7 +425,91 @@ def ask_details(selected_quote, annotation):
 		st.session_state.update({
 			key: issues
 		})
+		# st.session_state
+		if "clicked_annotation" in pdf_viewer:
+			print("POP")
+			pdf_viewer_data = st.session_state.get(k_pdf_viewer, {})
+			print(f"{pdf_viewer_data=}")
+			pdf_viewer_data.pop(k_c_a)
+			st.session_state.update({
+				k_pdf_viewer: pdf_viewer_data
+			})
+		else:
+			print("NO POP")
 		st.rerun()
+
+
+@st.dialog(title="Create New Meeting", width="large")
+def create_new_meeting():
+	k_date_input_meeting = "k_date_input_meeting"
+	st.session_state.setdefault(k_date_input_meeting, datetime.datetime.now().date())
+
+	usual_suspects = [
+		{"name": "Avery Briggs", "email": "avery.briggs@bwstrailers.com"},
+		{"name": "Jamie Merrithew", "email": "jamie.merrithew@bwstrailers.com"},
+		{"name": "Lori Piper", "email": "lori.piper@bwstrailers.com"},
+		{"name": "Jason Somerville", "email": "jason.somerville@bwstrailers.com"},
+		{"name": "Lance Lunn", "email": "lance.lunn@bwstrailers.com"},
+		{"name": "Gary Thomas", "email": "gary.thomas@bwstrailers.com"},
+		{"name": "Sarah Lord", "email": "sarah.lord@bwstrailers.com"},
+		{"name": "Saied Parsaeian", "email": "saied.parsaeian@stargatetrailers.ca"},
+		{"name": "Jason Morgan", "email": "jason.morgan@bwstrailers.com"}
+	]
+
+	cont = st.container(border=1, height=500)
+	cols = cont.columns(2, border=1)
+	k_multiselect_attendance = "k_multiselect_attendance"
+	multiselect_attendance = cols[1].multiselect(
+		label="Attendance",
+		key=k_multiselect_attendance,
+		options=[s["name"] for s in usual_suspects]
+	)
+	date_input_meeting = cols[0].date_input(
+		label="Meeting Date",
+		key=k_date_input_meeting,
+		format="YYYY-MM-DD",
+		min_value=df_meetings["DateMeeting"].max() + datetime.timedelta(days=4),
+		max_value=datetime.datetime.now() + datetime.timedelta(days=7)
+	)
+	k_time_input_meeting = "k_time_input_meeting"
+	st.session_state.setdefault(k_time_input_meeting, datetime.datetime.now())
+	time_input_meeting = cols[0].time_input(
+		label="Meeting Time",
+		key=k_time_input_meeting,
+		label_visibility="hidden"
+	)
+	if date_input_meeting:
+		if len(multiselect_attendance) > 1:
+			mt = datetime.datetime(
+				date_input_meeting.year,
+				date_input_meeting.month,
+				date_input_meeting.day,
+				time_input_meeting.hour,
+				time_input_meeting.minute,
+				time_input_meeting.second
+			)
+			attendance = ";".join(multiselect_attendance)
+			if st.button(
+				label="save",
+				key="k_btn_save_new_meeting"
+			):
+				sql = (f"""
+INSERT INTO 
+	[BWSdb].[dbo].[WSOM_Meetings]
+(
+	[DateMeeting],
+	[Attendance] 
+)
+VALUES
+('{mt:%Y-%m-%d %H:%M:%S}', '{attendance}')
+;
+				""").strip()
+				# st.code(sql, language="sql", line_numbers=True)
+				print(sql)
+				load_meetings.clear()
+				df_meetings_new = load_meetings()
+				st.session_state.update({"meeting_id": df_meetings_new["ID"].max()})
+				st.rerun()
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
@@ -434,12 +522,37 @@ if s_w is None or not s_w:
 
 root_path = r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings"
 list_meetings = [d for d in os.listdir(root_path) if d != "Scripts"]
+
+df_meetings = load_meetings()
+df_meeting_notes = load_meeting_notes()
+
+st.write("df_meetings")
+st.dataframe(df_meetings)
+st.write("df_meeting_notes")
+st.dataframe(df_meeting_notes)
+
 st.session_state.setdefault("selected_directory", list_meetings[-1])
 selected_directory = st.selectbox(
 	label="SELECT",
 	options=list_meetings,
 	key="selected_directory"
 )
+
+if "meeting_id" not in st.session_state:
+	if st.button(
+		label="New Meeting",
+		key='k_btn_new_meeting'
+	):
+
+		create_new_meeting()
+
+		db_name = "SysproCompanyA.accdb"
+		macro_name = "WSOM_MacroAutoRunWOReports"
+		cmd = f"msaccess.exe \"{db_name}\" /x \"{macro_name}\""
+		st.code(cmd, language="bash", line_numbers=True)
+else:
+	m_id = st.session_state.get("meeting_id")
+	st.header(f"Editing Meeting ID#{m_id}")
 
 
 if selected_directory:
@@ -467,6 +580,7 @@ if selected_directory:
 
 	st.write(rpt_files)
 	similar_quotes = check_similar_quotes()
+	# st.dataframe(similar_quotes)
 	df_products = load_products()
 	df_orders = load_orders()
 	if "df_meeting_quotes" not in st.session_state:
@@ -500,8 +614,6 @@ if selected_directory:
 
 	st.session_state.setdefault("df_meeting_quotes", df_meeting_quotes)
 
-	df_meeting_notes = load_meeting_notes()
-
 	similar_quotes_m1 = similar_quotes.merge(
 		df_orders[[
 			"Quote#",
@@ -512,6 +624,10 @@ if selected_directory:
 		left_on="Q",
 		right_on="Quote#"
 	)
+
+	similar_quotes_tree = {
+
+	}
 
 	similar_quotes_m1 = similar_quotes_m1.merge(
 		df_products[[
@@ -594,22 +710,73 @@ if selected_directory:
 					# print(f"{line_texts=}")
 					text = annotation.get("text")
 					print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-					ask_details(selected_quote, annotation)
+					key = f"issues_{selected_quote}_{idx}"
+					st.session_state.update({
+						f"need_details_{key}": True
+					})
+					# list_issues = st.session_state.setdefault(key, [])
+					ask_details(key, selected_quote, annotation)
 
 				parsed_annotations = load_pdf_annotations(pdf_file)
-				# st.write(parsed_annotations)
-				st.write(f"{len(parsed_annotations)=}")
-				st.write(f"{(len(parsed_annotations) == 15)=}")
-				# st.write(f"Parsed Annotation Texts:")
-				# st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+				# # st.write(parsed_annotations)
+				# st.write(f"{len(parsed_annotations)=}")
+				# st.write(f"{(len(parsed_annotations) == 15)=}")
+				# # st.write(f"Parsed Annotation Texts:")
+				# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+				#
+				# st.write("SESSION_STATE:")
+				# st.write(st.session_state)
 
+				k_c_a = "clicked_annotation"
+				k_pdf_viewer = f"pdf_viewer_wo"
+				pdf_click_callback = my_custom_annotation_handler
+				if (k_pdf_viewer in st.session_state) and (k_c_a in st.session_state[k_pdf_viewer]):
+					print("==A")
+					annotation = st.session_state[k_pdf_viewer][k_c_a]
+					idx = annotation.get("index")
+					key = f"issues_{selected_quote}_{idx}"
+					if not st.session_state.get(key, True):
+						print("==B")
+						# st.session_state.update({
+						# 	f"need_details_{key}": False
+						# })
+						pdf_click_callback = None
+					else:
+						print("==C")
+				else:
+					print("==D")
 				pdf_viewer = pdf_viewer(
 					input=load_pdf_binary(pdf_file),
 					width=s_w,
 					# annotations=annotations,
+					key=k_pdf_viewer,
 					annotations=parsed_annotations,
-					on_annotation_click=my_custom_annotation_handler
+					on_annotation_click=pdf_click_callback,
+					annotation_outline_size=2,
+					pages_vertical_spacing=10
 				)
+
+				if k_c_a in pdf_viewer:
+					print("_A")
+					if pdf_viewer[k_c_a]:
+						print("_B")
+						annotation = pdf_viewer[k_c_a]
+						idx = annotation.get("index")
+						key = f"issues_{selected_quote}_{idx}"
+						if not st.session_state.get(key, True):
+							print("_C")
+							pdf_viewer.pop(k_c_a)
+							st.session_state.update({
+								f"need_details_{key}": False
+							})
+						else:
+							print("_D")
+					else:
+						print("_E")
+				else:
+					print("_F")
+
+				st.write(pdf_viewer)
 
 				if st.button(
 					label="Approve",

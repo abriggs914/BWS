@@ -42,7 +42,7 @@ FROM (Orders INNER JOIN Production ON Orders.[Quote#] = Production.[Quote#]) INN
 --WHERE ((IIf([wo reviewed] Is Null,1,IIf([wo reviewed]=0,1,0))) = 1) AND (((Production.[Prod Date]) Between '2025-01-14 12:53:30 PM' And '2025-07-14 12:53:30 PM'));
 WHERE (((CASE WHEN [wo reviewed] Is Null THEN 1 ELSE (CASE WHEN [wo reviewed]=0 THEN 1 ELSE 0 END) END)) = 1) AND (((Production.[Prod Date]) Between '2025-01-14 12:53:30 PM' And '2025-07-14 12:53:30 PM'));
 
-exec sp_QuickRef_ListSimilarQuotes 31008
+exec [BWSdb].[dbo].sp_QuickRef_ListSimilarQuotes 31008
 
 SELECT TOP 100
 	*
