@@ -3,6 +3,7 @@ import json
 # import PyPDF2
 import os
 import datetime
+import subprocess
 from copy import deepcopy
 
 import pandas as pd
@@ -27,6 +28,15 @@ st.set_page_config(
 	layout="wide",
 	page_title="Weekly WO Meeting"
 )
+
+DEFAULT_NEW_FOLDER: str = "Create New"
+k_meeting_id: str = "k_meeting_id"
+k_date_input_meeting: str = "k_date_input_meeting"
+k_multiselect_attendance: str = "k_multiselect_attendance"
+k_time_input_meeting: str = "k_time_input_meeting"
+k_selectbox_directory: str = "k_selectbox_directory"
+
+now = datetime.datetime.now()
 
 
 @st.cache_data(ttl=None, show_spinner=True)
@@ -442,24 +452,33 @@ def ask_details(key, selected_quote, annotation):
 		st.rerun()
 
 
+def copy_wos_via_access(directory):
+	st.info(
+		"Please wait while SysproCompanyA processes the requested WOs..\nThis will take between 5 and 20 minutes (~30s per WO).")
+	access = r"C:\Program Files\Microsoft Office\root\Office16\MSACCESS.EXE"
+	db_name = r"C:\Access\SysproCompanyA.accdb"
+	macro_name = "WSOM_MacroAutoRunWOReports"
+	param_dir = directory
+	cmd = f"\"{access}\" \"{db_name}\" /x \"{macro_name}\" /cmd \"{param_dir}\""
+	print(f"{cmd=}")
+	st.code(cmd, language="shellSession", line_numbers=True)
+	try:
+		subprocess.run(cmd, shell=True)
+	except Exception as e:
+		st.error(f"Failure:\n{e}")
+		print(f"Failure:\n{e}")
+
+
 @st.dialog(title="Meeting Details", width="large")
 def meeting_input_menu(mode: str = "new"):
-	k_date_input_meeting = "k_date_input_meeting"
-	k_multiselect_attendance = "k_multiselect_attendance"
-	k_time_input_meeting = "k_time_input_meeting"
-	k_selectbox_directory = "k_selectbox_directory"
 
 	if mode == "new":
-		st.session_state.setdefault(k_date_input_meeting, datetime.datetime.now())
-		st.session_state.setdefault(k_multiselect_attendance, [])
-		st.session_state.setdefault(k_time_input_meeting, datetime.datetime.now())
-		st.session_state.setdefault(k_selectbox_directory, "Create New")
 		date_input_min_value = df_meetings["DateMeeting"].max() + datetime.timedelta(days=4)
 		date_input_max_value = datetime.datetime.now() + datetime.timedelta(days=7)
 
 		m_thresh = 0
 	else:
-		m_id = st.session_state.get("meeting_id")
+		m_id = st.session_state.get(k_meeting_id)
 		st.header(f"Edit Meeting #{m_id}")
 		date_input_min_value = None
 		date_input_max_value = None
@@ -475,7 +494,8 @@ def meeting_input_menu(mode: str = "new"):
 		{"name": "Gary Thomas", "email": "gary.thomas@bwstrailers.com"},
 		{"name": "Sarah Lord", "email": "sarah.lord@bwstrailers.com"},
 		{"name": "Saied Parsaeian", "email": "saied.parsaeian@stargatetrailers.ca"},
-		{"name": "Jason Morgan", "email": "jason.morgan@bwstrailers.com"}
+		{"name": "Jason Morgan", "email": "jason.morgan@bwstrailers.com"},
+		{"name": "Aaron Faulkner", "email": "aaron.faulkner@bwstrailers.com"}
 	]
 
 	cont = st.container(border=1, height=500)
@@ -483,9 +503,15 @@ def meeting_input_menu(mode: str = "new"):
 	list_directories = df_meetings["MeetingDirectory"].dropna().apply(
 		lambda d: os.path.basename(d)
 	).unique().tolist() + list_meeting_folders
-	n = datetime.datetime.now()
-	list_directories = [f"{d} - {(n - is_date(d)).days} day(s) ago" for d in list_directories]
-	list_directories = ["Create New"] + sorted(list(set(list_directories)), reverse=True)
+	# list_directories = [f"{d} - {(n - is_date(d)).days} day(s) ago" for d in list_directories]
+	list_directories = [DEFAULT_NEW_FOLDER] + sorted(list(set(list_directories)), reverse=True)
+	if cols[1].button(
+		label="Add all",
+		key="k_btn_attendance_add_all"
+	):
+		st.session_state.update({
+			k_multiselect_attendance: [s["name"] for s in usual_suspects]
+		})
 	multiselect_attendance = cols[1].multiselect(
 		label="Attendance",
 		key=k_multiselect_attendance,
@@ -499,7 +525,7 @@ def meeting_input_menu(mode: str = "new"):
 		max_value=date_input_max_value
 	)
 	if date_input_meeting:
-		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.date() == date_input_meeting.date()]
+		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.date == date_input_meeting]
 		if df_c.shape[0] > m_thresh:
 			st.markdown(
 				body=aligned_text(
@@ -516,8 +542,20 @@ def meeting_input_menu(mode: str = "new"):
 		key=k_selectbox_directory,
 		options=list_directories
 	)
+	if (selectbox_directory == DEFAULT_NEW_FOLDER) or (not selectbox_directory):
+		mt = is_date(date_input_meeting)
+		if mt:
+			selectbox_directory = f"{date_input_meeting:%Y-%m-%d}"
+		else:
+			selectbox_directory = f"{now:%Y-%m-%d}"
+	if directory := st.session_state.get(k_selectbox_directory, ""):
+		dir_date = os.path.basename(directory)
+		if dir_date != DEFAULT_NEW_FOLDER:
+			cols[0].write(f"'{dir_date}' - {(n - is_date(dir_date)).days} day(s) ago")
+		else:
+			cols[0].write(f"==> '{selectbox_directory}'")
 	if date_input_meeting:
-		if len(multiselect_attendance) > 1:
+		if len(st.session_state[k_multiselect_attendance]) > 1:
 			mt = datetime.datetime(
 				date_input_meeting.year,
 				date_input_meeting.month,
@@ -526,43 +564,60 @@ def meeting_input_menu(mode: str = "new"):
 				time_input_meeting.minute,
 				time_input_meeting.second
 			)
-			attendance = ";".join(multiselect_attendance)
+			attendance = ";".join(st.session_state[k_multiselect_attendance])
+			directory = os.path.join(root_path, selectbox_directory)
+			# st.session_state.update({k_selectbox_directory: directory})
 
 			if st.button(
-					label="save",
-					key="k_btn_save_new_meeting"
+				label="save",
+				key="k_btn_save_new_meeting"
 			):
+				print(f"=A")
 				if mode == "new":
 					# Create new meeting record
+					print(f"=B")
 					sql = (f"""
 INSERT INTO 
 	[BWSdb].[dbo].[WSOM_Meetings]
 (
 	[DateMeeting],
-	[Attendance] 
+	[Attendance],
+	[MeetingDirectory]
 )
 VALUES
-('{mt:%Y-%m-%d %H:%M:%S}', '{attendance}')
+('{mt:%Y-%m-%d %H:%M:%S}', '{attendance}', '{directory}')
 		;
 						""").strip()
 				else:
 					# Update existing meeting record
+					print(f"=C")
 					sql = (f"""
 UPDATE
 	[BWSdb].[dbo].[WSOM_Meetings]
 SET
 	[DateMeeting] = '{mt:%Y-%m-%d %H:%M:%S}',
-	[Attendance] = '{attendance}'
+	[Attendance] = '{attendance}',
+	[MeetingDirectory] = '{directory}'
 					""").strip()
 					# connect(sql, do_exec=False, do_print=False, do_show=False)
 
 				# st.code(sql, language="sql", line_numbers=True)
-				connect(sql, do_exec=False, do_print=False, do_show=False)
+				print("sql:")
+				print(sql)
+				connect(sql, do_exec=True, do_print=True, do_show=True)
 				load_meetings.clear()
 				df_meetings_new = load_meetings()
+				if not os.path.exists(os.path.join(root_path, directory)):
+					os.mkdir(os.path.join(root_path, directory))
 				if mode == "new":
-					st.session_state.update({"meeting_id": df_meetings_new["ID"].max()})
+					st.session_state.update({k_meeting_id: df_meetings_new["ID"].max()})
+					copy_wos_via_access()
 				st.rerun()
+	# 	else:
+	# 		print(f"not len(multiselect_attendance) > 1")
+	# 		print(f"{multiselect_attendance=}")
+	# else:
+	# 	print(f"not date_input_meeting")
 
 	if st.button(
 		label=f"cancel",
@@ -587,21 +642,25 @@ SET
 				label=f"yes",
 				key=f"k_btn_ays_cancel_yes"
 			):
+				st.session_state.clear()
 				st.rerun()
 
 
 def edit_meeting():
-	k_date_input_meeting = "k_date_input_meeting"
-	k_multiselect_attendance = "k_multiselect_attendance"
-	k_time_input_meeting = "k_time_input_meeting"
-	m_id = st.session_state.get("meeting_id")
+	m_id = st.session_state.get(k_meeting_id)
 	ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
 	meeting_attendance = ser_meeting["Attendance"]
 	meeting_date = ser_meeting["DateMeeting"]
+	directory = ser_meeting["MeetingDirectory"]
+	if pd.isna(directory):
+		directory = DEFAULT_NEW_FOLDER
+	else:
+		directory = os.path.basename(directory)
 	st.session_state.update({
 		k_date_input_meeting: meeting_date,
 		k_multiselect_attendance: meeting_attendance.split(";"),
-		k_time_input_meeting: meeting_date
+		k_time_input_meeting: meeting_date,
+		k_selectbox_directory: directory
 	})
 	meeting_input_menu(mode="edit")
 
@@ -611,6 +670,7 @@ def create_new_meeting():
 	k_multiselect_attendance = "k_multiselect_attendance"
 	k_time_input_meeting = "k_time_input_meeting"
 	st.session_state.update({
+		k_selectbox_directory: DEFAULT_NEW_FOLDER,
 		k_date_input_meeting: datetime.datetime.now(),
 		k_multiselect_attendance: [],
 		k_time_input_meeting: datetime.datetime.now()
@@ -632,25 +692,31 @@ list_meeting_folders = [d for d in os.listdir(root_path) if d != "Scripts"]
 df_meetings = load_meetings()
 df_meeting_notes = load_meeting_notes()
 
-st.write("df_meetings")
-st.dataframe(df_meetings)
-st.write("df_meeting_notes")
-st.dataframe(df_meeting_notes)
+# st.write("df_meetings")
+# st.dataframe(df_meetings)
+# st.write("df_meeting_notes")
+# st.dataframe(df_meeting_notes)
 
-st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
-selected_directory = st.selectbox(
-	label="SELECT",
-	options=list_meeting_folders,
-	key="selected_directory"
-)
+# st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
+# selected_directory = st.selectbox(
+# 	label="SELECT",
+# 	options=list_meeting_folders,
+# 	key="selected_directory"
+# )
 
-if "meeting_id" not in st.session_state:
+if k_meeting_id not in st.session_state:
+
+	st.write(f"{df_meetings.shape[0]} Meeting(s) on record")
+
+	m_id = None
+	selected_directory = None
+	st.session_state.update({k_selectbox_directory: None})
 
 	if st.button(
 		label="Edit Last Meeting",
 		key=f"k_btn_edit_last_meeting"
 	):
-		st.session_state.setdefault("meeting_id", df_meetings["ID"].max())
+		st.session_state.setdefault(k_meeting_id, df_meetings["ID"].max())
 		edit_meeting()
 
 	if st.button(
@@ -659,13 +725,8 @@ if "meeting_id" not in st.session_state:
 	):
 
 		create_new_meeting()
-
-		db_name = "SysproCompanyA.accdb"
-		macro_name = "WSOM_MacroAutoRunWOReports"
-		cmd = f"msaccess.exe \"{db_name}\" /x \"{macro_name}\""
-		st.code(cmd, language="bash", line_numbers=True)
 else:
-	m_id = st.session_state.get("meeting_id")
+	m_id = st.session_state.get(k_meeting_id)
 	st.header(f"Editing Meeting ID#{m_id}")
 	if st.button(
 		label=f"Edit Meeting #{m_id}",
@@ -673,7 +734,26 @@ else:
 	):
 		edit_meeting()
 
+	selected_directory = st.session_state.get(k_selectbox_directory, DEFAULT_NEW_FOLDER)
+	# if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
+	# 	selected_directory = f"{now:%Y-%m-%d}"
 
+	if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
+		mt = is_date(selected_directory)
+		print(f"{selected_directory=}, {mt=}")
+		print(f"{st.session_state.get(k_date_input_meeting)=}, {mt=}")
+		if mt:
+			selected_directory = f"{selected_directory:%Y-%m-%d}"
+		else:
+			mt = is_date(st.session_state.get(k_date_input_meeting))
+			d = st.session_state.get(k_date_input_meeting)
+			if mt:
+				selected_directory = f"{d:%Y-%m-%d}"
+			else:
+				selected_directory = f"{now:%Y-%m-%d}"
+
+
+st.write(selected_directory)
 if selected_directory:
 	itinerary_file_name_prefix = "wo_meeting_"
 	itinerary_file_name_suffix = ".pdf"
@@ -685,6 +765,11 @@ if selected_directory:
 	]
 	if not itinerary_file:
 		st.error(f"Cannot find Itinerary file within this directory.")
+		if st.button(
+			label="Try rerunning access commands?",
+			key="k_btn_rerun_access_command"
+		):
+			copy_wos_via_access(directory=selected_directory)
 		st.stop()
 	else:
 		itinerary_file = os.path.join(root_path, selected_directory, itinerary_file[0])
@@ -920,8 +1005,18 @@ if selected_directory:
 					})
 					st.rerun()
 
-
-
+if m_id is not None:
+	if st.button(
+		label=f"End Meeting #{m_id}",
+		key=f"k_end_meeting"
+	):
+		sql = ("""
+UPDATE
+	[BWSdb].[dbo].[WSOM_MeetingNotes]
+SET
+		""").strip()
+		connect(sql, do_exec=False, do_print=True, do_show=True)
+		st.session_state.update({k_meeting_id: None})
 
 		# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
 		# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
