@@ -19,10 +19,11 @@ from streamlit_scroll_navigation import scroll_navbar
 from streamlit_pills import pills
 
 from colour_utility import random_colour, gradient, RED, GREEN, Colour
-from datetime_utility import is_date
+from datetime_utility import is_date, date_str_format
 from json_utility import jsonify
 from pyodbc_connection import connect
 from streamlit_utility import aligned_text
+from utility import number_suffix
 
 st.set_page_config(
 	layout="wide",
@@ -31,10 +32,19 @@ st.set_page_config(
 
 DEFAULT_NEW_FOLDER: str = "Create New"
 k_meeting_id: str = "k_meeting_id"
+k_df_meeting_quotes: str = "k_df_meeting_quotes"
+k_selectbox_choose_edit_meeting: str = "k_selectbox_choose_edit_meeting"
 k_date_input_meeting: str = "k_date_input_meeting"
 k_multiselect_attendance: str = "k_multiselect_attendance"
 k_time_input_meeting: str = "k_time_input_meeting"
 k_selectbox_directory: str = "k_selectbox_directory"
+k_input_menu_dirty: str = "k_input_menu_dirty"
+
+meeting_id: str = k_meeting_id.removeprefix("k_")
+date_input_meeting: str = k_date_input_meeting.removeprefix("k_")
+multiselect_attendance: str = k_multiselect_attendance.removeprefix("k_")
+time_input_meeting: str = k_time_input_meeting.removeprefix("k_")
+selectbox_directory: str = k_selectbox_directory.removeprefix("k_")
 
 now = datetime.datetime.now()
 
@@ -83,225 +93,225 @@ def load_orders():
 
 @st.cache_data(ttl=None, show_spinner=True)
 def check_similar_quotes():
-	return connect("SELECT 30001 AS [Quote#], 30001 AS [Q], 30001 AS [SimQ]")
-# 	sql = """
-# SET NOCOUNT ON;
-# DECLARE @sd DATETIME = '{SD}';
-# DECLARE @ed DATETIME = '{ED}';
-#
-# DECLARE @t TABLE (
-#         [ID] INT IDENTITY(0, 1),
-#         [Q] INT
-# );
-# DECLARE @r TABLE (
-#         [ID] INT IDENTITY(0, 1),
-#         [Q] INT,
-#         [SimQ] INT
-# );
-# INSERT INTO @t ([Q])
-# SELECT
-#         [Orders].[Quote#]
-# FROM (
-#         [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
-# INNER JOIN
-#         [BWSdb].[dbo].[Orders] WITH (NOLOCK)
-# ON
-#         [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
-# )
-# INNER JOIN
-#         [BWSdb].[dbo].[Production] WITH (NOLOCK)
-# ON
-#         [Orders].[Quote#]=[Production].[Quote#]
-# WHERE (
-#         (
-#                 ([Production].[Prod Date]) Between @sd And @ed
-#         )
-#         And (
-#                 ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
-#         )
-# )
-# /*
-# ORDER BY
-#         [Orders].[Model No]
-#         ,[Production].[Prod Date]
-#         ,[Orders].[Quote#]
-# */
-# ;
-#
-# DECLARE @i INT;
-# DECLARE @c INT;
-# declare @modelno NVARCHAR(255);
-# declare @quote INT;
-#
-# SELECT
-#         @i = 0,
-#         @c = COUNT(*)
-# FROM
-#         @t
-# ;
-#
-# WHILE @i < @c BEGIN
-#
-#         SELECT
-#                 @quote = [Q]
-#         FROM
-#                 @t
-#         WHERE
-#                 [ID] = @i
-#         ;
-#
-#     -- Insert statements for procedure here
-#         --Grab Model No for future referencing
-#         SELECT
-# 			@modelno = (select [Model No]
-# 		from
-# 			[BWSdb].[dbo].Orders with (nolock)
-# 		where
-# 			Quote# = @quote);
-#
-#         --Drop and create temp table in tmpdb SQL database for faster processing
-#         IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
-# 			DROP TABLE #QuoteOptions
-# 		END
-#
-#         create table #QuoteOptions
-#         (
-#                 #Options int,
-#                 [Option No] nvarchar(255),
-#         [Price] money,
-#         [Qty] int,
-#         [Sections] nvarchar(255),
-#         [Description] nvarchar(max)
-#         );
-#
-#         --Grab Quotes with same Model No and Options as @quote parameter
-#         insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
-#         select [Option No], Price, Qty, Sections, Description
-#         from [BWSdb].[dbo].[Order Options] with (nolock)
-#         where Quote# = @quote
-# 		;
-#
-#         update #QuoteOptions
-#         set #Options = NoOptions
-#         from (select count(*) as NoOptions
-#                   from [BWSdb].[dbo].[Order Options] with (nolock)
-#                   where Quote# = @quote) as subCountOptions
-# 		;
-#
-#         --Drop and create temp table in tmpdb SQL database for faster processing
-#         IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
-# 			DROP TABLE #QuoteswithsameOptions
-# 		END
-#
-#         create table #QuoteswithsameOptions
-#         (
-#                 [Quote#] int,
-#                 [WO#] int,
-#                 [Quote Date] datetime,
-#                 [Prod Date] datetime
-#         );
-#
-#         insert into #QuoteswithsameOptions
-#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-#         from [BWSdb].[dbo].[Order Options] as main with (nolock)
-#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-#         inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
-#                                                                                                 and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)
-#                                                                                                 and main.Description = QuoteOptions.Description
-#                                                                                                 AND main.[Qty] = [QuoteOptions].[Qty]
-#         where main.Quote# in (select Quote#
-#                                                   from [BWSdb].[dbo].[Order Options] with (nolock)
-#                                                   group by Quote#
-#                                                   having count(*) in (select #Options from #QuoteOptions))
-#         and Orders.[Model No] = @modelno
-#         and [Date Declined] is null
-#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-#         having count(*) = (select distinct #Options from #QuoteOptions)
-# 		;
-#
-#         --Drop and create temp table in tmpdb SQL database for faster processing
-#         IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
-# 			DROP TABLE #QuoteNPOs
-# 		END
-#
-#         create table #QuoteNPOs
-#         (
-#                 #NPOs int,
-#         [Description] nvarchar(max)
-#         );
-#
-#         --Grab Quotes with same NPOs
-#         insert into #QuoteNPOs (Description)
-#         select Description
-#         from [BWSdb].[dbo].[Custom Work] with (nolock)
-#         where Quote# = @quote
-# 		;
-#
-#         update #QuoteNPOs
-#         set #NPOs = NoNPOs
-#         from (select count(*) as NoNPOs
-#                   from [BWSdb].[dbo].[Custom Work] with (nolock)
-#                   where Quote# = @quote) as subCountNPOs
-# 		;
-#
-#         --Drop and create temp table in tmpdb SQL database for faster processing
-#         IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
-# 			DROP TABLE #QuoteswithsameNPOs
-# 		END
-#
-#         create table #QuoteswithsameNPOs
-#         (
-#                 [Quote#] int,
-#                 [WO#] int,
-#                 [Quote Date] datetime,
-#                 [Prod Date] datetime
-#         );
-#
-#         insert into #QuoteswithsameNPOs
-#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-#         from [BWSdb].[dbo].[Custom Work] as main with (nolock)
-#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-#         inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
-#         where main.Quote# in (select Quote#
-#                                                   from [BWSdb].[dbo].[Custom Work] with (nolock)
-#                                                   group by Quote#
-#                                                   having count(*) in (select #NPOs from #QuoteNPOs))
-#         and Orders.[Model No] = @modelno
-#         and [Date Declined] is null
-#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-#         having count(*) = (select distinct #NPOs from #QuoteNPOs)
-# 		;
-#
-#         --Final select statement
-#         INSERT INTO @r ([Q], [SimQ])
-#         select @quote, Options.Quote#
-#         from #QuoteswithsameOptions as Options
-#         inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
-#         LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
-#         where Options.Quote# <> @quote
-# 		;
-#
-#
-#         SELECT @i = @i + 1;
-#
-# END
-# /*
-# SELECT
-#         *
-# FROM
-#         @t
-# */
-#
-# SELECT
-#         *
-# FROM
-#         @r
-# ;
-# 	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
-# 	print(sql)
-# 	return connect(sql, returns_records=True)
+	# return connect("SELECT 30001 AS [Quote#], 30001 AS [Q], 30001 AS [SimQ]")
+	sql = """
+SET NOCOUNT ON;
+DECLARE @sd DATETIME = '{SD}';
+DECLARE @ed DATETIME = '{ED}';
+
+DECLARE @t TABLE (
+        [ID] INT IDENTITY(0, 1),
+        [Q] INT
+);
+DECLARE @r TABLE (
+        [ID] INT IDENTITY(0, 1),
+        [Q] INT,
+        [SimQ] INT
+);
+INSERT INTO @t ([Q])
+SELECT
+        [Orders].[Quote#]
+FROM (
+        [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
+INNER JOIN
+        [BWSdb].[dbo].[Orders] WITH (NOLOCK)
+ON
+        [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
+)
+INNER JOIN
+        [BWSdb].[dbo].[Production] WITH (NOLOCK)
+ON
+        [Orders].[Quote#]=[Production].[Quote#]
+WHERE (
+        (
+                ([Production].[Prod Date]) Between @sd And @ed
+        )
+        And (
+                ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
+        )
+)
+/*
+ORDER BY
+        [Orders].[Model No]
+        ,[Production].[Prod Date]
+        ,[Orders].[Quote#]
+*/
+;
+
+DECLARE @i INT;
+DECLARE @c INT;
+declare @modelno NVARCHAR(255);
+declare @quote INT;
+
+SELECT
+        @i = 0,
+        @c = COUNT(*)
+FROM
+        @t
+;
+
+WHILE @i < @c BEGIN
+
+        SELECT
+                @quote = [Q]
+        FROM
+                @t
+        WHERE
+                [ID] = @i
+        ;
+
+    -- Insert statements for procedure here
+        --Grab Model No for future referencing
+        SELECT
+			@modelno = (select [Model No]
+		from
+			[BWSdb].[dbo].Orders with (nolock)
+		where
+			Quote# = @quote);
+
+        --Drop and create temp table in tmpdb SQL database for faster processing
+        IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
+			DROP TABLE #QuoteOptions
+		END
+
+        create table #QuoteOptions
+        (
+                #Options int,
+                [Option No] nvarchar(255),
+        [Price] money,
+        [Qty] int,
+        [Sections] nvarchar(255),
+        [Description] nvarchar(max)
+        );
+
+        --Grab Quotes with same Model No and Options as @quote parameter
+        insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
+        select [Option No], Price, Qty, Sections, Description
+        from [BWSdb].[dbo].[Order Options] with (nolock)
+        where Quote# = @quote
+		;
+
+        update #QuoteOptions
+        set #Options = NoOptions
+        from (select count(*) as NoOptions
+                  from [BWSdb].[dbo].[Order Options] with (nolock)
+                  where Quote# = @quote) as subCountOptions
+		;
+
+        --Drop and create temp table in tmpdb SQL database for faster processing
+        IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
+			DROP TABLE #QuoteswithsameOptions
+		END
+
+        create table #QuoteswithsameOptions
+        (
+                [Quote#] int,
+                [WO#] int,
+                [Quote Date] datetime,
+                [Prod Date] datetime
+        );
+
+        insert into #QuoteswithsameOptions
+        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+        from [BWSdb].[dbo].[Order Options] as main with (nolock)
+        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+        inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
+                                                                                                and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)
+                                                                                                and main.Description = QuoteOptions.Description
+                                                                                                AND main.[Qty] = [QuoteOptions].[Qty]
+        where main.Quote# in (select Quote#
+                                                  from [BWSdb].[dbo].[Order Options] with (nolock)
+                                                  group by Quote#
+                                                  having count(*) in (select #Options from #QuoteOptions))
+        and Orders.[Model No] = @modelno
+        and [Date Declined] is null
+        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+        having count(*) = (select distinct #Options from #QuoteOptions)
+		;
+
+        --Drop and create temp table in tmpdb SQL database for faster processing
+        IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
+			DROP TABLE #QuoteNPOs
+		END
+
+        create table #QuoteNPOs
+        (
+                #NPOs int,
+        [Description] nvarchar(max)
+        );
+
+        --Grab Quotes with same NPOs
+        insert into #QuoteNPOs (Description)
+        select Description
+        from [BWSdb].[dbo].[Custom Work] with (nolock)
+        where Quote# = @quote
+		;
+
+        update #QuoteNPOs
+        set #NPOs = NoNPOs
+        from (select count(*) as NoNPOs
+                  from [BWSdb].[dbo].[Custom Work] with (nolock)
+                  where Quote# = @quote) as subCountNPOs
+		;
+
+        --Drop and create temp table in tmpdb SQL database for faster processing
+        IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
+			DROP TABLE #QuoteswithsameNPOs
+		END
+
+        create table #QuoteswithsameNPOs
+        (
+                [Quote#] int,
+                [WO#] int,
+                [Quote Date] datetime,
+                [Prod Date] datetime
+        );
+
+        insert into #QuoteswithsameNPOs
+        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+        from [BWSdb].[dbo].[Custom Work] as main with (nolock)
+        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+        inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
+        where main.Quote# in (select Quote#
+                                                  from [BWSdb].[dbo].[Custom Work] with (nolock)
+                                                  group by Quote#
+                                                  having count(*) in (select #NPOs from #QuoteNPOs))
+        and Orders.[Model No] = @modelno
+        and [Date Declined] is null
+        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+        having count(*) = (select distinct #NPOs from #QuoteNPOs)
+		;
+
+        --Final select statement
+        INSERT INTO @r ([Q], [SimQ])
+        select @quote, Options.Quote#
+        from #QuoteswithsameOptions as Options
+        inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
+        LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
+        where Options.Quote# <> @quote
+		;
+
+
+        SELECT @i = @i + 1;
+
+END
+/*
+SELECT
+        *
+FROM
+        @t
+*/
+
+SELECT
+        *
+FROM
+        @r
+;
+	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
+	print(sql)
+	return connect(sql, returns_records=True)
 
 
 @st.cache_data(ttl=None, show_spinner=True)
@@ -422,24 +432,32 @@ def load_pdf_annotations(pdf_file):
 
 
 @st.dialog(title="WO Meeting Review Details")
-def ask_details(key, selected_quote, annotation):
+def ask_details(key, idx, selected_quote, annotation):
 	st.subheader(f"Describe the issue with quote {selected_quote}")
 	st.subheader(f"{annotation['text']}")
+	st.write(f"{type(annotation['text'])=}")
 	issues = st.session_state.setdefault(key, [])
-	st.text_area(
+	text_area_known_issues = st.text_area(
 		label="Known Issues:",
 		value="\n".join(issues),
 		disabled=True
+	)
+	text_area_new_issues = st.text_area(
+		label="Known Issues:",
+		key="text_area_new_issues"
 	)
 	if st.button(
 		label="save"
 	):
 		issues.append(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-		st.session_state.update({
-			key: issues
+		f"status_{m_id}_{selected_quote}"
+		if st.session_state.get(key, None) is None:
+			st.session_state.update({key: {}})
+		st.session_state[key].update({
+			f"issue_{now:%Y-%m-%d %H:%M:%S}": issues
 		})
 		# st.session_state
-		if "clicked_annotation" in pdf_viewer:
+		if "clicked_annotation" in st_pdf_viewer:
 			print("POP")
 			pdf_viewer_data = st.session_state.get(k_pdf_viewer, {})
 			print(f"{pdf_viewer_data=}")
@@ -449,6 +467,10 @@ def ask_details(key, selected_quote, annotation):
 			})
 		else:
 			print("NO POP")
+		st.rerun()
+	if st.button(
+		label="cancel"
+	):
 		st.rerun()
 
 
@@ -471,6 +493,24 @@ def copy_wos_via_access(directory):
 
 @st.dialog(title="Meeting Details", width="large")
 def meeting_input_menu(mode: str = "new"):
+
+	print(f"meeting_input_menu({mode=})")
+
+	m_id = st.session_state.get(k_meeting_id)
+	ser_saved = df_meetings.loc[df_meetings["ID"] == m_id]
+	saved_date = ser_saved.iloc[0]["DateMeeting"] if not ser_saved.empty else None
+	saved_attendance = ser_saved.iloc[0]["Attendance"] if not ser_saved.empty else None
+	saved_directory = ser_saved.iloc[0]["MeetingDirectory"] if not ser_saved.empty else None
+	if isinstance(saved_date, pd.Timestamp):
+		saved_date = saved_date.to_pydatetime()
+
+	# st.session_state.setdefault({k_input_menu_dirty: {
+	# 	"mid": m_id,
+	# 	"mdate": mdate,
+	# 	"mtime": mtime,
+	# 	"mattendance": mattendance,
+	# 	"mdirectory": mdirectory
+	# }})
 
 	if mode == "new":
 		date_input_min_value = df_meetings["DateMeeting"].max() + datetime.timedelta(days=4)
@@ -506,8 +546,8 @@ def meeting_input_menu(mode: str = "new"):
 	# list_directories = [f"{d} - {(n - is_date(d)).days} day(s) ago" for d in list_directories]
 	list_directories = [DEFAULT_NEW_FOLDER] + sorted(list(set(list_directories)), reverse=True)
 	if cols[1].button(
-		label="Add all",
-		key="k_btn_attendance_add_all"
+			label="Add all",
+			key="k_btn_attendance_add_all"
 	):
 		st.session_state.update({
 			k_multiselect_attendance: [s["name"] for s in usual_suspects]
@@ -539,7 +579,8 @@ def meeting_input_menu(mode: str = "new"):
 	)
 	selectbox_directory = cols[0].selectbox(
 		label="Directory",
-		key=k_selectbox_directory,
+		# key=_k_selectbox_directory,
+		key=f"k_{k_selectbox_directory}",
 		options=list_directories
 	)
 	if (selectbox_directory == DEFAULT_NEW_FOLDER) or (not selectbox_directory):
@@ -551,7 +592,7 @@ def meeting_input_menu(mode: str = "new"):
 	if directory := st.session_state.get(k_selectbox_directory, ""):
 		dir_date = os.path.basename(directory)
 		if dir_date != DEFAULT_NEW_FOLDER:
-			cols[0].write(f"'{dir_date}' - {(n - is_date(dir_date)).days} day(s) ago")
+			cols[0].write(f"'{dir_date}' - {(now - is_date(dir_date)).days} day(s) ago")
 		else:
 			cols[0].write(f"==> '{selectbox_directory}'")
 	if date_input_meeting:
@@ -568,51 +609,78 @@ def meeting_input_menu(mode: str = "new"):
 			directory = os.path.join(root_path, selectbox_directory)
 			# st.session_state.update({k_selectbox_directory: directory})
 
+			is_dirty: bool = any([
+				saved_date != date_input_meeting,
+				saved_attendance != attendance,
+				saved_directory != directory
+			])
+			st.write(f"{m_id=}")
+			st.write(f"{saved_date=}, {mt=}")
+			st.write(f"{saved_attendance=}, {attendance=}")
+			st.write(f"{saved_directory=}, {directory=}")
+			st.write(f"{is_dirty=}")
+
 			if st.button(
-				label="save",
-				key="k_btn_save_new_meeting"
+					label="save",
+					key="k_btn_save_new_meeting"
 			):
-				print(f"=A")
-				if mode == "new":
-					# Create new meeting record
-					print(f"=B")
-					sql = (f"""
-INSERT INTO 
-	[BWSdb].[dbo].[WSOM_Meetings]
-(
-	[DateMeeting],
-	[Attendance],
-	[MeetingDirectory]
-)
-VALUES
-('{mt:%Y-%m-%d %H:%M:%S}', '{attendance}', '{directory}')
-		;
+
+				if is_dirty:
+					print(f"=A")
+					if mode == "new":
+						# Create new meeting record
+						print(f"=B")
+						sql = (f"""
+	INSERT INTO 
+		[BWSdb].[dbo].[WSOM_Meetings]
+	(
+		[DateMeeting],
+		[Attendance],
+		[MeetingDirectory]
+	)
+	VALUES (
+		'{mt:%Y-%m-%d %H:%M:%S}',
+		'{attendance}',
+		'{directory}'
+	)
+	;
+							""").strip()
+					else:
+						# Update existing meeting record
+						print(f"=C")
+						sql = (f"""
+	UPDATE
+		[BWSdb].[dbo].[WSOM_Meetings]
+	SET
+		[DateMeeting] = '{mt:%Y-%m-%d %H:%M:%S}',
+		[Attendance] = '{attendance}',
+		[MeetingDirectory] = '{directory}'
+	WHERE
+		[ID] = {st.session_state.get(k_meeting_id)}
+	;
 						""").strip()
-				else:
-					# Update existing meeting record
-					print(f"=C")
-					sql = (f"""
-UPDATE
-	[BWSdb].[dbo].[WSOM_Meetings]
-SET
-	[DateMeeting] = '{mt:%Y-%m-%d %H:%M:%S}',
-	[Attendance] = '{attendance}',
-	[MeetingDirectory] = '{directory}'
-					""").strip()
 					# connect(sql, do_exec=False, do_print=False, do_show=False)
 
-				# st.code(sql, language="sql", line_numbers=True)
-				print("sql:")
-				print(sql)
-				connect(sql, do_exec=True, do_print=True, do_show=True)
-				load_meetings.clear()
-				df_meetings_new = load_meetings()
-				if not os.path.exists(os.path.join(root_path, directory)):
-					os.mkdir(os.path.join(root_path, directory))
-				if mode == "new":
-					st.session_state.update({k_meeting_id: df_meetings_new["ID"].max()})
-					copy_wos_via_access()
-				st.rerun()
+					# st.code(sql, language="sql", line_numbers=True)
+					print("sql:")
+					print(sql)
+					connect(sql, do_exec=True, do_print=True, do_show=True)
+					load_meetings.clear()
+					df_meetings_new = load_meetings()
+					if not os.path.exists(os.path.join(root_path, directory)):
+						os.mkdir(os.path.join(root_path, directory))
+					if mode == "new":
+						st.session_state.update({k_meeting_id: df_meetings_new["ID"].max()})
+						copy_wos_via_access(directory)
+					st.session_state.update({
+						# k_multiselect_attendance: attendance,
+						# k_date_input_meeting: k_date_input_meeting,
+						# k_time_input_meeting: k_time_input_meeting,
+						k_selectbox_directory: directory
+					})
+					st.rerun()
+				else:
+					print(f"NOT DIRTY")
 	# 	else:
 	# 		print(f"not len(multiselect_attendance) > 1")
 	# 		print(f"{multiselect_attendance=}")
@@ -623,6 +691,9 @@ SET
 		label=f"cancel",
 		key=f"k_btn_cancel_input"
 	):
+		st.session_state.update({"btn_cancel_input": True})
+
+	if st.session_state.get("btn_cancel_input"):
 		if any([date_input_meeting, time_input_meeting, selectbox_directory]):
 			st.markdown(
 				body=aligned_text(
@@ -634,20 +705,26 @@ SET
 			)
 			btn_cols = st.columns(2)
 			if btn_cols[0].button(
-				label=f"no",
-				key=f"k_btn_ays_cancel_no"
+					label=f"no",
+					key=f"k_btn_ays_cancel_no"
 			):
-				pass
+				st.session_state.update({"btn_cancel_input": False})
 			if btn_cols[1].button(
-				label=f"yes",
-				key=f"k_btn_ays_cancel_yes"
+					label=f"yes",
+					key=f"k_btn_ays_cancel_yes"
 			):
 				st.session_state.clear()
+				st.session_state.update({
+					"btn_cancel_input": True
+				})
+				print(f"{st.session_state=}")
 				st.rerun()
 
 
 def edit_meeting():
+	print(f"edit_meeting")
 	m_id = st.session_state.get(k_meeting_id)
+	print(f"{m_id=}")
 	ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
 	meeting_attendance = ser_meeting["Attendance"]
 	meeting_date = ser_meeting["DateMeeting"]
@@ -666,6 +743,7 @@ def edit_meeting():
 
 
 def create_new_meeting():
+	print(f"create_new_meeting")
 	k_date_input_meeting = "k_date_input_meeting"
 	k_multiselect_attendance = "k_multiselect_attendance"
 	k_time_input_meeting = "k_time_input_meeting"
@@ -691,11 +769,15 @@ list_meeting_folders = [d for d in os.listdir(root_path) if d != "Scripts"]
 
 df_meetings = load_meetings()
 df_meeting_notes = load_meeting_notes()
+df_meeting_notes["Quote"] = df_meeting_notes["Quote"].apply(int)
 
-# st.write("df_meetings")
-# st.dataframe(df_meetings)
-# st.write("df_meeting_notes")
-# st.dataframe(df_meeting_notes)
+cont = st.container(key="master", border=1)
+
+with cont:
+	st.write("df_meetings")
+	st.dataframe(df_meetings)
+	st.write("df_meeting_notes")
+	st.dataframe(df_meeting_notes)
 
 # st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
 # selected_directory = st.selectbox(
@@ -704,22 +786,39 @@ df_meeting_notes = load_meeting_notes()
 # 	key="selected_directory"
 # )
 
-if k_meeting_id not in st.session_state:
 
-	st.write(f"{df_meetings.shape[0]} Meeting(s) on record")
+with cont:
+	st.write("st.session_state")
+	st.write(st.session_state)
+
+if st.session_state.get(k_meeting_id, None) is None:
+
+	cont.empty()
+	cont.write(f"{df_meetings.shape[0]} Meeting(s) on record")
 
 	m_id = None
 	selected_directory = None
 	st.session_state.update({k_selectbox_directory: None})
+	st.session_state.setdefault(k_selectbox_choose_edit_meeting, df_meetings["ID"].max())
 
-	if st.button(
-		label="Edit Last Meeting",
+	selectbox_choose_edit_meeting = cont.selectbox(
+		label="Edit Meeting:",
+		key=k_selectbox_choose_edit_meeting,
+		options=df_meetings["ID"].values.tolist()
+	)
+
+	edit_m_id: int = int(st.session_state.get(k_selectbox_choose_edit_meeting))
+	if cont.button(
+		label=f"Edit Meeting #{edit_m_id}",
 		key=f"k_btn_edit_last_meeting"
 	):
-		st.session_state.setdefault(k_meeting_id, df_meetings["ID"].max())
+		# st.session_state.update({k_meeting_id: df_meetings["ID"].max()})
+		m_id = edit_m_id
+		st.session_state.update({k_meeting_id: edit_m_id})
+		print(f"IF & EM# {m_id=}, m_id2={st.session_state.get(k_meeting_id)}")
 		edit_meeting()
 
-	if st.button(
+	if cont.button(
 		label="New Meeting",
 		key='k_btn_new_meeting'
 	):
@@ -727,8 +826,15 @@ if k_meeting_id not in st.session_state:
 		create_new_meeting()
 else:
 	m_id = st.session_state.get(k_meeting_id)
-	st.header(f"Editing Meeting ID#{m_id}")
-	if st.button(
+	ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
+	mt = ser_meeting["DateMeeting"]
+	print(f"ELSE {m_id=}")
+	cont.header(f"Editing Meeting ID#{m_id}")
+	cont.subheader(f"{date_str_format(mt, include_time=True, include_weekday=True)}")
+	dds = (mt - now).total_seconds()
+	dd = round(abs(dds) / (60*60*24), 2)
+	cont.subheader(f"{dd} day{'' if dd == 1 else 's'} {'from now' if dds >= 0 else 'ago'}")
+	if cont.button(
 		label=f"Edit Meeting #{m_id}",
 		key="k_btn_edit_meeting"
 	):
@@ -741,19 +847,27 @@ else:
 	if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
 		mt = is_date(selected_directory)
 		print(f"{selected_directory=}, {mt=}")
-		print(f"{st.session_state.get(k_date_input_meeting)=}, {mt=}")
+		print(f"{st.session_state.get(date_input_meeting)=}, {mt=}")
 		if mt:
 			selected_directory = f"{selected_directory:%Y-%m-%d}"
 		else:
-			mt = is_date(st.session_state.get(k_date_input_meeting))
-			d = st.session_state.get(k_date_input_meeting)
+			mt = is_date(st.session_state.get(date_input_meeting))
+			d = st.session_state.get(date_input_meeting)
 			if mt:
 				selected_directory = f"{d:%Y-%m-%d}"
 			else:
 				selected_directory = f"{now:%Y-%m-%d}"
 
+if selected_directory:
+	if not os.path.exists(os.path.join(root_path, selected_directory)):
+		cont.write(f"BLOCKED PATH '{selected_directory}'")
+		selected_directory = None
+		st.session_state.update({
+			selectbox_directory: DEFAULT_NEW_FOLDER
+		})
 
-st.write(selected_directory)
+
+cont.write(selected_directory)
 if selected_directory:
 	itinerary_file_name_prefix = "wo_meeting_"
 	itinerary_file_name_suffix = ".pdf"
@@ -764,8 +878,8 @@ if selected_directory:
 		if f.lower().startswith(itinerary_file_name_prefix) and f.lower().endswith(itinerary_file_name_suffix)
 	]
 	if not itinerary_file:
-		st.error(f"Cannot find Itinerary file within this directory.")
-		if st.button(
+		cont.error(f"Cannot find Itinerary file within this directory.")
+		if cont.button(
 			label="Try rerunning access commands?",
 			key="k_btn_rerun_access_command"
 		):
@@ -782,12 +896,12 @@ if selected_directory:
 			path_wo_rpt = None
 		rpt_files[qn] = path_wo_rpt
 
-	st.write(rpt_files)
+	cont.write(rpt_files)
 	similar_quotes = check_similar_quotes()
 	# st.dataframe(similar_quotes)
 	df_products = load_products()
 	df_orders = load_orders()
-	if "df_meeting_quotes" not in st.session_state:
+	if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (st.session_state.get(k_df_meeting_quotes).empty):
 		df_meeting_quotes = pd.DataFrame(data={"Quote": map(int, list_quotes)})
 		df_meeting_quotes = df_meeting_quotes.merge(
 			df_orders[[
@@ -812,11 +926,24 @@ if selected_directory:
 		)
 
 		df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
-		df_meeting_quotes[["Reviewed", "Approved"]] = False, False
-	else:
-		df_meeting_quotes = st.session_state.get("df_meeting_quotes")
+		df_meeting_quotes = df_meeting_quotes.merge(
+			df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id],
+			how="outer",
+			on="Quote"
+		)
+		df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
 
-	st.session_state.setdefault("df_meeting_quotes", df_meeting_quotes)
+		for i, row in df_meeting_quotes.iterrows():
+			df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["Quote#"])
+			df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+			# CopyWithSlice
+			# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
+			# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+			# print(f"{i=}, {df_meeting_quotes.iloc[i][['Reviewed', 'Approved']]}, {row['Quote#']=}, {row['DateResolved']=}, {row['ResolvedBy']=}")
+	else:
+		df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
+
+	st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
 
 	similar_quotes_m1 = similar_quotes.merge(
 		df_orders[[
@@ -847,163 +974,200 @@ if selected_directory:
 	similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Q"].apply(lambda q: rpt_files.get(str(q)))
 	similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
 
-	st.write(df_meeting_notes)
-	st.write(df_meeting_quotes)
-	st.write(similar_quotes_m1)
+	cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
+	cont.write(df_meeting_notes)
+	cont.write(f"df_meeting_quotes == {df_meeting_quotes.shape}")
+	cont.write(df_meeting_quotes)
+	cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
+	cont.write(similar_quotes_m1)
 
 	list_models = similar_quotes_m1["Model No"].dropna().unique().tolist()
 
-	st.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} model(s):")
+	cont.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} model(s):")
 
-	selected_model = pills(
-		label="Models",
-		options=list_models,
-		key="pills_selected_model"
-	)
-	if selected_model:
-
-		st.write(selected_model)
-		df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes["Model No"] == selected_model]
-		st.write(f"{df_model_quotes.shape[0]} quote(s) to Review:")
-		stdf_model_quotes = st.dataframe(
-			df_model_quotes,
-			selection_mode="single-row",
-			key="stdf_model_quotes",
-			hide_index=True,
-			on_select="rerun"
+	with cont:
+		selected_model = pills(
+			label="Models",
+			options=list_models,
+			key="pills_selected_model"
 		)
+		if selected_model:
 
-		if stdf_model_quotes["selection"]["rows"]:
-			df_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
-			selected_quote = df_selected_quote["Quote"]
-			pdf_file = df_selected_quote["Q_WORpt"]
-			st.write(df_selected_quote)
-			st.write(pdf_file)
+			st.write(selected_model)
+			df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes["Model No"] == selected_model]
+			df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
+			st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
+			stdf_model_quotes = st.dataframe(
+				df_model_quotes,
+				selection_mode="single-row",
+				key="stdf_model_quotes",
+				hide_index=True,
+				on_select="rerun"
+			)
 
-			if pdf_file:
-				annotations = [
-					{
-						"page": 1,
-						"x": 220,
-						"y": 155,
-						"height": 22,
-						"width": 65,
-						"color": "red"
-					},
-					{
-						"page": 1,
-						"x": 220,
-						"y": 155,
-						"height": 22,
-						"width": 65,
-						"color": "red"
-					}
-				]
-				def my_custom_annotation_handler(annotation):
-					# print(f"Annotation {annotation} clicked.")
-					idx = annotation.get("index")
-					page = annotation.get("page")
-					x = annotation.get("x")
-					y = annotation.get("y")
-					w = annotation.get("width")
-					h = annotation.get("height")
-					c = annotation.get("color")
-					bbox = (x, y, x + w, y + h)
-					et = annotation.get("text")
-					# line_texts = ';; '.join([line['text'] for line in et])
-					# print(f"{line_texts=}")
-					text = annotation.get("text")
-					print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-					key = f"issues_{selected_quote}_{idx}"
-					st.session_state.update({
-						f"need_details_{key}": True
-					})
-					# list_issues = st.session_state.setdefault(key, [])
-					ask_details(key, selected_quote, annotation)
-
-				parsed_annotations = load_pdf_annotations(pdf_file)
-				# # st.write(parsed_annotations)
-				# st.write(f"{len(parsed_annotations)=}")
-				# st.write(f"{(len(parsed_annotations) == 15)=}")
-				# # st.write(f"Parsed Annotation Texts:")
-				# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
-				#
-				# st.write("SESSION_STATE:")
-				# st.write(st.session_state)
-
-				k_c_a = "clicked_annotation"
-				k_pdf_viewer = f"pdf_viewer_wo"
-				pdf_click_callback = my_custom_annotation_handler
-				if (k_pdf_viewer in st.session_state) and (k_c_a in st.session_state[k_pdf_viewer]):
-					print("==A")
-					annotation = st.session_state[k_pdf_viewer][k_c_a]
-					idx = annotation.get("index")
-					key = f"issues_{selected_quote}_{idx}"
-					if not st.session_state.get(key, True):
-						print("==B")
-						# st.session_state.update({
-						# 	f"need_details_{key}": False
-						# })
-						pdf_click_callback = None
-					else:
-						print("==C")
+			if stdf_model_quotes["selection"]["rows"]:
+				ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
+				selected_quote = ser_selected_quote["Quote"]
+				pdf_file = ser_selected_quote["Q_WORpt"]
+				known_issues = df_meeting_notes.loc[df_meeting_notes["Quote"] == selected_quote][["MeetingID", "IssueDescription"]]
+				if not known_issues.empty:
+					st.write(f"Known Issues:")
+					st.write(known_issues)
 				else:
-					print("==D")
-				pdf_viewer = pdf_viewer(
-					input=load_pdf_binary(pdf_file),
-					width=s_w,
-					# annotations=annotations,
-					key=k_pdf_viewer,
-					annotations=parsed_annotations,
-					on_annotation_click=pdf_click_callback,
-					annotation_outline_size=2,
-					pages_vertical_spacing=10
-				)
+					st.write("No Known Issues")
+				st.write(ser_selected_quote)
+				st.write(pdf_file)
 
-				if k_c_a in pdf_viewer:
-					print("_A")
-					if pdf_viewer[k_c_a]:
-						print("_B")
-						annotation = pdf_viewer[k_c_a]
+				if pdf_file:
+					annotations = [
+						{
+							"page": 1,
+							"x": 220,
+							"y": 155,
+							"height": 22,
+							"width": 65,
+							"color": "red"
+						},
+						{
+							"page": 1,
+							"x": 220,
+							"y": 155,
+							"height": 22,
+							"width": 65,
+							"color": "red"
+						}
+					]
+					def my_custom_annotation_handler(annotation):
+						# print(f"Annotation {annotation} clicked.")
+						idx = annotation.get("index")
+						page = annotation.get("page")
+						x = annotation.get("x")
+						y = annotation.get("y")
+						w = annotation.get("width")
+						h = annotation.get("height")
+						c = annotation.get("color")
+						bbox = (x, y, x + w, y + h)
+						et = annotation.get("text")
+						# line_texts = ';; '.join([line['text'] for line in et])
+						# print(f"{line_texts=}")
+						text = annotation.get("text")
+						print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+						# key = f"issues_{selected_quote}_{idx}"
+						key = f"status_{m_id}_{selected_quote}"
+						st.session_state.update({
+							f"need_details_{key}": True
+						})
+						# list_issues = st.session_state.setdefault(key, [])
+						ask_details(key, idx, selected_quote, annotation)
+
+					parsed_annotations = load_pdf_annotations(pdf_file)
+					# # st.write(parsed_annotations)
+					# st.write(f"{len(parsed_annotations)=}")
+					# st.write(f"{(len(parsed_annotations) == 15)=}")
+					# # st.write(f"Parsed Annotation Texts:")
+					# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+					#
+					# st.write("SESSION_STATE:")
+					# st.write(st.session_state)
+
+					k_c_a = "clicked_annotation"
+					k_pdf_viewer = f"pdf_viewer_wo"
+					pdf_click_callback = my_custom_annotation_handler
+					if (k_pdf_viewer in st.session_state) and isinstance(st.session_state[k_pdf_viewer], (dict, list, tuple)) and (k_c_a in st.session_state[k_pdf_viewer]):
+						print("==A")
+						annotation = st.session_state[k_pdf_viewer][k_c_a]
 						idx = annotation.get("index")
 						key = f"issues_{selected_quote}_{idx}"
 						if not st.session_state.get(key, True):
-							print("_C")
-							pdf_viewer.pop(k_c_a)
-							st.session_state.update({
-								f"need_details_{key}": False
-							})
+							print("==B")
+							# st.session_state.update({
+							# 	f"need_details_{key}": False
+							# })
+							pdf_click_callback = None
 						else:
-							print("_D")
+							print("==C")
 					else:
-						print("_E")
-				else:
-					print("_F")
+						print("==D")
+					st_pdf_viewer = pdf_viewer(
+						input=load_pdf_binary(pdf_file),
+						width=s_w,
+						# annotations=annotations,
+						key=k_pdf_viewer,
+						annotations=parsed_annotations,
+						on_annotation_click=pdf_click_callback,
+						annotation_outline_size=2,
+						pages_vertical_spacing=10
+					)
+					print(f"{st_pdf_viewer=}")
+					if isinstance(st_pdf_viewer, (dict, list)):
+						if k_c_a in st_pdf_viewer:
+							print("_A")
+							if st_pdf_viewer[k_c_a]:
+								print("_B")
+								annotation = st_pdf_viewer[k_c_a]
+								idx = annotation.get("index")
+								key = f"issues_{selected_quote}_{idx}"
+								if not st.session_state.get(key, True):
+									print("_C")
+									st_pdf_viewer.pop(k_c_a)
+									st.session_state.update({
+										f"need_details_{key}": False
+									})
+								else:
+									print("_D")
+							else:
+								print("_E")
+						else:
+							print("_F")
 
-				st.write(pdf_viewer)
+					st.write(st_pdf_viewer)
 
-				if st.button(
-					label="Approve",
-					key=f"btn_approve_quote"
-				):
-					df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
-					st.session_state.update({
-						"df_meeting_quotes": df_meeting_quotes,
-						f"approve_{selected_quote}_date": datetime.datetime.now(),
-						f"approve_{selected_quote}_by": "Avery Briggs"
-					})
-					st.rerun()
-				if st.button(
-					label="Issue",
-					key="btn_issue_quote"
-				):
-					df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
-					st.session_state.update({
-						"df_meeting_quotes": df_meeting_quotes,
-						f"approve_{selected_quote}_date": datetime.datetime.now(),
-						f"approve_{selected_quote}_by": "Avery Briggs"
-					})
-					st.rerun()
+					if st.button(
+						label="Approve",
+						key=f"btn_approve_quote"
+					):
+						df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
+						if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
+							st.session_state[f"status_{m_id}_{selected_quote}"] = {}
+						st.session_state[f"status_{m_id}_{selected_quote}"].update({
+							k_df_meeting_quotes: df_meeting_quotes,
+							f"approve_{selected_quote}_date": datetime.datetime.now(),
+							f"approve_{selected_quote}_by": "Avery Briggs"
+						})
+						st.rerun()
+					# TODO add a submit issue button at the bottom of the screen
+					# if st.button(
+					# 	label="Issue",
+					# 	key="btn_issue_quote"
+					# ):
+					# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
+					#
+					# 	idx = annotation.get("index")
+					# 	page = annotation.get("page")
+					# 	x = annotation.get("x")
+					# 	y = annotation.get("y")
+					# 	w = annotation.get("width")
+					# 	h = annotation.get("height")
+					# 	c = annotation.get("color")
+					# 	bbox = (x, y, x + w, y + h)
+					# 	et = annotation.get("text")
+					# 	# line_texts = ';; '.join([line['text'] for line in et])
+					# 	# print(f"{line_texts=}")
+					# 	text = annotation.get("text")
+					# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+					# 	key = f"issues_{selected_quote}_{idx}"
+					# 	st.session_state.update({
+					# 		f"need_details_{key}": True
+					# 	})
+					# 	# list_issues = st.session_state.setdefault(key, [])
+					# 	ask_details(key, selected_quote, annotation)
+					#
+					# 	# st.session_state.update({
+					# 	# 	k_df_meeting_quotes: df_meeting_quotes,
+					# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
+					# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
+					# 	# })
+					# 	st.rerun()
 
 if m_id is not None:
 	if st.button(
@@ -1014,9 +1178,16 @@ if m_id is not None:
 UPDATE
 	[BWSdb].[dbo].[WSOM_MeetingNotes]
 SET
+	
 		""").strip()
+		# TODO iterate through meeting quotes and set the approved status to the the table
 		connect(sql, do_exec=False, do_print=True, do_show=True)
-		st.session_state.update({k_meeting_id: None})
+		st.session_state.update({
+			k_meeting_id: None,
+			k_df_meeting_quotes: None
+		})
+		cont.empty()
+		st.rerun()
 
 		# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
 		# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
@@ -1195,7 +1366,7 @@ SET
 # 		max_pages, quotes_list = parse_quotes_list(pdf_file)
 # 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
 #
-# 		pdf_viewer(
+# 		st_pdf_viewer(
 # 			input=binary_data,
 # 			width=s_w,
 # 			pages_to_render=pdf_render_pages
@@ -1555,7 +1726,7 @@ SET
 # #
 # # import streamlit as st
 # #
-# # from streamlit_pdf_viewer import pdf_viewer
+# # from streamlit_pdf_viewer import st_pdf_viewer
 # # from streamlit_js_eval import streamlit_js_eval
 # # from streamlit_tree_select import tree_select
 # # from streamlit_float import float_init
@@ -1846,7 +2017,7 @@ SET
 # # 		max_pages, quotes_list = parse_quotes_list(pdf_file)
 # # 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
 # #
-# # 		pdf_viewer(
+# # 		st_pdf_viewer(
 # # 			input=binary_data,
 # # 			width=s_w,
 # # 			pages_to_render=pdf_render_pages
