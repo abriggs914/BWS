@@ -927,7 +927,13 @@ if selected_directory:
 
 		df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
 		df_meeting_quotes = df_meeting_quotes.merge(
-			df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id],
+			df_meeting_notes.loc[
+				(df_meeting_notes["MeetingID"] <= m_id)
+				& (
+					pd.isna(df_meeting_notes["DateResolved"])
+					| (str(df_meeting_notes["DateResolved"]).strip() != "")
+				)
+			],
 			how="outer",
 			on="Quote"
 		)
