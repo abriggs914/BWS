@@ -3445,6 +3445,7 @@ def code_samples():
     DATES: str = "date"
     PYTHON: str = "python"
     SHELL: str = "shell"
+    PDFS: str = "pdfs"
     BUILT_IN: str = "built_in"
     LOOKUP: str = "lookup"
     RECORDSET: str = "recordset"
@@ -3454,6 +3455,8 @@ def code_samples():
     PYTHON_UTILITY: str = "python_utility"
     DATE_UTILITY: str = "date_utility"
 
+    THIRD_PARTY: str = "3rd party"
+    STREAMLIT: str = "Streamlit"
 
     # TEMPLATE
     # {
@@ -3461,6 +3464,7 @@ def code_samples():
     #     "code": """""",
     #     "desc": """""",
     #     "warn": """""",
+    #     "date": datetime.datetime()
     #     "tags": [],
     # }
 
@@ -3480,7 +3484,8 @@ Use DLookup to retrieve a single value from a table given some criteria (Optiona
             "warn": """
 This function only returns a single value. If you need more than 1 value from that record it is best to use a Recordset object, or another method.
             """,
-            "tags": [BUILT_IN, LOOKUP]
+            "tags": [BUILT_IN, LOOKUP],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """RSFetch""",
@@ -3523,6 +3528,7 @@ Optionally supports indexed positional lookup if an integer is passed as 'ColNam
             """,
             "warn": """""",
             "tags": [LOOKUP, RECORDSET, RECORDSET_UTILITY],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """ExecPython""",
@@ -3629,6 +3635,7 @@ Optionally pass the absolute path to an interpreter, or have it looked up using 
 Also choose how the terminal window is displayed. By default it will have normal focus. 
             """,
             "tags": [PYTHON, SHELL, PYTHON_UTILITY],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """Scripting.Dictionary""",
@@ -3680,6 +3687,7 @@ Wrapper 'class' for a sudo-dictionary in VBA.
             """,
             "warn": """""",
             "tags": [DICTIONARY_UTILITY],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """DateFormat""",
@@ -3698,6 +3706,7 @@ Supports 5 modes using integer codes [-1, 0, 1, 2, 3]
             """,
             "warn": """""",
             "tags": [DATES, DATE_UTILITY],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """Array Utility""",
@@ -3781,6 +3790,7 @@ Functions List:
             """,
             "warn": """Please see the source file for more examples.""",
             "tags": [ARRAY_UTILITY, PYTHON, LISTS],
+            "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """Eval""",
@@ -3793,6 +3803,120 @@ Eval does not work properly in the immediate window. You must test using Script.
             """,
             "warn": """""",
             "tags": [BUILT_IN],
+            "date": datetime.datetime(2025, 2, 10, 17)
+        }
+    ]
+
+    python_samples = [
+        {
+            "name": """Streamlit_pdf_viewer""",
+            "code": r"""
+# normal imports
+import os
+
+# aliases
+import streamlit as st
+
+# 3rd-party modules
+from streamlit_pdf_viewer import pdf_viewer
+
+
+# Constants
+# -  session_state not required (yet)
+pdf_width = 1200
+pdf_height = 600
+root_pdf_folder = r"\\server4.bwsdomain.local\Design\DRAWINGS\Promos\9E) PROMOS BY MODEL 2025\Tags (2025)"
+
+
+# First section of a streamlit Application
+# this line can only be called once, and should be called at the beginning.
+st.set_page_config(
+	layout="wide",
+	page_title="Streamlit Demo"
+)
+
+
+# Helper Functions
+
+
+@st.cache_data(ttl=None, show_spinner=True)
+def load_pdfs():
+	# Function stores the list of pdfs in the cache, making successive reruns go faster.
+	return [
+		file
+		for file in os.listdir(root_pdf_folder)
+		if file.lower().endswith(".pdf")
+	]
+
+
+@st.cache_data(ttl=None, show_spinner=True)
+def load_pdf_binary(pdf_file):
+	# Handle opening and reading of the pdf file, caching the results.
+	with open(pdf_file, "rb") as f:
+		return f.read()
+
+
+# Begin streamlit widgets
+if not os.path.exists(root_pdf_folder):
+	# check folder exists before proceeding
+	st.error(NotADirectoryError(f"Could not find '{root_pdf_folder}'."))
+	st.stop()
+
+
+# Gather data
+# for a small dataset, looping the folder everytime is fine
+# pdf_files = [
+# 	file
+# 	for file in os.listdir(root_pdf_folder)
+# 	if file.lower().endswith(".pdf")
+# ]
+# for larger datasets, the data should be cached.
+pdf_files = load_pdfs()
+
+
+if pdf_files:
+
+	# maintain keys as variables to save typing and typos.
+	k_selectbox_file = f"k_selectbox_file"
+	selectbox_file = st.selectbox(
+		label="Choose a File:",
+		placeholder="select a file",
+		key=k_selectbox_file,
+		options=pdf_files
+	)
+
+	# Use safe accessors to st.session_state to maintain variable integrity
+	# st.session_state[k_selectbox_file]  may produce KeyError or return None
+	pdf_name = st.session_state.get(k_selectbox_file, "")
+
+	if pdf_name:
+		pdf_path = os.path.join(root_pdf_folder, pdf_name)
+		file_binary = load_pdf_binary(pdf_path)
+		st.write(pdf_path)
+
+		# Some widgets have unexpected behaviour when interacting with the session_state.
+		# This widget in-particular will display the same PDF despite receiving a new binary.
+		# removing the key returns the widget to normal functionality.
+		# k_pdf_viewer = f"k_pdf_viewer"
+		st_pdf_viewer = pdf_viewer(
+			input=file_binary,
+			width=pdf_width
+			# , key=k_pdf_viewer
+		)
+	else:
+		st.write(f"Select a PDF file first.")
+else:
+	# Tell user no files were found, the pdf_viewer and selectbox widgets are not even rendered here.
+	st.info(f"No PDF files were found in this folder '{root_pdf_folder}'.")
+            """,
+            "desc": """
+Sample code to show how to use a pdf_viewer widget in streamlit.
+            """,
+            "warn": """
+3rd-part widget - has weird interaction with the session_state
+            """,
+            "tags": [STREAMLIT, THIRD_PARTY, PDFS],
+            "date": datetime.datetime(2025, 2, 10, 17)
         }
     ]
 
@@ -3812,19 +3936,37 @@ Eval does not work properly in the immediate window. You must test using Script.
     ]
 
     samples = {
-        "vba": access_samples
+        "vba": access_samples,
+        "python": python_samples
     }
 
     for k in samples:
-        list_of_tags.insert(0, k)
+        if k not in list_of_tags:
+            list_of_tags.insert(0, k)
         for sample in samples[k]:
+            if k in sample["tags"]:
+                sample["tags"].remove(k)
             sample["tags"].insert(0, k)
+            for k2 in sample["tags"]:
+                if k2 not in list_of_tags:
+                    list_of_tags.append(k2)
 
     key = f"ms_tag_choices"
+    c_key = f"c_ms_tag_choices"
+    if st.session_state.get(c_key) is not None:
+        print(f"INSERT {st.session_state.get(c_key)}")
+        st.session_state.update({
+            key: st.session_state.get(c_key),
+            c_key: None
+        })
+
     st.session_state.setdefault(key, list_of_tags)
     st.session_state.setdefault("samples_expanded", False)
 
     cols_tags = st.columns([0.15, 0.85], border=True)
+
+    # def click_tag():
+    #     st.session_state.update({key: [tag]})
 
     with cols_tags[0]:
         if st.button(
@@ -3881,7 +4023,14 @@ Eval does not work properly in the immediate window. You must test using Script.
                         tag_cols = st.columns(len(tags), border=True)
                         for j, tag in enumerate(tags):
                             with tag_cols[j]:
-                                st.write(tag)
+                                # st.write(tag)
+                                if st.button(
+                                    label=tag,
+                                    key=f"k_btn_{i}_{lang}_{j}"
+                                ):
+                                    st.session_state.update({c_key: [tag]})
+                                    st.rerun()
+
 
 
 un = st.session_state.get('user_full_name')

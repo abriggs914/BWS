@@ -1097,7 +1097,6 @@ if selected_directory:
 					st_pdf_viewer = pdf_viewer(
 						input=load_pdf_binary(pdf_file),
 						width=s_w,
-						# annotations=annotations,
 						key=k_pdf_viewer,
 						annotations=parsed_annotations,
 						on_annotation_click=pdf_click_callback,
