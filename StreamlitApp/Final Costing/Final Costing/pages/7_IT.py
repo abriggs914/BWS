@@ -4032,7 +4032,6 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
                                     st.rerun()
 
 
-
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
