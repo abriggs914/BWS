@@ -1179,12 +1179,32 @@ if m_id is not None:
 		label=f"End Meeting #{m_id}",
 		key=f"k_end_meeting"
 	):
-		sql = ("""
+
+		editing = not df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id].empty
+		if editing:
+			sql = ("""
 UPDATE
 	[BWSdb].[dbo].[WSOM_MeetingNotes]
 SET
-	
-		""").strip()
+		
+			""").strip()
+		else:
+			sql = ("""
+INSERT INTO
+	[BWSdb].[dbo].[WSOM_MeetingNotes]
+			""").strip()
+
+		# for k, v in st.session_state.items():
+		# 	print(f"{k=}, {v=}")
+
+		df_meetings_results = st.session_state.get(k_df_meeting_quotes)
+
+		print("k_df_meeting_quotes")
+		print(df_meetings_results)
+
+		# new_quotes = []
+		# for i, row in df_meetings_results.iterrows():
+
 		# TODO iterate through meeting quotes and set the approved status to the the table
 		connect(sql, do_exec=False, do_print=True, do_show=True)
 		st.session_state.update({

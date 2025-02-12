@@ -1,4 +1,7 @@
-from typing import Literal
+from typing import Literal, Optional
+
+from streamlit_js_eval import streamlit_js_eval
+
 import streamlit as st
 import datetime
 
@@ -122,6 +125,17 @@ def rerun():
     # https://discuss.streamlit.io/t/is-it-possible-to-create-a-button-to-reset-relaod-the-whole-dashboard/6615/3
     import pyautogui
     pyautogui.hotkey("ctrl", "F5")
+
+
+def screen_dimensions() -> tuple[Optional[int], Optional[int]]:
+    """
+    Use JavaScript to retrieve the screen's Width and Height as integers.
+    :return: (Width, Height) as an integer tuple. May return None.
+    """
+    return (
+        streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W'),
+        streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
+    )
 
 
 if __name__ == '__main__':
