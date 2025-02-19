@@ -96,227 +96,227 @@ def load_orders():
 	return connect("Orders")
 
 
-@st.cache_data(ttl=None, show_spinner=True)
-def check_similar_quotes():
-	# return connect("SELECT 30001 AS [Quote#], 30001 AS [Q], 30001 AS [SimQ]")
-	sql = """
-SET NOCOUNT ON;
-DECLARE @sd DATETIME = '{SD}';
-DECLARE @ed DATETIME = '{ED}';
-
-DECLARE @t TABLE (
-        [ID] INT IDENTITY(0, 1),
-        [Q] INT
-);
-DECLARE @r TABLE (
-        [ID] INT IDENTITY(0, 1),
-        [Q] INT,
-        [SimQ] INT
-);
-INSERT INTO @t ([Q])
-SELECT
-        [Orders].[Quote#]
-FROM (
-        [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
-INNER JOIN
-        [BWSdb].[dbo].[Orders] WITH (NOLOCK)
-ON
-        [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
-)
-INNER JOIN
-        [BWSdb].[dbo].[Production] WITH (NOLOCK)
-ON
-        [Orders].[Quote#]=[Production].[Quote#]
-WHERE (
-        (
-                ([Production].[Prod Date]) Between @sd And @ed
-        )
-        And (
-                ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
-        )
-)
-/*
-ORDER BY
-        [Orders].[Model No]
-        ,[Production].[Prod Date]
-        ,[Orders].[Quote#]
-*/
-;
-
-DECLARE @i INT;
-DECLARE @c INT;
-declare @modelno NVARCHAR(255);
-declare @quote INT;
-
-SELECT
-        @i = 0,
-        @c = COUNT(*)
-FROM
-        @t
-;
-
-WHILE @i < @c BEGIN
-
-        SELECT
-                @quote = [Q]
-        FROM
-                @t
-        WHERE
-                [ID] = @i
-        ;
-
-    -- Insert statements for procedure here
-        --Grab Model No for future referencing
-        SELECT
-			@modelno = (select [Model No]
-		from
-			[BWSdb].[dbo].Orders with (nolock)
-		where
-			Quote# = @quote);
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
-			DROP TABLE #QuoteOptions
-		END
-
-        create table #QuoteOptions
-        (
-                #Options int,
-                [Option No] nvarchar(255),
-        [Price] money,
-        [Qty] int,
-        [Sections] nvarchar(255),
-        [Description] nvarchar(max)
-        );
-
-        --Grab Quotes with same Model No and Options as @quote parameter
-        insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
-        select [Option No], Price, Qty, Sections, Description
-        from [BWSdb].[dbo].[Order Options] with (nolock)
-        where Quote# = @quote
-		;
-
-        update #QuoteOptions
-        set #Options = NoOptions
-        from (select count(*) as NoOptions
-                  from [BWSdb].[dbo].[Order Options] with (nolock)
-                  where Quote# = @quote) as subCountOptions
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
-			DROP TABLE #QuoteswithsameOptions
-		END
-
-        create table #QuoteswithsameOptions
-        (
-                [Quote#] int,
-                [WO#] int,
-                [Quote Date] datetime,
-                [Prod Date] datetime
-        );
-
-        insert into #QuoteswithsameOptions
-        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        from [BWSdb].[dbo].[Order Options] as main with (nolock)
-        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-        inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
-                                                                                                and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)
-                                                                                                and main.Description = QuoteOptions.Description
-                                                                                                AND main.[Qty] = [QuoteOptions].[Qty]
-        where main.Quote# in (select Quote#
-                                                  from [BWSdb].[dbo].[Order Options] with (nolock)
-                                                  group by Quote#
-                                                  having count(*) in (select #Options from #QuoteOptions))
-        and Orders.[Model No] = @modelno
-        and [Date Declined] is null
-        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        having count(*) = (select distinct #Options from #QuoteOptions)
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
-			DROP TABLE #QuoteNPOs
-		END
-
-        create table #QuoteNPOs
-        (
-                #NPOs int,
-        [Description] nvarchar(max)
-        );
-
-        --Grab Quotes with same NPOs
-        insert into #QuoteNPOs (Description)
-        select Description
-        from [BWSdb].[dbo].[Custom Work] with (nolock)
-        where Quote# = @quote
-		;
-
-        update #QuoteNPOs
-        set #NPOs = NoNPOs
-        from (select count(*) as NoNPOs
-                  from [BWSdb].[dbo].[Custom Work] with (nolock)
-                  where Quote# = @quote) as subCountNPOs
-		;
-
-        --Drop and create temp table in tmpdb SQL database for faster processing
-        IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
-			DROP TABLE #QuoteswithsameNPOs
-		END
-
-        create table #QuoteswithsameNPOs
-        (
-                [Quote#] int,
-                [WO#] int,
-                [Quote Date] datetime,
-                [Prod Date] datetime
-        );
-
-        insert into #QuoteswithsameNPOs
-        select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        from [BWSdb].[dbo].[Custom Work] as main with (nolock)
-        inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
-        left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
-        inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
-        where main.Quote# in (select Quote#
-                                                  from [BWSdb].[dbo].[Custom Work] with (nolock)
-                                                  group by Quote#
-                                                  having count(*) in (select #NPOs from #QuoteNPOs))
-        and Orders.[Model No] = @modelno
-        and [Date Declined] is null
-        group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
-        having count(*) = (select distinct #NPOs from #QuoteNPOs)
-		;
-
-        --Final select statement
-        INSERT INTO @r ([Q], [SimQ])
-        select @quote, Options.Quote#
-        from #QuoteswithsameOptions as Options
-        inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
-        LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
-        where Options.Quote# <> @quote
-		;
-
-
-        SELECT @i = @i + 1;
-
-END
-/*
-SELECT
-        *
-FROM
-        @t
-*/
-
-SELECT
-        *
-FROM
-        @r
-;
-	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
-	print(sql)
-	return connect(sql, returns_records=True)
+# @st.cache_data(ttl=None, show_spinner=True)
+# def check_similar_quotes():
+# 	# return connect("SELECT 30001 AS [Quote#], 30001 AS [Q], 30001 AS [SimQ]")
+# 	sql = """
+# SET NOCOUNT ON;
+# DECLARE @sd DATETIME = '{SD}';
+# DECLARE @ed DATETIME = '{ED}';
+#
+# DECLARE @t TABLE (
+#         [ID] INT IDENTITY(0, 1),
+#         [Q] INT
+# );
+# DECLARE @r TABLE (
+#         [ID] INT IDENTITY(0, 1),
+#         [Q] INT,
+#         [SimQ] INT
+# );
+# INSERT INTO @t ([Q])
+# SELECT
+#         [Orders].[Quote#]
+# FROM (
+#         [BWSdb].[dbo].[Sales Staff] WITH (NOLOCK)
+# INNER JOIN
+#         [BWSdb].[dbo].[Orders] WITH (NOLOCK)
+# ON
+#         [Sales Staff].[ID-SaleStaff] = [Orders].[Sale PersonID]
+# )
+# INNER JOIN
+#         [BWSdb].[dbo].[Production] WITH (NOLOCK)
+# ON
+#         [Orders].[Quote#]=[Production].[Quote#]
+# WHERE (
+#         (
+#                 ([Production].[Prod Date]) Between @sd And @ed
+#         )
+#         And (
+#                 ([Orders].[WO Reviewed])=0 Or ([Orders].[WO Reviewed]) Is Null
+#         )
+# )
+# /*
+# ORDER BY
+#         [Orders].[Model No]
+#         ,[Production].[Prod Date]
+#         ,[Orders].[Quote#]
+# */
+# ;
+#
+# DECLARE @i INT;
+# DECLARE @c INT;
+# declare @modelno NVARCHAR(255);
+# declare @quote INT;
+#
+# SELECT
+#         @i = 0,
+#         @c = COUNT(*)
+# FROM
+#         @t
+# ;
+#
+# WHILE @i < @c BEGIN
+#
+#         SELECT
+#                 @quote = [Q]
+#         FROM
+#                 @t
+#         WHERE
+#                 [ID] = @i
+#         ;
+#
+#     -- Insert statements for procedure here
+#         --Grab Model No for future referencing
+#         SELECT
+# 			@modelno = (select [Model No]
+# 		from
+# 			[BWSdb].[dbo].Orders with (nolock)
+# 		where
+# 			Quote# = @quote);
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteOptions') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteOptions
+# 		END
+#
+#         create table #QuoteOptions
+#         (
+#                 #Options int,
+#                 [Option No] nvarchar(255),
+#         [Price] money,
+#         [Qty] int,
+#         [Sections] nvarchar(255),
+#         [Description] nvarchar(max)
+#         );
+#
+#         --Grab Quotes with same Model No and Options as @quote parameter
+#         insert into #QuoteOptions ([Option No], Price, Qty, Sections, Description)
+#         select [Option No], Price, Qty, Sections, Description
+#         from [BWSdb].[dbo].[Order Options] with (nolock)
+#         where Quote# = @quote
+# 		;
+#
+#         update #QuoteOptions
+#         set #Options = NoOptions
+#         from (select count(*) as NoOptions
+#                   from [BWSdb].[dbo].[Order Options] with (nolock)
+#                   where Quote# = @quote) as subCountOptions
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteswithsameOptions') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteswithsameOptions
+# 		END
+#
+#         create table #QuoteswithsameOptions
+#         (
+#                 [Quote#] int,
+#                 [WO#] int,
+#                 [Quote Date] datetime,
+#                 [Prod Date] datetime
+#         );
+#
+#         insert into #QuoteswithsameOptions
+#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         from [BWSdb].[dbo].[Order Options] as main with (nolock)
+#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+#         inner join #QuoteOptions as QuoteOptions on main.[Option No] = QuoteOptions.[Option No]
+#                                                                                                 and (case when main.Sections is null then '' else main.Sections end) = (case when QuoteOptions.Sections is null then '' else QuoteOptions.Sections end)
+#                                                                                                 and main.Description = QuoteOptions.Description
+#                                                                                                 AND main.[Qty] = [QuoteOptions].[Qty]
+#         where main.Quote# in (select Quote#
+#                                                   from [BWSdb].[dbo].[Order Options] with (nolock)
+#                                                   group by Quote#
+#                                                   having count(*) in (select #Options from #QuoteOptions))
+#         and Orders.[Model No] = @modelno
+#         and [Date Declined] is null
+#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         having count(*) = (select distinct #Options from #QuoteOptions)
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteNPOs') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteNPOs
+# 		END
+#
+#         create table #QuoteNPOs
+#         (
+#                 #NPOs int,
+#         [Description] nvarchar(max)
+#         );
+#
+#         --Grab Quotes with same NPOs
+#         insert into #QuoteNPOs (Description)
+#         select Description
+#         from [BWSdb].[dbo].[Custom Work] with (nolock)
+#         where Quote# = @quote
+# 		;
+#
+#         update #QuoteNPOs
+#         set #NPOs = NoNPOs
+#         from (select count(*) as NoNPOs
+#                   from [BWSdb].[dbo].[Custom Work] with (nolock)
+#                   where Quote# = @quote) as subCountNPOs
+# 		;
+#
+#         --Drop and create temp table in tmpdb SQL database for faster processing
+#         IF OBJECT_ID('tempdb..#QuoteswithsameNPOs') IS NOT NULL BEGIN
+# 			DROP TABLE #QuoteswithsameNPOs
+# 		END
+#
+#         create table #QuoteswithsameNPOs
+#         (
+#                 [Quote#] int,
+#                 [WO#] int,
+#                 [Quote Date] datetime,
+#                 [Prod Date] datetime
+#         );
+#
+#         insert into #QuoteswithsameNPOs
+#         select Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         from [BWSdb].[dbo].[Custom Work] as main with (nolock)
+#         inner join [BWSdb].[dbo].Orders with (nolock) on main.Quote# = Orders.Quote#
+#         left outer join [BWSdb].[dbo].Production with (nolock) on Orders.Quote# = Production.Quote#
+#         inner join #QuoteNPOs as QuoteNPOs on main.Description = QuoteNPOs.Description
+#         where main.Quote# in (select Quote#
+#                                                   from [BWSdb].[dbo].[Custom Work] with (nolock)
+#                                                   group by Quote#
+#                                                   having count(*) in (select #NPOs from #QuoteNPOs))
+#         and Orders.[Model No] = @modelno
+#         and [Date Declined] is null
+#         group by Orders.Quote#, Orders.WO#, Orders.[Quote Date], [Prod Date]
+#         having count(*) = (select distinct #NPOs from #QuoteNPOs)
+# 		;
+#
+#         --Final select statement
+#         INSERT INTO @r ([Q], [SimQ])
+#         select @quote, Options.Quote#
+#         from #QuoteswithsameOptions as Options
+#         inner join #QuoteswithsameNPOs as NPOs on Options.Quote# = NPOs.Quote#
+#         LEFT JOIN @t ON [Options].[Quote#] = [@t].[Q]
+#         where Options.Quote# <> @quote
+# 		;
+#
+#
+#         SELECT @i = @i + 1;
+#
+# END
+# /*
+# SELECT
+#         *
+# FROM
+#         @t
+# */
+#
+# SELECT
+#         *
+# FROM
+#         @r
+# ;
+# 	""".format(SD=f"{datetime.datetime.now():%Y-%m-%d}", ED=f"{(datetime.datetime.now() + datetime.timedelta(days=185)):%Y-%m-%d}")
+# 	print(sql)
+# 	return connect(sql, returns_records=True)
 
 
 @st.cache_data(ttl=None, show_spinner=True)
@@ -482,6 +482,7 @@ def ask_details(key, idx, selected_quote, annotation):
 def copy_wos_via_access(directory):
 	st.info(
 		"Please wait while SysproCompanyA processes the requested WOs..\nThis will take between 5 and 20 minutes (~30s per WO).")
+	st.info("Please wait for the 'RUNNING' icon to disappear before you try any successive reruns.")
 	access = r"C:\Program Files\Microsoft Office\root\Office16\MSACCESS.EXE"
 	db_name = r"C:\Access\SysproCompanyA.accdb"
 	macro_name = "WSOM_MacroAutoRunWOReports"
@@ -625,6 +626,7 @@ def meeting_input_menu(mode: str = "new"):
 			st.write(f"{saved_directory=}, {directory=}")
 			st.write(f"{is_dirty=}")
 
+			st.warning("Please ensure that Access is closed before trying this resource-intensive operation!")
 			if st.button(
 					label="save",
 					key="k_btn_save_new_meeting"
@@ -761,6 +763,21 @@ def create_new_meeting():
 	meeting_input_menu(mode="new")
 
 
+def set_orders_quotes_approved_from_wsom(lq):
+	sql = ("""	
+UPDATE
+	[BWSdb].[dbo].[Orders]
+SET
+	[WO Reviewed] = 1
+	,[WO Review Date] = '2025-02-05'
+WHERE
+	[Quote#] IN ({LQ});
+""").strip()
+	lqs = ", ".join(map(str, lq))
+	sql = sql.format(LQ=lqs)
+	connect(sql)
+
+
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
 s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
 
@@ -887,11 +904,13 @@ if selected_directory:
 	]
 	if not itinerary_file:
 		cont.error(f"Cannot find Itinerary file within this directory.")
-		if cont.button(
-			label="Try rerunning access commands?",
-			key="k_btn_rerun_access_command"
-		):
-			copy_wos_via_access(directory=selected_directory)
+		with cont.container(border=1):
+			st.warning("Please ensure that Access is closed before trying this resource-intensive operation!")
+			if st.button(
+				label="Try rerunning access commands?",
+				key="k_btn_rerun_access_command"
+			):
+				copy_wos_via_access(directory=selected_directory)
 		# streamlit_rea
 		st.stop()
 	else:
@@ -909,8 +928,8 @@ if selected_directory:
 	cont.write(rpt_files)
 	cont.write("list_quotes")
 	cont.write(list_quotes)
-	similar_quotes = check_similar_quotes()
-	# st.dataframe(similar_quotes)
+	# similar_quotes = check_similar_quotes()
+	# # st.dataframe(similar_quotes)
 	df_products = load_products()
 	df_orders = load_orders()
 	if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (st.session_state.get(k_df_meeting_quotes).empty):
@@ -963,20 +982,42 @@ if selected_directory:
 
 	st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
 
-	similar_quotes_m1 = similar_quotes.merge(
+	# similar_quotes_m1 = similar_quotes.merge(
+	# 	df_orders[[
+	# 		"Quote#",
+	# 		"ProductID",
+	# 		"DealerID"
+	# 	]],
+	# 	how="inner",
+	# 	left_on="Q",
+	# 	right_on="Quote#"
+	# )
+	#
+	# similar_quotes_tree = {
+	#
+	# }
+	#
+	# similar_quotes_m1 = similar_quotes_m1.merge(
+	# 	df_products[[
+	# 		"IDTrailer",
+	# 		"Class",
+	# 		"Model No"
+	# 	]],
+	# 	how="inner",
+	# 	left_on="ProductID",
+	# 	right_on="IDTrailer"
+	# )
+
+	similar_quotes_m1 = df_meeting_quotes.merge(
 		df_orders[[
 			"Quote#",
 			"ProductID",
 			"DealerID"
 		]],
 		how="inner",
-		left_on="Q",
+		left_on="Quote",
 		right_on="Quote#"
 	)
-
-	similar_quotes_tree = {
-
-	}
 
 	similar_quotes_m1 = similar_quotes_m1.merge(
 		df_products[[
@@ -985,12 +1026,12 @@ if selected_directory:
 			"Model No"
 		]],
 		how="inner",
-		left_on="ProductID",
+		left_on="ProductID_x",
 		right_on="IDTrailer"
 	)
 
-	similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Q"].apply(lambda q: rpt_files.get(str(q)))
-	similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
+	similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
+	# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
 
 	cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
 	cont.write(df_meeting_notes)
@@ -999,7 +1040,27 @@ if selected_directory:
 	cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
 	cont.write(similar_quotes_m1)
 
-	list_models = similar_quotes_m1["Model No"].dropna().unique().tolist()
+	quotes_approved_wsom_not_orders = df_meeting_quotes.merge(
+		df_orders[["Quote#"]].loc[(pd.isna(df_orders["WO Reviewed"])) | (df_orders["WO Reviewed"] == 0)],
+		how="inner",
+		left_on="Quote",
+		right_on="Quote#"
+	)
+	quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[quotes_approved_wsom_not_orders["Approved"] == 1]
+	with cont.container(border=1):
+		if not quotes_approved_wsom_not_orders.empty:
+			st.write("quotes_approved_wsom_not_orders")
+			st.write(quotes_approved_wsom_not_orders)
+			btn_set_orders_quotes_approved_from_wsom = st.button(
+				label="Set these quotes to approved",
+				key="k_btn_set_orders_quotes_approved_from_wsom",
+				on_click=lambda lq=quotes_approved_wsom_not_orders["Quote"].values.tolist(): set_orders_quotes_approved_from_wsom(lq)
+			)
+		else:
+			st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
+			st.write("Good to Go!")
+
+	list_models = sorted(similar_quotes_m1["Model No_x"].dropna().unique().tolist())
 
 	cont.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} model(s):")
 
