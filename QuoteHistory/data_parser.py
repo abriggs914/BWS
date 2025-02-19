@@ -808,6 +808,7 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2022-12-26",
 		"2022-12-27",
 		
+		"2023-01-02",
 		"2023-02-24",
 		"2023-04-07",
 		"2023-05-22",
@@ -829,7 +830,19 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
 		"2024-10-14",
 		"2024-11-11",
 		"2024-12-25",
-		"2024-12-26"
+		"2024-12-26",
+        
+		"2025-01-01",
+        "2025-02-17",
+        "2025-04-18",
+        "2025-05-19",
+        "2025-07-01",
+        "2025-08-04",
+        "2025-09-01",
+        "2025-10-13",
+        "2025-11-11",
+        "2025-12-25",
+        "2025-12-26"
 	]
 	personal_holidays = [
 		
@@ -917,14 +930,17 @@ with open(data_file, 'r') as data, open(out_file, 'w' if WRITING else 'r') as ou
         , "2024-10-04"
         , "2024-10-07"
         
+        # Quebec PWHL game
         , "2025-01-20"
         
+        # Halifax Rivalry Series
         , "2025-02-06"
         , "2025-02-07"
 	]
 	sick_days = [
 		"2023-05-23",
-		"2023-08-03"
+		"2023-08-03",
+        "2025-02-14"
 	]
 	
 	holidays = public_holidays + personal_holidays + sick_days

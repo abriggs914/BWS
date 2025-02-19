@@ -72,6 +72,11 @@ def parse_quotes_list(pdf_file, column_name="Quote #") -> list[str]:
 
 
 @st.cache_data(ttl=None, show_spinner=True)
+def load_gather_meetings():
+	return connect("EXEC [BWSdb].[dbo].[sp_WSOM_GatherMeetingQuotes]")
+
+
+@st.cache_data(ttl=None, show_spinner=True)
 def load_meetings():
 	return connect("WSOM_Meetings")
 
@@ -480,7 +485,7 @@ def copy_wos_via_access(directory):
 	access = r"C:\Program Files\Microsoft Office\root\Office16\MSACCESS.EXE"
 	db_name = r"C:\Access\SysproCompanyA.accdb"
 	macro_name = "WSOM_MacroAutoRunWOReports"
-	param_dir = directory
+	param_dir = os.path.basename(directory)
 	cmd = f"\"{access}\" \"{db_name}\" /x \"{macro_name}\" /cmd \"{param_dir}\""
 	print(f"{cmd=}")
 	st.code(cmd, language="shellSession", line_numbers=True)
@@ -768,12 +773,15 @@ root_path = r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings"
 list_meeting_folders = [d for d in os.listdir(root_path) if d != "Scripts"]
 
 df_meetings = load_meetings()
+df_gather_meetings = load_gather_meetings()
 df_meeting_notes = load_meeting_notes()
 df_meeting_notes["Quote"] = df_meeting_notes["Quote"].apply(int)
 
 cont = st.container(key="master", border=1)
 
 with cont:
+	st.write("df_gather_meetings")
+	st.dataframe(df_gather_meetings)
 	st.write("df_meetings")
 	st.dataframe(df_meetings)
 	st.write("df_meeting_notes")
@@ -884,6 +892,7 @@ if selected_directory:
 			key="k_btn_rerun_access_command"
 		):
 			copy_wos_via_access(directory=selected_directory)
+		# streamlit_rea
 		st.stop()
 	else:
 		itinerary_file = os.path.join(root_path, selected_directory, itinerary_file[0])
@@ -896,7 +905,10 @@ if selected_directory:
 			path_wo_rpt = None
 		rpt_files[qn] = path_wo_rpt
 
+	cont.write("rpt_files")
 	cont.write(rpt_files)
+	cont.write("list_quotes")
+	cont.write(list_quotes)
 	similar_quotes = check_similar_quotes()
 	# st.dataframe(similar_quotes)
 	df_products = load_products()
@@ -1004,7 +1016,7 @@ if selected_directory:
 			df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
 			st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
 			stdf_model_quotes = st.dataframe(
-				df_model_quotes,
+				df_model_quotes[["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails", "ResolvedBy", "Reviewed", "Approved"]],
 				selection_mode="single-row",
 				key="stdf_model_quotes",
 				hide_index=True,
@@ -1094,15 +1106,30 @@ if selected_directory:
 							print("==C")
 					else:
 						print("==D")
+
+					if st.button(
+						label="Approve",
+						key=f"btn_approve_quote"
+					):
+						df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
+						if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
+							st.session_state[f"status_{m_id}_{selected_quote}"] = {}
+						st.session_state[f"status_{m_id}_{selected_quote}"].update({
+							k_df_meeting_quotes: df_meeting_quotes,
+							f"approve_{selected_quote}_date": datetime.datetime.now(),
+							f"approve_{selected_quote}_by": "Avery Briggs"
+						})
+						st.rerun()
 					st_pdf_viewer = pdf_viewer(
 						input=load_pdf_binary(pdf_file),
 						width=s_w,
-						key=k_pdf_viewer,
+						key=f"kp_{k_pdf_viewer}",
 						annotations=parsed_annotations,
 						on_annotation_click=pdf_click_callback,
 						annotation_outline_size=2,
 						pages_vertical_spacing=10
 					)
+					st.session_state.update({k_pdf_viewer: f"kp_{k_pdf_viewer}"})
 					print(f"{st_pdf_viewer=}")
 					if isinstance(st_pdf_viewer, (dict, list)):
 						if k_c_a in st_pdf_viewer:
@@ -1124,22 +1151,8 @@ if selected_directory:
 								print("_E")
 						else:
 							print("_F")
-
 					st.write(st_pdf_viewer)
 
-					if st.button(
-						label="Approve",
-						key=f"btn_approve_quote"
-					):
-						df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
-						if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
-							st.session_state[f"status_{m_id}_{selected_quote}"] = {}
-						st.session_state[f"status_{m_id}_{selected_quote}"].update({
-							k_df_meeting_quotes: df_meeting_quotes,
-							f"approve_{selected_quote}_date": datetime.datetime.now(),
-							f"approve_{selected_quote}_by": "Avery Briggs"
-						})
-						st.rerun()
 					# TODO add a submit issue button at the bottom of the screen
 					# if st.button(
 					# 	label="Issue",
