@@ -775,7 +775,7 @@ WHERE
 """).strip()
 	lqs = ", ".join(map(str, lq))
 	sql = sql.format(LQ=lqs)
-	connect(sql)
+	connect(sql, do_print=True, do_show=True)
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
