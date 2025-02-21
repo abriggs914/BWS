@@ -1,4 +1,4 @@
-
+import enum
 import os.path
 import cv2
 import pandas as pd
@@ -13,7 +13,7 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
 
-from datetime_utility import is_date
+from datetime_utility import is_date, date_str_format
 from html_utility import list_to_html
 from pyodbc_connection import connect
 from sql_utility import *
@@ -3439,24 +3439,46 @@ def inventory_maintenance():
     #         st.error("No barcode detected in either the original nor the processed image.")
 
 
-def code_samples():
+class Tags(enum.Enum):
 
-    LISTS: str = "lists"
-    DATES: str = "date"
+    # Languages
     PYTHON: str = "python"
-    SHELL: str = "shell"
+    VBA: str = "vba"
+    SQL: str = "sql"
+
+    # Data Structures
+    LISTS: str = "lists"
+    DATES: str = "dates"
     PDFS: str = "pdfs"
-    BUILT_IN: str = "built_in"
+
+    # Environments
+    STREAMLIT: str = "Streamlit"
+    SHELL: str = "shell"
+
+    # Record Handling
     LOOKUP: str = "lookup"
     RECORDSET: str = "recordset"
+
+    # Utility Files
     ARRAY_UTILITY: str = "array_utility"
     DICTIONARY_UTILITY: str = "dictionary_utility"
     RECORDSET_UTILITY: str = "recordset_utility"
     PYTHON_UTILITY: str = "python_utility"
     DATE_UTILITY: str = "date_utility"
 
-    THIRD_PARTY: str = "3rd party"
-    STREAMLIT: str = "Streamlit"
+    # Other
+    BUILT_IN: str = "built_in"
+    ON_GITHUB: str = "on_GitHub"
+    ON_STACKOVERFLOW: str = "on_StackOverFlow"
+    THIRD_PARTY: str = "third_party"
+
+    def __str__(self):
+        return self.value.replace("_", " ").title()
+
+    def __repr__(self):
+        return self.value.replace("_", " ").title()
+
+def code_samples():
 
     # TEMPLATE
     # {
@@ -3484,7 +3506,7 @@ Use DLookup to retrieve a single value from a table given some criteria (Optiona
             "warn": """
 This function only returns a single value. If you need more than 1 value from that record it is best to use a Recordset object, or another method.
             """,
-            "tags": [BUILT_IN, LOOKUP],
+            "tags": [Tags.BUILT_IN, Tags.LOOKUP],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3527,7 +3549,7 @@ Optionally supports indexed positional lookup if an integer is passed as 'ColNam
     Errors when values not found
             """,
             "warn": """""",
-            "tags": [LOOKUP, RECORDSET, RECORDSET_UTILITY],
+            "tags": [Tags.LOOKUP, Tags.RECORDSET, Tags.RECORDSET_UTILITY],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3634,7 +3656,7 @@ Ensure all paths in python script are using absolute pathing.
 Optionally pass the absolute path to an interpreter, or have it looked up using a naive approach (see FindPythonPath)
 Also choose how the terminal window is displayed. By default it will have normal focus. 
             """,
-            "tags": [PYTHON, SHELL, PYTHON_UTILITY],
+            "tags": [Tags.PYTHON, Tags.SHELL, Tags.PYTHON_UTILITY],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3686,7 +3708,7 @@ Wrapper 'class' for a sudo-dictionary in VBA.
 '   in your VBA project for the Scripting.Dictionary object to be available.
             """,
             "warn": """""",
-            "tags": [DICTIONARY_UTILITY],
+            "tags": [Tags.DICTIONARY_UTILITY, Tags.ON_STACKOVERFLOW],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3705,7 +3727,7 @@ You may also just return the values.
 Supports 5 modes using integer codes [-1, 0, 1, 2, 3]
             """,
             "warn": """""",
-            "tags": [DATES, DATE_UTILITY],
+            "tags": [Tags.DATES, Tags.DATE_UTILITY],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3789,7 +3811,7 @@ Functions List:
 '   Zip                     -   Take 2 arrays and return a zipped list of elements at the same indexes.
             """,
             "warn": """Please see the source file for more examples.""",
-            "tags": [ARRAY_UTILITY, PYTHON, LISTS],
+            "tags": [Tags.ARRAY_UTILITY, Tags.PYTHON, Tags.LISTS],
             "date": datetime.datetime(2025, 2, 10, 17)
         },
         {
@@ -3802,7 +3824,7 @@ The expression being evaluated will be treated as generic VBA code - NO NESTED N
 Eval does not work properly in the immediate window. You must test using Script.
             """,
             "warn": """""",
-            "tags": [BUILT_IN],
+            "tags": [Tags.BUILT_IN],
             "date": datetime.datetime(2025, 2, 10, 17)
         }
     ]
@@ -3915,46 +3937,36 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
             "warn": """
 3rd-part widget - has weird interaction with the session_state
             """,
-            "tags": [STREAMLIT, THIRD_PARTY, PDFS],
+            "tags": [Tags.STREAMLIT, Tags.THIRD_PARTY, Tags.PDFS, Tags.ON_GITHUB],
             "date": datetime.datetime(2025, 2, 10, 17)
         }
     ]
 
-    list_of_tags = [
-        DATES,
-        LISTS,
-        PYTHON,
-        SHELL,
-        BUILT_IN,
-        LOOKUP,
-        RECORDSET,
-        ARRAY_UTILITY,
-        DICTIONARY_UTILITY,
-        RECORDSET_UTILITY,
-        PYTHON_UTILITY,
-        DATE_UTILITY
-    ]
+    list_of_tags = list(map(str, list(Tags)))
 
     samples = {
-        "vba": access_samples,
-        "python": python_samples
+        Tags.VBA: access_samples,
+        Tags.PYTHON: python_samples
     }
 
     for k in samples:
-        if k not in list_of_tags:
-            list_of_tags.insert(0, k)
+        if str(k) not in list_of_tags:
+            # print(f"ADDING {k=}")
+            list_of_tags.insert(0, str(k))
         for sample in samples[k]:
             if k in sample["tags"]:
+                # print(f"REMOVING {k=}")
                 sample["tags"].remove(k)
             sample["tags"].insert(0, k)
             for k2 in sample["tags"]:
-                if k2 not in list_of_tags:
-                    list_of_tags.append(k2)
+                if str(k2) not in list_of_tags:
+                    # print(f"ADDING {k2=}")
+                    list_of_tags.append(str(k2))
 
     key = f"ms_tag_choices"
     c_key = f"c_ms_tag_choices"
     if st.session_state.get(c_key) is not None:
-        print(f"INSERT {st.session_state.get(c_key)}")
+        # print(f"INSERT {st.session_state.get(c_key)}")
         st.session_state.update({
             key: st.session_state.get(c_key),
             c_key: None
@@ -3996,6 +4008,7 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
             options=list_of_tags
         )
 
+    # print(f"NEW == {datetime.datetime.now():%x %X}")
     for lang, samples_list in samples.items():
         for i, data in enumerate(samples_list):
             name = data["name"]
@@ -4003,8 +4016,15 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
             desc = data["desc"]
             warn = data["warn"]
             tags = data["tags"]
-            # if any tag in 'ms_tags_choices' are in 'tags', then show sample
-            if len(set(tags).difference(set(ms_tag_choices))) != len(tags):
+            date = data["date"]
+            # # if any tag in 'ms_tags_choices' are in 'tags', then show sample
+            # print(f"{lang=}, {i=}, {tags=}, {set(tags)=}, {set(ms_tag_choices)=}, A={set(tags).difference(set(ms_tag_choices))}, len(A)={len(set(tags).difference(set(ms_tag_choices)))}, B={len(tags)}, C={len(set(tags).difference(set(ms_tag_choices))) != len(tags)}")
+            # # if len(set(tags).difference(set(ms_tag_choices))) != len(tags):
+            # # if len(set(tags).difference(set(ms_tag_choices))) != 0:
+            a_ = set(ms_tag_choices)
+            b_ = set(map(str, tags))
+            # print(f"{a_=}, {b_=}, {a_.intersection(b_)=}")
+            if len(a_.intersection(b_)) > 0:
                 with st.expander(name, expanded=st.session_state.get("samples_expanded", False)):
                     if "\n" in desc:
                         lines = list_to_html(
@@ -4016,20 +4036,22 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
                         st.markdown(lines[1], unsafe_allow_html=True)
                     else:
                         st.write(desc)
-                    st.code(code, language=lang, line_numbers=True)
+                    st.code(code, language=str(lang), line_numbers=True)
                     if warn:
                         st.warning(warn)
                     if tags:
                         tag_cols = st.columns(len(tags), border=True)
                         for j, tag in enumerate(tags):
+                            # print(f"{j=}, {tag=}, {type(tag)=}")
                             with tag_cols[j]:
                                 # st.write(tag)
                                 if st.button(
-                                    label=tag,
+                                    label=str(tag),
                                     key=f"k_btn_{i}_{lang}_{j}"
                                 ):
-                                    st.session_state.update({c_key: [tag]})
+                                    st.session_state.update({c_key: [str(tag)]})
                                     st.rerun()
+                    st.write(f"LAST MODIFIED {date_str_format(date)}")
 
 
 un = st.session_state.get('user_full_name')
