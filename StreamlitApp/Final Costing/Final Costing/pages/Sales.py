@@ -31,6 +31,7 @@ st.set_page_config(
 )
 
 DEFAULT_NEW_FOLDER: str = "Create New"
+k_need_rerun: str = "need_rerun"
 k_meeting_id: str = "k_meeting_id"
 k_df_meeting_quotes: str = "k_df_meeting_quotes"
 k_selectbox_choose_edit_meeting: str = "k_selectbox_choose_edit_meeting"
@@ -712,7 +713,8 @@ def meeting_input_menu(mode: str = "new"):
 						# k_multiselect_attendance: attendance,
 						# k_date_input_meeting: k_date_input_meeting,
 						# k_time_input_meeting: k_time_input_meeting,
-						k_selectbox_directory: directory
+						k_selectbox_directory: directory,
+						k_need_rerun: True
 					})
 					st.rerun()
 	# 	else:
@@ -803,6 +805,34 @@ WHERE
 	lqs = ", ".join(map(str, lq))
 	sql = sql.format(LQ=lqs)
 	connect(sql, do_print=True, do_show=True)
+
+
+def select_quote(*args):
+	print(f"select_quote {args=}")
+	data = st.session_state.get('stdf_model_quotes_0', {})
+	print(f"{data=}")
+	edited_rows = data.get("edited_rows", {})
+	added_rows = data.get("added_rows", {})
+	deleted_rows = data.get("deleted_rows", {})
+	# newest = None, None
+	selected = []
+	for row, row_data in edited_rows.items():
+		ser_quote = df_meeting_quotes.iloc[row]
+		quote = ser_quote["Quote"]
+		date = ser_quote["Sel_Date"]
+		for col, val in row_data.items():
+			if (col == "Sel") and val:
+				selected.append([row, date])
+	selected.sort(key=lambda tup: tup[1] if not pd.isna(tup[1]) else now + datetime.timedelta(seconds=-300), reverse=True)
+
+	for row, date in selected[1:]:
+		df_meeting_quotes.loc[row, "Sel_Date"] = None
+		df_meeting_quotes.loc[row, "Sel"] = False
+
+	# selected = st.session_state.get("stdf_model_quotes_0_selected", [])
+	# for i, q in enumerate(selected):
+	# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == q, "Sel"] = False
+	# # df_meeting_quotes.loc[df_meeting_quotes["Quote"] == q, "Sel"] = False
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
@@ -1007,8 +1037,9 @@ if selected_directory:
 		df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
 
 		for i, row in df_meeting_quotes.iterrows():
-			df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["Quote#"])
+			df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
 			df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+
 		# CopyWithSlice
 		# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
 		# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
@@ -1017,6 +1048,24 @@ if selected_directory:
 		df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
 
 	st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
+
+	# # TODO WIP
+	# idxs = df_meeting_quotes.groupby("Quote")["MeetingID"].idmax()
+	# df_latest_meeting = df_meeting_quotes.loc[idxs]
+	# df_resolved = df_latest_meeting[df_latest_meeting["DateResolved"].notna()]
+	# df_unresolved = df_latest_meeting[df_latest_meeting["DateResolved"].isna()]
+	# df_unresolved = df_unresolved.merge(
+	# 	df_meeting_quotes.groupby("Quote")["IssueDescription"].apply(lambda x: "; ".join(x)).reset_index(),
+	# 	on="Quote",
+	# 	suffixes=("", "_All")
+	# )
+	#
+	# st.write("df_latest_meeting")
+	# st.write(df_latest_meeting)
+	# st.write("df_latest_meeting")
+	# st.write(df_latest_meeting)
+	# st.write("df_unresolved")
+	# st.write(df_unresolved)
 
 	# similar_quotes_m1 = similar_quotes.merge(
 	# 	df_orders[[
@@ -1109,33 +1158,39 @@ if selected_directory:
 			st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
 			st.write("Good to Go!")
 
-	view_as_options = ["By Class", "By Model", "By Dealer", "All"]
+	view_as_options = ["Class", "Model", "Dealer", "All"]
 
 	list_models = sorted(similar_quotes_m1["Model No_x"].dropna().unique().tolist())
 	list_classes = sorted(similar_quotes_m1["Class_x"].dropna().unique().tolist())
 	list_dealers = sorted(similar_quotes_m1["COMPANY NAME_y"].dropna().unique().tolist())
 
-	cols__ = st.columns(3)
-	with cols__[0]:
-		st.write(list_classes)
-	with cols__[1]:
-		st.write(list_models)
-	with cols__[2]:
-		st.write(list_dealers)
+	# cols__ = st.columns(3)
+	# with cols__[0]:
+	# 	st.write(list_classes)
+	# with cols__[1]:
+	# 	st.write(list_models)
+	# with cols__[2]:
+	# 	st.write(list_dealers)
 
 	def change_selectbox_view_quotes():
-		va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
-		lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
+		# va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
+		# lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
+
+		# double rerun to hide the "NO OP" warning
 		st.session_state.update({
-			"pills_selected_model": 0,
-			"need_rerun": True
+			# "pills_selected_model": 0
+			# ,
+			k_need_rerun: True
 		})
+		if "pills_selected_model" in st.session_state:
+			del st.session_state["pills_selected_model"]
+		st.rerun()
 
 	with cont:
 		k_selectbox_view_quotes = "selectbox_view_quotes"
 		st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
 		selectbox_view_quotes = st.selectbox(
-			label=f"View quotes as:",
+			label=f"View quotes by:",
 			key=f"k_{k_selectbox_view_quotes}",
 			options=view_as_options,
 			on_change=change_selectbox_view_quotes
@@ -1172,6 +1227,7 @@ if selected_directory:
 		else:
 			# All
 			df_k = None
+			selected_model = True
 
 		if selected_model:
 
@@ -1181,15 +1237,45 @@ if selected_directory:
 				df_model_quotes = df_meeting_quotes
 			df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
 			st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
+			view_cols = ["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
+					 "ResolvedBy", "Reviewed", "Approved"]
 			stdf_model_quotes = st.dataframe(
-				df_model_quotes[
-					["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
-					 "ResolvedBy", "Reviewed", "Approved"]],
+				df_model_quotes[view_cols],
 				selection_mode="single-row",
 				key="stdf_model_quotes",
 				hide_index=True,
 				on_select="rerun"
 			)
+			df_model_quotes["Sel"] = False
+			df_model_quotes["Sel_Date"] = None
+			stdf_model_quotes_0 = st.data_editor(
+				df_model_quotes[["Sel"] + view_cols],
+				# selection_mode="single-row",
+				key="stdf_model_quotes_0",
+				hide_index=True,
+				# on_select="rerun",
+				on_change=select_quote,
+				disabled=view_cols[:-2],
+				column_config={
+					"Sel": st.column_config.CheckboxColumn(
+						label="Sel",
+						width=50
+					),
+					view_cols[-2]: st.column_config.CheckboxColumn(
+						label=view_cols[-2],
+						width=120
+					),
+					view_cols[-1]: st.column_config.CheckboxColumn(
+						label=view_cols[-1],
+						width=120
+					)
+				}
+			)
+			# st.session_state.update({
+			# 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
+			# })
+			st.write("stdf_model_quotes_0")
+			st.write(stdf_model_quotes_0)
 
 			if stdf_model_quotes["selection"]["rows"]:
 				ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
@@ -1404,8 +1490,8 @@ INSERT INTO
 		cont.empty()
 		st.rerun()
 
-if st.session_state.get("need_rerun", False):
-	st.session_state.update({"need_rerun": False})
+if st.session_state.get(k_need_rerun, False):
+	st.session_state.update({k_need_rerun: False})
 	st.rerun()
 
 	# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
