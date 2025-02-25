@@ -1040,6 +1040,7 @@ if selected_directory:
 			df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
 			df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
 
+
 		# CopyWithSlice
 		# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
 		# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
