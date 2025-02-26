@@ -1126,6 +1126,11 @@ if selected_directory:
 		right_on="ID"
 	)
 
+	k_toggle_new_quotes_only = "toggle_new_quotes_only"
+	new_only: bool = st.session_state.setdefault(k_toggle_new_quotes_only, False)
+	if new_only:
+		df_meeting_quotes = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+
 	similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
 	# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
 
@@ -1161,9 +1166,9 @@ if selected_directory:
 
 	view_as_options = ["Class", "Model", "Dealer", "All"]
 
-	list_models = sorted(similar_quotes_m1["Model No_x"].dropna().unique().tolist())
-	list_classes = sorted(similar_quotes_m1["Class_x"].dropna().unique().tolist())
-	list_dealers = sorted(similar_quotes_m1["COMPANY NAME_y"].dropna().unique().tolist())
+	list_models = sorted(df_meeting_quotes["Model No"].dropna().unique().tolist())
+	list_classes = sorted(df_meeting_quotes["Class"].dropna().unique().tolist())
+	list_dealers = sorted(df_meeting_quotes["COMPANY NAME"].dropna().unique().tolist())
 
 	# cols__ = st.columns(3)
 	# with cols__[0]:
@@ -1188,6 +1193,20 @@ if selected_directory:
 		st.rerun()
 
 	with cont:
+
+		df_new_quotes: pd.DataFrame = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+		df_old_quotes: pd.DataFrame = df_meeting_quotes.loc[df_meeting_quotes["Reviewed"]]
+
+		st.write(f"##### # New: {df_new_quotes.shape[0]}")
+		st.write(f"##### # Old: {df_old_quotes.shape[0]}")
+
+		st.session_state.setdefault(k_toggle_new_quotes_only, False)
+		toggle_new_quotes_only = st.toggle(
+			label="New Quotes Only",
+			key=k_toggle_new_quotes_only
+		)
+		# st.session_state.update({k_toggle_new_quotes_only: toggle_new_quotes_only})
+
 		k_selectbox_view_quotes = "selectbox_view_quotes"
 		st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
 		selectbox_view_quotes = st.selectbox(
@@ -1247,36 +1266,36 @@ if selected_directory:
 				hide_index=True,
 				on_select="rerun"
 			)
-			df_model_quotes["Sel"] = False
-			df_model_quotes["Sel_Date"] = None
-			stdf_model_quotes_0 = st.data_editor(
-				df_model_quotes[["Sel"] + view_cols],
-				# selection_mode="single-row",
-				key="stdf_model_quotes_0",
-				hide_index=True,
-				# on_select="rerun",
-				on_change=select_quote,
-				disabled=view_cols[:-2],
-				column_config={
-					"Sel": st.column_config.CheckboxColumn(
-						label="Sel",
-						width=50
-					),
-					view_cols[-2]: st.column_config.CheckboxColumn(
-						label=view_cols[-2],
-						width=120
-					),
-					view_cols[-1]: st.column_config.CheckboxColumn(
-						label=view_cols[-1],
-						width=120
-					)
-				}
-			)
-			# st.session_state.update({
-			# 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
-			# })
-			st.write("stdf_model_quotes_0")
-			st.write(stdf_model_quotes_0)
+			# df_model_quotes["Sel"] = False
+			# df_model_quotes["Sel_Date"] = None
+			# stdf_model_quotes_0 = st.data_editor(
+			# 	df_model_quotes[["Sel"] + view_cols],
+			# 	# selection_mode="single-row",
+			# 	key="stdf_model_quotes_0",
+			# 	hide_index=True,
+			# 	# on_select="rerun",
+			# 	on_change=select_quote,
+			# 	disabled=view_cols[:-2],
+			# 	column_config={
+			# 		"Sel": st.column_config.CheckboxColumn(
+			# 			label="Sel",
+			# 			width=50
+			# 		),
+			# 		view_cols[-2]: st.column_config.CheckboxColumn(
+			# 			label=view_cols[-2],
+			# 			width=120
+			# 		),
+			# 		view_cols[-1]: st.column_config.CheckboxColumn(
+			# 			label=view_cols[-1],
+			# 			width=120
+			# 		)
+			# 	}
+			# )
+			# # # st.session_state.update({
+			# # # 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
+			# # # })
+			# # st.write("stdf_model_quotes_0")
+			# # st.write(stdf_model_quotes_0)
 
 			if stdf_model_quotes["selection"]["rows"]:
 				ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
