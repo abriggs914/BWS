@@ -1776,8 +1776,8 @@ if st.session_state.get(k_need_rerun, False):
 # 	):
 # 		st.subheader("Checklist:")
 #
-# 		# Create nodes to display
-# 		# nodes = [
+# 		# Create op_nodes to display
+# 		# op_nodes = [
 # 		# 	{"label": "Folder A", "value": "folder_a"},
 # 		# 	{
 # 		# 		"label": "Folder B",
@@ -1815,7 +1815,7 @@ if st.session_state.get(k_need_rerun, False):
 # 			"question": (["Beams", "Load-Securement"], qn),
 # 			"all of the above": ([], aa)
 # 		}
-# 		nodes = [{
+# 		op_nodes = [{
 # 			"label": q,
 # 			"value": f"{ch}{q}",
 # 			# "showCheckbox": False,
@@ -1836,17 +1836,17 @@ if st.session_state.get(k_need_rerun, False):
 # 		]
 # 		possible_keys = []
 # 		for i, q in enumerate(quotes_list):
-# 			possible_keys.append(nodes[i]["value"])
+# 			possible_keys.append(op_nodes[i]["value"])
 # 			for j, lbl in enumerate(node_structure):
-# 				possible_keys.append(nodes[i]["children"][j]["value"])
-# 				if not nodes[i]["children"][j].get("children", []):
-# 					del nodes[i]["children"][j]["children"]
+# 				possible_keys.append(op_nodes[i]["children"][j]["value"])
+# 				if not op_nodes[i]["children"][j].get("children", []):
+# 					del op_nodes[i]["children"][j]["children"]
 # 				else:
-# 					for child in nodes[i]["children"][j].get("children", []):
+# 					for child in op_nodes[i]["children"][j].get("children", []):
 # 						possible_keys.append(child["value"])
 # 		st.write(possible_keys)
-# 		st.write(nodes)
-# 		# nodes = [
+# 		st.write(op_nodes)
+# 		# op_nodes = [
 # 		# 	{
 # 		# 		"label": q,
 # 		# 		"value": f"{ch}{q}",
@@ -1897,7 +1897,7 @@ if st.session_state.get(k_need_rerun, False):
 # 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
 #
 # 			return_select = tree_select(
-# 				nodes,
+# 				op_nodes,
 # 				checked=pre_select,
 # 				# key="tree_select",
 # 				direction="ltr"
@@ -1907,7 +1907,7 @@ if st.session_state.get(k_need_rerun, False):
 # 				label="select all",
 # 				key="btn_select_all_checklist"
 # 			):
-# 				children = deepcopy(nodes)
+# 				children = deepcopy(op_nodes)
 # 				checked = []
 # 				while children:
 # 					node = children.pop(0)
@@ -2427,8 +2427,8 @@ if st.session_state.get(k_need_rerun, False):
 # # 	):
 # # 		st.subheader("Checklist:")
 # #
-# # 		# Create nodes to display
-# # 		# nodes = [
+# # 		# Create op_nodes to display
+# # 		# op_nodes = [
 # # 		# 	{"label": "Folder A", "value": "folder_a"},
 # # 		# 	{
 # # 		# 		"label": "Folder B",
@@ -2466,7 +2466,7 @@ if st.session_state.get(k_need_rerun, False):
 # # 			"question": (["Beams", "Load-Securement"], qn),
 # # 			"all of the above": ([], aa)
 # # 		}
-# # 		nodes = [{
+# # 		op_nodes = [{
 # # 			"label": q,
 # # 			"value": f"{ch}{q}",
 # # 			# "showCheckbox": False,
@@ -2487,17 +2487,17 @@ if st.session_state.get(k_need_rerun, False):
 # # 		]
 # # 		possible_keys = []
 # # 		for i, q in enumerate(quotes_list):
-# # 			possible_keys.append(nodes[i]["value"])
+# # 			possible_keys.append(op_nodes[i]["value"])
 # # 			for j, lbl in enumerate(node_structure):
-# # 				possible_keys.append(nodes[i]["children"][j]["value"])
-# # 				if not nodes[i]["children"][j].get("children", []):
-# # 					del nodes[i]["children"][j]["children"]
+# # 				possible_keys.append(op_nodes[i]["children"][j]["value"])
+# # 				if not op_nodes[i]["children"][j].get("children", []):
+# # 					del op_nodes[i]["children"][j]["children"]
 # # 				else:
-# # 					for child in nodes[i]["children"][j].get("children", []):
+# # 					for child in op_nodes[i]["children"][j].get("children", []):
 # # 						possible_keys.append(child["value"])
 # # 		st.write(possible_keys)
-# # 		st.write(nodes)
-# # 		# nodes = [
+# # 		st.write(op_nodes)
+# # 		# op_nodes = [
 # # 		# 	{
 # # 		# 		"label": q,
 # # 		# 		"value": f"{ch}{q}",
@@ -2548,7 +2548,7 @@ if st.session_state.get(k_need_rerun, False):
 # # 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
 # #
 # # 			return_select = tree_select(
-# # 				nodes,
+# # 				op_nodes,
 # # 				checked=pre_select,
 # # 				# key="tree_select",
 # # 				direction="ltr"
@@ -2558,7 +2558,7 @@ if st.session_state.get(k_need_rerun, False):
 # # 				label="select all",
 # # 				key="btn_select_all_checklist"
 # # 			):
-# # 				children = deepcopy(nodes)
+# # 				children = deepcopy(op_nodes)
 # # 				checked = []
 # # 				while children:
 # # 					node = children.pop(0)

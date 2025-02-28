@@ -1911,7 +1911,7 @@ from streamlit_tree_select import tree_select
 st.title("🐙 Streamlit-tree-select")
 st.subheader("A simple and elegant checkbox tree for Streamlit.")
 
-# Create nodes to display
+# Create op_nodes to display
 nodes = [
     {"label": "Folder A", "value": "folder_a"},
     {
