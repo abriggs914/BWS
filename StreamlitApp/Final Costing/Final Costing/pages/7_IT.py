@@ -3199,7 +3199,9 @@ def access_maintenance():
     databases = os.listdir(r"\\server3.bwsdomain.local\production")
     databases = [fn for fn in databases if any([fn.endswith(".mdb"), fn.endswith(".accdb")])]
 
+    main_cols = st.columns(2)
     grid_db_btns = []
+    grid_odbc_btns = []
 
     # download_buttons = []
     for i, db in enumerate(databases):
@@ -3213,7 +3215,7 @@ def access_maintenance():
         # print(f"{i=}, {db=}, {name=}, {key=}")
 
         if data is not None:
-            grid_db_btns.append(st.columns([0.25, 0.25, 0.5]))
+            grid_db_btns.append(main_cols[0].columns([0.25, 0.25, 0.5]))
             grid_db_btns[i][0].toggle(
                 label="select",
                 key=toggle_key,
@@ -3226,24 +3228,62 @@ def access_maintenance():
                 mime="application/octet-stream"
             )
 
-    if st.button(
-        label="Create 'Update Access.bat' file",
-        key="button_create_update_bat_file"
-    ):
-        out_lines = []
-        for i, db in enumerate(databases):
-            toggle_key = f"toggle_db_{i}"
-            if st.session_state.get(toggle_key, False):
-                out_lines.append(fr'xcopy "\\SERVER3.bwsdomain.local\Production\{db}" c:\Access\*.* /Y')
+    # if st.button(
+    #     label="Create 'Update Access.bat' file",
+    #     key="button_create_update_bat_file"
+    # ):
+    out_lines = []
+    for i, db in enumerate(databases):
+        toggle_key = f"toggle_db_{i}"
+        if st.session_state.get(toggle_key, False):
+            out_lines.append(fr'xcopy "\\SERVER3.bwsdomain.local\Production\{db}" c:\Access\*.* /Y')
 
-
-        st.download_button(
-            label="download file",
+    if out_lines:
+        grid_db_btns[i][0].download_button(
+            # label="download file",
+            label="Download 'Update Access.txt'",
             data="\n".join(out_lines),
             file_name="Update Access.txt"
         )
-        st.write(f":red[Please save this output file as '.bat' in order to execute it.]")
-        st.write(f":red[This file type triggers suspicious download protocols, so .txt is the best delivery method.]")
+        grid_db_btns[i][0].write(f":red[Please save this output file as '.bat' in order to execute it.]")
+        grid_db_btns[i][0].write(f":red[This file type triggers suspicious download protocols, so .txt is the best delivery method.]")
+
+    odbc_connection_dbs = [
+        "BWSdb",
+        "Stargatedb",
+        "UniPointdb",
+        "SysproCompanyA",
+        "SysproCompanyS",
+        "SysproCompanyL"
+    ]
+    for i, odbc_name in enumerate(odbc_connection_dbs):
+        grid_odbc_btns.append(main_cols[1].columns([0.25, 0.25, 0.5]))
+        key = f"db_file_{odbc_name.lower()}"
+        toggle_key = f"toggle_odbc_{i}"
+        grid_odbc_btns[i][0].toggle(
+            label=odbc_name,
+            key=toggle_key
+            # ,
+            # label_visibility="hidden"
+        )
+
+    out_lines_o = []
+    for i, odbc_name in enumerate(odbc_connection_dbs):
+        toggle_key = f"toggle_odbc_{i}"
+        # dsn_name =
+        if st.session_state.get(toggle_key, False):
+            out_lines_o.append(fr'odbcconf.exe /a {{CONFIGDSN "SQL Server" "DSN={odbc_name}|Server=SERVER3"}}')
+
+    if out_lines_o:
+        grid_odbc_btns[i][0].download_button(
+            # label="download file",
+            label="Download: 'Connect ODBC.txt'",
+            data="\n".join(out_lines_o),
+            file_name="Connect ODBC.txt"
+        )
+        grid_odbc_btns[i][0].write(f":red[Please save this output file as '.bat' in order to execute it.]")
+        grid_odbc_btns[i][0].write(f":red[This file type triggers suspicious download protocols, so .txt is the best delivery method.]")
+
 
 
 def inventory_maintenance():
@@ -4103,3 +4143,18 @@ else:
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
     st.write(st.session_state.get("session_sqls", {}))
+
+
+# x = lambda v: v+100
+#
+#
+# def x1(v):
+#     return v+10
+#
+# df1 = pd.DataFrame([{"a": 1, "b": 2}, {"a": 0, "b": -2}, {"a": 11, "b": 12}])
+# st.dataframe(df1)
+# st.write(df1.last_valid_index())
+# st.write(df1.first_valid_index())
+# st.write(df1.loc[0, "a"])
+# # st.write(int(df1.index.values[0]))
+# r

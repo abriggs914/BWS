@@ -2,7 +2,10 @@ import datetime
 import os
 from typing import Any
 
+import pdfplumber
 import pyautogui
+from streamlit_pdf_viewer import pdf_viewer
+
 import streamlit as st
 import altair as alt
 
@@ -1026,6 +1029,19 @@ def load_walk_part_standards():
     return list(os.walk(path))
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_walk_part_pdfs():
+    path = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
+    return list(os.walk(path))
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_pdf(path: str):
+    with open(path, "rb") as f:
+        return f.read()
+
+
+
 #################
 # Event Listeners
 #################
@@ -1211,13 +1227,31 @@ def update_date_range(start_date=None, end_date=None):
 
 def load_part_standard(part_num: str | list[str]):
     found_files = []
+    ff_n = []
     part_nums = [part_num] if not isinstance(part_num, list) else part_num
     for dir_path, dir_names, file_names in load_walk_part_standards():
         for i, file_ in enumerate(file_names):
             file = file_.upper()
             for j, pn in enumerate(part_nums):
                 if pn.upper() in file:
-                    found_files.append((dir_path, dir_names, file_))
+                    if file_ not in ff_n:
+                        found_files.append((dir_path, file_))
+                        ff_n.append(file_)
+    return found_files
+
+
+def load_part_drawing(part_num: str | list[str]):
+    found_files = []
+    ff_n = []
+    part_nums = [part_num] if not isinstance(part_num, list) else part_num
+    for dir_path, dir_names, file_names in load_walk_part_pdfs():
+        for i, file_ in enumerate(file_names):
+            file = file_.upper()
+            for j, pn in enumerate(part_nums):
+                if pn.upper() in file:
+                    if file_ not in ff_n:
+                        found_files.append((dir_path, file_))
+                        ff_n.append(file_)
     return found_files
 
 
@@ -2083,10 +2117,11 @@ with st.expander(
         },
         inplace=True
     )
+    df_parts_data.sort_values(by="DateProduction", ascending=False, inplace=True)
 
     st.write("### Newest 10 Jobs:")
     stdf_parts_data = st.dataframe(
-        data=df_parts_data.sort_values(by="DateProduction", ascending=False).head(10)
+        data=df_parts_data.head(10)
     )
     list_jobs = df_parts_data["WO"].dropna().unique()
 
@@ -2473,7 +2508,6 @@ with st.expander(
             else:
                 return [size_node_op, size_node_part, size_node_part_sub][node_type_id]
 
-
         i_c = 0
         for i, row in df_min_op_use.iterrows():
             op_num = row["Operation"]
@@ -2627,8 +2661,9 @@ with st.expander(
                     )
                     stock_codes = df_op_node_sel["StockCode"].dropna().unique().tolist()
                     standard_drawings = load_part_standard(stock_codes)
-                    st.write("standard_drawings")
-                    st.write(standard_drawings)
+                    pdf_drawings = load_part_drawing(stock_codes)
+                    # st.write("standard_drawings")
+                    # st.write(standard_drawings)
                     if standard_drawings:
                         selectbox_drawing_sel = st.selectbox(
                             label="Choose a drawing",
@@ -2660,6 +2695,23 @@ with st.expander(
                             #         st.error("STL conversion failed.")
                             # else:
                             #     st.error("DXF conversion failed.")
+
+                    # st.write("pdf_drawings")
+                    # st.write(pdf_drawings)
+                    pdf_options = [tup[-1] for tup in pdf_drawings]
+                    if pdf_drawings:
+                        selectbox_pdf_sel = st.selectbox(
+                            label="Choose a drawing",
+                            options=pdf_options
+                        )
+                        if selectbox_pdf_sel:
+                            st.write("selectbox_pdf_sel")
+                            st.write(selectbox_pdf_sel)
+                            idx = pdf_options.index(selectbox_pdf_sel)
+                            path = os.path.join(*pdf_drawings[idx])
+                            st_pdf_viewer = pdf_viewer(
+                                input=load_pdf(path)
+                            )
 
 
                 else:
