@@ -2259,7 +2259,7 @@ with st.expander(
                 physics=toggle_agraph_physics,
                 hierarchical=True,
                 direction="LR",
-                width=1600,
+                width=1200,
                 height=1600,
                 # groups=[1, 2, 3],
                 collapsible=True,
@@ -2404,7 +2404,7 @@ with st.expander(
                 physics=toggle_agraph_physics,
                 hierarchical=True,
                 # direction="LR",
-                width=1600,
+                width=1200,
                 height=1600,
                 # groups=[1, 2, 3],
                 collapsible=True
@@ -2646,8 +2646,8 @@ with st.expander(
                     config=config
                 )
             with columns_graph[1]:
-                st.write("graph")
-                st.write(graph)
+                # st.write("graph")
+                # st.write(graph)
                 if graph:
                     df_op_node_sel = df_job_parts.loc[
                         (df_job_parts["OpNode"] == graph)

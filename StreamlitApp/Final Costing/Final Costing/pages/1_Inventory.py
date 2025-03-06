@@ -4,8 +4,11 @@ import pandas as pd
 import streamlit as st
 import pygwalker as pyg
 import streamlit.components.v1 as components
+from streamlit_pills import pills
+from st_aggrid import AgGrid, GridOptionsBuilder
 
-from pyodbc_connection import connect
+from pyodbc_connection import connect, connect_2
+from sql_utility import casify
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -116,62 +119,1005 @@ FROM
     return connect(**connection_data)
 
 
-options_radio_dataset_choice = [
-    "Dataset 20241125",
-    "Dataset 20241126"
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_inventory_20250306() -> pd.DataFrame:
+# #     sql0 = casify(("""
+# # -- Dump BOM and Access model data into temp table for faster processing
+# # select BomStructure.Component
+# #     , case when len(BomStructure.Warehouse) = 0 then InvMaster.WarehouseToUse
+# #             else BomStructure.Warehouse
+# #             end as Warehouse
+# #     , BomStructure.ParentPart
+# #     , case when AccessBaseModel.[Model No] is not null and AccessQuoteModel.[Model No] is null then AccessBaseModel.[Model No]
+# #             when AccessBaseModel.[Model No] is null and AccessQuoteModel.[Model No] is not null then AccessQuoteModel.[Model No]
+# #             end as [Model No]
+# #     , case when AccessBaseModel.[Model No] is not null and AccessQuoteModel.[Model No] is null then AccessBaseModel.[Class]
+# #             when AccessBaseModel.[Model No] is null and AccessQuoteModel.[Model No] is not null then AccessQuoteModel.[Class]
+# #             end as [Class]
+# #     , case when AccessBaseModel.[Model No] is not null and AccessQuoteModel.[Model No] is null then AccessBaseModel.[Grouping]
+# #             when AccessBaseModel.[Model No] is null and AccessQuoteModel.[Model No] is not null then AccessQuoteModel.[Grouping]
+# #             end as [Grouping]
+# # into
+# #     #BomModelData
+# # FROM
+# #     SysproCompanyA.dbo.BomStructure with (nolock)
+# # INNER JOIN
+# #     SysproCompanyA.dbo.InvMaster with (nolock)
+# # ON
+# #     BomStructure.Component = InvMaster.StockCode
+# # LEFT OUTER JOIN
+# #     (
+# #         select Class
+# #             , [Model No]
+# #             , [Grouping]
+# #             , [Top Level Part# (SYSPRO 8)]
+# #         from
+# #             BWSdb.dbo.Products WITH (NOLOCK)
+# #         WHERE
+# #             [Non-Current] = 0
+# #             and [Proposed] = 0
+# #     ) AS AccessBaseModel
+# # ON
+# #     BomStructure.ParentPart = AccessBaseModel.[Top Level Part# (SYSPRO 8)] COLLATE Latin1_General_BIN
+# # LEFT OUTER JOIN
+# #     BWSdb.dbo.Orders WITH (NOLOCK)
+# # ON
+# #     RIGHT(BomStructure.ParentPart, 6) = '-' + CAST(Orders.[Quote#] AS VARCHAR)
+# # LEFT OUTER JOIN
+# #     (
+# #         select IDTrailer
+# #             , Class
+# #             , [Model No]
+# #             , [Grouping]
+# #             , [Top Level Part# (SYSPRO 8)]
+# #         from
+# #             BWSdb.dbo.Products WITH (NOLOCK)
+# #         WHERE
+# #             [Non-Current] = 0
+# #             and [Proposed] = 0
+# #     ) AS AccessQuoteModel
+# # ON
+# #     Orders.ProductID = AccessQuoteModel.IDTrailer
+# #     OR Orders.[Model No] = AccessQuoteModel.[Model No]
+# # ;
+# #
+# # -- Dump Inventory values into temp table for faster processing
+# # select InvMaster.StockCode
+# #     , InvWarehouse.Warehouse
+# #     , InvMaster.WarehouseToUse
+# #     , InvMaster.CycleCount
+# #     , case CycleCount when '1' then '1 - PURCHASED'
+# #                     when '2' then '2 - FULL LENGTH STEEL/ALUMINUM'
+# #                     when '3' then '3 - STEEL KITS'
+# #                     when '4' then '4 - PRECUT STEEL'
+# #                     when '5' then '5 - PAINT/PAINT PRODUCTS'
+# #                     when '6' then '6 - CONSUMABLES'
+# #                     when '7' then '7 - MANUFACTURED PARTS/COMPONENTS'
+# #                     when '8' then '8 - AXLES/SUSPENSIONS'
+# #                     when '9' then '9 - FLOORING/LUMBER'
+# #                     when '10' then '10 - LASER KITS'
+# #                     when '11' then '11 - TIRES/WHEELS'
+# #                     when '12' then '12 - MARKETING MATERIAL'
+# #                     when '13' then '13 - PRECUT ALUMINUM'
+# #                     when '14' then '14 - STEEL/ALUM PLATE'
+# #                     when '15' then '15 - CYLINDERS'
+# #                     when '21' then '21 - OBSOLETE PURCHASED PARTS'
+# #                     when '22' then '22 - OBSOLETE FULL LENGTH STEEL'
+# #                     when '23' then '23 - OBSOLETE STEEL KITS'
+# #                     when '24' then '24 - OBSOLETE PRECUT STEEL'
+# #                     when '25' then '25 - OBSOLETE PAINT/PAINT PRODUCTS'
+# #                     when '26' then '26 - OBSOLETE CONSUMABLES'
+# #                     when '27' then '27 - OBSOLETE MANUFACTURED PARTS/COMPONENTS'
+# #                     when '28' then '28 - OBSOLETE AXLES/SUSPENSIONS'
+# #                     when '29' then '29 - OBSOLETE FLOORING/LUMBER'
+# #                     when '30' then '30 - OBSOLETE LASER KITS'
+# #                     when '31' then '31 - OBSOLETE TIRES/WHEELS'
+# #                     when '32' then '32 - OBSOLETE MARKETING MATERIAL'
+# #                     when '33' then '33 - OBSOLETE PRECUT ALUMINUM'
+# #                     when '34' then '34 - OBSOLETE STEEL/ALUM PLATE'
+# #                     when '55' then '55 - EXCESS LB AND HR'
+# #                     else cast(CycleCount as varchar) + ' - UNCLASSIFIED' end as [CycleCountDescription]
+# #     , InvMaster.ProductClass
+# #     , InvWarehouse.QtyOnHand
+# #     , InvWarehouse.UnitCost
+# #     , (InvWarehouse.QtyOnHand * InvWarehouse.UnitCost) as [ValueOnHand]
+# # into
+# #     #InvData
+# # FROM
+# #     SysproCompanyA.dbo.InvWarehouse WITH (NOLOCK)
+# # INNER JOIN
+# #     SysproCompanyA.dbo.InvMaster WITH (NOLOCK)
+# # ON
+# #     InvWarehouse.StockCode = InvMaster.StockCode
+# # LEFT OUTER JOIN
+# #     (
+# #         select StockCode
+# #             , sum(DemandQty) as [NetDemandQty]
+# #         FROM
+# #             SysproCompanyA.dbo.MrpRequirement with (nolock)
+# #         GROUP by
+# #             StockCode
+# #     ) as subMRPReqDemandSumCheck
+# # ON
+# #     InvWarehouse.StockCode = subMRPReqDemandSumCheck.StockCode
+# # WHERE
+# #     (
+# #         InvMaster.WarehouseToUse NOT IN ('03', '99')
+# #         OR InvMaster.WarehouseToUse IS NULL
+# #     )
+# #     AND InvWarehouse.QtyOnHand <> 0
+# #     and (
+# #         subMRPReqDemandSumCheck.NetDemandQty = 0
+# #         or subMRPReqDemandSumCheck.NetDemandQty is null
+# #     )
+# #     """).strip())
+# #     sql1 = casify("""
+# # select 'Details' as [DatasetType]
+# #     , StockCode
+# #     , Warehouse
+# #     , WarehouseToUse
+# #     , CycleCount
+# #     , CycleCountDescription
+# #     , ProductClass
+# #     , QtyOnHand
+# #     , UnitCost
+# #     , ValueOnHand
+# #     , case when ParentPartsCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ParentPartsCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ParentPartsCount > 1 then 'MULTIPLE BOMS'
+# #         else ParentParts
+# #         end as [ParentPart]
+# #     , case when ParentPartsCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ParentPartsCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ParentPartsCount > 1 then ParentParts
+# #         end as [ParentPartsArray (IF MULTIPLE)]
+# #     , case when ModelNosCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ModelNosCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ModelNosCount > 1 then 'MULTIPLE MODELS'
+# #         else ModelNos
+# #         end as [ModelNo]
+# #     , case when ModelNosCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ModelNosCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ModelNosCount > 1 then ModelNos
+# #         end as [ModelNosArray (IF MULTIPLE)]
+# #     , case when ClassesCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ClassesCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ClassesCount > 1 then 'MULTIPLE CLASSES'
+# #         else Classes
+# #         end as [Class]
+# #     , case when ClassesCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when ClassesCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when ClassesCount > 1 then Classes
+# #         end as [ClasssArray (IF MULTIPLE)]
+# #     , case when GroupingsCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when GroupingsCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when GroupingsCount > 1 then 'MULTIPLE GROUPINGS'
+# #         else Groupings
+# #         end as [Grouping]
+# #     , case when GroupingsCount = 0 and CycleCount = 6 then 'SHOP SUPPLIES'
+# #         when GroupingsCount = 0 and CycleCount <> 6 then 'UNKNOWN'
+# #         when GroupingsCount > 1 then Groupings
+# #         end as [GroupingsArray (IF MULTIPLE)]
+# # FROM
+# # (
+# #     select StockCode
+# #         , Warehouse
+# #         , WarehouseToUse
+# #         , CycleCount
+# #         , [CycleCountDescription]
+# #         , ProductClass
+# #         , QtyOnHand
+# #         , UnitCost
+# #         , [ValueOnHand]
+# #         , (
+# #                 SELECT COUNT(*)
+# #                 FROM
+# #                     #BomModelData as BomModelData
+# #                 WHERE
+# #                     BomModelData.Component = InvData.StockCode
+# #                     and BomModelData.Warehouse = InvData.Warehouse
+# #         ) AS [ParentPartsCount]
+# #         , ltrim(
+# #             STUFF(
+# #                 (
+# #                     select ', ' + BomModelData.ParentPart
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #                 for xml path(''))
+# #                 , 1, 1, ''
+# #             )
+# #         ) as [ParentParts]
+# #         , (
+# #             select count(distinct BomModelData.[Model No])
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #         ) as [ModelNosCount]
+# #         , ltrim(
+# #             STUFF(
+# #                 (
+# #                     select distinct ', ' + BomModelData.[Model No]
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #                 for xml path(''))
+# #                 , 1, 1, ''
+# #                 )
+# #         ) as [ModelNos]
+# #         , (
+# #             select count(distinct BomModelData.[Class])
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #         ) as [ClassesCount]
+# #         , ltrim(
+# #             STUFF(
+# #                 (
+# #                     select distinct ', ' + BomModelData.[Class]
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #                 for xml path(''))
+# #                 , 1, 1, ''
+# #                 )
+# #         ) as [Classes]
+# #         , (
+# #             select count(distinct BomModelData.[Grouping])
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #         ) as [GroupingsCount]
+# #         , ltrim(
+# #             STUFF(
+# #                 (
+# #                     select distinct ', ' + BomModelData.[Grouping]
+# #                     FROM
+# #                         #BomModelData as BomModelData
+# #                     WHERE
+# #                         BomModelData.Component = InvData.StockCode
+# #                         and BomModelData.Warehouse = InvData.Warehouse
+# #                 for xml path(''))
+# #                 , 1, 1, ''
+# #                 )
+# #         ) as [Groupings]
+# #     FROM
+# #         #InvData as InvData
+# # ) as main;
+# #     """).strip()
+# #     sql2 = casify("""
+# # -- Drop temp table once done with select statements
+# # drop table #BomModelData;
+# # drop table #InvData;
+# #     """).strip()
+# #     # sql = casify(("""EXEC [BWSdb].[dbo].[sp_INVFCST_ValuationOnHand20250306]""").strip())
+# #     connection_data = {
+# #         # "sql": sql,
+# #         "database": "BWSdb",
+# #         "uid": CREDS_BWS["uid"],
+# #         "pwd": CREDS_BWS["pwd"]
+# #     }
+# #
+# #     r0 = connect(sql=sql0, **connection_data, returns_records=False)
+# #     r1 = connect(sql=sql1, **connection_data, returns_records=True)
+# #     r2 = connect(sql=sql2, ** connection_data, returns_records=False)
+# #
+# #     return r1
+#     sql = ("""
+# 	IF OBJECT_ID('tempdb..##BomModelData') IS NOT NULL BEGIN
+# 		DROP TABLE ##BomModelData
+# 	END;
+# 	IF OBJECT_ID('tempdb..##InvData') IS NOT NULL BEGIN
+# 		DROP TABLE ##InvData
+# 	END;
+#
+# 	-- Dump BOM and Access model data into temp table for faster processing
+#
+# 	SELECT BomStructure.Component
+# 		, CASE WHEN len(BomStructure.Warehouse) = 0 THEN InvMaster.WarehouseToUse
+# 				ELSE BomStructure.Warehouse
+# 				END AS Warehouse
+# 		, BomStructure.ParentPart
+# 		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Model No]
+# 				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Model No]
+# 				END AS [Model No]
+# 		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Class]
+# 				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Class]
+# 				END AS [Class]
+# 		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Grouping]
+# 				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Grouping]
+# 				END AS [Grouping]
+# 	INTO
+# 		##BomModelData
+# 	FROM
+# 		SysproCompanyA.dbo.BomStructure WITH (nolock)
+# 	INNER JOIN
+# 		SysproCompanyA.dbo.InvMaster WITH (nolock)
+# 	ON
+# 		BomStructure.Component = InvMaster.StockCode
+# 	LEFT OUTER JOIN
+# 		(
+# 			SELECT CLASS
+# 				, [Model No]
+# 				, [Grouping]
+# 				, [Top Level Part# (SYSPRO 8)]
+# 			FROM
+# 				BWSdb.dbo.Products WITH (NOLOCK)
+# 			WHERE
+# 				[Non-Current] = 0
+# 				AND [Proposed] = 0
+# 		) AS AccessBaseModel
+# 	ON
+# 		BomStructure.ParentPart = AccessBaseModel.[Top Level Part# (SYSPRO 8)] COLLATE Latin1_General_BIN
+# 	LEFT OUTER JOIN
+# 		BWSdb.dbo.Orders WITH (NOLOCK)
+# 	ON
+# 		RIGHT(BomStructure.ParentPart, 6) = '-' + CAST(Orders.[Quote#] AS VARCHAR)
+# 	LEFT OUTER JOIN
+# 		(
+# 			SELECT IDTrailer
+# 				, CLASS
+# 				, [Model No]
+# 				, [Grouping]
+# 				, [Top Level Part# (SYSPRO 8)]
+# 			FROM
+# 				BWSdb.dbo.Products WITH (NOLOCK)
+# 			WHERE
+# 				[Non-Current] = 0
+# 				AND [Proposed] = 0
+# 		) AS AccessQuoteModel
+# 	ON
+# 		Orders.ProductID = AccessQuoteModel.IDTrailer
+# 		OR Orders.[Model No] = AccessQuoteModel.[Model No]
+# 	;
+#
+# 	-- Dump Inventory values into temp table for faster processing
+# 	SELECT InvMaster.StockCode
+# 		, InvWarehouse.Warehouse
+# 		, InvMaster.WarehouseToUse
+# 		, InvMaster.CycleCount
+# 		, CASE CycleCount WHEN '1' THEN '1 - PURCHASED'
+# 						WHEN '2' THEN '2 - FULL LENGTH STEEL/ALUMINUM'
+# 						WHEN '3' THEN '3 - STEEL KITS'
+# 						WHEN '4' THEN '4 - PRECUT STEEL'
+# 						WHEN '5' THEN '5 - PAINT/PAINT PRODUCTS'
+# 						WHEN '6' THEN '6 - CONSUMABLES'
+# 						WHEN '7' THEN '7 - MANUFACTURED PARTS/COMPONENTS'
+# 						WHEN '8' THEN '8 - AXLES/SUSPENSIONS'
+# 						WHEN '9' THEN '9 - FLOORING/LUMBER'
+# 						WHEN '10' THEN '10 - LASER KITS'
+# 						WHEN '11' THEN '11 - TIRES/WHEELS'
+# 						WHEN '12' THEN '12 - MARKETING MATERIAL'
+# 						WHEN '13' THEN '13 - PRECUT ALUMINUM'
+# 						WHEN '14' THEN '14 - STEEL/ALUM PLATE'
+# 						WHEN '15' THEN '15 - CYLINDERS'
+# 						WHEN '21' THEN '21 - OBSOLETE PURCHASED PARTS'
+# 						WHEN '22' THEN '22 - OBSOLETE FULL LENGTH STEEL'
+# 						WHEN '23' THEN '23 - OBSOLETE STEEL KITS'
+# 						WHEN '24' THEN '24 - OBSOLETE PRECUT STEEL'
+# 						WHEN '25' THEN '25 - OBSOLETE PAINT/PAINT PRODUCTS'
+# 						WHEN '26' THEN '26 - OBSOLETE CONSUMABLES'
+# 						WHEN '27' THEN '27 - OBSOLETE MANUFACTURED PARTS/COMPONENTS'
+# 						WHEN '28' THEN '28 - OBSOLETE AXLES/SUSPENSIONS'
+# 						WHEN '29' THEN '29 - OBSOLETE FLOORING/LUMBER'
+# 						WHEN '30' THEN '30 - OBSOLETE LASER KITS'
+# 						WHEN '31' THEN '31 - OBSOLETE TIRES/WHEELS'
+# 						WHEN '32' THEN '32 - OBSOLETE MARKETING MATERIAL'
+# 						WHEN '33' THEN '33 - OBSOLETE PRECUT ALUMINUM'
+# 						WHEN '34' THEN '34 - OBSOLETE STEEL/ALUM PLATE'
+# 						WHEN '55' THEN '55 - EXCESS LB AND HR'
+# 						ELSE cast(CycleCount AS varchar) + ' - UNCLASSIFIED' END AS [CycleCountDescription]
+# 		, InvMaster.ProductClass
+# 		, InvWarehouse.QtyOnHand
+# 		, InvWarehouse.UnitCost
+# 		, (InvWarehouse.QtyOnHand * InvWarehouse.UnitCost) AS [ValueOnHand]
+# 	INTO
+# 		##InvData
+# 	FROM
+# 		SysproCompanyA.dbo.InvWarehouse WITH (NOLOCK)
+# 	INNER JOIN
+# 		SysproCompanyA.dbo.InvMaster WITH (NOLOCK)
+# 	ON
+# 		InvWarehouse.StockCode = InvMaster.StockCode
+# 	LEFT OUTER JOIN
+# 		(
+# 			SELECT StockCode
+# 				, sum(DemandQty) AS [NetDemandQty]
+# 			FROM
+# 				SysproCompanyA.dbo.MrpRequirement WITH (nolock)
+# 			GROUP BY
+# 				StockCode
+# 		) AS subMRPReqDemandSumCheck
+# 	ON
+# 		InvWarehouse.StockCode = subMRPReqDemandSumCheck.StockCode
+# 	WHERE
+# 		(
+# 			InvMaster.WarehouseToUse NOT IN ('03', '99')
+# 			OR InvMaster.WarehouseToUse IS NULL
+# 		)
+# 		AND InvWarehouse.QtyOnHand <> 0
+# 		AND (
+# 			subMRPReqDemandSumCheck.NetDemandQty = 0
+# 			OR subMRPReqDemandSumCheck.NetDemandQty IS NULL
+# 		)
+# 	;
+#
+# 	SELECT
+# 		'Details' AS [DatasetType]
+# 		, StockCode
+# 		, Warehouse
+# 		, WarehouseToUse
+# 		, CycleCount
+# 		, CycleCountDescription
+# 		, ProductClass
+# 		, QtyOnHand
+# 		, UnitCost
+# 		, ValueOnHand
+# 		, CASE WHEN ParentPartsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ParentPartsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ParentPartsCount > 1 THEN 'MULTIPLE BOMS'
+# 			ELSE ParentParts
+# 			END AS [ParentPart]
+# 		, CASE WHEN ParentPartsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ParentPartsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ParentPartsCount > 1 THEN ParentParts
+# 			END AS [ParentPartsArray (IF MULTIPLE)]
+# 		, CASE WHEN ModelNosCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ModelNosCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ModelNosCount > 1 THEN 'MULTIPLE MODELS'
+# 			ELSE ModelNos
+# 			END AS [ModelNo]
+# 		, CASE WHEN ModelNosCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ModelNosCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ModelNosCount > 1 THEN ModelNos
+# 			END AS [ModelNosArray (IF MULTIPLE)]
+# 		, CASE WHEN ClassesCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ClassesCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ClassesCount > 1 THEN 'MULTIPLE CLASSES'
+# 			ELSE Classes
+# 			END AS [Class]
+# 		, CASE WHEN ClassesCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN ClassesCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN ClassesCount > 1 THEN Classes
+# 			END AS [ClasssArray (IF MULTIPLE)]
+# 		, CASE WHEN GroupingsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN GroupingsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN GroupingsCount > 1 THEN 'MULTIPLE GROUPINGS'
+# 			ELSE Groupings
+# 			END AS [Grouping]
+# 		, CASE WHEN GroupingsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+# 			WHEN GroupingsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+# 			WHEN GroupingsCount > 1 THEN Groupings
+# 			END AS [GroupingsArray (IF MULTIPLE)]
+# 	FROM
+# 	(
+# 		SELECT StockCode
+# 			, Warehouse
+# 			, WarehouseToUse
+# 			, CycleCount
+# 			, [CycleCountDescription]
+# 			, ProductClass
+# 			, QtyOnHand
+# 			, UnitCost
+# 			, [ValueOnHand]
+# 			, (
+# 					SELECT COUNT(*)
+# 					FROM
+# 						##BomModelData AS BomModelData
+# 					WHERE
+# 						BomModelData.Component = InvData.StockCode
+# 						AND BomModelData.Warehouse = InvData.Warehouse
+# 			) AS [ParentPartsCount]
+# 			, ltrim(
+# 				STUFF(
+# 					(
+# 						SELECT ', ' + BomModelData.ParentPart
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 					FOR XML path(''))
+# 					, 1, 1, ''
+# 				)
+# 			) AS [ParentParts]
+# 			, (
+# 				SELECT count(DISTINCT BomModelData.[Model No])
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 			) AS [ModelNosCount]
+# 			, ltrim(
+# 				STUFF(
+# 					(
+# 						SELECT DISTINCT ', ' + BomModelData.[Model No]
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 					FOR XML path(''))
+# 					, 1, 1, ''
+# 					)
+# 			) AS [ModelNos]
+# 			, (
+# 				SELECT count(DISTINCT BomModelData.[Class])
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 			) AS [ClassesCount]
+# 			, ltrim(
+# 				STUFF(
+# 					(
+# 						SELECT DISTINCT ', ' + BomModelData.[Class]
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 					FOR XML path(''))
+# 					, 1, 1, ''
+# 					)
+# 			) AS [Classes]
+# 			, (
+# 				SELECT count(DISTINCT BomModelData.[Grouping])
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 			) AS [GroupingsCount]
+# 			, ltrim(
+# 				STUFF(
+# 					(
+# 						SELECT DISTINCT ', ' + BomModelData.[Grouping]
+# 						FROM
+# 							##BomModelData AS BomModelData
+# 						WHERE
+# 							BomModelData.Component = InvData.StockCode
+# 							AND BomModelData.Warehouse = InvData.Warehouse
+# 					FOR XML path(''))
+# 					, 1, 1, ''
+# 					)
+# 			) AS [Groupings]
+# 		FROM
+# 			##InvData AS InvData
+# 	) AS main
+# 	;
+#     """).strip()
+#     sql = "EXEC [BWSdb].[dbo].[sp_INVFCST_ValuationOnHand20250306]"
+    sql = casify("""
+    
+    SET NOCOUNT ON;
+
+	IF OBJECT_ID('tempdb..##BomModelData') IS NOT NULL BEGIN
+		DROP TABLE ##BomModelData
+	END;
+	IF OBJECT_ID('tempdb..##InvData') IS NOT NULL BEGIN
+		DROP TABLE ##InvData
+	END;
+
+	-- Dump BOM and Access model data into temp table for faster processing
+
+	SELECT BomStructure.Component
+		, CASE WHEN len(BomStructure.Warehouse) = 0 THEN InvMaster.WarehouseToUse
+				ELSE BomStructure.Warehouse
+				END AS Warehouse
+		, BomStructure.ParentPart
+		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Model No]
+				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Model No]
+				END AS [Model No]
+		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Class]
+				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Class]
+				END AS [Class]
+		, CASE WHEN AccessBaseModel.[Model No] IS NOT NULL AND AccessQuoteModel.[Model No] IS NULL THEN AccessBaseModel.[Grouping]
+				WHEN AccessBaseModel.[Model No] IS NULL AND AccessQuoteModel.[Model No] IS NOT NULL THEN AccessQuoteModel.[Grouping]
+				END AS [Grouping]
+	INTO
+		##BomModelData
+	FROM
+		SysproCompanyA.dbo.BomStructure WITH (nolock)
+	INNER JOIN
+		SysproCompanyA.dbo.InvMaster WITH (nolock)
+	ON
+		BomStructure.Component = InvMaster.StockCode
+	LEFT OUTER JOIN
+		(
+			SELECT CLASS
+				, [Model No]
+				, [Grouping]
+				, [Top Level Part# (SYSPRO 8)]
+			FROM
+				BWSdb.dbo.Products WITH (NOLOCK)
+			WHERE
+				[Non-Current] = 0
+				AND [Proposed] = 0
+		) AS AccessBaseModel
+	ON
+		BomStructure.ParentPart = AccessBaseModel.[Top Level Part# (SYSPRO 8)] COLLATE Latin1_General_BIN
+	LEFT OUTER JOIN
+		BWSdb.dbo.Orders WITH (NOLOCK)
+	ON
+		RIGHT(BomStructure.ParentPart, 6) = '-' + CAST(Orders.[Quote#] AS VARCHAR)
+	LEFT OUTER JOIN
+		(
+			SELECT IDTrailer
+				, CLASS
+				, [Model No]
+				, [Grouping]
+				, [Top Level Part# (SYSPRO 8)]
+			FROM
+				BWSdb.dbo.Products WITH (NOLOCK)
+			WHERE
+				[Non-Current] = 0
+				AND [Proposed] = 0
+		) AS AccessQuoteModel
+	ON
+		Orders.ProductID = AccessQuoteModel.IDTrailer
+		OR Orders.[Model No] = AccessQuoteModel.[Model No]
+	;
+
+	-- Dump Inventory values into temp table for faster processing
+	SELECT InvMaster.StockCode
+		, InvWarehouse.Warehouse
+		, InvMaster.WarehouseToUse
+		, InvMaster.CycleCount
+		, CASE CycleCount WHEN '1' THEN '1 - PURCHASED'
+						WHEN '2' THEN '2 - FULL LENGTH STEEL/ALUMINUM'
+						WHEN '3' THEN '3 - STEEL KITS'
+						WHEN '4' THEN '4 - PRECUT STEEL'
+						WHEN '5' THEN '5 - PAINT/PAINT PRODUCTS'
+						WHEN '6' THEN '6 - CONSUMABLES'
+						WHEN '7' THEN '7 - MANUFACTURED PARTS/COMPONENTS'
+						WHEN '8' THEN '8 - AXLES/SUSPENSIONS'
+						WHEN '9' THEN '9 - FLOORING/LUMBER'
+						WHEN '10' THEN '10 - LASER KITS'
+						WHEN '11' THEN '11 - TIRES/WHEELS'
+						WHEN '12' THEN '12 - MARKETING MATERIAL'
+						WHEN '13' THEN '13 - PRECUT ALUMINUM'
+						WHEN '14' THEN '14 - STEEL/ALUM PLATE'
+						WHEN '15' THEN '15 - CYLINDERS'
+						WHEN '21' THEN '21 - OBSOLETE PURCHASED PARTS'
+						WHEN '22' THEN '22 - OBSOLETE FULL LENGTH STEEL'
+						WHEN '23' THEN '23 - OBSOLETE STEEL KITS'
+						WHEN '24' THEN '24 - OBSOLETE PRECUT STEEL'
+						WHEN '25' THEN '25 - OBSOLETE PAINT/PAINT PRODUCTS'
+						WHEN '26' THEN '26 - OBSOLETE CONSUMABLES'
+						WHEN '27' THEN '27 - OBSOLETE MANUFACTURED PARTS/COMPONENTS'
+						WHEN '28' THEN '28 - OBSOLETE AXLES/SUSPENSIONS'
+						WHEN '29' THEN '29 - OBSOLETE FLOORING/LUMBER'
+						WHEN '30' THEN '30 - OBSOLETE LASER KITS'
+						WHEN '31' THEN '31 - OBSOLETE TIRES/WHEELS'
+						WHEN '32' THEN '32 - OBSOLETE MARKETING MATERIAL'
+						WHEN '33' THEN '33 - OBSOLETE PRECUT ALUMINUM'
+						WHEN '34' THEN '34 - OBSOLETE STEEL/ALUM PLATE'
+						WHEN '55' THEN '55 - EXCESS LB AND HR'
+						ELSE cast(CycleCount AS varchar) + ' - UNCLASSIFIED' END AS [CycleCountDescription]
+		, InvMaster.ProductClass
+		, InvWarehouse.QtyOnHand
+		, InvWarehouse.UnitCost
+		, (InvWarehouse.QtyOnHand * InvWarehouse.UnitCost) AS [ValueOnHand]
+	INTO
+		##InvData
+	FROM
+		SysproCompanyA.dbo.InvWarehouse WITH (NOLOCK)
+	INNER JOIN
+		SysproCompanyA.dbo.InvMaster WITH (NOLOCK)
+	ON
+		InvWarehouse.StockCode = InvMaster.StockCode
+	LEFT OUTER JOIN
+		(
+			SELECT StockCode
+				, sum(DemandQty) AS [NetDemandQty]
+			FROM
+				SysproCompanyA.dbo.MrpRequirement WITH (nolock)
+			GROUP BY
+				StockCode
+		) AS subMRPReqDemandSumCheck
+	ON
+		InvWarehouse.StockCode = subMRPReqDemandSumCheck.StockCode
+	WHERE
+		(
+			InvMaster.WarehouseToUse NOT IN ('03', '99')
+			OR InvMaster.WarehouseToUse IS NULL
+		)
+		AND InvWarehouse.QtyOnHand <> 0
+		AND (
+			subMRPReqDemandSumCheck.NetDemandQty = 0
+			OR subMRPReqDemandSumCheck.NetDemandQty IS NULL
+		)
+	;
+
+	SELECT 
+		'Details' AS [DatasetType]
+		, StockCode
+		, Warehouse
+		, WarehouseToUse
+		, CycleCount
+		, CycleCountDescription
+		, ProductClass
+		, QtyOnHand
+		, UnitCost
+		, ValueOnHand
+		, CASE WHEN ParentPartsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ParentPartsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ParentPartsCount > 1 THEN 'MULTIPLE BOMS'
+			ELSE ParentParts
+			END AS [ParentPart]
+		, CASE WHEN ParentPartsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ParentPartsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ParentPartsCount > 1 THEN ParentParts
+			END AS [ParentPartsArray (IF MULTIPLE)]
+		, CASE WHEN ModelNosCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ModelNosCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ModelNosCount > 1 THEN 'MULTIPLE MODELS'
+			ELSE ModelNos
+			END AS [ModelNo]
+		, CASE WHEN ModelNosCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ModelNosCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ModelNosCount > 1 THEN ModelNos
+			END AS [ModelNosArray (IF MULTIPLE)]
+		, CASE WHEN ClassesCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ClassesCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ClassesCount > 1 THEN 'MULTIPLE CLASSES'
+			ELSE Classes
+			END AS [Class]
+		, CASE WHEN ClassesCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN ClassesCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN ClassesCount > 1 THEN Classes
+			END AS [ClasssArray (IF MULTIPLE)]
+		, CASE WHEN GroupingsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN GroupingsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN GroupingsCount > 1 THEN 'MULTIPLE GROUPINGS'
+			ELSE Groupings
+			END AS [Grouping]
+		, CASE WHEN GroupingsCount = 0 AND CycleCount = 6 THEN 'SHOP SUPPLIES'
+			WHEN GroupingsCount = 0 AND CycleCount <> 6 THEN 'UNKNOWN'
+			WHEN GroupingsCount > 1 THEN Groupings
+			END AS [GroupingsArray (IF MULTIPLE)]
+	FROM
+	(
+		SELECT StockCode
+			, Warehouse
+			, WarehouseToUse
+			, CycleCount
+			, [CycleCountDescription]
+			, ProductClass
+			, QtyOnHand
+			, UnitCost
+			, [ValueOnHand]
+			, (
+					SELECT COUNT(*)
+					FROM
+						##BomModelData AS BomModelData
+					WHERE
+						BomModelData.Component = InvData.StockCode
+						AND BomModelData.Warehouse = InvData.Warehouse
+			) AS [ParentPartsCount]
+			, ltrim(
+				STUFF(
+					(
+						SELECT ', ' + BomModelData.ParentPart
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+					FOR XML path(''))
+					, 1, 1, ''
+				)
+			) AS [ParentParts]
+			, (
+				SELECT count(DISTINCT BomModelData.[Model No])
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+			) AS [ModelNosCount]
+			, ltrim(
+				STUFF(
+					(
+						SELECT DISTINCT ', ' + BomModelData.[Model No]
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+					FOR XML path(''))
+					, 1, 1, ''
+					)
+			) AS [ModelNos]
+			, (
+				SELECT count(DISTINCT BomModelData.[Class])
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+			) AS [ClassesCount]
+			, ltrim(
+				STUFF(
+					(
+						SELECT DISTINCT ', ' + BomModelData.[Class]
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+					FOR XML path(''))
+					, 1, 1, ''
+					)
+			) AS [Classes]
+			, (
+				SELECT count(DISTINCT BomModelData.[Grouping])
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+			) AS [GroupingsCount]
+			, ltrim(
+				STUFF(
+					(
+						SELECT DISTINCT ', ' + BomModelData.[Grouping]
+						FROM
+							##BomModelData AS BomModelData
+						WHERE
+							BomModelData.Component = InvData.StockCode
+							AND BomModelData.Warehouse = InvData.Warehouse
+					FOR XML path(''))
+					, 1, 1, ''
+					)
+			) AS [Groupings]
+		FROM
+			##InvData AS InvData
+	) AS main
+	;
+    """).strip()
+    connection_data = {
+        "sql": sql,
+        "database": "BWSdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect_2(**connection_data, enable_mars=True)
+
+
+options_pills = [
+    "November 2024 Version",
+    "Current"
 ]
-radio_company_choice = st.radio(
-    "Company:",
-    options_radio_dataset_choice,
-    key="radio_dataset_choice",
-    horizontal=True
+k_pills_operation_mode = "pills_operation_mode"
+st.session_state.setdefault(k_pills_operation_mode, 1)
+pills_operation_mode = pills(
+    label="Operation Mode:",
+    options=options_pills,
+    index=st.session_state.get(k_pills_operation_mode)
 )
 
-df_inv_bws_20241125: pd.DataFrame = pd.DataFrame()
-df_inv_stg_20241125: pd.DataFrame = pd.DataFrame()
-df_inv_bws_20241126: pd.DataFrame = pd.DataFrame()
-df_inv_stg_20241126: pd.DataFrame = pd.DataFrame()
+if pills_operation_mode == 0:
 
-old_data: bool = st.session_state.get("radio_dataset_choice") == options_radio_dataset_choice[0]
+    # November 2024 Version
 
-if old_data:
-    df_inv_bws_20241125: pd.DataFrame = load_inventory_view_bws_20241125()
-    df_inv_stg_20241125: pd.DataFrame = load_inventory_view_stg_20241125()
+    options_radio_dataset_choice = [
+        "Dataset 20241125",
+        "Dataset 20241126"
+    ]
+    radio_company_choice = st.radio(
+        "Company:",
+        options_radio_dataset_choice,
+        key="radio_dataset_choice",
+        horizontal=True
+    )
+
+    df_inv_bws_20241125: pd.DataFrame = pd.DataFrame()
+    df_inv_stg_20241125: pd.DataFrame = pd.DataFrame()
+    df_inv_bws_20241126: pd.DataFrame = pd.DataFrame()
+    df_inv_stg_20241126: pd.DataFrame = pd.DataFrame()
+
+    old_data: bool = st.session_state.get("radio_dataset_choice") == options_radio_dataset_choice[0]
+
+    if old_data:
+        df_inv_bws_20241125: pd.DataFrame = load_inventory_view_bws_20241125()
+        df_inv_stg_20241125: pd.DataFrame = load_inventory_view_stg_20241125()
+    else:
+        df_inv_bws_20241126: pd.DataFrame = load_inventory_view_bws_20241126()
+        df_inv_stg_20241126: pd.DataFrame = load_inventory_view_stg_20241126()
+
+    # df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
+    # df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
+    # df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
+    # df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
+
+    df_bws: pd.DataFrame = df_inv_bws_20241125 if old_data else df_inv_bws_20241126
+    df_stg: pd.DataFrame = df_inv_stg_20241125 if old_data else df_inv_stg_20241126
+
+
+    st.write("## BWS")
+    st.dataframe(df_bws, use_container_width=True, hide_index=True)
+    st.write("## Stargate")
+    st.dataframe(df_stg, use_container_width=True, hide_index=True)
+
+
+    options_radio_company_choice = [
+        ":red[BWS]",
+        ":blue[STARGATE]"
+    ]
+    radio_company_choice = st.radio(
+        "Company:",
+        options_radio_company_choice,
+        key="radio_company_choice",
+        horizontal=True
+    )
+
+
+    COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
+
+    df = df_bws if COMP == BWS else df_stg
+
+    pyg_html = pyg.walk(df).to_html()
+    components.html(pyg_html, height=1000, scrolling=True)
+    # st.write(pyg_html)
 else:
-    df_inv_bws_20241126: pd.DataFrame = load_inventory_view_bws_20241126()
-    df_inv_stg_20241126: pd.DataFrame = load_inventory_view_stg_20241126()
 
-# df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
-# df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
-# df_inv_bws_og: pd.DataFrame = df_inv_bws_20241125.copy()
-# df_inv_stg_og: pd.DataFrame = df_inv_stg_20241125.copy()
+    # Current
 
-df_bws: pd.DataFrame = df_inv_bws_20241125 if old_data else df_inv_bws_20241126
-df_stg: pd.DataFrame = df_inv_stg_20241125 if old_data else df_inv_stg_20241126
+    unknown: str = "UNKNOWN"
+    df_inventory = load_inventory_20250306()
+    df_inventory.replace(unknown, None, inplace=True)
+    df_inventory_cols = list(df_inventory.columns)
+
+    cols_to_split = [
+        "ParentPartsArray (IF MULTIPLE)",
+        "ModelNosArray (IF MULTIPLE)",
+        "ClasssArray (IF MULTIPLE)",
+        "GroupingsArray (IF MULTIPLE)"
+    ]
+    for c in cols_to_split:
+        df_inventory[c] = df_inventory[c].map(
+            lambda s: s.split(",") if s else s
+        )
+
+    multiselect_df_inventory_cols_view = st.multiselect(
+        label="Select some columns to order the view below",
+        options=df_inventory_cols,
+        default=df_inventory_cols,
+        placeholder="By default, all columns are shown in original order."
+    )
+
+    st.write(f"DataFrame ({df_inventory.shape[0]} Rows x {df_inventory.shape[1]} Columns):")
+    stdf_inventory = st.dataframe(
+        data=df_inventory,
+        column_order=multiselect_df_inventory_cols_view,
+        hide_index=True
+    )
+    st.write(f"AgGrid:")
+
+    gb = GridOptionsBuilder.from_dataframe(df_inventory)
+    gb.configure_side_bar()
+    go = gb.build()
+    agdf_inventory = AgGrid(
+        data=df_inventory,
+        gridOptions=go
+    )
 
 
-st.write("## BWS")
-st.dataframe(df_bws, use_container_width=True, hide_index=True)
-st.write("## Stargate")
-st.dataframe(df_stg, use_container_width=True, hide_index=True)
 
-
-options_radio_company_choice = [
-    ":red[BWS]",
-    ":blue[STARGATE]"
-]
-radio_company_choice = st.radio(
-    "Company:",
-    options_radio_company_choice,
-    key="radio_company_choice",
-    horizontal=True
-)
-
-
-COMP = BWS if radio_company_choice == options_radio_company_choice[0] else STG
-
-df = df_bws if COMP == BWS else df_stg
-
-pyg_html = pyg.walk(df).to_html()
-components.html(pyg_html, height=1000, scrolling=True)
-# st.write(pyg_html)
+st.session_state.update({k_pills_operation_mode: options_pills.index(pills_operation_mode)})
