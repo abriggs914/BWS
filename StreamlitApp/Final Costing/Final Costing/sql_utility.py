@@ -3,6 +3,7 @@ from typing import Literal, Any
 
 from pyodbc_connection import connect
 from itertools import combinations
+import sqlparse
 import pandas as pd
 import datetime
 
@@ -13,8 +14,8 @@ import datetime
 VERSION = \
     """	
     General SQL Utility Functions
-    Version..............1.05
-    Date...........2024-12-10
+    Version..............1.06
+    Date...........2025-03-05
     Author(s)....Avery Briggs
     """
 
@@ -1785,6 +1786,76 @@ def schema_parse(table: str, wrapped: bool = False) -> tuple[str, str]:
         db = wrap(db)
     # return t_og, r, database, table
     return db, table
+
+
+def casify(sql: str, to_upper: bool = True) -> str:
+    # keywords = [
+    #     "select",
+    #     "insert",
+    #     "update",
+    #     "delete",
+    #     "create",
+    #     "group",
+    #     "order",
+    #     "having",
+    #     "by",
+    #     "exec",
+    #     "table",
+    #     "procedure",
+    #     "function",
+    #     "view",
+    #     "into",
+    #     "from",
+    #     "as",
+    #     "cast",
+    #     "nvarchar",
+    #     "varchar",
+    #     "int",
+    #     "integer",
+    #     "and",
+    #     "or",
+    #     "if",
+    #     "else"
+    #     "begin",
+    #     "end"
+    #     "with",
+    #     "(nolock)",
+    #     "on",
+    #     "in",
+    #     "left",
+    #     "right",
+    #     "inner",
+    #     "outer",
+    #     "join",
+    #     "right",
+    #     "left",
+    #     "trim",
+    #     "isnull",
+    #     "max",
+    #     "sum",
+    #     "count",
+    #     "stuff",
+    #     "substring",
+    #     "datepart",
+    #     "datename",
+    #     "getdate",
+    #     "case",
+    #     "when",
+    #     "then",
+    #     "else",
+    #     "end",
+    #     "len",
+    #     "year",
+    #     "month",
+    #     "day",
+    #     "hour",
+    #     "minute",
+    #     "second",
+    #     "millisecond",
+    #     "microsecond",
+    #     "weekday"
+    # ]
+    return sqlparse.format(sql, keyword_case='upper' if to_upper else 'lower')
 
 
 if __name__ == '__main__':
