@@ -6,9 +6,12 @@ import pygwalker as pyg
 import streamlit.components.v1 as components
 from streamlit_pills import pills
 from st_aggrid import AgGrid, GridOptionsBuilder
+import plotly.express as px
 
+from colour_utility import RED, Colour
 from pyodbc_connection import connect, connect_2
 from sql_utility import casify
+from utility import money
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -1095,28 +1098,370 @@ else:
             lambda s: s.split(",") if s else s
         )
 
-    multiselect_df_inventory_cols_view = st.multiselect(
-        label="Select some columns to order the view below",
-        options=df_inventory_cols,
-        default=df_inventory_cols,
-        placeholder="By default, all columns are shown in original order."
-    )
+    with st.container(border=1):
+        multiselect_df_inventory_cols_view = st.multiselect(
+            label="Select some columns to order the view below",
+            options=df_inventory_cols,
+            default=df_inventory_cols,
+            placeholder="By default, all columns are shown in original order."
+        )
 
-    st.write(f"DataFrame ({df_inventory.shape[0]} Rows x {df_inventory.shape[1]} Columns):")
-    stdf_inventory = st.dataframe(
-        data=df_inventory,
-        column_order=multiselect_df_inventory_cols_view,
-        hide_index=True
-    )
-    st.write(f"AgGrid:")
+        st.write(f"All Data ({df_inventory.shape[0]} Rows x {df_inventory.shape[1]} Columns):")
+        stdf_inventory = st.dataframe(
+            data=df_inventory,
+            column_order=multiselect_df_inventory_cols_view,
+            hide_index=True
+        )
+        # st.write(f"AgGrid:")
+        #
+        # gb = GridOptionsBuilder.from_dataframe(df_inventory)
+        # gb.configure_side_bar()
+        # go = gb.build()
+        # agdf_inventory = AgGrid(
+        #     data=df_inventory,
+        #     gridOptions=go
+        # )
 
-    gb = GridOptionsBuilder.from_dataframe(df_inventory)
-    gb.configure_side_bar()
-    go = gb.build()
-    agdf_inventory = AgGrid(
-        data=df_inventory,
-        gridOptions=go
-    )
+        df_inventory_cols_describe = [
+            col for col in df_inventory.columns
+            if col not in cols_to_split
+        ]
+        st.write(f"Value Counts and Frequencies:")
+        st.write(df_inventory[df_inventory_cols_describe].describe())
+        # st.write(df_inventory.value_counts())
+
+
+    # filtered_melted: pd.DataFrame = filtered_melted.melt(
+    #     id_vars="Date",
+    #     value_vars=[f"NumNewQuotes{suf}", f"NumNewOrders{suf}"],
+    #     var_name="Category",
+    #     value_name="Count"
+    # )
+
+    with (st.container(border=1)):
+
+        clbl_ValueOnHand = "ValueOnHand"
+        clbl_ParentPart = "ParentPart"
+        df_inventory_options_graph_by_ValueOnHand = [
+            "ModelNo",
+            "Grouping",
+            "ProductClass",
+            "Warehouse",
+            "CycleCount",
+            "ParentPart"
+        ]
+
+        selectbox_df_inventory_graph_by_ValueOnHand = st.selectbox(
+            label="Select a column to graph against ValueOnHand:",
+            options=df_inventory_options_graph_by_ValueOnHand,
+            index=0
+        )
+        toggle_df_inventory_sort_by_value_graph_by_ValueOnHand = st.toggle(
+            label="Sort by Total Value?",
+            value=True
+        )
+
+        df_inventory_graph_by_ValueOnHand = df_inventory.groupby(
+            by=selectbox_df_inventory_graph_by_ValueOnHand
+        ).agg(
+            {clbl_ValueOnHand: "sum"}
+        ).reset_index()
+        df_inventory_graph_by_ValueOnHand["View"] = True
+
+        if toggle_df_inventory_sort_by_value_graph_by_ValueOnHand:
+            df_inventory_graph_by_ValueOnHand.sort_values(
+                by=clbl_ValueOnHand,
+                inplace=True,
+                ascending=False
+            )
+
+        cols_graph_0 = st.columns([0.25, 0.75])
+
+        with cols_graph_0[0]:
+            st.write("Data:")
+            k_stdf_inventory_graph_by_ValueOnHand = "stdf_inventory_graph_by_ValueOnHand"
+            stde_inventory_graph_by_ValueOnHand = st.data_editor(
+                df_inventory_graph_by_ValueOnHand[["View"] + df_inventory_graph_by_ValueOnHand.columns.tolist()[:-1]],
+                hide_index=True,
+                disabled=df_inventory_graph_by_ValueOnHand.columns.tolist()[:-1],
+                key=k_stdf_inventory_graph_by_ValueOnHand
+            )
+
+        with cols_graph_0[1]:
+            stde_inventory_graph_by_ValueOnHand_v = stde_inventory_graph_by_ValueOnHand.loc[
+                stde_inventory_graph_by_ValueOnHand["View"] == True
+            ]
+            chart = px.bar(
+                stde_inventory_graph_by_ValueOnHand_v,
+                x=selectbox_df_inventory_graph_by_ValueOnHand,
+                y=clbl_ValueOnHand,
+                title=f"ValueOnHand By {selectbox_df_inventory_graph_by_ValueOnHand}",
+            )
+            chart.update_xaxes(type="category")
+            st.plotly_chart(
+                chart,
+                theme=None,
+                use_container_width=True,
+                key="chart_0"
+            )
+
+        cols_metric_0 = st.columns(4)
+        with cols_metric_0[0]:
+            # st.metric(
+            #     label="Average:",
+            #     value=money(df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].mean()),
+            #     border=1
+            # )
+            stde_inventory_graph_by_ValueOnHand3 = stde_inventory_graph_by_ValueOnHand_v.copy()
+            stde_inventory_graph_by_ValueOnHand3["RnkAvg"] = \
+            stde_inventory_graph_by_ValueOnHand3[clbl_ValueOnHand].rank(
+                method="average",
+                ascending=False
+            )
+            stde_inventory_graph_by_ValueOnHand3.sort_values(by=clbl_ValueOnHand, ascending=False,
+                                                                         inplace=True)
+            # st.write("df_inventory_graph_by_ValueOnHand_by_ParentPart2")
+            # st.write(df_inventory_graph_by_ValueOnHand_by_ParentPart2)
+            sr_top = stde_inventory_graph_by_ValueOnHand3.iloc[0]
+            avg_pop = stde_inventory_graph_by_ValueOnHand3[clbl_ValueOnHand].mean()
+            diff = avg_pop - float(sr_top['ValueOnHand'])
+            st.metric(
+                label="Average:",
+                value=money(avg_pop),
+                delta=f"Top Avg {selectbox_df_inventory_graph_by_ValueOnHand}: '{sr_top[selectbox_df_inventory_graph_by_ValueOnHand]}' ({money(diff)})",
+                border=1,
+                delta_color="inverse" if diff < 0 else "normal"
+            )
+        with cols_metric_0[1]:
+            df_mode = stde_inventory_graph_by_ValueOnHand_v[clbl_ValueOnHand].mode().iloc[0]
+            # st.write(df_mode)
+            # st.write(type(df_mode))
+            st.metric(
+                label="Mode:",
+                value=money(df_mode),
+                border=1
+            )
+        # with cols_metric[1]:
+        with cols_metric_0[2]:
+            st.metric(
+                label="Min:",
+                value=money(
+                    stde_inventory_graph_by_ValueOnHand_v.loc[
+                        stde_inventory_graph_by_ValueOnHand_v[clbl_ValueOnHand].idxmin(),
+                        clbl_ValueOnHand]
+                ),
+                delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {stde_inventory_graph_by_ValueOnHand_v.loc[
+                    stde_inventory_graph_by_ValueOnHand_v[clbl_ValueOnHand].idxmin(),
+                    selectbox_df_inventory_graph_by_ValueOnHand]}",
+                border=1,
+                delta_color="off"
+            )
+        with cols_metric_0[3]:
+            st.metric(
+                label="Max:",
+                value=money(
+                    stde_inventory_graph_by_ValueOnHand_v.loc[
+                        stde_inventory_graph_by_ValueOnHand_v[clbl_ValueOnHand].idxmax(),
+                        clbl_ValueOnHand]
+                ),
+                delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {stde_inventory_graph_by_ValueOnHand_v.loc[
+                    stde_inventory_graph_by_ValueOnHand_v[clbl_ValueOnHand].idxmax(),
+                    selectbox_df_inventory_graph_by_ValueOnHand]}",
+                border=1,
+                delta_color="off"
+            )
+
+        # df_inventory_graph_by_ValueOnHand2 = df_inventory.groupby(
+        #     by=[clbl_ParentPart]
+        # ).agg(
+        #     {clbl_ValueOnHand: "sum"}
+        # ).reset_index()
+        # df_inventory_graph_by_ValueOnHand2["View"] = True
+        #
+        #
+        # filtered_melted: pd.DataFrame = df_inventory.melt(
+        #     id_vars=[clbl_ValueOnHand, "ParentPart"],
+        #     value_vars=[selectbox_df_inventory_graph_by_ValueOnHand],
+        #     var_name=f"Category{selectbox_df_inventory_graph_by_ValueOnHand}",
+        #     value_name=f"Count{selectbox_df_inventory_graph_by_ValueOnHand}"
+        # )
+        # st.write("filtered_melted")
+        # st.write(filtered_melted)
+        # chart = px.bar(
+        #     filtered_melted
+        #     # .rename(
+        #     #     columns={
+        #     #         "": ""
+        #     #     }
+        #     ,
+        #     # barmode="stack",
+        #     x=f"Category{selectbox_df_inventory_graph_by_ValueOnHand}",
+        #     y=clbl_ValueOnHand,
+        #     title=f"'ValueOnHand' By {selectbox_df_inventory_graph_by_ValueOnHand}",
+        #
+        #     color=clbl_ParentPart,
+        #     # title=f"Count of new Quotes & WOs {suf}",
+        #     # labels={"Date": "Date", "Count": "Count"}
+        # )
+        # chart.update_xaxes(type="category")
+        # st.plotly_chart(
+        #     chart,
+        #     theme=None,
+        #     use_container_width=True,
+        #     key="chart_1"
+        # )
+    # with st.container(border=1):
+
+        if selectbox_df_inventory_graph_by_ValueOnHand != clbl_ParentPart:
+
+            df_inventory_graph_by_ValueOnHand2 = df_inventory.groupby(
+                by=[selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart]
+            ).agg(
+                {clbl_ValueOnHand: "sum"}
+            ).reset_index()
+            df_inventory_graph_by_ValueOnHand2["Sel"] = True
+
+            st.divider()
+
+            cols_graph_1 = st.columns([0.25, 0.75])
+
+            with cols_graph_1[0]:
+                st.write(f"{clbl_ValueOnHand} x {selectbox_df_inventory_graph_by_ValueOnHand}, Grouped by {clbl_ParentPart} Data:")
+                stde_inventory_graph_by_ValueOnHand2 = st.data_editor(
+                    df_inventory_graph_by_ValueOnHand2[["Sel"] + df_inventory_graph_by_ValueOnHand2.columns.tolist()[:-1]],
+                    hide_index=True
+                )
+
+            # if stde_inventory_graph_by_ValueOnHand2.shape[0] != stde_inventory_graph_by_ValueOnHand2.loc[
+            #         stde_inventory_graph_by_ValueOnHand2["Sel"] == True
+            #     ].shape[0]:
+            #     if st.button("Select All"):
+            #         df_inventory_graph_by_ValueOnHand2["Sel"] = True
+            #         st.rerun()
+
+            df_inventory_graph_by_ValueOnHand_by_ParentPart = stde_inventory_graph_by_ValueOnHand2.loc[
+                stde_inventory_graph_by_ValueOnHand2["Sel"] == True
+                ]
+            with cols_graph_1[1]:
+                chart = px.bar(
+                    df_inventory_graph_by_ValueOnHand_by_ParentPart
+                    # .rename(
+                    #     columns={
+                    #         "": ""
+                    #     }
+                    ,
+                    # barmode="stack",
+                    x=selectbox_df_inventory_graph_by_ValueOnHand,
+                    y=clbl_ValueOnHand,
+                    title=f"{clbl_ValueOnHand} x {selectbox_df_inventory_graph_by_ValueOnHand}, Grouped by {clbl_ParentPart}",
+
+                    color=clbl_ParentPart,
+                    # title=f"Count of new Quotes & WOs {suf}",
+                    # labels={"Date": "Date", "Count": "Count"}
+                )
+                chart.update_xaxes(type="category")
+                st.plotly_chart(
+                    chart,
+                    theme=None,
+                    use_container_width=True,
+                    key="chart_2"
+                )
+
+            cols_metric_1 = st.columns(4)
+            with cols_metric_1[0]:
+                # st.metric(
+                #     label="Average:",
+                #     value=money(df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].mean()),
+                #     border=1
+                # )
+                df_inventory_graph_by_ValueOnHand_by_ParentPart2 = df_inventory_graph_by_ValueOnHand_by_ParentPart.copy()
+                df_inventory_graph_by_ValueOnHand_by_ParentPart2["RnkAvg"] = df_inventory_graph_by_ValueOnHand_by_ParentPart2[clbl_ValueOnHand].rank(
+                    method="average",
+                    ascending=False
+                )
+                df_inventory_graph_by_ValueOnHand_by_ParentPart2.sort_values(by=clbl_ValueOnHand, ascending=False, inplace=True)
+                # st.write("df_inventory_graph_by_ValueOnHand_by_ParentPart2")
+                # st.write(df_inventory_graph_by_ValueOnHand_by_ParentPart2)
+                sr_top = df_inventory_graph_by_ValueOnHand_by_ParentPart2.iloc[0]
+                avg_pop = df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].mean()
+                diff = avg_pop - float(sr_top['ValueOnHand'])
+                st.metric(
+                    label="Average:",
+                    value=money(avg_pop),
+                    delta=f"Top Avg Part: '{sr_top['ParentPart']}' ({money(diff)})",
+                    border=1,
+                    delta_color="inverse" if diff < 0 else "normal"
+                )
+            with cols_metric_1[1]:
+                df_mode = df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].mode().iloc[0]
+                # st.write(df_mode)
+                # st.write(type(df_mode))
+                st.metric(
+                    label="Mode:",
+                    value=money(df_mode),
+                    border=1
+                )
+            # with cols_metric[1]:
+            with cols_metric_1[2]:
+                st.metric(
+                    label="Min:",
+                    value=money(
+                        df_inventory_graph_by_ValueOnHand_by_ParentPart.loc[
+                            df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].idxmin(),
+                            clbl_ValueOnHand]
+                    ),
+                    delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {df_inventory_graph_by_ValueOnHand_by_ParentPart.loc[
+                            df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].idxmin(),
+                            selectbox_df_inventory_graph_by_ValueOnHand]}",
+                    border=1,
+                    delta_color="off"
+                )
+            with cols_metric_1[3]:
+                st.metric(
+                    label="Max:",
+                    value=money(
+                        df_inventory_graph_by_ValueOnHand_by_ParentPart.loc[
+                            df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].idxmax(),
+                            clbl_ValueOnHand]
+                    ),
+                    delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {df_inventory_graph_by_ValueOnHand_by_ParentPart.loc[
+                            df_inventory_graph_by_ValueOnHand_by_ParentPart[clbl_ValueOnHand].idxmax(),
+                            selectbox_df_inventory_graph_by_ValueOnHand]}",
+                    border=1,
+                    delta_color="off"
+                )
+
+        else:
+            with st.container(border=1):
+                st.write(f"Cannot plot '{clbl_ParentPart}' and group by it at the same time.")
+                st.write(f"Select another column to view this section.")
+
+    with st.container(border=1):
+        selectbox_df_inventory_investigate_col = st.selectbox(
+            label="Select a column to Investigate:",
+            options=df_inventory.columns.to_list(),
+            index=0
+        )
+
+        df_inventory_investigate_value_counts = pd.DataFrame(df_inventory[selectbox_df_inventory_investigate_col].value_counts()).reset_index()
+        n_df_inventory_investigate_values = df_inventory_investigate_value_counts.shape[0]
+        df_inventory_investigate_value_counts["pctFreq"] = df_inventory_investigate_value_counts["count"] / max(1, n_df_inventory_investigate_values)
+
+        st.write(f"Chosen Column: '{selectbox_df_inventory_investigate_col}'")
+        cols_df_inventory_investigate = st.columns(2)
+        with cols_df_inventory_investigate[0]:
+            st.write("All Data:")
+            st.dataframe(
+                df_inventory[selectbox_df_inventory_investigate_col].describe().reset_index(),
+                hide_index=True
+            )
+        with cols_df_inventory_investigate[1]:
+            st.write("Unique Value Counts:")
+            st.dataframe(
+                df_inventory_investigate_value_counts,
+                hide_index=True
+            )
+
 
 
 
