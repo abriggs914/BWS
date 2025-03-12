@@ -1305,7 +1305,7 @@ if selected_directory:
 					["MeetingID", "IssueDescription"]]
 				if not known_issues.empty:
 					st.write(f"Known Issues:")
-					st.write(known_issues)
+					st.dataframe(known_issues.transpose())
 				else:
 					st.write("No Known Issues")
 				st.write(ser_selected_quote)

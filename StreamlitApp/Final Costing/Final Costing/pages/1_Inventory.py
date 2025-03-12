@@ -1,9 +1,11 @@
 from typing import Any, Optional
 
 import pandas as pd
+import pyautogui
 import streamlit as st
 import pygwalker as pyg
 import streamlit.components.v1 as components
+from streamlit_agraph import Node, Config, agraph
 from streamlit_pills import pills
 from st_aggrid import AgGrid, GridOptionsBuilder
 import plotly.express as px
@@ -705,9 +707,7 @@ def load_inventory_20250306() -> pd.DataFrame:
 # 	;
 #     """).strip()
 #     sql = "EXEC [BWSdb].[dbo].[sp_INVFCST_ValuationOnHand20250306]"
-    sql = casify("""
-    
-    SET NOCOUNT ON;
+    sql = casify("""SET NOCOUNT ON;
 
 	IF OBJECT_ID('tempdb..##BomModelData') IS NOT NULL BEGIN
 		DROP TABLE ##BomModelData
@@ -841,10 +841,9 @@ def load_inventory_20250306() -> pd.DataFrame:
 			OR InvMaster.WarehouseToUse IS NULL
 		)
 		AND InvWarehouse.QtyOnHand <> 0
-		AND (
-			subMRPReqDemandSumCheck.NetDemandQty = 0
-			OR subMRPReqDemandSumCheck.NetDemandQty IS NULL
-		)
+		/*AND (
+			ISNULL([subMRPReqDemandSumCheck].[NetDemandQty], 0) = 0
+		)*/
 	;
 
 	SELECT 
@@ -1003,6 +1002,236 @@ def load_inventory_20250306() -> pd.DataFrame:
     return connect_2(**connection_data, enable_mars=True)
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_inventory_subs() -> pd.DataFrame:
+# #     sql = """
+# # SELECT
+# # 	[Src].*,
+# # 	[JM].[Job],
+# # 	[JM].[StockCode] AS [SubStockCode],
+# # 	[JM].[StockDescription] AS [SubStockDescription],
+# # 	[JM].[Warehouse] AS [SubWareHouse],
+# # 	[JM].[QtyIssued] AS [SubQtyIssued],
+# # 	[JM].[UnitCost] AS [SubUnitCost],
+# # 	[JM].[ValueIssued] AS [SubValueIssued],
+# # 	[JM].[ValueBilled] AS [SubValueBilled],
+# # 	[JM].[AllocCompleted] AS [SubAllocCompleted],
+# # 	[JP].[TrnDate],
+# # 	[JM].[Bin] AS [SubBin],
+# # 	[JM].[Warehouse] AS [SubWarehouse],
+# # 	[JM].[OperationOffset] AS [SubOperationOffset],
+# # 	([IW].[QtyOnHand] * [IW].[UnitCost]) AS [ValueOnHand]
+# # FROM (
+# # 	SELECT
+# # 		ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+# # 		[O].[WO#],
+# # 		[O].[Quote#],
+# # 		[P].[Model No],
+# # 		[D].[COMPANY NAME],
+# # 		[JM].[StockCode],
+# # 		[JM].[StockDescription],
+# # 		[JM].[OperationOffset],
+# # 		[JM].[QtyIssued],
+# # 		[JM].[UnitCost],
+# # 		[JM].[ValueIssued],
+# # 		[JM].[ValueBilled],
+# # 		(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete]
+# # 	FROM
+# # 		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+# # 	INNER JOIN
+# # 		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+# # 	ON
+# # 		CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+# # 	INNER JOIN
+# # 		[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+# # 	ON
+# # 		[O].[ProductID] = [P].[IDTrailer]
+# # 	INNER JOIN
+# # 		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+# # 	ON
+# # 		[O].[DealerID] = [D].[ID]
+# # 	LEFT JOIN
+# # 		[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+# # 	ON
+# # 		[O].[WO#] = [PR].[WO#]
+# # 	WHERE
+# # 		([O].[WO#] IS NOT NULL)
+# # 		AND ([O].[Decline/Rejected] = 4)
+# # ) AS [Src]
+# # INNER JOIN
+# # 	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+# # ON
+# # 	([Src].[StockCode] = [JM].[Job])
+# # 	AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+# # LEFT JOIN
+# # 	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+# # ON
+# # 	(CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+# # 	AND ([JM].[StockCode] = [JP].[MStockCode])
+# # LEFT JOIN
+# # 	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+# # ON
+# # 	[IW].[StockCode] = [JM].[StockCode]
+# # ;
+# # 	"""
+#     sql = """
+# SELECT
+# 	[Src].*,
+# 	[JM].[Job],
+# 	[JM].[StockCode] AS [SubStockCode],
+# 	[JM].[StockDescription] AS [SubStockDescription],
+# 	[JM].[Warehouse] AS [SubWareHouse],
+# 	[JM].[QtyIssued] AS [SubQtyIssued],
+# 	[JM].[UnitCost] AS [SubUnitCost],
+# 	[JM].[ValueIssued] AS [SubValueIssued],
+# 	[JM].[ValueBilled] AS [SubValueBilled],
+# 	[JM].[AllocCompleted] AS [SubAllocCompleted],
+# 	[JP].[TrnDate],
+# 	[JM].[Bin] AS [SubBin],
+# 	[JM].[Warehouse] AS [SubWarehouse],
+# 	[JM].[OperationOffset] AS [SubOperationOffset],
+# 	([IW].[QtyOnHand] * [IW].[UnitCost]) AS [ValueOnHand]
+# FROM (
+# 	SELECT
+# 		ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+# 		[O].[WO#],
+# 		[O].[Quote#],
+# 		[P].[Model No],
+# 		[D].[COMPANY NAME],
+# 		[JM].[StockCode],
+# 		[JM].[StockDescription],
+# 		[JM].[OperationOffset],
+# 		[JM].[QtyIssued],
+# 		[JM].[UnitCost],
+# 		[JM].[ValueIssued],
+# 		[JM].[ValueBilled],
+# 		(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete]
+# 	FROM
+# 		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+# 	INNER JOIN
+# 		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+# 	ON
+# 		CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+# 	INNER JOIN
+# 		[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+# 	ON
+# 		[O].[ProductID] = [P].[IDTrailer]
+# 	INNER JOIN
+# 		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+# 	ON
+# 		[O].[DealerID] = [D].[ID]
+# 	LEFT JOIN
+# 		[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+# 	ON
+# 		[O].[WO#] = [PR].[WO#]
+# 	WHERE
+# 		([O].[WO#] IS NOT NULL)
+# 		AND ([O].[Decline/Rejected] = 4)
+# ) AS [Src]
+# LEFT JOIN
+# 	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+# ON
+# 	([Src].[StockCode] = [JM].[Job])
+# 	AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+# LEFT JOIN
+# 	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+# ON
+# 	(CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+# 	AND ([JM].[StockCode] = [JP].[MStockCode])
+# LEFT JOIN
+# 	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+# ON
+# 	[IW].[StockCode] = [JM].[StockCode]
+# 	"""
+    sql = """
+SELECT
+	[Src].*,
+	[JM].[Job],
+	[JM].[StockCode] AS [SubStockCode],
+	[JM].[StockDescription] AS [SubStockDescription],
+	[JM].[Warehouse] AS [SubWareHouse],
+	[JM].[QtyIssued] AS [SubQtyIssued],
+	[JM].[UnitCost] AS [SubUnitCost],
+	[JM].[ValueIssued] AS [SubValueIssued],
+	[JM].[ValueBilled] AS [SubValueBilled],
+	[JM].[AllocCompleted] AS [SubAllocCompleted],
+	[JP].[TrnDate],
+	[JM].[Bin] AS [SubBin],
+	[JM].[Warehouse] AS [SubWarehouse],
+	[JM].[OperationOffset] AS [SubOperationOffset],
+	[IM].[PartCategory] AS [SubPartCategory],
+	([IW].[QtyOnHand] * [IW].[UnitCost]) AS [ValueOnHand]
+FROM (
+	SELECT
+		ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+		[O].[WO#],
+		[O].[Quote#],
+		[P].[Model No],
+		[D].[COMPANY NAME],
+		[JM].[StockCode],
+		[JM].[StockDescription],
+		[JM].[OperationOffset],
+		[JM].[QtyIssued],
+		[JM].[UnitCost],
+		[JM].[ValueIssued],
+		[JM].[ValueBilled],
+		[IM].[PartCategory],
+		(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete]
+	FROM
+		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+	INNER JOIN
+		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+	ON
+		CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+	INNER JOIN
+		[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+	ON
+		[O].[ProductID] = [P].[IDTrailer]
+	INNER JOIN
+		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+	ON
+		[O].[DealerID] = [D].[ID]
+	LEFT JOIN
+		[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+	ON
+		[O].[WO#] = [PR].[WO#]
+	LEFT JOIN
+		[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+	ON
+		[JM].[StockCode] = [IM].[StockCode]
+	WHERE
+		([O].[WO#] IS NOT NULL)
+		AND ([O].[Decline/Rejected] = 4)
+) AS [Src]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+ON
+	([Src].[StockCode] = [JM].[Job])
+	AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+ON
+	(CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+	AND ([JM].[StockCode] = [JP].[MStockCode])
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+ON
+	[IW].[StockCode] = [JM].[StockCode]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+ON
+	[JM].[StockCode] = [IM].[StockCode]
+	;
+	"""
+    connection_data = {
+        "sql": sql,
+        "database": "BWSdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
 def metrics(df, delta_col: Optional[str] = None):
     cols_metric = st.columns(3)
     with cols_metric[0]:
@@ -1120,17 +1349,39 @@ def metrics(df, delta_col: Optional[str] = None):
             )
 
 
+def clear_cache():
+    st.cache_data.clear()
+    st.cache_resource.clear()
+
+
+def rerun():
+    # st.rerun()  # no op
+    pyautogui.hotkey("ctrl", "F5")
+
+
+def clear_cache_and_rerun():
+    clear_cache()
+    rerun()
+
+
 options_pills = [
     "November 2024 Version",
     "Current"
 ]
 k_pills_operation_mode = "pills_operation_mode"
 st.session_state.setdefault(k_pills_operation_mode, 1)
-pills_operation_mode = pills(
-    label="Operation Mode:",
-    options=options_pills,
-    index=st.session_state.get(k_pills_operation_mode)
-)
+cols_top_bar = st.columns([0.65, 0.35])
+with cols_top_bar[0]:
+    pills_operation_mode = pills(
+        label="Operation Mode:",
+        options=options_pills,
+        index=st.session_state.get(k_pills_operation_mode)
+    )
+with cols_top_bar[1]:
+    button_clear_cache_and_rerun = st.button(
+        label="Clear Cache & Rerun",
+        on_click=clear_cache_and_rerun
+    )
 
 if pills_operation_mode == 0:
 
@@ -1197,6 +1448,8 @@ if pills_operation_mode == 0:
     # st.write(pyg_html)
 else:
 
+    hide_index: bool = False
+
     clbl_ValueOnHand = "ValueOnHand"
     clbl_ParentPart = "ParentPart"
     clbl_CycleCount = "CycleCount"
@@ -1233,7 +1486,7 @@ else:
         stdf_inventory = st.dataframe(
             data=df_inventory,
             column_order=multiselect_df_inventory_cols_view,
-            hide_index=True
+            hide_index=hide_index
         )
         # st.write(f"AgGrid:")
         #
@@ -1252,7 +1505,7 @@ else:
         st.write(f"Value Counts and Frequencies:")
         st.dataframe(
             df_inventory[df_inventory_cols_describe].describe().transpose().reset_index(),
-            hide_index=True
+            hide_index=hide_index
         )
 
         metrics(df_inventory)
@@ -1272,6 +1525,7 @@ else:
             "ModelNo",
             "Grouping",
             "ProductClass",
+            "Class",
             "Warehouse",
             "CycleCount",
             "ParentPart"
@@ -1291,7 +1545,8 @@ else:
 
         if selectbox_df_inventory_graph_by_ValueOnHand not in cols_to_split:
             df_inventory_graph_by_ValueOnHand = df_inventory.groupby(
-                by=selectbox_df_inventory_graph_by_ValueOnHand
+                by=selectbox_df_inventory_graph_by_ValueOnHand,
+                dropna=False
             ).agg(
                 {clbl_ValueOnHand: "sum"}
             ).reset_index()
@@ -1299,7 +1554,8 @@ else:
         else:
             df_inventory_exp = df_inventory.explode(selectbox_df_inventory_graph_by_ValueOnHand)
             df_inventory_graph_by_ValueOnHand = df_inventory_exp.groupby(
-                by=selectbox_df_inventory_graph_by_ValueOnHand
+                by=selectbox_df_inventory_graph_by_ValueOnHand,
+                dropna=False
             ).agg(
                 {clbl_ValueOnHand: "sum"}
             ).reset_index()
@@ -1334,7 +1590,7 @@ else:
             k_stdf_inventory_graph_by_ValueOnHand = "stdf_inventory_graph_by_ValueOnHand"
             stde_inventory_graph_by_ValueOnHand = st.data_editor(
                 df_inventory_graph_by_ValueOnHand[["View"] + df_inventory_graph_by_ValueOnHand.columns.tolist()[:-1]],
-                hide_index=True,
+                hide_index=hide_index,
                 disabled=df_inventory_graph_by_ValueOnHand.columns.tolist()[:-1],
                 key=k_stdf_inventory_graph_by_ValueOnHand
             )
@@ -1343,13 +1599,34 @@ else:
             stde_inventory_graph_by_ValueOnHand_v = stde_inventory_graph_by_ValueOnHand.loc[
                 stde_inventory_graph_by_ValueOnHand["View"] == True
             ]
-            chart = px.bar(
-                stde_inventory_graph_by_ValueOnHand_v,
-                x=selectbox_df_inventory_graph_by_ValueOnHand,
-                y=clbl_ValueOnHand,
-                title=f"ValueOnHand By {selectbox_df_inventory_graph_by_ValueOnHand}",
+            options_pills_graph_0_style = ["Pie", "Bar"]
+            pills_graph_0_style = pills(
+                label="Graph Style:",
+                options=options_pills_graph_0_style,
+                index=1,
+                key="k_pills_graph_0_style"
+                # ,
+                # icons=[":pie:", ":bar_chart:"]
             )
-            chart.update_xaxes(type="category")
+            if pills_graph_0_style == options_pills_graph_0_style[1]:
+                # Bar
+                chart = px.bar(
+                    stde_inventory_graph_by_ValueOnHand_v,
+                    x=selectbox_df_inventory_graph_by_ValueOnHand,
+                    y=clbl_ValueOnHand,
+                    title=f"ValueOnHand By {selectbox_df_inventory_graph_by_ValueOnHand}"
+                )
+                chart.update_xaxes(type="category")
+            else:
+                # Pie
+                chart = px.pie(
+                    data_frame=stde_inventory_graph_by_ValueOnHand_v,
+                    names=selectbox_df_inventory_graph_by_ValueOnHand,
+                    values=clbl_ValueOnHand,
+                    hole=0.28,
+                    title=f"ValueOnHand Divided By {selectbox_df_inventory_graph_by_ValueOnHand}"
+                )
+
             st.plotly_chart(
                 chart,
                 theme=None,
@@ -1497,7 +1774,8 @@ else:
 
             if selectbox_df_inventory_graph_by_ValueOnHand not in cols_to_split:
                 df_inventory_graph_by_ValueOnHand2 = df_inventory.groupby(
-                    by=[selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart]
+                    by=[selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart],
+                    dropna=False
                 ).agg(
                     {clbl_ValueOnHand: "sum"}
                 ).reset_index()
@@ -1505,7 +1783,8 @@ else:
             else:
                 df_inventory_exp = df_inventory.explode(selectbox_df_inventory_graph_by_ValueOnHand)
                 df_inventory_graph_by_ValueOnHand2 = df_inventory_exp.groupby(
-                    by=[selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart]
+                    by=[selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart],
+                    dropna=False
                 ).agg(
                     {clbl_ValueOnHand: "sum"}
                 ).reset_index()
@@ -1543,7 +1822,7 @@ else:
                 st.write(f"({df_inventory_graph_by_ValueOnHand2.shape[0]} Rows x {1 + len(df_inventory_graph_by_ValueOnHand2.columns.tolist()[:-1])} Columns):")
                 stde_inventory_graph_by_ValueOnHand2 = st.data_editor(
                     data=df_inventory_graph_by_ValueOnHand2[["Sel"] + df_inventory_graph_by_ValueOnHand2.columns.tolist()[:-1]],
-                    hide_index=True,
+                    hide_index=hide_index,
                     disabled=df_inventory_graph_by_ValueOnHand2.columns.tolist()[:-1]
                 )
 
@@ -1558,23 +1837,56 @@ else:
                 stde_inventory_graph_by_ValueOnHand2["Sel"] == True
                 ]
             with cols_graph_1[1]:
-                chart = px.bar(
-                    df_inventory_graph_by_ValueOnHand_by_ParentPart
-                    # .rename(
-                    #     columns={
-                    #         "": ""
-                    #     }
-                    ,
-                    # barmode="stack",
-                    x=selectbox_df_inventory_graph_by_ValueOnHand,
-                    y=clbl_ValueOnHand,
-                    title=f"{clbl_ValueOnHand} x {selectbox_df_inventory_graph_by_ValueOnHand}, Grouped by {clbl_ParentPart}",
-
-                    color=clbl_ParentPart,
-                    # title=f"Count of new Quotes & WOs {suf}",
-                    # labels={"Date": "Date", "Count": "Count"}
+                options_pills_graph_1_style = ["Pie", "Bar"]
+                pills_graph_1_style = pills(
+                    label="Graph Style:",
+                    options=options_pills_graph_1_style,
+                    index=1,
+                    key="k_pills_graph_1_style"
+                    # ,
+                    # icons=[":pie:", ":bar_chart:"]
                 )
-                chart.update_xaxes(type="category")
+                if pills_graph_1_style == options_pills_graph_1_style[1]:
+                    # Bar
+                    chart = px.bar(
+                        df_inventory_graph_by_ValueOnHand_by_ParentPart
+                        # .rename(
+                        #     columns={
+                        #         "": ""
+                        #     }
+                        ,
+                        # barmode="stack",
+                        x=selectbox_df_inventory_graph_by_ValueOnHand,
+                        y=clbl_ValueOnHand,
+                        title=f"{clbl_ValueOnHand} x {selectbox_df_inventory_graph_by_ValueOnHand}, Grouped by {clbl_ParentPart}",
+
+                        color=clbl_ParentPart,
+                        # title=f"Count of new Quotes & WOs {suf}",
+                        # labels={"Date": "Date", "Count": "Count"}
+                    )
+                    chart.update_xaxes(type="category")
+                else:
+                    # Pie
+
+                    options_pills_graph_1_by = [selectbox_df_inventory_graph_by_ValueOnHand, clbl_ParentPart]
+                    pills_graph_1_by = pills(
+                        label="Graph By:",
+                        options=options_pills_graph_1_by,
+                        index=0,
+                        key="k_pills_graph_1_by"
+                        # ,
+                        # icons=[":pie:", ":bar_chart:"]
+                    )
+
+                    chart = px.pie(
+                        df_inventory_graph_by_ValueOnHand_by_ParentPart,
+                        # names=selectbox_df_inventory_graph_by_ValueOnHand,
+                        # names=clbl_ParentPart,
+                        names=pills_graph_1_by,
+                        values=clbl_ValueOnHand,
+                        hole=0.28,
+                        title=f"{clbl_ValueOnHand} Divided By {pills_graph_1_by}"
+                    )
                 st.plotly_chart(
                     chart,
                     theme=None,
@@ -1695,7 +2007,7 @@ else:
             st.write("All Data:")
             st.dataframe(
                 df_inventory[selectbox_df_inventory_investigate_col].describe().reset_index(),
-                hide_index=True
+                hide_index=hide_index
             )
         with cols_df_inventory_investigate[1]:
             if selectbox_df_inventory_graph_by_ValueOnHand not in cols_to_split:
@@ -1703,7 +2015,7 @@ else:
                 st.write(f"{df_inventory_investigate_value_counts.shape[0]} Rows x {len(df_inventory_investigate_value_counts.columns)} Columns")
                 st.dataframe(
                     df_inventory_investigate_value_counts,
-                    hide_index=True
+                    hide_index=hide_index
                 )
             else:
                 cols_sub_investigate = st.columns(2)
@@ -1712,7 +2024,7 @@ else:
                     st.write(f"{df_inventory_investigate_value_counts.shape[0]} Rows x {len(df_inventory_investigate_value_counts.columns)} Columns")
                     st.dataframe(
                         df_inventory_investigate_value_counts,
-                        hide_index=True
+                        hide_index=hide_index
                     )
                 with cols_sub_investigate[1]:
                     df_iivc = pd.DataFrame(
@@ -1723,10 +2035,100 @@ else:
                     st.write(f"{df_iivc.shape[0]} Rows x {len(df_iivc.columns)} Columns")
                     st.dataframe(
                         df_iivc,
-                        hide_index=True
+                        hide_index=hide_index
                     )
 
+size_node_op: int = 40
 
+st.divider()
+st.header("Parts Graph")
+df_inventory_sub = load_inventory_subs()
+clbl_PartCategory = "PartCategory"
+clbl_OperationOffset = "OperationOffset"
+vlbl_bought_out = "B"
+vlbl_made_in = "M"
+
+df_inventory_sub[clbl_OperationOffset] = df_inventory_sub[clbl_OperationOffset].astype(int)
+
+df_inventory_sub.sort_values(
+    by="DateProduction",
+    ascending=False,
+    inplace=True
+)
+# print(df_inventory_sub)
+# # stdf_inventory_sub = st.write(df_inventory_sub)
+# stdf_inventory_sub = st.dataframe(
+#     data=df_inventory_sub,
+#     hide_index=True
+# )
+lst_jobs = df_inventory_sub["WO#"].unique().tolist()
+
+selectbox_graph_job = st.selectbox(
+    label="Select a Job:",
+    options=lst_jobs,
+    placeholder="Select a Job:"
+)
+
+df_job = df_inventory_sub.loc[
+    (df_inventory_sub["WO#"] == selectbox_graph_job)
+    | (df_inventory_sub["Job"] == selectbox_graph_job)
+]
+df_job_bought_out = df_job.loc[
+    (df_job[clbl_PartCategory] == vlbl_bought_out)
+    | (
+        df_job[clbl_PartCategory].isna()
+        & (df_job["SubPartCategory"] == vlbl_bought_out)
+    )
+]
+df_job_made_in = df_job.loc[
+    (df_job[clbl_PartCategory] == vlbl_made_in)
+    | (
+        df_job[clbl_PartCategory].isna()
+        & (df_job["SubPartCategory"] == vlbl_made_in)
+    )
+]
+
+if df_job.empty:
+    st.write("Select a job to graph.")
+else:
+    st.subheader(f"WO: {selectbox_graph_job}")
+    st.write(f"All Job Data ({df_job.shape[0]} Rows x {df_job.shape[1]} Columns):")
+    stdf_graph_job = st.dataframe(
+        data=df_job,
+        hide_index=hide_index
+    )
+    st.write(f"Bought-Out Parts Data ({df_job_bought_out.shape[0]} Rows x {df_job_bought_out.shape[1]} Columns):")
+    stdf_graph_job_bought_out = st.dataframe(
+        data=df_job_bought_out,
+        hide_index=hide_index
+    )
+    st.write(f"Made-In Parts Data ({df_job_made_in.shape[0]} Rows x {df_job_made_in.shape[1]} Columns):")
+    stdf_graph_job_made_in = st.dataframe(
+        data=df_job_made_in,
+        hide_index=hide_index
+    )
+    nodes = [
+        Node(
+            id=f"node_op_{op}",
+            title=f"{int(op)}",
+            size=size_node_op,
+            level=i
+        )
+        for i, op in enumerate(range(df_job[clbl_OperationOffset].min(), df_job[clbl_OperationOffset].max()))
+    ]
+
+    edges = []
+
+    config = Config(
+        hierarchical=True
+    )
+
+    with st.container(border=1):
+        graph = agraph(
+            nodes=nodes,
+            edges=edges,
+            config=config
+        )
 
 
 st.session_state.update({k_pills_operation_mode: options_pills.index(pills_operation_mode)})
