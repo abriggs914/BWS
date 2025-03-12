@@ -16,8 +16,8 @@ from utility import excel_column_name
 VERSION = \
     """	
     General Utility file for Dataframe operations
-    Version..............1.02
-    Date...........2025-03-05
+    Version..............1.03
+    Date...........2025-03-11
     Author(s)....Avery Briggs
     """
 
@@ -75,6 +75,7 @@ def random_df(
         dtypes: tuple[str] | str = ('int', 'float', 'str', 'datetime', 'bool', 'list'),
         empty_freq: float | dict[str: float] | list[float] = 0,
         defaults: Optional[dict[str: Any]] = None,
+        allow_sub_lists: bool = True,
         **kwargs
 ) -> pd.DataFrame:
     """
@@ -85,6 +86,7 @@ def random_df(
     :param dtypes: A tuple of primitive datatypes that will constrain the random data's data type.
     :param empty_freq: The frequency of None values in the result DataFrame.
     :param defaults: A dictionary of string column names and the availble options when choosing a cell value. Can be a single value or a list of options. 
+    :param allow_sub_lists: Decide whether the random DataFrame can contain sub-lists as cell-values.
     :param kwargs: Optional params to constrain the random data even more:
             min_random_int -- default: -5
             max_random_int -- default: 5
@@ -165,6 +167,9 @@ def random_df(
         raise ValueError(f"'match_sub_list_lens' must be an bool, got: {match_sub_list_lens=}, {type(match_sub_list_lens)}")
     if not isinstance(match_sub_list_dtypes, bool):
         raise ValueError(f"'match_sub_list_dtypes' must be an bool, got: {match_sub_list_dtypes=}, {type(match_sub_list_dtypes)}")
+
+    if not isinstance(allow_sub_lists, bool):
+        raise ValueError(f"'allow_sub_lists' must be an bool, got: {allow_sub_lists=}, {type(allow_sub_lists)}")
     
     min_random_int, max_random_int = utility.minmax(min_random_int, max_random_int)
     min_random_float, max_random_float = utility.minmax(min_random_float, max_random_float)
@@ -184,9 +189,16 @@ def random_df(
 
     if not isinstance(dtypes, (list, tuple)):
         dtypes = [dtypes]
+    elif isinstance(dtypes, tuple):
+        dtypes = list(dtypes)
 
     if isinstance(n_columns, dict):
         dtypes = [d_t for d_t in dtypes if d_t in n_columns.values()]
+
+    if not allow_sub_lists:
+        if "list" in dtypes:
+            dtypes.remove("list")
+
     valid_dtypes = ('int', 'float', 'str', 'datetime', 'bool', 'list')
     valid_dtypes2 = ('int', 'float', 'str', 'datetime', 'bool')
     dt = [d_t for d_t in dtypes if d_t in valid_dtypes]
