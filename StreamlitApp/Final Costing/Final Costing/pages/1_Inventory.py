@@ -2130,5 +2130,4 @@ else:
             config=config
         )
 
-
 st.session_state.update({k_pills_operation_mode: options_pills.index(pills_operation_mode)})
