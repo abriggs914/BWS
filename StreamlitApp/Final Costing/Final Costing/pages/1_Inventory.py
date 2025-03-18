@@ -1,3 +1,5 @@
+import datetime
+import os
 from typing import Any, Optional
 
 import pandas as pd
@@ -5,7 +7,8 @@ import pyautogui
 import streamlit as st
 import pygwalker as pyg
 import streamlit.components.v1 as components
-from streamlit_agraph import Node, Config, agraph
+from streamlit_agraph import Node, Config, agraph, Edge
+from streamlit_pdf_viewer import pdf_viewer
 from streamlit_pills import pills
 from st_aggrid import AgGrid, GridOptionsBuilder
 import plotly.express as px
@@ -14,6 +17,7 @@ from colour_utility import RED, Colour
 from pyodbc_connection import connect, connect_2
 from sql_utility import casify
 from utility import money, flatten
+
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -31,6 +35,15 @@ CREDS_STG: dict[str: Any] = {
     "quote_key": "SGQuote"
 }
 
+
+colour_node_op = Colour("#1277CC")
+colour_node_part_needed = Colour("#CC1212")
+colour_node_part_complete = Colour("#77CC12")
+colour_node_part_subs_needed = Colour("#CC1212").darken(0.35)
+colour_node_part_subs_complete = Colour("#FFF712")
+size_node_op = 60
+size_node_part = 25
+size_node_part_sub = 15
 
 #######################
 # Prep st.session_state
@@ -1232,6 +1245,437 @@ ON
     return connect(**connection_data)
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_parts_subs_data_bws():
+    sql_20250316 = ("""
+SELECT
+	[Src].*,
+	[JM].[Job],
+	[JM].[StockCode] AS [SubStockCode],
+	[JM].[StockDescription] AS [SubStockDescription],
+	[JM].[Warehouse] AS [SubWareHouse],
+	[JM].[QtyIssued] AS [SubQtyIssued],
+	[JM].[UnitCost] AS [SubUnitCost],
+	[JM].[ValueIssued] AS [SubValueIssued],
+	[JM].[ValueBilled] AS [SubValueBilled],
+	[JM].[AllocCompleted] AS [SubAllocCompleted],
+	[JP].[TrnDate]
+FROM (
+	SELECT
+		ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+		[O].[WO#],
+		[O].[Quote#],
+		[P].[Model No],
+		[D].[COMPANY NAME],
+		[JM].[StockCode],
+		[JM].[StockDescription],
+		[JM].[OperationOffset],
+		[JM].[QtyIssued],
+		[JM].[UnitCost],
+		[JM].[ValueIssued],
+		[JM].[ValueBilled],
+		(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete]
+	FROM
+		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+	INNER JOIN
+		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+	ON
+		CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+	INNER JOIN
+		[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+	ON
+		[O].[ProductID] = [P].[IDTrailer]
+	INNER JOIN
+		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+	ON
+		[O].[DealerID] = [D].[ID]
+	LEFT JOIN
+		[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+	ON
+		[O].[WO#] = [PR].[WO#]
+	WHERE
+		([O].[WO#] IS NOT NULL)
+		AND ([O].[Decline/Rejected] = 4)
+) AS [Src]
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [JM]
+ON
+	([Src].[StockCode] = [JM].[Job])
+	AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+ON
+	(CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+	AND ([JM].[StockCode] = [JP].[MStockCode])
+        """).strip()
+    sql_20250317 = ("""
+SELECT
+	[Src].*,
+	[JM].[Job],
+	[JM].[StockCode] AS [SubStockCode],
+	[JM].[StockDescription] AS [SubStockDescription],
+	[JM].[Warehouse] AS [SubWareHouse],
+	[JM].[QtyIssued] AS [SubQtyIssued],
+	[JM].[UnitCost] AS [SubUnitCost],
+	[JM].[ValueIssued] AS [SubValueIssued],
+	[JM].[ValueBilled] AS [SubValueBilled],
+	[JM].[AllocCompleted] AS [SubAllocCompleted],
+	[JP].[TrnDate],
+	[IM].[WarehouseToUse] AS [SubWarehouseToUse],
+	[IW].[DefaultBin] AS [SubDefaultBin]
+FROM (
+	SELECT
+		ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+		[O].[WO#],
+		[O].[Quote#],
+		[P].[Model No],
+		[D].[COMPANY NAME],
+		[JM].[StockCode],
+		[JM].[StockDescription],
+		[JM].[OperationOffset],
+		[JM].[QtyIssued],
+		[JM].[UnitCost],
+		[JM].[ValueIssued],
+		[JM].[ValueBilled],
+		(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete],
+		[IM].[WarehouseToUse],
+		[IW].[DefaultBin]
+	FROM
+		[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+	INNER JOIN
+		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+	ON
+		CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+	INNER JOIN
+		[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+	ON
+		[O].[ProductID] = [P].[IDTrailer]
+	INNER JOIN
+		[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+	ON
+		[O].[DealerID] = [D].[ID]
+	LEFT JOIN
+		[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+	ON
+		[O].[WO#] = [PR].[WO#]
+	LEFT JOIN
+		[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+	ON
+		[JM].[StockCode] = [IM].[StockCode]
+	LEFT JOIN
+		[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+	ON
+		([IM].StockCode = [IW].StockCode)
+		AND ([IM].[WarehouseToUse] = [IW].[Warehouse])
+	WHERE
+		([O].[WO#] IS NOT NULL)
+		AND ([O].[Decline/Rejected] = 4)
+) AS [Src]
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [JM]
+ON
+	([Src].[StockCode] = [JM].[Job])
+	AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+ON
+	(CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+	AND ([JM].[StockCode] = [JP].[MStockCode])
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+ON
+	[JM].[StockCode] = [IM].[StockCode]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+ON
+    ([IM].StockCode = [IW].StockCode)
+    AND ([IM].[WarehouseToUse] = [IW].[Warehouse])
+;
+    """).strip()
+    sql_20250318 = ("""SELECT
+ [Src].*,
+ [JM].[Job],
+ [JM].[StockCode] AS [SubStockCode],
+ [JM].[StockDescription] AS [SubStockDescription],
+ [JM].[Warehouse] AS [SubWareHouse],
+ [JM].[QtyIssued] AS [SubQtyIssued],
+ [JM].[UnitCost] AS [SubUnitCost],
+ [JM].[ValueIssued] AS [SubValueIssued],
+ [JM].[ValueBilled] AS [SubValueBilled],
+ [JM].[AllocCompleted] AS [SubAllocCompleted],
+ [JP].[TrnDate],
+ [IM].[WarehouseToUse] AS [SubWarehouseToUse],
+ [IW].[DefaultBin] AS [SubDefaultBin],
+    [Src].[PlannedStartDate],
+    [WM].[JobDeliveryDate] as [SubJobDelivery/FinishDate],
+    DATEDIFF(DAY, [Src].[PlannedStartDate], [WM].[JobDeliveryDate]) as [NumDaysDiff]
+FROM (
+ SELECT
+  ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+  [O].[WO#],
+  [O].[Quote#],
+  [P].[Model No],
+  [D].[COMPANY NAME],
+  [JM].[StockCode],
+  [JM].[StockDescription],
+  [JM].[OperationOffset],
+  [JM].[QtyIssued],
+  [JM].[UnitCost],
+  [JM].[ValueIssued],
+  [JM].[ValueBilled],
+  (CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete],
+  [IM].[WarehouseToUse],
+  [IW].[DefaultBin],
+        [JL].[PlannedStartDate]
+ FROM
+  [BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+ INNER JOIN
+  [SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+ ON
+  CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+ INNER JOIN
+  [BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+ ON
+  [O].[ProductID] = [P].[IDTrailer]
+ INNER JOIN
+  [BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+ ON
+  [O].[DealerID] = [D].[ID]
+ LEFT JOIN
+  [BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+ ON
+  [O].[WO#] = [PR].[WO#]
+ LEFT JOIN
+  [SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+ ON
+  [JM].[StockCode] = [IM].[StockCode]
+ LEFT JOIN
+  [SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+ ON
+  ([IM].StockCode = [IW].StockCode)
+  AND ([IM].[WarehouseToUse] = [IW].[Warehouse])
+    LEFT JOIN
+        [SysproCompanyA].[dbo].[WipJobAllLab] [JL] WITH (NOLOCK)
+    ON
+        [JM].Job = [JL].Job
+        and [JM].OperationOffset = [JL].Operation
+ WHERE
+  ([O].[WO#] IS NOT NULL)
+  AND ([O].[Decline/Rejected] = 4)
+) AS [Src]
+LEFT JOIN
+    [SysproCompanyA].[dbo].[WipMaster] [WM]
+ON
+    ([Src].StockCode = [WM].StockCode)
+INNER JOIN
+ [SysproCompanyA].[dbo].[WipJobAllMat] [JM]
+ON
+    [WM].Job = [JM].Job
+ -- ([Src].[StockCode] = [JM].[StockCode])
+ -- AND ([Src].[OperationOffset] = [JM].[OperationOffset])
+LEFT JOIN
+ [SysproCompanyA].[dbo].[WipJobPost] [JP]
+ON
+    [WM].Job = [JP].Job
+    and [WM].StockCode = [JP].MStockCode
+ -- (CAST([Src].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+ -- AND ([JM].[StockCode] = [JP].[MStockCode])
+LEFT JOIN
+ [SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+ON
+ [JM].[StockCode] = [IM].[StockCode]
+LEFT JOIN
+ [SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+ON
+    ([IM].StockCode = [IW].StockCode)
+    AND ([IM].[WarehouseToUse] = [IW].[Warehouse])
+LEFT JOIN
+    [SysproCompanyA].[dbo].[WipJobAllLab] [JL] WITH (NOLOCK)
+ON
+    [JM].Job = [JL].Job
+    and [JM].OperationOffset = [JL].Operation
+WHERE
+    (
+        [WM].JobClassification = 'SUB'
+        or [WM].JobClassification is null
+    )
+    and [WM].ActCompleteDate is null
+    and (
+        DATEDIFF(DAY, [Src].[PlannedStartDate], [WM].[JobDeliveryDate]) between -30 and 0
+        or DATEDIFF(DAY, [Src].[PlannedStartDate], [WM].[JobDeliveryDate]) is null
+    )
+	--AND (CAST([Src].[WO#] AS NVARCHAR(25)) = @j)
+;
+    """).strip()
+    connection_data = {
+        "sql": sql_20250318,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_parts_data_bws():
+    sql_20250316 = ("""
+SELECT
+	ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+	[O].[WO#],
+	[O].[Quote#],
+	[P].[Model No],
+	[D].[COMPANY NAME],
+	[JM].[StockCode],
+	[JM].[StockDescription],
+	[JM].[OperationOffset],
+	[JM].[QtyIssued],
+	[JM].[UnitCost],
+	[JM].[ValueIssued],
+	[JM].[ValueBilled],
+	(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete],
+	[JP].[TrnDate]
+FROM
+	[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+ON
+	CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+INNER JOIN
+	[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+ON
+	[O].[ProductID] = [P].[IDTrailer]
+INNER JOIN
+	[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+ON
+	[O].[DealerID] = [D].[ID]
+LEFT JOIN
+	[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+ON
+	[O].[WO#] = [PR].[WO#]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+ON
+	(CAST([O].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+	AND 
+	([JM].[StockCode] = [JP].[MStockCode])
+WHERE
+	([O].[WO#] IS NOT NULL)
+	AND ([O].[Decline/Rejected] = 4)
+    """).strip()
+    sql_20250317 = ("""
+SELECT
+	ISNULL([PR].[Prod Date], [PR].[Prod Date2]) AS [DateProduction],
+	[O].[WO#],
+	[O].[Quote#],
+	[P].[Model No],
+	[D].[COMPANY NAME],
+	[JM].[StockCode],
+	[JM].[StockDescription],
+	[JM].[OperationOffset],
+	[JM].[QtyIssued],
+	[JM].[UnitCost],
+	[JM].[ValueIssued],
+	[JM].[ValueBilled],
+	(CASE WHEN ISNULL([JM].[AllocCompleted], 'N') = 'Y' THEN 1 ELSE 0 END) AS [Complete],
+	[JP].[TrnDate],
+	[IM].[WarehouseToUse],
+	[IW].[DefaultBin]
+FROM
+	[BWSdb].[dbo].[Orders] [O] WITH (NOLOCK)
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+ON
+	CAST([O].[WO#] AS NVARCHAR(250)) = [JM].[Job]
+INNER JOIN
+	[BWSdb].[dbo].[Products] [P] WITH (NOLOCK)
+ON
+	[O].[ProductID] = [P].[IDTrailer]
+INNER JOIN
+	[BWSdb].[dbo].[Dealers] [D] WITH (NOLOCK)
+ON
+	[O].[DealerID] = [D].[ID]
+LEFT JOIN
+	[BWSdb].[dbo].[Production] [PR] WITH (NOLOCK)
+ON
+	[O].[WO#] = [PR].[WO#]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+ON
+	(CAST([O].[WO#] AS NVARCHAR(250)) = [JP].[Job])
+	AND ([JM].[StockCode] = [JP].[MStockCode])
+
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+ON
+	[JM].[StockCode] = [IM].[StockCode]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
+ON
+    ([IM].StockCode = [IW].StockCode)
+    AND ([IM].[WarehouseToUse] = [IW].[Warehouse])
+
+WHERE
+	([O].[WO#] IS NOT NULL)
+	AND ([O].[Decline/Rejected] = 4)
+;
+    """).strip()
+    connection_data = {
+        "sql": sql_20250317,
+        "database": "bwsdb",
+        "uid": CREDS_BWS["uid"],
+        "pwd": CREDS_BWS["pwd"]
+    }
+    return connect(**connection_data)
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_walk_part_standards():
+    path = r"\\server4.bwsdomain.local\Design\DRAWINGS\STANDARDS"
+    return list(os.walk(path))
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_walk_part_pdfs():
+    path = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
+    return list(os.walk(path))
+
+
+def load_part_standard(part_num: str | list[str]):
+    found_files = []
+    ff_n = []
+    part_nums = [part_num] if not isinstance(part_num, list) else part_num
+    for dir_path, dir_names, file_names in load_walk_part_standards():
+        for i, file_ in enumerate(file_names):
+            file = file_.upper()
+            for j, pn in enumerate(part_nums):
+                if pn.upper() in file:
+                    if file_ not in ff_n:
+                        found_files.append((dir_path, file_))
+                        ff_n.append(file_)
+    return found_files
+
+
+def load_part_drawing(part_num: str | list[str]):
+    found_files = []
+    ff_n = []
+    part_nums = [part_num] if not isinstance(part_num, list) else part_num
+    for dir_path, dir_names, file_names in load_walk_part_pdfs():
+        for i, file_ in enumerate(file_names):
+            file = file_.upper()
+            for j, pn in enumerate(part_nums):
+                if pn.upper() in file:
+                    if file_ not in ff_n:
+                        found_files.append((dir_path, file_))
+                        ff_n.append(file_)
+    return found_files
+
+
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_pdf(path: str):
+    with open(path, "rb") as f:
+        return f.read()
+
+
 def metrics(df, delta_col: Optional[str] = None):
     cols_metric = st.columns(3)
     with cols_metric[0]:
@@ -1998,7 +2442,8 @@ else:
         )
 
         df_inventory_investigate_value_counts = pd.DataFrame(df_inventory[selectbox_df_inventory_investigate_col].value_counts()).reset_index()
-        n_df_inventory_investigate_values = df_inventory_investigate_value_counts.shape[0]
+        # n_df_inventory_investigate_values = df_inventory_investigate_value_counts.shape[0]
+        n_df_inventory_investigate_values = df_inventory_investigate_value_counts["count"].sum()
         df_inventory_investigate_value_counts["pctFreq"] = df_inventory_investigate_value_counts["count"] / max(1, n_df_inventory_investigate_values)
 
         st.write(f"Chosen Column: '{selectbox_df_inventory_investigate_col}'")
@@ -2029,7 +2474,8 @@ else:
                 with cols_sub_investigate[1]:
                     df_iivc = pd.DataFrame(
                         df_inventory[selectbox_df_inventory_investigate_col].explode().value_counts()).reset_index()
-                    n_df_iivc = df_iivc.shape[0]
+                    # n_df_iivc = df_iivc.shape[0]
+                    n_df_iivc = df_iivc["count"].sum()
                     df_iivc["pctFreq"] = df_iivc["count"] / max(1, n_df_iivc)
                     st.write("Unique Value Counts (Exploded):")
                     st.write(f"{df_iivc.shape[0]} Rows x {len(df_iivc.columns)} Columns")
@@ -2041,93 +2487,721 @@ else:
 size_node_op: int = 40
 
 st.divider()
-st.header("Parts Graph")
-df_inventory_sub = load_inventory_subs()
-clbl_PartCategory = "PartCategory"
-clbl_OperationOffset = "OperationOffset"
-vlbl_bought_out = "B"
-vlbl_made_in = "M"
-
-df_inventory_sub[clbl_OperationOffset] = df_inventory_sub[clbl_OperationOffset].astype(int)
-
-df_inventory_sub.sort_values(
-    by="DateProduction",
-    ascending=False,
-    inplace=True
-)
-# print(df_inventory_sub)
-# # stdf_inventory_sub = st.write(df_inventory_sub)
-# stdf_inventory_sub = st.dataframe(
-#     data=df_inventory_sub,
-#     hide_index=True
+# st.header("Parts Graph")
+# df_inventory_sub = load_inventory_subs()
+# clbl_PartCategory = "PartCategory"
+# clbl_OperationOffset = "OperationOffset"
+# vlbl_bought_out = "B"
+# vlbl_made_in = "M"
+#
+# df_inventory_sub[clbl_OperationOffset] = df_inventory_sub[clbl_OperationOffset].astype(int)
+#
+# df_inventory_sub.sort_values(
+#     by="DateProduction",
+#     ascending=False,
+#     inplace=True
 # )
-lst_jobs = df_inventory_sub["WO#"].unique().tolist()
+# # print(df_inventory_sub)
+# # # stdf_inventory_sub = st.write(df_inventory_sub)
+# # stdf_inventory_sub = st.dataframe(
+# #     data=df_inventory_sub,
+# #     hide_index=True
+# # )
+# lst_jobs = df_inventory_sub["WO#"].unique().tolist()
+#
+# selectbox_graph_job = st.selectbox(
+#     label="Select a Job:",
+#     options=lst_jobs,
+#     placeholder="Select a Job:"
+# )
+#
+# df_job = df_inventory_sub.loc[
+#     (df_inventory_sub["WO#"] == selectbox_graph_job)
+#     | (df_inventory_sub["Job"] == selectbox_graph_job)
+# ]
+# df_job_bought_out = df_job.loc[
+#     (df_job[clbl_PartCategory] == vlbl_bought_out)
+#     | (
+#         df_job[clbl_PartCategory].isna()
+#         & (df_job["SubPartCategory"] == vlbl_bought_out)
+#     )
+# ]
+# df_job_made_in = df_job.loc[
+#     (df_job[clbl_PartCategory] == vlbl_made_in)
+#     | (
+#         df_job[clbl_PartCategory].isna()
+#         & (df_job["SubPartCategory"] == vlbl_made_in)
+#     )
+# ]
+#
+# if df_job.empty:
+#     st.write("Select a job to graph.")
+# else:
+#     st.subheader(f"WO: {selectbox_graph_job}")
+#     st.write(f"All Job Data ({df_job.shape[0]} Rows x {df_job.shape[1]} Columns):")
+#     stdf_graph_job = st.dataframe(
+#         data=df_job,
+#         hide_index=hide_index
+#     )
+#     st.write(f"Bought-Out Parts Data ({df_job_bought_out.shape[0]} Rows x {df_job_bought_out.shape[1]} Columns):")
+#     stdf_graph_job_bought_out = st.dataframe(
+#         data=df_job_bought_out,
+#         hide_index=hide_index
+#     )
+#     st.write(f"Made-In Parts Data ({df_job_made_in.shape[0]} Rows x {df_job_made_in.shape[1]} Columns):")
+#     stdf_graph_job_made_in = st.dataframe(
+#         data=df_job_made_in,
+#         hide_index=hide_index
+#     )
+#     nodes = [
+#         Node(
+#             id=f"node_op_{op}",
+#             title=f"{int(op)}",
+#             size=size_node_op,
+#             level=i
+#         )
+#         for i, op in enumerate(range(df_job[clbl_OperationOffset].min(), df_job[clbl_OperationOffset].max()))
+#     ]
+#
+#     edges = []
+#
+#     config = Config(
+#         hierarchical=True
+#     )
+#
+#     with st.container(border=1):
+#         graph = agraph(
+#             nodes=nodes,
+#             edges=edges,
+#             config=config
+#         )
 
-selectbox_graph_job = st.selectbox(
-    label="Select a Job:",
-    options=lst_jobs,
-    placeholder="Select a Job:"
-)
+# Copied from WO_final_costing # 2025-03-17
+with st.expander(
+    label=":new: Parts Per Job"
+):
+    df_parts_data = load_parts_data_bws()
+    df_parts_subs = load_parts_subs_data_bws()
+    df_parts_data.rename(
+        columns={
+            "WO#": "WO",
+            "OperationOffset": "Operation",
+            "MStockCode": "StockCode"
+        },
+        inplace=True
+    )
+    df_parts_subs.rename(
+        columns={
+            "WO#": "WO",
+            "OperationOffset": "Operation",
+            "MStockCode": "StockCode"
+        },
+        inplace=True
+    )
+    df_parts_data.sort_values(by="DateProduction", ascending=False, inplace=True)
 
-df_job = df_inventory_sub.loc[
-    (df_inventory_sub["WO#"] == selectbox_graph_job)
-    | (df_inventory_sub["Job"] == selectbox_graph_job)
-]
-df_job_bought_out = df_job.loc[
-    (df_job[clbl_PartCategory] == vlbl_bought_out)
-    | (
-        df_job[clbl_PartCategory].isna()
-        & (df_job["SubPartCategory"] == vlbl_bought_out)
+    st.write("### Newest 10 Jobs:")
+    stdf_parts_data = st.dataframe(
+        data=df_parts_data.head(10)
     )
-]
-df_job_made_in = df_job.loc[
-    (df_job[clbl_PartCategory] == vlbl_made_in)
-    | (
-        df_job[clbl_PartCategory].isna()
-        & (df_job["SubPartCategory"] == vlbl_made_in)
-    )
-]
+    list_jobs = df_parts_data["WO"].dropna().unique()
 
-if df_job.empty:
-    st.write("Select a job to graph.")
-else:
-    st.subheader(f"WO: {selectbox_graph_job}")
-    st.write(f"All Job Data ({df_job.shape[0]} Rows x {df_job.shape[1]} Columns):")
-    stdf_graph_job = st.dataframe(
-        data=df_job,
-        hide_index=hide_index
+    selectbox_job = st.selectbox(
+        label="Choose a Job:",
+        options=list_jobs
     )
-    st.write(f"Bought-Out Parts Data ({df_job_bought_out.shape[0]} Rows x {df_job_bought_out.shape[1]} Columns):")
-    stdf_graph_job_bought_out = st.dataframe(
-        data=df_job_bought_out,
-        hide_index=hide_index
+
+    options_hierarchy = ["Operation", "Date"]
+    selectbox_hierarchy = st.selectbox(
+        label="Hierarchy Mode:",
+        options=options_hierarchy
     )
-    st.write(f"Made-In Parts Data ({df_job_made_in.shape[0]} Rows x {df_job_made_in.shape[1]} Columns):")
-    stdf_graph_job_made_in = st.dataframe(
-        data=df_job_made_in,
-        hide_index=hide_index
+
+    toggle_incomplete_jobs_only = st.toggle(
+        label="Incomplete Issued Parts Only?"
     )
-    nodes = [
-        Node(
-            id=f"node_op_{op}",
-            title=f"{int(op)}",
-            size=size_node_op,
-            level=i
-        )
-        for i, op in enumerate(range(df_job[clbl_OperationOffset].min(), df_job[clbl_OperationOffset].max()))
-    ]
+
+    toggle_node_size_by_part_cost = st.toggle(
+        label="Size Nodes by Part Cost Totals?"
+    )
+
+    toggle_agraph_physics = st.toggle(
+        label="Physics?"
+    )
 
     edges = []
+    op_nodes = []
+    part_nodes = []
+    part_subs_nodes = []
+    if selectbox_job:
 
-    config = Config(
-        hierarchical=True
-    )
+        df_job_parts = df_parts_data.loc[df_parts_data["WO"] == selectbox_job]
+        df_job_parts_subs = df_parts_subs.loc[
+            df_parts_subs["WO"] == selectbox_job
+        ]
+        list_operations = sorted(list(map(int, df_job_parts["Operation"].dropna().unique())))
 
-    with st.container(border=1):
-        graph = agraph(
-            nodes=nodes,
-            edges=edges,
-            config=config
+        if toggle_incomplete_jobs_only:
+            df_job_parts = df_job_parts.loc[
+                pd.isna(df_job_parts["Complete"])
+                | (df_job_parts["Complete"] == 0)
+            ]
+
+        df_job_parts["OpNode"] = None
+        df_job_parts["OpPartNode"] = None
+        df_job_parts["MinDateOpUse"] = None
+        df_job_parts["TotalPartCostOp"] = None
+        df_job_parts_subs["TotalPartCostOp"] = None
+
+        # Temporary 'Constants' relevant to this job
+        min_date = df_job_parts["TrnDate"].min()  # first transaction date
+        max_date = df_job_parts["TrnDate"].max() + datetime.timedelta(days=1)  # last transaction date
+
+        if pd.isna(min_date):
+            min_date = pd.Timestamp.now()
+        if pd.isna(max_date):
+            max_date = pd.Timestamp.now() + pd.Timedelta(days=1)
+
+        total_cost_job_parts = df_job_parts["ValueBilled"].sum()  # total part cost across all operations
+        total_cost_job_parts_subs = df_job_parts_subs["ValueBilled"].sum()  # total part cost across all sub jobs
+
+        # st.write(f"{min_date=}, {max_date=}, {(max_date - min_date).days}")
+        # st.write("df_job_parts")
+        # st.write(df_job_parts)
+
+        # When hierarchy mode in 'Date' mode, use this dict to determine the node's level
+        date_2_level = {
+            # use 3 levels for each operation needed (Op, Parts, Subs).
+            pd.to_datetime(min_date + datetime.timedelta(days=i)): [3 * i, (3 * i) + 1, (3 * i) + 2]
+            for i in range((max_date - min_date).days)
+        }
+
+        # DF to store the first date an operation had a transaction
+        df_min_op_use: pd.DataFrame = df_job_parts.groupby(
+            by=["Operation"]
+        ).agg({"TrnDate": "min"}).rename(
+            columns={"TrnDate": "MinDateOpUse"}
+        ).reset_index()
+        df_min_op_use["OG_MinDateOpUse"] = df_min_op_use["MinDateOpUse"]
+        df_min_op_use["MinDateOpUse"].replace(
+            pd.NaT,
+            max_date + datetime.timedelta(days=-1),
+            inplace=True
         )
+        df_min_op_use.sort_values(
+            by="Operation",
+            inplace=True
+        )
+
+        # DF to store the total part cost for each operation.
+        df_job_part_cost_by_op: pd.DataFrame = df_job_parts.groupby(
+            by="Operation"
+        ).agg({"ValueIssued": "sum"}).rename(
+            columns={"ValueIssued": "TotalPartCostOp"}
+        ).reset_index()
+        max_part_cost_op = df_job_part_cost_by_op["TotalPartCostOp"].max()
+        if max_part_cost_op == 0:
+            # prevent division by 0
+            max_part_cost_op = 1
+
+        df_job_part_sub_cost_by_op: pd.DataFrame = df_job_parts_subs.groupby(
+            by="Operation"
+        ).agg({"ValueIssued": "sum"}).rename(
+            columns={"ValueIssued": "TotalPartCostOp"}
+        ).reset_index()
+        max_part_cost_subs_op = df_job_part_sub_cost_by_op["TotalPartCostOp"].max()
+        if max_part_cost_subs_op == 0:
+            # prevent division by 0
+            max_part_cost_subs_op = 1
+
+        # When using cost-based sizing for nodes, use this DF to determine node size.
+        min_node_size = 200
+        max_node_size = 1000
+        df_job_part_cost_by_op["NodeSize"] = ((df_job_part_cost_by_op["TotalPartCostOp"] / max_part_cost_op) * (max_node_size - min_node_size)) + min_node_size
+        df_job_part_sub_cost_by_op["NodeSize"] = ((df_job_part_sub_cost_by_op["TotalPartCostOp"] / max_part_cost_subs_op) * (max_node_size - min_node_size)) + min_node_size
+
+        # Report
+        st.subheader(f"WO# {selectbox_job}")
+        with st.container(border=1):
+            st.write(f"Total Part Cost: :red[{money(total_cost_job_parts)}]")
+            st.write(f"Total Part Subs Cost: :red[{money(total_cost_job_parts_subs)}]")
+            st.warning("#TODO -- 20250317")
+
+        # cc = st.columns(2)
+        # with cc[0]:
+        #     st.write("df_job_part_cost_by_op")
+        #     st.write(df_job_part_cost_by_op)
+        # with cc[1]:
+        #     st.write("df_job_part_sub_cost_by_op")
+        #     st.write(df_job_part_sub_cost_by_op)
+
+        if selectbox_hierarchy == options_hierarchy[1]:
+            # Date
+
+            config = Config(
+                physics=toggle_agraph_physics,
+                hierarchical=True,
+                direction="LR",
+                width=1200,
+                height=1600,
+                # groups=[1, 2, 3],
+                collapsible=True,
+                interaction={
+                    "selectable": True,
+                    "dragNodes": False,
+                    "dragView": True,
+                    "zoomView": True
+                }
+            )
+            get_level = lambda date_, lvl=0: date_2_level[date_][lvl]
+
+            # # st.write(f"{min_date=}, {max_date=}")
+            # # st.write(date_2_level)
+            #
+            # # st.write("df_min_op_use")
+            # # st.write(df_min_op_use)
+            #
+            # i_c = 0
+            # for i, row in df_min_op_use.iterrows():
+            #     if pd.isna(row["OG_MinDateOpUse"]):
+            #         date_str = "N/A"
+            #     else:
+            #         date_str = f"{row['MinDateOpUse']:%x}"
+            #     op_nodes.append(Node(
+            #         id=f"node_part_{i}",
+            #         title=f"{int(row['Operation'])} - {date_str}",
+            #         size=size_node_op,
+            #         level=date_2_level[row["MinDateOpUse"]][0],
+            #         color=colour_node_op.hex_code
+            #     ))
+            #     if i_c > 0:
+            #         edges.append(Edge(
+            #             source=op_nodes[-2].id,
+            #             target=op_nodes[-1].id,
+            #             title=f"{i=}"
+            #         ))
+            #     i_c += 1
+            # node_ids = [node.id for node in op_nodes]
+            #
+            # for i, op_node_id in enumerate(zip(list_operations, node_ids)):
+            #     op, node_id = op_node_id
+            #     df_op_parts = df_job_parts.loc[df_job_parts["Operation"] == op]
+            #     df_op_parts_subs = df_job_parts_subs.loc[
+            #         df_job_parts_subs["Operation"] == op
+            #     ]
+            #     if toggle_incomplete_jobs_only:
+            #         df_op_parts_subs = df_op_parts_subs.loc[
+            #             pd.isna(df_op_parts_subs["SubAllocCompleted"])
+            #             | (df_op_parts_subs["SubAllocCompleted"] == 0)
+            #         ]
+            #     # st.write(f"#### {i=}, {op=}")
+            #     # st.write(df_op_parts)
+            #     # st.write(df_op_parts_subs)
+            #     for j, row in df_op_parts.iterrows():
+            #         complete = row["Complete"]
+            #         date = row["TrnDate"]
+            #         date = max_date + datetime.timedelta(days=-1) if pd.isna(date) else date
+            #         if pd.isna(row["TrnDate"]):
+            #             date_str = "N/A"
+            #         else:
+            #             date_str = f"{row['TrnDate']:%x}"
+            #         part_nodes.append(Node(
+            #             id=f"node_part_{i}_{j}",
+            #             title=f"{row['StockCode']} - {row['StockDescription']} - {date_str}",
+            #             size=size_node_part,
+            #             color=(colour_node_part_complete if complete else colour_node_part_needed).hex_code
+            #             ,
+            #             # level=op
+            #             # level=max(0, 2*(i-1)) + 1
+            #             # level=2*(i-1)
+            #             level=date_2_level[date][1]
+            #             # group=2 if complete else 1
+            #         ))
+            #         edges.append(Edge(
+            #             source=part_nodes[-1].id,
+            #             target=node_id,
+            #             title=f"({i=}, {j=})"
+            #         ))
+            #         df_job_parts.loc[j, "OpNode"] = node_id
+            #         df_job_parts.loc[j, "OpPartNode"] = part_nodes[-1].id
+            #
+            #     for j, row in df_op_parts_subs.iterrows():
+            #         complete = row["Complete"]
+            #         parent_job = row["Job"]
+            #         date = row["TrnDate"]
+            #         if pd.isna(row["TrnDate"]):
+            #             date_str = "N/A"
+            #         else:
+            #             date_str = f"{row['MinDateOpUse']:%x}"
+            #         df_job_sub_part = df_job_parts.loc[
+            #             (df_job_parts["WO"] == selectbox_job)
+            #             & (df_job_parts["StockCode"] == parent_job)
+            #         ]
+            #         # st.write(f"SUBS {i=}, {j=}")
+            #         # st.write(df_job_sub_part)
+            #         part_node_id = df_job_sub_part.iloc[0]["OpPartNode"]
+            #         # st.write(f"{part_node_id=}")
+            #         part_subs_nodes.append(Node(
+            #             id=f"node_part_sub_{i}_{j}",
+            #             title=f"{row['SubStockCode']} - {row['SubStockDescription']} - {date_str}",
+            #             size=size_node_part_sub,
+            #             color=(colour_node_part_subs_complete if complete else colour_node_part_subs_needed).hex_code
+            #             ,
+            #             # level=op
+            #             # level=max(0, 2*(i-1)) + 1
+            #             # level=2*(i-1)
+            #             level=date_2_level[date][2]
+            #             # group=2 if complete else 1
+            #         ))
+            #         edges.append(Edge(
+            #             source=part_subs_nodes[-1].id,
+            #             target=part_node_id,
+            #             title=f"({i=}, {j=})"
+            #         ))
+
+        else:
+
+            # op_nodes = [
+            #     Node(
+            #         id=f"node_op_{op}",
+            #         title=f"{op}",
+            #         size=size_node_op,
+            #         color=colour_node_op.hex_code
+            #         ,
+            #         level=3*i,
+            #         # group=0
+            #     )
+            #     for i, op in enumerate(list_operations)
+            # ]
+            # node_ids = [node.id for node in op_nodes]
+            #
+            # edges = [
+            #     Edge(
+            #         source=op_nodes[i].id,
+            #         target=op_nodes[i+1].id
+            #     )
+            #     for i in range(len(op_nodes) - 1)
+            # ]
+
+            config = Config(
+                physics=toggle_agraph_physics,
+                hierarchical=True,
+                # direction="LR",
+                width=1200,
+                height=1600,
+                # groups=[1, 2, 3],
+                collapsible=True
+            )
+            get_level = lambda op_num_, lvl=0: (op_num_ * 3) + lvl
+
+            # # st.write("node_ids")
+            # # st.write(node_ids)
+            #
+            # for i, op_node_id in enumerate(zip(list_operations, node_ids)):
+            #     op, node_id = op_node_id
+            #     df_op_parts = df_job_parts.loc[df_job_parts["Operation"] == op]
+            #     df_op_parts_subs = df_job_parts_subs.loc[
+            #         (df_job_parts_subs["WO"] == selectbox_job)
+            #         & (df_job_parts_subs["Operation"] == op)
+            #     ]
+            #     if toggle_incomplete_jobs_only:
+            #         df_op_parts_subs = df_op_parts_subs.loc[
+            #             pd.isna(df_op_parts_subs["SubAllocCompleted"])
+            #             | (df_op_parts_subs["SubAllocCompleted"] == 0)
+            #         ]
+            #     # st.write(f"#### {i=}, {op=}")
+            #     # st.write(df_op_parts)
+            #     # st.write(df_op_parts_subs)
+            #     for j, row in df_op_parts.iterrows():
+            #         complete = row["Complete"]
+            #         part_nodes.append(Node(
+            #             id=f"node_part_{i}_{j}",
+            #             title=f"{row['StockCode']} - {row['StockDescription']}",
+            #             size=size_node_part,
+            #             color=(colour_node_part_complete if complete else colour_node_part_needed).hex_code
+            #             ,
+            #             # level=op
+            #             # level=max(0, 2*(i-1)) + 1
+            #             # level=2*(i-1)
+            #             level=(3*i)+1
+            #             # group=2 if complete else 1
+            #         ))
+            #         edges.append(Edge(
+            #             source=part_nodes[-1].id,
+            #             target=node_id,
+            #             title=f"({i=}, {j=})"
+            #         ))
+            #         df_job_parts.loc[j, "OpNode"] = node_id
+            #         df_job_parts.loc[j, "OpPartNode"] = part_nodes[-1].id
+            #
+            #     for j, row in df_op_parts_subs.iterrows():
+            #         complete = row["Complete"]
+            #         parent_job = row["Job"]
+            #         df_job_sub_part = df_job_parts.loc[
+            #             (df_job_parts["WO"] == selectbox_job)
+            #             & (df_job_parts["StockCode"] == parent_job)
+            #         ]
+            #         # st.write(f"SUBS {i=}, {j=}")
+            #         # st.write(df_job_sub_part)
+            #         part_node_id = df_job_sub_part.iloc[0]["OpPartNode"]
+            #         # st.write(f"{part_node_id=}")
+            #         part_subs_nodes.append(Node(
+            #             id=f"node_part_sub_{i}_{j}",
+            #             title=f"{row['SubStockCode']} - {row['SubStockDescription']}",
+            #             size=size_node_part_sub,
+            #             color=(colour_node_part_subs_complete if complete else colour_node_part_subs_needed).hex_code
+            #             ,
+            #             # level=op
+            #             # level=max(0, 2*(i-1)) + 1
+            #             # level=2*(i-1)
+            #             level=(3 * i) + 2
+            #             # group=2 if complete else 1
+            #         ))
+            #         edges.append(Edge(
+            #             source=part_subs_nodes[-1].id,
+            #             target=part_node_id,
+            #             title=f"({i=}, {j=})"
+            #         ))
+
+        # # if toggle_node_size_by_part_cost:
+        # get_size = lambda node_type_id, op_num: \
+        #     df_job_part_cost_by_op.loc[
+        #         df_job_part_cost_by_op["Operation"] == op_num
+        #     ].iloc[0]["NodeSize"] \
+        #         if toggle_node_size_by_part_cost else \
+        #         [size_node_op, size_node_part, size_node_part_sub][node_type_id]
+        # # else:
+        # #     get_size = 10
+
+        def get_size(node_type_id, op_num, part_num=None):
+            if toggle_node_size_by_part_cost:
+                sr_job_part_cost_by_op = df_job_part_cost_by_op.loc[
+                    df_job_part_cost_by_op["Operation"] == op_num
+                ].iloc[0]
+                if node_type_id == 0:
+                    # Node
+                    return sr_job_part_cost_by_op["NodeSize"]
+                else:
+                    max_part_cost_op = sr_job_part_cost_by_op["TotalPartCostOp"].max()
+                    part_cost = df_job_parts.loc[df_job_parts["StockCode"] == part_num].iloc[0]["ValueIssued"]
+                    if max_part_cost_op == 0:
+                        max_part_cost_op = 1
+                    p_part_cost = part_cost / max_part_cost_op
+                    return sr_job_part_cost_by_op["NodeSize"] * p_part_cost
+            else:
+                return [size_node_op, size_node_part, size_node_part_sub][node_type_id]
+
+        i_c = 0
+        for i, row in df_min_op_use.iterrows():
+            op_num = row["Operation"]
+            if pd.isna(row["OG_MinDateOpUse"]):
+                date_str = "N/A"
+            else:
+                date_str = f"{row['MinDateOpUse']:%x}"
+            total_op_cost = df_job_part_cost_by_op.loc[df_job_part_cost_by_op["Operation"] == op_num].iloc[0]["TotalPartCostOp"]
+            date_str = f" - {date_str} -- {money(total_op_cost)}".replace(" - N/A ", " ")
+            op_nodes.append(Node(
+                id=f"node_op_{i}",
+                title=f"{int(op_num)}{date_str}",
+                # label=f"{int(op_num)}{date_str}",
+                # text=f"{int(op_num)}{date_str}",
+                # title="MSN BWS 20250219.pdf",
+                # size=size_node_op,
+                size=get_size(0, op_num),
+                # level=date_2_level[row["MinDateOpUse"]][0],
+                level=get_level(row["MinDateOpUse"] if (selectbox_hierarchy == options_hierarchy[1]) else i_c, lvl=0),
+                color=colour_node_op.hex_code,
+                link=r"U:\Quick files\Junk\MSN STG 20250219.pdf",
+                data=r"U:\Quick files\Junk\MSN STG 20250219.pdf",
+                path=r"U:\Quick files\Junk\MSN STG 20250219.pdf",
+                metadata=r"U:\Quick files\Junk\MSN STG 20250219.pdf",
+                url=r"U:\Quick files\Junk\MSN STG 20250219.pdf"
+                # ,
+                # title=r"U:\Quick files\Junk\MSN STG 20250219.pdf"
+            ))
+            if i_c > 0:
+                edges.append(Edge(
+                    source=op_nodes[-2].id,
+                    target=op_nodes[-1].id,
+                    title=f"{i=}"
+                ))
+            i_c += 1
+        node_ids = [node.id for node in op_nodes]
+
+        for i, op_node_id in enumerate(zip(list_operations, node_ids)):
+            op, node_id = op_node_id
+            df_op_parts = df_job_parts.loc[df_job_parts["Operation"] == op]
+            df_op_parts_subs = df_job_parts_subs.loc[
+                df_job_parts_subs["Operation"] == op
+                ]
+            if toggle_incomplete_jobs_only:
+                df_op_parts_subs = df_op_parts_subs.loc[
+                    pd.isna(df_op_parts_subs["SubAllocCompleted"])
+                    | (df_op_parts_subs["SubAllocCompleted"] == 0)
+                    ]
+            # st.write(f"#### {i=}, {op=}")
+            # st.write(df_op_parts)
+            # st.write(df_op_parts_subs)
+            for j, row in df_op_parts.iterrows():
+                complete = row["Complete"]
+                date = row["TrnDate"]
+                date = max_date + datetime.timedelta(days=-1) if pd.isna(date) else date
+                if pd.isna(row["TrnDate"]):
+                    date_str = "N/A"
+                else:
+                    date_str = f"{row['TrnDate']:%x}"
+                # if toggle_node_size_by_part_cost:
+                #     date_str += f" -- {money(df_job_part_cost_by_op.loc[df_job_part_cost_by_op['Operation'] == op].iloc[0]['TotalPartCostOp'])}"
+                date_str += f" -- {money(row['ValueIssued' if complete else 'ValueBilled'])}"
+                part_nodes.append(Node(
+                    id=f"node_part_{i}_{j}",
+                    title=f"{row['StockCode']} - {row['StockDescription']} - {date_str}",
+                    # size=size_node_part,
+                    size=get_size(1, row["Operation"], part_num=row["StockCode"]),
+                    color=(colour_node_part_complete if complete else colour_node_part_needed).hex_code
+                    ,
+                    # level=op
+                    # level=max(0, 2*(i-1)) + 1
+                    # level=2*(i-1)
+                    # level=date_2_level[date][1]
+                    level=get_level(date if (selectbox_hierarchy == options_hierarchy[1]) else i, lvl=1)
+                    # group=2 if complete else 1
+                ))
+                edges.append(Edge(
+                    source=part_nodes[-1].id,
+                    target=node_id,
+                    title=f"({i=}, {j=})"
+                ))
+                df_job_parts.loc[j, "OpNode"] = node_id
+                df_job_parts.loc[j, "OpPartNode"] = part_nodes[-1].id
+
+            for j, row in df_op_parts_subs.iterrows():
+                complete = row["Complete"]
+                parent_job = row["Job"]
+                date = row["TrnDate"]
+                stock_code = row["StockCode"]
+                if pd.isna(row["TrnDate"]):
+                    date_str = "N/A"
+                    date = max_date + datetime.timedelta(days=-1)
+                else:
+                    date_str = f"{row['TrnDate']:%x}"
+                # if toggle_node_size_by_part_cost:
+                #     # date_str += f" -- {money(df_job_part_cost_by_op.loc[df_job_part_cost_by_op['Operation'] == op].iloc[0]['TotalPartCostOp'])}"
+                date_str += f" -- {money(row['ValueIssued' if complete else 'ValueBilled'])}"
+                # st.write(f"{j=}, {parent_job=}")
+                df_job_sub_part = df_job_parts.loc[
+                    (df_job_parts["WO"] == selectbox_job)
+                    & (df_job_parts["StockCode"] == stock_code)
+                    ]
+                # st.write(f"SUBS {i=}, {j=}")
+                # st.write(df_job_sub_part)
+                if (not df_job_sub_part.empty) or 1:
+                    part_node_id = df_job_sub_part.iloc[0]["OpPartNode"]
+                    # st.write(f"{part_node_id=}")
+                    part_subs_nodes.append(Node(
+                        id=f"node_part_sub_{i}_{j}",
+                        title=f"{row['SubStockCode']} - {row['SubStockDescription']} - {date_str}",
+                        # size=size_node_part_sub,
+                        size=get_size(2, row["Operation"], part_num=row["StockCode"]),
+                        color=(colour_node_part_subs_complete if complete else colour_node_part_subs_needed).hex_code
+                        ,
+                        # level=op
+                        # level=max(0, 2*(i-1)) + 1
+                        # level=2*(i-1)
+                        # level=date_2_level[date][2]
+                        level=get_level(date if (selectbox_hierarchy == options_hierarchy[1]) else i, lvl=2)
+                        # group=2 if complete else 1
+                    ))
+                    edges.append(Edge(
+                        source=part_subs_nodes[-1].id,
+                        target=part_node_id,
+                        title=f"({i=}, {j=})"
+                    ))
+
+        with st.container(border=1, height=1200):
+            nodes = op_nodes + part_nodes + part_subs_nodes
+            columns_graph = st.columns([2/3, 1/3])
+            with columns_graph[0]:
+                if not nodes:
+                    st.write("No Nodes!")
+                if not edges:
+                    st.write("No Edges!")
+                graph = agraph(
+                    nodes=nodes,
+                    edges=edges,
+                    config=config
+                )
+            with columns_graph[1]:
+                # st.write("graph")
+                # st.write(graph)
+                if graph:
+                    df_op_node_sel = df_job_parts.loc[
+                        (df_job_parts["OpNode"] == graph)
+                        | (df_job_parts["OpPartNode"] == graph)
+                    ]
+                    st.write("df_op_node_sel:")
+                    st.dataframe(
+                        df_op_node_sel,
+                        selection_mode="single-row",
+                        hide_index=True
+                    )
+                    stock_codes = df_op_node_sel["StockCode"].dropna().unique().tolist()
+                    standard_drawings = load_part_standard(stock_codes)
+                    pdf_drawings = load_part_drawing(stock_codes)
+                    # st.write("standard_drawings")
+                    # st.write(standard_drawings)
+                    if standard_drawings:
+                        selectbox_drawing_sel = st.selectbox(
+                            label="Choose a drawing",
+                            options=[tup[-1] for tup in standard_drawings]
+                        )
+                        if selectbox_drawing_sel:
+                            # st.write("selectbox_drawing_sel")
+                            # st.write(selectbox_drawing_sel)
+                            st.warning("#TODO -- 20250312 -- Finish STL widget")
+
+                            # dwg_path = os.path.join("temp", selectbox_drawing_sel)
+                            # dxf_path = dwg_path.replace(".dwg", ".dxf")
+                            # stl_path = dwg_path.replace(".dwg", ".stl")
+                            #
+                            # # Save uploaded file
+                            # with open(dwg_path, "wb") as f:
+                            #     f.write(uploaded_file.getbuffer())
+                            #
+                            # # Convert DWG → DXF
+                            # dxf_file = convert_dwg_to_dxf(dwg_path, dxf_path)
+                            #
+                            # if dxf_file:
+                            #     # Convert DXF → STL
+                            #     stl_file = convert_dxf_to_stl(dxf_file, stl_path)
+                            #
+                            #     if stl_file:
+                            #         st.success("Conversion successful!")
+                            #         stl(stl_file, width=500, height=500)  # Display in Streamlit
+                            #     else:
+                            #         st.error("STL conversion failed.")
+                            # else:
+                            #     st.error("DXF conversion failed.")
+
+                    # st.write("pdf_drawings")
+                    # st.write(pdf_drawings)
+                    pdf_options = [tup[-1] for tup in pdf_drawings]
+                    if pdf_drawings:
+                        selectbox_pdf_sel = st.selectbox(
+                            label="Choose a drawing",
+                            options=pdf_options
+                        )
+                        if selectbox_pdf_sel:
+                            # st.write("selectbox_pdf_sel")
+                            # st.write(selectbox_pdf_sel)
+                            idx = pdf_options.index(selectbox_pdf_sel)
+                            path = os.path.join(*pdf_drawings[idx])
+                            st_pdf_viewer = pdf_viewer(
+                                input=load_pdf(path)
+                            )
+                            st.warning("#TODO -- 20250312 -- PDF search too generic")
+
+                else:
+                    st.write("Select a Node first.")
 
 st.session_state.update({k_pills_operation_mode: options_pills.index(pills_operation_mode)})

@@ -3,11 +3,12 @@ import os
 
 import streamlit as st
 import pandas as pd
-from typing import Any
+from typing import Any, Optional
 
 from pyodbc_connection import connect
 from sql_utility import create_sql, get_database_tables, get_table_cols
 from streamlit_utility import coloured_text
+from utility import money
 
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
 MAX_FILE_HOLD_TIME: int = 1000 * 60 * 6  # 6 hours
@@ -643,6 +644,123 @@ def check_password(app_short_name: str = None):
         # return True
         st.rerun()
     # return False
+
+
+def metrics(df, metric_col: str, delta_col: Optional[str] = None):
+    cols_metric = st.columns(3)
+    with cols_metric[0]:
+        df_w = df.copy()
+        df_w["RnkAvg"] = \
+            df_w[metric_col].rank(
+                method="average",
+                ascending=False
+            )
+        df_w.sort_values(
+            by=metric_col,
+            ascending=False,
+            inplace=True
+        )
+        sr_top = df_w.iloc[0]
+        avg_pop = df_w[metric_col].mean()
+        diff = avg_pop - float(sr_top['ValueOnHand'])
+        if delta_col is not None:
+            delta = f"Top Avg Diff: '{sr_top[selectbox_df_inventory_graph_by_ValueOnHand]}' ({money(diff)})"
+        else:
+            delta = f"Top Avg Diff: ({money(diff)})"
+        st.metric(
+            label="Mean:",
+            value=money(avg_pop),
+            delta=delta,
+            border=1,
+            delta_color="inverse" if diff < 0 else "normal"
+        )
+        # with cols_metric_0[1]:
+        df_w = df.copy()
+        df_w.sort_values(
+            by=metric_col,
+            ascending=False,
+            inplace=True
+        )
+        sr_med = df_w.iloc[df_w.shape[0] // 2]
+        st.metric(
+            label="Median:",
+            value=money(sr_med[metric_col]),
+            border=1
+        )
+        # with cols_metric_0[2]:
+        df_mode = df_w[metric_col].mode().iloc[0]
+        # st.write(df_mode)
+        # st.write(type(df_mode))
+        st.metric(
+            label="Mode:",
+            value=money(df_mode),
+            border=1
+        )
+    with cols_metric[1]:
+        st.metric(
+            label="Total:",
+            value=money(
+                df[metric_col].sum()
+            ),
+            border=1
+        )
+        if delta_col is not None:
+            st.metric(
+                label="Min:",
+                value=money(
+                    df.loc[
+                        df[metric_col].idxmin(),
+                        metric_col]
+                ),
+                delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {df.loc[
+                    df[metric_col].idxmin(),
+                    selectbox_df_inventory_graph_by_ValueOnHand]}",
+                border=1,
+                delta_color="off"
+            )
+        else:
+            st.metric(
+                label="Min:",
+                value=money(
+                    df.loc[
+                        df[metric_col].idxmin(),
+                        metric_col]
+                ),
+                border=1
+            )
+
+    with cols_metric[2]:
+        st.metric(
+            label="St. Dev.:",
+            value=money(
+                df[metric_col].std()
+            ),
+            border=1
+        )
+        if delta_col is not None:
+            st.metric(
+                label="Max:",
+                value=money(
+                    df.loc[
+                        df[metric_col].idxmax(),
+                        metric_col]
+                ),
+                delta=f"{selectbox_df_inventory_graph_by_ValueOnHand}: {df.loc[
+                    df[metric_col].idxmax(),
+                    selectbox_df_inventory_graph_by_ValueOnHand]}",
+                border=1,
+                delta_color="off"
+            )
+        else:
+            st.metric(
+                label="Max:",
+                value=money(
+                    df.loc[
+                        df[metric_col].idxmax(),
+                        metric_col]
+                ),
+                border=1
+            )
 
 
 if __name__ == '__main__':

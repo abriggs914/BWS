@@ -1579,11 +1579,39 @@ def server_maintenance():
                 on_click=search_server3_tables
             )
 
-            st.dataframe(
-                st.session_state.get("df_search_cols_result"),
+            df_search_cols = st.session_state.get("df_search_cols_result")
+            stdf_search_cols = st.dataframe(
+                df_search_cols,
                 hide_index=True,
-                use_container_width=True
+                use_container_width=True,
+                selection_mode="multi-row",
+                on_select="rerun"
             )
+
+            # st.write("stdf_search_cols")
+            # st.write(stdf_search_cols)
+            sel_row_idxs = stdf_search_cols.get("selection", {}).get("rows", [])
+            code = ""
+            if sel_row_idxs:
+                toggle_select_star = st.toggle(
+                    label="SELECT *",
+                    value=False
+                )
+                if st.button(
+                    label="Write selects"
+                ):
+                    for i, row_i in enumerate(sel_row_idxs):
+                        table_catalog = df_search_cols.loc[row_i, "TABLE_CATALOG"]
+                        table_name = df_search_cols.loc[row_i, "TABLE_NAME"]
+                        column_name = df_search_cols.loc[row_i, "COLUMN_NAME"]
+                        sel_cols = "*" if toggle_select_star else f"[{column_name}]"
+                        table = f"[{table_catalog}].[dbo].[{table_name}]"
+                        code += f"-- {table}\nSELECT\n\t{sel_cols}\nFROM\n\t{table}\n;\n"
+                    st.code(
+                        body=code,
+                        language="sql",
+                        line_numbers=True
+                    )
 
         if sm_tabs == sm_tab_names[1]:
             # SQL Creator
