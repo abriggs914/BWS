@@ -3205,3 +3205,4 @@ with st.expander(
                     st.write("Select a Node first.")
 
 st.session_state.update({k_pills_operation_mode: options_pills.index(pills_operation_mode)})
+
