@@ -2553,7 +2553,7 @@ st.divider()
 #         data=df_job_made_in,
 #         hide_index=hide_index
 #     )
-#     nodes = [
+#     nodes_groups = [
 #         Node(
 #             id=f"node_op_{op}",
 #             title=f"{int(op)}",
@@ -2571,7 +2571,7 @@ st.divider()
 #
 #     with st.container(border=1):
 #         graph = agraph(
-#             nodes=nodes,
+#             nodes_groups=nodes_groups,
 #             edges=edges,
 #             config=config
 #         )
@@ -2714,7 +2714,7 @@ with st.expander(
             # prevent division by 0
             max_part_cost_subs_op = 1
 
-        # When using cost-based sizing for nodes, use this DF to determine node size.
+        # When using cost-based sizing for nodes_groups, use this DF to determine node size.
         min_node_size = 200
         max_node_size = 1000
         df_job_part_cost_by_op["NodeSize"] = ((df_job_part_cost_by_op["TotalPartCostOp"] / max_part_cost_op) * (max_node_size - min_node_size)) + min_node_size
