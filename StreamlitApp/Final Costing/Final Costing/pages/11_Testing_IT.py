@@ -1,12 +1,10 @@
-import json
-from typing import Optional, Literal
-
-import pandas as pd
 import streamlit as st
 from streamlit_agraph import Node, agraph, Config, Edge
+# import streamlit.components.v1 as components
+# import pygwalker as pyg
 
 from colour_utility import Colour, gradient
-from dataframe_utility import random_df
+from dataframe_utility import *
 from pyodbc_connection import connect
 
 from streamlit_sortables import sort_items
@@ -171,6 +169,11 @@ clbl_sortSe: str = "SortSe"
 # Moved sorting and some baseline sanitizing to the cache function
 df_groups_sections_os = load_df_groups_sections_os()
 
+# pyg_html = pyg.walk(df_groups_sections_os).to_html()
+# components.html(pyg_html, height=1000, scrolling=True)
+#
+# st.stop()
+
 clbl_o_quote: str = "Quote#"
 clbl_o_orderDate: str = "Order Date"
 df_orders = load_orders()
@@ -231,11 +234,23 @@ df_004 = df_001.rename(columns={"count": "MGCount"}).merge(
 	on=clbl_modelNo
 )
 
-cc1 = st.columns(2)
+
+df_005 = top_n_with_other_bin(
+	df_groups_sections_os,
+	["Model No", "Group", "SortG", "Section", "SortSe"],
+	top_n=1
+)
+
+st.write("df_005")
+st.write(df_005)
+
+cc1 = st.columns(3)
 with cc1[0]:
 	display_df(df_order_model_counts, "df_order_model_counts")
 with cc1[1]:
 	display_df(df_004, "df_004")
+with cc1[2]:
+	display_df(df_005, "df_005")
 # with cc1[1]:
 # 	display_df(df_002, "df_002")
 # with cc1[2]:
