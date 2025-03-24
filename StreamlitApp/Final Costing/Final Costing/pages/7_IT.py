@@ -1433,7 +1433,8 @@ def import_existing_table_cols():
         options=list_databases
     )
 
-    df_cols = st.columns([2/5, 3/5], gap="small")
+    # df_cols = st.columns([2/5, 3/5], gap="small")
+    tabs_df = st.tabs(["Choose Table", "Select Columns", "Review"])
 
     db_name = st.session_state.get("selectbox_sel_table", "BWSdb")
     count_col = "COLUMN_NAME"
@@ -1461,8 +1462,11 @@ def import_existing_table_cols():
         count_col: "count"
     }).rename(columns={count_col: "COL_COUNT"})
 
-    with df_cols[0]:
-        st.write("### Select a table:")
+    def update_sel_columns():
+        print(f"update_sel_columns")
+
+    with tabs_df[0]:
+        # Select a table
         st.dataframe(
             data=df_tables,
             key=f"stdf_df_tables",
@@ -1470,7 +1474,8 @@ def import_existing_table_cols():
             selection_mode="single-row"
         )
 
-    with df_cols[1]:
+    with tabs_df[1]:
+        # Select some columns from the previous table selection.
         if st.session_state.get("stdf_df_tables"):
             # this works because the table selection st.dataframe is in selection_mode="single-row"
             selected_rows = st.session_state.get("stdf_df_tables")["selection"]["rows"]
@@ -1478,52 +1483,89 @@ def import_existing_table_cols():
                 table_name = df_tables.iloc[selected_rows[0]].name
                 st.write(table_name)
                 df_columns = get_cols(table_name, db_name)
-                st.dataframe(
-                    df_columns[show_cols],
+                df_columns["+"] = False
+                stde_df_table_columns = st.data_editor(
+                    df_columns[["+"] + show_cols],
                     key=f"stdf_df_table_columns",
-                    on_select=lambda: 1,
-                    hide_index=True
+                    # on_select=lambda: 1,
+                    hide_index=True,
+                    disabled=show_cols,
+                    on_change=update_sel_columns
                 )
+            else:
+                st.write("Select a table first.")
 
-    with st.container(border=True):
+    with tabs_df[2]:
+        # Review and submit the selected columns
+        cont_table = st.container()
+        cols = st.columns([1 / 3, 1 / 3, 1 / 3])
         selected_table_rows = st.session_state.get("stdf_df_tables")["selection"]["rows"]
         if selected_table_rows:
             table_name = df_tables.iloc[selected_table_rows[0]].name
-            selected_column_rows = st.session_state.get("stdf_df_table_columns")["selection"]["rows"]
-            if selected_column_rows:
+            # selected_column_rows = st.session_state.get("stdf_df_table_columns")["selection"]["rows"]
+            selected_column_rows = stde_df_table_columns.loc[stde_df_table_columns["+"]]
+            if not selected_column_rows.empty:
                 column_names: pd.DataFrame = df_tables_og.loc[
                     df_tables_og["TABLE_NAME"] == table_name
                 ].reset_index().iloc[
-                    selected_column_rows
-                ][show_cols].reset_index()
-                st.data_editor(
+                    selected_column_rows.index
+                ][show_cols].reset_index(drop=True)
+
+                column_names["DATA_TYPE"].replace("nvarchar", "str", inplace=True)
+                column_names["DEFAULT"] = None
+                column_names["VALID"] = column_names.apply(lambda row:
+                                                           bool(len(row["DATA_TYPE"].strip()))
+                                                           and bool(len(row["COLUMN_NAME"].strip()))
+                                                           , axis=1)
+
+                new_col_names = column_names.columns.tolist()
+                new_col_names.remove("PRIMARY_KEY")
+                stde_columns = cont_table.data_editor(
                     column_names,
                     column_config={
                         "DATA_TYPE": st.column_config.SelectboxColumn(
                             label="DATA_TYPE",
-                            options=list_data_types
-                        ),
-                        "PRIMARY_KEY": st.column_config.CheckboxColumn(
-                            label="PK",
-                            width=50
+                            options=list_data_types,
+                            required=True,
+                            default=list_data_types[0]
                         )
+                        # ,
+                        # "PRIMARY_KEY": st.column_config.CheckboxColumn(
+                        #     label="PK",
+                        #     width=50
+                        # )
                     },
-                    key=f"data_editor_cols",
+                    key=f"k_data_editor_cols",
                     on_change=validate_chosen,
-                    hide_index=True
+                    hide_index=True,
+                    column_order=new_col_names,
+                    disabled=["VALID"],
                 )
+                # print(f"--MM")
+                # print(stde_columns)
+                st.session_state.update({
+                    "data_editor_cols_data": column_names[new_col_names],
+                    "data_editor_cols": stde_columns
+                })
 
-    if st.button(
-        label="submit",
-        key=f"btn_sel_table_submit"
-    ):
-        st.rerun()
+                # if stde_columns.loc[stde_columns["PRIMARY_KEY"]].empty:
+                #     st.warning("No PK specified in columns")
+                if stde_columns.loc[stde_columns["VALID"]].empty:
+                    st.error("You have invalid column details specified.")
+                else:
+                    with cols[2]:
+                        if st.button(
+                            label="Submit Columns",
+                            key=f"btn_sel_table_submit"
+                        ):
+                            st.rerun()
 
-    if st.button(
-        label="cancel",
-        key=f"btn_sel_table_cancel"
-    ):
-        st.rerun()
+        with cols[1]:
+            if st.button(
+                label="Cancel",
+                key=f"btn_sel_table_cancel"
+            ):
+                st.rerun()
 
 
 def server_maintenance():
@@ -1826,12 +1868,31 @@ def server_maintenance():
                                     st.rerun()
 
                 input_table_cols.subheader("Columns:")
+                print(st.session_state.get("data_editor_cols_data"))
+                df_decd = st.session_state.get("data_editor_cols_data", pd.DataFrame())
+                for idx, col_changes in st.session_state.get("data_editor_cols", {}).get("edited_rows", {}).items():
+                    for cn, ev in col_changes.items():
+                        df_decd.loc[idx, cn] = ev
+                input_table_cols.write(df_decd)
+                print(st.session_state.get("data_editor_cols_"))
+                input_table_cols.write(st.session_state.get("data_editor_cols"))
                 if "ct_data" not in st.session_state:
                     ct_data = pd.DataFrame(columns=ct_column_names)
                     st.session_state.update({"ct_data": ct_data})
-                elif not (imported_data := st.session_state.get("data_editor_cols", pd.DataFrame())).empty:
+                elif not df_decd.empty:
                     # TODO this dataframe doesnt match the expected columns.
-                    ct_data = imported_data
+                    df_decd.rename(
+                        columns={
+                            "COLUMN_NAME": "Name",
+                            "DATA_TYPE": "Type",
+                            "CHARACTER_MAXIMUM_LENGTH": "Size",
+                            "DEFAULT": "Default"
+                        },
+                        inplace=True
+                    )
+                    # by default, force the PK assignment to be done
+                    df_decd["PK"] = False
+                    ct_data = df_decd
                 else:
                     ct_data = st.session_state.get("ct_data")
 
@@ -1900,6 +1961,8 @@ def server_maintenance():
 
                 ct_columns = input_table_cols.columns(1 + len(ct_column_names), border=0)
                 # input_table_cols.write("---")
+                print("ct_data")
+                print(ct_data)
                 st.dataframe(ct_data)
                 list_cb_pk_keys = []
                 cont_height = 75
