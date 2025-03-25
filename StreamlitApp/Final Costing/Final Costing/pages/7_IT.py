@@ -1868,11 +1868,14 @@ def server_maintenance():
                                     st.rerun()
 
                 input_table_cols.subheader("Columns:")
+                print("st.session_state.get('data_editor_cols_data')")
                 print(st.session_state.get("data_editor_cols_data"))
                 df_decd = st.session_state.get("data_editor_cols_data", pd.DataFrame())
                 for idx, col_changes in st.session_state.get("data_editor_cols", {}).get("edited_rows", {}).items():
                     for cn, ev in col_changes.items():
                         df_decd.loc[idx, cn] = ev
+                print("df_decd")
+                print(df_decd)
                 input_table_cols.write(df_decd)
                 print(st.session_state.get("data_editor_cols_"))
                 input_table_cols.write(st.session_state.get("data_editor_cols"))
