@@ -17,7 +17,7 @@ from datetime_utility import is_date, date_str_format
 from html_utility import list_to_html
 from pyodbc_connection import connect
 from sql_utility import *
-from streamlit_utility import coloured_text
+from streamlit_utility import coloured_text, display_df
 from streamlit_utility_bws import load_it_requests, load_departments, load_itr_personnel, load_itstr_app_directory, \
     load_itr_customers, load_itr_hardware, load_itstr_user_directory, load_itr_software, load_itr_training, \
     get_next_it_request_number, get_tables, get_cols, load_production_file
@@ -110,7 +110,8 @@ def search_server3_tables():
                         FROM
                             INFORMATION_SCHEMA.COLUMNS
                         WHERE
-                            LOWER([COLUMN_NAME]) LIKE '%{ST}%'
+                            (LOWER([COLUMN_NAME]) LIKE LOWER('%{ST}%'))
+                            OR (LOWER('{ST}')) LIKE '%' + LOWER([COLUMN_NAME]) + '%'
                         ORDER BY
                             [TABLE_NAME],
                             [COLUMN_NAME]
@@ -1622,7 +1623,7 @@ def server_maintenance():
             )
 
             df_search_cols = st.session_state.get("df_search_cols_result")
-            stdf_search_cols = st.dataframe(
+            stdf_search_cols = display_df(
                 df_search_cols,
                 hide_index=True,
                 use_container_width=True,
