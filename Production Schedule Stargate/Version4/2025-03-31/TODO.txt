@@ -1,0 +1,60 @@
+2024-07-25
+    Complete 'shift-lines' functionality, currently pointed at nothing
+2024-07-25
+    correct the shift line preview canvas
+2024-07-25 -- 2024-07-31
+    Add Test mode back in
+2024-07-25 -- 2024-07-30
+    Add Dark / Light mode / Theme
+
+
+2024-07-26 -- 2024-08-01
+    Check for work days as well as holidays
+
+
+2024-08-01 -- 2024-08-01
+    Add Non-prod work day highlighting and labels
+2024-08-01
+    Try and correct geometry setting the window just-off
+
+
+2024-08-02
+    Add warning for non-prod-days when saving
+2024-08-02 -- 2024-08-02
+    Add save button to menu
+2024-08-02
+    Add breakdown of tile text meaning
+2024-08-02 -- 2024-08-02
+    Add delivery date calculation
+2024-08-02
+    Re-enable undo function
+2024-08-02 -- 2024-08-02
+    Add new user sign-in to auto-enable 'view mode'
+2024-08-02
+    Add features to 'view mode'
+2024-08-02
+    Add colour coding by model
+2024-08-02
+    Correct Font selection in colour-coding menu
+
+2024-08-13
+    Admin Menu for non-publish viewers to gain permission if they know the password.
+2024-08-13
+    re-organize the menubar controls.
+2024-08-13
+    Add 'All' search radio back
+2024-08-13
+    Colour-coding by priority
+2024-08-13
+    Correct theme colour startup
+2024-08-13
+    Add 'System' back to light/dark mode switch
+
+
+2024-08-16
+    BWS
+
+2024-08-22
+    BWS Delivery Date has a different formula
+2024-08-23
+    Move Allowed Companies buttons to admin menu
