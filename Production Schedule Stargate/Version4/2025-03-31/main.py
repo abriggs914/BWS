@@ -11401,6 +11401,9 @@ class App(ctk.CTk):
                 # user = utility.get_windows_user(2)
                 # user = self.app_state["user"]
                 user = self.app_state["user_name"]
+
+                if comp == COMPANY.STG.value:
+
                 rt1 = "[BWSdb].[dbo].[OrdersV2]"
                 kd = "[Available Date]"
                 kl = "[JobAvailableLine]"
