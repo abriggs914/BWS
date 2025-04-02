@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.85
-    Date...........2024-09-24
+    Version..............1.81
+    Date...........2024-09-16
     Author(s)....Avery Briggs
     """
 
@@ -2275,7 +2275,6 @@ class MultiComboBox(tkinter.Frame):
         #        new_entry_defaults is not None or allow_insert_ask) if not limit_to_list else 1, "Error, if allow new inserts to this combobox, then you must also either pass rest_values as 'new_entry_defaults' or set 'allow_insert_ask' to True.\nOtherwise there is no way to assign the rest of the column values."
 
         self.master = master
-        self.tag_history = {}
         self.namer = alpha_seq(10000000)
         self.top_most = patriarch(master)
         self.limit_to_list = limit_to_list
@@ -2472,7 +2471,7 @@ class MultiComboBox(tkinter.Frame):
             else:
                 if self.tv_tree_is_hidden.get():
                     self.click_canvas_dropdown_button(None)
-        # print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
+        print(f"{do_grid=}, {self.include_searching_widgets=}, {self.include_drop_down_arrow=}, {self.tv_tree_is_hidden.get()=}")
 
     def click_btn_clear(self):
         self.res_tv_entry.set("")
@@ -2835,7 +2834,6 @@ class MultiComboBox(tkinter.Frame):
                         # print(f"SELECTING {i=}")
                         column_names = self.tree_controller.viewable_column_names
                         for column in column_names:
-                            tags
                             if col != column:
                                 if column in self.new_entry_defaults:
                                     row.append(self.new_entry_defaults[column])
@@ -2884,11 +2882,6 @@ class MultiComboBox(tkinter.Frame):
             for i, row in df.iterrows():
                 vals_ = vals[i]
                 tags_ = tags[i]
-                if str(k+i) not in self.tag_history:
-                    self.tag_history[str(k+i)] = []
-                for t_ in tags_:
-                    if t_ not in self.tag_history[str(k+i)]:
-                        self.tag_history[str(k+i)].append(t_)
                 # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
                 #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
                 self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
@@ -2899,10 +2892,7 @@ class MultiComboBox(tkinter.Frame):
             self.tree_controller.df = self.tree_controller.df.fillna(self.nan_repr)
             self.data = self.data.fillna(self.nan_repr)
 
-        # # print(f"END==\n{self.data=}")
-        # print(f"## {len(self.tag_history)}, TH={list(self.tag_history)}")
-        # for i, key in enumerate(self.tag_history):
-        #     print(f"{i=}, {key=}, data={self.tag_history[key]}")
+        # print(f"END==\n{self.data=}")
 
     # def add_new_item(self, val, col, rest_values=None, rest_tags=None):
     #     # TODO support multiple values to be passed in iterable or dictionary fashion.
@@ -3072,25 +3062,18 @@ class MultiComboBox(tkinter.Frame):
     #         print(f"{tags=}")
 
     def update_treeview(self):
-        # id_to_tag = {child: self.tree_treeview.item(child, "tags") for child in self.tree_treeview.get_children()}
-        # for i, id_tags in enumerate(id_to_tag.items()):
-        #     print(f"{i=}, id={id_tags[0]}, tags{id_tags[1]=}")
         self.tree_treeview.delete(*self.tree_treeview.get_children())
         # sic = self.show_index_column
         # for i, row in enumerate(self.data.itertuples(), 0):
         for i, data in self.data.iterrows():
             # print(f"{i=}, {data=}, {self.tree_controller.viewable_column_names=}")
             row = [data[k] for k in self.tree_controller.viewable_column_names]
-            tags = self.tag_history.setdefault(str(i), [self.tree_controller.gen_row_tag(i)])
             # print(f"{i=}, {row=}, {self.tree_controller.viewable_column_names=}")
-            # tags = self.tag_history.get(str(i), [self.tree_controller.gen_row_tag(i)])
-            # self.tag_history[str(i)]
-            # tags = [self.tree_controller.gen_row_tag(i)]
+            tags = [self.tree_controller.gen_row_tag(i)]
             # self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row[1:], tags=tags)
             self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
             # self.tree_treeview.set(str(i + 1), j, val, tags=)
             # print(f"{tags=}")
-        self.tree_treeview.update()
 
     def filter_treeview(self):
         # print(f"filter_treeview: {self.typed_in.get()}\n\n\tDATA\n{self.data}")
@@ -3115,8 +3098,6 @@ class MultiComboBox(tkinter.Frame):
 
                 return
 
-            # id_to_tag = {child: self.tree_treeview.item(child, "tags") for child in self.tree_treeview.get_children()}
-
             if col != "All":
                 # print(f"col != All")
                 self.tree_treeview.delete(*self.tree_treeview.get_children())
@@ -3128,10 +3109,8 @@ class MultiComboBox(tkinter.Frame):
                         row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
                         # print(f"A {row=}")
                         # print(f"\t\t{i=}, {value=}, {row=}")
-                        # tags = [self.tree_controller.gen_cell_tag(i, j) for j in
-                        #                range(len(self.tree_controller.viewable_column_names))]
-                        # tags = id_to_tag.get(str(i), [self.tree_controller.gen_row_tag(i)])
-                        tags = self.tag_history.setdefault(str(i), [self.tree_controller.gen_row_tag(i)])
+                        tags = tags = [self.tree_controller.gen_cell_tag(i, j) for j in
+                                       range(len(self.tree_controller.viewable_column_names))]
                         self.tree_treeview.insert("", "end", iid=i, text=str(i + 1), values=row, tags=tags)
                         # print(f"{tags=}")
             else:
@@ -3147,10 +3126,8 @@ class MultiComboBox(tkinter.Frame):
                             break
                     if found:
                         # print(f"BACK IN {i=}\t{row=}")
-                        # tags = [self.tree_controller.gen_cell_tag(i, j) for j in
-                        #         range(len(self.tree_controller.viewable_column_names))]
-                        # tags = id_to_tag.get(str(i), [self.tree_controller.gen_row_tag(i)])
-                        tags = self.tag_history.setdefault(str(i), [self.tree_controller.gen_row_tag(i)])
+                        tags = [self.tree_controller.gen_cell_tag(i, j) for j in
+                                range(len(self.tree_controller.viewable_column_names))]
                         row = list(self.data.iloc[i][self.tree_controller.viewable_column_names])
                         # print(f"B {row=}")
                         self.tree_treeview.insert("", "end", iid=i, text=i + 1, values=row, tags=tags)
@@ -3197,7 +3174,6 @@ class MultiComboBox(tkinter.Frame):
                 self.res_entry.config(foreground="red")
             # if not self.limit_to_list:
             #     self.add_new_item(val, col)
-        # self.update_treeview()
 
     def click_canvas_dropdown_button(self, event):
         is_hidden = self.tv_tree_is_hidden.get()
@@ -4461,7 +4437,7 @@ class InfoFrame(tkinter.Frame):
     def get_objects(self):
         return self, *self.info_labels
 
-    def change_value(self, key, value, show_exception: bool = False):
+    def change_value(self, key, value):
         if key not in self.info_labels:
             # print(f"de-keying")
             ke = self.de_keyify(key)
@@ -4474,8 +4450,7 @@ class InfoFrame(tkinter.Frame):
             try:
                 val = fmt(value)
             except Exception as e:
-                if show_exception:
-                    print(f"FAILED TO FORMAT key='{key}'.")
+                print(f"FAILED TO FORMAT key='{key}'.")
                 val = value
 
         self.info_labels[ke]["v_tv"].set(val)

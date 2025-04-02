@@ -11402,7 +11402,7 @@ class App(ctk.CTk):
                 # user = self.app_state["user"]
                 user = self.app_state["user_name"]
 
-                if comp == COMPANY.STG.value:
+                # if comp == COMPANY.STG.value:
 
                 rt1 = "[BWSdb].[dbo].[OrdersV2]"
                 kd = "[Available Date]"
