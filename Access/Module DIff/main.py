@@ -3,6 +3,7 @@ import re
 import streamlit as st
 
 from itertools import zip_longest
+from difflib import SequenceMatcher, unified_diff
 
 
 st.set_page_config(
@@ -19,21 +20,30 @@ def load_file(file_bytes):
 
 
 @st.cache_data(show_spinner=True)
-def file_diff(file_a: dict[str: dict], file_b: dict[str: dict]) -> list[str]:
+def file_diff(file_a: dict[str: dict], file_b: dict[str: dict]) -> dict[str: dict]:
     file_al = str(file_a).strip().lower()
     file_bl = str(file_b).strip().lower()
     if file_al == file_bl:
-        return []
+        return {}
     
     funcs_a = list(file_a)
     funcs_b = list(file_b)
 
-    if len(funcs_a) == len(funcs_b):
-        for p_name in zip_longest(funcs_a, funcs_b):
-            p_a = funcs_a.get(p_name)
-            p_b = funcs_b.get(p_name)
+    diff = {}
+    # if len(funcs_a) = len(funcs_b):
+    for p_name in funcs_a + funcs_b:
+        p_a = file_a.get(p_name)
+        p_b = file_b.get(p_name)
+        p_al = str(p_a).strip().lower()
+        p_bl = str(p_b).strip().lower()
+        # st.write(f"{p_name=}, {p_a=}, {p_b=}")
+        if p_al != p_bl:
+            if p_name not in diff:
+                diff[p_name] = {"a": None, "b": None}
+            diff[p_name]["a"] = p_al
+            diff[p_name]["b"] = p_bl
 
-    return [file_al, file_bl]
+    return diff
 
 
 def parse_vba_blocks_0(vba_text: str) -> dict:
@@ -222,3 +232,17 @@ if txt_a and txt_b:
             value=not bool(diff),
             disabled=True
         )
+
+        ud = {}
+        for func in diff:
+            f_data = diff[func]
+            data_a: str = f_data["a"]
+            data_b: str = f_data["b"]
+            st.write(f"{data_a=}")
+            st.write(f"{data_b=}")
+            seq_match = SequenceMatcher(None, data_a, data_b)
+            ratio = seq_match.ratio()
+            st.write(f"SQM: {ratio=}")
+            ud[func] = list(unified_diff(data_a.splitlines(), data_b.splitlines()))
+            
+        st.write(ud)
