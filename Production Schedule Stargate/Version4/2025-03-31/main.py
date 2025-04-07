@@ -1106,8 +1106,8 @@ class App(ctk.CTk):
 
         self.tv_done_setup = ctk.BooleanVar(self, value=False)
 
-        self.splash = Splash(self, auto_run=True)
-        self.date_version = datetime.datetime(2024, 9, 24)
+        # self.splash = Splash(self, auto_run=True)
+        self.date_version = datetime.datetime(2025, 3, 31)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
 
         self.file_last_session_sql: str = r"C:\Access\last_session_sql.sql"
@@ -1895,7 +1895,7 @@ class App(ctk.CTk):
         ####################
 
         # multi-combobox now that data has been sorted
-        self.multi_combobox_orders_bws = tkinter_utility.MultiComboBox(
+        self.multi_combobox_orders_bws = customtkinter_utility.MultiComboBox(
             self.frame_mc_inner,
             data=self.df_multi_combobox_data_orders_bws,
             include_aggregate_row=False,
@@ -1920,14 +1920,14 @@ class App(ctk.CTk):
             command=self.multi_combobox_orders_bws.click_btn_clear
         )
         self.multi_combobox_orders_bws.btn_clear_ctk[1].grid(row=0, column=1)
-        self.multi_combobox_orders_bws.tree_treeview.tag_configure(
-            self.mc_tag_already_scheduled,
-            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
-            background=self.colour_mc_already_scheduled_background.hex_code
-        )
+        # self.multi_combobox_orders_bws.tree_treeview.tag_configure(
+        #     self.mc_tag_already_scheduled,
+        #     foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+        #     background=self.colour_mc_already_scheduled_background.hex_code
+        # )
 
         # multi-combobox for warranty quotes
-        self.multi_combobox_warranties_bws = tkinter_utility.MultiComboBox(
+        self.multi_combobox_warranties_bws = customtkinter_utility.MultiComboBox(
             self.frame_mc_inner,
             data=self.df_multi_combobox_data_warranties_bws,
             viewable_column_names=self.list_multi_combobox_warranties_viewable_cols_bws,
@@ -1951,11 +1951,11 @@ class App(ctk.CTk):
             command=self.multi_combobox_warranties_bws.click_btn_clear
         )
         self.multi_combobox_warranties_bws.btn_clear_ctk[1].grid(row=0, column=1)
-        self.multi_combobox_warranties_bws.tree_treeview.tag_configure(
-            self.mc_tag_already_scheduled,
-            foreground=self.colour_mc_already_scheduled_foreground.hex_code,
-            background=self.colour_mc_already_scheduled_background.hex_code
-        )
+        # self.multi_combobox_warranties_bws.tree_treeview.tag_configure(
+        #     self.mc_tag_already_scheduled,
+        #     foreground=self.colour_mc_already_scheduled_foreground.hex_code,
+        #     background=self.colour_mc_already_scheduled_background.hex_code
+        # )
 
         self.tiles_bws = {d: {pl: dict() for pl in self.list_prod_lines_bws} for d in self.list_dates}
         self.tiles_bws["home"] = dict()
@@ -2914,9 +2914,15 @@ class App(ctk.CTk):
 
         if tm:
             print(f"{self.min_date_stg=}, {self.max_date_stg=}")
-            print(f"{self.list_prod_lines_stg[self.min_line_stg]=}, {self.list_prod_lines_stg[self.max_line_stg]=}")
+            if self.min_line_stg is not None:
+                print(f"{self.list_prod_lines_stg[self.min_line_stg]=}")
+            if self.min_line_stg is not None:
+                print(f"{self.list_prod_lines_stg[self.max_line_stg]=}")
             print(f"{self.min_date_bws=}, {self.max_date_bws=}")
-            print(f"{self.list_prod_lines_bws[self.min_line_bws]=}, {self.list_prod_lines_bws[self.max_line_bws]=}")
+            if self.min_line_bws is not None:
+                print(f"{self.list_prod_lines_bws[self.min_line_bws]=}")
+            if self.max_line_bws is not None:
+                print(f"{self.list_prod_lines_bws[self.max_line_bws]=}")
 
         if not os.path.isdir(self.dir_path_resources):
             os.makedirs(self.dir_path_resources)
@@ -3254,8 +3260,8 @@ class App(ctk.CTk):
                 f"{self.canvas_width=}, {self.canvas_height=}, {self.canvas_width_scroll_region_stg=}, {self.canvas_height_scroll_region_stg=}")
 
         self.tv_done_setup.set(True)
-        self.splash.end()
-        self.splash.destroy()
+        # self.splash.end()
+        # self.splash.destroy()
 
         self.grab_set()
         print(f"READY")
@@ -11410,16 +11416,17 @@ class App(ctk.CTk):
                 ks = "[JobAvailableScheduled]"
                 kb = "[JobAvailableScheduledBy]"
                 kq = "[SGQuote]"
+                qc = "[OrdersV2_SGQuote]"
 
                 rt2 = "[Stargatedb].[dbo].[dtProductionScheduleV2]"
                 kj = "[JobStartLine]"
                 kk = "[JobFinishDate]"
 
-                sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
-                sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
 
-                sql_blank_double_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = NULL,\n\t{kl} = NULL,\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
-                sql_blank_double_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = NULL,\n\t{kk} = NULL\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                sql_blank_double_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = NULL,\n\t{kl} = NULL,\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                sql_blank_double_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = NULL,\n\t{kk} = NULL\nWHERE\n\t{kq} = {{KQ}}\n;"
 
                 now = datetime.datetime.now()
                 date = f"{now:%Y-%m-%d %H:%M:%S}"
@@ -11440,13 +11447,16 @@ class App(ctk.CTk):
 
                     for i, row in s_df.iterrows():
                         quote = s_df.iloc[i][self.quote_key("quote")]
+                        s_quote: str = f"'{quote}'"
+                        if comp == COMPANY.BWS.value:
+                            s_quote = s_quote.removeprefix("'").removesuffix("'")
                         dat = {
                             "KS": date,
                             "KB": user,
-                            "KQ": quote
+                            "KQ": s_quote
                         }
 
-                        dat_2 = {"KQ": quote}
+                        dat_2 = {"KQ": s_quote}
                         stmt_1 += f"/* Quote: {quote}*/\n"
                         stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
                         stmt_1 += f"\n/* {rt2}*/\n"
@@ -11481,32 +11491,38 @@ class App(ctk.CTk):
                             if order_1 is not None:
                                 print(f"\torder_1 is not NONE")
                                 order_1 = int(order_1)
+                                s_order_1 = f"'{self.df_orders_stg.iloc[order_1][qc]}'"
+                                if comp == COMPANY.BWS.value:
+                                    s_order_1 = s_order_1.removesuffix("'").removeprefix("'")
                                 dat_1 = {
                                     "KD": date_1,
                                     "KL": line_1,
                                     "KS": date,
                                     "KB": user,
-                                    "KQ": self.df_orders_stg.iloc[order_1]["OrdersV2_SGQuote"]
+                                    "KQ": s_order_1
                                 }
                                 stmt_1 += f"\n{sql_swap_1.format(**dat_1)}"
                                 dat_2 = {"KJ": line_1, "KK": date_1,
-                                         "KQ": self.df_orders_stg.iloc[order_1]["OrdersV2_SGQuote"]}
+                                         "KQ": s_order_1}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             if order_2 is not None:
                                 if tm:
                                     print(f"\torder_2 is not NONE")
                                 order_2 = int(order_2)
+                                s_order_2 = f"'{self.df_orders_stg.iloc[order_2][qc]}'"
+                                if comp == COMPANY.BWS.value:
+                                    s_order_2 = s_order_2.removesuffix("'").removeprefix("'")
                                 dat_1 = {
                                     "KD": date_2,
                                     "KL": line_2,
                                     "KS": date,
                                     "KB": user,
-                                    "KQ": self.df_orders_stg.iloc[order_2]["OrdersV2_SGQuote"]
+                                    "KQ": s_order_2
                                 }
                                 stmt_1 += f"\n{sql_swap_1.format(**dat_1)}"
                                 dat_2 = {"KJ": line_2, "KK": date_2,
-                                         "KQ": self.df_orders_stg.iloc[order_2]["OrdersV2_SGQuote"]}
+                                         "KQ": s_order_2}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             stmt_1 = stmt_1.removeprefix('\n')
@@ -11527,15 +11543,18 @@ class App(ctk.CTk):
                             if tm:
                                 print(f"{order=}, {date_=}, {line_=}")
 
+                            s_order = f"'{order}'"
+                            if comp == COMPANY.BWS.value:
+                                s_order = s_order.removeprefix("'").removesuffix("'")
                             dat = {
                                 "KD": date_,
                                 "KL": line_,
                                 "KS": date,
                                 "KB": user,
-                                "KQ": self.df_orders_stg.iloc[order]["OrdersV2_SGQuote"]
+                                "KQ": s_order
                             }
                             stmt_1 += f"\n{sql_swap_1.format(**dat)}"
-                            dat_2 = {"KJ": line_, "KK": date_, "KQ": self.df_orders_stg.iloc[order]["OrdersV2_SGQuote"]}
+                            dat_2 = {"KJ": line_, "KK": date_, "KQ": s_order}
                             stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
                             stmt_1 = stmt_1.removeprefix('\n')
@@ -11552,7 +11571,7 @@ class App(ctk.CTk):
                             if tm:
                                 print(f"{order=}, {date=}, {line=}")
 
-                            quote = self.df_orders_stg.iloc[order]["OrdersV2_SGQuote"]
+                            quote = self.df_orders_stg.iloc[order][qc]
                             dat = {
                                 "KS": date,
                                 "KB": user,
@@ -12393,7 +12412,10 @@ if __name__ == '__main__':
         pass
     finally:
         t = datetime.datetime.now()
-        errors = app.get_error_log()
+        if app is None:
+            errors = {}
+        else:
+            errors = app.get_error_log()
         if errors:
             file_name = f"PDS_Error_log_{t:%Y%m%d_%H%M}.txt"
             out_file = os.path.join(root_run_folder, file_name)

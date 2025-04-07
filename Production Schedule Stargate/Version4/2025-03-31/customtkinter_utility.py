@@ -1,10 +1,11 @@
+import difflib
 import functools
 import math
 import random
 import tkinter
 from copy import deepcopy
 from tkinter import font
-from typing import List, Any, Literal, Optional
+from typing import List, Any, Literal, Optional, Callable
 import calendar
 
 import datetime
@@ -14,8 +15,8 @@ from tkcalendar import Calendar
 from ttkwidgets.font import FontFamilyDropdown, FontSizeDropdown, FontPropertiesFrame
 
 from datetime_utility import is_date
-from colour_utility import Colour, iscolour, random_colour
-from utility import grid_cells, clamp, isnumber
+from colour_utility import Colour, iscolour, rgb_to_hex
+from utility import grid_cells, clamp, isnumber, excel_column_name
 import pandas as pd
 from screeninfo import get_monitors
 
@@ -27,8 +28,8 @@ VERSION = \
     """	
     General Utility Functions
     ans class for customtkinter
-    Version................1.10
-    Date.............2024-08-13
+    Version................1.11
+    Date.............2025-04-07
     Author(s)......Avery Briggs
     """
 
@@ -286,11 +287,13 @@ class CtkTableSortable(CTkTable):
             self,
             master: any,
             sortable: bool = True,
+            time_auto_unselect: int = 2500,
             **kwargs
     ):
         super().__init__(master, **kwargs)
 
         self.sortable = sortable
+        self.time_auto_unselect: int = time_auto_unselect
 
         if sortable:
             self.header = self.values[0]
@@ -316,6 +319,8 @@ class CtkTableSortable(CTkTable):
         args = data.get("args")
         if row == 0:
             self.sort_table(row, col)
+            self.after(self.time_auto_unselect, self.clear_selected_rows)
+            self.after(self.time_auto_unselect, self.clear_selected_cols)
         else:
             self.clear_selected_rows()
             self.select_row(row)
@@ -409,7 +414,7 @@ class CtkTableExt(ctk.CTkScrollableFrame):
     def __init__(
             self,
             master: any,
-            table_data: List[List[any]] = None,
+            table_data: List[List[any]] | pd.DataFrame = None,
             width: int = 400,
             height: int = 250,
             sortable: bool = True,
@@ -422,7 +427,11 @@ class CtkTableExt(ctk.CTkScrollableFrame):
     ):
         super().__init__(master, width=width, height=height, **kwargs)
 
-        self.table_data = table_data if isinstance(table_data, list) else [[]]
+        self.table_data = table_data if isinstance(table_data, (list, pd.DataFrame)) else [[]]
+        if isinstance(self.table_data, pd.DataFrame):
+            cols = list(self.table_data.columns)
+            self.table_data = self.table_data.values.tolist()
+            self.table_data.insert(0, cols)
         self.width = width
         self.height = height
         self.sortable = sortable
@@ -611,24 +620,30 @@ class CtkTableExt(ctk.CTkScrollableFrame):
 
     def search_table(self, value):
         print(f"searching for {value=}")
-        l_value = str(value).lower()
+        # l_value = str(value).lower()
         self.table.clear_selected_cols()
         self.table.clear_selected_rows()
         # i, j = None, None
         f_idxs = []
         for i, row in enumerate(self.table.values[1:]):
             for j, val in enumerate(row):
-                print(f"{i=}, {j=}, {val=}")
-                if self.allow_partial_match:
-                    if l_value in str(val).lower():
-                        f_idxs.append((i + 1, j))
-                    else:
-                        self.table.deselect(i + 1, j)
+                e = equals(value, val, partial_match=self.allow_partial_match)
+                print(f"{i=}, {j=}, {val=}, {value=}, {e=}")
+                if e:
+                    f_idxs.append((i + 1, j))
                 else:
-                    if str(val).lower() == l_value:
-                        f_idxs.append((i + 1, j))
-                    else:
-                        self.table.deselect(i + 1, j)
+                    self.table.deselect(i + 1, j)
+
+                # if self.allow_partial_match:
+                #     if l_value in str(val).lower():
+                #         f_idxs.append((i + 1, j))
+                #     else:
+                #         self.table.deselect(i + 1, j)
+                # else:
+                #     if str(val).lower() == l_value:
+                #         f_idxs.append((i + 1, j))
+                #     else:
+                #         self.table.deselect(i + 1, j)
 
         self.var_text_lbl_num.set("1" if len(f_idxs) else "0")
         self.var_text_lbl_den.set(str(len(f_idxs)))
@@ -888,7 +903,7 @@ def col_label(c):
 
 
 def random_table(rows, cols, low=-8, high=20):
-    return [[col_label(i) for i in range(cols)]] + [[random.randint(low, high) for j in range(cols)] for i in
+    return [[excel_column_name(i, up_to=False) for i in range(cols)]] + [[random.randint(low, high) for j in range(cols)] for i in
                                                     range(rows)]
 
 
@@ -2250,12 +2265,23 @@ def radio_factory(master, buttons, default_value=None, kwargs_buttons=None):
             if kwargs_buttons is not None:
                 print(f"WARNING kwargs param is applied to each radio button")
                 r_buttons.append(
-                    ctk.CTkRadioButton(master, variable=var, textvariable=tv_var, **kwargs_buttons, value=i,
-                                       name=f"rbtn_{btn.replace('.', '_')}"))
+                    ctk.CTkRadioButton(
+                        master,
+                        variable=var,
+                        textvariable=tv_var,
+                        **kwargs_buttons,
+                        value=i
+                        # , name=f"rbtn_{btn.replace('.', '_')}"
+                    ))
             else:
                 r_buttons.append(
-                    ctk.CTkRadioButton(master, variable=var, textvariable=tv_var, value=i,
-                                       name=f"rbtn_{str(btn).lower().replace('.', '_')}")
+                    ctk.CTkRadioButton(
+                        master,
+                        variable=var,
+                        textvariable=tv_var,
+                        value=i
+                        # , name=f"rbtn_{str(btn).lower().replace('.', '_')}"
+                    )
                 )
 
         # print(f"OUT {var.get()=}")
@@ -2749,11 +2775,11 @@ class TreeviewController(ctk.CTkScrollableFrame):
                 self.tv_label, \
                 self.label, \
                 self.treeview, \
-                self.scrollbar_x, \
-                self.scrollbar_y, \
                 (self.tv_button_new_item, self.button_new_item), \
                 (self.tv_button_delete_item, self.button_delete_item), \
                 self.aggregate_objects
+                # self._scrollbar, \
+                # self.scrollbar_y, \
 
     def next_iid(self):
         return next(self.iid_namer) + 1
@@ -2920,12 +2946,12 @@ class MultiComboBox(ctk.CTkScrollableFrame):
         else:
             self.res_label = ctk.CTkLabel(self, textvariable=self.res_tv_label)
 
-        self.frame_top_most = ctk.CTkFrame(self, name="ftm")
-        self.frame_tree = ctk.CTkFrame(self, name="ft")
+        self.frame_top_most = ctk.CTkFrame(self)  #, name="ftm")
+        self.frame_tree = ctk.CTkFrame(self)  #, name="ft")
 
         # print(f"{data.shape=}")
         # print(f"PRE-TREE-CONTROLLER\n{self.data=}")
-        # print(f"PRE-TREE-CONTROLLER\n{data=}")
+        print(f"PRE-TREE-CONTROLLER\n{data=}")
         self.tree_controller = treeview_factory(
             self.frame_tree,
             data,
@@ -2941,13 +2967,15 @@ class MultiComboBox(ctk.CTkScrollableFrame):
             self.tree_tv_label, \
             self.tree_label, \
             self.tree_treeview, \
-            self.tree_scrollbar_x, \
-            self.tree_scrollbar_y, \
             (self.tree_tv_button_new_item, self.tree_button_new_item), \
             (self.tree_tv_button_delete_item, self.tree_button_delete_item), \
             self.tree_aggregate_objects = self.tree_controller.get_objects()
 
-        # print(f"PRE {self.tree_controller.df=}")
+        # self.tree_scrollbar_x, \
+        #     self.tree_scrollbar_y, \
+
+
+            # print(f"PRE {self.tree_controller.df=}")
         if self.nan_repr is not None:
             self.tree_controller.df = self.tree_controller.df.fillna(self.nan_repr)
         # print(f"POST {self.tree_controller.df=}")
@@ -2988,7 +3016,7 @@ class MultiComboBox(ctk.CTkScrollableFrame):
 
         self.frame_top_most.grid_columnconfigure(0, weight=9)
         self.frame_top_most.grid_columnconfigure(1, weight=1)
-        self.frame_middle = tkinter.Frame(self, name="fm")
+        self.frame_middle = tkinter.Frame(self)  #, name="fm")
         self.radio_btn_texts = ["All", *self.tree_controller.viewable_column_names]
         if not self.show_index_column:
             self.radio_btn_texts.pop(0)
@@ -3452,7 +3480,8 @@ class MultiComboBox(ctk.CTkScrollableFrame):
                 tags_ = tags[i]
                 # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
                 #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
-                self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
+                # self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
+                self.tree_treeview.table.add_row(values=vals_)
             k += df.shape[0]
         self.data = pd.concat([self.data, *[df for df, *rest in new_dfs]], ignore_index=True)
 
@@ -3628,8 +3657,8 @@ class MultiComboBox(ctk.CTkScrollableFrame):
 
             self.tree_controller.grid(row=1, column=0)
             self.tree_treeview.grid(row=0, column=0)
-            self.tree_scrollbar_x.grid(row=3, sticky="ew")
-            self.tree_scrollbar_y.grid(row=0, column=1, sticky="ns")
+            # self.tree_scrollbar_x.grid(row=3, sticky="ew")
+            # self.tree_scrollbar_y.grid(row=0, column=1, sticky="ns")
             if self.inc_aggregate_row:
                 for i, data in enumerate(self.tree_aggregate_objects):
                     if i > 0:
@@ -3645,8 +3674,8 @@ class MultiComboBox(ctk.CTkScrollableFrame):
             self.frame_tree.grid_forget()
             self.tree_treeview.grid_forget()
             self.tree_controller.grid_forget()
-            self.tree_scrollbar_x.grid_forget()
-            self.tree_scrollbar_y.grid_forget()
+            # self.tree_scrollbar_x.grid_forget()
+            # self.tree_scrollbar_y.grid_forget()
             for btn in self.rg_btns:
                 btn.grid_forget()
             for i, data in enumerate(self.tree_aggregate_objects):
@@ -4544,6 +4573,99 @@ class FontSelectFrame(ctk.CTkFrame):
         return font_tuple, font_obj
 
 
+class ArrowButton(ctk.CTkCanvas):
+    def __init__(
+            self,
+            master,
+            mode: Literal[
+                "up", "down", "left", "right",
+                "top-left", "top-right", "bottom-left", "bottom-right",
+                "n", "s", "e", "w", "ne", "nw", "se", "sw",
+                "N", "S", "E", "W", "NE", "NW", "SE", "SW"
+            ] = "down",
+            width: int = 20,
+            height: int = 20,
+            autogrid: bool = True,
+            callback: Optional[Callable] = None,
+            callback_binding: Literal[
+                "<Button-1>", "<Button-2>", "<Button-3>"
+            ] = "<Button-1>",
+            *args, **kwargs
+    ):
+        super().__init__(master, width=width, height=height, *args, **kwargs)
+
+        self.valid = {
+            "up", "down", "left", "right",
+            "top-left", "top-right", "bottom-left", "bottom-right",
+            "n", "s", "e", "w", "ne", "nw", "se", "sw",
+            "N", "S", "E", "W", "NE", "NW", "SE", "SW"
+        }
+        self.valid_btns = ("<Button-1>", "<Button-2>", "<Button-3>")
+        mode = self.validate_mode(mode)
+        binding = self.valid_btns[0] if (callback_binding not in self.valid_btns) else callback_binding
+
+        self.mode = mode
+        self.width = width
+        self.height = height
+        self.auto_grid = autogrid
+        self.callback = callback
+        self.callback_binding = binding
+
+        self.configure(width=20, height=20, background=rgb_to_hex("GRAY_62"))
+
+        if self.auto_grid:
+            self.draw_arrow()
+        # print(f"=={game_mode=} :: ({x1}, {y1}), ({x2}, {y2})")
+        if self.callback is None:
+            self.tag_bind_click_button = self.bind(self.callback_binding, self.click_canvas_button)
+        else:
+            self.tag_bind_click_button = self.bind(self.callback_binding, self.callback)
+
+    def validate_mode(self, mode):
+        if mode not in self.valid:
+            mode = "s"
+        return mode
+
+    def calc_arrow(self):
+        x1, y1, x2, y2 = 11, 6, 11, 19  # down
+
+        if self.mode in {"down", "s", "S"}:
+            pass
+        elif self.mode in {"up", "n", "N"}:
+            y1, y2 = y2, y1
+        elif self.mode in {"left", "w", "W"}:
+            x1, y1, x2, y2 = y2, x1, y1, x2
+        elif self.mode in {"bottom-left", "sw", "SW"}:
+            x1, y1, x2, y2 = x1, x2, y1, y2
+        elif self.mode in {"top-right", "ne", "NE"}:
+            x1, y1, x2, y2 = x1, x2, y2, y1
+        elif self.mode in {"top-left", "nw", "NE"}:
+            x1, y1, x2, y2 = x1, x2, y1, y1
+        elif self.mode in {"bottom-right", "se", "SE"}:
+            x1, y1, x2, y2 = x1, x2, y2, y2
+        elif self.mode in {"right", "e", "E"}:
+            x1, y1, x2, y2 = y1, x1, y2, x2
+        else:
+            print(f"\tFAILURE\t\t{self.mode=}")
+            pass
+
+        return x1, y1, x2, y2
+
+    def draw_arrow(self, clear_first=True):
+        if clear_first:
+            self.delete("all")
+        x1, y1, x2, y2 = self.calc_arrow()
+        self.create_line(x1, y1, x2, y2, arrow=tkinter.LAST, arrowshape=(12, 12, 9))
+
+    def click_canvas_button(self, event):
+        # Add functionality here, or use the same binding in your code.
+        print(f"click_canvas_button\n{self}")
+
+    def change_direction(self, mode):
+        self.mode = self.validate_mode(mode)
+        self.draw_arrow()
+
+
 def demo_1():
     def select_cols():
         col = int(round(var_n_cols.get()))
@@ -4620,9 +4742,13 @@ def demo_1():
 
 
 def demo_2():
-    win = ctk.CTk()
 
-    n_rows, n_cols = 16, 6
+    from dataframe_utility import random_df
+
+    win = ctk.CTk()
+    win.geometry(calc_geometry_tl(0.8, 0.8, largest=2))
+
+    n_rows, n_cols = 1, 6
     # var_n_rows = tkinter.IntVar()
     # var_n_cols = tkinter.IntVar()
     # v_btn_rows = tkinter.StringVar(value=f"Select row: _")
@@ -4664,12 +4790,14 @@ def demo_2():
 
     table = CtkTableExt(
         win,
-        table_data=random_table(n_rows, n_cols),
+        # table_data=random_df(n_rows, n_cols, allow_sub_lists=False),
+        table_data=random_df(n_rows, n_cols, allow_sub_lists=False, dtypes=["bool"]),
         width=900,
         height=700,
         kwargs_table={
             "header_color": "#680002",
             "hover_color": "#985042",
+            # "select_color": "#12DD44",
             "height": 20,
             "colors": ["#AECCFF", "#AEEEFF"],
             "text_color": ["#010203", "#030201"]
@@ -4677,28 +4805,28 @@ def demo_2():
         }
     )
 
-    # date = CtkEntryDate_2(
-    #     win
-    # )
-
-    # date = Calendar(
-    #     win
-    # )
-
-    date = CtkEntryDate(
-        win
-    )
-
-    # label_rows.grid(row=0, column=0, rowspan=1, columnspan=1)
-    # slider_rows.grid(row=1, column=0, rowspan=1, columnspan=1)
-    # btn_rows.grid(row=0, column=1, rowspan=2, columnspan=1)
+    # # date = CtkEntryDate_2(
+    # #     win
+    # # )
     #
-    # label_cols.grid(row=0, column=2, rowspan=1, columnspan=1)
-    # slider_cols.grid(row=1, column=2, rowspan=1, columnspan=1)
-    # btn_cols.grid(row=0, column=3, rowspan=2, columnspan=1)
+    # # date = Calendar(
+    # #     win
+    # # )
+    #
+    # date = CtkEntryDate(
+    #     win
+    # )
+    #
+    # # label_rows.grid(row=0, column=0, rowspan=1, columnspan=1)
+    # # slider_rows.grid(row=1, column=0, rowspan=1, columnspan=1)
+    # # btn_rows.grid(row=0, column=1, rowspan=2, columnspan=1)
+    # #
+    # # label_cols.grid(row=0, column=2, rowspan=1, columnspan=1)
+    # # slider_cols.grid(row=1, column=2, rowspan=1, columnspan=1)
+    # # btn_cols.grid(row=0, column=3, rowspan=2, columnspan=1)
 
     table.grid(row=0, column=0, rowspan=1, columnspan=4)
-    date.grid(row=1, column=0, rowspan=1, columnspan=4)
+    # date.grid(row=1, column=0, rowspan=1, columnspan=4)
     win.mainloop()
 
 
@@ -4898,11 +5026,109 @@ def demo_7():
     win.mainloop()
 
 
+def demo_8():
+
+    app = ctk.CTk()
+    win = ctk.CTkFrame(app, width=500, height=400)
+    app.geometry(calc_geometry_tl(0.6, 0.42, largest=1))
+    lbl = label_factory(win, "I am a label", kwargs_label={"fg_color": "#AA1212"})
+    win.grid()
+    lbl[1].grid()
+
+    table = MultiComboBox(
+        win,
+        data=pd.DataFrame(random_table(25, 4)),
+        width=500,
+        height=400
+    )
+    table.grid()
+
+    app.mainloop()
+
+
+def equals(a: Any, b: Any, partial_match: bool = True, do_test: bool = False):
+    try:
+        s_a: str = str(a)
+        s_b: str = str(b)
+        if do_test:
+            print(f"EQUALS({a=}, {b=}) => ({s_a=}, {s_b=})")
+        if not partial_match:
+            if do_test:
+                print(f"-a")
+            return bool(int(difflib.SequenceMatcher(None, s_a, s_b).ratio()))
+        else:
+            s_a = s_a.strip().lower()
+            s_b = s_b.strip().lower()
+            if (s_a == s_b) or ((s_a in s_b) or (s_b in s_a)):
+                if do_test:
+                    print(f"-b")
+                return True
+
+            bools = ["false", "true"]
+            if isinstance(a, bool) and (isinstance(b, int) and (0 <= b <= 1)):
+                if do_test:
+                    print(f"-c")
+                return equals(a, bool(b), partial_match=partial_match)
+            if isinstance(b, bool) and (isinstance(a, int) and (0 <= a <= 1)):
+                if do_test:
+                    print(f"-d")
+                return equals(bool(a), b, partial_match=partial_match)
+            if (s_a in bools) and (isnumber(s_b) and (0 <= int(s_b) <= 1)):
+                if do_test:
+                    print(f"-e")
+                return equals(bool(bools.index(s_a)), int(s_b), partial_match=partial_match)
+            if (s_b in bools) and (isnumber(s_a) and (0 <= int(s_a) <= 1)):
+                if do_test:
+                    print(f"-f")
+                return equals(int(s_a), bool(bools.index(s_b)), partial_match=partial_match)
+
+
+            # # special consideration for dates and bools
+            # if isinstance(a, datetime.date):
+            #     if not isinstance(b, datetime.date):
+            #         if not isinstance(b, (datetime.datetime, pd.Timestamp)):
+            #             # cant compare date to non-date
+            #             print(f"-d")
+            #             return False
+            #         print(f"-e")
+            #         return equals(a, datetime.date(b.year, b.month, b.day))
+            # if isinstance(a, datetime.datetime):
+            #     if not isinstance(b, datetime.datetime):
+            #         if not isinstance(b, (datetime.date, pd.Timestamp)):
+            #             # cant compare date to non-date
+            #             print(f"-f")
+            #             return False
+            #         print(f"-g")
+            #         return equals(
+            #             a,
+            #             datetime.datetime(b.year, b.month, b.day) if
+            #                 isinstance(b, datetime.date)
+            #             else
+            #                 datetime.datetime(b.year, b.month, b.day, b.hour, b.minute, b.second, b.microsecond, b.tz))
+
+        # print(f"-h")
+        return False
+    except:
+        # print(f"-99")
+        return False
+
+
+def demo_9():
+    a = datetime.datetime.now().date()
+    b = pd.Timestamp.now()
+    print(equals(a, b))
+    print(equals(False, 0))
+    print(equals("False", 0))
+    print(equals("False", "0"))
+
+
 if __name__ == '__main__':
-    # demo_1()
-    # demo_2()
-    # demo_3()
-    # demo_4()
-    # demo_5()
-    # demo_6()
-    demo_7()
+    # # demo_1()
+    demo_2()
+    # # demo_3()
+    # # demo_4()
+    # # demo_5()
+    # # demo_6()
+    # # demo_7()
+    # # demo_8()
+    # demo_9()

@@ -24,8 +24,8 @@ from screeninfo import get_monitors
 VERSION = \
     """	
     General Utility Functions
-    Version..............1.83
-    Date...........2024-03-08
+    Version..............1.85
+    Date...........2025-03-05
     Author(s)....Avery Briggs
     """
 
@@ -1736,7 +1736,7 @@ def grid_cells(
         r_type: list | dict = list,
         r_int: bool = False
 ) -> list | dict:
-    """Calculate grid cell dimensions given W, H, n_rows_stg, n_cols, x and y padding, x and y offset. Choose to return list or dictionary using r_type."""
+    """Calculate grid cell dimensions given W, H, n_rows, n_cols, x and y padding, x and y offset. Choose to return list or dictionary using r_type."""
     assert isnumber(t_width), f"Error param 't_width' needs to be a number. Got {t_width=}"
     assert isnumber(n_cols), f"Error param 'n_cols' needs to be a number. Got {n_cols=}"
     assert isnumber(x_pad), f"Error param 'x_pad' needs to be a number. Got {x_pad=}"
@@ -1756,7 +1756,7 @@ def grid_cells(
     assert t_height > 0, f"Error, this grid must have at least 1 pixel of space. Got {t_height=}"
     assert n_rows > 0, f"Error, this grid must have at least 1 row. Got {n_rows=}"
     assert y_pad > -1, f"Error, y padding cannot be negative. Got {y_pad=}"
-    print(f"{t_width=}, {t_height=}, {n_rows=}, {n_cols=}, {x_pad=}, {y_pad=}, {r_type=}")
+    # print(f"{t_width=}, {t_height=}, {n_rows=}, {n_cols=}, {x_pad=}, {y_pad=}, {r_type=}")
 
     tw = (t_width - ((n_cols + 1) * x_pad)) / (n_cols + 0)  # tile width_canvas
     th = (t_height - ((n_rows + 1) * y_pad)) / (n_rows + 0)  # tile height_canvas
@@ -1765,8 +1765,8 @@ def grid_cells(
     if r_type == dict:
         tiles = {}
 
-    print(f"{tw=}, {t_width=}, {n_cols=}, {x_pad=}")
-    print(f"{th=}, {t_height=}, {n_rows=}, {y_pad=}")
+    # print(f"{tw=}, {t_width=}, {n_cols=}, {x_pad=}")
+    # print(f"{th=}, {t_height=}, {n_rows=}, {y_pad=}")
 
     for r in range(n_rows):
         if r_type == list:
@@ -1941,6 +1941,18 @@ def alpha_seq(n_digits=1, prefix="", suffix="", numbers_instead=False, pad_0=Fal
         # else:
         # print(f"VAL='{val}'")
         yield f"{prefix}{val}{suffix}"
+
+
+def excel_column_name(n: int, up_to: bool = True):
+    if n < 0:
+        return ""
+    if n == 0:
+        return "A"
+    if not up_to:
+        nd, nm = divmod(n, 26)
+        return excel_column_name(nd - 1, up_to=False) + chr(ord("A") + (n % 26))
+    else:
+        return [excel_column_name(i, up_to=False) for i in range(n + 1)]
 
 
 def sort_2_lists(list_1, list_2, reverse=False):
