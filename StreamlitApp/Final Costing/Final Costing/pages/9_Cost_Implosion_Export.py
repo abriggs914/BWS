@@ -357,3 +357,12 @@ if date_input_start and date_input_end and multiselect_stockcodes:
 		)
 else:
 	st.write("please make some selections first.")
+
+
+
+import dataframe_utility
+df1 = dataframe_utility.random_df(allow_sub_lists=False)
+df2 = dataframe_utility.random_df(allow_sub_lists=True)
+print(df2)
+# st.write(dataframe_utility.random_df(allow_sub_lists=True))
+display_df(df1)

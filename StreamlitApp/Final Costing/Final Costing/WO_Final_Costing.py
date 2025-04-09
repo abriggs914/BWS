@@ -35,6 +35,9 @@ size_node_op = 60
 size_node_part = 25
 size_node_part_sub = 15
 
+print()
+print()
+
 
 DEF_TODAY_DATE: datetime.datetime = datetime.datetime.now()
 DEF_START_DATE: datetime.datetime = DEF_TODAY_DATE + datetime.timedelta(days=-200)
@@ -793,25 +796,25 @@ ORDER BY
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
 def load_quotes_orders_by_date():
     sql = """
-    SELECT
+SELECT
 	[Cal].[Date]
 	,[Cal].[HolidayName]
-	,SUM([NumNewQuotesBWS]) AS [NumNewQuotesBWS]
-	,SUM([NumNewOrdersBWS]) AS [NumNewOrdersBWS]
+	,ISNULL(SUM([NumNewQuotesBWS]), 0) AS [NumNewQuotesBWS]
+	,ISNULL(SUM([NumNewOrdersBWS]), 0) AS [NumNewOrdersBWS]
 	,MIN([FirstQuoteBWS]) AS [FirstQuoteBWS]
 	,MAX([LastQuoteBWS]) AS [LastQuoteBWS]
 	,SUM([FirstWOBWS]) AS [FirstWOBWS]
 	,SUM([LastWOBWS]) AS [LastWOBWS]
 
-	,SUM([NumNewQuotesSTG]) AS [NumNewQuotesSTG]
-	,SUM([NumNewOrdersSTG]) AS [NumNewOrdersSTG]
+	,ISNULL(SUM([NumNewQuotesSTG]), 0) AS [NumNewQuotesSTG]
+	,ISNULL(SUM([NumNewOrdersSTG]), 0) AS [NumNewOrdersSTG]
 	,MIN([FirstQuoteSTG]) AS [FirstQuoteSTG]
 	,MAX([LastQuoteSTG]) AS [LastQuoteSTG]
 	,SUM([FirstWOSTG]) AS [FirstWOSTG]
 	,SUM([LastWOSTG]) AS [LastWOSTG]
 	
-	,SUM([NumNewQuotesBWS]) + SUM([NumNewQuotesSTG]) AS [TotalNewQuotes]
-	,SUM([NumNewOrdersBWS]) + SUM([NumNewOrdersSTG]) AS [TotalNewOrders]
+	,ISNULL(SUM([NumNewQuotesBWS]), 0) + ISNULL(SUM([NumNewQuotesSTG]), 0) AS [TotalNewQuotes]
+	,ISNULL(SUM([NumNewOrdersBWS]), 0) + ISNULL(SUM([NumNewOrdersSTG]), 0) AS [TotalNewOrders]
 FROM
 	[BWSdb].[dbo].[Calendar] [Cal] WITH (NOLOCK)
 LEFT JOIN (
@@ -861,12 +864,12 @@ LEFT JOIN (
 ON
 	[Cal].[Date] = [OrderSrc].[Quote Date]
 WHERE
-	[Cal].[Date] BETWEEN '2006-01-01' AND DATEADD(YEAR, 2, GETDATE())
+	[Cal].[Date] BETWEEN '2006-01-01' AND  GETDATE()
 GROUP BY
 	[Cal].[Date]
 	,[Cal].[HolidayName]
 ORDER BY
-	[Cal].[Date]
+	[Cal].[Date] DESC
 ;
 """
     connection_data = {

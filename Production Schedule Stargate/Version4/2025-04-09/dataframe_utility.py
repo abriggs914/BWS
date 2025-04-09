@@ -469,4 +469,3 @@ if __name__ == '__main__':
         min_random_int=0,
         max_random_int=9)
     )
-    "#CFAFAF"
