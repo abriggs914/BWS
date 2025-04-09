@@ -29,7 +29,7 @@ VERSION = \
     General Utility Functions
     ans class for customtkinter
     Version................1.11
-    Date.............2025-04-07
+    Date.............2025-04-08
     Author(s)......Avery Briggs
     """
 
@@ -287,29 +287,47 @@ class CtkTableSortable(CTkTable):
             self,
             master: any,
             sortable: bool = True,
+            has_header: bool = True,
             time_auto_unselect: int = 2500,
             **kwargs
     ):
         super().__init__(master, **kwargs)
 
         self.sortable = sortable
-        self.time_auto_unselect: int = time_auto_unselect
-
-        if sortable:
-            self.header = self.values[0]
-            # self.og_values = [[v for v in row] for row in self.values[1:]]
-            self.og_values = deepcopy(self.values[1:])
+        self.has_header = has_header
+        self.header = self.values[0]
+        self.og_values = deepcopy(self.values[1 if self.has_header else 0:])
+        if self.has_header:
             self.data_rev = {k: None for k in self.header}
-            self.selected_rows = list()
-            self.selected_cols = list()
-            self.history_sorts = dict()
+        else:
+            self.data_rev = {i: None for i in range(len(self.header))}
+        self.time_auto_unselect: int = time_auto_unselect
+        # self.og_values = [[v for v in row] for row in self.values[1:]]
+        # self.selected_rows = list()
+        # self.selected_cols = list()
+        self.history_sorts = dict()
 
-            callback = kwargs.pop("command", None)
-            if callback:
-                self.command = callback_wrapper(self, callback, self.clicked)
-            else:
-                self.command = None
-            # print(f"{self._internal_callback=}")
+        # if sortable:
+
+        callback = kwargs.pop("command", None)
+        if callback:
+            print(f"FOUND A CALLBACK")
+        else:
+            print(f"DID NOT FIND A CALLBACK")
+        self.command = callback_wrapper(self, callback, self.clicked)
+        # else:
+        #     self.command = self.clicked
+
+        self.aft_id_clear_rows = None
+        self.aft_id_clear_cols = None
+
+        # self.select(0, 0)
+        # self.after(50, lambda: self.deselect(0, 0))
+        # # print(f"{self._internal_callback=}")
+
+        print(f"CtkTableSortable")
+        print(f"{self.values=}")
+        print(f"{self.data_rev=}")
 
     def clicked(self, data):
         print(f"\nclicked {data=}")
@@ -317,43 +335,64 @@ class CtkTableSortable(CTkTable):
         col = data.get("column")
         val = data.get("value")
         args = data.get("args")
-        if row == 0:
+        if (row == 0) and self.sortable and self.has_header:
             self.sort_table(row, col)
-            self.after(self.time_auto_unselect, self.clear_selected_rows)
-            self.after(self.time_auto_unselect, self.clear_selected_cols)
+            if self.aft_id_clear_rows is not None:
+                self.after_cancel(self.aft_id_clear_rows)
+            if self.aft_id_clear_cols is not None:
+                self.after_cancel(self.aft_id_clear_cols)
+            self.aft_id_clear_rows = self.after(self.time_auto_unselect, self.clear_selected_rows)
+            self.aft_id_clear_cols = self.after(self.time_auto_unselect, self.clear_selected_cols)
         else:
             self.clear_selected_rows()
             self.select_row(row)
-            self.selected_rows.append(row)
+            # self.selected_rows.append(row)
 
-    def clear_selected_rows(self):
-        print(f"clear_selected_rows {self.selected_rows}")
-        for row in self.selected_rows:
-            self.deselect_row(row)
-        self.selected_rows.clear()
-        self.update_selected_cols()
+        return data
 
-    def update_selected_rows(self):
-        print(f"update_selected_rows, {self.selected_rows}")
-        for row in self.selected_rows:
-            self.select_row(row)
+    def clear_selected_rows(self, idx=None):
+        print(f"clear_selected_rows")
+        # print(f"clear_selected_rows {self.selected_rows}")
+        # for row in self.selected_rows:
+        #     self.deselect_row(row)
+        # self.selected_rows.clear()
+        # self.update_selected_cols()
+        if idx is not None:
+            self.deselect_row(idx)
+        else:
+            for i in range(self.rows):
+                self.deselect_row(i)
 
-    def update_selected_cols(self):
-        print(f"update_selected_cols {self.selected_cols}")
-        for col in self.selected_cols:
-            self.select_column(col)
+    # def update_selected_rows(self):
+    #     print(f"update_selected_rows, {self.selected_rows}")
+    #     for row in self.selected_rows:
+    #         self.select_row(row)
 
-    def clear_selected_cols(self):
-        print(f"clear_selected_cols {self.selected_cols}")
-        for col in self.selected_cols:
-            self.deselect_column(col)
-        self.selected_cols.clear()
-        self.update_selected_rows()
+    # def update_selected_cols(self):
+    #     print(f"update_selected_cols {self.selected_cols}")
+    #     for col in self.selected_cols:
+    #         self.select_column(col)
+
+    def clear_selected_cols(self, idx=None):
+        print(f"clear_selected_cols")
+        # print(f"clear_selected_cols {self.selected_cols}")
+        # for col in self.selected_cols:
+        #     self.deselect_column(col)
+        # self.selected_cols.clear()
+        # self.update_selected_rows()
+        if idx is not None:
+            self.deselect_column(idx)
+        else:
+            for i in range(self.columns):
+                self.deselect_column(i)
 
     def sort_table(self, row, col):
-        print(f"sort_table")
+        print(f"sort_table, {row=}, {col=}")
         col_name = self.header[col]
-        rev = self.data_rev[col_name]
+        if self.has_header:
+            rev = self.data_rev[col_name]
+        else:
+            rev = self.data_rev[col]
         if rev is None:
             rev = False
             rev_s = " (ASC)"
@@ -364,12 +403,16 @@ class CtkTableSortable(CTkTable):
             rev = True
             rev_s = " (DESC)"
 
+        # if self.has_header:
         for i, cn in enumerate(self.header):
-            self.data_rev[cn] = None
-            self.insert(0, i, f"{cn}")
+            if self.has_header:
+                self.data_rev[cn] = None
+                # self.insert(0, i, f"{cn}")
+            else:
+                self.data_rev[i] = None
 
         self.clear_selected_cols()
-        self.data_rev[col_name] = rev
+        self.data_rev[col_name if self.has_header else col] = rev
         print(f"{row=}, {col=}, {col_name=}, {rev=}")
         if rev is None:
             # original values
@@ -378,86 +421,170 @@ class CtkTableSortable(CTkTable):
         else:
             # s_values = [[v for v in r] for r in self.history_sorts.get((col, rev), [[]])]
             s_values = deepcopy(self.history_sorts.get((col, rev), [[]]))
+            print(f"{self.values=}")
             if (len(s_values) == 1) and (len(s_values[0]) == 0):
                 s_values = sorted(
-                    self.values[1:],
+                    self.values[1 if self.has_header else 0:],
                     key=lambda r: r[col],
                     reverse=rev
                 )
                 # self.history_sorts[(col, rev)] = [[v for v in r] for r in s_values]
                 self.history_sorts[(col, rev)] = deepcopy(s_values)
 
-        s_values.insert(0, self.header)
-        self.check_new_selected_rows(s_values)
+        if self.has_header:
+            s_values.insert(0, self.header)
+        # self.check_new_selected_rows(s_values)
         self.update_values(s_values)
-        self.insert(0, col, f"{col_name}{rev_s}")
-        self.select_column(col)
-        self.selected_cols.append(col)
-        self.update_selected_rows()
-
-    def check_new_selected_rows(self, s_values):
-        new_idxs = []
-        for row in self.selected_rows:
-            row_data = self.values[row]
-            try:
-                new_idx = s_values.index(row_data)
-            except (IndexError, ValueError):
-                pass
+        if self.has_header:
+            if not self.sortable:
+                self.insert(0, col, col_name)
             else:
-                new_idxs.append(new_idx)
+                self.insert(0, col, f"{col_name}{rev_s}")
+        self.select_column(col)
+        # self.selected_cols.append(col)
+        # self.update_selected_rows()
+        self.draw_table()
 
-        self.selected_rows = [r for r in new_idxs]
+    # def check_new_selected_rows(self, s_values):
+    #     new_idxs = []
+    #     for row in self.selected_rows:
+    #         row_data = self.values[row]
+    #         try:
+    #             new_idx = s_values.index(row_data)
+    #         except (IndexError, ValueError):
+    #             pass
+    #         else:
+    #             new_idxs.append(new_idx)
+    #
+    #     self.selected_rows = [r for r in new_idxs]
 
 
-class CtkTableExt(ctk.CTkScrollableFrame):
+class CtkTableExt(ctk.CTkFrame):
 
     def __init__(
             self,
-            master: any,
-            table_data: List[List[any]] | pd.DataFrame = None,
+            master: Any,
+            data: List[List[Any]] | pd.DataFrame = None,
             width: int = 400,
             height: int = 250,
             sortable: bool = True,
             searchable: bool = True,
             allow_partial_match: bool = True,
             auto_grid: bool = True,
+            show_index: bool = True,
             kwargs_entry: dict = None,
             kwargs_table: dict = None,
             **kwargs
     ):
         super().__init__(master, width=width, height=height, **kwargs)
 
-        self.table_data = table_data if isinstance(table_data, (list, pd.DataFrame)) else [[]]
+        self.table_data = data if isinstance(data, (list, pd.DataFrame)) else [[]]
         if isinstance(self.table_data, pd.DataFrame):
             cols = list(self.table_data.columns)
             self.table_data = self.table_data.values.tolist()
-            self.table_data.insert(0, cols)
+            # self.table_data.insert(0, cols)
+        if show_index:
+            for i, row in enumerate(self.table_data):
+                val = "#"
+                if i > 0:
+                    val = i
+                row.insert(0, val)
+
+        print(f"{self.table_data=}")
+
         self.width = width
         self.height = height
         self.sortable = sortable
         self.searchable = searchable
+        self.show_index = show_index
         self.allow_partial_match = allow_partial_match
         self.kwargs_entry = kwargs_entry if kwargs_entry is not None else dict()
         self.kwargs_table = kwargs_table if kwargs_table is not None else dict()
         self.search_idx = 0
         self.search_idxs = list()
 
-        if self.sortable:
-            print(f"sortable")
-            if self.kwargs_table.get("command") is None:
-                self.kwargs_table.update({"command": self.click_command})
-            self.table = CtkTableSortable(self, values=self.table_data, **self.kwargs_table)
-        else:
-            print(f"NOT sortable")
-            self.table = CTkTable(self, values=self.table_data, **self.kwargs_table)
+        if not self.kwargs_table:
+            self.kwargs_table = {
+                "header_color": "#69798C",
+                "hover_color": "#90B2E8",
+                "height": 20,
+                "colors": ["#FEFEFE", "#CCCCCC"],
+                "text_color": ["#000000", "#000000"]
+            }
 
-        self.header = self.table.values[0]
+        n_columns: int = len(self.table_data[0]) if self.table_data else 1  # cannot be 0
+        self.kwargs_table.update({
+            "width": self.width / n_columns,
+            "command": self.click_command
+        })
+        self.kwargs_table.setdefault("height", 28)
+        self.kwargs_header = {k: v for k, v in self.kwargs_table.items()}
 
-        self.frame_search_widgets = ctk.CTkFrame(self)
-        self.frame_search_nav_widgets = ctk.CTkFrame(self)
+        self.frame_search_widgets = ctk.CTkFrame(self, width=self.width)
+        self.frame_search_nav_widgets = ctk.CTkFrame(self, width=self.width)
+        self.frame_table = ctk.CTkScrollableFrame(self, width=self.width)
+
+        if "header_color" in self.kwargs_table:
+            self.kwargs_table.pop("header_color")
+
+        print(f"{self.kwargs_table=}")
+        self.table = CtkTableSortable(
+            self.frame_table,
+            values=self.table_data[1:],
+            sortable=False,
+            has_header=False,
+            **self.kwargs_table
+        )
+        #
+        # if self.sortable:
+        #     print(f"sortable")
+        #     if self.kwargs_table.get("command") is None:
+        #         self.kwargs_table.update({"command": self.click_command})
+        #     self.table = CtkTableSortable(self.frame_table, values=self.table_data[1:], **self.kwargs_table)
+
+
+        sbw = self.frame_table._scrollbar.winfo_reqwidth()
+        print(f"Scrollbar W: {sbw=}")
+        self.kwargs_header.update({
+            "corner_radius": 0
+            # ,
+            # "width": (self.width - sbw) / n_columns
+        })
+        self.frame_header = ctk.CTkFrame(self, width=self.width - sbw, height=self.kwargs_table["height"])
+        self.header_columns = [self.table_data[0] if self.table_data else []]
+
+        self.kwargs_header.update({"command": self.click_header})
+        # if self.sortable:
+        #     print(f"CTE sortable")
+        #     if self.kwargs_header.get("command") is None:
+        self.header = CtkTableSortable(
+            self.frame_header,
+            values=self.header_columns,
+            **self.kwargs_header
+        )
+        # else:
+        #     print(f"CTE ~sortable")
+        #     self.header = CTkTable(
+        #         self.frame_header,
+        #         values=self.header_columns,
+        #         **self.kwargs_header
+        #     )
+        print(f"{self.header_columns=}")
+
+        # for col in range(self.table.columns):
+        #     header_cell = self.table.rowconfigure(0, minsize=self.table.height*2)  #.widgets[0][col]  # First row, all columns
+        #     # header_cell.configure(font=("Arial", 16, "bold"))  # Change font
+
+        n_search_widget_cols = 3
+        for i in range(n_search_widget_cols):
+            self.frame_search_widgets.columnconfigure(i, weight=1)
 
         if self.searchable:
             self.searching = tkinter.BooleanVar(self, value=False)
+
+            self.height_btn = 25
+            self.width_btn_s = 40
+            self.width_btn_l = 65
 
             self.var_text_entry = tkinter.StringVar(self, value="")
             self.entry = ctk.CTkEntry(
@@ -470,35 +597,55 @@ class CtkTableExt(ctk.CTkScrollableFrame):
             self.btn_submit_search = ctk.CTkButton(
                 self.frame_search_widgets,
                 textvariable=self.var_text_btn_submit_search,
-                command=self.submit_entry
+                command=self.submit_entry,
+                width=self.width_btn_l,
+                height=self.height_btn
+            )
+            self.entry.bind("<Return>", self.submit_entry)
+
+            self.var_text_tog_exact_match = ctk.StringVar(self, value="Exact?")
+            self.var_tog_exact_match = ctk.BooleanVar(self, value=not self.allow_partial_match)
+            self.tog_exact_match = ctk.CTkSwitch(
+                self.frame_search_widgets,
+                textvariable=self.var_text_tog_exact_match,
+                variable=self.var_tog_exact_match,
+                command=self.toggle_exact_match
             )
 
             self.var_text_btn_clear_search = tkinter.StringVar(self, value="x")
             self.btn_clear_search = ctk.CTkButton(
                 self.frame_search_widgets,
                 textvariable=self.var_text_btn_clear_search,
-                command=self.clear_entry
+                command=self.clear_entry,
+                width=self.width_btn_s,
+                height=self.height_btn
             )
 
             self.var_text_btn_next_search = tkinter.StringVar(self, value=">>")
             self.btn_next_search = ctk.CTkButton(
                 self.frame_search_nav_widgets,
                 textvariable=self.var_text_btn_next_search,
-                command=self.next_search
+                command=self.next_search,
+                width=self.width_btn_s,
+                height=self.height_btn
             )
 
             self.var_text_btn_prev_search = tkinter.StringVar(self, value="<<")
             self.btn_prev_search = ctk.CTkButton(
                 self.frame_search_nav_widgets,
                 textvariable=self.var_text_btn_prev_search,
-                command=self.prev_search
+                command=self.prev_search,
+                width=self.width_btn_s,
+                height=self.height_btn
             )
 
             self.var_text_btn_show_all_search = tkinter.StringVar(self, value="show all")
             self.btn_show_all_search = ctk.CTkButton(
                 self.frame_search_nav_widgets,
                 textvariable=self.var_text_btn_show_all_search,
-                command=self.show_all_search
+                command=self.show_all_search,
+                width=self.width_btn_l,
+                height=self.height_btn
             )
 
             self.var_text_lbl_num = tkinter.StringVar(self, value="")
@@ -518,6 +665,9 @@ class CtkTableExt(ctk.CTkScrollableFrame):
                 textvariable=self.var_text_lbl_den
             )
 
+        # self.bind("<MouseWheel>", self.scroll)
+        # self.table.bind("<MouseWheel>", self.scroll)
+
         if auto_grid:
             self.grid_widgets()
 
@@ -525,20 +675,62 @@ class CtkTableExt(ctk.CTkScrollableFrame):
         rc, cc = 0, 0
         if self.searchable:
             self.frame_search_widgets.grid(row=0, column=0, rowspan=1, columnspan=1)
-            self.entry.grid(row=0, column=0, rowspan=1, columnspan=1)
-            self.btn_submit_search.grid(row=0, column=1, rowspan=1, columnspan=1)
-            self.btn_clear_search.grid(row=0, column=2, rowspan=1, columnspan=1)
+            self.frame_header.grid(row=2, column=0, rowspan=1, columnspan=1)
+            self.frame_table.grid(row=3, column=0, rowspan=1, columnspan=1)
+            self.entry.grid(row=0, column=0, rowspan=1, columnspan=2, sticky="ew")
+            self.btn_clear_search.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="e")
+            self.btn_submit_search.grid(row=0, column=2, rowspan=1, columnspan=1)
+            self.tog_exact_match.grid(row=0, column=3, rowspan=1, columnspan=1)
 
             self.show_search_fraction(False)
             rc += 2
             cc += 1
 
-        self.table.grid(row=rc, column=0, rowspan=1, columnspan=cc + 1)
+        self.header.grid(row=rc, column=0, rowspan=1, columnspan=cc + 1, sticky="w")
+        self.table.grid(row=rc + 1, column=0, rowspan=1, columnspan=cc + 1, sticky="w")
 
-    def click_command(self, *args):
-        # print(f"click_command, {args=}")
+    # def scroll(self, *args):
+    #     view_bboxX = self.table.winfo_x()
+    #     view_bboxY = self.table.winfo_y()
+    #     bbox = self.table.grid_bbox()
+    #     sx = self.table._scrollbar.winfo_x()
+    #     sy = self.table._scrollbar.winfo_y()
+    #     sb = self.table._scrollbar.get()
+    #
+    #     print(f"SCROLL {args}, {view_bboxX=}, {view_bboxY=}, {bbox=}, {sx=}, {sy=}, {sb=}")
+    #
+    def click_header(self, data=None):
+        if data:
+            row = data.get("row")
+            col = data.get("column")
+            val = data.get("value")
+            args = data.get("args")
+
+            print(f"{row=}, {col=}, {val=}, {args=}")
+            if row == 0:
+                self.table.sort_table(row, col)
+                self.after(self.table.time_auto_unselect, self.table.clear_selected_rows)
+                self.after(self.table.time_auto_unselect, self.table.clear_selected_cols)
+
+    def click_command(self, data=None):
+        print(f"click_command, {data=}")
         # self.hide_search_widgets()
-        pass
+        if data:
+            row = data.get("row")
+            col = data.get("column")
+            val = data.get("value")
+            args = data.get("args")
+            has_header = data.get("has_header")
+
+            print(f"{row=}, {col=}, {val=}, {args=}, {has_header=}")
+            # if has_header and (row == 0):
+            #     self.table.sort_table(row, col)
+            #     self.after(self.table.time_auto_unselect, self.table.clear_selected_rows)
+            #     self.after(self.table.time_auto_unselect, self.table.clear_selected_cols)
+            # else:
+            self.table.clear_selected_rows()
+            self.table.select_row(row)
+                # self.table.selected_rows.append(row)
 
     def clear_entry(self):
         self.var_text_entry.set("")
@@ -548,8 +740,8 @@ class CtkTableExt(ctk.CTkScrollableFrame):
         self.searching.set(False)
         # self.table.clear_selected_cols()
         # self.table.clear_selected_update_selected_rowsrows()
-        self.table.update_selected_rows()
-        self.table.update_selected_cols()
+        # self.table.update_selected_rows()
+        # self.table.update_selected_cols()
         self.show_search_fraction(False)
         self.clear_search_idxs()
 
@@ -609,9 +801,9 @@ class CtkTableExt(ctk.CTkScrollableFrame):
                 self.table.deselect(*self.search_idxs[idx - 1])
                 self.table.select(*self.search_idxs[idx - 2])
 
-    def submit_entry(self):
+    def submit_entry(self, *args):
         value = self.var_text_entry.get()
-        print(f"submit_entry {value=}")
+        print(f"submit_entry {value=}, {args=}")
 
         if value:
             self.searching.set(True)
@@ -659,6 +851,13 @@ class CtkTableExt(ctk.CTkScrollableFrame):
         #     for i in range(r - 1):
         #         for j in range(c):
         #             self.table.deselect(i + 1, j)
+
+    def toggle_exact_match(self):
+        val = self.var_tog_exact_match.get()
+        print(f"tog_em: {val=}")
+        # self.var_tog_exact_match.set(not val)
+        self.allow_partial_match = not val
+        self.submit_entry()
 
     def clear_all_selected(self):
         for i, row in enumerate(self.table.values[1:]):
@@ -2448,7 +2647,7 @@ class TreeviewController(ctk.CTkScrollableFrame):
         self.label = ctk.CTkLabel(self, textvariable=self.tv_label, **self.kwargs_label)
         self.treeview = CtkTableExt(
             self,
-            table_data=[self.viewable_column_names],
+            data=[self.viewable_column_names],
             kwargs_table={
                 "header_color": "#680002",
                 "hover_color": "#985042",
@@ -4725,7 +4924,7 @@ def demo_1():
 
     table = CtkTableExt(
         win,
-        values=random_table(n_rows, n_cols),
+        data=random_table(n_rows, n_cols),
         command=callback_a
     )
 
@@ -5035,13 +5234,21 @@ def demo_8():
     win.grid()
     lbl[1].grid()
 
-    table = MultiComboBox(
+    def click(*args):
+        for i, row in enumerate(multicombobox.table.values):
+            for j, val in enumerate(row):
+                print(f"{i=}, {j=}, {val=}")
+
+    multicombobox = CtkTableExt(
         win,
-        data=pd.DataFrame(random_table(25, 4)),
+        data=pd.DataFrame(random_table(3, 4)),
         width=500,
         height=400
     )
-    table.grid()
+    multicombobox.grid()
+
+    btn_click = button_factory(win, "click", command=click)
+    btn_click[1].grid()
 
     app.mainloop()
 
@@ -5124,11 +5331,11 @@ def demo_9():
 
 if __name__ == '__main__':
     # # demo_1()
-    demo_2()
+    # demo_2()
     # # demo_3()
     # # demo_4()
     # # demo_5()
     # # demo_6()
     # # demo_7()
-    # # demo_8()
+    demo_8()
     # demo_9()
