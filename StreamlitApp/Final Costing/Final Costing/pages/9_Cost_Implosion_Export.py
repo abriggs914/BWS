@@ -344,7 +344,7 @@ multiselect_stockcodes = st.multiselect(
 if date_input_start and date_input_end and multiselect_stockcodes:
 	toggle_show_code = st.toggle(
 		label="show generated code?",
-		value=False
+		value=True
 	)
 	if st.button(
 		label="run"
@@ -360,9 +360,10 @@ else:
 
 
 
-import dataframe_utility
-df1 = dataframe_utility.random_df(allow_sub_lists=False)
-df2 = dataframe_utility.random_df(allow_sub_lists=True)
-print(df2)
-# st.write(dataframe_utility.random_df(allow_sub_lists=True))
-display_df(df1)
+# import dataframe_utility
+# df1 = dataframe_utility.random_df(allow_sub_lists=False)
+# df2 = dataframe_utility.random_df(allow_sub_lists=True)
+# print(df2)
+# # st.write(dataframe_utility.random_df(allow_sub_lists=True))
+# display_df(df1)
+# px.colors.sequential.Viridis
