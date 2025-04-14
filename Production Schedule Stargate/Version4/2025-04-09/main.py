@@ -570,7 +570,9 @@ class App(ctk.CTk):
                 "redraw_legend": False,
                 "get_current_canvas_view": False,
                 "update_multicombobox_already_scheduled": False,
-                "mark_already_scheduled_units": False
+                "mark_already_scheduled_units": False,
+				"on_left_click_release_calendar": True,
+                "click_go_to_date": False
             },
             # warning Test Mode must be enabled for this to work.
             "quotes_of_interest": {
@@ -1564,8 +1566,8 @@ class App(ctk.CTk):
         )
         self.frame_bottom_calendar.grid_propagate(False)
         self.frame_bottom_calendar.rowconfigure(0, weight=100)
-        for i in range(3):
-            self.frame_bottom_calendar.columnconfigure(i, weight=33)
+        for i, weight in enumerate([20, 10, 10, 20, 10, 10, 20]):
+            self.frame_bottom_calendar.columnconfigure(i, weight=weight)
         self.btn_go_first_date = customtkinter_utility.button_factory(
             self.frame_bottom_calendar,
             tv_btn=f"{self.list_dates[0]:%Y-%m-%d}",
@@ -1576,6 +1578,30 @@ class App(ctk.CTk):
                 "font": self.kwargs_lbl["font"]
             },
             command=lambda d=self.list_dates[0]: self.click_go_to_date(d)
+        )
+        self.btn_go_back_one_week = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            # tv_btn=f"{self.today:%Y-%m-%d}",
+            tv_btn=f"<",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=-7: self.click_go_to_date(d)
+        )
+        self.btn_go_back_two_week = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            # tv_btn=f"{self.today:%Y-%m-%d}",
+            tv_btn=f"<<",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=-14: self.click_go_to_date(d)
         )
         self.btn_go_to_today = customtkinter_utility.button_factory(
             self.frame_bottom_calendar,
@@ -1588,6 +1614,30 @@ class App(ctk.CTk):
                 "font": self.kwargs_lbl["font"]
             },
             command=lambda d=self.today: self.click_go_to_date(d)
+        )
+        self.btn_go_ahead_one_week = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            # tv_btn=f"{self.today:%Y-%m-%d}",
+            tv_btn=f">",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=7: self.click_go_to_date(d)
+        )
+        self.btn_go_ahead_two_week = customtkinter_utility.button_factory(
+            self.frame_bottom_calendar,
+            # tv_btn=f"{self.today:%Y-%m-%d}",
+            tv_btn=f">>",
+            kwargs_btn={
+                "text_color": self.colour_fg_calendar_hyperlinks.hex_code,
+                "fg_color": "transparent",
+                "bg_color": "transparent",
+                "font": self.kwargs_lbl["font"]
+            },
+            command=lambda d=14: self.click_go_to_date(d)
         )
         self.btn_go_last_date = customtkinter_utility.button_factory(
             self.frame_bottom_calendar,
@@ -4301,8 +4351,12 @@ class App(ctk.CTk):
 
         # frame_bottom_calendar
         self.btn_go_first_date[1].grid(**{r: 0, c: 0, s: ctk.W})
-        self.btn_go_to_today[1].grid(**{r: 0, c: 1})
-        self.btn_go_last_date[1].grid(**{r: 0, c: 2, s: ctk.E})
+        self.btn_go_back_two_week[1].grid(**{r: 0, c: 1, s: ctk.E})
+        self.btn_go_back_one_week[1].grid(**{r: 0, c: 2, s: ctk.E})
+        self.btn_go_to_today[1].grid(**{r: 0, c: 3})
+        self.btn_go_ahead_one_week[1].grid(**{r: 0, c: 4, s: ctk.W})
+        self.btn_go_ahead_two_week[1].grid(**{r: 0, c: 5, s: ctk.W})
+        self.btn_go_last_date[1].grid(**{r: 0, c: 6, s: ctk.E})
 
         if tm:
             # print(f"GW W=2")
@@ -6959,7 +7013,7 @@ class App(ctk.CTk):
 
         return parent.create_rectangle(*bbox, **args)
 
-    def click_go_to_date(self, date: datetime.datetime | pd.Timestamp):
+    def click_go_to_date(self, date: datetime.datetime | pd.Timestamp | int | float):
         tm = bool(self.settings["tm_true_functions"].get("click_go_to_date"))
         if tm:
             print(f"WARNING TM IS TRUE 'click_go_to_date'")
@@ -6968,10 +7022,22 @@ class App(ctk.CTk):
             print(f"click_go_to_date")
         comp = self.settings["mode_company"]
 
-        date = pd.Timestamp(date) if not isinstance(date, pd.Timestamp) else date
+        can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
+        if isinstance(date, (int, float)):
+            x_view = can.xview()
+            # x_view = x_view[0] + ((x_view[1] - x_view[0]) / 2)
+            x_view = x_view[0]
+            x_view = can.canvasx(x_view)
+            days = date
+            print(f"A {x_view=}, {date=}, {days=}")
+            date = pd.Timestamp(self.get_date_bucket(x_view))
+            print(f"B {x_view=}, {date=}, {days=}")
+            date = date + pd.Timedelta(days=days)
+            print(f"C {x_view=}, {date=}, {days=}")
+        else:
+            date = pd.Timestamp(date) if not isinstance(date, pd.Timestamp) else date
 
         prod_lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
-        can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
         line = prod_lines[0]
         tile_data = (self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg).get(date, {}).get(line, {})
 
