@@ -837,6 +837,8 @@ def select_quote(*args):
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
 s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
+s_h = 0
+s_w = 0
 
 if s_h is None or not s_h:
 	s_h = 900
