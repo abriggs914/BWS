@@ -1857,6 +1857,98 @@ def casify(sql: str, to_upper: bool = True) -> str:
     # ]
     return sqlparse.format(sql, keyword_case='upper' if to_upper else 'lower')
 
+def clean_sql(sql: str) -> str:
+    keyword_case = 'upper'
+    use_space_around_operators = True
+    indent_columns = True
+    indent_tabs = True
+    comma_first = False
+    indent_after_first = False
+    strip_comments = False
+    reindent = True
+
+    # First pass using sqlparse formatting
+    sql = sqlparse.format(
+        sql,
+        keyword_case=keyword_case,
+        use_space_around_operators=use_space_around_operators,
+        indent_columns=indent_columns,
+        indent_tabs=indent_tabs,
+        comma_first=comma_first,
+        indent_after_first=indent_after_first,
+        strip_comments=strip_comments,
+        reindent=reindent
+    )
+
+    # Manual regex refinements
+    sql = re.sub(r"with \(nolock\)", r"WITH (NOLOCK)", sql, flags=re.IGNORECASE)
+
+    # Newlines around key JOIN / FROM / ON / INSERT / BEGIN/ROLLBACK/COMMIT etc
+    sql = re.sub(r'\s+(INNER|LEFT|RIGHT|FULL)?\s+JOIN\s+', r'\n\1 JOIN\n\t', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+FROM\s+', r'\nFROM\n\t', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+ON\s+', r'\nON\n\t', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+BEGIN\s+TRAN\s*;', r'\nBEGIN TRAN;\n', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+ROLLBACK\s*;', r'\nROLLBACK;\n', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+COMMIT\s*;', r'\nCOMMIT;\n', sql, flags=re.IGNORECASE)
+
+    # Handle INSERT VALUES: put each (row) on a new line
+    sql = re.sub(r'\),\s*\(', r'),\n(', sql)
+
+    # Clean up extra spaces
+    sql = re.sub(r'[ \t]+$', '', sql, flags=re.MULTILINE)  # Trailing whitespace
+    sql = re.sub(r'\s+,', ',', sql)  # Space before comma
+
+    # Tidy overall
+    sql = sql.strip()
+
+    return sql
+
+def clean_sql1(sql: str) -> str:
+    keyword_case: str = 'upper'
+    use_space_around_operators: bool = True
+    indent_columns: bool = True
+    indent_tabs: bool = True
+    comma_first: bool = False
+    indent_after_first: bool = False
+    strip_comments: bool = False
+    reindent: bool = True
+    sql = sqlparse.format(
+        sql,
+        keyword_case=keyword_case,
+        use_space_around_operators=use_space_around_operators,
+        indent_columns=indent_columns,
+        indent_tabs=indent_tabs,
+        comma_first=comma_first,
+        indent_after_first=indent_after_first,
+        strip_comments=strip_comments,
+        reindent=True
+    )
+
+    # sql = re.sub(r"with \(nolock\)", r"WITH (NOLOCK)", sql, flags=re.IGNORECASE)
+    sql = re.sub(r'(?:\s*)(INNER|LEFT|RIGHT|FULL)?\s+JOIN\s+', r'\n\1 JOIN\n\t', sql, flags=re.IGNORECASE)
+
+    for kw_out, kw_in, do_pad in [
+        (r"with \(nolock\)", "WITH (NOLOCK)", True),
+        (r"from", "FROM", True),
+        (r"on", "ON", True),
+        (r"begin\s+tran", "BEGIN TRAN", True),
+        (r"rollback", "ROLLBACK", True),
+        (r"commit", "COMMIT", False)
+    ]:
+        dp = "\n\t" if do_pad else ""
+        sql = re.sub(r"\s+" + kw_out + r"\s+", r"\n" + kw_in + dp, sql, flags=re.IGNORECASE)
+
+    # sql = re.sub(r'\s+FROM\s+', r'\nFROM\n\t', sql, flags=re.IGNORECASE)
+    # sql = re.sub(r'\s+ON\s+', r'\nON\n\t', sql, flags=re.IGNORECASE)
+
+    sql = re.sub(r'\),\s*\(', r'),\n(', sql)
+    sql = re.sub(r'[ \t]+$', '', sql, flags=re.MULTILINE)
+    sql = re.sub(r'\s+,', ',', sql)
+
+    sql = sql.strip()
+
+    return sql
+
 
 if __name__ == '__main__':
 
@@ -2213,3 +2305,28 @@ if __name__ == '__main__':
 
     # test_select_with_alias()
     # test_create_sql_parse_where_wrap()
+
+
+    sql = """
+    
+
+/*
+	Do not remove these comments, they are very important
+	-- SO is this one.
+*/
+BEGIN TRAn;
+
+	--INSERT INTO [orders] comment
+	insert into [bwsdb].dbo.[ORDERS] ([WO#], [Notes]) VALUES
+	(10016565, 'Notes, and more notes.'),
+	(10016566, 'Other notes, dont take my comma spaces.    extra whitespaces   .  A lot of    spaces.'),
+	(10016567, null)
+
+rollback;
+COMMIT ;
+    
+    """
+
+    print(sql)
+    print("="*120)
+    print(clean_sql(sql))

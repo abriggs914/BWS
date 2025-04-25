@@ -1,7 +1,10 @@
 import enum
 import os.path
+import re
+
 import cv2
 import pandas as pd
+import sqlparse
 
 from PIL import Image
 # from pyzbar.pyzbar import decode
@@ -483,6 +486,33 @@ def get_request_sub_types(rt_in: str = None) -> list[str]:
     return sorted(set(used))
 
 
+# def clean_sql(text_area_input: str) -> str:
+#
+#     # def check_no_lock(s: str):
+#     #     res = ""
+#     #     out = r"with \(nolock\)"
+#     #     in_ = "WITH (NOLOCK)"
+#     #     matches = re.search(out, s, re.IGNORECASE)
+#     #     regs = matches.regs
+#     #     if regs:
+#     #         regs = regs[0]
+#     #         i = 0
+#     #         for idx in regs:
+#     #             res += s[i: idx] + in_
+#     #             i = idx + len(in_)
+#     #         res += s[i:]
+#     #     else:
+#     #         res = s
+#     #     return res
+#
+#
+#
+#     # st.write("sql 1")
+#     # st.code(sql, language="sql")
+#
+#     return sql
+
+
 # def submit_form(form_key):
 #     print(f"SUBMIT {form_key} FORM")
 #     sql = ""
@@ -659,7 +689,7 @@ grid = {
 }
 
 tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples"]
-sm_tab_names = ["Search Tables", "SQL Creator", "Coming Soon"]
+sm_tab_names = ["Search Tables", "SQL Creator", "SQL Cleaner", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
         tab_choice = pills("Options:", tab_names)
@@ -1656,7 +1686,7 @@ def server_maintenance():
                         line_numbers=True
                     )
 
-        if sm_tabs == sm_tab_names[1]:
+        elif sm_tabs == sm_tab_names[1]:
             # SQL Creator
 
             list_query_types: list[str] = ["SELECT", "UPDATE", "INSERT", "DELETE", "CREATE"]
@@ -3216,8 +3246,26 @@ END
                         language="sql",
                         line_numbers=True
                     )
-
-        if sm_tabs == sm_tab_names[-1]:
+        elif sm_tabs == sm_tab_names[2]:
+            # SQL Cleaner
+            cols_sql_clean = st.columns(2)
+            with cols_sql_clean[0]:
+                text_area_input = st.text_area(
+                    label="Enter your SQL code block:",
+                    height=500
+                )
+            with cols_sql_clean[1]:
+                if text_area_input:
+                    if st.button(
+                        label="clean"
+                    ):
+                        cleaned_sql = clean_sql(text_area_input)
+                        output = st.code(
+                            cleaned_sql,
+                            language="sql"
+                        )
+        else:
+            #if sm_tabs == sm_tab_names[-1]:
             st.write("Coming Soon!")
 
 
