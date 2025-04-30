@@ -1890,6 +1890,7 @@ def clean_sql(sql: str) -> str:
     sql = re.sub(r'\s+BEGIN\s+TRAN\s*;', r'\nBEGIN TRAN;\n', sql, flags=re.IGNORECASE)
     sql = re.sub(r'\s+ROLLBACK\s*;', r'\nROLLBACK;\n', sql, flags=re.IGNORECASE)
     sql = re.sub(r'\s+COMMIT\s*;', r'\nCOMMIT;\n', sql, flags=re.IGNORECASE)
+    sql = re.sub(r'\s+VALUES\s*;', r'\nVALUES;\n', sql, flags=re.IGNORECASE)
 
     # Handle INSERT VALUES: put each (row) on a new line
     sql = re.sub(r'\),\s*\(', r'),\n(', sql)
