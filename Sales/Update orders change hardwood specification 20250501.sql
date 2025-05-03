@@ -11,6 +11,7 @@
 	
 */
 
+DECLARE @notesMsg AS NVARCHAR(MAX) = CHAR(10) + '2025-05-02 - Avery Briggs - Due to supply contsraints, replaced "1 3/4 in. Hardwood" with "1 1/2 in Hardwood".'
 DECLARE @out0 AS NVARCHAR(MAX) = '1-3/4 in. Hardwood'
 DECLARE @out1 AS NVARCHAR(MAX) = '1 3/4 in. Hardwood'
 DECLARE @in AS NVARCHAR(MAX) = '1 1/2 in. Hardwood'
@@ -470,7 +471,7 @@ IF @execute = 1 BEGIN
 	BEGIN TRAN;
 
 		SELECT
-			'Before' AS [T],
+			'Before OS' AS [T],
 			*
 		FROM
 			[BWSdb].[dbo].[Order Standards] [OS]
@@ -479,6 +480,19 @@ IF @execute = 1 BEGIN
 		ON
 			([OS].[Quote#] = [qtc].[Quote])
 			AND ([OS].[Standard No] = [qtc].[StandardNo])
+		WHERE
+			[Table] = 'Standards'
+		;
+
+		SELECT
+			'Before O' AS [T],
+			*
+		FROM
+			[BWSdb].[dbo].[Orders] [O]
+		INNER JOIN
+			@quotesToChange [qtc]
+		ON
+			([O].[Quote#] = [qtc].[Quote])
 		WHERE
 			[Table] = 'Standards'
 		;
@@ -498,8 +512,20 @@ IF @execute = 1 BEGIN
 			[Table] = 'Standards'
 		;
 
+		UPDATE
+			[BWSdb].[dbo].[Orders]
+		SET
+			[Notes] = ISNULL([Notes], '') + @notesMsg
+		FROM
+			[BWSdb].[dbo].[Orders] [O]
+		INNER JOIN
+			@quotesToChange [qtc]
+		ON
+			([O].[Quote#] = [qtc].[Quote])
+		;
+
 		SELECT
-			'After' AS [T],
+			'After OS' AS [T],
 			*
 		FROM
 			[BWSdb].[dbo].[Order Standards] [OS]
@@ -512,14 +538,27 @@ IF @execute = 1 BEGIN
 			[Table] = 'Standards'
 		;
 
-	ROLLBACK;
-	COMMIT;
+		SELECT
+			'After O' AS [T],
+			*
+		FROM
+			[BWSdb].[dbo].[Orders] [O]
+		INNER JOIN
+			@quotesToChange [qtc]
+		ON
+			([O].[Quote#] = [qtc].[Quote])
+		WHERE
+			[Table] = 'Standards'
+		;
+
 END
 ELSE BEGIN 
 	
 	SELECT
 		'RECORDS TO UPDATE' AS [T],
-		*
+		[qtc].*,
+		[O].[Notes],
+		ISNULL([Notes], '') + @notesMsg
 	FROM
 		[BWSdb].[dbo].[Order Standards] [OS]
 	INNER JOIN
@@ -527,9 +566,17 @@ ELSE BEGIN
 	ON
 		([OS].[Quote#] = [qtc].[Quote])
 		AND ([OS].[Standard No] = [qtc].[StandardNo])
+	INNER JOIN
+		[BWSdb].[dbo].[Orders] [O]
+	ON
+		[O].[Quote#] = [qtc].[Quote]
 	WHERE
 		[Table] = 'Standards'
 	;
 
 	SELECT 'EXECUTION NOT ENABLED' AS [T]
 END
+
+
+	ROLLBACK;
+	COMMIT;
