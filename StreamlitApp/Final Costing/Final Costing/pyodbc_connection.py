@@ -55,7 +55,7 @@ def can_connect(
         raise ValueError("Error you must pass both a username and a password. Got only a password.")
     if uid and pwd is None:
         raise ValueError("Error you must pass both a username and a password. Got only a username.")
-    # print(f"before {template=}")
+    # print(f"before {template_sql=}")
     cstr = template.format(dri=driver, svr=server, db=database, uid=uid, pwd=pwd)
     try:
         conn = pyodbc.connect(cstr, timeout=max(0, min(300, timeout)))
@@ -132,7 +132,7 @@ def connect(
         server,
         database,
         uid,
-        and pwd     - These parameters are combined using pyodbc connection string template
+        and pwd     - These parameters are combined using pyodbc connection string template_sql
 
         do_print    - shows connection and query status via print statements
         do_show     - shows connection information and sql queries via print statements
@@ -152,7 +152,7 @@ def connect(
         raise ValueError("Error you must pass both a username and a password. Got only a password.")
     if uid and pwd is None:
         raise ValueError("Error you must pass both a username and a password. Got only a username.")
-    # print(f"before {template=}")
+    # print(f"before {template_sql=}")
     cstr = template.format(dri=driver, svr=server, db=database, uid=uid, pwd=pwd)
 
     distinct_queries = [stmt for stmt in f"{sql};".split(";") if stmt.strip()]
@@ -203,10 +203,10 @@ def connect(
         tbl = sql.removeprefix("[").removesuffix("]")
         sql = f"SELECT * FROM [{tbl}];"
 
-    # print(f"after {template=}")
+    # print(f"after {template_sql=}")
     df = None
     conn, crsr = None, None
-    # print(f"\tRES\t{cstr=}, {template=}")
+    # print(f"\tRES\t{cstr=}, {template_sql=}")
     try:
         # sql_opt = "SELECT [IT Requests].*, [dept].[Dept] AS [DeptName], [IT Personnel].[Name] AS [ITPersonnelAssignedName] FROM [IT Requests] LEFT JOIN [Dept] ON [IT Requests].[Department] = [Dept].[DeptID] LEFT JOIN [IT Personnel] ON [IT Requests].[ITPersonAssignedID] = [IT Personnel].[ITPersonID#]"
         if do_print:
@@ -230,7 +230,26 @@ def connect(
                 conn.commit()
         else:
             if do_exec:
-                df = pd.DataFrame(pd.read_sql_query(sql, conn))
+                # df = pd.DataFrame(pd.read_sql_query(sql, conn))
+                crsr.execute(sql)
+
+                # while crsr.nextset():
+                #     pass
+                #
+                # # # crsr.commit()
+                # # print(f"vv FETCHALL vv")
+                # # print(crsr.fetchall())
+                # # print(f"^^ FETCHALL ^^")
+                # # # df = pd.DataFrame(crsr.fetchall())
+
+                print(crsr)
+                print(crsr.description)
+                print(crsr.messages)
+                print(crsr.rowcount)
+                rows = crsr.fetchall()
+                columns = [column[0] for column in crsr.description]
+                df = pd.DataFrame(rows, columns=columns)
+                conn.commit()
 
         if do_print:
             print("closing...")
@@ -276,7 +295,7 @@ def connect(
 #         server,
 #         database,
 #         uid,
-#         and pwd     - These parameters are combined using pyodbc connection string template
+#         and pwd     - These parameters are combined using pyodbc connection string template_sql
 #
 #         do_print    - shows connection and query status via print statements
 #         do_show     - shows connection information and sql queries via print statements
@@ -290,14 +309,14 @@ def connect(
 #         print(connect("SELECT TOP 10 * FROM [IT Requests]", uid="user5", pwd="M@gic456"))
 #         print(connect("SELECT TOP 10 * FROM [ClkTransaction]", database="SysproCompmanyA", uid="SRS", pwd=""))
 #     """
-#     template = "DRIVER={dri};SERVER={svr};DATABASE={db};UID={uid};PWD={pwd};MARS_Connection={mc}"
+#     template_sql = "DRIVER={dri};SERVER={svr};DATABASE={db};UID={uid};PWD={pwd};MARS_Connection={mc}"
 #     # params = [driver, server, database, uid, pwd]
 #     if pwd and uid is None:
 #         raise ValueError("Error you must pass both a username and a password. Got only a password.")
 #     if uid and pwd is None:
 #         raise ValueError("Error you must pass both a username and a password. Got only a username.")
-#     # print(f"before {template=}")
-#     cstr = template.format(dri=driver, svr=server, db=database, uid=uid, pwd=pwd, mc="yes" if enable_mars else "no")
+#     # print(f"before {template_sql=}")
+#     cstr = template_sql.format(dri=driver, svr=server, db=database, uid=uid, pwd=pwd, mc="yes" if enable_mars else "no")
 #
 #     distinct_queries = [stmt for stmt in f"{sql};".split(";") if stmt.strip()]
 #     n_distinct_queries = 1 if run_as_single else len(distinct_queries)
@@ -394,10 +413,10 @@ def connect(
 #             tbl = sql.removeprefix("[").removesuffix("]")
 #             sql = f"SELECT * FROM [{tbl}];"
 #
-#         # print(f"after {template=}")
+#         # print(f"after {template_sql=}")
 #         df = None
 #         conn, crsr = None, None
-#         # print(f"\tRES\t{cstr=}, {template=}")
+#         # print(f"\tRES\t{cstr=}, {template_sql=}")
 #         try:
 #             # sql_opt = "SELECT [IT Requests].*, [dept].[Dept] AS [DeptName], [IT Personnel].[Name] AS [ITPersonnelAssignedName] FROM [IT Requests] LEFT JOIN [Dept] ON [IT Requests].[Department] = [Dept].[DeptID] LEFT JOIN [IT Personnel] ON [IT Requests].[ITPersonAssignedID] = [IT Personnel].[ITPersonID#]"
 #             if do_print:

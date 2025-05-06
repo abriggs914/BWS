@@ -1766,7 +1766,7 @@ def server_maintenance():
                 ]
                 boilerplate_cols = [d["Name"] for d in records]
 
-                # New Column template data
+                # New Column template_sql data
                 ct_column_names = ["PK", "Name", "Type", "Size", "Default"]
                 ct_type_options = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
                 ct_size_options = {
@@ -2596,7 +2596,7 @@ END
 #                 ]
 #                 boilerplate_cols = [d["Name"] for d in records]
 #
-#                 # New Column template data
+#                 # New Column template_sql data
 #                 ct_column_names = ["PK", "Name", "Type", "Size", "Default"]
 #                 ct_type_options = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
 #                 ct_size_options = {
