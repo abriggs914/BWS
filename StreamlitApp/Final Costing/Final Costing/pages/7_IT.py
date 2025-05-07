@@ -3897,11 +3897,16 @@ Wrapper 'class' for a sudo-dictionary in VBA.
         {
             "name": """DateFormat""",
             "code": """
-dateformat(#2024-06-12#)              ' => "Wednesday June 12th 2024"
-dateformat(#2024-06-12#, 1)           ' => "Wednesday, June 12th, 2024"
-dateformat(#2024-06-12#, 2)           ' => "Wednesday, June 12th"
-dateformat(#2024-06-12#, 3)           ' => "Wednesday June 12th"
-printf(dateformat(#2024-06-12#, -1))  ' => "['Wednesday', 'June', '12th', 2024]"
+dateformat(#2024-06-12#)                                      ' => "Wednesday June 12th 2024"
+dateformat(#2024-06-12#, 1)                                   ' => "Wednesday, June 12th, 2024"
+dateformat(#2024-06-12#, 2)                                   ' => "Wednesday, June 12th"
+dateformat(#2024-06-12#, 3)                                   ' => "Wednesday June 12th"
+printf(dateformat(#2024-06-12#, -1))                          ' => "['Wednesday', 'June', '12th', 2024]"
+printf(dateformat(#2025-03-27 20:49 #, 4))                    ' => "March 27th 2025"
+printf(dateformat(#2025-03-27 20:49 #, 5))                    ' => "March 27 2025"
+printf(dateformat(#2025-03-27 20:49 #, 6))                    ' => "March 27th"
+printf(dateformat(#2025-03-27 20:49 #, 7))                    ' => "March 27"
+printf(dateformat(#2025-03-27 20:49 #, 3, shortNames:=True))  ' => "Thu Mar 27th"
             """,
             "desc": """
 Retrieve a date formatted as a string.
@@ -3911,7 +3916,7 @@ Supports 5 modes using integer codes [-1, 0, 1, 2, 3]
             """,
             "warn": """""",
             "tags": [Tags.DATES, Tags.DATE_UTILITY],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "date": datetime.datetime(2025, 5, 7, 15)
         },
         {
             "name": """Array Utility""",
@@ -4219,7 +4224,7 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
                         st.markdown(lines[1], unsafe_allow_html=True)
                     else:
                         st.write(desc)
-                    st.code(code, language=str(lang), line_numbers=True)
+                    st.code(code, language=str(lang).lower(), line_numbers=True)
                     if warn:
                         st.warning(warn)
                     if tags:

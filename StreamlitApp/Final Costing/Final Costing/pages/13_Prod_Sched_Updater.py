@@ -4,7 +4,8 @@ import streamlit as st
 # from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import pandas as pd
 #
-from pyodbc_connection import connect, connect_2
+# from pyodbc_connection import connect, connect_2
+from pyodbc_connection import connect
 from streamlit_utility import display_df
 #
 # APP_PASSWORD: str = "PRODSCHED25*"
@@ -235,13 +236,14 @@ template_header = """
 -- Matching {LST_COLS}
 -- on search term = '{STERM}'
 -- in {LST_COMPS} company(s)
+-- ALLOW_PARTIAL_MATCH={APARTIAL}
 """
 
 template_declares = """
 DECLARE @doTest BIT = 0
 DECLARE @st NVARCHAR(MAX) = '{STERM}'
-DECLARE @delim NVARCHAR(50) = ';'
-DECLARE @newDelim NVARCHAR(50) = ';|||;'
+DECLARE @delim NVARCHAR(5) = ';'
+DECLARE @newDelim NVARCHAR(5) = ';|||;'
 DECLARE @allowPartial BIT = {APARTIAL}
 
 DECLARE @checkOS BIT = 1
@@ -251,32 +253,89 @@ DECLARE @checkCWFL BIT = 1
 DECLARE @checkCWSL BIT = 1
 """
 
-template_sql = """
+# template_sql = """
+# SELECT
+# 	'{COMP}' AS [Comp],
+# 	CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+# 	'{COL}' AS [MatchColumn],
+# 	[Splt].[splited_data] AS [SearchTerm],
+# 	CAST([{COL}] AS NVARCHAR(MAX)) AS [Matched],
+# 	(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+# FROM
+# 	[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+# LEFT JOIN
+# 	[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+# ON
+# 	(
+# 		CASE
+# 		WHEN (@allowPartial = 1) AND (LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+# 		THEN 1
+# 		WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+# 		THEN 1
+# 		ELSE 0
+# 		END
+# 	) = 1
+# WHERE
+# 	ISNULL([Splt].[splited_data], '') <> ''
+# """
+
+
+template_sql_o = """
 SELECT
-	'{COMP}' AS [Comp],
-	CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
-	'{COL}' AS [MatchColumn],
-	[Splt].[splited_data] AS [SearchTerm],
-	CAST([{COL}] AS NVARCHAR(MAX)) AS [Matched],
-	(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+    '{COMP}' AS [Comp],
+    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    '{COL}' AS [MatchColumn],
+    [Splt].[splited_data] AS [SearchTerm],
+    CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+    (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
 FROM 
-	[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
-LEFT JOIN
-	[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
-ON 
-	(
-		CASE
-		WHEN (@allowPartial = 1) AND (LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
-		THEN 1
-		WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
-		THEN 1
-		ELSE 0
-		END
-	) = 1
+    [BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+CROSS JOIN
+    [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
 WHERE
-	ISNULL([Splt].[splited_data], '') <> ''
+    ISNULL([Splt].[splited_data], '') <> ''
+    AND (
+        (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        OR
+        (@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    )
 """
 
+
+template_sql_d = """
+SELECT
+    '{COMP}' AS [Comp],
+    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    '{COL}' AS [MatchColumn],
+    [Splt].[splited_data] AS [SearchTerm],
+    CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+    (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+FROM 
+    [BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+LEFT JOIN 
+    [BWSdb].[dbo].[{DTABLE}] [D] WITH (NOLOCK)
+ON
+	[O].[DealerID] = [D].[ID]
+CROSS JOIN
+    [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+WHERE
+    ISNULL([Splt].[splited_data], '') <> ''
+    AND (
+    	(
+        	(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    	OR (
+    		(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    )
+"""
+
+
+col_dealer = "Dealer"
 col_quote_bws = "Quote#"
 col_quote_stg = "SGQuote"
 o_table_cols = [
@@ -291,6 +350,8 @@ o_table_cols = [
 	"Sales Order#",
 	"Invoice #"
 ]
+
+table_cols = o_table_cols + [col_dealer]
 
 
 # template_fill_ins = {
@@ -333,10 +394,10 @@ o_table_cols = [
 def get_data() -> pd.DataFrame:
 	df = connect(
 		generate_sql()
-		# ,
-		# do_exec=True,
-		# do_show=True,
-		# do_print=True
+		,
+		do_exec=True,
+		do_show=True,
+		do_print=True
 	)
 	# print(f"{connect(generate_sql())=}")
 	# print("df")
@@ -349,7 +410,7 @@ def generate_sql():
 	s_term = entry_search_term
 	a_partial = int(toggle_allow_partial)
 
-	table_cols = multiselect_cols
+	table_cols = multiselect_cols.copy()
 	table_cols_b: list[str] = table_cols.copy()
 	table_cols_s: list[str] = table_cols.copy()
 
@@ -361,38 +422,71 @@ def generate_sql():
 	template_fill_ins = {
 		"BWS": {
 			"o_table": "Orders",
-			"q_col": "Quote#",
+			"d_table": "Dealers",
+			"q_col": col_quote_bws,
 			"cols": table_cols_b
 		},
 		"STG": {
 			"o_table": "OrdersV2",
-			"q_col": "SGQuote",
+			"d_table": "DealersV2",
+			"q_col": col_quote_stg,
 			"cols": table_cols_s
 		}
 	}
 
 	if not toggle_comp_bws:
-		template_fill_ins.pop("bws")
+		template_fill_ins.pop("BWS")
 	if not toggle_comp_stg:
-		template_fill_ins.pop("stg")
+		template_fill_ins.pop("STG")
+
+	if not template_fill_ins:
+		st.error(f"No companies selected")
+		st.stop()
 
 	statements = []
 	for company, comp_data in template_fill_ins.items():
 		q_col = comp_data["q_col"]
 		o_table = comp_data["o_table"]
+		d_table = comp_data["d_table"]
 		cols = comp_data["cols"]
+		# sql_dealers = ""
+		# if col_dealer in cols:
+		# 	sql_dealers = template_sql_d.format(
+		# 		DTABLE=d_table
+		# 	)
+		use_dealer = col_dealer in cols
 		for i, col in enumerate(cols):
-			statements.append(template_sql.format(
-				COMP=company,
-				QCOL=q_col,
-				COL=col,
-				OTABLE=o_table
-			))
+			# template_sql_where.format(COL=col)
+			if use_dealer:
+				if not (col_dealer == col):
+					statements.append(template_sql_d.format(
+						COMP=company,
+						QCOL=q_col,
+						COL=col,
+						OTABLE=o_table,
+						DTABLE=d_table
+						# ,
+						# DTEMPLATE=sql_dealers
+					))
+			else:
+				statements.append(template_sql_o.format(
+					COMP=company,
+					QCOL=q_col,
+					COL=col,
+					OTABLE=o_table
+					# ,
+					# DTEMPLATE=sql_dealers
+				))
+
+	if not statements:
+		st.error(f"No statements generated")
+		st.stop()
 
 	statements_h = template_header.format(
 		LST_COLS=", ".join(table_cols_b),
 		LST_COMPS=", ".join(template_fill_ins),
-		STERM=s_term
+		STERM=s_term,
+		APARTIAL=a_partial
 	)
 
 	statements_d = template_declares.format(
@@ -408,7 +502,7 @@ cols_controls = st.columns([0.3, 0.7])
 
 with cols_controls[0]:
 
-	cols_search_tools = st.columns([0.25, 0.5, 0.25])
+	cols_search_tools = st.columns([0.25, 0.3, 0.45])
 
 	with cols_search_tools[0]:
 		toggle_comp_bws = st.toggle(
@@ -423,17 +517,30 @@ with cols_controls[0]:
 	with cols_search_tools[2]:
 		toggle_allow_partial = st.toggle(
 			label="partial match?",
-			value=True
+			value=True,
+			help="Ignores case and any preceding or succeeding text."
+		)
+		toggle_extensive_search = st.toggle(
+			label="extensive?",
+			value=False,
+			help="This search method is more in depth and will take a little longer to process."
 		)
 
 	if toggle_comp_bws or toggle_comp_stg:
 
 		multiselect_cols = st.multiselect(
 			label="Fields to Search",
-			options=o_table_cols
+			# options=o_table_cols
+			options=table_cols
 		)
 
 		if multiselect_cols:
+
+			# if len(multiselect_cols) == len(o_table_cols):
+			# 	# if st.button(
+			# 	# 	label="remove all"
+			# 	# ):
+			# 	#
 
 			st.divider()
 
@@ -450,9 +557,10 @@ with cols_controls[0]:
 							language="sql",
 							line_numbers=True
 						)
-					st.write(
-						get_data()
-						# ,
-						# "Matching Values"
+					display_df(
+						get_data(),
+						"Matching Quote Values",
+						width=1000,
+						show_shape=False
 					)
 
