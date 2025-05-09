@@ -22,8 +22,8 @@ from tkinter import ttk, messagebox
 VERSION = \
     """	
     General tkinter Centered Utility Functions
-    Version..............1.85
-    Date...........2024-09-24
+    Version..............1.86
+    Date...........2025-05-09
     Author(s)....Avery Briggs
     """
 
@@ -2226,7 +2226,7 @@ class MultiComboBox(tkinter.Frame):
                  include_searching_widgets=True, exhaustive_filtering=False, default_null_char="",
                  row_colour_bg=None, row_colour_fg=None, use_str_dtype: bool = True, nan_repr: str | None = None,
                  width: float | None = None, height: float | None = None, show_index_column: bool = True,
-                 include_clear_button: bool = True
+                 include_clear_button: bool = True, min_search_length: int = 3
                  ):
         super().__init__(master)
 
@@ -2290,6 +2290,7 @@ class MultiComboBox(tkinter.Frame):
         self.default_null_char = default_null_char
         self.show_index_column = show_index_column
         self.include_clear_button = include_clear_button
+        self.min_search_length = min_search_length
 
         if not self.include_drop_down_arrow:
             # must show table, if this is false
@@ -2889,8 +2890,8 @@ class MultiComboBox(tkinter.Frame):
                 for t_ in tags_:
                     if t_ not in self.tag_history[str(k+i)]:
                         self.tag_history[str(k+i)].append(t_)
-                # # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
-                #     print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
+                # for df_, vals_, tags_ in zip(df.iterrows(), vals, tags):
+                # print(f"INSERTING {vals_=}, {k+i=}, {tags_=}, {i=}")
                 self.tree_treeview.insert("", "end", iid=k + i, text=str(k + i + 1), values=vals_, tags=tuple(tags_))
             k += df.shape[0]
         self.data = pd.concat([self.data, *[df for df, *rest in new_dfs]], ignore_index=True)
@@ -3100,7 +3101,8 @@ class MultiComboBox(tkinter.Frame):
             col = self.rg_var.get()
             col = self.radio_btn_texts[col]
             some = False
-            if not val:
+            val = val if val else ""
+            if len(val) < self.min_search_length:
                 # print(f"Not val")
                 self.update_treeview()
                 some = True

@@ -128,66 +128,272 @@ WHERE
 ;
 """
         },
-        SQL_DATED_BWS_UNITS_1 := {
-            "sql": "EXEC [BWSdb].[dbo].[sp_ProductionSchedule V4_Slots] {SD}, {ED};"
-        },
-        SQL_DATED_BWS_UNITS_2 := {
+#         SQL_DATED_BWS_UNITS_1 := {
+#             "sql": "EXEC [BWSdb].[dbo].[sp_ProductionSchedule V4_Slots] {SD}, {ED};"
+#         },
+#         SQL_DATED_BWS_UNITS_2 := {
+#             "sql": """
+# SELECT
+#     [O].*,
+#     [D].*
+# FROM
+#     [BWSdb].[dbo].[Orders] [O]
+# LEFT JOIN
+# 	[BWSdb].[dbo].[Dealers] [D]
+# ON
+# 	[O].[DealerID] = [D].[ID]
+# WHERE
+#     ([Order Date] BETWEEN {SD} AND {ED})
+#     OR ([Quote Date] BETWEEN {SD} AND {ED})
+#     OR ([Available Date] BETWEEN {SD} AND {ED})
+#     OR ([Delivery Date] BETWEEN {SD} AND {ED})
+#     OR ([Finish Date] BETWEEN {SD} AND {ED})
+#     OR ([PO Date] BETWEEN {SD} AND {ED})
+#     OR ([Est Pro Date] BETWEEN {SD} AND {ED})
+#     OR ([Date Registered] BETWEEN {SD} AND {ED})
+#     OR ([Date In Service] BETWEEN {SD} AND {ED})
+#     OR ([Invoice Date] BETWEEN {SD} AND {ED})
+#     OR ([Shipped Date] BETWEEN {SD} AND {ED})
+#     OR ([Date Requested] BETWEEN {SD} AND {ED})
+#     OR ([BWSPaidDate] BETWEEN {SD} AND {ED})
+#     OR ([CommPaidDate] BETWEEN {SD} AND {ED})
+#     OR ([Lead Date] BETWEEN {SD} AND {ED})
+#     OR ([DateLastQuoteReport] BETWEEN {SD} AND {ED})
+#     OR ([JobAvailableScheduled] BETWEEN {SD} AND {ED})
+# ;
+# """
+#         },
+#         SQL_DATED_BWS_UNITS_3 := {
+#             "sql": """
+# SELECT
+#     *
+# FROM
+#     [BWSdb].[dbo].[dtProductionSchedule]
+# WHERE
+#     ([Beam Date] BETWEEN {SD} AND {ED})
+#     OR ([Prod Date 1] BETWEEN {SD} AND {ED})
+#     OR ([Prod Date 2] BETWEEN {SD} AND {ED})
+#     OR ([Other Date] BETWEEN {SD} AND {ED})
+#     OR ([Prod On] BETWEEN {SD} AND {ED})
+#     OR ([Prod Off] BETWEEN {SD} AND {ED})
+#     OR ([Prod2 On] BETWEEN {SD} AND {ED})
+#     OR ([Prod2 Off] BETWEEN {SD} AND {ED})
+#     OR ([Beam On] BETWEEN {SD} AND {ED})
+#     OR ([Beam Off] BETWEEN {SD} AND {ED})
+#     OR ([GN On] BETWEEN {SD} AND {ED})
+#     OR ([GN Off] BETWEEN {SD} AND {ED})
+#     OR ([Axle On] BETWEEN {SD} AND {ED})
+#     OR ([Axle Off] BETWEEN {SD} AND {ED})
+#     OR ([Other On] BETWEEN {SD} AND {ED})
+#     OR ([Other Off] BETWEEN {SD} AND {ED})
+# ;
+# """
+#         },
+        SQL_DATED_BWS_UNITS_4 := {
             "sql": """
 SELECT
-    [O].*,
-    [D].*
+    [A].[ProdSchedID#]
+    ,CAST([O].[Quote#] AS NVARCHAR(25)) AS [Orders_Quote#]
+    ,[O].[WO#]
+    ,[O].[WO#] AS [Orders_WO#]
+    --,B.[JobStartDate]
+    ,[A].[Prod Date 1] AS [JobFinishDate]
+    --,B.[dtprodschedv2ts]
+    ,[A].[WO Line 1] AS [JobStartLine]
+    --,B.[HideFromProdInput]
+    ,[A].[InputField1]
+    ,[A].[InputField2]
+    --,B.[ApplyUpdate]
+    --,B.[ApplyUpdateUser]
+
+    , A.[ProdSchedID#]
+    ,A.[Quote#] AS [dtProductionSchedule_Quote#]
+    ,A.[WO#] AS [dt_ProductionSchedule_WO#]
+    --,A.[InputField1]
+    --,A.[InputField2]
+    ,A.[Beam Line]
+    ,A.[Beam Date]
+    ,A.[GN Line]
+    ,A.[GN Date]
+    ,A.[WO Line 1]
+    ,A.[Prod Date 1]
+    ,A.[WO Line 2]
+    ,A.[Prod Date 2]
+    --,A.[Other]
+    --,A.[Other Line]
+    --,A.[Other Date]
+    --,A.[HideFromProdInput]
+    --,A.[Step1SYSPROBudget]
+    --,A.[Step2SYSPROBudget]
+    --,A.[dtprodschedts]
+    --,A.[ApplyUpdate]
+    --,A.[ApplyUpdateUser]
+    ,A.[Slot#]
+    ,A.[Slot/Quote]
+    --,A.[Slot Approved]
+    ,A.[Prod On]
+    ,A.[Prod On Time]
+    ,A.[Prod Off]
+    ,A.[Prod Off Time]
+    ,A.[Prod PM]
+    ,A.[Prod Complete]
+    ,A.[Prod2 On]
+    ,A.[Prod2 On Time]
+    ,A.[Prod2 Off]
+    ,A.[Prod2 Off Time]
+    ,A.[Prod2 PM]
+    ,A.[Prod2 Complete]
+    --,A.[Prod Instructions]
+    ,A.[Beam On]
+    ,A.[Beam Off]
+    ,A.[Beam Complete]
+    ,A.[Beam PM]
+    ,A.[Beam Instructions]
+    ,A.[GN On]
+    ,A.[GN Off]
+    ,A.[GN Complete]
+    ,A.[GN PM]
+    ,A.[GN Instructions]
+    ,A.[Axle]
+    ,A.[Axle On]
+    ,A.[Axle Off]
+    ,A.[Axle Complete]
+    ,A.[Axle PM]
+    ,A.[Axle Instructions]
+    ,A.[Other On]
+    ,A.[Other On Time]
+    ,A.[Other Off]
+    ,A.[Other Off Time]
+    ,A.[Other Complete]
+    ,A.[Other PM]
+    ,A.[Other Instructions]
+    ,A.[Stargate WO#]
+
+    , O.[Quote#]
+    ,O.[Quote#] AS [dtProductionSchedule_Quote#]
+    ,O.[Quote Date]
+    ,O.[Order Date]
+    ,O.[WO#] AS [dt_ProductionScheduleV2_WO#]
+    ,O.[Sales Order#]
+    ,O.[Model No]
+    ,O.[Width]
+    ,O.[Spread]
+    ,O.[DealerID]
+    ,O.[Sale PersonID]
+    ,O.[Price]
+    ,O.[Prom Drawing]
+    --,O.[Special Instructions]
+    ,O.[Date Declined]
+    ,O.[Decline/Rejected]
+    ,O.[Serial Number]
+    ,O.[Available Date]
+    ,O.[Delivery Date]
+    ,O.[Requested Delivery Date]
+    ,O.[Finish Date]
+    ,O.[Purchase Order]
+    ,O.[PO Date]
+    --,O.[PayID]
+    --,O.[Volume Discount]
+    --,O.[Program Discount]
+    --,O.[Discount1_Name]
+    --,O.[Discount1_Type]
+    --,O.[Discount1]
+    --,O.[Discount2_Name]
+    --,O.[Discount2_Type]
+    --,O.[Discount2]
+    --,O.[Discount3_Name]
+    --,O.[Discount3_Type]
+    --,O.[Discount3]
+    --,O.[Est Pro Date]
+    --,O.[Notes]
+    --,O.[EngNotes]
+    --,O.[CarrierID]
+    --,O.[CustID]
+    ,O.[US Sale]
+    ,O.[Shipped Date]
+    --,O.[GL Override Date]
+    --,O.[FE Rate]
+    --,O.[PDD]
+    ,O.[Deck Length]
+    ,O.[Invoice #]
+    ,O.[Date Registered]
+    ,O.[Date In Service]
+    ,O.[Invoice Date]
+    --,O.[Date Requested]
+    ,O.[GVWR]
+    ,O.[Tare]
+    --,O.[Selection]
+    --,O.[Warranty]
+    --,O.[BWSPaid]
+    --,O.[BWSPaidDate]
+    --,O.[CommPaid]
+    --,O.[CommPaidDate]
+    --,O.[ts_timestamp]
+    --,O.[ModifiedBy]
+    --,O.[Lead Date]
+    --,O.[Lead Source]
+    --,O.[LeadID]
+    --,O.[DealerBranchID]
+    --,O.[DealerSalesPersonID]
+    --,O.[DataEntryCheck]
+    --,O.[DataEntryUser]
+    --,O.[FinishedGoodsDealerLocID]
+    --,O.[WO Reviewed]
+    --,O.[WO Review Date]
+    --,O.[Follow Up Date]
+    --,O.[MSOIsDifferent]
+    --,O.[MSOLocID]
+    --,O.[EstInvDateOverride]
+    --,O.[Estimated Invoice Date]
+    --,O.[AdditionalPricingInfo]
+    ,O.[Slot#]
+    --,O.[TempModel?]
+    --,O.[HighRiskUnit]
+    --,O.[EngNotes V2]
+    ,O.[CompanyID]
+    ,O.[Customer WO#]
+    ,[O].[JobAvailableLine]
+    ,[O].[JobAvailableScheduled]
+    ,[O].[JobAvailableScheduledBy]
+    --,O.[PriceSecured]
+    --,O.[DateSecured]
+    --,O.[SecuredBy]
+    ,(CASE WHEN C.[Quote#] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+
+    ,[D].[COMPANY NAME] AS [Orders_COMPANY NAME]
+    ,[O].[Model No] AS [Orders_Model No]
 FROM
-    [BWSdb].[dbo].[Orders] [O]
-LEFT JOIN
-	[BWSdb].[dbo].[Dealers] [D]
+    [BWSdb].[dbo].[Orders] AS [O]
+LEFT JOIN 
+    [BWSdb].[dbo].[dtProductionSchedule] AS [A]
 ON
-	[O].[DealerID] = [D].[ID]
+    [O].[Quote#] = [A].[Quote#]
+LEFT JOIN 
+    [BWSdb].[dbo].[Production] AS [B]
+ON
+    [O].[Quote#] = [B].[Quote#]
+LEFT JOIN
+    [BWSdb].[dbo].[v_GalvanizedOptionCheck] AS [C]
+ON
+    [O].[Quote#] = [C].[Quote#]
+LEFT JOIN
+    [BWSdb].[dbo].[Dealers] AS [D]
+ON
+    [O].[DealerID] = [D].[ID]
+--LEFT JOIN
+--    [BWSdb].[dbo].[DealersV2] AS [D]
+--ON
+--    [O].[DealerID] = [D].[ID]
+--WHERE
+--    [B].[JobFinishDate] IS NOT NULL
 WHERE
-    ([Order Date] BETWEEN {SD} AND {ED})
-    OR ([Quote Date] BETWEEN {SD} AND {ED}) 
-    OR ([Available Date] BETWEEN {SD} AND {ED}) 
-    OR ([Delivery Date] BETWEEN {SD} AND {ED}) 
-    OR ([Finish Date] BETWEEN {SD} AND {ED}) 
-    OR ([PO Date] BETWEEN {SD} AND {ED}) 
-    OR ([Est Pro Date] BETWEEN {SD} AND {ED}) 
-    OR ([Date Registered] BETWEEN {SD} AND {ED})
-    OR ([Date In Service] BETWEEN {SD} AND {ED})  
-    OR ([Invoice Date] BETWEEN {SD} AND {ED}) 
-    OR ([Shipped Date] BETWEEN {SD} AND {ED})
-    OR ([Date Requested] BETWEEN {SD} AND {ED})
-    OR ([BWSPaidDate] BETWEEN {SD} AND {ED})   
-    OR ([CommPaidDate] BETWEEN {SD} AND {ED})   
-    OR ([Lead Date] BETWEEN {SD} AND {ED})   
-    OR ([DateLastQuoteReport] BETWEEN {SD} AND {ED})
-    OR ([JobAvailableScheduled] BETWEEN {SD} AND {ED})   
+    [Date Declined] IS NULL
+ORDER BY
+    --[B].[JobFinishDate]
+    --[A].[Prod Date 1]
+    [O].[Quote#]
 ;
-"""
-        },
-        SQL_DATED_BWS_UNITS_3 := {
-            "sql": """
-SELECT
-    *
-FROM
-    [BWSdb].[dbo].[dtProductionSchedule]
-WHERE
-    ([Beam Date] BETWEEN {SD} AND {ED})
-    OR ([Prod Date 1] BETWEEN {SD} AND {ED})
-    OR ([Prod Date 2] BETWEEN {SD} AND {ED})
-    OR ([Other Date] BETWEEN {SD} AND {ED})
-    OR ([Prod On] BETWEEN {SD} AND {ED})
-    OR ([Prod Off] BETWEEN {SD} AND {ED})
-    OR ([Prod2 On] BETWEEN {SD} AND {ED})
-    OR ([Prod2 Off] BETWEEN {SD} AND {ED})
-    OR ([Beam On] BETWEEN {SD} AND {ED})
-    OR ([Beam Off] BETWEEN {SD} AND {ED})
-    OR ([GN On] BETWEEN {SD} AND {ED})
-    OR ([GN Off] BETWEEN {SD} AND {ED})
-    OR ([Axle On] BETWEEN {SD} AND {ED})
-    OR ([Axle Off] BETWEEN {SD} AND {ED})
-    OR ([Other On] BETWEEN {SD} AND {ED})
-    OR ([Other Off] BETWEEN {SD} AND {ED})
-;
-"""
+            """
         },
         SQL_PROD_SCHED_VERSION_BWS := {
             "sql": """
@@ -572,7 +778,8 @@ class App(ctk.CTk):
                 "update_multicombobox_already_scheduled": False,
                 "mark_already_scheduled_units": False,
 				"on_left_click_release_calendar": True,
-                "click_go_to_date": False
+                "click_go_to_date": False,
+				"on_closing": True
             },
             # warning Test Mode must be enabled for this to work.
             "quotes_of_interest": {
@@ -1063,81 +1270,109 @@ class App(ctk.CTk):
             self.last_date = datetime_utility.end_of_month(self.last_date)
         self.list_dates = pd.date_range(self.first_date, periods=self.n_cols, normalize=False).to_list()
 
-        SQL_DATED_BWS_UNITS_1.update({
-            "sql": SQL_DATED_BWS_UNITS_1["sql"].format(
-                SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
-                ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
-            )
-        })
-        SQL_DATED_BWS_UNITS_2.update({
-            "sql": SQL_DATED_BWS_UNITS_2["sql"].format(
-                SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
-                ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
-            )
-        })
-        SQL_DATED_BWS_UNITS_3.update({
-            "sql": SQL_DATED_BWS_UNITS_3["sql"].format(
-                SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
-                ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
-            )
-        })
+        # SQL_DATED_BWS_UNITS_1.update({
+        #     "sql": SQL_DATED_BWS_UNITS_1["sql"].format(
+        #         SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
+        #         ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
+        #     )
+        # })
+        # SQL_DATED_BWS_UNITS_2.update({
+        #     "sql": SQL_DATED_BWS_UNITS_2["sql"].format(
+        #         SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
+        #         ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
+        #     )
+        # })
+        # SQL_DATED_BWS_UNITS_3.update({
+        #     "sql": SQL_DATED_BWS_UNITS_3["sql"].format(
+        #         SD=f"'{self.list_dates[0]:%Y-%m-%d}'",
+        #         ED=f"'{self.list_dates[-1]:%Y-%m-%d} 23:59:59'"
+        #     )
+        # })
         self.df_calendar_bws = connect(**SQL_HOLIDAYS_BWS, do_show=tm, do_print=tm)
         self.df_calendar_bws["C_HolidayName"] = self.df_calendar_bws["C_HolidayName"].replace("Christmas is coming!")
         self.df_prod_lines_bws = connect(**SQL_USED_LINES_BWS, do_show=tm, do_print=tm)
 
-        self.df_orders_bws_1 = connect(**SQL_DATED_BWS_UNITS_1, do_show=tm, do_print=tm).fillna("")
-        self.df_orders_bws_2 = connect(**SQL_DATED_BWS_UNITS_2, do_show=tm, do_print=tm).fillna("")
-        if tm:
-            print(f"A {self.df_orders_bws_2=}")
-            print(f"A {sorted(list(self.df_orders_bws_2.columns))=}")
-        self.df_orders_bws_3 = connect(**SQL_DATED_BWS_UNITS_3, do_show=tm, do_print=tm).fillna("")
-        self.df_orders_bws_1 = self.df_orders_bws_1.loc[self.df_orders_bws_1["Quote#"] != ""]
-        self.df_orders_bws_2 = self.df_orders_bws_2.loc[self.df_orders_bws_2["Quote#"] != ""]
-        self.df_orders_bws_3 = self.df_orders_bws_3.loc[self.df_orders_bws_3["Quote#"] != ""]
-        self.df_orders_bws_2 = self.df_orders_bws_2.add_prefix("Orders_")
-        self.df_orders_bws_3 = self.df_orders_bws_3.add_prefix("dtProdSched_")
-        self.df_orders_bws_2 = self.df_orders_bws_2.rename(columns={"Orders_Quote#": "Quote#"})
-        self.df_orders_bws_3 = self.df_orders_bws_3.rename(columns={"dtProdSched_Quote#": "Quote#"})
+        # self.df_orders_bws_1 = connect(**SQL_DATED_BWS_UNITS_1, do_show=tm, do_print=tm).fillna("")
+        # self.df_orders_bws_2 = connect(**SQL_DATED_BWS_UNITS_2, do_show=tm, do_print=tm).fillna("")
+        # if tm:
+        #     print(f"A {self.df_orders_bws_2=}")
+        #     print(f"A {sorted(list(self.df_orders_bws_2.columns))=}")
+        # self.df_orders_bws_3 = connect(**SQL_DATED_BWS_UNITS_3, do_show=tm, do_print=tm).fillna("")
+        # self.df_orders_bws_1 = self.df_orders_bws_1.loc[self.df_orders_bws_1["Quote#"] != ""]
+        # self.df_orders_bws_2 = self.df_orders_bws_2.loc[self.df_orders_bws_2["Quote#"] != ""]
+        # self.df_orders_bws_3 = self.df_orders_bws_3.loc[self.df_orders_bws_3["Quote#"] != ""]
+        # self.df_orders_bws_2 = self.df_orders_bws_2.add_prefix("Orders_")
+        # self.df_orders_bws_3 = self.df_orders_bws_3.add_prefix("dtProdSched_")
+        # self.df_orders_bws_2 = self.df_orders_bws_2.rename(columns={"Orders_Quote#": "Quote#"})
+        # self.df_orders_bws_3 = self.df_orders_bws_3.rename(columns={"dtProdSched_Quote#": "Quote#"})
+        #
+        # if tm:
+        #     print(f"{self.df_orders_bws_1=}")
+        #     print(f"B {self.df_orders_bws_2=}")
+        #     print(f"{self.df_orders_bws_3=}")
+        #     print(f"{sorted(list(self.df_orders_bws_1.columns))=}")
+        #     print(f"B {sorted(list(self.df_orders_bws_2.columns))=}")
+        #     print(f"{sorted(list(self.df_orders_bws_3.columns))=}")
+        #
+        #     print(f"AA{self.df_orders_bws_1.loc[self.df_orders_bws_1['WO#'] == '10017085']=}")
+        # self.df_orders_bws = self.df_orders_bws_1.merge(
+        #     self.df_orders_bws_2,
+        #     on="Quote#",
+        #     how="outer"
+        # )
+        # if tm:
+        #     print(f"BB{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
+        # self.df_orders_bws = self.df_orders_bws.merge(
+        #     self.df_orders_bws_3,
+        #     on="Quote#",
+        #     how="outer"
+        # )
 
-        if tm:
-            print(f"{self.df_orders_bws_1=}")
-            print(f"B {self.df_orders_bws_2=}")
-            print(f"{self.df_orders_bws_3=}")
-            print(f"{sorted(list(self.df_orders_bws_1.columns))=}")
-            print(f"B {sorted(list(self.df_orders_bws_2.columns))=}")
-            print(f"{sorted(list(self.df_orders_bws_3.columns))=}")
+        self.df_orders_bws = connect(**SQL_DATED_BWS_UNITS_4, do_show=tm, do_print=tm).fillna("")
 
-            print(f"AA{self.df_orders_bws_1.loc[self.df_orders_bws_1['WO#'] == '10017085']=}")
-        self.df_orders_bws = self.df_orders_bws_1.merge(
-            self.df_orders_bws_2,
-            on="Quote#",
-            how="outer"
-        )
-        if tm:
-            print(f"BB{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
-        self.df_orders_bws = self.df_orders_bws.merge(
-            self.df_orders_bws_3,
-            on="Quote#",
-            how="outer"
-        )
-        if tm:
-            print(f"CC{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
-        self.df_orders_bws["WO#"] = (
-            self.df_orders_bws["WO#"].apply(
-                lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+        for col in ["Orders_WO#", "WO#", "Quote#"]:
+            self.df_orders_bws[col] = (
+                self.df_orders_bws[col].apply(
+                    lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+                )
             )
-        )
-        if tm:
-            print(f"DD{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
-        self.df_orders_bws["Quote#"] = (
-            self.df_orders_bws["Quote#"].apply(
-                lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
-            )
-        )
 
-        if tm:
-            print(f"EE{self.df_orders_bws.loc[self.df_orders_bws['WO#'] == '10017085']=}")
-            print(f"{self.df_orders_bws=}")
+        # print(f"DF_ORDERS_BWS HERE")
+        # print(self.df_orders_bws.columns)
+        # df_ob = self.df_orders_bws.loc[
+        #     (~self.df_orders_bws["JobFinishDate"].isna())
+        #     & (
+        #         (self.df_orders_bws["JobFinishDate"] >= datetime.datetime(2025,4,1))
+        #         & (datetime.datetime(2025,7,31) >= self.df_orders_bws["JobFinishDate"])
+        #     )
+        # ]
+        # print(df_ob.shape)
+        # print(df_ob.head())
+        # print(df_ob["Orders_Quote#"].values.tolist())
+
+        # # if tm:
+        # #     print(f"CC{self.df_orders_bws.loc[self.df_orders_bws['Orders_WO#'] == '10017085']=}")
+        # self.df_orders_bws["Orders_WO#"] = (
+        #     self.df_orders_bws["Orders_WO#"].apply(
+        #         lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+        #     )
+        # )
+        # self.df_orders_bws["WO#"] = (
+        #     self.df_orders_bws["WO#"].apply(
+        #         lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+        #     )
+        # )
+        # # if tm:
+        # #     print(f"DD{self.df_orders_bws.loc[self.df_orders_bws['Orders_WO#'] == '10017085']=}")
+        # self.df_orders_bws["Quote#"] = (
+        #     self.df_orders_bws["Quote#"].apply(
+        #         lambda x: str(x).rstrip('.0') if pd.notnull(x) else ''
+        #     )
+        # )
+        #
+        # # if tm:
+        # #     print(f"EE{self.df_orders_bws.loc[self.df_orders_bws['Orders_WO#'] == '10017085']=}")
+        # #     print(f"{self.df_orders_bws=}")
 
         self.multi_combobox_columns_bws = ['Quote#', 'WO#', 'Model No', "Dealer", "Serial#", "Customer WO#"]
         self.info_frame_columns_bws = \
@@ -2083,8 +2318,8 @@ class App(ctk.CTk):
             dat_galv = row.get(self.quote_key("galv", COMPANY.BWS.value), "GALV=____")
             dat_model = row.get(self.quote_key("model", COMPANY.BWS.value), "MODEL=____")
             dat_cust_wo = row.get(self.quote_key("Customer WO#", COMPANY.BWS.value), "CUSTWO=____")
-            date = row.get("Prod Date", None)
-            prod_line = row.get("Prod Line", None)
+            date = row.get("Prod Date 1", None)
+            prod_line = row.get("WO Line 1", None)
             self.df_ids_to_date_line_bws[i] = (date, prod_line)
             if prod_line == "":
                 prod_line = None
@@ -2723,32 +2958,32 @@ class App(ctk.CTk):
         self.grab_set()
         print(f"READY")
 
-    def update_done_init(self, *args):
-        tm = bool(self.settings["tm_true_functions"].get("update_done_init"))
-        if tm:
-            print(f"WARNING TM IS TRUE 'update_done_init'")
-        tm = tm or self.settings["TEST_MODE"].get()
-        if tm:
-            print(f"update_done_init")
-        val = self.tv_done_setup.get()
-        if tm:
-            print(f"update_done_init, {val=}")
-        if val:
-            self.quit_splash()
-
-    def quit_splash(self):
-        tm = bool(self.settings["tm_true_functions"].get("quit_splash"))
-        if tm:
-            print(f"WARNING TM IS TRUE 'quit_splash'")
-        tm = tm or self.settings["TEST_MODE"].get()
-        if tm:
-            print(f"quit_splash")
-        done_init = self.tv_done_setup.get()
-        if not done_init:
-            return
-        else:
-            if self.splash.winfo_exists():
-                self.splash.destroy()
+    # def update_done_init(self, *args):
+    #     tm = bool(self.settings["tm_true_functions"].get("update_done_init"))
+    #     if tm:
+    #         print(f"WARNING TM IS TRUE 'update_done_init'")
+    #     tm = tm or self.settings["TEST_MODE"].get()
+    #     if tm:
+    #         print(f"update_done_init")
+    #     val = self.tv_done_setup.get()
+    #     if tm:
+    #         print(f"update_done_init, {val=}")
+    #     if val:
+    #         self.quit_splash()
+    #
+    # def quit_splash(self):
+    #     tm = bool(self.settings["tm_true_functions"].get("quit_splash"))
+    #     if tm:
+    #         print(f"WARNING TM IS TRUE 'quit_splash'")
+    #     tm = tm or self.settings["TEST_MODE"].get()
+    #     if tm:
+    #         print(f"quit_splash")
+    #     done_init = self.tv_done_setup.get()
+    #     if not done_init:
+    #         return
+    #     else:
+    #         if self.splash.winfo_exists():
+    #             self.splash.destroy()
 
     def quote_key(self, attr: str = "quote", comp_id: int = None) -> str:
         tm = bool(self.settings["tm_true_functions"].get("quote_key"))
@@ -2774,19 +3009,19 @@ class App(ctk.CTk):
                 return "WO#" if (mc == COMPANY.BWS.value) else "Customer WO#"
             case "model" | "model no" | "inputfield1":
                 # return "InputField1"  # same for both companies
-                return "Orders_Model No" if (mc == COMPANY.BWS.value) else "Model No"
+                return "Model No" if (mc == COMPANY.BWS.value) else "Model No"
             case "serial" | "sn":
-                return "Orders_Serial Number" if (mc == COMPANY.BWS.value) else "Serial Number"
+                return "Serial Number" if (mc == COMPANY.BWS.value) else "Serial Number"
             case "ussale" | "us sale" | "us":
-                return "Orders_US Sale" if (mc == COMPANY.BWS.value) else "US Sale"  # same for both companies
+                return "US Sale" if (mc == COMPANY.BWS.value) else "US Sale"  # same for both companies
             case "delivery date":
-                return "Orders_Delivery Date" if (mc == COMPANY.BWS.value) else "Delivery Date"
+                return "Delivery Date" if (mc == COMPANY.BWS.value) else "Delivery Date"
             case "available date" | "availabledate":
                 return "Available Date"
             case "line" | "prod line" | "prodline":
                 return "JobAvailableLine"
             case _:
-                return "Quote#" if (mc == COMPANY.BWS.value) else "OrdersV2_SGQuote"
+                return "Orders_Quote#" if (mc == COMPANY.BWS.value) else "OrdersV2_SGQuote"
 
     def calculate_nth_business_day(
             self,
@@ -7883,17 +8118,20 @@ class App(ctk.CTk):
         def click_submit(*args):
             print(f"click_submit")
 
-            if comp == COMPANY.BWS.value:
-                # messagebox.showinfo(
-                #     title=self.title_application_short + f" - Shift Line",
-                #     message=self.msg_feature_coming_soon
-                # )
-                self.messagebox(
-                    title=self.title_application_short + f" - Shift Line",
-                    message=self.msg_feature_coming_soon,
-                    mode="showinfo"
-                )
-                return
+            testing: bool = True
+            is_bws: bool = comp == COMPANY.BWS.value
+
+            # if :
+            #     # messagebox.showinfo(
+            #     #     title=self.title_application_short + f" - Shift Line",
+            #     #     message=self.msg_feature_coming_soon
+            #     # )
+            #     self.messagebox(
+            #         title=self.title_application_short + f" - Shift Line",
+            #         message=self.msg_feature_coming_soon,
+            #         mode="showinfo"
+            #     )
+            #     return
 
             data = self.tl_data["table_change_preview"].get()[1:]
             p_line = self.tl_data["combobox_lines"][2].get()
@@ -7934,19 +8172,23 @@ class App(ctk.CTk):
                     now = datetime.datetime.now()
                     date = f"{now:%Y-%m-%d %H:%M:%S}"
                     user = self.app_state["user_name"]
-                    rt1 = "[BWSdb].[dbo].[OrdersV2]"
+                    rt1 = "[BWSdb].[dbo].[Orders]" if is_bws else "[BWSdb].[dbo].[OrdersV2]"
                     kd = "[Available Date]"
                     kl = "[JobAvailableLine]"
                     ks = "[JobAvailableScheduled]"
                     kb = "[JobAvailableScheduledBy]"
-                    kq = "[SGQuote]"
+                    kq = "[Quote#]" if is_bws else "[SGQuote]"
 
-                    rt2 = "[Stargatedb].[dbo].[dtProductionScheduleV2]"
-                    kj = "[JobStartLine]"
-                    kk = "[JobFinishDate]"
+                    rt2 = "[BWSdb].[dbo].[dtProductionSchedule]" if is_bws else "[Stargatedb].[dbo].[dtProductionScheduleV2]"
+                    kj = "[WO Line 1]" if is_bws else "[JobStartLine]"
+                    kk = "[JobFinishDate]" if is_bws else "[JobFinishDate]"
 
-                    sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
-                    sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                    if is_bws:
+                        sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                        sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                    else:
+                        sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                        sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
 
                     dat_1 = {
                         "KD": new_date_s,  # [Available Date]
@@ -7967,7 +8209,7 @@ class App(ctk.CTk):
                 print(f"{sql_statements=}")
 
                 try:
-                    connect(sql_statements, do_show=True, do_exec=False, do_print=True)
+                    connect(sql_statements, do_show=True, do_exec=not testing, do_print=True)
                 except:
                     # messagebox.showerror(
                     #     title=self.title_application_short,
@@ -7998,14 +8240,15 @@ class App(ctk.CTk):
                         current_version_num += 1
                         current_version_date = datetime.datetime.now()
 
-                        self.set_prod_sched_version(current_version_num, current_version_date)
+                        if not testing:
+                            self.set_prod_sched_version(current_version_num, current_version_date)
 
                         self.messagebox(
                             title=self.title_application_short,
                             message=self.msg_inc_prod_sched.format(
                                 VNUM=current_version_num,
                                 VDATE=f"{current_version_date:%Y-%m-%d %H:%M:%S}"
-                            ),
+                            ) + "\n -- NO SAVES MADE DUE TO 'TESTING' MODE ENABLED",
                             parent=self.tl_data[tl_name],
                             mode="showinfo"
                         )
@@ -9528,7 +9771,7 @@ class App(ctk.CTk):
 
         sql = f"UPDATE\n\t[PDS Valid Updaters]\nSET\n\t[ColourCoding]={cc}\nWHERE\n\t[UserName] = '{user_name}';"
         # print(f"{sql}")
-        res = connect(sql, database="Stargatedb", uid="SGeu1", pwd="Pupplies-Hagard->Rio0")
+        res = connect(sql, **STARGATE_SQL_CREDS)
 
         self.colour_code()
 
@@ -10919,22 +11162,44 @@ class App(ctk.CTk):
                 # user = self.app_state["user"]
                 user = self.app_state["user_name"]
 
-                # if comp == COMPANY.STG.value:
+                is_bws: bool = comp == COMPANY.BWS.value
 
-                rt1 = "[BWSdb].[dbo].[OrdersV2]"
+                rt1 = "[BWSdb].[dbo].[Orders]" if is_bws else "[BWSdb].[dbo].[OrdersV2]"
                 kd = "[Available Date]"
                 kl = "[JobAvailableLine]"
                 ks = "[JobAvailableScheduled]"
                 kb = "[JobAvailableScheduledBy]"
-                kq = "[SGQuote]"
-                qc = "[OrdersV2_SGQuote]"
+                kq = "[Quote#]" if is_bws else "[SGQuote]"
 
-                rt2 = "[Stargatedb].[dbo].[dtProductionScheduleV2]"
-                kj = "[JobStartLine]"
-                kk = "[JobFinishDate]"
+                rt2 = "[BWSdb].[dbo].[dtProductionSchedule]" if is_bws else "[Stargatedb].[dbo].[dtProductionScheduleV2]"
+                kj = "[WO Line 1]" if is_bws else "[JobStartLine]"
+                kk = "[Prod Date 1]" if is_bws else "[JobFinishDate]"
+                qc = self.quote_key()
 
-                sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
-                sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                if is_bws:
+                    sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                    sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                else:
+                    sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+                    sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = '{{KQ}}'\n;"
+
+
+                # # if comp == COMPANY.STG.value:
+                #
+                # rt1 = "[BWSdb].[dbo].[OrdersV2]"
+                # kd = "[Available Date]"
+                # kl = "[JobAvailableLine]"
+                # ks = "[JobAvailableScheduled]"
+                # kb = "[JobAvailableScheduledBy]"
+                # kq = "[SGQuote]"
+                # qc = "[OrdersV2_SGQuote]"
+                #
+                # rt2 = "[Stargatedb].[dbo].[dtProductionScheduleV2]"
+                # kj = "[JobStartLine]"
+                # kk = "[JobFinishDate]"
+                #
+                # sql_swap_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = '{{KD}}',\n\t{kl} = '{{KL}}',\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
+                # sql_swap_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = '{{KJ}}',\n\t{kk} = '{{KK}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
 
                 sql_blank_double_1 = f"UPDATE\n\t{rt1}\nSET\n\t{kd} = NULL,\n\t{kl} = NULL,\n\t{ks} = '{{KS}}',\n\t{kb} = '{{KB}}'\nWHERE\n\t{kq} = {{KQ}}\n;"
                 sql_blank_double_2 = f"UPDATE\n\t{rt2}\nSET\n\t{kj} = NULL,\n\t{kk} = NULL\nWHERE\n\t{kq} = {{KQ}}\n;"
@@ -10949,10 +11214,12 @@ class App(ctk.CTk):
                     print(f"\n\tON CLOSE\n{history=}")
                 # print(f"SHOULD MAKE SURE THESE ARE CLEAR\n\t{len(self.concats_double_entries_stg)}\n\t{self.concats_double_entries_stg=}")
 
-                for s_df in self.concats_double_entries_stg:
+                concats_double_entries = self.concats_double_entries_bws if is_bws else self.concats_double_entries_stg
+
+                for s_df in concats_double_entries:
                     stmt_1 = f""
-                    if tm:
-                        print(f"{s_df[[self.quote_key('quote'), 'Available Date', 'JobAvailableLine']]=}")
+                    # if tm:
+                    #     print(f"{s_df[[self.quote_key('quote'), 'Available Date', 'JobAvailableLine']]=}")
                     # sql_1 += sql_blank_double_1.format()
                     stmt_1 += f"\n/* SQL OUTPUT - FIX DOUBLE - {date}*/\n\n/*{rt1}*/\n"
 
@@ -10968,10 +11235,16 @@ class App(ctk.CTk):
                         }
 
                         dat_2 = {"KQ": s_quote}
-                        stmt_1 += f"/* Quote: {quote}*/\n"
+                        stmt_1 += f"/* Quote: {quote} */\n"
                         stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
-                        stmt_1 += f"\n/* {rt2}*/\n"
+                        stmt_1 += f"\n/* {rt2} */\n"
                         stmt_1 += f"\n{sql_blank_double_2.format(**dat_2)}\n"
+
+                        if is_bws:
+                            # need to update [Production] too
+                            stmt_1 += f"\n/* [BWSdb].[dbo].[Production] */\n"
+                            stmt_1 += f"\nUPDATE [BWSdb].[dbo].[Production] SET [Prod Line] = NULL, [Prod Date] = NULL WHERE [Quote#] = {s_quote}\n"
+
                         sql_statments.append(stmt_1)
                         # print(f"<<<<\n{sql_blank_double_2.format(**dat_2)}")
 
@@ -10979,6 +11252,8 @@ class App(ctk.CTk):
                         # dat_2 = {"KQ": quote}
                         # sql_2 += f"\n{sql_blank_double_2.format(**dat_2)}"
                         # sql_1 = f"-- SQL OUTPUT - FIX DOUBLE - {date}\n\n-- {rt1}\n{sql_1}\n-- {rt2}\n{sql_2}"
+
+                df_orders = self.df_orders_bws if is_bws else self.df_orders_stg
 
                 for action, *data in history:
                     stmt_1 = f""
@@ -11002,7 +11277,7 @@ class App(ctk.CTk):
                             if order_1 is not None:
                                 print(f"\torder_1 is not NONE")
                                 order_1 = int(order_1)
-                                s_order_1 = f"'{self.df_orders_stg.iloc[order_1][qc]}'"
+                                s_order_1 = f"'{df_orders.iloc[order_1][qc]}'"
                                 if comp == COMPANY.BWS.value:
                                     s_order_1 = s_order_1.removesuffix("'").removeprefix("'")
                                 dat_1 = {
@@ -11021,7 +11296,13 @@ class App(ctk.CTk):
                                 if tm:
                                     print(f"\torder_2 is not NONE")
                                 order_2 = int(order_2)
-                                s_order_2 = f"'{self.df_orders_stg.iloc[order_2][qc]}'"
+                                print("df_orders")
+                                print(df_orders)
+                                print("df_orders.iloc[order_2]")
+                                print(df_orders.iloc[order_2])
+                                print("df_orders.iloc[order_2][qc]")
+                                print(df_orders.iloc[order_2][qc])
+                                s_order_2 = f"'{df_orders.iloc[order_2][qc]}'"
                                 if comp == COMPANY.BWS.value:
                                     s_order_2 = s_order_2.removesuffix("'").removeprefix("'")
                                 dat_1 = {
@@ -11035,6 +11316,9 @@ class App(ctk.CTk):
                                 dat_2 = {"KJ": line_2, "KK": date_2,
                                          "KQ": s_order_2}
                                 stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
+                                if is_bws:
+                                    stmt_2 += f"\n/* [BWSdb].[dbo].[Production] */\n"
+                                    stmt_2 += f"\nUPDATE [BWSdb].[dbo].[Production] SET [Prod Date] = '{date_2}', [Prod Line] = '{line_2}' WHERE [Quote#] = {s_order_2}\n"
 
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
@@ -11068,6 +11352,10 @@ class App(ctk.CTk):
                             dat_2 = {"KJ": line_, "KK": date_, "KQ": s_order}
                             stmt_2 += f"\n{sql_swap_2.format(**dat_2)}"
 
+                            if is_bws:
+                                stmt_2 += f"\n/* [BWSdb].[dbo].[Production] */\n"
+                                stmt_2 += f"\nINSERT INTO [BWSdb].[dbo].[Production] VALUES ([Quote#], [Prod Date], [Prod Line]) VALUES ({s_order}, '{date_}', '{line_}');\n"
+
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
                             stmt_1 = f"/* SQL OUTPUT - INSERT - {date}*/\n\n/* {rt1}*/\n{stmt_1}\n\n/* {rt2}*/\n{stmt_2}"
@@ -11082,7 +11370,7 @@ class App(ctk.CTk):
                             if tm:
                                 print(f"{order=}, {date=}, {line=}")
 
-                            quote = self.df_orders_stg.iloc[order][qc]
+                            quote = df_orders.iloc[order][qc]
                             dat = {
                                 "KS": date,
                                 "KB": user,
@@ -11095,6 +11383,10 @@ class App(ctk.CTk):
                             stmt_1 += f"\n{sql_blank_double_1.format(**dat)}\n"
                             stmt_1 += f"\n/* {rt2}*/\n"
                             stmt_1 += f"\n{sql_blank_double_2.format(**dat_2)}\n"
+                            if is_bws:
+                                # need to update [Production] too
+                                stmt_1 += f"\n/* [BWSdb].[dbo].[Production] */\n"
+                                stmt_1 += f"\nUPDATE [BWSdb].[dbo].[Production] SET [Prod Line] = NULL, [Prod Date] = NULL WHERE [Quote#] = {quote}\n"
 
                         case _:
                             raise ValueError("Cant undo")
