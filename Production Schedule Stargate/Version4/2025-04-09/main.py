@@ -358,7 +358,7 @@ SELECT
     --,O.[PriceSecured]
     --,O.[DateSecured]
     --,O.[SecuredBy]
-    ,(CASE WHEN C.[Quote#] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+    ,(CASE WHEN [C].[Galvanized?] = 0 THEN 'N' ELSE 'Y' END) AS [IsGalv]
 
     ,[D].[COMPANY NAME] AS [Orders_COMPANY NAME]
     ,[O].[Model No] AS [Orders_Model No]
@@ -720,7 +720,7 @@ class App(ctk.CTk):
         self.tv_done_setup = ctk.BooleanVar(self, value=False)
 
         # self.splash = Splash(self, auto_run=True)
-        self.date_version = datetime.datetime(2025, 3, 31)
+        self.date_version = datetime.datetime(2025, 5, 12)
         print(f"DATE-VERSION >>> {self.date_version:%Y-%m-%d}")
 
         self.file_last_session_sql: str = r"C:\Access\last_session_sql.sql"
@@ -779,7 +779,7 @@ class App(ctk.CTk):
                 "mark_already_scheduled_units": False,
 				"on_left_click_release_calendar": True,
                 "click_go_to_date": False,
-				"on_closing": True
+				"on_closing": False
             },
             # warning Test Mode must be enabled for this to work.
             "quotes_of_interest": {
@@ -3002,7 +3002,7 @@ class App(ctk.CTk):
                 # return "InputField2"  # same for both companies
                 return "Orders_COMPANY NAME" if (mc == COMPANY.BWS.value) else "InputField2"
             case "galv" | "galvanized" | "isgalv":
-                return "IsGalvanized" if (mc == COMPANY.BWS.value) else "IsGalv"
+                return "IsGalv"
             case "wo" | "wo#":
                 return "WO#" if (mc == COMPANY.BWS.value) else "OrdersV2_WO#"
             case "cust_wo" | "custwo" | "customer wo#":
@@ -11418,19 +11418,22 @@ class App(ctk.CTk):
                 if do_exec:
 
                     if comp == COMPANY.BWS.value:
-                        # messagebox.showinfo(
-                        #     title=self.title_application_short,
-                        #     message=self.msg_feature_coming_soon,
-                        #     parent=self
-                        # )
-                        self.messagebox(
-                            title=self.title_application_short,
-                            message=self.msg_feature_coming_soon,
-                            parent=self,
-                            mode="showinfo"
-                        )
 
-                    connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
+                        connect(stmts, **BWS_SQL_CREDS, do_show=tm, do_print=tm)
+
+                    #     # messagebox.showinfo(
+                    #     #     title=self.title_application_short,
+                    #     #     message=self.msg_feature_coming_soon,
+                    #     #     parent=self
+                    #     # )
+                    #     self.messagebox(
+                    #         title=self.title_application_short,
+                    #         message=self.msg_feature_coming_soon,
+                    #         parent=self,
+                    #         mode="showinfo"
+                    #     )
+                    else:
+                        connect(stmts, **STARGATE_SQL_CREDS, do_show=tm, do_print=tm)
                     self.history.set(list())
                     # messagebox.showinfo(
                     #     title=self.title_application_short,
