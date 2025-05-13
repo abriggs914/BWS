@@ -4222,9 +4222,9 @@ class App(ctk.CTk):
         # silently create new PDS user in 'view-only' mode
         un = self.app_state["user_name"]
         columns = ["UserName", "Active", "AllowPublish", "InTestingMode", "LightDarkTheme", "AskMonitors",
-                   "ShowCalendarOnly"]
+                   "ShowCalendarOnly", "ModeCompany", "AllowedCompanies"]
         sql = f"INSERT INTO [PDS Valid Updaters] ([{'], ['.join(columns)}]) VALUES "
-        sql += f"('{un}', 1, 0, 0, 'System', 0, 1);"
+        sql += f"('{un}', 1, 0, 0, 'System', 0, 1, 1, [1]);"
 
         self.settings["TEST_MODE"].set(False)
         self.settings["allowed_to_publish_stg"].set(False)
@@ -9860,7 +9860,7 @@ class App(ctk.CTk):
             #     message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
             #     parent=(self if (self.tl_sc is None) else self.tl_sc)
             # )
-            print(f"ERROR")
+            print(f"ERROR {comp_id=}")
             self.messagebox(
                 title=self.title_application_short + " - Switch Companies",
                 message=self.msg_invalid_company_to_switch.format(COMPANY=companies[comp_id]),
