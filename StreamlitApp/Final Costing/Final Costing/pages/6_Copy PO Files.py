@@ -208,6 +208,9 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     i = 0
     not_found = []
     found = {}
+    
+    st.write("pns")
+    st.write(pns)
 
     t_walking = datetime.datetime.now(), None
     # pdfs
