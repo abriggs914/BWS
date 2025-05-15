@@ -391,6 +391,16 @@ table_cols = o_table_cols + [col_dealer]
 
 
 @st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
+def load_orders() -> pd.DataFrame:
+	return connect("Orders")
+
+
+@st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
+def load_orders2() -> pd.DataFrame:
+	return connect("OrdersV2")
+
+
+@st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
 def get_data() -> pd.DataFrame:
 	df = connect(
 		generate_sql()
@@ -498,7 +508,8 @@ def generate_sql():
 
 
 cols_controls = st.columns([0.3, 0.7])
-
+df_orders: pd.DataFrame = load_orders()
+df_orders2: pd.DataFrame = load_orders2()
 
 with cols_controls[0]:
 
@@ -557,10 +568,37 @@ with cols_controls[0]:
 							language="sql",
 							line_numbers=True
 						)
+					df_data: pd.DataFrame = get_data()
 					display_df(
-						get_data(),
+						df_data,
 						"Matching Quote Values",
 						width=1000,
 						show_shape=False
 					)
+
+					st.divider()
+					st.write("Tell me more:")
+					for i, row in df_data.iterrows():
+						q = int(row['Quote'])
+						c = row["Comp"]
+						if st.button(
+							label=f"{q}",
+							key=f"btn_tmm_{i}"
+						):
+							if c == "STG":
+								df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+							else:
+								df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+
+							# dfdd = pd.DataFrame(df_o.transpose())
+							# dfdd.columns = ["Value"]
+							# print(dfdd)
+							display_df(
+								df_o,
+								"Order Data:"
+							)
+							# display_df(
+							# 	dfdd,
+							# 	"Transposed:"
+							# )
 

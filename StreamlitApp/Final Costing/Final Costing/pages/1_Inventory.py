@@ -14,7 +14,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 import plotly.express as px
 
 from colour_utility import RED, Colour
-from pyodbc_connection import connect, connect_2
+from pyodbc_connection import connect  #, connect_2
 from sql_utility import casify
 from utility import money, flatten
 
@@ -1012,7 +1012,7 @@ def load_inventory_20250306() -> pd.DataFrame:
         "uid": CREDS_BWS["uid"],
         "pwd": CREDS_BWS["pwd"]
     }
-    return connect_2(**connection_data, enable_mars=True)
+    return connect(**connection_data)
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)

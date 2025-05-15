@@ -69,10 +69,11 @@ file_extensions: dict[str: str] = {
     "PDF": root_location_pdfs,
     "DXF": root_location_dwg_dxf,
     "DWG": root_location_dwg_dxf,
-    "STP": root_location_stp
+    "STP": root_location_stp,
+    "STEP": root_location_stp
 }
 
-necessery_files = [
+necessary_files = [
     read_file_root,
     root_location_pdfs,
     root_location_dwg_dxf,
@@ -80,7 +81,7 @@ necessery_files = [
     root_location_stp,
     read_file_path
 ]
-for pth in necessery_files:
+for pth in necessary_files:
     if not os.path.exists(pth):
         raise ValueError(f"File '{pth}' does not exist.")
 
@@ -198,7 +199,7 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     u_pns = set(map(str, df["PN"].unique().tolist()))
     n_parts = len(u_pns)
     pns = set(df["DXF_F"].unique().tolist()).union(
-        set(df["DWG_F"].unique().tolist()).union(set(df["PDF_F"].unique().tolist())))
+        set(df["DWG_F"].unique().tolist()).union(set(df["PDF_F"].unique().tolist())).union(set(df["STP_F"].unique().tolist())))
 
     t_pdfs = sum([len(fn) for dp, dn, fn in walked_pdf_folder])
     t_pdfs_stg = sum([len(fn) for dp, dn, fn in walked_pdf_stg_folder])
@@ -208,9 +209,9 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     i = 0
     not_found = []
     found = {}
-    
-    st.write("pns")
-    st.write(pns)
+
+    # st.write("pns")
+    # st.write(pns)
 
     t_walking = datetime.datetime.now(), None
     # pdfs
@@ -278,7 +279,8 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
         for file in file_names:
             file = file.upper()
             i += 1
-            if file.endswith(".STP"):
+
+            if file.replace(".STEP", ".STP").endswith(".STP"):
                 spl = file.split(".")
                 pn = ".".join(spl[:-1])
                 suffix = spl[-1].upper()
