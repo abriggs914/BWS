@@ -358,7 +358,8 @@ SELECT
     --,O.[PriceSecured]
     --,O.[DateSecured]
     --,O.[SecuredBy]
-    ,(CASE WHEN [C].[Galvanized?] = 0 THEN 'N' ELSE 'Y' END) AS [IsGalv]
+    --,(CASE WHEN [C].[Galvanized?] = 0 THEN 'N' ELSE 'Y' END) AS [IsGalv]
+    ,(CASE WHEN [C].[Galvanized?] = 0 THEN '' ELSE 'G' END) AS [IsGalv]
 
     ,[D].[COMPANY NAME] AS [Orders_COMPANY NAME]
     ,[O].[Model No] AS [Orders_Model No]
@@ -628,7 +629,8 @@ WHERE
         --,O.[PriceSecured]
         --,O.[DateSecured]
         --,O.[SecuredBy]
-        ,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+        --,(CASE WHEN C.[SGQuote] IS NULL THEN 'N' ELSE 'Y' END) AS [IsGalv]
+        ,(CASE WHEN [C].[SGQuote] IS NULL THEN '' ELSE 'G' END) AS [IsGalv]
     
         --,[D].[COMPANY NAME]
     FROM
@@ -779,7 +781,9 @@ class App(ctk.CTk):
                 "mark_already_scheduled_units": False,
 				"on_left_click_release_calendar": True,
                 "click_go_to_date": False,
-				"on_closing": False
+				"on_closing": False,
+				"update_show_already_scheduled": True,
+                "insert_tile": True
             },
             # warning Test Mode must be enabled for this to work.
             "quotes_of_interest": {
@@ -5429,8 +5433,10 @@ class App(ctk.CTk):
             if tm:
                 print(f"SETTING {date=}, {line=} == {{'order': {df_orders_id}, 'texts': {texts}}}")
             if comp == COMPANY.BWS.value:
+                quote = df_orders.loc[df_orders_id, self.quote_key("quote", comp_id=comp)]
                 self.df_ids_to_date_line_bws[df_orders_id] = date_line
             else:
+                quote = df_orders.loc[df_orders_id, self.quote_key("quote", comp_id=comp)]
                 self.df_ids_to_date_line_stg[df_orders_id] = date_line
             tiles[date][line].update({
                 "order": df_orders_id,
@@ -5442,7 +5448,7 @@ class App(ctk.CTk):
                 # )
 
                 hist = list(self.history.get())
-                hist.append(("INSERT", df_orders_id, date_line))
+                hist.append(("INSERT", quote, date_line))
                 self.history.set(hist)
 
             self.colour_code(date, line)
@@ -5692,10 +5698,10 @@ class App(ctk.CTk):
         df_warranties = self.df_multi_combobox_data_warranties_bws if (
                     comp == COMPANY.BWS.value) else self.df_multi_combobox_data_orders_stg
         df_orders = self.df_orders_bws if (comp == COMPANY.BWS.value) else self.df_orders_stg
-        combobox_warranties = self.multi_combobox_warranties_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
-        combobox_orders = self.multi_combobox_orders_bws if (
-                    comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
+        # combobox_warranties = self.multi_combobox_warranties_bws if (
+        #             comp == COMPANY.BWS.value) else self.multi_combobox_warranties_stg
+        # combobox_orders = self.multi_combobox_orders_bws if (
+        #             comp == COMPANY.BWS.value) else self.multi_combobox_orders_stg
 
         st = self.app_state["selected"]
         dt = self.app_state["dragged"]
@@ -11354,7 +11360,7 @@ class App(ctk.CTk):
 
                             if is_bws:
                                 stmt_2 += f"\n/* [BWSdb].[dbo].[Production] */\n"
-                                stmt_2 += f"\nINSERT INTO [BWSdb].[dbo].[Production] VALUES ([Quote#], [Prod Date], [Prod Line]) VALUES ({s_order}, '{date_}', '{line_}');\n"
+                                stmt_2 += f"\nINSERT INTO [BWSdb].[dbo].[Production] ([Quote#], [Prod Date], [Prod Line]) VALUES ({s_order}, '{date_}', '{line_}');\n"
 
                             stmt_1 = stmt_1.removeprefix('\n')
                             stmt_2 = stmt_2.removeprefix('\n')
