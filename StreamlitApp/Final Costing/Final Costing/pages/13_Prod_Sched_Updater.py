@@ -306,7 +306,7 @@ template_sql_d = """
 SELECT
     '{COMP}' AS [Comp],
     CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
-    '{COL}' AS [MatchColumn],
+    'Dealer' AS [MatchColumn],
     [Splt].[splited_data] AS [SearchTerm],
     CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
     (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
@@ -335,6 +335,39 @@ WHERE
 """
 
 
+template_sql_s = """
+SELECT
+    '{COMP}' AS [Comp],
+    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    'Dealer' AS [MatchColumn],
+    [Splt].[splited_data] AS [SearchTerm],
+    CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+    (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+FROM 
+    [BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+LEFT JOIN 
+    [BWSdb].[dbo].[{STABLE}] [S] WITH (NOLOCK)
+ON
+	[O].[DealerID] = [D].[ID]
+CROSS JOIN
+    [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+WHERE
+    ISNULL([Splt].[splited_data], '') <> ''
+    AND (
+    	(
+        	(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    	OR (
+    		(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    )
+"""
+
+col_standards = "Standards"
 col_dealer = "Dealer"
 col_quote_bws = "Quote#"
 col_quote_stg = "SGQuote"
@@ -351,7 +384,7 @@ o_table_cols = [
 	"Invoice #"
 ]
 
-table_cols = o_table_cols + [col_dealer]
+table_cols = o_table_cols + [col_dealer, col_standards]
 
 
 # template_fill_ins = {
@@ -389,15 +422,25 @@ table_cols = o_table_cols + [col_dealer]
 # 	line_numbers=True
 # )
 
-
 @st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
+def load_sql_data(sql) -> pd.DataFrame:
+	return connect(sql)
+
+
 def load_orders() -> pd.DataFrame:
-	return connect("Orders")
+	return load_sql_data("Orders")
 
 
-@st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
 def load_orders2() -> pd.DataFrame:
-	return connect("OrdersV2")
+	return load_sql_data("OrdersV2")
+
+
+def load_dealers() -> pd.DataFrame:
+	return load_sql_data("Dealers")
+
+
+def load_dealers2() -> pd.DataFrame:
+	return load_sql_data("DealersV2")
 
 
 @st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
@@ -459,34 +502,29 @@ def generate_sql():
 		o_table = comp_data["o_table"]
 		d_table = comp_data["d_table"]
 		cols = comp_data["cols"]
-		# sql_dealers = ""
-		# if col_dealer in cols:
-		# 	sql_dealers = template_sql_d.format(
-		# 		DTABLE=d_table
-		# 	)
 		use_dealer = col_dealer in cols
+		if use_dealer:
+			statements.append(template_sql_d.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				DTABLE=d_table
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_dealer = False
+			cols.remove(col_dealer)
 		for i, col in enumerate(cols):
 			# template_sql_where.format(COL=col)
-			if use_dealer:
-				if not (col_dealer == col):
-					statements.append(template_sql_d.format(
-						COMP=company,
-						QCOL=q_col,
-						COL=col,
-						OTABLE=o_table,
-						DTABLE=d_table
-						# ,
-						# DTEMPLATE=sql_dealers
-					))
-			else:
-				statements.append(template_sql_o.format(
-					COMP=company,
-					QCOL=q_col,
-					COL=col,
-					OTABLE=o_table
-					# ,
-					# DTEMPLATE=sql_dealers
-				))
+			statements.append(template_sql_o.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=col,
+				OTABLE=o_table
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
 
 	if not statements:
 		st.error(f"No statements generated")
@@ -510,6 +548,8 @@ def generate_sql():
 cols_controls = st.columns([0.3, 0.7])
 df_orders: pd.DataFrame = load_orders()
 df_orders2: pd.DataFrame = load_orders2()
+df_dealers: pd.DataFrame = load_dealers()
+df_dealers2: pd.DataFrame = load_dealers2()
 
 with cols_controls[0]:
 
@@ -569,36 +609,77 @@ with cols_controls[0]:
 							line_numbers=True
 						)
 					df_data: pd.DataFrame = get_data()
-					display_df(
+					# st.write(f"Matching Quote Values ({df_data.shape[0]} rows X {df_data.shape[1]} columns):")
+					stde_orders = display_df(
 						df_data,
 						"Matching Quote Values",
 						width=1000,
-						show_shape=False
+						selection_mode="single-row",
+						on_select="rerun"
 					)
 
-					st.divider()
-					st.write("Tell me more:")
-					for i, row in df_data.iterrows():
-						q = int(row['Quote'])
-						c = row["Comp"]
-						if st.button(
-							label=f"{q}",
-							key=f"btn_tmm_{i}"
-						):
-							if c == "STG":
-								df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
-							else:
-								df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+					if stde_orders["selection"]["rows"]:
+						sr_selected_order = df_data.iloc[stde_orders["selection"]["rows"][0]]
+						q = int(sr_selected_order['Quote'])
+						c = sr_selected_order["Comp"]
+						if c == "STG":
+							df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+							df_d: pd.DataFrame = df_dealers2
+						else:
+							df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+							df_d: pd.DataFrame = df_dealers
 
-							# dfdd = pd.DataFrame(df_o.transpose())
-							# dfdd.columns = ["Value"]
-							# print(dfdd)
+						# dfdd = pd.DataFrame(df_o.transpose())
+						# dfdd.columns = ["Value"]
+						# print(dfdd)
+						st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+						stde_orders = display_df(
+							df_o
+						)
+
+						if not df_o.empty:
+							st.divider()
+							sr_o = df_o.iloc[0]
+							dealer_id = sr_o["DealerID"]
+							df_d = df_d.loc[df_d["ID"] == dealer_id]
 							display_df(
-								df_o,
-								"Order Data:"
+								df_d,
+								"Dealer Data:"
 							)
-							# display_df(
-							# 	dfdd,
-							# 	"Transposed:"
-							# )
+					# st.write("Tell me more:")
+					# for i, row in df_data.iterrows():
+					# 	q = int(row['Quote'])
+					# 	c = row["Comp"]
+					# 	if st.button(
+					# 		label=f"{q}",
+					# 		key=f"btn_tmm_{i}"
+					# 	):
+					# 		if c == "STG":
+					# 			df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+					# 			df_d: pd.DataFrame = df_dealers2
+					# 		else:
+					# 			df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+					# 			df_d: pd.DataFrame = df_dealers
+
+					# 		# dfdd = pd.DataFrame(df_o.transpose())
+					# 		# dfdd.columns = ["Value"]
+					# 		# print(dfdd)
+					# 		st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+					# 		stde_orders = display_df(
+					# 			df_o
+					# 		)
+
+					# 		if not df_o.empty:
+					# 			sr_o = df_o.iloc[0]
+					# 			dealer_id = sr_o["DealerID"]
+					# 			df_d = df_d.loc[df_d["ID"] == dealer_id]
+					# 			display_df(
+					# 				df_d,
+					# 				"Dealer Data:"
+					# 			)
+
+					# 		# display_df(
+					# 		# 	dfdd,
+					# 		# 	"Transposed:"
+					# 		# )
 

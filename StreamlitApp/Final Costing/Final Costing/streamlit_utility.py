@@ -15,8 +15,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.04
-    Date...........2025-03-25
+    Version..............1.05
+    Date...........2025-05-21
     Author(s)....Avery Briggs
     """
 
@@ -153,7 +153,7 @@ def display_df(
 		column_config: Any | None = None,
 		key: Any | None = None,
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
-		selection_mode: Any = "multi-row",
+		selection_mode: Any = "multi-row"
 ):
 	title = title if title else ""
 	shape = df.shape
@@ -181,6 +181,12 @@ def display_df(
 		selection_mode=selection_mode
 	)
 	return stdf
+
+
+@st.cache_data(ttl=None, show_spinner=True)
+def load_pdf_binary(pdf_file):
+	with open(pdf_file, "rb") as f:
+		return f.read()
 
 
 if __name__ == '__main__':

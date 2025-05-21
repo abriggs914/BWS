@@ -1,10 +1,12 @@
 import enum
+import json
 import os.path
 import re
 
 import cv2
 import pandas as pd
 import sqlparse
+import configparser
 
 from PIL import Image
 # from pyzbar.pyzbar import decode
@@ -15,12 +17,13 @@ import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
+from streamlit_pdf_viewer import pdf_viewer
 
 from datetime_utility import is_date, date_str_format
 from html_utility import list_to_html
 from pyodbc_connection import connect
 from sql_utility import *
-from streamlit_utility import coloured_text, display_df
+from streamlit_utility import coloured_text, display_df, load_pdf_binary
 from streamlit_utility_bws import load_it_requests, load_departments, load_itr_personnel, load_itstr_app_directory, \
     load_itr_customers, load_itr_hardware, load_itstr_user_directory, load_itr_software, load_itr_training, \
     get_next_it_request_number, get_tables, get_cols, load_production_file
@@ -3654,6 +3657,7 @@ class Tags(enum.Enum):
     ON_GITHUB: str = "on_GitHub"
     ON_STACKOVERFLOW: str = "on_StackOverFlow"
     THIRD_PARTY: str = "third_party"
+    HUMOUR: str = "humour"
 
     def __str__(self):
         return self.value.replace("_", " ").title()
@@ -4018,6 +4022,16 @@ Eval does not work properly in the immediate window. You must test using Script.
     ]
 
     python_samples = [
+        
+        {
+            "name": """Chuckles""",
+            "code": r"""""",
+            "desc": """Please enjoy a joke or two:""",
+            "warn": """""",
+            "tags": [Tags.HUMOUR],
+            "date": datetime.datetime(2025, 5, 21, 18),
+            "path": r"\\bwsfp01\public\it\Resource\Chuckles"
+        },
         {
             "name": """Streamlit_pdf_viewer""",
             "code": r"""
@@ -4126,7 +4140,8 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
 3rd-part widget - has weird interaction with the session_state
             """,
             "tags": [Tags.STREAMLIT, Tags.THIRD_PARTY, Tags.PDFS, Tags.ON_GITHUB],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "date": datetime.datetime(2025, 2, 10, 17),
+            "path": r"C:\users\abriggs\desktop"
         }
     ]
 
@@ -4205,6 +4220,7 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
             warn = data["warn"]
             tags = data["tags"]
             date = data["date"]
+            path = data.get("path")
             # # if any tag in 'ms_tags_choices' are in 'tags', then show sample
             # print(f"{lang=}, {i=}, {tags=}, {set(tags)=}, {set(ms_tag_choices)=}, A={set(tags).difference(set(ms_tag_choices))}, len(A)={len(set(tags).difference(set(ms_tag_choices)))}, B={len(tags)}, C={len(set(tags).difference(set(ms_tag_choices))) != len(tags)}")
             # # if len(set(tags).difference(set(ms_tag_choices))) != len(tags):
@@ -4239,6 +4255,107 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
                                 ):
                                     st.session_state.update({c_key: [str(tag)]})
                                     st.rerun()
+                    if path:
+                        if os.path.isdir(path):
+                            files = os.listdir(path)
+                            i_a, i_b = 0, len(files)
+                            with st.container(border=True):
+                                st.subheader(f"Resource Files:")
+                                if len(files) > 10:
+                                    idx_file = st.session_state.setdefault("idx_resource_file", 0)
+                                    btn_cols = st.columns([1, 1, 1, 1, 4])
+                                    for j, txt_func in enumerate({
+                                        "first": lambda v: 0,
+                                        "prev": lambda v: max(0, v - 1),
+                                        "next": lambda v: min(len(files) - 1, v + 1),
+                                        "last": lambda v: len(files) - 1
+                                    }.items()):
+                                        txt, func = txt_func
+                                        with btn_cols[j]:
+                                            if st.button(
+                                                label=txt,
+                                                key=f"btn_{txt}_file_{i}_{j}"
+                                            ):
+                                                st.session_state.update({
+                                                    "idx_resource_file": func(idx_file)
+                                                })
+                                                st.rerun()
+                                    i_a, i_b = idx_file, idx_file + 1
+                                # st.write(f"{i_a=}, {i_b=}")
+                                st.write(f"{i_a+1} / {len(files)} file(s)")
+                                for j, file in enumerate(files[i_a: i_b]):
+                                    i_s = i_a + 1
+                                    l_file = file.lower()
+                                    f_path = os.path.join(path, l_file)
+                                    if any([
+                                        l_file.endswith(".png"),
+                                        l_file.endswith(".jpg"),
+                                        l_file.endswith(".jpeg"),
+                                        l_file.endswith(".gif")
+                                    ]):
+                                        st.image(
+                                            f_path,
+                                            caption=f"Resource #{i_s}: '{l_file}'."
+                                        )
+
+                                    elif l_file.endswith(".pdf"):
+                                        pdf_file_viewer = pdf_viewer(
+                                            load_pdf_binary(f_path)
+                                        )
+                                    
+                                    elif l_file.endswith(".mp4"):
+                                        with open(f_path, "rb") as f:
+                                            st.video(f.read())
+
+                                    elif l_file.endswith(".url"):
+                                        # u_name = os.path.basename(file)
+                                        # link_button = st.link_button(
+                                        #     label=f"{u_name}",
+                                        #     url=
+                                        # )
+                                        config = configparser.ConfigParser()
+                                        config.read(f_path)
+                                        url = config.get('InternetShortcut', 'URL', fallback=None)
+                                        if url:
+                                            u_name = os.path.basename(file)
+                                            st.link_button(label=f"{u_name}", url=url)
+                                        else:
+                                            st.warning(f"Resource #{i_s}: No valid URL found in '{l_file}'.")
+
+                                    elif l_file.endswith(".txt") or l_file.endswith(".bat"):
+                                        with open(f_path, "r", encoding="utf-8", errors="ignore") as f:
+                                            content = f.read()
+                                        st.text_area(f"Resource #{i_s}: '{l_file}'", content, height=200)
+
+                                    elif l_file.endswith(".json"):
+                                        try:
+                                            with open(f_path, "r", encoding="utf-8") as f:
+                                                data = json.load(f)
+                                            st.json(data)
+                                        except Exception as e:
+                                            st.text_area(f"Invalid JSON in '{l_file}'", f"{e}", height=100)
+
+                                    elif l_file.endswith((".docx", ".xlsx", ".mdb", ".rdp", ".exe")):
+                                        st.markdown(f"**Resource #{i_s}: '{l_file}'**")
+                                        with open(f_path, "rb") as f:
+                                            st.download_button(
+                                                label="Download file",
+                                                data=f,
+                                                file_name=file,
+                                                mime="application/octet-stream"
+                                            )
+                                        if os.name == "nt":  # Windows support
+                                            folder_path = os.path.dirname(f_path)
+                                            # opens explorer on server
+                                            with st.container(border=True):
+                                                st.info("Opens on host computer only")
+                                                st.button(
+                                                    f"Open in Explorer: {file}",
+                                                    on_click=lambda: os.startfile(folder_path)
+                                                )
+
+                                    else:
+                                        st.write(f"Resource #{i_s}: No view available for '{l_file}'.")
                     st.write(f"LAST MODIFIED {date_str_format(date)}")
 
 
