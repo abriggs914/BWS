@@ -7316,6 +7316,76 @@ class App(ctk.CTk):
             if tm:
                 print(f"No tile_data for {comp=}, {date=}, {line=}, {tile_data=}")
 
+    def click_go_to_line(self, line: str | int | float):
+        tm = bool(self.settings["tm_true_functions"].get("click_go_to_line"))
+        if tm:
+            print(f"WARNING TM IS TRUE 'click_go_to_line'")
+        tm = tm or self.settings["TEST_MODE"].get()
+        if tm:
+            print(f"click_go_to_line")
+        comp = self.settings["mode_company"]
+
+        can = self.canvas_bws if (comp == COMPANY.BWS.value) else self.canvas_stg
+        if isinstance(line, (int, float)):
+            y_view = can.yview()
+            # x_view = x_view[0] + ((x_view[1] - x_view[0]) / 2)
+            y_view = y_view[0]
+            y_view = can.canvasy(y_view)
+
+            # days = date
+            # print(f"A {x_view=}, {date=}, {days=}")
+            # date = pd.Timestamp(self.get_date_bucket(x_view))
+            # print(f"B {x_view=}, {date=}, {days=}")
+            # date = date + pd.Timedelta(days=days)
+            # print(f"C {x_view=}, {date=}, {days=}")
+
+            line = self.get_prod_line_bucket(y_view)
+        # else:
+        #     line = pd.Timestamp(date) if not isinstance(date, pd.Timestamp) else date
+
+        # prod_lines = self.list_prod_lines_bws if (comp == COMPANY.BWS.value) else self.list_prod_lines_stg
+        # line = prod_lines[0]
+        x_view = can.xview()
+        # x_view = x_view[0] + ((x_view[1] - x_view[0]) / 2)
+        x_view = x_view[0]
+        x_view = can.canvasx(x_view)
+        p_date, p_line = self.get_date_line_at_x_y(x_view, self.get_prod_line_bucket())
+        tile_data = (self.tiles_bws if (comp == COMPANY.BWS.value) else self.tiles_stg).get(date, {}).get(line, {})
+
+        if tile_data and ("tile" in tile_data):
+            tile = tile_data["tile"]
+
+            # movement work
+            bba = can.bbox("all")
+            bbaw = (bba[2] - bba[0])
+            cw = self.canvas_width
+            t_bbox = can.bbox(tile)
+            x, y = int((t_bbox[0] - (cw / 2)) + ((t_bbox[2] - t_bbox[0]) / 2)), int(
+                t_bbox[1] + ((t_bbox[3] - t_bbox[1]) / 2))
+            x /= bbaw
+            need_to_move = (bba[0] <= x <= bba[2])
+            if tm:
+                print(f"{need_to_move=}")
+            if need_to_move:
+                can.xview_moveto(x)
+                self.redraw_legend()
+
+            ttl_anim_time = 1
+            for line_ in prod_lines:
+                ttl_anim_time = self.flash_tile((date, line_), mode="attention")
+                self.after(
+                    ttl_anim_time + 10,
+                    lambda date_=date, line__=line_:
+                    self.colour_code(date=date_, line=line__)
+                )
+
+            if tm:
+                print(f"{ttl_anim_time=}")
+            # self.colour_code(date=date)
+        else:
+            if tm:
+                print(f"No tile_data for {comp=}, {date=}, {line=}, {tile_data=}")
+
     def click_mb_go_to_today(self, event=None):
         tm = bool(self.settings["tm_true_functions"].get("click_mb_go_to_today"))
         if tm:

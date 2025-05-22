@@ -4137,7 +4137,7 @@ else:
 Sample code to show how to use a pdf_viewer widget in streamlit.
             """,
             "warn": """
-3rd-part widget - has weird interaction with the session_state
+3rd-party widget - has weird interaction with the session_state
             """,
             "tags": [Tags.STREAMLIT, Tags.THIRD_PARTY, Tags.PDFS, Tags.ON_GITHUB],
             "date": datetime.datetime(2025, 2, 10, 17),

@@ -7,6 +7,7 @@ import pandas as pd
 # from pyodbc_connection import connect, connect_2
 from pyodbc_connection import connect
 from streamlit_utility import display_df
+from datetime_utility import first_of_month, end_of_month
 #
 # APP_PASSWORD: str = "PRODSCHED25*"
 # HOLD_TIME_PROD_QUERY: int = 1000 * 60  # 60 minute hold time on prod data
@@ -228,7 +229,7 @@ from streamlit_utility import display_df
 # orders / Order Standards
 
 
-MAX_HOLD_TIME: int = 1
+MAX_HOLD_TIME: int =  1000 * 60 * 60
 st.set_page_config(layout="wide")
 
 
@@ -283,7 +284,7 @@ DECLARE @checkCWSL BIT = 1
 template_sql_o = """
 SELECT
     '{COMP}' AS [Comp],
-    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
     '{COL}' AS [MatchColumn],
     [Splt].[splited_data] AS [SearchTerm],
     CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
@@ -299,13 +300,14 @@ WHERE
         OR
         (@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
     )
+	{DFILT}
 """
 
 
 template_sql_d = """
 SELECT
     '{COMP}' AS [Comp],
-    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
     'Dealer' AS [MatchColumn],
     [Splt].[splited_data] AS [SearchTerm],
     CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
@@ -332,14 +334,15 @@ WHERE
         	(@allowPartial = 1 AND LOWER(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
     	)
     )
+	{DFILT}
 """
 
 
 template_sql_s = """
 SELECT
     '{COMP}' AS [Comp],
-    CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
-    'Dealer' AS [MatchColumn],
+    CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    'Standards' AS [MatchColumn],
     [Splt].[splited_data] AS [SearchTerm],
     CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
     (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
@@ -348,7 +351,7 @@ FROM
 LEFT JOIN 
     [BWSdb].[dbo].[{STABLE}] [S] WITH (NOLOCK)
 ON
-	[O].[DealerID] = [D].[ID]
+	[O].[Model No] = [S].[Model No]
 CROSS JOIN
     [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
 WHERE
@@ -360,14 +363,89 @@ WHERE
         	(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
     	)
     	OR (
-    		(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+    		(CAST([S].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
         	OR
-        	(@allowPartial = 1 AND LOWER(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+        	(@allowPartial = 1 AND LOWER(CAST([S].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
     	)
     )
+	{DFILT}
 """
 
+
+template_sql_oo = """
+SELECT
+    '{COMP}' AS [Comp],
+    CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    'Options' AS [MatchColumn],
+    [Splt].[splited_data] AS [SearchTerm],
+    CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+    (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+FROM 
+    [BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+LEFT JOIN 
+    [BWSdb].[dbo].[{OPTABLE}] [OO] WITH (NOLOCK)
+ON
+	[O].[{QCOL}] = [OO].[{QCOL}]
+CROSS JOIN
+    [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+WHERE
+    ISNULL([Splt].[splited_data], '') <> ''
+    AND (
+    	(
+        	(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    	OR (
+    		(CAST([OO].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([OO].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    )
+	{DFILT}
+"""
+
+
+template_sql_cw = """
+SELECT
+    '{COMP}' AS [Comp],
+    CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+    'NPO' AS [MatchColumn],
+    [Splt].[splited_data] AS [SearchTerm],
+    CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+    (CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+FROM 
+    [BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+LEFT JOIN 
+    [BWSdb].[dbo].[{CWTABLE}] [CW] WITH (NOLOCK)
+ON
+	[O].[{QCOL}] = [CW].[{QCOL}]
+CROSS JOIN
+    [BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+WHERE
+    ISNULL([Splt].[splited_data], '') <> ''
+    AND (
+    	(
+        	(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    	OR (
+    		(CAST([CW].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+        	OR
+        	(@allowPartial = 1 AND LOWER(CAST([CW].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+    	)
+    )
+	{DFILT}
+"""
+
+
+template_sql_date = """AND ([O].[Order Date] BETWEEN '{SD}' AND '{ED}')"""
+
+
+col_npo = "NPOs"
 col_standards = "Standards"
+col_options = "Options"
 col_dealer = "Dealer"
 col_quote_bws = "Quote#"
 col_quote_stg = "SGQuote"
@@ -383,9 +461,6 @@ o_table_cols = [
 	"Sales Order#",
 	"Invoice #"
 ]
-
-table_cols = o_table_cols + [col_dealer, col_standards]
-
 
 # template_fill_ins = {
 # 	"BWS": {
@@ -443,11 +518,34 @@ def load_dealers2() -> pd.DataFrame:
 	return load_sql_data("DealersV2")
 
 
+def load_standards() -> pd.DataFrame:
+	return load_sql_data("Standards")
+
+
+def load_standards2() -> pd.DataFrame:
+	return load_sql_data("StandardsV2")
+
+
+def load_options() -> pd.DataFrame:
+	return load_sql_data("Order Options")
+
+
+def load_options2() -> pd.DataFrame:
+	return load_sql_data("Order OptionsV2")
+
+
+def load_npos() -> pd.DataFrame:
+	return load_sql_data("Custom Work")
+
+
+def load_npos2() -> pd.DataFrame:
+	return load_sql_data("Custom WorkV2")
+
+
 @st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
-def get_data() -> pd.DataFrame:
+def get_data(sql) -> pd.DataFrame:
 	df = connect(
-		generate_sql()
-		,
+		sql,
 		do_exec=True,
 		do_show=True,
 		do_print=True
@@ -460,8 +558,17 @@ def get_data() -> pd.DataFrame:
 
 def generate_sql():
 
-	s_term = entry_search_term
+	s_term = entry_search_term.replace("'", "''").strip()
 	a_partial = int(toggle_allow_partial)
+
+	sd = start_date
+	ed = end_date
+	use_date = (sd is not None) and (ed is not None)
+
+	if use_date:
+		d_filt = template_sql_date.format(SD=sd, ED=ed)
+	else:
+		d_filt = ""
 
 	table_cols = multiselect_cols.copy()
 	table_cols_b: list[str] = table_cols.copy()
@@ -476,12 +583,18 @@ def generate_sql():
 		"BWS": {
 			"o_table": "Orders",
 			"d_table": "Dealers",
+			"s_table": "Standards",
+			"op_table": "Order Options",
+			"cw_table": "Custom Work",
 			"q_col": col_quote_bws,
 			"cols": table_cols_b
 		},
 		"STG": {
 			"o_table": "OrdersV2",
 			"d_table": "DealersV2",
+			"s_table": "StandardsV2",
+			"op_table": "Order OptionsV2",
+			"cw_table": "Custom WorkV2",
 			"q_col": col_quote_stg,
 			"cols": table_cols_s
 		}
@@ -501,27 +614,74 @@ def generate_sql():
 		q_col = comp_data["q_col"]
 		o_table = comp_data["o_table"]
 		d_table = comp_data["d_table"]
+		s_table = comp_data["s_table"]
+		op_table = comp_data["op_table"]
+		cw_table = comp_data["cw_table"]
 		cols = comp_data["cols"]
 		use_dealer = col_dealer in cols
+		use_standards = col_standards in cols
+		use_options = col_options in cols
+		use_npos = col_npo in cols
 		if use_dealer:
 			statements.append(template_sql_d.format(
 				COMP=company,
 				QCOL=q_col,
 				COL=q_col,
 				OTABLE=o_table,
-				DTABLE=d_table
+				DTABLE=d_table,
+				DFILT=d_filt
 				# ,
 				# DTEMPLATE=sql_dealers
 			))
 			use_dealer = False
 			cols.remove(col_dealer)
+		if use_standards:
+			statements.append(template_sql_s.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				STABLE=s_table,
+				DFILT=d_filt
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_standards = False
+			cols.remove(col_standards)
+		if use_options:
+			statements.append(template_sql_oo.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				OPTABLE=op_table,
+				DFILT=d_filt
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_options = False
+			cols.remove(col_options)
+		if use_npos:
+			statements.append(template_sql_cw.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				CWTABLE=cw_table,
+				DFILT=d_filt
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_npos = False
+			cols.remove(col_npo)
 		for i, col in enumerate(cols):
 			# template_sql_where.format(COL=col)
 			statements.append(template_sql_o.format(
 				COMP=company,
 				QCOL=q_col,
 				COL=col,
-				OTABLE=o_table
+				OTABLE=o_table,
+				DFILT=d_filt
 				# ,
 				# DTEMPLATE=sql_dealers
 			))
@@ -550,6 +710,15 @@ df_orders: pd.DataFrame = load_orders()
 df_orders2: pd.DataFrame = load_orders2()
 df_dealers: pd.DataFrame = load_dealers()
 df_dealers2: pd.DataFrame = load_dealers2()
+df_standards: pd.DataFrame = load_standards()
+df_standards2: pd.DataFrame = load_standards2()
+df_options: pd.DataFrame = load_options()
+df_options2: pd.DataFrame = load_options2()
+df_npos: pd.DataFrame = load_npos()
+df_npos2: pd.DataFrame = load_npos2()
+
+k_times_blank_rerun: str = "times_blank_rerun"
+times_blank_rerun = st.session_state.setdefault(k_times_blank_rerun, 0)
 
 with cols_controls[0]:
 
@@ -577,6 +746,11 @@ with cols_controls[0]:
 			help="This search method is more in depth and will take a little longer to process."
 		)
 
+	table_cols = o_table_cols
+	if toggle_extensive_search:
+		table_cols += [col_dealer, col_standards, col_options, col_npo]
+	
+
 	if toggle_comp_bws or toggle_comp_stg:
 
 		multiselect_cols = st.multiselect(
@@ -595,6 +769,27 @@ with cols_controls[0]:
 
 			st.divider()
 
+			st.session_state.setdefault("start_date_input", first_of_month(datetime.datetime.now()))
+			st.session_state.setdefault("end_date_input", end_of_month(datetime.datetime.now()))
+			with st.container(border=True):
+				toggle_date_filter = st.toggle(
+					label=f"date filter?",
+					value=True
+				)
+				if toggle_date_filter:
+					st.write(f"Filter by order date:")
+					start_date = st.date_input(
+						label="start",
+						key=f"start_date_input"
+					)
+
+					end_date = st.date_input(
+						label="end",
+						key=f"end_date_input"
+					)
+				else:
+					start_date, end_date = None, None
+
 			entry_search_term = st.text_input(
 				label="Search Terms delimited by ';'"
 			)
@@ -608,44 +803,80 @@ with cols_controls[0]:
 							language="sql",
 							line_numbers=True
 						)
-					df_data: pd.DataFrame = get_data()
+					df_data: pd.DataFrame = get_data(generate_sql())
 					# st.write(f"Matching Quote Values ({df_data.shape[0]} rows X {df_data.shape[1]} columns):")
 					stde_orders = display_df(
 						df_data,
 						"Matching Quote Values",
 						width=1000,
 						selection_mode="single-row",
-						on_select="rerun"
+						on_select="rerun",
+						key=f"k_stde_matching_quotes"
 					)
 
 					if stde_orders["selection"]["rows"]:
-						sr_selected_order = df_data.iloc[stde_orders["selection"]["rows"][0]]
-						q = int(sr_selected_order['Quote'])
-						c = sr_selected_order["Comp"]
-						if c == "STG":
-							df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
-							df_d: pd.DataFrame = df_dealers2
-						else:
-							df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
-							df_d: pd.DataFrame = df_dealers
+						with st.container(border=True):
+							sr_selected_order = df_data.iloc[stde_orders["selection"]["rows"][0]]
+							q = int(sr_selected_order['Quote'])
+							c = sr_selected_order["Comp"]
+							if c == "STG":
+								col_q = col_quote_stg
+								df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+								df_d: pd.DataFrame = df_dealers2
+								df_s: pd.DataFrame = df_standards2
+								df_op: pd.DataFrame = df_options2
+								df_cw: pd.DataFrame = df_npos2
+							else:
+								col_q = col_quote_bws
+								df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+								df_d: pd.DataFrame = df_dealers
+								df_s: pd.DataFrame = df_standards
+								df_op: pd.DataFrame = df_options
+								df_cw: pd.DataFrame = df_npos
 
-						# dfdd = pd.DataFrame(df_o.transpose())
-						# dfdd.columns = ["Value"]
-						# print(dfdd)
-						st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
-						stde_orders = display_df(
-							df_o
-						)
-
-						if not df_o.empty:
-							st.divider()
-							sr_o = df_o.iloc[0]
-							dealer_id = sr_o["DealerID"]
-							df_d = df_d.loc[df_d["ID"] == dealer_id]
-							display_df(
-								df_d,
-								"Dealer Data:"
+							# dfdd = pd.DataFrame(df_o.transpose())
+							# dfdd.columns = ["Value"]
+							# print(dfdd)
+							st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+							stde_orders = display_df(
+								df_o
 							)
+
+							if not df_o.empty:
+								st.divider()
+								sr_o = df_o.iloc[0]
+								dealer_id = sr_o["DealerID"]
+								df_d = df_d.loc[df_d["ID"] == dealer_id]
+								display_df(
+									df_d,
+									"Dealer Data:"
+								)
+
+							if not df_s.empty:
+								st.divider()
+								sr_s = df_s.iloc[0]
+								model_no = sr_o["Model No"]
+								df_s = df_s.loc[df_s["Model No"] == model_no]
+								display_df(
+									df_s,
+									"Standards Data:"
+								)
+
+							if not df_op.empty:
+								st.divider()
+								df_op = df_op.loc[df_op[col_q] == q]
+								display_df(
+									df_op,
+									"Ordered Options Data:"
+								)
+
+							if not df_cw.empty:
+								st.divider()
+								df_cw = df_cw.loc[df_cw[col_q] == q]
+								display_df(
+									df_cw,
+									"NPO Data:"
+								)
 					# st.write("Tell me more:")
 					# for i, row in df_data.iterrows():
 					# 	q = int(row['Quote'])
@@ -682,4 +913,11 @@ with cols_controls[0]:
 					# 		# 	dfdd,
 					# 		# 	"Transposed:"
 					# 		# )
+		else:
+			st.session_state.update({
+				k_times_blank_rerun: times_blank_rerun + 1
+			})
 
+if st.session_state.get(k_times_blank_rerun, 0) >= 3:
+	if not toggle_allow_partial:
+		st.info(f"No results found, try re-running after allowing for 'partial match' to widen the search.")
