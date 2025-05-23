@@ -19,15 +19,17 @@ from streamlit_scroll_navigation import scroll_navbar
 from streamlit_pills import pills
 
 from colour_utility import random_colour, gradient, RED, GREEN, Colour
-from datetime_utility import is_date, date_str_format
+from datetime_utility import is_date, date_str_format, first_of_month, end_of_month, first_of_day
 from json_utility import jsonify
 from pyodbc_connection import connect
-from streamlit_utility import aligned_text
+from streamlit_utility import aligned_text, display_df
 from utility import number_suffix
 
+
+MAX_HOLD_TIME: int =  1000 * 60 * 60
 st.set_page_config(
 	layout="wide",
-	page_title="Weekly WO Meeting"
+	page_title="Sales"
 )
 
 DEFAULT_NEW_FOLDER: str = "Create New"
@@ -835,6 +837,241 @@ def select_quote(*args):
 	# # df_meeting_quotes.loc[df_meeting_quotes["Quote"] == q, "Sel"] = False
 
 
+@st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
+def load_sql_data(sql) -> pd.DataFrame:
+	return connect(sql)
+
+
+def load_orders() -> pd.DataFrame:
+	return load_sql_data("Orders")
+
+
+def load_orders2() -> pd.DataFrame:
+	return load_sql_data("OrdersV2")
+
+
+def load_dealers() -> pd.DataFrame:
+	return load_sql_data("Dealers")
+
+
+def load_dealers2() -> pd.DataFrame:
+	return load_sql_data("DealersV2")
+
+
+def load_order_standards() -> pd.DataFrame:
+	return load_sql_data("Order Standards")
+
+
+def load_order_standards2() -> pd.DataFrame:
+	return load_sql_data("Order StandardsV2")
+
+
+def load_options() -> pd.DataFrame:
+	return load_sql_data("Order Options")
+
+
+def load_options2() -> pd.DataFrame:
+	return load_sql_data("Order OptionsV2")
+
+
+def load_npos() -> pd.DataFrame:
+	return load_sql_data("Custom Work")
+
+
+def load_npos2() -> pd.DataFrame:
+	return load_sql_data("Custom WorkV2")
+
+
+def load_production() -> pd.DataFrame:
+	return load_sql_data("Production")
+
+
+def load_production2() -> pd.DataFrame:
+	return load_sql_data("ProductionV2")
+
+
+@st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
+def get_data(sql) -> pd.DataFrame:
+	df = connect(
+		sql,
+		do_exec=True,
+		do_show=True,
+		do_print=True
+	)
+	# print(f"{connect(generate_sql())=}")
+	# print("df")
+	# print(df)
+	return df
+
+
+def generate_sql():
+
+	s_term = entry_search_term.replace("'", "''").strip()
+	a_partial = int(toggle_allow_partial)
+
+	sd = start_date
+	ed = end_date
+	dbf = date_by_field
+	use_date = (sd is not None) and (ed is not None) and bool(dbf)
+	use_prod_date = col_prod_date == dbf
+
+	use_date = (not use_prod_date) if use_date else use_date
+
+	if use_date:
+		if use_prod_date:
+			dbf_s = f"ISNULL([Prod].[Prod Date], [Prod].[Prod Date2])"
+		else:
+			dbf_s = f"[O].[{dbf}]"
+		d_filt = template_sql_date.format(DBF=dbf_s, SD=sd, ED=ed)
+		prod_j = " LEFT JOIN [BWSdb].[dbo].[{PTABLE}] [Prod] ON [O].[ProductID] = [Prod].[IDTrailer]"
+	else:
+		d_filt = ""
+		prod_j = ""
+
+	table_cols = multiselect_cols.copy()
+	table_cols_b: list[str] = table_cols.copy()
+	table_cols_s: list[str] = table_cols.copy()
+
+	if col_quote_bws in table_cols:
+		table_cols.remove(col_quote_bws)
+		table_cols_b = [col_quote_bws] + table_cols.copy()
+		table_cols_s = [col_quote_stg] + table_cols.copy()
+
+	template_fill_ins = {
+		"BWS": {
+			"o_table": "Orders",
+			"d_table": "Dealers",
+			"s_table": "Order Standards",
+			"op_table": "Order Options",
+			"cw_table": "Custom Work",
+			"p_table": "Products",
+			"q_col": col_quote_bws,
+			"cols": table_cols_b
+		},
+		"STG": {
+			"o_table": "OrdersV2",
+			"d_table": "DealersV2",
+			"s_table": "Order StandardsV2",
+			"op_table": "Order OptionsV2",
+			"cw_table": "Custom WorkV2",
+			"p_table": "ProductsV2",
+			"q_col": col_quote_stg,
+			"cols": table_cols_s
+		}
+	}
+
+	if not toggle_comp_bws:
+		template_fill_ins.pop("BWS")
+	if not toggle_comp_stg:
+		template_fill_ins.pop("STG")
+
+	if not template_fill_ins:
+		st.error(f"No companies selected")
+		st.stop()
+
+	statements = []
+	for company, comp_data in template_fill_ins.items():
+		q_col = comp_data["q_col"]
+		o_table = comp_data["o_table"]
+		p_table = comp_data["p_table"]
+		d_table = comp_data["d_table"]
+		s_table = comp_data["s_table"]
+		op_table = comp_data["op_table"]
+		cw_table = comp_data["cw_table"]
+		cols = comp_data["cols"]
+		use_dealer = col_dealer in cols
+		use_standards = col_standards in cols
+		use_options = col_options in cols
+		use_npos = col_npo in cols
+		pj = prod_j.format(PTABLE=p_table) if use_prod_date else ""
+		if use_dealer:
+			statements.append(template_sql_d.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				DTABLE=d_table,
+				DFILT=d_filt,
+				PRODJOIN=pj
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_dealer = False
+			cols.remove(col_dealer)
+		if use_standards:
+			statements.append(template_sql_s.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				STABLE=s_table,
+				DFILT=d_filt,
+				PRODJOIN=pj
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_standards = False
+			cols.remove(col_standards)
+		if use_options:
+			statements.append(template_sql_oo.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				OPTABLE=op_table,
+				DFILT=d_filt,
+				PRODJOIN=pj
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_options = False
+			cols.remove(col_options)
+		if use_npos:
+			statements.append(template_sql_cw.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=q_col,
+				OTABLE=o_table,
+				CWTABLE=cw_table,
+				DFILT=d_filt,
+				PRODJOIN=pj
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+			use_npos = False
+			cols.remove(col_npo)
+		for i, col in enumerate(cols):
+			# template_sql_where.format(COL=col)
+			statements.append(template_sql_o.format(
+				COMP=company,
+				QCOL=q_col,
+				COL=col,
+				OTABLE=o_table,
+				DFILT=d_filt,
+				PRODJOIN=pj
+				# ,
+				# DTEMPLATE=sql_dealers
+			))
+
+	if not statements:
+		st.error(f"No statements generated")
+		st.stop()
+
+	statements_h = template_header.format(
+		LST_COLS=", ".join(table_cols_b),
+		LST_COMPS=", ".join(template_fill_ins),
+		STERM=s_term,
+		APARTIAL=a_partial
+	)
+
+	statements_d = template_declares.format(
+		STERM=s_term,
+		APARTIAL=a_partial
+	)
+
+	return f"{statements_h}\n{statements_d}\n" + ("\nUNION\n".join(statements)) + ";"
+
+
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
 s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
 s_h = 0
@@ -853,147 +1090,271 @@ df_gather_meetings = load_gather_meetings()
 df_meeting_notes = load_meeting_notes()
 df_meeting_notes["Quote"] = df_meeting_notes["Quote"].apply(int)
 
-cont = st.container(key="master", border=1)
 
-with cont:
-	st.write("df_gather_meetings")
-	st.dataframe(df_gather_meetings)
-	st.write("df_meetings")
-	st.dataframe(df_meetings)
-	st.write("df_meeting_notes")
-	st.dataframe(df_meeting_notes)
-
-# st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
-# selected_directory = st.selectbox(
-# 	label="SELECT",
-# 	options=list_meeting_folders,
-# 	key="selected_directory"
-# )
+options_pills_control = ["Sales Search", "Weekly Sales Order Meeting"]
+k_pill_control: str = f"pill_control"
+st.session_state.setdefault(k_pill_control, 0)
 
 
-with cont:
-	st.write("st.session_state")
-	st.write(st.session_state)
+toggle_testing = st.toggle(
+	label="Enable Testing Mode?",
+	value=False,
+	help="This may write a lot of additional information to the screen as the program executes."
+)
 
-if st.session_state.get(k_meeting_id, None) is None:
 
-	cont.empty()
-	cont.write(f"{df_meetings.shape[0]} Meeting(s) on record")
+pills_control = pills(
+	label="Mode",
+	options=options_pills_control,
+	key=k_pill_control
+)
 
-	m_id = None
-	selected_directory = None
-	st.session_state.update({k_selectbox_directory: None})
-	st.session_state.setdefault(k_selectbox_choose_edit_meeting, df_meetings["ID"].max())
 
-	selectbox_choose_edit_meeting = cont.selectbox(
-		label="Edit Meeting:",
-		key=k_selectbox_choose_edit_meeting,
-		options=df_meetings["ID"].values.tolist()
-	)
+if pills_control == options_pills_control[1]:
+	# Weekly Sales Order Meeting
 
-	edit_m_id: int = int(st.session_state.get(k_selectbox_choose_edit_meeting))
-	if cont.button(
-			label=f"Edit Meeting #{edit_m_id}",
-			key=f"k_btn_edit_last_meeting"
-	):
-		# st.session_state.update({k_meeting_id: df_meetings["ID"].max()})
-		m_id = edit_m_id
-		st.session_state.update({k_meeting_id: edit_m_id})
-		print(f"IF & EM# {m_id=}, m_id2={st.session_state.get(k_meeting_id)}")
-		edit_meeting()
+	cont = st.container(key="master", border=1)
 
-	if cont.button(
-			label="New Meeting",
-			key='k_btn_new_meeting'
-	):
-		create_new_meeting()
-else:
-	m_id = st.session_state.get(k_meeting_id)
-	ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
-	mt = ser_meeting["DateMeeting"]
-	print(f"ELSE {m_id=}")
-	cont.header(f"Editing Meeting ID#{m_id}")
-	cont.subheader(f"{date_str_format(mt, include_time=True, include_weekday=True)}")
-	dds = (mt - now).total_seconds()
-	dd = round(abs(dds) / (60 * 60 * 24), 2)
-	cont.subheader(f"{dd} day{'' if dd == 1 else 's'} {'from now' if dds >= 0 else 'ago'}")
-	if cont.button(
-			label=f"Edit Meeting #{m_id}",
-			key="k_btn_edit_meeting"
-	):
-		edit_meeting()
+	if toggle_testing:
+		with cont:
+			st.write("df_gather_meetings")
+			st.dataframe(df_gather_meetings)
+			st.write("df_meetings")
+			st.dataframe(df_meetings)
+			st.write("df_meeting_notes")
+			st.dataframe(df_meeting_notes)
 
-	selected_directory = st.session_state.get(k_selectbox_directory, DEFAULT_NEW_FOLDER)
-	# if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
-	# 	selected_directory = f"{now:%Y-%m-%d}"
+	# st.session_state.setdefault("selected_directory", list_meeting_folders[-1])
+	# selected_directory = st.selectbox(
+	# 	label="SELECT",
+	# 	options=list_meeting_folders,
+	# 	key="selected_directory"
+	# )
 
-	if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
-		mt = is_date(selected_directory)
-		print(f"{selected_directory=}, {mt=}")
-		print(f"{st.session_state.get(date_input_meeting)=}, {mt=}")
-		if mt:
-			selected_directory = f"{selected_directory:%Y-%m-%d}"
-		else:
-			mt = is_date(st.session_state.get(date_input_meeting))
-			d = st.session_state.get(date_input_meeting)
-			if mt:
-				selected_directory = f"{d:%Y-%m-%d}"
-			else:
-				selected_directory = f"{now:%Y-%m-%d}"
 
-if selected_directory:
-	if not os.path.exists(os.path.join(root_path, selected_directory)):
-		cont.write(f"BLOCKED PATH '{selected_directory}'")
+	if st.session_state.get(k_meeting_id, None) is None:
+
+		cont.empty()
+		cont.write(f"{df_meetings.shape[0]} Meeting(s) on record")
+
+		m_id = None
 		selected_directory = None
-		st.session_state.update({
-			selectbox_directory: DEFAULT_NEW_FOLDER
-		})
+		st.session_state.update({k_selectbox_directory: None})
+		st.session_state.setdefault(k_selectbox_choose_edit_meeting, df_meetings["ID"].max())
 
-cont.write(selected_directory)
-if selected_directory:
-	itinerary_file_name_prefix = "wo_meeting_"
-	itinerary_file_name_suffix = ".pdf"
-	wo_rpt_file_name_template = "WO_Rpt_q{QUOTE}.pdf"
-	dir_files = os.listdir(os.path.join(root_path, selected_directory))
-	itinerary_file = [
-		f for f in dir_files
-		if f.lower().startswith(itinerary_file_name_prefix) and f.lower().endswith(itinerary_file_name_suffix)
-	]
-	if not itinerary_file:
-		cont.error(f"Cannot find Itinerary file within this directory.")
-		with cont.container(border=1):
-			st.warning("Please ensure that Access is closed before trying this resource-intensive operation!")
-			if st.button(
-					label="Try rerunning access commands?",
-					key="k_btn_rerun_access_command"
-			):
-				copy_wos_via_access(directory=selected_directory)
-		# streamlit_rea
-		st.stop()
+		selectbox_choose_edit_meeting = cont.selectbox(
+			label="Edit Meeting:",
+			key=k_selectbox_choose_edit_meeting,
+			options=df_meetings["ID"].values.tolist()
+		)
+
+		edit_m_id: int = int(st.session_state.get(k_selectbox_choose_edit_meeting))
+		if cont.button(
+				label=f"Edit Meeting #{edit_m_id}",
+				key=f"k_btn_edit_last_meeting"
+		):
+			# st.session_state.update({k_meeting_id: df_meetings["ID"].max()})
+			m_id = edit_m_id
+			st.session_state.update({k_meeting_id: edit_m_id})
+			print(f"IF & EM# {m_id=}, m_id2={st.session_state.get(k_meeting_id)}")
+			edit_meeting()
+
+		if cont.button(
+				label="New Meeting",
+				key='k_btn_new_meeting'
+		):
+			create_new_meeting()
 	else:
-		itinerary_file = os.path.join(root_path, selected_directory, itinerary_file[0])
+		m_id = st.session_state.get(k_meeting_id)
+		ser_meeting = df_meetings.loc[df_meetings["ID"] == m_id].iloc[0]
+		mt = ser_meeting["DateMeeting"]
+		print(f"ELSE {m_id=}")
+		cont.header(f"Editing Meeting ID#{m_id}")
+		cont.subheader(f"{date_str_format(mt, include_time=True, include_weekday=True)}")
+		dds = (mt - now).total_seconds()
+		dd = round(abs(dds) / (60 * 60 * 24), 2)
+		cont.subheader(f"{dd} day{'' if dd == 1 else 's'} {'from now' if dds >= 0 else 'ago'}")
+		if cont.button(
+				label=f"Edit Meeting #{m_id}",
+				key="k_btn_edit_meeting"
+		):
+			edit_meeting()
 
-	list_quotes = parse_quotes_list(itinerary_file)
-	rpt_files = {}
-	for i, qn in enumerate(list_quotes):
-		path_wo_rpt = os.path.join(root_path, selected_directory, wo_rpt_file_name_template.format(QUOTE=qn))
-		if not os.path.exists(path_wo_rpt):
-			path_wo_rpt = None
-		rpt_files[qn] = path_wo_rpt
+		selected_directory = st.session_state.get(k_selectbox_directory, DEFAULT_NEW_FOLDER)
+		# if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
+		# 	selected_directory = f"{now:%Y-%m-%d}"
 
-	cont.write("rpt_files")
-	cont.write(rpt_files)
-	cont.write("list_quotes")
-	cont.write(list_quotes)
-	# similar_quotes = check_similar_quotes()
-	# # st.dataframe(similar_quotes)
-	df_products = load_products()
-	df_dealers = load_dealers()
-	df_orders = load_orders()
-	if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (
-	st.session_state.get(k_df_meeting_quotes).empty):
-		df_meeting_quotes = pd.DataFrame(data={"Quote": map(int, list_quotes)})
-		df_meeting_quotes = df_meeting_quotes.merge(
+		if (selected_directory == DEFAULT_NEW_FOLDER) or (not selected_directory):
+			mt = is_date(selected_directory)
+			print(f"{selected_directory=}, {mt=}")
+			print(f"{st.session_state.get(date_input_meeting)=}, {mt=}")
+			if mt:
+				selected_directory = f"{selected_directory:%Y-%m-%d}"
+			else:
+				mt = is_date(st.session_state.get(date_input_meeting))
+				d = st.session_state.get(date_input_meeting)
+				if mt:
+					selected_directory = f"{d:%Y-%m-%d}"
+				else:
+					selected_directory = f"{now:%Y-%m-%d}"
+
+	if selected_directory:
+		if not os.path.exists(os.path.join(root_path, selected_directory)):
+			cont.write(f"BLOCKED PATH '{selected_directory}'")
+			selected_directory = None
+			st.session_state.update({
+				selectbox_directory: DEFAULT_NEW_FOLDER
+			})
+
+	cont.write(selected_directory)
+	if selected_directory:
+		itinerary_file_name_prefix = "wo_meeting_"
+		itinerary_file_name_suffix = ".pdf"
+		wo_rpt_file_name_template = "WO_Rpt_q{QUOTE}.pdf"
+		dir_files = os.listdir(os.path.join(root_path, selected_directory))
+		itinerary_file = [
+			f for f in dir_files
+			if f.lower().startswith(itinerary_file_name_prefix) and f.lower().endswith(itinerary_file_name_suffix)
+		]
+		if not itinerary_file:
+			cont.error(f"Cannot find Itinerary file within this directory.")
+			with cont.container(border=1):
+				st.warning("Please ensure that Access is closed before trying this resource-intensive operation!")
+				if st.button(
+						label="Try rerunning access commands?",
+						key="k_btn_rerun_access_command"
+				):
+					copy_wos_via_access(directory=selected_directory)
+			# streamlit_rea
+			st.stop()
+		else:
+			itinerary_file = os.path.join(root_path, selected_directory, itinerary_file[0])
+
+		list_quotes = parse_quotes_list(itinerary_file)
+		rpt_files = {}
+		for i, qn in enumerate(list_quotes):
+			path_wo_rpt = os.path.join(root_path, selected_directory, wo_rpt_file_name_template.format(QUOTE=qn))
+			if not os.path.exists(path_wo_rpt):
+				path_wo_rpt = None
+			rpt_files[qn] = path_wo_rpt
+
+		if toggle_testing:
+			cont.write("rpt_files")
+			cont.write(rpt_files)
+			cont.write("list_quotes")
+			cont.write(list_quotes)
+		# similar_quotes = check_similar_quotes()
+		# # st.dataframe(similar_quotes)
+		df_products = load_products()
+		df_dealers = load_dealers()
+		df_orders = load_orders()
+		if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (
+		st.session_state.get(k_df_meeting_quotes).empty):
+			df_meeting_quotes = pd.DataFrame(data={"Quote": map(int, list_quotes)})
+			df_meeting_quotes = df_meeting_quotes.merge(
+				df_orders[[
+					"Quote#",
+					"ProductID",
+					"DealerID"
+				]],
+				how="inner",
+				left_on="Quote",
+				right_on="Quote#"
+			)
+
+			df_meeting_quotes = df_meeting_quotes.merge(
+				df_products[[
+					"IDTrailer",
+					"Class",
+					"Model No"
+				]],
+				how="inner",
+				left_on="ProductID",
+				right_on="IDTrailer"
+			)
+
+			df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
+			df_meeting_quotes = df_meeting_quotes.merge(
+				df_meeting_notes.loc[
+					(df_meeting_notes["MeetingID"] <= m_id)
+					& (
+							pd.isna(df_meeting_notes["DateResolved"])
+							| (str(df_meeting_notes["DateResolved"]).strip() != "")
+					)
+					],
+				how="outer",
+				on="Quote"
+			)
+			df_meeting_quotes = df_meeting_quotes.merge(
+				df_dealers[[
+					"ID",
+					"COMPANY NAME"
+				]],
+				how="inner",
+				left_on="DealerID",
+				right_on="ID"
+			)
+			df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
+
+			for i, row in df_meeting_quotes.iterrows():
+				df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
+				df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+
+
+			# CopyWithSlice
+			# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
+			# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+			# print(f"{i=}, {df_meeting_quotes.iloc[i][['Reviewed', 'Approved']]}, {row['Quote#']=}, {row['DateResolved']=}, {row['ResolvedBy']=}")
+		else:
+			df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
+
+		st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
+
+		# # TODO WIP
+		# idxs = df_meeting_quotes.groupby("Quote")["MeetingID"].idmax()
+		# df_latest_meeting = df_meeting_quotes.loc[idxs]
+		# df_resolved = df_latest_meeting[df_latest_meeting["DateResolved"].notna()]
+		# df_unresolved = df_latest_meeting[df_latest_meeting["DateResolved"].isna()]
+		# df_unresolved = df_unresolved.merge(
+		# 	df_meeting_quotes.groupby("Quote")["IssueDescription"].apply(lambda x: "; ".join(x)).reset_index(),
+		# 	on="Quote",
+		# 	suffixes=("", "_All")
+		# )
+		#
+		# st.write("df_latest_meeting")
+		# st.write(df_latest_meeting)
+		# st.write("df_latest_meeting")
+		# st.write(df_latest_meeting)
+		# st.write("df_unresolved")
+		# st.write(df_unresolved)
+
+		# similar_quotes_m1 = similar_quotes.merge(
+		# 	df_orders[[
+		# 		"Quote#",
+		# 		"ProductID",
+		# 		"DealerID"
+		# 	]],
+		# 	how="inner",
+		# 	left_on="Q",
+		# 	right_on="Quote#"
+		# )
+		#
+		# similar_quotes_tree = {
+		#
+		# }
+		#
+		# similar_quotes_m1 = similar_quotes_m1.merge(
+		# 	df_products[[
+		# 		"IDTrailer",
+		# 		"Class",
+		# 		"Model No"
+		# 	]],
+		# 	how="inner",
+		# 	left_on="ProductID",
+		# 	right_on="IDTrailer"
+		# )
+
+		similar_quotes_m1 = df_meeting_quotes.merge(
 			df_orders[[
 				"Quote#",
 				"ProductID",
@@ -1004,1740 +1365,2151 @@ if selected_directory:
 			right_on="Quote#"
 		)
 
-		df_meeting_quotes = df_meeting_quotes.merge(
+		similar_quotes_m1 = similar_quotes_m1.merge(
 			df_products[[
 				"IDTrailer",
 				"Class",
 				"Model No"
 			]],
 			how="inner",
-			left_on="ProductID",
+			left_on="ProductID_x",
 			right_on="IDTrailer"
 		)
 
-		df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
-		df_meeting_quotes = df_meeting_quotes.merge(
-			df_meeting_notes.loc[
-				(df_meeting_notes["MeetingID"] <= m_id)
-				& (
-						pd.isna(df_meeting_notes["DateResolved"])
-						| (str(df_meeting_notes["DateResolved"]).strip() != "")
-				)
-				],
-			how="outer",
-			on="Quote"
-		)
-		df_meeting_quotes = df_meeting_quotes.merge(
+		similar_quotes_m1 = similar_quotes_m1.merge(
 			df_dealers[[
 				"ID",
 				"COMPANY NAME"
 			]],
 			how="inner",
-			left_on="DealerID",
+			left_on="DealerID_y",
 			right_on="ID"
 		)
-		df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
 
-		for i, row in df_meeting_quotes.iterrows():
-			df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
-			df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+		k_toggle_new_quotes_only = "toggle_new_quotes_only"
+		new_only: bool = st.session_state.setdefault(k_toggle_new_quotes_only, False)
+		if new_only:
+			df_meeting_quotes = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+
+		similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
+		# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
+
+		if toggle_testing:
+			cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
+			cont.write(df_meeting_notes)
+			cont.write(f"df_meeting_quotes == {df_meeting_quotes.shape}")
+			cont.write(df_meeting_quotes)
+			cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
+			cont.write(similar_quotes_m1)
+
+		quotes_approved_wsom_not_orders = df_meeting_quotes.merge(
+			df_orders[["Quote#"]].loc[(pd.isna(df_orders["WO Reviewed"])) | (df_orders["WO Reviewed"] == 0)],
+			how="inner",
+			left_on="Quote",
+			right_on="Quote#"
+		)
+		quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[
+			quotes_approved_wsom_not_orders["Approved"] == 1]
+		with cont.container(border=1):
+			if not quotes_approved_wsom_not_orders.empty:
+				st.write("quotes_approved_wsom_not_orders")
+				st.write(quotes_approved_wsom_not_orders)
+				btn_set_orders_quotes_approved_from_wsom = st.button(
+					label="Set these quotes to approved",
+					key="k_btn_set_orders_quotes_approved_from_wsom",
+					on_click=lambda
+						lq=quotes_approved_wsom_not_orders["Quote"].values.tolist(): set_orders_quotes_approved_from_wsom(
+						lq)
+				)
+			else:
+				st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
+				st.write("Good to Go!")
+
+		view_as_options = ["Class", "Model", "Dealer", "All"]
+
+		list_models = sorted(df_meeting_quotes["Model No"].dropna().unique().tolist())
+		list_classes = sorted(df_meeting_quotes["Class"].dropna().unique().tolist())
+		list_dealers = sorted(df_meeting_quotes["COMPANY NAME"].dropna().unique().tolist())
+
+		# cols__ = st.columns(3)
+		# with cols__[0]:
+		# 	st.write(list_classes)
+		# with cols__[1]:
+		# 	st.write(list_models)
+		# with cols__[2]:
+		# 	st.write(list_dealers)
+
+		def change_selectbox_view_quotes():
+			# va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
+			# lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
+
+			# double rerun to hide the "NO OP" warning
+			st.session_state.update({
+				# "pills_selected_model": 0
+				# ,
+				k_need_rerun: True
+			})
+			if "pills_selected_model" in st.session_state:
+				del st.session_state["pills_selected_model"]
+			st.rerun()
+
+		with cont:
+
+			df_new_quotes: pd.DataFrame = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+			df_old_quotes: pd.DataFrame = df_meeting_quotes.loc[df_meeting_quotes["Reviewed"]]
+
+			st.write(f"##### # New: {df_new_quotes.shape[0]}")
+			st.write(f"##### # Old: {df_old_quotes.shape[0]}")
+
+			st.session_state.setdefault(k_toggle_new_quotes_only, False)
+			toggle_new_quotes_only = st.toggle(
+				label="New Quotes Only",
+				key=k_toggle_new_quotes_only
+			)
+			# st.session_state.update({k_toggle_new_quotes_only: toggle_new_quotes_only})
+
+			k_selectbox_view_quotes = "selectbox_view_quotes"
+			st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
+			selectbox_view_quotes = st.selectbox(
+				label=f"View quotes by:",
+				key=f"k_{k_selectbox_view_quotes}",
+				options=view_as_options,
+				on_change=change_selectbox_view_quotes
+			)
+
+			print(f"{st.session_state.get('pills_selected_model')=}")
+			if selectbox_view_quotes == view_as_options[0]:
+				# class
+				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_classes)} classes:")
+				selected_model = pills(
+					label="Classes",
+					options=list_classes,
+					key="pills_selected_model"
+				)
+				df_k = "Class"
+			elif selectbox_view_quotes == view_as_options[1]:
+				# model
+				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} models:")
+				selected_model = pills(
+					label="Models",
+					options=list_models,
+					key="pills_selected_model"
+				)
+				df_k = "Model No"
+			elif selectbox_view_quotes == view_as_options[2]:
+				# dealer
+				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_dealers)} dealers:")
+				selected_model = pills(
+					label="Dealers",
+					options=list_dealers,
+					key="pills_selected_model"
+				)
+				df_k = "COMPANY NAME"
+			else:
+				# All
+				df_k = None
+				selected_model = True
+
+			if selected_model:
+
+				if df_k is not None:
+					df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes[df_k] == selected_model]
+				else:
+					df_model_quotes = df_meeting_quotes
+				df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
+				st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
+				view_cols = ["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
+						"ResolvedBy", "Reviewed", "Approved"]
+				stdf_model_quotes = st.dataframe(
+					df_model_quotes[view_cols],
+					selection_mode="single-row",
+					key="stdf_model_quotes",
+					hide_index=True,
+					on_select="rerun"
+				)
+				# df_model_quotes["Sel"] = False
+				# df_model_quotes["Sel_Date"] = None
+				# stdf_model_quotes_0 = st.data_editor(
+				# 	df_model_quotes[["Sel"] + view_cols],
+				# 	# selection_mode="single-row",
+				# 	key="stdf_model_quotes_0",
+				# 	hide_index=True,
+				# 	# on_select="rerun",
+				# 	on_change=select_quote,
+				# 	disabled=view_cols[:-2],
+				# 	column_config={
+				# 		"Sel": st.column_config.CheckboxColumn(
+				# 			label="Sel",
+				# 			width=50
+				# 		),
+				# 		view_cols[-2]: st.column_config.CheckboxColumn(
+				# 			label=view_cols[-2],
+				# 			width=120
+				# 		),
+				# 		view_cols[-1]: st.column_config.CheckboxColumn(
+				# 			label=view_cols[-1],
+				# 			width=120
+				# 		)
+				# 	}
+				# )
+				# # # st.session_state.update({
+				# # # 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
+				# # # })
+				# # st.write("stdf_model_quotes_0")
+				# # st.write(stdf_model_quotes_0)
+
+				if stdf_model_quotes["selection"]["rows"]:
+					ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
+					selected_quote = ser_selected_quote["Quote"]
+					pdf_file = ser_selected_quote["Q_WORpt"]
+					known_issues = df_meeting_notes.loc[df_meeting_notes["Quote"] == selected_quote][
+						["MeetingID", "IssueDescription"]]
+					if not known_issues.empty:
+						st.write(f"Known Issues:")
+						st.dataframe(known_issues.transpose())
+					else:
+						st.write("No Known Issues")
+					st.write(ser_selected_quote)
+					st.write(pdf_file)
+
+					if pdf_file:
+						# annotations = [
+						# 	{
+						# 		"page": 1,
+						# 		"x": 220,
+						# 		"y": 155,
+						# 		"height": 22,
+						# 		"width": 65,
+						# 		"color": "red"
+						# 	},
+						# 	{
+						# 		"page": 1,
+						# 		"x": 220,
+						# 		"y": 155,
+						# 		"height": 22,
+						# 		"width": 65,
+						# 		"color": "red"
+						# 	}
+						# ]
 
 
-		# CopyWithSlice
-		# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
-		# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
-		# print(f"{i=}, {df_meeting_quotes.iloc[i][['Reviewed', 'Approved']]}, {row['Quote#']=}, {row['DateResolved']=}, {row['ResolvedBy']=}")
-	else:
-		df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
+						def my_custom_annotation_handler(annotation):
+							# print(f"Annotation {annotation} clicked.")
+							idx = annotation.get("index")
+							page = annotation.get("page")
+							x = annotation.get("x")
+							y = annotation.get("y")
+							w = annotation.get("width")
+							h = annotation.get("height")
+							c = annotation.get("color")
+							bbox = (x, y, x + w, y + h)
+							et = annotation.get("text")
+							# line_texts = ';; '.join([line['text'] for line in et])
+							# print(f"{line_texts=}")
+							text = annotation.get("text")
+							print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+							# key = f"issues_{selected_quote}_{idx}"
+							key = f"status_{m_id}_{selected_quote}"
+							st.session_state.update({
+								f"need_details_{key}": True
+							})
+							# list_issues = st.session_state.setdefault(key, [])
+							ask_details(key, idx, selected_quote, annotation)
 
-	st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
 
-	# # TODO WIP
-	# idxs = df_meeting_quotes.groupby("Quote")["MeetingID"].idmax()
-	# df_latest_meeting = df_meeting_quotes.loc[idxs]
-	# df_resolved = df_latest_meeting[df_latest_meeting["DateResolved"].notna()]
-	# df_unresolved = df_latest_meeting[df_latest_meeting["DateResolved"].isna()]
-	# df_unresolved = df_unresolved.merge(
-	# 	df_meeting_quotes.groupby("Quote")["IssueDescription"].apply(lambda x: "; ".join(x)).reset_index(),
-	# 	on="Quote",
-	# 	suffixes=("", "_All")
-	# )
+						parsed_annotations = load_pdf_annotations(pdf_file)
+						# # st.write(parsed_annotations)
+						# st.write(f"{len(parsed_annotations)=}")
+						# st.write(f"{(len(parsed_annotations) == 15)=}")
+						# # st.write(f"Parsed Annotation Texts:")
+						# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+						#
+						# st.write("SESSION_STATE:")
+						# st.write(st.session_state)
+
+						k_c_a = "clicked_annotation"
+						k_pdf_viewer = f"pdf_viewer_wo"
+						pdf_click_callback = my_custom_annotation_handler
+						if (k_pdf_viewer in st.session_state) and isinstance(st.session_state[k_pdf_viewer],
+																			(dict, list, tuple)) and (
+								k_c_a in st.session_state[k_pdf_viewer]):
+							print("==A")
+							annotation = st.session_state[k_pdf_viewer][k_c_a]
+							idx = annotation.get("index")
+							key = f"issues_{selected_quote}_{idx}"
+							if not st.session_state.get(key, True):
+								print("==B")
+								# st.session_state.update({
+								# 	f"need_details_{key}": False
+								# })
+								pdf_click_callback = None
+							else:
+								print("==C")
+						else:
+							print("==D")
+
+						if st.button(
+								label=f"Approve {selected_quote}",
+								key=f"btn_approve_quote"
+						):
+							df_meeting_quotes.loc[
+								df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
+							if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
+								st.session_state[f"status_{m_id}_{selected_quote}"] = {}
+							st.session_state[f"status_{m_id}_{selected_quote}"].update({
+								k_df_meeting_quotes: df_meeting_quotes,
+								f"approve_{selected_quote}_date": datetime.datetime.now(),
+								f"approve_{selected_quote}_by": "Avery Briggs"
+							})
+							st.rerun()
+						print(f"AA == {pdf_file=}")
+						st_pdf_viewer = pdf_viewer(
+							input=load_pdf_binary(pdf_file),
+							width=s_w,
+							# key=f"kp_{k_pdf_viewer}",
+							annotations=parsed_annotations,
+							on_annotation_click=pdf_click_callback,
+							annotation_outline_size=2,
+							pages_vertical_spacing=10
+						)
+						# st.session_state.update({k_pdf_viewer: st.session_state.get(f"kp_{k_pdf_viewer}")})
+						st.session_state.update({k_pdf_viewer: st_pdf_viewer})
+						print(f"{st_pdf_viewer=}")
+						if isinstance(st_pdf_viewer, (dict, list)):
+							if k_c_a in st_pdf_viewer:
+								print("_A")
+								if st_pdf_viewer[k_c_a]:
+									print("_B")
+									annotation = st_pdf_viewer[k_c_a]
+									idx = annotation.get("index")
+									key = f"issues_{selected_quote}_{idx}"
+									if not st.session_state.get(key, True):
+										print("_C")
+										st_pdf_viewer.pop(k_c_a)
+										st.session_state.update({
+											f"need_details_{key}": False
+										})
+									else:
+										print("_D")
+								else:
+									print("_E")
+							else:
+								print("_F")
+						st.write(st_pdf_viewer)
+
+					# TODO add a submit issue button at the bottom of the screen
+					# if st.button(
+					# 	label="Issue",
+					# 	key="btn_issue_quote"
+					# ):
+					# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
+					#
+					# 	idx = annotation.get("index")
+					# 	page = annotation.get("page")
+					# 	x = annotation.get("x")
+					# 	y = annotation.get("y")
+					# 	w = annotation.get("width")
+					# 	h = annotation.get("height")
+					# 	c = annotation.get("color")
+					# 	bbox = (x, y, x + w, y + h)
+					# 	et = annotation.get("text")
+					# 	# line_texts = ';; '.join([line['text'] for line in et])
+					# 	# print(f"{line_texts=}")
+					# 	text = annotation.get("text")
+					# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+					# 	key = f"issues_{selected_quote}_{idx}"
+					# 	st.session_state.update({
+					# 		f"need_details_{key}": True
+					# 	})
+					# 	# list_issues = st.session_state.setdefault(key, [])
+					# 	ask_details(key, selected_quote, annotation)
+					#
+					# 	# st.session_state.update({
+					# 	# 	k_df_meeting_quotes: df_meeting_quotes,
+					# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
+					# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
+					# 	# })
+					# 	st.rerun()
+
+	if m_id is not None:
+		if st.button(
+				label=f"End Meeting #{m_id}",
+				key=f"k_end_meeting"
+		):
+
+			editing = not df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id].empty
+			if editing:
+				sql = ("""
+	UPDATE
+		[BWSdb].[dbo].[WSOM_MeetingNotes]
+	SET
+			
+				""").strip()
+			else:
+				sql = ("""
+	INSERT INTO
+		[BWSdb].[dbo].[WSOM_MeetingNotes]
+				""").strip()
+
+			# for k, v in st.session_state.items():
+			# 	print(f"{k=}, {v=}")
+
+			df_meetings_results = st.session_state.get(k_df_meeting_quotes)
+
+			print("k_df_meeting_quotes")
+			print(df_meetings_results)
+
+			# new_quotes = []
+			# for i, row in df_meetings_results.iterrows():
+
+			# TODO iterate through meeting quotes and set the approved status to the the table
+			connect(sql, do_exec=False, do_print=True, do_show=True)
+			st.session_state.update({
+				k_meeting_id: None,
+				k_df_meeting_quotes: None
+			})
+			cont.empty()
+			st.rerun()
+
+	if st.session_state.get(k_need_rerun, False):
+		st.session_state.update({k_need_rerun: False})
+		st.rerun()
+
+		# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
+		# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
+		# if model_quote_options:
+		# 	selected_quote = pills(
+		# 		label="Quotes",
+		# 		options=model_quote_options
+		# 	)
+		# 	if selected_quote:
+		# 		df_quote = df_model_quotes.loc[df_model_quotes["SimQ"] == selected_quote]
+		# 		st.write(df_quote)
+
+	# similar_quotes_m2 = similar_quotes_m1.copy()
+	# # similar_quotes_m2[["ModelCount", "ClassCount"]] = 0, 0
+	# # st.write("A")
+	# # st.write(similar_quotes_m2.groupby(by="Q").value_counts())
+	# # st.write("B")
+	# # df_model_group = similar_quotes_m2.groupby(
+	# # 	by="Model No"
+	# # ).agg({"ModelCount": "count"})
+	# # df_class_group = similar_quotes_m2.groupby(
+	# # 	by=["Q", "Class"]
+	# # ).agg({"ClassCount": "count"})
+	# #
+	# # st.write(df_model_group)
+	# # st.write(df_class_group)
+	# #
+	# # df_model_group = similar_quotes_m1.groupby(
+	# # 	by="Model No"
+	# # )[["Model No", "Q"]].head().drop_duplicates(["Model No", "Q"])
 	#
-	# st.write("df_latest_meeting")
-	# st.write(df_latest_meeting)
-	# st.write("df_latest_meeting")
-	# st.write(df_latest_meeting)
-	# st.write("df_unresolved")
-	# st.write(df_unresolved)
+	# df_model_group = similar_quotes_m1.groupby(
+	# 	by="Q"
+	# ).head()
+	# st.write("==")
+	# st.write(df_model_group)
 
-	# similar_quotes_m1 = similar_quotes.merge(
-	# 	df_orders[[
-	# 		"Quote#",
-	# 		"ProductID",
-	# 		"DealerID"
-	# 	]],
-	# 	how="inner",
-	# 	left_on="Q",
-	# 	right_on="Quote#"
-	# )
+	# # # Create a dummy streamlit page
+	# # import streamlit as st
+	# # from streamlit_scroll_navigation import scroll_navbar
+	# #
+	# # # Anchor IDs and icons
+	# # anchor_ids = ["About", "Features", "Settings", "Pricing", "Contact"]
+	# # anchor_icons = ["info-circle", "lightbulb", "gear", "tag", "envelope"]
+	# #
+	# # # 1. as sidebar menu
+	# # with st.sidebar:
+	# #     st.subheader("Example 1")
+	# #     scroll_navbar(
+	# #         anchor_ids,
+	# #         anchor_labels=None, # Use anchor_ids as labels
+	# #         anchor_icons=anchor_icons)
+	# #
+	# # # 2. horizontal menu
+	# # st.subheader("Example 2")
+	# # scroll_navbar(
+	# #         anchor_ids,
+	# #         key = "navbar2",
+	# #         anchor_icons=anchor_icons,
+	# #         orientation="horizontal")
+	# #
+	# # # Dummy page setup
+	# # for anchor_id in anchor_ids:
+	# #     st.subheader(anchor_id,anchor=anchor_id)
+	# #     st.write("content " * 100)
 	#
-	# similar_quotes_tree = {
 	#
+	# float_init()
+	#
+	#
+	# @st.cache_data(ttl=None, show_spinner=True)
+	# def parse_quotes_list(pdf_obj, column_name="Quote #") -> tuple[int, list[str]]:
+	# 	quotes = []
+	#
+	# 	with pdfplumber.open(pdf_file) as pdf_obj:
+	#
+	# 		max_pages = len(pdf_obj.pages) + 1
+	#
+	# 		for page in pdf_obj.pages[:2]:
+	# 			tables = page.extract_tables()
+	# 			for table in tables:
+	# 				# Check if the column name exists in the table header
+	# 				if column_name in table[0]:  # table[0] is assumed to be the header row
+	# 					# Get the index of the desired column
+	# 					col_index = table[0].index(column_name)
+	#
+	# 					# Extract data from the column
+	# 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
+	#
+	# 		return max_pages, quotes
+	#
+	#
+	# def refresh():
+	# 	print(f"REFRESH")
+	# 	sel = st.session_state.get("tree_select_selected_nodes", [])
+	# 	print(f"AA 'problem_option_wording_leaf_31080' in sel => '{'problem_option_wording_leaf_31080' in sel}'")
+	# 	st.rerun()
+	#
+	#
+	# @st.dialog(title="Issue Details", width="large")
+	# def ask_details(key: str):
+	# 	*key, quote = key.rsplit("_", 1)
+	# 	key = "".join(key).removeprefix("_").removesuffix("_")
+	# 	st.header(f"Please describe your '{key}' issue with quote '{quote}':")
+	# 	st.write(f"issue_details_{key}")
+	# 	t_key: str = f"issue_details_{key}"
+	# 	# IMPORTANT!
+	# 	# widget keys in dialog functions are popped from session_state before they can share their values.
+	# 	inp = st.text_area(
+	# 		label="Details",
+	# 		key=f"text_area_{t_key}",
+	# 		placeholder=f"Contact sales for further details",
+	# 		label_visibility="hidden"
+	# 		# ,
+	# 		# on_change=lambda: st.session_state.update({t_key: ""})
+	# 	)
+	# 	cols = st.columns(2)
+	# 	with cols[0]:
+	# 		if st.button(
+	# 			label="cancel",
+	# 			key=f"cancel_details_input"
+	# 		):
+	# 			st.rerun()
+	# 	with cols[1]:
+	# 		if st.button(
+	# 			label="submit",
+	# 			key=f"submit_details_input"
+	# 		):
+	# 			st.session_state.update({t_key: inp})
+	# 			print(t_key)
+	# 			print(f"SS=> '{st.session_state.get(t_key, 'N/A').strip()}'")
+	# 			st.rerun()
+	#
+	#
+	# s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
+	# s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
+	#
+	# if s_h is None or not s_h:
+	# 	s_h = 900
+	# if s_w is None or not s_w:
+	# 	s_w = 1600
+	#
+	#
+	# # pages_per_render = 5
+	# checklist_float_pos = 50, 60
+	#
+	#
+	# # column_pdf, column = st.columns([50, 50])
+	# cols_main = st.columns([0.75, 0.25])
+	# container_pdf = cols_main[0].container(border=1)
+	# container_pdf_ctls = st.container(border=1, height=25)
+	# # container_pdf_ctls.float()
+	# container_pdf_ctls.float("bottom: 0;background-color: grey;")
+	#
+	# cols_main[1].float(f"right: {checklist_float_pos[0]}px; top: {checklist_float_pos[1]}px;")
+	#
+	# st.write(f"Screen width is '{s_w}'")
+	# st.write(f"Screen height is '{s_h}'")
+	# pdf_render_pages = st.session_state.setdefault("pdf_render_pages", list(range(1, pages_per_render + 1)))
+	# iss_log = {}
+	# valid_log = []
+	#
+	# with container_pdf:
+	# 	pdf_file = st.file_uploader(
+	# 		"Upload PDF file",
+	# 		type=('pdf',),
+	# 		key="file_uploader_pdf_file",
+	# 		accept_multiple_files=False
+	# 	)
+	#
+	# 	if pdf_file:
+	# 		st.write(pdf_file.name)
+	# 		binary_data = pdf_file.getvalue()
+	#
+	# 		max_pages, quotes_list = parse_quotes_list(pdf_file)
+	# 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
+	#
+	# 		st_pdf_viewer(
+	# 			input=binary_data,
+	# 			width=s_w,
+	# 			pages_to_render=pdf_render_pages
+	# 		)
+	# 	else:
+	# 		pdf_render_pages = None, None
+	# 		max_pages, quotes_list = None, []
+	# 		st.session_state.pop("pdf_render_pages")
+	#
+	#
+	# st.write(f"Max_pages: '{max_pages}'")
+	# st.write(f"pdf_render_pages: '{pdf_render_pages}'")
+	#
+	#
+	# if any(pdf_render_pages):
+	# 	with container_pdf_ctls:
+	# 		cols_ctls = st.columns(5)
+	#
+	# 		with cols_ctls[0]:
+	# 			a, b = 0, pages_per_render
+	# 			st.write(f"0 {a=}, {b=}")
+	# 			if st.button(
+	# 				label=f"1 - {pages_per_render}",
+	# 				key="btn_pdf_ctl_first",
+	# 				disabled=pdf_render_pages[0] == 1
+	# 			):
+	# 				st.session_state.update({
+	# 					"pdf_render_pages": list(range(a+1, b+1))
+	# 				})
+	# 				st.rerun()
+	# 		with cols_ctls[1]:
+	# 			a, b = (
+	# 				max(1, pdf_render_pages[0] - pages_per_render - 1),
+	# 				max(pages_per_render, pdf_render_pages[0] - 1)
+	# 			)
+	# 			st.write(f"1 {a=}, {b=}")
+	# 			if st.button(
+	# 				label=f"{a} - {b}",
+	# 				key="btn_pdf_ctl_prev",
+	# 				disabled=pdf_render_pages[0] == 1
+	# 			):
+	# 				st.session_state.update({
+	# 					"pdf_render_pages": list(range(a, b+1))
+	# 				})
+	# 				st.rerun()
+	# 		with cols_ctls[2]:
+	# 			st.write(f"2 {pdf_render_pages=}")
+	# 			st.write(f"2 {max_pages=}")
+	# 			st.write(f"Page ({pdf_render_pages[0]} - {pdf_render_pages[-1]}) of {max_pages} pages(s)")
+	# 		with cols_ctls[3]:
+	# 			a, b = (
+	# 				min(max_pages - (1 + (max_pages % pages_per_render)), pdf_render_pages[0] + pages_per_render),
+	# 				min(max_pages, pdf_render_pages[-1] + pages_per_render)
+	# 			)
+	# 			st.write(f"3 {a=}, {b=}")
+	# 			if st.button(
+	# 				label=f"{a} - {b}",
+	# 				key="btn_pdf_ctl_next",
+	# 				disabled=pdf_render_pages[-1] == max_pages
+	# 			):
+	# 				st.session_state.update({
+	# 					"pdf_render_pages": list(range(a, b+1))
+	# 				})
+	# 				st.rerun()
+	# 		with cols_ctls[4]:
+	# 			a, b = max_pages - (1 + (max_pages % pages_per_render)), max_pages
+	# 			st.write(f"4 {a=}, {b=}")
+	# 			if st.button(
+	# 				label=f"{a} - {b}",
+	# 				key="btn_pdf_ctl_last",
+	# 				disabled=pdf_render_pages[-1] == max_pages
+	# 			):
+	# 				st.session_state.update({
+	# 					"pdf_render_pages": list(range(a, b+1))
+	# 				})
+	# 				st.rerun()
+	#
+	# with cols_main[1]:
+	#
+	# 	with st.container(
+	# 		border=1,
+	# 		height=int(s_h * 0.75)
+	# 	):
+	# 		st.subheader("Checklist:")
+	#
+	# 		# Create op_nodes to display
+	# 		# op_nodes = [
+	# 		# 	{"label": "Folder A", "value": "folder_a"},
+	# 		# 	{
+	# 		# 		"label": "Folder B",
+	# 		# 		"value": "folder_b",
+	# 		# 		"children": [
+	# 		# 			{"label": "Sub-folder A", "value": "sub_a"},
+	# 		# 			{"label": "Sub-folder B", "value": "sub_b"},
+	# 		# 			{"label": "Sub-folder C", "value": "sub_c"},
+	# 		# 		],
+	# 		# 	},
+	# 		# 	{
+	# 		# 		"label": "Folder C",
+	# 		# 		"value": "folder_c",
+	# 		# 		"children": [
+	# 		# 			{"label": "Sub-folder D", "value": "sub_d"},
+	# 		# 			{
+	# 		# 				"label": "Sub-folder E",
+	# 		# 				"value": "sub_e",
+	# 		# 				"children": [
+	# 		# 					{"label": "Sub-sub-folder A", "value": "sub_sub_a"},
+	# 		# 					{"label": "Sub-sub-folder B", "value": "sub_sub_b"},
+	# 		# 				],
+	# 		# 			},
+	# 		# 			{"label": "Sub-folder F", "value": "sub_f"},
+	# 		# 		],
+	# 		# 	},
+	# 		# ]
+	# 		lf = "leaf_"
+	# 		ch = "check_"
+	# 		pb = "problem_"
+	# 		qn = "question_"
+	# 		aa = "all_of_the_above_"
+	# 		node_structure = {
+	# 			"problem": (["Code", "Option-Wording", "Typo"], pb),
+	# 			"question": (["Beams", "Load-Securement"], qn),
+	# 			"all of the above": ([], aa)
+	# 		}
+	# 		op_nodes = [{
+	# 			"label": q,
+	# 			"value": f"{ch}{q}",
+	# 			# "showCheckbox": False,
+	# 			"children": [{
+	# 				"label": lbl.title(),
+	# 				"value": f"{node_structure[lbl][1]}{q}",
+	# 				# "showCheckbox": False,
+	# 				"children": [{
+	# 					# "label": child.title(),
+	# 					"label": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}",
+	# 					"value": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}"
+	# 					}
+	# 					for child in node_structure[lbl][0]
+	# 				]}
+	# 				for lbl in node_structure
+	# 			]}
+	# 			for i, q in enumerate(quotes_list)
+	# 		]
+	# 		possible_keys = []
+	# 		for i, q in enumerate(quotes_list):
+	# 			possible_keys.append(op_nodes[i]["value"])
+	# 			for j, lbl in enumerate(node_structure):
+	# 				possible_keys.append(op_nodes[i]["children"][j]["value"])
+	# 				if not op_nodes[i]["children"][j].get("children", []):
+	# 					del op_nodes[i]["children"][j]["children"]
+	# 				else:
+	# 					for child in op_nodes[i]["children"][j].get("children", []):
+	# 						possible_keys.append(child["value"])
+	# 		st.write(possible_keys)
+	# 		st.write(op_nodes)
+	# 		# op_nodes = [
+	# 		# 	{
+	# 		# 		"label": q,
+	# 		# 		"value": f"{ch}{q}",
+	# 		# 		"children": [
+	# 		# 			{
+	# 		# 				"label": "problem",
+	# 		# 				"value": f"{pb}{q}",
+	# 		# 				"children": [
+	# 		# 					{
+	# 		# 						"label": "code",
+	# 		# 						"value": f"{pb}code_{lf}{q}"
+	# 		# 					},
+	# 		# 					{
+	# 		# 						"label": "option-wording",
+	# 		# 						"value": f"{pb}wording_{lf}{q}"
+	# 		# 					},
+	# 		# 					{
+	# 		# 						"label": "typo",
+	# 		# 						"value": f"{pb}typo_{lf}{q}"
+	# 		# 					}
+	# 		# 				]
+	# 		# 			},
+	# 		# 			{
+	# 		# 				"label": "question",
+	# 		# 				"value": f"{qn}{q}",
+	# 		# 				"children": [
+	# 		# 					{
+	# 		# 						"label": "Beams",
+	# 		# 						"value": f"{qn}beams_{lf}{q}"
+	# 		# 					},
+	# 		# 					{
+	# 		# 						"label": "Load Securement",
+	# 		# 						"value": f"{qn}load_securement_{lf}{q}"
+	# 		# 					}
+	# 		# 				]
+	# 		# 			},
+	# 		# 			{
+	# 		# 				"label": "all of the above",
+	# 		# 				"value": f"{lf}{aa}{q}"
+	# 		# 			}
+	# 		# 		]
+	# 		# 	}
+	# 		# 	for q in quotes_list
+	# 		# ]
+	#
+	# 		with st.container(border=True):
+	# 			pre_select = st.session_state.get("tree_select_selected_nodes", [])
+	# 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
+	#
+	# 			return_select = tree_select(
+	# 				op_nodes,
+	# 				checked=pre_select,
+	# 				# key="tree_select",
+	# 				direction="ltr"
+	# 			)
+	#
+	# 			if st.button(
+	# 				label="select all",
+	# 				key="btn_select_all_checklist"
+	# 			):
+	# 				children = deepcopy(op_nodes)
+	# 				checked = []
+	# 				while children:
+	# 					node = children.pop(0)
+	# 					val = node.get("value")
+	# 					children.extend(node.get("children", []))
+	# 					checked.append(val)
+	# 					# st.session_state.update({val: True})
+	# 				st.session_state.update({"tree_select_selected_nodes": checked})
+	# 				# if val not in return_select["checked"]:
+	# 				# 	return_select["checked"].append(val)
+	#
+	# 				st.rerun()
+	#
+	# 			st.write("pre_select")
+	# 			st.write(pre_select)
+	#
+	# 		with st.container(border=True):
+	# 			st.write(return_select)
+	#
+	# 		checked = return_select["checked"]
+	#
+	# 		old_checked = st.session_state.get("tree_select_selected_nodes", [])
+	# 		new_checked = set(checked).difference(set(old_checked))
+	# 		new_removed = set(old_checked).difference(set(checked))
+	#
+	# 		added: bool = False
+	# 		for i, key in enumerate(new_checked):
+	# 			if key.startswith(aa):
+	# 				for j, k in enumerate(node_structure):
+	# 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
+	# 					if ok not in checked:
+	# 						checked.append(ok)
+	# 						added = True
+	# 						print(f"ADD '{ok}'")
+	# 						if ok not in possible_keys:
+	# 							raise ValueError(f"NO '{ok}'")
+	# 					for lbl in node_structure[k][0]:
+	# 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
+	# 						if ok not in checked:
+	# 							checked.append(ok)
+	# 							added = True
+	# 							print(f"ADD '{ok}'")
+	# 							if ok not in possible_keys:
+	# 								raise ValueError(f"NO '{ok}'")
+	# 			ask_details(key)
+	# 			print("XX '" + st.session_state.get(f"issue_details{key}", "n/a") + "'")
+	#
+	# 		removed: bool = False
+	# 		for i, key in enumerate(new_removed):
+	# 			if key.startswith(aa):
+	# 				for j, k in enumerate(node_structure):
+	# 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
+	# 					if ok in checked:
+	# 						checked.remove(ok)
+	# 						removed = True
+	# 						print(f"ADD '{ok}'")
+	# 						if ok not in possible_keys:
+	# 							raise ValueError(f"NO '{ok}'")
+	# 					for lbl in node_structure[k][0]:
+	# 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
+	# 						if ok in checked:
+	# 							checked.remove(ok)
+	# 							removed = True
+	# 							print(f"ADD '{ok}'")
+	# 							if ok not in possible_keys:
+	# 								raise ValueError(f"NO '{ok}'")
+	#
+	# 		st.session_state.update({"tree_select_selected_nodes": checked})
+	# 		st.write("old_checked")
+	# 		st.write(old_checked)
+	# 		st.write("new_checked")
+	# 		st.write(new_checked)
+	# 		st.write("new_removed")
+	# 		st.write(new_removed)
+	# 		st.write("checked")
+	# 		st.write(checked)
+	# 		#
+	# 		#
+	# 		# st.session_state.update({"tree_select_selected_nodes": return_select["checked"]})
+	# 		if added or removed:
+	# 			# print(f"{st.session_state.get('tree_select_selected_nodes')=}")
+	# 			print(f"RERUN {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+	# 			# st.rerun()
+	# 			refresh()
+	#
+	# 		chk_quotes = set()
+	# 		for i, check_key in enumerate(checked):
+	# 			*key, quote = check_key.rsplit("_", 1)
+	# 			key = "".join(key)
+	# 			# print(f"Quote: '{quote}', ISS: '{key}'")
+	# 			chk_quotes.add(quote)
+	# 		quotes_left = list(set(quotes_list).difference(chk_quotes))
+	#
+	# 		with st.container(border=True):
+	# 			if st.button(
+	# 				label="End Meeting",
+	# 				key=f"btn_end_meeting",
+	# 				disabled=bool(quotes_left)
+	# 			):
+	# 				for i, check_key in enumerate(return_select["checked"]):
+	# 					*key, quote = check_key.rsplit("_", 1)
+	# 					key = "".join(key).removeprefix("_").removesuffix("_")
+	# 					# iss = key.removeprefix(pb).removeprefix(qn).removesuffix(lf)
+	# 					print(f"Quote: '{quote}', ISS: '{key}'")
+	# 					if key == ch.removeprefix("_").removesuffix("_"):
+	# 						# checked Tag
+	# 						valid_log.append(quote)
+	# 					else:
+	# 						if quote not in valid_log:
+	# 							# if key == aa.removesuffix("_").removeprefix("_"):
+	# 							if quote not in iss_log:
+	# 								iss_log[quote] = []
+	# 							# if key.removeprefix(lf).removeprefix(ch) == aa:
+	# 							# 	for j
+	# 							# else:
+	# 								iss_log[quote].append({
+	# 									"iss": key,
+	# 									"comm": st.session_state.get(f"issue_details_{key}", "N/A")
+	# 								})
+	#
+	# with st.expander("RESULTS"):
+	# 	st.write("Checked")
+	# 	st.write(valid_log)
+	# 	st.write("---")
+	# 	st.write("Issues")
+	# 	st.write(iss_log)
+	#
+	# # ----------------------------------------------------------------------
+	# # ----------------------------------------------------------------------
+	# # ----------------------------------------------------------------------
+	#
+	# # # Version 2025-01-27 1900
+	# #
+	# # import os
+	# # import datetime
+	# # from copy import deepcopy
+	# #
+	# # import pdfplumber
+	# # from PyPDF2 import PdfMerger
+	# #
+	# # import streamlit as st
+	# #
+	# # from streamlit_pdf_viewer import st_pdf_viewer
+	# # from streamlit_js_eval import streamlit_js_eval
+	# # from streamlit_tree_select import tree_select
+	# # from streamlit_float import float_init
+	# # from streamlit_scroll_navigation import scroll_navbar
+	# #
+	# # from utility import next_available_file_name
+	# #
+	# # st.set_page_config(
+	# # 	layout="wide",
+	# # 	page_title="Weekly WO Meeting"
+	# # )
+	# #
+	# #
+	# # list_meeting_folders = [d for d in os.listdir(r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings") if d != "Scripts"]
+	# # st.multiselect(
+	# # 	label="SELECT",
+	# # 	options=list_meeting_folders,
+	# # 	key="selected_directory"
+	# # )
+	# # # import wx
+	# # #
+	# # # if st.button("Browse"):
+	# # # 	dialog = wx.DirDialog(None, "Select a folder:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+	# # # 	if dialog.ShowModal() == wx.ID_OK:
+	# # # 		folder_path = dialog.GetPath()  # folder_path will contain the path of the folder you have selected as string
+	# # # 		st.write(f"{folder_path=}")
+	# # # 	st.write(f"B")
+	# # # st.write(f"A")
+	# #
+	# #
+	# # # # Create a dummy streamlit page
+	# # # import streamlit as st
+	# # # from streamlit_scroll_navigation import scroll_navbar
+	# # #
+	# # # # Anchor IDs and icons
+	# # # anchor_ids = ["About", "Features", "Settings", "Pricing", "Contact"]
+	# # # anchor_icons = ["info-circle", "lightbulb", "gear", "tag", "envelope"]
+	# # #
+	# # # # 1. as sidebar menu
+	# # # with st.sidebar:
+	# # #     st.subheader("Example 1")
+	# # #     scroll_navbar(
+	# # #         anchor_ids,
+	# # #         anchor_labels=None, # Use anchor_ids as labels
+	# # #         anchor_icons=anchor_icons)
+	# # #
+	# # # # 2. horizontal menu
+	# # # st.subheader("Example 2")
+	# # # scroll_navbar(
+	# # #         anchor_ids,
+	# # #         key = "navbar2",
+	# # #         anchor_icons=anchor_icons,
+	# # #         orientation="horizontal")
+	# # #
+	# # # # Dummy page setup
+	# # # for anchor_id in anchor_ids:
+	# # #     st.subheader(anchor_id,anchor=anchor_id)
+	# # #     st.write("content " * 100)
+	# #
+	# #
+	# # float_init()
+	# #
+	# #
+	# # @st.cache_data(ttl=None, show_spinner=True)
+	# # def parse_quotes_list(pdf_obj, column_name="Quote #") -> tuple[int, list[str]]:
+	# # 	quotes = []
+	# #
+	# # 	with pdfplumber.open(pdf_file) as pdf_obj:
+	# #
+	# # 		max_pages = len(pdf_obj.pages) + 1
+	# #
+	# # 		for page in pdf_obj.pages[:2]:
+	# # 			tables = page.extract_tables()
+	# # 			for table in tables:
+	# # 				# Check if the column name exists in the table header
+	# # 				if column_name in table[0]:  # table[0] is assumed to be the header row
+	# # 					# Get the index of the desired column
+	# # 					col_index = table[0].index(column_name)
+	# #
+	# # 					# Extract data from the column
+	# # 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
+	# #
+	# # 		return max_pages, quotes
+	# #
+	# #
+	# # def refresh():
+	# # 	print(f"REFRESH")
+	# # 	sel = st.session_state.get("tree_select_selected_nodes", [])
+	# # 	print(f"AA 'problem_option_wording_leaf_31080' in sel => '{'problem_option_wording_leaf_31080' in sel}'")
+	# # 	st.rerun()
+	# #
+	# #
+	# # @st.dialog(title="Issue Details", width="large")
+	# # def ask_details(key: str):
+	# # 	*key, quote = key.rsplit("_", 1)
+	# # 	key = "".join(key).removeprefix("_").removesuffix("_")
+	# # 	st.header(f"Please describe your '{key}' issue with quote '{quote}':")
+	# # 	st.write(f"issue_details_{key}")
+	# # 	t_key: str = f"issue_details_{key}"
+	# # 	# IMPORTANT!
+	# # 	# widget keys in dialog functions are popped from session_state before they can share their values.
+	# # 	inp = st.text_area(
+	# # 		label="Details",
+	# # 		key=f"text_area_{t_key}",
+	# # 		placeholder=f"Contact sales for further details",
+	# # 		label_visibility="hidden"
+	# # 		# ,
+	# # 		# on_change=lambda: st.session_state.update({t_key: ""})
+	# # 	)
+	# # 	cols = st.columns(2)
+	# # 	with cols[0]:
+	# # 		if st.button(
+	# # 			label="cancel",
+	# # 			key=f"cancel_details_input"
+	# # 		):
+	# # 			st.rerun()
+	# # 	with cols[1]:
+	# # 		if st.button(
+	# # 			label="submit",
+	# # 			key=f"submit_details_input"
+	# # 		):
+	# # 			st.session_state.update({t_key: inp})
+	# # 			print(t_key)
+	# # 			print(f"SS=> '{st.session_state.get(t_key, 'N/A').strip()}'")
+	# # 			st.rerun()
+	# #
+	# #
+	# # def merge_pdfs_from_folder(
+	# # 		folder_path: str,
+	# # 		quote_order: list[str],
+	# # 		output_file: str = "merged_output.pdf"
+	# # ) -> str:
+	# # 	"""
+	# # 	Merges all PDF files in a specified folder into a single PDF file.
+	# #
+	# # 	Args:
+	# # 		folder_path (str): The path to the folder containing PDF files.
+	# # 		quote_order (list[str)): The order of quotes to reference when ordering the PDFs. Read from itinerary_file.
+	# # 		output_file (str): The name of the output merged PDF file (default: "merged_output.pdf").
+	# #
+	# # 	Returns:
+	# # 		str: The path to the merged output file.
+	# # 	"""
+	# #
+	# # 	print(f"Starting...")
+	# # 	start_time = datetime.datetime.now()
+	# #
+	# # 	# Check if the folder exists
+	# # 	if not os.path.exists(folder_path):
+	# # 		raise FileNotFoundError(f"The folder '{folder_path}' does not exist.")
+	# #
+	# # 	if not os.path.exists(os.path.join(folder_path, itinerary_file)):
+	# # 		raise FileNotFoundError(f"The Itinerary file '{itinerary_file}' does not exist.")
+	# #
+	# # 	files = []
+	# #
+	# # 	print(f"Searching...")
+	# #
+	# # 	# Iterate through files in the folder
+	# # 	for filename in sorted(os.listdir(folder_path)):
+	# # 		# Check if the file is a PDF
+	# # 		if filename.lower().endswith(".pdf"):
+	# # 			if filename != itinerary_file:
+	# # 				file_path = os.path.join(folder_path, filename)
+	# # 				# print(f"Adding: {file_path}")
+	# # 				files.append(file_path)
+	# #
+	# # 	print(f"Combining...")
+	# #
+	# # 	# Create a PdfMerger object
+	# # 	merger = PdfMerger()
+	# # 	merger.append(os.path.join(folder_path, itinerary_file))
+	# #
+	# # 	for i, quote_number in enumerate(quote_order):
+	# # 		if not isinstance(quote_number, str):
+	# # 			quote_number = str(quote_number)
+	# # 		for j, file_name in enumerate(files):
+	# # 			if f"q{quote_number}.pdf".lower() in file_name.lower():
+	# # 				merger.append(file_name)
+	# #
+	# # 	print(f"Saving...")
+	# #
+	# # 	# Save the merged PDF to the specified output file
+	# # 	output_path = os.path.join(folder_path, output_file)
+	# # 	merger.write(output_path)
+	# # 	merger.close()
+	# #
+	# # 	end_time = datetime.datetime.now()
+	# # 	print(f"Finished...")
+	# # 	print(f"Merged PDF saved as: {output_path}")
+	# # 	print(f"Results in {(end_time - start_time).total_seconds()} second(s)")
+	# # 	return output_path
+	# #
+	# #
+	# # def extract_quote_column(pdf_file_path, column_name="Quote #"):
+	# # 	"""
+	# # 	Extract data from a specific column in a table within a PDF.
+	# #
+	# # 	Args:
+	# # 		pdf_file_path (str): Path to the PDF file.
+	# # 		column_name (str): Name of the column to extract (default: "Quote").
+	# #
+	# # 	Returns:
+	# # 		list: A list of values from the specified column.
+	# # 	"""
+	# # 	quotes = []
+	# #
+	# # 	# Open the PDF file using pdfplumber
+	# # 	with pdfplumber.open(pdf_file_path) as pdf:
+	# # 		for page in pdf.pages:
+	# # 			# Extract tables from the page
+	# # 			tables = page.extract_tables()
+	# # 			for table in tables:
+	# # 				# Check if the column name exists in the table header
+	# # 				if column_name in table[0]:  # table[0] is assumed to be the header row
+	# # 					# Get the index of the desired column
+	# # 					col_index = table[0].index(column_name)
+	# #
+	# # 					# Extract data from the column
+	# # 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
+	# # 	return quotes
+	# #
+	# #
+	# # s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
+	# # s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
+	# #
+	# # if s_h is None or not s_h:
+	# # 	s_h = 900
+	# # if s_w is None or not s_w:
+	# # 	s_w = 1600
+	# #
+	# #
+	# # pages_per_render = 5
+	# # checklist_float_pos = 50, 60
+	# #
+	# #
+	# # # column_pdf, column = st.columns([50, 50])
+	# # cols_main = st.columns([0.75, 0.25])
+	# # container_pdf = cols_main[0].container(border=1)
+	# # container_pdf_ctls = st.container(border=1, height=25)
+	# # # container_pdf_ctls.float()
+	# # container_pdf_ctls.float("bottom: 0;background-color: grey;")
+	# #
+	# # cols_main[1].float(f"right: {checklist_float_pos[0]}px; top: {checklist_float_pos[1]}px;")
+	# #
+	# # st.write(f"Screen width is '{s_w}'")
+	# # st.write(f"Screen height is '{s_h}'")
+	# # pdf_render_pages = st.session_state.setdefault("pdf_render_pages", list(range(1, pages_per_render + 1)))
+	# # iss_log = {}
+	# # valid_log = []
+	# #
+	# # with container_pdf:
+	# # 	pdf_file = st.file_uploader(
+	# # 		"Upload PDF file",
+	# # 		type=('pdf',),
+	# # 		key="file_uploader_pdf_file",
+	# # 		accept_multiple_files=False
+	# # 	)
+	# #
+	# # 	# prep_date = datetime.datetime(2025, 1, 14)
+	# # 	prep_date = datetime.datetime.today()
+	# #
+	# # 	output_file = r"merged_output.pdf"
+	# # 	folder_path = fr"\\bwsfp01\Public\SALES OFFICE\Weekly WO Meetings\{prep_date:%Y-%m-%d}"
+	# #
+	# # 	output_file = next_available_file_name(os.path.join(folder_path, output_file))
+	# # 	output_file = os.path.basename(output_file)
+	# #
+	# # 	itinerary_file = fr"WO_Meeting_{prep_date:%Y-%m-%d}.pdf"
+	# # 	if os.path.exists(os.path.join(folder_path, itinerary_file)):
+	# # 		quote_order = extract_quote_column(
+	# # 			os.path.join(folder_path, itinerary_file)
+	# # 		)
+	# # 		# print(f"{quote_order=}")
+	# #
+	# # 		merge_pdfs_from_folder(
+	# # 			folder_path,
+	# # 			quote_order,
+	# # 			os.path.join(folder_path, output_file)
+	# # 		)
+	# # 	else:
+	# # 		print(f"Please follow the steps to create an Itinerary file first.")
+	# #
+	# # 	if pdf_file:
+	# # 		st.write(pdf_file.name)
+	# # 		binary_data = pdf_file.getvalue()
+	# #
+	# # 		max_pages, quotes_list = parse_quotes_list(pdf_file)
+	# # 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
+	# #
+	# # 		st_pdf_viewer(
+	# # 			input=binary_data,
+	# # 			width=s_w,
+	# # 			pages_to_render=pdf_render_pages
+	# # 		)
+	# # 	else:
+	# # 		pdf_render_pages = None, None
+	# # 		max_pages, quotes_list = None, []
+	# # 		st.session_state.pop("pdf_render_pages")
+	# #
+	# #
+	# # st.write(f"Max_pages: '{max_pages}'")
+	# # st.write(f"pdf_render_pages: '{pdf_render_pages}'")
+	# #
+	# #
+	# # if any(pdf_render_pages):
+	# # 	with container_pdf_ctls:
+	# # 		cols_ctls = st.columns(5)
+	# #
+	# # 		with cols_ctls[0]:
+	# # 			a, b = 0, pages_per_render
+	# # 			st.write(f"0 {a=}, {b=}")
+	# # 			if st.button(
+	# # 				label=f"1 - {pages_per_render}",
+	# # 				key="btn_pdf_ctl_first",
+	# # 				disabled=pdf_render_pages[0] == 1
+	# # 			):
+	# # 				st.session_state.update({
+	# # 					"pdf_render_pages": list(range(a+1, b+1))
+	# # 				})
+	# # 				st.rerun()
+	# # 		with cols_ctls[1]:
+	# # 			a, b = (
+	# # 				max(1, pdf_render_pages[0] - pages_per_render - 1),
+	# # 				max(pages_per_render, pdf_render_pages[0] - 1)
+	# # 			)
+	# # 			st.write(f"1 {a=}, {b=}")
+	# # 			if st.button(
+	# # 				label=f"{a} - {b}",
+	# # 				key="btn_pdf_ctl_prev",
+	# # 				disabled=pdf_render_pages[0] == 1
+	# # 			):
+	# # 				st.session_state.update({
+	# # 					"pdf_render_pages": list(range(a, b+1))
+	# # 				})
+	# # 				st.rerun()
+	# # 		with cols_ctls[2]:
+	# # 			st.write(f"2 {pdf_render_pages=}")
+	# # 			st.write(f"2 {max_pages=}")
+	# # 			st.write(f"Page ({pdf_render_pages[0]} - {pdf_render_pages[-1]}) of {max_pages} pages(s)")
+	# # 		with cols_ctls[3]:
+	# # 			a, b = (
+	# # 				min(max_pages - (1 + (max_pages % pages_per_render)), pdf_render_pages[0] + pages_per_render),
+	# # 				min(max_pages, pdf_render_pages[-1] + pages_per_render)
+	# # 			)
+	# # 			st.write(f"3 {a=}, {b=}")
+	# # 			if st.button(
+	# # 				label=f"{a} - {b}",
+	# # 				key="btn_pdf_ctl_next",
+	# # 				disabled=pdf_render_pages[-1] == max_pages
+	# # 			):
+	# # 				st.session_state.update({
+	# # 					"pdf_render_pages": list(range(a, b+1))
+	# # 				})
+	# # 				st.rerun()
+	# # 		with cols_ctls[4]:
+	# # 			a, b = max_pages - (1 + (max_pages % pages_per_render)), max_pages
+	# # 			st.write(f"4 {a=}, {b=}")
+	# # 			if st.button(
+	# # 				label=f"{a} - {b}",
+	# # 				key="btn_pdf_ctl_last",
+	# # 				disabled=pdf_render_pages[-1] == max_pages
+	# # 			):
+	# # 				st.session_state.update({
+	# # 					"pdf_render_pages": list(range(a, b+1))
+	# # 				})
+	# # 				st.rerun()
+	# #
+	# # with cols_main[1]:
+	# #
+	# # 	with st.container(
+	# # 		border=1,
+	# # 		height=int(s_h * 0.75)
+	# # 	):
+	# # 		st.subheader("Checklist:")
+	# #
+	# # 		# Create op_nodes to display
+	# # 		# op_nodes = [
+	# # 		# 	{"label": "Folder A", "value": "folder_a"},
+	# # 		# 	{
+	# # 		# 		"label": "Folder B",
+	# # 		# 		"value": "folder_b",
+	# # 		# 		"children": [
+	# # 		# 			{"label": "Sub-folder A", "value": "sub_a"},
+	# # 		# 			{"label": "Sub-folder B", "value": "sub_b"},
+	# # 		# 			{"label": "Sub-folder C", "value": "sub_c"},
+	# # 		# 		],
+	# # 		# 	},
+	# # 		# 	{
+	# # 		# 		"label": "Folder C",
+	# # 		# 		"value": "folder_c",
+	# # 		# 		"children": [
+	# # 		# 			{"label": "Sub-folder D", "value": "sub_d"},
+	# # 		# 			{
+	# # 		# 				"label": "Sub-folder E",
+	# # 		# 				"value": "sub_e",
+	# # 		# 				"children": [
+	# # 		# 					{"label": "Sub-sub-folder A", "value": "sub_sub_a"},
+	# # 		# 					{"label": "Sub-sub-folder B", "value": "sub_sub_b"},
+	# # 		# 				],
+	# # 		# 			},
+	# # 		# 			{"label": "Sub-folder F", "value": "sub_f"},
+	# # 		# 		],
+	# # 		# 	},
+	# # 		# ]
+	# # 		lf = "leaf_"
+	# # 		ch = "check_"
+	# # 		pb = "problem_"
+	# # 		qn = "question_"
+	# # 		aa = "all_of_the_above_"
+	# # 		node_structure = {
+	# # 			"problem": (["Code", "Option-Wording", "Typo"], pb),
+	# # 			"question": (["Beams", "Load-Securement"], qn),
+	# # 			"all of the above": ([], aa)
+	# # 		}
+	# # 		op_nodes = [{
+	# # 			"label": q,
+	# # 			"value": f"{ch}{q}",
+	# # 			# "showCheckbox": False,
+	# # 			"children": [{
+	# # 				"label": lbl.title(),
+	# # 				"value": f"{node_structure[lbl][1]}{q}",
+	# # 				# "showCheckbox": False,
+	# # 				"children": [{
+	# # 					# "label": child.title(),
+	# # 					"label": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}",
+	# # 					"value": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}"
+	# # 					}
+	# # 					for child in node_structure[lbl][0]
+	# # 				]}
+	# # 				for lbl in node_structure
+	# # 			]}
+	# # 			for i, q in enumerate(quotes_list)
+	# # 		]
+	# # 		possible_keys = []
+	# # 		for i, q in enumerate(quotes_list):
+	# # 			possible_keys.append(op_nodes[i]["value"])
+	# # 			for j, lbl in enumerate(node_structure):
+	# # 				possible_keys.append(op_nodes[i]["children"][j]["value"])
+	# # 				if not op_nodes[i]["children"][j].get("children", []):
+	# # 					del op_nodes[i]["children"][j]["children"]
+	# # 				else:
+	# # 					for child in op_nodes[i]["children"][j].get("children", []):
+	# # 						possible_keys.append(child["value"])
+	# # 		st.write(possible_keys)
+	# # 		st.write(op_nodes)
+	# # 		# op_nodes = [
+	# # 		# 	{
+	# # 		# 		"label": q,
+	# # 		# 		"value": f"{ch}{q}",
+	# # 		# 		"children": [
+	# # 		# 			{
+	# # 		# 				"label": "problem",
+	# # 		# 				"value": f"{pb}{q}",
+	# # 		# 				"children": [
+	# # 		# 					{
+	# # 		# 						"label": "code",
+	# # 		# 						"value": f"{pb}code_{lf}{q}"
+	# # 		# 					},
+	# # 		# 					{
+	# # 		# 						"label": "option-wording",
+	# # 		# 						"value": f"{pb}wording_{lf}{q}"
+	# # 		# 					},
+	# # 		# 					{
+	# # 		# 						"label": "typo",
+	# # 		# 						"value": f"{pb}typo_{lf}{q}"
+	# # 		# 					}
+	# # 		# 				]
+	# # 		# 			},
+	# # 		# 			{
+	# # 		# 				"label": "question",
+	# # 		# 				"value": f"{qn}{q}",
+	# # 		# 				"children": [
+	# # 		# 					{
+	# # 		# 						"label": "Beams",
+	# # 		# 						"value": f"{qn}beams_{lf}{q}"
+	# # 		# 					},
+	# # 		# 					{
+	# # 		# 						"label": "Load Securement",
+	# # 		# 						"value": f"{qn}load_securement_{lf}{q}"
+	# # 		# 					}
+	# # 		# 				]
+	# # 		# 			},
+	# # 		# 			{
+	# # 		# 				"label": "all of the above",
+	# # 		# 				"value": f"{lf}{aa}{q}"
+	# # 		# 			}
+	# # 		# 		]
+	# # 		# 	}
+	# # 		# 	for q in quotes_list
+	# # 		# ]
+	# #
+	# # 		with st.container(border=True):
+	# # 			pre_select = st.session_state.get("tree_select_selected_nodes", [])
+	# # 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
+	# #
+	# # 			return_select = tree_select(
+	# # 				op_nodes,
+	# # 				checked=pre_select,
+	# # 				# key="tree_select",
+	# # 				direction="ltr"
+	# # 			)
+	# #
+	# # 			if st.button(
+	# # 				label="select all",
+	# # 				key="btn_select_all_checklist"
+	# # 			):
+	# # 				children = deepcopy(op_nodes)
+	# # 				checked = []
+	# # 				while children:
+	# # 					node = children.pop(0)
+	# # 					val = node.get("value")
+	# # 					children.extend(node.get("children", []))
+	# # 					checked.append(val)
+	# # 					# st.session_state.update({val: True})
+	# # 				st.session_state.update({"tree_select_selected_nodes": checked})
+	# # 				# if val not in return_select["checked"]:
+	# # 				# 	return_select["checked"].append(val)
+	# #
+	# # 				st.rerun()
+	# #
+	# # 			st.write("pre_select")
+	# # 			st.write(pre_select)
+	# #
+	# # 		with st.container(border=True):
+	# # 			st.write(return_select)
+	# #
+	# # 		checked = return_select["checked"]
+	# #
+	# # 		old_checked = st.session_state.get("tree_select_selected_nodes", [])
+	# # 		new_checked = set(checked).difference(set(old_checked))
+	# # 		new_removed = set(old_checked).difference(set(checked))
+	# #
+	# # 		added: bool = False
+	# # 		for i, key in enumerate(new_checked):
+	# # 			if key.startswith(aa):
+	# # 				for j, k in enumerate(node_structure):
+	# # 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
+	# # 					if ok not in checked:
+	# # 						checked.append(ok)
+	# # 						added = True
+	# # 						print(f"ADD '{ok}'")
+	# # 						if ok not in possible_keys:
+	# # 							raise ValueError(f"NO '{ok}'")
+	# # 					for lbl in node_structure[k][0]:
+	# # 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
+	# # 						if ok not in checked:
+	# # 							checked.append(ok)
+	# # 							added = True
+	# # 							print(f"ADD '{ok}'")
+	# # 							if ok not in possible_keys:
+	# # 								raise ValueError(f"NO '{ok}'")
+	# # 			ask_details(key)
+	# # 			print("XX '" + st.session_state.get(f"issue_details{key}", "n/a") + "'")
+	# #
+	# # 		removed: bool = False
+	# # 		for i, key in enumerate(new_removed):
+	# # 			if key.startswith(aa):
+	# # 				for j, k in enumerate(node_structure):
+	# # 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
+	# # 					if ok in checked:
+	# # 						checked.remove(ok)
+	# # 						removed = True
+	# # 						print(f"ADD '{ok}'")
+	# # 						if ok not in possible_keys:
+	# # 							raise ValueError(f"NO '{ok}'")
+	# # 					for lbl in node_structure[k][0]:
+	# # 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
+	# # 						if ok in checked:
+	# # 							checked.remove(ok)
+	# # 							removed = True
+	# # 							print(f"ADD '{ok}'")
+	# # 							if ok not in possible_keys:
+	# # 								raise ValueError(f"NO '{ok}'")
+	# #
+	# # 		st.session_state.update({"tree_select_selected_nodes": checked})
+	# # 		st.write("old_checked")
+	# # 		st.write(old_checked)
+	# # 		st.write("new_checked")
+	# # 		st.write(new_checked)
+	# # 		st.write("new_removed")
+	# # 		st.write(new_removed)
+	# # 		st.write("checked")
+	# # 		st.write(checked)
+	# # 		#
+	# # 		#
+	# # 		# st.session_state.update({"tree_select_selected_nodes": return_select["checked"]})
+	# # 		if added or removed:
+	# # 			# print(f"{st.session_state.get('tree_select_selected_nodes')=}")
+	# # 			print(f"RERUN {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+	# # 			# st.rerun()
+	# # 			refresh()
+	# #
+	# # 		chk_quotes = set()
+	# # 		for i, check_key in enumerate(checked):
+	# # 			*key, quote = check_key.rsplit("_", 1)
+	# # 			key = "".join(key)
+	# # 			# print(f"Quote: '{quote}', ISS: '{key}'")
+	# # 			chk_quotes.add(quote)
+	# # 		quotes_left = list(set(quotes_list).difference(chk_quotes))
+	# #
+	# # 		with st.container(border=True):
+	# # 			if st.button(
+	# # 				label="End Meeting",
+	# # 				key=f"btn_end_meeting",
+	# # 				disabled=bool(quotes_left)
+	# # 			):
+	# # 				for i, check_key in enumerate(return_select["checked"]):
+	# # 					*key, quote = check_key.rsplit("_", 1)
+	# # 					key = "".join(key).removeprefix("_").removesuffix("_")
+	# # 					# iss = key.removeprefix(pb).removeprefix(qn).removesuffix(lf)
+	# # 					print(f"Quote: '{quote}', ISS: '{key}'")
+	# # 					if key == ch.removeprefix("_").removesuffix("_"):
+	# # 						# checked Tag
+	# # 						valid_log.append(quote)
+	# # 					else:
+	# # 						if quote not in valid_log:
+	# # 							# if key == aa.removesuffix("_").removeprefix("_"):
+	# # 							if quote not in iss_log:
+	# # 								iss_log[quote] = []
+	# # 							# if key.removeprefix(lf).removeprefix(ch) == aa:
+	# # 							# 	for j
+	# # 							# else:
+	# # 								iss_log[quote].append({
+	# # 									"iss": key,
+	# # 									"comm": st.session_state.get(f"issue_details_{key}", "N/A")
+	# # 								})
+	# #
+	# # with st.expander("RESULTS"):
+	# # 	st.write("Checked")
+	# # 	st.write(valid_log)
+	# # 	st.write("---")
+	# # 	st.write("Issues")
+	# # 	st.write(iss_log)
+	# #
+	# #
+	# #
+	# # # # Script run 2025-01-28 1450
+	# # # x_cols = st.columns(3)
+	# # # with x_cols[0]:
+	# # # 	if st.button(
+	# # # 		label="APPROVE PAST WO's"
+	# # # 	):
+	# # # 		r_lst = [
+	# # # 			30983,
+	# # # 			31111,
+	# # # 			31124,
+	# # # 			30875,
+	# # # 			31005,
+	# # # 			31011,
+	# # # 			30757,
+	# # # 			31039,
+	# # # 			31040,
+	# # # 			31044,
+	# # # 			31045,
+	# # # 			31046,
+	# # # 			31047,
+	# # # 			30921,
+	# # # 			31053,
+	# # # 			31055,
+	# # # 			31056,
+	# # # 			31058,
+	# # # 			31059,
+	# # # 			31061,
+	# # # 			31062,
+	# # # 			31073,
+	# # # 			30947,
+	# # # 			31080,
+	# # # 			31083,
+	# # # 			31084,
+	# # # 			31096,
+	# # # 			31102,
+	# # # 			31103
+	# # # 		]
+	# # #
+	# # # 		sql = f"""
+	# # # 	UPDATE
+	# # # 		[BWSdb].[dbo].[Orders]
+	# # # 	SET
+	# # # 		[WO Reviewed] = 1,
+	# # # 		[WO Review Date] = '{datetime.datetime.now():%Y-%m-%d %H:%M:%S}'
+	# # # 	WHERE
+	# # # 		[Quote#] IN (
+	# # # 			{',\n\t\t'.join(map(str, r_lst))}
+	# # # 		)
+	# # # 		"""
+	# # #
+	# # # 		st.code(sql, language="sql", line_numbers=True)
+else:
+	# Sales Search
+	template_header = """
+	-- Matching {LST_COLS}
+	-- on search term = '{STERM}'
+	-- in {LST_COMPS} company(s)
+	-- ALLOW_PARTIAL_MATCH={APARTIAL}
+	"""
+
+	template_declares = """
+	DECLARE @doTest BIT = 0
+	DECLARE @st NVARCHAR(MAX) = '{STERM}'
+	DECLARE @delim NVARCHAR(5) = ';'
+	DECLARE @newDelim NVARCHAR(5) = ';|||;'
+	DECLARE @allowPartial BIT = {APARTIAL}
+	"""
+
+	# template_sql = """
+	# SELECT
+	# 	'{COMP}' AS [Comp],
+	# 	CAST([{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+	# 	'{COL}' AS [MatchColumn],
+	# 	[Splt].[splited_data] AS [SearchTerm],
+	# 	CAST([{COL}] AS NVARCHAR(MAX)) AS [Matched],
+	# 	(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	# FROM
+	# 	[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	# LEFT JOIN
+	# 	[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	# ON
+	# 	(
+	# 		CASE
+	# 		WHEN (@allowPartial = 1) AND (LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+	# 		THEN 1
+	# 		WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+	# 		THEN 1
+	# 		ELSE 0
+	# 		END
+	# 	) = 1
+	# WHERE
+	# 	ISNULL([Splt].[splited_data], '') <> ''
+	# """
+
+
+	template_sql_o = """
+	SELECT
+		'{COMP}' AS [Comp],
+		CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+		'{COL}' AS [MatchColumn],
+		[Splt].[splited_data] AS [SearchTerm],
+		CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+		(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	FROM 
+		[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	{PRODJOIN}
+	CROSS JOIN
+		[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	WHERE
+		ISNULL([Splt].[splited_data], '') <> ''
+		AND (
+			(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+			OR
+			(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+		)
+		{DFILT}
+	"""
+
+
+	template_sql_d = """
+	SELECT
+		'{COMP}' AS [Comp],
+		CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+		'Dealer' AS [MatchColumn],
+		[Splt].[splited_data] AS [SearchTerm],
+		CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+		(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	FROM 
+		[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	LEFT JOIN 
+		[BWSdb].[dbo].[{DTABLE}] [D] WITH (NOLOCK)
+	ON
+		[O].[DealerID] = [D].[ID]
+	{PRODJOIN}
+	CROSS JOIN
+		[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	WHERE
+		ISNULL([Splt].[splited_data], '') <> ''
+		AND (
+			(
+				(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+			OR (
+				(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([D].[COMPANY NAME] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+		)
+		{DFILT}
+	"""
+
+
+	template_sql_s = """
+	SELECT
+		'{COMP}' AS [Comp],
+		CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+		'Standards' AS [MatchColumn],
+		[Splt].[splited_data] AS [SearchTerm],
+		CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+		(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	FROM 
+		[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	LEFT JOIN 
+		[BWSdb].[dbo].[{STABLE}] [S] WITH (NOLOCK)
+	ON
+		[O].[{QCOL}] = [S].[{QCOL}]
+	{PRODJOIN}
+	CROSS JOIN
+		[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	WHERE
+		ISNULL([Splt].[splited_data], '') <> ''
+		AND (
+			(
+				(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+			OR (
+				(CAST([S].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([S].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+		)
+		{DFILT}
+	"""
+
+
+	template_sql_oo = """
+	SELECT
+		'{COMP}' AS [Comp],
+		CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+		'Options' AS [MatchColumn],
+		[Splt].[splited_data] AS [SearchTerm],
+		CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+		(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	FROM 
+		[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	LEFT JOIN 
+		[BWSdb].[dbo].[{OPTABLE}] [OO] WITH (NOLOCK)
+	ON
+		[O].[{QCOL}] = [OO].[{QCOL}]
+	{PRODJOIN}
+	CROSS JOIN
+		[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	WHERE
+		ISNULL([Splt].[splited_data], '') <> ''
+		AND (
+			(
+				(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+			OR (
+				(CAST([OO].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([OO].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+		)
+		{DFILT}
+	"""
+
+
+	template_sql_cw = """
+	SELECT
+		'{COMP}' AS [Comp],
+		CAST([O].[{QCOL}] AS NVARCHAR(MAX)) AS [Quote],
+		'NPO' AS [MatchColumn],
+		[Splt].[splited_data] AS [SearchTerm],
+		CAST([O].[{COL}] AS NVARCHAR(MAX)) AS [Matched],
+		(CASE WHEN (CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data]) THEN 1 ELSE 0 END) AS [ExactMatch]
+	FROM 
+		[BWSdb].[dbo].[{OTABLE}] [O] WITH (NOLOCK)
+	LEFT JOIN 
+		[BWSdb].[dbo].[{CWTABLE}] [CW] WITH (NOLOCK)
+	ON
+		[O].[{QCOL}] = [CW].[{QCOL}]
+	{PRODJOIN}
+	CROSS JOIN
+		[BWSdb].[dbo].[split_string_idx](@st, @delim) [Splt]
+	WHERE
+		ISNULL([Splt].[splited_data], '') <> ''
+		AND (
+			(
+				(CAST([O].[{COL}] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([O].[{COL}] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+			OR (
+				(CAST([CW].[Description] AS NVARCHAR(MAX)) = [Splt].[splited_data])
+				OR
+				(@allowPartial = 1 AND LOWER(CAST([CW].[Description] AS NVARCHAR(MAX))) LIKE LOWER('%' + [Splt].[splited_data] + '%'))
+			)
+		)
+		{DFILT}
+	"""
+
+
+	template_sql_date = """AND ({DBF} BETWEEN '{SD}' AND '{ED}')"""
+
+
+	col_prod_date = "Prod Date"
+	col_npo = "NPOs"
+	col_standards = "Standards"
+	col_options = "Options"
+	col_dealer = "Dealer"
+	col_quote_bws = "Quote#"
+	col_quote_stg = "SGQuote"
+	o_table_cols = [
+		col_quote_bws,
+		"WO#",
+		"Serial Number",
+		"Model No",
+		"Special Instructions",
+		"Notes",
+		"EngNotes",
+		"Customer WO#",
+		"Sales Order#",
+		"Invoice #"
+	]
+
+	# template_fill_ins = {
+	# 	"BWS": {
+	# 		"o_table": "Orders",
+	# 		"q_col": "Quote#",
+	# 		"cols": o_table_cols
+	# 	},
+	# 	"STG": {
+	# 		"o_table": "OrdersV2",
+	# 		"q_col": "SGQuote",
+	# 		"cols": o_table_cols
+	# 	}
 	# }
 	#
-	# similar_quotes_m1 = similar_quotes_m1.merge(
-	# 	df_products[[
-	# 		"IDTrailer",
-	# 		"Class",
-	# 		"Model No"
-	# 	]],
-	# 	how="inner",
-	# 	left_on="ProductID",
-	# 	right_on="IDTrailer"
+	# statement = ""
+	# statements = []
+	# for company, comp_data in template_fill_ins.items():
+	# 	q_col = comp_data["q_col"]
+	# 	o_table = comp_data["o_table"]
+	# 	cols = comp_data["cols"]
+	# 	for i, col in enumerate(cols):
+	# 		statements.append(template_sql.format(
+	# 			COMP=company,
+	# 			QCOL=q_col,
+	# 			COL=col,
+	# 			OTABLE=o_table
+	# 		))
+	#
+	# statement = "\nUNION\n".join(statements)
+	#
+	# st.code(
+	# 	statement,
+	# 	language="sql",
+	# 	line_numbers=True
 	# )
 
-	similar_quotes_m1 = df_meeting_quotes.merge(
-		df_orders[[
-			"Quote#",
-			"ProductID",
-			"DealerID"
-		]],
-		how="inner",
-		left_on="Quote",
-		right_on="Quote#"
-	)
+	cols_controls = st.columns([0.3, 0.7])
+	df_orders: pd.DataFrame = load_orders()
+	df_orders2: pd.DataFrame = load_orders2()
+	df_dealers: pd.DataFrame = load_dealers()
+	df_dealers2: pd.DataFrame = load_dealers2()
+	df_standards: pd.DataFrame = load_order_standards()
+	df_standards2: pd.DataFrame = load_order_standards2()
+	df_options: pd.DataFrame = load_options()
+	df_options2: pd.DataFrame = load_options2()
+	df_npos: pd.DataFrame = load_npos()
+	df_npos2: pd.DataFrame = load_npos2()
+	df_production: pd.DataFrame = load_production()
+	df_production2: pd.DataFrame = load_production2()
 
-	similar_quotes_m1 = similar_quotes_m1.merge(
-		df_products[[
-			"IDTrailer",
-			"Class",
-			"Model No"
-		]],
-		how="inner",
-		left_on="ProductID_x",
-		right_on="IDTrailer"
-	)
+	date_cols: list[str] = [col_prod_date] + [col for col in df_orders.columns if "date" in col.lower()]
 
-	similar_quotes_m1 = similar_quotes_m1.merge(
-		df_dealers[[
-			"ID",
-			"COMPANY NAME"
-		]],
-		how="inner",
-		left_on="DealerID_y",
-		right_on="ID"
-	)
+	k_times_blank_rerun: str = "times_blank_rerun"
+	times_blank_rerun = st.session_state.setdefault(k_times_blank_rerun, 0)
 
-	k_toggle_new_quotes_only = "toggle_new_quotes_only"
-	new_only: bool = st.session_state.setdefault(k_toggle_new_quotes_only, False)
-	if new_only:
-		df_meeting_quotes = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+	with cols_controls[0]:
 
-	similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
-	# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
+		cols_search_tools = st.columns([0.25, 0.3, 0.45])
 
-	cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
-	cont.write(df_meeting_notes)
-	cont.write(f"df_meeting_quotes == {df_meeting_quotes.shape}")
-	cont.write(df_meeting_quotes)
-	cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
-	cont.write(similar_quotes_m1)
-
-	quotes_approved_wsom_not_orders = df_meeting_quotes.merge(
-		df_orders[["Quote#"]].loc[(pd.isna(df_orders["WO Reviewed"])) | (df_orders["WO Reviewed"] == 0)],
-		how="inner",
-		left_on="Quote",
-		right_on="Quote#"
-	)
-	quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[
-		quotes_approved_wsom_not_orders["Approved"] == 1]
-	with cont.container(border=1):
-		if not quotes_approved_wsom_not_orders.empty:
-			st.write("quotes_approved_wsom_not_orders")
-			st.write(quotes_approved_wsom_not_orders)
-			btn_set_orders_quotes_approved_from_wsom = st.button(
-				label="Set these quotes to approved",
-				key="k_btn_set_orders_quotes_approved_from_wsom",
-				on_click=lambda
-					lq=quotes_approved_wsom_not_orders["Quote"].values.tolist(): set_orders_quotes_approved_from_wsom(
-					lq)
+		with cols_search_tools[0]:
+			toggle_comp_bws = st.toggle(
+				label=":red[BWS]",
+				value=True
 			)
-		else:
-			st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
-			st.write("Good to Go!")
 
-	view_as_options = ["Class", "Model", "Dealer", "All"]
-
-	list_models = sorted(df_meeting_quotes["Model No"].dropna().unique().tolist())
-	list_classes = sorted(df_meeting_quotes["Class"].dropna().unique().tolist())
-	list_dealers = sorted(df_meeting_quotes["COMPANY NAME"].dropna().unique().tolist())
-
-	# cols__ = st.columns(3)
-	# with cols__[0]:
-	# 	st.write(list_classes)
-	# with cols__[1]:
-	# 	st.write(list_models)
-	# with cols__[2]:
-	# 	st.write(list_dealers)
-
-	def change_selectbox_view_quotes():
-		# va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
-		# lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
-
-		# double rerun to hide the "NO OP" warning
-		st.session_state.update({
-			# "pills_selected_model": 0
-			# ,
-			k_need_rerun: True
-		})
-		if "pills_selected_model" in st.session_state:
-			del st.session_state["pills_selected_model"]
-		st.rerun()
-
-	with cont:
-
-		df_new_quotes: pd.DataFrame = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
-		df_old_quotes: pd.DataFrame = df_meeting_quotes.loc[df_meeting_quotes["Reviewed"]]
-
-		st.write(f"##### # New: {df_new_quotes.shape[0]}")
-		st.write(f"##### # Old: {df_old_quotes.shape[0]}")
-
-		st.session_state.setdefault(k_toggle_new_quotes_only, False)
-		toggle_new_quotes_only = st.toggle(
-			label="New Quotes Only",
-			key=k_toggle_new_quotes_only
-		)
-		# st.session_state.update({k_toggle_new_quotes_only: toggle_new_quotes_only})
-
-		k_selectbox_view_quotes = "selectbox_view_quotes"
-		st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
-		selectbox_view_quotes = st.selectbox(
-			label=f"View quotes by:",
-			key=f"k_{k_selectbox_view_quotes}",
-			options=view_as_options,
-			on_change=change_selectbox_view_quotes
-		)
-
-		print(f"{st.session_state.get('pills_selected_model')=}")
-		if selectbox_view_quotes == view_as_options[0]:
-			# class
-			st.header(f"{len(list_quotes)} quote(s) to review across {len(list_classes)} classes:")
-			selected_model = pills(
-				label="Classes",
-				options=list_classes,
-				key="pills_selected_model"
+			toggle_comp_stg = st.toggle(
+				label=":blue[STG]",
+				value=True
 			)
-			df_k = "Class"
-		elif selectbox_view_quotes == view_as_options[1]:
-			# model
-			st.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} models:")
-			selected_model = pills(
-				label="Models",
-				options=list_models,
-				key="pills_selected_model"
+		with cols_search_tools[2]:
+			toggle_allow_partial = st.toggle(
+				label="partial match?",
+				value=True,
+				help="Ignores case and any preceding or succeeding text."
 			)
-			df_k = "Model No"
-		elif selectbox_view_quotes == view_as_options[2]:
-			# dealer
-			st.header(f"{len(list_quotes)} quote(s) to review across {len(list_dealers)} dealers:")
-			selected_model = pills(
-				label="Dealers",
-				options=list_dealers,
-				key="pills_selected_model"
+			toggle_extensive_search = st.toggle(
+				label="extensive?",
+				value=False,
+				help="This search method is more in depth and will take a little longer to process."
 			)
-			df_k = "COMPANY NAME"
-		else:
-			# All
-			df_k = None
-			selected_model = True
-
-		if selected_model:
-
-			if df_k is not None:
-				df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes[df_k] == selected_model]
-			else:
-				df_model_quotes = df_meeting_quotes
-			df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
-			st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
-			view_cols = ["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
-					 "ResolvedBy", "Reviewed", "Approved"]
-			stdf_model_quotes = st.dataframe(
-				df_model_quotes[view_cols],
-				selection_mode="single-row",
-				key="stdf_model_quotes",
-				hide_index=True,
-				on_select="rerun"
+			toggle_intersection_search = st.toggle(
+				label="intersect?",
+				value=False,
+				help="If on, all criteria must match. Otherwise it will perform a logical union of all results."
 			)
-			# df_model_quotes["Sel"] = False
-			# df_model_quotes["Sel_Date"] = None
-			# stdf_model_quotes_0 = st.data_editor(
-			# 	df_model_quotes[["Sel"] + view_cols],
-			# 	# selection_mode="single-row",
-			# 	key="stdf_model_quotes_0",
-			# 	hide_index=True,
-			# 	# on_select="rerun",
-			# 	on_change=select_quote,
-			# 	disabled=view_cols[:-2],
-			# 	column_config={
-			# 		"Sel": st.column_config.CheckboxColumn(
-			# 			label="Sel",
-			# 			width=50
-			# 		),
-			# 		view_cols[-2]: st.column_config.CheckboxColumn(
-			# 			label=view_cols[-2],
-			# 			width=120
-			# 		),
-			# 		view_cols[-1]: st.column_config.CheckboxColumn(
-			# 			label=view_cols[-1],
-			# 			width=120
-			# 		)
-			# 	}
-			# )
-			# # # st.session_state.update({
-			# # # 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
-			# # # })
-			# # st.write("stdf_model_quotes_0")
-			# # st.write(stdf_model_quotes_0)
 
-			if stdf_model_quotes["selection"]["rows"]:
-				ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
-				selected_quote = ser_selected_quote["Quote"]
-				pdf_file = ser_selected_quote["Q_WORpt"]
-				known_issues = df_meeting_notes.loc[df_meeting_notes["Quote"] == selected_quote][
-					["MeetingID", "IssueDescription"]]
-				if not known_issues.empty:
-					st.write(f"Known Issues:")
-					st.dataframe(known_issues.transpose())
-				else:
-					st.write("No Known Issues")
-				st.write(ser_selected_quote)
-				st.write(pdf_file)
-
-				if pdf_file:
-					# annotations = [
-					# 	{
-					# 		"page": 1,
-					# 		"x": 220,
-					# 		"y": 155,
-					# 		"height": 22,
-					# 		"width": 65,
-					# 		"color": "red"
-					# 	},
-					# 	{
-					# 		"page": 1,
-					# 		"x": 220,
-					# 		"y": 155,
-					# 		"height": 22,
-					# 		"width": 65,
-					# 		"color": "red"
-					# 	}
-					# ]
-
-
-					def my_custom_annotation_handler(annotation):
-						# print(f"Annotation {annotation} clicked.")
-						idx = annotation.get("index")
-						page = annotation.get("page")
-						x = annotation.get("x")
-						y = annotation.get("y")
-						w = annotation.get("width")
-						h = annotation.get("height")
-						c = annotation.get("color")
-						bbox = (x, y, x + w, y + h)
-						et = annotation.get("text")
-						# line_texts = ';; '.join([line['text'] for line in et])
-						# print(f"{line_texts=}")
-						text = annotation.get("text")
-						print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-						# key = f"issues_{selected_quote}_{idx}"
-						key = f"status_{m_id}_{selected_quote}"
-						st.session_state.update({
-							f"need_details_{key}": True
-						})
-						# list_issues = st.session_state.setdefault(key, [])
-						ask_details(key, idx, selected_quote, annotation)
-
-
-					parsed_annotations = load_pdf_annotations(pdf_file)
-					# # st.write(parsed_annotations)
-					# st.write(f"{len(parsed_annotations)=}")
-					# st.write(f"{(len(parsed_annotations) == 15)=}")
-					# # st.write(f"Parsed Annotation Texts:")
-					# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
-					#
-					# st.write("SESSION_STATE:")
-					# st.write(st.session_state)
-
-					k_c_a = "clicked_annotation"
-					k_pdf_viewer = f"pdf_viewer_wo"
-					pdf_click_callback = my_custom_annotation_handler
-					if (k_pdf_viewer in st.session_state) and isinstance(st.session_state[k_pdf_viewer],
-																		 (dict, list, tuple)) and (
-							k_c_a in st.session_state[k_pdf_viewer]):
-						print("==A")
-						annotation = st.session_state[k_pdf_viewer][k_c_a]
-						idx = annotation.get("index")
-						key = f"issues_{selected_quote}_{idx}"
-						if not st.session_state.get(key, True):
-							print("==B")
-							# st.session_state.update({
-							# 	f"need_details_{key}": False
-							# })
-							pdf_click_callback = None
-						else:
-							print("==C")
-					else:
-						print("==D")
-
-					if st.button(
-							label=f"Approve {selected_quote}",
-							key=f"btn_approve_quote"
-					):
-						df_meeting_quotes.loc[
-							df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
-						if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
-							st.session_state[f"status_{m_id}_{selected_quote}"] = {}
-						st.session_state[f"status_{m_id}_{selected_quote}"].update({
-							k_df_meeting_quotes: df_meeting_quotes,
-							f"approve_{selected_quote}_date": datetime.datetime.now(),
-							f"approve_{selected_quote}_by": "Avery Briggs"
-						})
-						st.rerun()
-					print(f"AA == {pdf_file=}")
-					st_pdf_viewer = pdf_viewer(
-						input=load_pdf_binary(pdf_file),
-						width=s_w,
-						# key=f"kp_{k_pdf_viewer}",
-						annotations=parsed_annotations,
-						on_annotation_click=pdf_click_callback,
-						annotation_outline_size=2,
-						pages_vertical_spacing=10
-					)
-					# st.session_state.update({k_pdf_viewer: st.session_state.get(f"kp_{k_pdf_viewer}")})
-					st.session_state.update({k_pdf_viewer: st_pdf_viewer})
-					print(f"{st_pdf_viewer=}")
-					if isinstance(st_pdf_viewer, (dict, list)):
-						if k_c_a in st_pdf_viewer:
-							print("_A")
-							if st_pdf_viewer[k_c_a]:
-								print("_B")
-								annotation = st_pdf_viewer[k_c_a]
-								idx = annotation.get("index")
-								key = f"issues_{selected_quote}_{idx}"
-								if not st.session_state.get(key, True):
-									print("_C")
-									st_pdf_viewer.pop(k_c_a)
-									st.session_state.update({
-										f"need_details_{key}": False
-									})
-								else:
-									print("_D")
-							else:
-								print("_E")
-						else:
-							print("_F")
-					st.write(st_pdf_viewer)
-
-				# TODO add a submit issue button at the bottom of the screen
-				# if st.button(
-				# 	label="Issue",
-				# 	key="btn_issue_quote"
-				# ):
-				# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
-				#
-				# 	idx = annotation.get("index")
-				# 	page = annotation.get("page")
-				# 	x = annotation.get("x")
-				# 	y = annotation.get("y")
-				# 	w = annotation.get("width")
-				# 	h = annotation.get("height")
-				# 	c = annotation.get("color")
-				# 	bbox = (x, y, x + w, y + h)
-				# 	et = annotation.get("text")
-				# 	# line_texts = ';; '.join([line['text'] for line in et])
-				# 	# print(f"{line_texts=}")
-				# 	text = annotation.get("text")
-				# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-				# 	key = f"issues_{selected_quote}_{idx}"
-				# 	st.session_state.update({
-				# 		f"need_details_{key}": True
-				# 	})
-				# 	# list_issues = st.session_state.setdefault(key, [])
-				# 	ask_details(key, selected_quote, annotation)
-				#
-				# 	# st.session_state.update({
-				# 	# 	k_df_meeting_quotes: df_meeting_quotes,
-				# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
-				# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
-				# 	# })
-				# 	st.rerun()
-
-if m_id is not None:
-	if st.button(
-			label=f"End Meeting #{m_id}",
-			key=f"k_end_meeting"
-	):
-
-		editing = not df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id].empty
-		if editing:
-			sql = ("""
-UPDATE
-	[BWSdb].[dbo].[WSOM_MeetingNotes]
-SET
+		table_cols = o_table_cols
+		if toggle_extensive_search:
+			table_cols += [col_dealer, col_standards, col_options, col_npo]
 		
-			""").strip()
-		else:
-			sql = ("""
-INSERT INTO
-	[BWSdb].[dbo].[WSOM_MeetingNotes]
-			""").strip()
 
-		# for k, v in st.session_state.items():
-		# 	print(f"{k=}, {v=}")
+		if toggle_comp_bws or toggle_comp_stg:
 
-		df_meetings_results = st.session_state.get(k_df_meeting_quotes)
+			multiselect_cols = st.multiselect(
+				label="Fields to Search",
+				# options=o_table_cols
+				options=table_cols
+			)
 
-		print("k_df_meeting_quotes")
-		print(df_meetings_results)
+			if multiselect_cols:
 
-		# new_quotes = []
-		# for i, row in df_meetings_results.iterrows():
+				# if len(multiselect_cols) == len(o_table_cols):
+				# 	# if st.button(
+				# 	# 	label="remove all"
+				# 	# ):
+				# 	#
 
-		# TODO iterate through meeting quotes and set the approved status to the the table
-		connect(sql, do_exec=False, do_print=True, do_show=True)
-		st.session_state.update({
-			k_meeting_id: None,
-			k_df_meeting_quotes: None
-		})
-		cont.empty()
-		st.rerun()
+				st.divider()
 
-if st.session_state.get(k_need_rerun, False):
-	st.session_state.update({k_need_rerun: False})
-	st.rerun()
+				st.session_state.setdefault("start_date_input", first_of_month(first_of_day(datetime.datetime.now())))
+				st.session_state.setdefault("end_date_input", end_of_month(datetime.datetime.now()))
+				with st.container(border=True):
+					toggle_date_filter = st.toggle(
+						label=f"date filter?",
+						value=True
+					)
+					if toggle_date_filter:
+						k_date_col: str = "date_col"
+						st.session_state.setdefault(k_date_col, date_cols[0])
+						date_by_field = st.selectbox(
+							label="By Date Field:",
+							options=date_cols,
+							key=k_date_col
+						)
+						st.write(f"Filter by {date_by_field} date:")
+						start_date = st.date_input(
+							label="start",
+							key=f"start_date_input"
+						)
 
-	# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
-	# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
-	# if model_quote_options:
-	# 	selected_quote = pills(
-	# 		label="Quotes",
-	# 		options=model_quote_options
-	# 	)
-	# 	if selected_quote:
-	# 		df_quote = df_model_quotes.loc[df_model_quotes["SimQ"] == selected_quote]
-	# 		st.write(df_quote)
+						end_date = st.date_input(
+							label="end",
+							key=f"end_date_input"
+						)
+					else:
+						date_by_field, start_date, end_date = None, None, None
 
-# similar_quotes_m2 = similar_quotes_m1.copy()
-# # similar_quotes_m2[["ModelCount", "ClassCount"]] = 0, 0
-# # st.write("A")
-# # st.write(similar_quotes_m2.groupby(by="Q").value_counts())
-# # st.write("B")
-# # df_model_group = similar_quotes_m2.groupby(
-# # 	by="Model No"
-# # ).agg({"ModelCount": "count"})
-# # df_class_group = similar_quotes_m2.groupby(
-# # 	by=["Q", "Class"]
-# # ).agg({"ClassCount": "count"})
-# #
-# # st.write(df_model_group)
-# # st.write(df_class_group)
-# #
-# # df_model_group = similar_quotes_m1.groupby(
-# # 	by="Model No"
-# # )[["Model No", "Q"]].head().drop_duplicates(["Model No", "Q"])
-#
-# df_model_group = similar_quotes_m1.groupby(
-# 	by="Q"
-# ).head()
-# st.write("==")
-# st.write(df_model_group)
+				entry_search_term = st.text_input(
+					label="Search Terms delimited by ';'"
+				)
 
-# # # Create a dummy streamlit page
-# # import streamlit as st
-# # from streamlit_scroll_navigation import scroll_navbar
-# #
-# # # Anchor IDs and icons
-# # anchor_ids = ["About", "Features", "Settings", "Pricing", "Contact"]
-# # anchor_icons = ["info-circle", "lightbulb", "gear", "tag", "envelope"]
-# #
-# # # 1. as sidebar menu
-# # with st.sidebar:
-# #     st.subheader("Example 1")
-# #     scroll_navbar(
-# #         anchor_ids,
-# #         anchor_labels=None, # Use anchor_ids as labels
-# #         anchor_icons=anchor_icons)
-# #
-# # # 2. horizontal menu
-# # st.subheader("Example 2")
-# # scroll_navbar(
-# #         anchor_ids,
-# #         key = "navbar2",
-# #         anchor_icons=anchor_icons,
-# #         orientation="horizontal")
-# #
-# # # Dummy page setup
-# # for anchor_id in anchor_ids:
-# #     st.subheader(anchor_id,anchor=anchor_id)
-# #     st.write("content " * 100)
-#
-#
-# float_init()
-#
-#
-# @st.cache_data(ttl=None, show_spinner=True)
-# def parse_quotes_list(pdf_obj, column_name="Quote #") -> tuple[int, list[str]]:
-# 	quotes = []
-#
-# 	with pdfplumber.open(pdf_file) as pdf_obj:
-#
-# 		max_pages = len(pdf_obj.pages) + 1
-#
-# 		for page in pdf_obj.pages[:2]:
-# 			tables = page.extract_tables()
-# 			for table in tables:
-# 				# Check if the column name exists in the table header
-# 				if column_name in table[0]:  # table[0] is assumed to be the header row
-# 					# Get the index of the desired column
-# 					col_index = table[0].index(column_name)
-#
-# 					# Extract data from the column
-# 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
-#
-# 		return max_pages, quotes
-#
-#
-# def refresh():
-# 	print(f"REFRESH")
-# 	sel = st.session_state.get("tree_select_selected_nodes", [])
-# 	print(f"AA 'problem_option_wording_leaf_31080' in sel => '{'problem_option_wording_leaf_31080' in sel}'")
-# 	st.rerun()
-#
-#
-# @st.dialog(title="Issue Details", width="large")
-# def ask_details(key: str):
-# 	*key, quote = key.rsplit("_", 1)
-# 	key = "".join(key).removeprefix("_").removesuffix("_")
-# 	st.header(f"Please describe your '{key}' issue with quote '{quote}':")
-# 	st.write(f"issue_details_{key}")
-# 	t_key: str = f"issue_details_{key}"
-# 	# IMPORTANT!
-# 	# widget keys in dialog functions are popped from session_state before they can share their values.
-# 	inp = st.text_area(
-# 		label="Details",
-# 		key=f"text_area_{t_key}",
-# 		placeholder=f"Contact sales for further details",
-# 		label_visibility="hidden"
-# 		# ,
-# 		# on_change=lambda: st.session_state.update({t_key: ""})
-# 	)
-# 	cols = st.columns(2)
-# 	with cols[0]:
-# 		if st.button(
-# 			label="cancel",
-# 			key=f"cancel_details_input"
-# 		):
-# 			st.rerun()
-# 	with cols[1]:
-# 		if st.button(
-# 			label="submit",
-# 			key=f"submit_details_input"
-# 		):
-# 			st.session_state.update({t_key: inp})
-# 			print(t_key)
-# 			print(f"SS=> '{st.session_state.get(t_key, 'N/A').strip()}'")
-# 			st.rerun()
-#
-#
-# s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
-# s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
-#
-# if s_h is None or not s_h:
-# 	s_h = 900
-# if s_w is None or not s_w:
-# 	s_w = 1600
-#
-#
-# # pages_per_render = 5
-# checklist_float_pos = 50, 60
-#
-#
-# # column_pdf, column = st.columns([50, 50])
-# cols_main = st.columns([0.75, 0.25])
-# container_pdf = cols_main[0].container(border=1)
-# container_pdf_ctls = st.container(border=1, height=25)
-# # container_pdf_ctls.float()
-# container_pdf_ctls.float("bottom: 0;background-color: grey;")
-#
-# cols_main[1].float(f"right: {checklist_float_pos[0]}px; top: {checklist_float_pos[1]}px;")
-#
-# st.write(f"Screen width is '{s_w}'")
-# st.write(f"Screen height is '{s_h}'")
-# pdf_render_pages = st.session_state.setdefault("pdf_render_pages", list(range(1, pages_per_render + 1)))
-# iss_log = {}
-# valid_log = []
-#
-# with container_pdf:
-# 	pdf_file = st.file_uploader(
-# 		"Upload PDF file",
-# 		type=('pdf',),
-# 		key="file_uploader_pdf_file",
-# 		accept_multiple_files=False
-# 	)
-#
-# 	if pdf_file:
-# 		st.write(pdf_file.name)
-# 		binary_data = pdf_file.getvalue()
-#
-# 		max_pages, quotes_list = parse_quotes_list(pdf_file)
-# 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
-#
-# 		st_pdf_viewer(
-# 			input=binary_data,
-# 			width=s_w,
-# 			pages_to_render=pdf_render_pages
-# 		)
-# 	else:
-# 		pdf_render_pages = None, None
-# 		max_pages, quotes_list = None, []
-# 		st.session_state.pop("pdf_render_pages")
-#
-#
-# st.write(f"Max_pages: '{max_pages}'")
-# st.write(f"pdf_render_pages: '{pdf_render_pages}'")
-#
-#
-# if any(pdf_render_pages):
-# 	with container_pdf_ctls:
-# 		cols_ctls = st.columns(5)
-#
-# 		with cols_ctls[0]:
-# 			a, b = 0, pages_per_render
-# 			st.write(f"0 {a=}, {b=}")
-# 			if st.button(
-# 				label=f"1 - {pages_per_render}",
-# 				key="btn_pdf_ctl_first",
-# 				disabled=pdf_render_pages[0] == 1
-# 			):
-# 				st.session_state.update({
-# 					"pdf_render_pages": list(range(a+1, b+1))
-# 				})
-# 				st.rerun()
-# 		with cols_ctls[1]:
-# 			a, b = (
-# 				max(1, pdf_render_pages[0] - pages_per_render - 1),
-# 				max(pages_per_render, pdf_render_pages[0] - 1)
-# 			)
-# 			st.write(f"1 {a=}, {b=}")
-# 			if st.button(
-# 				label=f"{a} - {b}",
-# 				key="btn_pdf_ctl_prev",
-# 				disabled=pdf_render_pages[0] == 1
-# 			):
-# 				st.session_state.update({
-# 					"pdf_render_pages": list(range(a, b+1))
-# 				})
-# 				st.rerun()
-# 		with cols_ctls[2]:
-# 			st.write(f"2 {pdf_render_pages=}")
-# 			st.write(f"2 {max_pages=}")
-# 			st.write(f"Page ({pdf_render_pages[0]} - {pdf_render_pages[-1]}) of {max_pages} pages(s)")
-# 		with cols_ctls[3]:
-# 			a, b = (
-# 				min(max_pages - (1 + (max_pages % pages_per_render)), pdf_render_pages[0] + pages_per_render),
-# 				min(max_pages, pdf_render_pages[-1] + pages_per_render)
-# 			)
-# 			st.write(f"3 {a=}, {b=}")
-# 			if st.button(
-# 				label=f"{a} - {b}",
-# 				key="btn_pdf_ctl_next",
-# 				disabled=pdf_render_pages[-1] == max_pages
-# 			):
-# 				st.session_state.update({
-# 					"pdf_render_pages": list(range(a, b+1))
-# 				})
-# 				st.rerun()
-# 		with cols_ctls[4]:
-# 			a, b = max_pages - (1 + (max_pages % pages_per_render)), max_pages
-# 			st.write(f"4 {a=}, {b=}")
-# 			if st.button(
-# 				label=f"{a} - {b}",
-# 				key="btn_pdf_ctl_last",
-# 				disabled=pdf_render_pages[-1] == max_pages
-# 			):
-# 				st.session_state.update({
-# 					"pdf_render_pages": list(range(a, b+1))
-# 				})
-# 				st.rerun()
-#
-# with cols_main[1]:
-#
-# 	with st.container(
-# 		border=1,
-# 		height=int(s_h * 0.75)
-# 	):
-# 		st.subheader("Checklist:")
-#
-# 		# Create op_nodes to display
-# 		# op_nodes = [
-# 		# 	{"label": "Folder A", "value": "folder_a"},
-# 		# 	{
-# 		# 		"label": "Folder B",
-# 		# 		"value": "folder_b",
-# 		# 		"children": [
-# 		# 			{"label": "Sub-folder A", "value": "sub_a"},
-# 		# 			{"label": "Sub-folder B", "value": "sub_b"},
-# 		# 			{"label": "Sub-folder C", "value": "sub_c"},
-# 		# 		],
-# 		# 	},
-# 		# 	{
-# 		# 		"label": "Folder C",
-# 		# 		"value": "folder_c",
-# 		# 		"children": [
-# 		# 			{"label": "Sub-folder D", "value": "sub_d"},
-# 		# 			{
-# 		# 				"label": "Sub-folder E",
-# 		# 				"value": "sub_e",
-# 		# 				"children": [
-# 		# 					{"label": "Sub-sub-folder A", "value": "sub_sub_a"},
-# 		# 					{"label": "Sub-sub-folder B", "value": "sub_sub_b"},
-# 		# 				],
-# 		# 			},
-# 		# 			{"label": "Sub-folder F", "value": "sub_f"},
-# 		# 		],
-# 		# 	},
-# 		# ]
-# 		lf = "leaf_"
-# 		ch = "check_"
-# 		pb = "problem_"
-# 		qn = "question_"
-# 		aa = "all_of_the_above_"
-# 		node_structure = {
-# 			"problem": (["Code", "Option-Wording", "Typo"], pb),
-# 			"question": (["Beams", "Load-Securement"], qn),
-# 			"all of the above": ([], aa)
-# 		}
-# 		op_nodes = [{
-# 			"label": q,
-# 			"value": f"{ch}{q}",
-# 			# "showCheckbox": False,
-# 			"children": [{
-# 				"label": lbl.title(),
-# 				"value": f"{node_structure[lbl][1]}{q}",
-# 				# "showCheckbox": False,
-# 				"children": [{
-# 					# "label": child.title(),
-# 					"label": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}",
-# 					"value": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}"
-# 					}
-# 					for child in node_structure[lbl][0]
-# 				]}
-# 				for lbl in node_structure
-# 			]}
-# 			for i, q in enumerate(quotes_list)
-# 		]
-# 		possible_keys = []
-# 		for i, q in enumerate(quotes_list):
-# 			possible_keys.append(op_nodes[i]["value"])
-# 			for j, lbl in enumerate(node_structure):
-# 				possible_keys.append(op_nodes[i]["children"][j]["value"])
-# 				if not op_nodes[i]["children"][j].get("children", []):
-# 					del op_nodes[i]["children"][j]["children"]
-# 				else:
-# 					for child in op_nodes[i]["children"][j].get("children", []):
-# 						possible_keys.append(child["value"])
-# 		st.write(possible_keys)
-# 		st.write(op_nodes)
-# 		# op_nodes = [
-# 		# 	{
-# 		# 		"label": q,
-# 		# 		"value": f"{ch}{q}",
-# 		# 		"children": [
-# 		# 			{
-# 		# 				"label": "problem",
-# 		# 				"value": f"{pb}{q}",
-# 		# 				"children": [
-# 		# 					{
-# 		# 						"label": "code",
-# 		# 						"value": f"{pb}code_{lf}{q}"
-# 		# 					},
-# 		# 					{
-# 		# 						"label": "option-wording",
-# 		# 						"value": f"{pb}wording_{lf}{q}"
-# 		# 					},
-# 		# 					{
-# 		# 						"label": "typo",
-# 		# 						"value": f"{pb}typo_{lf}{q}"
-# 		# 					}
-# 		# 				]
-# 		# 			},
-# 		# 			{
-# 		# 				"label": "question",
-# 		# 				"value": f"{qn}{q}",
-# 		# 				"children": [
-# 		# 					{
-# 		# 						"label": "Beams",
-# 		# 						"value": f"{qn}beams_{lf}{q}"
-# 		# 					},
-# 		# 					{
-# 		# 						"label": "Load Securement",
-# 		# 						"value": f"{qn}load_securement_{lf}{q}"
-# 		# 					}
-# 		# 				]
-# 		# 			},
-# 		# 			{
-# 		# 				"label": "all of the above",
-# 		# 				"value": f"{lf}{aa}{q}"
-# 		# 			}
-# 		# 		]
-# 		# 	}
-# 		# 	for q in quotes_list
-# 		# ]
-#
-# 		with st.container(border=True):
-# 			pre_select = st.session_state.get("tree_select_selected_nodes", [])
-# 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
-#
-# 			return_select = tree_select(
-# 				op_nodes,
-# 				checked=pre_select,
-# 				# key="tree_select",
-# 				direction="ltr"
-# 			)
-#
-# 			if st.button(
-# 				label="select all",
-# 				key="btn_select_all_checklist"
-# 			):
-# 				children = deepcopy(op_nodes)
-# 				checked = []
-# 				while children:
-# 					node = children.pop(0)
-# 					val = node.get("value")
-# 					children.extend(node.get("children", []))
-# 					checked.append(val)
-# 					# st.session_state.update({val: True})
-# 				st.session_state.update({"tree_select_selected_nodes": checked})
-# 				# if val not in return_select["checked"]:
-# 				# 	return_select["checked"].append(val)
-#
-# 				st.rerun()
-#
-# 			st.write("pre_select")
-# 			st.write(pre_select)
-#
-# 		with st.container(border=True):
-# 			st.write(return_select)
-#
-# 		checked = return_select["checked"]
-#
-# 		old_checked = st.session_state.get("tree_select_selected_nodes", [])
-# 		new_checked = set(checked).difference(set(old_checked))
-# 		new_removed = set(old_checked).difference(set(checked))
-#
-# 		added: bool = False
-# 		for i, key in enumerate(new_checked):
-# 			if key.startswith(aa):
-# 				for j, k in enumerate(node_structure):
-# 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
-# 					if ok not in checked:
-# 						checked.append(ok)
-# 						added = True
-# 						print(f"ADD '{ok}'")
-# 						if ok not in possible_keys:
-# 							raise ValueError(f"NO '{ok}'")
-# 					for lbl in node_structure[k][0]:
-# 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
-# 						if ok not in checked:
-# 							checked.append(ok)
-# 							added = True
-# 							print(f"ADD '{ok}'")
-# 							if ok not in possible_keys:
-# 								raise ValueError(f"NO '{ok}'")
-# 			ask_details(key)
-# 			print("XX '" + st.session_state.get(f"issue_details{key}", "n/a") + "'")
-#
-# 		removed: bool = False
-# 		for i, key in enumerate(new_removed):
-# 			if key.startswith(aa):
-# 				for j, k in enumerate(node_structure):
-# 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
-# 					if ok in checked:
-# 						checked.remove(ok)
-# 						removed = True
-# 						print(f"ADD '{ok}'")
-# 						if ok not in possible_keys:
-# 							raise ValueError(f"NO '{ok}'")
-# 					for lbl in node_structure[k][0]:
-# 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
-# 						if ok in checked:
-# 							checked.remove(ok)
-# 							removed = True
-# 							print(f"ADD '{ok}'")
-# 							if ok not in possible_keys:
-# 								raise ValueError(f"NO '{ok}'")
-#
-# 		st.session_state.update({"tree_select_selected_nodes": checked})
-# 		st.write("old_checked")
-# 		st.write(old_checked)
-# 		st.write("new_checked")
-# 		st.write(new_checked)
-# 		st.write("new_removed")
-# 		st.write(new_removed)
-# 		st.write("checked")
-# 		st.write(checked)
-# 		#
-# 		#
-# 		# st.session_state.update({"tree_select_selected_nodes": return_select["checked"]})
-# 		if added or removed:
-# 			# print(f"{st.session_state.get('tree_select_selected_nodes')=}")
-# 			print(f"RERUN {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-# 			# st.rerun()
-# 			refresh()
-#
-# 		chk_quotes = set()
-# 		for i, check_key in enumerate(checked):
-# 			*key, quote = check_key.rsplit("_", 1)
-# 			key = "".join(key)
-# 			# print(f"Quote: '{quote}', ISS: '{key}'")
-# 			chk_quotes.add(quote)
-# 		quotes_left = list(set(quotes_list).difference(chk_quotes))
-#
-# 		with st.container(border=True):
-# 			if st.button(
-# 				label="End Meeting",
-# 				key=f"btn_end_meeting",
-# 				disabled=bool(quotes_left)
-# 			):
-# 				for i, check_key in enumerate(return_select["checked"]):
-# 					*key, quote = check_key.rsplit("_", 1)
-# 					key = "".join(key).removeprefix("_").removesuffix("_")
-# 					# iss = key.removeprefix(pb).removeprefix(qn).removesuffix(lf)
-# 					print(f"Quote: '{quote}', ISS: '{key}'")
-# 					if key == ch.removeprefix("_").removesuffix("_"):
-# 						# checked Tag
-# 						valid_log.append(quote)
-# 					else:
-# 						if quote not in valid_log:
-# 							# if key == aa.removesuffix("_").removeprefix("_"):
-# 							if quote not in iss_log:
-# 								iss_log[quote] = []
-# 							# if key.removeprefix(lf).removeprefix(ch) == aa:
-# 							# 	for j
-# 							# else:
-# 								iss_log[quote].append({
-# 									"iss": key,
-# 									"comm": st.session_state.get(f"issue_details_{key}", "N/A")
-# 								})
-#
-# with st.expander("RESULTS"):
-# 	st.write("Checked")
-# 	st.write(valid_log)
-# 	st.write("---")
-# 	st.write("Issues")
-# 	st.write(iss_log)
-#
-# # ----------------------------------------------------------------------
-# # ----------------------------------------------------------------------
-# # ----------------------------------------------------------------------
-#
-# # # Version 2025-01-27 1900
-# #
-# # import os
-# # import datetime
-# # from copy import deepcopy
-# #
-# # import pdfplumber
-# # from PyPDF2 import PdfMerger
-# #
-# # import streamlit as st
-# #
-# # from streamlit_pdf_viewer import st_pdf_viewer
-# # from streamlit_js_eval import streamlit_js_eval
-# # from streamlit_tree_select import tree_select
-# # from streamlit_float import float_init
-# # from streamlit_scroll_navigation import scroll_navbar
-# #
-# # from utility import next_available_file_name
-# #
-# # st.set_page_config(
-# # 	layout="wide",
-# # 	page_title="Weekly WO Meeting"
-# # )
-# #
-# #
-# # list_meeting_folders = [d for d in os.listdir(r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings") if d != "Scripts"]
-# # st.multiselect(
-# # 	label="SELECT",
-# # 	options=list_meeting_folders,
-# # 	key="selected_directory"
-# # )
-# # # import wx
-# # #
-# # # if st.button("Browse"):
-# # # 	dialog = wx.DirDialog(None, "Select a folder:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
-# # # 	if dialog.ShowModal() == wx.ID_OK:
-# # # 		folder_path = dialog.GetPath()  # folder_path will contain the path of the folder you have selected as string
-# # # 		st.write(f"{folder_path=}")
-# # # 	st.write(f"B")
-# # # st.write(f"A")
-# #
-# #
-# # # # Create a dummy streamlit page
-# # # import streamlit as st
-# # # from streamlit_scroll_navigation import scroll_navbar
-# # #
-# # # # Anchor IDs and icons
-# # # anchor_ids = ["About", "Features", "Settings", "Pricing", "Contact"]
-# # # anchor_icons = ["info-circle", "lightbulb", "gear", "tag", "envelope"]
-# # #
-# # # # 1. as sidebar menu
-# # # with st.sidebar:
-# # #     st.subheader("Example 1")
-# # #     scroll_navbar(
-# # #         anchor_ids,
-# # #         anchor_labels=None, # Use anchor_ids as labels
-# # #         anchor_icons=anchor_icons)
-# # #
-# # # # 2. horizontal menu
-# # # st.subheader("Example 2")
-# # # scroll_navbar(
-# # #         anchor_ids,
-# # #         key = "navbar2",
-# # #         anchor_icons=anchor_icons,
-# # #         orientation="horizontal")
-# # #
-# # # # Dummy page setup
-# # # for anchor_id in anchor_ids:
-# # #     st.subheader(anchor_id,anchor=anchor_id)
-# # #     st.write("content " * 100)
-# #
-# #
-# # float_init()
-# #
-# #
-# # @st.cache_data(ttl=None, show_spinner=True)
-# # def parse_quotes_list(pdf_obj, column_name="Quote #") -> tuple[int, list[str]]:
-# # 	quotes = []
-# #
-# # 	with pdfplumber.open(pdf_file) as pdf_obj:
-# #
-# # 		max_pages = len(pdf_obj.pages) + 1
-# #
-# # 		for page in pdf_obj.pages[:2]:
-# # 			tables = page.extract_tables()
-# # 			for table in tables:
-# # 				# Check if the column name exists in the table header
-# # 				if column_name in table[0]:  # table[0] is assumed to be the header row
-# # 					# Get the index of the desired column
-# # 					col_index = table[0].index(column_name)
-# #
-# # 					# Extract data from the column
-# # 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
-# #
-# # 		return max_pages, quotes
-# #
-# #
-# # def refresh():
-# # 	print(f"REFRESH")
-# # 	sel = st.session_state.get("tree_select_selected_nodes", [])
-# # 	print(f"AA 'problem_option_wording_leaf_31080' in sel => '{'problem_option_wording_leaf_31080' in sel}'")
-# # 	st.rerun()
-# #
-# #
-# # @st.dialog(title="Issue Details", width="large")
-# # def ask_details(key: str):
-# # 	*key, quote = key.rsplit("_", 1)
-# # 	key = "".join(key).removeprefix("_").removesuffix("_")
-# # 	st.header(f"Please describe your '{key}' issue with quote '{quote}':")
-# # 	st.write(f"issue_details_{key}")
-# # 	t_key: str = f"issue_details_{key}"
-# # 	# IMPORTANT!
-# # 	# widget keys in dialog functions are popped from session_state before they can share their values.
-# # 	inp = st.text_area(
-# # 		label="Details",
-# # 		key=f"text_area_{t_key}",
-# # 		placeholder=f"Contact sales for further details",
-# # 		label_visibility="hidden"
-# # 		# ,
-# # 		# on_change=lambda: st.session_state.update({t_key: ""})
-# # 	)
-# # 	cols = st.columns(2)
-# # 	with cols[0]:
-# # 		if st.button(
-# # 			label="cancel",
-# # 			key=f"cancel_details_input"
-# # 		):
-# # 			st.rerun()
-# # 	with cols[1]:
-# # 		if st.button(
-# # 			label="submit",
-# # 			key=f"submit_details_input"
-# # 		):
-# # 			st.session_state.update({t_key: inp})
-# # 			print(t_key)
-# # 			print(f"SS=> '{st.session_state.get(t_key, 'N/A').strip()}'")
-# # 			st.rerun()
-# #
-# #
-# # def merge_pdfs_from_folder(
-# # 		folder_path: str,
-# # 		quote_order: list[str],
-# # 		output_file: str = "merged_output.pdf"
-# # ) -> str:
-# # 	"""
-# # 	Merges all PDF files in a specified folder into a single PDF file.
-# #
-# # 	Args:
-# # 		folder_path (str): The path to the folder containing PDF files.
-# # 		quote_order (list[str)): The order of quotes to reference when ordering the PDFs. Read from itinerary_file.
-# # 		output_file (str): The name of the output merged PDF file (default: "merged_output.pdf").
-# #
-# # 	Returns:
-# # 		str: The path to the merged output file.
-# # 	"""
-# #
-# # 	print(f"Starting...")
-# # 	start_time = datetime.datetime.now()
-# #
-# # 	# Check if the folder exists
-# # 	if not os.path.exists(folder_path):
-# # 		raise FileNotFoundError(f"The folder '{folder_path}' does not exist.")
-# #
-# # 	if not os.path.exists(os.path.join(folder_path, itinerary_file)):
-# # 		raise FileNotFoundError(f"The Itinerary file '{itinerary_file}' does not exist.")
-# #
-# # 	files = []
-# #
-# # 	print(f"Searching...")
-# #
-# # 	# Iterate through files in the folder
-# # 	for filename in sorted(os.listdir(folder_path)):
-# # 		# Check if the file is a PDF
-# # 		if filename.lower().endswith(".pdf"):
-# # 			if filename != itinerary_file:
-# # 				file_path = os.path.join(folder_path, filename)
-# # 				# print(f"Adding: {file_path}")
-# # 				files.append(file_path)
-# #
-# # 	print(f"Combining...")
-# #
-# # 	# Create a PdfMerger object
-# # 	merger = PdfMerger()
-# # 	merger.append(os.path.join(folder_path, itinerary_file))
-# #
-# # 	for i, quote_number in enumerate(quote_order):
-# # 		if not isinstance(quote_number, str):
-# # 			quote_number = str(quote_number)
-# # 		for j, file_name in enumerate(files):
-# # 			if f"q{quote_number}.pdf".lower() in file_name.lower():
-# # 				merger.append(file_name)
-# #
-# # 	print(f"Saving...")
-# #
-# # 	# Save the merged PDF to the specified output file
-# # 	output_path = os.path.join(folder_path, output_file)
-# # 	merger.write(output_path)
-# # 	merger.close()
-# #
-# # 	end_time = datetime.datetime.now()
-# # 	print(f"Finished...")
-# # 	print(f"Merged PDF saved as: {output_path}")
-# # 	print(f"Results in {(end_time - start_time).total_seconds()} second(s)")
-# # 	return output_path
-# #
-# #
-# # def extract_quote_column(pdf_file_path, column_name="Quote #"):
-# # 	"""
-# # 	Extract data from a specific column in a table within a PDF.
-# #
-# # 	Args:
-# # 		pdf_file_path (str): Path to the PDF file.
-# # 		column_name (str): Name of the column to extract (default: "Quote").
-# #
-# # 	Returns:
-# # 		list: A list of values from the specified column.
-# # 	"""
-# # 	quotes = []
-# #
-# # 	# Open the PDF file using pdfplumber
-# # 	with pdfplumber.open(pdf_file_path) as pdf:
-# # 		for page in pdf.pages:
-# # 			# Extract tables from the page
-# # 			tables = page.extract_tables()
-# # 			for table in tables:
-# # 				# Check if the column name exists in the table header
-# # 				if column_name in table[0]:  # table[0] is assumed to be the header row
-# # 					# Get the index of the desired column
-# # 					col_index = table[0].index(column_name)
-# #
-# # 					# Extract data from the column
-# # 					quotes += [row[col_index] for row in table[1:] if len(row) > col_index]
-# # 	return quotes
-# #
-# #
-# # s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
-# # s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
-# #
-# # if s_h is None or not s_h:
-# # 	s_h = 900
-# # if s_w is None or not s_w:
-# # 	s_w = 1600
-# #
-# #
-# # pages_per_render = 5
-# # checklist_float_pos = 50, 60
-# #
-# #
-# # # column_pdf, column = st.columns([50, 50])
-# # cols_main = st.columns([0.75, 0.25])
-# # container_pdf = cols_main[0].container(border=1)
-# # container_pdf_ctls = st.container(border=1, height=25)
-# # # container_pdf_ctls.float()
-# # container_pdf_ctls.float("bottom: 0;background-color: grey;")
-# #
-# # cols_main[1].float(f"right: {checklist_float_pos[0]}px; top: {checklist_float_pos[1]}px;")
-# #
-# # st.write(f"Screen width is '{s_w}'")
-# # st.write(f"Screen height is '{s_h}'")
-# # pdf_render_pages = st.session_state.setdefault("pdf_render_pages", list(range(1, pages_per_render + 1)))
-# # iss_log = {}
-# # valid_log = []
-# #
-# # with container_pdf:
-# # 	pdf_file = st.file_uploader(
-# # 		"Upload PDF file",
-# # 		type=('pdf',),
-# # 		key="file_uploader_pdf_file",
-# # 		accept_multiple_files=False
-# # 	)
-# #
-# # 	# prep_date = datetime.datetime(2025, 1, 14)
-# # 	prep_date = datetime.datetime.today()
-# #
-# # 	output_file = r"merged_output.pdf"
-# # 	folder_path = fr"\\bwsfp01\Public\SALES OFFICE\Weekly WO Meetings\{prep_date:%Y-%m-%d}"
-# #
-# # 	output_file = next_available_file_name(os.path.join(folder_path, output_file))
-# # 	output_file = os.path.basename(output_file)
-# #
-# # 	itinerary_file = fr"WO_Meeting_{prep_date:%Y-%m-%d}.pdf"
-# # 	if os.path.exists(os.path.join(folder_path, itinerary_file)):
-# # 		quote_order = extract_quote_column(
-# # 			os.path.join(folder_path, itinerary_file)
-# # 		)
-# # 		# print(f"{quote_order=}")
-# #
-# # 		merge_pdfs_from_folder(
-# # 			folder_path,
-# # 			quote_order,
-# # 			os.path.join(folder_path, output_file)
-# # 		)
-# # 	else:
-# # 		print(f"Please follow the steps to create an Itinerary file first.")
-# #
-# # 	if pdf_file:
-# # 		st.write(pdf_file.name)
-# # 		binary_data = pdf_file.getvalue()
-# #
-# # 		max_pages, quotes_list = parse_quotes_list(pdf_file)
-# # 		# pdf_obj = PyPDF2.PdfReader(pdf_file)
-# #
-# # 		st_pdf_viewer(
-# # 			input=binary_data,
-# # 			width=s_w,
-# # 			pages_to_render=pdf_render_pages
-# # 		)
-# # 	else:
-# # 		pdf_render_pages = None, None
-# # 		max_pages, quotes_list = None, []
-# # 		st.session_state.pop("pdf_render_pages")
-# #
-# #
-# # st.write(f"Max_pages: '{max_pages}'")
-# # st.write(f"pdf_render_pages: '{pdf_render_pages}'")
-# #
-# #
-# # if any(pdf_render_pages):
-# # 	with container_pdf_ctls:
-# # 		cols_ctls = st.columns(5)
-# #
-# # 		with cols_ctls[0]:
-# # 			a, b = 0, pages_per_render
-# # 			st.write(f"0 {a=}, {b=}")
-# # 			if st.button(
-# # 				label=f"1 - {pages_per_render}",
-# # 				key="btn_pdf_ctl_first",
-# # 				disabled=pdf_render_pages[0] == 1
-# # 			):
-# # 				st.session_state.update({
-# # 					"pdf_render_pages": list(range(a+1, b+1))
-# # 				})
-# # 				st.rerun()
-# # 		with cols_ctls[1]:
-# # 			a, b = (
-# # 				max(1, pdf_render_pages[0] - pages_per_render - 1),
-# # 				max(pages_per_render, pdf_render_pages[0] - 1)
-# # 			)
-# # 			st.write(f"1 {a=}, {b=}")
-# # 			if st.button(
-# # 				label=f"{a} - {b}",
-# # 				key="btn_pdf_ctl_prev",
-# # 				disabled=pdf_render_pages[0] == 1
-# # 			):
-# # 				st.session_state.update({
-# # 					"pdf_render_pages": list(range(a, b+1))
-# # 				})
-# # 				st.rerun()
-# # 		with cols_ctls[2]:
-# # 			st.write(f"2 {pdf_render_pages=}")
-# # 			st.write(f"2 {max_pages=}")
-# # 			st.write(f"Page ({pdf_render_pages[0]} - {pdf_render_pages[-1]}) of {max_pages} pages(s)")
-# # 		with cols_ctls[3]:
-# # 			a, b = (
-# # 				min(max_pages - (1 + (max_pages % pages_per_render)), pdf_render_pages[0] + pages_per_render),
-# # 				min(max_pages, pdf_render_pages[-1] + pages_per_render)
-# # 			)
-# # 			st.write(f"3 {a=}, {b=}")
-# # 			if st.button(
-# # 				label=f"{a} - {b}",
-# # 				key="btn_pdf_ctl_next",
-# # 				disabled=pdf_render_pages[-1] == max_pages
-# # 			):
-# # 				st.session_state.update({
-# # 					"pdf_render_pages": list(range(a, b+1))
-# # 				})
-# # 				st.rerun()
-# # 		with cols_ctls[4]:
-# # 			a, b = max_pages - (1 + (max_pages % pages_per_render)), max_pages
-# # 			st.write(f"4 {a=}, {b=}")
-# # 			if st.button(
-# # 				label=f"{a} - {b}",
-# # 				key="btn_pdf_ctl_last",
-# # 				disabled=pdf_render_pages[-1] == max_pages
-# # 			):
-# # 				st.session_state.update({
-# # 					"pdf_render_pages": list(range(a, b+1))
-# # 				})
-# # 				st.rerun()
-# #
-# # with cols_main[1]:
-# #
-# # 	with st.container(
-# # 		border=1,
-# # 		height=int(s_h * 0.75)
-# # 	):
-# # 		st.subheader("Checklist:")
-# #
-# # 		# Create op_nodes to display
-# # 		# op_nodes = [
-# # 		# 	{"label": "Folder A", "value": "folder_a"},
-# # 		# 	{
-# # 		# 		"label": "Folder B",
-# # 		# 		"value": "folder_b",
-# # 		# 		"children": [
-# # 		# 			{"label": "Sub-folder A", "value": "sub_a"},
-# # 		# 			{"label": "Sub-folder B", "value": "sub_b"},
-# # 		# 			{"label": "Sub-folder C", "value": "sub_c"},
-# # 		# 		],
-# # 		# 	},
-# # 		# 	{
-# # 		# 		"label": "Folder C",
-# # 		# 		"value": "folder_c",
-# # 		# 		"children": [
-# # 		# 			{"label": "Sub-folder D", "value": "sub_d"},
-# # 		# 			{
-# # 		# 				"label": "Sub-folder E",
-# # 		# 				"value": "sub_e",
-# # 		# 				"children": [
-# # 		# 					{"label": "Sub-sub-folder A", "value": "sub_sub_a"},
-# # 		# 					{"label": "Sub-sub-folder B", "value": "sub_sub_b"},
-# # 		# 				],
-# # 		# 			},
-# # 		# 			{"label": "Sub-folder F", "value": "sub_f"},
-# # 		# 		],
-# # 		# 	},
-# # 		# ]
-# # 		lf = "leaf_"
-# # 		ch = "check_"
-# # 		pb = "problem_"
-# # 		qn = "question_"
-# # 		aa = "all_of_the_above_"
-# # 		node_structure = {
-# # 			"problem": (["Code", "Option-Wording", "Typo"], pb),
-# # 			"question": (["Beams", "Load-Securement"], qn),
-# # 			"all of the above": ([], aa)
-# # 		}
-# # 		op_nodes = [{
-# # 			"label": q,
-# # 			"value": f"{ch}{q}",
-# # 			# "showCheckbox": False,
-# # 			"children": [{
-# # 				"label": lbl.title(),
-# # 				"value": f"{node_structure[lbl][1]}{q}",
-# # 				# "showCheckbox": False,
-# # 				"children": [{
-# # 					# "label": child.title(),
-# # 					"label": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}",
-# # 					"value": f"{node_structure[lbl][1]}{child.lower().replace(' ', '_').replace('-', '_')}_{lf}{q}"
-# # 					}
-# # 					for child in node_structure[lbl][0]
-# # 				]}
-# # 				for lbl in node_structure
-# # 			]}
-# # 			for i, q in enumerate(quotes_list)
-# # 		]
-# # 		possible_keys = []
-# # 		for i, q in enumerate(quotes_list):
-# # 			possible_keys.append(op_nodes[i]["value"])
-# # 			for j, lbl in enumerate(node_structure):
-# # 				possible_keys.append(op_nodes[i]["children"][j]["value"])
-# # 				if not op_nodes[i]["children"][j].get("children", []):
-# # 					del op_nodes[i]["children"][j]["children"]
-# # 				else:
-# # 					for child in op_nodes[i]["children"][j].get("children", []):
-# # 						possible_keys.append(child["value"])
-# # 		st.write(possible_keys)
-# # 		st.write(op_nodes)
-# # 		# op_nodes = [
-# # 		# 	{
-# # 		# 		"label": q,
-# # 		# 		"value": f"{ch}{q}",
-# # 		# 		"children": [
-# # 		# 			{
-# # 		# 				"label": "problem",
-# # 		# 				"value": f"{pb}{q}",
-# # 		# 				"children": [
-# # 		# 					{
-# # 		# 						"label": "code",
-# # 		# 						"value": f"{pb}code_{lf}{q}"
-# # 		# 					},
-# # 		# 					{
-# # 		# 						"label": "option-wording",
-# # 		# 						"value": f"{pb}wording_{lf}{q}"
-# # 		# 					},
-# # 		# 					{
-# # 		# 						"label": "typo",
-# # 		# 						"value": f"{pb}typo_{lf}{q}"
-# # 		# 					}
-# # 		# 				]
-# # 		# 			},
-# # 		# 			{
-# # 		# 				"label": "question",
-# # 		# 				"value": f"{qn}{q}",
-# # 		# 				"children": [
-# # 		# 					{
-# # 		# 						"label": "Beams",
-# # 		# 						"value": f"{qn}beams_{lf}{q}"
-# # 		# 					},
-# # 		# 					{
-# # 		# 						"label": "Load Securement",
-# # 		# 						"value": f"{qn}load_securement_{lf}{q}"
-# # 		# 					}
-# # 		# 				]
-# # 		# 			},
-# # 		# 			{
-# # 		# 				"label": "all of the above",
-# # 		# 				"value": f"{lf}{aa}{q}"
-# # 		# 			}
-# # 		# 		]
-# # 		# 	}
-# # 		# 	for q in quotes_list
-# # 		# ]
-# #
-# # 		with st.container(border=True):
-# # 			pre_select = st.session_state.get("tree_select_selected_nodes", [])
-# # 			print(f"BB 'problem_option_wording_leaf_31080' in pre_select => '{'problem_option_wording_leaf_31080' in pre_select}'")
-# #
-# # 			return_select = tree_select(
-# # 				op_nodes,
-# # 				checked=pre_select,
-# # 				# key="tree_select",
-# # 				direction="ltr"
-# # 			)
-# #
-# # 			if st.button(
-# # 				label="select all",
-# # 				key="btn_select_all_checklist"
-# # 			):
-# # 				children = deepcopy(op_nodes)
-# # 				checked = []
-# # 				while children:
-# # 					node = children.pop(0)
-# # 					val = node.get("value")
-# # 					children.extend(node.get("children", []))
-# # 					checked.append(val)
-# # 					# st.session_state.update({val: True})
-# # 				st.session_state.update({"tree_select_selected_nodes": checked})
-# # 				# if val not in return_select["checked"]:
-# # 				# 	return_select["checked"].append(val)
-# #
-# # 				st.rerun()
-# #
-# # 			st.write("pre_select")
-# # 			st.write(pre_select)
-# #
-# # 		with st.container(border=True):
-# # 			st.write(return_select)
-# #
-# # 		checked = return_select["checked"]
-# #
-# # 		old_checked = st.session_state.get("tree_select_selected_nodes", [])
-# # 		new_checked = set(checked).difference(set(old_checked))
-# # 		new_removed = set(old_checked).difference(set(checked))
-# #
-# # 		added: bool = False
-# # 		for i, key in enumerate(new_checked):
-# # 			if key.startswith(aa):
-# # 				for j, k in enumerate(node_structure):
-# # 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
-# # 					if ok not in checked:
-# # 						checked.append(ok)
-# # 						added = True
-# # 						print(f"ADD '{ok}'")
-# # 						if ok not in possible_keys:
-# # 							raise ValueError(f"NO '{ok}'")
-# # 					for lbl in node_structure[k][0]:
-# # 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
-# # 						if ok not in checked:
-# # 							checked.append(ok)
-# # 							added = True
-# # 							print(f"ADD '{ok}'")
-# # 							if ok not in possible_keys:
-# # 								raise ValueError(f"NO '{ok}'")
-# # 			ask_details(key)
-# # 			print("XX '" + st.session_state.get(f"issue_details{key}", "n/a") + "'")
-# #
-# # 		removed: bool = False
-# # 		for i, key in enumerate(new_removed):
-# # 			if key.startswith(aa):
-# # 				for j, k in enumerate(node_structure):
-# # 					ok = f"{k}_{q}".lower().replace(' ', '_').replace('-', '_')
-# # 					if ok in checked:
-# # 						checked.remove(ok)
-# # 						removed = True
-# # 						print(f"ADD '{ok}'")
-# # 						if ok not in possible_keys:
-# # 							raise ValueError(f"NO '{ok}'")
-# # 					for lbl in node_structure[k][0]:
-# # 						ok = f"{k}_{lbl}_{lf}{q}".lower().replace(' ', '_').replace('-', '_')
-# # 						if ok in checked:
-# # 							checked.remove(ok)
-# # 							removed = True
-# # 							print(f"ADD '{ok}'")
-# # 							if ok not in possible_keys:
-# # 								raise ValueError(f"NO '{ok}'")
-# #
-# # 		st.session_state.update({"tree_select_selected_nodes": checked})
-# # 		st.write("old_checked")
-# # 		st.write(old_checked)
-# # 		st.write("new_checked")
-# # 		st.write(new_checked)
-# # 		st.write("new_removed")
-# # 		st.write(new_removed)
-# # 		st.write("checked")
-# # 		st.write(checked)
-# # 		#
-# # 		#
-# # 		# st.session_state.update({"tree_select_selected_nodes": return_select["checked"]})
-# # 		if added or removed:
-# # 			# print(f"{st.session_state.get('tree_select_selected_nodes')=}")
-# # 			print(f"RERUN {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-# # 			# st.rerun()
-# # 			refresh()
-# #
-# # 		chk_quotes = set()
-# # 		for i, check_key in enumerate(checked):
-# # 			*key, quote = check_key.rsplit("_", 1)
-# # 			key = "".join(key)
-# # 			# print(f"Quote: '{quote}', ISS: '{key}'")
-# # 			chk_quotes.add(quote)
-# # 		quotes_left = list(set(quotes_list).difference(chk_quotes))
-# #
-# # 		with st.container(border=True):
-# # 			if st.button(
-# # 				label="End Meeting",
-# # 				key=f"btn_end_meeting",
-# # 				disabled=bool(quotes_left)
-# # 			):
-# # 				for i, check_key in enumerate(return_select["checked"]):
-# # 					*key, quote = check_key.rsplit("_", 1)
-# # 					key = "".join(key).removeprefix("_").removesuffix("_")
-# # 					# iss = key.removeprefix(pb).removeprefix(qn).removesuffix(lf)
-# # 					print(f"Quote: '{quote}', ISS: '{key}'")
-# # 					if key == ch.removeprefix("_").removesuffix("_"):
-# # 						# checked Tag
-# # 						valid_log.append(quote)
-# # 					else:
-# # 						if quote not in valid_log:
-# # 							# if key == aa.removesuffix("_").removeprefix("_"):
-# # 							if quote not in iss_log:
-# # 								iss_log[quote] = []
-# # 							# if key.removeprefix(lf).removeprefix(ch) == aa:
-# # 							# 	for j
-# # 							# else:
-# # 								iss_log[quote].append({
-# # 									"iss": key,
-# # 									"comm": st.session_state.get(f"issue_details_{key}", "N/A")
-# # 								})
-# #
-# # with st.expander("RESULTS"):
-# # 	st.write("Checked")
-# # 	st.write(valid_log)
-# # 	st.write("---")
-# # 	st.write("Issues")
-# # 	st.write(iss_log)
-# #
-# #
-# #
-# # # # Script run 2025-01-28 1450
-# # # x_cols = st.columns(3)
-# # # with x_cols[0]:
-# # # 	if st.button(
-# # # 		label="APPROVE PAST WO's"
-# # # 	):
-# # # 		r_lst = [
-# # # 			30983,
-# # # 			31111,
-# # # 			31124,
-# # # 			30875,
-# # # 			31005,
-# # # 			31011,
-# # # 			30757,
-# # # 			31039,
-# # # 			31040,
-# # # 			31044,
-# # # 			31045,
-# # # 			31046,
-# # # 			31047,
-# # # 			30921,
-# # # 			31053,
-# # # 			31055,
-# # # 			31056,
-# # # 			31058,
-# # # 			31059,
-# # # 			31061,
-# # # 			31062,
-# # # 			31073,
-# # # 			30947,
-# # # 			31080,
-# # # 			31083,
-# # # 			31084,
-# # # 			31096,
-# # # 			31102,
-# # # 			31103
-# # # 		]
-# # #
-# # # 		sql = f"""
-# # # 	UPDATE
-# # # 		[BWSdb].[dbo].[Orders]
-# # # 	SET
-# # # 		[WO Reviewed] = 1,
-# # # 		[WO Review Date] = '{datetime.datetime.now():%Y-%m-%d %H:%M:%S}'
-# # # 	WHERE
-# # # 		[Quote#] IN (
-# # # 			{',\n\t\t'.join(map(str, r_lst))}
-# # # 		)
-# # # 		"""
-# # #
-# # # 		st.code(sql, language="sql", line_numbers=True)
+				if entry_search_term:
+
+					with cols_controls[1]:
+						with st.expander(label="code"):
+							st.code(
+								generate_sql(),
+								language="sql",
+								line_numbers=True
+							)
+						df_data: pd.DataFrame = get_data(generate_sql())
+						if toggle_intersection_search:
+							# n_terms = len(multiselect_cols) + int(toggle_comp_bws) + int(toggle_comp_stg)
+							n_terms = len(entry_search_term.split(";"))
+							counts = df_data['Quote'].value_counts()
+							valid_quotes = counts[counts >= n_terms].index
+							df_data = df_data[df_data['Quote'].isin(valid_quotes)]
+
+						# st.write(f"Matching Quote Values ({df_data.shape[0]} rows X {df_data.shape[1]} columns):")
+						cols_results = st.columns([0.85, 0.15])
+						with cols_results[0]:
+							stde_orders = display_df(
+								df_data,
+								"Matching Quote Values",
+								width=1000,
+								selection_mode="single-row",
+								on_select="rerun",
+								key=f"k_stde_matching_quotes"
+							)
+						with cols_results[1]:
+							st.write("Quote List")
+							st.write(df_data["Quote"].dropna().unique().tolist())
+
+						if stde_orders["selection"]["rows"]:
+							with st.container(border=True):
+								sr_selected_order = df_data.iloc[stde_orders["selection"]["rows"][0]]
+								try:
+									q = int(sr_selected_order['Quote'])
+								except:
+									q = sr_selected_order['Quote']
+								c = sr_selected_order["Comp"]
+								if c == "STG":
+									col_q = col_quote_stg
+									df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGQuote"] == q]
+									df_d: pd.DataFrame = df_dealers2
+									df_s: pd.DataFrame = df_standards2
+									df_op: pd.DataFrame = df_options2
+									df_cw: pd.DataFrame = df_npos2
+								else:
+									col_q = col_quote_bws
+									df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+									df_d: pd.DataFrame = df_dealers
+									df_s: pd.DataFrame = df_standards
+									df_op: pd.DataFrame = df_options
+									df_cw: pd.DataFrame = df_npos
+
+								# dfdd = pd.DataFrame(df_o.transpose())
+								# dfdd.columns = ["Value"]
+								# print(dfdd)
+								st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+								stde_orders = display_df(
+									df_o
+								)
+
+								if not df_o.empty:
+									st.divider()
+									sr_o = df_o.iloc[0]
+									dealer_id = sr_o["DealerID"]
+									df_d = df_d.loc[df_d["ID"] == dealer_id]
+									display_df(
+										df_d,
+										"Dealer Data:"
+									)
+
+								if not df_s.empty:
+									st.divider()
+									sr_s = df_s.iloc[0]
+									model_no = sr_o[col_q]
+									df_s = df_s.loc[df_s[col_q] == q]
+									display_df(
+										df_s,
+										"Ordered Standards Data:"
+									)
+
+								if not df_op.empty:
+									st.divider()
+									df_op = df_op.loc[df_op[col_q] == q]
+									display_df(
+										df_op,
+										"Ordered Options Data:"
+									)
+
+								if not df_cw.empty:
+									st.divider()
+									df_cw = df_cw.loc[df_cw[col_q] == q]
+									display_df(
+										df_cw,
+										"NPO Data:"
+									)
+						# st.write("Tell me more:")
+						# for i, row in df_data.iterrows():
+						# 	q = int(row['Quote'])
+						# 	c = row["Comp"]
+						# 	if st.button(
+						# 		label=f"{q}",
+						# 		key=f"btn_tmm_{i}"
+						# 	):
+						# 		if c == "STG":
+						# 			df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+						# 			df_d: pd.DataFrame = df_dealers2
+						# 		else:
+						# 			df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+						# 			df_d: pd.DataFrame = df_dealers
+
+						# 		# dfdd = pd.DataFrame(df_o.transpose())
+						# 		# dfdd.columns = ["Value"]
+						# 		# print(dfdd)
+						# 		st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+						# 		stde_orders = display_df(
+						# 			df_o
+						# 		)
+
+						# 		if not df_o.empty:
+						# 			sr_o = df_o.iloc[0]
+						# 			dealer_id = sr_o["DealerID"]
+						# 			df_d = df_d.loc[df_d["ID"] == dealer_id]
+						# 			display_df(
+						# 				df_d,
+						# 				"Dealer Data:"
+						# 			)
+
+						# 		# display_df(
+						# 		# 	dfdd,
+						# 		# 	"Transposed:"
+						# 		# )
+			else:
+				st.session_state.update({
+					k_times_blank_rerun: times_blank_rerun + 1
+				})
+
+	if st.session_state.get(k_times_blank_rerun, 0) >= 3:
+		if not toggle_allow_partial:
+			st.info(f"No results found, try re-running after allowing for 'partial match' to widen the search.")

@@ -232,6 +232,9 @@ from datetime_utility import first_of_month, end_of_month
 MAX_HOLD_TIME: int =  1000 * 60 * 60
 st.set_page_config(layout="wide")
 
+kill_time = datetime.datetime(2025, 5, 23, 12)
+st.warning(f"DEPRECATED -- Functions moved to Sales page {kill_time:%x%X}")
+
 
 template_header = """
 -- Matching {LST_COLS}

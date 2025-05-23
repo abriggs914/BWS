@@ -2023,24 +2023,30 @@ if b1:
     }
     st.write(data)
 
-# st.write(st.user_info._get_user_info())
-# rtc = st.runtime.get_instance()
-# rtc = st.runtime.runtime.RuntimeConfig
-# st.write(f"{rtc.session_manager_class.num_sessions()=}")
-# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.num_active_sessions()=}")
-# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_sessions()=}")
-# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_active_sessions()=}")
-# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_session_info()=}")
-# st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_active_session_info()=}")
+# # st.write(st.user_info._get_user_info())
+# # rtc = st.runtime.get_instance()
+# # rtc = st.runtime.runtime.RuntimeConfig
+# # st.write(f"{rtc.session_manager_class.num_sessions()=}")
+# # st.write(f"{st.runtime.RuntimeConfig.session_manager_class.num_active_sessions()=}")
+# # st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_sessions()=}")
+# # st.write(f"{st.runtime.RuntimeConfig.session_manager_class.list_active_sessions()=}")
+# # st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_session_info()=}")
+# # st.write(f"{st.runtime.RuntimeConfig.session_manager_class.get_active_session_info()=}")
 
-from st_excel_table import Table
+# from st_excel_table import Table
 
-st.title("Streamlit-Excel-Table")
+# st.title("Streamlit-Excel-Table")
 
-data = [
-    {"id": "hoge", "x": 5.77, "y": 8.85, "color": "red"},
-    {"id": "hogedb", "x": 15.77, "y": 18.85, "color": "red"},
-    {"id": "hogeba", "x": 25.77, "y": 28.85, "color": "red"},
-    {"id": "hogeas", "x": 35.77, "y": 38.85, "color": "red"},
-]
-Table(data)
+# data = [
+#     {"id": "hoge", "x": 5.77, "y": 8.85, "color": "red"},
+#     {"id": "hogedb", "x": 15.77, "y": 18.85, "color": "red"},
+#     {"id": "hogeba", "x": 25.77, "y": 28.85, "color": "red"},
+#     {"id": "hogeas", "x": 35.77, "y": 38.85, "color": "red"},
+# ]
+# Table(data, key="table0")
+
+import requests
+resp = requests.get("https://teams.microsoft.com/l/channel/19%3A2c154f95a30848fabd38a3131aa250cc%40thread.tacv2/Parts%20from%20Milton!?groupId=ddddd82b-6d0f-4351-abff-8a8aa056b834&tenantId=777ee35c-9e94-4e3c-9594-542fbc819fe6")
+
+st.code(resp.text, language="html")
+st.write(resp)

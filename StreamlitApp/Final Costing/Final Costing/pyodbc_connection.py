@@ -118,9 +118,9 @@ def connect(
     # distinct_queries = [stmt for stmt in f"{sql};".split(";") if stmt.strip()]
     # n_distinct_queries = len(distinct_queries)
 
-    print(f"SQL BEGIN (")
-    print(sql)
-    print(f") SQL END")
+    # print(f"SQL BEGIN (")
+    # print(sql)
+    # print(f") SQL END")
 
     has_insert = all([
         any([
