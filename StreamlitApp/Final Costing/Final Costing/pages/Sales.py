@@ -838,8 +838,8 @@ def select_quote(*args):
 
 
 @st.cache_data(show_spinner=True, ttl=MAX_HOLD_TIME)
-def load_sql_data(sql) -> pd.DataFrame:
-	return connect(sql)
+def load_sql_data(sql, **connection_data) -> pd.DataFrame:
+	return connect(sql, **connection_data)
 
 
 def load_orders() -> pd.DataFrame:
@@ -1072,6 +1072,62 @@ def generate_sql():
 	return f"{statements_h}\n{statements_d}\n" + ("\nUNION\n".join(statements)) + ";"
 
 
+@st.cache_data(ttl=60*60)
+def hold_walk_bws():
+    # SUPER SLOW
+    return list(os.walk(root_location_bws))
+
+
+@st.cache_data(ttl=60*60)
+def hold_walk_stg():
+    # SUPER SLOW
+    return list(os.walk(root_location_stg))
+
+
+@st.cache_data(ttl=60*60)
+def gather_parts() -> pd.DataFrame:
+    walk_bws = hold_walk_bws()
+    walk_stg = hold_walk_stg()
+
+    parts = []
+    for dir_path, dir_names, file_names in walk_bws:
+        # st.write(f"{len(file_names)=}, {file_names[:5]:}")
+        for file in file_names:
+            if file.lower().endswith(".pdf"):
+                stock_code = os.path.basename(file).removesuffix(".pdf")
+                parts.append({
+                    "StockCode": stock_code,
+                    "Path": os.path.join(dir_path, file)
+                })
+    
+    df = pd.DataFrame(parts)
+    if df.empty:
+        df.columns = ["StockCode", "Path"]
+    return df
+
+
+@st.cache_data(ttl=None)
+def get_pdf(path):
+    with open(path, "rb") as f:
+        return f.read()
+
+
+def load_inv_bws() -> pd.DataFrame:
+	return load_sql_data("InvMaster", database="SysproCompanyA", uid="SRS", pwd="")
+
+
+def load_inv_stg() -> pd.DataFrame:
+	return load_sql_data("InvMaster", database="SysproCompanyS", uid="SCSRS", pwd="")
+
+
+def load_inv_move_bws() -> pd.DataFrame:
+	return load_sql_data("InvMovements", database="SysproCompanyA", uid="SRS", pwd="")
+
+
+def load_inv_move_stg() -> pd.DataFrame:
+	return load_sql_data("InvMovements", database="SysproCompanyS", uid="SCSRS", pwd="")
+
+
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
 s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
 s_h = 0
@@ -1091,7 +1147,7 @@ df_meeting_notes = load_meeting_notes()
 df_meeting_notes["Quote"] = df_meeting_notes["Quote"].apply(int)
 
 
-options_pills_control = ["Sales Search", "Weekly Sales Order Meeting"]
+options_pills_control = ["Sales Search", "Weekly Sales Order Meeting", "Part Search"]
 k_pill_control: str = f"pill_control"
 st.session_state.setdefault(k_pill_control, 0)
 
@@ -3000,6 +3056,85 @@ if pills_control == options_pills_control[1]:
 	# # # 		"""
 	# # #
 	# # # 		st.code(sql, language="sql", line_numbers=True)
+elif pills_control == options_pills_control[2]:
+	# Part Search
+	root_location_bws = r"\\server4\Design\VaultWorkspace_BWS\PDFS"
+	root_location_stg = r"\\stgdc01\Public\STARGATE PDFS"
+
+	df_parts = gather_parts()
+	df_inv_bws = load_inv_bws()
+	df_inv_stg = load_inv_stg()	
+	df_inv_move_bws = load_inv_move_bws()
+	df_inv_move_stg = load_inv_move_stg()	
+
+	list_parts: list[str] = df_parts["StockCode"].unique().tolist()
+
+	st.header("Part Search:")
+	st.subheader(f"Download the PDF to any known part number BWS or Stargate:")
+
+	multiselect_parts = st.multiselect(
+		label="Enter Parts:",
+		options=list_parts,
+		max_selections=5
+	)
+
+	if multiselect_parts:
+		df_sel_parts = df_parts.loc[
+			df_parts["StockCode"].isin(multiselect_parts)
+		]
+
+		stdf_parts = display_df(
+			df_sel_parts,
+			"Selected Parts:",
+			selection_mode="single-row",
+			on_select="rerun"
+		)
+		st.write(f"Select a row by clicking the left-margin for more details.")
+
+		st.divider()
+		cols_ps = st.columns([0.25, 0.75])
+		for i, row in df_sel_parts.iterrows():
+			with cols_ps[0]:
+				dowbload_button = st.download_button(
+					label=f'Download "{row["StockCode"]}"',
+					data=get_pdf(row["Path"]),
+					file_name=row["StockCode"].removesuffix(".pdf") + ".pdf",
+					key=f"download_button_{i}",
+					mime="application/pdf"
+				)
+
+		selected_rows = stdf_parts["selection"]["rows"]
+		if selected_rows:
+			sr_sel_part = df_sel_parts.iloc[stdf_parts["selection"]["rows"][0]]
+			stockcode = sr_sel_part["StockCode"].removesuffix(".pdf").removesuffix(".PDF")
+			file_name = stockcode + ".pdf"
+			with cols_ps[1]:
+				st.write("HERE")
+				st.write(sr_sel_part)
+				st.write(f"{stockcode=}")
+				st.write(f"{file_name=}")
+				df_inv_bws_part = df_inv_bws.loc[df_inv_bws["StockCode"] == stockcode]
+				df_inv_stg_part = df_inv_stg.loc[df_inv_stg["StockCode"] == stockcode]
+				display_df(
+					df_inv_bws_part,
+					"df_inv_bws_part"
+				)
+				display_df(
+					df_inv_stg_part,
+					"df_inv_stg_part"
+				)
+				df_inv_move_bws_part = df_inv_move_bws.loc[df_inv_move_bws["StockCode"] == stockcode]
+				df_inv_move_stg_part = df_inv_move_stg.loc[df_inv_move_stg["StockCode"] == stockcode]
+				display_df(
+					df_inv_move_bws_part,
+					"df_inv_move_bws_part"
+				)
+				display_df(
+					df_inv_move_stg_part,
+					"df_inv_move_stg_part"
+				)
+
+
 else:
 	# Sales Search
 	template_header = """
