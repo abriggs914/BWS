@@ -763,6 +763,92 @@ def metrics(df, metric_col: str, delta_col: Optional[str] = None):
             )
 
 
+@st.cache_data(ttl=None, show_spinner=True)
+def load_products_bws():
+	return connect("Products")
+
+
+@st.cache_data(ttl=None, show_spinner=True)
+def load_dealers_bws():
+	return connect("Dealers")
+
+
+@st.cache_data(ttl=None, show_spinner=True)
+def load_orders_bws():
+	return connect("Orders")
+
+
+@st.cache_data(show_spinner=True, ttl=MAX_QUERY_HOLD_TIME)
+def load_sql_data(sql, **connection_data) -> pd.DataFrame:
+	return connect(sql, **connection_data)
+
+
+def load_orders() -> pd.DataFrame:
+	return load_sql_data("Orders")
+
+
+def load_orders2() -> pd.DataFrame:
+	return load_sql_data("OrdersV2")
+
+
+def load_dealers() -> pd.DataFrame:
+	return load_sql_data("Dealers")
+
+
+def load_dealers2() -> pd.DataFrame:
+	return load_sql_data("DealersV2")
+
+
+def load_order_standards() -> pd.DataFrame:
+	return load_sql_data("Order Standards")
+
+
+def load_order_standards2() -> pd.DataFrame:
+	return load_sql_data("Order StandardsV2")
+
+
+def load_options() -> pd.DataFrame:
+	return load_sql_data("Order Options")
+
+
+def load_options2() -> pd.DataFrame:
+	return load_sql_data("Order OptionsV2")
+
+
+def load_npos() -> pd.DataFrame:
+	return load_sql_data("Custom Work")
+
+
+def load_npos2() -> pd.DataFrame:
+	return load_sql_data("Custom WorkV2")
+
+
+def load_production() -> pd.DataFrame:
+	return load_sql_data("Production")
+
+
+def load_production2() -> pd.DataFrame:
+	return load_sql_data("ProductionV2")
+
+
+def load_inventory_bws() -> pd.DataFrame:
+    return load_sql_data(
+        "InvMaster",
+        database="SysproCompanyA",
+        uid="SRS",
+        pwd=""
+    )
+
+
+def load_inventory_stg() -> pd.DataFrame:
+    return load_sql_data(
+        "InvMaster",
+        database="SysproCompanyS",
+        uid="SCSRS",
+        pwd=""
+    )
+
+
 if __name__ == '__main__':
 
     st.write("Hello")

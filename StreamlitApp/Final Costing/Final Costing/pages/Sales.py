@@ -3109,30 +3109,30 @@ elif pills_control == options_pills_control[2]:
 			stockcode = sr_sel_part["StockCode"].removesuffix(".pdf").removesuffix(".PDF")
 			file_name = stockcode + ".pdf"
 			with cols_ps[1]:
-				st.write("HERE")
-				st.write(sr_sel_part)
-				st.write(f"{stockcode=}")
-				st.write(f"{file_name=}")
-				df_inv_bws_part = df_inv_bws.loc[df_inv_bws["StockCode"] == stockcode]
-				df_inv_stg_part = df_inv_stg.loc[df_inv_stg["StockCode"] == stockcode]
-				display_df(
-					df_inv_bws_part,
-					"df_inv_bws_part"
-				)
-				display_df(
-					df_inv_stg_part,
-					"df_inv_stg_part"
-				)
-				df_inv_move_bws_part = df_inv_move_bws.loc[df_inv_move_bws["StockCode"] == stockcode]
-				df_inv_move_stg_part = df_inv_move_stg.loc[df_inv_move_stg["StockCode"] == stockcode]
-				display_df(
-					df_inv_move_bws_part,
-					"df_inv_move_bws_part"
-				)
-				display_df(
-					df_inv_move_stg_part,
-					"df_inv_move_stg_part"
-				)
+				with st.expander(label="Details"):
+					st.write(sr_sel_part)
+					st.write(f"{stockcode=}")
+					st.write(f"{file_name=}")
+					df_inv_bws_part = df_inv_bws.loc[df_inv_bws["StockCode"] == stockcode]
+					df_inv_stg_part = df_inv_stg.loc[df_inv_stg["StockCode"] == stockcode]
+					display_df(
+						df_inv_bws_part,
+						"df_inv_bws_part"
+					)
+					display_df(
+						df_inv_stg_part,
+						"df_inv_stg_part"
+					)
+					df_inv_move_bws_part = df_inv_move_bws.loc[df_inv_move_bws["StockCode"] == stockcode]
+					df_inv_move_stg_part = df_inv_move_stg.loc[df_inv_move_stg["StockCode"] == stockcode]
+					display_df(
+						df_inv_move_bws_part,
+						"df_inv_move_bws_part"
+					)
+					display_df(
+						df_inv_move_stg_part,
+						"df_inv_move_stg_part"
+					)
 
 
 else:
