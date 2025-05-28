@@ -1128,6 +1128,18 @@ def load_inv_move_stg() -> pd.DataFrame:
 	return load_sql_data("InvMovements", database="SysproCompanyS", uid="SCSRS", pwd="")
 
 
+def update_multiselect_parts():
+	values = multiselect_parts.copy()
+	if values:
+		for i, v in enumerate(values):
+			if v not in list_parts_l:
+				st.write(f"NEW!! {i=}, {v=}")
+			else:
+				st.write(f"old {i=}, {v=}")
+	else:
+		st.write("No values")
+
+
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
 s_w = streamlit_js_eval(js_expressions='parent.innerWidth', key='SCR_W')
 s_h = 0
@@ -1165,6 +1177,8 @@ pills_control = pills(
 	key=k_pill_control
 )
 
+list_parts: list[str] = []
+list_parts_l: list[str] = []
 
 if pills_control == options_pills_control[1]:
 	# Weekly Sales Order Meeting
@@ -3067,7 +3081,8 @@ elif pills_control == options_pills_control[2]:
 	df_inv_move_bws = load_inv_move_bws()
 	df_inv_move_stg = load_inv_move_stg()	
 
-	list_parts: list[str] = df_parts["StockCode"].unique().tolist()
+	list_parts = df_parts["StockCode"].unique().tolist()
+	list_parts_l = [p.lower().strip() for p in list_parts]
 
 	st.header("Part Search:")
 	st.subheader(f"Download the PDF to any known part number BWS or Stargate:")
@@ -3075,7 +3090,9 @@ elif pills_control == options_pills_control[2]:
 	multiselect_parts = st.multiselect(
 		label="Enter Parts:",
 		options=list_parts,
-		max_selections=5
+		max_selections=5,
+		# accept_new_options=True,
+		on_change=update_multiselect_parts
 	)
 
 	if multiselect_parts:
