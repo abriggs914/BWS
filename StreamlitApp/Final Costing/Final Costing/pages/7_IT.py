@@ -27,7 +27,7 @@ from streamlit_utility import coloured_text, display_df, load_pdf_binary
 from streamlit_utility_bws import load_it_requests, load_departments, load_itr_personnel, load_itstr_app_directory, \
     load_itr_customers, load_itr_hardware, load_itstr_user_directory, load_itr_software, load_itr_training, \
     get_next_it_request_number, get_tables, get_cols, load_production_file
-from utility import isnumber
+from utility import isnumber, next_available_file_name
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 ROOT_DIRECTORY_REQUESTS = r"\\bwsfp01.bwsdomain.local\Public\IT\Requests"
@@ -691,7 +691,7 @@ grid = {
     # "tab_edit_request": None
 }
 
-tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples"]
+tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples", "Issues"]
 sm_tab_names = ["Search Tables", "SQL Creator", "SQL Cleaner", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
@@ -4359,6 +4359,34 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
                     st.write(f"LAST MODIFIED {date_str_format(date)}")
 
 
+def issues():
+    attached_files = st.file_uploader(
+        label="Attachments",
+        type=["png", "jpg", "heic", "jpeg", "pdf", "mp4"],
+        accept_multiple_files=True,
+        key="k_attached_files"
+    )
+    save_root = r"\\bwsfp01\public\IT\Streamlit\Issue Uploads"
+    if st.button(
+        label="upload files"
+    ):
+        if attached_files:
+            for file in attached_files:
+                try:
+                    file_name = getattr(file, "name")
+                    file_path = os.path.join(save_root, file_name)
+                    file_path = next_available_file_name(file_path)
+                    with open(file_path, "wb") as f:
+                        f.write(file.getbuffer())
+                except Exception as e:
+                    st.write(f"Error copying file {file}.\n{e}")
+                    continue
+            attached_files.clear()
+            st.rerun()
+        else:
+            st.info("select some attachment files first.")
+
+
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
@@ -4404,6 +4432,9 @@ else:
 
         if tab_choice == tab_names[5]:
             code_samples()
+
+        if tab_choice == tab_names[6]:
+            issues()
 
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
