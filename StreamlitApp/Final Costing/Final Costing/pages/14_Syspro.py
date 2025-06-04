@@ -27,6 +27,16 @@ k_empty_df: str = "k_empty_df"
 
 key = f"k_multiselect_bins"
 c_key = f"c_ms_tag_choices"
+k_match_strictness = "k_match_strictness"
+
+for k, dv in [
+	(k_bins_to_use, None),
+	(k_empty_df, None),
+	(key, None),
+	(c_key, None),
+	(k_match_strictness, 75)
+]:
+	st.session_state.setdefault(k, dv)
 
 # df_inventory_bws_raw: pd.DataFrame = load_inventory_bws()
 # df_inventory_stg_raw: pd.DataFrame = load_inventory_stg()
@@ -266,7 +276,7 @@ elif pills_mode == options_mode[1]:
 			label="match strictness",
 			min_value=0,
 			max_value=100,
-			key=f"k_match_strictness"
+			key=k_match_strictness
 		)
 
 		if textbox_search:
@@ -423,13 +433,21 @@ elif pills_mode == options_mode[1]:
 		else:
 			df_search = pd.DataFrame(columns=['No Data'])
 
+	df_search.rename(
+		columns={
+			col: col.replace("Qty", "").replace("qty", "").replace("QTY", "")
+			for col in df_search.columns
+			if col.lower().startswith("qty")
+		},
+		inplace=True
+	)
 	show_cols = [c for c in df_search.columns if not c.lower().endswith("_norm")]
 	# comp, stockcode, description, longdesc, defaultbin, qtyallocated, qtyonhand, qtyonorder, qtyonbackorder
-	col_widths = [12, 100, 175, 250, 35, 15, 15, 15, 15]
+	col_widths = [50, 150, 225, 300, 65, 25, 25, 25, 25]
 	display_df(
 		df_search[show_cols],
 		"df_search",
-		width=1200,
+		width=1500,
 		column_config={sc: {"width": w} for sc, w in zip(show_cols, col_widths)}
 	)
 
