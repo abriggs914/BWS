@@ -1,3 +1,4 @@
+import os.path
 import re
 from difflib import SequenceMatcher
 
@@ -18,6 +19,9 @@ from streamlit_pills import pills
 # interruptions
 
 
+file_nicknames = r"C:\access\streamlit_syspro_nicknames.txt"
+
+
 st.set_page_config(
 	layout="wide"
 )
@@ -34,7 +38,7 @@ for k, dv in [
 	(k_empty_df, None),
 	(key, None),
 	(c_key, None),
-	(k_match_strictness, 75)
+	(k_match_strictness, 50 )
 ]:
 	st.session_state.setdefault(k, dv)
 
@@ -134,40 +138,78 @@ with cols_controls[0]:
 def load_inventory():
 	sql = """
 SELECT
-		'BWS' AS [Comp],
-		[IM].[StockCode],
-		[IM].[Description],
-		[IM].[LongDesc],
-		[IW].[DefaultBin],
-		[IW].[QtyAllocated],
-		[IW].[QtyOnHand],
-		[IW].[QtyOnOrder],
-		[IW].[QtyOnBackOrder]
-	FROM
-		[SysproCompanyA].[dbo].[InvMaster] [IM]
-	INNER JOIN
-		[SysproCompanyA].[dbo].[InvWarehouse] [IW]
-	ON
-		[IM].[StockCode] = [IW].[StockCode]
-	UNION
-	SELECT
-		'STG' AS [Comp],
-		[IM].[StockCode],
-		[IM].[Description],
-		[IM].[LongDesc],
-		[IW].[DefaultBin],
-		[IW].[QtyAllocated],
-		[IW].[QtyOnHand],
-		[IW].[QtyOnOrder],
-		[IW].[QtyOnBackOrder]
-	FROM
-		[SysproCompanyS].[dbo].[InvMaster] [IM]
-	INNER JOIN
-		[SysproCompanyS].[dbo].[InvWarehouse] [IW]
-	ON
-		[IM].[StockCode] = [IW].[StockCode]
+	'BWS' AS [Comp],
+	[IM].[StockCode],
+	[IM].[Description],
+	[IM].[LongDesc],
+	[IW].[DefaultBin],
+	[IW].[QtyAllocated],
+	[IW].[QtyOnHand],
+	[IW].[QtyOnOrder],
+	[IW].[QtyOnBackOrder],
+	[IW].[Supplier],
+	[IM].[AlternateKey1],
+	[IM].[AlternateKey2],
+	[PC].[Description] AS [ProductClass],
+	[AS].[SupplierName],
+	[AS].[SupplierChName]
+FROM
+	[SysproCompanyA].[dbo].[InvMaster] [IM]
+INNER JOIN
+	[SysproCompanyA].[dbo].[InvWarehouse] [IW]
+ON
+	[IM].[StockCode] = [IW].[StockCode]
+INNER JOIN
+	[SysproCompanyA].[dbo].[SalProductClass] [PC]
+ON
+	[IM].[ProductClass] = [PC].[ProductClass]
+INNER JOIN
+	[SysproCompanyA].[dbo].[ApSupplier] [AS]
+ON
+	[IM].[Supplier] = [AS].[Supplier]
+UNION
+SELECT
+	'STG' AS [Comp],
+	[IM].[StockCode],
+	[IM].[Description],
+	[IM].[LongDesc],
+	[IW].[DefaultBin],
+	[IW].[QtyAllocated],
+	[IW].[QtyOnHand],
+	[IW].[QtyOnOrder],
+	[IW].[QtyOnBackOrder],
+	[IW].[Supplier],
+	[IM].[AlternateKey1],
+	[IM].[AlternateKey2],
+	[PC].[Description] AS [ProductClass],
+	[AS].[SupplierName],
+	[AS].[SupplierChName]
+FROM
+	[SysproCompanyS].[dbo].[InvMaster] [IM]
+INNER JOIN
+	[SysproCompanyS].[dbo].[InvWarehouse] [IW]
+ON
+	[IM].[StockCode] = [IW].[StockCode]
+INNER JOIN
+	[SysproCompanyS].[dbo].[SalProductClass] [PC]
+ON
+	[IM].[ProductClass] = [PC].[ProductClass]
+INNER JOIN
+	[SysproCompanyS].[dbo].[ApSupplier] [AS]
+ON
+	[IM].[Supplier] = [AS].[Supplier]
+;
 	"""
 	return connect(sql)
+
+
+def load_sales_orders() -> pd.DataFrame:
+	return load_sql_data(
+		"SELECT * FROM [SysproCompanyA].[dbo].[v_OpenSalesOrders]",
+		database="SysproCompanyA",
+		uid="SRS",
+		pwd=""
+	)
 
 
 def normalize_string(s):
@@ -190,19 +232,57 @@ def determine_match(a: str, b: str, r_val: str = "ratio"):
 		return seq_match.ratio()
 
 
+@streamlit.dialog(title="Submit Nickname", width="large")
+def submit_nickname():
+	delim = "__=__"
+	txt = textbox_search
+	entry_known_part = st.selectbox(
+		label="Known Stockcode",
+		options=list_stock_codes
+	)
+
+	st.write(f"Associate the term '{txt}' with {entry_known_part}'?")
+
+	cols_btns = st.columns(2)
+	if entry_known_part:
+		with cols_btns[0]:
+			if st.button(
+				label="cancel"
+			):
+				st.rerun()
+		with cols_btns[1]:
+			if st.button(
+				label="submit"
+			):
+				if not os.path.exists(file_nicknames):
+					with open(file_nicknames, "w") as f:
+						pass
+				with open(file_nicknames, "a") as f:
+					f.write(f"\t{delim}".join([txt, entry_known_part, f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"]))
+					
+				st.rerun()
+
+
 df_inventory = load_inventory()
 
-# st.write(df_inventory)
 # st.write("df_inventory")
+# st.write(df_inventory)
 
 col_stockcode: str = "StockCode"
 col_stock_desc: str = "Description"
 col_stock_long_desc: str = "LongDesc"
+col_supplier: str = "Supplier"
+col_alt_key_1: str = "AlternateKey1"
+col_alt_key_2: str = "AlternateKey2"
+col_product_class: str = "ProductClass"
+col_supplier_name: str = "SupplierName"
+col_supplier_ch_Name: str = "SupplierChName"
 col_bin: str = "DefaultBin"
 col_company: str = "Comp"
 list_stock_codes = df_inventory[col_stockcode].dropna().unique().tolist()
 
-for col in [col_stockcode, col_stock_desc, col_stock_long_desc]:
+list_cols_to_check = [col_stockcode, col_stock_desc, col_stock_long_desc, col_supplier, col_alt_key_1, col_alt_key_2, col_product_class, col_supplier_name, col_supplier_ch_Name]
+for col in list_cols_to_check:
 	df_inventory[f"{col}_norm"] = df_inventory[col].apply(normalize_string)
 
 list_known_bins_hawkins: list[str] = [
@@ -232,7 +312,7 @@ list_bins_montana: list[str] = [
 # )
 
 with cols_controls[1]:
-	options_mode = ["Select", "Search"]
+	options_mode = ["Select", "Search", "Sales Orders"]
 	st.session_state.setdefault("k_pills_mode", 1)
 	pills_mode = pills(
 		label="Mode",
@@ -272,10 +352,11 @@ elif pills_mode == options_mode[1]:
 			# on_change=lambda : st.session_state.pop(key)
 		)
 
-		match_strictness = st.slider(
+		match_strictness = st.select_slider(
 			label="match strictness",
-			min_value=0,
-			max_value=100,
+			# min_value=0,
+			# max_value=100,
+			options=[x * 10 for x in range(11)],
 			key=k_match_strictness
 		)
 
@@ -308,7 +389,10 @@ elif pills_mode == options_mode[1]:
 			mask_exact = (
 					(df_inventory[col_stockcode] == s_term) |
 					(df_inventory[col_stock_desc] == s_term) |
-					(df_inventory[col_stock_long_desc] == s_term)
+					(df_inventory[col_stock_long_desc] == s_term) |
+					(df_inventory[col_supplier] == s_term) |
+					(df_inventory[col_alt_key_1] == s_term) |
+					(df_inventory[col_alt_key_2] == s_term)
 			)
 
 			# mask_partial = (
@@ -317,12 +401,13 @@ elif pills_mode == options_mode[1]:
 			# 	df_inventory[f"{col_stock_long_desc}_norm"].str.lower().str.strip().str.contains(normalize_string(s_term))
 			# )
 
-			for col in [col_stockcode, col_stock_desc, col_stock_long_desc]:
+			for col in list_cols_to_check:
 				df_inventory[f"{col}_norm_a"] = df_inventory[f"{col}_norm"].apply(lambda s: determine_match(s, normalize_string(s_term)))
 
-			df_inventory["sum_norm_a"] = df_inventory[f"{col_stockcode}_norm_a"] + df_inventory[f"{col_stock_desc}_norm_a"] + df_inventory[f"{col_stock_long_desc}_norm_a"]
+			# df_inventory["sum_norm_a"] = df_inventory[f"{col_stockcode}_norm_a"] + df_inventory[f"{col_stock_desc}_norm_a"] + df_inventory[f"{col_stock_long_desc}_norm_a"] + df_inventory[f"{col_supplier}_norm_a"]
+			df_inventory["sum_norm_a"] = sum([df_inventory[f"{col}_norm_a"] for col in list_cols_to_check])
 			level = match_strictness / 100
-			level *= 3
+			level *= len(list_cols_to_check)
 			mask_partial = (
 					(df_inventory["sum_norm_a"]) >= level
 			)
@@ -337,7 +422,10 @@ elif pills_mode == options_mode[1]:
 					mask_exact = (
 							(df_inventory[col_stockcode] == s_term) |
 							(df_inventory[col_stock_desc] == s_term) |
-							(df_inventory[col_stock_long_desc] == s_term)
+							(df_inventory[col_stock_long_desc] == s_term) |
+							(df_inventory[col_supplier] == s_term) |
+							(df_inventory[col_alt_key_1] == s_term) |
+							(df_inventory[col_alt_key_2] == s_term)
 					)
 
 					mask_partial = (
@@ -346,6 +434,12 @@ elif pills_mode == options_mode[1]:
 							df_inventory[f"{col_stock_desc}_norm"].str.lower().str.strip().str.contains(
 								normalize_string(s_term)) |
 							df_inventory[f"{col_stock_long_desc}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_supplier}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_alt_key_1}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_alt_key_2}_norm"].str.lower().str.strip().str.contains(
 								normalize_string(s_term))
 					)
 
@@ -433,6 +527,13 @@ elif pills_mode == options_mode[1]:
 		else:
 			df_search = pd.DataFrame(columns=['No Data'])
 
+		if df_search.empty:
+			if st.button(
+				label="submit nickname",
+				key=f"k_button_submit_nickname"
+			):
+				submit_nickname()
+
 	df_search.rename(
 		columns={
 			col: col.replace("Qty", "").replace("qty", "").replace("QTY", "")
@@ -452,3 +553,12 @@ elif pills_mode == options_mode[1]:
 	)
 
 	st.session_state.update({k_empty_df: df_search.empty})
+
+elif pills_mode == options_mode[2]:
+	# Sales Orders
+	df_sales_orders = load_sales_orders()
+	display_df(
+		df_sales_orders,
+		"Sales Orders",
+		width=1500
+	)
