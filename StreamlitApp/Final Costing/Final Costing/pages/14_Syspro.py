@@ -20,6 +20,7 @@ from streamlit_pills import pills
 
 
 file_nicknames = r"C:\access\streamlit_syspro_nicknames.txt"
+delim = "__=__"
 
 
 st.set_page_config(
@@ -35,10 +36,10 @@ k_match_strictness = "k_match_strictness"
 
 for k, dv in [
 	(k_bins_to_use, None),
-	(k_empty_df, None),
+	(k_empty_df, True),
 	(key, None),
 	(c_key, None),
-	(k_match_strictness, 50 )
+	(k_match_strictness, 50)
 ]:
 	st.session_state.setdefault(k, dv)
 
@@ -132,6 +133,21 @@ with cols_controls[0]:
 # 		df_inventory_bws_raw,
 # 		df_inventory_stg_raw
 # 	])
+
+
+@st.cache_data(ttl=MAX_QUERY_HOLD_TIME)
+def load_nicknames() -> pd.DataFrame:
+	cols_nicknames = ["Nickname", "StockCode", "Date"]
+	if not os.path.exists(file_nicknames):
+		return pd.DataFrame(columns=cols_nicknames)
+	with open(file_nicknames, "r") as f:
+		lines = f.readlines()
+	dfs = []
+	for i, line in enumerate(lines):
+		spl = map(str.strip, (line.split(delim) + [None for j in range(len(cols_nicknames))])[:len(cols_nicknames)])
+		nn, sc, dt = spl
+		dfs.append(pd.DataFrame([dict(zip(cols_nicknames, [nn, sc, dt]))]))
+	return pd.concat(dfs)
 
 
 @st.cache_data(ttl=None)
@@ -234,7 +250,6 @@ def determine_match(a: str, b: str, r_val: str = "ratio"):
 
 @streamlit.dialog(title="Submit Nickname", width="large")
 def submit_nickname():
-	delim = "__=__"
 	txt = textbox_search
 	entry_known_part = st.selectbox(
 		label="Known Stockcode",
@@ -259,11 +274,14 @@ def submit_nickname():
 						pass
 				with open(file_nicknames, "a") as f:
 					f.write(f"\t{delim}".join([txt, entry_known_part, f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"]))
-					
+
 				st.rerun()
 
 
 df_inventory = load_inventory()
+df_nicknames = load_nicknames()
+
+# display_df(df_nicknames, "df_nicknames")
 
 # st.write("df_inventory")
 # st.write(df_inventory)
@@ -279,9 +297,23 @@ col_supplier_name: str = "SupplierName"
 col_supplier_ch_Name: str = "SupplierChName"
 col_bin: str = "DefaultBin"
 col_company: str = "Comp"
+col_nickname: str = "Nickname"
+
+# display_df(df_nicknames.loc[df_nicknames[col_stockcode] == "03071"], "df_nicknames2")
+# display_df(df_nicknames.loc[df_nicknames[col_stockcode] == 3071], "df_nicknames3")
+# display_df(df_inventory.loc[df_inventory[col_stockcode] == "03071"], "df_inventory WITH NICKNAMES")
+
+df_inventory = df_inventory.merge(
+	df_nicknames,
+	on=col_stockcode,
+	how="left",
+	suffixes=("", "nn_")
+)
+# display_df(df_inventory.loc[~df_inventory[col_nickname].isna()], "df_inventory WITH NICKNAMES")
+
 list_stock_codes = df_inventory[col_stockcode].dropna().unique().tolist()
 
-list_cols_to_check = [col_stockcode, col_stock_desc, col_stock_long_desc, col_supplier, col_alt_key_1, col_alt_key_2, col_product_class, col_supplier_name, col_supplier_ch_Name]
+list_cols_to_check = [col_stockcode, col_stock_desc, col_stock_long_desc, col_supplier, col_alt_key_1, col_alt_key_2, col_product_class, col_supplier_name, col_supplier_ch_Name, col_nickname]
 for col in list_cols_to_check:
 	df_inventory[f"{col}_norm"] = df_inventory[col].apply(normalize_string)
 
@@ -356,7 +388,7 @@ elif pills_mode == options_mode[1]:
 			label="match strictness",
 			# min_value=0,
 			# max_value=100,
-			options=[x * 10 for x in range(11)],
+			options=[x * 10 for x in range(1, 11)],
 			key=k_match_strictness
 		)
 
@@ -392,7 +424,11 @@ elif pills_mode == options_mode[1]:
 					(df_inventory[col_stock_long_desc] == s_term) |
 					(df_inventory[col_supplier] == s_term) |
 					(df_inventory[col_alt_key_1] == s_term) |
-					(df_inventory[col_alt_key_2] == s_term)
+					(df_inventory[col_alt_key_2] == s_term) |
+					(df_inventory[col_product_class] == s_term) |
+					(df_inventory[col_supplier_name] == s_term) |
+					(df_inventory[col_supplier_ch_Name] == s_term) |
+					(df_inventory[col_nickname] == s_term)
 			)
 
 			# mask_partial = (
@@ -425,8 +461,12 @@ elif pills_mode == options_mode[1]:
 							(df_inventory[col_stock_long_desc] == s_term) |
 							(df_inventory[col_supplier] == s_term) |
 							(df_inventory[col_alt_key_1] == s_term) |
-							(df_inventory[col_alt_key_2] == s_term)
-					)
+							(df_inventory[col_alt_key_2] == s_term) |
+							(df_inventory[col_product_class] == s_term) |
+							(df_inventory[col_supplier_name] == s_term) |
+							(df_inventory[col_supplier_ch_Name] == s_term) |
+							(df_inventory[col_nickname] == s_term)
+						)
 
 					mask_partial = (
 							df_inventory[f"{col_stockcode}_norm"].str.lower().str.strip().str.contains(
@@ -440,6 +480,15 @@ elif pills_mode == options_mode[1]:
 							df_inventory[f"{col_alt_key_1}_norm"].str.lower().str.strip().str.contains(
 								normalize_string(s_term)) |
 							df_inventory[f"{col_alt_key_2}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+
+							df_inventory[f"{col_product_class}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_supplier_name}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_supplier_ch_Name}_norm"].str.lower().str.strip().str.contains(
+								normalize_string(s_term)) |
+							df_inventory[f"{col_nickname}_norm"].str.lower().str.strip().str.contains(
 								normalize_string(s_term))
 					)
 
