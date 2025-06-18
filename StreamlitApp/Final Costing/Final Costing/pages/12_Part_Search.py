@@ -11,19 +11,22 @@ root_location_stg = r"\\stgdc01\Public\STARGATE PDFS"
 st.set_page_config(layout="wide")
 
 
-@st.cache_data(ttl=60*60)
+MAX_QUERY_HOLD_TIME: float = 2.5 * 60 * 60  # in seconds
+
+
+@st.cache_data(ttl=MAX_QUERY_HOLD_TIME)
 def hold_walk_bws():
     # SUPER SLOW
     return list(os.walk(root_location_bws))
 
 
-@st.cache_data(ttl=60*60)
+@st.cache_data(ttl=MAX_QUERY_HOLD_TIME)
 def hold_walk_stg():
     # SUPER SLOW
     return list(os.walk(root_location_stg))
 
 
-@st.cache_data(ttl=60*60)
+@st.cache_data(ttl=MAX_QUERY_HOLD_TIME)
 def gather_parts() -> pd.DataFrame:
     walk_bws = hold_walk_bws()
     walk_stg = hold_walk_stg()

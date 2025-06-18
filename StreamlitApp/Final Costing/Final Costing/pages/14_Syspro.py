@@ -376,6 +376,17 @@ if pills_mode == options_mode[0]:
 elif pills_mode == options_mode[1]:
 
 	with cols_controls[1]:
+
+		# textbox_job = st.text_input(
+		# 	label="Known Job:",
+		# 	key="k_textbox_job"
+		# 	# ,
+		# 	# on_change=lambda : st.session_state.pop(key)
+		# )
+		#
+		# if textbox_job:
+		# 	df_inventory = df_inventory.loc[col_job]
+
 		textbox_search = st.text_input(
 			label="Search:",
 			key="k_textbox_search",
