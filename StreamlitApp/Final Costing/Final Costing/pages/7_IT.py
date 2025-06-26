@@ -1511,6 +1511,7 @@ def import_existing_table_cols():
     with tabs_df[1]:
         # Select some columns from the previous table selection.
         if st.session_state.get("stdf_df_tables"):
+
             # this works because the table selection st.dataframe is in selection_mode="single-row"
             selected_rows = st.session_state.get("stdf_df_tables")["selection"]["rows"]
             if selected_rows:
@@ -1526,6 +1527,24 @@ def import_existing_table_cols():
                     disabled=show_cols,
                     on_change=update_sel_columns
                 )
+
+                # cols_quick_controls = st.columns(2)
+                # with cols_quick_controls[0]:
+                #     if st.button(
+                #             label="none"
+                #     ):
+                #         # st.session_state.update({
+                #         #     "stdf_df_table_columns": None
+                #         # })
+                #         stde_df_table_columns["selection"].clear()
+                # with cols_quick_controls[1]:
+                #     if st.button(
+                #             label="all"
+                #     ):
+                #         stde_df_table_columns["selection"] = df_columns.index.tolist()
+                #         # st.session_state.update({
+                #         #     "stdf_df_table_columns": get_cols(table_name, db_name)[]
+                #         # })
             else:
                 st.write("Select a table first.")
 
@@ -1592,6 +1611,7 @@ def import_existing_table_cols():
                             label="Submit Columns",
                             key=f"btn_sel_table_submit"
                         ):
+                            st.session_state.update({"ct_text_table_name": table_name})
                             st.rerun()
 
         with cols[1]:
@@ -1778,7 +1798,8 @@ def server_maintenance():
                     "decimal": [f"{a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
                     "float": [f"({a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
                     "date": "na",
-                    "datetime": "na"
+                    "datetime": "na",
+                    "bit": "na"
                 }
 
                 ct_text_db_name = input_table_cols.text_input(
