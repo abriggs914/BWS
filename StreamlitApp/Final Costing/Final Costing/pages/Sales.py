@@ -800,13 +800,43 @@ UPDATE
 	[BWSdb].[dbo].[Orders]
 SET
 	[WO Reviewed] = 1
-	,[WO Review Date] = '2025-02-05'
+	,[WO Review Date] = '{DT}'
 WHERE
 	[Quote#] IN ({LQ});
 """).strip()
 	lqs = ", ".join(map(str, lq))
-	sql = sql.format(LQ=lqs)
-	connect(sql, do_print=True, do_show=True)
+	date_resolved = f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
+	resolved_by = 'Jason Morgan'
+	sql = sql.format(LQ=lqs, DT=date_resolved)
+	connect(sql, do_exec=False, do_print=True, do_show=True)
+
+	lst_quotes = df_meeting_notes["Quote"].dropna().unique()
+	# print(f"{lq=}, {lst_quotes=}")
+
+	sqls = []
+	sql_i = "INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Quote], [MeetingID], [DateResolved], [ResolvedBy]) VALUES "
+	sql_u_t = "UPDATE [BWSdb].[dbo].[WSOM_MeetingNotes] SET "
+	has_insert = False
+	for q in lq:
+		if q not in lst_quotes:
+			# insert
+			has_insert = True
+			sql_i += f" ('{q}', {m_id}, '{date_resolved}', '{resolved_by}'),"
+		else:
+			# update
+			sqls.append(f"{sql_u_t} [MeetingID] = {m_id}, [DateResolved] = '{date_resolved}', [ResolvedBy] = '{resolved_by}' WHERE [Quote] = '{q}'")
+
+	if has_insert:
+		sqls.append(sql_i.removesuffix(","))
+	for s in sqls:
+		connect(s, do_exec=True, do_print=True, do_show=True)
+
+	st.session_state.update({
+		k_meeting_id: None,
+		k_df_meeting_quotes: None
+	})
+	cont.empty()
+	st.rerun()
 
 
 def select_quote(*args):
@@ -1817,8 +1847,7 @@ if pills_control == options_pills_control[1]:
 				""").strip()
 			else:
 				sql = ("""
-	INSERT INTO
-		[BWSdb].[dbo].[WSOM_MeetingNotes]
+INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Quote], [MeetingID], [DateResolved], [ResolvedBy]) VALUES 
 				""").strip()
 
 			# for k, v in st.session_state.items():
@@ -1829,7 +1858,7 @@ if pills_control == options_pills_control[1]:
 			print("k_df_meeting_quotes")
 			print(df_meetings_results)
 
-			# new_quotes = []
+			# # new_quotes = []
 			# for i, row in df_meetings_results.iterrows():
 
 			# TODO iterate through meeting quotes and set the approved status to the the table
