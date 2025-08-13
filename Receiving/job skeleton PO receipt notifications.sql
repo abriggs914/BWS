@@ -1,8 +1,9 @@
 
 -- 2025-07-23 - Abriggs - Notify individuals when a PO is received, even partially.
 --	They must subscribe first, and must have an entry for [ITR Customers].[WindowsUser].
+-- 2025-07-29 - Abriggs - Added consideration for Yellow Tagged items via [BWSdb].[dbo].[PROD_YellowTags]
 
-DECLARE @testMode BIT = 1;
+DECLARE @testMode BIT = 0;
 
 SET NOCOUNT ON;
 
@@ -12,20 +13,27 @@ IF @testMode = 1 BEGIN
 	FROM
 		[BWSdb].[dbo].[REC_POReceivedSubs] [S]
 	;
+	SELECT
+		*
+	FROM
+		[BWSdb].[dbo].[PROD_YellowTags] [P]
+	;
 END
 
-DECLARE @t TABLE ([ID] INT IDENTITY(0, 1), [R_PO_ID] INT, [PO] NVARCHAR(255), [AllQtyMet] INT, [RB] NVARCHAR(255), [LastDate] DATETIME, [NewDate] DATETIME);
+DECLARE @t TABLE ([ID] INT IDENTITY(0, 1), [R_PO_ID] INT, [PO] NVARCHAR(255), [AllQtyMet] INT, [RB] NVARCHAR(255), [LastDate] DATETIME, [NewDate] DATETIME, [YTID] INT, [YT] INT);
 
 --DECLARE @poIsGood TABLE ([ID] INT IDENTITY(0, 1), [PO] NVARCHAR(255), [AllQtyMet] INT);
 
-INSERT INTO @t ([R_PO_ID], [PO], [AllQtyMet], [RB], [LastDate], [NewDate])
+INSERT INTO @t ([R_PO_ID], [PO], [AllQtyMet], [RB], [LastDate], [NewDate], [YTID], [YT])
 SELECT
-	[S].[ID],
-	[S].[PurchaseOrder],
-	[Src].[AllQtyMet],
-	[S].[RequestedBy],
-	ISNULL([S].[LastSent], DATEADD(DAY, -1, GETDATE())),
-	[Src].[MaxLastReceiptDate]
+	[Src2].[ID],
+	[Src2].[PurchaseOrder],
+	[Src1].[AllQtyMet],
+	[Src2].[RequestedBy],
+	ISNULL([Src2].[LastSent], DATEADD(DAY, -1, GETDATE())),
+	[Src1].[MaxLastReceiptDate],
+	[YTID],
+	[YT]
 FROM (
 	SELECT
 		[P].[PurchaseOrder],
@@ -39,17 +47,38 @@ FROM (
 		[SysproCompanyA].[dbo].[PorMasterDetail] [P]
 	GROUP BY
 		[P].[PurchaseOrder]
-) AS [Src]
-INNER JOIN
-	[BWSdb].[dbo].[REC_POReceivedSubs] [S]
-ON
-	[S].[PurchaseOrder] = [Src].[PurchaseOrder] COLLATE DATABASE_DEFAULT 
-WHERE
-	([S].[Active] = 1)
-	--AND ([AllQtyMet] = 1)
+) AS [Src1]
+INNER JOIN (
+	SELECT
+		[S].[ID],
+		[S].[RequestedBy],
+		[S].[LastSent],
+		ISNULL([S].[PurchaseOrder], [YT].[PO]) AS [PurchaseOrder],
+		[S].[Active],
+		[YT].[ID] AS [YTID],
+		(CASE WHEN [YT].[ID] IS NULL THEN 0 ELSE 1 END) AS [YT]
+	FROM
+		[BWSdb].[dbo].[REC_POReceivedSubs] [S]
+	FULL JOIN
+		[BWSdb].[dbo].[PROD_YellowTags] [YT]
+	ON
+		[S].[PurchaseOrder] = [YT].[PO]
+	WHERE
+		(ISNULL([YT].[PO], [S].[PurchaseOrder]) IS NOT NULL)
+		AND (([S].[Active] = 1) OR ([YT].[Active] = 1))
+) AS [Src2]
+	ON
+	[Src2].[PurchaseOrder] = [Src1].[PurchaseOrder] COLLATE DATABASE_DEFAULT 
 ;
 
 IF @testMode = 1 BEGIN
+	/* -- From testing on 20250729
+	INSERT INTO @t ([R_PO_ID], [PO], [AllQtyMet], [RB], [LastDate], [NewDate], [YT]) VALUES
+	(NULL, '000000000147350', 0, NULL, DATEADD(DAY, -1, GETDATE()),	GETDATE(), 1),
+	(NULL, '000000000149158', 0, NULL, DATEADD(DAY, -1, GETDATE()),	GETDATE(), 0)
+	;
+	*/
+
 	SELECT '@t' AS [T], * FROM @t;
 END
 
@@ -63,9 +92,11 @@ END
 -- Yassin Nasser
 DECLARE @defaultEmails AS NVARCHAR(MAX) = 'rec@bwstrailers.com';
 SELECT @defaultEmails = @defaultEmails + ';avery.briggs@bwstrailers.com';
-SELECT @defaultEmails = @defaultEmails + ';lori.piper@bwstrailers.com';
+--SELECT @defaultEmails = @defaultEmails + ';lori.piper@bwstrailers.com';
 SELECT @defaultEmails = @defaultEmails + ';jason.somerville@bwstrailers.com';
 SELECT @defaultEmails = @defaultEmails + ';lance.lunn@bwstrailers.com';
+SELECT @defaultEmails = @defaultEmails + ';rick.howard@bwstrailers.com';
+SELECT @defaultEmails = @defaultEmails + ';tony.underhill@bwstrailers.com';
 SELECT @defaultEmails = @defaultEmails + ';jamie.merrithew@bwstrailers.com';
 SELECT @defaultEmails = @defaultEmails + ';yassin.nasser@bwstrailers.com';
 	
@@ -78,7 +109,9 @@ DECLARE @lastReceived DATETIME;
 DECLARE @firstReceived DATETIME;
 DECLARE @timesReceived INT;
 DECLARE @po INT;
+DECLARE @yt INT;
 DECLARE @iR INT = 0;
+DECLARE @iY INT = 0;
 DECLARE @i INT = 0;
 DECLARE @j INT = 0;
 SELECT @j = COUNT(*) FROM @t;
@@ -93,6 +126,8 @@ WHILE @i < @j BEGIN
 		@subject = NULL,
 		@email = NULL,
 		@iR = NULL,
+		@yt = NULL,
+		@iY = NULL,
 		@complete = NULL,
 		@newDate = NULL,
 		@lastDate = NULL,
@@ -103,7 +138,9 @@ WHILE @i < @j BEGIN
 
 	SELECT
 		@iR = [R_PO_ID],
+		@iY = [YTID],
 		@rb = [RB],
+		@yt = [YT],
 		@poS = [PO],
 		@po = CAST([PO] AS INT),
 		@complete = ISNULL([AllQtyMet], 0),
@@ -115,9 +152,9 @@ WHILE @i < @j BEGIN
 		[T].[ID] = @i
 	;
 	SELECT
-		@timesReceived = COUNT([JnlDate]),
-		@firstReceived = MIN([JnlDate]),
-		@lastReceived = MAX([JnlDate])
+		@timesReceived = ISNULL(COUNT([JnlDate]), 0),
+		@firstReceived = ISNULL(MIN([JnlDate]), 0),
+		@lastReceived = ISNULL(MAX([JnlDate]), 0)
 	FROM
 		[SysproCompanyA].[dbo].[PorHistReceipt] [P]
 	WHERE
@@ -138,21 +175,29 @@ WHILE @i < @j BEGIN
 		;
 	END
 
-	IF ((LEN(@rb) * LEN(@poS)) > 0) AND (ISNULL(@newDate, @lastDate) > @lastDate) BEGIN
+	IF (LEN(ISNULL(@poS, '')) > 0) AND (ISNULL(@newDate, @lastDate) > @lastDate) BEGIN
 		
 		SET @body = '<!DOCTYPE html><html><head><title>PO Receipt Alert</title></head><body><p>'
 
 		SELECT
-			@subject = 'PO ' + CAST(@po AS NVARCHAR(255)) + ' Received',
-			@body = @body + 'PO ' + CAST(@po AS NVARCHAR(255)) + ' has been received, please check Syspro for futher details.'
+			@subject = 'PO ' + CAST(ISNULL(@po, 0) AS NVARCHAR(255)) + ' Received'
+			--,
+			--@body = @body + 'PO ' + CAST(ISNULL(@po, 0) AS NVARCHAR(255)) + ' has been received'
 		;
 
 		IF @complete = 0 BEGIN
-			SELECT @body = @body + '</p><h4 style="color:RGB(200, 34, 34)">BACKORDERED PARTS YET TO BE DELIVERED</h4><p>PO ' + CAST(@po AS NVARCHAR(255)) + ' has been received ' + CAST(@timesReceived AS NVARCHAR(12)) + ' time(s), between ' + CAST(CAST(@firstReceived AS DATE) AS NVARCHAR(255)) + ' and ' + CAST(CAST(@lastReceived AS DATE) AS NVARCHAR(255))
+			SELECT @body = @body + '</p><h4 style="color:RGB(200, 34, 34)">BACKORDERED PARTS YET TO BE DELIVERED</h4><p>PO ' + CAST(ISNULL(@po, 0) AS NVARCHAR(255)) + ' has been received ' + ISNULL(CAST(@timesReceived AS NVARCHAR(12)), '?') + ' time(s), between ' + ISNULL(CAST(CAST(@firstReceived AS DATE) AS NVARCHAR(255)), '?') + ' and ' + ISNULL(CAST(CAST(@lastReceived AS DATE) AS NVARCHAR(255)), '?')
+		END
+
+		IF @yt = 1 BEGIN
+			SELECT @body = @body + '</p><h4 style="color:RGB(200, 34, 34)">THIS PO IS LISTED AS URGENT DUE TO EXPECTED PARTS INDICATED IN THE YELLOW TAG PROCESS.</h4><p>'
 		END
 
 		SELECT
+			@body = @body + 'please check Syspro for futher details.'
+		SELECT
 			@body = @body + '</p></body></html>'
+		;
 
 		SELECT
 			@email = [Email]
@@ -180,6 +225,7 @@ WHILE @i < @j BEGIN
 			;
 		END
 		ELSE BEGIN		
+
 			EXEC msdb.dbo.sp_send_dbmail 
 				@recipients = @email,
 				@profile_name = 'SQL Agent',
@@ -198,8 +244,16 @@ WHILE @i < @j BEGIN
 			WHERE
 				[ID] = @iR
 			;
+		
+			UPDATE
+				[BWSdb].[dbo].[PROD_YellowTags]
+			SET
+				[Active] = (CASE WHEN @complete = 1 THEN 0 ELSE 1 END)
+			WHERE
+				[ID] = @iY
+			;
 		END
 	END
 
 	SELECT @i = @i + 1;
-END
+--END
