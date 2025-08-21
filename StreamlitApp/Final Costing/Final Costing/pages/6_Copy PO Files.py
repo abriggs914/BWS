@@ -77,7 +77,7 @@ necessary_files = [
     read_file_root,
     root_location_pdfs,
     root_location_dwg_dxf,
-    root_location_stg_pdfs,
+    # root_location_stg_pdfs,
     root_location_stp,
     read_file_path
 ]
