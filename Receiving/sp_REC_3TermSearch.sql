@@ -3,11 +3,13 @@ GO
 
 -- 2025-08-21 - Avery Briggs - Simple format to search known parts by up to 3 terms.
 --								Condsiders [Description] and [LongDescription] fields of [SysproCompanyA].[dbo].[InvMaster]
+-- 2025-08-25 - Avery Briggs -  Added support for specific [Warehouse] lookups
 
-CREATE PROCEDURE [dbo].[sp_REC_3TermSearch]
+ALTER PROCEDURE [dbo].[sp_REC_3TermSearch]
 	@st1 NVARCHAR(MAX) = NULL,
 	@st2 NVARCHAR(MAX) = NULL,
-	@st3 NVARCHAR(MAX) = NULL
+	@st3 NVARCHAR(MAX) = NULL,
+	@warehouse NVARCHAR(MAX) = '01'
 AS
 BEGIN
 
@@ -24,8 +26,8 @@ BEGIN
 			[IW].[QtyAllocatedToPick],
 			[IW].[QtyAllocatedWip],
 			[IW].[UnitCost],
-			[IW].[DateLastSale]
-
+			[IW].[DateLastSale],
+			[IW].[Warehouse]
 			, LOWER(ISNULL([IM].[Description], '') + ISNULL([IM].[LongDesc], '')) AS [Desc]
 		FROM
 			[SysproCompanyA].[dbo].[InvWarehouse] [IW]
@@ -40,4 +42,5 @@ BEGIN
 		((CASE WHEN @st1 IS NULL THEN 1 ELSE (CASE WHEN [Desc] LIKE '%' + @st1 + '%' THEN 1 ELSE 0 END) END) * 
 		(CASE WHEN @st2 IS NULL THEN 1 ELSE (CASE WHEN [Desc] LIKE '%' + @st2 + '%' THEN 1 ELSE 0 END) END) *
 		(CASE WHEN @st3 IS NULL THEN 1 ELSE (CASE WHEN [Desc] LIKE '%' + @st3 + '%' THEN 1 ELSE 0 END) END)) > 0
+		AND (CASE WHEN ISNULL(@warehouse, '') = '' THEN 1 ELSE (CASE WHEN LOWER([Warehouse]) = LOWER(@warehouse) THEN 1 ELSE 0 END) END) > 0
 END

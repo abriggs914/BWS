@@ -7,9 +7,12 @@ FROM
 	[ClkEmployee] [C]
 WHERE
 	(
-	[Name] LIKE '%Hath%'
-	OR [Name] LIKE '%luis p%'
-	OR [Name] LIKE '%sean hard%')
+	LOWER([Name]) LIKE LOWER('%Hath%')
+	OR LOWER([Name]) LIKE LOWER('%luis p%')
+	OR LOWER([Name]) LIKE LOWER('%sean hard%')
+	OR LOWER([Name]) LIKE LOWER('%Mason%'))
+ORDER BY
+	[Name]
 	AND [LoggedOn] BETWEEN '2022-01-01' AND GETDATE()
 
 
