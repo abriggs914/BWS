@@ -2545,7 +2545,7 @@ SET
             [C].[DateActive]
         END
     )
-    , [DateInactive] = (CASE 
+    , [DateInActive] = (CASE 
         WHEN ([I].[Active] = 0) AND (([D].[Active] IS NULL) OR ([D].[Active] = 1)) THEN
             GETDATE()
         ELSE

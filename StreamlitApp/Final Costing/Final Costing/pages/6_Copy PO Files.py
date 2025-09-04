@@ -5,6 +5,8 @@ import shutil
 import pandas as pd
 import streamlit as st
 
+from pyodbc_connection import connect
+from streamlit_utility import display_df
 # from tkinter import filedialog
 # import wx
 # from wx import DirDialog, ID_OK, DD_DEFAULT_STYLE, DD_NEW_DIR_BUTTON
@@ -49,6 +51,14 @@ def check_folder_exists():
             st.info(body=f"{len(has_files)} file{'' if len(has_files) == 1 else 's'} already exists in this folder")
         elif path_exists:
             st.info(body="This folder already exists, and is empty")
+
+
+@st.cache_data(ttl=60*60)
+def get_open_POs_dash_mach() -> pd.DataFrame:
+    sql = "v_REC-MACHParts"
+    return connect(
+        sql
+    )
 
 
 
@@ -346,3 +356,15 @@ if (not df.empty) and st.session_state.get("button_run_part_data"):
     # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
     # st.link_button(label="Folder", url=output_location)
     # st.markdown("<p><a href = \"" + output_location + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
+
+
+## Open POs that have -MACH
+
+st.divider()
+st.subheader("Open POs that have -MACH")
+df_dash_mach = get_open_POs_dash_mach()
+display_df(
+    df_dash_mach,
+    hide_index=True,
+    width=1200
+)
