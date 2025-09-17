@@ -1185,7 +1185,6 @@ def load_pdf(path: str):
         return f.read()
 
 
-
 #################
 # Event Listeners
 #################
@@ -3035,4 +3034,3 @@ with st.expander(":new: Access DB Logs"):
 
     # Display in Streamlit
     st.plotly_chart(fig)
-

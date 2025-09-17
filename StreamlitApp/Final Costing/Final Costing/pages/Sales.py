@@ -1348,10 +1348,115 @@ if pills_control == options_pills_control[1]:
 		df_products = load_products()
 		df_dealers = load_dealers()
 		df_orders = load_orders()
-		if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (
-		st.session_state.get(k_df_meeting_quotes).empty):
-			df_meeting_quotes = pd.DataFrame(data={"Quote": map(int, list_quotes)})
-			df_meeting_quotes = df_meeting_quotes.merge(
+		list_quotes = [q for q in list_quotes if str(q)]
+		if list_quotes:
+			if (k_df_meeting_quotes not in st.session_state) or (st.session_state.get(k_df_meeting_quotes) is None) or (
+			st.session_state.get(k_df_meeting_quotes).empty):
+				df_meeting_quotes = pd.DataFrame(data={"Quote": map(int, list_quotes)})
+				df_meeting_quotes = df_meeting_quotes.merge(
+					df_orders[[
+						"Quote#",
+						"ProductID",
+						"DealerID"
+					]],
+					how="inner",
+					left_on="Quote",
+					right_on="Quote#"
+				)
+
+				df_meeting_quotes = df_meeting_quotes.merge(
+					df_products[[
+						"IDTrailer",
+						"Class",
+						"Model No"
+					]],
+					how="inner",
+					left_on="ProductID",
+					right_on="IDTrailer"
+				)
+
+				df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
+				df_meeting_quotes = df_meeting_quotes.merge(
+					df_meeting_notes.loc[
+						(df_meeting_notes["MeetingID"] <= m_id)
+						& (
+								pd.isna(df_meeting_notes["DateResolved"])
+								| (str(df_meeting_notes["DateResolved"]).strip() != "")
+						)
+						],
+					how="outer",
+					on="Quote"
+				)
+				df_meeting_quotes = df_meeting_quotes.merge(
+					df_dealers[[
+						"ID",
+						"COMPANY NAME"
+					]],
+					how="inner",
+					left_on="DealerID",
+					right_on="ID"
+				)
+				df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
+
+				for i, row in df_meeting_quotes.iterrows():
+					df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
+					df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+
+
+				# CopyWithSlice
+				# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
+				# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+				# print(f"{i=}, {df_meeting_quotes.iloc[i][['Reviewed', 'Approved']]}, {row['Quote#']=}, {row['DateResolved']=}, {row['ResolvedBy']=}")
+			else:
+				df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
+
+			st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
+
+			# # TODO WIP
+			# idxs = df_meeting_quotes.groupby("Quote")["MeetingID"].idmax()
+			# df_latest_meeting = df_meeting_quotes.loc[idxs]
+			# df_resolved = df_latest_meeting[df_latest_meeting["DateResolved"].notna()]
+			# df_unresolved = df_latest_meeting[df_latest_meeting["DateResolved"].isna()]
+			# df_unresolved = df_unresolved.merge(
+			# 	df_meeting_quotes.groupby("Quote")["IssueDescription"].apply(lambda x: "; ".join(x)).reset_index(),
+			# 	on="Quote",
+			# 	suffixes=("", "_All")
+			# )
+			#
+			# st.write("df_latest_meeting")
+			# st.write(df_latest_meeting)
+			# st.write("df_latest_meeting")
+			# st.write(df_latest_meeting)
+			# st.write("df_unresolved")
+			# st.write(df_unresolved)
+
+			# similar_quotes_m1 = similar_quotes.merge(
+			# 	df_orders[[
+			# 		"Quote#",
+			# 		"ProductID",
+			# 		"DealerID"
+			# 	]],
+			# 	how="inner",
+			# 	left_on="Q",
+			# 	right_on="Quote#"
+			# )
+			#
+			# similar_quotes_tree = {
+			#
+			# }
+			#
+			# similar_quotes_m1 = similar_quotes_m1.merge(
+			# 	df_products[[
+			# 		"IDTrailer",
+			# 		"Class",
+			# 		"Model No"
+			# 	]],
+			# 	how="inner",
+			# 	left_on="ProductID",
+			# 	right_on="IDTrailer"
+			# )
+
+			similar_quotes_m1 = df_meeting_quotes.merge(
 				df_orders[[
 					"Quote#",
 					"ProductID",
@@ -1362,474 +1467,373 @@ if pills_control == options_pills_control[1]:
 				right_on="Quote#"
 			)
 
-			df_meeting_quotes = df_meeting_quotes.merge(
+			similar_quotes_m1 = similar_quotes_m1.merge(
 				df_products[[
 					"IDTrailer",
 					"Class",
 					"Model No"
 				]],
 				how="inner",
-				left_on="ProductID",
+				left_on="ProductID_x",
 				right_on="IDTrailer"
 			)
 
-			df_meeting_quotes["Q_WORpt"] = df_meeting_quotes["Quote"].apply(lambda q: rpt_files.get(str(q)))
-			df_meeting_quotes = df_meeting_quotes.merge(
-				df_meeting_notes.loc[
-					(df_meeting_notes["MeetingID"] <= m_id)
-					& (
-							pd.isna(df_meeting_notes["DateResolved"])
-							| (str(df_meeting_notes["DateResolved"]).strip() != "")
-					)
-					],
-				how="outer",
-				on="Quote"
-			)
-			df_meeting_quotes = df_meeting_quotes.merge(
+			similar_quotes_m1 = similar_quotes_m1.merge(
 				df_dealers[[
 					"ID",
 					"COMPANY NAME"
 				]],
 				how="inner",
-				left_on="DealerID",
+				left_on="DealerID_y",
 				right_on="ID"
 			)
-			df_meeting_quotes.loc[:, ["Reviewed", "Approved"]] = False, False
 
-			for i, row in df_meeting_quotes.iterrows():
-				df_meeting_quotes.loc[i, "Reviewed"] = not pd.isna(row["MeetingID"])
-				df_meeting_quotes.loc[i, "Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
+			k_toggle_new_quotes_only = "toggle_new_quotes_only"
+			new_only: bool = st.session_state.setdefault(k_toggle_new_quotes_only, False)
+			if new_only:
+				df_meeting_quotes = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
 
+			similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
+			# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
 
-			# CopyWithSlice
-			# df_meeting_quotes.iloc[i]["Reviewed"] = not pd.isna(row["Quote#"])
-			# df_meeting_quotes.iloc[i]["Approved"] = not pd.isna(row["DateResolved"]) and not pd.isna(row["ResolvedBy"])
-			# print(f"{i=}, {df_meeting_quotes.iloc[i][['Reviewed', 'Approved']]}, {row['Quote#']=}, {row['DateResolved']=}, {row['ResolvedBy']=}")
-		else:
-			df_meeting_quotes = st.session_state.get(k_df_meeting_quotes)
+			if toggle_testing:
+				cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
+				cont.write(df_meeting_notes)
+				cont.write(f"df_meeting_quotes == {df_meeting_quotes.shape}")
+				cont.write(df_meeting_quotes)
+				cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
+				cont.write(similar_quotes_m1)
 
-		st.session_state.update({k_df_meeting_quotes: df_meeting_quotes})
-
-		# # TODO WIP
-		# idxs = df_meeting_quotes.groupby("Quote")["MeetingID"].idmax()
-		# df_latest_meeting = df_meeting_quotes.loc[idxs]
-		# df_resolved = df_latest_meeting[df_latest_meeting["DateResolved"].notna()]
-		# df_unresolved = df_latest_meeting[df_latest_meeting["DateResolved"].isna()]
-		# df_unresolved = df_unresolved.merge(
-		# 	df_meeting_quotes.groupby("Quote")["IssueDescription"].apply(lambda x: "; ".join(x)).reset_index(),
-		# 	on="Quote",
-		# 	suffixes=("", "_All")
-		# )
-		#
-		# st.write("df_latest_meeting")
-		# st.write(df_latest_meeting)
-		# st.write("df_latest_meeting")
-		# st.write(df_latest_meeting)
-		# st.write("df_unresolved")
-		# st.write(df_unresolved)
-
-		# similar_quotes_m1 = similar_quotes.merge(
-		# 	df_orders[[
-		# 		"Quote#",
-		# 		"ProductID",
-		# 		"DealerID"
-		# 	]],
-		# 	how="inner",
-		# 	left_on="Q",
-		# 	right_on="Quote#"
-		# )
-		#
-		# similar_quotes_tree = {
-		#
-		# }
-		#
-		# similar_quotes_m1 = similar_quotes_m1.merge(
-		# 	df_products[[
-		# 		"IDTrailer",
-		# 		"Class",
-		# 		"Model No"
-		# 	]],
-		# 	how="inner",
-		# 	left_on="ProductID",
-		# 	right_on="IDTrailer"
-		# )
-
-		similar_quotes_m1 = df_meeting_quotes.merge(
-			df_orders[[
-				"Quote#",
-				"ProductID",
-				"DealerID"
-			]],
-			how="inner",
-			left_on="Quote",
-			right_on="Quote#"
-		)
-
-		similar_quotes_m1 = similar_quotes_m1.merge(
-			df_products[[
-				"IDTrailer",
-				"Class",
-				"Model No"
-			]],
-			how="inner",
-			left_on="ProductID_x",
-			right_on="IDTrailer"
-		)
-
-		similar_quotes_m1 = similar_quotes_m1.merge(
-			df_dealers[[
-				"ID",
-				"COMPANY NAME"
-			]],
-			how="inner",
-			left_on="DealerID_y",
-			right_on="ID"
-		)
-
-		k_toggle_new_quotes_only = "toggle_new_quotes_only"
-		new_only: bool = st.session_state.setdefault(k_toggle_new_quotes_only, False)
-		if new_only:
-			df_meeting_quotes = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
-
-		similar_quotes_m1["Q_WORpt"] = similar_quotes_m1["Quote"].apply(lambda q: rpt_files.get(str(q)))
-		# similar_quotes_m1["SimQ_WORpt"] = similar_quotes_m1["SimQ"].apply(lambda q: rpt_files.get(str(q)))
-
-		if toggle_testing:
-			cont.write(f"df_meeting_notes == {df_meeting_notes.shape}")
-			cont.write(df_meeting_notes)
-			cont.write(f"df_meeting_quotes == {df_meeting_quotes.shape}")
-			cont.write(df_meeting_quotes)
-			cont.write(f"similar_quotes_m1 == {similar_quotes_m1.shape}")
-			cont.write(similar_quotes_m1)
-
-		quotes_approved_wsom_not_orders = df_meeting_quotes.merge(
-			df_orders[["Quote#"]].loc[(pd.isna(df_orders["WO Reviewed"])) | (df_orders["WO Reviewed"] == 0)],
-			how="inner",
-			left_on="Quote",
-			right_on="Quote#"
-		)
-		quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[
-			quotes_approved_wsom_not_orders["Approved"] == 1]
-		with cont.container(border=1):
-			if not quotes_approved_wsom_not_orders.empty:
-				st.write("quotes_approved_wsom_not_orders")
-				st.write(quotes_approved_wsom_not_orders)
-				btn_set_orders_quotes_approved_from_wsom = st.button(
-					label="Set these quotes to approved",
-					key="k_btn_set_orders_quotes_approved_from_wsom",
-					on_click=lambda
-						lq=quotes_approved_wsom_not_orders["Quote"].values.tolist(): set_orders_quotes_approved_from_wsom(
-						lq)
-				)
-			else:
-				st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
-				st.write("Good to Go!")
-
-		view_as_options = ["Class", "Model", "Dealer", "All"]
-
-		list_models = sorted(df_meeting_quotes["Model No"].dropna().unique().tolist())
-		list_classes = sorted(df_meeting_quotes["Class"].dropna().unique().tolist())
-		list_dealers = sorted(df_meeting_quotes["COMPANY NAME"].dropna().unique().tolist())
-
-		# cols__ = st.columns(3)
-		# with cols__[0]:
-		# 	st.write(list_classes)
-		# with cols__[1]:
-		# 	st.write(list_models)
-		# with cols__[2]:
-		# 	st.write(list_dealers)
-
-		def change_selectbox_view_quotes():
-			# va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
-			# lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
-
-			# double rerun to hide the "NO OP" warning
-			st.session_state.update({
-				# "pills_selected_model": 0
-				# ,
-				k_need_rerun: True
-			})
-			if "pills_selected_model" in st.session_state:
-				del st.session_state["pills_selected_model"]
-			st.rerun()
-
-		with cont:
-
-			df_new_quotes: pd.DataFrame = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
-			df_old_quotes: pd.DataFrame = df_meeting_quotes.loc[df_meeting_quotes["Reviewed"]]
-
-			st.write(f"##### # New: {df_new_quotes.shape[0]}")
-			st.write(f"##### # Old: {df_old_quotes.shape[0]}")
-
-			st.session_state.setdefault(k_toggle_new_quotes_only, False)
-			toggle_new_quotes_only = st.toggle(
-				label="New Quotes Only",
-				key=k_toggle_new_quotes_only
+			quotes_approved_wsom_not_orders = df_meeting_quotes.merge(
+				df_orders[["Quote#"]].loc[(pd.isna(df_orders["WO Reviewed"])) | (df_orders["WO Reviewed"] == 0)],
+				how="inner",
+				left_on="Quote",
+				right_on="Quote#"
 			)
-			# st.session_state.update({k_toggle_new_quotes_only: toggle_new_quotes_only})
-
-			k_selectbox_view_quotes = "selectbox_view_quotes"
-			st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
-			selectbox_view_quotes = st.selectbox(
-				label=f"View quotes by:",
-				key=f"k_{k_selectbox_view_quotes}",
-				options=view_as_options,
-				on_change=change_selectbox_view_quotes
-			)
-
-			print(f"{st.session_state.get('pills_selected_model')=}")
-			if selectbox_view_quotes == view_as_options[0]:
-				# class
-				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_classes)} classes:")
-				selected_model = pills(
-					label="Classes",
-					options=list_classes,
-					key="pills_selected_model"
-				)
-				df_k = "Class"
-			elif selectbox_view_quotes == view_as_options[1]:
-				# model
-				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} models:")
-				selected_model = pills(
-					label="Models",
-					options=list_models,
-					key="pills_selected_model"
-				)
-				df_k = "Model No"
-			elif selectbox_view_quotes == view_as_options[2]:
-				# dealer
-				st.header(f"{len(list_quotes)} quote(s) to review across {len(list_dealers)} dealers:")
-				selected_model = pills(
-					label="Dealers",
-					options=list_dealers,
-					key="pills_selected_model"
-				)
-				df_k = "COMPANY NAME"
-			else:
-				# All
-				df_k = None
-				selected_model = True
-
-			if selected_model:
-
-				if df_k is not None:
-					df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes[df_k] == selected_model]
+			quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[
+				quotes_approved_wsom_not_orders["Approved"] == 1]
+			with cont.container(border=1):
+				if not quotes_approved_wsom_not_orders.empty:
+					st.write("quotes_approved_wsom_not_orders")
+					st.write(quotes_approved_wsom_not_orders)
+					btn_set_orders_quotes_approved_from_wsom = st.button(
+						label="Set these quotes to approved",
+						key="k_btn_set_orders_quotes_approved_from_wsom",
+						on_click=lambda
+							lq=quotes_approved_wsom_not_orders["Quote"].values.tolist(): set_orders_quotes_approved_from_wsom(
+							lq)
+					)
 				else:
-					df_model_quotes = df_meeting_quotes
-				df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
-				st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
-				view_cols = ["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
-						"ResolvedBy", "Reviewed", "Approved"]
-				stdf_model_quotes = st.dataframe(
-					df_model_quotes[view_cols],
-					selection_mode="single-row",
-					key="stdf_model_quotes",
-					hide_index=True,
-					on_select="rerun"
+					st.write("All Quotes approved in meeting history are also approved in WSOM tables.")
+					st.write("Good to Go!")
+
+			view_as_options = ["Class", "Model", "Dealer", "All"]
+
+			list_models = sorted(df_meeting_quotes["Model No"].dropna().unique().tolist())
+			list_classes = sorted(df_meeting_quotes["Class"].dropna().unique().tolist())
+			list_dealers = sorted(df_meeting_quotes["COMPANY NAME"].dropna().unique().tolist())
+
+			# cols__ = st.columns(3)
+			# with cols__[0]:
+			# 	st.write(list_classes)
+			# with cols__[1]:
+			# 	st.write(list_models)
+			# with cols__[2]:
+			# 	st.write(list_dealers)
+
+			def change_selectbox_view_quotes():
+				# va = st.session_state.get(f"k_{k_selectbox_view_quotes}", view_as_options[0])
+				# lst = list_dealers if (va == view_as_options[2]) else (list_classes if (va == view_as_options[1]) else list_models)
+
+				# double rerun to hide the "NO OP" warning
+				st.session_state.update({
+					# "pills_selected_model": 0
+					# ,
+					k_need_rerun: True
+				})
+				if "pills_selected_model" in st.session_state:
+					del st.session_state["pills_selected_model"]
+				st.rerun()
+
+			with cont:
+
+				df_new_quotes: pd.DataFrame = df_meeting_quotes.loc[~df_meeting_quotes["Reviewed"]]
+				df_old_quotes: pd.DataFrame = df_meeting_quotes.loc[df_meeting_quotes["Reviewed"]]
+
+				st.write(f"##### # New: {df_new_quotes.shape[0]}")
+				st.write(f"##### # Old: {df_old_quotes.shape[0]}")
+
+				st.session_state.setdefault(k_toggle_new_quotes_only, False)
+				toggle_new_quotes_only = st.toggle(
+					label="New Quotes Only",
+					key=k_toggle_new_quotes_only
 				)
-				# df_model_quotes["Sel"] = False
-				# df_model_quotes["Sel_Date"] = None
-				# stdf_model_quotes_0 = st.data_editor(
-				# 	df_model_quotes[["Sel"] + view_cols],
-				# 	# selection_mode="single-row",
-				# 	key="stdf_model_quotes_0",
-				# 	hide_index=True,
-				# 	# on_select="rerun",
-				# 	on_change=select_quote,
-				# 	disabled=view_cols[:-2],
-				# 	column_config={
-				# 		"Sel": st.column_config.CheckboxColumn(
-				# 			label="Sel",
-				# 			width=50
-				# 		),
-				# 		view_cols[-2]: st.column_config.CheckboxColumn(
-				# 			label=view_cols[-2],
-				# 			width=120
-				# 		),
-				# 		view_cols[-1]: st.column_config.CheckboxColumn(
-				# 			label=view_cols[-1],
-				# 			width=120
-				# 		)
-				# 	}
-				# )
-				# # # st.session_state.update({
-				# # # 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
-				# # # })
-				# # st.write("stdf_model_quotes_0")
-				# # st.write(stdf_model_quotes_0)
+				# st.session_state.update({k_toggle_new_quotes_only: toggle_new_quotes_only})
 
-				if stdf_model_quotes["selection"]["rows"]:
-					ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
-					selected_quote = ser_selected_quote["Quote"]
-					pdf_file = ser_selected_quote["Q_WORpt"]
-					known_issues = df_meeting_notes.loc[df_meeting_notes["Quote"] == selected_quote][
-						["MeetingID", "IssueDescription"]]
-					if not known_issues.empty:
-						st.write(f"Known Issues:")
-						st.dataframe(known_issues.transpose())
+				k_selectbox_view_quotes = "selectbox_view_quotes"
+				st.session_state.setdefault(f"k_{k_selectbox_view_quotes}", view_as_options[-1])
+				selectbox_view_quotes = st.selectbox(
+					label=f"View quotes by:",
+					key=f"k_{k_selectbox_view_quotes}",
+					options=view_as_options,
+					on_change=change_selectbox_view_quotes
+				)
+
+				print(f"{st.session_state.get('pills_selected_model')=}")
+				if selectbox_view_quotes == view_as_options[0]:
+					# class
+					st.header(f"{len(list_quotes)} quote(s) to review across {len(list_classes)} classes:")
+					selected_model = pills(
+						label="Classes",
+						options=list_classes,
+						key="pills_selected_model"
+					)
+					df_k = "Class"
+				elif selectbox_view_quotes == view_as_options[1]:
+					# model
+					st.header(f"{len(list_quotes)} quote(s) to review across {len(list_models)} models:")
+					selected_model = pills(
+						label="Models",
+						options=list_models,
+						key="pills_selected_model"
+					)
+					df_k = "Model No"
+				elif selectbox_view_quotes == view_as_options[2]:
+					# dealer
+					st.header(f"{len(list_quotes)} quote(s) to review across {len(list_dealers)} dealers:")
+					selected_model = pills(
+						label="Dealers",
+						options=list_dealers,
+						key="pills_selected_model"
+					)
+					df_k = "COMPANY NAME"
+				else:
+					# All
+					df_k = None
+					selected_model = True
+
+				if selected_model:
+
+					if df_k is not None:
+						df_model_quotes = df_meeting_quotes.loc[df_meeting_quotes[df_k] == selected_model]
 					else:
-						st.write("No Known Issues")
-					st.write(ser_selected_quote)
-					st.write(pdf_file)
+						df_model_quotes = df_meeting_quotes
+					df_quotes_left_to_review = df_model_quotes.loc[~df_model_quotes["Approved"]]
+					st.write(f"{df_quotes_left_to_review.shape[0]} / {df_model_quotes.shape[0]} quote(s) left to Approve:")
+					view_cols = ["Quote", "Class", "Model No", "MeetingID", "IssueDescription", "DateResolved", "ResolutionDetails",
+							"ResolvedBy", "Reviewed", "Approved"]
+					stdf_model_quotes = st.dataframe(
+						df_model_quotes[view_cols],
+						selection_mode="single-row",
+						key="stdf_model_quotes",
+						hide_index=True,
+						on_select="rerun"
+					)
+					# df_model_quotes["Sel"] = False
+					# df_model_quotes["Sel_Date"] = None
+					# stdf_model_quotes_0 = st.data_editor(
+					# 	df_model_quotes[["Sel"] + view_cols],
+					# 	# selection_mode="single-row",
+					# 	key="stdf_model_quotes_0",
+					# 	hide_index=True,
+					# 	# on_select="rerun",
+					# 	on_change=select_quote,
+					# 	disabled=view_cols[:-2],
+					# 	column_config={
+					# 		"Sel": st.column_config.CheckboxColumn(
+					# 			label="Sel",
+					# 			width=50
+					# 		),
+					# 		view_cols[-2]: st.column_config.CheckboxColumn(
+					# 			label=view_cols[-2],
+					# 			width=120
+					# 		),
+					# 		view_cols[-1]: st.column_config.CheckboxColumn(
+					# 			label=view_cols[-1],
+					# 			width=120
+					# 		)
+					# 	}
+					# )
+					# # # st.session_state.update({
+					# # # 	"stdf_model_quotes_0_selected": stdf_model_quotes_0.loc[stdf_model_quotes_0["Sel"] == True]["Quote"].values.tolist()
+					# # # })
+					# # st.write("stdf_model_quotes_0")
+					# # st.write(stdf_model_quotes_0)
 
-					if pdf_file:
-						# annotations = [
-						# 	{
-						# 		"page": 1,
-						# 		"x": 220,
-						# 		"y": 155,
-						# 		"height": 22,
-						# 		"width": 65,
-						# 		"color": "red"
-						# 	},
-						# 	{
-						# 		"page": 1,
-						# 		"x": 220,
-						# 		"y": 155,
-						# 		"height": 22,
-						# 		"width": 65,
-						# 		"color": "red"
-						# 	}
-						# ]
-
-
-						def my_custom_annotation_handler(annotation):
-							# print(f"Annotation {annotation} clicked.")
-							idx = annotation.get("index")
-							page = annotation.get("page")
-							x = annotation.get("x")
-							y = annotation.get("y")
-							w = annotation.get("width")
-							h = annotation.get("height")
-							c = annotation.get("color")
-							bbox = (x, y, x + w, y + h)
-							et = annotation.get("text")
-							# line_texts = ';; '.join([line['text'] for line in et])
-							# print(f"{line_texts=}")
-							text = annotation.get("text")
-							print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-							# key = f"issues_{selected_quote}_{idx}"
-							key = f"status_{m_id}_{selected_quote}"
-							st.session_state.update({
-								f"need_details_{key}": True
-							})
-							# list_issues = st.session_state.setdefault(key, [])
-							ask_details(key, idx, selected_quote, annotation)
-
-
-						parsed_annotations = load_pdf_annotations(pdf_file)
-						# # st.write(parsed_annotations)
-						# st.write(f"{len(parsed_annotations)=}")
-						# st.write(f"{(len(parsed_annotations) == 15)=}")
-						# # st.write(f"Parsed Annotation Texts:")
-						# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
-						#
-						# st.write("SESSION_STATE:")
-						# st.write(st.session_state)
-
-						k_c_a = "clicked_annotation"
-						k_pdf_viewer = f"pdf_viewer_wo"
-						pdf_click_callback = my_custom_annotation_handler
-						if (k_pdf_viewer in st.session_state) and isinstance(st.session_state[k_pdf_viewer],
-																			(dict, list, tuple)) and (
-								k_c_a in st.session_state[k_pdf_viewer]):
-							print("==A")
-							annotation = st.session_state[k_pdf_viewer][k_c_a]
-							idx = annotation.get("index")
-							key = f"issues_{selected_quote}_{idx}"
-							if not st.session_state.get(key, True):
-								print("==B")
-								# st.session_state.update({
-								# 	f"need_details_{key}": False
-								# })
-								pdf_click_callback = None
-							else:
-								print("==C")
+					if stdf_model_quotes["selection"]["rows"]:
+						ser_selected_quote = df_model_quotes.iloc[stdf_model_quotes["selection"]["rows"][0]]
+						selected_quote = ser_selected_quote["Quote"]
+						pdf_file = ser_selected_quote["Q_WORpt"]
+						known_issues = df_meeting_notes.loc[df_meeting_notes["Quote"] == selected_quote][
+							["MeetingID", "IssueDescription"]]
+						if not known_issues.empty:
+							st.write(f"Known Issues:")
+							st.dataframe(known_issues.transpose())
 						else:
-							print("==D")
+							st.write("No Known Issues")
+						st.write(ser_selected_quote)
+						st.write(pdf_file)
 
-						if st.button(
-								label=f"Approve {selected_quote}",
-								key=f"btn_approve_quote"
-						):
-							df_meeting_quotes.loc[
-								df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
-							if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
-								st.session_state[f"status_{m_id}_{selected_quote}"] = {}
-							st.session_state[f"status_{m_id}_{selected_quote}"].update({
-								k_df_meeting_quotes: df_meeting_quotes,
-								f"approve_{selected_quote}_date": datetime.datetime.now(),
-								f"approve_{selected_quote}_by": "Avery Briggs"
-							})
-							st.rerun()
-						print(f"AA == {pdf_file=}")
-						st_pdf_viewer = pdf_viewer(
-							input=load_pdf_binary(pdf_file),
-							width=s_w,
-							# key=f"kp_{k_pdf_viewer}",
-							annotations=parsed_annotations,
-							on_annotation_click=pdf_click_callback,
-							annotation_outline_size=2,
-							pages_vertical_spacing=10
-						)
-						# st.session_state.update({k_pdf_viewer: st.session_state.get(f"kp_{k_pdf_viewer}")})
-						st.session_state.update({k_pdf_viewer: st_pdf_viewer})
-						print(f"{st_pdf_viewer=}")
-						if isinstance(st_pdf_viewer, (dict, list)):
-							if k_c_a in st_pdf_viewer:
-								print("_A")
-								if st_pdf_viewer[k_c_a]:
-									print("_B")
-									annotation = st_pdf_viewer[k_c_a]
-									idx = annotation.get("index")
-									key = f"issues_{selected_quote}_{idx}"
-									if not st.session_state.get(key, True):
-										print("_C")
-										st_pdf_viewer.pop(k_c_a)
-										st.session_state.update({
-											f"need_details_{key}": False
-										})
-									else:
-										print("_D")
+						if pdf_file:
+							# annotations = [
+							# 	{
+							# 		"page": 1,
+							# 		"x": 220,
+							# 		"y": 155,
+							# 		"height": 22,
+							# 		"width": 65,
+							# 		"color": "red"
+							# 	},
+							# 	{
+							# 		"page": 1,
+							# 		"x": 220,
+							# 		"y": 155,
+							# 		"height": 22,
+							# 		"width": 65,
+							# 		"color": "red"
+							# 	}
+							# ]
+
+
+							def my_custom_annotation_handler(annotation):
+								# print(f"Annotation {annotation} clicked.")
+								idx = annotation.get("index")
+								page = annotation.get("page")
+								x = annotation.get("x")
+								y = annotation.get("y")
+								w = annotation.get("width")
+								h = annotation.get("height")
+								c = annotation.get("color")
+								bbox = (x, y, x + w, y + h)
+								et = annotation.get("text")
+								# line_texts = ';; '.join([line['text'] for line in et])
+								# print(f"{line_texts=}")
+								text = annotation.get("text")
+								print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+								# key = f"issues_{selected_quote}_{idx}"
+								key = f"status_{m_id}_{selected_quote}"
+								st.session_state.update({
+									f"need_details_{key}": True
+								})
+								# list_issues = st.session_state.setdefault(key, [])
+								ask_details(key, idx, selected_quote, annotation)
+
+
+							parsed_annotations = load_pdf_annotations(pdf_file)
+							# # st.write(parsed_annotations)
+							# st.write(f"{len(parsed_annotations)=}")
+							# st.write(f"{(len(parsed_annotations) == 15)=}")
+							# # st.write(f"Parsed Annotation Texts:")
+							# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+							#
+							# st.write("SESSION_STATE:")
+							# st.write(st.session_state)
+
+							k_c_a = "clicked_annotation"
+							k_pdf_viewer = f"pdf_viewer_wo"
+							pdf_click_callback = my_custom_annotation_handler
+							if (k_pdf_viewer in st.session_state) and isinstance(st.session_state[k_pdf_viewer],
+																				(dict, list, tuple)) and (
+									k_c_a in st.session_state[k_pdf_viewer]):
+								print("==A")
+								annotation = st.session_state[k_pdf_viewer][k_c_a]
+								idx = annotation.get("index")
+								key = f"issues_{selected_quote}_{idx}"
+								if not st.session_state.get(key, True):
+									print("==B")
+									# st.session_state.update({
+									# 	f"need_details_{key}": False
+									# })
+									pdf_click_callback = None
 								else:
-									print("_E")
+									print("==C")
 							else:
-								print("_F")
-						st.write(st_pdf_viewer)
+								print("==D")
 
-					# TODO add a submit issue button at the bottom of the screen
-					# if st.button(
-					# 	label="Issue",
-					# 	key="btn_issue_quote"
-					# ):
-					# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
-					#
-					# 	idx = annotation.get("index")
-					# 	page = annotation.get("page")
-					# 	x = annotation.get("x")
-					# 	y = annotation.get("y")
-					# 	w = annotation.get("width")
-					# 	h = annotation.get("height")
-					# 	c = annotation.get("color")
-					# 	bbox = (x, y, x + w, y + h)
-					# 	et = annotation.get("text")
-					# 	# line_texts = ';; '.join([line['text'] for line in et])
-					# 	# print(f"{line_texts=}")
-					# 	text = annotation.get("text")
-					# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-					# 	key = f"issues_{selected_quote}_{idx}"
-					# 	st.session_state.update({
-					# 		f"need_details_{key}": True
-					# 	})
-					# 	# list_issues = st.session_state.setdefault(key, [])
-					# 	ask_details(key, selected_quote, annotation)
-					#
-					# 	# st.session_state.update({
-					# 	# 	k_df_meeting_quotes: df_meeting_quotes,
-					# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
-					# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
-					# 	# })
-					# 	st.rerun()
+							if st.button(
+									label=f"Approve {selected_quote}",
+									key=f"btn_approve_quote"
+							):
+								df_meeting_quotes.loc[
+									df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = True, True
+								if st.session_state.get(f"status_{m_id}_{selected_quote}", None) is None:
+									st.session_state[f"status_{m_id}_{selected_quote}"] = {}
+								st.session_state[f"status_{m_id}_{selected_quote}"].update({
+									k_df_meeting_quotes: df_meeting_quotes,
+									f"approve_{selected_quote}_date": datetime.datetime.now(),
+									f"approve_{selected_quote}_by": "Avery Briggs"
+								})
+								st.rerun()
+							print(f"AA == {pdf_file=}")
+							st_pdf_viewer = pdf_viewer(
+								input=load_pdf_binary(pdf_file),
+								width=s_w,
+								# key=f"kp_{k_pdf_viewer}",
+								annotations=parsed_annotations,
+								on_annotation_click=pdf_click_callback,
+								annotation_outline_size=2,
+								pages_vertical_spacing=10
+							)
+							# st.session_state.update({k_pdf_viewer: st.session_state.get(f"kp_{k_pdf_viewer}")})
+							st.session_state.update({k_pdf_viewer: st_pdf_viewer})
+							print(f"{st_pdf_viewer=}")
+							if isinstance(st_pdf_viewer, (dict, list)):
+								if k_c_a in st_pdf_viewer:
+									print("_A")
+									if st_pdf_viewer[k_c_a]:
+										print("_B")
+										annotation = st_pdf_viewer[k_c_a]
+										idx = annotation.get("index")
+										key = f"issues_{selected_quote}_{idx}"
+										if not st.session_state.get(key, True):
+											print("_C")
+											st_pdf_viewer.pop(k_c_a)
+											st.session_state.update({
+												f"need_details_{key}": False
+											})
+										else:
+											print("_D")
+									else:
+										print("_E")
+								else:
+									print("_F")
+							st.write(st_pdf_viewer)
+
+						# TODO add a submit issue button at the bottom of the screen
+						# if st.button(
+						# 	label="Issue",
+						# 	key="btn_issue_quote"
+						# ):
+						# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
+						#
+						# 	idx = annotation.get("index")
+						# 	page = annotation.get("page")
+						# 	x = annotation.get("x")
+						# 	y = annotation.get("y")
+						# 	w = annotation.get("width")
+						# 	h = annotation.get("height")
+						# 	c = annotation.get("color")
+						# 	bbox = (x, y, x + w, y + h)
+						# 	et = annotation.get("text")
+						# 	# line_texts = ';; '.join([line['text'] for line in et])
+						# 	# print(f"{line_texts=}")
+						# 	text = annotation.get("text")
+						# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+						# 	key = f"issues_{selected_quote}_{idx}"
+						# 	st.session_state.update({
+						# 		f"need_details_{key}": True
+						# 	})
+						# 	# list_issues = st.session_state.setdefault(key, [])
+						# 	ask_details(key, selected_quote, annotation)
+						#
+						# 	# st.session_state.update({
+						# 	# 	k_df_meeting_quotes: df_meeting_quotes,
+						# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
+						# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
+						# 	# })
+						# 	st.rerun()
+		else:
+			st.warning("No quotes were found to review this week.")
 
 	if m_id is not None:
 		if st.button(
