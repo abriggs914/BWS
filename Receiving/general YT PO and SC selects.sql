@@ -134,7 +134,7 @@ LEFT JOIN
 ON
 	[O].[WO#] = [P].[WO#]
 WHERE
-	[C].[Date] BETWEEN (SELECT MIN([Quote Date]) FROM [BWSdb].[dbo].[Orders]) 
+	[C].[Date] BETWEEN (SELECT MIN([Quote Date]) FROM [BWSdb].[dbo].[Orders]) AND (SELECT MAX([Quote Date]) FROM [BWSdb].[dbo].[Orders])
 	--[O].[Decline/Rejected] = 4
 ORDER BY
 	[C].[Date]

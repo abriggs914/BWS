@@ -3,9 +3,81 @@
 -- Convert this into a view to be approved by purchasing / production
 
 DECLARE @StartDate DATETIME = '2025-09-18 08:00';
-DECLARE @TopLevelOnly BIT = 1;
+DECLARE @TopLevelOnly BIT = 0;
+
+SELECT * FROM [BWSdb].[dbo].[PROD_JobOpIssue] [JOI];
+SELECT * FROM [BWSdb].[dbo].[hist_PROD_JobOpIssue] [hJOI] ;
+
+SELECT
+	'Material Posted Since ' + CAST(@StartDate AS NVARCHAR(MAX)) AS [T],
+	*
+FROM
+	[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] 
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobPost] [WJ] 
+ON
+	([WJP].[Job] = [WJ].[Job])
+	AND ([WJP].[MStockCode] = [WJ].[MStockCode])
+	AND ([WJP].[Line] = [WJ].[Line])
+WHERE
+	([WJP].[TrnDateTime] >= @StartDate)
+	AND ([WJ].[TrnType] <> 'L')
+ORDER BY
+	[WJP].[TrnDateTime] DESC
+;
+
+/*
+SELECT 
+	'Material Posted - B' AS [T],
+	[JP].[MQtyIssued],
+	[WJM].[UnitQtyReqd],
+	[JP].[Job],
+	[WJM].[Job],
+	[JP].[MStockCode],
+	[WJM].[StockCode],
+	[JP].[LOperation],
+	[WJM].[OperationOffset],
+	[JP].*
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [WJM]  
+ON
+	([JP].[Job] = [WJM].[Job])
+	AND ([JP].[MStockCode] = [WJM].[StockCode])
+	AND ([JP].[LOperation] = [WJM].[OperationOffset])
+;
+
+-- Material Issued Today
+SELECT 
+	'Material Posted' AS [T],
+	[WJP].[TrnDateTime],
+	[JP].[MQtyIssued],
+	[WJM].[UnitQtyReqd],
+	[JP].*
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP]
+INNER JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [WJM] 
+ON
+	([JP].[Job] = [WJM].[Job])
+	AND ([JP].[MStockCode] = [WJM].[StockCode])
+	AND ([JP].[LOperation] = [WJM].[OperationOffset])
+INNER JOIN
+	[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] 
+ON	
+	([JP].[Job] = [WJP].[Job])
+	AND ([JP].[Line] = [WJP].[Line])
+	AND ([JP].[MStockCode] = [WJP].[MStockCode])
+WHERE
+	/*([WJP].[TrnDateTime] >= @StartDate)
+	AND*/
+	([JP].[TrnType] <> 'L')
+;
+*/	
 
 -- Find shortages -> all [WipJobAllMat] rows where QtyIssued < UnitQtyReqd for a Job/Operation that has been started (FirstIssued IS NOT NULL).
+
 DECLARE @partOrNoneIssued AS TABLE 
 (
 	[ID] INT IDENTITY(0, 1),
@@ -52,7 +124,8 @@ SELECT
 	'New StockCodes w/ part or none posting' AS [T],
 	*
 FROM 
-	@partOrNoneIssued;
+	@partOrNoneIssued
+;
 
 -- #####
 -- Compare with newely added Yellow Tags via manual entry
@@ -61,16 +134,19 @@ FROM
 -- New YTs
 SELECT
 	'New YTs' AS [T],
+	(CASE WHEN (([Src].[Job] IS NOT NULL) AND ([Src].[StockCode] IS NOT NULL)) THEN 1 ELSE 0 END) AS [FoundOnBoth],
 	[YT].[LastModified],
 	[YT].[WO],
 	[YT].[StockCode],
 	[YT].[Description],
 	[YT].[PO],
 	[YT].[QtyMissing],
-	[YT].[Notes]
+	[YT].[Notes],
+	[YT].[ID] AS [YT_ID],
+	[Src].[ID] AS [Src_ID]
 FROM
 	[BWSdb].[dbo].[PROD_YellowTags] [YT]
-INNER JOIN
+LEFT JOIN
 	@partOrNoneIssued [Src]
 ON
 	([YT].[WO] = [Src].[Job])
@@ -106,11 +182,12 @@ ORDER BY
 -- FAILs
 
 -- Manual YTs that don’t match auto shortages
+-- These are bad. If Someone marked something as a YT, but the system didnt pick up on it, then there is a flaw to the logic.
 SELECT
     'FAIL_MANUAL_ONLY' AS [CorrectlyPredicted],
     YT.WO,
     YT.StockCode,
-    YT.DateCreated
+    YT.DateCreated AS [YTDateCreated]
 FROM BWSdb.dbo.PROD_YellowTags YT
 INNER JOIN (SELECT DISTINCT Job FROM @partOrNoneIssued) J
   ON YT.WO = J.Job COLLATE DATABASE_DEFAULT
@@ -120,6 +197,8 @@ LEFT JOIN @partOrNoneIssued Src
 WHERE (Src.Job IS NULL) AND ([YT].[DateCreated] >= @StartDate);
 
 -- Auto shortages that don’t match manual YTs
+-- Some room for error on these ones. POTENTIALLY, these YTs are YET-TO-BE made manually.
+-- If the record is older, there may be a problem in the logic.
 SELECT 'FAIL_AUTO_ONLY' AS [CorrectlyPredicted], Src.*
 FROM @partOrNoneIssued Src
 LEFT JOIN BWSdb.dbo.PROD_YellowTags YT

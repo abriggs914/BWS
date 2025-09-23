@@ -368,3 +368,111 @@ display_df(
     hide_index=True,
     width=1200
 )
+
+#
+# @st.cache_data(ttl=1000*60)  # 1 hour
+# def load_material_issued() -> pd.DataFrame:
+#     return connect("""
+# SELECT
+# 	[WM].[Job],
+# 	[WM].[Warehouse],
+# 	[WM].[OperationOffset],
+# 	[WM].[StockCode],
+# 	[WM].[StockDescription],
+# 	[JP].[SumQtyIssued],
+# 	[WM].[UnitQtyReqd],
+# 	[WM].[AllocCompleted],
+# 	(CASE WHEN ISNULL([WM].[UnitQtyReqd], 0) > ISNULL([JP].[SumQtyIssued], 0) THEN 0 ELSE 1 END) AS [Check]
+# 	, (CASE WHEN (
+# 			([JP].[Job] IS NOT NULL)
+# 			AND ([JP].[MStockCode] IS NOT NULL)
+# 			AND ([JP].[MWarehouse] IS NOT NULL)
+# 			AND ([JP].[SumQtyIssued] IS NOT NULL)
+# 		)
+# 		THEN 1 ELSE 0 END) AS [IsPosted],
+# 	[JP].[FirstTransaction],
+# 	[JP].[LastTransaction],
+#     (CASE
+#         WHEN [WM].[AllocCompleted] = 'Y' THEN 1  -- SYSPRO says done
+#         WHEN ISNULL([WM].[UnitQtyReqd],0) <= ISNULL([JP].[SumQtyIssued],0) THEN 1
+#         ELSE 0
+#     END) AS [IsSatisfied],
+#     (CASE
+#         WHEN ISNULL([WM].[UnitQtyReqd],0) > ISNULL([JP].[SumQtyIssued],0) THEN 1 ELSE 0
+#     END) AS [StillMissing]
+# FROM
+# 	[SysproCompanyA].[dbo].[WipJobAllMat] [WM] WITH (NOLOCK)
+# LEFT JOIN (
+# 	SELECT
+# 		[JP].[Job],
+# 		[JP].[MStockCode],
+# 		[JP].[LOperation],
+# 		[JP].[MWarehouse],
+# 		[JP].[TrnType],
+# 		ISNULL(SUM(ISNULL([JP].[MQtyIssued], 0)), 0) AS [SumQtyIssued],
+# 		MIN([WJP].[TrnDateTime]) AS [FirstTransaction],
+# 		MAX([WJP].[TrnDateTime]) AS [LastTransaction]
+# 	FROM
+# 		[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+# 	INNER JOIN
+# 		[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] WITH (NOLOCK)
+# 	ON
+# 		([JP].[Job] = [WJP].[Job])
+# 		AND ([JP].[MStockCode] = [WJP].[MStockCode])
+# 		AND ([JP].[Line] = [WJP].[Line])
+# 	WHERE
+# 		([JP].[TrnType] <> 'L')
+# 	GROUP BY
+# 		[JP].[Job],
+# 		[JP].[MStockCode],
+# 		[JP].[LOperation],
+# 		[JP].[MWarehouse],
+# 		[JP].[TrnType]
+# ) AS [JP]
+# ON
+# 	([WM].[Job] = [JP].[Job])
+# 	AND ([WM].[StockCode] = [JP].[MStockCode])
+# 	AND ([WM].[Warehouse] = [JP].[MWarehouse])
+# 	--AND ([WM].[QtyIssued] = [JP].[SumQtyIssued])
+# WHERE
+# 	(ISNUMERIC(LEFT([WM].[Job], 1)) = 1)
+# 	AND ([WM].[Warehouse] <> '**')
+#     """)
+#
+#
+# df_mat: pd.DataFrame = load_material_issued()
+# list_jobs = sorted(df_mat["Job"].dropna().unique().tolist())
+#
+# k_multiselect_jobs: str = "key_multiselect_jobs"
+# n_max_jobs: int = 5
+# if k_multiselect_jobs not in st.session_state:
+#     st.session_state[k_multiselect_jobs] = [j for j in list_jobs if j[0] == "1"][-n_max_jobs:]
+# multiselect_jobs = st.multiselect(
+#     label="Select a job",
+#     key=k_multiselect_jobs,
+#     options=list_jobs,
+#     max_selections=n_max_jobs
+# )
+#
+#
+#
+# k_multiselect_job_mat_sort: str = "key_multiselect_job_mat_sort"
+# multiselect_job_mat_sort = st.multiselect(
+#     label="Sort",
+#     key=k_multiselect_job_mat_sort,
+#     options=df_mat.columns.tolist(),
+#     max_selections=3
+# )
+#
+# if multiselect_job_mat_sort:
+#     df_mat.sort_values(
+#         by=multiselect_job_mat_sort,
+#         inplace=True
+#     )
+#
+# if multiselect_jobs:
+#     df_mat_0 = df_mat.loc[df_mat["Job"].isin(multiselect_jobs)]
+#     display_df(
+#         df_mat_0,
+#         "Material Issued"
+#     )

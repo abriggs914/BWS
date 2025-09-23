@@ -5,6 +5,7 @@ import pandas as pd
 from typing import Any
 from pyodbc_connection import connect
 from streamlit_utility import display_df, st
+from streamlit_pills import pills
 
 MIN_QUERY_HOLD_TIME: int = 1000 * 30  # 30 minutes
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -193,128 +194,295 @@ def change_df_yts():
 	ask_commit_update(edited_rows)
 
 
+@st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
+def load_new_yellow_tags():
+	start_date = "2025-09-18 08:00"
+	top_level_only = "1"
+
+	sql_new_mat = """
+	SELECT
+		'Material Posted Since ' + CAST('{SD}' AS NVARCHAR(MAX)) AS [T],
+		[WJP].[TrnDateTime],
+		[WJ].*
+	FROM
+		[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] 
+	INNER JOIN
+		[SysproCompanyA].[dbo].[WipJobPost] [WJ] 
+	ON
+		([WJP].[Job] = [WJ].[Job])
+		AND ([WJP].[MStockCode] = [WJ].[MStockCode])
+		AND ([WJP].[Line] = [WJ].[Line])
+	WHERE
+		([WJP].[TrnDateTime] >= '{SD}')
+		AND ([WJ].[TrnType] <> 'L')
+	ORDER BY
+		[WJP].[TrnDateTime] DESC
+	;
+	""".format(SD=start_date)
+
+	sql_part_or_none = """
+	SELECT
+		[JOI].[Job],
+		[JOI].[Operation],
+		[JOI].[FirstIssued],
+		[JOI].[LastIssued],
+		[WM].[StockCode],
+		[WM].[QtyIssued],
+		[WM].[UnitQtyReqd]
+	FROM
+		[BWSdb].[dbo].[PROD_JobOpIssue] [JOI]
+	INNER JOIN
+		[SysproCompanyA].[dbo].[WipJobAllMat] [WM]
+	ON
+		([JOI].[Job] = [WM].[Job] COLLATE DATABASE_DEFAULT)
+		AND ([JOI].[Operation] = [WM].[OperationOffset])
+	WHERE
+		([JOI].[FirstIssued] IS NOT NULL)
+		AND ([WM].[QtyIssued] < [WM].[UnitQtyReqd])
+		AND ([JOI].[FirstIssued] >= '{SD}')
+		AND ((CASE WHEN ISNULL({TLO}, 0) = 1 THEN (CASE WHEN LEFT([WM].[Job], 1) = '1' THEN 1 ELSE 0 END) ELSE 1 END) > 0)
+	""".format(SD=start_date, TLO=top_level_only)
+
+	sql_new_yts = """
+	SELECT
+		'New YTs' AS [T],
+		CASE WHEN (Src.Job IS NOT NULL AND Src.StockCode IS NOT NULL) THEN 1 ELSE 0 END AS [FoundOnBoth],
+		YT.LastModified,
+		YT.WO,
+		YT.StockCode,
+		YT.Description,
+		YT.PO,
+		YT.QtyMissing,
+		YT.Notes,
+		YT.ID AS [YT_ID]
+	FROM BWSdb.dbo.PROD_YellowTags YT
+	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) AS Src
+		ON YT.WO        = Src.Job
+	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
+	WHERE YT.DateCreated >= '{SD}'
+	  AND (
+			CASE WHEN ISNULL({TLO}, 0) = 1
+				 THEN CASE WHEN LEFT(YT.WO, 1) = '1' THEN 1 ELSE 0 END
+				 ELSE 1
+			END
+		  ) > 0
+	""".format(SD=start_date, TLO=top_level_only)
+
+	sql_success = """
+	SELECT
+		'SUCCESS!' AS [CorrectlyPredicted],
+		YT.ID AS [YT_ID],
+		YT.*
+	FROM BWSdb.dbo.PROD_YellowTags YT
+	INNER JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) AS Src
+		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
+	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
+	WHERE YT.DateCreated >= '{SD}'
+	  AND (
+			CASE WHEN ISNULL({TLO}, 0) = 1
+				 THEN CASE WHEN LEFT(YT.WO, 1) = '1' THEN 1 ELSE 0 END
+				 ELSE 1
+			END
+		  ) > 0
+	""".format(SD=start_date, TLO=top_level_only)
+
+	sql_fail_manual = """
+	SELECT
+		'FAIL_MANUAL_ONLY' AS [CorrectlyPredicted],
+		YT.WO,
+		YT.StockCode,
+		YT.DateCreated AS [YTDateCreated]
+	FROM BWSdb.dbo.PROD_YellowTags YT
+	INNER JOIN (
+		SELECT DISTINCT Job
+		FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO})
+	) J
+		ON YT.WO = J.Job COLLATE DATABASE_DEFAULT
+	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) Src
+		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
+	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
+	WHERE Src.Job IS NULL
+	  AND YT.DateCreated >= '{SD}';
+	""".format(SD=start_date, TLO=top_level_only)
+
+	sql_fail_auto = """
+	SELECT
+		'FAIL_AUTO_ONLY' AS [CorrectlyPredicted],
+		Src.*
+	FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO}) Src
+	LEFT JOIN BWSdb.dbo.PROD_YellowTags YT
+		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
+	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
+	WHERE YT.WO IS NULL
+	  AND Src.FirstIssued >= '{SD}';
+	""".format(SD=start_date, TLO=top_level_only)
+
+	sqls = {
+		"Material posted since param date": sql_new_mat,
+		"Showing the current stockcodes with missing or partial issuing": sql_part_or_none,
+		"New YTs since param date": sql_new_yts,
+		"These YTs were correctly auto-flagged and manually input": sql_success,
+		"Someone marked something as a YT, but the system didn't pick up on it (No records = Good!)": sql_fail_manual,
+		"POTENTIALLY, these YTs are YET-TO-BE made manually (No records = Good! some records = maybe okay)": sql_fail_auto
+	}
+
+	returns = {}
+	for i, sql_k in enumerate(sqls):
+		sql = sqls[sql_k]
+		print(f"{i=}")
+		print(sql)
+		returns[sql_k] = connect(sql)
+
+	return returns
+
 st.set_page_config(layout="wide")
 
-k_toggle_active_only: str = "key_toggle_active_only"
-st.session_state.setdefault(k_toggle_active_only, True)
-toggle_active_only = st.toggle(
-	label="Active YTs only?",
-	key=k_toggle_active_only
+pills_menu_options = [
+	"Yellow Tags",
+	"New Yellow Tags"
+]
+
+k_pills_menu: str = "key_pills_menu"
+if k_pills_menu not in st.session_state:
+	st.session_state[k_pills_menu] = 1
+pills_menu = pills(
+	label="Menu",
+	options=pills_menu_options,
+	key=k_pills_menu,
+	label_visibility="hidden"
 )
 
-k_df_timeout: str = "key_df_timeout"
-k_df_yts: str = "key_df_yts"
-k_force_rerun: str = "key_rerun"
-st.session_state.setdefault(k_force_rerun, False)
-df_yts: pd.DataFrame = st.session_state.setdefault(k_df_yts, load_yellow_tags())
-query_time = st.session_state.setdefault(k_df_timeout, datetime.datetime.now())
-curr_time = datetime.datetime.now()
-st.write(f"{query_time=}")
-st.write(f"{curr_time=}")
+if pills_menu == pills_menu_options[1]:
+	# View New Yellow Tags
+	dfs = load_new_yellow_tags()
 
-cont_header = st.container()
-cont_data = st.container()
-if ((curr_time - query_time).total_seconds() / (1000 * MIN_QUERY_HOLD_TIME)) >= 1:
-	del st.session_state[k_df_timeout]
-	del st.session_state[k_df_yts]
+	for i, df_k in enumerate(dfs):
+		df = dfs[df_k]
+		st.write(f"{i} - {df_k}")
+		st.write(df)
 
-if (st.session_state.get(k_force_rerun, False)) or (k_df_yts not in st.session_state):
-	print("RERUN to requery")
-
-	load_yellow_tags.clear()
-	df_fresh = load_yellow_tags()
-	st.session_state[k_df_yts] = df_fresh.copy()  # Working copy
-	st.session_state[k_df_timeout] = datetime.datetime.now()
-	st.session_state[k_force_rerun] = False
-	cont_data.empty()
-	st.rerun()
-
-vis_cols = {
-	"DateCreated": "Missing Since",
-	"WO": "WO",
-	"QtyMissing": "# Missing",
-	"QtyOnHand": "# on Hand",
-	"StockCode": "Part",
-	"Desc": "Desc",
-	"LongDesc": "Long Desc",
-	"Supplier": "Supplier",
-	"PO": "PO",
-	"Notes": "Notes"
-}
-vis_cols_short = {k: v for k, v in vis_cols.items()}
-del vis_cols_short["QtyMissing"]
-del vis_cols_short["QtyOnHand"]
-del vis_cols_short["LongDesc"]
-del vis_cols_short["PO"]
-df_yts: pd.DataFrame = df_yts.rename(columns=vis_cols)
-if toggle_active_only:
-	df_yts = df_yts[df_yts["Active"] == 1]
-df_yts[vis_cols["DateCreated"]] = df_yts[vis_cols["DateCreated"]].apply(lambda x: x.date() if pd.notnull(x) else "")
-df_yts[vis_cols["PO"]] = df_yts[vis_cols["PO"]].apply(lambda x: int(str(x)[-6:]) if not pd.isna(x) else x)
-df_yts[vis_cols["StockCode"]] = df_yts[vis_cols["StockCode"]].apply(lambda x: x.upper() if not pd.isna(x) else x)
-k_df_yts: str = "key_df_yts"
-k_de_yts: str = f"key_de_yts_{query_time:%x %X}"
-
-title: str = "Production Yellow tags"
-shape = df_yts.shape
-title = f"{title} ({shape[0]} Rows".strip()
-title += f" x {shape[1]} Cols)" if len(shape) > 1 else ")"
-with cont_header:
-	st.write(title)
-
-with cont_data:
-	de_yts = st.data_editor(
-		df_yts[vis_cols.values()],
-		width=1500,
-		height=650,
-		on_change=change_df_yts,
-		key=k_de_yts,
-		hide_index=True
+else:
+	# View the Current Yellow Tags
+	k_toggle_active_only: str = "key_toggle_active_only"
+	st.session_state.setdefault(k_toggle_active_only, True)
+	toggle_active_only = st.toggle(
+		label="Active YTs only?",
+		key=k_toggle_active_only
 	)
 
-#
-# rolling_window = 3
-# min_periods = 3
-# df_order_counts = load_order_counts()
-# df_order_counts_2 = df_order_counts[~pd.isna(df_order_counts["Order Date"])]
-# df_order_counts_2["AvgDDQO"] = df_order_counts_2["DaysBtwnQuoteOrder"].rolling(
-# 	window=rolling_window,
-# 	min_periods=min_periods
-# ).mean()
-# display_df(
-# 	df_order_counts,
-# 	"df_order_counts - Rolling Avg Datediffs"
-# )
-# display_df(
-# 	df_order_counts_2,
-# 	"df_order_counts_2 - Rolling Avg Datediffs"
-# )
-#
-# df_quotes_per_day = df_order_counts.copy()
-# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.date())
-# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.date())
-# # df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.groupby(
-# df_quotes_per_day_grouped_0 = df_quotes_per_day.groupby(
-# 	by="Quote Date"
-# ).agg({
-# 	"Quote#": "count"
-# }).rename(columns={"Quote#": "CountOfQuotes"})
-# df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.merge(
-# 	df_quotes_per_day_grouped_0["CountOfQuotes"],
-# 	left_on="Date",
-# 	right_on="Quote Date",
-# 	how="left"
-# )["CountOfQuotes"]
-#
-# df_quotes_per_day["QPDAvg"] = df_quotes_per_day["QuotesPerDay"].rolling(
-# 	window=rolling_window
-# ).mean()
-#
-# display_df(
-# 	df_quotes_per_day_grouped_0,
-# 	"df_quotes_per_day - Grouped"
-# )
-# display_df(
-# 	df_quotes_per_day,
-# 	"df_quotes_per_day - Final"
-# )
+	k_df_timeout: str = "key_df_timeout"
+	k_df_yts: str = "key_df_yts"
+	k_force_rerun: str = "key_rerun"
+	st.session_state.setdefault(k_force_rerun, False)
+	df_yts: pd.DataFrame = st.session_state.setdefault(k_df_yts, load_yellow_tags())
+	query_time = st.session_state.setdefault(k_df_timeout, datetime.datetime.now())
+	curr_time = datetime.datetime.now()
+	st.write(f"{query_time=}")
+	st.write(f"{curr_time=}")
+
+	cont_header = st.container()
+	cont_data = st.container()
+	if ((curr_time - query_time).total_seconds() / (1000 * MIN_QUERY_HOLD_TIME)) >= 1:
+		del st.session_state[k_df_timeout]
+		del st.session_state[k_df_yts]
+
+	if (st.session_state.get(k_force_rerun, False)) or (k_df_yts not in st.session_state):
+		print("RERUN to requery")
+
+		load_yellow_tags.clear()
+		df_fresh = load_yellow_tags()
+		st.session_state[k_df_yts] = df_fresh.copy()  # Working copy
+		st.session_state[k_df_timeout] = datetime.datetime.now()
+		st.session_state[k_force_rerun] = False
+		cont_data.empty()
+		st.rerun()
+
+	vis_cols = {
+		"DateCreated": "Missing Since",
+		"WO": "WO",
+		"QtyMissing": "# Missing",
+		"QtyOnHand": "# on Hand",
+		"StockCode": "Part",
+		"Desc": "Desc",
+		"LongDesc": "Long Desc",
+		"Supplier": "Supplier",
+		"PO": "PO",
+		"Notes": "Notes"
+	}
+	vis_cols_short = {k: v for k, v in vis_cols.items()}
+	del vis_cols_short["QtyMissing"]
+	del vis_cols_short["QtyOnHand"]
+	del vis_cols_short["LongDesc"]
+	del vis_cols_short["PO"]
+	df_yts: pd.DataFrame = df_yts.rename(columns=vis_cols)
+	if toggle_active_only:
+		df_yts = df_yts[df_yts["Active"] == 1]
+	df_yts[vis_cols["DateCreated"]] = df_yts[vis_cols["DateCreated"]].apply(lambda x: x.date() if pd.notnull(x) else "")
+	df_yts[vis_cols["PO"]] = df_yts[vis_cols["PO"]].apply(lambda x: int(str(x)[-6:]) if not pd.isna(x) else x)
+	df_yts[vis_cols["StockCode"]] = df_yts[vis_cols["StockCode"]].apply(lambda x: x.upper() if not pd.isna(x) else x)
+	k_df_yts: str = "key_df_yts"
+	k_de_yts: str = f"key_de_yts_{query_time:%x %X}"
+
+	title: str = "Production Yellow tags"
+	shape = df_yts.shape
+	title = f"{title} ({shape[0]} Rows".strip()
+	title += f" x {shape[1]} Cols)" if len(shape) > 1 else ")"
+	with cont_header:
+		st.write(title)
+
+	with cont_data:
+		de_yts = st.data_editor(
+			df_yts[vis_cols.values()],
+			width=1500,
+			height=650,
+			on_change=change_df_yts,
+			key=k_de_yts,
+			hide_index=True
+		)
+
+	#
+	# rolling_window = 3
+	# min_periods = 3
+	# df_order_counts = load_order_counts()
+	# df_order_counts_2 = df_order_counts[~pd.isna(df_order_counts["Order Date"])]
+	# df_order_counts_2["AvgDDQO"] = df_order_counts_2["DaysBtwnQuoteOrder"].rolling(
+	# 	window=rolling_window,
+	# 	min_periods=min_periods
+	# ).mean()
+	# display_df(
+	# 	df_order_counts,
+	# 	"df_order_counts - Rolling Avg Datediffs"
+	# )
+	# display_df(
+	# 	df_order_counts_2,
+	# 	"df_order_counts_2 - Rolling Avg Datediffs"
+	# )
+	#
+	# df_quotes_per_day = df_order_counts.copy()
+	# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.date())
+	# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.date())
+	# # df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.groupby(
+	# df_quotes_per_day_grouped_0 = df_quotes_per_day.groupby(
+	# 	by="Quote Date"
+	# ).agg({
+	# 	"Quote#": "count"
+	# }).rename(columns={"Quote#": "CountOfQuotes"})
+	# df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.merge(
+	# 	df_quotes_per_day_grouped_0["CountOfQuotes"],
+	# 	left_on="Date",
+	# 	right_on="Quote Date",
+	# 	how="left"
+	# )["CountOfQuotes"]
+	#
+	# df_quotes_per_day["QPDAvg"] = df_quotes_per_day["QuotesPerDay"].rolling(
+	# 	window=rolling_window
+	# ).mean()
+	#
+	# display_df(
+	# 	df_quotes_per_day_grouped_0,
+	# 	"df_quotes_per_day - Grouped"
+	# )
+	# display_df(
+	# 	df_quotes_per_day,
+	# 	"df_quotes_per_day - Final"
+	# )
