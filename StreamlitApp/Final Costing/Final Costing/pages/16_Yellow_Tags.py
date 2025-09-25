@@ -318,7 +318,7 @@ def load_new_yellow_tags():
 	""".format(SD=start_date, TLO=top_level_only)
 
 	sqls = {
-		"Material posted since param date": sql_new_mat,
+		"Material posted since param date [WipJobPost] only": sql_new_mat,
 		"Showing the current stockcodes with missing or partial issuing": sql_part_or_none,
 		"New YTs since param date": sql_new_yts,
 		"These YTs were correctly auto-flagged and manually input": sql_success,
@@ -356,10 +356,58 @@ if pills_menu == pills_menu_options[1]:
 	# View New Yellow Tags
 	dfs = load_new_yellow_tags()
 
-	for i, df_k in enumerate(dfs):
-		df = dfs[df_k]
-		st.write(f"{i} - {df_k}")
-		st.write(df)
+	df_keys = list(dfs.keys())
+	list_jobs = sorted(dfs[df_keys[0]]["Job"].dropna().unique().tolist())
+	list_ops = sorted(dfs[df_keys[0]]["Job"].dropna().unique().tolist())
+
+	k_toggle_top_level_only = "key_toggle_top_level_only"
+	if k_toggle_top_level_only not in st.session_state:
+		st.session_state[k_toggle_top_level_only] = True
+	toggle_top_level_only = st.toggle(
+		label="Top Level Only?",
+		key=k_toggle_top_level_only
+	)
+
+	k_multiselect_jobs = "key_multiselect_jobs"
+
+	if toggle_top_level_only:
+		list_jobs = [j for j in list_jobs if j[0] == "1"]
+
+	k_button_add_all_jobs = "key_button_add_all_jobs"
+	if (button_add_all_jobs := st.button(
+		label="Add All Jobs",
+		key=k_button_add_all_jobs
+	)):
+		st.session_state[k_multiselect_jobs] = list_jobs
+
+	k_button_clear_all_jobs = "key_button_clear_all_jobs"
+	if (button_clear_all_jobs := st.button(
+		label="Clear All Jobs",
+		key=k_button_clear_all_jobs
+	)):
+		st.session_state[k_multiselect_jobs] = []
+
+	if k_multiselect_jobs not in st.session_state:
+		st.session_state[k_multiselect_jobs] = list_jobs
+	multiselect_jobs = st.multiselect(
+		label="Select some jobs",
+		options=list_jobs,
+		key=k_multiselect_jobs
+	)
+
+	if multiselect_jobs:
+		for i, df_k in enumerate(dfs):
+			df = dfs[df_k]
+			if multiselect_jobs:
+				for col in ["Job", "WO"]:
+					if col in df.columns:
+						df = df.loc[df[col].isin(multiselect_jobs)]
+			with st.expander(
+					f"{i} - {df_k}"
+			):
+				st.write(df)
+	else:
+		st.warning("Select some jobs first")
 
 else:
 	# View the Current Yellow Tags
