@@ -1,4 +1,14 @@
 SELECT
+	*
+FROM
+	[BWSdb].[dbo].[REC_POReceivedSubs]
+;
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[hist_REC_POReceivedSubs]
+;
+SELECT
 	[Active], [WO], [StockCode], [QtyMissing], [Notes]
 
 FROM
@@ -9,6 +19,18 @@ SELECT
 FROM
 	[BWSdb].[dbo].[hist_PROD_YellowTags]
 ;
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[PROD_JobOpIssue] [JOI]
+;
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[hist_PROD_JobOpIssue] [hJOI]
+;
+
 SELECT
 	*
 FROM
