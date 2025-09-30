@@ -6,6 +6,7 @@ from typing import Any
 from pyodbc_connection import connect
 from streamlit_utility import display_df, st
 from streamlit_pills import pills
+import plotly.express as px
 
 MIN_QUERY_HOLD_TIME: int = 1000 * 30  # 30 minutes
 MAX_QUERY_HOLD_TIME: int = 1000 * 60 * 2  # 2 hours
@@ -152,7 +153,7 @@ def ask_commit_update(data):
 
 			if any(df_wos["Include"].values.tolist()):
 				if st.button(
-					label="Apply to all YTs for the same Job?"
+						label="Apply to all YTs for the same Job?"
 				):
 					print("yes")
 		else:
@@ -170,7 +171,7 @@ def ask_commit_update(data):
 
 			if any(df_stock_codes["Include"].values.tolist()):
 				if st.button(
-					label="Apply to all YTs for the same Part?"
+						label="Apply to all YTs for the same Part?"
 				):
 					print("yes")
 		else:
@@ -195,9 +196,16 @@ def change_df_yts():
 
 
 @st.cache_data(show_spinner=SHOW_SPINNERS, ttl=MAX_QUERY_HOLD_TIME)
-def load_new_yellow_tags():
-	start_date = "2025-09-18 08:00"
-	top_level_only = "1"
+def load_new_yellow_tags(
+		start_date_in: Any = "2025-09-18 08:00",
+		top_level_only="1",
+		tolerance=0.01
+):
+
+	# if not isinstance(start_date_in, (datetime.datetime, datetime.date)):
+	# 	start_date_in = datetime.datetime.strptime(start_date_in, "%Y-%m-%d %H:%M")
+	if not isinstance(start_date_in, str):
+		start_date_in = start_date_in.strftime("%Y-%m-%d %H:%M")
 
 	sql_new_mat = """
 	SELECT
@@ -218,7 +226,7 @@ def load_new_yellow_tags():
 	ORDER BY
 		[WJP].[TrnDateTime] DESC
 	;
-	""".format(SD=start_date)
+	""".format(SD=start_date_in)
 
 	sql_part_or_none = """
 	SELECT
@@ -241,7 +249,7 @@ def load_new_yellow_tags():
 		AND ([WM].[QtyIssued] < [WM].[UnitQtyReqd])
 		AND ([JOI].[FirstIssued] >= '{SD}')
 		AND ((CASE WHEN ISNULL({TLO}, 0) = 1 THEN (CASE WHEN LEFT([WM].[Job], 1) = '1' THEN 1 ELSE 0 END) ELSE 1 END) > 0)
-	""".format(SD=start_date, TLO=top_level_only)
+	""".format(SD=start_date_in, TLO=top_level_only)
 
 	sql_new_yts = """
 	SELECT
@@ -256,7 +264,7 @@ def load_new_yellow_tags():
 		YT.Notes,
 		YT.ID AS [YT_ID]
 	FROM BWSdb.dbo.PROD_YellowTags YT
-	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) AS Src
+	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}, {TOL}) AS Src
 		ON YT.WO        = Src.Job
 	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
 	WHERE YT.DateCreated >= '{SD}'
@@ -266,7 +274,7 @@ def load_new_yellow_tags():
 				 ELSE 1
 			END
 		  ) > 0
-	""".format(SD=start_date, TLO=top_level_only)
+	""".format(SD=start_date_in, TLO=top_level_only, TOL=tolerance)
 
 	sql_success = """
 	SELECT
@@ -274,7 +282,7 @@ def load_new_yellow_tags():
 		YT.ID AS [YT_ID],
 		YT.*
 	FROM BWSdb.dbo.PROD_YellowTags YT
-	INNER JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) AS Src
+	INNER JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}, {TOL}) AS Src
 		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
 	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
 	WHERE YT.DateCreated >= '{SD}'
@@ -284,7 +292,7 @@ def load_new_yellow_tags():
 				 ELSE 1
 			END
 		  ) > 0
-	""".format(SD=start_date, TLO=top_level_only)
+	""".format(SD=start_date_in, TLO=top_level_only, TOL=tolerance)
 
 	sql_fail_manual = """
 	SELECT
@@ -295,27 +303,31 @@ def load_new_yellow_tags():
 	FROM BWSdb.dbo.PROD_YellowTags YT
 	INNER JOIN (
 		SELECT DISTINCT Job
-		FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO})
+		FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO}, {TOL})
 	) J
 		ON YT.WO = J.Job COLLATE DATABASE_DEFAULT
-	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}) Src
+	LEFT JOIN dbo.fn_PartOrNoneIssued('{SD}', {TLO}, {TOL}) Src
 		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
 	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
 	WHERE Src.Job IS NULL
 	  AND YT.DateCreated >= '{SD}';
-	""".format(SD=start_date, TLO=top_level_only)
+	""".format(SD=start_date_in, TLO=top_level_only, TOL=tolerance)
 
 	sql_fail_auto = """
 	SELECT
 		'FAIL_AUTO_ONLY' AS [CorrectlyPredicted],
 		Src.*
-	FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO}) Src
+	FROM dbo.fn_PartOrNoneIssued('{SD}', {TLO}, {TOL}) Src
 	LEFT JOIN BWSdb.dbo.PROD_YellowTags YT
 		ON YT.WO        = Src.Job COLLATE DATABASE_DEFAULT
 	   AND YT.StockCode = Src.StockCode COLLATE DATABASE_DEFAULT
 	WHERE YT.WO IS NULL
 	  AND Src.FirstIssued >= '{SD}';
-	""".format(SD=start_date, TLO=top_level_only)
+	""".format(SD=start_date_in, TLO=top_level_only, TOL=tolerance)
+
+	sql_prod_job_issue_status = """SELECT * FROM [BWSdb].[dbo].[v_PROD_JobIssueStatus]"""
+
+	sql_prod_job_op_issue_status = """SELECT * FROM [BWSdb].[dbo].[v_PROD_JobOpIssueStatus]"""
 
 	sqls = {
 		"Material posted since param date [WipJobPost] only": sql_new_mat,
@@ -323,7 +335,9 @@ def load_new_yellow_tags():
 		"New YTs since param date": sql_new_yts,
 		"These YTs were correctly auto-flagged and manually input": sql_success,
 		"Someone marked something as a YT, but the system didn't pick up on it (No records = Good!)": sql_fail_manual,
-		"POTENTIALLY, these YTs are YET-TO-BE made manually (No records = Good! some records = maybe okay)": sql_fail_auto
+		"POTENTIALLY, these YTs are YET-TO-BE made manually (No records = Good! some records = maybe okay)": sql_fail_auto,
+		"Job Issue Status": sql_prod_job_issue_status,
+		"Job Op Issue Status": sql_prod_job_op_issue_status
 	}
 
 	returns = {}
@@ -334,6 +348,7 @@ def load_new_yellow_tags():
 		returns[sql_k] = connect(sql)
 
 	return returns
+
 
 st.set_page_config(layout="wide")
 
@@ -354,6 +369,19 @@ pills_menu = pills(
 
 if pills_menu == pills_menu_options[1]:
 	# View New Yellow Tags
+
+	# k_start_date = "key_start_date"
+	# if k_start_date not in st.session_state:
+	# 	st.session_state[k_start_date] = datetime.datetime.strptime()"2025-09-18 08:00"
+	# start_date = st.date_input(
+	# 	label="Start date:",
+	# 	key=k_start_date
+	# )
+	#
+	# if isinstance(start_date, str):
+	# 	sd = datetime.datetime.strptime(start_date, "%Y-%m-%d %H:%M").date()
+	# else:
+	# 	sd = start_date
 	dfs = load_new_yellow_tags()
 
 	df_keys = list(dfs.keys())
@@ -363,10 +391,14 @@ if pills_menu == pills_menu_options[1]:
 	k_toggle_top_level_only = "key_toggle_top_level_only"
 	if k_toggle_top_level_only not in st.session_state:
 		st.session_state[k_toggle_top_level_only] = True
-	toggle_top_level_only = st.toggle(
-		label="Top Level Only?",
-		key=k_toggle_top_level_only
-	)
+
+	cols_search_box = st.columns([0.85, 0.15])
+
+	with cols_search_box[1]:
+		toggle_top_level_only = st.toggle(
+			label="Top Level Only?",
+			key=k_toggle_top_level_only
+		)
 
 	k_multiselect_jobs = "key_multiselect_jobs"
 
@@ -374,28 +406,49 @@ if pills_menu == pills_menu_options[1]:
 		list_jobs = [j for j in list_jobs if j[0] == "1"]
 
 	k_button_add_all_jobs = "key_button_add_all_jobs"
-	if (button_add_all_jobs := st.button(
-		label="Add All Jobs",
-		key=k_button_add_all_jobs
-	)):
-		st.session_state[k_multiselect_jobs] = list_jobs
+	with cols_search_box[1]:
+		if (button_add_all_jobs := st.button(
+				label="Add All Jobs",
+				key=k_button_add_all_jobs,
+				help=""
+		)):
+			st.session_state[k_multiselect_jobs] = list_jobs
 
 	k_button_clear_all_jobs = "key_button_clear_all_jobs"
-	if (button_clear_all_jobs := st.button(
-		label="Clear All Jobs",
-		key=k_button_clear_all_jobs
-	)):
-		st.session_state[k_multiselect_jobs] = []
+	with cols_search_box[1]:
+		if (button_clear_all_jobs := st.button(
+				label="Clear All Jobs",
+				key=k_button_clear_all_jobs
+		)):
+			st.session_state[k_multiselect_jobs] = []
 
 	if k_multiselect_jobs not in st.session_state:
 		st.session_state[k_multiselect_jobs] = list_jobs
-	multiselect_jobs = st.multiselect(
-		label="Select some jobs",
-		options=list_jobs,
-		key=k_multiselect_jobs
-	)
+	with cols_search_box[0]:
+		multiselect_jobs = st.multiselect(
+			label="Select some jobs",
+			options=list_jobs,
+			key=k_multiselect_jobs
+		)
 
 	if multiselect_jobs:
+		with st.container():
+			st.write("progress:")
+			data = dfs[df_keys[-2]]
+			data = data[["Job", "PctComplete"]]
+			data = data.loc[data["Job"].isin(multiselect_jobs)]
+			data.sort_values(
+				by="PctComplete",
+				inplace=True,
+				ascending=False
+			)
+			chart = px.bar(
+				data,
+				x="PctComplete",
+				y="Job"
+			)
+			chart.update_yaxes(type="category")
+			st.plotly_chart(chart)
 		for i, df_k in enumerate(dfs):
 			df = dfs[df_k]
 			if multiselect_jobs:
@@ -405,6 +458,8 @@ if pills_menu == pills_menu_options[1]:
 			with st.expander(
 					f"{i} - {df_k}"
 			):
+				n_rows, n_cols = df.shape
+				st.write(f"{n_rows} row(s) X {n_cols} col(s)")
 				st.write(df)
 	else:
 		st.warning("Select some jobs first")
@@ -488,49 +543,49 @@ else:
 			hide_index=True
 		)
 
-	#
-	# rolling_window = 3
-	# min_periods = 3
-	# df_order_counts = load_order_counts()
-	# df_order_counts_2 = df_order_counts[~pd.isna(df_order_counts["Order Date"])]
-	# df_order_counts_2["AvgDDQO"] = df_order_counts_2["DaysBtwnQuoteOrder"].rolling(
-	# 	window=rolling_window,
-	# 	min_periods=min_periods
-	# ).mean()
-	# display_df(
-	# 	df_order_counts,
-	# 	"df_order_counts - Rolling Avg Datediffs"
-	# )
-	# display_df(
-	# 	df_order_counts_2,
-	# 	"df_order_counts_2 - Rolling Avg Datediffs"
-	# )
-	#
-	# df_quotes_per_day = df_order_counts.copy()
-	# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.date())
-	# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.date())
-	# # df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.groupby(
-	# df_quotes_per_day_grouped_0 = df_quotes_per_day.groupby(
-	# 	by="Quote Date"
-	# ).agg({
-	# 	"Quote#": "count"
-	# }).rename(columns={"Quote#": "CountOfQuotes"})
-	# df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.merge(
-	# 	df_quotes_per_day_grouped_0["CountOfQuotes"],
-	# 	left_on="Date",
-	# 	right_on="Quote Date",
-	# 	how="left"
-	# )["CountOfQuotes"]
-	#
-	# df_quotes_per_day["QPDAvg"] = df_quotes_per_day["QuotesPerDay"].rolling(
-	# 	window=rolling_window
-	# ).mean()
-	#
-	# display_df(
-	# 	df_quotes_per_day_grouped_0,
-	# 	"df_quotes_per_day - Grouped"
-	# )
-	# display_df(
-	# 	df_quotes_per_day,
-	# 	"df_quotes_per_day - Final"
-	# )
+#
+# rolling_window = 3
+# min_periods = 3
+# df_order_counts = load_order_counts()
+# df_order_counts_2 = df_order_counts[~pd.isna(df_order_counts["Order Date"])]
+# df_order_counts_2["AvgDDQO"] = df_order_counts_2["DaysBtwnQuoteOrder"].rolling(
+# 	window=rolling_window,
+# 	min_periods=min_periods
+# ).mean()
+# display_df(
+# 	df_order_counts,
+# 	"df_order_counts - Rolling Avg Datediffs"
+# )
+# display_df(
+# 	df_order_counts_2,
+# 	"df_order_counts_2 - Rolling Avg Datediffs"
+# )
+#
+# df_quotes_per_day = df_order_counts.copy()
+# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.date())
+# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.date())
+# # df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.groupby(
+# df_quotes_per_day_grouped_0 = df_quotes_per_day.groupby(
+# 	by="Quote Date"
+# ).agg({
+# 	"Quote#": "count"
+# }).rename(columns={"Quote#": "CountOfQuotes"})
+# df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.merge(
+# 	df_quotes_per_day_grouped_0["CountOfQuotes"],
+# 	left_on="Date",
+# 	right_on="Quote Date",
+# 	how="left"
+# )["CountOfQuotes"]
+#
+# df_quotes_per_day["QPDAvg"] = df_quotes_per_day["QuotesPerDay"].rolling(
+# 	window=rolling_window
+# ).mean()
+#
+# display_df(
+# 	df_quotes_per_day_grouped_0,
+# 	"df_quotes_per_day - Grouped"
+# )
+# display_df(
+# 	df_quotes_per_day,
+# 	"df_quotes_per_day - Final"
+# )
