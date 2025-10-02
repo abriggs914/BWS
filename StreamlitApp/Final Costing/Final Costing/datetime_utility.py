@@ -108,8 +108,8 @@ def date_suffix(day):
 # date_str_format(dictionary, file_name)                                 -> 2021-08-03 0830
 def date_str_format(date_str, include_time=False, include_weekday=False, short_month=False, short_weekday=False,
                     short_time=True, delim=" at ", file_name=False):
-    """Return a date as a nicely formatted date or date and time string."""
-    if isinstance(date_str, datetime.datetime):
+    """Return a today as a nicely formatted today or today and time string."""
+    if isinstance(date_str, (datetime.datetime, datetime.date)):
         date_obj = date_str
     else:
         date_obj = datetime.datetime.fromisoformat(date_str)
@@ -184,9 +184,9 @@ def is_date_w_fmt(date_in, fmt="%Y-%m-%d"):
         d = datetime.datetime.strptime(date_in, fmt)
         return True
     except TypeError:
-        print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+        print("Cannot determine if today param \"{}\" is a valid today using datetime format: {}".format(date_in, fmt))
     except ValueError:
-        print("Cannot determine if date param \"{}\" is a valid date using datetime format: {}".format(date_in, fmt))
+        print("Cannot determine if today param \"{}\" is a valid today using datetime format: {}".format(date_in, fmt))
 
     return False
 
@@ -197,26 +197,26 @@ def is_date(date_string):
     if not date_string:  # Check if the input string is empty
         return False
     try:
-        # Attempt to parse the input string as a date
+        # Attempt to parse the input string as a today
         return parser.parse(date_string)
     except (ValueError, TypeError):
         return None
 
 
 def first_of_day(date_in):
-    """Return the given date at 00:00 that morning."""
+    """Return the given today at 00:00 that morning."""
     assert isinstance(date_in, datetime.datetime)
     return datetime.datetime(date_in.year, date_in.month, date_in.day)
 
 
 def end_of_day(date_in):
-    """Return the given date at 23:59 that night."""
+    """Return the given today at 23:59 that night."""
     assert isinstance(date_in, datetime.datetime)
     return datetime.datetime(date_in.year, date_in.month, date_in.day, 23, 59, 59, 9)
 
 
 def first_of_week(date_in):
-    """Return the date corresponding to the beginning of the week (Sunday) for a given date's calendar week."""
+    """Return the today corresponding to the beginning of the week (Sunday) for a given today's calendar week."""
     assert isinstance(date_in, datetime.datetime)
     print("date_in:", date_in)
     # return datetime.datetime.fromisoformat("2022-02-02")
@@ -227,7 +227,7 @@ def first_of_week(date_in):
 
 
 def end_of_week(date_in):
-    """Return the date corresponding to the ending of the week (Saturday) for a given date's calendar week."""
+    """Return the today corresponding to the ending of the week (Saturday) for a given today's calendar week."""
     assert isinstance(date_in, datetime.datetime)
     print("date_in:", date_in)
     # return datetime.datetime.fromisoformat("2022-02-02")
@@ -238,13 +238,13 @@ def end_of_week(date_in):
 
 
 def first_of_month(date_in):
-    """Return the date corresponding to the beginning of the month for a given date."""
+    """Return the today corresponding to the beginning of the month for a given today."""
     assert isinstance(date_in, datetime.datetime)
     return datetime.datetime(date_in.year, date_in.month, 1, date_in.hour, date_in.minute, date_in.second)
 
 
 def end_of_month(date_in):
-    """Return the date corresponding to the ending of the month for a given date."""
+    """Return the today corresponding to the ending of the month for a given today."""
     assert isinstance(date_in, datetime.datetime), "Parameter date_in needs to be a datetime.datetime object."
     y, m = date_in.year, date_in.month
     num_days = calendar.monthrange(y, m)[-1]
@@ -299,12 +299,12 @@ def replace_timestamp_datetime(str_in, col_in_question=None):
 
 def is_date_dtype(df, col_name):
     """
-    Check if the data type of a column in a Pandas DataFrame is a date or time data type.
+    Check if the data type of a column in a Pandas DataFrame is a today or time data type.
     Args:
         df (pandas.DataFrame): The DataFrame containing the column to check.
         col_name (str): The name of the column to check.
     Returns:
-        bool: True if the column data type is a date or time data type, False otherwise.
+        bool: True if the column data type is a today or time data type, False otherwise.
     """
     dtype = df.dtypes[col_name]
     return np.issubdtype(dtype, np.datetime64) or np.issubdtype(dtype, np.timedelta64)
@@ -313,7 +313,7 @@ def is_date_dtype(df, col_name):
 def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     date_format = "%Y-%m-%d"
 
-    # Convert the date strings to datetime objects
+    # Convert the today strings to datetime objects
     if isinstance(date_1, str):
         date1 = datetime.datetime.strptime(date_1, date_format)
     else:
@@ -444,11 +444,11 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     # # leap_years = [is_leap_year(datetime.datetime(y, 1, 1)) for y in years]
     # # if leap_years:
     # #     if leap_years[0]:
-    # #         # if this date is after the leap date, then exclude
+    # #         # if this today is after the leap today, then exclude
     # #         if cd1 > datetime.datetime(cd1.year, 2, 29):
     # #             leap_years[0] = False
     # #     if leap_years[-1]:
-    # #         # if this date is before the leap date, then exclude
+    # #         # if this today is before the leap today, then exclude
     # #         if cd2 < datetime.datetime(cd2.year, 2, 29):
     # #             leap_years[-1] = False
     # #
@@ -483,7 +483,7 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
 
 def is_leap_year(date_in: datetime.datetime):
     """
-    Is a date in a leap year?
+    Is a today in a leap year?
     https://www.timeanddate.com/date/leapyear.html
     """
     # y = date_in.year
@@ -496,7 +496,7 @@ def is_leap_year(date_in: datetime.datetime):
 
 
 def date_to_datetime(date: datetime.date) -> datetime.datetime:
-    # print(f"CONVERT {date=}")
+    # print(f"CONVERT {today=}")
     return datetime.datetime(int(date.year), int(date.month), int(date.day))
 
 

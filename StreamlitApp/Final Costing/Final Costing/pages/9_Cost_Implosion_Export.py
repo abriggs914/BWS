@@ -177,7 +177,7 @@ ORDER BY
 df_orders: pd.DataFrame = load_data_orders()
 list_quotes: list[int] = df_orders["Quote"].unique().tolist()
 list_quotes.sort(reverse=True)
-cols_dates = [c for c in df_orders if c.lower().startswith("date")]
+cols_dates = [c for c in df_orders if c.lower().startswith("today")]
 cols_totals_o = [c for c in df_orders if c.lower().startswith("n") or c.lower().startswith("avgn")]
 
 df_data: pd.DataFrame = load_data()

@@ -25,11 +25,11 @@ def VERSION_DETAILS():
 
 
 def VERSION_NUMBER():
-    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+    return float(".".join(VERSION.lower().split("version")[-1].split("today")[0].split(".")[-2:]).strip())
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+    return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(),
                                       "%Y-%m-%dictionary")
 
 
@@ -58,9 +58,9 @@ def no_specials(text: str, r_char: str = "") -> str:
     return text
 
 
-def date_first(msg: str, keyword="date") -> str:
+def date_first(msg: str, keyword="today") -> str:
     """
-        Ensure that a column name that specifies path_data follows the 'date-first' noming convention
+        Ensure that a column name that specifies path_data follows the 'today-first' noming convention
         1 pass only! If the keyword appears
         EX: date_first("Quote Date") => "DateQuote"
     """
@@ -703,7 +703,7 @@ def select_with_alias(
         "$": "Dollars",
         "?": "",
         "/": "",
-        "date": date_first
+        "today": date_first
     }
     og_keys = list(specials.keys())
 
@@ -1030,7 +1030,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<{AUTHOR}>
--- Create date: <{DATE_CREATED}>
+-- Create today: <{DATE_CREATED}>
 -- Description:	<{DESCRIPTION}>
 -- =============================================
 {CREATE_ALTER} TRIGGER [dbo].[tr_Update{TABLE}History]
@@ -1380,7 +1380,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<{AUTHOR}>
--- Create date: <{DATE_CREATED}>
+-- Create today: <{DATE_CREATED}>
 -- Description:	<{DESCRIPTION}>
 -- =============================================
 {CREATE_ALTER} TRIGGER [dbo].[tr_Update{TABLE}History]

@@ -1479,7 +1479,7 @@ def import_existing_table_cols():
         "DATA_TYPE",
         "CHARACTER_MAXIMUM_LENGTH"
     ]
-    list_data_types = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
+    list_data_types = ["str", "int", "decimal", "float", "today", "datetime", "bit"]
     # join_cols = ["TABLE_NAME"]
     # join_suffixes = ("_x", "_y")
     # col_names = df_tables.columns.tolist()
@@ -1791,13 +1791,13 @@ def server_maintenance():
 
                 # New Column template_sql data
                 ct_column_names = ["PK", "Name", "Type", "Size", "Default"]
-                ct_type_options = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
+                ct_type_options = ["str", "int", "decimal", "float", "today", "datetime", "bit"]
                 ct_size_options = {
                     "str": range(1, 6000001),
                     "int": "na",
                     "decimal": [f"{a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
                     "float": [f"({a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
-                    "date": "na",
+                    "today": "na",
                     "datetime": "na",
                     "bit": "na"
                 }
@@ -2171,14 +2171,14 @@ def server_maintenance():
                                         input_table_cols.warning(
                                             f"default value '{ct_nc_default}' must be a number for this field."
                                         )
-                                if ct_nc_type in ("date", "datetime"):
-                                    # validate date types
+                                if ct_nc_type in ("today", "datetime"):
+                                    # validate today types
                                     date_val = is_date(ct_nc_default)
                                     if ct_nc_default.lower() == "getdate()":
                                         date_val = "GETDATE()"
                                     elif date_val is None:
                                         input_table_cols.warning(
-                                            f"default value '{ct_nc_default}' must be a date for this field."
+                                            f"default value '{ct_nc_default}' must be a today for this field."
                                         )
 
                             if input_table_cols.button(
@@ -2248,7 +2248,7 @@ GO
 
 -- =============================================
 -- Author:\t\t<{user_name}>
--- Create date:\t<{now:%Y-%m-%d %H:%M:%S}>
+-- Create today:\t<{now:%Y-%m-%d %H:%M:%S}>
 -- Description:\t<Create Table [{db_name}].[dbo].[{{TABLE_NAME}}]>
 -- =============================================
                                 """).strip()
@@ -2270,7 +2270,7 @@ GO
 
 -- =============================================
 -- Author:\t\t<{user_name}>
--- Create date:\t<{now:%Y-%m-%d %H:%M:%S}>
+-- Create today:\t<{now:%Y-%m-%d %H:%M:%S}>
 -- Description:\t<Maintain History Table>
 -- =============================================
 CREATE TRIGGER [dbo].[tr_Update{table_name}History] 
@@ -2377,7 +2377,7 @@ BEGIN
                                     else:
                                         # l_sql = f"\n\t[{ct_cn_name}] [nvarchar]({ct_nc_size}) IDENTITY(0, 1) NOT NULL"
                                         st.error(f"Cannot use {ct_nc_type} values as PKs. Feature coming soon")
-                                case "date" | "datetime" | "bit" | "float":
+                                case "today" | "datetime" | "bit" | "float":
                                     if not ct_nc_pk:
                                         l_sql = f"\n\t[{ct_nc_name}] [{ct_nc_type}] NULL"
                                     else:
@@ -2521,7 +2521,7 @@ GO
 
 -- =============================================
 -- Author:\t\t<{user_name}>
--- Create date:\t<{now:%Y-%m-%d %H:%M:%S}>
+-- Create today:\t<{now:%Y-%m-%d %H:%M:%S}>
 -- Description:\t<Maintain Boilerplate Columns>
 -- =============================================
 CREATE TRIGGER [dbo].[tr_Update{table_name}BoilerPlate] 
@@ -2622,13 +2622,13 @@ END
 #
 #                 # New Column template_sql data
 #                 ct_column_names = ["PK", "Name", "Type", "Size", "Default"]
-#                 ct_type_options = ["str", "int", "decimal", "float", "date", "datetime", "bit"]
+#                 ct_type_options = ["str", "int", "decimal", "float", "today", "datetime", "bit"]
 #                 ct_size_options = {
 #                     "str": range(1, 6000001),
 #                     "int": "na",
 #                     "decimal": [f"{a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
 #                     "float": [f"({a_}, {b_})" for a_ in range(2, 19) for b_ in range(1, 18) if (a_ - 1) >= b_],
-#                     "date": "na",
+#                     "today": "na",
 #                     "datetime": "na"
 #                 }
 #
@@ -2870,14 +2870,14 @@ END
 #                                         input_table_cols.warning(
 #                                             f"default value '{ct_nc_default}' must be a number for this field."
 #                                         )
-#                                 if ct_nc_type in ("date", "datetime"):
-#                                     # validate date types
+#                                 if ct_nc_type in ("today", "datetime"):
+#                                     # validate today types
 #                                     date_val = is_date(ct_nc_default)
 #                                     if ct_nc_default.lower() == "getdate()":
 #                                         date_val = "GETDATE()"
 #                                     elif date_val is None:
 #                                         input_table_cols.warning(
-#                                             f"default value '{ct_nc_default}' must be a date for this field."
+#                                             f"default value '{ct_nc_default}' must be a today for this field."
 #                                         )
 #
 #                             if input_table_cols.button(
@@ -2936,7 +2936,7 @@ END
 #
 # -- =============================================
 # -- Author:\t\t<{user_name}>
-# -- Create date:\t<{now:%Y-%m-%d %H:%M:%S}>
+# -- Create today:\t<{now:%Y-%m-%d %H:%M:%S}>
 # -- Description:\t<Create Table [{db_name}].[dbo].[{table_name}]>
 # -- =============================================
 #                         """).strip()
@@ -2978,7 +2978,7 @@ END
 #                                     else:
 #                                         # l_sql = f"\n\t[{ct_cn_name}] [nvarchar]({ct_nc_size}) IDENTITY(0, 1) NOT NULL"
 #                                         st.error(f"Cannot use {ct_nc_type} values as PKs. Feature coming soon")
-#                                 case "date" | "datetime" | "bit" | "float":
+#                                 case "today" | "datetime" | "bit" | "float":
 #                                     if not ct_nc_pk:
 #                                         l_sql = f"\n\t[{ct_nc_name}] [{ct_nc_type}] NULL"
 #                                     else:
@@ -3058,7 +3058,7 @@ END
 #
 # -- =============================================
 # -- Author:\t\t<{user_name}>
-# -- Create date:\t<{now:%Y-%m-%d %H:%M:%S}>
+# -- Create today:\t<{now:%Y-%m-%d %H:%M:%S}>
 # -- Description:\t<Maintain Boilerplate Columns>
 # -- =============================================
 # CREATE TRIGGER [dbo].[tr_Update{table_name}BoilerPlate]
@@ -3694,7 +3694,7 @@ def code_samples():
     #     "code": """""",
     #     "desc": """""",
     #     "warn": """""",
-    #     "date": datetime.datetime()
+    #     "today": datetime.datetime()
     #     "tags": [],
     # }
 
@@ -3715,7 +3715,7 @@ Use DLookup to retrieve a single value from a table given some criteria (Optiona
 This function only returns a single value. If you need more than 1 value from that record it is best to use a Recordset object, or another method.
             """,
             "tags": [Tags.BUILT_IN, Tags.LOOKUP],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """RSFetch""",
@@ -3758,7 +3758,7 @@ Optionally supports indexed positional lookup if an integer is passed as 'ColNam
             """,
             "warn": """""",
             "tags": [Tags.LOOKUP, Tags.RECORDSET, Tags.RECORDSET_UTILITY],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """ExecPython""",
@@ -3865,7 +3865,7 @@ Optionally pass the absolute path to an interpreter, or have it looked up using 
 Also choose how the terminal window is displayed. By default it will have normal focus. 
             """,
             "tags": [Tags.PYTHON, Tags.SHELL, Tags.PYTHON_UTILITY],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """Scripting.Dictionary""",
@@ -3917,7 +3917,7 @@ Wrapper 'class' for a sudo-dictionary in VBA.
             """,
             "warn": """""",
             "tags": [Tags.DICTIONARY_UTILITY, Tags.ON_STACKOVERFLOW],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """DateFormat""",
@@ -3934,14 +3934,14 @@ printf(dateformat(#2025-03-27 20:49 #, 7))                    ' => "March 27"
 printf(dateformat(#2025-03-27 20:49 #, 3, shortNames:=True))  ' => "Thu Mar 27th"
             """,
             "desc": """
-Retrieve a date formatted as a string.
+Retrieve a today formatted as a string.
 You may also just return the values.
 
 Supports 5 modes using integer codes [-1, 0, 1, 2, 3]
             """,
             "warn": """""",
             "tags": [Tags.DATES, Tags.DATE_UTILITY],
-            "date": datetime.datetime(2025, 5, 7, 15)
+            "today": datetime.datetime(2025, 5, 7, 15)
         },
         {
             "name": """Array Utility""",
@@ -4025,7 +4025,7 @@ Functions List:
             """,
             "warn": """Please see the source file for more examples.""",
             "tags": [Tags.ARRAY_UTILITY, Tags.PYTHON, Tags.LISTS],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         },
         {
             "name": """Eval""",
@@ -4038,7 +4038,7 @@ Eval does not work properly in the immediate window. You must test using Script.
             """,
             "warn": """""",
             "tags": [Tags.BUILT_IN],
-            "date": datetime.datetime(2025, 2, 10, 17)
+            "today": datetime.datetime(2025, 2, 10, 17)
         }
     ]
 
@@ -4050,7 +4050,7 @@ Eval does not work properly in the immediate window. You must test using Script.
             "desc": """Please enjoy a joke or two:""",
             "warn": """""",
             "tags": [Tags.HUMOUR],
-            "date": datetime.datetime(2025, 5, 21, 18),
+            "today": datetime.datetime(2025, 5, 21, 18),
             "path": r"\\bwsfp01\public\it\Resource\Chuckles"
         },
         {
@@ -4161,7 +4161,7 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
 3rd-party widget - has weird interaction with the session_state
             """,
             "tags": [Tags.STREAMLIT, Tags.THIRD_PARTY, Tags.PDFS, Tags.ON_GITHUB],
-            "date": datetime.datetime(2025, 2, 10, 17),
+            "today": datetime.datetime(2025, 2, 10, 17),
             "path": r"C:\users\abriggs\desktop"
         }
     ]
@@ -4240,7 +4240,7 @@ Sample code to show how to use a pdf_viewer widget in streamlit.
             desc = data["desc"]
             warn = data["warn"]
             tags = data["tags"]
-            date = data["date"]
+            date = data["today"]
             path = data.get("path")
             # # if any tag in 'ms_tags_choices' are in 'tags', then show sample
             # print(f"{lang=}, {i=}, {tags=}, {set(tags)=}, {set(ms_tag_choices)=}, A={set(tags).difference(set(ms_tag_choices))}, len(A)={len(set(tags).difference(set(ms_tag_choices)))}, B={len(tags)}, C={len(set(tags).difference(set(ms_tag_choices))) != len(tags)}")

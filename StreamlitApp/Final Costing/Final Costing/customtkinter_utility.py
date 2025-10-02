@@ -38,11 +38,11 @@ def VERSION_DETAILS():
 
 
 def VERSION_NUMBER():
-    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+    return float(".".join(VERSION.lower().split("version")[-1].split("today")[0].split(".")[-2:]).strip())
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+    return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(),
                                       "%Y-%m-%dictionary")
 
 
@@ -693,9 +693,9 @@ class CtkEntryDate_2(ctk.CTkEntry):
                 if type(i) == int and i < 100:
                     string += str(i)
                 else:
-                    raise TypeError('The format of a "date" is (DD, MM, YY) where DD, MM, YY is an integer!')
+                    raise TypeError('The format of a "today" is (DD, MM, YY) where DD, MM, YY is an integer!')
             if date[1] > 12 or (calendar.monthrange(2000 + date[2], date[1])[1]) < date[0]:
-                raise ValueError('The "date" is invalid!')
+                raise ValueError('The "today" is invalid!')
             self.temp = string
             return self.__insert_fix()
         if string is not None:
@@ -809,8 +809,8 @@ class CtkEntryDate(ctk.CTkFrame):
         print(f"submit_entry v={self.var_date_entry.get()}")
         val = self.var_date_entry.get()
         if is_date(val):
-            # date = self.date_picker.parse_date(val)
-            # self.date_picker.date = date
+            # today = self.date_picker.parse_date(val)
+            # self.date_picker.today = today
             val = is_date(val)
             print(f"A: {val}")
             val = self.date_picker.format_date(val)
@@ -828,35 +828,35 @@ class CtkEntryDate(ctk.CTkFrame):
         #         "%Y-%m-%d"
         #     ):
         #         try:
-        #             self.date = datetime.datetime.strptime(text, fmt)
-        #             print(f"{self.date=}")
-        #             self.date_picker.selection_set(self.date)
+        #             self.today = datetime.datetime.strptime(text, fmt)
+        #             print(f"{self.today=}")
+        #             self.date_picker.selection_set(self.today)
         #         except ValueError:
         #             pass
         #         else:
         #             break
         # print(f"END")
 
-        # date = self.date_picker.selection_get()
-        # print(f"update_selected_date v={date}")
+        # today = self.date_picker.selection_get()
+        # print(f"update_selected_date v={today}")
         # fmt = "%x"
-        # if isinstance(date, str):
+        # if isinstance(today, str):
         #     for fmt in (
         #         "%x",
         #         "%Y-%m-%d"
         #     ):
         #         try:
-        #             self.date = datetime.datetime.strptime(date, fmt)
+        #             self.today = datetime.datetime.strptime(today, fmt)
         #         except ValueError:
         #             pass
         #         else:
         #             break
         # else:
-        #     # self.date = self.date_picker.format_date(date)
-        #     self.date = date
+        #     # self.today = self.date_picker.format_date(today)
+        #     self.today = today
         #
-        # print(f"New Date! {self.date:%Y-%m-%d}")
-        # self.var_date_picker.set(f"{self.date:%Y-%m-%d}")
+        # print(f"New Date! {self.today:%Y-%m-%d}")
+        # self.var_date_picker.set(f"{self.today:%Y-%m-%d}")
 
 
 def callback_wrapper(obj, callback, secondary_callback):
@@ -1952,7 +1952,7 @@ class CalendarCanvas2(ctk.CTkCanvas):
         if not text_vis:
             print(f"--B")
             if is_ is None:
-                # invalid cell (no visible date) and invalid_style is None
+                # invalid cell (no visible today) and invalid_style is None
                 return
 
             # if ((i, j) in self.set_date_cells) and ((i, j) != selected):
@@ -4677,11 +4677,11 @@ def demo_2():
         }
     )
 
-    # date = CtkEntryDate_2(
+    # today = CtkEntryDate_2(
     #     win
     # )
 
-    # date = Calendar(
+    # today = Calendar(
     #     win
     # )
 

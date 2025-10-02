@@ -202,7 +202,7 @@ def load_new_yellow_tags(
 		tolerance=0.01
 ):
 
-	# if not isinstance(start_date_in, (datetime.datetime, datetime.date)):
+	# if not isinstance(start_date_in, (datetime.datetime, datetime.today)):
 	# 	start_date_in = datetime.datetime.strptime(start_date_in, "%Y-%m-%d %H:%M")
 	if not isinstance(start_date_in, str):
 		start_date_in = start_date_in.strftime("%Y-%m-%d %H:%M")
@@ -330,9 +330,9 @@ def load_new_yellow_tags(
 	sql_prod_job_op_issue_status = """SELECT * FROM [BWSdb].[dbo].[v_PROD_JobOpIssueStatus]"""
 
 	sqls = {
-		"Material posted since param date [WipJobPost] only": sql_new_mat,
+		"Material posted since param today [WipJobPost] only": sql_new_mat,
 		"Showing the current stockcodes with missing or partial issuing": sql_part_or_none,
-		"New YTs since param date": sql_new_yts,
+		"New YTs since param today": sql_new_yts,
 		"These YTs were correctly auto-flagged and manually input": sql_success,
 		"Someone marked something as a YT, but the system didn't pick up on it (No records = Good!)": sql_fail_manual,
 		"POTENTIALLY, these YTs are YET-TO-BE made manually (No records = Good! some records = maybe okay)": sql_fail_auto,
@@ -374,12 +374,12 @@ if pills_menu == pills_menu_options[1]:
 	# if k_start_date not in st.session_state:
 	# 	st.session_state[k_start_date] = datetime.datetime.strptime()"2025-09-18 08:00"
 	# start_date = st.date_input(
-	# 	label="Start date:",
+	# 	label="Start today:",
 	# 	key=k_start_date
 	# )
 	#
 	# if isinstance(start_date, str):
-	# 	sd = datetime.datetime.strptime(start_date, "%Y-%m-%d %H:%M").date()
+	# 	sd = datetime.datetime.strptime(start_date, "%Y-%m-%d %H:%M").today()
 	# else:
 	# 	sd = start_date
 	dfs = load_new_yellow_tags()
@@ -520,7 +520,7 @@ else:
 	df_yts: pd.DataFrame = df_yts.rename(columns=vis_cols)
 	if toggle_active_only:
 		df_yts = df_yts[df_yts["Active"] == 1]
-	df_yts[vis_cols["DateCreated"]] = df_yts[vis_cols["DateCreated"]].apply(lambda x: x.date() if pd.notnull(x) else "")
+	df_yts[vis_cols["DateCreated"]] = df_yts[vis_cols["DateCreated"]].apply(lambda x: x.today() if pd.notnull(x) else "")
 	df_yts[vis_cols["PO"]] = df_yts[vis_cols["PO"]].apply(lambda x: int(str(x)[-6:]) if not pd.isna(x) else x)
 	df_yts[vis_cols["StockCode"]] = df_yts[vis_cols["StockCode"]].apply(lambda x: x.upper() if not pd.isna(x) else x)
 	k_df_yts: str = "key_df_yts"
@@ -562,8 +562,8 @@ else:
 # )
 #
 # df_quotes_per_day = df_order_counts.copy()
-# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.date())
-# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.date())
+# df_quotes_per_day["Quote Date"] = df_quotes_per_day["Quote Date"].apply(lambda x: x.today())
+# df_quotes_per_day["Date"] = df_quotes_per_day["Date"].apply(lambda x: x.today())
 # # df_quotes_per_day["QuotesPerDay"] = df_quotes_per_day.groupby(
 # df_quotes_per_day_grouped_0 = df_quotes_per_day.groupby(
 # 	by="Quote Date"

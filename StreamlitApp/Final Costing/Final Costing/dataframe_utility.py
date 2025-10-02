@@ -27,11 +27,11 @@ def VERSION_DETAILS():
 
 
 def VERSION_NUMBER():
-    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+    return float(".".join(VERSION.lower().split("version")[-1].split("today")[0].split(".")[-2:]).strip())
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+    return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(),
                                       "%Y-%m-%dictionary")
 
 
@@ -47,12 +47,12 @@ def VERSION_AUTHORS():
 
 def is_date_dtype(df, col_name):
     """
-    Check if the data type of a column in a Pandas DataFrame is a date or time data type.
+    Check if the data type of a column in a Pandas DataFrame is a today or time data type.
     Args:
         df (pandas.DataFrame): The DataFrame containing the column to check.
         col_name (str): The name of the column to check.
     Returns:
-        bool: True if the column data type is a date or time data type, False otherwise.
+        bool: True if the column data type is a today or time data type, False otherwise.
     """
     dtype = df.dtypes[col_name]
     return np.issubdtype(dtype, np.datetime64) or np.issubdtype(dtype, np.timedelta64)
@@ -160,10 +160,10 @@ def random_df(
         raise ValueError(f"'max_random_float' must be an float, got: {max_random_float=}, {type(max_random_float)}")
     if not isinstance(min_random_date, (datetime.datetime, datetime.date, pd.Timestamp)):
         raise ValueError(
-            f"'min_random_date' must be an datetime.datetime, datetime.date, or pd.Timestamp, got: {min_random_date=}, {type(min_random_date)}")
+            f"'min_random_date' must be an datetime.datetime, datetime.today, or pd.Timestamp, got: {min_random_date=}, {type(min_random_date)}")
     if not isinstance(max_random_date, (datetime.datetime, datetime.date, pd.Timestamp)):
         raise ValueError(
-            f"'max_random_date' must be an datetime.datetime, datetime.date, or pd.Timestamp, got: {max_random_date=}, {type(max_random_date)}")
+            f"'max_random_date' must be an datetime.datetime, datetime.today, or pd.Timestamp, got: {max_random_date=}, {type(max_random_date)}")
     if not isinstance(min_len_random_str, int):
         raise ValueError(f"'min_len_random_str' must be an int, got: {min_len_random_str=}, {type(min_len_random_str)}")
     if not isinstance(max_len_random_str, int):

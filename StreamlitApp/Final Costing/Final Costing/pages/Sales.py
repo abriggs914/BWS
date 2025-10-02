@@ -580,11 +580,11 @@ def meeting_input_menu(mode: str = "new"):
 		max_value=date_input_max_value
 	)
 	if date_input_meeting:
-		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.date == date_input_meeting]
+		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.today == date_input_meeting]
 		if df_c.shape[0] > m_thresh:
 			st.markdown(
 				body=aligned_text(
-					f"This date is already used in {df_c.shape[0]} other Meeting Record(s)"
+					f"This today is already used in {df_c.shape[0]} other Meeting Record(s)"
 				),
 				unsafe_allow_html=True
 			)
@@ -3465,7 +3465,7 @@ else:
 	df_production: pd.DataFrame = load_production()
 	df_production2: pd.DataFrame = load_production2()
 
-	date_cols: list[str] = [col_prod_date] + [col for col in df_orders.columns if "date" in col.lower()]
+	date_cols: list[str] = [col_prod_date] + [col for col in df_orders.columns if "today" in col.lower()]
 
 	k_times_blank_rerun: str = "times_blank_rerun"
 	times_blank_rerun = st.session_state.setdefault(k_times_blank_rerun, 0)
@@ -3528,7 +3528,7 @@ else:
 				st.session_state.setdefault("end_date_input", end_of_month(datetime.datetime.now()))
 				with st.container(border=True):
 					toggle_date_filter = st.toggle(
-						label=f"date filter?",
+						label=f"today filter?",
 						value=True
 					)
 					if toggle_date_filter:
@@ -3539,7 +3539,7 @@ else:
 							options=date_cols,
 							key=k_date_col
 						)
-						st.write(f"Filter by {date_by_field} date:")
+						st.write(f"Filter by {date_by_field} today:")
 						start_date = st.date_input(
 							label="start",
 							key=f"start_date_input"

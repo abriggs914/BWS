@@ -9,6 +9,11 @@ FROM
 	[BWSdb].[dbo].[hist_REC_POReceivedSubs]
 ;
 SELECT
+	*
+FROM
+	[BWSdb].[dbo].[PROD_YellowTagsAdmins]
+;
+SELECT
 	[Active], [WO], [StockCode], [QtyMissing], [Notes]
 
 FROM
@@ -51,6 +56,8 @@ SELECT
 	*
 FROM
 	[BWSdb].[dbo].[ITR Customers]
+WHERE
+	LOWER([Name]) LIKE '%arnold%'
 ;
 SELECT
 	*
@@ -114,17 +121,18 @@ HAVING COUNT(*) > 1
 BEGIN TRAN;
 
 	UPDATE
-		[BWSdb].[dbo].[PROD_YellowTags]
+		[BWSdb].[dbo].[ITR Customers]
 	SET
-		[Active] = 0
+		[WindowsUser] = 'aed'
 	WHERE
-		[ID] IN (
-			54, 55, 63, 217
+		[CustomerID] IN (
+			3
 		)
 
 ROLLBACK;
 COMMIT;
 */
+
 
 SELECT
 	*
@@ -169,3 +177,23 @@ FROM
 WHERE
 	([O].[Order Date] = '2025-09-15')
 	OR ([O].[WO#] = 10017229)
+
+
+/*
+
+BEGIN TRAN;
+
+	UPDATE
+		[BWSdb].[dbo].[IT Personnel]
+	SET
+		[UseAccessAlias] = 1,
+		[AccessAliasWindowsUser] = 'aed',
+		[AccessAliasFullName] = 'Arnold Dill'
+	WHERE
+		[ITRCustomerID] IN (
+			4
+		)
+
+ROLLBACK;
+COMMIT;
+*/

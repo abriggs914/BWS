@@ -29,11 +29,11 @@ def VERSION_DETAILS():
 
 
 def VERSION_NUMBER():
-    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+    return float(".".join(VERSION.lower().split("version")[-1].split("today")[0].split(".")[-2:]).strip())
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(), "%Y-%m-%dictionary")
+    return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(), "%Y-%m-%dictionary")
 
 
 def VERSION_AUTHORS():

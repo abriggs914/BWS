@@ -1355,7 +1355,7 @@ def update_date_range(start_date=None, end_date=None):
     if end_date is None:
         end_date = dr[1]
 
-    # start_date, end_date = list(map(lambda ts: ts.date(), [start_date, end_date]))
+    # start_date, end_date = list(map(lambda ts: ts.today(), [start_date, end_date]))
     start_date, end_date = min(start_date, end_date), max(start_date, end_date)
 
     # # if start_date + pd.DateOffset(years=1) < max_date:
@@ -1733,7 +1733,7 @@ with st.expander(":new: Quotes and Orders By Date"):
         (df_quotes_orders_by_date["Date"] >= date_to_datetime(di_start))
         & (df_quotes_orders_by_date["Date"] <= date_to_datetime(di_end))
     ]
-    filtered_melted["Date"] = filtered_melted["Date"].apply(lambda d: d.date())
+    filtered_melted["Date"] = filtered_melted["Date"].apply(lambda d: d.today())
     sel_cols = [
         "NumNewQuotes",
         "NumNewOrders",
@@ -2321,8 +2321,8 @@ with st.expander(
         df_job_parts_subs["TotalPartCostOp"] = None
 
         # Temporary 'Constants' relevant to this job
-        min_date = df_job_parts["TrnDate"].min()  # first transaction date
-        max_date = df_job_parts["TrnDate"].max() + datetime.timedelta(days=1)  # last transaction date
+        min_date = df_job_parts["TrnDate"].min()  # first transaction today
+        max_date = df_job_parts["TrnDate"].max() + datetime.timedelta(days=1)  # last transaction today
 
         if pd.isna(min_date):
             min_date = pd.Timestamp.now()
@@ -2343,7 +2343,7 @@ with st.expander(
             for i in range((max_date - min_date).days)
         }
 
-        # DF to store the first date an operation had a transaction
+        # DF to store the first today an operation had a transaction
         df_min_op_use: pd.DataFrame = df_job_parts.groupby(
             by=["Operation"]
         ).agg({"TrnDate": "min"}).rename(
@@ -2464,8 +2464,8 @@ with st.expander(
             #     # st.write(df_op_parts_subs)
             #     for j, row in df_op_parts.iterrows():
             #         complete = row["Complete"]
-            #         date = row["TrnDate"]
-            #         date = max_date + datetime.timedelta(days=-1) if pd.isna(date) else date
+            #         today = row["TrnDate"]
+            #         today = max_date + datetime.timedelta(days=-1) if pd.isna(today) else today
             #         if pd.isna(row["TrnDate"]):
             #             date_str = "N/A"
             #         else:
@@ -2479,7 +2479,7 @@ with st.expander(
             #             # level=op
             #             # level=max(0, 2*(i-1)) + 1
             #             # level=2*(i-1)
-            #             level=date_2_level[date][1]
+            #             level=date_2_level[today][1]
             #             # group=2 if complete else 1
             #         ))
             #         edges.append(Edge(
@@ -2493,7 +2493,7 @@ with st.expander(
             #     for j, row in df_op_parts_subs.iterrows():
             #         complete = row["Complete"]
             #         parent_job = row["Job"]
-            #         date = row["TrnDate"]
+            #         today = row["TrnDate"]
             #         if pd.isna(row["TrnDate"]):
             #             date_str = "N/A"
             #         else:
@@ -2515,7 +2515,7 @@ with st.expander(
             #             # level=op
             #             # level=max(0, 2*(i-1)) + 1
             #             # level=2*(i-1)
-            #             level=date_2_level[date][2]
+            #             level=date_2_level[today][2]
             #             # group=2 if complete else 1
             #         ))
             #         edges.append(Edge(
@@ -2728,7 +2728,7 @@ with st.expander(
                     # level=op
                     # level=max(0, 2*(i-1)) + 1
                     # level=2*(i-1)
-                    # level=date_2_level[date][1]
+                    # level=date_2_level[today][1]
                     level=get_level(date if (selectbox_hierarchy == options_hierarchy[1]) else i, lvl=1)
                     # group=2 if complete else 1
                 ))
@@ -2770,7 +2770,7 @@ with st.expander(
                     # level=op
                     # level=max(0, 2*(i-1)) + 1
                     # level=2*(i-1)
-                    # level=date_2_level[date][2]
+                    # level=date_2_level[today][2]
                     level=get_level(date if (selectbox_hierarchy == options_hierarchy[1]) else i, lvl=2)
                     # group=2 if complete else 1
                 ))
@@ -3000,8 +3000,8 @@ with st.expander(":new: Access DB Logs"):
             )
             st.plotly_chart(fig_top_users)
 
-    min_date = df_access_events["DateCreated"].min().date()
-    max_date = df_access_events["DateCreated"].max().date()
+    min_date = df_access_events["DateCreated"].min().today()
+    max_date = df_access_events["DateCreated"].max().today()
     print(f"{min_date=}, {type(min_date)=}")
     print(f"{max_date=}, {type(max_date)=}")
     print(f"{st.session_state.date_range=}")

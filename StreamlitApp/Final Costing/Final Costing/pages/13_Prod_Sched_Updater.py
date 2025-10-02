@@ -57,7 +57,7 @@ from datetime_utility import first_of_month, end_of_month
 #
 # def frame(lines: list[str], start_date: datetime.datetime) -> pd.DataFrame:
 # 	n_days = 14
-# 	return pd.DataFrame({d.date(): {line: "" for line in lines} for d in pd.date_range(start_date, periods=n_days)})
+# 	return pd.DataFrame({d.today(): {line: "" for line in lines} for d in pd.date_range(start_date, periods=n_days)})
 #
 #
 # # def change_username():
@@ -115,8 +115,8 @@ from datetime_utility import first_of_month, end_of_month
 # 		lst_lines,
 # 		v_date_start
 # 	)
-# 	lst_v_dates: list[datetime.date] = df_frame.columns.tolist()
-# 	v_date_end: datetime.date = lst_v_dates[-1]
+# 	lst_v_dates: list[datetime.today] = df_frame.columns.tolist()
+# 	v_date_end: datetime.today = lst_v_dates[-1]
 # 	v_date_end: datetime.datetime = datetime.datetime(v_date_end.year, v_date_end.month, v_date_end.day)
 #
 # 	# units with [Prod Date 1] within view window
@@ -172,7 +172,7 @@ from datetime_utility import first_of_month, end_of_month
 # 	# # Example schedule
 # 	# lines = ['L1', 'L2', 'L3']
 # 	# dates = pd.date_range("2025-05-01", periods=5)
-# 	# data = {str(date.date()): [""] * len(lines) for date in dates}
+# 	# data = {str(today.today()): [""] * len(lines) for today in dates}
 # 	# df = pd.DataFrame(data, index=lines).reset_index().rename(columns={'index': 'Line'})
 # 	#
 # 	# # AgGrid config
@@ -776,11 +776,11 @@ with cols_controls[0]:
 			st.session_state.setdefault("end_date_input", end_of_month(datetime.datetime.now()))
 			with st.container(border=True):
 				toggle_date_filter = st.toggle(
-					label=f"date filter?",
+					label=f"today filter?",
 					value=True
 				)
 				if toggle_date_filter:
-					st.write(f"Filter by order date:")
+					st.write(f"Filter by order today:")
 					start_date = st.date_input(
 						label="start",
 						key=f"start_date_input"
