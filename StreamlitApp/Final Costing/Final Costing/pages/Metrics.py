@@ -526,7 +526,7 @@ ttl_new_sos_diff_v = ttl_new_sos_today_v - ttl_new_sos_yesterday_v
 with cols_body_0[1][0]:
 	with st.container(border=True):
 		st.metric(
-			label="Number of Sales Orders",
+			label="Number of New Sales Orders",
 			value=ttl_new_sos_today_v,
 			delta=f"{ttl_new_sos_diff_v} (yesterday={ttl_new_sos_yesterday_v})",
 			delta_color="normal" if ttl_new_sos_diff_v < 0 else "inverse"
@@ -596,7 +596,7 @@ ttl_new_pos_diff_v = ttl_new_pos_today_v - ttl_new_pos_yesterday_v
 with cols_body_0[1][2]:
 	with st.container(border=True):
 		st.metric(
-			label="Number of Purchase Orders",
+			label="Number of New Purchase Orders",
 			value=ttl_new_pos_today_v,
 			delta=f"{ttl_new_pos_diff_v} (yesterday={ttl_new_pos_yesterday_v})",
 			delta_color="normal" if ttl_new_pos_diff_v < 0 else "inverse"
@@ -622,6 +622,21 @@ df_pos_rec_today: pd.DataFrame = df_date_data[today]["df_purchase_orders"].group
 	}
 ).reset_index()
 df_pos_rec_today = df_pos_rec_today.loc[(df_pos_rec_today["DateReceived"].dt.date == today)]
+# df_pos_rec_today = df_pos_rec_today.loc[(df_pos_rec_today["DateReceived"].dt.date == today)].groupby(
+# 	by=["PurchaseOrder", "DateReceived"]
+# ).agg({
+# 	"DateReceived": "count"
+# }).rename(
+# 	columns={
+# 		"DateReceived": "CountPOsReceived"
+# 	}
+# )
+
+display_df(
+	df_pos_rec_today,
+	"df_pos_rec_today"
+)
+
 ttl_new_pos_rec_today_v = df_pos_rec_today["PurchaseOrder"].count()
 ttl_price_pos_rec_today_v = df_pos_rec_today["SumOfPriceRec"].sum()
 df_pos_rec_yesterday: pd.DataFrame = df_date_data[yesterday]["df_purchase_orders"].groupby(
@@ -653,7 +668,7 @@ with cols_body_0[1][3]:
 		with st.popover(
 			label="view"
 		):
-			st.write(df_pos_today["PurchaseOrder"].values.tolist())
+			st.write(df_pos_rec_today["PurchaseOrder"].unique().tolist())
 with cols_body_0[2][0]:
 	with st.container(border=True):
 		st.metric(
@@ -665,7 +680,7 @@ with cols_body_0[2][0]:
 		with st.popover(
 			label="view"
 		):
-			st.write(df_pos_today["PurchaseOrder"].values.tolist())
+			st.write(df_pos_rec_today["PurchaseOrder"].unique().tolist())
 
 st.divider()
 

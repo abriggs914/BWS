@@ -1,3 +1,11 @@
+SELECT * FROM [BWSdb].[dbo].[Orders] WHERE [Quote Date] = DATEADD(DAY, 0, CAST(GETDATE() AS DATE))  -- Quotes Today
+SELECT * FROM [BWSdb].[dbo].[Orders] WHERE [Quote Date] = DATEADD(DAY, -1, CAST(GETDATE() AS DATE))  -- Quotes Yesterday
+
+SELECT * FROM [BWSdb].[dbo].[Orders] WHERE [Order Date] = DATEADD(DAY, 0, CAST(GETDATE() AS DATE))  -- Orders Today
+SELECT * FROM [BWSdb].[dbo].[Orders] WHERE [Order Date] = DATEADD(DAY, -1, CAST(GETDATE() AS DATE))  -- Orders Yesterday
+
+
+
 
 DECLARE @d AS DATE;
 SELECT

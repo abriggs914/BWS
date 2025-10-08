@@ -526,17 +526,18 @@ def meeting_input_menu(mode: str = "new"):
 	# 	"mattendance": mattendance,
 	# 	"mdirectory": mdirectory
 	# }})
-
+	date_input_min_value = datetime.datetime(2025, 1, 1)
+	date_input_max_value = datetime.datetime.now() + datetime.timedelta(days=32)
 	if mode == "new":
-		date_input_min_value = df_meetings["DateMeeting"].max() + datetime.timedelta(days=4)
-		date_input_max_value = datetime.datetime.now() + datetime.timedelta(days=7)
+		# date_input_min_value = df_meetings["DateMeeting"].max() + datetime.timedelta(days=4)
+		# date_input_max_value = datetime.datetime.now() + datetime.timedelta(days=7)
 
 		m_thresh = 0
 	else:
 		m_id = st.session_state.get(k_meeting_id)
 		st.header(f"Edit Meeting #{m_id}")
-		date_input_min_value = None
-		date_input_max_value = None
+		# date_input_min_value = None
+		# date_input_max_value = None
 
 		m_thresh = 1
 
@@ -580,7 +581,10 @@ def meeting_input_menu(mode: str = "new"):
 		max_value=date_input_max_value
 	)
 	if date_input_meeting:
-		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.today == date_input_meeting]
+		print("df_meetings")
+		print(df_meetings)
+		print(df_meetings.columns.tolist())
+		df_c = df_meetings.loc[df_meetings["DateMeeting"].dt.date == date_input_meeting]
 		if df_c.shape[0] > m_thresh:
 			st.markdown(
 				body=aligned_text(

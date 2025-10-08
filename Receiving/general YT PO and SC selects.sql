@@ -1,3 +1,7 @@
+-- ###################
+-- ## PO SUBSCRIPTIONS
+-- ###################
+
 SELECT
 	*
 FROM
@@ -8,21 +12,34 @@ SELECT
 FROM
 	[BWSdb].[dbo].[hist_REC_POReceivedSubs]
 ;
+
+-- ###################
+-- # YELLOW TAGS
+-- ###################
+
 SELECT
 	*
 FROM
 	[BWSdb].[dbo].[PROD_YellowTagsAdmins]
 ;
 SELECT
-	[Active], [WO], [StockCode], [QtyMissing], [Notes]
-
+	--[Active], [WO], [StockCode], [QtyMissing], [Notes]
+	*
 FROM
 	[BWSdb].[dbo].[PROD_YellowTags]
 ;
 SELECT
 	*
 FROM
+	[BWSdb].[dbo].[v_PROD_YellowTags]
+;
+SELECT
+	*
+FROM
 	[BWSdb].[dbo].[hist_PROD_YellowTags]
+WHERE
+	[ModifiedColumn] = 'Active'
+	AND [ValueAfter] = '0'
 ;
 
 SELECT
@@ -36,11 +53,10 @@ FROM
 	[BWSdb].[dbo].[hist_PROD_JobOpIssue] [hJOI]
 ;
 
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[PROD_YellowTags]
-;
+-- ############################
+-- # WEEKLY SALES ORDER MEETING
+-- ############################
+
 SELECT
 	*
 FROM
@@ -51,6 +67,10 @@ SELECT
 FROM
 	[BWSdb].[dbo].[WSOM_Meetings]
 ;
+
+-- ########################
+-- ITR REQUESTS< PUSHES, AND CUSTOMERS
+-- ########################
 
 SELECT
 	*
@@ -68,14 +88,9 @@ FROM
 SELECT
 	*
 FROM
-	[BWSdb].[dbo].[WSOM_Meetings]
+	[BWSdb].[dbo].[IT Requests]
 ;
 
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[WSOM_MeetingNotes]
-;
 
 SELECT
 	[O].[WO#],
@@ -85,12 +100,6 @@ FROM
 	[BWSdb].[dbo].[Orders] [O]
 WHERE
 	[O].[WO#] IS NOT NULL
-;
-
-SELECT
-	*
-FROM
-	[BWSdb].[dbo].[IT Requests]
 ;
 
 SELECT TOP 1000
