@@ -4,6 +4,7 @@ import shutil
 
 import pandas as pd
 import streamlit as st
+from streamlit_pills import pills
 
 from pyodbc_connection import connect
 from streamlit_utility import display_df
@@ -60,6 +61,71 @@ def get_open_POs_dash_mach() -> pd.DataFrame:
         sql
     )
 
+
+# PDF_FileRootBWS: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS\"
+
+
+@st.cache_data(ttl=60*60)
+def get_recent_pos() -> pd.DataFrame:
+    sql = r"""
+DECLARE @PDF_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS\'
+DECLARE @dwg_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\DRAWINGS\STANDARDS\'
+DECLARE @dxf_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\DRAWINGS\STANDARDS\'
+DECLARE @stp_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\'
+DECLARE @step_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\'
+
+SELECT
+	[PMD].[PurchaseOrder],
+	[PMD].[Line],
+	[PMD].[MStockCode],
+	[PMD].[MWarehouse],
+	[PMD].[MOrderQty],
+	[PMD].[MReceivedQty],
+	[PMD].[MPrice],
+	[PMD].[MLatestDueDate],
+	[PMD].[MJob],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @PDF_FileRootBWS + [IM].[DrawOfficeNum] + '.pdf'
+		ELSE @PDF_FileRootBWS + [IM].[StockCode] + '.pdf' 
+	END) AS [PDF_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @DWG_FileRootBWS + [IM].[DrawOfficeNum] + '.dwg'
+		ELSE @DWG_FileRootBWS + [IM].[StockCode] + '.dwg' 
+	END) AS [DWG_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @DXF_FileRootBWS + [IM].[DrawOfficeNum] + '.dxf'
+		ELSE @DXF_FileRootBWS + [IM].[StockCode] + '.dxf' 
+	END) AS [DXF_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @STP_FileRootBWS + [IM].[DrawOfficeNum] + '.stp'
+		ELSE @STP_FileRootBWS + [IM].[StockCode] + '.stp' 
+	END) AS [STP_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @STEP_FileRootBWS + [IM].[DrawOfficeNum] + '.step'
+		ELSE @STEP_FileRootBWS + [IM].[StockCode] + '.step' 
+	END) AS [STEP_BWSPath]
+FROM
+	[SysproCompanyA].[dbo].[PorMasterDetail] [PMD]
+INNER JOIN
+	[SysproCompanyA].[dbo].[InvMaster] [IM]
+ON
+	([PMD].[MStockCode] = [IM].[StockCode])
+	AND ([PMD].[MWarehouse] = [IM].[WarehouseToUse])
+WHERE
+	([PMD].[MLatestDueDate] >= DATEADD(DAY, -400, GETDATE()))
+;
+    """
+    return connect(sql)
 
 
 read_file_root: str = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files"
@@ -128,246 +194,403 @@ if not output_location.strip():
 if not os.path.exists(output_location):
     os.makedirs(output_location)
 
+
+k_pills_version: str = "key_pills_version"
+options_pills_version = ["Old Version", "New Version"]
+pills_version = pills(label="Version", options=options_pills_version, key=k_pills_version)
+
+
 button_cols = st.columns([1, 1, 1])
 result_cols = st.columns([1] if st.session_state.get("has_run", False) else [1, 4])
 
-button_load_part_data = button_cols[0].button(
-    label="load parts",
-    key="button_load_part_data",
-    on_click=lambda: st.session_state.update({
-        "df": pd.read_excel(
-            read_file_path,
-            index_col=None,
-            header=None
-        ),
-        "has_run": False
-    })
-)
-button_reset_part_data = button_cols[1].button(
-    label="reset parts",
-    key="button_reset_part_data",
-    on_click=lambda: st.session_state.update({
-        "df": pd.DataFrame(columns=["PN"]),
-        "has_run": False
-    })
-)
-button_run_part_data = button_cols[2].button(
-    label="run",
-    key="button_run_part_data",
-    on_click=lambda: st.session_state.update({
-        "has_run": True
-    })
-)
 
-text_input_output_folder = st.text_input(
-    label="Enter a PO Number to save the copied files into as a folder.",
-    placeholder=os.path.basename(output_location_default),
-    key="text_input_output_folder",
-    on_change=check_folder_exists
-)
+@st.cache_data(ttl=60*60)
+def check_file_exists(path):
+    path = os.path.normpath(path)
+    # print(f"{path=}")
+    return os.path.exists(path)
 
-df: pd.DataFrame = st.session_state.get("df", pd.DataFrame(columns=["PN"]))
 
-if not df.empty:
-    df = df.rename(columns={
-        0: "PN"
-    })
-    df["PN"] = df["PN"].astype(str)
+if pills_version == options_pills_version[1]:
+    # New Version Oct 2025
+
+    default_output_folder_root: str = r"\\bwsfp01\public\PARTS\Purchase Order Copied Files"
+    default_output_folder: str = f"output_{datetime.datetime.now():%Y%m%d%H%M}"
+
+    k_textbox_output_name = "key_textbox_output_name"
+    st.session_state.setdefault(k_textbox_output_name, default_output_folder)
+    textbox_output_name = st.text_input(
+        label=f"Enter a file name for the copied files to be placed. Folder will be created within parent folder '{default_output_folder_root}'",
+        key=k_textbox_output_name
+    )
+
+    df_parts_pos: pd.DataFrame = get_recent_pos()
+    # display_df(
+    #     df_parts_pos,
+    #     "df_parts_pos"
+    # )
+    df_parts_pos["PurchaseOrder_n"] = df_parts_pos["PurchaseOrder"].apply(lambda po: int(po[-6:]))
+
+    k_toggle_mach_only: str = "key_toggle_mach_only"
+    st.session_state.setdefault(k_toggle_mach_only, False)
+    toggle_mach_only = st.toggle(
+        label="-Mach parts only?",
+        key=k_toggle_mach_only
+    )
+
+    if toggle_mach_only:
+        df_parts_pos = df_parts_pos.loc[
+            df_parts_pos["MStockCode"].str.upper().str.contains("-MACH")
+        ]
+
+    df_recent_pos: pd.DataFrame = df_parts_pos.groupby(
+        by="PurchaseOrder_n"
+    ).agg({
+        "MStockCode": "count"
+    }).reset_index()
+
+    max_pos: int = 5
+    k_multiselect_pos: str = "key_multiselect_pos"
+    multiselect_pos = st.multiselect(
+        label=f"Select up to {max_pos} POs from the list of {df_recent_pos.shape[0]}:",
+        key=k_multiselect_pos,
+        options=df_recent_pos["PurchaseOrder_n"],
+        max_selections=5
+    )
+
+    df_selected_pos: pd.DataFrame = df_parts_pos.loc[
+        df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos)
+    ]
+    # display_df(
+    #     df_selected_pos,
+    #     "df_selected_pos"
+    # )
+    df_parts: pd.DataFrame = df_selected_pos.groupby(
+        by=["MStockCode", "PDF_BWSPath", "DWG_BWSPath", "DXF_BWSPath", "STP_BWSPath"]
+    ).agg({
+        "MWarehouse": "count"
+    }).reset_index()
+
+    # display_df(
+    #     df_selected_pos,
+    #     "df_selected_pos"
+    # )
+    #
+    # display_df(
+    #     df_parts,
+    #     "df_parts A"
+    # )
+
+    file_cols = [col for col in df_parts.columns if col.upper().split("_")[0] in file_extensions]
+
+    show_cols = {
+        "MStockCode": "Part",
+        "PurchaseOrder_n": "PO"
+    }
+
+    for i, row in df_parts.iterrows():
+        for j, col in enumerate(file_cols):
+            k_found_col = f"found_{col}"
+            show_cols[k_found_col] = k_found_col
+            if i == 0:
+                df_parts[k_found_col] = False
+            df_parts.loc[i, k_found_col] = check_file_exists(row[col])
+
+    # display_df(
+    #     df_parts_pos[[
+    #         "PurchaseOrder_n",
+    #         "MStockCode"
+    #     ]],
+    #     "XX"
+    # )
+    #
+    # display_df(
+    #     df_parts,
+    #     "df_parts B"
+    # )
+
+    df_parts = df_parts.merge(
+        df_parts_pos.loc[
+            df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos),
+            [
+                "PurchaseOrder_n",
+                "MStockCode"
+            ]
+        ],
+        how="outer",
+        on="MStockCode"
+    )
+
+    display_df(
+        df_parts[list(show_cols)].rename(columns=show_cols),
+        "Results"
+    )
+
+    if not df_parts.empty:
+        st.info(f"*** Please be advised, program output for version 2 (oct2025) is now '{default_output_folder_root}' ***")
+        if st.button(
+            label="copy found files?",
+            key="k_button_copy_files"
+        ):
+            n_files = 0
+            for i, row in df_parts.iterrows():
+                for j, col in enumerate(file_cols):
+                    k_found_col = f"found_{col}"
+                    if ~pd.isna(row[k_found_col]) and row[k_found_col]:
+                        src_file = row[col]
+                        file = os.path.basename(src_file)
+                        if not textbox_output_name:
+                            textbox_output_name = default_output_folder
+                        if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
+                            os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
+                        dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
+                        # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                        # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                        if not os.path.exists(dest_file):
+                            n_files += 1
+                            shutil.copyfile(src_file, dest_file)
+            st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
+
 else:
-    st.write(f"Enter your part numbers in this excel first: '{read_file}'")
-    st.write(instructions)
+    # Old Version
 
-if not st.session_state.get("has_run", False):
-    result_cols[0].dataframe(df["PN"], use_container_width=True, hide_index=True)
-result_cols[0].write(f"{df.shape[0]} part{'' if (df.shape[0] == 1) else 's'} loaded")
+    button_load_part_data = button_cols[0].button(
+        label="load parts",
+        key="button_load_part_data",
+        on_click=lambda: st.session_state.update({
+            "df": pd.read_excel(
+                read_file_path,
+                index_col=None,
+                header=None
+            ),
+            "has_run": False
+        })
+    )
+    button_reset_part_data = button_cols[1].button(
+        label="reset parts",
+        key="button_reset_part_data",
+        on_click=lambda: st.session_state.update({
+            "df": pd.DataFrame(columns=["PN"]),
+            "has_run": False
+        })
+    )
+    button_run_part_data = button_cols[2].button(
+        label="run",
+        key="button_run_part_data",
+        on_click=lambda: st.session_state.update({
+            "has_run": True
+        })
+    )
 
-if (not df.empty) and st.session_state.get("button_run_part_data"):
+    text_input_output_folder = st.text_input(
+        label="Enter a PO Number to save the copied files into as a folder.",
+        placeholder=os.path.basename(output_location_default),
+        key="text_input_output_folder",
+        on_change=check_folder_exists
+    )
 
-    progress_fetching = st.progress(value=0, text=f"fetching files... {percent(0)}")
-    progress_walking = st.progress(value=0, text=f"searching... {percent(0)}")
-    progress_copying = st.progress(value=0, text=f"copying... {percent(0)}")
+    df: pd.DataFrame = st.session_state.get("df", pd.DataFrame(columns=["PN"]))
 
-    t_fetching = datetime.datetime.now(), None
-    walked_pdf_folder = hold_walk_pdf()
-    progress_fetching.progress(value=0.25, text=f"fetching files... {percent(0.25)}")
-    walked_pdf_stg_folder = hold_walk_pdf_stg()
-    progress_fetching.progress(value=0.5, text=f"fetching files... {percent(0.5)}")
-    walked_dwg_dxf_folder = hold_walk_dwg_dxf()
-    progress_fetching.progress(value=0.75, text=f"fetching files... {percent(0.75)}")
-    walked_stp_folder = hold_walk_stp()
-    t_fetching = t_fetching[0], datetime.datetime.now()
-    tt_fetching = (t_fetching[1] - t_fetching[0]).total_seconds()
-    progress_fetching.progress(100, f"fetching files... {percent(1)} -- results in {tt_fetching:.2f} seconds")
+    if not df.empty:
+        df = df.rename(columns={
+            0: "PN"
+        })
+        df["PN"] = df["PN"].astype(str)
+    else:
+        st.write(f"Enter your part numbers in this excel first: '{read_file}'")
+        st.write(instructions)
 
-    for fe in file_extensions:
-        # df[f"{fe}_F"] = df.apply(lambda row: f"{row['PN']}.{fe.upper()}", axis=1)
-        df[f"{fe}_F".upper()] = df.apply(lambda row: f"{row['PN']}.{fe}".upper(), axis=1)
-        df[fe.upper()] = False
-        df[f"{fe}_P".upper()] = ""
-    df["COMP"] = ""
+    if not st.session_state.get("has_run", False):
+        result_cols[0].dataframe(df["PN"], use_container_width=True, hide_index=True)
+    result_cols[0].write(f"{df.shape[0]} part{'' if (df.shape[0] == 1) else 's'} loaded")
 
-    u_pns = set(map(str, df["PN"].unique().tolist()))
-    n_parts = len(u_pns)
-    pns = set(df["DXF_F"].unique().tolist()).union(
-        set(df["DWG_F"].unique().tolist()).union(set(df["PDF_F"].unique().tolist())).union(set(df["STP_F"].unique().tolist())))
+    if (not df.empty) and st.session_state.get("button_run_part_data"):
 
-    t_pdfs = sum([len(fn) for dp, dn, fn in walked_pdf_folder])
-    t_pdfs_stg = sum([len(fn) for dp, dn, fn in walked_pdf_stg_folder])
-    t_dxfs = sum([len(fn) for dp, dn, fn in walked_dwg_dxf_folder])
-    t_stps = sum([len(fn) for dp, dn, fn in walked_stp_folder])
-    t_to_walk = t_pdfs + t_pdfs_stg + t_dxfs + t_stps
-    i = 0
-    not_found = []
-    found = {}
+        progress_fetching = st.progress(value=0, text=f"fetching files... {percent(0)}")
+        progress_walking = st.progress(value=0, text=f"searching... {percent(0)}")
+        progress_copying = st.progress(value=0, text=f"copying... {percent(0)}")
 
-    # st.write("pns")
-    # st.write(pns)
+        t_fetching = datetime.datetime.now(), None
+        walked_pdf_folder = hold_walk_pdf()
+        progress_fetching.progress(value=0.25, text=f"fetching files... {percent(0.25)}")
+        walked_pdf_stg_folder = hold_walk_pdf_stg()
+        progress_fetching.progress(value=0.5, text=f"fetching files... {percent(0.5)}")
+        walked_dwg_dxf_folder = hold_walk_dwg_dxf()
+        progress_fetching.progress(value=0.75, text=f"fetching files... {percent(0.75)}")
+        walked_stp_folder = hold_walk_stp()
+        t_fetching = t_fetching[0], datetime.datetime.now()
+        tt_fetching = (t_fetching[1] - t_fetching[0]).total_seconds()
+        progress_fetching.progress(100, f"fetching files... {percent(1)} -- results in {tt_fetching:.2f} seconds")
 
-    t_walking = datetime.datetime.now(), None
-    # pdfs
-    for dir_path, dir_names, file_names in walked_pdf_folder:
-        # st.write(f"{len(file_names)=}, {file_names[:5]:}")
-        for file in file_names:
-            file = file.upper()
-            i += 1
-            if file in pns:
-                # st.write(f"BWS {file=}")
-                spl = file.split(".")
-                pn = ".".join(spl[:-1])
-                suffix = spl[-1].upper()
-                df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "BWS"
-                progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
-    # st.write(pns)
-    # st.write(f"A = {i=}")
-    if i < n_parts:
-        # search stargate too
-        for dir_path, dir_names, file_names in walked_pdf_stg_folder:
-            # print(f"{len(file_names)=}, {file_names[:5]:}")
+        for fe in file_extensions:
+            # df[f"{fe}_F"] = df.apply(lambda row: f"{row['PN']}.{fe.upper()}", axis=1)
+            df[f"{fe}_F".upper()] = df.apply(lambda row: f"{row['PN']}.{fe}".upper(), axis=1)
+            df[fe.upper()] = False
+            df[f"{fe}_P".upper()] = ""
+        df["COMP"] = ""
+
+        u_pns = set(map(str, df["PN"].unique().tolist()))
+        n_parts = len(u_pns)
+        pns = set(df["DXF_F"].unique().tolist()).union(
+            set(df["DWG_F"].unique().tolist()).union(set(df["PDF_F"].unique().tolist())).union(set(df["STP_F"].unique().tolist())))
+
+        t_pdfs = sum([len(fn) for dp, dn, fn in walked_pdf_folder])
+        t_pdfs_stg = sum([len(fn) for dp, dn, fn in walked_pdf_stg_folder])
+        t_dxfs = sum([len(fn) for dp, dn, fn in walked_dwg_dxf_folder])
+        t_stps = sum([len(fn) for dp, dn, fn in walked_stp_folder])
+        t_to_walk = t_pdfs + t_pdfs_stg + t_dxfs + t_stps
+        i = 0
+        not_found = []
+        found = {}
+
+        # st.write("pns")
+        # st.write(pns)
+
+        t_walking = datetime.datetime.now(), None
+        # pdfs
+        for dir_path, dir_names, file_names in walked_pdf_folder:
             # st.write(f"{len(file_names)=}, {file_names[:5]:}")
             for file in file_names:
                 file = file.upper()
                 i += 1
                 if file in pns:
-                    # st.write(f"STG {file=}")
+                    # st.write(f"BWS {file=}")
                     spl = file.split(".")
                     pn = ".".join(spl[:-1])
                     suffix = spl[-1].upper()
-                    df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "STG"
+                    df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "BWS"
                     progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
-        # st.write(f"B = {i=}")
-    else:
-        # all parts were found in bws directory
-        i += t_pdfs_stg
-        progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
-        pass
+        # st.write(pns)
+        # st.write(f"A = {i=}")
+        if i < n_parts:
+            # search stargate too
+            for dir_path, dir_names, file_names in walked_pdf_stg_folder:
+                # print(f"{len(file_names)=}, {file_names[:5]:}")
+                # st.write(f"{len(file_names)=}, {file_names[:5]:}")
+                for file in file_names:
+                    file = file.upper()
+                    i += 1
+                    if file in pns:
+                        # st.write(f"STG {file=}")
+                        spl = file.split(".")
+                        pn = ".".join(spl[:-1])
+                        suffix = spl[-1].upper()
+                        df.loc[df["PDF_F"] == file, ["PDF", "PDF_P", "COMP"]] = True, dir_path, "STG"
+                        progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+            # st.write(f"B = {i=}")
+        else:
+            # all parts were found in bws directory
+            i += t_pdfs_stg
+            progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+            pass
 
-    # parts_with_found_pdfs = set(df.loc[df["PDF"]]["PN"].values.tolist())
-    # st.write(parts_with_found_pdfs)
+        # parts_with_found_pdfs = set(df.loc[df["PDF"]]["PN"].values.tolist())
+        # st.write(parts_with_found_pdfs)
 
-    for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
-        # print(f"{len(file_names)=}, {file_names[:5]:}")
-        for file in file_names:
-            file = file.upper()
-            # st.write(f"DXF -> {file=}")
-            i += 1
-            is_dxf: bool = file.endswith(".DXF")
-            is_dwg: bool = file.endswith(".DWG")
-            if is_dxf or is_dwg:
-                spl = file.split(".")
-                pn = ".".join(spl[:-1])
-                suffix = spl[-1].upper()
-                # if pn in parts_with_found_pdfs
-                if pn in u_pns:
-                    df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
-                    progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
-                # else:
-                #     if len(pn) < 12:
-                #         st.write(f"skipped {pn=}")
+        for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
+            # print(f"{len(file_names)=}, {file_names[:5]:}")
+            for file in file_names:
+                file = file.upper()
+                # st.write(f"DXF -> {file=}")
+                i += 1
+                is_dxf: bool = file.endswith(".DXF")
+                is_dwg: bool = file.endswith(".DWG")
+                if is_dxf or is_dwg:
+                    spl = file.split(".")
+                    pn = ".".join(spl[:-1])
+                    suffix = spl[-1].upper()
+                    # if pn in parts_with_found_pdfs
+                    if pn in u_pns:
+                        df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
+                        progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+                    # else:
+                    #     if len(pn) < 12:
+                    #         st.write(f"skipped {pn=}")
 
-    for dir_path, dir_names, file_names in walked_stp_folder:
-        # print(f"{len(file_names)=}, {file_names[:5]:}")
-        for file in file_names:
-            file = file.upper()
-            i += 1
+        for dir_path, dir_names, file_names in walked_stp_folder:
+            # print(f"{len(file_names)=}, {file_names[:5]:}")
+            for file in file_names:
+                file = file.upper()
+                i += 1
 
-            if file.replace(".STEP", ".STP").endswith(".STP"):
-                spl = file.split(".")
-                pn = ".".join(spl[:-1])
-                suffix = spl[-1].upper()
-                # if pn in parts_with_found_pdfs
-                if pn in u_pns:
-                    df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
-                    progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
+                if file.replace(".STEP", ".STP").endswith(".STP"):
+                    spl = file.split(".")
+                    pn = ".".join(spl[:-1])
+                    suffix = spl[-1].upper()
+                    # if pn in parts_with_found_pdfs
+                    if pn in u_pns:
+                        df.loc[df[f"{suffix}_F"] == file, [suffix, f"{suffix}_P"]] = True, dir_path
+                        progress_walking.progress(i / t_to_walk, f"searching... {percent(i / t_to_walk)}")
 
-    t_walking = t_walking[0], datetime.datetime.now()
-    tt_walking = (t_walking[1] - t_walking[0]).total_seconds()
-    progress_walking.progress(100, f"searching... {percent(1)} -- results in {tt_walking:.2f} seconds")
+        t_walking = t_walking[0], datetime.datetime.now()
+        tt_walking = (t_walking[1] - t_walking[0]).total_seconds()
+        progress_walking.progress(100, f"searching... {percent(1)} -- results in {tt_walking:.2f} seconds")
 
-    result_cols[0 if st.session_state.get("has_run", False) else 1].dataframe(
-        df[["PN", *file_extensions, "COMP"]],
-        use_container_width=True,
-        hide_index=True
+        result_cols[0 if st.session_state.get("has_run", False) else 1].dataframe(
+            df[["PN", *file_extensions, "COMP"]],
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.subheader("Results")
+        sub_results_cols = st.columns(len(file_extensions))
+        kpfe = 1 / len(file_extensions)
+        k = 0
+        t_copying = datetime.datetime.now(), None
+        progress_copying.progress(k, percent(k))
+        t_copied = 0
+        for i, fe in enumerate(file_extensions):
+            root = file_extensions[fe]
+            df_nf: pd.DataFrame = df.loc[~df[fe]]
+            df_f: pd.DataFrame = df.loc[df[fe]]
+            t_to_check: int = df_f.shape[0]
+            kpc = kpfe / (1 if t_to_check == 0 else t_to_check)
+            # print(f"{k=}, {kpfe=}, {kpc=}")
+            for j, row in df_f.iterrows():
+                k += kpc
+                pn: str = row["PN"]
+                pp: str = row[f"{fe}_P"]
+                pf: str = row[f"{fe}_F"]
+                found: bool = row[fe]
+                # st.write(f"{i=}, {j=}, {pn=}, {pp=}, {pf=}, {found=}")
+                if found:
+                    src_file = os.path.join(pp, pf)
+                    dest_file = os.path.join(output_location, pf)
+                    # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                    # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                    if not os.path.exists(dest_file):
+                        shutil.copyfile(src_file, dest_file)
+                progress_copying.progress(k, f"copying... {percent(k)}")
+
+            missing_file_parts: list[str] = df_nf["PN"].values.tolist()
+            sub_results_cols[i].write(f"{df.shape[0] - df_nf.shape[0]} {fe} files copied" + (
+                "" if not df_nf.shape[0] else f", missing {df_nf.shape[0]}"))
+            t_copied += df_f.shape[0]
+            with sub_results_cols[i].popover(label="show missing part #s"):
+                st.write(missing_file_parts)
+        t_copying = t_copying[0], datetime.datetime.now()
+        tt_copying = (t_copying[1] - t_copying[0]).total_seconds()
+        progress_copying.progress(100, f"copying... {percent(1)} -- results in {tt_copying:.2f} seconds")
+
+        st.write(f"{t_copied} File{'' if t_copied == 1 else 's'} copied to:")
+        st.code(output_location)
+
+        # st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
+        # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
+        # st.link_button(label="Folder", url=output_location)
+        # st.markdown("<p><a href = \"" + output_location + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
+
+
+    ## Open POs that have -MACH
+
+    st.divider()
+    st.subheader("Open POs that have -MACH")
+    df_dash_mach = get_open_POs_dash_mach()
+    display_df(
+        df_dash_mach,
+        hide_index=True,
+        width=1200
     )
-
-    st.subheader("Results")
-    sub_results_cols = st.columns(len(file_extensions))
-    kpfe = 1 / len(file_extensions)
-    k = 0
-    t_copying = datetime.datetime.now(), None
-    progress_copying.progress(k, percent(k))
-    t_copied = 0
-    for i, fe in enumerate(file_extensions):
-        root = file_extensions[fe]
-        df_nf: pd.DataFrame = df.loc[~df[fe]]
-        df_f: pd.DataFrame = df.loc[df[fe]]
-        t_to_check: int = df_f.shape[0]
-        kpc = kpfe / (1 if t_to_check == 0 else t_to_check)
-        # print(f"{k=}, {kpfe=}, {kpc=}")
-        for j, row in df_f.iterrows():
-            k += kpc
-            pn: str = row["PN"]
-            pp: str = row[f"{fe}_P"]
-            pf: str = row[f"{fe}_F"]
-            found: bool = row[fe]
-            # st.write(f"{i=}, {j=}, {pn=}, {pp=}, {pf=}, {found=}")
-            if found:
-                src_file = os.path.join(pp, pf)
-                dest_file = os.path.join(output_location, pf)
-                # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                if not os.path.exists(dest_file):
-                    shutil.copyfile(src_file, dest_file)
-            progress_copying.progress(k, f"copying... {percent(k)}")
-
-        missing_file_parts: list[str] = df_nf["PN"].values.tolist()
-        sub_results_cols[i].write(f"{df.shape[0] - df_nf.shape[0]} {fe} files copied" + (
-            "" if not df_nf.shape[0] else f", missing {df_nf.shape[0]}"))
-        t_copied += df_f.shape[0]
-        with sub_results_cols[i].popover(label="show missing part #s"):
-            st.write(missing_file_parts)
-    t_copying = t_copying[0], datetime.datetime.now()
-    tt_copying = (t_copying[1] - t_copying[0]).total_seconds()
-    progress_copying.progress(100, f"copying... {percent(1)} -- results in {tt_copying:.2f} seconds")
-
-    st.write(f"{t_copied} File{'' if t_copied == 1 else 's'} copied to:")
-    st.code(output_location)
-
-    # st.link_button(label="Folder", url=r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output")
-    # st.markdown("<p><a href = \"" + r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files\output" + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
-    # st.link_button(label="Folder", url=output_location)
-    # st.markdown("<p><a href = \"" + output_location + "\"> Some Network Folder (Works in Edge and IE)</a></p>", unsafe_allow_html=True)
-
-
-## Open POs that have -MACH
-
-st.divider()
-st.subheader("Open POs that have -MACH")
-df_dash_mach = get_open_POs_dash_mach()
-display_df(
-    df_dash_mach,
-    hide_index=True,
-    width=1200
-)
 
 #
 # @st.cache_data(ttl=1000*60)  # 1 hour
