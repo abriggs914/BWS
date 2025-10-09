@@ -38,8 +38,9 @@ SELECT
 FROM
 	[BWSdb].[dbo].[hist_PROD_YellowTags]
 WHERE
-	[ModifiedColumn] = 'Active'
-	AND [ValueAfter] = '0'
+	[ModifiedID] = 0
+	/*[ModifiedColumn] = 'Active'
+	AND [ValueAfter] = '0'*/
 ;
 
 SELECT

@@ -142,6 +142,12 @@ SELECT * FROM @emp_dat ORDER BY [2nd Name], [1st Name]
 SELECT * FROM @emp_dat WHERE [1st Name] LIKE '%avery%' AND [2nd Name] LIKE '%briggs%'
 
 -- View raises in 2023
+SELECT 2026 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2026 ORDER BY [DAnnual]
+-- View raises in 2023
+SELECT 2025 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2025 ORDER BY [DAnnual]
+-- View raises in 2023
+SELECT 2024 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2024 ORDER BY [DAnnual]
+-- View raises in 2023
 SELECT 2023 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2023 ORDER BY [DAnnual]
 -- View raises in 2022
 SELECT 2022 AS [RaiseYear], * FROM @emp_dat WHERE YEAR([Date]) = 2022 ORDER BY [DAnnual]

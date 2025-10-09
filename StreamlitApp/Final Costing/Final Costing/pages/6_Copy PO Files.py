@@ -73,6 +73,8 @@ DECLARE @dwg_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\DRAWI
 DECLARE @dxf_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\DRAWINGS\STANDARDS\'
 DECLARE @stp_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\'
 DECLARE @step_FileRootBWS NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\'
+DECLARE @stp_FileRootSTG NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\STARGATE STEP FILES\'
+DECLARE @step_FileRootSTG NVARCHAR(MAX) = '\\server4.bwsdomain.local\Design\SheetMetal_Step_Files_\STARGATE STEP FILES\'
 
 SELECT
 	[PMD].[PurchaseOrder],
@@ -113,7 +115,19 @@ SELECT
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
 		THEN @STEP_FileRootBWS + [IM].[DrawOfficeNum] + '.step'
 		ELSE @STEP_FileRootBWS + [IM].[StockCode] + '.step' 
-	END) AS [STEP_BWSPath]
+	END) AS [STEP_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @STP_FileRootSTG + [IM].[DrawOfficeNum] + '.stp'
+		ELSE @STP_FileRootSTG + [IM].[StockCode] + '.stp' 
+	END) AS [STP_STGPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
+		THEN @STEP_FileRootSTG + [IM].[DrawOfficeNum] + '.step'
+		ELSE @STEP_FileRootSTG + [IM].[StockCode] + '.step' 
+	END) AS [STEP_STGPath]
 FROM
 	[SysproCompanyA].[dbo].[PorMasterDetail] [PMD]
 INNER JOIN
@@ -205,10 +219,27 @@ result_cols = st.columns([1] if st.session_state.get("has_run", False) else [1, 
 
 
 @st.cache_data(ttl=60*60)
-def check_file_exists(path):
+def check_file_exists(path) -> str:
     path = os.path.normpath(path)
-    # print(f"{path=}")
-    return os.path.exists(path)
+    path_base = os.path.basename(path)
+    dwg_mask = r"\DESIGN\DRAWINGS\STANDARDS"
+    match = dwg_mask in path.upper()
+    # print(f"{path=}, {path_base=}, {dwg_mask=}, {dwg_mask in path.upper()}")
+    i = 0
+    # progress_walking = st.progress(value=0)
+    if match:
+        # dwg and dxf files may be in a nested folder
+        for dir_path, dir_names, file_names in walked_dwg_dxf_folder:
+            for dir_name in dir_names:
+                if os.path.exists(os.path.join(dir_path, dir_name, path_base)):
+                    return os.path.join(dir_path, dir_name, path_base)
+        return ""
+    else:
+        # pdf, stp, and step files should ONLY EVER BE IN 1 OF 2 PLACES!!
+        return path if os.path.exists(path) else ""
+
+
+walked_dwg_dxf_folder = hold_walk_dwg_dxf()
 
 
 if pills_version == options_pills_version[1]:
@@ -266,7 +297,16 @@ if pills_version == options_pills_version[1]:
     #     "df_selected_pos"
     # )
     df_parts: pd.DataFrame = df_selected_pos.groupby(
-        by=["MStockCode", "PDF_BWSPath", "DWG_BWSPath", "DXF_BWSPath", "STP_BWSPath"]
+        by=[
+            "MStockCode",
+            "PDF_BWSPath",
+            "DWG_BWSPath",
+            "DXF_BWSPath",
+            "STP_BWSPath",
+            "STEP_BWSPath",
+            "STP_STGPath",
+            "STEP_STGPath"
+        ]
     ).agg({
         "MWarehouse": "count"
     }).reset_index()
@@ -291,10 +331,14 @@ if pills_version == options_pills_version[1]:
     for i, row in df_parts.iterrows():
         for j, col in enumerate(file_cols):
             k_found_col = f"found_{col}"
+            # st.write(f"{k_found_col=}")
             show_cols[k_found_col] = k_found_col
             if i == 0:
                 df_parts[k_found_col] = False
-            df_parts.loc[i, k_found_col] = check_file_exists(row[col])
+            exists_path = check_file_exists(row[col])
+            exists = bool(exists_path)
+            exists_path = exists_path if exists else None
+            df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
 
     # display_df(
     #     df_parts_pos[[
@@ -333,14 +377,14 @@ if pills_version == options_pills_version[1]:
             key="k_button_copy_files"
         ):
             n_files = 0
+            if not textbox_output_name:
+                textbox_output_name = default_output_folder
             for i, row in df_parts.iterrows():
                 for j, col in enumerate(file_cols):
                     k_found_col = f"found_{col}"
                     if ~pd.isna(row[k_found_col]) and row[k_found_col]:
                         src_file = row[col]
                         file = os.path.basename(src_file)
-                        if not textbox_output_name:
-                            textbox_output_name = default_output_folder
                         if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
                             os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
                         dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
@@ -415,7 +459,6 @@ else:
         progress_fetching.progress(value=0.25, text=f"fetching files... {percent(0.25)}")
         walked_pdf_stg_folder = hold_walk_pdf_stg()
         progress_fetching.progress(value=0.5, text=f"fetching files... {percent(0.5)}")
-        walked_dwg_dxf_folder = hold_walk_dwg_dxf()
         progress_fetching.progress(value=0.75, text=f"fetching files... {percent(0.75)}")
         walked_stp_folder = hold_walk_stp()
         t_fetching = t_fetching[0], datetime.datetime.now()
