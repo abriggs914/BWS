@@ -86,6 +86,7 @@ SELECT
 	[PMD].[MPrice],
 	[PMD].[MLatestDueDate],
 	[PMD].[MJob],
+	[DrawOfficeNum],
 
 	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
@@ -94,10 +95,22 @@ SELECT
 	END) AS [PDF_BWSPath],
 
 	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @PDF_FileRootBWS + [IM].[StockCode] + '.pdf'
+		ELSE NULL
+	END) AS [ALT_PDF_BWSPath],
+
+	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
 		THEN @DWG_FileRootBWS + [IM].[DrawOfficeNum] + '.dwg'
 		ELSE @DWG_FileRootBWS + [IM].[StockCode] + '.dwg' 
 	END) AS [DWG_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @DWG_FileRootBWS + [IM].[StockCode] + '.dwg'
+		ELSE NULL
+	END) AS [ALT_DWG_BWSPath],
 
 	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
@@ -106,10 +119,22 @@ SELECT
 	END) AS [DXF_BWSPath],
 
 	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @DXF_FileRootBWS + [IM].[StockCode] + '.dxf'
+		ELSE NULL
+	END) AS [ALT_DXF_BWSPath],
+
+	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
 		THEN @STP_FileRootBWS + [IM].[DrawOfficeNum] + '.stp'
 		ELSE @STP_FileRootBWS + [IM].[StockCode] + '.stp' 
 	END) AS [STP_BWSPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @STP_FileRootBWS + [IM].[StockCode] + '.stp'
+		ELSE NULL
+	END) AS [ALT_STP_BWSPath],
 
 	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
@@ -118,16 +143,34 @@ SELECT
 	END) AS [STEP_BWSPath],
 
 	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @STEP_FileRootBWS + [IM].[StockCode] + '.step'
+		ELSE NULL
+	END) AS [ALT_STEP_BWSPath],
+
+	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
 		THEN @STP_FileRootSTG + [IM].[DrawOfficeNum] + '.stp'
 		ELSE @STP_FileRootSTG + [IM].[StockCode] + '.stp' 
 	END) AS [STP_STGPath],
 
 	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @STP_FileRootSTG + [IM].[StockCode] + '.stp' 
+		ELSE NULL
+	END) AS [ALT_STP_STGPath],
+
+	(CASE 
 		WHEN LTRIM(RTRIM(ISNULL([IM].[DrawOfficeNum], ''))) <> ''
 		THEN @STEP_FileRootSTG + [IM].[DrawOfficeNum] + '.step'
 		ELSE @STEP_FileRootSTG + [IM].[StockCode] + '.step' 
-	END) AS [STEP_STGPath]
+	END) AS [STEP_STGPath],
+
+	(CASE 
+		WHEN LTRIM(RTRIM(ISNULL([IM].[StockCode], ''))) <> ''
+		THEN @STEP_FileRootSTG + [IM].[StockCode] + '.step'
+		ELSE NULL
+	END) AS [ALT_STEP_STGPath]
 FROM
 	[SysproCompanyA].[dbo].[PorMasterDetail] [PMD]
 INNER JOIN
@@ -138,6 +181,43 @@ ON
 WHERE
 	([PMD].[MLatestDueDate] >= DATEADD(DAY, -400, GETDATE()))
 ;
+    """
+    return connect(sql)
+
+
+@st.cache_data(ttl=60*60)
+def mismatched_drawings() -> pd.DataFrame:
+    sql = """
+SELECT
+	[AS].[SupShortName],
+	[IM].*
+FROM (
+	SELECT
+		[IM].[StockCode]
+		,[IM].[DrawOfficeNum]
+		, COUNT(*) AS [Freq]
+	FROM
+		[SysproCompanyA].[dbo].[InvMaster] [IM]
+	WHERE
+		([IM].[StockCode] <> [IM].[DrawOfficeNum])
+		--AND ([IM].[ProductClass] = '40')
+		AND ([IM].[Planner] IN ('15', '14', '13','10', '7', '6', '5', '2'))
+		AND (ISNULL([IM].[DrawOfficeNum], '') <> '')
+		AND ([DrawOfficeNum] <> 'BF')
+	GROUP BY
+		[IM].[StockCode]
+		,[IM].[DrawOfficeNum]
+) AS [Src]
+INNER JOIN
+	[SysproCompanyA].[dbo].[InvMaster] [IM]
+ON
+	[Src].[StockCode] = [IM].[StockCode]
+INNER JOIN
+	[SysproCompanyA].[dbo].[ApSupplier] [AS]
+ON
+	[IM].[Supplier] = [AS].[Supplier]
+ORDER BY
+	[IM].[StockCode]
     """
     return connect(sql)
 
@@ -250,16 +330,19 @@ if pills_version == options_pills_version[1]:
 
     k_textbox_output_name = "key_textbox_output_name"
     st.session_state.setdefault(k_textbox_output_name, default_output_folder)
+    if st.button(
+        label="new_folder"
+    ):
+        lf = st.session_state[k_textbox_output_name]
+        if lf == default_output_folder:
+            default_output_folder = f"{default_output_folder}_0"
+        st.session_state.update({k_textbox_output_name: default_output_folder})
     textbox_output_name = st.text_input(
         label=f"Enter a file name for the copied files to be placed. Folder will be created within parent folder '{default_output_folder_root}'",
         key=k_textbox_output_name
     )
 
     df_parts_pos: pd.DataFrame = get_recent_pos()
-    # display_df(
-    #     df_parts_pos,
-    #     "df_parts_pos"
-    # )
     df_parts_pos["PurchaseOrder_n"] = df_parts_pos["PurchaseOrder"].apply(lambda po: int(po[-6:]))
 
     k_toggle_mach_only: str = "key_toggle_mach_only"
@@ -292,53 +375,61 @@ if pills_version == options_pills_version[1]:
     df_selected_pos: pd.DataFrame = df_parts_pos.loc[
         df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos)
     ]
-    # display_df(
-    #     df_selected_pos,
-    #     "df_selected_pos"
-    # )
     df_parts: pd.DataFrame = df_selected_pos.groupby(
         by=[
             "MStockCode",
             "PDF_BWSPath",
+            "ALT_PDF_BWSPath",
             "DWG_BWSPath",
+            "ALT_DWG_BWSPath",
             "DXF_BWSPath",
+            "ALT_DXF_BWSPath",
             "STP_BWSPath",
+            "ALT_STP_BWSPath",
             "STEP_BWSPath",
+            "ALT_STEP_BWSPath",
             "STP_STGPath",
-            "STEP_STGPath"
+            "ALT_STP_STGPath",
+            "STEP_STGPath",
+            "ALT_STEP_STGPath"
         ]
     ).agg({
         "MWarehouse": "count"
     }).reset_index()
 
-    # display_df(
-    #     df_selected_pos,
-    #     "df_selected_pos"
-    # )
-    #
-    # display_df(
-    #     df_parts,
-    #     "df_parts A"
-    # )
+    # st.write(df_parts.columns.tolist())
+    # # display_df(
+    # #     df_selected_pos,
+    # #     "df_selected_pos"
+    # # )
+    # #
+    # # display_df(
+    # #     df_parts,
+    # #     "df_parts A"
+    # # )
 
-    file_cols = [col for col in df_parts.columns if col.upper().split("_")[0] in file_extensions]
+    file_cols = [col for col in df_parts.columns if col.upper().replace("ALT_", "").split("_")[0].upper() in file_extensions]
+    # st.write(file_cols)
 
     show_cols = {
         "MStockCode": "Part",
         "PurchaseOrder_n": "PO"
     }
+    data_cols = {}
 
     for i, row in df_parts.iterrows():
         for j, col in enumerate(file_cols):
             k_found_col = f"found_{col}"
             # st.write(f"{k_found_col=}")
-            show_cols[k_found_col] = k_found_col
+            data_cols[k_found_col] = k_found_col
             if i == 0:
                 df_parts[k_found_col] = False
             exists_path = check_file_exists(row[col])
             exists = bool(exists_path)
             exists_path = exists_path if exists else None
             df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
+
+    show_cols.update(data_cols)
 
     # display_df(
     #     df_parts_pos[[
@@ -377,6 +468,9 @@ if pills_version == options_pills_version[1]:
             key="k_button_copy_files"
         ):
             n_files = 0
+            t_files = sum([df_parts.loc[df_parts[col] == 1, col].sum() for col in data_cols])
+            progress_copying = st.progress(value=0)
+            st.write(f"{t_files=}")
             if not textbox_output_name:
                 textbox_output_name = default_output_folder
             for i, row in df_parts.iterrows():
@@ -393,7 +487,15 @@ if pills_version == options_pills_version[1]:
                         if not os.path.exists(dest_file):
                             n_files += 1
                             shutil.copyfile(src_file, dest_file)
+                        p = int((n_files / t_files) * 100)
+                        progress_copying.progress(p, text=percent(p))
             st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
+
+    with st.container(border=1):
+        display_df(
+            mismatched_drawings(),
+            title="Mismatched parts"
+        )
 
 else:
     # Old Version

@@ -20,7 +20,11 @@ FROM
 SELECT
 	*
 FROM
-	[BWSdb].[dbo].[PROD_YellowTagsAdmins]
+	[BWSdb].[dbo].[PROD_YellowTagsAdmins] [YTA]
+LEFT JOIN
+	[BWSdb].[dbo].[ITR Customers] [CUS]
+ON
+	[YTA].[ITRCustomerID] = [CUS].[CustomerID]
 ;
 SELECT
 	--[Active], [WO], [StockCode], [QtyMissing], [Notes]
@@ -31,14 +35,16 @@ FROM
 SELECT
 	*
 FROM
-	[BWSdb].[dbo].[v_PROD_YellowTags]
+	[BWSdb].[dbo].[v_PROD_YellowTags] [vYT]
+ORDER BY
+	[vYT].[ID]
 ;
 SELECT
 	*
 FROM
 	[BWSdb].[dbo].[hist_PROD_YellowTags]
 WHERE
-	[ModifiedID] = 0
+	[ModifiedColumn] <> 'LastModified'
 	/*[ModifiedColumn] = 'Active'
 	AND [ValueAfter] = '0'*/
 ;

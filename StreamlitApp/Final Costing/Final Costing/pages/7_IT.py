@@ -1,27 +1,23 @@
+import calendar
+import datetime
 import enum
 import json
 import os.path
-import re
 
 import cv2
-import pandas as pd
-import sqlparse
 import configparser
 
+import pandas as pd
 from PIL import Image
-# from pyzbar.pyzbar import decode
 import pyzbar.pyzbar as pyz
 
-import pyautogui
 import streamlit as st
-from streamlit_extras.add_vertical_space import add_vertical_space
-from streamlit_autorefresh import st_autorefresh
 from streamlit_pills import pills
 from streamlit_pdf_viewer import pdf_viewer
+import plotly.express as px
 
 from datetime_utility import is_date, date_str_format
 from html_utility import list_to_html
-from pyodbc_connection import connect
 from sql_utility import *
 from streamlit_utility import coloured_text, display_df, load_pdf_binary
 from streamlit_utility_bws import load_it_requests, load_departments, load_itr_personnel, load_itstr_app_directory, \
@@ -171,6 +167,52 @@ def search_server3_tables():
             st.info("No databases selected")
         if not s_term:
             st.info("Enter a search term first.")
+
+
+@st.cache_data(ttl=60 * 30, show_spinner=True)
+def load_df_itr_joined() -> pd.DataFrame:
+    sql = """
+SELECT
+	[ITR].*,
+	[ITC].[CustomerID] AS [RequestByID],
+	[Dept].[Dept]
+FROM
+	[BWSdb].[dbo].[IT Requests] [ITR]
+LEFT JOIN
+	[BWSdb].[dbo].[IT Personnel] [ITP]
+ON
+	[ITR].[ITPersonAssignedID] = [ITP].[ITPersonID#]
+LEFT JOIN
+	[BWSdb].[dbo].[ITR Customers] [ITC]
+ON
+	LOWER([ITR].[RequestedBy]) = LOWER([ITC].[Name])
+LEFT JOIN (
+	SELECT
+        MIN([Dept].[DeptID]) AS [MinOfDeptID],
+        [Dept].[Dept]
+    FROM
+        [BWSdb].[dbo].[Dept] 
+    GROUP BY
+        [Dept].[Dept]
+    HAVING
+        [Dept].[Dept] <> ''
+) AS [Dept]
+ON
+	[ITR].[Department] = [Dept].[MinOfDeptID]
+    """
+    return connect(sql)
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_df_itr_pushes() -> pd.DataFrame:
+    sql = """
+SELECT
+    *
+FROM
+    [BWSdb].[dbo].[ITR Pushes]
+;
+    """
+    return connect(sql)
 
 
 #################
@@ -691,7 +733,7 @@ grid = {
     # "tab_edit_request": None
 }
 
-tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples", "Issues"]
+tab_names = ["New", "Edit", "Server", "Access", "Inventory", "Code Samples", "Issues", "Reporting"]
 sm_tab_names = ["Search Tables", "SQL Creator", "SQL Cleaner", "Coming Soon"]
 if st.session_state.get("signed_in", False):
     with grid["content_row_1"]:
@@ -4408,6 +4450,226 @@ def issues():
             st.info("select some attachment files first.")
 
 
+def reporting():
+    # requests by dept
+    # requests by type
+    # requests by subtype
+
+    df: pd.DataFrame = load_df_itr_joined()
+    df_pushes: pd.DataFrame = load_df_itr_pushes()
+    df["RequestDate"] = df["RequestDate"].apply(lambda rd: rd.date())
+    df_pushes["DateCreatedTime"] = df_pushes["DateCreated"].apply(lambda dc: datetime.datetime(dc.year, dc.month, dc.day))
+
+    sd: datetime.date = df["RequestDate"].min()
+    ed: datetime.date = max(datetime.datetime.now().date(), df["RequestDate"].max())
+
+    k_slider_date_range: str = "key_slider_date_range"
+    st.session_state.setdefault(k_slider_date_range, (sd, ed))
+    slider_date_range = st.slider(
+        label="Date Range:",
+        min_value=sd,
+        max_value=ed,
+        key=k_slider_date_range
+    )
+
+    k_n_categories: str = "key_k_n_categories"
+    st.session_state.setdefault(k_n_categories, 50)
+    number_n_categories = st.number_input(
+        label="Number Categories:",
+        min_value=1,
+        max_value=50,
+        key=k_n_categories
+    )
+
+    sd_b, ed_b = slider_date_range
+
+    df = df.loc[
+        (sd_b <= df["RequestDate"])
+        & (df["RequestDate"] <= ed_b)
+    ]
+    df["RequestDate_Y"] = df["RequestDate"].apply(lambda rd: rd.year)
+    df["RequestDate_M"] = df["RequestDate"].apply(lambda rd: rd.month)
+    df["RequestDate_D"] = df["RequestDate"].apply(lambda rd: rd.day)
+
+    df_pushes = df_pushes.loc[
+        (datetime.datetime(sd_b.year, sd_b.month, sd_b.day) <= df_pushes["DateCreatedTime"])
+        & (df_pushes["DateCreatedTime"] <= datetime.datetime(ed_b.year, ed_b.month, ed_b.day))
+    ]
+
+    k_toggle_totals_hours: str = "key_toggle_totals_hours"
+    st.session_state.setdefault(k_toggle_totals_hours, False)
+    toggle_totals_hours = st.toggle(
+        label="By Hours?",
+        key=k_toggle_totals_hours
+    )
+
+    agg = {"LabourActual": "sum"} if toggle_totals_hours else {"ITRequestID#": "count"}
+    r_agg = {
+        "LabourActual": "Ttl Hrs.",
+        "ITRequestID#": "Freq",
+        "RequestType": "Type",
+        "RequestSubType": "Sub-Type"
+    }
+    axis_values = "Ttl Hrs." if toggle_totals_hours else "Freq"
+    t_agg = "Hour Totals" if toggle_totals_hours else "Frequency"
+
+    with st.container(border=True):
+        st.header(f"{'Hour' if toggle_totals_hours else 'Nominal'} Totals All-Time")
+
+        # By Department
+        df_by_dept: pd.DataFrame = df.groupby(
+            by="Dept"
+        ).agg(
+            agg
+        ).reset_index().rename(
+            columns=r_agg
+        ).sort_values(by=axis_values, ascending=False)
+        bar_by_dept = px.bar(
+            data_frame=df_by_dept.head(number_n_categories),
+            x="Dept",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Department"
+        )
+        st.plotly_chart(bar_by_dept)
+        st.divider()
+
+        # By Type
+        df_by_type: pd.DataFrame = df.groupby(
+            by="RequestType"
+        ).agg(
+            agg
+        ).reset_index().rename(columns=r_agg).sort_values(by=axis_values, ascending=False)
+        bar_by_type = px.bar(
+            data_frame=df_by_type.head(number_n_categories),
+            x="Type",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Type"
+        )
+        st.plotly_chart(bar_by_type)
+        st.divider()
+
+        # By SubType
+        df_by_type: pd.DataFrame = df.groupby(
+            by="RequestSubType"
+        ).agg(agg).reset_index().rename(columns=r_agg).sort_values(by=axis_values, ascending=False)
+        bar_by_type = px.bar(
+            data_frame=df_by_type.head(number_n_categories),
+            x="Sub-Type",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Sub-Type"
+        )
+        st.plotly_chart(bar_by_type)
+        st.divider()
+
+    with st.container(border=True):
+        st.header("Totals Comparison")
+
+        # By Year
+        df_by_year: pd.DataFrame = df.groupby(
+            by=[
+                "RequestDate_Y"
+            ]
+        ).agg(agg).reset_index().rename(columns=r_agg).sort_values(by=axis_values, ascending=False)
+        df_by_year["Period"] = df_by_year.apply(
+            lambda row: datetime.datetime(int(row["RequestDate_Y"]), 1, 1).date(), axis=1)
+        bar_by_year = px.bar(
+            data_frame=df_by_year,
+            x="Period",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Year"
+        )
+        st.plotly_chart(bar_by_year)
+        st.divider()
+
+        # By Month
+        df_by_month: pd.DataFrame = df.groupby(
+            by=[
+                "RequestDate_M",
+                "RequestDate_Y"
+            ]
+        ).agg(agg).reset_index().rename(columns=r_agg).sort_values(by=["RequestDate_M", "RequestDate_Y"], ascending=True)
+        df_by_month["Month"] = df_by_month.apply(
+            lambda row: calendar.month_name[int(row["RequestDate_M"])], axis=1)
+        df_by_month = df_by_month.rename(columns={"RequestDate_Y": "Year"})
+        bar_by_month = px.bar(
+            data_frame=df_by_month,
+            x="Month",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Month",
+            color="Year"
+        )
+        bar_by_month.update_xaxes(type="category")
+        st.plotly_chart(bar_by_month)
+        st.divider()
+
+        # By Department
+        df_by_month_year: pd.DataFrame = df.groupby(
+            by=[
+                "Dept",
+                "RequestDate_Y",
+                "RequestDate_M"
+            ]
+        ).agg(agg).reset_index().rename(columns=r_agg).sort_values(by=axis_values, ascending=False)
+        df_by_month_year["Period"] = df_by_month_year.apply(lambda row: datetime.datetime(int(row["RequestDate_Y"]), int(row["RequestDate_M"]), 1).date(), axis=1)
+        bar_by_month_year = px.bar(
+            data_frame=df_by_month_year,
+            x="Period",
+            y=axis_values,
+            title=f"{t_agg} of IT Requests by Department",
+            color="Dept"
+        )
+        st.plotly_chart(bar_by_month_year)
+        st.divider()
+
+    with st.container(border=True):
+        st.header("Access & GitHub Updates")
+        show_cols = {
+            "DateCreated": "Date",
+            "DBStr": "DBStr",
+            "CommentStr": "Comment",
+            "User": "User",
+            "Recipient": "Email Recipients",
+            "Subject": "Email Subject",
+            "Body": "Email Body",
+            "NotificationText": "Notification"
+        }
+        df_pushes.sort_values(by="DateCreated", ascending=False, inplace=True)
+        df_pushes = df_pushes.rename(columns=show_cols)
+        st.write(f"ITR Pushes - {df_pushes.shape[0]} Entries")
+        key_df_itr_pushes: str = "k_df_itr_pushes"
+        stde_itr_pushes = st.dataframe(
+            data=df_pushes[list(show_cols.values())],
+            hide_index=True,
+            selection_mode="single-row",
+            on_select="rerun",
+            key=key_df_itr_pushes
+        )
+
+        stde_data: dict = st.session_state.get(key_df_itr_pushes, dict())
+        sel_row: list[int] = stde_data.get("selection", {}).get("rows", [])
+        if sel_row:
+            for i, idx in enumerate(sel_row):
+                # st.write(f"{i=}, {idx=}")
+                ser_push: pd.Series = df_pushes.iloc[idx]
+                # st.write(ser_push)
+                date = ser_push["Date"]
+                db_id = ser_push["ID"]
+                user = ser_push["User"]
+                body = ser_push["Email Body"]
+                comment = ser_push["Comment"]
+                recipients = ser_push["Email Recipients"]
+                subject = ser_push["Email Subject"]
+                with st.expander(f"Update {date_str_format(date)} - {user}", expanded=True):
+                    st.write(f"Database Version #{db_id}")
+                    st.write(subject)
+                    st.write(f"To: {recipients}")
+                    if body:
+                        st.markdown(body, unsafe_allow_html=True)
+                    st.divider()
+                    st.write("Original update text:")
+                    st.code(comment)
+
+
 un = st.session_state.get('user_full_name')
 if not un:
     un = "NO NAME YET"
@@ -4456,6 +4718,9 @@ else:
 
         if tab_choice == tab_names[6]:
             issues()
+
+        if tab_choice == tab_names[7]:
+            reporting()
 
 # st.write(st.session_state)
 if not st.session_state.get("toggle_submit_requests", True):
