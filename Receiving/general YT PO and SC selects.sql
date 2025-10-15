@@ -99,6 +99,35 @@ FROM
 ;
 
 
+--##############################
+-- Sales Orders
+--##############################
+
+SELECT
+	*
+FROM
+	[SysproCompanyA].[dbo].[v_OpenSalesOrders] [vOS]
+;
+
+SELECT
+	*
+FROM
+	[SysproCompanyA].[dbo].[v_OpenSalesOrders] [vOS]
+WHERE
+	[vOS].[SOCanBePicked] = 1
+;
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[REC_SalesOrderTracking]
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[hist_REC_SalesOrderTracking]
+
+
 SELECT
 	[O].[WO#],
 	[O].[WO Review Date],

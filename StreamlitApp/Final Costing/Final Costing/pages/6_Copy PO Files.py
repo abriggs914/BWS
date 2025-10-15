@@ -5,6 +5,7 @@ import shutil
 import pandas as pd
 import streamlit as st
 from streamlit_pills import pills
+from streamlit_sortables import sort_items
 
 from pyodbc_connection import connect
 from streamlit_utility import display_df
@@ -12,8 +13,6 @@ from streamlit_utility import display_df
 # import wx
 # from wx import DirDialog, ID_OK, DD_DEFAULT_STYLE, DD_NEW_DIR_BUTTON
 from utility import next_available_file_name, percent, number_suffix
-
-st.set_page_config(layout="wide")
 
 
 @st.cache_data(ttl=60*60)
@@ -186,11 +185,12 @@ WHERE
 
 
 @st.cache_data(ttl=60*60)
-def mismatched_drawings() -> pd.DataFrame:
+def mismatched_drawings() -> tuple[pd.DataFrame, str]:
     sql = """
 SELECT
 	[AS].[SupShortName],
-	[IM].*
+	[IM].*,
+	[Freq]
 FROM (
 	SELECT
 		[IM].[StockCode]
@@ -219,8 +219,17 @@ ON
 ORDER BY
 	[IM].[StockCode]
     """
-    return connect(sql)
+    return connect(sql), sql
 
+
+st.set_page_config(layout="wide")
+
+if st.button(
+    label="Clear Cache & Rerun"
+):
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.rerun()
 
 read_file_root: str = r"\\bwsfp01.bwsdomain.local\public\Janet Orser\po\po copied files"
 read_file: str = r"PO LIST.xlsx"
@@ -325,177 +334,207 @@ walked_dwg_dxf_folder = hold_walk_dwg_dxf()
 if pills_version == options_pills_version[1]:
     # New Version Oct 2025
 
-    default_output_folder_root: str = r"\\bwsfp01\public\PARTS\Purchase Order Copied Files"
-    default_output_folder: str = f"output_{datetime.datetime.now():%Y%m%d%H%M}"
+    with st.container(border=True):
+        default_output_folder_root: str = r"\\bwsfp01\public\PARTS\Purchase Order Copied Files"
+        default_output_folder: str = f"output_{datetime.datetime.now():%Y%m%d%H%M}"
 
-    k_textbox_output_name = "key_textbox_output_name"
-    st.session_state.setdefault(k_textbox_output_name, default_output_folder)
-    if st.button(
-        label="new_folder"
-    ):
-        lf = st.session_state[k_textbox_output_name]
-        if lf == default_output_folder:
-            default_output_folder = f"{default_output_folder}_0"
-        st.session_state.update({k_textbox_output_name: default_output_folder})
-    textbox_output_name = st.text_input(
-        label=f"Enter a file name for the copied files to be placed. Folder will be created within parent folder '{default_output_folder_root}'",
-        key=k_textbox_output_name
-    )
-
-    df_parts_pos: pd.DataFrame = get_recent_pos()
-    df_parts_pos["PurchaseOrder_n"] = df_parts_pos["PurchaseOrder"].apply(lambda po: int(po[-6:]))
-
-    k_toggle_mach_only: str = "key_toggle_mach_only"
-    st.session_state.setdefault(k_toggle_mach_only, False)
-    toggle_mach_only = st.toggle(
-        label="-Mach parts only?",
-        key=k_toggle_mach_only
-    )
-
-    if toggle_mach_only:
-        df_parts_pos = df_parts_pos.loc[
-            df_parts_pos["MStockCode"].str.upper().str.contains("-MACH")
-        ]
-
-    df_recent_pos: pd.DataFrame = df_parts_pos.groupby(
-        by="PurchaseOrder_n"
-    ).agg({
-        "MStockCode": "count"
-    }).reset_index()
-
-    max_pos: int = 5
-    k_multiselect_pos: str = "key_multiselect_pos"
-    multiselect_pos = st.multiselect(
-        label=f"Select up to {max_pos} POs from the list of {df_recent_pos.shape[0]}:",
-        key=k_multiselect_pos,
-        options=df_recent_pos["PurchaseOrder_n"],
-        max_selections=5
-    )
-
-    df_selected_pos: pd.DataFrame = df_parts_pos.loc[
-        df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos)
-    ]
-    df_parts: pd.DataFrame = df_selected_pos.groupby(
-        by=[
-            "MStockCode",
-            "PDF_BWSPath",
-            "ALT_PDF_BWSPath",
-            "DWG_BWSPath",
-            "ALT_DWG_BWSPath",
-            "DXF_BWSPath",
-            "ALT_DXF_BWSPath",
-            "STP_BWSPath",
-            "ALT_STP_BWSPath",
-            "STEP_BWSPath",
-            "ALT_STEP_BWSPath",
-            "STP_STGPath",
-            "ALT_STP_STGPath",
-            "STEP_STGPath",
-            "ALT_STEP_STGPath"
-        ]
-    ).agg({
-        "MWarehouse": "count"
-    }).reset_index()
-
-    # st.write(df_parts.columns.tolist())
-    # # display_df(
-    # #     df_selected_pos,
-    # #     "df_selected_pos"
-    # # )
-    # #
-    # # display_df(
-    # #     df_parts,
-    # #     "df_parts A"
-    # # )
-
-    file_cols = [col for col in df_parts.columns if col.upper().replace("ALT_", "").split("_")[0].upper() in file_extensions]
-    # st.write(file_cols)
-
-    show_cols = {
-        "MStockCode": "Part",
-        "PurchaseOrder_n": "PO"
-    }
-    data_cols = {}
-
-    for i, row in df_parts.iterrows():
-        for j, col in enumerate(file_cols):
-            k_found_col = f"found_{col}"
-            # st.write(f"{k_found_col=}")
-            data_cols[k_found_col] = k_found_col
-            if i == 0:
-                df_parts[k_found_col] = False
-            exists_path = check_file_exists(row[col])
-            exists = bool(exists_path)
-            exists_path = exists_path if exists else None
-            df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
-
-    show_cols.update(data_cols)
-
-    # display_df(
-    #     df_parts_pos[[
-    #         "PurchaseOrder_n",
-    #         "MStockCode"
-    #     ]],
-    #     "XX"
-    # )
-    #
-    # display_df(
-    #     df_parts,
-    #     "df_parts B"
-    # )
-
-    df_parts = df_parts.merge(
-        df_parts_pos.loc[
-            df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos),
-            [
-                "PurchaseOrder_n",
-                "MStockCode"
-            ]
-        ],
-        how="outer",
-        on="MStockCode"
-    )
-
-    display_df(
-        df_parts[list(show_cols)].rename(columns=show_cols),
-        "Results"
-    )
-
-    if not df_parts.empty:
-        st.info(f"*** Please be advised, program output for version 2 (oct2025) is now '{default_output_folder_root}' ***")
+        k_textbox_output_name = "key_textbox_output_name"
+        st.session_state.setdefault(k_textbox_output_name, default_output_folder)
         if st.button(
-            label="copy found files?",
-            key="k_button_copy_files"
+            label="new_folder"
         ):
-            n_files = 0
-            t_files = sum([df_parts.loc[df_parts[col] == 1, col].sum() for col in data_cols])
-            progress_copying = st.progress(value=0)
-            st.write(f"{t_files=}")
-            if not textbox_output_name:
-                textbox_output_name = default_output_folder
-            for i, row in df_parts.iterrows():
-                for j, col in enumerate(file_cols):
-                    k_found_col = f"found_{col}"
-                    if ~pd.isna(row[k_found_col]) and row[k_found_col]:
-                        src_file = row[col]
-                        file = os.path.basename(src_file)
-                        if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
-                            os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
-                        dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
-                        # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                        # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                        if not os.path.exists(dest_file):
-                            n_files += 1
-                            shutil.copyfile(src_file, dest_file)
-                        p = int((n_files / t_files) * 100)
-                        progress_copying.progress(p, text=percent(p))
-            st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
+            lf = st.session_state[k_textbox_output_name]
+            if lf == default_output_folder:
+                default_output_folder = f"{default_output_folder}{datetime.datetime.now():%S}"
+            st.session_state.update({k_textbox_output_name: default_output_folder})
+        textbox_output_name = st.text_input(
+            label=f"Enter a file name for the copied files to be placed. Folder will be created within parent folder '{default_output_folder_root}'",
+            key=k_textbox_output_name
+        )
+
+        df_parts_pos: pd.DataFrame = get_recent_pos()
+        df_parts_pos["PurchaseOrder_n"] = df_parts_pos["PurchaseOrder"].apply(lambda po: int(po[-6:]))
+
+        k_toggle_mach_only: str = "key_toggle_mach_only"
+        st.session_state.setdefault(k_toggle_mach_only, False)
+        toggle_mach_only = st.toggle(
+            label="-Mach parts only?",
+            key=k_toggle_mach_only
+        )
+
+        if toggle_mach_only:
+            df_parts_pos = df_parts_pos.loc[
+                df_parts_pos["MStockCode"].str.upper().str.contains("-MACH")
+            ]
+
+        df_recent_pos: pd.DataFrame = df_parts_pos.groupby(
+            by="PurchaseOrder_n"
+        ).agg({
+            "MStockCode": "count"
+        }).reset_index()
+
+        max_pos: int = 5
+        k_multiselect_pos: str = "key_multiselect_pos"
+        multiselect_pos = st.multiselect(
+            label=f"Select up to {max_pos} POs from the list of {df_recent_pos.shape[0]}:",
+            key=k_multiselect_pos,
+            options=df_recent_pos["PurchaseOrder_n"],
+            max_selections=5
+        )
+
+        df_selected_pos: pd.DataFrame = df_parts_pos.loc[
+            df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos)
+        ]
+        df_parts: pd.DataFrame = df_selected_pos.groupby(
+            by=[
+                "MStockCode",
+                "PDF_BWSPath",
+                "ALT_PDF_BWSPath",
+                "DWG_BWSPath",
+                "ALT_DWG_BWSPath",
+                "DXF_BWSPath",
+                "ALT_DXF_BWSPath",
+                "STP_BWSPath",
+                "ALT_STP_BWSPath",
+                "STEP_BWSPath",
+                "ALT_STEP_BWSPath",
+                "STP_STGPath",
+                "ALT_STP_STGPath",
+                "STEP_STGPath",
+                "ALT_STEP_STGPath"
+            ]
+        ).agg({
+            "MWarehouse": "count"
+        }).reset_index()
+
+        file_cols = [col for col in df_parts.columns if col.upper().replace("ALT_", "").split("_")[0].upper() in file_extensions]
+        # st.write(file_cols)
+
+        show_cols = {
+            "MStockCode": "Part",
+            "PurchaseOrder_n": "PO"
+        }
+        data_cols = {}
+
+        for i, row in df_parts.iterrows():
+            for j, col in enumerate(file_cols):
+                k_found_col = f"found_{col}"
+                # st.write(f"{k_found_col=}")
+                data_cols[k_found_col] = k_found_col
+                if i == 0:
+                    df_parts[k_found_col] = False
+                exists_path = check_file_exists(row[col])
+                exists = bool(exists_path)
+                exists_path = exists_path if exists else None
+                df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
+
+        show_cols.update(data_cols)
+
+        # display_df(
+        #     df_parts_pos[[
+        #         "PurchaseOrder_n",
+        #         "MStockCode"
+        #     ]],
+        #     "XX"
+        # )
+        #
+        # display_df(
+        #     df_parts,
+        #     "df_parts B"
+        # )
+
+        df_parts = df_parts.merge(
+            df_parts_pos.loc[
+                df_parts_pos["PurchaseOrder_n"].isin(multiselect_pos),
+                [
+                    "PurchaseOrder_n",
+                    "MStockCode"
+                ]
+            ],
+            how="outer",
+            on="MStockCode"
+        )
+
+        display_df(
+            df_parts[list(show_cols)].rename(columns=show_cols),
+            "Results"
+        )
+
+        if not df_parts.empty:
+            st.info(f"*** Please be advised, program output for version 2 (oct2025) is now '{default_output_folder_root}' ***")
+            if st.button(
+                label="copy found files?",
+                key="k_button_copy_files"
+            ):
+                n_files = 0
+                t_files = sum([df_parts.loc[df_parts[col] == 1, col].sum() for col in data_cols])
+                progress_copying = st.progress(value=0)
+                st.write(f"{t_files=}")
+                if not textbox_output_name:
+                    textbox_output_name = default_output_folder
+                for i, row in df_parts.iterrows():
+                    for j, col in enumerate(file_cols):
+                        k_found_col = f"found_{col}"
+                        if ~pd.isna(row[k_found_col]) and row[k_found_col]:
+                            src_file = row[col]
+                            file = os.path.basename(src_file)
+                            if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
+                                os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
+                            dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
+                            # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                            # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                            if not os.path.exists(dest_file):
+                                n_files += 1
+                                shutil.copyfile(src_file, dest_file)
+                            p = int((100 * n_files / t_files) * 100)
+                            progress_copying.progress(p, text=percent(p))
+                st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
 
     with st.container(border=1):
-        display_df(
-            mismatched_drawings(),
-            title="Mismatched parts"
-        )
+
+        df_mm, sql_mm = mismatched_drawings()
+
+        columns = df_mm.columns.tolist()
+        exclude_cols = []
+        info_cols = {
+            "SupShortName": "Supp.",
+            "StockCode": "Part",
+            "DrawOfficeNum": "Part File",
+            "Description": "Desc.",
+            "LongDesc": "Long Desc.",
+            "StockUom": "UoM",
+            "ProductClass": "Class",
+        }
+        for col in info_cols:
+            if col in columns:
+                columns.remove(col)
+            else:
+                exclude_cols.append(col)
+        columns = list(info_cols.keys()) + columns
+
+        with st.expander("Edit Table Columns:"):
+            k_multiselect_columns: str = "key_multiselect_columns"
+            data_sortable_columns = [
+                {"header": "Order:", "items": columns},
+                {"header": "Exclude:", "items": exclude_cols}
+            ]
+            st.session_state.setdefault(k_multiselect_columns, data_sortable_columns)
+            multiselect_columns = sort_items(
+                header="Column order:",
+                items=data_sortable_columns,
+                multi_containers=True
+            )
+
+        show_cols = multiselect_columns[0]["items"]
+        if show_cols:
+            display_df(
+                df_mm[show_cols].rename(columns=info_cols),
+                title="Mismatched parts"
+            )
+            st.write("Criteria:")
+            st.code(sql_mm, language="sql", line_numbers=True)
+        else:
+            st.info("Please select at least one column")
 
 else:
     # Old Version
