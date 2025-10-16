@@ -14,6 +14,8 @@ from streamlit_utility import display_df
 # from wx import DirDialog, ID_OK, DD_DEFAULT_STYLE, DD_NEW_DIR_BUTTON
 from utility import next_available_file_name, percent, number_suffix
 
+print(f"NEW RERUN 'COPY PO FILES' {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+
 
 @st.cache_data(ttl=60*60)
 def hold_walk_dwg_dxf():
@@ -429,19 +431,22 @@ if pills_version == options_pills_version[1]:
                 df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
 
         show_cols.update(data_cols)
-
-        # display_df(
-        #     df_parts_pos[[
-        #         "PurchaseOrder_n",
-        #         "MStockCode"
-        #     ]],
-        #     "XX"
-        # )
+        # show_cols.update({
+        #     "found_PDF_BWSPath": "PDF_B"
+        # })
         #
-        # display_df(
-        #     df_parts,
-        #     "df_parts B"
-        # )
+        # # display_df(
+        # #     df_parts_pos[[
+        # #         "PurchaseOrder_n",
+        # #         "MStockCode"
+        # #     ]],
+        # #     "XX"
+        # # )
+        # #
+        # # display_df(
+        # #     df_parts,
+        # #     "df_parts B"
+        # # )
 
         df_parts = df_parts.merge(
             df_parts_pos.loc[
@@ -468,7 +473,7 @@ if pills_version == options_pills_version[1]:
             ):
                 n_files = 0
                 t_files = sum([df_parts.loc[df_parts[col] == 1, col].sum() for col in data_cols])
-                progress_copying = st.progress(value=0)
+                # progress_copying = st.progress(value=0)
                 st.write(f"{t_files=}")
                 if not textbox_output_name:
                     textbox_output_name = default_output_folder
@@ -486,8 +491,8 @@ if pills_version == options_pills_version[1]:
                             if not os.path.exists(dest_file):
                                 n_files += 1
                                 shutil.copyfile(src_file, dest_file)
-                            p = int((100 * n_files / t_files) * 100)
-                            progress_copying.progress(p, text=percent(p))
+                            p = int((100 * n_files / t_files))
+                            # progress_copying.progress(p, text=percent(p / 100))
                 st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
 
     with st.container(border=1):

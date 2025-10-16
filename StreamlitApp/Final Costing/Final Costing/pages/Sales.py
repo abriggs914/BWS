@@ -1264,28 +1264,28 @@ def df_to_sortables(df: pd.DataFrame) -> list[dict]:
 	return out
 
 
-import uuid
-SEP = "\u2063"     # zero-width separator (invisible)
-NBSP = "\u00A0"    # non-breaking space (shows as a space with white-space: normal)
-
-@st.cache_resource
-def empty_ids(alphabet=None, start_len: int = 1):
-	"""
-    Session-long generator that yields (visible, unique_for_sortable).
-    Grows the string length as needed to produce arbitrarily many uniques.
-    """
-	# Your requested characters, plus NBSP for a reliable "blank" space
-	if alphabet is None:
-		alphabet = (",", ".", "_", NBSP, "'", '"')
-
-	L = start_len
-	while True:
-		for tup in product(alphabet, repeat=L):
-			vis = "".join(tup)  # what the user sees
-			# uniq = f"{vis}{SEP}{uuid.uuid4().hex}"  # unique for DnD widget
-			uniq = f"{vis}{SEP}"  # unique for DnD widget
-			yield vis, uniq
-		L += 1
+# import uuid
+# SEP = "\u2063"     # zero-width separator (invisible)
+# NBSP = "\u00A0"    # non-breaking space (shows as a space with white-space: normal)
+#
+# @st.cache_resource
+# def empty_ids(alphabet=None, start_len: int = 1):
+# 	"""
+#     Session-long generator that yields (visible, unique_for_sortable).
+#     Grows the string length as needed to produce arbitrarily many uniques.
+#     """
+# 	# Your requested characters, plus NBSP for a reliable "blank" space
+# 	if alphabet is None:
+# 		alphabet = (",", ".", "_", NBSP, "'", '"')
+#
+# 	L = start_len
+# 	while True:
+# 		for tup in product(alphabet, repeat=L):
+# 			vis = "".join(tup)  # what the user sees
+# 			# uniq = f"{vis}{SEP}{uuid.uuid4().hex}"  # unique for DnD widget
+# 			uniq = f"{vis}{SEP}"  # unique for DnD widget
+# 			yield vis, uniq
+# 		L += 1
 
 
 s_h = streamlit_js_eval(js_expressions='parent.innerHeight', key='SCR_H')
@@ -1306,7 +1306,13 @@ df_gather_meetings = load_gather_meetings()
 df_meeting_notes = load_meeting_notes()
 df_meeting_notes["Quote"] = df_meeting_notes["Quote"].apply(int)
 
-options_pills_control = ["Sales Search", "Weekly Sales Order Meeting", "Part Search", "Sales Orders"]
+options_pills_control = [
+	"Sales Search",
+	"Weekly Sales Order Meeting",
+	"Part Search",
+	"Sales Orders",
+	"Testing Prod Sched UI"
+]
 k_pill_control: str = f"pill_control"
 st.session_state.setdefault(k_pill_control, 0)
 
@@ -1324,6 +1330,11 @@ pills_control = pills(
 
 list_parts: list[str] = []
 list_parts_l: list[str] = []
+
+
+def load_sales_order_tracking():
+	return connect("[BWSdb].[dbo].[REC_SalesOrderTracking]")
+
 
 if pills_control == options_pills_control[1]:
 	# Weekly Sales Order Meeting
@@ -3328,6 +3339,14 @@ elif pills_control == options_pills_control[3]:
 		"Sales Orders that can be completed"
 	)
 
+	df_so_tracking = load_sales_order_tracking()
+	display_df(
+		df_so_tracking,
+		"df_so_tracking"
+	)
+
+elif pills_control == options_pills_control[4]:
+	# Testing Prod Sched UI
 	items_0 = [
 		{
 			"header": "T1",
@@ -3405,29 +3424,29 @@ elif pills_control == options_pills_control[3]:
 		"df_bws_prod_sched"
 	)
 
-
-	# empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
-
-	def series_to_items(df_: pd.DataFrame):
-		return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
-
-
-	df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
-		{
-			"header": col,
-			"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
-		}
-		for i, col in enumerate(df_bws_prod_sched["ProdLine"])
-	])
-
-	print(df_bws_prod_sched_items)
-
-	st.write(df_bws_prod_sched_items)
-
-	display_df(
-		df_bws_prod_sched_items,
-		"df_bws_prod_sched_items"
-	)
+	#
+	# # empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
+	#
+	# def series_to_items(df_: pd.DataFrame):
+	# 	return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
+	#
+	#
+	# df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
+	# 	{
+	# 		"header": col,
+	# 		"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
+	# 	}
+	# 	for i, col in enumerate(df_bws_prod_sched["ProdLine"])
+	# ])
+	#
+	# print(df_bws_prod_sched_items)
+	#
+	# st.write(df_bws_prod_sched_items)
+	#
+	# display_df(
+	# 	df_bws_prod_sched_items,
+	# 	"df_bws_prod_sched_items"
+	# )
 
 
 
