@@ -15,8 +15,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.05
-    Date...........2025-05-21
+    Version..............1.06
+    Date...........2025-10-20
     Author(s)....Avery Briggs
     """
 
@@ -140,7 +140,7 @@ def screen_dimensions() -> tuple[Optional[int], Optional[int]]:
 
 
 def display_df(
-		df: pd.DataFrame,
+		df: pd.DataFrame | pd.Series,
 		title: Optional[str] = None,
 		hide_index: str | bool = "if_int",
 		show_shape: bool = True,
@@ -166,6 +166,9 @@ def display_df(
 
 	if hide_index == "if_int":
 		hide_index = str(df.index.dtype).lower() == "int64"
+
+	if height is None:
+		height = "auto"
 
 	# st.write(f"{title=}, {hide_index=}")
 	stdf = st.dataframe(

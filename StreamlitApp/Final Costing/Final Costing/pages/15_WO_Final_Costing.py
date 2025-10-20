@@ -3000,8 +3000,8 @@ with st.expander(":new: Access DB Logs"):
             )
             st.plotly_chart(fig_top_users)
 
-    min_date = df_access_events["DateCreated"].min().today()
-    max_date = df_access_events["DateCreated"].max().today()
+    min_date = df_access_events["DateCreated"].min().today().date()
+    max_date = df_access_events["DateCreated"].max().today().date()
     print(f"{min_date=}, {type(min_date)=}")
     print(f"{max_date=}, {type(max_date)=}")
     print(f"{st.session_state.date_range=}")
