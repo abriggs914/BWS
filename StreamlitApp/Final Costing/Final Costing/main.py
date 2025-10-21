@@ -416,7 +416,6 @@ if selected_models:
     show_filtered = show_filtered[[sc for sc in show_cols.values()]]
     st.dataframe(
         show_filtered,
-        use_container_width=True,
         hide_index=True
     )
     # column_config = {}
@@ -465,7 +464,7 @@ if selected_models:
         hover_data="HoverData",
         title="% Margin vs Production Start Date"
     )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
 else:
     st.write("Please select some models first.")

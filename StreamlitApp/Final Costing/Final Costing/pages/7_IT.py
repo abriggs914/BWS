@@ -1334,21 +1334,18 @@ def request_form(form, mode: Literal["new", "edit"]):
             st.button(
                 label="cancel",
                 key="btn_cancel",
-                on_click=click_cancel,
-                use_container_width=True
+                on_click=click_cancel
             )
         with form_grid["btns"][1]:
             st.button(
                 label="clear",
                 key="btn_clear",
-                on_click=click_clear,
-                use_container_width=True
+                on_click=click_clear
             )
         with form_grid["btns"][2]:
             st.button(
                 label="submit",
-                on_click=click_submit,
-                use_container_width=True
+                on_click=click_submit
             )
 
 
@@ -1721,7 +1718,6 @@ def server_maintenance():
             stdf_search_cols = display_df(
                 df_search_cols,
                 hide_index=True,
-                use_container_width=True,
                 selection_mode="multi-row",
                 on_select="rerun"
             )

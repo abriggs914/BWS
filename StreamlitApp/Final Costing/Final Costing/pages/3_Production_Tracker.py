@@ -1283,7 +1283,6 @@ for j, col in enumerate(col_order):
             label=str(col_n),
             on_click=lambda j_=j, col_=col_n: click_column_header(j_, col_),
             key=f"CD_{COMP}_{j}_{col}",
-            use_container_width=True,
             help=lbl
         )
 
@@ -1401,7 +1400,6 @@ for i, row in df_production_data_by_op.iterrows():
                 st.button(
                     label=val,
                     key=f"btn_{job}_op_{j}",
-                    use_container_width=False,
                     help=top_un_iss_parts
                 )
                 # st.markdown(f'<div class="selected-job">{val}</div>', unsafe_allow_html=True)
@@ -1423,8 +1421,7 @@ for i, row in df_production_data_by_op.iterrows():
                     st.button(
                         label=E_SHRINK if st.session_state.get("expanded_index") == i else E_EXPAND,
                         on_click=lambda i_=i, j_=j: click_expand_order(i_, j_),
-                        key=f"BTN_EXP_{COMP}_{i}_{j}",
-                        use_container_width=True
+                        key=f"BTN_EXP_{COMP}_{i}_{j}"
                     )
                 else:
                     if (new == old) and done_showing:
@@ -1509,7 +1506,7 @@ for i, row in df_production_data_by_op.iterrows():
                     if not df_ClkTransaction_job_data.empty:
                         # st.dataframe(df_ClkTransaction_job_data)
                         filtered = dataframe_explorer(df_ClkTransaction_job_data, case=False)
-                        st.dataframe(filtered, use_container_width=True)
+                        st.dataframe(filtered)
                     else:
                         st.write(f"Could not retrieve any ShopClk Labour path_data for {job=}.")
             elif df_explorer_radio == options[1]:
@@ -1517,7 +1514,7 @@ for i, row in df_production_data_by_op.iterrows():
                     if not df_WipJobAllLab_job_data.empty:
                         # st.dataframe(df_ClkTransaction_job_data)
                         filtered = dataframe_explorer(df_WipJobAllLab_job_data, case=False)
-                        st.dataframe(filtered, use_container_width=True)
+                        st.dataframe(filtered)
                     else:
                         st.write(f"Could not retrieve any Syspro Labour path_data for {job=}.")
             elif df_explorer_radio == options[2]:
@@ -1525,7 +1522,7 @@ for i, row in df_production_data_by_op.iterrows():
                     if not df_WipJobAllMat_job_data.empty:
                         # st.dataframe(df_WipJobAllMat_job_data)
                         filtered = dataframe_explorer(df_WipJobAllMat_job_data, case=False)
-                        st.dataframe(filtered, use_container_width=True, hide_index=True)
+                        st.dataframe(filtered, hide_index=True)
                     else:
                         st.write(f"Could not retrieve any Syspro Material path_data for {job=}.")
 
@@ -1533,12 +1530,12 @@ for i, row in df_production_data_by_op.iterrows():
                 st.write(f"#### Options")
                 df_options = df_order_options_bws if COMP == BWS else df_order_options_stg
                 df_options = df_options.loc[df_options["WO#"] == int(job)]
-                st.dataframe(df_options, use_container_width=True, hide_index=True)
+                st.dataframe(df_options, hide_index=True)
 
                 st.write(f"#### NPOs")
                 df_npos = df_npos_bws if COMP == BWS else df_npos_stg
                 df_npos = df_npos.loc[df_npos["WO#"] == int(job)]
-                st.dataframe(df_npos, use_container_width=True, hide_index=True)
+                st.dataframe(df_npos, hide_index=True)
 
                 # for j, op in enumerate(df_timeline_clk["Operation"]):
                 #     # st.write(f"{j=}, {op=}, {operation_colour_map[op]=}")
@@ -1550,7 +1547,7 @@ for i, row in df_production_data_by_op.iterrows():
                     ascending=[True, False],
                     inplace=True
                 )
-                st.dataframe(df_job_material, hide_index=True, use_container_width=True)
+                st.dataframe(df_job_material, hide_index=True)
 
 
         exp_count += rows_per_expansion

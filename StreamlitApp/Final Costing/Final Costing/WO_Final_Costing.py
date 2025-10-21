@@ -1657,7 +1657,6 @@ if selected_models:
     show_filtered = show_filtered[[sc for sc in show_cols.values()]]
     st.dataframe(
         show_filtered,
-        use_container_width=True,
         hide_index=True
     )
 
@@ -1678,7 +1677,7 @@ if selected_models:
         title="% Margin vs Production Start Date",
         trendline="ols"
     )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
     filtered["WO"] = filtered["WO#"].astype(str)
     # st.dataframe(filtered)
@@ -1741,7 +1740,7 @@ with st.expander(":new: Quotes and Orders By Date"):
     sel_cols = [f"{sc}{suf}" for sc in sel_cols]
     sel_cols.insert(0, "Date")
     filtered_melted = filtered_melted[sel_cols]
-    st.dataframe(filtered_melted, hide_index=True, use_container_width=True)
+    st.dataframe(filtered_melted, hide_index=True)
     # filtered_melted = filtered_melted.melt(
     #     id_vars="Date",
     #     value_vars=["NumNewQuotesBWS", "NumNewQuotesSTG"],
@@ -1800,7 +1799,7 @@ with st.expander(":new: Quotes and Orders By Date"):
     #     title="Count of new Quotes & WOs for BWS & Stargate",
     #     labels={"Date": "Date", "CountQuotesOrders": "Num New Quotes Orders"}
     # )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
 
 # Jobs In Wip -- Grouping
@@ -1846,7 +1845,7 @@ with st.expander("Jobs in Wip By Grouping"):
         height=700
         # trendline="ols"
     )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
     df_show_jobs_in_wip: pd.DataFrame = df_jobs_in_wip.loc[
         (~df_jobs_in_wip["Grouping"].isin(groupings_to_omit))
@@ -1862,7 +1861,7 @@ with st.expander("Jobs in Wip By Grouping"):
         right_on=["WO#", "ActCompleteDate_d"],
         suffixes=("_a", "_b")
     )
-    st.dataframe(df_show_jobs_in_wip, use_container_width=True, hide_index=True)
+    st.dataframe(df_show_jobs_in_wip, hide_index=True)
 
     df_valuation_grouping = df_show_jobs_in_wip[[
         "ProdDate",
@@ -1920,7 +1919,7 @@ with st.expander("Jobs in Wip By Grouping"):
         ,hover_data=["HoverData"]
     )
     chart.update_xaxes(type='category')
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
     # st.write(df_show_jobs_in_wip.loc[
     #     (~df_jobs_in_wip["Grouping"].isin(groupings_to_omit))
@@ -2027,7 +2026,7 @@ with st.expander("Jobs in Wip By Class"):
         height=700
         # trendline="ols"
     )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
     df_show_jobs_in_wip: pd.DataFrame = df_jobs_in_wip.loc[
         (~df_jobs_in_wip["Class"].isin(classes_to_omit))
@@ -2043,7 +2042,7 @@ with st.expander("Jobs in Wip By Class"):
         right_on=["WO#", "ActCompleteDate_d"],
         suffixes=("_a", "_b")
     )
-    st.dataframe(df_show_jobs_in_wip, use_container_width=True, hide_index=True)
+    st.dataframe(df_show_jobs_in_wip, hide_index=True)
 
     df_valuation_class = df_show_jobs_in_wip[[
         "ProdDate",
@@ -2108,7 +2107,7 @@ with st.expander("Jobs in Wip By Class"):
         ,hover_data=["HoverData"]
     )
     chart.update_xaxes(type='category')
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
 # Jobs In Wip -- Model
 with st.expander("Jobs in Wip By Model"):
@@ -2153,7 +2152,7 @@ with st.expander("Jobs in Wip By Model"):
         height=700
         # trendline="ols"
     )
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
     df_show_jobs_in_wip: pd.DataFrame = df_jobs_in_wip.loc[
         (~df_jobs_in_wip["Model No"].isin(classes_to_omit))
@@ -2171,7 +2170,7 @@ with st.expander("Jobs in Wip By Model"):
     )
     df_show_jobs_in_wip.drop(columns=["Model No_a"], inplace=True)
     df_show_jobs_in_wip.rename(columns={"Model No_b": "Model No"}, inplace=True)
-    st.dataframe(df_show_jobs_in_wip, use_container_width=True, hide_index=True)
+    st.dataframe(df_show_jobs_in_wip, hide_index=True)
 
     df_valuation_model = df_show_jobs_in_wip[[
         "ProdDate",
@@ -2236,7 +2235,7 @@ with st.expander("Jobs in Wip By Model"):
         , hover_data=["HoverData"]
     )
     chart.update_xaxes(type='category')
-    st.plotly_chart(chart, theme=None, use_container_width=True)
+    st.plotly_chart(chart, theme=None)
 
 
 with st.expander(

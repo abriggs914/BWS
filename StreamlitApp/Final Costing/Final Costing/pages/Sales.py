@@ -19,6 +19,7 @@ from dataframe_utility import random_df
 from datetime_utility import is_date, date_str_format, first_of_month, end_of_month, first_of_day
 from pyodbc_connection import connect
 from streamlit_utility import aligned_text, display_df
+from streamlit_calendar import calendar as st_calendar
 
 MAX_HOLD_TIME: int = 1000 * 60 * 60
 st.set_page_config(
@@ -1245,7 +1246,61 @@ N'FROM (
 
 EXEC sp_executesql @sql;
 	"""
-	return connect(sql)
+	df: pd.DataFrame = connect(sql)
+	df = df.loc[~pd.isna(df["ProdLine"])]
+	df = df.sort_values(by="ProdLine").reset_index(drop=True)
+
+	df_c = df.copy()
+	df_j_rows = []
+	ids_to_drop = []
+	for i, row in df_c.iterrows():
+		for j, col in enumerate(df_c.columns):
+			if "," in str(df_c.loc[i, col]):
+				st.write(f"{i=}, {j=}, {col=}, line='{df_c.loc[i, 'ProdLine']}', val='{df_c.loc[i, col]}'")
+				splt = str(df.loc[i, col]).split(",")
+				df_splt = None
+				for k, wo in enumerate(splt):
+					row_c = {k: None if k != "ProdLine" else v for k, v in row.items()}
+					row_c.update({col: wo})
+					df_row = pd.DataFrame([row_c])
+					df_splt = pd.concat([df_splt, df_row], ignore_index=True) if df_splt is not None else df_row
+				# for ii, k_row_k in enumerate(df_splt.iterrows(), start=1):
+				# 	k, row_k = k_row_k
+				# 	df_splt.loc[k, "ProdLine"] = f"{df_splt.loc[k, 'ProdLine']}_{ii}"
+				df_j_rows.append(df_splt)
+				ids_to_drop.append(i)
+	df = df.drop(index=ids_to_drop)
+	df = pd.concat([df, *df_j_rows], ignore_index=True)
+	df = df.sort_values(by="ProdLine")
+
+	# # for i, row in df.copy().iterrows():
+	# # 	for j, col in enumerate(df.columns):
+	# # 		if "," in str(df.loc[i, col]):
+	# # 			splt = str(df.loc[i, col]).split(",")
+	# # 			df_splt = None
+	# # 			for k, wo in enumerate(splt):
+	# # 				row_c = {k: v for k, v in row.items()}
+	# # 				row_c.update({col: wo})
+	# # 				df_row = pd.DataFrame([row_c])
+	# # 				df_splt = pd.concat([df_splt, df_row], ignore_index=True) if df_splt is not None else df_row
+	# # 			df = pd.concat([df, df_splt], ignore_index=True)
+	# # df = df.sort_values(by="ProdLine")
+	# id_cols = ["ProdLine"]  # keep as-is; everything else is a date column
+	#
+	# df_long = (
+	# 	df.melt(id_vars=id_cols, var_name="ProdDate", value_name="WOList")
+	# 	.assign(WO=lambda d: d["WOList"].astype(str).str.split(","))  # split every cell
+	# 	.explode("WO", ignore_index=True)  # 1 row per WO
+	# )
+	#
+	# # clean up
+	# df_long["WO"] = df_long["WO"].str.strip()
+	# df_long.loc[df_long["WO"].isin(["", "nan", "None"]), "WO"] = pd.NA
+	# df_long = df_long.dropna(subset=["WO"]).drop(columns=["WOList"])
+	#
+	# # Optional: make ProdDate a proper date
+	# df_long["ProdDate"] = pd.to_datetime(df_long["ProdDate"], errors="coerce").dt.date
+	return df
 
 
 def df_to_sortables(df: pd.DataFrame) -> list[dict]:
@@ -3347,106 +3402,201 @@ elif pills_control == options_pills_control[3]:
 
 elif pills_control == options_pills_control[4]:
 	# Testing Prod Sched UI
-	items_0 = [
-		{
-			"header": "T1",
-			"items": ["A", "B", "C"]
-		},
-		{
-			"header": "T2",
-			"items": ["D", "E", "F"]
-		},
-		{
-			"header": "T3",
-			"items": ["G", "H", "I"]
-		}
-	]
-	r_df: pd.DataFrame = random_df(
-		n_rows=10,
-		n_columns=[f"T{i}" for i in range(10)],
-		dtypes="str"
-		# ,
-		# defaults={
-		# 	None
-		# 	for i in range(10)
-		# }
-	)
-
-	wo_ids = st.session_state.setdefault("wo_ids", (f"1001{('0000' + str(i))[-4:]}" for i in range(99999999)))
-
-	for i, row in r_df.iterrows():
-		for col in r_df.columns:
-			r_df.loc[i, col] = next(wo_ids)
-
-	df_items = st.session_state.setdefault("df_random", df_to_sortables(r_df))
-	st.write(df_items)
-
-	simple_style_wos = """
-	.sortable-component {
-	    background-color:rgb(0, 225, 255);
-	    font-size: 16px;
-	    counter-reset: item;
-	}
-	.sortable-item {
-	    background-color: black;
-	    color: white;
-	}
-	"""
-	simple_style_header = """
-	.sortable-component {
-	    background-color:rgb(0, 225, 255);
-	    font-size: 16px;
-	    counter-reset: item;
-	}
-	.sortable-item {
-	    background-color: crimson;
-	    color: white;
-	}
-		"""
-
-	sort_items(
-		items=[
-			calendar.day_name[i % 7][:3].upper().center(9, "_") for i in range(14)
-		],
-		multi_containers=False,
-		custom_style=simple_style_header
-	)
-
-	sort_items(
-		items=df_items,
-		multi_containers=True,
-		custom_style=simple_style_wos
-	)
+	# items_0 = [
+	# 	{
+	# 		"header": "T1",
+	# 		"items": ["A", "B", "C"]
+	# 	},
+	# 	{
+	# 		"header": "T2",
+	# 		"items": ["D", "E", "F"]
+	# 	},
+	# 	{
+	# 		"header": "T3",
+	# 		"items": ["G", "H", "I"]
+	# 	}
+	# ]
+	# r_df: pd.DataFrame = random_df(
+	# 	n_rows=10,
+	# 	n_columns=[f"T{i}" for i in range(10)],
+	# 	dtypes="str"
+	# 	# ,
+	# 	# defaults={
+	# 	# 	None
+	# 	# 	for i in range(10)
+	# 	# }
+	# )
+	#
+	# wo_ids = st.session_state.setdefault("wo_ids", (f"1001{('0000' + str(i))[-4:]}" for i in range(99999999)))
+	#
+	# for i, row in r_df.iterrows():
+	# 	for col in r_df.columns:
+	# 		r_df.loc[i, col] = next(wo_ids)
+	#
+	# df_items = st.session_state.setdefault("df_random", df_to_sortables(r_df))
+	# st.write(df_items)
+	#
+	# simple_style_wos = """
+	# .sortable-component {
+	#     background-color:rgb(0, 225, 255);
+	#     font-size: 16px;
+	#     counter-reset: item;
+	# }
+	# .sortable-item {
+	#     background-color: black;
+	#     color: white;
+	# }
+	# """
+	# simple_style_header = """
+	# .sortable-component {
+	#     background-color:rgb(0, 225, 255);
+	#     font-size: 16px;
+	#     counter-reset: item;
+	# }
+	# .sortable-item {
+	#     background-color: crimson;
+	#     color: white;
+	# }
+	# 	"""
+	#
+	# sort_items(
+	# 	items=[
+	# 		calendar.day_name[i % 7][:3].upper().center(9, "_") for i in range(14)
+	# 	],
+	# 	multi_containers=False,
+	# 	custom_style=simple_style_header
+	# )
+	#
+	# sort_items(
+	# 	items=df_items,
+	# 	multi_containers=True,
+	# 	custom_style=simple_style_wos
+	# )
 
 	df_bws_prod_sched: pd.DataFrame = load_bws_prod_sched()
 	display_df(
 		df_bws_prod_sched,
-		"df_bws_prod_sched"
+		"df_bws_prod_sched",
+		hide_index=False
 	)
 
+	events = []
+	dates = df_bws_prod_sched.columns.tolist()[1:]
+	lines = df_bws_prod_sched["ProdLine"].unique().tolist()
+	for i, date in enumerate(dates):
+		wos = []
+		for j, val in enumerate(df_bws_prod_sched[date].values):
+			if not pd.isna(val):
+				# wos.append(val)
+				line = df_bws_prod_sched.loc[j, "ProdLine"]
+				title = f"{val} - {line}"
+				events.append({
+					"id": f"calendar_wo_{i}_{j}_val",
+					"title": title,
+					"start": date,
+					"extendedProps": {
+						"lines": [title, f"Date: {date}", f"Line: {line}"],
+						"tooltip": f"<b>{val}</b><br>{line}<br>{date}"
+					}
+				})
+
+	st.write(f"{len(events)=}")
+	# st.write(events)
+
+	custom_css = """
+	/* Allow line breaks inside month view event titles */
+	.fc .fc-daygrid-event .fc-event-title { white-space: pre-line; }
+	/* Make events auto-height rather than single-line pills */
+	.fc .fc-daygrid-event { height: auto; }
+	"""
+
+	cal = st_calendar(
+		events=events,
+		options={
+			"initialView": "multiMonthYear",
+			"multiMonthMaxColumns": 2,
+			"height": 1800,
+			"contentHeight": 1700,
+			"expandRows": True,
+			"dayMaxEventRows": False,     # unlimited rows per day (or set an int)
+			"eventDisplay": "block",
+			"displayEventTime": False,
+			"moreLinkClick": "popover",   # still works without callbacks
+			"droppable": True,
+			"editable": True
+		},
+		custom_css=custom_css,
+	)
+
+	st.write(cal)
+
+	# custom_css = """
+	# .fc .fc-daygrid-event { height: auto; }
+	# .fc .my-evt { white-space: normal; line-height: 1.15; }
+	# """
 	#
-	# # empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
+	# st_calendar(
+	# 	events=events,
+	# 	options={
+	# 		"height": 1800,
+	# 		"contentHeight": 300,
+	# 		"initialView": "multiMonthYear",  # https://fullcalendar.io/docs/multimonth-stack
+	# 		"multiMonthMaxColumns": 2,
+	# 		"droppable": True,
+	# 		"editable": True,
 	#
-	# def series_to_items(df_: pd.DataFrame):
-	# 	return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
+	# 		"expandRows": True,  # let rows grow vertically
+	# 		"dayMaxEventRows": False,  # False = unlimited rows per day; or set an int (e.g., 6)
 	#
+	# 		# make month tiles wrap and look like blocks
+	# 		"eventDisplay": "block",
+	# 		"displayEventTime": False,
+	# 		"moreLinkClick": "popover",  # when there are too many events
 	#
-	# df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
-	# 	{
-	# 		"header": col,
-	# 		"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
-	# 	}
-	# 	for i, col in enumerate(df_bws_prod_sched["ProdLine"])
-	# ])
+	# 		# MULTI-LINE RENDERING
+	# 		"eventContent": """
+	# 		  function(arg){
+	# 			var lines = arg.event.extendedProps.lines || [arg.event.title];
+	# 			return { html: '<div class="my-evt">'+ lines.join('<br/>') +'</div>' };
+	# 		  }
+	# 		""",
 	#
-	# print(df_bws_prod_sched_items)
-	#
-	# st.write(df_bws_prod_sched_items)
-	#
-	# display_df(
-	# 	df_bws_prod_sched_items,
-	# 	"df_bws_prod_sched_items"
+	# 			# SIMPLE HOVER TOOLTIP (native title attr). Replace with tippy.js if you want fancier.
+	# 			"eventDidMount": """
+	# 		  function(info){
+	# 			var html = info.event.extendedProps.tooltip || info.event.title;
+	# 			// strip tags for native title, or keep if your wrapper allows HTML tooltips
+	# 			info.el.setAttribute('title', html.replace(/<[^>]*>?/gm, ''));
+	# 		  }
+	# 		"""
+	# 	},
+	# 	custom_css=custom_css
 	# )
+	#
+	#
+	# #
+	# # # empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
+	# #
+	# # def series_to_items(df_: pd.DataFrame):
+	# # 	return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
+	# #
+	# #
+	# # df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
+	# # 	{
+	# # 		"header": col,
+	# # 		"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
+	# # 	}
+	# # 	for i, col in enumerate(df_bws_prod_sched["ProdLine"])
+	# # ])
+	# #
+	# # print(df_bws_prod_sched_items)
+	# #
+	# # st.write(df_bws_prod_sched_items)
+	# #
+	# # display_df(
+	# # 	df_bws_prod_sched_items,
+	# # 	"df_bws_prod_sched_items"
+	# # )
 
 
 

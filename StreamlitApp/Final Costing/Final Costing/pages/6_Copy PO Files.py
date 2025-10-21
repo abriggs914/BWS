@@ -591,7 +591,7 @@ else:
         st.write(instructions)
 
     if not st.session_state.get("has_run", False):
-        result_cols[0].dataframe(df["PN"], use_container_width=True, hide_index=True)
+        result_cols[0].dataframe(df["PN"], hide_index=True)
     result_cols[0].write(f"{df.shape[0]} part{'' if (df.shape[0] == 1) else 's'} loaded")
 
     if (not df.empty) and st.session_state.get("button_run_part_data"):
@@ -717,7 +717,6 @@ else:
 
         result_cols[0 if st.session_state.get("has_run", False) else 1].dataframe(
             df[["PN", *file_extensions, "COMP"]],
-            use_container_width=True,
             hide_index=True
         )
 

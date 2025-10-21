@@ -592,7 +592,7 @@ if tab_choice == tab_names[1]:
     # Begin Widget Creation
     #######################
     st.write(f"df_sales")
-    st.dataframe(df_sales, hide_index=True, use_container_width=True)
+    st.dataframe(df_sales, hide_index=True)
 
     st.write(f"## :red[BWS data only on maps - Stargate coming soon]")
     st.map(

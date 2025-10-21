@@ -1866,9 +1866,9 @@ if pills_operation_mode == 0:
 
 
     st.write("## BWS")
-    st.dataframe(df_bws, use_container_width=True, hide_index=True)
+    st.dataframe(df_bws, hide_index=True)
     st.write("## Stargate")
-    st.dataframe(df_stg, use_container_width=True, hide_index=True)
+    st.dataframe(df_stg, hide_index=True)
 
 
     options_radio_company_choice = [
@@ -2074,7 +2074,6 @@ else:
             st.plotly_chart(
                 chart,
                 theme=None,
-                use_container_width=True,
                 key="chart_0"
             )
 
@@ -2334,7 +2333,6 @@ else:
                 st.plotly_chart(
                     chart,
                     theme=None,
-                    use_container_width=True,
                     key="chart_2"
                 )
 
