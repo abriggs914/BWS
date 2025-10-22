@@ -364,6 +364,7 @@ pills_menu = pills(
 	label="Menu",
 	options=pills_menu_options,
 	key=k_pills_menu,
+	index=1,
 	label_visibility="hidden"
 )
 

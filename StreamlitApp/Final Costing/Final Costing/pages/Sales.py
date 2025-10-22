@@ -21,6 +21,8 @@ from pyodbc_connection import connect
 from streamlit_utility import aligned_text, display_df
 from streamlit_calendar import calendar as st_calendar
 
+DEFAULT_USER: str = "Jason Morgan"
+
 MAX_HOLD_TIME: int = 1000 * 60 * 60
 st.set_page_config(
 	layout="wide",
@@ -323,46 +325,67 @@ def load_pdf_binary(pdf_file):
 		return f.read()
 
 
-@st.cache_data(ttl=None, show_spinner=True)
+# def to_viewer_box(rect, page):
+# 	# pdfplumber rects are PDF coords: origin bottom-left
+# 	x0, y0, x1, y1 = rect["x0"], rect["y0"], rect["x1"], rect["y1"]
+# 	w_pts = page.width
+# 	h_pts = page.height
+#
+# 	w = (x1 - x0) / w_pts
+# 	h = (y1 - y0) / h_pts
+# 	x = x0 / w_pts
+# 	# flip Y: pdfplumber's y increases upward; viewer wants top-left origin
+# 	y = 1.0 - (y1 / h_pts)
+#
+# 	# clamp just in case tiny numeric overshoots cause overflow
+# 	clamp = lambda v: max(0.0, min(1.0, float(v)))
+# 	return {
+# 		"x": clamp(x),
+# 		"y": clamp(y),
+# 		"width": clamp(w),
+# 		"height": clamp(h),
+# 	}
+#
+#
+# @st.cache_data(ttl=None, show_spinner=True)
+# def load_pdf_annotations(pdf_file):
+# 	annots = []
+# 	with pdfplumber.open(pdf_file) as f:
+# 		for p_idx, page in enumerate(f.pages):
+# 			for rect in page.rects:
+# 				if rect.get("non_stroking_color") != (1,):
+# 					box = to_viewer_box(rect, page)
+# 					r_box = list(map(int, (rect["x0"], rect["y1"], rect["x1"], rect["y0"])))
+# 					if r_box[0] == r_box[2]:
+# 						# 0 width
+# 						r_box = [r_box[0] - 1, r_box[1], r_box[2], r_box[3]]
+# 					if r_box[1] == r_box[3]:
+# 						# 0 height
+# 						r_box = [r_box[0], r_box[1] - 1, r_box[2], r_box[3]]
+# 					print(f"{box=}, {r_box=}")
+# 					annots.append({
+# 						"page": p_idx,  # many viewers expect 0-based
+# 						**box,
+# 						"color": "#AA1111",
+# 						"text": page.within_bbox(r_box).extract_text(),
+# 					})
+
+
 def load_pdf_annotations(pdf_file):
 	highlighted_texts = []
-	# print(f"{pdf_file=}")
-	# highlighted_texts = {
-	# 	"annots": [],
-	# 	"texts": []
-	# }
 	max_width = 0
-	# unique = set()
 	with pdfplumber.open(pdf_file) as f:
 		for page_num, page in enumerate(f.pages, start=1):
-			# st.write("page.annots")
-			# st.write(page.annots)
-			# st.write("page.lines")
-			# st.write(page.lines)
-			# st.write("page.extract_text_lines()")
-			# st.write(page.extract_text_lines()[:8])
 			for i, rect in enumerate(page.rects):
 				# X and Y points are calculated from the bottom left of the page????
 				x_r = rect.get("x0")
-				# y_r = rect.get("y0")
-				# x_r = rect.get("x1")
 				y_r = rect.get("y1")
-				# x_r = rect.get("top")
-				# y_r = rect.get("bottom")
 				w_r = rect.get("width")
 				h_r = rect.get("height")
-				# w_r = rect.get("x1") - rect.get("x0")
-				# h_r = rect.get("y1") - rect.get("y0")
 				x_r_c, y_r_c = page.point2coord((x_r, y_r))
-				# x_r_c, y_r_c = x_r, y_r
-				# h_r /= 3
-
-				# bbox = (x_r, y_r, x_r + w_r, y_r + h_r)
-				# unique.add(jsonify(rect))
 				if w_r >= max_width:
 					if rect["non_stroking_color"] != (1,):
 						max_width = w_r
-						# bbox = (rect.get("x0"), rect.get("y0"), rect.get("x1"), rect.get("y1"))
 						bbox = (
 							x_r_c,
 							y_r_c,
@@ -371,7 +394,6 @@ def load_pdf_annotations(pdf_file):
 								rect.get("y0")
 							))
 						)
-						# texts = page.within_bbox(bbox).extract_text_lines()
 						texts = page.within_bbox(bbox).extract_text()
 						highlighted_texts.append({
 							"page": page_num,
@@ -382,58 +404,122 @@ def load_pdf_annotations(pdf_file):
 							"color": "#AA1111",
 							"text": texts
 						})
-				# print(f"\n{page_num=}, {i=}, {rect=}")
-				# print(f"WW => {page.within_bbox(bbox).extract_text()}")
-		# for i, char in enumerate(page.chars):
-		# 	# if i < 750:
-		# 	if (page_num == 1) and (250 <= i <= 300):
-		# 		print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}', {char=}")
-		# 		# print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}'")
-		# 	# if "non_stroking_color" in char and char["non_stroking_color"]:
-		# 	# 	color = char["non_stroking_color"]
-		# 	# 	print(f"{color=}")
-		# 	# 	# Check for highlight-like colors (e.g., yellow shades)
-		# 	# 	if isinstance(color, (list, tuple)) and 0.8 <= color[1] <= 1 and color[0] < 0.5 and color[2] < 0.5:
-		# 	# 		highlighted_texts.append({
-		# 	# 			"page": page_num + 1,
-		# 	# 			"text": char["text"],
-		# 	# 			"bbox": char["bbox"],
-		# 	# 			"color": color
-		# 	# 		})
-		highlighted_texts = [annot for annot in highlighted_texts if (annot["width"] == max_width)]
-		# highlighted_texts.sort(key=lambda annot: (annot["page"], annot["y"]))
-		# # grads = [gradient(i, len(highlighted_texts) - 1, GREEN, RED, rgb=False) for i in range(len(highlighted_texts))]
-		# print(f"\n\nPARSED OPTIONS:")
-		# for i, data in enumerate(highlighted_texts):
-		# 	print(f"\n{i=}, {data=}")
-		# 	bbox = (data["x"], data["y"], data["x"] + data["width"], data["y"] + data["height"])
-		# 	print(f"WW => {page.within_bbox(bbox).extract_text()}")
-		# # 	highlighted_texts[i]["color"] = grads[i]
-		# # 	highlighted_texts[i]["color_n"] = str(Colour(grads[i]))
-		#
-		# # print("unique")
-		# # print(unique)
-		# # st.write(list(map(lambda v: json.loads(v), unique)))
-
-		print(f"{pdf_file=}, {len(highlighted_texts)}")
-		return highlighted_texts
+	highlighted_texts = [annot for annot in highlighted_texts if (annot["width"] == max_width)]
+	print(f"{pdf_file=}, {len(highlighted_texts)}")
+	return highlighted_texts
 
 
-# highlighted_regions = []
-# print(f"{pdf_file=}")
-# with pdfplumber.open(pdf_file) as f:
-# 	for page_num, page in enumerate(f.pages):
-# 		# print(f"{dir(page)=}")
-# 		print(f"{page_num}, {dir(page.annots)=}")
-# 		print(f"{page_num}, {page.annots=}")
-# 		if page.annots:
-# 			for annot in page.annots:
-# 				if annot["subtype"] == "Highlight":
-# 					# Extract the bounding box (bbox) of the highlighted text
-# 					bbox = annot["rect"]
-# 					highlighted_regions.append({"page": page_num + 1, "bbox": bbox})
+# @st.cache_data(ttl=None, show_spinner=True)
+# def load_pdf_annotations(pdf_file):
+# 	highlighted_texts = []
+# 	# print(f"{pdf_file=}")
+# 	# highlighted_texts = {
+# 	# 	"annots": [],
+# 	# 	"texts": []
+# 	# }
+# 	max_width = 0
+# 	# unique = set()
+# 	with pdfplumber.open(pdf_file) as f:
+# 		for page_num, page in enumerate(f.pages, start=1):
+# 			# st.write("page.annots")
+# 			# st.write(page.annots)
+# 			# st.write("page.lines")
+# 			# st.write(page.lines)
+# 			# st.write("page.extract_text_lines()")
+# 			# st.write(page.extract_text_lines()[:8])
+# 			for i, rect in enumerate(page.rects):
+# 				# X and Y points are calculated from the bottom left of the page????
+# 				x_r = rect.get("x0")
+# 				# y_r = rect.get("y0")
+# 				# x_r = rect.get("x1")
+# 				y_r = rect.get("y1")
+# 				# x_r = rect.get("top")
+# 				# y_r = rect.get("bottom")
+# 				w_r = rect.get("width")
+# 				h_r = rect.get("height")
+# 				# w_r = rect.get("x1") - rect.get("x0")
+# 				# h_r = rect.get("y1") - rect.get("y0")
+# 				x_r_c, y_r_c = page.point2coord((x_r, y_r))
+# 				# x_r_c, y_r_c = x_r, y_r
+# 				# h_r /= 3
 #
-# 	return highlighted_regions
+# 				# bbox = (x_r, y_r, x_r + w_r, y_r + h_r)
+# 				# unique.add(jsonify(rect))
+# 				if w_r >= max_width:
+# 					if rect["non_stroking_color"] != (1,):
+# 						max_width = w_r
+# 						# bbox = (rect.get("x0"), rect.get("y0"), rect.get("x1"), rect.get("y1"))
+# 						bbox = (
+# 							x_r_c,
+# 							y_r_c,
+# 							*page.point2coord((
+# 								rect.get("x1"),
+# 								rect.get("y0")
+# 							))
+# 						)
+# 						# texts = page.within_bbox(bbox).extract_text_lines()
+# 						texts = page.within_bbox(bbox).extract_text()
+# 						highlighted_texts.append({
+# 							"page": page_num,
+# 							"x": x_r_c,
+# 							"y": y_r_c,
+# 							"height": h_r,
+# 							"width": w_r,
+# 							"color": "#AA1111",
+# 							"text": texts
+# 						})
+# 			# print(f"\n{page_num=}, {i=}, {rect=}")
+# 			# print(f"WW => {page.within_bbox(bbox).extract_text()}")
+# 		# for i, char in enumerate(page.chars):
+# 		# 	# if i < 750:
+# 		# 	if (page_num == 1) and (250 <= i <= 300):
+# 		# 		print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}', {char=}")
+# 		# 		# print(f"{page_num=}, {i=}, C='{char['text']}', NCS='{char['ncs']}'")
+# 		# 	# if "non_stroking_color" in char and char["non_stroking_color"]:
+# 		# 	# 	color = char["non_stroking_color"]
+# 		# 	# 	print(f"{color=}")
+# 		# 	# 	# Check for highlight-like colors (e.g., yellow shades)
+# 		# 	# 	if isinstance(color, (list, tuple)) and 0.8 <= color[1] <= 1 and color[0] < 0.5 and color[2] < 0.5:
+# 		# 	# 		highlighted_texts.append({
+# 		# 	# 			"page": page_num + 1,
+# 		# 	# 			"text": char["text"],
+# 		# 	# 			"bbox": char["bbox"],
+# 		# 	# 			"color": color
+# 		# 	# 		})
+# 		highlighted_texts = [annot for annot in highlighted_texts if (annot["width"] == max_width)]
+# 		# highlighted_texts.sort(key=lambda annot: (annot["page"], annot["y"]))
+# 		# # grads = [gradient(i, len(highlighted_texts) - 1, GREEN, RED, rgb=False) for i in range(len(highlighted_texts))]
+# 		# print(f"\n\nPARSED OPTIONS:")
+# 		# for i, data in enumerate(highlighted_texts):
+# 		# 	print(f"\n{i=}, {data=}")
+# 		# 	bbox = (data["x"], data["y"], data["x"] + data["width"], data["y"] + data["height"])
+# 		# 	print(f"WW => {page.within_bbox(bbox).extract_text()}")
+# 		# # 	highlighted_texts[i]["color"] = grads[i]
+# 		# # 	highlighted_texts[i]["color_n"] = str(Colour(grads[i]))
+# 		#
+# 		# # print("unique")
+# 		# # print(unique)
+# 		# # st.write(list(map(lambda v: json.loads(v), unique)))
+#
+# 		print(f"{pdf_file=}, {len(highlighted_texts)}")
+# 		return highlighted_texts
+#
+#
+# # highlighted_regions = []
+# # print(f"{pdf_file=}")
+# # with pdfplumber.open(pdf_file) as f:
+# # 	for page_num, page in enumerate(f.pages):
+# # 		# print(f"{dir(page)=}")
+# # 		print(f"{page_num}, {dir(page.annots)=}")
+# # 		print(f"{page_num}, {page.annots=}")
+# # 		if page.annots:
+# # 			for annot in page.annots:
+# # 				if annot["subtype"] == "Highlight":
+# # 					# Extract the bounding box (bbox) of the highlighted text
+# # 					bbox = annot["rect"]
+# # 					highlighted_regions.append({"page": page_num + 1, "bbox": bbox})
+# #
+# # 	return highlighted_regions
 
 
 @st.dialog(title="WO Meeting Review Details")
@@ -800,7 +886,7 @@ WHERE
 """).strip()
 	lqs = ", ".join(map(str, lq))
 	date_resolved = f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
-	resolved_by = 'Jason Morgan'
+	resolved_by = DEFAULT_USER
 	sql = sql.format(LQ=lqs, DT=date_resolved)
 	connect(sql, do_exec=False, do_print=True, do_show=True)
 
@@ -1351,7 +1437,7 @@ s_w = 0
 if s_h is None or not s_h:
 	s_h = 900
 if s_w is None or not s_w:
-	s_w = 1600
+	s_w = 1400
 
 root_path = r"\\bwsfp01\public\SALES OFFICE\Weekly WO Meetings"
 list_meeting_folders = [d for d in os.listdir(root_path) if d != "Scripts"]
@@ -1368,8 +1454,9 @@ options_pills_control = [
 	"Sales Orders",
 	"Testing Prod Sched UI"
 ]
+default_pill_control: int = 1
 k_pill_control: str = f"pill_control"
-st.session_state.setdefault(k_pill_control, 0)
+st.session_state.setdefault(k_pill_control, default_pill_control)
 
 toggle_testing = st.toggle(
 	label="Enable Testing Mode?",
@@ -1380,7 +1467,8 @@ toggle_testing = st.toggle(
 pills_control = pills(
 	label="Mode",
 	options=options_pills_control,
-	key=k_pill_control
+	key=k_pill_control,
+	index=default_pill_control
 )
 
 list_parts: list[str] = []
@@ -1690,8 +1778,11 @@ if pills_control == options_pills_control[1]:
 				left_on="Quote",
 				right_on="Quote#"
 			)
-			quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.loc[
+			quotes_approved_wsom_not_orders: pd.DataFrame = quotes_approved_wsom_not_orders.loc[
 				quotes_approved_wsom_not_orders["Approved"] == 1]
+			quotes_approved_wsom_not_orders = quotes_approved_wsom_not_orders.drop_duplicates(subset=[
+				"Quote"
+			])
 			with cont.container(border=1):
 				if not quotes_approved_wsom_not_orders.empty:
 					st.write("quotes_approved_wsom_not_orders")
@@ -1856,8 +1947,8 @@ if pills_control == options_pills_control[1]:
 							st.dataframe(known_issues.transpose())
 						else:
 							st.write("No Known Issues")
-						st.write(ser_selected_quote)
-						st.write(pdf_file)
+						# st.write(ser_selected_quote)
+						# st.write(pdf_file)
 
 						if pdf_file:
 							# annotations = [
@@ -1904,14 +1995,14 @@ if pills_control == options_pills_control[1]:
 
 
 							parsed_annotations = load_pdf_annotations(pdf_file)
-							# # st.write(parsed_annotations)
-							# st.write(f"{len(parsed_annotations)=}")
-							# st.write(f"{(len(parsed_annotations) == 15)=}")
-							# # st.write(f"Parsed Annotation Texts:")
-							# # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
-							#
-							# st.write("SESSION_STATE:")
-							# st.write(st.session_state)
+							# # # st.write(parsed_annotations)
+							# # st.write(f"{len(parsed_annotations)=}")
+							# # st.write(f"{(len(parsed_annotations) == 15)=}")
+							# # # st.write(f"Parsed Annotation Texts:")
+							# # # st.write(jsonify({(a["page"], a["y"]): [l["text"] for l in a["text"]] for a in parsed_annotations}))
+							# #
+							# # st.write("SESSION_STATE:")
+							# # st.write(st.session_state)
 
 							k_c_a = "clicked_annotation"
 							k_pdf_viewer = f"pdf_viewer_wo"
@@ -1945,14 +2036,14 @@ if pills_control == options_pills_control[1]:
 								st.session_state[f"status_{m_id}_{selected_quote}"].update({
 									k_df_meeting_quotes: df_meeting_quotes,
 									f"approve_{selected_quote}_date": datetime.datetime.now(),
-									f"approve_{selected_quote}_by": "Avery Briggs"
+									f"approve_{selected_quote}_by": DEFAULT_USER
 								})
 								st.rerun()
 							print(f"AA == {pdf_file=}")
 							st_pdf_viewer = pdf_viewer(
 								input=load_pdf_binary(pdf_file),
 								width=s_w,
-								# key=f"kp_{k_pdf_viewer}",
+								# # key=f"kp_{k_pdf_viewer}",
 								annotations=parsed_annotations,
 								on_annotation_click=pdf_click_callback,
 								annotation_outline_size=2,
@@ -1982,96 +2073,132 @@ if pills_control == options_pills_control[1]:
 								else:
 									print("_F")
 							st.write(st_pdf_viewer)
+						else:
+							st.warning(f"Could not find a PDF to show.")
 
-					# TODO add a submit issue button at the bottom of the screen
-					# if st.button(
-					# 	label="Issue",
-					# 	key="btn_issue_quote"
-					# ):
-					# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
-					#
-					# 	idx = annotation.get("index")
-					# 	page = annotation.get("page")
-					# 	x = annotation.get("x")
-					# 	y = annotation.get("y")
-					# 	w = annotation.get("width")
-					# 	h = annotation.get("height")
-					# 	c = annotation.get("color")
-					# 	bbox = (x, y, x + w, y + h)
-					# 	et = annotation.get("text")
-					# 	# line_texts = ';; '.join([line['text'] for line in et])
-					# 	# print(f"{line_texts=}")
-					# 	text = annotation.get("text")
-					# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
-					# 	key = f"issues_{selected_quote}_{idx}"
-					# 	st.session_state.update({
-					# 		f"need_details_{key}": True
-					# 	})
-					# 	# list_issues = st.session_state.setdefault(key, [])
-					# 	ask_details(key, selected_quote, annotation)
-					#
-					# 	# st.session_state.update({
-					# 	# 	k_df_meeting_quotes: df_meeting_quotes,
-					# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
-					# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
-					# 	# })
-					# 	st.rerun()
+				# TODO add a submit issue button at the bottom of the screen
+				# if st.button(
+				# 	label="Issue",
+				# 	key="btn_issue_quote"
+				# ):
+				# 	df_meeting_quotes.loc[df_meeting_quotes["Quote"] == selected_quote, ["Approved", "Reviewed"]] = False, True
+				#
+				# 	idx = annotation.get("index")
+				# 	page = annotation.get("page")
+				# 	x = annotation.get("x")
+				# 	y = annotation.get("y")
+				# 	w = annotation.get("width")
+				# 	h = annotation.get("height")
+				# 	c = annotation.get("color")
+				# 	bbox = (x, y, x + w, y + h)
+				# 	et = annotation.get("text")
+				# 	# line_texts = ';; '.join([line['text'] for line in et])
+				# 	# print(f"{line_texts=}")
+				# 	text = annotation.get("text")
+				# 	print(f"ANNOTATION (P={page}, I={idx}) ({x=}, {y=}) => {text=}")
+				# 	key = f"issues_{selected_quote}_{idx}"
+				# 	st.session_state.update({
+				# 		f"need_details_{key}": True
+				# 	})
+				# 	# list_issues = st.session_state.setdefault(key, [])
+				# 	ask_details(key, selected_quote, annotation)
+				#
+				# 	# st.session_state.update({
+				# 	# 	k_df_meeting_quotes: df_meeting_quotes,
+				# 	# 	f"approve_{selected_quote}_date": datetime.datetime.now(),
+				# 	# 	f"approve_{selected_quote}_by": "Avery Briggs"
+				# 	# })
+				# 	st.rerun()
 		else:
 			st.warning("No quotes were found to review this week.")
 
 	if m_id is not None:
-		if st.button(
-				label=f"End Meeting #{m_id}",
-				key=f"k_end_meeting"
-		):
+		df_meetings_results: pd.DataFrame = st.session_state.get(k_df_meeting_quotes)
+		if df_meetings_results is not None:
+			df_meetings_results = df_meetings_results.loc[df_meetings_results["Approved"] == True]
+			n_to_approve = df_meetings_results.shape[0]
+			st.write(f"{n_to_approve} quote(s) selected to approve")
+			if st.button(
+					label=f"End Meeting #{m_id}",
+					key=f"k_end_meeting"
+			):
 
-			editing = not df_meeting_notes.loc[df_meeting_notes["MeetingID"] == m_id].empty
-			if editing:
-				sql = ("""
-	UPDATE
-		[BWSdb].[dbo].[WSOM_MeetingNotes]
-	SET
-			
-				""").strip()
-			else:
-				sql = ("""
-INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Quote], [MeetingID], [DateResolved], [ResolvedBy]) VALUES 
-				""").strip()
+				df_known_quotes: pd.DataFrame = df_meetings_results.loc[~pd.isna(df_meetings_results["MeetingID"])]
+				df_new_quotes: pd.DataFrame = df_meetings_results.loc[pd.isna(df_meetings_results["MeetingID"])]
 
-			# for k, v in st.session_state.items():
-			# 	print(f"{k=}, {v=}")
+				sql_exist = "UPDATE [BWSdb].[dbo].[WSOM_MeetingNotes] SET [DateResolved] = '{DT}', [ResolvedBy] = '{DU}' WHERE (([MeetingID] = {MID}) AND ([Quote] IN {QTS}));"
+				sql_exist = sql_exist.format(
+					DT=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+					MID=m_id,
+					DU=DEFAULT_USER,
+					QTS=",".join(list(map(str, df_known_quotes["Quote"].unique().tolist())))
+				)
 
-			df_meetings_results = st.session_state.get(k_df_meeting_quotes)
+				if not df_known_quotes.empty:
+					connect(sql_exist, do_print=True, do_show=True, do_exec=False)
 
-			print("k_df_meeting_quotes")
-			print(df_meetings_results)
+				sql_new = "INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Active], [MeetingID], [Quote], [DateResolved], [ResolvedBy]) VALUES "
+				for i, row in df_new_quotes.iterrows():
+					sql_new += f"(1, {m_id}, {row['Quote']}, '{datetime.datetime.now():%Y-%m-%d}', '{DEFAULT_USER}'),"
+				sql_new = sql_new.format(
+					DT=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+					MID=m_id,
+					QTS=",".join(list(map(str, df_new_quotes["Quote"].unique().tolist())))
+				).removesuffix(",") + ";"
 
-			# # new_quotes = []
-			# for i, row in df_meetings_results.iterrows():
+				if not df_new_quotes.empty:
+					connect(sql_new, do_print=True, do_show=True, do_exec=False)
 
-			# TODO iterate through meeting quotes and set the approved status to the the table
-			connect(sql, do_exec=False, do_print=True, do_show=True)
-			st.session_state.update({
-				k_meeting_id: None,
-				k_df_meeting_quotes: None
-			})
-			cont.empty()
-			st.rerun()
+				# 			if editing:
+				# 				sql = ("""
+				# 	UPDATE
+				# 		[BWSdb].[dbo].[WSOM_MeetingNotes]
+				# 	SET
+				#
+				# 				""").strip()
+				# 			else:
+				# 				sql = ("""
+				# INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Quote], [MeetingID], [DateResolved], [ResolvedBy]) VALUES
+				# 				""").strip()
+				#
+				# 			# for k, v in st.session_state.items():
+				# 			# 	print(f"{k=}, {v=}")
+				#
+				# 			print("k_df_meeting_quotes")
+				# 			print(df_meetings_results)
+				#
+				# 			# # new_quotes = []
+				# 			# for i, row in df_meetings_results.iterrows():
+				#
+				# 			# TODO iterate through meeting quotes and set the approved status to the the table
+				#
+				# 			print(f"{sql=}")
+				# 			st.write("sql")
+				# 			st.write(sql)
+				#
+				# 			connect(sql, do_exec=False, do_print=True, do_show=True)
+				st.session_state.update({
+					k_meeting_id: None,
+					k_df_meeting_quotes: None
+				})
+				cont.empty()
+				st.toast("Meeting closed successfully.")
+				st.rerun()
 
 	if st.session_state.get(k_need_rerun, False):
 		st.session_state.update({k_need_rerun: False})
 		st.rerun()
 
-	# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
-	# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
-	# if model_quote_options:
-	# 	selected_quote = pills(
-	# 		label="Quotes",
-	# 		options=model_quote_options
-	# 	)
-	# 	if selected_quote:
-	# 		df_quote = df_model_quotes.loc[df_model_quotes["SimQ"] == selected_quote]
-	# 		st.write(df_quote)
+# df_model_quotes = similar_quotes_m1.loc[similar_quotes_m1["Model No"] == selected_model]
+# model_quote_options = [q for q in df_model_quotes["Q"].dropna().unique().tolist() if q in rpt_files]
+# if model_quote_options:
+# 	selected_quote = pills(
+# 		label="Quotes",
+# 		options=model_quote_options
+# 	)
+# 	if selected_quote:
+# 		df_quote = df_model_quotes.loc[df_model_quotes["SimQ"] == selected_quote]
+# 		st.write(df_quote)
 
 # similar_quotes_m2 = similar_quotes_m1.copy()
 # # similar_quotes_m2[["ModelCount", "ClassCount"]] = 0, 0
@@ -3518,10 +3645,10 @@ elif pills_control == options_pills_control[4]:
 			"height": 1800,
 			"contentHeight": 1700,
 			"expandRows": True,
-			"dayMaxEventRows": False,     # unlimited rows per day (or set an int)
+			"dayMaxEventRows": False,  # unlimited rows per day (or set an int)
 			"eventDisplay": "block",
 			"displayEventTime": False,
-			"moreLinkClick": "popover",   # still works without callbacks
+			"moreLinkClick": "popover",  # still works without callbacks
 			"droppable": True,
 			"editable": True
 		},
@@ -3530,73 +3657,73 @@ elif pills_control == options_pills_control[4]:
 
 	st.write(cal)
 
-	# custom_css = """
-	# .fc .fc-daygrid-event { height: auto; }
-	# .fc .my-evt { white-space: normal; line-height: 1.15; }
-	# """
-	#
-	# st_calendar(
-	# 	events=events,
-	# 	options={
-	# 		"height": 1800,
-	# 		"contentHeight": 300,
-	# 		"initialView": "multiMonthYear",  # https://fullcalendar.io/docs/multimonth-stack
-	# 		"multiMonthMaxColumns": 2,
-	# 		"droppable": True,
-	# 		"editable": True,
-	#
-	# 		"expandRows": True,  # let rows grow vertically
-	# 		"dayMaxEventRows": False,  # False = unlimited rows per day; or set an int (e.g., 6)
-	#
-	# 		# make month tiles wrap and look like blocks
-	# 		"eventDisplay": "block",
-	# 		"displayEventTime": False,
-	# 		"moreLinkClick": "popover",  # when there are too many events
-	#
-	# 		# MULTI-LINE RENDERING
-	# 		"eventContent": """
-	# 		  function(arg){
-	# 			var lines = arg.event.extendedProps.lines || [arg.event.title];
-	# 			return { html: '<div class="my-evt">'+ lines.join('<br/>') +'</div>' };
-	# 		  }
-	# 		""",
-	#
-	# 			# SIMPLE HOVER TOOLTIP (native title attr). Replace with tippy.js if you want fancier.
-	# 			"eventDidMount": """
-	# 		  function(info){
-	# 			var html = info.event.extendedProps.tooltip || info.event.title;
-	# 			// strip tags for native title, or keep if your wrapper allows HTML tooltips
-	# 			info.el.setAttribute('title', html.replace(/<[^>]*>?/gm, ''));
-	# 		  }
-	# 		"""
-	# 	},
-	# 	custom_css=custom_css
-	# )
-	#
-	#
-	# #
-	# # # empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
-	# #
-	# # def series_to_items(df_: pd.DataFrame):
-	# # 	return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
-	# #
-	# #
-	# # df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
-	# # 	{
-	# # 		"header": col,
-	# # 		"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
-	# # 	}
-	# # 	for i, col in enumerate(df_bws_prod_sched["ProdLine"])
-	# # ])
-	# #
-	# # print(df_bws_prod_sched_items)
-	# #
-	# # st.write(df_bws_prod_sched_items)
-	# #
-	# # display_df(
-	# # 	df_bws_prod_sched_items,
-	# # 	"df_bws_prod_sched_items"
-	# # )
+# custom_css = """
+# .fc .fc-daygrid-event { height: auto; }
+# .fc .my-evt { white-space: normal; line-height: 1.15; }
+# """
+#
+# st_calendar(
+# 	events=events,
+# 	options={
+# 		"height": 1800,
+# 		"contentHeight": 300,
+# 		"initialView": "multiMonthYear",  # https://fullcalendar.io/docs/multimonth-stack
+# 		"multiMonthMaxColumns": 2,
+# 		"droppable": True,
+# 		"editable": True,
+#
+# 		"expandRows": True,  # let rows grow vertically
+# 		"dayMaxEventRows": False,  # False = unlimited rows per day; or set an int (e.g., 6)
+#
+# 		# make month tiles wrap and look like blocks
+# 		"eventDisplay": "block",
+# 		"displayEventTime": False,
+# 		"moreLinkClick": "popover",  # when there are too many events
+#
+# 		# MULTI-LINE RENDERING
+# 		"eventContent": """
+# 		  function(arg){
+# 			var lines = arg.event.extendedProps.lines || [arg.event.title];
+# 			return { html: '<div class="my-evt">'+ lines.join('<br/>') +'</div>' };
+# 		  }
+# 		""",
+#
+# 			# SIMPLE HOVER TOOLTIP (native title attr). Replace with tippy.js if you want fancier.
+# 			"eventDidMount": """
+# 		  function(info){
+# 			var html = info.event.extendedProps.tooltip || info.event.title;
+# 			// strip tags for native title, or keep if your wrapper allows HTML tooltips
+# 			info.el.setAttribute('title', html.replace(/<[^>]*>?/gm, ''));
+# 		  }
+# 		"""
+# 	},
+# 	custom_css=custom_css
+# )
+#
+#
+# #
+# # # empty_ids = st.session_state.setdefault("empty_ids", permutations(["_"] + ["." for _ in range(13)], 5))
+# #
+# # def series_to_items(df_: pd.DataFrame):
+# # 	return [v if v else "".join(next(empty_ids())) for v in df_.values.tolist()[0]]
+# #
+# #
+# # df_bws_prod_sched_items: pd.DataFrame = pd.DataFrame([
+# # 	{
+# # 		"header": col,
+# # 		"items": series_to_items(df_bws_prod_sched.loc[df_bws_prod_sched["ProdLine"] == col])
+# # 	}
+# # 	for i, col in enumerate(df_bws_prod_sched["ProdLine"])
+# # ])
+# #
+# # print(df_bws_prod_sched_items)
+# #
+# # st.write(df_bws_prod_sched_items)
+# #
+# # display_df(
+# # 	df_bws_prod_sched_items,
+# # 	"df_bws_prod_sched_items"
+# # )
 
 
 
@@ -4061,42 +4188,42 @@ else:
 										df_cw,
 										"NPO Data:"
 									)
-					# st.write("Tell me more:")
-					# for i, row in df_data.iterrows():
-					# 	q = int(row['Quote'])
-					# 	c = row["Comp"]
-					# 	if st.button(
-					# 		label=f"{q}",
-					# 		key=f"btn_tmm_{i}"
-					# 	):
-					# 		if c == "STG":
-					# 			df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
-					# 			df_d: pd.DataFrame = df_dealers2
-					# 		else:
-					# 			df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
-					# 			df_d: pd.DataFrame = df_dealers
+				# st.write("Tell me more:")
+				# for i, row in df_data.iterrows():
+				# 	q = int(row['Quote'])
+				# 	c = row["Comp"]
+				# 	if st.button(
+				# 		label=f"{q}",
+				# 		key=f"btn_tmm_{i}"
+				# 	):
+				# 		if c == "STG":
+				# 			df_o: pd.DataFrame = df_orders2.loc[df_orders2["SGquote"] == q]
+				# 			df_d: pd.DataFrame = df_dealers2
+				# 		else:
+				# 			df_o: pd.Series = df_orders.loc[df_orders["Quote#"] == q]
+				# 			df_d: pd.DataFrame = df_dealers
 
-					# 		# dfdd = pd.DataFrame(df_o.transpose())
-					# 		# dfdd.columns = ["Value"]
-					# 		# print(dfdd)
-					# 		st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
-					# 		stde_orders = display_df(
-					# 			df_o
-					# 		)
+				# 		# dfdd = pd.DataFrame(df_o.transpose())
+				# 		# dfdd.columns = ["Value"]
+				# 		# print(dfdd)
+				# 		st.write(f"Order Data ({df_o.shape[0]} rows X {df_o.shape[1]} columns):")
+				# 		stde_orders = display_df(
+				# 			df_o
+				# 		)
 
-					# 		if not df_o.empty:
-					# 			sr_o = df_o.iloc[0]
-					# 			dealer_id = sr_o["DealerID"]
-					# 			df_d = df_d.loc[df_d["ID"] == dealer_id]
-					# 			display_df(
-					# 				df_d,
-					# 				"Dealer Data:"
-					# 			)
+				# 		if not df_o.empty:
+				# 			sr_o = df_o.iloc[0]
+				# 			dealer_id = sr_o["DealerID"]
+				# 			df_d = df_d.loc[df_d["ID"] == dealer_id]
+				# 			display_df(
+				# 				df_d,
+				# 				"Dealer Data:"
+				# 			)
 
-					# 		# display_df(
-					# 		# 	dfdd,
-					# 		# 	"Transposed:"
-					# 		# )
+				# 		# display_df(
+				# 		# 	dfdd,
+				# 		# 	"Transposed:"
+				# 		# )
 			else:
 				st.session_state.update({
 					k_times_blank_rerun: times_blank_rerun + 1
