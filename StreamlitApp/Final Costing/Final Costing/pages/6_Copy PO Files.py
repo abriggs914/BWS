@@ -375,13 +375,13 @@ if pills_version == options_pills_version[1]:
             "MStockCode": "count"
         }).reset_index()
 
-        max_pos: int = 5
+        max_pos: int = 10
         k_multiselect_pos: str = "key_multiselect_pos"
         multiselect_pos = st.multiselect(
             label=f"Select up to {max_pos} POs from the list of {df_recent_pos.shape[0]}:",
             key=k_multiselect_pos,
             options=df_recent_pos["PurchaseOrder_n"],
-            max_selections=5
+            max_selections=max_pos
         )
 
         df_selected_pos: pd.DataFrame = df_parts_pos.loc[
@@ -421,14 +421,26 @@ if pills_version == options_pills_version[1]:
         for i, row in df_parts.iterrows():
             for j, col in enumerate(file_cols):
                 k_found_col = f"found_{col}"
+                # k_found_col = col
                 # st.write(f"{k_found_col=}")
-                data_cols[k_found_col] = k_found_col
+                ft = col.split("_")[0]
+
+                # # if pd.isna(df_parts.loc[i, col]) or (not df_parts.loc[i, col]):
+                #
+                # if i == 0 and j < 1:
+                #     st.write(f"{i=}, {j=}")
+                #     st.write(df_parts)
+                #
+                #
+                # # data_cols[k_found_col] = k_found_col
+                data_cols[ft] = ft
                 if i == 0:
-                    df_parts[k_found_col] = False
+                    df_parts[ft] = False
                 exists_path = check_file_exists(row[col])
-                exists = bool(exists_path)
+                exists = bool(exists_path) or df_parts.loc[i, ft]
                 exists_path = exists_path if exists else None
-                df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
+                # df_parts.loc[i, [k_found_col, col]] = [exists, exists_path]
+                df_parts.loc[i, [ft, col]] = [exists, exists_path]
 
         show_cols.update(data_cols)
         # show_cols.update({
@@ -459,6 +471,9 @@ if pills_version == options_pills_version[1]:
             how="outer",
             on="MStockCode"
         )
+
+        # remove redundant file types
+
 
         display_df(
             df_parts[list(show_cols)].rename(columns=show_cols),

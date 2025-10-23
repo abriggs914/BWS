@@ -1,4 +1,5 @@
 import io
+import gc
 import cv2
 import numpy as np
 import pandas as pd
@@ -13,8 +14,11 @@ from operator import itemgetter
 from PIL import Image
 import re
 
+import altair as alt
 from streamlit_pills import pills
 from streamlit_pdf_viewer import pdf_viewer
+
+from utility import money, isnumber
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\abriggs\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 
@@ -246,6 +250,20 @@ if pills_mode == options_pills_mode[0]:
 
 else:
 
+	dpi, row = 300, 90
+	known_cols: list[str] = [
+		"Qty Ord.",
+		"Qty Ship.",
+		"Qty B.O.",
+		"Piece No.",
+		"Unit Price",
+		"Total Price"
+	]
+
+	int_cols = {"lst": known_cols[:3], "func": lambda v: try_cast(v, "int")}
+	str_cols = {"lst": known_cols[3:4], "func": lambda v: try_cast(v, "str")}
+	dbl_cols = {"lst": known_cols[-2:], "func": lambda v: try_cast(v, "float")}
+
 	# ---- Optional on Windows: point pytesseract to tesseract.exe ----
 	# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 	# or wherever yours is installed
@@ -289,7 +307,7 @@ else:
 
 
 	# ----------------- Table grid detection -----------------
-	def detect_table_cells(bw, min_line_len_frac=0.25, line_thickness=1):
+	def detect_table_cells(bw, min_line_len_frac=0.12, line_thickness=1):
 		"""
 		Detects table grid by morphological operations.
 		Returns a list of cell boxes [(x, y, w, h), ...] sorted by rows then cols.
@@ -298,35 +316,28 @@ else:
 		min_len = int(min(h, w) * min_line_len_frac)
 
 		# Kernels for morphology
-		horiz_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(10, w // 40), line_thickness))
-		vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (line_thickness, max(10, h // 40)))
+		horiz_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(10, w // 50), 2))
+		vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(5, h // 20)))
 
 		# Extract horizontal and vertical lines
 		horiz = cv2.morphologyEx(bw, cv2.MORPH_OPEN, horiz_kernel, iterations=2)
 		vert = cv2.morphologyEx(bw, cv2.MORPH_OPEN, vert_kernel, iterations=2)
 
-		# Keep only long lines
-		def filter_long_lines(img, axis=0):
-			cnts, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-			keep = np.zeros_like(img)
-			for c in cnts:
-				x, y, cw, ch = cv2.boundingRect(c)
-				ln = ch if axis == 0 else cw
-				if ln >= min_len:
-					cv2.drawContours(keep, [c], -1, 255, -1)
-			return keep
-
-		horiz = filter_long_lines(horiz, axis=1)
-		vert = filter_long_lines(vert, axis=0)
-
-		# st.write(f"horiz")
-		# st.write(horiz)
-		# st.write(f"vert")
-		# st.write(vert)
+		# # Keep only long lines
+		# def filter_long_lines(img, axis=0):
+		# 	cnts, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		# 	keep = np.zeros_like(img)
+		# 	for c in cnts:
+		# 		x, y, cw, ch = cv2.boundingRect(c)
+		# 		ln = ch if axis == 0 else cw
+		# 		if ln >= min_len:
+		# 			cv2.drawContours(keep, [c], -1, 255, -1)
+		# 	return keep
+		#
+		# horiz = filter_long_lines(horiz, axis=1)
+		# vert = filter_long_lines(vert, axis=0)
 
 		grid = cv2.bitwise_or(horiz, vert)
-		# st.write(f"grid")
-		# st.write(grid)
 
 		# Intersections can help ensure real grid (optional)
 		intersections = cv2.bitwise_and(horiz, vert)
@@ -334,40 +345,37 @@ else:
 			# Not enough grid structure
 			return []
 
-		# Find boxes by looking at closed contours in the grid's inverted mask
-		# Create a mask where table cells (white areas bounded by lines) are blobs
+		# # Find boxes by looking at closed contours in the grid's inverted mask
+		# # Create a mask where table cells (white areas bounded by lines) are blobs
+		# table_mask = cv2.bitwise_not(grid)
+		# # Slight closing to merge tiny gaps
+		# table_mask = cv2.morphologyEx(table_mask, cv2.MORPH_CLOSE,
+		# 							  cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)), 1)
+
+
+		footer_cutoff = int(h * 0.90)  # keep upper 90% of the page only
+		bw_no_footer = bw[:footer_cutoff, :]  # crop binary image
+		h, w = bw_no_footer.shape
+		# recompute kernels and grid using bw_no_footer instead of bw
+		horiz = cv2.morphologyEx(bw_no_footer, cv2.MORPH_OPEN, horiz_kernel, iterations=2)
+		vert = cv2.morphologyEx(bw_no_footer, cv2.MORPH_OPEN, vert_kernel, iterations=2)
+		grid = cv2.bitwise_or(horiz, vert)
 		table_mask = cv2.bitwise_not(grid)
-		# Slight closing to merge tiny gaps
-		table_mask = cv2.morphologyEx(table_mask, cv2.MORPH_CLOSE,
-									  cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)), 1)
 
 		cnts, _ = cv2.findContours(table_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-		# st.write(f"cnts")
-		# st.write(cnts)
 		boxes = []
 		for c in cnts:
 			x, y, cw, ch = cv2.boundingRect(c)
-			# # Filter out non-cell areas (too big/too small/outer background)
-			# if cw < 25 or ch < 14:  # tiny
-			# 	continue
-			# if cw > int(w * 0.999) and ch > int(h * 0.999):  # full page
-			# 	continue
-			# # Require there to be surrounding grid lines near borders
-			# # (loose check: look for some black pixels along borders in grid)
-			# pad = 2
-			# left_line = grid[y:y + ch, max(0, x - pad):x + 1].sum() > 0
-			# right_line = grid[y:y + ch, x + cw - 1:min(w, x + cw + pad)].sum() > 0
-			# top_line = grid[max(0, y - pad):y + 1, x:x + cw].sum() > 0
-			# bot_line = grid[y + ch - 1:min(h, y + ch + pad), x:x + cw].sum() > 0
-			# # if sum([left_line, right_line, top_line, bot_line]) >= 2:
+			if cw > int(w * 0.999) and ch > int(h * 0.999):
+				continue  # keep skipping full page only
+			elif cw > int(w * 0.90):  # previously cropped wide cells
+				boxes.append((x, y, cw, ch))
+				continue
 			boxes.append((x, y, cw, ch))
 
 		if not boxes:
 			return []
-
-		st.write(f"boxes")
-		st.write(boxes)
 
 		# Cluster into rows (by y) then sort each row by x
 		boxes = sorted(boxes, key=lambda b: (b[1], b[0]))
@@ -387,8 +395,6 @@ else:
 		# Normalize each row order and reduce duplicates/overlaps
 		cleaned = []
 		for row in rows:
-			st.write(f"A ROW")
-			st.write(row)
 			row = sorted(row, key=lambda b: b[0])
 			# remove overlapping duplicates
 			keep = []
@@ -434,18 +440,14 @@ else:
 				else:
 					grouped.append([b])
 		# keep only rows with target count
-		st.write("A Grouped")
-		st.write(grouped)
 		grouped = [sorted(r, key=lambda b: b[0]) for r in grouped if len(r) == cols]
-		st.write("B Grouped")
-		st.write(grouped)
 
 		data = []
 		for r in grouped:
 			row_vals = []
 			for (x, y, w, h) in r:
 				roi = cv_bgr[max(0, y + 2):y + h - 2, max(0, x + 2):x + w - 2]
-				st.write(f"{r=}, {x=}, {y=}, {w=}, {h=}, {roi=}")
+				# st.write(f"{r=}, {x=}, {y=}, {w=}, {h=}, {roi=}")
 				row_vals.append(ocr_cell(roi))
 			data.append(row_vals)
 		if not data:
@@ -516,115 +518,437 @@ else:
 		return cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
 
 
+	def try_cast(v, type_: str = "str"):
+		vs = str(v).replace(" ", "").strip()
+		try:
+			if type_.lower().strip() == "int":
+				return int(vs)
+			elif type_.lower().strip() == "float":
+				return float(vs)
+			else:
+				return v
+		except:
+			return None
+
+
+	def score_df_accuracy(df: pd.DataFrame) -> pd.DataFrame:
+		"""
+		Scores each known column by how many values successfully cast
+		to the expected type (int, float, str).
+		Returns a summary DataFrame with per-column and overall accuracy.
+		"""
+		results = []
+
+		def score_type(col_name, target_type):
+			series = df[col_name].dropna().astype(str)
+			total = len(series)
+			if total == 0:
+				return 0.0
+
+			ok = 0
+			for v in series:
+				casted = try_cast(v, target_type)
+				if casted is not None and not (isinstance(casted, str) and target_type != "str"):
+					ok += 1
+				elif target_type == "str" and isinstance(casted, str):
+					ok += 1
+
+			return ok / total
+
+		# Evaluate integer, string, and float groups
+		for col in int_cols["lst"]:
+			results.append({"Column": col, "Expected": "int", "Score": score_type(col, "int")})
+		for col in str_cols["lst"]:
+			results.append({"Column": col, "Expected": "str", "Score": score_type(col, "str")})
+		for col in dbl_cols["lst"]:
+			results.append({"Column": col, "Expected": "float", "Score": score_type(col, "float")})
+
+		# Build summary DataFrame
+		df_score = pd.DataFrame(results)
+		df_score["Score %"] = (df_score["Score"] * 100).round(1)
+		df_score.loc["Overall"] = ["—", "—", df_score["Score"].mean(), df_score["Score %"].mean()]
+		return df_score
+
+
 	# PO Invoices
 	st.title("PO Invoice Extractor")
-	uploaded_file = st.file_uploader("Upload a PO Invoice PDF", type=["pdf"])
+	uploaded_files = st.file_uploader(
+		"Upload a PO Invoice PDF",
+		type="pdf"
+		# ,
+		# accept_multiple_files=True
+	)
 
-	dpi = st.slider("Render DPI", 200, 400, value=300, step=50, disabled=True)
-	rot = st.slider("Rotate", 0, 270, value=0, step=90, disabled=True)
-	digits_only = st.checkbox("Digits-only OCR for cells", value=False)
+	# dpi = st.slider("Render DPI", 200, 400, value=300, step=50, disabled=True)
+	# rot = st.slider("Rotate", 0, 270, value=0, step=90, disabled=True)
+	# digits_only = st.checkbox("Digits-only OCR for cells", value=False)
 	show_debug = st.checkbox("Show debug masks", value=False)
 
-	if uploaded_file:
-		pdf_bytes = uploaded_file.getvalue()
-		with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-			for pidx, page in enumerate(pdf.pages, start=1):
-				st.subheader(f"Page {pidx}")
-				# Render page to image
-				# pil = page.to_image(resolution=dpi).original
-				# cv = pil_to_cv(pil)
-				#
-				# # Preprocess
-				# gray, bw = preprocess_for_ocr(cv, adaptive=True)
-				# gray = gray.transpose()[::-1]
-				# bw = bw.transpose()[::-1]
-				#
-				# # Detect table grid
-				# detected = detect_table_cells(bw)
+	if uploaded_files:
+		if not isinstance(uploaded_files, (list, tuple)):
+			uploaded_files = [uploaded_files]
+		if st.button(
+			f"Process {len(uploaded_files)} pdf(s)?"
+		):
+			pdf_tables: list[pd.DataFrame] = []
+			for file in uploaded_files:
+				# st.write(file)
+				pdf_bytes = file.getvalue()
+				with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+					for pidx, page in enumerate(pdf.pages, start=1):
+						with st.expander(f"{file.name}  -  Page {pidx}"):
 
-				pil = page.to_image(resolution=dpi).original
-				cv = pil_to_cv(pil)
+							pil = page.to_image(resolution=dpi).original
+							cv = pil_to_cv(pil)
 
-				# Apply the SAME rotation to cv first
-				cv = rotate_cv(cv, rot)
+							# # Apply the SAME rotation to cv first
+							# cv = rotate_cv(cv, rot)
 
-				# Now preprocess (deskew, threshold) on the rotated image
-				gray, bw = preprocess_for_ocr(cv, adaptive=True)
+							# Now preprocess (deskew, threshold) on the rotated image
+							gray, bw = preprocess_for_ocr(cv, adaptive=True)
 
-				# Make sure arrays are contiguous before any PIL/Tesseract calls or cv2 color ops
-				gray = np.ascontiguousarray(gray)
-				bw = np.ascontiguousarray(bw)
-				cv = np.ascontiguousarray(cv)
+							# Make sure arrays are contiguous before any PIL/Tesseract calls or cv2 color ops
+							gray = np.ascontiguousarray(gray)
+							bw = np.ascontiguousarray(bw)
+							cv = np.ascontiguousarray(cv)
 
-				# Detect grid on bw
-				detected = detect_table_cells(bw)
+							# Detect grid on bw
+							detected = detect_table_cells(bw)
 
-				if detected:
-					(cells, cols) = detected
-					# st.write(f"cells")
-					# st.write(cells)
-					# st.write(f"cols")
-					# st.write(cols)
-					df = assemble_table_from_cells(cv, rows=None, cols=2, cells=cells)
-					st.write(df)
-					df.columns = [f"col_{i+1}" for i in range(len(df.columns))]
-					st.write(df)
-					col_0: str = df.columns.tolist()[0]
-					df = df[[col_0]]
-					df = df[~pd.isna(df[col_0])]
-					df = df[df[col_0] != ""]
+							cont_0 = st.container()
+							cont_1 = st.container(border=True)
+							cont_1.subheader("debugging info:")
+							cols_results_0 = cont_1.columns(2)
 
-					known_cols: list[str] = [
-						"Qty Ord.",
-						"Qty Ship.",
-						"Qty B.O.",
-						"Piece No.",
-						"Unit Price",
-						"Total Price"
-					]
-					n_known_cols: int = len(known_cols)
-					table_vals: str = df.loc[1, col_0]
+							if detected:
+								(cells, cols) = detected
 
-					table_data = {kc: [] for kc in known_cols}
-					splt_vals: list[str] = table_vals.split("\n")
-					# st.write(len(splt_vals))
-					# st.write(splt_vals)
-					for i in range(len(splt_vals)):
-						sub_splt = splt_vals[i].split(" ")
-						for j in range(len(sub_splt)):
-							# st.write(f"{i=}, {j=}, {sub_splt=}")
-							col = known_cols[j]
-							table_data[col].append(sub_splt[j])
+								expand_right = 0.4009  # 18 % of page width — adjust until green boxes cover prices
+								for i, (x, y, w, h) in enumerate(cells):
+									new_w = int(w * (1 + expand_right))
+									cells[i] = (x, y, new_w, h)
 
-					st.write(table_data)
-					table_data = {k: v for k, v in table_data.items() if v}
-					df_table_data: pd.DataFrame = pd.DataFrame(table_data)
-					st.write(df_table_data)
+								page_height = bw.shape[0]
+								max_y1 = max(y + h for (x, y, w, h) in cells)
+								gap_below = page_height - max_y1
 
-					if df is not None and not df.empty:
-						st.dataframe(df, use_container_width=True)
-						st.download_button(
-							f"Download Page {pidx} as CSV",
-							df.to_csv(index=False).encode("utf-8"),
-							file_name=f"page_{pidx}.csv",
-							mime="text/csv",
-						)
-					else:
-						st.info("Grid found but OCR returned no cells; trying fallback…")
-						df2 = words_to_naive_table(cv)
-						st.dataframe(df2 if df2 is not None else pd.DataFrame(["No result"]))
+								# If there’s significant white space below, extend the last row boxes
+								expand_bottom = 0.625  # 18 % of page width — adjust until green boxes cover prices
+								for i, (x, y, w, h) in enumerate(cells):
+									new_h = int(h * (1 + expand_bottom))
+									cells[i] = (x, y, w, new_h)
+
+								df = assemble_table_from_cells(cv, rows=None, cols=2, cells=cells)
+								df.columns = [f"col_{i+1}" for i in range(len(df.columns))]
+								col_0: str = df.columns.tolist()[0]
+								df = df[[col_0]]
+								df = df[~pd.isna(df[col_0])]
+								df = df[df[col_0] != ""]
+
+								if show_debug:
+									with cols_results_0[1]:
+										display_df(
+											df,
+											"Interpreted values:"
+										)
+
+								n_known_cols: int = len(known_cols)
+								header_vals: str = df.loc[0, col_0].split("\n")[1]
+								header_cols = ["P.O. Number", "Memo No.", "Date"]
+
+								cols_results_0[1].write("header_vals")
+								cols_results_0[1].write(header_vals)
+								po, memo_no, *rest = header_vals.split(" ", 2)
+								l_memo = ""
+								cols_results_0[1].write(f"A {po=}, {memo_no=}, {rest=}")
+								j_rest = " ".join(rest)
+								if j_rest.count(" ") == 0:
+									date = j_rest
+								else:
+									*rest, l_memo, date = j_rest.rsplit(" ", 2)
+
+								cols_results_0[1].write(f"B {po=}, {date=}, {l_memo=}, {memo_no=}, {rest=}")
+								memo_no = memo_no + l_memo
+								table_vals: str = df.loc[1, col_0]
+
+								table_data = {kc: [] for kc in known_cols}
+								splt_vals: list[str] = table_vals.split("\n")
+								for i in range(len(splt_vals)):
+									if splt_vals[i].strip():
+										sub_splt = splt_vals[i].split(" ", len(known_cols) - 1)
+										# st.write(f"{i=}")
+										# st.write(sub_splt)
+										for j in range(len(sub_splt)):
+											col = known_cols[j]
+											table_data[col].append(sub_splt[j])
+
+								# st.write(table_data)
+								table_data = {k: v for k, v in table_data.items() if v}
+								# st.write(table_data)
+								df_table_data: pd.DataFrame = pd.DataFrame(table_data)
+								df_table_data["PO"] = po
+								df_table_data["Memo"] = memo_no
+								df_table_data["Date"] = date
+								df_table_data["File"] = file.name
+								df_table_data["Page"] = pidx
+
+								for i, col_data in enumerate([
+									int_cols,
+									str_cols,
+									dbl_cols
+								]):
+									lst = col_data["lst"]
+									func = col_data["func"]
+									for j, col in enumerate(lst):
+										df_table_data[col] = df_table_data[col].apply(func)
+
+								with cont_0:
+									display_df(
+										df_table_data,
+										"Parsed Data:"
+									)
+								pdf_tables.append(df_table_data)
+
+								if df is not None and not df.empty:
+									# st.dataframe(df, use_container_width=True)
+									cont_0.download_button(
+										f"Download Page {pidx} as CSV",
+										df_table_data.to_csv(index=False).encode("utf-8"),
+										file_name=f"page_{pidx}.csv",
+										mime="text/csv",
+										key=f"btn_download_df_table_{pidx}_{file.name}"
+									)
+								else:
+									cont_0.info("Grid found but OCR returned no cells; trying fallback…")
+									df2 = words_to_naive_table(cv)
+									df2 = df2 if df2 is not None else pd.DataFrame(["No result"])
+									cont_0.dataframe(df2)
+							else:
+								cont_0.info("No clear grid detected; trying fallback (word clustering)…")
+								df2 = words_to_naive_table(cv)
+								df2 = df2 if df2 is not None else pd.DataFrame(["No result"])
+								cont_0.dataframe(df2)
+
+							if show_debug:
+
+								# with cols[0]:
+								# 	st.image(pil, caption="Original")
+								#
+								# with cols[1]:
+								# 	st.image(cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR), caption="Gray/Deskew")
+								#
+								# with cols[2]:
+								# 	st.image(bw, caption="Binary (inverted)")
+
+								with cols_results_0[0]:
+									debug = cv.copy()
+									for (x, y, w, h) in cells:
+										cv2.rectangle(debug, (x, y), (x + w, y + h), (0, 255, 0), 1)
+									st.image(cv2.cvtColor(debug, cv2.COLOR_BGR2RGB), caption="Detected cells (expanded)")
+				cols_results = st.columns([0.64, 0.18, 0.18], border=True)
+
+				if pdf_tables:
+					df_all = pd.concat(pdf_tables, ignore_index=True)
 				else:
-					st.info("No clear grid detected; trying fallback (word clustering)…")
-					df2 = words_to_naive_table(cv)
-					st.dataframe(df2 if df2 is not None else pd.DataFrame(["No result"]))
+					st.warning("No tables extracted from any uploaded files.")
+					st.stop()
 
-				if show_debug:
-					cols = st.columns(3)
-					with cols[0]:
-						st.image(pil, caption="Original")
+				sub_total = df_all["Total Price"].sum()
+				if isnumber(sub_total):
+					sales_tax = sub_total * 0.15
+					total = sub_total + sales_tax
+				else:
+					sales_tax = "?"
+					total = "?"
+				po = df_all["PO"].mode().iat[0]
+				memo = df_all["Memo"].mode().iat[0]
+				date = df_all["Date"].mode().iat[0]
 
-					with cols[1]:
-						st.image(cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR), caption="Gray/Deskew")
+				with cols_results[0]:
+					display_df(
+						df_all,
+						"Results",
+						width=1000
+					)
+					st.download_button(
+						f"Download results as CSV",
+						df_all.to_csv(index=False).encode("utf-8"),
+						file_name=f"parsed_results_{datetime.datetime.now():%Y%m%d%H%M%S}.csv",
+						mime="text/csv",
+						key=f"btn_download_df_all_{file.name}"
+					)
+					df_score = score_df_accuracy(df_all)
+					cols_results_scores = st.columns(2)
+					with cols_results_scores[0]:
+						display_df(
+							df_score,
+							f"Accuracy score:"
+						)
+					with cols_results_scores[1]:
+						df_plot = df_score.copy()
+						df_plot = df_plot[df_plot["Column"].notna()].copy()
+						df_plot["Score %"] = pd.to_numeric(df_plot["Score %"], errors="coerce")
+						order = [c for c in df_plot["Column"].tolist() if c != "—"] + ["—"]
+						df_plot = df_plot.set_index("Column").loc[order].reset_index()
+						chart = (
+							alt.Chart(df_plot)
+							.mark_bar()
+							.encode(
+								x=alt.X("Score %:Q", title="Accuracy (%)", scale=alt.Scale(domain=[0, 100])),
+								y=alt.Y("Column:N", sort="-x", title=None),
+								color=alt.Color(
+									# use an expression to choose color based on value
+									"Score %:Q",
+									scale=alt.Scale(
+										domain=[0, 60, 85, 100],
+										range=["firebrick", "gold", "seagreen", "seagreen"]
+									),
+									legend=None
+								),
+								tooltip=["Column", "Expected", "Score %"]
+							)
+							.properties(width=500, height=325, title="Column Accuracy Scores")
+						)
+						text = (
+							alt.Chart(df_plot)
+							.mark_text(align="left", dx=5, color="white")
+							.encode(
+								x="Score %:Q",
+								y=alt.Y("Column:N", sort=order),
+								text=alt.Text("Score %:Q", format=".0f")
+							)
+						)
+						st.altair_chart(chart + text)
 
-					with cols[2]:
-						st.image(bw, caption="Binary (inverted)")
+				with cols_results[1]:
+					st.metric(
+						label="PO",
+						value=po
+					)
+					st.metric(
+						label="Memo",
+						value=memo
+					)
+					st.metric(
+						label="Date",
+						value=date
+					)
+
+				with cols_results[2]:
+					st.metric(
+						label="Sub-Total",
+						value=money(sub_total) if isnumber(sub_total) else sub_total
+					)
+					st.metric(
+						label="Sales-Tax",
+						value="+ " + f"{money(sales_tax) if (isnumber(sales_tax) and sales_tax != "?") else sales_tax}"
+					)
+					st.divider()
+					st.metric(
+						label="Total",
+						value=money(total) if (isnumber(total) and sales_tax != "?") else total
+					)
+				gc.collect()
+
+			###################
+			## Combined Results
+			###################
+
+			if len(uploaded_files) > 1:
+				cols_results = st.columns([0.64, 0.18, 0.18], border=True)
+				df_all_master: pd.DataFrame = pd.concat(pdf_tables, ignore_index=True)
+				sub_total = df_all_master["Total Price"].sum()
+				if isnumber(sub_total):
+					sales_tax = sub_total * 0.15
+					total = sub_total + sales_tax
+				else:
+					sales_tax = "?"
+					total = "?"
+				po = df_all_master["PO"].mode().iat[0]
+				memo = df_all_master["Memo"].mode().iat[0]
+				date = df_all_master["Date"].mode().iat[0]
+
+				with cols_results[0]:
+					display_df(
+						df_all_master,
+						"Combined Results",
+						width=1000
+					)
+					st.download_button(
+						f"Download results as CSV",
+						df_all_master.to_csv(index=False).encode("utf-8"),
+						file_name=f"parsed_results_{datetime.datetime.now():%Y%m%d%H%M%S}.csv",
+						mime="text/csv",
+						key=f"btn_download_df_all_master"
+					)
+					df_score = score_df_accuracy(df_all_master)
+					cols_results_scores = st.columns(2)
+					with cols_results_scores[0]:
+						display_df(
+							df_score,
+							f"Accuracy score:"
+						)
+					with cols_results_scores[1]:
+						df_plot = df_score.copy()
+						df_plot = df_plot[df_plot["Column"].notna()].copy()
+						df_plot["Score %"] = pd.to_numeric(df_plot["Score %"], errors="coerce")
+						order = [c for c in df_plot["Column"].tolist() if c != "—"] + ["—"]
+						df_plot = df_plot.set_index("Column").loc[order].reset_index()
+						chart = (
+							alt.Chart(df_plot)
+							.mark_bar()
+							.encode(
+								x=alt.X("Score %:Q", title="Accuracy (%)", scale=alt.Scale(domain=[0, 100])),
+								y=alt.Y("Column:N", sort="-x", title=None),
+								color=alt.Color(
+									# use an expression to choose color based on value
+									"Score %:Q",
+									scale=alt.Scale(
+										domain=[0, 60, 85, 100],
+										range=["firebrick", "gold", "seagreen", "seagreen"]
+									),
+									legend=None
+								),
+								tooltip=["Column", "Expected", "Score %"]
+							)
+							.properties(width=500, height=250, title="Column Accuracy Scores")
+						)
+						text = (
+							alt.Chart(df_plot)
+							.mark_text(align="left", dx=5, color="white")
+							.encode(
+								x="Score %:Q",
+								y=alt.Y("Column:N", sort=order),
+								text=alt.Text("Score %:Q", format=".0f")
+							)
+						)
+						st.altair_chart(chart+text)
+
+				with cols_results[1]:
+					st.metric(
+						label="PO",
+						value=po
+					)
+					st.metric(
+						label="Memo",
+						value=memo
+					)
+					st.metric(
+						label="Date",
+						value=date
+					)
+
+				with cols_results[2]:
+					st.metric(
+						label="Sub-Total",
+						value=money(sub_total) if isnumber(sub_total) else sub_total
+					)
+					st.metric(
+						label="Sales-Tax",
+						value="+ " + f"{(money(sales_tax) if (isnumber(sales_tax) and sales_tax != "?") else sales_tax)}"
+					)
+					st.divider()
+					st.metric(
+						label="Total",
+						value=money(total) if (isnumber(total) and sales_tax != "?") else total
+					)

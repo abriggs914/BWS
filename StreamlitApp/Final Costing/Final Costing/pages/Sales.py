@@ -2126,16 +2126,21 @@ if pills_control == options_pills_control[1]:
 				df_known_quotes: pd.DataFrame = df_meetings_results.loc[~pd.isna(df_meetings_results["MeetingID"])]
 				df_new_quotes: pd.DataFrame = df_meetings_results.loc[pd.isna(df_meetings_results["MeetingID"])]
 
-				sql_exist = "UPDATE [BWSdb].[dbo].[WSOM_MeetingNotes] SET [DateResolved] = '{DT}', [ResolvedBy] = '{DU}' WHERE (([MeetingID] = {MID}) AND ([Quote] IN {QTS}));"
+				sql_orders = f"UPDATE [BWSdb].[dbo].[Orders] SET [WO Reviewed] = 1, [WO Review Date] = '{datetime.datetime.now():%Y-%m-%d %H:%M:%S}' WHERE [Quote#] IN ({{QTS}})"
+
+				sql_exist = "UPDATE [BWSdb].[dbo].[WSOM_MeetingNotes] SET [DateResolved] = '{DT}', [ResolvedBy] = '{DU}' WHERE (([MeetingID] = {MID}) AND ([Quote] IN ({QTS})));"
 				sql_exist = sql_exist.format(
 					DT=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 					MID=m_id,
 					DU=DEFAULT_USER,
 					QTS=",".join(list(map(str, df_known_quotes["Quote"].unique().tolist())))
 				)
+				sql_orders_exist = sql_orders.format(QTS=",".join(list(map(str, df_known_quotes["Quote"].unique().tolist()))))
 
 				if not df_known_quotes.empty:
-					connect(sql_exist, do_print=True, do_show=True, do_exec=False)
+					connect(sql_exist, do_print=True, do_show=True, do_exec=True)
+					connect(sql_orders_exist, do_print=True, do_show=True, do_exec=True)
+
 
 				sql_new = "INSERT INTO [BWSdb].[dbo].[WSOM_MeetingNotes] ([Active], [MeetingID], [Quote], [DateResolved], [ResolvedBy]) VALUES "
 				for i, row in df_new_quotes.iterrows():
@@ -2145,9 +2150,11 @@ if pills_control == options_pills_control[1]:
 					MID=m_id,
 					QTS=",".join(list(map(str, df_new_quotes["Quote"].unique().tolist())))
 				).removesuffix(",") + ";"
+				sql_orders_new = sql_orders.format(QTS=",".join(list(map(str, df_new_quotes["Quote"].unique().tolist()))))
 
 				if not df_new_quotes.empty:
-					connect(sql_new, do_print=True, do_show=True, do_exec=False)
+					connect(sql_new, do_print=True, do_show=True, do_exec=True)
+					connect(sql_orders_new, do_print=True, do_show=True, do_exec=True)
 
 				# 			if editing:
 				# 				sql = ("""
