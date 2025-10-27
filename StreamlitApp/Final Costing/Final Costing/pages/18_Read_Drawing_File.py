@@ -1,5 +1,7 @@
 import io
 import gc
+import json
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -18,15 +20,21 @@ import altair as alt
 from streamlit_pills import pills
 from streamlit_pdf_viewer import pdf_viewer
 
-from utility import money, isnumber
+from utility import money, isnumber, percent
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\abriggs\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+SAVE_FILE: str = r"\\bwsfp01\Public\Accounts Payable\AP - BWS Manufacturing\Processed Invoices\processed_invoices.json"
 
 
 @st.cache_data(ttl=None, show_spinner=True)
 def load_pdf_binary(pdf_file):
 	with open(pdf_file, "rb") as f:
 		return f.read()
+
+
+def read_saved_data() -> list[dict]:
+	with open(SAVE_FILE, "r") as f:
+		return json.load(f)
 
 
 st.set_page_config(layout="wide")
@@ -39,6 +47,9 @@ pills_mode = pills(
 	index=1,
 	options=options_pills_mode
 )
+
+read_data: list[dict] = read_saved_data()
+
 
 if pills_mode == options_pills_mode[0]:
 
@@ -268,6 +279,16 @@ else:
 	# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 	# or wherever yours is installed
 
+
+	def clean_numeric(txt):
+		txt = txt.replace("S", "5").replace("O", "0")
+		txt = txt.replace("..", ".").replace(",", ".")
+		txt = txt.replace(" ", "").replace("!", "|")
+		txt = txt.replace("(", "|").replace(")", "|")
+		txt = txt.replace("|", "")
+		return txt
+
+
 	# ----------------- Image utilities -----------------
 	def pil_to_cv(pil_img):
 		arr = np.array(pil_img)
@@ -294,15 +315,34 @@ else:
 
 
 	def preprocess_for_ocr(cv_bgr, adaptive=True):
+		# gray = cv2.cvtColor(cv_bgr, cv2.COLOR_BGR2GRAY)
+		# gray = deskew(gray)
+		# # Light denoise
+		# gray = cv2.bilateralFilter(gray, 5, 40, 40)
+		# if adaptive:
+		# 	# bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 31, 12)
+		# 	bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25,10)
+		# else:
+		# 	_, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+		# return gray, bw
 		gray = cv2.cvtColor(cv_bgr, cv2.COLOR_BGR2GRAY)
 		gray = deskew(gray)
-		# Light denoise
 		gray = cv2.bilateralFilter(gray, 5, 40, 40)
+
 		if adaptive:
-			# bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 31, 12)
-			bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25,10)
+			bw = cv2.adaptiveThreshold(
+				gray, 255,
+				cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,
+				27, 9
+			)
 		else:
 			_, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+		# 🔍 Morph close + open to emphasize fine dots/lines
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+		bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel, iterations=1)
+		bw = cv2.morphologyEx(bw, cv2.MORPH_OPEN, kernel, iterations=1)
+
 		return gray, bw
 
 
@@ -417,11 +457,31 @@ else:
 
 	# ----------------- OCR helpers -----------------
 	def ocr_cell(image_bgr, psm=6, digits_only=False):
-		cfg = f"--oem 3 --psm {psm}"
+		# cfg = f"--oem 3 --psm {psm}"
+		# if digits_only:
+		# 	cfg += " -c tessedit_char_whitelist=0123456789.,-/"
+		# txt = pytesseract.image_to_string(image_bgr, config=cfg)
+		# return txt.strip()
+
+		cfg_base = "--oem 3 --dpi 300"
+		psms = [7, 6, 8]  # try single line, block, sparse text
+		whitelist = "0123456789.,-/"
 		if digits_only:
-			cfg += " -c tessedit_char_whitelist=0123456789.,-/"
-		txt = pytesseract.image_to_string(image_bgr, config=cfg)
-		return txt.strip()
+			cfg_base += f" -c tessedit_char_whitelist={whitelist}"
+
+		min_len: int = 8
+		txts = []
+		for psm in psms:
+			cfg = f"{cfg_base} --psm {psm}"
+			txt = pytesseract.image_to_string(image_bgr, config=cfg).strip()
+			if len(txt.replace(" ", "").strip()) >= min_len:
+				txts.append(txt)
+			else:
+				txts.append("")
+
+		print(f"OCR_CELL:")
+		print(txts)
+		return txts
 
 
 	def assemble_table_from_cells(cv_bgr, rows, cols, cells):
@@ -443,12 +503,14 @@ else:
 		grouped = [sorted(r, key=lambda b: b[0]) for r in grouped if len(r) == cols]
 
 		data = []
+		off: int = 1
 		for r in grouped:
 			row_vals = []
 			for (x, y, w, h) in r:
-				roi = cv_bgr[max(0, y + 2):y + h - 2, max(0, x + 2):x + w - 2]
+				roi = cv_bgr[max(0, y + off):y + h - off, max(0, x + off):x + w - off]
+				roi = cv2.copyMakeBorder(roi, 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=[255, 255, 255])
 				# st.write(f"{r=}, {x=}, {y=}, {w=}, {h=}, {roi=}")
-				row_vals.append(ocr_cell(roi))
+				row_vals.append("".join(ocr_cell(roi)))
 			data.append(row_vals)
 		if not data:
 			return None
@@ -540,6 +602,9 @@ else:
 		results = []
 
 		def score_type(col_name, target_type):
+			if col_name not in df:
+				return 0
+
 			series = df[col_name].dropna().astype(str)
 			total = len(series)
 			if total == 0:
@@ -616,9 +681,10 @@ else:
 							detected = detect_table_cells(bw)
 
 							cont_0 = st.container()
-							cont_1 = st.container(border=True)
-							cont_1.subheader("debugging info:")
-							cols_results_0 = cont_1.columns(2)
+							if show_debug:
+								cont_1 = st.container(border=True)
+								cont_1.subheader("debugging info:")
+								cols_results_0 = cont_1.columns(2)
 
 							if detected:
 								(cells, cols) = detected
@@ -634,6 +700,7 @@ else:
 
 								# If there’s significant white space below, extend the last row boxes
 								expand_bottom = 0.625  # 18 % of page width — adjust until green boxes cover prices
+								# expand_bottom = 0.63  # 18 % of page width — adjust until green boxes cover prices
 								for i, (x, y, w, h) in enumerate(cells):
 									new_h = int(h * (1 + expand_bottom))
 									cells[i] = (x, y, w, new_h)
@@ -656,18 +723,21 @@ else:
 								header_vals: str = df.loc[0, col_0].split("\n")[1]
 								header_cols = ["P.O. Number", "Memo No.", "Date"]
 
-								cols_results_0[1].write("header_vals")
-								cols_results_0[1].write(header_vals)
+								if show_debug:
+									cols_results_0[1].write("header_vals")
+									cols_results_0[1].write(header_vals)
 								po, memo_no, *rest = header_vals.split(" ", 2)
 								l_memo = ""
-								cols_results_0[1].write(f"A {po=}, {memo_no=}, {rest=}")
+								if show_debug:
+									cols_results_0[1].write(f"A {po=}, {memo_no=}, {rest=}")
 								j_rest = " ".join(rest)
 								if j_rest.count(" ") == 0:
 									date = j_rest
 								else:
 									*rest, l_memo, date = j_rest.rsplit(" ", 2)
 
-								cols_results_0[1].write(f"B {po=}, {date=}, {l_memo=}, {memo_no=}, {rest=}")
+								if show_debug:
+									cols_results_0[1].write(f"B {po=}, {date=}, {l_memo=}, {memo_no=}, {rest=}")
 								memo_no = memo_no + l_memo
 								table_vals: str = df.loc[1, col_0]
 
@@ -682,15 +752,24 @@ else:
 											col = known_cols[j]
 											table_data[col].append(sub_splt[j])
 
-								# st.write(table_data)
+								st.write(table_data)
 								table_data = {k: v for k, v in table_data.items() if v}
-								# st.write(table_data)
+								st.write(1)
 								df_table_data: pd.DataFrame = pd.DataFrame(table_data)
 								df_table_data["PO"] = po
 								df_table_data["Memo"] = memo_no
 								df_table_data["Date"] = date
 								df_table_data["File"] = file.name
 								df_table_data["Page"] = pidx
+
+								try:
+									df_table_data["Total Price"] = df_table_data["Total Price"].apply(lambda tp: float(str(tp).replace(" ", "").strip()))
+									if show_debug:
+										cols_results_0[1].write(f"Sum Total Price: {df_table_data['Total Price'].sum()}")
+										cols_results_0[1].write(f"Max Total Price: {df_table_data['Total Price'].max()}")
+										cols_results_0[1].write(f"Min Total Price: {df_table_data['Total Price'].min()}")
+								except:
+									st.warning("Unable to find 'Total Price'")
 
 								for i, col_data in enumerate([
 									int_cols,
@@ -700,7 +779,10 @@ else:
 									lst = col_data["lst"]
 									func = col_data["func"]
 									for j, col in enumerate(lst):
-										df_table_data[col] = df_table_data[col].apply(func)
+										try:
+											df_table_data[col] = df_table_data[col].apply(func)
+										except:
+											pass
 
 								with cont_0:
 									display_df(
@@ -753,7 +835,12 @@ else:
 					st.warning("No tables extracted from any uploaded files.")
 					st.stop()
 
-				sub_total = df_all["Total Price"].sum()
+				try:
+					sub_total = df_all["Total Price"].sum()
+				except:
+					sub_total = None
+					st.warning("Unable to find 'Total Price'")
+
 				if isnumber(sub_total):
 					sales_tax = sub_total * 0.15
 					total = sub_total + sales_tax
@@ -778,7 +865,7 @@ else:
 						key=f"btn_download_df_all_{file.name}"
 					)
 					df_score = score_df_accuracy(df_all)
-					cols_results_scores = st.columns(2)
+					cols_results_scores = st.columns([0.25, 0.6, 0.15])
 					with cols_results_scores[0]:
 						display_df(
 							df_score,
@@ -820,6 +907,44 @@ else:
 						)
 						st.altair_chart(chart + text)
 
+					with cols_results_scores[2]:
+						overall_score = df_score.loc["Overall", "Score %"]
+
+						with st.container(border=True):
+							st.subheader("Overall Accuracy")
+							if overall_score >= 90:
+								st.metric(
+									"Overall",
+									f"{overall_score:.1f}%",
+									delta="✅ Excellent",
+									# delta_color="#21AA21",
+									delta_color="normal",
+									border=True
+								)
+							elif overall_score >= 70:
+								st.metric(
+									"Overall",
+									f"{overall_score:.1f}%",
+									delta="⚠️ Good",
+									# delta_color="#FFCF4F"
+									delta_color="off",
+									border=True
+								)
+							else:
+								st.metric(
+									"Overall",
+									f"{overall_score:.1f}%",
+									delta="❌ Poor",
+									# delta_color="#AA2121"
+									delta_color="inverse",
+									border=True
+								)
+
+						# st.metric(
+						# 	label=f"Score: {percent(df_plot.loc[0, '-']/100)}",
+						# 	delta=
+						# )
+
 				with cols_results[1]:
 					st.metric(
 						label="PO",
@@ -848,6 +973,60 @@ else:
 						label="Total",
 						value=money(total) if (isnumber(total) and sales_tax != "?") else total
 					)
+
+				# Save the results
+				df_all_grps: pd.DataFrame = df_all.groupby(
+					by=[
+						"PO",
+						"Memo",
+						"Date",
+						"File",
+						"Page"
+					]
+				).agg({
+					"Piece No.": "count"
+				}).reset_index()
+
+				save_data = []
+				for i, row in df_all_grps.iterrows():
+					file = row["File"]
+					memo = row["Memo"]
+					po = row["PO"]
+					po_date = row["Date"]
+					page = row["Page"]
+					score = overall_score
+
+					df_all_grp_po: pd.DataFrame = df_all.loc[
+						(df_all["File"] == file)
+						& (df_all["Memo"] == memo)
+						& (df_all["PO"] == po)
+						& (df_all["Date"] == po_date)
+						& (df_all["Page"] == page)
+					]
+
+					df_all_grp_po = df_all_grp_po.drop(columns=["File", "Memo", "PO", "Date", "Page"])
+					try:
+						total = df_all_grp_po["Total Price"].sum().round(2)
+					except:
+						total = "?"
+
+					save_data.append({
+						"date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+						"file": file,
+						"memo": memo,
+						"po": po,
+						"po_date": po_date,
+						"page": page,
+						"total": total,
+						"score": score,
+						"data": df_all_grp_po.to_json()
+					})
+
+				read_data.extend(save_data)
+
+				with open(SAVE_FILE, "w") as f:
+					json.dump(read_data, f)
+
 				gc.collect()
 
 			###################
@@ -952,3 +1131,20 @@ else:
 						label="Total",
 						value=money(total) if (isnumber(total) and sales_tax != "?") else total
 					)
+
+with st.expander("Previously processed:", expanded=False):
+	for i, data in enumerate(read_data):
+		cols_r = st.columns(2)
+		d_ = data.copy()
+		del d_["data"]
+		cols_r[0].write(
+			d_
+		)
+		with cols_r[1]:
+			display_df(
+				pd.read_json(io.StringIO(data["data"]))
+			)
+		st.divider()
+
+	if not read_data:
+		st.write("No Data")
