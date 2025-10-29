@@ -494,20 +494,22 @@ if pills_version == options_pills_version[1]:
                     textbox_output_name = default_output_folder
                 for i, row in df_parts.iterrows():
                     for j, col in enumerate(file_cols):
-                        k_found_col = f"found_{col}"
+                        # k_found_col = f"found_{col}"
+                        k_found_col = col.upper().split("_")[0].strip()
                         if ~pd.isna(row[k_found_col]) and row[k_found_col]:
                             src_file = row[col]
-                            file = os.path.basename(src_file)
-                            if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
-                                os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
-                            dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
-                            # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                            # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
-                            if not os.path.exists(dest_file):
-                                n_files += 1
-                                shutil.copyfile(src_file, dest_file)
-                            p = int((100 * n_files / t_files))
-                            # progress_copying.progress(p, text=percent(p / 100))
+                            if src_file:
+                                file = os.path.basename(src_file)
+                                if not os.path.exists(os.path.join(default_output_folder_root, textbox_output_name)):
+                                    os.makedirs(os.path.join(default_output_folder_root, textbox_output_name))
+                                dest_file = os.path.join(default_output_folder_root, textbox_output_name, file)
+                                # st.write(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                                # print(f"{i=}, {j=}, {pn=}, {src_file=}, {dest_file=}")
+                                if not os.path.exists(dest_file):
+                                    n_files += 1
+                                    shutil.copyfile(src_file, dest_file)
+                                p = int((100 * n_files / t_files))
+                                # progress_copying.progress(p, text=percent(p / 100))
                 st.toast(f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
 
     with st.container(border=1):
