@@ -1,5 +1,6 @@
 import datetime
 import json
+import os.path
 
 import pandas as pd
 import streamlit
@@ -715,6 +716,10 @@ with st.expander("##### Expand and leave a comment, and we will follow up with y
 				"name": textbox_name.strip(),
 				"idea": textarea_idea.strip()
 			}]
+			if not os.path.exists(new_idea_file):
+				with open(new_idea_file, "w") as f:
+					json.dump([], f)
+
 			with open(new_idea_file, "r") as f:
 				orig_data = eval(str(json.load(f)))
 

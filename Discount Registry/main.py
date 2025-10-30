@@ -241,8 +241,8 @@ def read_entries():
             dims[1] = max(dims[1], len(discount.dealer))
             dims[2] = max(dims[2], len(str(discount.model.model_name)))
             dims[3] = max(dims[3], len(discount.model.clazz))
-            dims[4] = max(dims[4], len(percent(discount.slot, 3)))
-            dims[5] = max(dims[5], len(percent(discount.market, 3)))
+            dims[4] = max(dims[4], len(percent(discount.slot)))
+            dims[5] = max(dims[5], len(percent(discount.market)))
             dims[6] = max(dims[6], len(money(discount.freight)))
         # discout_entries = {k: v for k, v in f_dict.items()}
 
@@ -1230,7 +1230,7 @@ def main_view():
                     else:
                         s = str(getattr(entry, attr)).lower()
                     if attr in percentages:
-                        s = percent(float(s), 3)
+                        s = percent(float(s))
                     if attr in monies:
                         s = money(float(s))
                     if s not in query and query not in s:

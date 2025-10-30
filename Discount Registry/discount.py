@@ -13,8 +13,8 @@ def table_format(d, m, s, k, f, c, t, dims):
             d.title().ljust(dims[1]),
             m.model_name.upper().rjust(dims[2]),
             c.upper().rjust(dims[3]),
-            percent(s, 3).rjust(dims[4]),
-            percent(k, 3).rjust(dims[5]),
+            percent(s).rjust(dims[4]),
+            percent(k).rjust(dims[5]),
             money(f).rjust(dims[6])
         ]) + " |"
 
@@ -70,4 +70,4 @@ class Discount:
         # print("slot: " + str(self.slot) + ", t(): " + str(type(self.slot)))
         # print("market: " + str(self.market) + ", t(): " + str(type(self.market)))
         # print("freight: " + str(self.freight) + ", t(): " + str(type(self.freight)))
-        return self.dealer + " (" + str(self.model) + ") (" + percent(self.slot, 3) + ", " + percent(self.market, 3) + ", " + money(self.freight) + ")" 
+        return self.dealer + " (" + str(self.model) + ") (" + percent(self.slot) + ", " + percent(self.market) + ", " + money(self.freight) + ")" 
