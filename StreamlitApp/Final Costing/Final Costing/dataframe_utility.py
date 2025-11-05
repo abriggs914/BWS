@@ -1,11 +1,13 @@
 import datetime
 import random
-from typing import Optional, Any
+from typing import Optional, Any, Literal
 
 import numpy as np
 import pandas as pd
 
 import utility
+from pyodbc_connection import connect
+from sql_utility import no_specials
 from utility import excel_column_name
 
 #######################################################################################################################
@@ -16,8 +18,8 @@ from utility import excel_column_name
 VERSION = \
     """	
     General Utility file for Dataframe operations
-    Version..............1.04
-    Date...........2025-03-21
+    Version..............1.05
+    Date...........2025-11-04
     Author(s)....Avery Briggs
     """
 
@@ -342,130 +344,256 @@ def top_n_with_other_bin(
     return top_df
 
 
+def norm_columns(
+        df: pd.DataFrame,
+        date_position: Literal["start", "end", "ignore"] = "start",
+        in_place: bool = True
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+
+    def date_idx(txt: str) -> int:
+        l_txt = txt.lower()
+        try:
+            return l_txt.index("date")
+        except:
+            return -1
+
+    og_columns = df.columns.tolist()
+    column_key = {}
+    for col in og_columns:
+        n_col = col
+        l_col = str(col).lower()
+
+        if date_position != "ignore":
+            if (date_position == "end") and l_col.startswith("date"):
+                d_idx = date_idx(col)
+                n_col = f"{str(col)[d_idx+len("date"):].removeprefix("_").strip()}_Date"
+            elif (date_position == "start") and l_col.endswith("date"):
+                d_idx = date_idx(col)
+                n_col = f"Date_{str(col)[:d_idx].removesuffix("_").strip()}"
+
+        n_col = no_specials(n_col)
+
+        column_key[col] = n_col
+        if in_place:
+            df = df.rename(columns={col: n_col})
+
+    if len(set(df.columns)) != len(df.columns):
+        raise ValueError(f"Got duplicate column names: ['{"', '".join(df.columns)}']")
+
+    return df, column_key
+
+
 if __name__ == '__main__':
-    df = random_df(5, 3, match_sub_list_dtypes=True, dtypes=("list", "int"))
+    # df = random_df(5, 3, match_sub_list_dtypes=True, dtypes=("list", "int"))
+    # print(df)
+    # print(random_df(n_columns=["Name", "Date", "Price", "Cust"]))
+    # print(
+    #     random_df(n_columns={"Name": "str", "Date": "datetime", "Price": "float", "Cust": "list"}, min_len_random_str=4,
+    #               max_len_random_str=4))
+    # print(random_df(n_columns={"Name": "str", "Date": "datetime", "Price": "float", "Cust": "list", "US": "bool"},
+    #                 min_len_random_str=4, max_len_random_str=4))
+    # print(random_df(n_columns={"Name": "list", "Cust": "list"}, max_sub_list_len=6))
+    # print(random_df(10, 6, dtypes="bool"))
+    # print(random_df(10, 6, min_sub_list_len=4, max_sub_list_len=5, match_sub_list_lens=False))
+    # print(random_df(10, 6, min_sub_list_len=0, max_sub_list_len=0, match_sub_list_lens=False))
+    # print(random_df(1, 1))
+    #
+    # print(random_df(3, 3, **{
+    #     "min_random_int": -8,
+    #     "max_random_int": -1,
+    #     "min_random_float": 100,
+    #     "max_random_float": -2,
+    #     "min_random_date": datetime.datetime(2021, 1, 1),
+    #     "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
+    #     "min_len_random_str": -3,
+    #     "max_len_random_str": 7,
+    #     "min_sub_list_len": 14,
+    #     "max_sub_list_len": 6,
+    #     "match_sub_list_lens": False,
+    #     "match_sub_list_dtypes": True
+    # }))
+    #
+    # print(random_df(
+    #     3,
+    #     3,
+    #     empty_freq=0.3,
+    #     **{
+    #         "min_random_int": -8,
+    #         "max_random_int": -1,
+    #         "min_random_float": 100,
+    #         "max_random_float": -2,
+    #         "min_random_date": datetime.datetime(2021, 1, 1),
+    #         "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
+    #         "min_len_random_str": -3,
+    #         "max_len_random_str": 7,
+    #         "min_sub_list_len": 14,
+    #         "max_sub_list_len": 6,
+    #         "match_sub_list_lens": False,
+    #         "match_sub_list_dtypes": True
+    #     }))
+    #
+    # print(random_df(
+    #     10,
+    #     3,
+    #     empty_freq=[0, 0.98, 1],
+    #     **{
+    #         "min_random_int": -8,
+    #         "max_random_int": -1,
+    #         "min_random_float": 100,
+    #         "max_random_float": -2,
+    #         "min_random_date": datetime.datetime(2021, 1, 1),
+    #         "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
+    #         "min_len_random_str": -3,
+    #         "max_len_random_str": 7,
+    #         "min_sub_list_len": 14,
+    #         "max_sub_list_len": 6,
+    #         "match_sub_list_lens": False,
+    #         "match_sub_list_dtypes": True
+    #     }))
+    #
+    # print(random_df(
+    #     10,
+    #     3,
+    #     defaults={"A": [-1, -3, -5, -7, -9, -11], "B": 4, "C": 6, "D": 8, "E": 10},
+    #     **{
+    #         "min_random_int": -8,
+    #         "max_random_int": -1,
+    #         "min_random_float": 100,
+    #         "max_random_float": -2,
+    #         "min_random_date": datetime.datetime(2021, 1, 1),
+    #         "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
+    #         "min_len_random_str": -3,
+    #         "max_len_random_str": 7,
+    #         "min_sub_list_len": 14,
+    #         "max_sub_list_len": 6,
+    #         "match_sub_list_lens": False,
+    #         "match_sub_list_dtypes": True
+    #     }))
+    #
+    # print(random_df(
+    #     10,
+    #     n_columns={"Name": "str", "Cust": "int", "CustType": "str", "Active": "bool"},
+    #     defaults={"CustType": ["A", "B", "C"], "Active": 1},
+    #     **{
+    #         "min_random_int": 16,
+    #         "max_random_int": 1,
+    #         "min_random_float": 100,
+    #         "max_random_float": -2,
+    #         "min_random_date": datetime.datetime(2021, 1, 1),
+    #         "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
+    #         "min_len_random_str": 3,
+    #         "max_len_random_str": 7,
+    #         "min_sub_list_len": 14,
+    #         "max_sub_list_len": 6,
+    #         "match_sub_list_lens": False,
+    #         "match_sub_list_dtypes": True
+    #     }))
+    #
+    # print(random_df(
+    #     16,
+    #     {
+    #         "Model": "str",
+    #         "Group": "str",
+    #         "Section": "str",
+    #         "Desc": "str",
+    #         "Freq": "int",
+    #         "SortG": "int",
+    #         "SortSe": "int"
+    #     },
+    #     allow_sub_lists=False,
+    #     defaults={
+    #         "Model": ["A", "B", "C", "D", "E", "G", "H", "I", "J", "K", "L", "M", "N"],
+    #         "Group": ["Axle", "Deck", "GNK"],
+    #         "Freq": list(range(100)),
+    #         "Section": ["A", "B", "C", "D", "E", "F", "G"]
+    #     },
+    #     min_random_int=0,
+    #     max_random_int=9)
+    # )
+
+    df_o = connect("SELECT TOP 1000 * FROM [Orders] ORDER BY [Order Date] DESC")
+
+    df_o, df_o_key = norm_columns(df_o)
+    print("df_o")
+    print(df_o)
+    print("df_o.columns.tolist()")
+    print(df_o.columns.tolist())
+    print("df_o_key")
+    print(df_o_key)
+
+    # Will throw an error because of duplicate column names
+    # df2 = pd.DataFrame({
+    #     "A": [1],
+    #     "A-": [2],
+    #     "A--": [3],
+    #     "A---": [4]
+    # })
+    # df_2, df_2_key = norm_columns(df2)
+    # print(df_2)
+
+    def load_order_data(date_1: Optional[datetime.datetime] = None,
+                        date_2: Optional[datetime.datetime] = None) -> pd.DataFrame:
+        sql = """
+              SELECT
+                  [O].[Quote Date]
+                      , [O].[Order Date]
+                      , [O].[Date Registered]
+                      , [O].[Date Declined]
+                      , [O].[Decline/Rejected]
+                      , [O].[Date In Service]
+                      , [O].[Invoice Date]
+                      , [O].[Quote#]
+                      , [O].[WO#]
+                      , [O].[Serial Number]
+                      , [O].[ProductID]
+                      , [O].[Model No]
+                      , [O].[US Sale]
+                      , [O].[Price]
+                      , ISNULL([P].[Prod Date], [P].[Prod Date2]) AS [ProdDate]
+                      , ISNULL([P].[Prod Line], [P].[Prod Line2]) AS [ProdLine]
+                      , [C].[Customer]
+                      , [D].[COMPANY NAME]
+              FROM
+                  [BWSdb].[dbo].[Orders] [O]
+                  LEFT JOIN
+                  [BWSdb].[dbo].[Production] [P]
+              ON
+                  [O].[Quote#] = [P].[Quote#]
+                  LEFT JOIN
+                  [BWSdb].[dbo].[Customers] [C]
+                  ON
+                  [O].[CustID] = [C].[ID#]
+                  LEFT JOIN
+                  [BWSdb].[dbo].[Dealers] [D]
+                  ON
+                  [O].[DealerID] = [D].[ID]
+              ;
+              """
+        df: pd.DataFrame = connect(sql)
+        df, df_col_key = norm_columns(df, date_position="start")
+
+        date_cols = [col for col in df.columns if col.startswith("Date")]
+        dfs = []
+
+        if date_1 is not None and date_2 is not None:
+            # window
+            for col in date_cols:
+                dfs.append(df[(date_1 <= df[col]) & (df[col] <= date_2)])
+        elif date_1 is not None:
+            # since
+            for col in date_cols:
+                dfs.append(df[date_1 <= df[col]])
+        elif date_2 is not None:
+            # up-to
+            for col in date_cols:
+                dfs.append(df[df[col] <= date_2])
+        else:
+            return df
+
+        df = pd.concat(dfs)
+        df.drop_duplicates(inplace=True)
+
+        return df
+
+    df = load_order_data(date_1=datetime.datetime(2025, 10, 1), date_2=datetime.datetime(2025, 11, 30))
     print(df)
-    print(random_df(n_columns=["Name", "Date", "Price", "Cust"]))
-    print(
-        random_df(n_columns={"Name": "str", "Date": "datetime", "Price": "float", "Cust": "list"}, min_len_random_str=4,
-                  max_len_random_str=4))
-    print(random_df(n_columns={"Name": "str", "Date": "datetime", "Price": "float", "Cust": "list", "US": "bool"},
-                    min_len_random_str=4, max_len_random_str=4))
-    print(random_df(n_columns={"Name": "list", "Cust": "list"}, max_sub_list_len=6))
-    print(random_df(10, 6, dtypes="bool"))
-    print(random_df(10, 6, min_sub_list_len=4, max_sub_list_len=5, match_sub_list_lens=False))
-    print(random_df(10, 6, min_sub_list_len=0, max_sub_list_len=0, match_sub_list_lens=False))
-    print(random_df(1, 1))
-
-    print(random_df(3, 3, **{
-        "min_random_int": -8,
-        "max_random_int": -1,
-        "min_random_float": 100,
-        "max_random_float": -2,
-        "min_random_date": datetime.datetime(2021, 1, 1),
-        "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
-        "min_len_random_str": -3,
-        "max_len_random_str": 7,
-        "min_sub_list_len": 14,
-        "max_sub_list_len": 6,
-        "match_sub_list_lens": False,
-        "match_sub_list_dtypes": True
-    }))
-
-    print(random_df(
-        3,
-        3,
-        empty_freq=0.3,
-        **{
-            "min_random_int": -8,
-            "max_random_int": -1,
-            "min_random_float": 100,
-            "max_random_float": -2,
-            "min_random_date": datetime.datetime(2021, 1, 1),
-            "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
-            "min_len_random_str": -3,
-            "max_len_random_str": 7,
-            "min_sub_list_len": 14,
-            "max_sub_list_len": 6,
-            "match_sub_list_lens": False,
-            "match_sub_list_dtypes": True
-        }))
-
-    print(random_df(
-        10,
-        3,
-        empty_freq=[0, 0.98, 1],
-        **{
-            "min_random_int": -8,
-            "max_random_int": -1,
-            "min_random_float": 100,
-            "max_random_float": -2,
-            "min_random_date": datetime.datetime(2021, 1, 1),
-            "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
-            "min_len_random_str": -3,
-            "max_len_random_str": 7,
-            "min_sub_list_len": 14,
-            "max_sub_list_len": 6,
-            "match_sub_list_lens": False,
-            "match_sub_list_dtypes": True
-        }))
-
-    print(random_df(
-        10,
-        3,
-        defaults={"A": [-1, -3, -5, -7, -9, -11], "B": 4, "C": 6, "D": 8, "E": 10},
-        **{
-            "min_random_int": -8,
-            "max_random_int": -1,
-            "min_random_float": 100,
-            "max_random_float": -2,
-            "min_random_date": datetime.datetime(2021, 1, 1),
-            "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
-            "min_len_random_str": -3,
-            "max_len_random_str": 7,
-            "min_sub_list_len": 14,
-            "max_sub_list_len": 6,
-            "match_sub_list_lens": False,
-            "match_sub_list_dtypes": True
-        }))
-
-    print(random_df(
-        10,
-        n_columns={"Name": "str", "Cust": "int", "CustType": "str", "Active": "bool"},
-        defaults={"CustType": ["A", "B", "C"], "Active": 1},
-        **{
-            "min_random_int": 16,
-            "max_random_int": 1,
-            "min_random_float": 100,
-            "max_random_float": -2,
-            "min_random_date": datetime.datetime(2021, 1, 1),
-            "max_random_date": datetime.datetime(2027, 12, 31, 23, 59, 59),
-            "min_len_random_str": 3,
-            "max_len_random_str": 7,
-            "min_sub_list_len": 14,
-            "max_sub_list_len": 6,
-            "match_sub_list_lens": False,
-            "match_sub_list_dtypes": True
-        }))
-
-    print(random_df(
-        16,
-        {
-            "Model": "str",
-            "Group": "str",
-            "Section": "str",
-            "Desc": "str",
-            "Freq": "int",
-            "SortG": "int",
-            "SortSe": "int"
-        },
-        allow_sub_lists=False,
-        defaults={
-            "Model": ["A", "B", "C", "D", "E", "G", "H", "I", "J", "K", "L", "M", "N"],
-            "Group": ["Axle", "Deck", "GNK"],
-            "Freq": list(range(100)),
-            "Section": ["A", "B", "C", "D", "E", "F", "G"]
-        },
-        min_random_int=0,
-        max_random_int=9)
-    )

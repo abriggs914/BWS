@@ -58,7 +58,7 @@ def business_days_between(d1, d2, holidays=None):
         if temp not in holidays:
             business_days += 1
             break
-    # print("temp: {temp}\ndate_2: {date_2}\ntemp < date_2: {td2}".format(temp=temp, date_2=date_2, td2=(temp < date_2)))
+    # print("temp: {temp}\nending: {ending}\ntemp < ending: {td2}".format(temp=temp, ending=ending, td2=(temp < ending)))
     # print("business_days: " + str(business_days))
     return business_days
 
@@ -353,15 +353,15 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     # s_p_h = 60 * s_p_m
     # s_p_d = 24 * s_p_h
     #
-    # y1, m1, d1, h1, n1, s1 = date_1.year, date_1.month, date_1.day, date_1.hour, date_1.minute, date_1.second
-    # y2, m2, d2, h2, n2, s2 = date_2.year, date_2.month, date_2.day, date_2.hour, date_2.minute, date_2.second
+    # y1, m1, d1, h1, n1, s1 = starting.year, starting.month, starting.day, starting.hour, starting.minute, starting.second
+    # y2, m2, d2, h2, n2, s2 = ending.year, ending.month, ending.day, ending.hour, ending.minute, ending.second
     # yd, md, dd, hd, nd, sd = y2 - y1, m2 - m1, d2 - d1, h2 - h1, n2 - n1, s2 - s1
     #
     # result = f""
     #
     # print(dict_print({
-    #     "d1": date_1,
-    #     "d2": date_2,
+    #     "d1": starting,
+    #     "d2": ending,
     #     "yd": yd,
     #     "md": md,
     #     "dd": dd,
@@ -376,18 +376,18 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     # else:
     #     yd = 0
     #
-    # new_date_1 = date_1 + relativedelta(years=yd)
-    # rem = (date_2 - new_date_1)
+    # new_date_1 = starting + relativedelta(years=yd)
+    # rem = (ending - new_date_1)
     # # rem is the total time LESS THAN 1 year
-    # md = date_2.month - new_date_1.month
+    # md = ending.month - new_date_1.month
     # if md > 1:
     #     if result:
     #         result += f", "
     #     result += f"{md} month{'s' if md != 1 else ''}"
     #
     # print(dict_print({
-    #     "d1": date_1,
-    #     "d2": date_2,
+    #     "d1": starting,
+    #     "d2": ending,
     #     "yd": yd,
     #     "md": md,
     #     "dd": dd,
@@ -396,21 +396,21 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     #     "sd": sd,
     # }, "B"))
     #
-    # months = range(new_date_1.month, date_2.month)
+    # months = range(new_date_1.month, ending.month)
     # months_days = [calendar.monthrange(new_date_1.year, m)[1] for m in months]
     # t_months_days = sum(months_days)
     # # t_months_seconds = t_months_days * s_p_d
     #
     # new_date_1 = new_date_1 + relativedelta(days=t_months_days)
-    # dd = date_2.day - new_date_1.day
+    # dd = ending.day - new_date_1.day
     # if dd > 1:
     #     if result:
     #         result += f", "
     #     result += f"{dd} day{'s' if dd != 1 else ''}"
     #
     # print(dict_print({
-    #     "d1": date_1,
-    #     "d2": date_2,
+    #     "d1": starting,
+    #     "d2": ending,
     #     "yd": yd,
     #     "md": md,
     #     "dd": dd,
@@ -419,10 +419,10 @@ def time_between(date_1: datetime.datetime, date_2: datetime.datetime):
     #     "sd": sd,
     # }, "C"))
     #
-    # hours = range(new_date_1.hour, date_2.hour)
+    # hours = range(new_date_1.hour, ending.hour)
     # t_day_hours = len(hours)
     # new_date_1 = new_date_1 + relativedelta(hours=t_day_hours)
-    # hd = date_2.hour - new_date_1.hour
+    # hd = ending.hour - new_date_1.hour
     # if hd > 1:
     #     if result:
     #         result += f", "
