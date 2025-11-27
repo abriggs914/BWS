@@ -29,3 +29,10 @@ WHERE
 	OR LOWER([1st Name]) LIKE LOWER('%damien%'))
 ORDER BY
 	[2nd Name] DESC
+
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Employees] [E]
+	ORDER BY 
+	[Terminated] DESC
