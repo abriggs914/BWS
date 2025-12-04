@@ -175,9 +175,9 @@ SELECT
 		ELSE NULL
 	END) AS [ALT_STEP_STGPath]
 FROM
-	[SysproCompanyA].[dbo].[PorMasterDetail] [PMD]
+	[SysproCompanyA].[dbo].[PorMasterDetail] [PMD] WITH (NOLOCK)
 INNER JOIN
-	[SysproCompanyA].[dbo].[InvMaster] [IM]
+	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
 ON
 	([PMD].[MStockCode] = [IM].[StockCode])
 	AND ([PMD].[MWarehouse] = [IM].[WarehouseToUse])
@@ -201,7 +201,7 @@ FROM (
 		,[IM].[DrawOfficeNum]
 		, COUNT(*) AS [Freq]
 	FROM
-		[SysproCompanyA].[dbo].[InvMaster] [IM]
+		[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
 	WHERE
 		([IM].[StockCode] <> [IM].[DrawOfficeNum])
 		--AND ([IM].[ProductClass] = '40')
@@ -305,7 +305,7 @@ if not os.path.exists(output_location):
 	os.makedirs(output_location)
 
 k_pills_version: str = "key_pills_version"
-options_pills_version = ["Old Version", "New Version"]
+options_pills_version = ["Old Version", "New Version", "Mismatched POs"]
 
 with cols_top[0]:
 	pills_version = pills(label="Version", options=options_pills_version, key=k_pills_version)
@@ -518,53 +518,53 @@ if pills_version == options_pills_version[1]:
 				st.toast(
 					f"{n_files} file(s) copied to '{os.path.join(default_output_folder_root, textbox_output_name)}'.")
 
-	with st.container(border=1):
-
-		df_mm, sql_mm = mismatched_drawings()
-
-		columns = df_mm.columns.tolist()
-		exclude_cols = []
-		info_cols = {
-			"SupShortName": "Supp.",
+elif pills_version == options_pills_version[2]:
+    with st.container(border=1):
+        df_mm, sql_mm = mismatched_drawings()
+        
+        columns = df_mm.columns.tolist()
+        exclude_cols = []
+        info_cols = {
+            "SupShortName": "Supp.",
 			"StockCode": "Part",
 			"DrawOfficeNum": "Part File",
 			"Description": "Desc.",
 			"LongDesc": "Long Desc.",
 			"StockUom": "UoM",
 			"ProductClass": "Class",
-		}
-		for col in info_cols:
-			if col in columns:
-				columns.remove(col)
-			else:
-				exclude_cols.append(col)
-		columns = list(info_cols.keys()) + columns
+        }
+        for col in info_cols:
+            if col in columns:
+                columns.remove(col)
+            else:
+                exclude_cols.append(col)
+        columns = list(info_cols.keys()) + columns
 
-		# with st.expander("Edit Table Columns:"):
-		# 	k_multiselect_columns: str = "key_multiselect_columns"
-		# 	data_sortable_columns = [
-		# 		{"header": "Order:", "items": columns},
-		# 		{"header": "Exclude:", "items": exclude_cols}
-		# 	]
-		# 	st.session_state.setdefault(k_multiselect_columns, data_sortable_columns)
-		# 	multiselect_columns = sort_items(
-		# 		header="Column order:",
-		# 		items=data_sortable_columns,
-		# 		multi_containers=True
-		# 	)
+        # with st.expander("Edit Table Columns:"):
+        # 	k_multiselect_columns: str = "key_multiselect_columns"
+        # 	data_sortable_columns = [
+        # 		{"header": "Order:", "items": columns},
+        # 		{"header": "Exclude:", "items": exclude_cols}
+        # 	]
+        # 	st.session_state.setdefault(k_multiselect_columns, data_sortable_columns)
+        # 	multiselect_columns = sort_items(
+        # 		header="Column order:",
+        # 		items=data_sortable_columns,
+        # 		multi_containers=True
+        # 	)
 
 		# show_cols = multiselect_columns[0]["items"]
-		show_cols = columns
-		if show_cols:
-			display_df(
-				df_mm[show_cols].rename(columns=info_cols),
-				title="Mismatched parts"
-			)
-			st.info("These parts have an inconsistent value in the [DrawOfficeNum] field in Syspro. When searching for PDFs, syspro will use the [DrawOfficeNum] field, but more accurately some parts need to be searched by their stockcode text.")
-			with st.expander("Criteria:"):
-				st.code(sql_mm, language="sql", line_numbers=True)
-		else:
-			st.info("Please select at least one column")
+        show_cols = columns
+        if show_cols:
+            display_df(
+                df_mm[show_cols].rename(columns=info_cols),
+                title="Mismatched parts"
+            )
+            st.info("These parts have an inconsistent value in the [DrawOfficeNum] field in Syspro. When searching for PDFs, syspro will use the [DrawOfficeNum] field, but more accurately some parts need to be searched by their stockcode text.")
+            with st.expander("Criteria:"):
+                st.code(sql_mm, language="sql", line_numbers=True)
+        else:
+            st.info("Please select at least one column")
 
 else:
 	# Old Version
@@ -837,7 +837,7 @@ else:
 #         WHEN ISNULL([WM].[UnitQtyReqd],0) > ISNULL([JP].[SumQtyIssued],0) THEN 1 ELSE 0
 #     END) AS [StillMissing]
 # FROM
-# 	[SysproCompanyA].[dbo].[WipJobAllMat] [WM] WITH (NOLOCK)
+# 	[SysproCompanyA].[dbo].[WipJobAllMat] [WM] WITH ((NOLOCK))
 # LEFT JOIN (
 # 	SELECT
 # 		[JP].[Job],
@@ -849,9 +849,9 @@ else:
 # 		MIN([WJP].[TrnDateTime]) AS [FirstTransaction],
 # 		MAX([WJP].[TrnDateTime]) AS [LastTransaction]
 # 	FROM
-# 		[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+# 		[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH ((NOLOCK))
 # 	INNER JOIN
-# 		[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] WITH (NOLOCK)
+# 		[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [WJP] WITH ((NOLOCK))
 # 	ON
 # 		([JP].[Job] = [WJP].[Job])
 # 		AND ([JP].[MStockCode] = [WJP].[MStockCode])
