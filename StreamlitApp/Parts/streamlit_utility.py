@@ -190,6 +190,75 @@ def display_df(
 def load_pdf_binary(pdf_file):
 	with open(pdf_file, "rb") as f:
 		return f.read()
+	
+
+@st.cache_data(show_spinner=False)
+def split_frame(input_df, rows):
+    df = [input_df.loc[i : i + rows - 1, :] for i in range(0, len(input_df), rows)]
+    return df
+
+
+def display_df_paginated(
+		df: pd.DataFrame | pd.Series,
+		title: Optional[str] = None,
+		hide_index: str | bool = "if_int",
+		show_shape: bool = True,
+
+		# params for st.dataframe 20250325
+		width: int | None = None,
+		height: int | None = None,
+		use_container_width: bool = False,
+		column_order: Iterable[str] | None = None,
+		column_config: Any | None = None,
+		key: Any | None = None,
+		on_select: Literal["ignore", "rerun"] | Any = "ignore",
+		selection_mode: Any = "multi-row"		
+):
+	top_menu = st.columns(3)
+	with top_menu[0]:
+		sort = st.radio("Sort Data", options=["Yes", "No"], horizontal=1, index=1)
+	if sort == "Yes":
+		with top_menu[1]:
+			sort_field = st.selectbox("Sort By", options=df.columns)
+		with top_menu[2]:
+			sort_direction = st.radio(
+				"Direction", options=["⬆️", "⬇️"], horizontal=True
+			)
+		df = df.sort_values(
+			by=sort_field, ascending=sort_direction == "⬆️", ignore_index=True
+		)
+	pagination = st.container()
+
+	bottom_menu = st.columns((4, 1, 1))
+	with bottom_menu[2]:
+		batch_size = st.selectbox("Page Size", options=[25, 50, 100])
+	with bottom_menu[1]:
+		total_pages = (
+			int(len(df) / batch_size) if int(len(df) / batch_size) > 0 else 1
+		)
+		current_page = st.number_input(
+			"Page", min_value=1, max_value=total_pages, step=1
+		)
+	with bottom_menu[0]:
+		st.markdown(f"Page **{current_page}** of **{total_pages}** ")
+	
+	pages = split_frame(df, batch_size)
+	with pagination:
+		return display_df(
+			df=pages[current_page - 1],
+			title=title,
+			hide_index=hide_index,
+			show_shape=show_shape,
+
+			width=width,
+			height=height,
+			use_container_width=use_container_width,
+			column_order=column_order,
+			column_config=column_config,
+			key=key,
+			on_select=on_select,
+			selection_mode=selection_mode
+		)
 
 
 if __name__ == '__main__':
