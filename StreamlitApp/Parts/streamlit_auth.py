@@ -79,6 +79,7 @@ def register_user(username: str, password: str) -> tuple[bool, str]:
         "first_access": now,
         "last_access": now,
         "times_accessed": 1,
+        "settings": {}
     }
 
     save_user_db(db)
@@ -134,6 +135,48 @@ def change_user_password(username: str, old_password: str, new_password: str) ->
 
     save_user_db(db)
     return True, "Password updated successfully."
+
+
+def get_user_settings() -> tuple[bool, dict | str]:
+    if "user" not in st.session_state:
+        msg = f"Please log in first."
+        st.error(msg)
+        return False, msg
+
+    username = st.session_state.get("user")
+    db = load_user_db()
+    users = db["users"]
+
+    if username not in users:
+        msg = f"Please register first."
+        st.error(msg)
+        return False, msg
+    
+    user = users[username]
+    user_settings = user.setdefault("settings", {})
+    return True, user_settings
+
+
+def save_user_settings(settings_in: dict) -> tuple[bool, str]:
+    if "user" not in st.session_state:
+        msg = f"Please log in first."
+        st.error(msg)
+        return False, msg
+
+    username = st.session_state.get("user")
+    db = load_user_db()
+    users = db["users"]
+
+    if username not in users:
+        msg = f"Please register first."
+        st.error(msg)
+        return False, msg
+    
+    user = users[username]
+    user_settings = user.setdefault("settings", {})
+    user_settings.update(settings_in)
+    save_user_db(db)
+    return True, "Settings updated successfully."
 
 
 def get_user_stats(username: str) -> dict | None:

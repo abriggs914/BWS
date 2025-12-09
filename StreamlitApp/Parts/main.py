@@ -1,12 +1,14 @@
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated
 from pyodbc_connection import connect
-from streamlit_auth import st_auth, show_change_password
+from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
 from datetime_utility import time_between
 from utility import percent
+from colour_utility import Colour, random_colour, gradient_merge
 
 from streamlit_pills import pills
-from typing import Literal
+from typing import Literal, Optional
 
+import plotly.express as px
 import streamlit as st
 import pandas as pd
 import datetime
@@ -329,7 +331,7 @@ ON
 	AND ([PD].[MWarehouse] = [PR].[Warehouse])
 	AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
 
-INNER JOIN
+LEFT JOIN
 	[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
 ON
 	[PR].[Supplier] = [AS].[Supplier]
@@ -416,6 +418,79 @@ def search_three_term(*terms) -> pd.DataFrame:
         # st1, st2, st3 = ["NULL", "NULL", "NULL"]
     sql = f"""
 EXEC [BWSdb].[dbo].[sp_REC_3TermSearch] @st1={st1},  @st2={st2},  @st3={st3}, @warehouse='01';
+"""
+    df = connect(sql)
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_shopclock_frame(date_in: Optional[datetime.date] = None) -> pd.DataFrame:
+    if date_in is None:
+        date_in = datetime.datetime.now().date()
+    sql = f"""
+SELECT
+	[CT].[TransactionID],
+	[CT].[JobNumber],
+	[CT].[JobName],
+	[CT].[Operation],
+	[CT].[OperationComplete],
+	[CT].[EmployeeNumber],
+	[CT].[EmployeeName],
+	[CT].[WorkCentreCode],
+	[CT].[LoggedOn],
+	[CT].[LoggedOff],
+	[CT].[IsComplete],
+	[CT].[GroupID],
+	[CT].[GroupName],
+	[CT].[IsNonProductive],
+	[CT].[NonProductiveCode],
+	[CT].[NonProductiveDescription],
+	[CT].[MachineCode],
+	[CT].[MachineCodeDescription],
+	[CT].[IsLoggedOn]
+FROM
+	[SysproCompanyA].[dbo].[ClkTransaction] [CT] WITH (NOLOCK)
+WHERE
+	(CAST([CT].[LoggedOn] AS DATE) = '{date_in:%Y-%m-%d}')
+	OR (CAST([CT].[LoggedOff] AS DATE) = '{date_in:%Y-%m-%d}')
+"""
+    df = connect(sql)
+    df["JobNumber"] = df["JobNumber"].apply(lambda jn: "NP" if (pd.isna(jn) or (not bool(str(jn)))) else jn)
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_yellow_tags(stockcode: str) -> pd.DataFrame:
+    sql = f"""
+SELECT
+    [ID]
+    ,[DateCreated]
+    ,[LastModified]
+    ,[Active]
+    ,[DateActive]
+    ,[DateInActive]
+    ,[PO]
+    ,[WO]
+    ,[StockCode]
+    ,[YTDescription]
+    ,[QtyMissing]
+    ,[Notes]
+    ,[QtyOnHand]
+    ,[Description]
+    ,[LongDesc]
+    ,[Supplier]
+    ,[Warehouse]
+    ,[LastPurchDate]
+    ,[POOrigDueDate]
+    ,[POLatestDueDate]
+    ,[Bin]
+    ,[POReceivedQty]
+    ,[DrawingPath]
+FROM
+    [BWSdb].[dbo].[v_PROD_YellowTags] [YT] WITH (NOLOCK)
+WHERE
+    [YT].[StockCode] = '{stockcode}'
+;
 """
     df = connect(sql)
     return df
@@ -517,34 +592,68 @@ if st_auth():
 
     # search for all parts in a bin
 
+    list_settings_keys = []
     with st.popover("Filter"):
         k_checkbox_warehouse_1_only = "key_checkbox_warehouse_1_only"
+        k_checkbox_hawkins_parts_inc = "key_checkbox_hawkins_parts_inc"
+        k_checkbox_montana_parts_inc = "key_checkbox_montana_parts_inc"
+        k_checkbox_vmi_parts_inc = "key_checkbox_vmi_parts_inc"
+
+        list_settings_keys.extend([
+            k_checkbox_warehouse_1_only,
+            k_checkbox_hawkins_parts_inc,
+            k_checkbox_montana_parts_inc,
+            k_checkbox_vmi_parts_inc
+        ])
+
+        k_loaded_settings_session = "key_loaded_settings_session"
+        loaded_settings = get_user_settings()
+        loaded_settings_bd = st.session_state.setdefault(k_loaded_settings_session, loaded_settings)
+        loaded_settings_b, loaded_settings_d = loaded_settings_bd
+        if loaded_settings_b:
+            for k, v in loaded_settings_d.items():
+                st.session_state.setdefault(k, v)
+
         st.session_state.setdefault(k_checkbox_warehouse_1_only, True)
         checkbox_warehouse_1_only = st.checkbox(
             label="Warehouse 01 Stockcodes only?",
             key=k_checkbox_warehouse_1_only
         )
 
-        k_checkbox_hawkins_parts_inc = "key_checkbox_hawkins_parts_inc"
         st.session_state.setdefault(k_checkbox_hawkins_parts_inc, True)
         checkbox_hawkins_parts_inc = st.checkbox(
             label="Include parts @ Hawkins Warehouse?",
             key=k_checkbox_hawkins_parts_inc
         )
 
-        k_checkbox_montana_parts_inc = "key_checkbox_montana_parts_inc"
         st.session_state.setdefault(k_checkbox_montana_parts_inc, True)
         checkbox_montana_parts_inc = st.checkbox(
             label="Include parts @ Montana Warehouse?",
             key=k_checkbox_montana_parts_inc
         )
 
-        k_checkbox_vmi_parts_inc = "key_checkbox_vmi_parts_inc"
         st.session_state.setdefault(k_checkbox_vmi_parts_inc, False)
         checkbox_vmi_parts_inc = st.checkbox(
             label="Include parts in Vending Machines?",
             key=k_checkbox_vmi_parts_inc
         )
+
+        current_settings = {k: st.session_state[k] for k in list_settings_keys}
+        # st.write("loaded_settings")
+        # st.write(loaded_settings[1])
+        # st.write("current_settings")
+        # st.write(current_settings)
+
+        if not loaded_settings[1]:
+            save_user_settings(current_settings)
+            loaded_settings = (True, current_settings)
+
+        if loaded_settings[1] != current_settings:
+            if st.button(
+                "Save these settings as your preferred settings?"
+            ):
+                save_user_settings(current_settings)
+        st.session_state.update({k_loaded_settings_session: (True, current_settings)})
 
     if checkbox_warehouse_1_only:
         df_bins = df_bins[
@@ -583,7 +692,7 @@ if st_auth():
     #     options=list_stockcodes
     # )
 
-    options_pills_search_mode = ["Single", "Multi", "By Bin", "By Section"]
+    options_pills_search_mode = ["Simple", "Advanced", "By Bin", "By Section", "By PO", "By SO"]
     k_pills_search_mode: str = "key_pills_search_mode"
     st.session_state.setdefault(k_pills_search_mode, 0)
     pills_search_mode = pills(
@@ -645,13 +754,15 @@ if st_auth():
                     "LongDesc"
                 ]
                 with cols_search_term[1]:
-                    stdf_searched = display_df_paginated(
-                        df=df_searched[show_cols],
-                        title="df_searched",
-                        on_select="rerun",
-                        selection_mode="single-row",
-                        key=k_stdf_searched
-                    )
+                    
+                    with st.container(border=True):
+                        stdf_searched = display_df_paginated(
+                            df=df_searched[show_cols],
+                            title="df_searched",
+                            on_select="rerun",
+                            selection_mode="single-row",
+                            key=k_stdf_searched
+                        )
 
                     # st.write(stdf_searched)
 
@@ -675,10 +786,11 @@ if st_auth():
                 df_parts["DefaultBin"] == selectbox_bin_search
             ]
 
-            display_df_paginated(
-                df_search_bin,
-                "df_search_bin"
-            )
+            with st.container(border=True):
+                display_df_paginated(
+                    df_search_bin,
+                    "df_search_bin"
+                )
     
     elif pills_search_mode == options_pills_search_mode[3]:
         # By Section
@@ -695,10 +807,134 @@ if st_auth():
                 df_parts["DefaultBin"].isin(filt_section_bins)
             ]
 
-            display_df_paginated(
-                df_search_section,
-                "df_search_section"
+            with st.container(border=True):
+                display_df_paginated(
+                    df_search_section,
+                    "df_search_section"
+                )
+
+    elif pills_search_mode == options_pills_search_mode[4] or pills_search_mode == options_pills_search_mode[5]:
+        # By PO
+        # By SO
+        df_shopclock = load_shopclock_frame()
+
+        stdf_shopclock = display_df_paginated(
+            df_shopclock,
+            title="ShopClock",
+            key="k_stdf_shopclock"
+        )
+
+        st.divider()
+
+        k_checkbox_include_machines: str = "key_checkbox_include_machines"
+        checkbox_include_machines = st.session_state.setdefault(k_checkbox_include_machines, False)
+
+        k_checkbox_include_np: str = "key_checkbox_include_np"
+        checkbox_include_np = st.session_state.setdefault(k_checkbox_include_np, False)
+
+        k_radio_colour_by: str = "key_radio_colour_by"
+        options_radio_colour_by = ["Job", "Group"]
+        radio_colour_by = st.session_state.setdefault(k_radio_colour_by, options_radio_colour_by[0])
+
+        if not checkbox_include_machines:
+            df_shopclock = df_shopclock[
+                df_shopclock["EmployeeNumber"].str[0] == "2"
+            ]
+
+        if not checkbox_include_np:
+            df_shopclock = df_shopclock[
+                df_shopclock["JobNumber"] != "NP"
+            ]
+
+        keys_checkboxes_include_groups = {f"K_checkbox_include_group_{gi}": gi for gi in sorted(df_shopclock["GroupID"].dropna().unique())}
+        checkboxes_include_groups = []
+        with st.popover(f"Filter"):
+            st.write(f"Groups:")
+            cols_checkboxes = st.columns(len(keys_checkboxes_include_groups))
+            st.divider()
+            st.write(f"Other:")
+            checkbox_include_machines = st.checkbox(
+                label="Include Machines?",
+                key=k_checkbox_include_machines
             )
+            checkbox_include_np = st.checkbox(
+                label="Include NP?",
+                key=k_checkbox_include_np
+            )
+
+            st.divider()
+
+            radio_colour_by = st.radio(
+                label="Colour By:",
+                key=k_radio_colour_by,
+                options=options_radio_colour_by,
+                index=0
+            )
+
+        for i, key in enumerate(keys_checkboxes_include_groups):
+            st.session_state.setdefault(key, True)
+            gi = keys_checkboxes_include_groups[key]
+            with cols_checkboxes[i]:
+                checkboxes_include_groups.append(st.checkbox(
+                    label=f"{gi}",
+                    key=key
+                ))
+            if not checkboxes_include_groups[-1]:
+                df_shopclock = df_shopclock[df_shopclock["GroupID"] != gi]
+
+        # display_df(
+        #     df_shopclock,
+        #     "df_shopclock"
+        # )
+
+        if not df_shopclock.empty:
+
+            timeline_events = []
+            lst_unique_jobs = df_shopclock["JobNumber"].unique()
+            lst_unique_groups = df_shopclock["GroupName"].unique()
+            colour_start = Colour("#DD2212")
+            colour_end = Colour("#22DD12")
+            colour
+            wo_grad = gradient_merge([colour_start, colour_end], len(lst_unique_jobs), as_hex=True)
+            group_grad = gradient_merge([colour_start, colour_end], len(lst_unique_groups), as_hex=True)
+            wo_colour_map = {j: wo_grad[i] for i, j in enumerate(lst_unique_jobs)}
+            group_colour_map = {g: group_grad[i] for i, g in enumerate(lst_unique_groups)}
+            for i, row in df_shopclock.iterrows():
+                timeline_events.append({
+                    # "start": game.start_time_atl.strftime(UTC_FMT).removesuffix("Z"),
+                    "Start Date": row["LoggedOn"],
+                    # "end": (game.start_time_atl + datetime.timedelta(minutes=165)).strftime(UTC_FMT).removesuffix("Z"),
+                    "End Date": datetime.datetime.now() if pd.isna(row["LoggedOff"]) else row["LoggedOff"],
+                    "Event": f"{row['EmployeeName']} {row['EmployeeNumber']}",
+                    "State": row["GroupName"] if radio_colour_by == options_radio_colour_by[1] else row["JobNumber"]
+                })
+
+            df_timeline_events = pd.DataFrame(timeline_events)
+            # display_df(
+            #     df_timeline_events,
+            #     title="df_timeline_events",
+            #     hide_index=False
+            # )
+            
+            fig_timeline_games = px.timeline(
+                df_timeline_events,
+                x_start='Start Date',
+                x_end='End Date',
+                y='Event',
+                title='ShopClock:',
+                color='State',
+                height=1200,
+                color_discrete_map=group_colour_map if radio_colour_by == options_radio_colour_by[1] else wo_colour_map
+            )
+
+            # Update layout to make it more readable
+            fig_timeline_games.update_layout(xaxis_title="Date", yaxis_title="ShopClock")
+
+            # Display in Streamlit
+            chart_widget = st.plotly_chart(fig_timeline_games)
+            st.write(chart_widget)
+        else:
+            st.info(f"No data based on criteria. Check filters, if needed.")
 
     else:
         # Single
@@ -708,8 +944,8 @@ if st_auth():
             key=k_textbox_stockcode
         )
 
-    if pills_search_mode not in options_pills_search_mode[2:4]:
-        # searching for non-bin locations
+    if pills_search_mode in options_pills_search_mode[:2]:
+        # searching for stockcode specific results
 
         selectbox_stockcode = None
         if textbox_stockcode:
@@ -750,190 +986,229 @@ if st_auth():
                 # df_stock_sales_orders = df_stock_sales_orders[df_stock_sales_orders["Warehouse"] == "01"]
                 # df_stock_purchase_orders = df_stock_purchase_orders[df_stock_purchase_orders["Warehouse"] == "01"]
 
-            ser_stock: pd.Series = df_parts[df_parts["StockCode"] == selectbox_stockcode].iloc[0]
+            df_stock: pd.DataFrame = df_parts[df_parts["StockCode"] == selectbox_stockcode]
+            df_yt: pd.DataFrame = load_yellow_tags(selectbox_stockcode)
 
-            bin_location: str = ser_stock["DefaultBin"]
-            qty_on_hand: float = ser_stock["QtyOnHand"]
-            
-            show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
-            show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
-            cols_information = st.columns(3)
-            with cols_information[0]:
-                display_df(
-                    ser_stock[show_cols_info],
-                    title="Info",
-                    width="stretch"
-                )
+            if not df_stock.empty:
+                ser_stock: pd.Series = df_stock.iloc[0]
 
-                df_stock_pdf = load_path_pdf(selectbox_stockcode)
-                stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
-                stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
-                if stock_pdf_listed or stock_pdf_stock:
-                    if stock_pdf_listed:
-                        st.download_button(
-                            label="download PDF as listed in Syspro?",
-                            data=open(stock_pdf_listed, "rb").read(),
-                            file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
-                            mime="application/pdf"
-                        )
-                    if stock_pdf_stock:
-                        st.download_button(
-                            label="Download found PDF from drive?",
-                            data=open(stock_pdf_stock, "rb").read(),
-                            file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
-                            mime="application/pdf"
-                        )
-                else:
-                    st.write(f"No PDFs found for this stockcode.")
-            with cols_information[1]:
-                st.metric(
-                    "Bin:",
-                    value=bin_location
-                )
-                st.metric(
-                    "On Hand:",
-                    value=qty_on_hand
-                )
-            with cols_information[2]:
-                display_df(
-                    ser_stock[show_cols_qty],
-                    title="Quantity Info",
-                    width="stretch"
-                )
-            
-            k_checkbox_movement_inc_issue = "key_checkbox_movement_inc_issue"
-            checkbox_movement_inc_issue = st.session_state.setdefault(k_checkbox_movement_inc_issue, True)
-            k_checkbox_movement_inc_sale = "key_checkbox_movement_inc_sale"
-            checkbox_movement_inc_sale = st.session_state.setdefault(k_checkbox_movement_inc_sale, True)
+                bin_location: str = ser_stock["DefaultBin"]
+                qty_on_hand: float = ser_stock["QtyOnHand"]
+                
+                show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
+                show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
+                cols_information = st.columns(3)
+                with cols_information[0]:
+                    display_df(
+                        ser_stock[show_cols_info],
+                        title="Info",
+                        width="stretch"
+                    )
 
-            if not checkbox_movement_inc_issue:
-                df_stock_movements = df_stock_movements[
-                    df_stock_movements["MovementType"] != "ISSUE"
-                ]
-            if not checkbox_movement_inc_sale:
-                df_stock_movements = df_stock_movements[
-                    df_stock_movements["MovementType"] != "SALE"
-                ]
-            total_records: int = df_stock_movements.shape[0]
+                    with st.expander(f"Drawings"):
+                        df_stock_pdf = load_path_pdf(selectbox_stockcode)
+                        stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
+                        stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
+                        if stock_pdf_listed or stock_pdf_stock:
+                            if stock_pdf_listed:
+                                st.download_button(
+                                    label="download PDF as listed in Syspro?",
+                                    data=open(stock_pdf_listed, "rb").read(),
+                                    file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
+                                    mime="application/pdf"
+                                )
+                            if stock_pdf_stock:
+                                st.download_button(
+                                    label="Download found PDF from drive?",
+                                    data=open(stock_pdf_stock, "rb").read(),
+                                    file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
+                                    mime="application/pdf"
+                                )
+                        else:
+                            st.info(f"No PDFs found for this stockcode.")
+                
+                with cols_information[1]:
+                    st.metric(
+                        "Bin:",
+                        value=bin_location
+                    )
+                    st.metric(
+                        "On Hand:",
+                        value=qty_on_hand
+                    )
+                with cols_information[2]:
+                    display_df(
+                        ser_stock[show_cols_qty],
+                        title="Quantity Info",
+                        width="stretch"
+                    )
+                
+                k_checkbox_movement_inc_issue = "key_checkbox_movement_inc_issue"
+                checkbox_movement_inc_issue = st.session_state.setdefault(k_checkbox_movement_inc_issue, True)
+                k_checkbox_movement_inc_sale = "key_checkbox_movement_inc_sale"
+                checkbox_movement_inc_sale = st.session_state.setdefault(k_checkbox_movement_inc_sale, True)
 
-            with st.expander(f"Movements ({total_records}):"):
-                k_max_records_movements = "key_max_records_movements"
-                st.session_state.setdefault(k_max_records_movements, df_stock_movements.shape[0])
-                if st.button(
-                    "Show All?"
-                ):
-                    st.session_state.update({
-                        k_max_records_movements: total_records,
-                        k_checkbox_movement_inc_issue: True,
-                        k_checkbox_movement_inc_sale: True
-                    })
-                    st.rerun()
-
-                checkbox_movement_inc_issue = st.checkbox(
-                    label="Include 'Issue' movements?",
-                    key=k_checkbox_movement_inc_issue
-                )
-                checkbox_movement_inc_sale = st.checkbox(
-                    label="Include 'Sale' movements?",
-                    key=k_checkbox_movement_inc_sale
-                )
-
-                max_records_movements = st.number_input(
-                    label="Max Records:",
-                    key=k_max_records_movements,
-                    min_value=0,
-                    max_value=df_stock_movements.shape[0]
-                )
-
-                df_stock_movements = df_stock_movements.head(max_records_movements)
-
-                show_cols = df_stock_movements.columns.to_list()
-                cols_to_rem = [
-                    "StockCode",
-                    "EntryDate",
-                    "TrnTime",
-                    "Warehouse"
-                ]
-                # if checkbox_warehouse_1_only:
-                #     cols_to_rem.append("Warehouse")
-                for col in cols_to_rem:
-                    show_cols.remove(col)
-
-                display_df(
-                    df_stock_movements[show_cols],
-                    # f"Movements for StockCode: {selectbox_stockcode}"
-                    title=f"Total: ({total_records} Rows x {len(show_cols)} Cols) - Showing:",
-                    width="stretch"
-                )
-            
-            k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
-            checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
-            if checkbox_po_unfulfilled_only:
-                df_stock_purchase_orders = df_stock_purchase_orders[
-                    (df_stock_purchase_orders["MCompleteFlag"] != "Y")
-                    & (df_stock_purchase_orders["MReceivedQty"] < df_stock_purchase_orders["MOrderQty"])
-                ]
-            with st.expander(f"Purchase Orders ({df_stock_purchase_orders.shape[0]}):"):
-                k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
-                st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
-                checkbox_po_unfulfilled_only = st.checkbox(
-                    label="Unfulfilled Purchase Orders Only?",
-                    key=k_checkbox_po_unfulfilled_only
-                )
-
-                display_df(
-                    df_stock_purchase_orders,
-                    title="Purchase Orders",
-                    width="stretch"
-                )
-            
-            k_checkbox_so_unfulfilled_only = "key_checkbox_so_unfulfilled_only"
-            checkbox_so_unfulfilled_only = st.session_state.setdefault(k_checkbox_so_unfulfilled_only, True)
-            if checkbox_so_unfulfilled_only:
-                df_stock_sales_orders = df_stock_sales_orders[
-                    (df_stock_sales_orders["CancelledFlag"] != "Y")
-                    & (df_stock_sales_orders["ActiveFlag"] != "N")
-                ]
-            with st.expander(f"Sales Orders ({df_stock_sales_orders.shape[0]}):"):
-                checkbox_so_unfulfilled_only = st.checkbox(
-                    label="Unfulfilled Sales Orders Only?",
-                    key=k_checkbox_so_unfulfilled_only
-                )
-
-                display_df(
-                    df_stock_sales_orders,
-                    title="Sales Orders",
-                    width="stretch"
-                )
-
-            k_checkbox_alloc_unfulfilled_only: str = "key_checkbox_alloc_unfulfilled_only"
-            checkbox_alloc_unfulfilled_only = st.session_state.setdefault(k_checkbox_alloc_unfulfilled_only, True)
-            if checkbox_alloc_unfulfilled_only:
-                df_stock_allocations = df_stock_allocations[
-                    (df_stock_allocations["AllocCompleted"] != "Y")
-                ]
-            with st.expander(f"Allocations ({df_stock_allocations.shape[0]}):"):
-                checkbox_alloc_unfulfilled_only = st.checkbox(
-                    label="Unfulfilled Allocations Only?",
-                    key=k_checkbox_alloc_unfulfilled_only
-                )
-
-                show_cols = df_stock_allocations.columns.to_list()
-                if checkbox_alloc_unfulfilled_only:
-                    cols_to_drop = [
-                        "TrnDateTime",
-                        "AllocCompleted",
+                if not checkbox_movement_inc_issue:
+                    df_stock_movements = df_stock_movements[
+                        df_stock_movements["MovementType"] != "ISSUE"
                     ]
-                    if checkbox_warehouse_1_only:
-                        cols_to_drop.append("Warehouse")
-                    for col in cols_to_drop:
+                if not checkbox_movement_inc_sale:
+                    df_stock_movements = df_stock_movements[
+                        df_stock_movements["MovementType"] != "SALE"
+                    ]
+                total_records: int = df_stock_movements.shape[0]
+
+                with st.expander(f"Movements ({total_records}):", expanded=False):
+                    k_max_records_movements = "key_max_records_movements"
+                    st.session_state.setdefault(k_max_records_movements, df_stock_movements.shape[0])
+                    if st.button(
+                        "Show All?"
+                    ):
+                        st.session_state.update({
+                            k_max_records_movements: total_records,
+                            k_checkbox_movement_inc_issue: True,
+                            k_checkbox_movement_inc_sale: True
+                        })
+                        st.rerun()
+
+                    checkbox_movement_inc_issue = st.checkbox(
+                        label="Include 'Issue' movements?",
+                        key=k_checkbox_movement_inc_issue
+                    )
+                    checkbox_movement_inc_sale = st.checkbox(
+                        label="Include 'Sale' movements?",
+                        key=k_checkbox_movement_inc_sale
+                    )
+
+                    # max_records_movements = st.number_input(
+                    #     label="Max Records:",
+                    #     key=k_max_records_movements,
+                    #     min_value=0,
+                    #     max_value=df_stock_movements.shape[0]
+                    # )
+
+                    # df_stock_movements = df_stock_movements.head(max_records_movements)
+
+                    show_cols = df_stock_movements.columns.to_list()
+                    cols_to_rem = [
+                        "StockCode",
+                        "EntryDate",
+                        "TrnTime",
+                        "Warehouse"
+                    ]
+                    # if checkbox_warehouse_1_only:
+                    #     cols_to_rem.append("Warehouse")
+                    for col in cols_to_rem:
                         show_cols.remove(col)
 
-                display_df(
-                    df_stock_allocations[show_cols],
-                    title="Allocations",
-                    width="stretch"
-                )
+                    display_df_paginated(
+                        df_stock_movements[show_cols],
+                        # f"Movements for StockCode: {selectbox_stockcode}"
+                        title=f"Total: ({total_records} Rows x {len(show_cols)} Cols) - Showing:",
+                        width="stretch",
+                        key=f"stdf_stock_movements"
+                    )
+                
+                k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
+                checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
+                if checkbox_po_unfulfilled_only:
+                    df_stock_purchase_orders = df_stock_purchase_orders[
+                        (df_stock_purchase_orders["MCompleteFlag"] != "Y")
+                        & (df_stock_purchase_orders["MReceivedQty"] < df_stock_purchase_orders["MOrderQty"])
+                    ]
+                with st.expander(f"Purchase Orders ({df_stock_purchase_orders.shape[0]}):", expanded=bool(df_stock_purchase_orders.shape[0])):
+                    k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
+                    st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
+                    checkbox_po_unfulfilled_only = st.checkbox(
+                        label="Unfulfilled Purchase Orders Only?",
+                        key=k_checkbox_po_unfulfilled_only
+                    )
+
+                    display_df(
+                        df_stock_purchase_orders,
+                        title="Purchase Orders",
+                        width="stretch"
+                    )
+                
+                k_checkbox_so_unfulfilled_only = "key_checkbox_so_unfulfilled_only"
+                checkbox_so_unfulfilled_only = st.session_state.setdefault(k_checkbox_so_unfulfilled_only, True)
+                if checkbox_so_unfulfilled_only:
+                    df_stock_sales_orders = df_stock_sales_orders[
+                        (df_stock_sales_orders["CancelledFlag"] != "Y")
+                        & (df_stock_sales_orders["ActiveFlag"] != "N")
+                    ]
+                with st.expander(f"Sales Orders ({df_stock_sales_orders.shape[0]}):", expanded=bool(df_stock_sales_orders.shape[0])):
+                    checkbox_so_unfulfilled_only = st.checkbox(
+                        label="Unfulfilled Sales Orders Only?",
+                        key=k_checkbox_so_unfulfilled_only
+                    )
+
+                    display_df(
+                        df_stock_sales_orders,
+                        title="Sales Orders",
+                        width="stretch"
+                    )
+
+                    ttl_on_hand: float = ser_stock["QtyOnHand"]
+                    run_ttl_on_hand: float = ttl_on_hand
+                    for i, row in df_stock_sales_orders.iterrows():
+                        qty_reqd: float = row["MBackOrderQty"]
+                        if qty_on_hand is None:
+                            qty_on_hand = row["MOrderQty"] - row["MShipQty"]
+                        ttl_on_hand -= qty_reqd
+                        run_ttl_on_hand -= qty_reqd
+                        if ttl_on_hand >= 0:
+                            st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
+                        else:
+                            st.error(f"Short {abs(ttl_on_hand)} {row['MOrderUom']} to fulfill SO# {row['SalesOrder']}")
+                            ttl_on_hand = 0  # reset to 0 for order specific shortage count
+
+                k_checkbox_alloc_unfulfilled_only: str = "key_checkbox_alloc_unfulfilled_only"
+                checkbox_alloc_unfulfilled_only = st.session_state.setdefault(k_checkbox_alloc_unfulfilled_only, True)
+                if checkbox_alloc_unfulfilled_only:
+                    df_stock_allocations = df_stock_allocations[
+                        (df_stock_allocations["AllocCompleted"] != "Y")
+                    ]
+                with st.expander(f"Allocations ({df_stock_allocations.shape[0]}):", expanded=bool(df_stock_allocations.shape[0])):
+                    checkbox_alloc_unfulfilled_only = st.checkbox(
+                        label="Unfulfilled Allocations Only?",
+                        key=k_checkbox_alloc_unfulfilled_only
+                    )
+
+                    show_cols = df_stock_allocations.columns.to_list()
+                    if checkbox_alloc_unfulfilled_only:
+                        cols_to_drop = [
+                            "TrnDateTime",
+                            "AllocCompleted",
+                        ]
+                        if checkbox_warehouse_1_only:
+                            cols_to_drop.append("Warehouse")
+                        for col in cols_to_drop:
+                            show_cols.remove(col)
+
+                    display_df(
+                        df_stock_allocations[show_cols],
+                        title="Allocations",
+                        width="stretch"
+                    )
+
+                k_checkbox_yt_unfulfilled_only: str = "key_checkbox_yt_unfulfilled_only"
+                checkbox_yt_unfulfilled_only = st.session_state.setdefault(k_checkbox_yt_unfulfilled_only, True)
+                if checkbox_yt_unfulfilled_only:
+                    df_yt = df_yt[
+                        (df_yt["Active"] == 1)
+                    ]
+                with st.expander(f"Yellow Tags ({df_yt.shape[0]})", expanded=bool(df_yt.shape[0])):
+                    checkbox_yt_unfulfilled_only = st.checkbox(
+                        label="Unfulfilled Yellow Tags Only?",
+                        key=k_checkbox_yt_unfulfilled_only
+                    )
+                    display_df_paginated(
+                        df_yt,
+                        "Yellow Tags"
+                    )
+            else:
+                st.info(f"No parts found matching search criteria. Check your filters, if needed.")
 
 
     # if user in ["abriggs", "rec"]:

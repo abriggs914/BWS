@@ -15,8 +15,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.06
-    Date...........2025-10-20
+    Version..............1.07
+    Date...........2025-12-09
     Author(s)....Avery Briggs
     """
 
@@ -214,30 +214,56 @@ def display_df_paginated(
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
 		selection_mode: Any = "multi-row"		
 ):
+	
+	if key is None:
+		sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
+	else:
+		sub_widget_keys = key
+
 	top_menu = st.columns(3)
 	with top_menu[0]:
-		sort = st.radio("Sort Data", options=["Yes", "No"], horizontal=1, index=1)
+		sort = st.radio(
+			label="Sort Data",
+			options=["Yes", "No"],
+			horizontal=1,
+			index=1,
+			key=f"{sub_widget_keys}_radio_sort_col"
+		)
 	if sort == "Yes":
 		with top_menu[1]:
 			sort_field = st.selectbox("Sort By", options=df.columns)
 		with top_menu[2]:
 			sort_direction = st.radio(
-				"Direction", options=["⬆️", "⬇️"], horizontal=True
+				label="Direction",
+				options=["⬆️", "⬇️"],
+				horizontal=True,
+				key=f"{sub_widget_keys}_radio_sort_dir"
 			)
-		df = df.sort_values(
-			by=sort_field, ascending=sort_direction == "⬆️", ignore_index=True
+		df.sort_values(
+			by=sort_field,
+			ascending=sort_direction == "⬆️",
+			ignore_index=True,
+			inplace=True
 		)
 	pagination = st.container()
 
 	bottom_menu = st.columns((4, 1, 1))
 	with bottom_menu[2]:
-		batch_size = st.selectbox("Page Size", options=[25, 50, 100])
+		batch_size = st.selectbox(
+			label="Page Size",
+			options=[25, 50, 100],
+			key=f"{sub_widget_keys}_selectbox_batch_size"
+		)
 	with bottom_menu[1]:
 		total_pages = (
 			int(len(df) / batch_size) if int(len(df) / batch_size) > 0 else 1
 		)
 		current_page = st.number_input(
-			"Page", min_value=1, max_value=total_pages, step=1
+			label="Page",
+			min_value=1,
+			max_value=total_pages,
+			step=1,
+			key=f"{sub_widget_keys}_number_input_pages"
 		)
 	with bottom_menu[0]:
 		st.markdown(f"Page **{current_page}** of **{total_pages}** ")
@@ -245,7 +271,7 @@ def display_df_paginated(
 	pages = split_frame(df, batch_size)
 	with pagination:
 		return display_df(
-			df=pages[current_page - 1],
+			df=pages[current_page - 1] if pages else pd.DataFrame(data=[{"data": None}]),
 			title=title,
 			hide_index=hide_index,
 			show_shape=show_shape,
