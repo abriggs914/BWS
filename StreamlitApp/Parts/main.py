@@ -4,6 +4,7 @@ from streamlit_auth import st_auth, show_change_password, save_user_settings, ge
 from datetime_utility import time_between
 from utility import percent
 from colour_utility import Colour, random_colour, gradient_merge
+from json_utility import jsonify
 
 from streamlit_pills import pills
 from typing import Literal, Optional
@@ -11,8 +12,10 @@ from typing import Literal, Optional
 import plotly.express as px
 import streamlit as st
 import pandas as pd
+import numpy as np
 import datetime
 import asyncio
+import json
 import os
 
 
@@ -22,6 +25,7 @@ st.set_page_config(
 )
 
 
+CHANGE_REQUEST_FILE: str = "change_requests.json"
 PATH_STOCK_PDFS: str = r"J:\VaultWorkspace_BWS\PDFS"
 BUILDING_CODE_BOTH: int = 0
 BUILDING_CODE_VMI: int = -2
@@ -129,6 +133,8 @@ FROM
             REPLACE(REPLACE(REPLACE(LOWER([BC2].[DefaultBin]), ' ', ''), '/', ''), '@', ''))
         AND (LOWER(BC1.DefaultBin) <> LOWER([BC2].[DefaultBin]))
 		AND ([BC1].[Warehouse] = [BC2].[Warehouse])
+WHERE
+	ISNULL([BC1].[DefaultBin], '') <> ''
 """
     df = connect(sql)
     df.sort_values(
@@ -496,6 +502,71 @@ WHERE
     return df
 
 
+@st.dialog(title="Submit a Change:")
+def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
+
+    k_selectbox_change_field: str = "key_selectbox_change_field"
+    options_selectbox_change_field = [
+        "DefaultBin"
+    ]
+    selectbox_change_field = st.selectbox(
+        label="Select a field to change:",
+        key=k_selectbox_change_field,
+        options=options_selectbox_change_field
+    )
+    if selectbox_change_field:
+        k_text_field_current: str = "key_text_field_current"
+        curr_val = ser_stock[selectbox_change_field]
+        st.session_state.update({k_text_field_current: curr_val})
+        text_field_current = st.text_input(
+            label="Current:",
+            key=k_text_field_current,
+            disabled=True
+        )
+        k_text_field_new: str = "key_text_field_new"
+        curr_val = ser_stock[selectbox_change_field]
+        text_field_new = st.session_state.setdefault(k_text_field_new, "")
+        text_field_new = st.text_input(
+            label="New:",
+            key=k_text_field_new
+        )
+        k_text_field_notes: str = "key_text_field_notes"
+        curr_val = ser_stock[selectbox_change_field]
+        text_field_notes = st.session_state.setdefault(k_text_field_notes, "")
+        text_field_notes = st.text_input(
+            label="Notes:",
+            key=k_text_field_notes
+        )
+        k_btn_submit_change: str = "key_btn_submit_change"
+        if text_field_new:
+            if st.button(
+                label="submit",
+                key=k_btn_submit_change
+            ):
+                
+                path_abs: str = os.path.join(os.getcwd(), CHANGE_REQUEST_FILE)
+                if not os.path.exists(path_abs):
+                    with open(path_abs, "w") as f:
+                        json.dump([], f)
+                with open(path_abs, "r") as f:
+                    data = json.load(f)
+                data.append({
+                    "user": st.session_state["user"],
+                    "date": jsonify(datetime.datetime.now()),
+                    "stockcode": ser_stock["StockCode"],
+                    "field": selectbox_change_field,
+                    "old": text_field_current,
+                    "new": text_field_new,
+                    "notes": text_field_notes
+                })
+
+                with open(path_abs, "w") as f:
+                    json.dump(data, f)
+
+                st.toast("Request submitted")
+                st.rerun()
+
+
 def load_path_pdf(stockcode) -> pd.DataFrame:
     sql = f"""
 SELECT
@@ -692,7 +763,22 @@ if st_auth():
     #     options=list_stockcodes
     # )
 
-    options_pills_search_mode = ["Simple", "Advanced", "By Bin", "By Section", "By PO", "By SO"]
+    op_search_mode_simple: str = "Simple"
+    op_search_mode_advanced: str = "Advanced"
+    op_search_mode_by_bin: str = "By Bin"
+    op_search_mode_by_section: str = "By Section"
+    op_search_mode_by_po: str = "By PO"
+    op_search_mode_by_so: str = "By SO"
+    op_search_mode_by_shopclock: str = "ShopClock"
+    options_pills_search_mode = [
+        op_search_mode_simple, 
+        op_search_mode_advanced,
+        op_search_mode_by_bin,
+        op_search_mode_by_section,
+        op_search_mode_by_po,
+        op_search_mode_by_so,
+        op_search_mode_by_shopclock
+    ]
     k_pills_search_mode: str = "key_pills_search_mode"
     st.session_state.setdefault(k_pills_search_mode, 0)
     pills_search_mode = pills(
@@ -702,7 +788,7 @@ if st_auth():
         index=0
     )
 
-    if pills_search_mode == options_pills_search_mode[1]:
+    if pills_search_mode == op_search_mode_advanced:
         # Multi
         k_text_multi_0 = "key_text_multi_0"
         k_text_multi_1 = "key_text_multi_1"
@@ -772,7 +858,7 @@ if st_auth():
                             textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
         st.divider()
 
-    elif pills_search_mode == options_pills_search_mode[2]:
+    elif pills_search_mode == op_search_mode_by_bin:
         # By Bin
         k_selectbox_bin_search = "key_selectbox_bin_search"
         selectbox_bin_search  = st.selectbox(
@@ -789,10 +875,12 @@ if st_auth():
             with st.container(border=True):
                 display_df_paginated(
                     df_search_bin,
-                    "df_search_bin"
+                    title="df_search_bin",
+                    key=f"key_stdf_search_bin"
+
                 )
     
-    elif pills_search_mode == options_pills_search_mode[3]:
+    elif pills_search_mode == op_search_mode_by_section:
         # By Section
         k_selectbox_section_search = "key_selectbox_section_search"
         selectbox_section_search  = st.selectbox(
@@ -810,18 +898,26 @@ if st_auth():
             with st.container(border=True):
                 display_df_paginated(
                     df_search_section,
-                    "df_search_section"
+                    title="df_search_section",
+                    key=f"key_stdf_search_section"
                 )
 
-    elif pills_search_mode == options_pills_search_mode[4] or pills_search_mode == options_pills_search_mode[5]:
+    elif pills_search_mode == op_search_mode_by_po:
         # By PO
+        st.info(f"coming soon!")
+    
+    elif pills_search_mode == op_search_mode_by_so:
         # By SO
+        st.info(f"coming soon!")
+    
+    elif pills_search_mode == op_search_mode_by_shopclock:
+        # ShopClock
         df_shopclock = load_shopclock_frame()
 
         stdf_shopclock = display_df_paginated(
             df_shopclock,
             title="ShopClock",
-            key="k_stdf_shopclock"
+            key="key_stdf_shopclock"
         )
 
         st.divider()
@@ -894,9 +990,12 @@ if st_auth():
             lst_unique_groups = df_shopclock["GroupName"].unique()
             colour_start = Colour("#DD2212")
             colour_end = Colour("#22DD12")
-            colour
-            wo_grad = gradient_merge([colour_start, colour_end], len(lst_unique_jobs), as_hex=True)
-            group_grad = gradient_merge([colour_start, colour_end], len(lst_unique_groups), as_hex=True)
+            colours_for_grad = [
+                colour_start,
+                colour_end
+            ]
+            wo_grad = gradient_merge(colours_for_grad.copy(), len(lst_unique_jobs), as_hex=True)
+            group_grad = gradient_merge(colours_for_grad.copy(), len(lst_unique_groups), as_hex=True)
             wo_colour_map = {j: wo_grad[i] for i, j in enumerate(lst_unique_jobs)}
             group_colour_map = {g: group_grad[i] for i, g in enumerate(lst_unique_groups)}
             for i, row in df_shopclock.iterrows():
@@ -943,8 +1042,15 @@ if st_auth():
             label="Stockcode:",
             key=k_textbox_stockcode
         )
+    
+    ###############################################
+    # If a stockcode is selected, then show details
+    ###############################################
 
-    if pills_search_mode in options_pills_search_mode[:2]:
+    if pills_search_mode in [
+        op_search_mode_simple,
+        op_search_mode_advanced
+    ]:
         # searching for stockcode specific results
 
         selectbox_stockcode = None
@@ -997,7 +1103,7 @@ if st_auth():
                 
                 show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
                 show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
-                cols_information = st.columns(3)
+                cols_information = st.columns([0.4, 0.2, 0.4])
                 with cols_information[0]:
                     display_df(
                         ser_stock[show_cols_info],
@@ -1036,9 +1142,22 @@ if st_auth():
                         "On Hand:",
                         value=qty_on_hand
                     )
+                    if st.button(
+                        label="Submit a change?"
+                    ):
+                        submit_change(ser_stock)
+
                 with cols_information[2]:
                     display_df(
                         ser_stock[show_cols_qty],
+                        title="Quantity Info",
+                        width="stretch"
+                    )
+                    df_show_qty = pd.DataFrame(ser_stock[show_cols_qty]).transpose()
+                    df_show_qty.columns = [col.replace("Qty", "") for col in df_show_qty.columns]
+                    display_df(
+                        # np.transpose(ser_stock[show_cols_qty]),
+                        df_show_qty,
                         title="Quantity Info",
                         width="stretch"
                     )
@@ -1106,7 +1225,7 @@ if st_auth():
                         # f"Movements for StockCode: {selectbox_stockcode}"
                         title=f"Total: ({total_records} Rows x {len(show_cols)} Cols) - Showing:",
                         width="stretch",
-                        key=f"stdf_stock_movements"
+                        key=f"key_stdf_stock_movements"
                     )
                 
                 k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
@@ -1205,7 +1324,8 @@ if st_auth():
                     )
                     display_df_paginated(
                         df_yt,
-                        "Yellow Tags"
+                        title="Yellow Tags",
+                        key=f"key_stdf_yellow_tags"
                     )
             else:
                 st.info(f"No parts found matching search criteria. Check your filters, if needed.")

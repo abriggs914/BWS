@@ -15,8 +15,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.07
-    Date...........2025-12-09
+    Version..............1.08
+    Date...........2025-12-10
     Author(s)....Avery Briggs
     """
 
@@ -193,9 +193,13 @@ def load_pdf_binary(pdf_file):
 	
 
 @st.cache_data(show_spinner=False)
-def split_frame(input_df, rows):
-    df = [input_df.loc[i : i + rows - 1, :] for i in range(0, len(input_df), rows)]
-    return df
+def split_frame(input_df: pd.DataFrame, rows: int):
+	if input_df.shape[0] == 1 <= rows:
+		return [input_df]
+	st.write(f"{rows=}")
+	st.write(input_df.head(3))
+	df = [input_df.loc[i : i + rows - 1, :] for i in range(0, len(input_df), rows)]
+	return df
 
 
 def display_df_paginated(
@@ -203,6 +207,7 @@ def display_df_paginated(
 		title: Optional[str] = None,
 		hide_index: str | bool = "if_int",
 		show_shape: bool = True,
+		batch_size_options: list[int] = (25, 50, 100),
 
 		# params for st.dataframe 20250325
 		width: int | None = None,
@@ -216,7 +221,10 @@ def display_df_paginated(
 ):
 	
 	if key is None:
-		sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
+		# sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
+		msg = f"You must pass a key for a paginated dataframe widget. Otherwise sub-widgets won't have state-persistence."
+		st.error(msg)
+		raise ValueError(msg)
 	else:
 		sub_widget_keys = key
 
@@ -251,7 +259,7 @@ def display_df_paginated(
 	with bottom_menu[2]:
 		batch_size = st.selectbox(
 			label="Page Size",
-			options=[25, 50, 100],
+			options=batch_size_options,
 			key=f"{sub_widget_keys}_selectbox_batch_size"
 		)
 	with bottom_menu[1]:
@@ -267,7 +275,8 @@ def display_df_paginated(
 		)
 	with bottom_menu[0]:
 		st.markdown(f"Page **{current_page}** of **{total_pages}** ")
-	
+		st.markdown(f"**{df.shape[0]}** total records")
+
 	pages = split_frame(df, batch_size)
 	with pagination:
 		return display_df(
