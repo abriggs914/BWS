@@ -1,5 +1,6 @@
 from typing import Literal, Optional, Iterable, Any
 
+import math
 import pandas as pd
 from streamlit_js_eval import streamlit_js_eval
 
@@ -194,11 +195,11 @@ def load_pdf_binary(pdf_file):
 
 @st.cache_data(show_spinner=False)
 def split_frame(input_df: pd.DataFrame, rows: int):
-	if input_df.shape[0] == 1 <= rows:
+	if input_df.shape[0] <= rows:
 		return [input_df]
-	st.write(f"{rows=}")
-	st.write(input_df.head(3))
-	df = [input_df.loc[i : i + rows - 1, :] for i in range(0, len(input_df), rows)]
+	# st.write(f"{rows=}")
+	# st.write(input_df.head(3))
+	df = [input_df.reset_index().loc[i : i + rows - 1, :] for i in range(0, input_df.shape[0] + rows, rows)]
 	return df
 
 
@@ -264,7 +265,7 @@ def display_df_paginated(
 		)
 	with bottom_menu[1]:
 		total_pages = (
-			int(len(df) / batch_size) if int(len(df) / batch_size) > 0 else 1
+			math.ceil(len(df) / batch_size) if int(len(df) / batch_size) > 0 else 1
 		)
 		current_page = st.number_input(
 			label="Page",
@@ -278,6 +279,9 @@ def display_df_paginated(
 		st.markdown(f"**{df.shape[0]}** total records")
 
 	pages = split_frame(df, batch_size)
+	# st.write(f"{len(pages)=}")
+	# st.write(f"{[len(p) for p in pages]=}")
+	# st.write(f"{batch_size=}")
 	with pagination:
 		return display_df(
 			df=pages[current_page - 1] if pages else pd.DataFrame(data=[{"data": None}]),

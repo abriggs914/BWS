@@ -7,6 +7,7 @@ from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
 
 from streamlit_pills import pills
+from streamlit_calendar import calendar
 from typing import Literal, Optional
 
 import plotly.express as px
@@ -27,6 +28,7 @@ st.set_page_config(
 
 CHANGE_REQUEST_FILE: str = "change_requests.json"
 PATH_STOCK_PDFS: str = r"J:\VaultWorkspace_BWS\PDFS"
+UTC_FMT: str = "%Y-%m-%dT%H:%M:%SZ"
 BUILDING_CODE_BOTH: int = 0
 BUILDING_CODE_VMI: int = -2
 BUILDING_CODE_HAWKINS: int = 2
@@ -193,12 +195,13 @@ SELECT
 	[IM].[Warehouse],
 	[IM].[Job],
 	[IM].[TrnQty],
-	[IM].[MovementType],
+	--[IM].[MovementType],
+	[IM].[TrnType],
 	[IM].[Reference],
 	[IM].[SalesOrder]
 FROM
 	[SysproCompanyA].[dbo].[InvMovements] [IM] WITH (NOLOCK)
-INNER JOIN
+LEFT JOIN
 	[SysproCompanyA].[dbo].[v_PROD_InvMovementsDateTime] [IMdt] WITH (NOLOCK)
 ON
 	([IM].[StockCode] = [IMdt].[StockCode])
@@ -214,8 +217,11 @@ WHERE
 ;
 """
     df = connect(sql)
-    df["MovementType"] = df["MovementType"].apply(lambda mt: "ISSUE" if mt == "I" else ("SALE" if mt == "S" else mt))
+    # display_df(df, "FETCH MOVEMENTS A")
+    # df["MovementType"] = df["MovementType"].apply(lambda mt: "ISSUE" if mt == "I" else ("SALE" if mt == "S" else mt))
+    df["TrnType"] = df["TrnType"].apply(lambda mt: "ISSUE" if mt == "I" else ("REC" if mt == "R" else ("ADJ" if mt == "A" else ("SALE" if mt == "S" else mt))))
     df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
+    # display_df(df, "FETCH MOVEMENTS B")
     return df
 
 
@@ -1166,14 +1172,20 @@ if st_auth():
                 checkbox_movement_inc_issue = st.session_state.setdefault(k_checkbox_movement_inc_issue, True)
                 k_checkbox_movement_inc_sale = "key_checkbox_movement_inc_sale"
                 checkbox_movement_inc_sale = st.session_state.setdefault(k_checkbox_movement_inc_sale, True)
+                k_checkbox_movement_inc_rec = "key_checkbox_movement_inc_rec"
+                checkbox_movement_inc_rec = st.session_state.setdefault(k_checkbox_movement_inc_rec, True)
 
                 if not checkbox_movement_inc_issue:
                     df_stock_movements = df_stock_movements[
-                        df_stock_movements["MovementType"] != "ISSUE"
+                        df_stock_movements["TrnType"] != "ISSUE"
                     ]
                 if not checkbox_movement_inc_sale:
                     df_stock_movements = df_stock_movements[
-                        df_stock_movements["MovementType"] != "SALE"
+                        df_stock_movements["TrnType"] != "SALE"
+                    ]
+                if not checkbox_movement_inc_rec:
+                    df_stock_movements = df_stock_movements[
+                        df_stock_movements["TrnType"] != "REC"
                     ]
                 total_records: int = df_stock_movements.shape[0]
 
@@ -1186,7 +1198,8 @@ if st_auth():
                         st.session_state.update({
                             k_max_records_movements: total_records,
                             k_checkbox_movement_inc_issue: True,
-                            k_checkbox_movement_inc_sale: True
+                            k_checkbox_movement_inc_sale: True,
+                            k_checkbox_movement_inc_rec: True
                         })
                         st.rerun()
 
@@ -1197,6 +1210,10 @@ if st_auth():
                     checkbox_movement_inc_sale = st.checkbox(
                         label="Include 'Sale' movements?",
                         key=k_checkbox_movement_inc_sale
+                    )
+                    checkbox_movement_inc_rec = st.checkbox(
+                        label="Include 'Rec' movements?",
+                        key=k_checkbox_movement_inc_rec
                     )
 
                     # max_records_movements = st.number_input(
@@ -1220,6 +1237,11 @@ if st_auth():
                     for col in cols_to_rem:
                         show_cols.remove(col)
 
+                    # display_df(
+                    #     df_stock_movements,
+                    #     "df_stock_movements"
+                    # )
+
                     display_df_paginated(
                         df_stock_movements[show_cols],
                         # f"Movements for StockCode: {selectbox_stockcode}"
@@ -1227,6 +1249,68 @@ if st_auth():
                         width="stretch",
                         key=f"key_stdf_stock_movements"
                     )
+
+                    move_events = []
+                    for i, row in df_stock_movements.iterrows():
+                        sc = row["StockCode"]
+                        tt = row["TrnType"]
+                        qty = row["TrnQty"]
+                        ref = row["SalesOrder"] if ((not pd.isna(row["SalesOrder"])) and (row["SalesOrder"])) else row["Job"]
+                        date_s = row["TrnDateTime"]
+                        date_e = date_s + datetime.timedelta(minutes=10)
+                        move_events.append({
+                            "id": i,    
+                            "title": f"{tt} {qty} {ref}",
+                            "start": date_s.strftime(UTC_FMT).removesuffix("Z"),
+                            "end": date_e.strftime(UTC_FMT).removesuffix("Z")
+                            # ,
+                            # "url": NHL_URL.removesuffix("/") + row["game_center_link"]
+                        })
+
+                    # print(move_events)
+
+                    k_cal_movements: str = "key_cal_movements"
+                    if k_cal_movements in st.session_state:
+                        cm = st.session_state[k_cal_movements]
+                        st.write(f"cm:")
+                        st.write(cm)
+                        es = cm.get("eventsSet", {})
+                        view = es.get("view", {})
+                        active_start = view.get("activeStart")
+                        active_end = view.get("activeEnd")
+                        ac_s = datetime.datetime.fromisoformat(active_start)
+                        ac_e = datetime.datetime.fromisoformat(active_end)
+                        ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
+                        if active_start and active_end:
+                            me = []
+                            for me in move_events:
+                                start = datetime.datetime.fromisoformat(me["start"])
+                                end = datetime.datetime.fromisoformat(me["end"])
+                                if start <= ac_m <= end:
+                                    me.append(me)
+                            move_events = me
+
+                    st.write(move_events)
+                    
+                    cal_movements = calendar(
+                        events=move_events,
+                        options={
+                            "multiMonthMaxColumns": 3,
+                            "height": 1800,
+                            "contentHeight": 500,
+                            "expandRows": True,
+                            "dayMaxEventRows": 10,  # unlimited rows per day (or set an int)
+                            "eventDisplay": "block",
+                            "displayEventTime": False,
+                            "slotMinTime": "05:00:00",
+                            "slotMaxTime": "17:30:00",
+                            "initialView": "resourceTimelineDay"
+                            # ,
+                            # "moreLinkClick": "popover",  # still works without callbacks
+                        },
+                        key=k_cal_movements
+                    )
+                    st.write(cal_movements)
                 
                 k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
                 checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
@@ -1327,6 +1411,18 @@ if st_auth():
                         title="Yellow Tags",
                         key=f"key_stdf_yellow_tags"
                     )
+                    
+                    ttl_on_hand: float = ser_stock["QtyOnHand"]
+                    run_ttl_on_hand: float = ttl_on_hand
+                    for i, row in df_yt.iterrows():
+                        qty_reqd: float = row["QtyMissing"]
+                        ttl_on_hand -= qty_reqd
+                        run_ttl_on_hand -= qty_reqd
+                        if ttl_on_hand >= 0:
+                            st.success(f"Enough on hand to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
+                        else:
+                            st.error(f"Short {abs(ttl_on_hand)} to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
+                            ttl_on_hand = 0  # reset to 0 for order specific shortage count
             else:
                 st.info(f"No parts found matching search criteria. Check your filters, if needed.")
 
