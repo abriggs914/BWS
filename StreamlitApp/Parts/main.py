@@ -1,7 +1,7 @@
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated
 from pyodbc_connection import connect
 from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
-from datetime_utility import time_between
+from datetime_utility import time_between, datetime_is_tz_aware
 from utility import percent
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
@@ -17,6 +17,7 @@ import numpy as np
 import datetime
 import asyncio
 import json
+import math
 import os
 
 
@@ -213,7 +214,7 @@ ON
 	AND ([IM].[TrnTime] = [IMdt].[TrnTime])
 	AND ([IM].[TrnType] = [IMdt].[TrnType])
 WHERE
-	[IM].[StockCode] = '{stockcode}'
+	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
 ;
 """
     df = connect(sql)
@@ -226,57 +227,118 @@ WHERE
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
-def load_so_details(stockcode: str) -> pd.DataFrame:
-    sql = f"""
-SELECT
-	[SD].[SalesOrder],
-	[SD].[MStockCode],
-	[SD].[MOrderUom],
-	[SD].[MOrderQty],
-	[SD].[MShipQty],
-	[SD].[MBackOrderQty],
-	[SD].[MPrice],
-	[SD].[MDiscPct1],
-	[SD].[MDiscPct2],
-	[SD].[MDiscPct3],
-	[SD].[MCustRequestDat],
-	[SM].[ExchangeRate],
-	[SM].[OrderDate],
-	[SM].[OrderStatus],
-	[SM].[ActiveFlag],
-	[SM].[CancelledFlag],
-	[SM].[LastOperator],
-	[SM].[LastInvoice],
-	[AC].[Name] AS [Customer],
-	[AC].[ShortName],
-	[AC].[SoldToAddr1],
-	[AC].[SoldToAddr2],
-	[AC].[SoldToAddr3],
-	[SM].[ShipAddress1],
-	[SM].[ShipAddress2],
-	[SM].[ShipAddress3],
-	[AC].[Contact],
-	[AC].[Telephone],
-	[AC].[Email],
-	[AC].[Nationality],
-	[AC].[DateCustAdded],
-	[AC].[DateLastSale],
-	[AC].[DateLastPay]
-FROM
-	[SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
-INNER JOIN
-	[SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
-ON
-	[SD].[SalesOrder] = [SM].[SalesOrder]
-INNER JOIN
-	[SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
-ON
-	[SM].[Customer] = [AC].[Customer]
-WHERE
-	[SD].[MStockCode] = '{stockcode}'
-"""
+def load_so_details(stockcode: Optional[str] = None, salesorder: Optional[str] = None) -> pd.DataFrame:
+    """
+        Load more Sales Order data than the Sales Order Pick Sheet version, but mising formatting.
+        Ability to search by StockCode or SalesOrder. When querying with salesorder, the data will exclude StockCode data.
+    """
+
+    if ((stockcode is None) and (salesorder is None)) or ((stockcode is not None) and (salesorder is not None)):
+        raise ValueError(f"Must pass either a SalesOrder # or a StockCode #. Got '{stockcode=}', '{salesorder=}'.")
+    sc_mode: bool = stockcode is not None
+
+    if sc_mode:
+        sql = f"""
+    SELECT
+        [SD].[SalesOrder],
+        [SD].[MStockCode],
+        [SD].[MOrderUom],
+        [SD].[MOrderQty],
+        [SD].[MShipQty],
+        [SD].[MBackOrderQty],
+        [SD].[MPrice],
+        [SD].[MDiscPct1],
+        [SD].[MDiscPct2],
+        [SD].[MDiscPct3],
+        [SD].[MCustRequestDat],
+        [SM].[ExchangeRate],
+        [SM].[OrderDate],
+        [SM].[OrderStatus],
+        [SM].[ActiveFlag],
+        [SM].[CancelledFlag],
+        [SM].[LastOperator],
+        [SM].[LastInvoice],
+        [AC].[Name] AS [Customer],
+        [AC].[ShortName],
+        [AC].[SoldToAddr1],
+        [AC].[SoldToAddr2],
+        [AC].[SoldToAddr3],
+        [SM].[ShipAddress1],
+        [SM].[ShipAddress2],
+        [SM].[ShipAddress3],
+        [AC].[Contact],
+        [AC].[Telephone],
+        [AC].[Email],
+        [AC].[Nationality],
+        [AC].[DateCustAdded],
+        [AC].[DateLastSale],
+        [AC].[DateLastPay]
+    FROM
+        [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
+    INNER JOIN
+        [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
+    ON
+        [SD].[SalesOrder] = [SM].[SalesOrder]
+    INNER JOIN
+        [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
+    ON
+        [SM].[Customer] = [AC].[Customer]
+    WHERE
+		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
+        AND (LOWER([SD].[MStockCode]) = LOWER('{stockcode}'))
+    """
+    else:
+        sql = f"""
+    SELECT
+        [SD].[SalesOrder],
+        [SD].[MStockCode],
+        [SD].[MOrderUom],
+        [SD].[MOrderQty],
+        [SD].[MShipQty],
+        [SD].[MBackOrderQty],
+        [SD].[MPrice],
+        [SD].[MDiscPct1],
+        [SD].[MDiscPct2],
+        [SD].[MDiscPct3],
+        [SD].[MCustRequestDat],
+        [SM].[ExchangeRate],
+        [SM].[OrderDate],
+        [SM].[OrderStatus],
+        [SM].[ActiveFlag],
+        [SM].[CancelledFlag],
+        [SM].[LastOperator],
+        [SM].[LastInvoice],
+        [AC].[Name] AS [Customer],
+        [AC].[ShortName],
+        [AC].[SoldToAddr1],
+        [AC].[SoldToAddr2],
+        [AC].[SoldToAddr3],
+        [SM].[ShipAddress1],
+        [SM].[ShipAddress2],
+        [SM].[ShipAddress3],
+        [AC].[Contact],
+        [AC].[Telephone],
+        [AC].[Email],
+        [AC].[Nationality],
+        [AC].[DateCustAdded],
+        [AC].[DateLastSale],
+        [AC].[DateLastPay]
+    FROM
+        [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
+    INNER JOIN
+        [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
+    ON
+        [SD].[SalesOrder] = [SM].[SalesOrder]
+    INNER JOIN
+        [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
+    ON
+        [SM].[Customer] = [AC].[Customer]
+    WHERE
+		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
+        AND (LOWER([SM].[SalesOrder]) = LOWER('{so_fmt(salesorder, out_type='str')}'))
+    """
     df = connect(sql)
-    df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
+    df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
     return df
 
 
@@ -348,7 +410,7 @@ LEFT JOIN
 ON
 	[PR].[Supplier] = [AS].[Supplier]
 WHERE
-	[PD].[MStockCode] = '{stockcode}'
+	LOWER([PD].[MStockCode]) = LOWER('{stockcode}')
 """
     df = connect(sql)
     df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
@@ -407,7 +469,7 @@ LEFT JOIN (
 ON
 	([JM].[Job] = [JL].[Job])
 WHERE
-	[JM].[StockCode] = '{stockcode}'
+	LOWER([JM].[StockCode]) = LOWER('{stockcode}')
 	AND ([JM].[QtyIssued] <= [JM].[QtyToIssue])
 	--AND ([JM].[AllocCompleted] = 'N'))
 ;
@@ -501,10 +563,120 @@ SELECT
 FROM
     [BWSdb].[dbo].[v_PROD_YellowTags] [YT] WITH (NOLOCK)
 WHERE
-    [YT].[StockCode] = '{stockcode}'
+    LOWER([YT].[StockCode]) = LOWER('{stockcode}')
 ;
 """
     df = connect(sql)
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_sales_orders() -> pd.DataFrame:
+    """Load Sales Order data by header, only 1 record per Sales Order"""
+    sql = """
+SELECT
+	[SM].[SalesOrder],
+	[SM].[ExchangeRate],
+	[SM].[OrderDate],
+	[SM].[OrderStatus],
+	[SM].[ActiveFlag],
+	[SM].[CancelledFlag],
+	[SM].[LastOperator],
+	[SM].[LastInvoice],
+	[AC].[Name] AS [Customer],
+	[AC].[ShortName],
+	[AC].[SoldToAddr1],
+	[AC].[SoldToAddr2],
+	[AC].[SoldToAddr3],
+	[SM].[ShipAddress1],
+	[SM].[ShipAddress2],
+	[SM].[ShipAddress3],
+	[AC].[Contact],
+	[AC].[Telephone],
+	[AC].[Email],
+	[AC].[Nationality],
+	[AC].[DateCustAdded],
+	[AC].[DateLastSale],
+	[AC].[DateLastPay]
+FROM
+	[SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
+INNER JOIN
+	[SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
+ON
+	[SM].[Customer] = [AC].[Customer]
+WHERE
+	ISNULL([SM].[OrderDate], GETDATE()) >= DATEADD(YEAR, -5, GETDATE())
+	AND ISNULL([SM].[OrderDate], GETDATE()) <= DATEADD(YEAR, 5, GETDATE())
+"""
+    df = connect(sql)
+    df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_sales_order_pick_sheet(salesorder: str) -> pd.DataFrame:
+    """Run the SO pick sheet logic from within Access to get the formatted and focused data on Sales Order StockCode data"""
+    sql = f"""
+SELECT
+    [SO].[SalesOrder],
+    [SO].[SalesOrderLine],
+    [SO].[MStockCode],
+    [SO].[MStockDes],
+    [IM].[LongDesc],
+    [SO].[MStockingUom],
+    [SO].[MWarehouse],
+    [IW].[DefaultBin],
+    [SO].[MOrderQty],
+    [SO].[MShipQty],
+    [SO].[MBackOrderQty],
+    [SO].[MPrice],
+    [IW].[QtyAllocated],
+    [IW].[QtyAllocatedToPick],
+    [IW].[QtyAllocatedWip],
+    [IW].[QtyOnBackOrder],
+    [IW].[QtyOnHand],
+    [IW].[QtyOnOrder],
+    [SM].[Customer],
+    [SM].[CustomerName],
+    [SM].[ShipAddress1],
+    [SM].[ShipAddress2],
+    [SM].[ShipAddress3],
+    [SM].[ShipAddress3Loc],
+    [SM].[ShipAddress4],
+    [SM].[ShipAddress5],
+    [IW].[QtyOnHand] - (
+        [IW].[QtyAllocated] + [IW].[QtyAllocatedToPick] + [IW].[QtyAllocatedWip]
+    ) AS Available,
+    [SO].[MOrderQty] * (
+        [SO].[MPrice] - (
+            (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
+        )
+    ) AS Amount,
+    [SO].[MOrderQty] * (
+        (
+            (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
+        )
+    ) AS Discount
+FROM
+    (
+        (
+            [SysproCompanyA].[dbo].[SorDetail] AS [SO]
+            LEFT JOIN [SysproCompanyA].[dbo].[InvWarehouse] AS [IW] ON ([SO].[MWarehouse] = [IW].[Warehouse])
+            AND ([SO].[MStockCode] = [IW].[StockCode])
+        )
+        LEFT JOIN [SysproCompanyA].[dbo].[SorMaster] AS SM ON [SO].[SalesOrder] = [SM].[SalesOrder]
+    )
+    LEFT JOIN [SysproCompanyA].[dbo].[InvMaster] AS IM ON ([IM].[StockCode] = [IW].[StockCode])
+    AND ([IW].[Warehouse] = [IM].[WarehouseToUse])
+WHERE
+    (
+        [SO].[SalesOrder] = RIGHT('000000000000000' + '{so_fmt(salesorder, out_type="str")}', 15)
+    )
+    AND (ISNULL([SO].[MStockCode], '') <> '')
+;
+"""
+    df = connect(sql)
+    df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
     return df
 
 
@@ -581,7 +753,7 @@ SELECT
 FROM
 	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
 WHERE
-	[IM].[StockCode] = '{stockcode}'
+	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
 """
     df = connect(sql)
     for col in [
@@ -596,7 +768,7 @@ WHERE
     return df
 
 
-def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 16) -> int | str:
+def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
     if out_type == "str":
         return str(po_num).rjust(word_size, "0")
     else:
@@ -605,7 +777,7 @@ def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 
         return po_num
 
 
-def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 16) -> int | str:
+def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
     if out_type == "str":
         return str(so_num).rjust(word_size, "0")
     else:
@@ -660,7 +832,7 @@ if st_auth():
     df_bins = load_bin_location_data()
 
     # list_bins = df_parts["DefaultBin"].unique().tolist()
-    list_stockcodes = df_parts["StockCode"].unique().tolist()
+    list_stockcodes = list(map(str.lower, df_parts["StockCode"].unique()))
 
     # search for a stockcode
     # view bin and quantities
@@ -776,6 +948,7 @@ if st_auth():
     op_search_mode_by_po: str = "By PO"
     op_search_mode_by_so: str = "By SO"
     op_search_mode_by_shopclock: str = "ShopClock"
+    op_search_mode_day_totals: str = "Day Totals"
     options_pills_search_mode = [
         op_search_mode_simple, 
         op_search_mode_advanced,
@@ -785,6 +958,12 @@ if st_auth():
         op_search_mode_by_so,
         op_search_mode_by_shopclock
     ]
+
+    if user in ["abriggs"]:
+        options_pills_search_mode.append(
+            op_search_mode_day_totals
+        )
+
     k_pills_search_mode: str = "key_pills_search_mode"
     st.session_state.setdefault(k_pills_search_mode, 0)
     pills_search_mode = pills(
@@ -794,6 +973,7 @@ if st_auth():
         index=0
     )
 
+    textbox_stockcode = None
     if pills_search_mode == op_search_mode_advanced:
         # Multi
         k_text_multi_0 = "key_text_multi_0"
@@ -914,7 +1094,106 @@ if st_auth():
     
     elif pills_search_mode == op_search_mode_by_so:
         # By SO
-        st.info(f"coming soon!")
+        df_sales_orders = load_sales_orders()
+        list_sales_orders: list[str] = df_sales_orders["SalesOrder"].dropna().unique().tolist()
+
+        k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
+        multiselect_sales_order_search = st.session_state.setdefault(k_multiselect_sales_order_search, [])
+        multiselect_sales_order_search = st.multiselect(
+            label="Select a Sales Order:",
+            key=k_multiselect_sales_order_search,
+            options=list_sales_orders,
+            max_selections=10
+        )
+
+        if multiselect_sales_order_search:
+            st.divider()
+            lst_df_sales_orders: list[pd.DataFrame] = [load_so_details(salesorder=so) for so in multiselect_sales_order_search]
+            if len(lst_df_sales_orders) < 2:
+                df_sales_orders = lst_df_sales_orders[0]
+            else:
+                df_sales_orders = pd.concat(lst_df_sales_orders, ignore_index=True).reset_index()
+
+            k_stdf_sales_orders: str = "key_stdf_sales_orders"
+            stdf_sales_orders = display_df_paginated(
+                df_sales_orders,
+                title="Sales Orders:",
+                key=k_stdf_sales_orders
+            )
+
+            st.divider()
+
+            lst_df_sales_order_pick_sheets: list[pd.DataFrame] = [load_sales_order_pick_sheet(so) for so in multiselect_sales_order_search]
+            if len(lst_df_sales_orders) < 2:
+                df_sales_order_pick_sheets = lst_df_sales_order_pick_sheets[0]
+            else:
+                df_sales_order_pick_sheets = pd.concat(lst_df_sales_order_pick_sheets).reset_index()
+
+            df_sales_order_pick_sheets.sort_values(
+                by=["SalesOrder", "MStockCode"],
+                inplace=True
+            )
+
+            k_stdf_sales_order_pick_sheets: str = "key_stdf_sales_order_pick_sheets"
+            stdf_sales_order_pick_sheets = display_df_paginated(
+                df_sales_order_pick_sheets,
+                title="Sales Order Pick Sheets:",
+                key=k_stdf_sales_order_pick_sheets,
+                selection_mode="single-row",
+                on_select="rerun"
+            )
+
+            n_found = 0
+            for i, row in df_sales_order_pick_sheets.iterrows():
+                sc = row["MStockCode"]
+                df_so_stock_path = load_path_pdf(sc)
+                if not df_so_stock_path.empty:
+                    stock_pdf_listed = df_so_stock_path.loc[0, "PDF_Listed"]
+                    stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
+                    if stock_pdf_listed or stock_pdf_stock:
+                        n_found += 1
+
+            cols_per_row = 3
+            cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(n_found / cols_per_row)))]
+
+            ii = 0
+            for i, row in df_sales_order_pick_sheets.iterrows():
+                so = row["SalesOrder"]
+                sc = row["MStockCode"]
+                df_so_stock_path = load_path_pdf(sc)
+                if not df_so_stock_path.empty:
+                    stock_pdf_listed = df_so_stock_path.loc[0, "PDF_Listed"]
+                    stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
+                    if stock_pdf_listed or stock_pdf_stock:
+                        with cols_grid[ii // cols_per_row][ii % cols_per_row]:
+                            st.write(f"{so}")
+                            st.write(f"{sc}")
+                            f_name = f"{sc.replace(' ', '_')}"
+                            if stock_pdf_listed:
+                                st.download_button(
+                                    label="download PDF as listed in Syspro?",
+                                    data=open(stock_pdf_listed, "rb").read(),
+                                    file_name=f"{f_name}_syspro.pdf",
+                                    mime="application/pdf",
+                                    key=f"{f_name}_drive_0"
+                                )
+                            if stock_pdf_stock:
+                                f_name = f"{sc.replace(' ', '_')}"
+                                st.download_button(
+                                    label="Download found PDF from drive?",
+                                    data=open(stock_pdf_stock, "rb").read(),
+                                    file_name=f"{f_name}_found.pdf",
+                                    mime="application/pdf",
+                                    key=f"{f_name}_drive_1"
+                                )
+                        ii += 1
+
+            if stdf_sales_order_pick_sheets:
+                    if stdf_sales_order_pick_sheets["selection"]:
+                        if stdf_sales_order_pick_sheets["selection"]["rows"]:
+                            textbox_stockcode = df_sales_order_pick_sheets.loc[stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+
+            st.divider()
     
     elif pills_search_mode == op_search_mode_by_shopclock:
         # ShopClock
@@ -1041,6 +1320,11 @@ if st_auth():
         else:
             st.info(f"No data based on criteria. Check filters, if needed.")
 
+    elif pills_search_mode == op_search_mode_day_totals:
+        pb_day = st.progress(value=0)
+        pb_week = st.progress(value=0)
+        asyncio.run(run_day())
+
     else:
         # Single
         k_textbox_stockcode = "key_textbox_stockcode"
@@ -1055,13 +1339,14 @@ if st_auth():
 
     if pills_search_mode in [
         op_search_mode_simple,
-        op_search_mode_advanced
+        op_search_mode_advanced,
+        op_search_mode_by_so
     ]:
         # searching for stockcode specific results
 
         selectbox_stockcode = None
         if textbox_stockcode:
-            if textbox_stockcode in list_stockcodes:
+            if textbox_stockcode.lower() in list_stockcodes:
                 selectbox_stockcode = textbox_stockcode
             else:
                 st.warning(f"Stockcode '{textbox_stockcode}' not found.")
@@ -1073,7 +1358,7 @@ if st_auth():
                 ascending=[False, False],
                 inplace=True
             )
-            df_stock_sales_orders: pd.DataFrame = load_so_details(selectbox_stockcode)
+            df_stock_sales_orders: pd.DataFrame = load_so_details(stockcode=selectbox_stockcode)
             df_stock_sales_orders.sort_values(
                 by="MCustRequestDat",
                 ascending=False,
@@ -1098,7 +1383,7 @@ if st_auth():
                 # df_stock_sales_orders = df_stock_sales_orders[df_stock_sales_orders["Warehouse"] == "01"]
                 # df_stock_purchase_orders = df_stock_purchase_orders[df_stock_purchase_orders["Warehouse"] == "01"]
 
-            df_stock: pd.DataFrame = df_parts[df_parts["StockCode"] == selectbox_stockcode]
+            df_stock: pd.DataFrame = df_parts[df_parts["StockCode"].str.lower() == selectbox_stockcode.lower()]
             df_yt: pd.DataFrame = load_yellow_tags(selectbox_stockcode)
 
             if not df_stock.empty:
@@ -1122,19 +1407,23 @@ if st_auth():
                         stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
                         stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
                         if stock_pdf_listed or stock_pdf_stock:
+                            f_name = f"{sc.replace(' ', '_')}"
                             if stock_pdf_listed:
                                 st.download_button(
                                     label="download PDF as listed in Syspro?",
                                     data=open(stock_pdf_listed, "rb").read(),
-                                    file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
-                                    mime="application/pdf"
+                                    file_name=f"{f_name}_syspro.pdf",
+                                    mime="application/pdf",
+                                    key=f"{f_name}_drive_2"
                                 )
                             if stock_pdf_stock:
+                                f_name = f"{sc.replace(' ', '_')}"
                                 st.download_button(
                                     label="Download found PDF from drive?",
                                     data=open(stock_pdf_stock, "rb").read(),
-                                    file_name=f"{selectbox_stockcode.replace(' ', '_')}.pdf",
-                                    mime="application/pdf"
+                                    file_name=f"{f_name}_found.pdf",
+                                    mime="application/pdf",
+                                    key=f"{f_name}_drive_3"
                                 )
                         else:
                             st.info(f"No PDFs found for this stockcode.")
@@ -1278,14 +1567,32 @@ if st_auth():
                         view = es.get("view", {})
                         active_start = view.get("activeStart")
                         active_end = view.get("activeEnd")
+                        if active_start is None:
+                            active_start = datetime.datetime.now().isoformat()
+                        if active_end is None:
+                            active_end = datetime.datetime.now().replace(hour=23, minute=59, second=59).isoformat()
+                        print(f"{active_start=}")
+                        print(f"{active_end=}")
                         ac_s = datetime.datetime.fromisoformat(active_start)
                         ac_e = datetime.datetime.fromisoformat(active_end)
+                        print(f"{ac_s=}")
+                        print(f"{ac_e=}")
                         ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
                         if active_start and active_end:
                             me = []
                             for me in move_events:
                                 start = datetime.datetime.fromisoformat(me["start"])
                                 end = datetime.datetime.fromisoformat(me["end"])
+                                if datetime_is_tz_aware(ac_m) and ((not datetime_is_tz_aware(start)) or (not datetime_is_tz_aware(end))): 
+                                    tz = ac_m.tzinfo
+                                    start = start.replace(tzinfo=tz)
+                                    end = end.replace(tzinfo=tz)
+                                if datetime_is_tz_aware(start) and (not datetime_is_tz_aware(end)):
+                                    tz = start.tzinfo
+                                    end = end.replace(tzinfo=tz)
+                                elif (not datetime_is_tz_aware(start)) and datetime_is_tz_aware(end):
+                                    tz = end.tzinfo
+                                    start = start.replace(tzinfo=tz)
                                 if start <= ac_m <= end:
                                     me.append(me)
                             move_events = me
@@ -1425,11 +1732,4 @@ if st_auth():
                             ttl_on_hand = 0  # reset to 0 for order specific shortage count
             else:
                 st.info(f"No parts found matching search criteria. Check your filters, if needed.")
-
-
-    # if user in ["abriggs", "rec"]:
-    if user in ["abriggs"]:
-        pb_day = st.progress(value=0)
-        pb_week = st.progress(value=0)
-        asyncio.run(run_day())
 

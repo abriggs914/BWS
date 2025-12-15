@@ -2,18 +2,22 @@ USE SysproCompanyA
 GO
 
 SELECT
-	*
+	[CT].*
 FROM
 	[ClkEmployee] [C]
+LEFT JOIN
+	[ClkTransaction] [CT]
+ON
+	[C].[Employee] = [CT].[EmployeeNumber]
 WHERE
 	(
-	LOWER([Name]) LIKE LOWER('%Hath%')
-	OR LOWER([Name]) LIKE LOWER('%luis p%')
-	OR LOWER([Name]) LIKE LOWER('%sean hard%')
-	OR LOWER([Name]) LIKE LOWER('%Mason%'))
+	LOWER([C].[Name]) LIKE LOWER('%Hath%')
+	OR LOWER([C].[Name]) LIKE LOWER('%luis p%')
+	OR LOWER([C].[Name]) LIKE LOWER('%damien%')
+	OR LOWER([C].[Name]) LIKE LOWER('%sean hard%')
+	OR LOWER([C].[Name]) LIKE LOWER('%Mason%'))
 ORDER BY
-	[Name]
-	AND [LoggedOn] BETWEEN '2022-01-01' AND GETDATE()
+	[LoggedOn] DESC
 
 
 	
