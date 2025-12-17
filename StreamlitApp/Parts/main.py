@@ -5,6 +5,7 @@ from datetime_utility import time_between, datetime_is_tz_aware
 from utility import percent
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
+import reportlab_utility as rlu
 
 from streamlit_pills import pills
 from streamlit_calendar import calendar
@@ -20,7 +21,6 @@ import json
 import math
 import os
 
-
 st.set_page_config(
     layout="wide",
     page_title="Parts"
@@ -34,15 +34,113 @@ BUILDING_CODE_BOTH: int = 0
 BUILDING_CODE_VMI: int = -2
 BUILDING_CODE_HAWKINS: int = 2
 BUILDING_CODE_MONTANA: int = 1
+BUILDING_CODE_UNKNOWN: int = -99
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
 def load_bin_location_data() -> pd.DataFrame:
+#     sql = """
+#
+# -- Bin Locations in Duplicate
+# -- 2025-12-08
+#
+# WITH KnownSections AS (
+# 	SELECT 0 AS [ID], 'A' AS [Section]
+# 	UNION SELECT 1, 'B'
+# 	UNION SELECT 2, 'C'
+# 	UNION SELECT 3, 'D'
+# 	UNION SELECT 4, 'E'
+# 	UNION SELECT 5, 'F'
+# 	UNION SELECT 6, 'G'
+# 	UNION SELECT 7, 'H'
+# 	UNION SELECT 8, 'I'
+# 	UNION SELECT 9, 'J'
+# 	UNION SELECT 10, 'K'
+# 	UNION SELECT 11, 'L'
+# 	UNION SELECT 12, 'M'
+# 	UNION SELECT 13, 'N'
+# 	UNION SELECT 14, 'O'
+# 	UNION SELECT 15, 'P'
+# 	UNION SELECT 16, 'Q'
+# 	UNION SELECT 17, 'R'
+# 	UNION SELECT 18, 'S'
+# 	UNION SELECT 19, 'T'
+# 	UNION SELECT 20, 'U'
+# 	UNION SELECT 21, 'V'
+# 	UNION SELECT 22, 'W'
+# 	UNION SELECT 23, 'X'
+# 	UNION SELECT 24, 'Y'
+# 	UNION SELECT 25, 'Z'
+# ),
+# BinCounts AS (
+# SELECT
+# 	[IW].[DefaultBin],
+# 	[IW].[Warehouse],
+# 	COUNT(*) AS [NumItems],
+# 	SUM([IW].[QtyOnHand] * [IW].[LastCostEntered]) AS [TtlItemValue],
+# 	(CASE WHEN
+# 			(LOWER([IW].[DefaultBin]) = 'vmi')
+# 			OR (LOWER([IW].[DefaultBin]) LIKE '%vend%')
+# 		THEN -2
+# 		WHEN
+# 			LOWER([IW].[DefaultBin]) LIKE '%wh4%'
+# 		THEN
+# 			2 -- Montana Only
+# 		WHEN
+# 			LOWER([IW].[DefaultBin]) LIKE '%@%'
+# 		THEN
+# 			0 -- Both
+# 		ELSE
+# 			1 -- Hawkins Only
+# 	END) AS [BuildingCode],
+# 	(CASE WHEN
+# 			LOWER([IW].[DefaultBin]) LIKE '%/%'
+# 		THEN
+# 			1 -- Slash divides bins
+# 		WHEN
+# 			LOWER([IW].[DefaultBin]) LIKE '%@%'
+# 		THEN
+# 			1 -- @ denotes same bin in another building
+# 		ELSE
+# 			0 -- Only 1 noted
+# 	END) AS [HasMultipleBins],
+# 	[KS].[Section] AS [Section]
+# FROM
+# 	[SysproCompanyA].[dbo].[InvWarehouse] [IW]
+# LEFT JOIN
+# 	[KnownSections] [KS]
+# ON
+# 	(CASE WHEN LOWER(LEFT([IW].[DefaultBin], 3)) = 'wh4' THEN (
+# 			CASE WHEN LOWER(LEFT(SUBSTRING([IW].[DefaultBin], 4, LEN([IW].[DefaultBin]) - 3), 1)) = LOWER([KS].[Section]) THEN 1 ELSE 0 END
+# 		)
+# 		WHEN LOWER(LEFT([IW].[DefaultBin], 1)) = LOWER([KS].[Section]) THEN 1
+# 		ELSE 0
+# 	END) > 0
+# GROUP BY
+# 	[IW].[DefaultBin],
+# 	[IW].[Warehouse],
+# 	[KS].[Section]
+# )
+# SELECT
+#     [BC1].[Section],
+#     [BC1].[DefaultBin],
+#     [BC2].[DefaultBin] AS [BinLike],
+# 	[BC1].[Warehouse],
+#     [BC1].[NumItems],
+#     [BC1].[TtlItemValue],
+#     [BC1].[BuildingCode],
+#     [BC1].[HasMultipleBins]
+# FROM
+#     [BinCounts] AS [BC1]
+#     LEFT JOIN [BinCounts] AS [BC2]
+#         ON  (REPLACE(REPLACE(REPLACE(LOWER([BC1].[DefaultBin]), ' ', ''), '/', ''), '@', '') =
+#             REPLACE(REPLACE(REPLACE(LOWER([BC2].[DefaultBin]), ' ', ''), '/', ''), '@', ''))
+#         AND (LOWER(BC1.DefaultBin) <> LOWER([BC2].[DefaultBin]))
+# 		AND ([BC1].[Warehouse] = [BC2].[Warehouse])
+# WHERE
+# 	ISNULL([BC1].[DefaultBin], '') <> ''
+# """
     sql = """
-
--- Bin Locations in Duplicate
--- 2025-12-08
-
 WITH KnownSections AS (
 	SELECT 0 AS [ID], 'A' AS [Section]
 	UNION SELECT 1, 'B'
@@ -89,11 +187,15 @@ SELECT
 			LOWER([IW].[DefaultBin]) LIKE '%@%'
 		THEN 
 			0 -- Both
+		WHEN 
+			(LOWER([IW].[DefaultBin]) = '/') OR (ISNULL([IW].[DefaultBin], '') = '')
+		THEN
+			-99 -- Unknown
 		ELSE
 			1 -- Hawkins Only
 	END) AS [BuildingCode],
 	(CASE WHEN 
-			LOWER([IW].[DefaultBin]) LIKE '%/%'
+			(LEN([IW].[DefaultBin]) > 1) AND (LOWER([IW].[DefaultBin]) LIKE '%/%')
 		THEN
 			1 -- Slash divides bins
 		WHEN
@@ -136,9 +238,8 @@ FROM
             REPLACE(REPLACE(REPLACE(LOWER([BC2].[DefaultBin]), ' ', ''), '/', ''), '@', ''))
         AND (LOWER(BC1.DefaultBin) <> LOWER([BC2].[DefaultBin]))
 		AND ([BC1].[Warehouse] = [BC2].[Warehouse])
-WHERE
-	ISNULL([BC1].[DefaultBin], '') <> ''
-"""
+;
+    """
     df = connect(sql)
     df.sort_values(
         by=["DefaultBin", "BinLike"],
@@ -456,7 +557,7 @@ ON
 LEFT JOIN
 	[BWSdb].[dbo].[Production] [PD] WITH (NOLOCK)
 ON
-	([JM].[Job] = [PD].[WO#])
+	([JM].[Job] = CAST([PD].[WO#] AS NVARCHAR(MAX)))
 LEFT JOIN (
 	SELECT
 		[JL].[Job],
@@ -537,31 +638,35 @@ WHERE
 def load_yellow_tags(stockcode: str) -> pd.DataFrame:
     sql = f"""
 SELECT
-    [ID]
-    ,[DateCreated]
-    ,[LastModified]
-    ,[Active]
-    ,[DateActive]
-    ,[DateInActive]
-    ,[PO]
-    ,[WO]
-    ,[StockCode]
-    ,[YTDescription]
-    ,[QtyMissing]
-    ,[Notes]
-    ,[QtyOnHand]
-    ,[Description]
-    ,[LongDesc]
-    ,[Supplier]
-    ,[Warehouse]
-    ,[LastPurchDate]
-    ,[POOrigDueDate]
-    ,[POLatestDueDate]
-    ,[Bin]
-    ,[POReceivedQty]
-    ,[DrawingPath]
+    [YT].[ID]
+    ,[YT].[Active]
+    ,[vYT].[DateCreated]
+    ,[vYT].[LastModified]
+    ,[vYT].[DateActive]
+    ,[vYT].[DateInActive]
+    ,[vYT].[PO]
+    ,[vYT].[WO]
+    ,[vYT].[StockCode]
+    ,[vYT].[YTDescription]
+    ,[vYT].[QtyMissing]
+    ,[vYT].[Notes]
+    ,[vYT].[QtyOnHand]
+    ,[vYT].[Description]
+    ,[vYT].[LongDesc]
+    ,[vYT].[Supplier]
+    ,[vYT].[Warehouse]
+    ,[vYT].[LastPurchDate]
+    ,[vYT].[POOrigDueDate]
+    ,[vYT].[POLatestDueDate]
+    ,[vYT].[Bin]
+    ,[vYT].[POReceivedQty]
+    ,[vYT].[DrawingPath]
 FROM
-    [BWSdb].[dbo].[v_PROD_YellowTags] [YT] WITH (NOLOCK)
+    [BWSdb].[dbo].[PROD_YellowTags] [YT] WITH (NOLOCK)
+LEFT JOIN
+    [BWSdb].[dbo].[v_PROD_YellowTags] [vYT] WITH (NOLOCK)
+ON
+	[YT].[ID] = [vYT].[ID]
 WHERE
     LOWER([YT].[StockCode]) = LOWER('{stockcode}')
 ;
@@ -680,6 +785,18 @@ WHERE
     return df
 
 
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_change_requests() -> pd.DataFrame:
+    path_abs: str = os.path.join(os.getcwd(), CHANGE_REQUEST_FILE)
+    if not os.path.exists(path_abs):
+        with open(path_abs, "w") as f:
+            json.dump([], f)
+    with open(path_abs, "r") as f:
+        df = pd.DataFrame(json.load(f))
+        df["date"] = df["date"].apply(lambda date: eval(date))
+        return df
+
+
 @st.dialog(title="Submit a Change:")
 def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 
@@ -735,12 +852,18 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
                     "field": selectbox_change_field,
                     "old": text_field_current,
                     "new": text_field_new,
-                    "notes": text_field_notes
+                    "notes": text_field_notes,
+                    "completed": None,
+                    "completed_by": None,
+                    "completed_date": None
                 })
 
                 with open(path_abs, "w") as f:
                     json.dump(data, f)
 
+                st.session_state.update({
+                    k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+                })
                 st.toast("Request submitted")
                 st.rerun()
 
@@ -766,6 +889,111 @@ WHERE
         )
         df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
     return df
+
+
+def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False):
+    df_w = df_so_pick_sheet.copy()
+
+    if len(df_w["SalesOrder"].dropna().unique()) != 1:
+        raise ValueError(f"Cannot prepare a Sales Order Pick Sheet with combined orders.")
+
+    so = df_w.loc[0, "SalesOrder"]
+    cust_name = df_w.loc[0, "CustomerName"]
+    ship_addr_0 = df_w.loc[0, "ShipAddress1"]
+    ship_addr_1 = df_w.loc[0, "ShipAddress2"]
+    ship_addr_2 = df_w.loc[0, "ShipAddress3"]
+
+    df_w.sort_values("SalesOrderLine", inplace=True)
+    table_cols = {
+        "MOrderQty": "QTY ORD",
+        "MBackOrderQty": "QTY B/O",
+        "MShipQty": "QTY SHP",
+        "MStockCode": "STOCK",
+        "MStockDes": "DESC",
+        "LongDesc": "LONG DESC",
+        "MStockingUom": "UOM",
+        "MPrice": "PRICE",
+        "Discount": "DISC",
+        "Amount": "TOTAL",
+        "QtyOnHand": "ON HAND",
+        "QtyOnOrder": "ON ORDER"
+    }
+    df_part_data = df_w[table_cols.keys()]
+    df_part_data.rename(columns=table_cols, inplace=True)
+
+    report_file_name: str = f"so_pick_sheet_{so}_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.pdf"
+    report_title: str = f"Sales Order Pick Sheet"
+    report_subtitle: str = f"SO# {so}"
+    report_author: str = f"{user}"
+
+    theme = rlu.PDFTheme(
+        page_size=rlu.LETTER
+    )
+    meta = rlu.PDFMeta(
+        title=report_title,
+        subtitle=report_subtitle,
+        author=report_author,
+    )
+    styles = rlu.build_styles(theme)
+
+    out, doc = rlu.build_pdf(
+        report_file_name,
+        story=None,
+        theme=theme,
+        meta=meta,
+        as_zip=as_zip
+    )
+    buf = out
+    rlu.add_grid_template(doc, theme, template_id="dash", rows=3, cols=2)
+
+    story = []
+    story += [
+        rlu.h3("Picked By:", styles),
+        rlu.h3("Picked Date:", styles),
+        rlu.h3("Ship Date:", styles),
+    ]
+
+    # cell 0, 0
+    story += [rlu.FrameBreak()]
+
+    # cell 0, 1
+    story += [
+        rlu.h3(f"{cust_name}", styles),
+        rlu.h3(f"{ship_addr_0}", styles),
+        rlu.h3(f"{ship_addr_1}", styles),
+        rlu.h3(f"{ship_addr_2}", styles),
+        rlu.FrameBreak()
+    ]
+
+    # cell 1, 0
+    story += [
+        rlu.df_table(df_part_data, theme, styles, number_format={"Value": "{:,.2f}"})
+    ]
+
+    # # # TOC (optional) — headings added after it will populate it
+    # # story += rlu.toc(styles)
+    #
+    # story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+    # story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+    # story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+    # story += [rlu.vspace(12)]
+    #
+    # # If you have a matplotlib chart saved as PNG:
+    # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+    # # story += [h2("A figure", styles)]
+    # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+
+    # out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
+
+    doc.build(story)
+    if not as_zip:
+        f_name = out.resolve()
+        print(f"Wrote: {f_name}")
+        return f_name
+
+    # Will be io.BytesIO for zipping
+    print(f"ZIP generate_so_pick_sheet")
+    return buf.getvalue()
 
 
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
@@ -830,6 +1058,7 @@ if st_auth():
 
     df_parts = load_parts_data()
     df_bins = load_bin_location_data()
+    df_change_requests = load_change_requests()
 
     # list_bins = df_parts["DefaultBin"].unique().tolist()
     list_stockcodes = list(map(str.lower, df_parts["StockCode"].unique()))
@@ -847,12 +1076,14 @@ if st_auth():
         k_checkbox_hawkins_parts_inc = "key_checkbox_hawkins_parts_inc"
         k_checkbox_montana_parts_inc = "key_checkbox_montana_parts_inc"
         k_checkbox_vmi_parts_inc = "key_checkbox_vmi_parts_inc"
+        k_checkbox_unknown_parts_inc = "key_checkbox_unknown_parts_inc"
 
         list_settings_keys.extend([
             k_checkbox_warehouse_1_only,
             k_checkbox_hawkins_parts_inc,
             k_checkbox_montana_parts_inc,
-            k_checkbox_vmi_parts_inc
+            k_checkbox_vmi_parts_inc,
+            k_checkbox_unknown_parts_inc
         ])
 
         k_loaded_settings_session = "key_loaded_settings_session"
@@ -885,6 +1116,12 @@ if st_auth():
         checkbox_vmi_parts_inc = st.checkbox(
             label="Include parts in Vending Machines?",
             key=k_checkbox_vmi_parts_inc
+        )
+
+        st.session_state.setdefault(k_checkbox_unknown_parts_inc, False)
+        checkbox_unknown_parts_inc = st.checkbox(
+            label="Include parts in Unknown Bin Locations?",
+            key=k_checkbox_unknown_parts_inc
         )
 
         current_settings = {k: st.session_state[k] for k in list_settings_keys}
@@ -924,6 +1161,11 @@ if st_auth():
             ~df_bins["BuildingCode"].isin([BUILDING_CODE_VMI])
         ]
 
+    if not checkbox_unknown_parts_inc:
+        df_bins = df_bins[
+            ~df_bins["BuildingCode"].isin([BUILDING_CODE_UNKNOWN])
+        ]
+
     # display_df(
     #     df_bins,
     #     "df_bins"
@@ -959,21 +1201,44 @@ if st_auth():
         op_search_mode_by_shopclock
     ]
 
-    if user in ["abriggs"]:
+    admin_end_users = ["abriggs"]
+    if user in admin_end_users:
         options_pills_search_mode.append(
             op_search_mode_day_totals
         )
 
-    k_pills_search_mode: str = "key_pills_search_mode"
-    st.session_state.setdefault(k_pills_search_mode, 0)
-    pills_search_mode = pills(
-        label="Search Mode:",
-        key=k_pills_search_mode,
-        options=options_pills_search_mode,
-        index=0
-    )
-
     textbox_stockcode = None
+    k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
+    k_pills_search_mode: str = "key_pills_search_mode"
+    k_pills_search_mode_save: str = "key_pills_search_mode_save"
+
+    if user in admin_end_users:
+        with st.container(border=True):
+            st.write(f"A")
+            st.write(f"{st.session_state.get(k_pills_search_mode)=}")
+            st.write(f"{st.session_state.get(k_pills_search_mode_save)=}")
+            st.write(f"{textbox_stockcode=}")
+
+    pills_search_mode = st.session_state.setdefault(k_pills_search_mode, 0)
+    if st.session_state.get(k_pills_search_mode_save) is not None:
+        st.session_state.update({
+            k_pills_search_mode: st.session_state.get(k_pills_search_mode_save),
+            k_pills_search_mode_save: None
+        })
+
+    if user in admin_end_users:
+        with st.container(border=True):
+            st.write(f"B")
+            st.write(f"{pills_search_mode=}")
+            st.write(f"{st.session_state.get(k_pills_search_mode)=}")
+            st.write(f"{textbox_stockcode=}")
+
+    # pills_search_mode = st.session_state.setdefault(k_pills_search_mode, op_search_mode_simple)
+    # if pills_search_mode == 0:
+    #     pills_search_mode = op_search_mode_simple
+    # pills_search_mode = pills_search_mode if isinstance(pills_search_mode, str) else options_pills_search_mode[pills_search_mode]
+    cont_top_control = st.container()
+
     if pills_search_mode == op_search_mode_advanced:
         # Multi
         k_text_multi_0 = "key_text_multi_0"
@@ -994,9 +1259,10 @@ if st_auth():
                     st.session_state.update({
                         k_text_multi_0: "",
                         k_text_multi_1: "",
-                        k_text_multi_2: ""
+                        k_text_multi_2: "",
+                        k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
                     })
-                    st.rerun()
+                    # st.rerun()
 
             text_widgets = []
             for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
@@ -1006,16 +1272,18 @@ if st_auth():
                         key=key,
                         on_change=lambda : st.session_state.update({k_search_text_widgets: None})
                     ))
+                if not st.session_state.get(key):
+                    break
 
-            textbox_stockcode = None      
-            k_search_text_widgets: str = "key_search_text_widgets" 
-            with cols_search_term[0]:  
+            textbox_stockcode = None
+            k_search_text_widgets: str = "key_search_text_widgets"
+            with cols_search_term[0]:
                 if st.button(
                     "submit"
                 ):
                     st.session_state.update({k_search_text_widgets: text_widgets})
-                    st.rerun()
-            
+                    # st.rerun()
+
             if st.session_state.setdefault(k_search_text_widgets):
                 df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
                 k_stdf_searched = "key_stdf_searched"
@@ -1026,7 +1294,7 @@ if st_auth():
                     "LongDesc"
                 ]
                 with cols_search_term[1]:
-                    
+
                     with st.container(border=True):
                         stdf_searched = display_df_paginated(
                             df=df_searched[show_cols],
@@ -1044,7 +1312,83 @@ if st_auth():
                             textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
         st.divider()
 
-    elif pills_search_mode == op_search_mode_by_bin:
+    # if pills_search_mode == op_search_mode_advanced:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_advanced):
+        # Multi
+        k_text_multi_0 = "key_text_multi_0"
+        k_text_multi_1 = "key_text_multi_1"
+        k_text_multi_2 = "key_text_multi_2"
+        t0 = st.session_state.setdefault(k_text_multi_0, "")
+        t1 = st.session_state.setdefault(k_text_multi_1, "")
+        t2 = st.session_state.setdefault(k_text_multi_2, "")
+        # t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
+        with st.container():
+            cols_search_term = st.columns([0.45, 0.55])
+            cont_search_result = st.container()
+
+            with cols_search_term[0]:
+                if st.button(
+                    "clear"
+                ):
+                    st.session_state.update({
+                        k_text_multi_0: "",
+                        k_text_multi_1: "",
+                        k_text_multi_2: "",
+                        k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+                    })
+                    # st.rerun()
+
+            text_widgets = []
+            for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
+                with cols_search_term[0]:
+                    text_widgets.append(st.text_input(
+                        label=f"Term {i + 1}",
+                        key=key,
+                        on_change=lambda : st.session_state.update({k_search_text_widgets: None})
+                    ))
+
+            textbox_stockcode = None
+            k_search_text_widgets: str = "key_search_text_widgets"
+            with cols_search_term[0]:
+                if st.button(
+                    "submit"
+                ):
+                    st.session_state.update({
+                        k_search_text_widgets: text_widgets,
+                        k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+                    })
+                    # st.rerun()
+
+            if st.session_state.setdefault(k_search_text_widgets):
+                df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
+                k_stdf_searched = "key_stdf_searched"
+                show_cols = [
+                    "StockCode",
+                    "DefaultBin",
+                    "Description",
+                    "LongDesc"
+                ]
+                with cols_search_term[1]:
+
+                    with st.container(border=True):
+                        stdf_searched = display_df_paginated(
+                            df=df_searched[show_cols],
+                            title="df_searched",
+                            on_select="rerun",
+                            selection_mode="single-row",
+                            key=k_stdf_searched
+                        )
+
+                    # st.write(stdf_searched)
+
+                if stdf_searched:
+                    if stdf_searched["selection"]:
+                        if stdf_searched["selection"]["rows"]:
+                            textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
+        st.divider()
+
+    # elif pills_search_mode == op_search_mode_by_bin:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin):
         # By Bin
         k_selectbox_bin_search = "key_selectbox_bin_search"
         selectbox_bin_search  = st.selectbox(
@@ -1066,7 +1410,8 @@ if st_auth():
 
                 )
     
-    elif pills_search_mode == op_search_mode_by_section:
+    # elif pills_search_mode == op_search_mode_by_section:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_section):
         # By Section
         k_selectbox_section_search = "key_selectbox_section_search"
         selectbox_section_search  = st.selectbox(
@@ -1088,16 +1433,17 @@ if st_auth():
                     key=f"key_stdf_search_section"
                 )
 
-    elif pills_search_mode == op_search_mode_by_po:
+    # elif pills_search_mode == op_search_mode_by_po:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
         # By PO
         st.info(f"coming soon!")
     
-    elif pills_search_mode == op_search_mode_by_so:
+    # elif pills_search_mode == op_search_mode_by_so:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
         # By SO
         df_sales_orders = load_sales_orders()
         list_sales_orders: list[str] = df_sales_orders["SalesOrder"].dropna().unique().tolist()
 
-        k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
         multiselect_sales_order_search = st.session_state.setdefault(k_multiselect_sales_order_search, [])
         multiselect_sales_order_search = st.multiselect(
             label="Select a Sales Order:",
@@ -1143,7 +1489,34 @@ if st_auth():
                 on_select="rerun"
             )
 
-            n_found = 0
+            #################################################
+
+            lst_pdfs_bytes = []
+            for so in df_sales_order_pick_sheets["SalesOrder"].dropna().unique():
+                f_name = f"SOPickSheet_{so}.pdf"
+                lst_pdfs_bytes.append((
+                    f_name,
+                    generate_so_pick_sheet(
+                        df_sales_order_pick_sheets[df_sales_order_pick_sheets["SalesOrder"] == so],
+                        as_zip=True
+                    )
+                ))
+
+            zip_bytes = rlu.build_zip_bytes(lst_pdfs_bytes)
+
+            st.download_button(
+                "Download Sales Order Pick Sheets",
+                data=zip_bytes,
+                file_name=f"reports_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.zip",
+                mime="application/zip",
+            )
+
+            #################################################
+
+
+
+
+            found = {}
             for i, row in df_sales_order_pick_sheets.iterrows():
                 sc = row["MStockCode"]
                 df_so_stock_path = load_path_pdf(sc)
@@ -1151,10 +1524,12 @@ if st_auth():
                     stock_pdf_listed = df_so_stock_path.loc[0, "PDF_Listed"]
                     stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
                     if stock_pdf_listed or stock_pdf_stock:
-                        n_found += 1
+                        if i not in found:
+                            found[i] = []
+                        found[i].append(sc)
 
             cols_per_row = 3
-            cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(n_found / cols_per_row)))]
+            cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(len(found) / cols_per_row)))]
 
             ii = 0
             for i, row in df_sales_order_pick_sheets.iterrows():
@@ -1195,7 +1570,8 @@ if st_auth():
 
             st.divider()
     
-    elif pills_search_mode == op_search_mode_by_shopclock:
+    # elif pills_search_mode == op_search_mode_by_shopclock:
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shopclock):
         # ShopClock
         df_shopclock = load_shopclock_frame()
 
@@ -1320,7 +1696,8 @@ if st_auth():
         else:
             st.info(f"No data based on criteria. Check filters, if needed.")
 
-    elif pills_search_mode == op_search_mode_day_totals:
+    # elif pills_search_mode == op_search_mode_day_totals:
+    elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_totals)):
         pb_day = st.progress(value=0)
         pb_week = st.progress(value=0)
         asyncio.run(run_day())
@@ -1337,10 +1714,16 @@ if st_auth():
     # If a stockcode is selected, then show details
     ###############################################
 
+    if user in admin_end_users:
+        with st.container(border=True):
+            st.write(f"{pills_search_mode=}")
+            st.write(f"{st.session_state.get(k_pills_search_mode)=}")
+            st.write(f"{textbox_stockcode=}")
+
     if pills_search_mode in [
-        op_search_mode_simple,
-        op_search_mode_advanced,
-        op_search_mode_by_so
+        options_pills_search_mode.index(op_search_mode_simple),
+        options_pills_search_mode.index(op_search_mode_advanced),
+        options_pills_search_mode.index(op_search_mode_by_so)
     ]:
         # searching for stockcode specific results
 
@@ -1402,12 +1785,12 @@ if st_auth():
                         width="stretch"
                     )
 
-                    with st.expander(f"Drawings"):
-                        df_stock_pdf = load_path_pdf(selectbox_stockcode)
-                        stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
-                        stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
+                    df_stock_pdf = load_path_pdf(selectbox_stockcode)
+                    stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
+                    stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
+                    with st.popover(f"Drawings"):
                         if stock_pdf_listed or stock_pdf_stock:
-                            f_name = f"{sc.replace(' ', '_')}"
+                            f_name = f"{selectbox_stockcode.replace(' ', '_')}"
                             if stock_pdf_listed:
                                 st.download_button(
                                     label="download PDF as listed in Syspro?",
@@ -1417,7 +1800,7 @@ if st_auth():
                                     key=f"{f_name}_drive_2"
                                 )
                             if stock_pdf_stock:
-                                f_name = f"{sc.replace(' ', '_')}"
+                                f_name = f"{selectbox_stockcode.replace(' ', '_')}"
                                 st.download_button(
                                     label="Download found PDF from drive?",
                                     data=open(stock_pdf_stock, "rb").read(),
@@ -1425,8 +1808,8 @@ if st_auth():
                                     mime="application/pdf",
                                     key=f"{f_name}_drive_3"
                                 )
-                        else:
-                            st.info(f"No PDFs found for this stockcode.")
+                        # else:
+                        #     st.info(f"No PDFs found for this stockcode.")
                 
                 with cols_information[1]:
                     st.metric(
@@ -1441,6 +1824,33 @@ if st_auth():
                         label="Submit a change?"
                     ):
                         submit_change(ser_stock)
+
+                    df_stock_change_requests = df_change_requests[df_change_requests["stockcode"].str.lower() == selectbox_stockcode.lower()]
+                    with st.popover("Previously Submitted Change Requests:", width=500):
+                        if not df_stock_change_requests.empty:
+                            for i, row in df_stock_change_requests.reset_index(drop=True).iterrows():
+                                date_ = eval(row["date"])
+                                user_ = row["user"]
+                                field_ = row["field"]
+                                old_ = row["old"].strip().replace("", "_")
+                                new_ = row["new"]
+                                notes_ = row["notes"]
+                                done_ = row["completed"]
+                                done_by_ = row["completed_by"]
+                                done_date_ = row["completed_date"]
+                                msg_0 = f"{date_}, {user_}"
+                                msg_1 = f"{field_}: {old_} -> {new_}"
+                                st.write(msg_0)
+                                st.write(msg_1)
+                                if notes_:
+                                    st.write(f"{notes_}")
+                                if i > 0:
+                                    st.divider()
+                            # display_df_paginated(
+                            #     df_stock_change_requests,
+                            #     title="Previously Submitted Change Requests:",
+                            #     key="key_df_stock_change_requests"
+                            # )
 
                 with cols_information[2]:
                     display_df(
@@ -1490,7 +1900,7 @@ if st_auth():
                             k_checkbox_movement_inc_sale: True,
                             k_checkbox_movement_inc_rec: True
                         })
-                        st.rerun()
+                        # st.rerun()
 
                     checkbox_movement_inc_issue = st.checkbox(
                         label="Include 'Issue' movements?",
@@ -1539,85 +1949,85 @@ if st_auth():
                         key=f"key_stdf_stock_movements"
                     )
 
-                    move_events = []
-                    for i, row in df_stock_movements.iterrows():
-                        sc = row["StockCode"]
-                        tt = row["TrnType"]
-                        qty = row["TrnQty"]
-                        ref = row["SalesOrder"] if ((not pd.isna(row["SalesOrder"])) and (row["SalesOrder"])) else row["Job"]
-                        date_s = row["TrnDateTime"]
-                        date_e = date_s + datetime.timedelta(minutes=10)
-                        move_events.append({
-                            "id": i,    
-                            "title": f"{tt} {qty} {ref}",
-                            "start": date_s.strftime(UTC_FMT).removesuffix("Z"),
-                            "end": date_e.strftime(UTC_FMT).removesuffix("Z")
-                            # ,
-                            # "url": NHL_URL.removesuffix("/") + row["game_center_link"]
-                        })
-
-                    # print(move_events)
-
-                    k_cal_movements: str = "key_cal_movements"
-                    if k_cal_movements in st.session_state:
-                        cm = st.session_state[k_cal_movements]
-                        st.write(f"cm:")
-                        st.write(cm)
-                        es = cm.get("eventsSet", {})
-                        view = es.get("view", {})
-                        active_start = view.get("activeStart")
-                        active_end = view.get("activeEnd")
-                        if active_start is None:
-                            active_start = datetime.datetime.now().isoformat()
-                        if active_end is None:
-                            active_end = datetime.datetime.now().replace(hour=23, minute=59, second=59).isoformat()
-                        print(f"{active_start=}")
-                        print(f"{active_end=}")
-                        ac_s = datetime.datetime.fromisoformat(active_start)
-                        ac_e = datetime.datetime.fromisoformat(active_end)
-                        print(f"{ac_s=}")
-                        print(f"{ac_e=}")
-                        ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
-                        if active_start and active_end:
-                            me = []
-                            for me in move_events:
-                                start = datetime.datetime.fromisoformat(me["start"])
-                                end = datetime.datetime.fromisoformat(me["end"])
-                                if datetime_is_tz_aware(ac_m) and ((not datetime_is_tz_aware(start)) or (not datetime_is_tz_aware(end))): 
-                                    tz = ac_m.tzinfo
-                                    start = start.replace(tzinfo=tz)
-                                    end = end.replace(tzinfo=tz)
-                                if datetime_is_tz_aware(start) and (not datetime_is_tz_aware(end)):
-                                    tz = start.tzinfo
-                                    end = end.replace(tzinfo=tz)
-                                elif (not datetime_is_tz_aware(start)) and datetime_is_tz_aware(end):
-                                    tz = end.tzinfo
-                                    start = start.replace(tzinfo=tz)
-                                if start <= ac_m <= end:
-                                    me.append(me)
-                            move_events = me
-
-                    st.write(move_events)
-                    
-                    cal_movements = calendar(
-                        events=move_events,
-                        options={
-                            "multiMonthMaxColumns": 3,
-                            "height": 1800,
-                            "contentHeight": 500,
-                            "expandRows": True,
-                            "dayMaxEventRows": 10,  # unlimited rows per day (or set an int)
-                            "eventDisplay": "block",
-                            "displayEventTime": False,
-                            "slotMinTime": "05:00:00",
-                            "slotMaxTime": "17:30:00",
-                            "initialView": "resourceTimelineDay"
-                            # ,
-                            # "moreLinkClick": "popover",  # still works without callbacks
-                        },
-                        key=k_cal_movements
-                    )
-                    st.write(cal_movements)
+                    # move_events = []
+                    # for i, row in df_stock_movements.iterrows():
+                    #     sc = row["StockCode"]
+                    #     tt = row["TrnType"]
+                    #     qty = row["TrnQty"]
+                    #     ref = row["SalesOrder"] if ((not pd.isna(row["SalesOrder"])) and (row["SalesOrder"])) else row["Job"]
+                    #     date_s = row["TrnDateTime"]
+                    #     date_e = date_s + datetime.timedelta(minutes=10)
+                    #     move_events.append({
+                    #         "id": i,
+                    #         "title": f"{tt} {qty} {ref}",
+                    #         "start": date_s.strftime(UTC_FMT).removesuffix("Z"),
+                    #         "end": date_e.strftime(UTC_FMT).removesuffix("Z")
+                    #         # ,
+                    #         # "url": NHL_URL.removesuffix("/") + row["game_center_link"]
+                    #     })
+                    #
+                    # # print(move_events)
+                    #
+                    # k_cal_movements: str = "key_cal_movements"
+                    # if k_cal_movements in st.session_state:
+                    #     cm = st.session_state[k_cal_movements]
+                    #     st.write(f"cm:")
+                    #     st.write(cm)
+                    #     es = cm.get("eventsSet", {})
+                    #     view = es.get("view", {})
+                    #     active_start = view.get("activeStart")
+                    #     active_end = view.get("activeEnd")
+                    #     if active_start is None:
+                    #         active_start = datetime.datetime.now().isoformat()
+                    #     if active_end is None:
+                    #         active_end = datetime.datetime.now().replace(hour=23, minute=59, second=59).isoformat()
+                    #     print(f"{active_start=}")
+                    #     print(f"{active_end=}")
+                    #     ac_s = datetime.datetime.fromisoformat(active_start)
+                    #     ac_e = datetime.datetime.fromisoformat(active_end)
+                    #     print(f"{ac_s=}")
+                    #     print(f"{ac_e=}")
+                    #     ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
+                    #     if active_start and active_end:
+                    #         me = []
+                    #         for me in move_events:
+                    #             start = datetime.datetime.fromisoformat(me["start"])
+                    #             end = datetime.datetime.fromisoformat(me["end"])
+                    #             if datetime_is_tz_aware(ac_m) and ((not datetime_is_tz_aware(start)) or (not datetime_is_tz_aware(end))):
+                    #                 tz = ac_m.tzinfo
+                    #                 start = start.replace(tzinfo=tz)
+                    #                 end = end.replace(tzinfo=tz)
+                    #             if datetime_is_tz_aware(start) and (not datetime_is_tz_aware(end)):
+                    #                 tz = start.tzinfo
+                    #                 end = end.replace(tzinfo=tz)
+                    #             elif (not datetime_is_tz_aware(start)) and datetime_is_tz_aware(end):
+                    #                 tz = end.tzinfo
+                    #                 start = start.replace(tzinfo=tz)
+                    #             if start <= ac_m <= end:
+                    #                 me.append(me)
+                    #         move_events = me
+                    #
+                    # st.write(move_events)
+                    #
+                    # cal_movements = calendar(
+                    #     events=move_events,
+                    #     options={
+                    #         "multiMonthMaxColumns": 3,
+                    #         "height": 1800,
+                    #         "contentHeight": 500,
+                    #         "expandRows": True,
+                    #         "dayMaxEventRows": 10,  # unlimited rows per day (or set an int)
+                    #         "eventDisplay": "block",
+                    #         "displayEventTime": False,
+                    #         "slotMinTime": "05:00:00",
+                    #         "slotMaxTime": "17:30:00",
+                    #         "initialView": "resourceTimelineDay"
+                    #         # ,
+                    #         # "moreLinkClick": "popover",  # still works without callbacks
+                    #     },
+                    #     key=k_cal_movements
+                    # )
+                    # st.write(cal_movements)
                 
                 k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
                 checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
@@ -1668,7 +2078,15 @@ if st_auth():
                         ttl_on_hand -= qty_reqd
                         run_ttl_on_hand -= qty_reqd
                         if ttl_on_hand >= 0:
-                            st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
+                            if row["ActiveFlag"] == "1":
+                                st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
+                                if st.button(f"Go To {row['SalesOrder']}"):
+                                    st.session_state.update({
+                                        k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so),
+                                        k_multiselect_sales_order_search: [row["SalesOrder"]]
+                                        # k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so)
+                                    })
+                                    st.rerun()
                         else:
                             st.error(f"Short {abs(ttl_on_hand)} {row['MOrderUom']} to fulfill SO# {row['SalesOrder']}")
                             ttl_on_hand = 0  # reset to 0 for order specific shortage count
@@ -1733,3 +2151,20 @@ if st_auth():
             else:
                 st.info(f"No parts found matching search criteria. Check your filters, if needed.")
 
+
+    with cont_top_control:
+        # FINALLY create the widget, this will allow for the state to be programatically changed.
+
+        # st.write(f"{pills_search_mode=}")
+        # st.write(f"{st.session_state.get(k_pills_search_mode)=}")
+        #
+        # psm = pills_search_mode if isinstance(pills_search_mode, str) else options_pills_search_mode[pills_search_mode]
+
+        pills_search_mode = pills(
+            label="Search Mode:",
+            key=k_pills_search_mode,
+            options=options_pills_search_mode,
+            # index=options_pills_search_mode.index(psm)
+            # index=pills_search_mode
+            index=0
+        )
