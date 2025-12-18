@@ -927,7 +927,7 @@ def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False)
     report_author: str = f"{user}"
 
     theme = rlu.PDFTheme(
-        page_size=rlu.LETTER
+        page_size=rlu.landscape(rlu.LETTER)
     )
     meta = rlu.PDFMeta(
         title=report_title,
