@@ -1581,6 +1581,32 @@ if st_auth():
             )
 
             st.divider()
+
+            # lst_df_purchase_order_pick_sheets: list[pd.DataFrame] = [load_purchase_order_pick_sheet(so) for so in multiselect_purchase_order_search]
+            # if len(lst_df_purchase_orders) < 2:
+            #     df_purchase_order_pick_sheets = lst_df_purchase_order_pick_sheets[0]
+            # else:
+            #     df_purchase_order_pick_sheets = pd.concat(lst_df_purchase_order_pick_sheets).reset_index()
+            #
+            # df_purchase_order_pick_sheets.sort_values(
+            #     by=["PurchaseOrder", "MStockCode"],
+            #     inplace=True
+            # )
+
+            k_stdf_purchase_order_pick_sheets: str = "key_stdf_purchase_order_pick_sheets"
+            stdf_purchase_order_pick_sheets = display_df_paginated(
+                df_purchase_orders,
+                title="Purchase Order StockCodes:",
+                key=k_stdf_purchase_order_pick_sheets,
+                selection_mode="single-row",
+                on_select="rerun"
+            )
+
+        if stdf_purchase_order_pick_sheets:
+            if stdf_purchase_order_pick_sheets["selection"]:
+                if stdf_purchase_order_pick_sheets["selection"]["rows"]:
+                    textbox_stockcode = df_purchase_orders.loc[
+                        stdf_purchase_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
     
     # elif pills_search_mode == op_search_mode_by_so:
     elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
@@ -1708,9 +1734,9 @@ if st_auth():
                         ii += 1
 
             if stdf_sales_order_pick_sheets:
-                    if stdf_sales_order_pick_sheets["selection"]:
-                        if stdf_sales_order_pick_sheets["selection"]["rows"]:
-                            textbox_stockcode = df_sales_order_pick_sheets.loc[stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+                if stdf_sales_order_pick_sheets["selection"]:
+                    if stdf_sales_order_pick_sheets["selection"]["rows"]:
+                        textbox_stockcode = df_sales_order_pick_sheets.loc[stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
 
             st.divider()
     
