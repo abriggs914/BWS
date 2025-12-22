@@ -691,6 +691,7 @@ def add_grid_template(
     template_id: str = "grid",
     rows: int = 2,
     cols: int = 2,
+    height: Optional[float] = None,
     gutter: float = 0.2 * inch,
     merged_cells: Optional[Sequence[tuple[int, int, int, int]]] = None,
 ):
@@ -714,6 +715,8 @@ def add_grid_template(
     content_y = doc.bottomMargin + theme.footer_height
     content_w = doc.width
     content_h = doc.height - theme.header_height - theme.footer_height
+    # content_h *= height if height else 1
+    # # content_h = (doc.height if height is None else height) - theme.header_height - theme.footer_height
 
     # Base cell sizes (gutter sits *between* cells)
     cell_w = (content_w - gutter * (cols - 1)) / cols
@@ -888,9 +891,16 @@ if __name__ == "__main__":
             "Discount": "DISC",
             "Amount": "TOTAL",
             "QtyOnHand": "ON HAND",
-            "QtyOnOrder": "ON ORDER"
+            "QtyOnOrder": "ON ORDER",
+
+            "StockCode": "STOCK",
+            "TrnDateTime": "DATE",
+            "Job": "WO",
+            "TrnType": "EVENT",
+            "Reference": "REF",
+            "SalesOrder": "SO",
         }
-        df_part_data = df_w[table_cols.keys()]
+        df_part_data = df_w[[tc for tc in table_cols if tc in df_w.columns]]
         df_part_data.rename(columns=table_cols, inplace=True)
 
         report_file_name: str = f"so_pick_sheet_{so}_{datetime.now():%Y-%m-%d_%H%M%S}.pdf"
@@ -928,9 +938,16 @@ if __name__ == "__main__":
             doc,
             theme,
             template_id="dash",
-            rows=3,
-            cols=2,
-            merged_cells=[[1, 0, 1, 2]]
+            height=0.8,
+            rows=5,
+            cols=3,
+            gutter=0.05*inch,
+            merged_cells=[
+                [1, 0, 1, 3],
+                [2, 1, 1, 2],
+                [3, 0, 1, 3],
+                [4, 1, 1, 2]
+            ]
         )
         doc._firstPageTemplateIndex = next(
             i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
@@ -939,16 +956,21 @@ if __name__ == "__main__":
         story = []
         # story += [NextPageTemplate("dash")]
         # story += [NextPageTemplate("dash"), PageBreak()]
+
+        # cell 0, 0
         story += [
             h3("Picked By:", styles),
             h3("Picked Date:", styles),
             h3("Ship Date:", styles),
+            FrameBreak()
         ]
 
-        # cell 0, 0
-        story += [FrameBreak()]
-
         # cell 0, 1
+        story += [
+            FrameBreak()
+        ]
+
+        # cell 0, 2
         story += [
             h3(f"{cust_name}", styles),
             h3(f"{ship_addr_0}", styles),
@@ -973,28 +995,37 @@ if __name__ == "__main__":
 
         available_w = doc.width  # or frame width if you’re in a grid cell
 
-        col_widths = []
-        for col in df_part_data.columns:
-            if col in {"QTY ORD", "QTY B/O", "QTY SHP"}:
-                col_widths.append(0.55 * inch)
-            elif col in {"UOM"}:
-                col_widths.append(0.45 * inch)
-            elif col in {"PRICE", "TOTAL", "ON HAND", "ON ORDER"}:
-                col_widths.append(0.70 * inch)
-            elif col in {"STOCK"}:
-                col_widths.append(0.90 * inch)
-            else:
-                col_widths.append(None)
+        def calc_col_widths(df, t_w):
+            col_widths = []
+            for col in df.columns:
+                if col in {"QTY ORD", "QTY B/O", "QTY SHP"}:
+                    col_widths.append(0.55 * inch)
+                elif col in {"UOM"}:
+                    col_widths.append(0.45 * inch)
+                elif col in {"PRICE", "TOTAL", "ON HAND", "ON ORDER"}:
+                    col_widths.append(0.70 * inch)
+                elif col in {"STOCK"}:
+                    col_widths.append(0.90 * inch)
+                else:
+                    col_widths.append(None)
 
-        # distribute remaining width among None columns
-        fixed = sum(w for w in col_widths if w is not None)
-        flex_cols = [i for i, w in enumerate(col_widths) if w is None]
-        flex_w = max(0, (available_w - fixed) / max(1, len(flex_cols)))
-        for i in flex_cols:
-            col_widths[i] = flex_w
+            # distribute remaining width among None columns
+            fixed = sum(w for w in col_widths if w is not None)
+            flex_cols = [i for i, w in enumerate(col_widths) if w is None]
+            flex_w = max(0, (t_w - fixed) / max(1, len(flex_cols)))
+            for i in flex_cols:
+                col_widths[i] = flex_w
+
+            return col_widths
+
+        col_widths_a = calc_col_widths(df_part_data, available_w)
 
         print(df_part_data.columns)
         for i, row in df_part_data.iterrows():
+            df_b = load_stockcode_movements(row["STOCK"]).sort_values("TrnDateTime", ascending=False).head(3)
+            df_b = df_b[[tc for tc in table_cols if tc in df_b.columns]]
+            df_b = df_b.rename(columns={c: table_cols[c] for c in table_cols if c in df_b.columns})
+            col_widths_b = calc_col_widths(df_b, available_w * 2 / 3)
             story += [
                 df_table(
                     # pd.DataFrame(row),
@@ -1006,14 +1037,16 @@ if __name__ == "__main__":
                     pd.DataFrame(df_part_data.loc[i].transpose()).transpose(),
                     theme,
                     styles,
-                    col_widths=col_widths,
+                    col_widths=col_widths_a,
                     number_format={"Value": "{:,.2f}"},
                     font_size=7.0,
-                    pad_x=1.5,
-                    pad_y=1.8,
+                    pad_x=0,
+                    pad_y=0,
                     truncate_columns={"LONG DESC", "DESC"}
                 ),
-                vspace(1),
+                # vspace(1),
+                FrameBreak(),
+                FrameBreak(),
                 df_table(
                     # pd.DataFrame(row),
                     # pd.DataFrame(df_part_data.loc[i, df_part_data.columns]),
@@ -1021,17 +1054,17 @@ if __name__ == "__main__":
                     # pd.DataFrame(df_part_data.loc[i, list(df_part_data.columns)].transpose(), columns=df_part_data.columns),
                     # pd.DataFrame(df_part_data.iloc[i].transpose(), columns=df_part_data.columns),
                     # pd.DataFrame(df_part_data.iloc[i].transpose()),
-                    load_stockcode_movements(row["STOCK"]).sort_values("TrnDateTime", ascending=False).head(3),
+                    df_b,
                     theme,
                     styles,
-                    col_widths=col_widths,
+                    col_widths=col_widths_b,
                     number_format={"Value": "{:,.2f}"},
                     font_size=7.0,
-                    pad_x=1.5,
-                    pad_y=1.8,
+                    pad_x=0,
+                    pad_y=0,
                     truncate_columns={"LONG DESC", "DESC"}
                 ),
-                vspace(1)
+                FrameBreak()
             ]
 
         doc.build(story)

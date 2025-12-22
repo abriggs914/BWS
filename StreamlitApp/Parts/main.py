@@ -444,75 +444,151 @@ def load_so_details(stockcode: Optional[str] = None, salesorder: Optional[str] =
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
-def load_po_details(stockcode: str) -> pd.DataFrame:
-    sql = f"""
+def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str] = None) -> pd.DataFrame:
+
+    if ((stockcode is None) and (purchaseorder is None)) or ((stockcode is not None) and (purchaseorder is not None)):
+        raise ValueError(f"Must pass either a PurchaseOrder # or a StockCode #. Got '{stockcode=}', '{purchaseorder=}'.")
+    sc_mode: bool = stockcode is not None
+    if sc_mode:
+        sql = """
 SELECT
-	[PD].[PurchaseOrder],
-	[PD].[MStockCode],
-	[PD].[MWarehouse],
-	[MOrderUom],
-	[MOrderQty],
-	[MReceivedQty],
-	[PD].[MOrigDueDate],
-	[PD].[MLatestDueDate],
-	[PD].[MLastReceiptDat],
-	[PD].[MCompleteFlag],
-	[PD].[MPrice],
-	[PD].[MDiscPct1],
-	[PD].[MDiscPct2],
-	[PD].[MDiscPct3],
-
-	[PR].[PoDate],
-	[PR].[QtyReceived],
-	[PR].[PriceReceived],
-	[PR].[Currency],
-	[PR].[ExchangeRate],
-
-	[AS].[SupplierName] AS [Supplier],
-	[AS].[SupShortName],
-	[AS].[Contact],
-	[AS].[Telephone],
-	[AS].[Email],
-	[AS].[Nationality]
-FROM
-	[SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
-LEFT JOIN (
-	SELECT
-		[PRs].[PurchaseOrder],
-		[PRs].[StockCode],
-		[PRs].[Warehouse],
-		[PRs].[Supplier],
-		[PRs].[Currency],
-		[PRs].[ExchangeRate],
-		MIN([PRs].[DateReceived]) AS [FirstDateReceived],
-		MAX([PRs].[DateReceived]) AS [LastDateReceived],
-		[PRs].[PoDate],
-		SUM([PRs].[QtyReceived]) AS [QtyReceived],
-		SUM([PRs].[PriceReceived]) AS [PriceReceived]
-	FROM
-		[SysproCompanyA].[dbo].[PorHistReceipt] [PRs] WITH (NOLOCK)
-	GROUP BY
-		[PRs].[PurchaseOrder],
-		[PRs].[StockCode],
-		[PRs].[Warehouse],
-		[PRs].[Supplier],
-		[PRs].[Currency],
-		[PRs].[ExchangeRate],
-		[PRs].[PoDate]
-) AS [PR]
-ON
-	([PD].[PurchaseOrder] = [PR].[PurchaseOrder])
-	AND ([PD].[MStockCode] = [PR].[StockCode])
-	AND ([PD].[MWarehouse] = [PR].[Warehouse])
-	AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
-
-LEFT JOIN
-	[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
-ON
-	[PR].[Supplier] = [AS].[Supplier]
-WHERE
-	LOWER([PD].[MStockCode]) = LOWER('{stockcode}')
-"""
+        [PD].[PurchaseOrder],
+        [PD].[MStockCode],
+        [PD].[MWarehouse],
+        [MOrderUom],
+        [MOrderQty],
+        [MReceivedQty],
+        [PD].[MOrigDueDate],
+        [PD].[MLatestDueDate],
+        [PD].[MLastReceiptDat],
+        [PD].[MCompleteFlag],
+        [PD].[MPrice],
+        [PD].[MDiscPct1],
+        [PD].[MDiscPct2],
+        [PD].[MDiscPct3],
+    
+        [PR].[PoDate],
+        [PR].[QtyReceived],
+        [PR].[PriceReceived],
+        [PR].[Currency],
+        [PR].[ExchangeRate],
+    
+        [AS].[SupplierName] AS [Supplier],
+        [AS].[SupShortName],
+        [AS].[Contact],
+        [AS].[Telephone],
+        [AS].[Email],
+        [AS].[Nationality]
+    FROM
+        [SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
+    LEFT JOIN (
+        SELECT
+            [PRs].[PurchaseOrder],
+            [PRs].[StockCode],
+            [PRs].[Warehouse],
+            [PRs].[Supplier],
+            [PRs].[Currency],
+            [PRs].[ExchangeRate],
+            MIN([PRs].[DateReceived]) AS [FirstDateReceived],
+            MAX([PRs].[DateReceived]) AS [LastDateReceived],
+            [PRs].[PoDate],
+            SUM([PRs].[QtyReceived]) AS [QtyReceived],
+            SUM([PRs].[PriceReceived]) AS [PriceReceived]
+        FROM
+            [SysproCompanyA].[dbo].[PorHistReceipt] [PRs] WITH (NOLOCK)
+        GROUP BY
+            [PRs].[PurchaseOrder],
+            [PRs].[StockCode],
+            [PRs].[Warehouse],
+            [PRs].[Supplier],
+            [PRs].[Currency],
+            [PRs].[ExchangeRate],
+            [PRs].[PoDate]
+    ) AS [PR]
+    ON
+        ([PD].[PurchaseOrder] = [PR].[PurchaseOrder])
+        AND ([PD].[MStockCode] = [PR].[StockCode])
+        AND ([PD].[MWarehouse] = [PR].[Warehouse])
+        AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
+    
+    LEFT JOIN
+        [SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
+    ON
+        [PR].[Supplier] = [AS].[Supplier]
+    WHERE
+        LOWER([PD].[PurchaseOrder]) = LOWER('{purchasecode}')
+;
+        """
+    else:
+        sql = f"""
+    SELECT
+        [PD].[PurchaseOrder],
+        [PD].[MStockCode],
+        [PD].[MWarehouse],
+        [MOrderUom],
+        [MOrderQty],
+        [MReceivedQty],
+        [PD].[MOrigDueDate],
+        [PD].[MLatestDueDate],
+        [PD].[MLastReceiptDat],
+        [PD].[MCompleteFlag],
+        [PD].[MPrice],
+        [PD].[MDiscPct1],
+        [PD].[MDiscPct2],
+        [PD].[MDiscPct3],
+    
+        [PR].[PoDate],
+        [PR].[QtyReceived],
+        [PR].[PriceReceived],
+        [PR].[Currency],
+        [PR].[ExchangeRate],
+    
+        [AS].[SupplierName] AS [Supplier],
+        [AS].[SupShortName],
+        [AS].[Contact],
+        [AS].[Telephone],
+        [AS].[Email],
+        [AS].[Nationality]
+    FROM
+        [SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
+    LEFT JOIN (
+        SELECT
+            [PRs].[PurchaseOrder],
+            [PRs].[StockCode],
+            [PRs].[Warehouse],
+            [PRs].[Supplier],
+            [PRs].[Currency],
+            [PRs].[ExchangeRate],
+            MIN([PRs].[DateReceived]) AS [FirstDateReceived],
+            MAX([PRs].[DateReceived]) AS [LastDateReceived],
+            [PRs].[PoDate],
+            SUM([PRs].[QtyReceived]) AS [QtyReceived],
+            SUM([PRs].[PriceReceived]) AS [PriceReceived]
+        FROM
+            [SysproCompanyA].[dbo].[PorHistReceipt] [PRs] WITH (NOLOCK)
+        GROUP BY
+            [PRs].[PurchaseOrder],
+            [PRs].[StockCode],
+            [PRs].[Warehouse],
+            [PRs].[Supplier],
+            [PRs].[Currency],
+            [PRs].[ExchangeRate],
+            [PRs].[PoDate]
+    ) AS [PR]
+    ON
+        ([PD].[PurchaseOrder] = [PR].[PurchaseOrder])
+        AND ([PD].[MStockCode] = [PR].[StockCode])
+        AND ([PD].[MWarehouse] = [PR].[Warehouse])
+        AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
+    
+    LEFT JOIN
+        [SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
+    ON
+        [PR].[Supplier] = [AS].[Supplier]
+    WHERE
+        LOWER([PD].[PurchaseOrder]) = LOWER('{po_fmt(purchaseorder, "str")}')
+;
+    """
     df = connect(sql)
     df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
     return df
@@ -715,6 +791,45 @@ WHERE
 """
     df = connect(sql)
     df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_purchase_orders() -> pd.DataFrame:
+    """Load Purchase Order data by header, only 1 record per Purchase Order"""
+    sql = """
+SELECT
+	[PM].[PurchaseOrder],
+	[PM].[ExchangeRate],
+	[PM].[OrderEntryDate],
+	[PM].[OrderDueDate],
+	[PM].[OrderStatus],
+	[PM].[ActiveFlag],
+	[PM].[CancelledFlag],
+	[PM].[ActiveFlag],
+	[PM].[Buyer],
+	[PS].[SupShortName] AS [Supplier],
+	[PS].[SupplierName],
+	[PS].[City],
+	[PS].[Branch],
+	[PS].[CountyZip],
+	[PS].[Contact],
+	[PS].[Telephone],
+	[PS].[Email],
+	[PS].[Nationality]
+FROM
+	[SysproCompanyA].[dbo].[PorMasterHdr] [PM] WITH (NOLOCK)
+INNER JOIN
+	[SysproCompanyA].[dbo].[ApSupplier] [PS] WITH (NOLOCK)
+ON
+	[PM].[Supplier] = [PS].[Supplier]
+WHERE
+	ISNULL([PM].[OrderDueDate], GETDATE()) >= DATEADD(YEAR, -5, GETDATE())
+	AND ISNULL([PM].[OrderDueDate], GETDATE()) <= DATEADD(YEAR, 5, GETDATE())
+;
+"""
+    df = connect(sql)
+    df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
     return df
 
 
@@ -1301,7 +1416,8 @@ if st_auth():
                             title="df_searched",
                             on_select="rerun",
                             selection_mode="single-row",
-                            key=k_stdf_searched
+                            key=k_stdf_searched,
+                            width=1600
                         )
 
                     # st.write(stdf_searched)
@@ -1436,7 +1552,35 @@ if st_auth():
     # elif pills_search_mode == op_search_mode_by_po:
     elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
         # By PO
-        st.info(f"coming soon!")
+        df_pos: pd.DataFrame = load_purchase_orders()
+        lst_pos = df_pos["PurchaseOrder"].dropna().unique().tolist()
+
+        k_multiselect_purchase_order_search: str = "key_multiselect_purchase_order_search"
+        multiselect_purchase_order_search = st.session_state.setdefault(k_multiselect_purchase_order_search, [])
+        multiselect_purchase_order_search = st.multiselect(
+            label="Select a Purchase Order:",
+            key=k_multiselect_purchase_order_search,
+            options=lst_pos,
+            max_selections=10
+        )
+
+        if multiselect_purchase_order_search:
+            st.divider()
+            lst_df_purchase_orders: list[pd.DataFrame] = [load_po_details(purchaseorder=po) for po in
+                                                       multiselect_purchase_order_search]
+            if len(lst_df_purchase_orders) < 2:
+                df_purchase_orders = lst_df_purchase_orders[0]
+            else:
+                df_purchase_orders = pd.concat(lst_df_purchase_orders, ignore_index=True).reset_index()
+
+            k_stdf_purchase_orders: str = "key_stdf_purchase_orders"
+            stdf_purchase_orders = display_df_paginated(
+                df_purchase_orders,
+                title="Purchase Orders:",
+                key=k_stdf_purchase_orders
+            )
+
+            st.divider()
     
     # elif pills_search_mode == op_search_mode_by_so:
     elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
