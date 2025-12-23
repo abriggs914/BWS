@@ -901,6 +901,124 @@ WHERE
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
+def load_syspro_issuing_values() -> list[pd.DataFrame]:
+    sql_job = """
+SELECT
+	[JP].[Job]
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+GROUP BY
+	[JP].[Job]
+"""
+
+    sql_stockcode = """
+SELECT
+	[JP].[MStockCode]
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+GROUP BY
+	[JP].[MStockCode]
+"""
+
+    sql_journal = """
+SELECT
+	[JP].[Journal]
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+GROUP BY
+	[JP].[Journal]
+"""
+
+    sql_operation = """
+SELECT
+	[JP].[LOperation]
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+GROUP BY
+	[JP].[LOperation]
+"""
+
+    sql_operator = """
+SELECT
+	[IJ].[Operator]
+FROM
+	[SysproCompanyA].[dbo].[InvJournalCtl] [IJ] WITH (NOLOCK)
+GROUP BY
+	[IJ].[Operator]
+"""
+
+    lst = [connect(sql_) for sql_ in (sql_job, sql_stockcode, sql_journal, sql_operation, sql_operator)]
+
+    for df in lst:
+        df = pd.concat([df, pd.DataFrame(data=[{c: None for c in df.columns}])])
+
+    return lst
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def search_syspro_issuing(
+    stockcode: str,
+    job: str,
+    operation: int,
+    journal: int,
+    operator: str,
+    and_or: bool = True,
+    year_int: float = 1.5
+) -> pd.DataFrame:
+    sql = """
+
+SELECT
+	[JP].[Job],
+	[JP].[MStockCode],
+	[JP].[LOperation],
+	[JP].[MQtyIssued],
+	[JP].[TrnDate],
+	[dtJP].[TrnDateTime],
+	[IJ].[Operator]
+FROM
+	[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+INNER JOIN
+	[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [dtJP] WITH (NOLOCK)
+ON
+	([JP].[Job] = [dtJP].[Job])
+	AND ([JP].[Line] = [dtJP].[Line])
+	AND ([JP].[MStockCode] = [dtJP].[MStockCode])
+INNER JOIN
+	[SysproCompanyA].[dbo].[InvJournalCtl] [IJ] WITH (NOLOCK)
+ON
+	([JP].[Journal] = [IJ].[Journal])
+	AND ([JP].[MWarehouse] = [IJ].[Warehouse])
+"""
+    ao = " AND " if and_or else " OR "
+    crit = []
+    if any([stockcode, job, operation, journal, operator]):
+        if stockcode:
+            crit.append(f"(LOWER(LTRIM(RTRIM([JP].[MStockCode]))) = '{stockcode.strip().lower()}')")
+        if job:
+            crit.append(f"(LOWER(LTRIM(RTRIM([JP].[Job]))) = '{job.strip().lower()}')")
+        if operation:
+            crit.append(f"([JP].[LOperation] = {int(operation)})")
+        if journal:
+            crit.append(f"([JP].[Journal] = {int(journal)})")
+        if operator:
+            crit.append(f"(LOWER(LTRIM(RTRIM([IJ].[Operator]))) = '{operator.strip().lower()}')")
+    else:
+        crit.append("(1=1)")
+
+    sql += "WHERE\n\t" + (ao.join(crit))
+    sql += f"\n\tAND ((DATEADD(YEAR, -{abs(year_int)}, GETDATE()) <= [dtJP].[TrnDateTime]) AND ([dtJP].[TrnDateTime] <= DATEADD(YEAR, {abs(year_int)}, GETDATE())))"
+    df = connect(sql, do_show=True, do_print=True)
+    if user in admin_end_users:
+        with st.expander(f"sql"):
+            st.code(
+                sql,
+                language="sql",
+                line_numbers=True
+            )
+    return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
 def load_change_requests() -> pd.DataFrame:
     path_abs: str = os.path.join(os.getcwd(), CHANGE_REQUEST_FILE)
     if not os.path.exists(path_abs):
@@ -1304,7 +1422,8 @@ if st_auth():
     op_search_mode_by_section: str = "By Section"
     op_search_mode_by_po: str = "By PO"
     op_search_mode_by_so: str = "By SO"
-    op_search_mode_by_shopclock: str = "ShopClock"
+    op_search_mode_by_shopclock: str = "ShopClock",
+    op_search_mode_syspro: str = "Syspro"
     op_search_mode_day_totals: str = "Day Totals"
     options_pills_search_mode = [
         op_search_mode_simple, 
@@ -1313,7 +1432,8 @@ if st_auth():
         op_search_mode_by_section,
         op_search_mode_by_po,
         op_search_mode_by_so,
-        op_search_mode_by_shopclock
+        op_search_mode_by_shopclock,
+        op_search_mode_syspro
     ]
 
     admin_end_users = ["abriggs"]
@@ -1865,6 +1985,139 @@ if st_auth():
             st.write(chart_widget)
         else:
             st.info(f"No data based on criteria. Check filters, if needed.")
+
+    elif pills_search_mode == options_pills_search_mode.index(op_search_mode_syspro):
+        # stockcode
+        # Job
+        # Operation
+        # Journal
+        # Operator
+
+        df_job, df_stockcode, df_journal, df_operation, df_operator = load_syspro_issuing_values()
+
+        k_checkbox_syspro_and_or: str = "key_checkbox_syspro_and_or"
+        st.session_state.setdefault(k_checkbox_syspro_and_or, True)
+
+        year_interval = 1.5
+        k_combobox_syspro_stockcode: str = "key_combobox_syspro_stockcode"
+        k_combobox_syspro_job: str = "key_combobox_syspro_job"
+        k_combobox_syspro_operation: str = "key_combobox_syspro_operation"
+        k_combobox_syspro_journal: str = "key_combobox_syspro_journal"
+        k_combobox_syspro_operator: str = "key_combobox_syspro_operator"
+        keys_syspro_searchboxes = [
+            k_combobox_syspro_stockcode,
+            k_combobox_syspro_job,
+            k_combobox_syspro_operation,
+            k_combobox_syspro_journal,
+            k_combobox_syspro_operator
+        ]
+        for k in keys_syspro_searchboxes:
+            st.session_state.setdefault(k, "")
+
+        cols_syspro_search_boxes = st.columns(len(keys_syspro_searchboxes) + 1)
+
+        with cols_syspro_search_boxes[0]:
+            st.metric(
+                label="Within +/- years",
+                value=year_interval,
+                border=True
+            )
+            checkbox_syspro_and_or = st.checkbox(
+                label="And / Or",
+                key=k_checkbox_syspro_and_or
+            )
+            if st.button(
+                label="clear",
+                key="key_btn_clear_syspro_search"
+            ):
+                st.session_state.update({k: "" for k in keys_syspro_searchboxes})
+            # if st.button(
+            #     label="search",
+            #     key="key_btn_search_syspro_search"
+            # ):
+            #     st.rerun()
+
+        with cols_syspro_search_boxes[1]:
+            if st.button(
+                label="x",
+                key=f"{k_combobox_syspro_stockcode}_x",
+            ):
+                st.session_state.update({k_combobox_syspro_stockcode: ""})
+            combobox_syspro_stockcode = st.selectbox(
+                label="StockCode:",
+                key=k_combobox_syspro_stockcode,
+                options=sorted(df_stockcode["MStockCode"].unique(), key=lambda s: s.lower())
+            )
+        with cols_syspro_search_boxes[2]:
+            if st.button(
+                label="x",
+                key=f"{k_combobox_syspro_job}_x",
+            ):
+                st.session_state.update({k_combobox_syspro_job: ""})
+            combobox_syspro_job = st.selectbox(
+                label="Job:",
+                key=k_combobox_syspro_job,
+                options=sorted(df_job["Job"].unique(), key=lambda s: s.lower())
+            )
+        with cols_syspro_search_boxes[3]:
+            if st.button(
+                label="x",
+                key=f"{k_combobox_syspro_operation}_x",
+            ):
+                st.session_state.update({k_combobox_syspro_operation: ""})
+            combobox_syspro_operation = st.selectbox(
+                label="Operation:",
+                key=k_combobox_syspro_operation,
+                options=sorted(map(int, df_operation["LOperation"].unique()))
+            )
+        with cols_syspro_search_boxes[4]:
+            if st.button(
+                label="x",
+                key=f"{k_combobox_syspro_journal}_x",
+            ):
+                st.session_state.update({k_combobox_syspro_journal: ""})
+            combobox_syspro_journal = st.selectbox(
+                label="Journal:",
+                key=k_combobox_syspro_journal,
+                options=sorted(map(int, df_journal["Journal"].unique()))
+            )
+        with cols_syspro_search_boxes[5]:
+            if st.button(
+                label="x",
+                key=f"{k_combobox_syspro_operator}_x",
+            ):
+                st.session_state.update({k_combobox_syspro_operator: ""})
+            combobox_syspro_operator = st.selectbox(
+                label="Operator:",
+                key=k_combobox_syspro_operator,
+                options=sorted(df_operator["Operator"].unique(), key=lambda s: s.lower())
+            )
+
+        st.divider()
+            
+        if any([
+            combobox_syspro_stockcode,
+            combobox_syspro_job,
+            combobox_syspro_operation,
+            combobox_syspro_journal,
+            combobox_syspro_operator
+        ]):
+            df_syspro_search = search_syspro_issuing(
+                combobox_syspro_stockcode,
+                combobox_syspro_job,
+                combobox_syspro_operation,
+                combobox_syspro_journal,
+                combobox_syspro_operator,
+                checkbox_syspro_and_or,
+                year_int=year_interval
+            )
+
+            display_df_paginated(
+                df_syspro_search,
+                title="Results:",
+                key="stdf_search_syspro_issuing",
+                batch_size_options=(50, 100, 250)
+            )
 
     # elif pills_search_mode == op_search_mode_day_totals:
     elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_totals)):

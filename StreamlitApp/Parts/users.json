@@ -4,8 +4,8 @@
       "password_hash": "a9283257912c030370e30931c5c4695d87b241b1a112de4c4a99768af2316d0a",
       "salt": "2baca7c9bbba86914d60e05aa8779c79",
       "first_access": "2025-12-04T13:41:59.851832+00:00",
-      "last_access": "2025-12-22T17:18:48.896744+00:00",
-      "times_accessed": 46,
+      "last_access": "2025-12-23T16:26:49.735314+00:00",
+      "times_accessed": 48,
       "settings": {
         "key_checkbox_warehouse_1_only": true,
         "key_checkbox_hawkins_parts_inc": true,
@@ -17,8 +17,22 @@
       "password_hash": "8f932e78dcdf0d4e1f93492836d7291835792fc7389bf4c2eb5c667505a463d6",
       "salt": "df01c741a5910d1f8da34f4718605bb0",
       "first_access": "2025-12-04T15:04:16.022758+00:00",
-      "last_access": "2025-12-22T20:15:13.449494+00:00",
-      "times_accessed": 50,
+      "last_access": "2025-12-23T15:06:10.786598+00:00",
+      "times_accessed": 57,
+      "settings": {
+        "key_checkbox_warehouse_1_only": true,
+        "key_checkbox_hawkins_parts_inc": true,
+        "key_checkbox_montana_parts_inc": true,
+        "key_checkbox_vmi_parts_inc": true,
+        "key_checkbox_unknown_parts_inc": true
+      }
+    },
+    "ctr": {
+      "password_hash": "536aedf9821263b13174249c447edc96436550590f36444ca607012187dedd57",
+      "salt": "717070efe9da833d200ef68e21d5cf81",
+      "first_access": "2025-12-23T20:02:40.293918+00:00",
+      "last_access": "2025-12-23T20:02:51.042101+00:00",
+      "times_accessed": 2,
       "settings": {
         "key_checkbox_warehouse_1_only": true,
         "key_checkbox_hawkins_parts_inc": true,
