@@ -16,8 +16,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.08
-    Date...........2025-12-10
+    Version..............1.10
+    Date...........2026-01-06
     Author(s)....Avery Briggs
     """
 
@@ -32,7 +32,7 @@ def VERSION_NUMBER():
 
 def VERSION_DATE():
 	return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(),
-									  "%Y-%m-%dictionary")
+									  "%Y-%m-%d")
 
 
 def VERSION_AUTHORS():
@@ -171,15 +171,13 @@ def display_df(
 	if height is None:
 		height = "auto"
 
-	if width is None:
-		width = "stretch" if use_container_width else "content"
-
 	# st.write(f"{title=}, {hide_index=}")
 	stdf = st.dataframe(
 		data=df,
 		hide_index=hide_index,
 		width=width,
 		height=height,
+		use_container_width=use_container_width,
 		column_order=column_order,
 		column_config=column_config,
 		key=key,
@@ -193,7 +191,7 @@ def display_df(
 def load_pdf_binary(pdf_file):
 	with open(pdf_file, "rb") as f:
 		return f.read()
-	
+
 
 @st.cache_data(show_spinner=False)
 def split_frame(input_df: pd.DataFrame, rows: int):
@@ -201,7 +199,7 @@ def split_frame(input_df: pd.DataFrame, rows: int):
 		return [input_df]
 	# st.write(f"{rows=}")
 	# st.write(input_df.head(3))
-	df = [input_df.reset_index().loc[i : i + rows - 1, :] for i in range(0, input_df.shape[0] + rows, rows)]
+	df = [input_df.reset_index().loc[i: i + rows - 1, :] for i in range(0, input_df.shape[0] + rows, rows)]
 	return df
 
 
@@ -220,9 +218,8 @@ def display_df_paginated(
 		column_config: Any | None = None,
 		key: Any | None = None,
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
-		selection_mode: Any = "multi-row"		
+		selection_mode: Any = "multi-row"
 ):
-	
 	if key is None:
 		# sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
 		msg = f"You must pass a key for a paginated dataframe widget. Otherwise sub-widgets won't have state-persistence."
@@ -246,13 +243,13 @@ def display_df_paginated(
 		with top_menu[2]:
 			sort_direction = st.radio(
 				label="Direction",
-				options=["⬆️", "⬇️"],
+				options=["â¬†ï¸", "â¬‡ï¸"],
 				horizontal=True,
 				key=f"{sub_widget_keys}_radio_sort_dir"
 			)
 		df.sort_values(
 			by=sort_field,
-			ascending=sort_direction == "⬆️",
+			ascending=sort_direction == "â¬†ï¸",
 			ignore_index=True,
 			inplace=True
 		)
@@ -300,6 +297,20 @@ def display_df_paginated(
 			on_select=on_select,
 			selection_mode=selection_mode
 		)
+
+
+def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Series:
+	if stdf:
+		if stdf["selection"]:
+			if stdf["selection"]["rows"]:
+				if n == 1:
+					return df.reset_index().loc[stdf["selection"]["rows"][0], cols]
+				else:
+					if n is None:
+						n = len(stdf["selection"]["rows"])
+					return df.reset_index().loc[stdf["selection"]["rows"][:n], cols]
+	return pd.DataFrame()
+
 
 
 if __name__ == '__main__':
