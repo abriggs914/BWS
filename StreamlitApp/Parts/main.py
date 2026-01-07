@@ -1231,12 +1231,18 @@ def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False)
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
-def load_layout_data(pth_layout: str = r"G:\IT\Network Port Layout\BWS\Hawkins Warehouse Layout Rev3 202601050840.xlsx") -> dict[str, pd.DataFrame]:
-	data = pd.read_excel(
-		pth_layout,
-		sheet_name=["Layout", "Legend", "ShelfSections", "Shelves"]
-	)
-	data["Shelves"]["ShelfRow"] = data["Shelves"]["ShelfRow"].apply(lambda v: int(v) if not pd.isna(v) else v)
+def load_layout_data() -> dict[str, pd.DataFrame]:
+	# pth_layout: str = r"G:\IT\Network Port Layout\BWS\Hawkins Warehouse Layout Rev3 202601050840.xlsx"
+
+	data = {}
+	for name, t_name in {
+		"Layout": "INV_WarehouseLayout_Hawkins",
+		"Legend": "INV_WarehouseLayout_Legend",
+		"Shelves": "INV_WarehouseLayout_HawkinsShelves",
+		"ShelfSections": "INV_WarehouseShelfSections_Hawkins",
+	}.items():
+		data[name] = connect(t_name)
+
 	return data
 
 
@@ -1313,6 +1319,18 @@ def rot_rect(df_sections: pd.DataFrame, W: int, H: int, rotation_deg: int) -> pd
 
 	for _, row in df.iterrows():
 		x0, x1, y0, y1 = float(row["X0"]), float(row["X1"]), float(row["Y0"]), float(row["Y1"])
+		# after changing to SQL tables, need to offset the indexes to match
+		if rotation_deg == 90:
+			y0 -= 1
+			y1 -= 1
+		elif rotation_deg == 180:
+			x0 -= 1
+			x1 -= 1
+			y0 -= 1
+			y1 -= 1
+		elif rotation_deg == 270:
+			x0 -= 1
+			x1 -= 1
 
 		# transform the 4 corners and compute new bounds
 		corners = [
@@ -1492,15 +1510,25 @@ def load_hawkins_map(
 
 	if isinstance(found_map_to_bin, (list, tuple)):
 		fig = None
-		for data in found_map_to_bin:
+		if not found_map_to_bin:
 			fig = load_hawkins_map(
-				data,
+				dict(),
 				fig_in=fig,
 				deg_rot=deg_rot,
 				dot_colour=dot_colour,
 				title=title,
 				overlay_sections=overlay_sections
 			)
+		else:
+			for data in found_map_to_bin:
+				fig = load_hawkins_map(
+					data,
+					fig_in=fig,
+					deg_rot=deg_rot,
+					dot_colour=dot_colour,
+					title=title,
+					overlay_sections=overlay_sections
+				)
 		return fig
 	else:
 		st.session_state["selected_section_id"] = None
@@ -1510,7 +1538,7 @@ def load_hawkins_map(
 		df_legend = df_data["Legend"]
 		df_sections = df_data["ShelfSections"]
 		df_shelves = df_data["Shelves"]
-		msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] if found_map_to_bin else ''}'
+		msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] + 1 if found_map_to_bin else ''}'
 
 		if fig_in is None:
 			bg_map = build_legend_bg_map(df_legend)
@@ -1530,50 +1558,52 @@ def load_hawkins_map(
 				selected_section_id=st.session_state["selected_section_id"],
 				title=title
 			)
-			x0 = found_map_to_bin["x0"]
-			y0 = found_map_to_bin["y0"]
-			x1 = found_map_to_bin["x1"]
-			y1 = found_map_to_bin["y1"]
-			cx = found_map_to_bin["cx"]
-			cy = found_map_to_bin["cy"]
-			x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
-			x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
-			cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
-			found_map_to_bin.update({
-				"x0": x0,
-				"y0": y0,
-				"x1": x1,
-				"y1": y1,
-				"cx": cx,
-				"cy": cy
-			})
+			if found_map_to_bin:
+				x0 = found_map_to_bin["x0"]
+				y0 = found_map_to_bin["y0"]
+				x1 = found_map_to_bin["x1"]
+				y1 = found_map_to_bin["y1"]
+				cx = found_map_to_bin["cx"]
+				cy = found_map_to_bin["cy"]
+				x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
+				x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
+				cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
+				found_map_to_bin.update({
+					"x0": x0,
+					"y0": y0,
+					"x1": x1,
+					"y1": y1,
+					"cx": cx,
+					"cy": cy
+				})
 		else:
 			fig = fig_in
 
-		fig.add_shape(
-			type="circle",
-			xref="x", yref="y",
-			x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
-			y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
-			line=dict(width=2, color=Colour(dot_colour).hex_code),
-			fillcolor=Colour(dot_colour).hex_code,
-			opacity=0.5,
-			layer="above",
-		)
-		x_off = 40
-		y_off = 18
-		stockcode = found_map_to_bin["stockcode"]
-		binlocation = found_map_to_bin["bin_location"]
-		fig.add_annotation(
-			x=found_map_to_bin["cx"],
-			y=found_map_to_bin["cy"],
-			xref="x", yref="y",
-			ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
-			ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
-			text=f"StockCode: '{stockcode}' located in bin '{binlocation}' on{msg_shelf.lower()}",
-			showarrow=True,
-			font=dict(size=10, color="black")
-		)
+		if found_map_to_bin:
+			fig.add_shape(
+				type="circle",
+				xref="x", yref="y",
+				x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
+				y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
+				line=dict(width=2, color=Colour(dot_colour).hex_code),
+				fillcolor=Colour(dot_colour).hex_code,
+				opacity=0.5,
+				layer="above",
+			)
+			x_off = 40
+			y_off = 18
+			stockcode = found_map_to_bin["stockcode"]
+			binlocation = found_map_to_bin["bin_location"]
+			fig.add_annotation(
+				x=found_map_to_bin["cx"],
+				y=found_map_to_bin["cy"],
+				xref="x", yref="y",
+				ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
+				ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
+				text=f"StockCode: '{stockcode}' located in bin '{binlocation}' on{msg_shelf.lower()}",
+				showarrow=True,
+				font=dict(size=10, color="black")
+			)
 		return fig
 
 
@@ -2162,7 +2192,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 				df_selected_sos,
 				"Sales Orders to Map"
 			)
-
+			selected_stockcodes = df_selected_sos["MStockCode"].dropna().unique().tolist()
 
 			#########################################################
 			#########################################################
@@ -2193,7 +2223,10 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 				left_on="Shelf",
 				right_on="DefaultBin"
 			)
-			st.write(df_bin_shelf)
+			display_df(
+				df_bin_shelf,
+				"df_bin_shelf"
+			)
 			if not df_bin_shelf.empty:
 				ser_bin_section = df_bin_shelf.iloc[0]
 				bin_section = ser_bin_section["Section"]
@@ -2257,6 +2290,20 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 								"cy": cy
 							})
 						bin_maps.append(found_map_to_bin)
+
+			reported = set()
+			for i, sc in enumerate(selected_stockcodes):
+				bin = df_selected_sos.loc[df_selected_sos["MStockCode"] == sc].reset_index().loc[0, "DefaultBin"]
+				if bin_maps:
+					for data in bin_maps:
+						if sc != data["stockcode"]:
+							if sc not in reported:
+								st.warning(f"Could not map {sc} in {bin}")
+								reported.add(sc)
+				else:
+					if sc not in reported:
+						st.warning(f"Could not map {sc} in {bin}")
+						reported.add(sc)
 
 			fig = load_hawkins_map(
 				bin_maps,
@@ -2731,8 +2778,17 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 				df_sel = df_shelves.loc[sel_mask].copy()
 				df_sel.sort_values(["ShelfRow"], inplace=True)
 
+				display_df(
+					df_hit,
+					"df_hit"
+				)
+				df_hit_show = df_hit[["Shelf", "ShelfRow"]]
+				display_df(
+					df_hit_show,
+					"df_hit_show"
+				)
 				stde_section_shelves = st.data_editor(
-					df_hit[["Shelf", "ShelfRow"]],
+					df_hit_show,
 					key="key_shelves_selected",
 					num_rows="dynamic",
 					hide_index=True,
@@ -2746,7 +2802,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 					edited2 = stde_section_shelves.copy()
 					edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
 					edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
-					edited2["Order"] = pd.to_numeric(edited2["Order"], errors="coerce").astype("Int64")
 
 					errs = validate_shelves(edited2)
 					if errs:
@@ -2761,7 +2816,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 
 						# replace slice in master
 						df_master = df_shelves.copy()
-						df_master = df_master.loc[~df_hit].copy()  # drop old rows
+						df_master = df_master.loc[~sel_mask].copy()  # drop old rows
 						df_master = pd.concat([df_master, edited2], ignore_index=True)
 
 						df_shelves = df_master
