@@ -1,3 +1,5 @@
+import random
+
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated, get_selected_rows
 from pyodbc_connection import connect
 from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
@@ -1369,6 +1371,7 @@ def find_section_at_point(df_sections: pd.DataFrame, x: float, y: float) -> pd.S
 	return hits.iloc[0]
 
 
+@st.cache_data(ttl=60*63, show_spinner=True)
 def layout_to_rgb_image(df_layout: pd.DataFrame, bg_map: dict[str, str], default_bg="#FFFFFF") -> np.ndarray:
 	default_rgb = Colour(default_bg).rgb_code
 
@@ -1505,9 +1508,13 @@ def load_hawkins_map(
 		dot_colour: str = "#13AACC",
 		deg_rot: float = 0,
 		title: str = "title",
-		overlay_sections: bool = False
+		overlay_sections: bool = False,
+		clear_selected : bool = False,
+		plotted=None  # use to prevent overlaying identifying text over other text. Also print only 1 directional arrow per bin
 ):
-
+	st.write(f"plotted TOP")
+	st.write(plotted)
+	k_selected_section_id = "key_selected_section_id"
 	if isinstance(found_map_to_bin, (list, tuple)):
 		fig = None
 		if not found_map_to_bin:
@@ -1520,31 +1527,40 @@ def load_hawkins_map(
 				overlay_sections=overlay_sections
 			)
 		else:
-			for data in found_map_to_bin:
+			plotted = [] if plotted is None else plotted
+			for i, data in enumerate(found_map_to_bin):
 				fig = load_hawkins_map(
 					data,
 					fig_in=fig,
 					deg_rot=deg_rot,
 					dot_colour=dot_colour,
 					title=title,
-					overlay_sections=overlay_sections
+					overlay_sections=overlay_sections,
+					plotted=plotted
 				)
+			st.write(f"plotted BOTTOM")
+			st.write(plotted)
 		return fig
 	else:
-		st.session_state["selected_section_id"] = None
+		if clear_selected and (k_selected_section_id in st.session_state):
+			st.session_state[k_selected_section_id] = None
 
 		df_data = load_layout_data()
 		df_layout = df_data["Layout"]
 		df_legend = df_data["Legend"]
 		df_sections = df_data["ShelfSections"]
 		df_shelves = df_data["Shelves"]
-		msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] + 1 if found_map_to_bin else ''}'
+		msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] if found_map_to_bin else ''}'
 
 		if fig_in is None:
 			bg_map = build_legend_bg_map(df_legend)
 
 			img0 = layout_to_rgb_image(df_layout, bg_map)
 			H, W = img0.shape[:2]
+			st.session_state.update({
+				"hawkins_img_w": W,
+				"hawkins_img_h": H
+			})
 
 			img = rotate_img(img0, deg_rot)
 			df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
@@ -1555,31 +1571,35 @@ def load_hawkins_map(
 				bg_map=bg_map,
 				rotation_deg=deg_rot,
 				show_sections=overlay_sections,
-				selected_section_id=st.session_state["selected_section_id"],
+				selected_section_id=st.session_state.get(k_selected_section_id),
 				title=title
 			)
-			if found_map_to_bin:
-				x0 = found_map_to_bin["x0"]
-				y0 = found_map_to_bin["y0"]
-				x1 = found_map_to_bin["x1"]
-				y1 = found_map_to_bin["y1"]
-				cx = found_map_to_bin["cx"]
-				cy = found_map_to_bin["cy"]
-				x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
-				x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
-				cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
-				found_map_to_bin.update({
-					"x0": x0,
-					"y0": y0,
-					"x1": x1,
-					"y1": y1,
-					"cx": cx,
-					"cy": cy
-				})
 		else:
 			fig = fig_in
 
+			W = st.session_state["hawkins_img_w"]
+			H = st.session_state["hawkins_img_h"]
+
 		if found_map_to_bin:
+
+			x0 = found_map_to_bin["x0"]
+			y0 = found_map_to_bin["y0"]
+			x1 = found_map_to_bin["x1"]
+			y1 = found_map_to_bin["y1"]
+			cx = found_map_to_bin["cx"]
+			cy = found_map_to_bin["cy"]
+			x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
+			x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
+			cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
+			found_map_to_bin.update({
+				"x0": x0,
+				"y0": y0,
+				"x1": x1,
+				"y1": y1,
+				"cx": cx,
+				"cy": cy
+			})
+
 			fig.add_shape(
 				type="circle",
 				xref="x", yref="y",
@@ -1594,14 +1614,45 @@ def load_hawkins_map(
 			y_off = 18
 			stockcode = found_map_to_bin["stockcode"]
 			binlocation = found_map_to_bin["bin_location"]
+
+			df_plotted = pd.DataFrame(plotted)
+			display_df(
+				df_plotted,
+				"df_plotted"
+			)
+			if not df_plotted.empty:
+				df_plotted_same_bin = df_plotted.loc[
+					(df_plotted["cx"] == found_map_to_bin["cx"])
+					& (df_plotted["cy"] == found_map_to_bin["cy"])
+				]
+			else:
+				df_plotted_same_bin = pd.DataFrame([])
+
+			display_df(
+				df_plotted_same_bin,
+				"df_plotted_same_bin"
+			)
+			first_of_bin = df_plotted_same_bin.shape[0] == 0
+			t_y = found_map_to_bin["cy"]
+			t_x = found_map_to_bin["cx"]
+			t_y += max(0, df_plotted_same_bin.shape[0] - 1) * 2
+			t_x += 0 if first_of_bin else -(x_off if deg_rot % 180 == 0 else y_off)
+			t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
+
+			plotted.append(dict(
+				cx=t_x,
+				cy=t_y,
+				sc=stockcode
+			))
+
 			fig.add_annotation(
-				x=found_map_to_bin["cx"],
-				y=found_map_to_bin["cy"],
+				x=t_x,
+				y=t_y,
 				xref="x", yref="y",
 				ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
 				ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
 				text=f"StockCode: '{stockcode}' located in bin '{binlocation}' on{msg_shelf.lower()}",
-				showarrow=True,
+				showarrow=first_of_bin,
 				font=dict(size=10, color="black")
 			)
 		return fig
@@ -1627,6 +1678,109 @@ def validate_shelves(df: pd.DataFrame) -> list[str]:
 	if bad:
 		errs.append("ShelfRow must be an integer (0 = floor).")
 	return errs
+
+
+def validate_sql_term(val, as_str: bool = True):
+	# res = None
+	if (val is not None) and (str(val).replace(".", "").isdigit()):
+		try:
+			if not as_str:
+				res = (int(val) if (str(val).endswith(".0") or ("." not in str(val))) else float(val)) if "." in str(val) else int(val)
+				# print(f"A {val=}, {val}, {str(val).endswith(".0")=}, {int(val)=}, {res=}")
+			else:
+				res = f"{int(val) if (str(val).endswith(".0") or ("." not in str(val))) else float(val)}"
+				# print(f"B {val=}, {val}, {str(val).endswith(".0")=}, {int(val)=}, {res=}")
+		except (TypeError, ValueError):
+			res = None if (not as_str) else "NULL"
+			# print(f"C {val=}, {val}, {res=}")
+	else:
+		if (not bool(val)) or pd.isna(val):
+			res = None if (not as_str) else "NULL"
+			# print(f"D {val=}, {val}, {res=}")
+		else:
+			res = f"'{val}'"
+			# print(f"E {val=}, {val}, {res=}")
+	return res
+
+
+def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str = "ID", default_insert_cols = None):
+
+	if isinstance(t_name, pd.DataFrame):
+		raise NotImplementedError(f"Support for DataFrame editing not supported yet. Use a str t_name to modify SQL tables.")
+
+	if not isinstance(default_insert_cols, dict):
+		if default_insert_cols is not None:
+			raise ValueError(f"Expected default_insert_cols to be a dict, but got {type(default_insert_cols)}")
+		default_insert_cols = dict()
+
+	stde_data: dict = st.session_state[stde_key]
+	edited_rows = stde_data.get("edited_rows", {})
+	added_rows = stde_data.get("added_rows", [])
+	deleted_rows = stde_data.get("deleted_rows", [])
+
+	t_name = "[" + t_name.removeprefix("[").removesuffix("]") + "]"
+
+	sql_edit = ""
+	sql_edit_t = f"UPDATE\n\t{t_name}\nSET\n\t"
+	for id_, edit_data in edited_rows.items():
+		sql_edit_r = sql_edit_t
+		for col, new_val in edit_data.items():
+			sql_edit_r += f"[{col}] = {new_val},\n\t"
+		sql_edit_r = sql_edit_r.rstrip().removesuffix(",") + "\n"
+		sql_edit += f"{sql_edit_r}WHERE\n\t[ID] = {id_}\n;\n\n"
+	sql_edit = sql_edit.rstrip()
+	st.code(
+		sql_edit,
+		language="sql",
+		line_numbers=True,
+	)
+
+	col_names = []
+	sql_insert = f"INSERT INTO {t_name}\n\t([{{COL_NAMES}}])\nVALUES\n\t"
+	for i, row in enumerate(added_rows):
+		if not col_names:
+			col_names = list(row.keys())
+			col_names += list(default_insert_cols.keys())
+		sql_insert_r = "("
+		for col, val in row.items():
+			sql_insert_r += f"{validate_sql_term(val)},"
+		for col, val in default_insert_cols.items():
+			sql_insert_r += f"{validate_sql_term(val)},"
+		sql_insert += f"{sql_insert_r.rstrip().removesuffix(',')}),\n"
+
+	sql_insert = sql_insert.format(COL_NAMES="], [".join(col_names))
+	sql_insert = sql_insert.rstrip().removesuffix(",") + "\n;"
+	st.code(
+		sql_insert,
+		language="sql",
+		line_numbers=True,
+	)
+
+	sql_delete = f"DELETE FROM {t_name}\nWHERE [{pk_name}] IN ({', '.join(map(validate_sql_term, deleted_rows))});"
+	st.code(
+		sql_delete,
+		language="sql",
+		line_numbers=True,
+	)
+
+	sqls = {
+		"edit": sql_edit,
+		"del": sql_delete,
+		"add": sql_insert
+	}
+	if not edited_rows:
+		del sqls["edit"]
+	if not deleted_rows:
+		del sqls["del"]
+	if not added_rows:
+		del sqls["add"]
+
+	for mode, sql in sqls.items():
+		# df_res = connect(sql, do_show=True, do_print=True, do_exec=False)
+		st.code(sql, language="sql", line_numbers=True)
+		df_res = connect(sql, do_show=True, do_print=True, do_exec=True)
+
+	st.toast("Updated saved successfully.")
 
 
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
@@ -2040,6 +2194,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_advance
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin):
 	# By Bin
 	k_selectbox_bin_search = "key_selectbox_bin_search"
+	st.session_state.setdefault(k_selectbox_bin_search, random.choice(list_filtered_bins))
 	selectbox_bin_search  = st.selectbox(
 		label="Select a Bin:",
 		key=k_selectbox_bin_search,
@@ -2295,15 +2450,22 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 			for i, sc in enumerate(selected_stockcodes):
 				bin = df_selected_sos.loc[df_selected_sos["MStockCode"] == sc].reset_index().loc[0, "DefaultBin"]
 				if bin_maps:
+					found = False
 					for data in bin_maps:
-						if sc != data["stockcode"]:
-							if sc not in reported:
-								st.warning(f"Could not map {sc} in {bin}")
-								reported.add(sc)
+						if sc == data["stockcode"]:
+							found = True
+							break
+					if not found:
+						if sc not in reported:
+							st.warning(f"Could not map {sc} in {bin}")
+							reported.add(sc)
 				else:
 					if sc not in reported:
 						st.warning(f"Could not map {sc} in {bin}")
 						reported.add(sc)
+
+			st.write(f"bin_maps")
+			st.write(bin_maps)
 
 			fig = load_hawkins_map(
 				bin_maps,
@@ -2778,18 +2940,15 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 				df_sel = df_shelves.loc[sel_mask].copy()
 				df_sel.sort_values(["ShelfRow"], inplace=True)
 
-				display_df(
-					df_hit,
-					"df_hit"
-				)
-				df_hit_show = df_hit[["Shelf", "ShelfRow"]]
+				df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"], ascending=[False, True]).reset_index(drop=True)
 				display_df(
 					df_hit_show,
 					"df_hit_show"
 				)
+				k_stde_section_shelves: str = "key_stde_section_shelves"
 				stde_section_shelves = st.data_editor(
 					df_hit_show,
-					key="key_shelves_selected",
+					key=k_stde_section_shelves,
 					num_rows="dynamic",
 					hide_index=True,
 					column_config={
@@ -2798,60 +2957,82 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 					}
 				)
 
+				st.write(f"st.session_state[{k_stde_section_shelves}]")
+				st.write(st.session_state[k_stde_section_shelves])
+
 				if st.button("Apply shelf edits to working copy"):
-					edited2 = stde_section_shelves.copy()
-					edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
-					edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
+					# edited2 = stde_section_shelves.copy()
+					# display_df(
+					# 	edited2,
+					# 	"edited2 A"
+					# )
+					# edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
+					# edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
+					# display_df(
+					# 	edited2,
+					# 	"edited2 B"
+					# )
+					#
+					# errs = validate_shelves(edited2)
+					# if errs:
+					# 	st.error("\n".join(errs))
+					# else:
+					# 	edited2 = normalize_order(edited2)
+					#
+					#
+					#
+					# 	# stamp required IDs
+					# 	edited2["Section"] = sec
+					# 	edited2["ShelfSectionID"] = sec_id
+					# 	edited2["Group"] = grp
+					#
+					# 	# replace slice in master
+					# 	df_master = df_shelves.copy()
+					# 	# df_master = df_master.loc[~sel_mask].copy()  # drop old rows
+					# 	# df_master = pd.concat([df_master, edited2], ignore_index=True)
+					#
+					# 	# df_shelves = df_master
+					# 	st.toast("Updated saved successfully.")
+					# 	push_shelf_changes(df_master, edited2, sel_mask)
+					# 	load_layout_data.clear()
 
-					errs = validate_shelves(edited2)
-					if errs:
-						st.error("\n".join(errs))
-					else:
-						edited2 = normalize_order(edited2)
+					# df_shelves = df_master
+					st.toast("Updated saved successfully.")
+					default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
+					push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]", default_insert_cols=default_insert_cols)
+					load_layout_data.clear()
+					st.rerun()
 
-						# stamp required IDs
-						edited2["Section"] = sec
-						edited2["ShelfSectionID"] = sec_id
-						edited2["Group"] = grp
+				# Floor-level highlights
+				if "ShelfRow" in df_hit.columns:
+					floor = df_hit[df_hit["ShelfRow"] < 2]
+					if not floor.empty:
+						st.write("Floor-level shelves (ShelfRow < 2):")
+						display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
 
-						# replace slice in master
-						df_master = df_shelves.copy()
-						df_master = df_master.loc[~sel_mask].copy()  # drop old rows
-						df_master = pd.concat([df_master, edited2], ignore_index=True)
+				df_parts_in_loc = df_parts[
+					df_parts["DefaultBin"].str.lower().isin(map(lambda v: str(v).lower(), df_hit["Shelf"].dropna().unique()))
+				]
+				df_parts_in_loc = df_parts_in_loc.merge(
+					df_shelves,
+					left_on="DefaultBin",
+					right_on="Shelf",
+					how="left"
+				)
+				df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
 
-						df_shelves = df_master
-						st.success("Updated working copy. Now click 'Save to Excel' to persist.")
-
-					# Floor-level highlights
-					if "ShelfRow" in df_hit.columns:
-						floor = df_hit[df_hit["ShelfRow"] < 2]
-						if not floor.empty:
-							st.write("Floor-level shelves (ShelfRow < 2):")
-							display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
-
-					df_parts_in_loc = df_parts[
-						df_parts["DefaultBin"].str.lower().isin(map(str.lower, df_hit["Shelf"].dropna().unique()))
-					]
-					df_parts_in_loc = df_parts_in_loc.merge(
-						df_shelves,
-						left_on="DefaultBin",
-						right_on="Shelf",
-						how="left"
-					)
-					df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
-
-					show_cols = [
-						"StockCode",
-						"DefaultBin",
-						"Description",
-						"LongDesc",
-						"GroundLvl"
-					]
-					stdf_parts_in_loc = display_df_paginated(
-						df_parts_in_loc[show_cols],
-						"Parts in this location:",
-						key="key_stdf_parts_in_loc"
-					)
+				show_cols = [
+					"StockCode",
+					"DefaultBin",
+					"Description",
+					"LongDesc",
+					"GroundLvl"
+				]
+				stdf_parts_in_loc = display_df_paginated(
+					df_parts_in_loc[show_cols],
+					"Parts in this location:",
+					key="key_stdf_parts_in_loc"
+				)
 
 
 	else:
@@ -2886,7 +3067,9 @@ if user in admin_end_users:
 # 	options_pills_search_mode.index(op_search_mode_advanced),
 # 	options_pills_search_mode.index(op_search_mode_by_so)
 # ]:
-if textbox_stockcode:
+if isinstance(textbox_stockcode, (pd.DataFrame, pd.Series)):
+	st.info(f"Select a stock code for more details.")
+elif textbox_stockcode:
 	# searching for stockcode specific results
 
 	selectbox_stockcode = None
