@@ -1,0 +1,875 @@
+-- SQL to Insert New Rows:
+INSERT INTO [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+	([Section], [ShelfSectionID], [Shelf], [ShelfRow])
+VALUES
+	('C', 108, NULL, 0),
+	('C', 109, '4B', 4),
+	('C', 109, '4A', 3),
+	('C', 109, 'B3', 2),
+	('C', 109, 'B2', 1),
+	('C', 109, 'B1', 0),
+	('C', 110, '8B', 4),
+	('C', 110, '8A', 3),
+	('C', 110, 'B7', 2),
+	('C', 110, 'B6', 1),
+	('C', 110, 'B5', 0),
+	('C', 111, 'B15', 6),
+	('C', 111, 'B14', 5),
+	('C', 111, 'B13', 4),
+	('C', 111, 'B12', 3),
+	('C', 111, 'B11', 2),
+	('C', 111, 'B10', 1),
+	('C', 111, 'B9', 0),
+	('C', 112, 'B22', 6),
+	('C', 112, 'B21', 5),
+	('C', 112, 'B20', 4),
+	('C', 112, 'B19', 3),
+	('C', 112, 'B18', 2),
+	('C', 112, 'B17', 1),
+	('C', 112, 'B16', 0),
+	('C', 113, 'B29', 6),
+	('C', 113, 'B28', 5),
+	('C', 113, 'B27', 4),
+	('C', 113, 'B26', 3),
+	('C', 113, 'B25', 2),
+	('C', 113, 'B24', 1),
+	('C', 113, 'B23', 0),
+	('C', 114, 'B36', 6),
+	('C', 114, 'B35', 5),
+	('C', 114, 'B34', 4),
+	('C', 114, 'B33', 3),
+	('C', 114, 'B32', 2),
+	('C', 114, 'B31', 1),
+	('C', 114, 'B30', 0),
+	('C', 115, 'B43', 6),
+	('C', 115, 'B42', 5),
+	('C', 115, 'B41', 4),
+	('C', 115, 'B40', 3),
+	('C', 115, 'B39', 2),
+	('C', 115, 'B38', 1),
+	('C', 115, 'B37', 0),
+	('C', 116, NULL, 6),
+	('C', 116, 'B46', 5),
+	('C', 116, '45B', 4),
+	('C', 116, '45A', 3),
+	('C', 116, 'B44', 2),
+	('C', 116, 'B43', 1),
+	('C', 116, 'B42', 0),
+	('C', 117, 'B50E', 7),
+	('C', 117, 'B50D', 6),
+	('C', 117, 'B50C', 5),
+	('C', 117, 'B50B', 4),
+	('C', 117, 'B50A', 3),
+	('C', 117, 'B49', 2),
+	('C', 117, 'B48', 1),
+	('C', 117, 'B47', 0),
+	('C', 118, 'B54E', 7),
+	('C', 118, 'B54D', 6),
+	('C', 118, 'B54C', 5),
+	('C', 118, 'B54B', 4),
+	('C', 118, 'B54A', 3),
+	('C', 118, 'B53', 2),
+	('C', 118, 'B52', 1),
+	('C', 118, 'B51', 0),
+	('C', 119, 'B58G', 9),
+	('C', 119, 'B58F', 8),
+	('C', 119, 'B58E', 7),
+	('C', 119, 'B58D', 6),
+	('C', 119, 'B58C', 5),
+	('C', 119, 'B58B', 4),
+	('C', 119, 'B58A', 3),
+	('C', 119, 'B58', 2),
+	('C', 119, 'B57', 1),
+	('C', 119, 'B56', 0),
+	('C', 120, 'B59', 1),
+	('C', 120, 'A56', 0),
+	('D', 13, NULL, 0),
+	('D', 14, NULL, 0),
+	('D', 15, 'C10', 4),
+	('D', 15, 'C9', 3),
+	('D', 15, 'C8', 2),
+	('D', 15, 'C7', 1),
+	('D', 15, 'C6', 0),
+	('D', 16, 'C15', 4),
+	('D', 16, 'C14', 3),
+	('D', 16, 'C13', 2),
+	('D', 16, 'C12', 1),
+	('D', 16, 'C11', 0),
+	('D', 17, 'C20', 4),
+	('D', 17, 'C19', 3),
+	('D', 17, 'C18', 2),
+	('D', 17, 'C17', 1),
+	('D', 17, 'C16', 0),
+	('D', 18, 'C25', 4),
+	('D', 18, 'C24', 3),
+	('D', 18, 'C23', 2),
+	('D', 18, 'C22', 1),
+	('D', 18, 'C21', 0),
+	('D', 19, 'C30', 4),
+	('D', 19, 'C29', 3),
+	('D', 19, 'C28', 2),
+	('D', 19, 'C27', 1),
+	('D', 19, 'C26', 0),
+	('D', 20, 'C35', 4),
+	('D', 20, 'C34', 3),
+	('D', 20, 'C33', 2),
+	('D', 20, 'C32', 1),
+	('D', 20, 'C31', 0),
+	('D', 21, NULL, 1),
+	('D', 21, 'C36', 0),
+	('D', 22, 'C41', 3),
+	('D', 22, 'C40', 2),
+	('D', 22, 'C39', 1),
+	('D', 22, 'C38', 0),
+	('D', 23, 'C45E', 8),
+	('D', 23, 'C45D', 7),
+	('D', 23, 'C45C', 6),
+	('D', 23, 'C45B', 5),
+	('D', 23, 'C45A', 4),
+	('D', 23, 'C45', 3),
+	('D', 23, 'C44', 2),
+	('D', 23, 'C43', 1),
+	('D', 23, 'C42', 0),
+	('D', 24, 'C49E', 7),
+	('D', 24, 'C49D', 6),
+	('D', 24, 'C49C', 5),
+	('D', 24, 'C49B', 4),
+	('D', 24, 'C49A', 3),
+	('D', 24, 'C49', 2),
+	('D', 24, 'C48', 1),
+	('D', 24, 'C47', 0),
+	('D', 25, NULL, 0),
+	('F', 28, 'D8', 2),
+	('F', 28, 'D7', 1),
+	('F', 28, 'D6', 0),
+	('F', 29, 'D15', 4),
+	('F', 29, 'D14', 3),
+	('F', 29, 'D13', 2),
+	('F', 29, 'D12', 1),
+	('F', 29, 'D11', 0),
+	('F', 30, 'D20', 4),
+	('F', 30, 'D19', 3),
+	('F', 30, 'D18', 2),
+	('F', 30, 'D17', 1),
+	('F', 30, 'D16', 0),
+	('F', 31, 'D25', 4),
+	('F', 31, 'D24', 3),
+	('F', 31, 'D23', 2),
+	('F', 31, 'D22', 1),
+	('F', 31, 'D21', 0),
+	('F', 32, 'D30', 4),
+	('F', 32, 'D29', 3),
+	('F', 32, 'D28', 2),
+	('F', 32, 'D27', 1),
+	('F', 32, 'D26', 0),
+	('F', 33, 'D35', 4),
+	('F', 33, 'D34', 3),
+	('F', 33, 'D33', 2),
+	('F', 33, 'D32', 1),
+	('F', 33, 'D31', 0),
+	('F', 34, NULL, 1),
+	('F', 34, 'D36', 0),
+	('F', 35, 'D42', 4),
+	('F', 35, 'D41', 3),
+	('F', 35, 'D40', 2),
+	('F', 35, 'D39', 1),
+	('F', 35, 'D38', 0),
+	('F', 36, 'D45E', 7),
+	('F', 36, 'D45D', 6),
+	('F', 36, 'D45C', 5),
+	('F', 36, 'D45B', 4),
+	('F', 36, 'D45A', 3),
+	('F', 36, 'D45', 2),
+	('F', 36, 'D44', 1),
+	('F', 36, 'D43', 0),
+	('F', 37, 'D49G', 9),
+	('F', 37, 'D49F', 8),
+	('F', 37, 'D49E', 7),
+	('F', 37, 'D49D', 6),
+	('F', 37, 'D49C', 5),
+	('F', 37, 'D49B', 4),
+	('F', 37, 'D49A', 3),
+	('F', 37, 'D49', 2),
+	('F', 37, 'D48', 1),
+	('F', 37, 'D47', 0),
+	('F', 38, 'D54G', 13),
+	('F', 38, 'D54F', 12),
+	('F', 38, 'D54E', 11),
+	('F', 38, 'D54D', 10),
+	('F', 38, 'D54C', 9),
+	('F', 38, 'D54B', 8),
+	('F', 38, 'D54A', 7),
+	('F', 38, 'D53E', 6),
+	('F', 38, 'D53D', 5),
+	('F', 38, 'D53C', 4),
+	('F', 38, 'D53B', 3),
+	('F', 38, 'D53A', 2),
+	('F', 38, 'D52', 1),
+	('F', 38, 'D51', 0),
+	('G', 122, 'E5', 4),
+	('G', 122, 'E4', 3),
+	('G', 122, 'E3', 2),
+	('G', 122, 'E2', 1),
+	('G', 122, 'E1', 0),
+	('G', 123, NULL, 3),
+	('G', 123, 'E8', 2),
+	('G', 123, 'E7', 1),
+	('G', 123, 'E6', 0),
+	('G', 124, 'E15', 4),
+	('G', 124, 'E14', 3),
+	('G', 124, 'E13', 2),
+	('G', 124, 'E12', 1),
+	('G', 124, 'E11', 0),
+	('G', 125, 'E20', 4),
+	('G', 125, 'E19', 3),
+	('G', 125, 'E18', 2),
+	('G', 125, 'E17', 1),
+	('G', 125, 'E16', 0),
+	('G', 126, 'E25D', 7),
+	('G', 126, 'E25C', 6),
+	('G', 126, 'E25B', 5),
+	('G', 126, 'E25A', 4),
+	('G', 126, 'E24', 3),
+	('G', 126, 'E23', 2),
+	('G', 126, 'E22', 1),
+	('G', 126, 'E21', 0),
+	('G', 127, 'E30', 4),
+	('G', 127, 'E29', 3),
+	('G', 127, 'E28', 2),
+	('G', 127, 'E27', 1),
+	('G', 127, 'E26', 0),
+	('G', 128, 'E35', 4),
+	('G', 128, 'E34', 3),
+	('G', 128, 'E33', 2),
+	('G', 128, 'E32', 1),
+	('G', 128, 'E31', 0),
+	('G', 129, NULL, 1),
+	('G', 129, 'E36', 0),
+	('G', 130, 'E40', 2),
+	('G', 130, 'E39', 1),
+	('G', 130, 'E38', 0),
+	('G', 131, 'E45E', 6),
+	('G', 131, 'E45D', 5),
+	('G', 131, 'E45C', 4),
+	('G', 131, 'E45B', 3),
+	('G', 131, 'E45A', 2),
+	('G', 131, 'E43', 1),
+	('G', 131, 'E42', 0),
+	('G', 132, NULL, 2),
+	('G', 132, 'E49', 1),
+	('G', 132, 'E48', 0),
+	('G', 133, 'D53E', 6),
+	('G', 133, 'D53D', 5),
+	('G', 133, 'D53C', 4),
+	('G', 133, 'D53B', 3),
+	('G', 133, 'D53A', 2),
+	('G', 133, 'E52', 1),
+	('G', 133, 'E51', 0),
+	('I', 39, NULL, 0),
+	('I', 40, 'F5', 4),
+	('I', 40, 'F4', 3),
+	('I', 40, 'F3', 2),
+	('I', 40, 'F2', 1),
+	('I', 40, 'F1', 0),
+	('I', 41, 'F10B', 5),
+	('I', 41, 'F10A', 4),
+	('I', 41, 'F9', 3),
+	('I', 41, 'F8', 2),
+	('I', 41, 'F7', 1),
+	('I', 41, 'F6', 0),
+	('I', 42, 'F15', 4),
+	('I', 42, 'F14', 3),
+	('I', 42, 'F13', 2),
+	('I', 42, 'F12', 1),
+	('I', 42, 'F11', 0),
+	('I', 43, 'F20', 4),
+	('I', 43, 'F19', 3),
+	('I', 43, 'F18', 2),
+	('I', 43, 'F17', 1),
+	('I', 43, 'F16', 0),
+	('I', 44, 'F25', 4),
+	('I', 44, 'F24', 3),
+	('I', 44, 'F23', 2),
+	('I', 44, 'F22', 1),
+	('I', 44, 'F21', 0),
+	('I', 45, 'F30', 4),
+	('I', 45, 'F29', 3),
+	('I', 45, 'F28', 2),
+	('I', 45, 'F27', 1),
+	('I', 45, 'F26', 0),
+	('I', 46, 'F35', 4),
+	('I', 46, 'F34', 3),
+	('I', 46, 'F33', 2),
+	('I', 46, 'F32', 1),
+	('I', 46, 'F31', 0),
+	('I', 47, NULL, 1),
+	('I', 47, 'F36', 0),
+	('I', 48, 'E36H', 7),
+	('I', 48, 'E36G', 6),
+	('I', 48, 'E36F', 5),
+	('I', 48, 'E36E', 4),
+	('I', 48, 'E36D', 3),
+	('I', 48, 'E36C', 2),
+	('I', 48, 'E36B', 1),
+	('I', 48, 'E36A', 0),
+	('I', 49, 'E38E', 5),
+	('I', 49, 'E38D', 4),
+	('I', 49, 'E38C', 3),
+	('I', 49, 'E38B', 2),
+	('I', 49, 'E38A', 1),
+	('I', 49, 'F37', 0),
+	('I', 51, 'F40', 1),
+	('I', 51, 'F39', 0)
+--==============================================================================================================
+
+-- SQL to Update Old Rows:
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 0,
+	[Shelf] = 'A5',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 32
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 0,
+	[Shelf] = 'A4',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 33
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 0,
+	[Shelf] = 'A3',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 2
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 0,
+	[Shelf] = 'A2',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 1
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 0,
+	[Shelf] = 'A1',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 0
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 1,
+	[Shelf] = 'A11',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 8
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 1,
+	[Shelf] = 'A10',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 7
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 1,
+	[Shelf] = 'A9',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 6
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 1,
+	[Shelf] = 'A8',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 5
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A16',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 34
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A15B',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 13
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A15A',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 12
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A14',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 11
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A13',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 10
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 2,
+	[Shelf] = 'A12',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 9
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A21',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 31
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A20B',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 30
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A20A',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 29
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A19',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 28
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A18',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 27
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 3,
+	[Shelf] = 'A17',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 26
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A26',
+	[ShelfRow] = 6
+WHERE
+	[ID] = 35
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A25B',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 36
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A25A',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 37
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A24',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 38
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A23',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 39
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A22',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 40
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 4,
+	[Shelf] = 'A22',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 40
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A31',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 42
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A30B',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 43
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A30A',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 44
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A29',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 45
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A28',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 46
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 5,
+	[Shelf] = 'A27',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 47
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A36',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 48
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A35B',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 49
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A35A',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 50
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A34',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 51
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A33',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 52
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 6,
+	[Shelf] = 'A32',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 53
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 7,
+	[Shelf] = 'A41',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 54
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 7,
+	[Shelf] = 'A40',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 55
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 7,
+	[Shelf] = 'A39',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 56
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 7,
+	[Shelf] = 'A38',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 57
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 7,
+	[Shelf] = 'A37',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 58
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 9,
+	[Shelf] = 'A46',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 59
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A50E',
+	[ShelfRow] = 7
+WHERE
+	[ID] = 60
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A50D',
+	[ShelfRow] = 6
+WHERE
+	[ID] = 61
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A50C',
+	[ShelfRow] = 5
+WHERE
+	[ID] = 62
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A50B',
+	[ShelfRow] = 4
+WHERE
+	[ID] = 63
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A50A',
+	[ShelfRow] = 3
+WHERE
+	[ID] = 64
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A49',
+	[ShelfRow] = 2
+WHERE
+	[ID] = 65
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A48',
+	[ShelfRow] = 1
+WHERE
+	[ID] = 66
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 10,
+	[Shelf] = 'A47',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 67
+;
+UPDATE [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	
+	[Section] = 'A',
+	[ShelfSectionID] = 12,
+	[Shelf] = 'A55',
+	[ShelfRow] = 0
+WHERE
+	[ID] = 68
+;

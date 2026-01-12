@@ -85,7 +85,7 @@ def connect(
 
     parameters:
 
-        sql         - a string of sql queries delimited by ';'
+        sql_i         - a string of sql_i queries delimited by ';'
                       OR a single table name in the database
 
         driver,
@@ -95,8 +95,8 @@ def connect(
         and pwd     - These parameters are combined using pyodbc connection string template
 
         do_print    - shows connection and query status via print statements
-        do_show     - shows connection information and sql queries via print statements
-        do_exec     - used with 'do_print' and 'do_exec' this parameter controls if the sql is sent to the database.
+        do_show     - shows connection information and sql_i queries via print statements
+        do_exec     - used with 'do_print' and 'do_exec' this parameter controls if the sql_i is sent to the database.
                     - Use for testing
         timeout     - see pyodbc.connect timeout parameter
 

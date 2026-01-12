@@ -42,7 +42,7 @@ BUILDING_CODE_UNKNOWN: int = -99
 
 @st.cache_data(ttl=60*60, show_spinner=True)
 def load_bin_location_data() -> pd.DataFrame:
-#     sql = """
+#     sql_i = """
 #
 # -- Bin Locations in Duplicate
 # -- 2025-12-08
@@ -1012,10 +1012,10 @@ ON
 	sql += f"\n\tAND ((DATEADD(YEAR, -{abs(year_int)}, GETDATE()) <= [dtJP].[TrnDateTime]) AND ([dtJP].[TrnDateTime] <= DATEADD(YEAR, {abs(year_int)}, GETDATE())))"
 	df = connect(sql, do_show=True, do_print=True)
 	if user in admin_end_users:
-		with st.expander(f"sql"):
+		with st.expander(f"sql_i"):
 			st.code(
 				sql,
-				language="sql",
+				language="sql_i",
 				line_numbers=True
 			)
 	return df
@@ -1527,7 +1527,7 @@ def load_hawkins_map(
 				overlay_sections=overlay_sections
 			)
 		else:
-			plotted = [] if plotted is None else plotted
+			plotted = {} if plotted is None else plotted
 			for i, data in enumerate(found_map_to_bin):
 				fig = load_hawkins_map(
 					data,
@@ -1615,7 +1615,9 @@ def load_hawkins_map(
 			stockcode = found_map_to_bin["stockcode"]
 			binlocation = found_map_to_bin["bin_location"]
 
-			df_plotted = pd.DataFrame(plotted)
+			if binlocation not in plotted:
+				plotted[binlocation] = []
+			df_plotted = pd.DataFrame(plotted[binlocation])
 			display_df(
 				df_plotted,
 				"df_plotted"
@@ -1635,11 +1637,12 @@ def load_hawkins_map(
 			first_of_bin = df_plotted_same_bin.shape[0] == 0
 			t_y = found_map_to_bin["cy"]
 			t_x = found_map_to_bin["cx"]
-			t_y += max(0, df_plotted_same_bin.shape[0] - 1) * 2
-			t_x += 0 if first_of_bin else -(x_off if deg_rot % 180 == 0 else y_off)
-			t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
+			# t_y += (max(0, df_plotted_same_bin.shape[0] - 1) + 1) * 2
+			# # t_x += 0 if first_of_bin else -(x_off if deg_rot % 180 == 0 else y_off)
+			# # t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
+			# t_x -= (x_off * 0.1441)
 
-			plotted.append(dict(
+			plotted[binlocation].append(dict(
 				cx=t_x,
 				cy=t_y,
 				sc=stockcode
@@ -1649,10 +1652,14 @@ def load_hawkins_map(
 				x=t_x,
 				y=t_y,
 				xref="x", yref="y",
-				ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
-				ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
-				text=f"StockCode: '{stockcode}' located in bin '{binlocation}' on{msg_shelf.lower()}",
+				# ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
+				# ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
+				ax=-x_off,
+				ay=y_off + (10 * len(plotted[binlocation])),
+				text=f"{stockcode} located in bin {binlocation} on{msg_shelf.lower()}",
 				showarrow=first_of_bin,
+				xshift=0 if first_of_bin else -x_off,
+				yshift=0 if first_of_bin else -y_off,
 				font=dict(size=10, color="black")
 			)
 		return fig
@@ -1731,7 +1738,7 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 	sql_edit = sql_edit.rstrip()
 	st.code(
 		sql_edit,
-		language="sql",
+		language="sql_i",
 		line_numbers=True,
 	)
 
@@ -1752,14 +1759,14 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 	sql_insert = sql_insert.rstrip().removesuffix(",") + "\n;"
 	st.code(
 		sql_insert,
-		language="sql",
+		language="sql_i",
 		line_numbers=True,
 	)
 
 	sql_delete = f"DELETE FROM {t_name}\nWHERE [{pk_name}] IN ({', '.join(map(validate_sql_term, deleted_rows))});"
 	st.code(
 		sql_delete,
-		language="sql",
+		language="sql_i",
 		line_numbers=True,
 	)
 
@@ -1776,8 +1783,8 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 		del sqls["add"]
 
 	for mode, sql in sqls.items():
-		# df_res = connect(sql, do_show=True, do_print=True, do_exec=False)
-		st.code(sql, language="sql", line_numbers=True)
+		# df_res = connect(sql_i, do_show=True, do_print=True, do_exec=False)
+		st.code(sql, language="sql_i", line_numbers=True)
 		df_res = connect(sql, do_show=True, do_print=True, do_exec=True)
 
 	st.toast("Updated saved successfully.")

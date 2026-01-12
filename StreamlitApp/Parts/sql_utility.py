@@ -424,13 +424,13 @@ def create_sql(
             cols: str = "*"
 
     if mode == "select":
-        # sql = f"SELECT {cols} FROM {table}"
+        # sql_i = f"SELECT {cols} FROM {table}"
         sql_lines.append(f"SELECT")
         sql_lines.append(cols)
         sql_lines.append(f"FROM")
         sql_lines.append(f"{table}")
         if where:
-            # sql += f" WHERE {where}"
+            # sql_i += f" WHERE {where}"
             sql_lines.append(f"WHERE")
             sql_lines.append(f"{where}")
 
@@ -440,7 +440,7 @@ def create_sql(
             group = [wrap(col) for col in group]
             if in_line:
                 group = ", ".join(group)
-            # sql += f" GROUP BY {group}"
+            # sql_i += f" GROUP BY {group}"
             sql_lines.append(f"GROUP BY")
             sql_lines.append(group)
 
@@ -459,7 +459,7 @@ def create_sql(
                         order = ", ".join(order)
             else:
                 order = wrap(order)
-            # sql += f" ORDER BY {order}"
+            # sql_i += f" ORDER BY {order}"
             sql_lines.append(f"ORDER BY")
             sql_lines.append(order)
     elif mode == "insert":
@@ -474,7 +474,7 @@ def create_sql(
                                            ")" * (1 if i < (len(data) - 1) else 0)) for i, dat in enumerate(data)]
         if in_line:
             vals: str = ", ".join(vals)
-        # sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+        # sql_i = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
         sql_lines.append(f"INSERT INTO")
         sql_lines.append(f"{table}")
         sql_lines.append(f"(")
@@ -485,8 +485,8 @@ def create_sql(
         sql_lines.append(vals)
         sql_lines.append(f")")
     elif mode == "update":
-        # sql = f"UPDATE {table} SET "
-        # sql += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in path_data.items()])
+        # sql_i = f"UPDATE {table} SET "
+        # sql_i += ", ".join([f"{wrap(key)} = {wrap(val, is_col=False, sanitize=do_sanitize(key))}" for key, val in path_data.items()])
         sql_lines.append(f"UPDATE")
         sql_lines.append(f"{table}")
         sql_lines.append("SET")
@@ -499,15 +499,15 @@ def create_sql(
 
         # vals: list[str] = [wrap(val, False, sanitize=do_sanitize(key)) for key, val in path_data.items()]
         if where:
-            # sql += f" WHERE {where}"
+            # sql_i += f" WHERE {where}"
             sql_lines.append(f"WHERE ")
             sql_lines.append(f"{where}")
     elif mode == "delete":
-        # sql = f"DELETE FROM {table}"
+        # sql_i = f"DELETE FROM {table}"
         sql_lines.append(f"DELETE FROM")
         sql_lines.append(f"{table}")
         if where:
-            # sql += f" WHERE {where}"
+            # sql_i += f" WHERE {where}"
             sql_lines.append(f"WHERE")
             sql_lines.append(f"{where}")
 
@@ -1925,7 +1925,7 @@ def clean_sql1(sql: str) -> str:
         reindent=True
     )
 
-    # sql = re.sub(r"with \(nolock\)", r"WITH (NOLOCK)", sql, flags=re.IGNORECASE)
+    # sql_i = re.sub(r"with \(nolock\)", r"WITH (NOLOCK)", sql_i, flags=re.IGNORECASE)
     sql = re.sub(r'(?:\s*)(INNER|LEFT|RIGHT|FULL)?\s+JOIN\s+', r'\n\1 JOIN\n\t', sql, flags=re.IGNORECASE)
 
     for kw_out, kw_in, do_pad in [
@@ -1939,8 +1939,8 @@ def clean_sql1(sql: str) -> str:
         dp = "\n\t" if do_pad else ""
         sql = re.sub(r"\s+" + kw_out + r"\s+", r"\n" + kw_in + dp, sql, flags=re.IGNORECASE)
 
-    # sql = re.sub(r'\s+FROM\s+', r'\nFROM\n\t', sql, flags=re.IGNORECASE)
-    # sql = re.sub(r'\s+ON\s+', r'\nON\n\t', sql, flags=re.IGNORECASE)
+    # sql_i = re.sub(r'\s+FROM\s+', r'\nFROM\n\t', sql_i, flags=re.IGNORECASE)
+    # sql_i = re.sub(r'\s+ON\s+', r'\nON\n\t', sql_i, flags=re.IGNORECASE)
 
     sql = re.sub(r'\),\s*\(', r'),\n(', sql)
     sql = re.sub(r'[ \t]+$', '', sql, flags=re.MULTILINE)
@@ -2037,7 +2037,7 @@ if __name__ == '__main__':
             "RequestDate": datetime.datetime.now(),
             "Status": "Queued",
             "RequestDateOriginal": "2024-11-21 17:01:59",
-            "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
+            "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql_i"
         }
         sanitize_cols = list(insert_data.keys())
         sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
@@ -2194,9 +2194,9 @@ if __name__ == '__main__':
         #     )
         # ]
         #
-        # for i, sql in enumerate(test_sqls):
-        #     # print(f"{sql}")
-        #     st.text(sql)
+        # for i, sql_i in enumerate(test_sqls):
+        #     # print(f"{sql_i}")
+        #     st.text(sql_i)
         #     st.write("---")
 
         # st.text(create_sql(
@@ -2253,7 +2253,7 @@ if __name__ == '__main__':
         #     "RequestDate": datetime.datetime.now(),
         #     "Status": "Queued",
         #     "RequestDateOriginal": "2024-11-21 17:01:59",
-        #     "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql"
+        #     "Directory": r"C:\Users\abriggs\Documents\BWS\Nulls being weird.sql_i"
         # }
         # sanitize_cols = list(insert_data.keys())
         # sanitize_cols.remove("RequestFollowUpPersonnel")  # preserve semicolons delimiting email addresses
