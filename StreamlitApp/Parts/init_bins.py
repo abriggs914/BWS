@@ -90,6 +90,41 @@ data = {
 		9: ["E36H", "E36G", "E36F", "E36E", "E36D", "E36C", "E36B", "E36A"],
 		10: ["E38E", "E38D", "E38C", "E38B", "E38A", 37],
 		12: [40, 39]
+	},
+	"G": {
+		0: [None],
+		1: [5, 4, 3, 2, 1],
+		2: [10, 9, 8, 7, 6],
+		3: [15, 14, 13, 12, 11],
+		4: [20, 19, 18, 17, 16],
+		5: [25, 24, 23, 22, 21],
+		6: [30, 29, 28, 27, 26],
+		7: [35, 34, 33, 32, 31],
+		8: [None]
+	},
+	"H": {
+		0: [None],
+		1: [None],
+		2: ["H2B", "H2A", 2, 1],
+		3: ["H4D", "H4C", "H4B", "H4A", 4, 3],
+		4: [None, 6, 5],
+		5: ["H9B", "H9A", 9, 8, 7],
+		6: ["H11B", "H11A", 11, 10],
+		7: [16, 15, 14, 13, 12]
+	},
+	"R1": {
+		0: [None],
+		1: [30, 29, 28, 27, 26],
+		2: [35, 34, 33, 32, 31],
+		3: [40, 39, 38, 37, 36],
+		4: [42, 41]
+	},
+	"R2": {
+		0: [5, 4, 3, 2, 1],
+		1: [10, 9, 8, 7, 6],
+		2: [15, 14, 13, 12, 11],
+		3: [20, 19, 18, 17, 16],
+		4: [25, 24, 23, 22, 21]
 	}
 }
 
@@ -135,20 +170,32 @@ section_map = {
 	"F": "I",
 	"G": "J",
 	"H": "L",
+	"R1": "J",
+	"R2": "L"
 }
 
 
 if __name__ == '__main__':
+
+	skip_exist: bool = True  # 20260113 skipping all previously configured data
+
 	cols = ["Section", "ShelfSectionID", "Shelf", "ShelfRow"]
 	t_name_shelves = "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]".removeprefix("[").removesuffix("]")
 	t_name_sections = "[BWSdb].[dbo].[INV_WarehouseShelfSections_Hawkins]".removeprefix("[").removesuffix("]")
 	sql_i = f"INSERT INTO [{t_name_shelves}]\n\t([{'], ['.join(cols)}])\nVALUES\n\t"
 	sql_u_t = f"UPDATE [{t_name_shelves}]\nSET\n\t"
 	sql_u = []
+	has_inserts: bool = False
 	df_sections = load_known_sections()
 	df_known = load_known_shelves()
 	print("df_known[cols]")
 	print(df_known[cols])
+	print("df_sections")
+	print(df_sections)
+
+	# df_known_ = df_known[df_known["ParentShelf"].isin(["G", "H", "R"])]
+	# print("df_known_[cols]")
+	# print(df_known_[cols])
 	df_new_rows = []
 	df_sections["Section"] = df_sections["Section"].astype(str)
 	df_sections["Group"] = df_sections["Group"].astype(str)
@@ -159,55 +206,65 @@ if __name__ == '__main__':
 		for j, bins in sec_data.items():
 			for k, bin_location in enumerate(bins):
 				if isinstance(bin_location, int):
-					bin_location = f"{sec}{bin_location}"
-				print(f"{i=}, {j=}, {sec=}, {k=}, {bin_location=}, grp={j+5}", end="")
-				ss_id = df_sections.loc[
-					(df_sections["Section"] == str(sec))
-					& (df_sections["Group"] == str(j + 5))
-				].reset_index().loc[0, "ID"]
-				print(f", {ss_id=}")
-				vals = [section_map[sec], ss_id, bin_location, len(bins) - (k + 1)]
-				df_known_same_loc = df_known.loc[
-					(df_known["Section"] == str(sec))
-					& (df_known["Shelf"] == str(bin_location))
+					bin_location = f"{sec[0]}{bin_location}"
+				print(f"{i=}, {j=}, sec={sec}=>{section_map[sec]}, {k=}, {bin_location=}, grp={j+(5 if sec[0] != "R" else 0)}", end="")
+				if not bin_location:
+					print("")
+					continue
+				df_sec = df_sections.loc[
+					(df_sections["Section"] == str(section_map[sec]))
+					& (df_sections["Group"] == str(j + (5 if sec[0] != "R" else 0)))
 				]
-				if df_known_same_loc.empty:
-					sql_i += f"({', '.join(map(validate_sql_term, vals))}),\n\t"
+				if not df_sec.empty:
+					ss_id = df_sec.reset_index().loc[0, "ID"]
+					print(f", {ss_id=}")
+					vals = [section_map[sec], ss_id, bin_location, len(bins) - (k + 1)]
+					df_known_same_loc = df_known.loc[
+						(df_known["Section"] == str(section_map[sec]))
+						& (df_known["Shelf"] == str(bin_location))
+					]
+					if df_known_same_loc.empty:
+						sql_i += f"({', '.join(map(validate_sql_term, vals))}),\n\t"
+						has_inserts = True
+					elif not skip_exist:
+						known_vals = df_known_same_loc[cols]
+						if any([v0 != v1 for v0, v1 in zip(known_vals, vals)]):
+							vals_ = ""
+							for col, val in zip(cols, vals):
+								vals_ += f"{col}] = {validate_sql_term(val)},\n\t["
+							vals_ = vals_.rstrip().removesuffix(",").strip().removesuffix("[").strip().removesuffix(",")
+							sql_u.append(sql_u_t + f"\n\t[" + vals_ + f"\nWHERE\n\t[ID] = {int(df_known_same_loc.reset_index().loc[0, "ID"])}\n;")
+					df_new_rows.append(pd.DataFrame([dict(zip(cols, vals))]))
 				else:
-					known_vals = df_known_same_loc[cols]
-					if any([v0 != v1 for v0, v1 in zip(known_vals, vals)]):
-						vals_ = ""
-						for col, val in zip(cols, vals):
-							vals_ += f"{col}] = {validate_sql_term(val)},\n\t["
-						vals_ = vals_.rstrip().removesuffix(",").strip().removesuffix("[").strip().removesuffix(",")
-						sql_u.append(sql_u_t + f"\n\t[" + vals_ + f"\nWHERE\n\t[ID] = {int(df_known_same_loc.reset_index().loc[0, "ID"])}\n;")
-				df_new_rows.append(pd.DataFrame([dict(zip(cols, vals))]))
+					print("")
 
 	sql_i = sql_i.rstrip().removesuffix(",")
 	print(sql_i)
 	for sql in sql_u:
 		print(sql)
 
-	df_new = pd.concat(df_new_rows).reset_index(drop=True)
-	print("df_new")
-	print(df_new)
+	if df_new_rows:
+		df_new = pd.concat(df_new_rows).reset_index(drop=True)
+		print("df_new")
+		print(df_new)
 
-	# mask = None
-	# for col in cols:
-	# 	if mask is None:
-	# 		mask = (~df_new[col].isin(df_known[cols]))
-	# 	else:
-	# 		mask = mask & (~df_new[col].isin(df_known[cols]))
+		# mask = None
+		# for col in cols:
+		# 	if mask is None:
+		# 		mask = (~df_new[col].isin(df_known[cols]))
+		# 	else:
+		# 		mask = mask & (~df_new[col].isin(df_known[cols]))
 
-	df_new_new = pd.concat([df_known, df_new])
-	df_new_new.drop_duplicates(subset=cols, inplace=True)
-	df_new_new.sort_values(by=cols, ascending=True, inplace=True)
-	print('df_new_new[cols]')
-	print(df_new_new[cols])
+		df_new_new = pd.concat([df_known, df_new])
+		df_new_new.drop_duplicates(subset=cols, inplace=True)
+		df_new_new.sort_values(by=cols, ascending=True, inplace=True)
+		print('df_new_new[cols]')
+		print(df_new_new[cols])
 
 	with open("sqls_to_run.sql", "w") as f:
 		f.write("-- SQL to Insert New Rows:\n")
-		f.write(sql_i + "\n--" + ("="*110) + "\n\n")
+		if has_inserts:
+			f.write(sql_i + "\n--" + ("="*110) + "\n\n")
 		f.write("-- SQL to Update Old Rows:\n")
 		for line in sql_u:
 			f.write(line + "\n")

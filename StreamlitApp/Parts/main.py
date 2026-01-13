@@ -1022,6 +1022,53 @@ ON
 
 
 @st.cache_data(ttl=60*60, show_spinner=True)
+def load_jobs() -> pd.DataFrame:
+	sql = """
+SELECT
+	[WM].[Job]
+FROM
+	[SysproCompanyA].[dbo].[WipMaster] [WM]
+WHERE
+	ISNULL([WM].[Complete], 'N') = 'N'
+GROUP BY
+	[WM].[Job]
+;
+	"""
+	return connect(sql)
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
+def load_pick_list(job: str, from_op: int = 12, to_op: int = 18) -> pd.DataFrame:
+	sql = f"""
+SELECT 
+	[v_NewPickList].[Job],
+	[v_NewPickList].[JobDescription],
+	[v_NewPickList].[StockCode], 
+	[v_NewPickList].[StockDescription], 
+	[v_NewPickList].[LongDesc],
+	[v_NewPickList].[Warehouse], 
+	[v_NewPickList].[UnitQtyReqd], 
+	[v_NewPickList].[OperationOffset], 
+	[v_NewPickList].[Uom], 
+	[v_NewPickList].[Bin], 
+	[v_NewPickList].[QtyIssued], 
+	[v_NewPickList].[ProductClass], 
+	[v_NewPickList].[SubWO], 
+	[v_NewPickList].[SubWOJobDescription], 
+	[v_NewPickList].[QtyAvailable], 
+	(CASE WHEN [UnitQtyReqd]-[QtyIssued] <=0 THEN 0 ELSE [UnitQtyReqd]-[QtyIssued] END) AS [QtyToPick]
+FROM 
+	[SysproCompanyA].[dbo].[v_NewPickList]
+WHERE 
+	([v_NewPickList].[Job] = '{job}')
+	AND ([v_NewPickList].[OperationOffset] BETWEEN {from_op} AND {to_op})
+	--AND ([UnitQtyReqd]-[QtyIssued] <> 0)
+;
+	"""
+	return connect(sql)
+
+
+@st.cache_data(ttl=60*60, show_spinner=True)
 def load_change_requests() -> pd.DataFrame:
 	path_abs: str = os.path.join(os.getcwd(), CHANGE_REQUEST_FILE)
 	if not os.path.exists(path_abs):
@@ -1244,6 +1291,8 @@ def load_layout_data() -> dict[str, pd.DataFrame]:
 		"ShelfSections": "INV_WarehouseShelfSections_Hawkins",
 	}.items():
 		data[name] = connect(t_name)
+		if "Active" in data[name].columns:
+			data[name] = data[name].loc[data[name]["Active"] == 1]
 
 	return data
 
@@ -1259,9 +1308,9 @@ def build_legend_bg_map(df_legend: pd.DataFrame) -> dict[str, str]:
 	for _, r in df_legend.iterrows():
 		k = r.get(k_col)
 		bg = r.get(bg_col)
-		if pd.isna(k) or pd.isna(bg):
-			continue
-		key = str(k).strip().upper()
+		# if pd.isna(k) or pd.isna(bg):
+		# 	continue
+		key = str(k).strip().upper() if k is not None else None
 		hx = str(bg).strip().upper()
 		if not hx.startswith("#"):
 			hx = "#" + hx
@@ -1395,6 +1444,133 @@ def layout_to_rgb_image(df_layout: pd.DataFrame, bg_map: dict[str, str], default
 	return img
 
 
+def generate_bin_maps(
+	df_stocks: pd.DataFrame,
+	col_bin: str = "DefaultBin",
+	col_stock: str = "MStockCode"
+):
+	bin_maps = []
+	df_data = load_layout_data()
+	df_layout = df_data["Layout"]
+	df_legend = df_data["Legend"]
+	df_sections = df_data["ShelfSections"]
+	df_shelves = df_data["Shelves"]
+
+	lst_bins = map(str.lower, df_stocks[col_bin].unique().tolist())
+	lst_stockcodes = df_stocks[col_stock].unique().tolist()
+
+	display_df(
+		df_stocks,
+		"START DF"
+	)
+
+	df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip().isin(lst_bins)]
+	df_bin_shelf = df_bin_shelf.merge(
+		df_sections[["ID", "ParentShelf", "Group", "X0", "X1", "Y0", "Y1"]],
+		how="left",
+		left_on="ShelfSectionID",
+		right_on="ID"
+	)
+	df_bin_shelf = df_bin_shelf.merge(
+		df_stocks[[col_bin, col_stock]],
+		how="left",
+		left_on="Shelf",
+		right_on=col_bin
+	)
+	display_df(
+		df_bin_shelf,
+		"df_bin_shelf"
+	)
+	if not df_bin_shelf.empty:
+		ser_bin_section = df_bin_shelf.iloc[0]
+		bin_section = ser_bin_section["Section"]
+		bin_section_id = ser_bin_section["ShelfSectionID"]
+		bin_shelf_row = ser_bin_section["ShelfRow"]
+
+		df_bin_shelf_section = df_sections.loc[df_sections["ID"] == bin_section_id]
+		if not df_bin_shelf_section.empty:
+			# ser_bin_shelf_section = df_bin_shelf_section.iloc[0]
+			# try:
+			# 	bsr = int(bin_shelf_row)
+			# except (ValueError, TypeError):
+			# 	bsr = bin_shelf_row
+			for i, row in df_bin_shelf.iterrows():
+				found_map_to_bin = dict(
+					p_shelf=row["ParentShelf"],
+					group=row["Group"],
+					x0=row["X0"],
+					x1=row["X1"],
+					y0=row["Y0"],
+					y1=row["Y1"],
+					section=bin_section,
+					section_id=bin_section_id,
+					shelf_row=int(row["ShelfRow"]) if not pd.isna(row["ShelfRow"]) else None,
+					bin_location=row["Shelf"],
+					stockcode=row[col_stock]
+				)
+
+				x0 = found_map_to_bin["x0"]
+				y0 = found_map_to_bin["y0"]
+				x1 = found_map_to_bin["x1"]
+				y1 = found_map_to_bin["y1"]
+				w = x1 - x0
+				h = y1 - y0
+				found_map_to_bin["w"] = w
+				found_map_to_bin["h"] = h
+				cx = x0 + w
+				cy = y0 + h
+				found_map_to_bin["cx"] = cx
+				found_map_to_bin["cy"] = cy
+
+				if not st.session_state.get(k_use_full_map_dot_size, False):
+					ds = st.session_state.get(k_map_dot_size, 1)
+					wd = (ds - w) / 2
+					hd = (ds - h) / 2
+					x_0 = x0 - wd
+					x_1 = x1 + wd
+					y_0 = y0 - hd
+					y_1 = y1 + hd
+					cx = x_0 + (ds / 2)
+					cy = y_0 + (ds / 2)
+
+					found_map_to_bin.update({
+						"x0": x_0,
+						"y0": y_0,
+						"x1": x_1,
+						"y1": y_1,
+						"w": ds,
+						"h": ds,
+						"cx": cx,
+						"cy": cy
+					})
+				bin_maps.append(found_map_to_bin)
+
+	reported = set()
+	for i, sc in enumerate(lst_stockcodes):
+		bin = df_stocks.loc[df_stocks[col_stock] == sc].reset_index().loc[0, col_bin]
+		if bin_maps:
+			found = False
+			for data in bin_maps:
+				if sc == data["stockcode"]:
+					found = True
+					break
+			if not found:
+				if sc not in reported:
+					st.warning(f"Could not map {sc} in {bin}")
+					reported.add(sc)
+		else:
+			if sc not in reported:
+				st.warning(f"Could not map {sc} in {bin}")
+				reported.add(sc)
+
+	if user in admin_end_users:
+		st.write(f"bin_maps")
+		st.write(bin_maps)
+		display_df(df_stocks, f"df_stocks")
+
+	return bin_maps
+
+
 def build_plotly_map(
 	img: np.ndarray,
 	df_sections: pd.DataFrame,
@@ -1452,19 +1628,26 @@ def build_plotly_map(
 				layer="above",
 			)
 
+			txts = []
 			if not pd.isna(p_shelf):
-				txt = f"{p_shelf}-{grp}"
+				# txt = f"{p_shelf}-{grp}-{id_}"
+				txts.extend([f"{p_shelf}-{sec}", grp, id_])
 			else:
-				txt = f"aisle - {len(aisle_count) + 1}"
+				# txt = f"aisle - {len(aisle_count) + 1}"
+				txts.extend(["aisle", len(aisle_count) + 1])
 				if sec not in aisle_count:
 					aisle_count[sec] = 1
-			fig.add_annotation(
-				x=(x0 + x1) / 2 - 0.5,
-				y=(y0 + y1) / 2 - 0.5,
-				text=txt,
-				showarrow=False,
-				font=dict(size=10, color="black"),
-			)
+			# hd = y1 - y0
+			# hpt = hd / len(txts)
+			for i, txt in enumerate(txts):
+				fig.add_annotation(
+					x=(x0 + x1) / 2 - 0.5,
+					# y=(y0 + y1) / 2 - 0.5,
+					y=(y0 + i) + 0.5 + (1 if len(txts) == 2 else 0),
+					text=txt,
+					showarrow=False,
+					font=dict(size=10, color="black"),
+				)
 
 	# --- highlight selected section (top layer) ---
 	if selected_section_id is not None and "ID" in df_sections.columns:
@@ -1512,8 +1695,8 @@ def load_hawkins_map(
 		clear_selected : bool = False,
 		plotted=None  # use to prevent overlaying identifying text over other text. Also print only 1 directional arrow per bin
 ):
-	st.write(f"plotted TOP")
-	st.write(plotted)
+	# st.write(f"plotted TOP")
+	# st.write(plotted)
 	k_selected_section_id = "key_selected_section_id"
 	if isinstance(found_map_to_bin, (list, tuple)):
 		fig = None
@@ -1538,8 +1721,8 @@ def load_hawkins_map(
 					overlay_sections=overlay_sections,
 					plotted=plotted
 				)
-			st.write(f"plotted BOTTOM")
-			st.write(plotted)
+			# st.write(f"plotted BOTTOM")
+			# st.write(plotted)
 		return fig
 	else:
 		if clear_selected and (k_selected_section_id in st.session_state):
@@ -1582,86 +1765,89 @@ def load_hawkins_map(
 
 		if found_map_to_bin:
 
-			x0 = found_map_to_bin["x0"]
-			y0 = found_map_to_bin["y0"]
-			x1 = found_map_to_bin["x1"]
-			y1 = found_map_to_bin["y1"]
-			cx = found_map_to_bin["cx"]
-			cy = found_map_to_bin["cy"]
-			x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
-			x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
-			cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
-			found_map_to_bin.update({
-				"x0": x0,
-				"y0": y0,
-				"x1": x1,
-				"y1": y1,
-				"cx": cx,
-				"cy": cy
-			})
-
-			fig.add_shape(
-				type="circle",
-				xref="x", yref="y",
-				x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
-				y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
-				line=dict(width=2, color=Colour(dot_colour).hex_code),
-				fillcolor=Colour(dot_colour).hex_code,
-				opacity=0.5,
-				layer="above",
-			)
-			x_off = 40
-			y_off = 18
 			stockcode = found_map_to_bin["stockcode"]
 			binlocation = found_map_to_bin["bin_location"]
 
 			if binlocation not in plotted:
 				plotted[binlocation] = []
-			df_plotted = pd.DataFrame(plotted[binlocation])
-			display_df(
-				df_plotted,
-				"df_plotted"
-			)
-			if not df_plotted.empty:
-				df_plotted_same_bin = df_plotted.loc[
-					(df_plotted["cx"] == found_map_to_bin["cx"])
-					& (df_plotted["cy"] == found_map_to_bin["cy"])
-				]
-			else:
-				df_plotted_same_bin = pd.DataFrame([])
 
-			display_df(
-				df_plotted_same_bin,
-				"df_plotted_same_bin"
-			)
-			first_of_bin = df_plotted_same_bin.shape[0] == 0
-			t_y = found_map_to_bin["cy"]
-			t_x = found_map_to_bin["cx"]
-			# t_y += (max(0, df_plotted_same_bin.shape[0] - 1) + 1) * 2
-			# # t_x += 0 if first_of_bin else -(x_off if deg_rot % 180 == 0 else y_off)
-			# # t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
-			# t_x -= (x_off * 0.1441)
+			if stockcode not in [d["sc"] for d in plotted[binlocation]]:
+				x0 = found_map_to_bin["x0"]
+				y0 = found_map_to_bin["y0"]
+				x1 = found_map_to_bin["x1"]
+				y1 = found_map_to_bin["y1"]
+				cx = found_map_to_bin["cx"]
+				cy = found_map_to_bin["cy"]
+				x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=deg_rot)
+				x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=deg_rot)
+				cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=deg_rot)
+				found_map_to_bin.update({
+					"x0": x0,
+					"y0": y0,
+					"x1": x1,
+					"y1": y1,
+					"cx": cx,
+					"cy": cy
+				})
 
-			plotted[binlocation].append(dict(
-				cx=t_x,
-				cy=t_y,
-				sc=stockcode
-			))
+				fig.add_shape(
+					type="circle",
+					xref="x", yref="y",
+					x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
+					y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
+					line=dict(width=2, color=Colour(dot_colour).hex_code),
+					fillcolor=Colour(dot_colour).hex_code,
+					opacity=0.5,
+					layer="above",
+				)
+				x_off = 40
+				y_off = 18
 
-			fig.add_annotation(
-				x=t_x,
-				y=t_y,
-				xref="x", yref="y",
-				# ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
-				# ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
-				ax=-x_off,
-				ay=y_off + (10 * len(plotted[binlocation])),
-				text=f"{stockcode} located in bin {binlocation} on{msg_shelf.lower()}",
-				showarrow=first_of_bin,
-				xshift=0 if first_of_bin else -x_off,
-				yshift=0 if first_of_bin else -y_off,
-				font=dict(size=10, color="black")
-			)
+				df_plotted = pd.DataFrame(plotted[binlocation])
+				# display_df(
+				# 	df_plotted,
+				# 	"df_plotted"
+				# )
+				if not df_plotted.empty:
+					df_plotted_same_bin = df_plotted.loc[
+						(df_plotted["cx"] == found_map_to_bin["cx"])
+						& (df_plotted["cy"] == found_map_to_bin["cy"])
+					]
+				else:
+					df_plotted_same_bin = pd.DataFrame([])
+
+				# display_df(
+				# 	df_plotted_same_bin,
+				# 	"df_plotted_same_bin"
+				# )
+				first_of_bin = df_plotted_same_bin.shape[0] == 0
+				t_y = found_map_to_bin["cy"]
+				t_x = found_map_to_bin["cx"]
+				# t_y += (max(0, df_plotted_same_bin.shape[0] - 1) + 1) * 2
+				# # t_x += 0 if first_of_bin else -(x_off if deg_rot % 180 == 0 else y_off)
+				# # t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
+				# t_x -= (x_off * 0.1441)
+
+				plotted[binlocation].append(dict(
+					cx=t_x,
+					cy=t_y,
+					sc=stockcode
+				))
+
+				fig.add_annotation(
+					x=t_x,
+					y=t_y,
+					xref="x", yref="y",
+					# ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
+					# ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
+					ax=-x_off,
+					ay=y_off + (10 * len(plotted[binlocation])),
+					text=f"{stockcode} located in bin {binlocation} on{msg_shelf.lower()}",
+					showarrow=first_of_bin,
+					xshift=0 if first_of_bin else -x_off,
+					yshift=0 if first_of_bin else -y_off,
+					font=dict(size=10, color="black")
+				)
 		return fig
 
 
@@ -1994,6 +2180,7 @@ op_search_mode_by_bin: str = "By Bin"
 op_search_mode_by_section: str = "By Section"
 op_search_mode_by_po: str = "By PO"
 op_search_mode_by_so: str = "By SO"
+op_search_mode_by_pick_list: str = "By Pick List"
 op_search_mode_by_shopclock: str = "ShopClock",
 op_search_mode_syspro: str = "Syspro"
 op_search_mode_warehouse: str = "Warehouse"
@@ -2005,6 +2192,7 @@ options_pills_search_mode = [
 	op_search_mode_by_section,
 	op_search_mode_by_po,
 	op_search_mode_by_so,
+	op_search_mode_by_pick_list,
 	op_search_mode_by_shopclock,
 	op_search_mode_syspro,
 	op_search_mode_warehouse
@@ -2363,117 +2551,13 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 			#########################################################
 
 			# found_map_to_bin: dict = {}
-			bin_maps = []
-			df_data = load_layout_data()
-			df_layout = df_data["Layout"]
-			df_legend = df_data["Legend"]
-			df_sections = df_data["ShelfSections"]
-			df_shelves = df_data["Shelves"]
+			# so_bins = map(lambda v: str(v).strip().lower(), df_selected_sos["DefaultBin"].dropna())
+			df_sos_bins = df_selected_sos[["DefaultBin", "MStockCode"]]
+			bin_maps = generate_bin_maps(
+				df_stocks=df_sos_bins
+			)
+
 			rotation_deg = 90
-
-			so_bins = map(lambda v: str(v).strip().lower(), df_selected_sos["DefaultBin"].dropna())
-			df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip().isin(so_bins)]
-			df_bin_shelf = df_bin_shelf.merge(
-				df_sections[["ID", "ParentShelf", "Group", "X0", "X1", "Y0", "Y1"]],
-				how="left",
-				left_on="ShelfSectionID",
-				right_on="ID"
-			)
-			df_bin_shelf = df_bin_shelf.merge(
-				df_selected_sos[["DefaultBin", "MStockCode"]],
-				how="left",
-				left_on="Shelf",
-				right_on="DefaultBin"
-			)
-			display_df(
-				df_bin_shelf,
-				"df_bin_shelf"
-			)
-			if not df_bin_shelf.empty:
-				ser_bin_section = df_bin_shelf.iloc[0]
-				bin_section = ser_bin_section["Section"]
-				bin_section_id = ser_bin_section["ShelfSectionID"]
-				bin_shelf_row = ser_bin_section["ShelfRow"]
-
-				df_bin_shelf_section = df_sections.loc[df_sections["ID"] == bin_section_id]
-				if not df_bin_shelf_section.empty:
-					# ser_bin_shelf_section = df_bin_shelf_section.iloc[0]
-					# try:
-					# 	bsr = int(bin_shelf_row)
-					# except (ValueError, TypeError):
-					# 	bsr = bin_shelf_row
-					for i, row in df_bin_shelf.iterrows():
-						found_map_to_bin = dict(
-							p_shelf=row["ParentShelf"],
-							group=row["Group"],
-							x0=row["X0"],
-							x1=row["X1"],
-							y0=row["Y0"],
-							y1=row["Y1"],
-							section=bin_section,
-							section_id=bin_section_id,
-							shelf_row=int(row["ShelfRow"]) if not pd.isna(row["ShelfRow"]) else None,
-							bin_location=row["Shelf"],
-							stockcode=row["MStockCode"]
-						)
-
-						x0 = found_map_to_bin["x0"]
-						y0 = found_map_to_bin["y0"]
-						x1 = found_map_to_bin["x1"]
-						y1 = found_map_to_bin["y1"]
-						w = x1 - x0
-						h = y1 - y0
-						found_map_to_bin["w"] = w
-						found_map_to_bin["h"] = h
-						cx = x0 + w
-						cy = y0 + h
-						found_map_to_bin["cx"] = cx
-						found_map_to_bin["cy"] = cy
-
-						if not st.session_state.get(k_use_full_map_dot_size, False):
-							ds = st.session_state.get(k_map_dot_size, 1)
-							wd = (ds - w) / 2
-							hd = (ds - h) / 2
-							x_0 = x0 - wd
-							x_1 = x1 + wd
-							y_0 = y0 - hd
-							y_1 = y1 + hd
-							cx = x_0 + (ds / 2)
-							cy = y_0 + (ds / 2)
-
-							found_map_to_bin.update({
-								"x0": x_0,
-								"y0": y_0,
-								"x1": x_1,
-								"y1": y_1,
-								"w": ds,
-								"h": ds,
-								"cx": cx,
-								"cy": cy
-							})
-						bin_maps.append(found_map_to_bin)
-
-			reported = set()
-			for i, sc in enumerate(selected_stockcodes):
-				bin = df_selected_sos.loc[df_selected_sos["MStockCode"] == sc].reset_index().loc[0, "DefaultBin"]
-				if bin_maps:
-					found = False
-					for data in bin_maps:
-						if sc == data["stockcode"]:
-							found = True
-							break
-					if not found:
-						if sc not in reported:
-							st.warning(f"Could not map {sc} in {bin}")
-							reported.add(sc)
-				else:
-					if sc not in reported:
-						st.warning(f"Could not map {sc} in {bin}")
-						reported.add(sc)
-
-			st.write(f"bin_maps")
-			st.write(bin_maps)
-
 			fig = load_hawkins_map(
 				bin_maps,
 				title="Map of Parts in Selected Sales Orders",
@@ -2563,8 +2647,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 				stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
 				if stock_pdf_listed or stock_pdf_stock:
 					with cols_grid[ii // cols_per_row][ii % cols_per_row]:
-						st.write(f"{so}")
-						st.write(f"{sc}")
+						st.write(f"SO# {so}")
+						st.write(f"PART# {sc}")
 						f_name = f"{sc.replace(' ', '_')}"
 						if stock_pdf_listed:
 							st.download_button(
@@ -2591,6 +2675,85 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 					textbox_stockcode = df_sales_order_pick_sheets.loc[stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
 
 		st.divider()
+
+elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick_list):
+	# Pick List
+	cols_controls = st.columns(2)
+	df_jobs = load_jobs()
+	with cols_controls[0]:
+		k_pick_list_ops: str = "key_pick_list_ops"
+		st.session_state.setdefault(k_pick_list_ops, [12, 18])
+		pick_list_ops = st.slider(
+			label="Operations:",
+			min_value=1,
+			max_value=19,
+			key=k_pick_list_ops
+		)
+	with cols_controls[1]:
+		k_pick_list_job: str = "key_pick_list_job"
+		st.session_state.setdefault(k_pick_list_job, None)
+		pick_list_job = st.selectbox(
+			label="Job:",
+			options=df_jobs["Job"],
+			key=k_pick_list_job
+		)
+
+	st.write(f"{pick_list_job=}")
+	st.write(f"{pick_list_ops=}")
+	if pick_list_ops and pick_list_job:
+		if st.button(
+			"View Pick List",
+			key="btn_pick_list_submit"
+		):
+			df_pick_list = load_pick_list(pick_list_job, *pick_list_ops)
+			st.session_state["k_df_pick_list"] = df_pick_list
+
+		if st.session_state.get("k_df_pick_list") is not None:
+			df_pick_list = st.session_state["k_df_pick_list"]
+			stdf_pick_list = display_df_paginated(
+				df_pick_list,
+				title="Pick List",
+				key="k_stde_pick_list",
+				batch_size_options=(50, 100, 250),
+				selection_mode="multi-row",
+				on_select="rerun"
+			)
+			df_selected_pick_list = get_selected_rows(
+				df_pick_list,
+				stdf_pick_list,
+				df_pick_list.columns,
+				n=df_pick_list.shape[0]
+			)
+
+			display_df(
+				df_selected_pick_list,
+				"df_selected_pick_list"
+			)
+			if not df_selected_pick_list.empty:
+				bin_maps = generate_bin_maps(
+					df_selected_pick_list,
+					col_bin="Bin",
+					col_stock="StockCode"
+				)
+
+				rotation_deg = 90
+				fig = load_hawkins_map(
+					bin_maps,
+					title=f"Map of Parts in {pick_list_job}",
+					deg_rot=rotation_deg
+				)
+
+				fig.update_layout(
+					width=1200,
+					height=700
+				)
+				chart = st.plotly_chart(
+					fig
+				)
+
+			else:
+				st.info(f"Select some parts first.")
+
 
 # elif pills_search_mode == op_search_mode_by_shopclock:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shopclock):
