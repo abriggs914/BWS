@@ -1721,8 +1721,8 @@ def load_hawkins_map(
 					overlay_sections=overlay_sections,
 					plotted=plotted
 				)
-			# st.write(f"plotted BOTTOM")
-			# st.write(plotted)
+			st.write(f"plotted ITER BOTTOM")
+			st.write(plotted)
 		return fig
 	else:
 		if clear_selected and (k_selected_section_id in st.session_state):
@@ -1767,11 +1767,14 @@ def load_hawkins_map(
 
 			stockcode = found_map_to_bin["stockcode"]
 			binlocation = found_map_to_bin["bin_location"]
+			section = found_map_to_bin["section"]
+			grp = found_map_to_bin["group"]
 
-			if binlocation not in plotted:
-				plotted[binlocation] = []
+			plot_key = (section, grp)
+			if plot_key not in plotted:
+				plotted[plot_key] = []
 
-			if stockcode not in [d["sc"] for d in plotted[binlocation]]:
+			if stockcode not in [d["sc"] for d in plotted[plot_key]]:
 				x0 = found_map_to_bin["x0"]
 				y0 = found_map_to_bin["y0"]
 				x1 = found_map_to_bin["x1"]
@@ -1803,7 +1806,7 @@ def load_hawkins_map(
 				x_off = 40
 				y_off = 18
 
-				df_plotted = pd.DataFrame(plotted[binlocation])
+				df_plotted = pd.DataFrame(plotted[plot_key])
 				# display_df(
 				# 	df_plotted,
 				# 	"df_plotted"
@@ -1828,7 +1831,7 @@ def load_hawkins_map(
 				# # t_y += 0 if first_of_bin else -(y_off if deg_rot % 180 == 0 else x_off)
 				# t_x -= (x_off * 0.1441)
 
-				plotted[binlocation].append(dict(
+				plotted[plot_key].append(dict(
 					cx=t_x,
 					cy=t_y,
 					sc=stockcode
@@ -1841,7 +1844,7 @@ def load_hawkins_map(
 					# ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
 					# ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
 					ax=-x_off,
-					ay=y_off + (10 * len(plotted[binlocation])),
+					ay=y_off + (10 * len(plotted[plot_key])),
 					text=f"{stockcode} located in bin {binlocation} on{msg_shelf.lower()}",
 					showarrow=first_of_bin,
 					xshift=0 if first_of_bin else -x_off,
