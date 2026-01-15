@@ -1631,7 +1631,7 @@ def build_plotly_map(
 				line=dict(width=2, color=bx_color),
 				fillcolor=bx_color,
 				opacity=opacity,
-				layer="above"
+				layer="above",
 			)
 
 			txts = []
@@ -1652,7 +1652,7 @@ def build_plotly_map(
 					y=(y0 + i) + 0.5 + (1 if len(txts) == 2 else 0),
 					text=txt,
 					showarrow=False,
-					font=dict(size=10, color="black")
+					font=dict(size=10, color="black"),
 				)
 
 	# --- highlight selected section (top layer) ---
@@ -2300,7 +2300,6 @@ op_search_mode_by_shopclock: str = "ShopClock",
 op_search_mode_syspro: str = "Syspro"
 op_search_mode_warehouse: str = "Warehouse"
 op_search_mode_day_totals: str = "Day Totals"
-op_search_mode_day_testing: str = "Testing"
 options_pills_search_mode = [
 	op_search_mode_simple,
 	op_search_mode_advanced,
@@ -2315,16 +2314,10 @@ options_pills_search_mode = [
 ]
 
 admin_end_users = ["abriggs"]
-admin_test_users = ["rec"] + admin_end_users
 if user in admin_end_users:
 	options_pills_search_mode.append(
 		op_search_mode_day_totals
 	)
-if user in admin_test_users:
-	options_pills_search_mode.append(
-		op_search_mode_day_testing
-	)
-
 
 textbox_stockcode = None
 k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
@@ -3342,41 +3335,6 @@ elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mo
 	pb_week = st.progress(value=0)
 	asyncio.run(run_day())
 
-# elif pills_search_mode == op_search_mode_day_totals:
-elif (user in admin_test_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_testing)):
-
-	df_data = load_layout_data()
-	# df_layout = df_data["Layout"]
-	df_legend = df_data["Legend"]
-	# df_sections = df_data["ShelfSections"]
-	# df_shelves = df_data["Shelves"]
-	df_layout = pd.DataFrame([{
-
-	}])
-	deg_rot = 0
-
-	bg_map = build_legend_bg_map(df_legend)
-
-	img0 = layout_to_rgb_image(df_layout, bg_map)
-	H, W = img0.shape[:2]
-	st.session_state.update({
-		"hawkins_img_w": W,
-		"hawkins_img_h": H
-	})
-
-	img = rotate_img(img0, deg_rot)
-	df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
-
-	fig = build_plotly_map(
-		img=img,
-		df_sections=df_sections_plot,
-		bg_map=bg_map,
-		rotation_deg=deg_rot,
-		show_sections=overlay_sections,
-		selected_section_id=st.session_state.get(k_selected_section_id),
-		title=title
-	)
-
 else:
 	# Single
 	k_textbox_stockcode = "key_textbox_stockcode"
@@ -3395,6 +3353,11 @@ if user in admin_end_users:
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
 		st.write(f"{textbox_stockcode=}")
 
+# if pills_search_mode in [
+# 	options_pills_search_mode.index(op_search_mode_simple),
+# 	options_pills_search_mode.index(op_search_mode_advanced),
+# 	options_pills_search_mode.index(op_search_mode_by_so)
+# ]:
 if isinstance(textbox_stockcode, (pd.DataFrame, pd.Series)):
 	st.info(f"Select a stock code for more details.")
 elif textbox_stockcode:
