@@ -3348,11 +3348,15 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 	df_data = load_layout_data()
 	# df_layout = df_data["Layout"]
 	df_legend = df_data["Legend"]
-	# df_sections = df_data["ShelfSections"]
+	df_sections = df_data["ShelfSections"]
 	# df_shelves = df_data["Shelves"]
-	df_layout = pd.DataFrame([{
-
-	}])
+	df_layout = pd.DataFrame({
+		"A": [None, "A", None, None, None, None, None, None, None, None],
+		"B": [None, None, None, None, None, None, None, None, None, None],
+		"C": [None, "A", "A", None, None, None, None, None, None, None],
+		"D": [None, None, None, None, None, None, None, None, None, None],
+		"E": [None, "A", None, None, None, None, None, None, None, None]
+	})
 	deg_rot = 0
 
 	bg_map = build_legend_bg_map(df_legend)
@@ -3372,10 +3376,12 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 		df_sections=df_sections_plot,
 		bg_map=bg_map,
 		rotation_deg=deg_rot,
-		show_sections=overlay_sections,
-		selected_section_id=st.session_state.get(k_selected_section_id),
-		title=title
+		show_sections=False,
+		# selected_section_id=st.session_state.get(k_selected_section_id),
+		title="TESTING"
 	)
+
+	st.plotly_chart(fig)
 
 else:
 	# Single
