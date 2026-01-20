@@ -1282,16 +1282,28 @@ def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False)
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
-def load_layout_data() -> dict[str, pd.DataFrame]:
+def load_layout_data(building: str = "Hawkins") -> dict[str, pd.DataFrame]:
 	# pth_layout: str = r"G:\IT\Network Port Layout\BWS\Hawkins Warehouse Layout Rev3 202601050840.xlsx"
 
+	if not building:
+		building = "Hawkins"
+	if building.lower() == "montana":
+		t_data = {
+			"Layout": "INV_WarehouseLayout_Montana",
+			"Legend": "INV_WarehouseLayout_Legend",
+			"Shelves": "INV_WarehouseLayout_MontanaShelves",
+			"ShelfSections": "INV_WarehouseShelfSections_Montana",
+		}
+	else:
+		t_data = {
+			"Layout": "INV_WarehouseLayout_Hawkins",
+			"Legend": "INV_WarehouseLayout_Legend",
+			"Shelves": "INV_WarehouseLayout_HawkinsShelves",
+			"ShelfSections": "INV_WarehouseShelfSections_Hawkins",
+		}
+
 	data = {}
-	for name, t_name in {
-		"Layout": "INV_WarehouseLayout_Hawkins",
-		"Legend": "INV_WarehouseLayout_Legend",
-		"Shelves": "INV_WarehouseLayout_HawkinsShelves",
-		"ShelfSections": "INV_WarehouseShelfSections_Hawkins",
-	}.items():
+	for name, t_name in t_data.items():
 		data[name] = connect(t_name)
 		if "Active" in data[name].columns:
 			data[name] = data[name].loc[data[name]["Active"] == 1]
@@ -1452,7 +1464,7 @@ def generate_bin_maps(
 		col_stock: str = "MStockCode"
 ):
 	bin_maps = []
-	df_data = load_layout_data()
+	df_data = load_layout_data(building="hawkins")
 	df_layout = df_data["Layout"]
 	df_legend = df_data["Legend"]
 	df_sections = df_data["ShelfSections"]
@@ -1609,6 +1621,9 @@ def build_plotly_map(
 		raise ValueError(f"ShelfSections missing required columns for rotation={rotation_deg}: {missing}")
 
 	if show_sections:
+
+		print("pre show_sections")
+		st.write("pre show_sections")
 		aisle_count = {}
 		# --- draw all sections (base layer) ---
 		for _, row in df_sections.iterrows():
@@ -1655,8 +1670,13 @@ def build_plotly_map(
 					font=dict(size=10, color="black")
 				)
 
+		print("post show_sections")
+		st.write("post show_sections")
+
 	# --- highlight selected section (top layer) ---
 	if selected_section_id is not None and "ID" in df_sections.columns:
+		print("pre highlight_sections")
+		st.write("pre highlight_sections")
 		sel = df_sections[df_sections["ID"] == selected_section_id]
 		if not sel.empty:
 			row = sel.iloc[0]
@@ -1689,6 +1709,9 @@ def build_plotly_map(
 				opacity=0.35,  # slightly stronger fill for selected
 				layer="above",
 			)
+
+		print("post highlight_sections")
+		st.write("post highlight_sections")
 
 	return fig
 
@@ -1787,6 +1810,7 @@ def add_hover_scatter_from_plotted(
 
 
 def load_hawkins_map(
+		building: str,
 		found_map_to_bin,
 		fig_in=None,
 		dot_colour: str = "#FF3313",
@@ -1804,7 +1828,8 @@ def load_hawkins_map(
 		fig = None
 		if not found_map_to_bin:
 			fig = load_hawkins_map(
-				dict(),
+				building=building,
+				found_map_to_bin=dict(),
 				fig_in=fig,
 				deg_rot=deg_rot,
 				dot_colour=dot_colour,
@@ -1815,7 +1840,8 @@ def load_hawkins_map(
 			plotted = {} if plotted is None else plotted
 			for i, data in enumerate(found_map_to_bin):
 				fig = load_hawkins_map(
-					data,
+					building=building,
+					found_map_to_bin=data,
 					fig_in=fig,
 					deg_rot=deg_rot,
 					dot_colour=dot_colour,
@@ -1840,7 +1866,7 @@ def load_hawkins_map(
 		single_fig = plotted is None
 		plotted = {} if single_fig else plotted
 
-		df_data = load_layout_data()
+		df_data = load_layout_data(building=building)
 		df_layout = df_data["Layout"]
 		df_legend = df_data["Legend"]
 		df_sections = df_data["ShelfSections"]
@@ -2684,7 +2710,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 
 			rotation_deg = 90
 			fig = load_hawkins_map(
-				bin_maps,
+				building="hawkins",
+				found_map_to_bin=bin_maps,
 				title="Map of Parts in Selected Sales Orders",
 				deg_rot=rotation_deg
 			)
@@ -2862,7 +2889,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 
 				rotation_deg = 90
 				fig = load_hawkins_map(
-					bin_maps,
+					building="hawkins",
+					found_map_to_bin=bin_maps,
 					title=f"Map of Parts in {pick_list_job}",
 					deg_rot=rotation_deg
 				)
@@ -3144,7 +3172,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 	if "selected_section_id" not in st.session_state:
 		st.session_state["selected_section_id"] = None
 
-	df_data = load_layout_data()
+	df_data = load_layout_data(building="hawkins")
 	df_layout = df_data["Layout"]
 	df_legend = df_data["Legend"]
 	df_sections = df_data["ShelfSections"]
@@ -3345,18 +3373,18 @@ elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mo
 # elif pills_search_mode == op_search_mode_day_totals:
 elif (user in admin_test_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_testing)):
 
-	df_data = load_layout_data()
-	# df_layout = df_data["Layout"]
+	df_data = load_layout_data(building="montana")
+	df_layout = df_data["Layout"]
 	df_legend = df_data["Legend"]
 	df_sections = df_data["ShelfSections"]
-	# df_shelves = df_data["Shelves"]
-	df_layout = pd.DataFrame({
-		"A": [None, "A", None, None, None, None, None, None, None, None],
-		"B": [None, None, None, None, None, None, None, None, None, None],
-		"C": [None, "A", "A", None, None, None, None, None, None, None],
-		"D": [None, None, None, None, None, None, None, None, None, None],
-		"E": [None, "A", None, None, None, None, None, None, None, None]
-	})
+	df_shelves = df_data["Shelves"]
+	# df_layout = pd.DataFrame({
+	# 	"A": [None, "A", None, None, None, None, None, None, None, None],
+	# 	"B": [None, None, None, None, None, None, None, None, None, None],
+	# 	"C": [None, "A", "A", None, None, None, None, None, None, None],
+	# 	"D": [None, None, None, None, None, None, None, None, None, None],
+	# 	"E": [None, "A", None, None, None, None, None, None, None, None]
+	# })
 	deg_rot = 0
 
 	bg_map = build_legend_bg_map(df_legend)
@@ -3371,15 +3399,20 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 	img = rotate_img(img0, deg_rot)
 	df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
 
+	print("pre build_plotly_map")
+	st.write("pre build_plotly_map")
+
 	fig = build_plotly_map(
 		img=img,
 		df_sections=df_sections_plot,
 		bg_map=bg_map,
 		rotation_deg=deg_rot,
-		show_sections=False,
+		show_sections=True,
 		# selected_section_id=st.session_state.get(k_selected_section_id),
 		title="TESTING"
 	)
+	print("post build_plotly_map")
+	st.write("post build_plotly_map")
 
 	st.plotly_chart(fig)
 
@@ -3835,7 +3868,7 @@ elif textbox_stockcode:
 							f"Short {abs(ttl_on_hand)} to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
 						ttl_on_hand = 0  # reset to 0 for order specific shortage count
 
-			df_data = load_layout_data()
+			df_data = load_layout_data(building="hawkins")
 			df_layout = df_data["Layout"]
 			df_legend = df_data["Legend"]
 			df_sections = df_data["ShelfSections"]
@@ -3930,7 +3963,8 @@ elif textbox_stockcode:
 					)
 
 					fig = load_hawkins_map(
-						found_map_to_bin,
+						building="hawkins",
+						found_map_to_bin=found_map_to_bin,
 						dot_colour=colour_dot,
 						title=f"Bin {bin_location} shown on map:",
 						deg_rot=rotation_deg

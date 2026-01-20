@@ -51,7 +51,7 @@ if __name__ == "__main__":
 		# df_shelves = df_data["Shelves"]
 
 		cols = dict(zip(df_layout.columns, excel_column_name(len(df_layout.columns))))
-		t_name = "INV_WarehouseLayout_Hawkins"
+		t_name = "INV_WarehouseLayout_Montana"
 		sql = f"INSERT INTO [{t_name}] ([{'], ['.join(cols.values())}]) VALUES ("
 		for i, row in df_layout.iterrows():
 			sql += f"({', '.join([(f"'{row[c]}'" if (bool(row[c]) and (not pd.isna(row[c]))) else "NULL") for c in cols])}),\n"
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 		print(sql)
 
 	# ["Layout", "Legend", "ShelfSections", "Shelves"]
-	# create_layout_init()
+	create_layout_init()
 	# create_legend_init()
 	# create_shelves_init()
-	create_shelf_sections()
+	# create_shelf_sections()
