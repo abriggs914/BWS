@@ -40,6 +40,16 @@ ORDER BY
 	,[Terminated] ASC
 ;
 
+SELECT
+	*
+FROM
+	[BWSdb].[dbo].[Employees]
+ORDER BY
+	[Terminated] DESC
+	,[2nd Name] ASC
+	,[1st Name] ASC
+;
+
 --WHERE
 	--(
 	--(([1st Name] LIKE '%aver%') OR [2nd Name] LIKE '%aver%')
