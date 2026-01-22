@@ -12,7 +12,7 @@ import reportlab_utility as rlu
 from streamlit_pills import pills
 from streamlit_plotly_events import plotly_events
 from streamlit_calendar import calendar
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 from collections import defaultdict
 
 import plotly.express as px
@@ -37,8 +37,8 @@ PATH_STOCK_PDFS: str = r"J:\VaultWorkspace_BWS\PDFS"
 UTC_FMT: str = "%Y-%m-%dT%H:%M:%SZ"
 BUILDING_CODE_BOTH: int = 0
 BUILDING_CODE_VMI: int = -2
-BUILDING_CODE_HAWKINS: int = 2
-BUILDING_CODE_MONTANA: int = 1
+BUILDING_CODE_HAWKINS: int = 1
+BUILDING_CODE_MONTANA: int = 2
 BUILDING_CODE_UNKNOWN: int = -99
 
 
@@ -147,7 +147,8 @@ def load_bin_location_data() -> pd.DataFrame:
 	# """
 	sql = """
 WITH KnownSections AS (
-	SELECT 0 AS [ID], 'A' AS [Section]
+	SELECT 
+		0 AS [ID], 'A' AS [Section]
 	UNION SELECT 1, 'B'
 	UNION SELECT 2, 'C'
 	UNION SELECT 3, 'D'
@@ -176,35 +177,35 @@ WITH KnownSections AS (
 ),
 BinCounts AS (
 SELECT
-	[IW].[DefaultBin],
+	LTRIM(RTRIM([IW].[DefaultBin])) AS [DefaultBin],
 	[IW].[Warehouse],
 	COUNT(*) AS [NumItems],
 	SUM([IW].[QtyOnHand] * [IW].[LastCostEntered]) AS [TtlItemValue],
 	(CASE WHEN 
-			(LOWER([IW].[DefaultBin]) = 'vmi')
-			OR (LOWER([IW].[DefaultBin]) LIKE '%vend%')
+			(LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) = 'vmi')
+			OR (LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%vend%')
 		THEN -2
 		WHEN 
-			LOWER([IW].[DefaultBin]) LIKE '%wh4%'
+			LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%wh4%'
 		THEN
 			2 -- Montana Only
 		WHEN
-			LOWER([IW].[DefaultBin]) LIKE '%@%'
+			LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%@%'
 		THEN 
 			0 -- Both
 		WHEN 
-			(LOWER([IW].[DefaultBin]) = '/') OR (ISNULL([IW].[DefaultBin], '') = '')
+			(LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) = '/') OR (ISNULL(LTRIM(RTRIM([IW].[DefaultBin])), '') = '')
 		THEN
 			-99 -- Unknown
 		ELSE
 			1 -- Hawkins Only
 	END) AS [BuildingCode],
 	(CASE WHEN 
-			(LEN([IW].[DefaultBin]) > 1) AND (LOWER([IW].[DefaultBin]) LIKE '%/%')
+			(LEN(LTRIM(RTRIM([IW].[DefaultBin]))) > 1) AND (LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%/%')
 		THEN
 			1 -- Slash divides bins
 		WHEN
-			LOWER([IW].[DefaultBin]) LIKE '%@%'
+			LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%@%'
 		THEN 
 			1 -- @ denotes same bin in another building
 		ELSE
@@ -216,14 +217,14 @@ FROM
 LEFT JOIN
 	[KnownSections] [KS]
 ON
-	(CASE WHEN LOWER(LEFT([IW].[DefaultBin], 3)) = 'wh4' THEN (
-			CASE WHEN LOWER(LEFT(SUBSTRING([IW].[DefaultBin], 4, LEN([IW].[DefaultBin]) - 3), 1)) = LOWER([KS].[Section]) THEN 1 ELSE 0 END
+	(CASE WHEN LOWER(LEFT(LTRIM(RTRIM([IW].[DefaultBin])), 3)) = 'wh4' THEN (
+			CASE WHEN LOWER(LEFT(SUBSTRING(LTRIM(RTRIM([IW].[DefaultBin])), 4, LEN(LTRIM(RTRIM([IW].[DefaultBin]))) - 3), 1)) = LOWER([KS].[Section]) THEN 1 ELSE 0 END
 		)
-		WHEN LOWER(LEFT([IW].[DefaultBin], 1)) = LOWER([KS].[Section]) THEN 1
+		WHEN LOWER(LEFT(LTRIM(RTRIM([IW].[DefaultBin])), 1)) = LOWER([KS].[Section]) THEN 1
 		ELSE 0
 	END) > 0
 GROUP BY
-	[IW].[DefaultBin],
+	LTRIM(RTRIM([IW].[DefaultBin])),
 	[IW].[Warehouse],
 	[KS].[Section]
 )
@@ -275,7 +276,10 @@ SELECT
 	[IW].[QtyOnOrder],
 	[IW].[QtyWipReserved],
 	[IW].[QtyAllocated],
-	[AS].[SupShortName]
+	[AS].[SupShortName],
+	[IM].[ProductClass],
+	[IM].[CycleCount],
+	[IW].[UnitCost]
 FROM
 	[SysproCompanyA].[dbo].[InvWarehouse] [IW] WITH (NOLOCK)
 INNER JOIN
@@ -1281,6 +1285,96 @@ def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False)
 	return buf.getvalue()
 
 
+def prep_inv_by_bin_report(f_name: str, title: str, df: pd.DataFrame):
+	date_str = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
+	report_file_name: str = f_name.format(DATE=date_str.replace(":", "").replace("-", "").strip())
+	report_subtitle: str = f"Generated: {date_str}"
+	report_title: str = title
+	report_author: str = f"{user}"
+
+	theme = rlu.PDFTheme(
+		page_size=rlu.portrait(rlu.LETTER),
+		margin_left=0.35 * rlu.inch,
+		margin_right=0.35 * rlu.inch,
+		margin_top=0.40 * rlu.inch,
+		margin_bottom=0.40 * rlu.inch,
+		header_height=0.25 * rlu.inch,
+		footer_height=0.25 * rlu.inch,
+		table_header_bg=rlu.colors.HexColor("#ADADAD")
+	)
+	meta = rlu.PDFMeta(
+		title=report_title,
+		subtitle=report_subtitle,
+		author=report_author
+	)
+	styles = rlu.build_styles(theme)
+
+	out, doc = rlu.build_pdf(
+		report_file_name,
+		story=None,
+		theme=theme,
+		meta=meta,
+		as_zip=False
+	)
+	buf = out
+	rlu.add_grid_template(
+		doc,
+		theme,
+		template_id="dash",
+		height=0.85,
+		rows=1,
+		cols=1,
+		gutter=0.05 * rlu.inch,
+		merged_cells=[
+			[0, 0, 1, 1]
+		]
+	)
+	doc._firstPageTemplateIndex = next(
+		i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
+	)
+
+	story = []
+
+
+	# # cell 0, 0
+	# story += [rlu.FrameBreak()]
+	#
+	# # cell 0, 1
+	# story += [
+	# 	rlu.h3(f"{cust_name}", styles),
+	# 	rlu.h3(f"{ship_addr_0}", styles),
+	# 	rlu.h3(f"{ship_addr_1}", styles),
+	# 	rlu.h3(f"{ship_addr_2}", styles),
+	# 	rlu.FrameBreak()
+	# ]
+
+	# cell 1, 0
+
+	num_cols = [c for c in df.columns if df[c].dtype in ("int64", "float64")]
+	num_fmts = dict(zip(num_cols, ["{:,.2f}" for i in range(len(num_cols))]))
+	mon_cols = [c for c in df.columns if (df[c].dtype in ("int64", "float64")) and ("$" in c)]
+	for c in mon_cols:
+		num_fmts[c] = "$ {:,.2f}"
+
+	story += [
+		rlu.df_table(df, theme, styles, number_format=num_fmts),
+		rlu.FrameBreak()
+	]
+	# print(f"out:")
+	# print(out)
+	# print(f"story:")
+	# print(story)
+	doc.build(story)
+
+	if out is not None:
+		f_name = out.resolve()
+		print(f"Wrote: {f_name}")
+	if buf is not None:
+		# return buf.getvalue()
+		return buf, report_file_name
+	return f_name, report_file_name
+
+
 @st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_layout_data(building: str = "Hawkins") -> dict[str, pd.DataFrame]:
 	# pth_layout: str = r"G:\IT\Network Port Layout\BWS\Hawkins Warehouse Layout Rev3 202601050840.xlsx"
@@ -1512,6 +1606,22 @@ def generate_bin_maps(
 			# except (ValueError, TypeError):
 			# 	bsr = bin_shelf_row
 			for i, row in df_bin_shelf.iterrows():
+
+				df_building_code: pd.DataFrame = df_bins.merge(
+					df_parts,
+					left_on="DefaultBin",
+					right_on="DefaultBin"
+				)
+				df_building_code = df_building_code[
+					df_building_code["StockCode"].str.lower().str.strip() == row[col_stock].lower().strip()
+				].reset_index(drop=True)
+				# display_df(
+				# 	df_building_code,
+				# 	f"{i=}"
+				# )
+				ser_stock_building_code = df_building_code.iloc[0]
+				building_code = ser_stock_building_code["BuildingCode"]
+
 				found_map_to_bin = dict(
 					p_shelf=row["ParentShelf"],
 					group=row["Group"],
@@ -1523,7 +1633,8 @@ def generate_bin_maps(
 					section_id=bin_section_id,
 					shelf_row=int(row["ShelfRow"]) if not pd.isna(row["ShelfRow"]) else None,
 					bin_location=row["Shelf"],
-					stockcode=row[col_stock]
+					stockcode=row[col_stock],
+					building_code=int(building_code)
 				)
 
 				x0 = found_map_to_bin["x0"]
@@ -2133,6 +2244,25 @@ def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 
 		return so_num
 
 
+def nz(val: Any, length: int):
+
+	def helper(val_: str, length_: int):
+		if len(val_) > length_:
+			return val_[:length_] + "... "
+		return val_
+
+	if isinstance(val, (pd.Series, pd.DataFrame)):
+		if val.empty:
+			return ""
+		else:
+			for i, va in enumerate(val):
+				val[i] = va[:length]
+			return val
+	if pd.isna(val):
+		return ""
+	return helper(str(val))
+
+
 async def run_day():
 	days_of_work: int = 4
 	now = datetime.datetime.now()
@@ -2383,8 +2513,9 @@ if user in admin_end_users:
 # if pills_search_mode == 0:
 #     pills_search_mode = op_search_mode_simple
 # pills_search_mode = pills_search_mode if isinstance(pills_search_mode, str) else options_pills_search_mode[pills_search_mode]
-cont_top_control = st.container()
+# cont_top_control = st.container()
 
+cont_top_control = st.container()
 if pills_search_mode == op_search_mode_advanced:
 	# Multi
 	k_text_multi_0 = "key_text_multi_0"
@@ -2537,34 +2668,140 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_advance
 # elif pills_search_mode == op_search_mode_by_bin:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin):
 	# By Bin
-	k_selectbox_bin_search = "key_selectbox_bin_search"
-	st.session_state.setdefault(k_selectbox_bin_search, random.choice(list_filtered_bins))
-	selectbox_bin_search = st.selectbox(
-		label="Select a Bin:",
-		key=k_selectbox_bin_search,
-		options=list_filtered_bins
+
+	options_pills_by_bin_mode = ["Single", "Range"]
+	pills_by_bin_mode = pills(
+		"mode:",
+		options=options_pills_by_bin_mode,
+		key="k_pills_by_bin_mode"
 	)
 
-	if selectbox_bin_search:
-		df_search_bin = df_parts.loc[
-			df_parts["DefaultBin"] == selectbox_bin_search
-			]
+	if pills_by_bin_mode == "Single":
 
-		with st.container(border=True):
-			stdf_search_bin = display_df_paginated(
-				df_search_bin,
-				title="df_search_bin",
-				key=f"key_stdf_search_bin",
-				selection_mode="single-row",
-				on_select="rerun"
+		k_selectbox_bin_search = "key_selectbox_bin_search"
+		st.session_state.setdefault(k_selectbox_bin_search, random.choice(list_filtered_bins))
+		selectbox_bin_search = st.selectbox(
+			label="Select a Bin:",
+			key=k_selectbox_bin_search,
+			options=list_filtered_bins
+		)
+
+		if selectbox_bin_search:
+			df_search_bin = df_parts.loc[
+				df_parts["DefaultBin"] == selectbox_bin_search
+				]
+
+			with st.container(border=True):
+				stdf_search_bin = display_df_paginated(
+					df_search_bin,
+					title="df_search_bin",
+					key=f"key_stdf_search_bin",
+					selection_mode="single-row",
+					on_select="rerun"
+				)
+				textbox_stockcode = get_selected_rows(df_search_bin, stdf_search_bin, cols="StockCode", n=1)
+	else:
+		cols_by_bin_range = st.columns(4)
+		with cols_by_bin_range[0]:
+			k_textbox_bin_a = "key_textbox_bin_a"
+			textbox_bin_a = st.text_input(
+				label="Start Bin",
+				key=k_textbox_bin_a
 			)
-			textbox_stockcode = get_selected_rows(df_search_bin, stdf_search_bin, cols="StockCode", n=1)
+		with cols_by_bin_range[1]:
+			k_textbox_bin_b = "key_textbox_bin_b"
+			textbox_bin_b = st.text_input(
+				label="To Bin",
+				key=k_textbox_bin_b
+			)
+		with cols_by_bin_range[2]:
+			k_selectbox_by_bin_warehouse = "key_selectbox_by_bin_warehouse"
+			st.session_state.setdefault(k_selectbox_by_bin_warehouse, "01")
+			selectbox_by_bin_warehouse = st.selectbox(
+				label="Warehouse",
+				options=["01", "04"],
+				key=k_selectbox_by_bin_warehouse
+			)
+		k_df_by_bin_range = "key_df_by_bin_range"
+		k_title_by_bin_range = "key_title_by_bin_range"
+		if textbox_bin_a and textbox_bin_b and selectbox_by_bin_warehouse:
+			min_prefix = min(len(textbox_bin_a), len(textbox_bin_b))
+			with cols_by_bin_range[3]:
+				if st.button(
+					label="submit",
+					key="submit_by_bin_range"
+				):
+					df_by_bin_range = df_bins[
+						(textbox_bin_a.lower().strip() <= df_bins["DefaultBin"].str.lower().str.strip().str[:min_prefix])
+						& (df_bins["DefaultBin"].str.lower().str.strip().str[:min_prefix] <= textbox_bin_b.lower().strip())
+					]
+					st.session_state.update({
+						k_df_by_bin_range: df_by_bin_range,
+						k_title_by_bin_range: f"Inventory between {textbox_bin_a.upper().strip()} and {textbox_bin_b.upper().strip()} in {selectbox_by_bin_warehouse}"
+					})
+
+			if st.session_state.get(k_df_by_bin_range) is not None:
+				df_by_bin_range: pd.DataFrame = st.session_state.get(k_df_by_bin_range)
+				if df_by_bin_range.empty:
+					st.info(f"No data based on criteria. Check filters, if needed.")
+				else:
+					title = st.session_state.get(k_title_by_bin_range)
+					df_by_bin_range = df_by_bin_range.merge(
+						df_parts,
+						left_on="DefaultBin",
+						right_on="DefaultBin",
+						how="inner"
+					).reset_index(drop=True)
+					df_by_bin_range["TotalCost"] = df_by_bin_range["UnitCost"] * df_by_bin_range["QtyOnHand"]
+					df_by_bin_range["Part"] = (
+							nz(df_by_bin_range["StockCode"], 30)
+							+ "\n"
+							+ nz(df_by_bin_range["Description"], 30)
+							+ "\n"
+							+ nz(df_by_bin_range["LongDesc"], 30)
+					)
+					df_by_bin_range["Count"] = " " * 6
+					df_by_bin_range["ReCount"] = " " * 6
+					show_cols = {
+						"DefaultBin": "Bin",
+						"Part": "Part",
+						"ProductClass": "Class",
+						"CycleCount": "CY/CO",
+						"QtyOnOrder": "On Order",
+						"QtyOnHand": "On Hand",
+						"UnitCost": "Unit $",
+						"TotalCost": "Total $",
+						"Count": "Count",
+						"ReCount": "ReCount"
+					}
+					df_by_bin_range = df_by_bin_range.rename(columns=show_cols)
+					df_by_bin_range = df_by_bin_range.sort_values(
+						by=show_cols["DefaultBin"]
+					)
+					display_df(
+						df_by_bin_range[show_cols.values()],
+						title
+					)
+					f_name = "inv_by_bin_{DATE}.pdf"
+					if not os.path.exists(f_name):
+						file, f_name = prep_inv_by_bin_report(f_name, title, df_by_bin_range[show_cols.values()])
+					else:
+						f_name = f_name.format(DATE=f"{datetime.datetime.now():%Y%m%d_%H%M}")
+						file = f_name
+					st.download_button(
+						label="download Inventory By Bin Print",
+						data=open(file, "rb").read(),
+						file_name=f_name,
+						mime="application/pdf",
+						key=f"{f_name}_drive_0"
+					)
+
+
 	# if stdf_search_bin:
-	# 	if stdf_search_bin["selection"]:
+# 	if stdf_search_bin["selection"]:
 	# 		if stdf_search_bin["selection"]["rows"]:
 	# 			textbox_stockcode = df_search_bin.reset_index().loc[
 	# 				stdf_search_bin["selection"]["rows"][0], "StockCode"]
-
 
 # elif pills_search_mode == op_search_mode_by_section:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_section):
@@ -2709,10 +2946,13 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 					df_stocks=df_sos_bins
 				)
 
+			bin_maps_hawkins = [val for val in bin_maps if val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI, BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
+			bin_maps_montana = [val for val in bin_maps if val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
+
 			rotation_deg = 90
 			fig = load_hawkins_map(
 				building="hawkins",
-				found_map_to_bin=bin_maps,
+				found_map_to_bin=bin_maps_hawkins,
 				title="Map of Parts in Selected Sales Orders",
 				deg_rot=rotation_deg
 			)
@@ -2888,25 +3128,45 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 					col_stock="StockCode"
 				)
 
+				bin_maps_hawkins = [val for val in bin_maps if
+									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI,
+															BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
+				bin_maps_montana = [val for val in bin_maps if
+									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
+
 				rotation_deg = 90
-				fig = load_hawkins_map(
+				fig_hawkins = load_hawkins_map(
 					building="hawkins",
-					found_map_to_bin=bin_maps,
-					title=f"Map of Parts in {pick_list_job}",
+					found_map_to_bin=bin_maps_hawkins,
+					title=f"Hawkins Map of Parts in {pick_list_job}",
 					deg_rot=rotation_deg
 				)
 
-				fig.update_layout(
+				fig_hawkins.update_layout(
 					width=1200,
 					height=700
 				)
-				chart = st.plotly_chart(
-					fig
+				chart_hawkins = st.plotly_chart(
+					fig_hawkins
+				)
+
+				fig_montana = load_hawkins_map(
+					building="montana",
+					found_map_to_bin=bin_maps_montana,
+					title=f"Montana Map of Parts in {pick_list_job}",
+					deg_rot=0
+				)
+
+				fig_montana.update_layout(
+					width=1200,
+					height=700
+				)
+				chart_montana = st.plotly_chart(
+					fig_montana
 				)
 
 			else:
 				st.info(f"Select some parts first.")
-
 
 # elif pills_search_mode == op_search_mode_by_shopclock:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shopclock):
@@ -3374,9 +3634,16 @@ elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mo
 # elif pills_search_mode == op_search_mode_day_totals:
 elif (user in admin_test_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_testing)):
 
-	cols_maps = st.columns(2)
+	cols_maps = pills(
+		label="Warehouse",
+		options=["Hawkins", "Montana"],
+		key="key_pills_warehouse_view_testing"
+	)
 
-	with cols_maps[0]:
+	st.write(f"{cols_maps=}")
+	st.write(f"{cols_maps==0}")
+	st.write(f"{cols_maps==1}")
+	if cols_maps == "Hawkins":
 		df_data = load_layout_data(building="hawkins")
 		df_layout = df_data["Layout"]
 		df_legend = df_data["Legend"]
@@ -3420,7 +3687,7 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 
 		st.plotly_chart(fig_hawkins)
 
-	with cols_maps[1]:
+	else:
 		df_data = load_layout_data(building="montana")
 		df_layout = df_data["Layout"]
 		df_legend = df_data["Legend"]
