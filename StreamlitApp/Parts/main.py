@@ -15,6 +15,8 @@ from streamlit_calendar import calendar
 from typing import Literal, Optional, Any
 from collections import defaultdict
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -601,6 +603,8 @@ SELECT
 	"""
 	df = connect(sql)
 	df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
+	df["MOrigDueDate"] = pd.to_datetime(df["MOrigDueDate"], errors="ignore").dt.date
+	df["MLatestDueDate"] = pd.to_datetime(df["MLatestDueDate"], errors="ignore").dt.date
 	return df
 
 
@@ -814,7 +818,6 @@ SELECT
 	[PM].[OrderEntryDate],
 	[PM].[OrderDueDate],
 	[PM].[OrderStatus],
-	[PM].[ActiveFlag],
 	[PM].[CancelledFlag],
 	[PM].[ActiveFlag],
 	[PM].[Buyer],
@@ -840,6 +843,8 @@ WHERE
 """
 	df = connect(sql)
 	df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
+	df["OrderEntryDate"] = pd.to_datetime(df["OrderEntryDate"], errors="ignore").dt.date
+	df["OrderDueDate"] = pd.to_datetime(df["OrderDueDate"], errors="ignore").dt.date
 	return df
 
 
@@ -2226,6 +2231,167 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 	st.toast("Updated saved successfully.")
 
 
+@st.dialog(title="Prep PO Due Date Report", width="large", dismissible=False)
+def input_purchase_order_due_date_report_parameters():
+	cont = st.container()
+	cols = st.columns(3)
+
+	min_date = datetime.date.today() + datetime.timedelta(days=-30)
+	max_date = datetime.date.today() + datetime.timedelta(days=30)
+
+	k_slider_dates = "key_slider_dates"
+	st.session_state.setdefault(k_slider_dates, [
+		datetime.date.today(),
+		datetime.date.today() + datetime.timedelta(days=1)
+	])
+
+	with cont:
+		date_input_po_dd = st.slider(
+			label="Between Dates:",
+			min_value=min_date,
+			max_value=max_date,
+			key=k_slider_dates,
+		)
+
+	with cols[0]:
+		if st.button(
+			label="cancel",
+			key="k_btn_po_dd_cancel"
+		):
+			st.rerun()
+
+	with cols[2]:
+		if date_input_po_dd:
+			if st.button(
+				label="submit",
+				key="k_btn_po_dd_submit"
+			):
+				d0, d1 = date_input_po_dd
+				df_pos_in_range: pd.DataFrame = df_pos[
+					(d0 <= df_pos["OrderDueDate"])
+					& (df_pos["OrderDueDate"] <= d1)
+				]
+
+				df_pos_in_range.sort_values(
+					by="OrderDueDate",
+					ascending=True,
+					inplace=True
+				)
+
+				st.session_state.update({
+					k_stde_df_pos_in_range: df_pos_in_range
+				})
+				st.rerun()
+
+
+def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = True):
+	report_title: str = f"Purchase Order Due Date Report"
+	report_subtitle: str = f"Generated PDF: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
+	report_author: str = f"{user}"
+
+	theme = rlu.PDFTheme(
+		page_size=rlu.landscape(rlu.LETTER)
+	)
+	meta = rlu.PDFMeta(
+		title=report_title,
+		subtitle=report_subtitle,
+		author=report_author,
+	)
+	styles = rlu.build_styles(theme)
+
+	out, doc = rlu.build_pdf(
+		report_file_name,
+		story=None,
+		theme=theme,
+		meta=meta,
+		as_zip=False
+	)
+	buf = out
+	story = []
+	pdf_header = f"Purchase Orders Due Between {d0:%Y-%m-%d} and {d1:%Y-%m-%d}"
+
+	if not top_level:
+		rlu.add_grid_template(
+			doc,
+			theme,
+			template_id="dash",
+			rows=df_pos_in_range.shape[0] + 1,
+			cols=1
+			# ,
+			# merged_cells=[(0, 0, 1, 2)]
+		)
+		# doc._firstPageTemplateIndex = next(
+		# 	i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
+		# )
+		story += [
+			rlu.h3(pdf_header, styles)
+		]
+
+		lst_dfs_pos = []
+		show_cols = {
+			"MOrigDueDate": "Due Date",
+			"MStockCode": "Part",
+			"MOrderQty": "Order Qty",
+			"MReceivedQty": "Rec. Qty",
+			"MPrice": "$"
+		}
+		for i, row in df_pos_in_range.iterrows():
+			po_num: int = row["PurchaseOrder"]
+			df_po_data: pd.DataFrame = load_po_details(purchaseorder=po_num)
+			df_po_data["PurchaseOrder"] = po_num
+			df_po_data["QtyOutstanding"] = df_po_data["MOrderQty"] - df_po_data["MReceivedQty"]
+			df_po_data = df_po_data[["PurchaseOrder" + "QtyOutstanding"] + list(show_cols.keys())]
+			lst_dfs_pos.append(df_po_data)
+		df_po_datas = pd.concat(lst_dfs_pos, ignore_index=True)
+		df_po_datas = df_po_datas[
+			(~pd.isna(df_po_datas["MStockCode"]))
+			& (df_po_datas["MStockCode"].str.strip() != "")
+		]
+		df_po_datas = df_po_datas.rename(columns=show_cols).rename(columns={
+			"PurchaseOrder": "PO",
+			"QtyOutstanding": "Qty Outstanding"
+		})
+		story += [
+			# rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
+			# rlu.FrameBreak(),
+			rlu.df_table(df_po_datas, theme, styles)
+		]
+
+	else:
+		rlu.add_grid_template(doc, theme, template_id="dash", rows=1, cols=1)
+
+		story += [
+			rlu.h3(pdf_header, styles)
+		]
+
+		# cell 0, 0
+		story += [
+			# rlu.df_table(df_pos_in_range, theme, styles, number_format={"Value": "{:,.2f}"})
+			rlu.df_table(df_pos_in_range, theme, styles)
+		]
+
+		# # # TOC (optional) — headings added after it will populate it
+		# # story += rlu.toc(styles)
+		#
+		# story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+		# story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+		# story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+		# story += [rlu.vspace(12)]
+		#
+		# # If you have a matplotlib chart saved as PNG:
+		# # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+		# # story += [h2("A figure", styles)]
+		# # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+
+		# out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
+
+	doc.build(story)
+	f_name = out.resolve()
+	print(f"Wrote: {f_name}")
+	return f_name
+
+
+
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
 	if out_type == "str":
 		return str(po_num).rjust(word_size, "0")
@@ -2880,11 +3046,73 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 			on_select="rerun"
 		)
 
-	if stdf_purchase_order_pick_sheets:
-		if stdf_purchase_order_pick_sheets["selection"]:
-			if stdf_purchase_order_pick_sheets["selection"]["rows"]:
-				textbox_stockcode = df_purchase_orders.loc[
-					stdf_purchase_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+		if stdf_purchase_order_pick_sheets:
+			if stdf_purchase_order_pick_sheets["selection"]:
+				if stdf_purchase_order_pick_sheets["selection"]["rows"]:
+					textbox_stockcode = df_purchase_orders.loc[
+						stdf_purchase_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+
+	k_checkbox_due_date_report_top_level = "key_checkbox_due_date_report_top_level"
+	st.session_state.setdefault(k_checkbox_due_date_report_top_level, False)
+	checkbox_due_date_report_top_level = st.checkbox(
+		label="Top Level Report?",
+		key=k_checkbox_due_date_report_top_level
+	)
+
+	k_btn_due_date_report = "key_btn_due_date_report"
+	k_stde_df_pos_in_range = "key_stde_df_pos_in_range"
+	if st.button(
+		label="Due Date Report",
+		key=k_btn_due_date_report
+	):
+		input_purchase_order_due_date_report_parameters()
+
+	# display_df_paginated(
+	# 	df_pos,
+	# 	"df_pos",
+	# 	key="df_pos",
+	# )
+
+	display_df_paginated(
+		load_po_details(purchaseorder=150769),
+		"PO 150769",
+		key="PO150769_ddp"
+	)
+
+	if st.session_state.get(k_stde_df_pos_in_range) is not None:
+		df_pos_in_range: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range)
+		if not df_pos_in_range.empty:
+			d0 = df_pos_in_range["OrderDueDate"].min()
+			d1 = df_pos_in_range["OrderDueDate"].max()
+			display_df_paginated(
+				df_pos_in_range,
+				f"POs in Range {d0} - {d1}",
+				key="key_ddp_pos_in_range_show",
+				batch_size_options=(100, 250, 1000)
+			)
+
+			f_name = f"pos_due_{d0:%Y-%m-%d}_{d1:%Y-%m-%d}_{datetime.datetime.now():%Y-%m-%d_%H%M}.pdf"
+			if checkbox_due_date_report_top_level:
+				f_name = f_name.replace(".pdf", "_tl.pdf")
+			if not os.path.exists(f_name):
+				st.toast("Creating New Report")
+				f_name = prep_pdf_report_po_dd(
+					df_pos_in_range[["PurchaseOrder", "OrderEntryDate", "OrderDueDate", "Supplier"]],
+					report_file_name=f_name,
+					top_level=checkbox_due_date_report_top_level
+				)
+			st.download_button(
+				label="Download Purchase Order Due Date Report",
+				data=open(f_name, "rb").read(),
+				file_name=f"{f_name}",
+				mime="application/pdf",
+				key=f"{f_name}_po_dd_report"
+			)
+
+		else:
+			st.info("No Results")
+	else:
+		st.info("Submit dates via the 'Due Date Report' button.")
 
 # elif pills_search_mode == op_search_mode_by_so:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
@@ -3429,201 +3657,760 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_syspro)
 		)
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehouse):
-	# Interactive Warehouse
-	if "selected_section_id" not in st.session_state:
-		st.session_state["selected_section_id"] = None
 
-	df_data = load_layout_data(building="hawkins")
+	def build_section_valuation_geometry(
+			df_sections: pd.DataFrame,
+			df_bins: pd.DataFrame,
+			map_all_shelves: bool = True
+	) -> pd.DataFrame:
+		# 1) valuation per section
+		val = (
+			df_bins.groupby(["ParentShelf", "Section", "Group", "IsPath"], as_index=False)
+			.agg({
+				"TtlItemValue":"sum",
+				"Shelf":lambda x: ', '.join(x)
+			})
+			.rename(columns={
+				"TtlItemValue": "TtlValue",
+				"Shelf": "Shelves"
+			})
+		)
+		val["Section"] = val["Section"].astype(str).str.strip().str.upper()
+		val["Group"] = val["Group"].astype(str).str.strip().str.upper()
+
+		# 2) section geometry (combine all rectangles for a Section into one bounding box)
+		geo = df_sections.copy()
+		geo["Section"] = geo["Section"].astype(str).str.strip().str.upper()
+		geo["Group"] = geo["Group"].astype(str).str.strip().str.upper()
+
+		geo2 = (
+			geo.groupby(["Section", "Group"], as_index=False)
+			.agg(
+				X0=("X0", "min"),
+				X1=("X1", "max"),
+				Y0=("Y0", "min"),
+				Y1=("Y1", "max"),
+			)
+		)
+
+		# 3) join
+		out = geo2.merge(val, on=["Section", "Group"], how="left")
+		out["TtlValue"] = out["TtlValue"].fillna(0.0)
+		out["Shelves"] = out["Shelves"].fillna("")
+
+		if not map_all_shelves:
+			out = out[
+				(~pd.isna(out["Section"]))
+				& (~pd.isna(out["ParentShelf"]))
+				& (out["TtlValue"] > 0)
+			]
+
+		# if map_all_shelves:
+		# 	# out = out[out["TtlValue"] > 0]
+		# 	# out = out[
+		# 	# 	~pd.isna(out["ParentShelf"])
+		# 	# ]
+		# 	out = out[
+		# 		(~pd.isna(out["Section"]))
+		# 		& (~pd.isna(out["ParentShelf"]))
+		# 		& (out["TtlValue"] > 0)
+		# 	]
+		# else:
+		# 	out = out[out["IsPath"] == 0]
+
+		# 4) derived geometry for bar placement/sizing
+		out["cx"] = (out["X0"] + out["X1"]) / 2.0
+		out["cy"] = (out["Y0"] + out["Y1"]) / 2.0
+		out["dx"] = (out["X1"] - out["X0"]).clip(lower=0.5)  # avoid zero width
+		out["dy"] = (out["Y1"] - out["Y0"]).clip(lower=0.5)
+
+		# display_df_paginated(
+		# 	out,
+		# 	"out",
+		# 	key="out",
+		# 	batch_size_options=(250, 750, 1500)
+		# )
+
+		return out
+
+	def plot_section_value_3d(df_sec_val: pd.DataFrame, *, elev=25, azim=-55, z_log=False):
+		# Place bars by LOWER-LEFT corner
+		x = (df_sec_val["cx"] - df_sec_val["dx"] / 2.0).to_numpy()
+		y = (df_sec_val["cy"] - df_sec_val["dy"] / 2.0).to_numpy()
+		dx = df_sec_val["dx"].to_numpy()
+		dy = df_sec_val["dy"].to_numpy()
+
+		z0 = np.zeros(len(df_sec_val), dtype=float)
+		dz_raw = df_sec_val["TtlValue"].to_numpy(dtype=float)
+
+		# Optional log scaling for huge value ranges
+		if z_log:
+			dz = np.log10(dz_raw + 1.0)
+			z_label = "log10(Value + 1)"
+		else:
+			dz = dz_raw
+			z_label = "Value"
+
+		fig = plt.figure(figsize=(12, 7))
+		ax = fig.add_subplot(111, projection="3d")
+
+		# IMPORTANT: no explicit colors unless you ask; use default
+		ax.bar3d(x, y, z0, dx, dy, dz, shade=True)
+
+		ax.set_xlabel("X (grid)")
+		ax.set_ylabel("Y (grid)")
+		ax.set_zlabel(z_label)
+		ax.view_init(elev=elev, azim=azim)
+
+		# Optional: label section names (can clutter)
+		# for _, r in df_sec_val.iterrows():
+		#     ax.text(r["cx"], r["cy"], (np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]) + 0.1, r["Section"], fontsize=8)
+
+		plt.tight_layout()
+		return fig
+
+	def add_prism(fig: go.Figure, *, x0, x1, y0, y1, z0, z1, name="", color=None, opacity=0.85, hover=None):
+		# 8 vertices of the prism
+		verts = np.array([
+			[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],  # bottom
+			[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],  # top
+		], dtype=float)
+
+		# Triangulate faces (two triangles per face)
+		I = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+		J = [1, 2, 5, 6, 6, 7, 4, 7, 5, 6, 1, 2]
+		K = [2, 3, 6, 7, 7, 4, 0, 4, 6, 7, 5, 6]
+		# The above is a compact triangulation; if any face looks off, I can give you the explicit face list.
+
+		fig.add_trace(go.Mesh3d(
+			x=verts[:, 0], y=verts[:, 1], z=verts[:, 2],
+			i=I, j=J, k=K,
+			opacity=opacity,
+			color=color,  # optional
+			name=name,
+			hovertext=hover,
+			hoverinfo="text" if hover else "skip",
+			showscale=False
+		))
+		return fig
+
+
+	def plotly_cell_prisms(df_cells, *, z_log=True, opacity=0.85):
+		fig = go.Figure()
+
+		for r in df_cells.itertuples(index=False):
+			x0, x1 = float(r.X0), float(r.X1)
+			y0, y1 = float(r.Y0), float(r.Y1)
+
+			val = float(getattr(r, "TtlValue", 0.0))
+			z1 = np.log10(val + 1.0) if z_log else val
+
+			r_shelves_spl = r.Shelves.split(", ")
+			bins_per_row = 5
+			if r_shelves_spl:
+				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[i:i+5]) for i in range(len(r_shelves_spl))]))
+			else:
+				shelves_br = " None "
+
+			hover = (
+				f"Section: <b>{r.ParentShelf}</b><br>"
+				f"Group: <b>{r.Group}</b><br>"
+				f"Value: <b>$ {val:,.2f}</b><br>"
+				f"Shelves: <b>{shelves_br}</b>"
+				# f"Value: <b>{val:,.2f}</b><extra></extra>"
+			)
+
+			add_prism(
+				fig,
+				x0=x0, x1=x1,
+				y0=y0, y1=y1,
+				z0=0.0, z1=z1,
+				opacity=opacity,
+				hover=hover
+			)
+
+		fig.update_layout(
+			margin=dict(l=0, r=0, t=40, b=0),
+			scene=dict(
+				aspectmode="data",
+				xaxis_title="X",
+				yaxis_title="Y",
+				zaxis_title="log10(Value+1)" if z_log else "Value",
+			)
+		)
+		return fig
+
+	k_radio_warehouse_building = "key_radio_warehouse_building"
+	st.session_state.setdefault(k_radio_warehouse_building, "Hawkins")
+	radio_warehouse_building = st.radio(
+		label="Mode",
+		options=["Hawkins", "Montana"],
+		key=k_radio_warehouse_building
+	)
+
+	k_pills_warehouse_mode = "key_pills_warehouse_mode"
+	pills_warehouse_mode = pills(
+		label="Mode",
+		options=["Browse", "Valuation"]
+	)
+
+	df_data = load_layout_data(building=radio_warehouse_building)
 	df_layout = df_data["Layout"]
 	df_legend = df_data["Legend"]
 	df_sections = df_data["ShelfSections"]
 	df_shelves = df_data["Shelves"]
 
-	bg_map = build_legend_bg_map(df_legend)
+	if pills_warehouse_mode == "Valuation":
+		# df_parts_in_warehouse = df_data["PartsInWarehouse"]
 
-	with st.sidebar:
-		st.subheader("Map Controls")
-		show_sections = True
-		default_bg = st.color_picker("Default BG", value="#FFFFFF")
-		st.caption("Tip: click a section rectangle to inspect its shelves.")
+		df_bins_sections: pd.DataFrame = df_bins.merge(
+			df_shelves[["Section", "ShelfSectionID", "Shelf", "ShelfRow"]],
+			left_on="DefaultBin",
+			right_on="Shelf",
+			how="outer"
+		).merge(
+			df_sections[["ID", "ParentShelf", "Section", "Group", "X0", "X1", "Y0", "Y1"]],
+			left_on="ShelfSectionID",
+			right_on="ID",
+			how="outer"
+		).merge(
+			df_legend[["ID", "Key", "Value", "IsPath", "BG", "FG"]],
+			left_on="ParentShelf",
+			right_on="Key",
+			how="outer"
+		)
 
-		rotation_deg = st.selectbox("Rotation", [0, 90, 180, 270], index=1)
+		df_bins_sections = df_bins_sections[
+			~pd.isna(df_bins_sections["TtlItemValue"])
+			& (df_bins_sections["TtlItemValue"] > 0)
+		]
 
-		if st.button("Clear selection"):
-			st.session_state["selected_section_id"] = None
-			st.rerun()
+		# display_df_paginated(
+		# 	df_bins_sections,
+		# 	"df_bins",
+		# 	batch_size_options=(750, 2000, 5000),
+		# 	key=f"k_ddp_df_bins"
+		# )
+		df_bins_by_section: pd.DataFrame = df_bins_sections.groupby(
+			by=["ParentShelf", "Section", "Group"]
+		).agg({
+			"TtlItemValue": "sum",
+			"ID_x": "count",
+			'Shelf': lambda x: ', '.join(x)
+		}).rename(
+			columns={
+				"TtlItemValue": "$ Total",
+				"ID_x": "Num Bins",
+				"Shelf": "Shelves"
+			}
+		).reset_index()
 
-		overlay_section = st.checkbox("Overlay Sections", value=show_sections)
+		# display_df_paginated(
+		# 	df_bins_by_section,
+		# 	"df_bins_by_section",
+		# 	batch_size_options=(250, 500, 1200),
+		# 	key=f"k_ddp_df_bins_by_section"
+		# )
 
-	img0 = layout_to_rgb_image(df_layout, bg_map)
-	H, W = img0.shape[:2]
+		k_map_all_shelves = "key_map_all_shelves"
+		st.session_state.setdefault(k_map_all_shelves, False)
+		map_all_shelves = st.checkbox(
+			label="Map all shelves?",
+			key=k_map_all_shelves
+		)
 
-	img = rotate_img(img0, rotation_deg)
-	df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=rotation_deg)
-	fig = build_plotly_map(
-		img=img,
-		df_sections=df_sections_plot,
-		bg_map=bg_map,
-		rotation_deg=rotation_deg,
-		show_sections=overlay_section,
-		selected_section_id=st.session_state["selected_section_id"]
-	)
+		# df_bins must be available here
+		df_sec_val: pd.DataFrame = build_section_valuation_geometry(df_sections, df_bins_sections, map_all_shelves=map_all_shelves)
 
-	# Click capture
-	st.subheader("Interactive Map")
-	clicked = plotly_events(fig, click_event=True, hover_event=False, select_event=False, override_height=800)
+		k_ddp_sec_val = "key_ddp_sec_val"
+		display_df_paginated(
+			df_sec_val,
+			"Results:",
+			key=k_ddp_sec_val,
+			batch_size_options=(750, 1500, 2500)
+		)
 
-	# Display selection results
-	st.subheader("Selection")
+		#
+		st.subheader("Inventory valuation by section (3D)")
+		# z_log = st.checkbox("Log-scale Z (helps big ranges)", value=True)
+		# elev = st.slider("Elevation", 5, 85, 25)
+		# azim = st.slider("Azimuth", -180, 180, -55)
+		#
+		# fig = plot_section_value_3d(df_sec_val, elev=elev, azim=azim, z_log=z_log)
+		# st.pyplot(fig, clear_figure=True)
+		#
+		# # Optional: show table
+		# st.dataframe(
+		# 	df_sec_val[["Section", "TtlValue", "X0", "X1", "Y0", "Y1"]].sort_values("TtlValue", ascending=False))
 
-	if clicked:
-		xr = float(clicked[0]["x"])
-		yr = float(clicked[0]["y"])
+		def plotly_skyscrapers(df_sec_val, z_log=True, title="Valuation 3D"):
+			z = df_sec_val["TtlValue"].to_numpy(float)
+			z_plot = np.log10(z + 1) if z_log else z
 
-		# convert rotated click back to original coords
-		x, y = inv_rot_point_xy(xr, yr, W=W, H=H, rotation_deg=rotation_deg)
-		st.write({"clicked_col_x": x, "clicked_row_y": y})
+			fig = go.Figure()
 
-		sec_row = find_section_at_point(df_sections, x=x, y=y)  # NOTE: original df_sections
+			for _, r in df_sec_val.iterrows():
+				z0 = 0
+				z1 = np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]
+				fig.add_trace(go.Scatter3d(
+					x=[r["cx"], r["cx"]],
+					y=[r["cy"], r["cy"]],
+					z=[z0, z1],
+					mode="lines",
+					hovertemplate=(
+						f"Section: <b>{r['Section']}</b><br>"
+						f"Value: <b>{r['TtlValue']:,.2f}</b><extra></extra>"
+					),
+					showlegend=False
+				))
 
-		if sec_row is None:
-			st.session_state["selected_section_id"] = None
-			st.info("No ShelfSection contains that point.")
-		else:
-			st.session_state["selected_section_id"] = int(sec_row["ID"])
-			sec = str(sec_row["Section"]).strip().upper()
-			grp = sec_row["Group"]
-			sec_id = sec_row.get("ID", None)
+			fig.update_layout(
+				title=title,
+				scene=dict(
+					xaxis_title="X",
+					yaxis_title="Y",
+					zaxis_title="log10(Value+1)" if z_log else "Value",
+				),
+				margin=dict(l=0, r=0, t=40, b=0),
+			)
+			return fig
 
-			st.success(f"Clicked Section: {sec}, Group: {grp}, ID: {sec_id}")
+		def add_section_floor_outlines(fig: go.Figure, df_sec_geo, *, opacity=0.8, line_width=4):
+			for r in df_sec_geo.itertuples(index=False):
+				x0, x1, y0, y1 = float(r.X0), float(r.X1), float(r.Y0), float(r.Y1)
 
-			# Filter shelves that belong to this section/group
-			# Your Shelves sheet columns: Section, ShelfSection, Shelf, ShelfRow
-			cols = {c.lower(): c for c in df_shelves.columns}
-			col_section = cols.get("section")
-			col_group = cols.get("shelfsectionid")
-			st.write(f"{col_section}, {col_group}")
-			if not (col_section and col_group):
-				st.warning("Shelves sheet must have columns like: Section and ShelfSectionID (group).")
+				# closed loop rectangle on z=0
+				xs = [x0, x1, x1, x0, x0]
+				ys = [y0, y0, y1, y1, y0]
+				zs = [0, 0, 0, 0, 0]
+
+				fig.add_trace(go.Scatter3d(
+					x=xs, y=ys, z=zs,
+					mode="lines",
+					line=dict(width=line_width),
+					opacity=opacity,
+					hovertemplate=f"Section: <b>{getattr(r, 'Section', '')}</b><extra></extra>",
+					showlegend=False,
+				))
+			return fig
+
+		# def add_compass(fig: go.Figure, *, x_min, x_max, y_min, y_max, z=0, size=8):
+		# 	# place compass near bottom-left of the floor
+		# 	base_x = x_min + (x_max - x_min) * 0.08
+		# 	base_y = y_min + (y_max - y_min) * 0.08
+		#
+		# 	# N arrow (+Y)
+		# 	fig.add_trace(go.Scatter3d(
+		# 		x=[base_x, base_x],
+		# 		y=[base_y, base_y + size],
+		# 		z=[z, z],
+		# 		mode="lines",
+		# 		line=dict(width=6),
+		# 		showlegend=False,
+		# 		hoverinfo="skip"
+		# 	))
+		# 	fig.add_trace(go.Cone(
+		# 		x=[base_x], y=[base_y + size], z=[z],
+		# 		u=[0], v=[1], w=[0],  # direction +Y
+		# 		sizemode="absolute",
+		# 		sizeref=0.8,
+		# 		showscale=False,
+		# 		hoverinfo="skip"
+		# 	))
+		# 	fig.add_trace(go.Scatter3d(
+		# 		x=[base_x],
+		# 		y=[base_y + size + size * 0.25],
+		# 		z=[z],
+		# 		mode="text",
+		# 		text=["N"],
+		# 		textfont=dict(size=18),
+		# 		showlegend=False,
+		# 		hoverinfo="skip"
+		# 	))
+		#
+		# 	# E arrow (+X)
+		# 	fig.add_trace(go.Scatter3d(
+		# 		x=[base_x, base_x + size],
+		# 		y=[base_y, base_y],
+		# 		z=[z, z],
+		# 		mode="lines",
+		# 		line=dict(width=6),
+		# 		showlegend=False,
+		# 		hoverinfo="skip"
+		# 	))
+		# 	fig.add_trace(go.Cone(
+		# 		x=[base_x + size], y=[base_y], z=[z],
+		# 		u=[1], v=[0], w=[0],  # direction +X
+		# 		sizemode="absolute",
+		# 		sizeref=0.8,
+		# 		showscale=False,
+		# 		hoverinfo="skip"
+		# 	))
+		# 	fig.add_trace(go.Scatter3d(
+		# 		x=[base_x + size + size * 0.25],
+		# 		y=[base_y],
+		# 		z=[z],
+		# 		mode="text",
+		# 		text=["E"],
+		# 		textfont=dict(size=18),
+		# 		showlegend=False,
+		# 		hoverinfo="skip"
+		# 	))
+		#
+		# 	return fig
+
+		def add_compass_rotated(
+				fig: go.Figure,
+				*,
+				x_min: float,
+				x_max: float,
+				y_min: float,
+				y_max: float,
+				z: float = 0.0,
+				size: float | None = None,
+				rotation_deg: float = 0.0,
+				corner: Literal["ne", "nw", "se", "sw"] = "sw",
+				pad_frac: float = 0.08,  # fraction of map size used as padding
+		):
+			"""
+			Adds a rotated N/E compass to a Plotly 3D figure.
+
+			corner:
+				"ne" = top-right
+				"nw" = top-left
+				"se" = bottom-right
+				"sw" = bottom-left
+			"""
+
+			# Default compass size
+			if size is None:
+				size = (x_max - x_min) * 0.08
+
+			# Padding offsets
+			pad_x = (x_max - x_min) * pad_frac
+			pad_y = (y_max - y_min) * pad_frac
+
+			# Base anchor by corner
+			if corner == "sw":
+				base_x = x_min + pad_x
+				base_y = y_min + pad_y
+			elif corner == "se":
+				base_x = x_max - pad_x
+				base_y = y_min + pad_y
+			elif corner == "nw":
+				base_x = x_min + pad_x
+				base_y = y_max - pad_y
+			elif corner == "ne":
+				base_x = x_max - pad_x
+				base_y = y_max - pad_y
 			else:
-				df_hit = df_shelves[
-					(df_shelves[col_section].astype(str).str.strip().str.upper() == sec) &
-					(df_shelves[col_group] == sec_id)
-					].copy()
+				raise ValueError(f"Invalid corner: {corner}")
 
-				# if df_hit.empty:
-				# 	st.info("No shelves defined for this section/group yet.")
-				# else:
-				df_hit = df_hit.sort_values(["ShelfRow", "Shelf"])
-				st.write("Shelves in selected section")
+			# Rotation math (Z-axis rotation)
+			th = np.deg2rad(rotation_deg)
 
-				sel_mask = (
-						(df_shelves["Section"].astype(str).str.upper().str.strip() == sec) &
-						(df_shelves["ShelfSectionID"] == sec_id)
-				)
-				df_sel = df_shelves.loc[sel_mask].copy()
-				df_sel.sort_values(["ShelfRow"], inplace=True)
+			# Direction vectors
+			ex, ey = np.cos(th), np.sin(th)  # East
+			nx, ny = -np.sin(th), np.cos(th)  # North (90° CCW)
 
-				df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"],
-																		ascending=[False, True]).reset_index(drop=True)
-				display_df(
-					df_hit_show,
-					"df_hit_show"
-				)
-				k_stde_section_shelves: str = "key_stde_section_shelves"
-				stde_section_shelves = st.data_editor(
-					df_hit_show,
-					key=k_stde_section_shelves,
-					num_rows="dynamic",
-					hide_index=True,
-					column_config={
-						"Shelf": st.column_config.TextColumn(required=True),
-						"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7, required=True),
-					}
-				)
+			# Endpoints
+			ex2, ey2 = base_x + size * ex, base_y + size * ey
+			nx2, ny2 = base_x + size * nx, base_y + size * ny
 
-				st.write(f"st.session_state[{k_stde_section_shelves}]")
-				st.write(st.session_state[k_stde_section_shelves])
+			# East arrow
+			fig.add_trace(go.Scatter3d(
+				x=[base_x, ex2],
+				y=[base_y, ey2],
+				z=[z, z],
+				mode="lines+text",
+				text=["", "E"],
+				textposition="top center",
+				line=dict(width=6),
+				showlegend=False,
+				hoverinfo="skip",
+				textfont=dict(size=18)
+			))
 
-				if st.button("Apply shelf edits to working copy"):
-					# edited2 = stde_section_shelves.copy()
-					# display_df(
-					# 	edited2,
-					# 	"edited2 A"
-					# )
-					# edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
-					# edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
-					# display_df(
-					# 	edited2,
-					# 	"edited2 B"
-					# )
-					#
-					# errs = validate_shelves(edited2)
-					# if errs:
-					# 	st.error("\n".join(errs))
-					# else:
-					# 	edited2 = normalize_order(edited2)
-					#
-					#
-					#
-					# 	# stamp required IDs
-					# 	edited2["Section"] = sec
-					# 	edited2["ShelfSectionID"] = sec_id
-					# 	edited2["Group"] = grp
-					#
-					# 	# replace slice in master
-					# 	df_master = df_shelves.copy()
-					# 	# df_master = df_master.loc[~sel_mask].copy()  # drop old rows
-					# 	# df_master = pd.concat([df_master, edited2], ignore_index=True)
-					#
-					# 	# df_shelves = df_master
-					# 	st.toast("Updated saved successfully.")
-					# 	push_shelf_changes(df_master, edited2, sel_mask)
-					# 	load_layout_data.clear()
+			# North arrow
+			fig.add_trace(go.Scatter3d(
+				x=[base_x, nx2],
+				y=[base_y, ny2],
+				z=[z, z],
+				mode="lines+text",
+				text=["", "N"],
+				textposition="top center",
+				line=dict(width=6),
+				showlegend=False,
+				hoverinfo="skip",
+				textfont=dict(size=18)
+			))
 
-					# df_shelves = df_master
-					st.toast("Updated saved successfully.")
-					default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
-					push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
-									   default_insert_cols=default_insert_cols)
-					load_layout_data.clear()
-					st.rerun()
+			return fig
 
-				# Floor-level highlights
-				if "ShelfRow" in df_hit.columns:
-					floor = df_hit[df_hit["ShelfRow"] < 2]
-					if not floor.empty:
-						st.write("Floor-level shelves (ShelfRow < 2):")
-						display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
+		def flip_y_value(y: float, y_min: float, y_max: float) -> float:
+			return (y_min + y_max) - y
 
-				df_parts_in_loc = df_parts[
-					df_parts["DefaultBin"].str.lower().isin(
-						map(lambda v: str(v).lower(), df_hit["Shelf"].dropna().unique()))
-				]
-				df_parts_in_loc = df_parts_in_loc.merge(
-					df_shelves,
-					left_on="DefaultBin",
-					right_on="Shelf",
-					how="left"
-				)
-				df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
+		def flip_y_rect_df(df, *, y_min: float, y_max: float, y0c="Y0", y1c="Y1"):
+			out = df.copy()
+			y0f = out[y0c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+			y1f = out[y1c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+			out[y0c] = np.minimum(y0f, y1f)
+			out[y1c] = np.maximum(y0f, y1f)
+			return out
 
-				show_cols = [
-					"StockCode",
-					"DefaultBin",
-					"Description",
-					"LongDesc",
-					"GroundLvl"
-				]
-				stdf_parts_in_loc = display_df_paginated(
-					df_parts_in_loc[show_cols],
-					"Parts in this location:",
-					key="key_stdf_parts_in_loc"
-				)
+		def flip_y_points_df(df, *, y_min: float, y_max: float, yc="cy"):
+			out = df.copy()
+			out[yc] = out[yc].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+			return out
 
+		def flip_x_value(x: float, x_min: float, x_max: float) -> float:
+			return (x_min + x_max) - x
+
+		def flip_x_rect_df(df, *, x_min: float, x_max: float, x0c="X0", x1c="X1"):
+			out = df.copy()
+			x0f = out[x0c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+			x1f = out[x1c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+			out[x0c] = np.minimum(x0f, x1f)
+			out[x1c] = np.maximum(x0f, x1f)
+			return out
+
+		def flip_x_points_df(df, *, x_min: float, x_max: float, xc="cx"):
+			out = df.copy()
+			out[xc] = out[xc].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+			return out
+
+
+		# fig = plotly_skyscrapers(df_sec_val, z_log=True)
+		# st.plotly_chart(fig, use_container_width=True)
+
+		y_min = float(df_sec_val["Y0"].min())
+		y_max = float(df_sec_val["Y1"].max())
+
+		x_min = float(df_sec_val["X0"].min())
+		x_max = float(df_sec_val["X1"].max())
+
+		df_plot = df_sec_val.copy()
+		# df_plot = build_shelf_cell_df(df_sections, df_shelves, df_legend)
+
+		df_plot = flip_x_rect_df(df_plot, x_min=x_min, x_max=x_max, x0c="X0", x1c="X1")
+		df_plot = flip_x_points_df(df_plot, x_min=x_min, x_max=x_max, xc="cx")
+
+		# now plot using df_plot instead of df_sec_val
+		# fig = plotly_skyscrapers(df_plot, z_log=True)
+		fig = plotly_cell_prisms(df_plot, z_log=True)
+		fig = add_section_floor_outlines(fig, df_plot)
+		compass_rot = 94
+		fig = add_compass_rotated(
+			fig,
+			x_min=float(df_plot["X0"].min()),
+			x_max=float(df_plot["X1"].max()),
+			y_min=float(df_plot["Y0"].min()),
+			y_max=float(df_plot["Y1"].max()),
+			size=(float(df_plot["X1"].max()) - float(df_plot["X0"].min())) * 0.08,
+			rotation_deg=compass_rot,
+			corner="se"
+		)
+
+		fig.update_layout(
+			scene=dict(
+				aspectmode="data",  # preserves real XY proportions
+				zaxis=dict(nticks=6),
+			),
+			margin=dict(l=0, r=0, t=40, b=0),
+		)
+
+		st.plotly_chart(fig, use_container_width=True)
 
 	else:
-		st.info("Click a section overlay to see shelves in that space.")
+		# Interactive Warehouse
+		if "selected_section_id" not in st.session_state:
+			st.session_state["selected_section_id"] = None
+
+		bg_map = build_legend_bg_map(df_legend)
+
+		with st.sidebar:
+			st.subheader("Map Controls")
+			show_sections = False
+			default_bg = st.color_picker("Default BG", value="#FFFFFF")
+			st.caption("Tip: click a section rectangle to inspect its shelves.")
+
+			rotation_deg = st.selectbox("Rotation", [0, 90, 180, 270], index=1)
+
+			if st.button("Clear selection"):
+				st.session_state["selected_section_id"] = None
+				st.rerun()
+
+			overlay_section = st.checkbox("Overlay Sections", value=show_sections)
+
+		img0 = layout_to_rgb_image(df_layout, bg_map)
+		H, W = img0.shape[:2]
+
+		img = rotate_img(img0, rotation_deg)
+		df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=rotation_deg)
+		fig = build_plotly_map(
+			img=img,
+			df_sections=df_sections_plot,
+			bg_map=bg_map,
+			rotation_deg=rotation_deg,
+			show_sections=overlay_section,
+			selected_section_id=st.session_state["selected_section_id"]
+		)
+
+		# Click capture
+		st.subheader("Interactive Map")
+		clicked = plotly_events(fig, click_event=True, hover_event=False, select_event=False, override_height=800)
+
+		# Display selection results
+		st.subheader("Selection")
+
+		if clicked:
+			xr = float(clicked[0]["x"])
+			yr = float(clicked[0]["y"])
+
+			# convert rotated click back to original coords
+			x, y = inv_rot_point_xy(xr, yr, W=W, H=H, rotation_deg=rotation_deg)
+			st.write({"clicked_col_x": x, "clicked_row_y": y})
+
+			sec_row = find_section_at_point(df_sections, x=x, y=y)  # NOTE: original df_sections
+
+			if sec_row is None:
+				st.session_state["selected_section_id"] = None
+				st.info("No ShelfSection contains that point.")
+			else:
+				st.session_state["selected_section_id"] = int(sec_row["ID"])
+				sec = str(sec_row["Section"]).strip().upper()
+				grp = sec_row["Group"]
+				sec_id = sec_row.get("ID", None)
+
+				st.success(f"Clicked Section: {sec}, Group: {grp}, ID: {sec_id}")
+
+				# Filter shelves that belong to this section/group
+				# Your Shelves sheet columns: Section, ShelfSection, Shelf, ShelfRow
+				cols = {c.lower(): c for c in df_shelves.columns}
+				col_section = cols.get("section")
+				col_group = cols.get("shelfsectionid")
+				st.write(f"{col_section}, {col_group}")
+				if not (col_section and col_group):
+					st.warning("Shelves sheet must have columns like: Section and ShelfSectionID (group).")
+				else:
+					df_hit = df_shelves[
+						(df_shelves[col_section].astype(str).str.strip().str.upper() == sec) &
+						(df_shelves[col_group] == sec_id)
+						].copy()
+
+					# if df_hit.empty:
+					# 	st.info("No shelves defined for this section/group yet.")
+					# else:
+					df_hit = df_hit.sort_values(["ShelfRow", "Shelf"])
+					st.write("Shelves in selected section")
+
+					sel_mask = (
+							(df_shelves["Section"].astype(str).str.upper().str.strip() == sec) &
+							(df_shelves["ShelfSectionID"] == sec_id)
+					)
+					df_sel = df_shelves.loc[sel_mask].copy()
+					df_sel.sort_values(["ShelfRow"], inplace=True)
+
+					df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"],
+																			ascending=[False, True]).reset_index(drop=True)
+					display_df(
+						df_hit_show,
+						"df_hit_show"
+					)
+					k_stde_section_shelves: str = "key_stde_section_shelves"
+					stde_section_shelves = st.data_editor(
+						df_hit_show,
+						key=k_stde_section_shelves,
+						num_rows="dynamic",
+						hide_index=True,
+						column_config={
+							"Shelf": st.column_config.TextColumn(required=True),
+							"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7, required=True),
+						}
+					)
+
+					st.write(f"st.session_state[{k_stde_section_shelves}]")
+					st.write(st.session_state[k_stde_section_shelves])
+
+					if st.button("Apply shelf edits to working copy"):
+						# edited2 = stde_section_shelves.copy()
+						# display_df(
+						# 	edited2,
+						# 	"edited2 A"
+						# )
+						# edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
+						# edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
+						# display_df(
+						# 	edited2,
+						# 	"edited2 B"
+						# )
+						#
+						# errs = validate_shelves(edited2)
+						# if errs:
+						# 	st.error("\n".join(errs))
+						# else:
+						# 	edited2 = normalize_order(edited2)
+						#
+						#
+						#
+						# 	# stamp required IDs
+						# 	edited2["Section"] = sec
+						# 	edited2["ShelfSectionID"] = sec_id
+						# 	edited2["Group"] = grp
+						#
+						# 	# replace slice in master
+						# 	df_master = df_shelves.copy()
+						# 	# df_master = df_master.loc[~sel_mask].copy()  # drop old rows
+						# 	# df_master = pd.concat([df_master, edited2], ignore_index=True)
+						#
+						# 	# df_shelves = df_master
+						# 	st.toast("Updated saved successfully.")
+						# 	push_shelf_changes(df_master, edited2, sel_mask)
+						# 	load_layout_data.clear()
+
+						# df_shelves = df_master
+						st.toast("Updated saved successfully.")
+						default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
+						push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
+										   default_insert_cols=default_insert_cols)
+						load_layout_data.clear()
+						st.rerun()
+
+					# Floor-level highlights
+					if "ShelfRow" in df_hit.columns:
+						floor = df_hit[df_hit["ShelfRow"] < 2]
+						if not floor.empty:
+							st.write("Floor-level shelves (ShelfRow < 2):")
+							display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
+
+					df_parts_in_loc = df_parts[
+						df_parts["DefaultBin"].str.lower().isin(
+							map(lambda v: str(v).lower(), df_hit["Shelf"].dropna().unique()))
+					]
+					df_parts_in_loc = df_parts_in_loc.merge(
+						df_shelves,
+						left_on="DefaultBin",
+						right_on="Shelf",
+						how="left"
+					)
+					df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
+
+					show_cols = [
+						"StockCode",
+						"DefaultBin",
+						"Description",
+						"LongDesc",
+						"GroundLvl"
+					]
+					stdf_parts_in_loc = display_df_paginated(
+						df_parts_in_loc[show_cols],
+						"Parts in this location:",
+						key="key_stdf_parts_in_loc"
+					)
+
+
+		else:
+			st.info("Click a section overlay to see shelves in that space.")
 
 # elif pills_search_mode == op_search_mode_day_totals:
 elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_totals)):

@@ -32,6 +32,10 @@ from reportlab.platypus import (
 from reportlab.platypus.tableofcontents import TableOfContents
 
 
+# 2026-01-26
+# Version 1.2
+
+
 # -----------------------------
 # Theme / Config
 # -----------------------------
@@ -125,8 +129,8 @@ class ReportDocTemplate(BaseDocTemplate):
         """
         if isinstance(flowable, Paragraph):
             style_name = getattr(flowable.style, "name", "")
-            if style_name in ("H1", "H2", "H3"):
-                level = {"H1": 0, "H2": 1, "H3": 2}[style_name]
+            if style_name in ("H1", "H2", "H3", "H4", "H5", "H6"):
+                level = {"H1": 0, "H2": 1, "H3": 2, "H4": 3, "H5": 4, "H6": 5}[style_name]
                 text = flowable.getPlainText()
                 page_num = self.page
                 # Notify TableOfContents instances in the story
@@ -177,7 +181,7 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         fontName=theme.base_font,
         fontSize=10,
         leading=12,
-        spaceAfter=6,
+        spaceAfter=6
     )
 
     h1 = ParagraphStyle(
@@ -188,7 +192,7 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         leading=20,
         spaceBefore=10,
         spaceAfter=10,
-        keepWithNext=True,
+        keepWithNext=True
     )
 
     h2 = ParagraphStyle(
@@ -199,7 +203,7 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         leading=16,
         spaceBefore=10,
         spaceAfter=8,
-        keepWithNext=True,
+        keepWithNext=True
     )
 
     h3 = ParagraphStyle(
@@ -210,7 +214,40 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         leading=14,
         spaceBefore=8,
         spaceAfter=6,
-        keepWithNext=True,
+        keepWithNext=True
+    )
+
+    h4 = ParagraphStyle(
+        "H4",
+        parent=base["Heading4"],
+        fontName=theme.base_font,
+        fontSize=10,
+        leading=12,
+        spaceBefore=8,
+        spaceAfter=6,
+        keepWithNext=True
+    )
+
+    h5 = ParagraphStyle(
+        "H5",
+        parent=base["Heading5"],
+        fontName=theme.base_font,
+        fontSize=9,
+        leading=10,
+        spaceBefore=8,
+        spaceAfter=6,
+        keepWithNext=True
+    )
+
+    h6 = ParagraphStyle(
+        "H6",
+        parent=base["Heading6"],
+        fontName=theme.base_font,
+        fontSize=8,
+        leading=8,
+        spaceBefore=8,
+        spaceAfter=6,
+        keepWithNext=True
     )
 
     caption = ParagraphStyle(
@@ -221,7 +258,7 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         leading=11,
         textColor=colors.HexColor("#444444"),
         spaceBefore=4,
-        spaceAfter=10,
+        spaceAfter=10
     )
 
     mono = ParagraphStyle(
@@ -233,10 +270,10 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
         backColor=colors.HexColor("#F3F3F3"),
         borderPadding=6,
         spaceBefore=6,
-        spaceAfter=10,
+        spaceAfter=10
     )
 
-    return {"normal": normal, "h1": h1, "h2": h2, "h3": h3, "caption": caption, "mono": mono}
+    return {"normal": normal, "h1": h1, "h2": h2, "h3": h3, "h4": h4, "h5": h5, "h6": h6, "caption": caption, "mono": mono}
 
 
 # -----------------------------
@@ -254,6 +291,15 @@ def h2(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
 
 def h3(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h3"])
+
+def h4(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
+    return Paragraph(text, styles["h4"])
+
+def h5(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
+    return Paragraph(text, styles["h5"])
+
+def h6(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
+    return Paragraph(text, styles["h6"])
 
 def code_block(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     # Basic escaping to keep it readable in Paragraph
