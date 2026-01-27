@@ -32,7 +32,7 @@ from reportlab.platypus import (
 from reportlab.platypus.tableofcontents import TableOfContents
 
 
-# 2026-01-26
+# 2026-01-27
 # Version 1.2
 
 
@@ -283,23 +283,30 @@ def build_styles(theme: PDFTheme) -> dict[str, ParagraphStyle]:
 def p(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["normal"])
 
+
 def h1(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h1"])
+
 
 def h2(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h2"])
 
+
 def h3(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h3"])
+
 
 def h4(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h4"])
 
+
 def h5(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h5"])
 
+
 def h6(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     return Paragraph(text, styles["h6"])
+
 
 def code_block(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     # Basic escaping to keep it readable in Paragraph
@@ -312,8 +319,10 @@ def code_block(text: str, styles: dict[str, ParagraphStyle]) -> Paragraph:
     )
     return Paragraph(safe, styles["mono"])
 
+
 def vspace(points: float) -> Spacer:
     return Spacer(1, points)
+
 
 def pagebreak() -> PageBreak:
     return PageBreak()
@@ -366,73 +375,6 @@ def toc(styles: dict[str, ParagraphStyle]) -> list:
     ]
 
 
-# def df_table(
-#     df: pd.DataFrame,
-#     theme: PDFTheme,
-#     styles: dict[str, ParagraphStyle],
-#     *,
-#     col_widths: Optional[Sequence[float]] = None,
-#     zebra: bool = True,
-#     header_repeat: bool = True,
-#     max_rows: Optional[int] = None,
-#     number_format: Optional[dict[str, str]] = None,
-# ) -> Table:
-#     """
-#     DataFrame -> ReportLab Table.
-#
-#     number_format: mapping of column -> format string, e.g. {"Value": "{:,.2f}"}
-#     """
-#     if max_rows is not None:
-#         df = df.head(max_rows)
-#
-#     number_format = number_format or {}
-#
-#     # Build rows: header + body
-#     cols = list(df.columns)
-#     data: list[list[Any]] = [cols]
-#
-#     for _, row in df.iterrows():
-#         out_row = []
-#         for c in cols:
-#             v = row[c]
-#             if pd.isna(v):
-#                 out_row.append("")
-#             elif c in number_format:
-#                 try:
-#                     out_row.append(number_format[c].format(v))
-#                 except Exception:
-#                     out_row.append(str(v))
-#             else:
-#                 out_row.append(str(v))
-#         data.append(out_row)
-#
-#     tbl = Table(data, colWidths=col_widths, repeatRows=1 if header_repeat else 0)
-#
-#     # Style
-#     ts = TableStyle([
-#         ("FONTNAME", (0, 0), (-1, -1), theme.base_font),
-#         ("FONTSIZE", (0, 0), (-1, -1), 9),
-#         ("LEADING", (0, 0), (-1, -1), 11),
-#         ("BACKGROUND", (0, 0), (-1, 0), theme.table_header_bg),
-#         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-#         ("LINEBELOW", (0, 0), (-1, 0), 1, theme.table_grid),
-#         ("GRID", (0, 0), (-1, -1), 0.25, theme.table_grid),
-#         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-#         ("LEFTPADDING", (0, 0), (-1, -1), 6),
-#         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-#         ("TOPPADDING", (0, 0), (-1, -1), 3),
-#         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-#     ])
-#
-#     if zebra and len(data) > 2:
-#         for r in range(1, len(data)):
-#             if r % 2 == 0:
-#                 ts.add("BACKGROUND", (0, r), (-1, r), theme.zebra_bg)
-#
-#     tbl.setStyle(ts)
-#     return tbl
-
-
 def ellipsize(text: str, font_name: str, font_size: float, max_width: float) -> str:
     """Return text truncated with … so it fits in max_width (points)."""
     if not text:
@@ -460,12 +402,291 @@ def ellipsize(text: str, font_name: str, font_size: float, max_width: float) -> 
     return text[:cut].rstrip() + ell
 
 
+# def df_table(
+#     df: pd.DataFrame,
+#     theme,
+#     styles: dict[str, ParagraphStyle],
+#     *,
+#     col_widths: Optional[Sequence[float]] = None,
+#     zebra: bool = True,
+#     header_repeat: bool = True,
+#     max_rows: Optional[int] = None,
+#     number_format: Optional[dict[str, str]] = None,
+#     font_size: float = 8.0,
+#     leading: Optional[float] = None,
+#     pad_x: float = 2.5,
+#     pad_y: float = 1.5,
+#     wrap_columns: Optional[set[str]] = None,
+#     truncate_columns: Optional[set[str]] = None,
+#     header_font_size: Optional[float] = None,
+# ) -> Table:
+#     """
+#     DataFrame -> ReportLab Table with optional wrapping and truncation.
+#
+#     wrap_columns:
+#         Columns whose cell values will be turned into Paragraphs (wrap enabled).
+#         (Usually for longer text columns.)
+#
+#     truncate_columns:
+#         Columns whose cell values will be truncated with … to fit the column width.
+#         This is ideal for "single-line as much as possible" printer-friendly tables.
+#         NOTE: col_widths should be provided for best results; otherwise truncation is skipped.
+#
+#     number_format:
+#         Mapping column -> format string, e.g. {"TOTAL": "{:,.2f}"}
+#     """
+#     if max_rows is not None:
+#         df = df.head(max_rows)
+#
+#     number_format = number_format or {}
+#     wrap_columns = wrap_columns or set()
+#     truncate_columns = truncate_columns or set()
+#
+#     header_font_size = header_font_size or (font_size + 0.5)
+#     leading = leading or (font_size + 1.5)
+#
+#     cols = list(df.columns)
+#
+#     # Style for wrapped cells
+#     wrap_style = ParagraphStyle(
+#         "WrapCell",
+#         parent=styles["normal"],
+#         fontName=theme.base_font,
+#         fontSize=font_size,
+#         leading=leading,
+#         spaceAfter=0,
+#         spaceBefore=0,
+#     )
+#
+#     # Build header + rows
+#     data: list[list[Any]] = [cols]
+#
+#     # For truncation, we need per-column usable width (minus padding)
+#     usable_col_widths: dict[str, float] = {}
+#     if col_widths is not None:
+#         if len(col_widths) != len(cols):
+#             raise ValueError(
+#                 f"col_widths length mismatch: expected {len(cols)}, got {len(col_widths)}"
+#             )
+#         for i, c in enumerate(cols):
+#             w = col_widths[i]
+#             # subtract left/right padding inside the cell
+#             usable_col_widths[c] = max(0.0, float(w) - (2.0 * pad_x))
+#
+#     for _, row in df.iterrows():
+#         out_row: list[Any] = []
+#         for c in cols:
+#             v = row[c]
+#
+#             # format value
+#             if pd.isna(v):
+#                 cell_txt = ""
+#             elif c in number_format:
+#                 try:
+#                     cell_txt = number_format[c].format(v)
+#                 except Exception:
+#                     cell_txt = str(v)
+#             else:
+#                 cell_txt = str(v)
+#
+#             # truncate (single-line preference) if requested and widths known
+#             if c in truncate_columns and c in usable_col_widths and cell_txt:
+#                 cell_txt = ellipsize(cell_txt, theme.base_font, font_size, usable_col_widths[c])
+#
+#             # wrap if requested (wrap uses Paragraph)
+#             if c in wrap_columns and cell_txt:
+#                 safe = (cell_txt.replace("&", "&amp;")
+#                                 .replace("<", "&lt;")
+#                                 .replace(">", "&gt;"))
+#                 out_row.append(Paragraph(safe, wrap_style))
+#             else:
+#                 out_row.append(cell_txt)
+#
+#         data.append(out_row)
+#
+#     tbl = Table(data, colWidths=col_widths, repeatRows=1 if header_repeat else 0)
+#
+#     ts = TableStyle([
+#         ("FONTNAME", (0, 0), (-1, -1), theme.base_font),
+#         ("FONTSIZE", (0, 1), (-1, -1), font_size),
+#         ("LEADING", (0, 1), (-1, -1), leading),
+#
+#         ("BACKGROUND", (0, 0), (-1, 0), theme.table_header_bg),
+#         ("FONTSIZE", (0, 0), (-1, 0), header_font_size),
+#         ("LINEBELOW", (0, 0), (-1, 0), 0.75, theme.table_grid),
+#
+#         ("GRID", (0, 0), (-1, -1), 0.25, theme.table_grid),
+#         ("VALIGN", (0, 0), (-1, -1), "TOP"),
+#         ("LEFTPADDING", (0, 0), (-1, -1), pad_x),
+#         ("RIGHTPADDING", (0, 0), (-1, -1), pad_x),
+#         ("TOPPADDING", (0, 0), (-1, -1), pad_y),
+#         ("BOTTOMPADDING", (0, 0), (-1, -1), pad_y),
+#     ])
+#
+#     if zebra and len(data) > 2:
+#         for r in range(1, len(data)):
+#             if r % 2 == 0:
+#                 ts.add("BACKGROUND", (0, r), (-1, r), theme.zebra_bg)
+#
+#     tbl.setStyle(ts)
+#     return tbl
+
+
+def _is_numeric_series(s: pd.Series) -> bool:
+    # treat bool as non-numeric for width purposes
+    if pd.api.types.is_bool_dtype(s):
+        return False
+    return pd.api.types.is_numeric_dtype(s)
+
+
+def _auto_col_widths(
+    df: pd.DataFrame,
+    *,
+    target_width: float,
+    font_name: str,
+    font_size: float,
+    pad_x: float,
+    number_format: dict[str, str],
+    sample_rows: int = 50,
+    min_col_width: float = 0.35 * 72 / 1.0,   # ~0.35" in points (approx; you can override via args)
+    max_col_width: Optional[float] = None,
+    col_min_widths: Optional[dict[str, float]] = None,
+    col_max_widths: Optional[dict[str, float]] = None,
+    col_weight_boost: Optional[dict[str, float]] = None,
+) -> list[float]:
+    """
+    Compute col widths to fill target_width based on measured string widths.
+    Returns widths in points (same unit as ReportLab).
+    """
+    cols = list(df.columns)
+    col_min_widths = col_min_widths or {}
+    col_max_widths = col_max_widths or {}
+    col_weight_boost = col_weight_boost or {}
+
+    if max_col_width is None:
+        max_col_width = target_width  # effectively no cap
+
+    # How much usable width per column after padding?
+    # We compute content widths, then add padding back later.
+    # Total padding across table = 2*pad_x per cell per column; but that's inside widths already.
+    # Easiest: compute desired *full* column widths including padding by adding 2*pad_x.
+    pad_full = 2.0 * pad_x
+
+    # Sample rows for performance
+    if len(df) > sample_rows:
+        df_s = df.sample(sample_rows, random_state=0)
+    else:
+        df_s = df
+
+    # Measure "needed" content width per column (max of header + sampled cells)
+    needs: list[float] = []
+    for c in cols:
+        series = df_s[c]
+        is_num = _is_numeric_series(series)
+
+        # header
+        header_txt = str(c)
+        w_header = stringWidth(header_txt, font_name, font_size)
+
+        # body: measure a few representative strings
+        w_body = 0.0
+        for v in series.tolist():
+            if pd.isna(v):
+                txt = ""
+            elif c in number_format:
+                try:
+                    txt = number_format[c].format(v)
+                except Exception:
+                    txt = str(v)
+            elif is_num:
+                # numeric default formatting tends to be shorter than raw repr;
+                # also you usually want room for 2 decimals + commas.
+                txt = f"{v:,.2f}" if isinstance(v, (int, float)) else str(v)
+            else:
+                txt = str(v)
+
+            if txt:
+                w_body = max(w_body, stringWidth(txt, font_name, font_size))
+
+        needed = max(w_header, w_body)
+
+        # Heuristics:
+        # - numeric columns can be slightly tighter (they don't need wrapping)
+        # - text columns benefit from extra breathing room
+        if is_num:
+            needed *= 1.05
+        else:
+            needed *= 1.15
+
+        # Apply per-column weight boosts (e.g. DESC/LONG DESC)
+        needed *= float(col_weight_boost.get(c, 1.0))
+
+        needs.append(needed)
+
+    # Convert needs (content widths) into initial full column widths including padding
+    widths = [n + pad_full for n in needs]
+
+    # Apply per-column min/max clamps
+    clamped: list[float] = []
+    for c, w in zip(cols, widths):
+        wmin = col_min_widths.get(c, min_col_width)
+        wmax = col_max_widths.get(c, max_col_width)
+        clamped.append(max(wmin, min(w, wmax)))
+    widths = clamped
+
+    # Now scale/proportionally fit into target_width
+    total = sum(widths)
+    if total <= 0:
+        # fallback: equal
+        return [target_width / max(1, len(cols))] * len(cols)
+
+    scale = target_width / total
+    widths = [w * scale for w in widths]
+
+    # Re-apply clamps after scaling, then redistribute remaining width
+    widths2: list[float] = []
+    for c, w in zip(cols, widths):
+        wmin = col_min_widths.get(c, min_col_width)
+        wmax = col_max_widths.get(c, max_col_width)
+        widths2.append(max(wmin, min(w, wmax)))
+    widths = widths2
+
+    # If clamping changed totals, redistribute leftover across "flex" cols
+    total2 = sum(widths)
+    delta = target_width - total2
+
+    if abs(delta) > 0.5:
+        # flex cols: those not pinned by min/max at both ends
+        flex_idx = []
+        for i, (c, w) in enumerate(zip(cols, widths)):
+            wmin = col_min_widths.get(c, min_col_width)
+            wmax = col_max_widths.get(c, max_col_width)
+            if (w > wmin + 1e-6) and (w < wmax - 1e-6):
+                flex_idx.append(i)
+        if not flex_idx:
+            flex_idx = list(range(len(cols)))
+
+        share = delta / len(flex_idx)
+        widths = [w + (share if i in flex_idx else 0.0) for i, w in enumerate(widths)]
+
+    # Final: avoid negatives from redistribution edge cases
+    widths = [max(1.0, w) for w in widths]
+
+    # Ensure exact sum (tiny error fix)
+    fix = target_width - sum(widths)
+    if widths:
+        widths[-1] += fix
+
+    return widths
+
+
 def df_table(
     df: pd.DataFrame,
     theme,
     styles: dict[str, ParagraphStyle],
     *,
     col_widths: Optional[Sequence[float]] = None,
+    target_width: Optional[float] = None,               # NEW: if set and col_widths is None, auto-fit
     zebra: bool = True,
     header_repeat: bool = True,
     max_rows: Optional[int] = None,
@@ -477,25 +698,36 @@ def df_table(
     wrap_columns: Optional[set[str]] = None,
     truncate_columns: Optional[set[str]] = None,
     header_font_size: Optional[float] = None,
+    col_align: Optional[dict[str, str]] = None,
+    header_align: str = "LEFT",
+
+    # NEW: tuning knobs for auto sizing
+    sample_rows: int = 50,
+    min_col_width: float = 0.35 * inch,
+    max_col_width: Optional[float] = None,
+    col_min_widths: Optional[dict[str, float]] = None,
+    col_max_widths: Optional[dict[str, float]] = None,
+    col_weight_boost: Optional[dict[str, float]] = None,
 ) -> Table:
     """
-    DataFrame -> ReportLab Table with optional wrapping and truncation.
+    DataFrame -> ReportLab Table with optional wrapping, truncation, and auto-fit column widths.
+
+    - If col_widths is provided, it's used directly.
+    - Else if target_width is provided, col_widths are computed from real cell values
+      and scaled to fill target_width.
 
     wrap_columns:
         Columns whose cell values will be turned into Paragraphs (wrap enabled).
-        (Usually for longer text columns.)
 
     truncate_columns:
         Columns whose cell values will be truncated with … to fit the column width.
-        This is ideal for "single-line as much as possible" printer-friendly tables.
-        NOTE: col_widths should be provided for best results; otherwise truncation is skipped.
-
-    number_format:
-        Mapping column -> format string, e.g. {"TOTAL": "{:,.2f}"}
+        Best for printer-friendly "single-line" columns. Truncation needs col_widths
+        (either passed directly or computed via target_width).
     """
     if max_rows is not None:
         df = df.head(max_rows)
 
+    col_align = col_align or {}
     number_format = number_format or {}
     wrap_columns = wrap_columns or set()
     truncate_columns = truncate_columns or set()
@@ -504,6 +736,23 @@ def df_table(
     leading = leading or (font_size + 1.5)
 
     cols = list(df.columns)
+
+    # Auto-fit widths if requested
+    if col_widths is None and target_width is not None:
+        col_widths = _auto_col_widths(
+            df,
+            target_width=float(target_width),
+            font_name=theme.base_font,
+            font_size=float(font_size),
+            pad_x=float(pad_x),
+            number_format=number_format,
+            sample_rows=sample_rows,
+            min_col_width=min_col_width,
+            max_col_width=max_col_width,
+            col_min_widths=col_min_widths,
+            col_max_widths=col_max_widths,
+            col_weight_boost=col_weight_boost,
+        )
 
     # Style for wrapped cells
     wrap_style = ParagraphStyle(
@@ -527,9 +776,8 @@ def df_table(
                 f"col_widths length mismatch: expected {len(cols)}, got {len(col_widths)}"
             )
         for i, c in enumerate(cols):
-            w = col_widths[i]
-            # subtract left/right padding inside the cell
-            usable_col_widths[c] = max(0.0, float(w) - (2.0 * pad_x))
+            w = float(col_widths[i])
+            usable_col_widths[c] = max(0.0, w - (2.0 * pad_x))
 
     for _, row in df.iterrows():
         out_row: list[Any] = []
@@ -541,7 +789,10 @@ def df_table(
                 cell_txt = ""
             elif c in number_format:
                 try:
-                    cell_txt = number_format[c].format(v)
+                    if callable(number_format[c]):
+                        cell_txt = number_format[c](v)
+                    else:
+                        cell_txt = number_format[c].format(v)
                 except Exception:
                     cell_txt = str(v)
             else:
@@ -551,7 +802,7 @@ def df_table(
             if c in truncate_columns and c in usable_col_widths and cell_txt:
                 cell_txt = ellipsize(cell_txt, theme.base_font, font_size, usable_col_widths[c])
 
-            # wrap if requested (wrap uses Paragraph)
+            # wrap if requested
             if c in wrap_columns and cell_txt:
                 safe = (cell_txt.replace("&", "&amp;")
                                 .replace("<", "&lt;")
@@ -580,6 +831,18 @@ def df_table(
         ("TOPPADDING", (0, 0), (-1, -1), pad_y),
         ("BOTTOMPADDING", (0, 0), (-1, -1), pad_y),
     ])
+
+    # Header alignment
+    ts.add("ALIGN", (0, 0), (-1, 0), header_align)
+    # Body defaults
+    ts.add("ALIGN", (0, 1), (-1, -1), "LEFT")
+    # Column-specific alignment by name
+    name_to_idx = {c: i for i, c in enumerate(cols)}
+    for name, align in col_align.items():
+        if name not in name_to_idx:
+            continue
+        i = name_to_idx[name]
+        ts.add("ALIGN", (i, 1), (i, -1), align.upper())
 
     if zebra and len(data) > 2:
         for r in range(1, len(data)):
@@ -686,49 +949,6 @@ def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
             print(f"{filename=}: {len(data)} bytes")
             zf.writestr(filename, data)
     return zbuf.getvalue()
-
-
-# def add_grid_template(
-#     doc: BaseDocTemplate,
-#     theme: PDFTheme,
-#     template_id: str = "grid_2x2",
-#     rows: int = 2,
-#     cols: int = 2,
-#     gutter: float = 0.2 * inch,
-# ):
-#     """
-#     Creates a PageTemplate with rows x cols Frames inside the content area.
-#     Flowables fill frames left-to-right, top-to-bottom by default.
-#     Use FrameBreak() to jump to next cell; PageBreak() to go next page.
-#     """
-#     content_x = doc.leftMargin
-#     content_y = doc.bottomMargin + theme.footer_height
-#     content_w = doc.width
-#     content_h = doc.height - theme.header_height - theme.footer_height
-#
-#     cell_w = (content_w - gutter * (cols - 1)) / cols
-#     cell_h = (content_h - gutter * (rows - 1)) / rows
-#
-#     frames = []
-#     for r in range(rows):
-#         for c in range(cols):
-#             x = content_x + c * (cell_w + gutter)
-#             # top row should be highest y; Frame uses bottom-left origin
-#             y = content_y + (rows - 1 - r) * (cell_h + gutter)
-#             frames.append(Frame(x, y, cell_w, cell_h, id=f"cell_{r}_{c}"))
-#
-#     if isinstance(doc, ReportDocTemplate):
-#         tpl = PageTemplate(
-#             id=template_id,
-#             frames=frames,
-#             onPage=doc._draw_header_footer,
-#         )
-#     else:
-#         tpl = PageTemplate(
-#             id=template_id,
-#             frames=frames
-#         )
-#     doc.addPageTemplates([tpl])
 
 
 def add_grid_template(

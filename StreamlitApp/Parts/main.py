@@ -4,7 +4,7 @@ from streamlit_utility import display_df, load_pdf_binary, display_df_paginated,
 from pyodbc_connection import connect
 from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
 from datetime_utility import time_between, datetime_is_tz_aware
-from utility import percent
+from utility import percent, money
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
 import reportlab_utility as rlu
@@ -42,6 +42,8 @@ BUILDING_CODE_VMI: int = -2
 BUILDING_CODE_HAWKINS: int = 1
 BUILDING_CODE_MONTANA: int = 2
 BUILDING_CODE_UNKNOWN: int = -99
+PREFIX_PO_DD_RPT: str = "pos_due_"
+PREFIX_PO_RD_RPT: str = "pos_rec_"
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
@@ -462,8 +464,8 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 			f"Must pass either a PurchaseOrder # or a StockCode #. Got '{stockcode=}', '{purchaseorder=}'.")
 	sc_mode: bool = stockcode is not None
 	if sc_mode:
-		sql = """
-SELECT
+		sql = f"""
+	SELECT
 		[PD].[PurchaseOrder],
 		[PD].[MStockCode],
 		[PD].[MWarehouse],
@@ -478,13 +480,15 @@ SELECT
 		[PD].[MDiscPct1],
 		[PD].[MDiscPct2],
 		[PD].[MDiscPct3],
-
+	
+		[PH].[Supplier] AS [PHSupplier],
+	
 		[PR].[PoDate],
 		[PR].[QtyReceived],
 		[PR].[PriceReceived],
 		[PR].[Currency],
 		[PR].[ExchangeRate],
-
+	
 		[AS].[SupplierName] AS [Supplier],
 		[AS].[SupShortName],
 		[AS].[Contact],
@@ -493,6 +497,10 @@ SELECT
 		[AS].[Nationality]
 	FROM
 		[SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
+	LEFT JOIN
+		[SysproCompanyA].[dbo].[PorMasterHdr] [PH] WITH (NOLOCK)
+	ON
+		[PD].[PurchaseOrder] = [PH].[PurchaseOrder]
 	LEFT JOIN (
 		SELECT
 			[PRs].[PurchaseOrder],
@@ -522,13 +530,17 @@ SELECT
 		AND ([PD].[MStockCode] = [PR].[StockCode])
 		AND ([PD].[MWarehouse] = [PR].[Warehouse])
 		AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
-
+	
 	LEFT JOIN
 		[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
 	ON
-		[PR].[Supplier] = [AS].[Supplier]
+		[PH].[Supplier] = [AS].[Supplier]
 	WHERE
-		LOWER([PD].[PurchaseOrder]) = LOWER('{purchasecode}')
+		(
+			(ISNULL([MStockCode], '') <> '')
+			OR (ISNULL([MOrderQty], 0) <> 0)
+		)
+		AND (LOWER([PD].[MStockCode]) = LOWER('{stockcode}'))
 ;
 		"""
 	else:
@@ -548,13 +560,15 @@ SELECT
 		[PD].[MDiscPct1],
 		[PD].[MDiscPct2],
 		[PD].[MDiscPct3],
-
+	
+		[PH].[Supplier] AS [PHSupplier],
+	
 		[PR].[PoDate],
 		[PR].[QtyReceived],
 		[PR].[PriceReceived],
 		[PR].[Currency],
 		[PR].[ExchangeRate],
-
+	
 		[AS].[SupplierName] AS [Supplier],
 		[AS].[SupShortName],
 		[AS].[Contact],
@@ -563,6 +577,10 @@ SELECT
 		[AS].[Nationality]
 	FROM
 		[SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
+	LEFT JOIN
+		[SysproCompanyA].[dbo].[PorMasterHdr] [PH] WITH (NOLOCK)
+	ON
+		[PD].[PurchaseOrder] = [PH].[PurchaseOrder]
 	LEFT JOIN (
 		SELECT
 			[PRs].[PurchaseOrder],
@@ -592,13 +610,17 @@ SELECT
 		AND ([PD].[MStockCode] = [PR].[StockCode])
 		AND ([PD].[MWarehouse] = [PR].[Warehouse])
 		AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
-
+	
 	LEFT JOIN
 		[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
 	ON
-		[PR].[Supplier] = [AS].[Supplier]
+		[PH].[Supplier] = [AS].[Supplier]
 	WHERE
-		LOWER([PD].[PurchaseOrder]) = LOWER('{po_fmt(purchaseorder, "str")}')
+		(
+			(ISNULL([MStockCode], '') <> '')
+			OR (ISNULL([MOrderQty], 0) <> 0)
+		)
+		AND (LOWER([PD].[PurchaseOrder]) = LOWER('{po_fmt(purchaseorder, "str")}'))
 ;
 	"""
 	df = connect(sql)
@@ -817,6 +839,7 @@ SELECT
 	[PM].[ExchangeRate],
 	[PM].[OrderEntryDate],
 	[PM].[OrderDueDate],
+	
 	[PM].[OrderStatus],
 	[PM].[CancelledFlag],
 	[PM].[ActiveFlag],
@@ -829,22 +852,32 @@ SELECT
 	[PS].[Contact],
 	[PS].[Telephone],
 	[PS].[Email],
-	[PS].[Nationality]
+	[PS].[Nationality],
+	
+	[PD].[MStockCode],
+	[PD].[MLastReceiptDat],
+	[PD].[MLatestDueDate],
+	[PD].[MReceivedQty]
 FROM
 	[SysproCompanyA].[dbo].[PorMasterHdr] [PM] WITH (NOLOCK)
+LEFT JOIN
+	[SysproCompanyA].[dbo].[PorMasterDetail] [PD] WITH (NOLOCK)
+ON
+	[PM].[PurchaseOrder] = [PD].[PurchaseOrder]
 INNER JOIN
 	[SysproCompanyA].[dbo].[ApSupplier] [PS] WITH (NOLOCK)
 ON
 	[PM].[Supplier] = [PS].[Supplier]
 WHERE
-	ISNULL([PM].[OrderDueDate], GETDATE()) >= DATEADD(YEAR, -5, GETDATE())
-	AND ISNULL([PM].[OrderDueDate], GETDATE()) <= DATEADD(YEAR, 5, GETDATE())
+	ISNULL([PM].[OrderDueDate], GETDATE()) >= DATEADD(YEAR, -3.5, GETDATE())
+	AND ISNULL([PM].[OrderDueDate], GETDATE()) <= DATEADD(YEAR, 3.5, GETDATE())
 ;
 """
 	df = connect(sql)
 	df["PurchaseOrder"] = df["PurchaseOrder"].apply(lambda po: po_fmt(po, "int"))
 	df["OrderEntryDate"] = pd.to_datetime(df["OrderEntryDate"], errors="ignore").dt.date
 	df["OrderDueDate"] = pd.to_datetime(df["OrderDueDate"], errors="ignore").dt.date
+	df["MLatestDueDate"] = pd.to_datetime(df["MLatestDueDate"], errors="ignore").dt.date
 	return df
 
 
@@ -2234,6 +2267,7 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 @st.dialog(title="Prep PO Due Date Report", width="large", dismissible=False)
 def input_purchase_order_due_date_report_parameters():
 	cont = st.container()
+	cols_btns = st.columns(4)
 	cols = st.columns(3)
 
 	min_date = datetime.date.today() + datetime.timedelta(days=-30)
@@ -2244,6 +2278,48 @@ def input_purchase_order_due_date_report_parameters():
 		datetime.date.today(),
 		datetime.date.today() + datetime.timedelta(days=1)
 	])
+
+	with cols_btns[0]:
+		k_btn_today = "key_btn_today"
+		if st.button(
+			label="Today",
+			key=k_btn_today,
+		):
+			st.session_state.update({
+				k_slider_dates: [datetime.date.today(), datetime.date.today()]
+			})
+
+	with cols_btns[1]:
+		k_btn_tomorrow = "key_btn_tomorrow"
+		if st.button(
+			label="Tomorrow",
+			key=k_btn_tomorrow,
+		):
+			st.session_state.update({
+				k_slider_dates: [datetime.date.today() + datetime.timedelta(days=1), datetime.date.today() + datetime.timedelta(days=1)]
+			})
+
+	with cols_btns[2]:
+		key_btn_sub_day = "key_btn_sub_day"
+		if st.button(
+			label="-1 Day",
+			key=key_btn_sub_day,
+		):
+			d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
+			st.session_state.update({
+				k_slider_dates: [d0_ + datetime.timedelta(days=-1), d1_]
+			})
+
+	with cols_btns[3]:
+		key_btn_add_day = "key_btn_add_day"
+		if st.button(
+			label="+1 Day",
+			key=key_btn_add_day,
+		):
+			d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
+			st.session_state.update({
+				k_slider_dates: [d0_, d1_ + datetime.timedelta(days=1)]
+			})
 
 	with cont:
 		date_input_po_dd = st.slider(
@@ -2268,9 +2344,15 @@ def input_purchase_order_due_date_report_parameters():
 			):
 				d0, d1 = date_input_po_dd
 				df_pos_in_range: pd.DataFrame = df_pos[
-					(d0 <= df_pos["OrderDueDate"])
-					& (df_pos["OrderDueDate"] <= d1)
+					((d0 <= df_pos["OrderDueDate"])
+					 & (df_pos["OrderDueDate"] <= d1)
+					)
+					| ((d0 <= df_pos["MLatestDueDate"])
+					   & (df_pos["MLatestDueDate"] <= d1)
+					)
 				]
+
+				df_pos_in_range["Date"] = max(df_pos_in_range["OrderDueDate"], df_pos_in_range["MLatestDueDate"])
 
 				df_pos_in_range.sort_values(
 					by="OrderDueDate",
@@ -2284,8 +2366,35 @@ def input_purchase_order_due_date_report_parameters():
 				st.rerun()
 
 
-def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = True):
+def init_po_df_show_cols():
+	if k_df_po_show_cols not in st.session_state:
+		st.session_state.update({
+			k_df_po_show_cols: {
+				"Supplier": "Supplier",
+				"MOrigDueDate": "Due Date",
+				"MLatestDueDate": "New Date",
+				"MStockCode": "Part",
+				"MOrderQty": "Order Qty",
+				"MReceivedQty": "Rec. Qty",
+				"TPrice": "$",
+				"PurchaseOrder": "PO",
+				"QtyOutstanding": "Qty Outstanding"
+			}
+		})
+
+
+def prep_po_pdf_report(df_pos_in_range, report_file_name, top_level: bool = True, mode: Literal["due", "received"] = "due"):
+
+	if st.session_state.get(k_df_po_show_cols) is None:
+		init_po_df_show_cols()
+
+	show_cols: dict = st.session_state.get(k_df_po_show_cols, {})
+	if mode == "received":
+		show_cols["MOrigDueDate"] = "Received Date"
+
 	report_title: str = f"Purchase Order Due Date Report"
+	if mode == "received":
+		report_title = report_title.replace("Due Date", "Received Date")
 	report_subtitle: str = f"Generated PDF: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
 	report_author: str = f"{user}"
 
@@ -2309,6 +2418,8 @@ def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = T
 	buf = out
 	story = []
 	pdf_header = f"Purchase Orders Due Between {d0:%Y-%m-%d} and {d1:%Y-%m-%d}"
+	if mode == "received":
+		pdf_header = pdf_header.replace("Due Date", "Received")
 
 	if not top_level:
 		rlu.add_grid_template(
@@ -2328,34 +2439,61 @@ def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = T
 		]
 
 		lst_dfs_pos = []
-		show_cols = {
-			"MOrigDueDate": "Due Date",
-			"MStockCode": "Part",
-			"MOrderQty": "Order Qty",
-			"MReceivedQty": "Rec. Qty",
-			"MPrice": "$"
-		}
+
+		show_cols_ord = list(show_cols.keys())
+		if "PurchaseOrder" not in show_cols_ord:
+			show_cols_ord.insert(1, "PurchaseOrder")
+		if "QtyOutstanding" not in show_cols_ord:
+			show_cols_ord.insert(-1, "QtyOutstanding")
+
 		for i, row in df_pos_in_range.iterrows():
 			po_num: int = row["PurchaseOrder"]
 			df_po_data: pd.DataFrame = load_po_details(purchaseorder=po_num)
 			df_po_data["PurchaseOrder"] = po_num
+			df_po_data["TPrice"] = df_po_data["MOrderQty"] * df_po_data["MPrice"]
 			df_po_data["QtyOutstanding"] = df_po_data["MOrderQty"] - df_po_data["MReceivedQty"]
-			df_po_data = df_po_data[["PurchaseOrder" + "QtyOutstanding"] + list(show_cols.keys())]
+			df_po_data = df_po_data[[c for c in show_cols_ord if c in df_po_data.columns]]
 			lst_dfs_pos.append(df_po_data)
 		df_po_datas = pd.concat(lst_dfs_pos, ignore_index=True)
 		df_po_datas = df_po_datas[
 			(~pd.isna(df_po_datas["MStockCode"]))
 			& (df_po_datas["MStockCode"].str.strip() != "")
 		]
-		df_po_datas = df_po_datas.rename(columns=show_cols).rename(columns={
-			"PurchaseOrder": "PO",
-			"QtyOutstanding": "Qty Outstanding"
-		})
+		print("\n\n\nHERE\n\n\n")
+		print(df_po_datas.head(10))
+		print(df_po_datas.columns)
+		df_po_datas.sort_values(
+			by=["MOrigDueDate", "PurchaseOrder", "MStockCode"],
+			inplace=True
+		)
+		df_po_datas_show = df_po_datas.rename(columns=show_cols)
 		story += [
 			# rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
 			# rlu.FrameBreak(),
-			rlu.df_table(df_po_datas, theme, styles)
+			rlu.df_table(
+				df=df_po_datas_show,
+				theme=theme,
+				styles=styles,
+				target_width=doc.width,
+				number_format={
+					# show_cols["MPrice"]: "$ {:,.2f}"
+					show_cols["TPrice"]: lambda x: money(x)
+				},
+				header_align="CENTER",
+				col_align={
+					show_cols["QtyOutstanding"]: "RIGHT",
+					show_cols["MOrderQty"]: "RIGHT",
+					show_cols["MReceivedQty"]: "RIGHT",
+					show_cols["TPrice"]: "RIGHT",
+					show_cols["PurchaseOrder"]: "LEFT",
+					show_cols["MStockCode"]: "LEFT",
+					show_cols["MOrigDueDate"]: "CENTER"
+				}
+			)
 		]
+		st.session_state.update({
+			k_stde_df_pos_in_range_ord: df_po_datas
+		})
 
 	else:
 		rlu.add_grid_template(doc, theme, template_id="dash", rows=1, cols=1)
@@ -2370,26 +2508,43 @@ def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = T
 			rlu.df_table(df_pos_in_range, theme, styles)
 		]
 
-		# # # TOC (optional) — headings added after it will populate it
-		# # story += rlu.toc(styles)
-		#
-		# story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
-		# story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
-		# story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
-		# story += [rlu.vspace(12)]
-		#
-		# # If you have a matplotlib chart saved as PNG:
-		# # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
-		# # story += [h2("A figure", styles)]
-		# # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+	# # # TOC (optional) — headings added after it will populate it
+	# # story += rlu.toc(styles)
+	#
+	# story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+	# story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+	# story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+	# story += [rlu.vspace(12)]
+	#
+	# # If you have a matplotlib chart saved as PNG:
+	# # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+	# # story += [h2("A figure", styles)]
+	# # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
 
-		# out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
+	# out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
 
 	doc.build(story)
 	f_name = out.resolve()
 	print(f"Wrote: {f_name}")
 	return f_name
 
+
+def prep_pdf_report_po_rd(df_pos_in_range, report_file_name, top_level: bool = True):
+	return prep_po_pdf_report(
+		df_pos_in_range=df_pos_in_range,
+		report_file_name=report_file_name,
+		top_level=top_level,
+		mode="received"
+	)
+
+
+def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = True):
+	return prep_po_pdf_report(
+		df_pos_in_range=df_pos_in_range,
+		report_file_name=report_file_name,
+		top_level=top_level,
+		mode="due"
+	)
 
 
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
@@ -2483,6 +2638,7 @@ k_use_full_map_dot_size = "key_use_full_map_dot_size"
 st.session_state.setdefault(k_use_full_map_dot_size, False)
 k_map_dot_size = "key_map_dot_size"
 st.session_state.setdefault(k_map_dot_size, 2)
+k_df_po_show_cols: str = "key_df_po_show_cols"
 ##
 
 df_parts = load_parts_data()
@@ -3052,67 +3208,170 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 					textbox_stockcode = df_purchase_orders.loc[
 						stdf_purchase_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
 
-	k_checkbox_due_date_report_top_level = "key_checkbox_due_date_report_top_level"
-	st.session_state.setdefault(k_checkbox_due_date_report_top_level, False)
-	checkbox_due_date_report_top_level = st.checkbox(
-		label="Top Level Report?",
-		key=k_checkbox_due_date_report_top_level
-	)
-
-	k_btn_due_date_report = "key_btn_due_date_report"
 	k_stde_df_pos_in_range = "key_stde_df_pos_in_range"
-	if st.button(
-		label="Due Date Report",
-		key=k_btn_due_date_report
-	):
-		input_purchase_order_due_date_report_parameters()
+	k_stde_df_pos_in_range_ord = "key_stde_df_pos_in_range_ord"
 
-	# display_df_paginated(
-	# 	df_pos,
-	# 	"df_pos",
-	# 	key="df_pos",
-	# )
+	if user in admin_test_users:
+		pdfs = [f for f in os.listdir(os.getcwd()) if f.lower().endswith(".pdf") and (f.lower().startswith(PREFIX_PO_DD_RPT.lower()))]
+		if pdfs:
+			if st.button(
+				label=f"Delete {len(pdfs)} existing reports?",
+				key="key_delete_existing_reports"
+			):
+				for pdf in pdfs:
+					os.remove(os.path.join(os.getcwd(), pdf))
 
-	display_df_paginated(
-		load_po_details(purchaseorder=150769),
-		"PO 150769",
-		key="PO150769_ddp"
-	)
+	# # display_df_paginated(
+	# # 	df_pos,
+	# # 	"df_pos",
+	# # 	key="df_pos",
+	# # )
+	# for p in (150769, 150675, 150784, 150796, 150828, 150009):
+	# 	display_df_paginated(
+	# 		load_po_details(purchaseorder=p),
+	# 		f"PO {p}",
+	# 		key=f"PO{p}_ddp"
+	# 	)
 
-	if st.session_state.get(k_stde_df_pos_in_range) is not None:
-		df_pos_in_range: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range)
-		if not df_pos_in_range.empty:
-			d0 = df_pos_in_range["OrderDueDate"].min()
-			d1 = df_pos_in_range["OrderDueDate"].max()
-			display_df_paginated(
-				df_pos_in_range,
-				f"POs in Range {d0} - {d1}",
-				key="key_ddp_pos_in_range_show",
-				batch_size_options=(100, 250, 1000)
-			)
+	init_po_df_show_cols()
+	show_cols_po_ext = {v: k for k, v in st.session_state.get(k_df_po_show_cols, {}).items()}
+	show_cols_po_ext.update(st.session_state.get(k_df_po_show_cols, {}))
+	if "Due Date" in show_cols_po_ext:
+		show_cols_po_ext["Received Date"] = show_cols_po_ext["Due Date"]
+	if "Received Date" in show_cols_po_ext:
+		show_cols_po_ext["Due Date"] = show_cols_po_ext["Received Date"]
+	show_cols_po_ext.update(st.session_state.get(k_df_po_show_cols, {}))
+	cols_test = st.columns(2)
+	with cols_test[0]:
 
-			f_name = f"pos_due_{d0:%Y-%m-%d}_{d1:%Y-%m-%d}_{datetime.datetime.now():%Y-%m-%d_%H%M}.pdf"
-			if checkbox_due_date_report_top_level:
-				f_name = f_name.replace(".pdf", "_tl.pdf")
-			if not os.path.exists(f_name):
-				st.toast("Creating New Report")
-				f_name = prep_pdf_report_po_dd(
-					df_pos_in_range[["PurchaseOrder", "OrderEntryDate", "OrderDueDate", "Supplier"]],
-					report_file_name=f_name,
-					top_level=checkbox_due_date_report_top_level
+		st.subheader("POs Due")
+
+		k_checkbox_due_date_report_top_level = "key_checkbox_due_date_report_top_level"
+		st.session_state.setdefault(k_checkbox_due_date_report_top_level, False)
+		checkbox_due_date_report_top_level = st.checkbox(
+			label="Top Level Report?",
+			key=k_checkbox_due_date_report_top_level
+		)
+
+		k_btn_due_date_report = "key_btn_due_date_report"
+		if st.button(
+				label="Due Date Report",
+				key=k_btn_due_date_report
+		):
+			st.session_state.update({
+				k_stde_df_pos_in_range: None,
+				k_stde_df_pos_in_range_ord: None
+			})
+			input_purchase_order_due_date_report_parameters()
+
+		if st.session_state.get(k_stde_df_pos_in_range) is not None:
+			df_pos_in_range: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range)
+			df_pos_in_range_ord: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range_ord)
+			if not df_pos_in_range.empty or not df_pos_in_range_ord.empty:
+				if (df_pos_in_range_ord is not None) and (not df_pos_in_range_ord.empty):
+					st.write("show_cols_po_ext")
+					st.write(show_cols_po_ext)
+					display_df(
+						df_pos_in_range_ord,
+						"df_pos_in_range_ord"
+					)
+					d0 = df_pos_in_range_ord["Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].min()
+					d1 = df_pos_in_range_ord["Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].max()
+					display_df_paginated(
+						df_pos_in_range_ord,
+						f"POs in Range {d0} - {d1}",
+						key="key_ddp_pos_in_range_show",
+						batch_size_options=(100, 250, 1000)
+					)
+				else:
+					d0 = df_pos_in_range["OrderDueDate"].min()
+					d1 = df_pos_in_range["OrderDueDate"].max()
+					display_df_paginated(
+						df_pos_in_range,
+						f"POs in Range {d0} - {d1}",
+						key="key_ddp_pos_in_range_show",
+						batch_size_options=(100, 250, 1000)
+					)
+
+				f_name = f"{PREFIX_PO_DD_RPT}{d0:%Y-%m-%d}_{d1:%Y-%m-%d}_{datetime.datetime.now():%Y-%m-%d_%H%M}.pdf"
+				if checkbox_due_date_report_top_level:
+					f_name = f_name.replace(".pdf", "_tl.pdf")
+				if not os.path.exists(f_name):
+					st.toast("Creating New Report")
+					f_name = prep_pdf_report_po_dd(
+						df_pos_in_range[["PurchaseOrder", "OrderEntryDate", "OrderDueDate", "Supplier"]],
+						report_file_name=f_name,
+						top_level=checkbox_due_date_report_top_level
+					)
+				st.download_button(
+					label="Download Purchase Order Due Date Report",
+					data=open(f_name, "rb").read(),
+					file_name=f"{f_name}",
+					mime="application/pdf",
+					key=f"{f_name}_po_dd_report"
 				)
-			st.download_button(
-				label="Download Purchase Order Due Date Report",
-				data=open(f_name, "rb").read(),
-				file_name=f"{f_name}",
-				mime="application/pdf",
-				key=f"{f_name}_po_dd_report"
-			)
 
+			else:
+				st.info("No Results")
 		else:
-			st.info("No Results")
-	else:
-		st.info("Submit dates via the 'Due Date Report' button.")
+			st.info("Submit dates via the 'Due Date Report' button.")
+
+	with cols_test[1]:
+
+		st.subheader("POs Received")
+
+		k_checkbox_received_report_top_level = "key_checkbox_received_report_top_level"
+		st.session_state.setdefault(k_checkbox_received_report_top_level, False)
+		checkbox_received_report_top_level = st.checkbox(
+			label="Top Level Report?",
+			key=k_checkbox_received_report_top_level
+		)
+
+		if st.session_state.get(k_stde_df_pos_in_range) is not None:
+			df_pos_in_range: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range)
+			df_pos_in_range_ord: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range_ord)
+			if not df_pos_in_range.empty or not df_pos_in_range_ord.empty:
+				if (df_pos_in_range_ord is not None) and (not df_pos_in_range_ord.empty):
+					d0 = df_pos_in_range_ord["Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext["Received Date"]].min()
+					d1 = df_pos_in_range_ord["Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext["Received Date"]].max()
+					display_df_paginated(
+						df_pos_in_range_ord,
+						f"POs in Range {d0} - {d1}",
+						key="key_ddp_pos_in_range_rd_show",
+						batch_size_options=(100, 250, 1000)
+					)
+				else:
+					d0 = df_pos_in_range["OrderDueDate"].min()
+					d1 = df_pos_in_range["OrderDueDate"].max()
+					display_df_paginated(
+						df_pos_in_range,
+						f"POs in Range {d0} - {d1}",
+						key="key_ddp_pos_in_range_rd_show",
+						batch_size_options=(100, 250, 1000)
+					)
+
+				f_name = f"{PREFIX_PO_RD_RPT}{d0:%Y-%m-%d}_{d1:%Y-%m-%d}_{datetime.datetime.now():%Y-%m-%d_%H%M}.pdf"
+				if checkbox_received_report_top_level:
+					f_name = f_name.replace(".pdf", "_tl.pdf")
+				if not os.path.exists(f_name):
+					st.toast("Creating New Report")
+					f_name = prep_pdf_report_po_rd(
+						df_pos_in_range[["PurchaseOrder", "OrderEntryDate", "OrderDueDate", "Supplier"]],
+						report_file_name=f_name,
+						top_level=checkbox_received_report_top_level
+					)
+				st.download_button(
+					label="Download Purchase Order Received Report",
+					data=open(f_name, "rb").read(),
+					file_name=f"{f_name}",
+					mime="application/pdf",
+					key=f"{f_name}_po_rd_report"
+				)
+
+			else:
+				st.info("No Results")
+		else:
+			st.info("Submit dates via the 'Received Report' button.")
 
 # elif pills_search_mode == op_search_mode_by_so:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
