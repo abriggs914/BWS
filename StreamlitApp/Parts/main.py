@@ -4,7 +4,7 @@ from streamlit_utility import display_df, load_pdf_binary, display_df_paginated,
 from pyodbc_connection import connect
 from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
 from datetime_utility import time_between, datetime_is_tz_aware
-from utility import percent, money
+from utility import percent, money, clamp
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
 import reportlab_utility as rlu
@@ -2264,10 +2264,12 @@ def push_shelf_changes(stde_key: str, t_name: str | pd.DataFrame, pk_name: str =
 	st.toast("Updated saved successfully.")
 
 
-@st.dialog(title="Prep PO Due Date Report", width="large", dismissible=False)
+@st.dialog(title="Prep PO Due Date Report", width="large", dismissible=True)
 def input_purchase_order_due_date_report_parameters():
 	cont = st.container()
-	cols_btns = st.columns(4)
+	with st.expander("Adjust dates", expanded=False):
+		cols_slider_btns = st.columns(2)
+	st.divider()
 	cols = st.columns(3)
 
 	min_date = datetime.date.today() + datetime.timedelta(days=-30)
@@ -2279,47 +2281,37 @@ def input_purchase_order_due_date_report_parameters():
 		datetime.date.today() + datetime.timedelta(days=1)
 	])
 
-	with cols_btns[0]:
-		k_btn_today = "key_btn_today"
-		if st.button(
-			label="Today",
-			key=k_btn_today,
-		):
-			st.session_state.update({
-				k_slider_dates: [datetime.date.today(), datetime.date.today()]
-			})
+	offsets = [1, 2, 3, 5, 7, 10, 14]
+	for i, col in enumerate(cols_slider_btns):
+		with cols_slider_btns[i]:
+			st.write("Start Date" if i == 0 else "End Date")
+		cols_slider_btns_sub = cols_slider_btns[i].columns(2)
+		for j in range(2):
+			for k, offset in enumerate(offsets):
+				with cols_slider_btns_sub[j]:
+					k_btn = f"key_btn_{i}_{j}_{k}"
+					# st.write(f"{i=}, {j=}, {offset=}")
+					# st.write(k_btn)
+					if st.button(
+						# label="Today",
+						label=f"{'+' if j == 0 else '-'}{offset}",
+						key=k_btn
+					):
+						d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
+						dd_ = (d1_ - d0_).days
+						td = d0_ if i == 0 else d1_
+						td += datetime.timedelta(days=offset*(1 if j == 0 else -1))
+						new_dates = [td, d1_] if i == 0 else [d0_, td]
+						if new_dates[1] < new_dates[0]:
+							if j == 0:
+								new_dates = [new_dates[0], new_dates[0] + datetime.timedelta(days=dd_)]
+							else:
+								new_dates = [new_dates[1] + datetime.timedelta(days=-dd_), new_dates[1]]
 
-	with cols_btns[1]:
-		k_btn_tomorrow = "key_btn_tomorrow"
-		if st.button(
-			label="Tomorrow",
-			key=k_btn_tomorrow,
-		):
-			st.session_state.update({
-				k_slider_dates: [datetime.date.today() + datetime.timedelta(days=1), datetime.date.today() + datetime.timedelta(days=1)]
-			})
-
-	with cols_btns[2]:
-		key_btn_sub_day = "key_btn_sub_day"
-		if st.button(
-			label="-1 Day",
-			key=key_btn_sub_day,
-		):
-			d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
-			st.session_state.update({
-				k_slider_dates: [d0_ + datetime.timedelta(days=-1), d1_]
-			})
-
-	with cols_btns[3]:
-		key_btn_add_day = "key_btn_add_day"
-		if st.button(
-			label="+1 Day",
-			key=key_btn_add_day,
-		):
-			d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
-			st.session_state.update({
-				k_slider_dates: [d0_, d1_ + datetime.timedelta(days=1)]
-			})
+						new_dates = [clamp(min_date, new_dates[0], max_date), clamp(min_date, new_dates[1], max_date)]
+						st.session_state.update({
+							k_slider_dates: new_dates,
+						})
 
 	with cont:
 		date_input_po_dd = st.slider(
@@ -2351,8 +2343,18 @@ def input_purchase_order_due_date_report_parameters():
 					   & (df_pos["MLatestDueDate"] <= d1)
 					)
 				]
-
-				df_pos_in_range["Date"] = max(df_pos_in_range["OrderDueDate"], df_pos_in_range["MLatestDueDate"])
+				df_pos_in_range["MLatestDueDate"] = df_pos_in_range["MLatestDueDate"].fillna(df_pos_in_range["OrderDueDate"])
+				df_test = df_pos_in_range[
+					["OrderDueDate", "MLatestDueDate"]
+				]
+				display_df(
+					df_test,
+					"df_test"
+				)
+				df_pos_in_range["Date"] = df_pos_in_range[
+					["OrderDueDate", "MLatestDueDate"]
+				# ].max().max()
+				].max(axis=1, skipna=True)
 
 				df_pos_in_range.sort_values(
 					by="OrderDueDate",
@@ -3267,6 +3269,12 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 		if st.session_state.get(k_stde_df_pos_in_range) is not None:
 			df_pos_in_range: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range)
 			df_pos_in_range_ord: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range_ord)
+
+			# for the Due date date report, groupby PO, StockCode, and Dates, Order Qty, Aggregate Rec Quantity, Price, and Outstanding cols
+			df_pos_in_range = df_pos_in_range.groupby(
+
+			)
+
 			if not df_pos_in_range.empty or not df_pos_in_range_ord.empty:
 				if (df_pos_in_range_ord is not None) and (not df_pos_in_range_ord.empty):
 					st.write("show_cols_po_ext")
@@ -4054,17 +4062,23 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		return fig
 
 
-	def plotly_cell_prisms(df_cells, *, z_log=True, opacity=0.85):
+	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1):
 		fig = go.Figure()
 
 		for r in df_cells.itertuples(index=False):
 			x0, x1 = float(r.X0), float(r.X1)
 			y0, y1 = float(r.Y0), float(r.Y1)
 
-			val = float(getattr(r, "TtlValue", 0.0))
+			val = float(getattr(r, plot_col, 0.0))
+			t_val = val
+			val *= pillar_scale
 			z1 = np.log10(val + 1.0) if z_log else val
 
 			r_shelves_spl = r.Shelves.split(", ")
+			df_parts_in_section: pd.DataFrame = df_parts[df_parts["DefaultBin"].isin(r_shelves_spl)]
+			avg_per_bin = t_val / len(r.Shelves)
+			avg_per_stock = t_val / df_parts_in_section.shape[0]
+
 			bins_per_row = 5
 			if r_shelves_spl:
 				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[i:i+5]) for i in range(len(r_shelves_spl))]))
@@ -4074,8 +4088,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			hover = (
 				f"Section: <b>{r.ParentShelf}</b><br>"
 				f"Group: <b>{r.Group}</b><br>"
-				f"Value: <b>$ {val:,.2f}</b><br>"
-				f"Shelves: <b>{shelves_br}</b>"
+				f"Value: <b>$ {money(t_val)}</b><br>"
+				f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
+				f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
+				f"Shelves: <b>{shelves_br}</b><br>"
+				f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
 				# f"Value: <b>{val:,.2f}</b><extra></extra>"
 			)
 
@@ -4191,6 +4208,14 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 
 		#
 		st.subheader("Inventory valuation by section (3D)")
+
+		k_checkbox_valuation_log = "key_checkbox_valuation_log"
+		st.session_state.setdefault(k_checkbox_valuation_log, True)
+		checkbox_valuation_log = st.checkbox(
+			label="Show Valuations as Log10",
+			key=k_checkbox_valuation_log
+		)
+
 		# z_log = st.checkbox("Log-scale Z (helps big ranges)", value=True)
 		# elev = st.slider("Elevation", 5, 85, 25)
 		# azim = st.slider("Azimuth", -180, 180, -55)
@@ -4454,9 +4479,14 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		df_plot = flip_x_rect_df(df_plot, x_min=x_min, x_max=x_max, x0c="X0", x1c="X1")
 		df_plot = flip_x_points_df(df_plot, x_min=x_min, x_max=x_max, xc="cx")
 
+		pillar_scale = 1
+		if not checkbox_valuation_log:
+			# pillars are too large (usually) scale everything down by 1000 to improve appearance
+			pillar_scale = 1 / 1000
+
 		# now plot using df_plot instead of df_sec_val
 		# fig = plotly_skyscrapers(df_plot, z_log=True)
-		fig = plotly_cell_prisms(df_plot, z_log=True)
+		fig = plotly_cell_prisms(df_plot, plot_col="TtlValue", z_log=checkbox_valuation_log, pillar_scale=pillar_scale)
 		fig = add_section_floor_outlines(fig, df_plot)
 		compass_rot = 94
 		fig = add_compass_rotated(
