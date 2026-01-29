@@ -19,8 +19,8 @@ from utility import excel_column_name
 VERSION = \
     """	
     General Utility file for Dataframe operations
-    Version..............1.06
-    Date...........2026-01-28
+    Version..............1.07
+    Date...........2026-01-29
     Author(s)....Avery Briggs
     """
 
@@ -30,12 +30,12 @@ def VERSION_DETAILS():
 
 
 def VERSION_NUMBER():
-    return float(".".join(VERSION.lower().split("version")[-1].split("today")[0].split(".")[-2:]).strip())
+    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
 
 
 def VERSION_DATE():
-    return datetime.datetime.strptime(VERSION.lower().split("today")[-1].split("author")[0].split(".")[-1].strip(),
-                                      "%Y-%m-%dictionary")
+    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+                                      "%Y-%m-%d")
 
 
 def VERSION_AUTHORS():
@@ -81,6 +81,8 @@ def random_df(
         empty_freq: float | dict[str: float] | list[float] = 0,
         defaults: Optional[dict[str: Any]] = None,
         allow_sub_lists: bool = True,
+        index_cols: Optional[list[str] | int | str] = None,
+        auto_number: Optional[list[str | int | str]] = None,
         **kwargs
 ) -> pd.DataFrame:
     """
@@ -105,7 +107,8 @@ def random_df(
             min_sub_list_len -- default: 0
             max_sub_list_len -- default: 3
             match_sub_list_lens -- default: False
-            match_sub_list_dtypes -- default: False
+            match_sub_list_dtypes -- default: False,
+            as_datetime -- default: True
     :return: pandas Dataframe
     """
 
@@ -125,6 +128,7 @@ def random_df(
     max_sub_list_len = kwargs.get("max_sub_list_len", 3)
     match_sub_list_lens = kwargs.get("match_sub_list_lens", False)
     match_sub_list_dtypes = kwargs.get("match_sub_list_dtypes", False)
+    as_datetime = kwargs.get("as_datetime", True)
     list_kwargs = [
         "min_random_int",
         "max_random_int",
@@ -170,7 +174,6 @@ def random_df(
                         new_cols.remove(col)
                 n_columns.update(dict(zip(new_cols, [random.choice(valid_dtypes) for _ in range(len(new_cols))])))
                 n_columns = {col: n_columns[col] for col in list(n_columns.keys())[:num_c]}
-
 
     if (n_rows < 0) or (not isinstance(n_rows, int)):
         raise ValueError(f"'n_rows' must be an int greater than 0, got {n_rows=}, {type(n_rows)=}")
@@ -231,9 +234,51 @@ def random_df(
     if isinstance(n_columns, (list, dict)) and all(n_columns) and (len(n_columns) == n_c):
         cn = list(n_columns)
 
+    index_cols: list = index_cols if isinstance(index_cols, (list, tuple, dict)) else ([index_cols] if isinstance(index_cols, (int, str)) else [])
+    auto_number: list = auto_number if isinstance(auto_number, (list, tuple, dict)) else ([auto_number] if isinstance(auto_number, (int, str)) else [])
+    for i, col in enumerate(index_cols.copy()):
+        if isinstance(col, int):
+            index_cols[i] = cn[col]
+    for i, col in enumerate(auto_number.copy()):
+        if isinstance(col, int):
+            if col >= len(cn):
+                raise ValueError(f"Auto number column index {col} is out of range, columns={cn}")
+            auto_number[i] = cn[col]
+            n_columns[col] = "int"
+
+    if index_cols:
+        if set(index_cols).difference(set(cn)):
+            raise ValueError(f"columns passed via 'index_cols'={index_cols} do not match output columns {cn}")
+        for col in index_cols:
+            if col in defaults:
+                n_columns[col] = interpret_type(defaults[col])
+            else:
+
+    if auto_number:
+        # a = set(auto_number)
+        # b = set(cn)
+        # dab = a.difference(b)
+        # dba = b.difference(a)
+        # sab = a.symmetric_difference(b)
+        # sba = b.symmetric_difference(a)
+        # print(dict(a=a, b=b, dab=dab, dba=dba, sab=sab, sba=sba))
+        if set(auto_number).difference(set(cn)).difference(set(cn)):
+            raise ValueError(f"columns {list(set(auto_number).difference(set(cn)).difference(set(cn)))} passed via 'auto_number' do not match output columns {cn}")
+
     if isinstance(empty_freq, list) and (len(empty_freq) < n_c):
         raise ValueError(
             f"when passing a list for param 'empty_freq', it's length must be at least as long as the number of columns that will be created. (len(empty_freq) < len(n_columns)).")
+
+    if index_cols and isinstance(empty_freq, (list, tuple, dict)):
+        if set(index_cols).union(set(empty_freq)):
+            raise ValueError(f"columns passed via 'index_cols'={index_cols} can not have empty values via the 'empty_freq' param.")
+    if auto_number:
+        if isinstance(empty_freq, (list, tuple, dict)):
+            if set(auto_number).union(set(empty_freq)):
+                raise ValueError(f"columns passed via 'auto_number'={auto_number} can not have empty values via the 'empty_freq' param.")
+        for col in auto_number.copy():
+            if col not in index_cols:
+                index_cols.append(col)
 
     if not isinstance(dtypes, (list, tuple)):
         dtypes = [dtypes]
@@ -256,9 +301,21 @@ def random_df(
         if (len(dt) == 1) and (dt[0] == "list"):
             dt = valid_dtypes
 
+    indexed = {}
     defaults = {} if defaults is None else defaults
     # defaults = {k: random.choice(v) if isinstance(v, list) else v for k, v in defaults.items()}
-    defaults = {k: (lambda v_=v: random.choice(v_)) if isinstance(v, list) else v for k, v in defaults.items()}
+    # defaults = {k: (lambda v_=v: random.choice(v_)) if isinstance(v, list) else v for k, v in defaults.items()}
+    indexed_defaults = {k: (v.copy() if isinstance(v, (list, tuple, dict)) else [None]) for k, v in defaults.items() if k in index_cols}
+    # for col in index_cols:
+    #     if col not in auto_number:
+    #         indexed_defaults[k] =
+
+    if indexed_defaults:
+        for k, v in indexed_defaults.items():
+            if (None in v) or (len(v) < n_rows):
+                raise ValueError(f"Cannot have None values as defaults in an indexed_column for column={k}. Add at least as many more values to defaults['{k}'] as n_rows expects. Or un-index {k}")
+    for k, v in defaults.items():
+        defaults[k] = (random.shuffle(indexed_defaults[k].copy())) if k in indexed_defaults else ((lambda v_=v: random.choice(v_)) if isinstance(v, list) else v)
 
     cn_dt = list(n_columns.values()) if isinstance(n_columns, dict) else [random.choice(dt) for _ in cn]
     matching_cn_dt = random.choice(dt2)
@@ -271,17 +328,20 @@ def random_df(
         empty_freq[i] if isinstance(empty_freq, list) else empty_freq) for j in range(max_sub_list_len + 1)] for i, col
                  in enumerate(cn)]
 
-    # print(f"{n_columns=}")
-    # print(f"{defaults=}")
-    # print(f"{dtypes=}")
+    print(f"{n_columns=}")
+    print(f"{defaults=}")
+    print(f"{indexed_defaults=}")
+    print(f"{dtypes=}")
+    print(f"{index_cols=}")
+    print(f"{auto_number=}")
 
-    # print(f"{cn=}")
-    # print(f"{dt=}")
-    # print(f"{cn_dt=}")
-    # print(f"{cn_dt_sub=}")
-    # print(f"{cn_ef=}")
-    # print(f"{matching_cn_dt=}")
-    # print(f"{matching_sub_len=}")
+    print(f"{cn=}")
+    print(f"{dt=}")
+    print(f"{cn_dt=}")
+    print(f"{cn_dt_sub=}")
+    print(f"{cn_ef=}")
+    print(f"{matching_cn_dt=}")
+    print(f"{matching_sub_len=}")
 
     def get_random(dtype: Optional[str] = None, col_num: int = 0, nested: bool = False):
         # print(f"{dtype=}, {nested=}")
@@ -321,16 +381,45 @@ def random_df(
                                                                                                               dt) if dtype is None else dtype,
                                                                                                           col_num=col_num))
 
+    def get_index(col_num: int):
+        col: str = cn[col_num]
+        dtype = cn_dt[col_num]
+
+        if col not in indexed:
+            indexed[col] = []
+
+        if col in auto_number:
+            val = len(indexed[col])
+        elif col in indexed_defaults:
+            val = indexed_defaults[col].pop()
+        else:
+            val = get_random(dtype, col_num=col_num, nested=False)
+            while val in indexed[col]:
+                val = get_random(dtype, col_num=col_num, nested=False)
+
+        indexed[col].append(val)
+        return val
+
     data = [
-        dict(zip(cn, [(defaults.get(cn[j])()) if callable(defaults.get(cn[j])) else defaults.get(cn[j],
+        dict(zip(cn, [get_index(j) if col in index_cols else ((defaults.get(cn[j])()) if callable(defaults.get(cn[j])) else defaults.get(cn[j],
                                                                                                  get_random(cn_dt[j],
                                                                                                             col_num=j) if random.random() >
                                                                                                                           cn_ef[
-                                                                                                                              j] else None)
-                      for j in range(len(cn))]))
+                                                                                                                              j] else None))
+                      for j, col in enumerate(cn)]))
         for i in range(n_rows)
     ]
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    if as_datetime and any(["date" in cn_dt, "datetime" in cn_dt]):
+        for i, col_type in enumerate(cn_dt):
+            if col_type in ("date", "datetime"):
+                ser_dates: pd.Series = df[cn[i]]
+                dates = ser_dates.values.tolist()
+                print(f"{i=}, {col_type=}, {cn[i]}, {dates=}")
+                df[cn[i]] = pd.to_datetime(df[cn[i]])
+                # if col_type == "date":
+                #     df[cn[i]] = df[cn[i]].dt.date
+    return df
 
 
 def top_n_with_other_bin(

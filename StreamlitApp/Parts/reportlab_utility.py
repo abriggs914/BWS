@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence, Union
 
 import io
 import zipfile
+
+import numpy as np
 import pandas as pd
 
 from reportlab.lib import colors
@@ -32,8 +34,8 @@ from reportlab.platypus import (
 from reportlab.platypus.tableofcontents import TableOfContents
 
 
-# 2026-01-27
-# Version 1.2
+# 2026-01-29
+# Version 1.3
 
 
 # -----------------------------
@@ -1086,109 +1088,600 @@ def add_grid_template(
 # -----------------------------
 if __name__ == "__main__":
 
-    from pyodbc_connection import connect
+    # from pyodbc_connection import connect
+    # from typing import Literal
+    #
+    # # report_file_name: str = "demo_report.pdf"
+    # # report_title: str = "Demo Report"
+    # # report_subtitle: str = "ReportLab skeleton"
+    # # report_author: str = "Avery Briggs"
+    # #
+    # # theme = PDFTheme(page_size=LETTER)
+    # # meta = PDFMeta(
+    # #     title=report_title,
+    # #     subtitle=report_subtitle,
+    # #     author=report_author,
+    # # )
+    # # styles = build_styles(theme)
+    # #
+    # # df = pd.DataFrame({
+    # #     "Item": ["A", "B", "C"],
+    # #     "Qty": [10, 25, 7],
+    # #     "Value": [1234.5, 9876.0, 50.25],
+    # # })
+    # #
+    # # story = []
+    # # story += [
+    # #     h1("Demo Report", styles),
+    # #     p("This is a quick demo of the skeleton.", styles),
+    # #     vspace(10)
+    # # ]
+    # #
+    # # # TOC (optional) — headings added after it will populate it
+    # # story += toc(styles)
+    # #
+    # # story += [h1("Section 1", styles), p("Some paragraph text.", styles)]
+    # # story += [h2("A table from a DataFrame", styles)]
+    # # story += [df_table(df, theme, styles, number_format={"Value": "{:,.2f}"})]
+    # # story += [vspace(12)]
+    # #
+    # # # If you have a matplotlib chart saved as PNG:
+    # # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+    # # # story += [h2("A figure", styles)]
+    # # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+    # #
+    # # out = build_pdf(report_file_name, story, theme=theme, meta=meta)
+    # # print(f"Wrote: {out.resolve()}")
+    #
+    # def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False):
+    #     df_w = df_so_pick_sheet.copy()
+    #
+    #     if len(df_w["SalesOrder"].dropna().unique()) != 1:
+    #         raise ValueError(f"Cannot prepare a Sales Order Pick Sheet with combined orders.")
+    #
+    #     so = df_w.loc[0, "SalesOrder"]
+    #     df_stock_movements = load_stockcode_movements(so)
+    #     cust_name = df_w.loc[0, "CustomerName"]
+    #     ship_addr_0 = df_w.loc[0, "ShipAddress1"]
+    #     ship_addr_1 = df_w.loc[0, "ShipAddress2"]
+    #     ship_addr_2 = df_w.loc[0, "ShipAddress3"]
+    #
+    #     df_w.sort_values("SalesOrderLine", inplace=True)
+    #     table_cols = {
+    #         "MOrderQty": "ORD",
+    #         "MBackOrderQty": "B/O",
+    #         "MShipQty": "SHP",
+    #         "MStockingUom": "UOM",
+    #         "MStockCode": "STOCK",
+    #         "MStockDes": "DESC",
+    #         "LongDesc": "LONG DESC",
+    #         "MPrice": "PRICE",
+    #         "Discount": "DISC",
+    #         "Amount": "TOTAL",
+    #         "QtyOnHand": "ON HAND",
+    #         "QtyOnOrder": "ON ORDER",
+    #
+    #         "StockCode": "STOCK",
+    #         "TrnDateTime": "DATE",
+    #         "Job": "WO",
+    #         "TrnType": "EVENT",
+    #         "Reference": "REF",
+    #         "SalesOrder": "SO",
+    #     }
+    #     df_part_data = df_w[[tc for tc in table_cols if tc in df_w.columns]]
+    #     df_part_data.rename(columns=table_cols, inplace=True)
+    #
+    #     report_file_name: str = f"so_pick_sheet_{so}_{datetime.now():%Y-%m-%d_%H%M%S}.pdf"
+    #     report_title: str = f"Sales Order Pick Sheet"
+    #     report_subtitle: str = f"SO# {so}"
+    #     # report_author: str = f"{user}"
+    #     report_author: str = f"abriggs"
+    #
+    #     theme = PDFTheme(
+    #         page_size=landscape(LETTER),
+    #         margin_left=0.35*inch,
+    #         margin_right=0.35*inch,
+    #         margin_top=0.40*inch,
+    #         margin_bottom=0.40*inch,
+    #         header_height=0.25*inch,
+    #         footer_height=0.25*inch,
+    #         table_header_bg=colors.HexColor("#ADADAD")
+    #     )
+    #     meta = PDFMeta(
+    #         title=report_title,
+    #         subtitle=report_subtitle,
+    #         author=report_author
+    #     )
+    #     styles = build_styles(theme)
+    #
+    #     out, doc = build_pdf(
+    #         report_file_name,
+    #         story=None,
+    #         theme=theme,
+    #         meta=meta,
+    #         as_zip=as_zip
+    #     )
+    #     buf = out
+    #     add_grid_template(
+    #         doc,
+    #         theme,
+    #         template_id="dash",
+    #         height=0.8,
+    #         rows=5,
+    #         cols=3,
+    #         gutter=0.05*inch,
+    #         merged_cells=[
+    #             [1, 0, 1, 3],
+    #             [2, 1, 1, 2],
+    #             [3, 0, 1, 3],
+    #             [4, 1, 1, 2]
+    #         ]
+    #     )
+    #     doc._firstPageTemplateIndex = next(
+    #         i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
+    #     )
+    #
+    #     story = []
+    #     # story += [NextPageTemplate("dash")]
+    #     # story += [NextPageTemplate("dash"), PageBreak()]
+    #
+    #     # cell 0, 0
+    #     story += [
+    #         h3("Picked By:", styles),
+    #         h3("Picked Date:", styles),
+    #         h3("Ship Date:", styles),
+    #         FrameBreak()
+    #     ]
+    #
+    #     # cell 0, 1
+    #     story += [
+    #         FrameBreak()
+    #     ]
+    #
+    #     # cell 0, 2
+    #     story += [
+    #         h3(f"{cust_name}", styles),
+    #         h3(f"{ship_addr_0}", styles),
+    #         h3(f"{ship_addr_1}", styles),
+    #         h3(f"{ship_addr_2}", styles),
+    #         FrameBreak()
+    #     ]
+    #
+    #     # # cell 1, 0
+    #     # story += [
+    #     #     df_table(
+    #     #         df_part_data,
+    #     #         theme,
+    #     #         styles,
+    #     #         number_format={"Value": "{:,.2f}"},
+    #     #         font_size=7.0,
+    #     #         pad_x=1.5,
+    #     #         pad_y=1.8,
+    #     #         truncate_columns={"LONG DESC", "DESC"}
+    #     #     )
+    #     # ]
+    #
+    #     available_w = doc.width  # or frame width if you’re in a grid cell
+    #
+    #     def calc_col_widths(df, t_w):
+    #         col_widths = []
+    #         for col in df.columns:
+    #             if col in {"QTY ORD", "QTY B/O", "QTY SHP"}:
+    #                 col_widths.append(0.55 * inch)
+    #             elif col in {"UOM"}:
+    #                 col_widths.append(0.45 * inch)
+    #             elif col in {"PRICE", "TOTAL", "ON HAND", "ON ORDER"}:
+    #                 col_widths.append(0.70 * inch)
+    #             elif col in {"STOCK"}:
+    #                 col_widths.append(0.90 * inch)
+    #             else:
+    #                 col_widths.append(None)
+    #
+    #         # distribute remaining width among None columns
+    #         fixed = sum(w for w in col_widths if w is not None)
+    #         flex_cols = [i for i, w in enumerate(col_widths) if w is None]
+    #         flex_w = max(0, (t_w - fixed) / max(1, len(flex_cols)))
+    #         for i in flex_cols:
+    #             col_widths[i] = flex_w
+    #
+    #         return col_widths
+    #
+    #     col_widths_a = calc_col_widths(df_part_data, available_w)
+    #
+    #     print(df_part_data.columns)
+    #     for i, row in df_part_data.iterrows():
+    #         df_b = load_stockcode_movements(row["STOCK"]).sort_values("TrnDateTime", ascending=False).head(3)
+    #         df_b = df_b[[tc for tc in table_cols if tc in df_b.columns]]
+    #         df_b = df_b.rename(columns={c: table_cols[c] for c in table_cols if c in df_b.columns})
+    #         col_widths_b = calc_col_widths(df_b, available_w * 2 / 3)
+    #         story += [
+    #             df_table(
+    #                 # pd.DataFrame(row),
+    #                 # pd.DataFrame(df_part_data.loc[i, df_part_data.columns]),
+    #                 # df_part_data.loc[i, df_part_data.columns],
+    #                 # pd.DataFrame(df_part_data.loc[i, list(df_part_data.columns)].transpose(), columns=df_part_data.columns),
+    #                 # pd.DataFrame(df_part_data.iloc[i].transpose(), columns=df_part_data.columns),
+    #                 # pd.DataFrame(df_part_data.iloc[i].transpose()),
+    #                 pd.DataFrame(df_part_data.loc[i].transpose()).transpose(),
+    #                 theme,
+    #                 styles,
+    #                 col_widths=col_widths_a,
+    #                 number_format={"Value": "{:,.2f}"},
+    #                 font_size=7.0,
+    #                 pad_x=0,
+    #                 pad_y=0,
+    #                 truncate_columns={"LONG DESC", "DESC"}
+    #             ),
+    #             # vspace(1),
+    #             FrameBreak(),
+    #             FrameBreak(),
+    #             df_table(
+    #                 # pd.DataFrame(row),
+    #                 # pd.DataFrame(df_part_data.loc[i, df_part_data.columns]),
+    #                 # df_part_data.loc[i, df_part_data.columns],
+    #                 # pd.DataFrame(df_part_data.loc[i, list(df_part_data.columns)].transpose(), columns=df_part_data.columns),
+    #                 # pd.DataFrame(df_part_data.iloc[i].transpose(), columns=df_part_data.columns),
+    #                 # pd.DataFrame(df_part_data.iloc[i].transpose()),
+    #                 df_b,
+    #                 theme,
+    #                 styles,
+    #                 col_widths=col_widths_b,
+    #                 number_format={"Value": "{:,.2f}"},
+    #                 font_size=7.0,
+    #                 pad_x=0,
+    #                 pad_y=0,
+    #                 truncate_columns={"LONG DESC", "DESC"}
+    #             ),
+    #             FrameBreak()
+    #         ]
+    #
+    #     doc.build(story)
+    #     if (not as_zip) and out:
+    #         f_name = out.resolve()
+    #         print(f"Wrote: {f_name}")
+    #         return f_name
+    #
+    #     # Will be io.BytesIO for zipping
+    #     print(f"ZIP generate_so_pick_sheet")
+    #     if buf is not None:
+    #         return buf.getvalue()
+    #     else:
+    #         return None
+    #
+    #
+    # def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
+    #     if out_type == "str":
+    #         return str(so_num).rjust(word_size, "0")
+    #     else:
+    #         while so_num and (so_num[0] == "0"):
+    #             so_num = so_num[1:]
+    #         return so_num
+    #
+    #
+    # def load_stockcode_movements(stockcode: str) -> pd.DataFrame:
+    #     sql = f"""
+    # SELECT
+    # 	[IMdt].[TrnDateTime],
+    # 	[IM].[EntryDate],
+    # 	[IM].[TrnTime],
+    # 	[IM].[StockCode],
+    # 	[IM].[Warehouse],
+    # 	[IM].[Job],
+    # 	[IM].[TrnQty],
+    # 	--[IM].[MovementType],
+    # 	[IM].[TrnType],
+    # 	[IM].[Reference],
+    # 	[IM].[SalesOrder]
+    # FROM
+    # 	[SysproCompanyA].[dbo].[InvMovements] [IM] WITH (NOLOCK)
+    # LEFT JOIN
+    # 	[SysproCompanyA].[dbo].[v_PROD_InvMovementsDateTime] [IMdt] WITH (NOLOCK)
+    # ON
+    # 	([IM].[StockCode] = [IMdt].[StockCode])
+    # 	AND ([IM].[Warehouse] = [IMdt].[Warehouse])
+    # 	AND ([IM].[Journal] = [IMdt].[Journal])
+    # 	AND ([IM].[JournalEntry] = [IMdt].[JournalEntry])
+    # 	AND ([IM].[TrnYear] = [IMdt].[TrnYear])
+    # 	AND ([IM].[TrnMonth] = [IMdt].[TrnMonth])
+    # 	AND ([IM].[TrnTime] = [IMdt].[TrnTime])
+    # 	AND ([IM].[TrnType] = [IMdt].[TrnType])
+    # WHERE
+    # 	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
+    # ;
+    # """
+    #     df = connect(sql)
+    #     # display_df(df, "FETCH MOVEMENTS A")
+    #     # df["MovementType"] = df["MovementType"].apply(lambda mt: "ISSUE" if mt == "I" else ("SALE" if mt == "S" else mt))
+    #     df["TrnType"] = df["TrnType"].apply(lambda mt: "ISSUE" if mt == "I" else (
+    #         "REC" if mt == "R" else ("ADJ" if mt == "A" else ("SALE" if mt == "S" else mt))))
+    #     df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
+    #     # display_df(df, "FETCH MOVEMENTS B")
+    #     return df
+    #
+    #
+    # def load_so_details(stockcode: Optional[str] = None, salesorder: Optional[str] = None) -> pd.DataFrame:
+    #     """
+    #         Load more Sales Order data than the Sales Order Pick Sheet version, but mising formatting.
+    #         Ability to search by StockCode or SalesOrder. When querying with salesorder, the data will exclude StockCode data.
+    #     """
+    #
+    #     if ((stockcode is None) and (salesorder is None)) or ((stockcode is not None) and (salesorder is not None)):
+    #         raise ValueError(f"Must pass either a SalesOrder # or a StockCode #. Got '{stockcode=}', '{salesorder=}'.")
+    #     sc_mode: bool = stockcode is not None
+    #
+    #     if sc_mode:
+    #         sql = f"""
+    #     SELECT
+    #         [SD].[SalesOrder],
+    #         [SD].[MStockCode],
+    #         [SD].[MOrderUom],
+    #         [SD].[MOrderQty],
+    #         [SD].[MShipQty],
+    #         [SD].[MBackOrderQty],
+    #         [SD].[MPrice],
+    #         [SD].[MDiscPct1],
+    #         [SD].[MDiscPct2],
+    #         [SD].[MDiscPct3],
+    #         [SD].[MCustRequestDat],
+    #         [SM].[ExchangeRate],
+    #         [SM].[OrderDate],
+    #         [SM].[OrderStatus],
+    #         [SM].[ActiveFlag],
+    #         [SM].[CancelledFlag],
+    #         [SM].[LastOperator],
+    #         [SM].[LastInvoice],
+    #         [AC].[Name] AS [Customer],
+    #         [AC].[ShortName],
+    #         [AC].[SoldToAddr1],
+    #         [AC].[SoldToAddr2],
+    #         [AC].[SoldToAddr3],
+    #         [SM].[ShipAddress1],
+    #         [SM].[ShipAddress2],
+    #         [SM].[ShipAddress3],
+    #         [AC].[Contact],
+    #         [AC].[Telephone],
+    #         [AC].[Email],
+    #         [AC].[Nationality],
+    #         [AC].[DateCustAdded],
+    #         [AC].[DateLastSale],
+    #         [AC].[DateLastPay]
+    #     FROM
+    #         [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
+    #     INNER JOIN
+    #         [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
+    #     ON
+    #         [SD].[SalesOrder] = [SM].[SalesOrder]
+    #     INNER JOIN
+    #         [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
+    #     ON
+    #         [SM].[Customer] = [AC].[Customer]
+    #     WHERE
+    # 		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
+    #         AND (LOWER([SD].[MStockCode]) = LOWER('{stockcode}'))
+    #     """
+    #     else:
+    #         sql = f"""
+    #     SELECT
+    #         [SD].[SalesOrder],
+    #         [SD].[MStockCode],
+    #         [SD].[MOrderUom],
+    #         [SD].[MOrderQty],
+    #         [SD].[MShipQty],
+    #         [SD].[MBackOrderQty],
+    #         [SD].[MPrice],
+    #         [SD].[MDiscPct1],
+    #         [SD].[MDiscPct2],
+    #         [SD].[MDiscPct3],
+    #         [SD].[MCustRequestDat],
+    #         [SM].[ExchangeRate],
+    #         [SM].[OrderDate],
+    #         [SM].[OrderStatus],
+    #         [SM].[ActiveFlag],
+    #         [SM].[CancelledFlag],
+    #         [SM].[LastOperator],
+    #         [SM].[LastInvoice],
+    #         [AC].[Name] AS [Customer],
+    #         [AC].[ShortName],
+    #         [AC].[SoldToAddr1],
+    #         [AC].[SoldToAddr2],
+    #         [AC].[SoldToAddr3],
+    #         [SM].[ShipAddress1],
+    #         [SM].[ShipAddress2],
+    #         [SM].[ShipAddress3],
+    #         [AC].[Contact],
+    #         [AC].[Telephone],
+    #         [AC].[Email],
+    #         [AC].[Nationality],
+    #         [AC].[DateCustAdded],
+    #         [AC].[DateLastSale],
+    #         [AC].[DateLastPay]
+    #     FROM
+    #         [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
+    #     INNER JOIN
+    #         [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
+    #     ON
+    #         [SD].[SalesOrder] = [SM].[SalesOrder]
+    #     INNER JOIN
+    #         [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
+    #     ON
+    #         [SM].[Customer] = [AC].[Customer]
+    #     WHERE
+    # 		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
+    #         AND (LOWER([SM].[SalesOrder]) = LOWER('{so_fmt(salesorder, out_type='str')}'))
+    #     """
+    #     df = connect(sql)
+    #     df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
+    #     return df
+    #
+    #
+    # def load_sales_order_pick_sheet(salesorder: str) -> pd.DataFrame:
+    #     """Run the SO pick sheet logic from within Access to get the formatted and focused data on Sales Order StockCode data"""
+    #     sql = f"""
+    # SELECT
+    #     [SO].[SalesOrder],
+    #     [SO].[SalesOrderLine],
+    #     [SO].[MStockCode],
+    #     [SO].[MStockDes],
+    #     [IM].[LongDesc],
+    #     [SO].[MStockingUom],
+    #     [SO].[MWarehouse],
+    #     [IW].[DefaultBin],
+    #     [SO].[MOrderQty],
+    #     [SO].[MShipQty],
+    #     [SO].[MBackOrderQty],
+    #     [SO].[MPrice],
+    #     [IW].[QtyAllocated],
+    #     [IW].[QtyAllocatedToPick],
+    #     [IW].[QtyAllocatedWip],
+    #     [IW].[QtyOnBackOrder],
+    #     [IW].[QtyOnHand],
+    #     [IW].[QtyOnOrder],
+    #     [SM].[Customer],
+    #     [SM].[CustomerName],
+    #     [SM].[ShipAddress1],
+    #     [SM].[ShipAddress2],
+    #     [SM].[ShipAddress3],
+    #     [SM].[ShipAddress3Loc],
+    #     [SM].[ShipAddress4],
+    #     [SM].[ShipAddress5],
+    #     [IW].[QtyOnHand] - (
+    #         [IW].[QtyAllocated] + [IW].[QtyAllocatedToPick] + [IW].[QtyAllocatedWip]
+    #     ) AS Available,
+    #     [SO].[MOrderQty] * (
+    #         [SO].[MPrice] - (
+    #             (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
+    #         )
+    #     ) AS Amount,
+    #     [SO].[MOrderQty] * (
+    #         (
+    #             (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
+    #         )
+    #     ) AS Discount
+    # FROM
+    #     (
+    #         (
+    #             [SysproCompanyA].[dbo].[SorDetail] AS [SO]
+    #             LEFT JOIN [SysproCompanyA].[dbo].[InvWarehouse] AS [IW] ON ([SO].[MWarehouse] = [IW].[Warehouse])
+    #             AND ([SO].[MStockCode] = [IW].[StockCode])
+    #         )
+    #         LEFT JOIN [SysproCompanyA].[dbo].[SorMaster] AS SM ON [SO].[SalesOrder] = [SM].[SalesOrder]
+    #     )
+    #     LEFT JOIN [SysproCompanyA].[dbo].[InvMaster] AS IM ON ([IM].[StockCode] = [IW].[StockCode])
+    #     AND ([IW].[Warehouse] = [IM].[WarehouseToUse])
+    # WHERE
+    #     (
+    #         [SO].[SalesOrder] = RIGHT('000000000000000' + '{so_fmt(salesorder, out_type="str")}', 15)
+    #     )
+    #     AND (ISNULL([SO].[MStockCode], '') <> '')
+    # ;
+    # """
+    #     df = connect(sql)
+    #     df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
+    #     return df
+    #
+    #
+    # df_sales_order_pick_sheets = load_sales_order_pick_sheet(115601)
+    #
+    # lst_pdfs_bytes = []
+    # for so in df_sales_order_pick_sheets["SalesOrder"].dropna().unique():
+    #     f_name = f"SOPickSheet_{so}.pdf"
+    #     lst_pdfs_bytes.append((
+    #         f_name,
+    #         generate_so_pick_sheet(
+    #             df_sales_order_pick_sheets[df_sales_order_pick_sheets["SalesOrder"] == so],
+    #             as_zip=False
+    #         )
+    #     ))
+    # # zip_bytes = build_zip_bytes(lst_pdfs_bytes)
+    # #
+    # # st.download_button(
+    # #     "Download Sales Order Pick Sheets",
+    # #     data=zip_bytes,
+    # #     file_name=f"reports_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.zip",
+    # #     mime="application/zip",
+    # # )
+
+    from dataframe_utility import pd, random_df
+    from utility import money
     from typing import Literal
+    import os
 
-    # report_file_name: str = "demo_report.pdf"
-    # report_title: str = "Demo Report"
-    # report_subtitle: str = "ReportLab skeleton"
-    # report_author: str = "Avery Briggs"
-    #
-    # theme = PDFTheme(page_size=LETTER)
-    # meta = PDFMeta(
-    #     title=report_title,
-    #     subtitle=report_subtitle,
-    #     author=report_author,
-    # )
-    # styles = build_styles(theme)
-    #
-    # df = pd.DataFrame({
-    #     "Item": ["A", "B", "C"],
-    #     "Qty": [10, 25, 7],
-    #     "Value": [1234.5, 9876.0, 50.25],
-    # })
-    #
-    # story = []
-    # story += [
-    #     h1("Demo Report", styles),
-    #     p("This is a quick demo of the skeleton.", styles),
-    #     vspace(10)
-    # ]
-    #
-    # # TOC (optional) — headings added after it will populate it
-    # story += toc(styles)
-    #
-    # story += [h1("Section 1", styles), p("Some paragraph text.", styles)]
-    # story += [h2("A table from a DataFrame", styles)]
-    # story += [df_table(df, theme, styles, number_format={"Value": "{:,.2f}"})]
-    # story += [vspace(12)]
-    #
-    # # If you have a matplotlib chart saved as PNG:
-    # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
-    # # story += [h2("A figure", styles)]
-    # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
-    #
-    # out = build_pdf(report_file_name, story, theme=theme, meta=meta)
-    # print(f"Wrote: {out.resolve()}")
+    def test_0():
+        df_jerseys = random_df(
+            n_rows=125,
+            n_columns={
+                "ID": "int",
+                "Order Date": "date",
+                "Receive Date": "date",
+                "Open Date": "date",
+                "Jersey": "str",
+                "Price": "float"
+            },
+            index_cols="Jersey",
+            auto_number=[0, 2],
+            min_random_float=75,
+            max_random_float=500
+        )
+        print(f"df_jerseys A")
+        print(df_jerseys)
+        df_jerseys["Price Per Day"] = df_jerseys["Price"] / (datetime.today() - df_jerseys["Order Date"]).dt.days
+        print(f"df_jerseys B")
+        print(df_jerseys)
 
-    def generate_so_pick_sheet(df_so_pick_sheet: pd.DataFrame, as_zip: bool = False):
-        df_w = df_so_pick_sheet.copy()
+        unique_jerseys: list = df_jerseys["Jersey"].unique().tolist()
 
-        if len(df_w["SalesOrder"].dropna().unique()) != 1:
-            raise ValueError(f"Cannot prepare a Sales Order Pick Sheet with combined orders.")
+        df_player_jerseys = random_df(
+            n_rows=len(unique_jerseys),
+            n_columns=["ID", "Jersey"],
+            defaults={"Jersey": unique_jerseys},
+            index_cols=["Jersey"],
+            auto_number=["ID"]
+        )
+        print(df_player_jerseys)
 
-        so = df_w.loc[0, "SalesOrder"]
-        df_stock_movements = load_stockcode_movements(so)
-        cust_name = df_w.loc[0, "CustomerName"]
-        ship_addr_0 = df_w.loc[0, "ShipAddress1"]
-        ship_addr_1 = df_w.loc[0, "ShipAddress2"]
-        ship_addr_2 = df_w.loc[0, "ShipAddress3"]
+        df_j_pj = df_jerseys.merge(
+            df_player_jerseys,
+            left_on="Jersey",
+            right_on="Jersey",
+            suffixes=("_jersey", "_player_jersey"),
+            how="inner",
+        )
+        print(df_j_pj)
 
-        df_w.sort_values("SalesOrderLine", inplace=True)
-        table_cols = {
-            "MOrderQty": "ORD",
-            "MBackOrderQty": "B/O",
-            "MShipQty": "SHP",
-            "MStockingUom": "UOM",
-            "MStockCode": "STOCK",
-            "MStockDes": "DESC",
-            "LongDesc": "LONG DESC",
-            "MPrice": "PRICE",
-            "Discount": "DISC",
-            "Amount": "TOTAL",
-            "QtyOnHand": "ON HAND",
-            "QtyOnOrder": "ON ORDER",
+        datet: datetime = datetime.now()
+        date_: date = datet.date()
+        datet_str: str = f"{datet:%Y-%m-%d %H:%M:%S}"
+        date_str: str = f"{date_:%Y-%m-%d}"
+        output_folder: str = r"C:\Users\abrig\Documents\Coding_Practice\Python\Resource\Tests\ReportLab"
+        if not os.path.exists(output_folder):
+            output_folder = r"C:\Users\abriggs\Documents\Coding_Practice\Python\Resource\Tests\ReportLab"
+        output_filename: str = f"reportlab_test{date_str}.pdf"
 
-            "StockCode": "STOCK",
-            "TrnDateTime": "DATE",
-            "Job": "WO",
-            "TrnType": "EVENT",
-            "Reference": "REF",
-            "SalesOrder": "SO",
-        }
-        df_part_data = df_w[[tc for tc in table_cols if tc in df_w.columns]]
-        df_part_data.rename(columns=table_cols, inplace=True)
+        # ********************************************************************
+        report_file_name: str = os.path.join(output_folder, output_filename)
+        report_author: str = "Avery Briggs"
+        pdf_header: str = "HEADER"
+        # ********************************************************************
 
-        report_file_name: str = f"so_pick_sheet_{so}_{datetime.now():%Y-%m-%d_%H%M%S}.pdf"
-        report_title: str = f"Sales Order Pick Sheet"
-        report_subtitle: str = f"SO# {so}"
-        # report_author: str = f"{user}"
-        report_author: str = f"abriggs"
+        top_level: bool = True
+        mode: Literal["due", "received"] = "due"
+
+        show_cols: dict = None
+        if mode == "received":
+            show_cols["MOrigDueDate"] = "Received Date"
+
+        report_title: str = f"Purchase Order Due Date Report"
+        if mode == "received":
+            report_title = report_title.replace("Due Date", "Received Date")
+        report_subtitle: str = f"Generated PDF: {datetime.now():%Y-%m-%d %H:%M:%S}"
 
         theme = PDFTheme(
-            page_size=landscape(LETTER),
-            margin_left=0.35*inch,
-            margin_right=0.35*inch,
-            margin_top=0.40*inch,
-            margin_bottom=0.40*inch,
-            header_height=0.25*inch,
-            footer_height=0.25*inch,
-            table_header_bg=colors.HexColor("#ADADAD")
+            page_size=landscape(LETTER)
         )
         meta = PDFMeta(
             title=report_title,
             subtitle=report_subtitle,
-            author=report_author
+            author=report_author,
         )
         styles = build_styles(theme)
 
@@ -1197,404 +1690,75 @@ if __name__ == "__main__":
             story=None,
             theme=theme,
             meta=meta,
-            as_zip=as_zip
+            as_zip=False
         )
         buf = out
-        add_grid_template(
-            doc,
-            theme,
-            template_id="dash",
-            height=0.8,
-            rows=5,
-            cols=3,
-            gutter=0.05*inch,
-            merged_cells=[
-                [1, 0, 1, 3],
-                [2, 1, 1, 2],
-                [3, 0, 1, 3],
-                [4, 1, 1, 2]
-            ]
-        )
-        doc._firstPageTemplateIndex = next(
-            i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
-        )
-
         story = []
-        # story += [NextPageTemplate("dash")]
-        # story += [NextPageTemplate("dash"), PageBreak()]
+        if mode == "received":
+            pdf_header = pdf_header.replace("Due Date", "Received")
+
+        # add_grid_template(
+        #     doc,
+        #     theme,
+        #     template_id="dash",
+        #     rows=df_pos_in_range.shape[0] + 1,
+        #     cols=1
+        #     # ,
+        #     # merged_cells=[(0, 0, 1, 2)]
+        # )
+        # add_grid_template(doc, theme, template_id="dash", rows=1, cols=1)
+
+        story += [
+            h3(pdf_header, styles)
+        ]
 
         # cell 0, 0
         story += [
-            h3("Picked By:", styles),
-            h3("Picked Date:", styles),
-            h3("Ship Date:", styles),
-            FrameBreak()
+            # rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
+            # rlu.FrameBreak(),
+            df_table(
+                df=df_jerseys,
+                theme=theme,
+                styles=styles,
+                target_width=doc.width,
+                number_format={
+                    # show_cols["MPrice"]: "$ {:,.2f}"
+                    "Price Per Day": lambda x: money(x),
+                    "Price": lambda x: money(x)
+                },
+                header_align="CENTER"
+                ,
+                # col_align={
+                #     show_cols["QtyOutstanding"]: "RIGHT",
+                #     show_cols["MOrderQty"]: "RIGHT",
+                #     show_cols["MReceivedQty"]: "RIGHT",
+                #     show_cols["TPrice"]: "RIGHT",
+                #     show_cols["PurchaseOrder"]: "LEFT",
+                #     show_cols["MStockCode"]: "LEFT",
+                #     show_cols["MOrigDueDate"]: "CENTER"
+                # }
+            )
         ]
 
-        # cell 0, 1
-        story += [
-            FrameBreak()
-        ]
+        # # # TOC (optional) â€” headings added after it will populate it
+        # # story += rlu.toc(styles)
+        #
+        # story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+        # story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+        # story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+        # story += [rlu.vspace(12)]
+        #
+        # # If you have a matplotlib chart saved as PNG:
+        # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+        # # story += [h2("A figure", styles)]
+        # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
 
-        # cell 0, 2
-        story += [
-            h3(f"{cust_name}", styles),
-            h3(f"{ship_addr_0}", styles),
-            h3(f"{ship_addr_1}", styles),
-            h3(f"{ship_addr_2}", styles),
-            FrameBreak()
-        ]
-
-        # # cell 1, 0
-        # story += [
-        #     df_table(
-        #         df_part_data,
-        #         theme,
-        #         styles,
-        #         number_format={"Value": "{:,.2f}"},
-        #         font_size=7.0,
-        #         pad_x=1.5,
-        #         pad_y=1.8,
-        #         truncate_columns={"LONG DESC", "DESC"}
-        #     )
-        # ]
-
-        available_w = doc.width  # or frame width if you’re in a grid cell
-
-        def calc_col_widths(df, t_w):
-            col_widths = []
-            for col in df.columns:
-                if col in {"QTY ORD", "QTY B/O", "QTY SHP"}:
-                    col_widths.append(0.55 * inch)
-                elif col in {"UOM"}:
-                    col_widths.append(0.45 * inch)
-                elif col in {"PRICE", "TOTAL", "ON HAND", "ON ORDER"}:
-                    col_widths.append(0.70 * inch)
-                elif col in {"STOCK"}:
-                    col_widths.append(0.90 * inch)
-                else:
-                    col_widths.append(None)
-
-            # distribute remaining width among None columns
-            fixed = sum(w for w in col_widths if w is not None)
-            flex_cols = [i for i, w in enumerate(col_widths) if w is None]
-            flex_w = max(0, (t_w - fixed) / max(1, len(flex_cols)))
-            for i in flex_cols:
-                col_widths[i] = flex_w
-
-            return col_widths
-
-        col_widths_a = calc_col_widths(df_part_data, available_w)
-
-        print(df_part_data.columns)
-        for i, row in df_part_data.iterrows():
-            df_b = load_stockcode_movements(row["STOCK"]).sort_values("TrnDateTime", ascending=False).head(3)
-            df_b = df_b[[tc for tc in table_cols if tc in df_b.columns]]
-            df_b = df_b.rename(columns={c: table_cols[c] for c in table_cols if c in df_b.columns})
-            col_widths_b = calc_col_widths(df_b, available_w * 2 / 3)
-            story += [
-                df_table(
-                    # pd.DataFrame(row),
-                    # pd.DataFrame(df_part_data.loc[i, df_part_data.columns]),
-                    # df_part_data.loc[i, df_part_data.columns],
-                    # pd.DataFrame(df_part_data.loc[i, list(df_part_data.columns)].transpose(), columns=df_part_data.columns),
-                    # pd.DataFrame(df_part_data.iloc[i].transpose(), columns=df_part_data.columns),
-                    # pd.DataFrame(df_part_data.iloc[i].transpose()),
-                    pd.DataFrame(df_part_data.loc[i].transpose()).transpose(),
-                    theme,
-                    styles,
-                    col_widths=col_widths_a,
-                    number_format={"Value": "{:,.2f}"},
-                    font_size=7.0,
-                    pad_x=0,
-                    pad_y=0,
-                    truncate_columns={"LONG DESC", "DESC"}
-                ),
-                # vspace(1),
-                FrameBreak(),
-                FrameBreak(),
-                df_table(
-                    # pd.DataFrame(row),
-                    # pd.DataFrame(df_part_data.loc[i, df_part_data.columns]),
-                    # df_part_data.loc[i, df_part_data.columns],
-                    # pd.DataFrame(df_part_data.loc[i, list(df_part_data.columns)].transpose(), columns=df_part_data.columns),
-                    # pd.DataFrame(df_part_data.iloc[i].transpose(), columns=df_part_data.columns),
-                    # pd.DataFrame(df_part_data.iloc[i].transpose()),
-                    df_b,
-                    theme,
-                    styles,
-                    col_widths=col_widths_b,
-                    number_format={"Value": "{:,.2f}"},
-                    font_size=7.0,
-                    pad_x=0,
-                    pad_y=0,
-                    truncate_columns={"LONG DESC", "DESC"}
-                ),
-                FrameBreak()
-            ]
+        # out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
 
         doc.build(story)
-        if (not as_zip) and out:
-            f_name = out.resolve()
-            print(f"Wrote: {f_name}")
-            return f_name
-
-        # Will be io.BytesIO for zipping
-        print(f"ZIP generate_so_pick_sheet")
-        if buf is not None:
-            return buf.getvalue()
-        else:
-            return None
+        f_name = out.resolve()
+        print(f"Wrote: {f_name}")
+        return f_name
 
 
-    def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
-        if out_type == "str":
-            return str(so_num).rjust(word_size, "0")
-        else:
-            while so_num and (so_num[0] == "0"):
-                so_num = so_num[1:]
-            return so_num
-
-
-    def load_stockcode_movements(stockcode: str) -> pd.DataFrame:
-        sql = f"""
-    SELECT
-    	[IMdt].[TrnDateTime],
-    	[IM].[EntryDate],
-    	[IM].[TrnTime],
-    	[IM].[StockCode],
-    	[IM].[Warehouse],
-    	[IM].[Job],
-    	[IM].[TrnQty],
-    	--[IM].[MovementType],
-    	[IM].[TrnType],
-    	[IM].[Reference],
-    	[IM].[SalesOrder]
-    FROM
-    	[SysproCompanyA].[dbo].[InvMovements] [IM] WITH (NOLOCK)
-    LEFT JOIN
-    	[SysproCompanyA].[dbo].[v_PROD_InvMovementsDateTime] [IMdt] WITH (NOLOCK)
-    ON
-    	([IM].[StockCode] = [IMdt].[StockCode])
-    	AND ([IM].[Warehouse] = [IMdt].[Warehouse])
-    	AND ([IM].[Journal] = [IMdt].[Journal])
-    	AND ([IM].[JournalEntry] = [IMdt].[JournalEntry])
-    	AND ([IM].[TrnYear] = [IMdt].[TrnYear])
-    	AND ([IM].[TrnMonth] = [IMdt].[TrnMonth])
-    	AND ([IM].[TrnTime] = [IMdt].[TrnTime])
-    	AND ([IM].[TrnType] = [IMdt].[TrnType])
-    WHERE
-    	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
-    ;
-    """
-        df = connect(sql)
-        # display_df(df, "FETCH MOVEMENTS A")
-        # df["MovementType"] = df["MovementType"].apply(lambda mt: "ISSUE" if mt == "I" else ("SALE" if mt == "S" else mt))
-        df["TrnType"] = df["TrnType"].apply(lambda mt: "ISSUE" if mt == "I" else (
-            "REC" if mt == "R" else ("ADJ" if mt == "A" else ("SALE" if mt == "S" else mt))))
-        df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, "int"))
-        # display_df(df, "FETCH MOVEMENTS B")
-        return df
-
-
-    def load_so_details(stockcode: Optional[str] = None, salesorder: Optional[str] = None) -> pd.DataFrame:
-        """
-            Load more Sales Order data than the Sales Order Pick Sheet version, but mising formatting.
-            Ability to search by StockCode or SalesOrder. When querying with salesorder, the data will exclude StockCode data.
-        """
-
-        if ((stockcode is None) and (salesorder is None)) or ((stockcode is not None) and (salesorder is not None)):
-            raise ValueError(f"Must pass either a SalesOrder # or a StockCode #. Got '{stockcode=}', '{salesorder=}'.")
-        sc_mode: bool = stockcode is not None
-
-        if sc_mode:
-            sql = f"""
-        SELECT
-            [SD].[SalesOrder],
-            [SD].[MStockCode],
-            [SD].[MOrderUom],
-            [SD].[MOrderQty],
-            [SD].[MShipQty],
-            [SD].[MBackOrderQty],
-            [SD].[MPrice],
-            [SD].[MDiscPct1],
-            [SD].[MDiscPct2],
-            [SD].[MDiscPct3],
-            [SD].[MCustRequestDat],
-            [SM].[ExchangeRate],
-            [SM].[OrderDate],
-            [SM].[OrderStatus],
-            [SM].[ActiveFlag],
-            [SM].[CancelledFlag],
-            [SM].[LastOperator],
-            [SM].[LastInvoice],
-            [AC].[Name] AS [Customer],
-            [AC].[ShortName],
-            [AC].[SoldToAddr1],
-            [AC].[SoldToAddr2],
-            [AC].[SoldToAddr3],
-            [SM].[ShipAddress1],
-            [SM].[ShipAddress2],
-            [SM].[ShipAddress3],
-            [AC].[Contact],
-            [AC].[Telephone],
-            [AC].[Email],
-            [AC].[Nationality],
-            [AC].[DateCustAdded],
-            [AC].[DateLastSale],
-            [AC].[DateLastPay]
-        FROM
-            [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
-        INNER JOIN
-            [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
-        ON
-            [SD].[SalesOrder] = [SM].[SalesOrder]
-        INNER JOIN
-            [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
-        ON
-            [SM].[Customer] = [AC].[Customer]
-        WHERE
-    		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
-            AND (LOWER([SD].[MStockCode]) = LOWER('{stockcode}'))
-        """
-        else:
-            sql = f"""
-        SELECT
-            [SD].[SalesOrder],
-            [SD].[MStockCode],
-            [SD].[MOrderUom],
-            [SD].[MOrderQty],
-            [SD].[MShipQty],
-            [SD].[MBackOrderQty],
-            [SD].[MPrice],
-            [SD].[MDiscPct1],
-            [SD].[MDiscPct2],
-            [SD].[MDiscPct3],
-            [SD].[MCustRequestDat],
-            [SM].[ExchangeRate],
-            [SM].[OrderDate],
-            [SM].[OrderStatus],
-            [SM].[ActiveFlag],
-            [SM].[CancelledFlag],
-            [SM].[LastOperator],
-            [SM].[LastInvoice],
-            [AC].[Name] AS [Customer],
-            [AC].[ShortName],
-            [AC].[SoldToAddr1],
-            [AC].[SoldToAddr2],
-            [AC].[SoldToAddr3],
-            [SM].[ShipAddress1],
-            [SM].[ShipAddress2],
-            [SM].[ShipAddress3],
-            [AC].[Contact],
-            [AC].[Telephone],
-            [AC].[Email],
-            [AC].[Nationality],
-            [AC].[DateCustAdded],
-            [AC].[DateLastSale],
-            [AC].[DateLastPay]
-        FROM
-            [SysproCompanyA].[dbo].[SorDetail] [SD] WITH (NOLOCK)
-        INNER JOIN
-            [SysproCompanyA].[dbo].[SorMaster] [SM] WITH (NOLOCK)
-        ON
-            [SD].[SalesOrder] = [SM].[SalesOrder]
-        INNER JOIN
-            [SysproCompanyA].[dbo].[ArCustomer] [AC] WITH (NOLOCK)
-        ON
-            [SM].[Customer] = [AC].[Customer]
-        WHERE
-    		(LTRIM(RTRIM(ISNULL([SD].[MStockCode], ''))) <> '')
-            AND (LOWER([SM].[SalesOrder]) = LOWER('{so_fmt(salesorder, out_type='str')}'))
-        """
-        df = connect(sql)
-        df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
-        return df
-
-
-    def load_sales_order_pick_sheet(salesorder: str) -> pd.DataFrame:
-        """Run the SO pick sheet logic from within Access to get the formatted and focused data on Sales Order StockCode data"""
-        sql = f"""
-    SELECT
-        [SO].[SalesOrder],
-        [SO].[SalesOrderLine],
-        [SO].[MStockCode],
-        [SO].[MStockDes],
-        [IM].[LongDesc],
-        [SO].[MStockingUom],
-        [SO].[MWarehouse],
-        [IW].[DefaultBin],
-        [SO].[MOrderQty],
-        [SO].[MShipQty],
-        [SO].[MBackOrderQty],
-        [SO].[MPrice],
-        [IW].[QtyAllocated],
-        [IW].[QtyAllocatedToPick],
-        [IW].[QtyAllocatedWip],
-        [IW].[QtyOnBackOrder],
-        [IW].[QtyOnHand],
-        [IW].[QtyOnOrder],
-        [SM].[Customer],
-        [SM].[CustomerName],
-        [SM].[ShipAddress1],
-        [SM].[ShipAddress2],
-        [SM].[ShipAddress3],
-        [SM].[ShipAddress3Loc],
-        [SM].[ShipAddress4],
-        [SM].[ShipAddress5],
-        [IW].[QtyOnHand] - (
-            [IW].[QtyAllocated] + [IW].[QtyAllocatedToPick] + [IW].[QtyAllocatedWip]
-        ) AS Available,
-        [SO].[MOrderQty] * (
-            [SO].[MPrice] - (
-                (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
-            )
-        ) AS Amount,
-        [SO].[MOrderQty] * (
-            (
-                (([SO].[MPrice] * ([SO].[MDiscPct1] / 100))) + [SO].[MDiscValue]
-            )
-        ) AS Discount
-    FROM
-        (
-            (
-                [SysproCompanyA].[dbo].[SorDetail] AS [SO]
-                LEFT JOIN [SysproCompanyA].[dbo].[InvWarehouse] AS [IW] ON ([SO].[MWarehouse] = [IW].[Warehouse])
-                AND ([SO].[MStockCode] = [IW].[StockCode])
-            )
-            LEFT JOIN [SysproCompanyA].[dbo].[SorMaster] AS SM ON [SO].[SalesOrder] = [SM].[SalesOrder]
-        )
-        LEFT JOIN [SysproCompanyA].[dbo].[InvMaster] AS IM ON ([IM].[StockCode] = [IW].[StockCode])
-        AND ([IW].[Warehouse] = [IM].[WarehouseToUse])
-    WHERE
-        (
-            [SO].[SalesOrder] = RIGHT('000000000000000' + '{so_fmt(salesorder, out_type="str")}', 15)
-        )
-        AND (ISNULL([SO].[MStockCode], '') <> '')
-    ;
-    """
-        df = connect(sql)
-        df["SalesOrder"] = df["SalesOrder"].apply(lambda so: so_fmt(so, out_type="int"))
-        return df
-
-
-    df_sales_order_pick_sheets = load_sales_order_pick_sheet(115601)
-
-    lst_pdfs_bytes = []
-    for so in df_sales_order_pick_sheets["SalesOrder"].dropna().unique():
-        f_name = f"SOPickSheet_{so}.pdf"
-        lst_pdfs_bytes.append((
-            f_name,
-            generate_so_pick_sheet(
-                df_sales_order_pick_sheets[df_sales_order_pick_sheets["SalesOrder"] == so],
-                as_zip=False
-            )
-        ))
-    # zip_bytes = build_zip_bytes(lst_pdfs_bytes)
-    #
-    # st.download_button(
-    #     "Download Sales Order Pick Sheets",
-    #     data=zip_bytes,
-    #     file_name=f"reports_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.zip",
-    #     mime="application/zip",
-    # )
+    test_0()
