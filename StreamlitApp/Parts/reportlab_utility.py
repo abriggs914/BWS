@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import LETTER, A4, portrait, landscape
+from reportlab.lib.pagesizes import LETTER, A4, portrait, landscape, letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -1620,11 +1620,15 @@ if __name__ == "__main__":
             index_cols="Jersey",
             auto_number=[0, 2],
             min_random_float=75,
-            max_random_float=500
+            max_random_float=500,
+            max_random_date=datetime.now().date()
         )
         print(f"df_jerseys A")
         print(df_jerseys)
-        df_jerseys["Price Per Day"] = df_jerseys["Price"] / (datetime.today() - df_jerseys["Order Date"]).dt.days
+        df_jerseys_w = df_jerseys.copy()
+        df_jerseys_w["Days_Ord_Now"] = datetime.today().date() - df_jerseys_w["Order Date"]
+        df_jerseys_w["Days_Ord_Now"] = df_jerseys_w["Days_Ord_Now"].apply(lambda x: x.days)
+        df_jerseys["Price Per Day"] = df_jerseys_w["Price"] / df_jerseys_w["Days_Ord_Now"]
         print(f"df_jerseys B")
         print(df_jerseys)
 

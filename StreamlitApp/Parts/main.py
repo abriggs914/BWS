@@ -4710,102 +4710,347 @@ elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mo
 # elif pills_search_mode == op_search_mode_day_totals:
 elif (user in admin_test_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_testing)):
 
-	cols_maps = pills(
-		label="Warehouse",
-		options=["Hawkins", "Montana"],
-		key="key_pills_warehouse_view_testing"
+	cols_testing = pills(
+		label="Testing Mode",
+		options=["Warehouse Visualization Testing", "Other"],
+		key="key_pills_testing_mode"
 	)
 
-	st.write(f"{cols_maps=}")
-	st.write(f"{cols_maps==0}")
-	st.write(f"{cols_maps==1}")
-	if cols_maps == "Hawkins":
-		df_data = load_layout_data(building="hawkins")
-		df_layout = df_data["Layout"]
-		df_legend = df_data["Legend"]
-		df_sections = df_data["ShelfSections"]
-		df_shelves = df_data["Shelves"]
-		# df_layout = pd.DataFrame({
-		# 	"A": [None, "A", None, None, None, None, None, None, None, None],
-		# 	"B": [None, None, None, None, None, None, None, None, None, None],
-		# 	"C": [None, "A", "A", None, None, None, None, None, None, None],
-		# 	"D": [None, None, None, None, None, None, None, None, None, None],
-		# 	"E": [None, "A", None, None, None, None, None, None, None, None]
-		# })
-		deg_rot = 0
+	if cols_testing == "Warehouse Visualization Testing":
 
-		bg_map = build_legend_bg_map(df_legend)
-
-		img0 = layout_to_rgb_image(df_layout, bg_map)
-		H, W = img0.shape[:2]
-		st.session_state.update({
-			"hawkins_img_w": W,
-			"hawkins_img_h": H
-		})
-
-		img = rotate_img(img0, deg_rot)
-		df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
-
-		print("pre build_plotly_map")
-		st.write("pre build_plotly_map")
-
-		fig_hawkins = build_plotly_map(
-			img=img,
-			df_sections=df_sections_plot,
-			bg_map=bg_map,
-			rotation_deg=deg_rot,
-			show_sections=True,
-			# selected_section_id=st.session_state.get(k_selected_section_id),
-			title="Hawkins"
+		cols_maps = pills(
+			label="Warehouse",
+			options=["Hawkins", "Montana"],
+			key="key_pills_warehouse_view_testing"
 		)
-		print("post build_plotly_map")
-		st.write("post build_plotly_map")
 
-		st.plotly_chart(fig_hawkins)
+		st.write(f"{cols_maps=}")
+		st.write(f"{cols_maps==0}")
+		st.write(f"{cols_maps==1}")
+		if cols_maps == "Hawkins":
+			df_data = load_layout_data(building="hawkins")
+			df_layout = df_data["Layout"]
+			df_legend = df_data["Legend"]
+			df_sections = df_data["ShelfSections"]
+			df_shelves = df_data["Shelves"]
+			# df_layout = pd.DataFrame({
+			# 	"A": [None, "A", None, None, None, None, None, None, None, None],
+			# 	"B": [None, None, None, None, None, None, None, None, None, None],
+			# 	"C": [None, "A", "A", None, None, None, None, None, None, None],
+			# 	"D": [None, None, None, None, None, None, None, None, None, None],
+			# 	"E": [None, "A", None, None, None, None, None, None, None, None]
+			# })
+			deg_rot = 0
+
+			bg_map = build_legend_bg_map(df_legend)
+
+			img0 = layout_to_rgb_image(df_layout, bg_map)
+			H, W = img0.shape[:2]
+			st.session_state.update({
+				"hawkins_img_w": W,
+				"hawkins_img_h": H
+			})
+
+			img = rotate_img(img0, deg_rot)
+			df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
+
+			print("pre build_plotly_map")
+			st.write("pre build_plotly_map")
+
+			fig_hawkins = build_plotly_map(
+				img=img,
+				df_sections=df_sections_plot,
+				bg_map=bg_map,
+				rotation_deg=deg_rot,
+				show_sections=True,
+				# selected_section_id=st.session_state.get(k_selected_section_id),
+				title="Hawkins"
+			)
+			print("post build_plotly_map")
+			st.write("post build_plotly_map")
+
+			st.plotly_chart(fig_hawkins)
+
+		else:
+			df_data = load_layout_data(building="montana")
+			df_layout = df_data["Layout"]
+			df_legend = df_data["Legend"]
+			df_sections = df_data["ShelfSections"]
+			df_shelves = df_data["Shelves"]
+			# df_layout = pd.DataFrame({
+			# 	"A": [None, "A", None, None, None, None, None, None, None, None],
+			# 	"B": [None, None, None, None, None, None, None, None, None, None],
+			# 	"C": [None, "A", "A", None, None, None, None, None, None, None],
+			# 	"D": [None, None, None, None, None, None, None, None, None, None],
+			# 	"E": [None, "A", None, None, None, None, None, None, None, None]
+			# })
+			deg_rot = 0
+
+			bg_map = build_legend_bg_map(df_legend)
+
+			img0 = layout_to_rgb_image(df_layout, bg_map)
+			H, W = img0.shape[:2]
+			st.session_state.update({
+				"hawkins_img_w": W,
+				"hawkins_img_h": H
+			})
+
+			img = rotate_img(img0, deg_rot)
+			df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
+
+			print("pre build_plotly_map")
+			st.write("pre build_plotly_map")
+
+			fig_montana = build_plotly_map(
+				img=img,
+				df_sections=df_sections_plot,
+				bg_map=bg_map,
+				rotation_deg=deg_rot,
+				show_sections=True,
+				# selected_section_id=st.session_state.get(k_selected_section_id),
+				title="Montana"
+			)
+			print("post build_plotly_map")
+			st.write("post build_plotly_map")
+
+			st.plotly_chart(fig_montana)
 
 	else:
-		df_data = load_layout_data(building="montana")
-		df_layout = df_data["Layout"]
-		df_legend = df_data["Legend"]
-		df_sections = df_data["ShelfSections"]
-		df_shelves = df_data["Shelves"]
-		# df_layout = pd.DataFrame({
-		# 	"A": [None, "A", None, None, None, None, None, None, None, None],
-		# 	"B": [None, None, None, None, None, None, None, None, None, None],
-		# 	"C": [None, "A", "A", None, None, None, None, None, None, None],
-		# 	"D": [None, None, None, None, None, None, None, None, None, None],
-		# 	"E": [None, "A", None, None, None, None, None, None, None, None]
-		# })
-		deg_rot = 0
+		from dataframe_utility import random_df
+		# from utility import money
+		# from typing import Literal
+		# import os
 
-		bg_map = build_legend_bg_map(df_legend)
 
-		img0 = layout_to_rgb_image(df_layout, bg_map)
-		H, W = img0.shape[:2]
-		st.session_state.update({
-			"hawkins_img_w": W,
-			"hawkins_img_h": H
-		})
+		def test_0():
 
-		img = rotate_img(img0, deg_rot)
-		df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=deg_rot)
+			cols_results = st.columns(2)
 
-		print("pre build_plotly_map")
-		st.write("pre build_plotly_map")
+			n_rows = 125
+			df_jerseys = random_df(
+				n_rows=n_rows,
+				n_columns={
+					"ID": "int",
+					"Order Date": "date",
+					"Receive Date": "date",
+					"Open Date": "date",
+					"Jersey": "str",
+					"PlayerID": "int",
+					"Price": "float"
+				},
+				index_cols="Jersey",
+				auto_number=[0, 2],  # use autonumbering for ID and Receive Date Ensures unique values and sequential ordering
+				min_random_float=75,
+				max_random_float=500,
+				min_random_int=0,
+				max_random_int=50,
+				min_random_date=(datetime.datetime.now() + datetime.timedelta(days=-n_rows)).date(),
+				max_random_date=datetime.datetime.now().date(),
+				print_debug=True
+			)
+			with cols_results[0]:
+				display_df(
+					df_jerseys,
+					f"df_jerseys A"
+				)
+			df_jerseys_w = df_jerseys.copy()
+			df_jerseys_w["Days_Ord_Now"] = datetime.datetime.today().date() - df_jerseys_w["Order Date"]
+			df_jerseys_w["Days_Ord_Now"] = df_jerseys_w["Days_Ord_Now"].apply(lambda x: x.days)
+			df_jerseys["Price Per Day"] = df_jerseys_w["Price"] / df_jerseys_w["Days_Ord_Now"]
+			display_df(
+				df_jerseys,
+				f"df_jerseys B"
+			)
 
-		fig_montana = build_plotly_map(
-			img=img,
-			df_sections=df_sections_plot,
-			bg_map=bg_map,
-			rotation_deg=deg_rot,
-			show_sections=True,
-			# selected_section_id=st.session_state.get(k_selected_section_id),
-			title="Montana"
-		)
-		print("post build_plotly_map")
-		st.write("post build_plotly_map")
+			unique_jerseys: list = df_jerseys["Jersey"].unique().tolist()
+			unique_players: list = df_jerseys["Jersey"].unique().tolist()
 
-		st.plotly_chart(fig_montana)
+			# Prepare random Jersey dataframes
+			df_player_jerseys = random_df(
+				n_rows=len(unique_jerseys),
+				n_columns=["ID", "Jersey"],
+				defaults={"Jersey": unique_jerseys},
+				index_cols=["Jersey"],
+				auto_number=["ID"]
+			)
+			display_df(
+				df_player_jerseys,
+				"df_player_jerseys"
+			)
+
+			df_j_pj = df_jerseys.merge(
+				df_player_jerseys,
+				left_on="Jersey",
+				right_on="Jersey",
+				suffixes=("_jersey", "_player_jersey"),
+				how="inner",
+			)
+			with cols_results[1]:
+				display_df(
+					df_j_pj,
+					"df_j_pj"
+				)
+
+			datet: datetime.datetime = datetime.datetime.now()
+			date_: datetime.date = datet.date()
+			datet_str: str = f"{datet:%Y-%m-%d %H:%M:%S}"
+			date_str: str = f"{date_:%Y-%m-%d}"
+			output_folder: str = r"C:\Users\abrig\Documents\Coding_Practice\Python\Resource\Tests\ReportLab"
+			if not os.path.exists(output_folder):
+				output_folder = r"C:\Users\abriggs\Documents\Coding_Practice\Python\Resource\Tests\ReportLab"
+			output_filename: str = f"reportlab_test{date_str}.pdf"
+
+			# ********************************************************************
+			report_file_name: str = os.path.join(output_folder, output_filename)
+			report_author: str = "Avery Briggs"
+			pdf_header: str = "HEADER"
+			# ********************************************************************
+
+			top_level: bool = True
+			mode: Literal["due", "received"] = "due"
+
+			show_cols: dict = None
+			if mode == "received":
+				show_cols["MOrigDueDate"] = "Received Date"
+
+			report_title: str = f"Purchase Order Due Date Report"
+			if mode == "received":
+				report_title = report_title.replace("Due Date", "Received Date")
+			report_subtitle: str = f"Generated PDF: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}"
+
+			st.code(report_file_name)
+
+			if st.button(
+				label="Generate PDF",
+				key="testing_generate_pdf",
+			):
+				doc = rlu.SimpleDocTemplate("table_grids.pdf", pagesize=rlu.letter)
+				story = []
+
+				data = [['col_{}'.format(x) for x in range(1, 6)],
+						[str(x) for x in range(1, 6)],
+						['a', 'b', 'c', 'd', 'e']
+						]
+
+				tblstyle = rlu.TableStyle([('INNERGRID', (0, 0), (-1, -1), 0.25, rlu.colors.red),
+									   ('BOX', (0, 0), (-1, -1), 0.25, rlu.colors.black),
+									   ])
+
+				tbl = rlu.Table(data)
+				tbl.setStyle(tblstyle)
+				story.append(tbl)
+
+				story.append(rlu.Spacer(0, 25))
+
+				tbl = rlu.Table(data, style=[
+					('GRID', (0, 0), (-1, -1), 0.5, rlu.colors.blue)
+				])
+				story.append(tbl)
+
+				doc.build(story)
+
+			# theme = rlu.PDFTheme(
+				# 	page_size=rlu.landscape(rlu.LETTER)
+				# )
+				# meta = rlu.PDFMeta(
+				# 	title=report_title,
+				# 	subtitle=report_subtitle,
+				# 	author=report_author,
+				# )
+				# styles = rlu.build_styles(theme)
+				#
+				# out, doc = rlu.build_pdf(
+				# 	report_file_name,
+				# 	story=None,
+				# 	theme=theme,
+				# 	meta=meta,
+				# 	as_zip=False
+				# )
+				# buf = out
+				# story = []
+				# if mode == "received":
+				# 	pdf_header = pdf_header.replace("Due Date", "Received")
+				#
+				# # add_grid_template(
+				# #     doc,
+				# #     theme,
+				# #     template_id="dash",
+				# #     rows=df_pos_in_range.shape[0] + 1,
+				# #     cols=1
+				# #     # ,
+				# #     # merged_cells=[(0, 0, 1, 2)]
+				# # )
+				# rlu.add_grid_template(
+				# 	doc,
+				# 	theme,
+				# 	rows=2,
+				# 	cols=2,
+				# 	merged_cells=[(0, 0, 1, 2)]
+				# )
+				#
+				# story += [
+				# 	rlu.h3(pdf_header, styles)
+				# ]
+				#
+				# # cell 0, 0
+				# story += [
+				# 	# rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
+				# 	# rlu.FrameBreak(),
+				# 	rlu.df_table(
+				# 		df=df_jerseys,
+				# 		theme=theme,
+				# 		styles=styles,
+				# 		target_width=doc.width,
+				# 		number_format={
+				# 			# show_cols["MPrice"]: "$ {:,.2f}"
+				# 			"Price Per Day": lambda x: money(x),
+				# 			"Price": lambda x: money(x)
+				# 		},
+				# 		header_align="CENTER"
+				# 		,
+				# 		# col_align={
+				# 		#     show_cols["QtyOutstanding"]: "RIGHT",
+				# 		#     show_cols["MOrderQty"]: "RIGHT",
+				# 		#     show_cols["MReceivedQty"]: "RIGHT",
+				# 		#     show_cols["TPrice"]: "RIGHT",
+				# 		#     show_cols["PurchaseOrder"]: "LEFT",
+				# 		#     show_cols["MStockCode"]: "LEFT",
+				# 		#     show_cols["MOrigDueDate"]: "CENTER"
+				# 		# }
+				# 	)
+				# ]
+				#
+				# # # # TOC (optional) â€” headings added after it will populate it
+				# # # story += rlu.toc(styles)
+				# #
+				# # story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+				# # story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+				# # story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+				# # story += [rlu.vspace(12)]
+				# #
+				# # # If you have a matplotlib chart saved as PNG:
+				# # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+				# # # story += [h2("A figure", styles)]
+				# # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+				#
+				# # out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
+				#
+				# doc.build(story)
+				# f_name = out.resolve()
+				# print(f"Wrote: {f_name}")
+				# return f_name
+
+			if os.path.exists(report_file_name):
+				from streamlit_pdf_viewer import pdf_viewer
+				doc_pdf_viewer = pdf_viewer(
+					report_file_name,
+					key="testing_doc_generate_pdf",
+					pages_to_render=[0]
+				)
+			else:
+				st.info("Generate a PDF first.")
+
+		test_0()
 
 else:
 	# Single
