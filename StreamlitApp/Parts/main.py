@@ -3,7 +3,7 @@ import random
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated, get_selected_rows
 from pyodbc_connection import connect
 from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
-from datetime_utility import time_between, datetime_is_tz_aware
+from datetime_utility import time_between, datetime_is_tz_aware, is_date
 from utility import percent, money, clamp
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
@@ -185,6 +185,8 @@ SELECT
 	[IW].[Warehouse],
 	COUNT(*) AS [NumItems],
 	SUM([IW].[QtyOnHand] * [IW].[LastCostEntered]) AS [TtlItemValue],
+	MIN([IW].[DateLastPurchase]) AS  [OldestPurchasedDate],
+	MAX([IW].[DateLastPurchase]) AS  [NewestPurchasedDate],
 	(CASE WHEN 
 			(LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) = 'vmi')
 			OR (LOWER(LTRIM(RTRIM([IW].[DefaultBin]))) LIKE '%vend%')
@@ -240,7 +242,9 @@ SELECT
 	[BC1].[NumItems],
 	[BC1].[TtlItemValue],
 	[BC1].[BuildingCode],
-	[BC1].[HasMultipleBins]
+	[BC1].[HasMultipleBins],
+	[BC1].[OldestPurchasedDate],
+	[BC1].[NewestPurchasedDate]
 FROM 
 	[BinCounts] AS [BC1]
 	LEFT JOIN [BinCounts] AS [BC2]
@@ -1067,6 +1071,22 @@ ON
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
+def load_warranty_claims() -> pd.DataFrame:
+	sql = """
+	SELECT
+		[WC].[Claim Number]
+	FROM
+		[BWSdb].[dbo].[Warranty Claims] [WC]
+	GROUP BY
+		[WC].[Claim Number]
+	;
+		"""
+	df = connect(sql)
+	df["Claim Number"] = df["Claim Number"].apply(lambda cn: int(cn))
+	return df
+
+
+@st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_jobs() -> pd.DataFrame:
 	sql = """
 SELECT
@@ -1080,6 +1100,75 @@ GROUP BY
 ;
 	"""
 	return connect(sql)
+
+
+@st.cache_data(ttl=60 * 60, show_spinner=True)
+def load_warranty_data(job: Optional[int] = None, claim: Optional[int] = None) -> pd.DataFrame:
+
+	if (job is None) and (claim is None):
+		raise ValueError("Must specify either job or claim")
+
+	claim_mode: int = 0
+	if job is None:
+		# use claim
+		job = claim
+		claim_mode = 1
+
+	sql = f"""
+	DECLARE @war_wo NVARCHAR(8) = '{job}';
+	DECLARE @claim_mode BIT = {claim_mode};
+	
+	IF @claim_mode = 0 BEGIN
+		IF LEN(@war_wo) <> 8 BEGIN
+			SET @war_wo = '3' + RIGHT('00000000' + SUBSTRING(ISNULL(@war_wo, ' '), 1, (CASE WHEN LEN(ISNULL(@war_wo, ' ')) < 5 THEN LEN(ISNULL(@war_wo, ' ')) ELSE 5 END)), 7)
+		END
+	END
+		
+	SELECT
+	[WM].[Job],
+	[WM].[JobDescription],
+	--[WM].[StockCode],
+	--[WM].[StockDescription],
+	--[WM].[QtyToMake],
+	[WJM].[StockCode],
+	[WJM].[StockDescription],
+	[WJM].[QtyIssued],
+	[WJM].[QtyToIssue],
+	[WC].[Claim Date],
+	[WC].[Claim Number],
+	[WC].[BWS Invoice #],
+	[WC].[WO#],
+	[WC].[Customer],
+	[WC].[Dealer],
+	[WC].[S/N]
+	
+	--,*
+FROM
+	[BWSdb].[dbo].[Warranty Claims] [WC]
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipMaster] [WM]
+ON
+	LOWER([WM].[JobDescription]) LIKE '%' + LOWER([WC].[WO#]) + '%'
+	--AND LOWER([WM].[JobDescription]) LIKE '%' + LOWER([WC].[Claim Number]) + '%'
+LEFT JOIN
+	[SysproCompanyA].[dbo].[WipJobAllMat] [WJM]
+ON
+	--(CAST([WC].[WO#] AS NVARCHAR(MAX)) = [WJM].[Job] COLLATE DATABASE_DEFAULT)
+	--AND
+	([WM].[Job] = [WJM].[Job])
+	"""
+	if claim is None:
+		sql += """
+		WHERE
+			[WM].[Job] = @war_wo
+		"""
+	else:
+		sql += """
+		WHERE
+			[WC].[Claim Number] = @war_wo
+		"""
+	df = connect(sql)
+	return df
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
@@ -2776,6 +2865,7 @@ op_search_mode_by_bin: str = "By Bin"
 op_search_mode_by_section: str = "By Section"
 op_search_mode_by_po: str = "By PO"
 op_search_mode_by_so: str = "By SO"
+op_search_mode_by_warranty: str = "By Warranty"
 op_search_mode_by_pick_list: str = "By Pick List"
 op_search_mode_by_shopclock: str = "ShopClock",
 op_search_mode_syspro: str = "Syspro"
@@ -2789,6 +2879,7 @@ options_pills_search_mode = [
 	op_search_mode_by_section,
 	op_search_mode_by_po,
 	op_search_mode_by_so,
+	op_search_mode_by_warranty,
 	op_search_mode_by_pick_list,
 	op_search_mode_by_shopclock,
 	op_search_mode_syspro,
@@ -3508,6 +3599,35 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 		#
 		# #################################################
 
+
+		import re
+
+		_WINDOWS_RESERVED = {
+			"CON", "PRN", "AUX", "NUL",
+			*{f"COM{i}" for i in range(1, 10)},
+			*{f"LPT{i}" for i in range(1, 10)},
+		}
+
+
+		def safe_windows_filename(name: str, *, default="file") -> str:
+			# Replace invalid filename characters
+			name = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", str(name))
+			name = name.strip()  # remove leading/trailing whitespace
+			name = name.rstrip(". ")  # Windows can't create trailing dot/space
+			if not name:
+				name = default
+			# Avoid reserved device names (case-insensitive)
+			base = name.split(".")[0].upper()
+			if base in _WINDOWS_RESERVED:
+				name = f"_{name}"
+			# Optional: cap length (Explorer can choke on very long names)
+			if len(name) > 150:
+				name = name[:150]
+			return name
+
+
+
+
 		found = {}
 		for i, row in df_sales_order_pick_sheets.iterrows():
 			sc = row["MStockCode"]
@@ -3524,6 +3644,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 		cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(len(found) / cols_per_row)))]
 
 		ii = 0
+		pdfs_to_zip = []
 		for i, row in df_sales_order_pick_sheets.iterrows():
 			so = row["SalesOrder"]
 			sc = row["MStockCode"]
@@ -3536,32 +3657,139 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 						st.write(f"SO# {so}")
 						st.write(f"PART# {sc}")
 						f_name = f"{sc.replace(' ', '_')}"
+						f_bytes = None
+						f_bytes_z = None
 						if stock_pdf_listed:
+							f_bytes = open(stock_pdf_listed, "rb").read()
+							f_bytes_z = f_bytes
 							st.download_button(
 								label="download PDF as listed in Syspro?",
-								data=open(stock_pdf_listed, "rb").read(),
+								data=f_bytes,
 								file_name=f"{f_name}_syspro.pdf",
 								mime="application/pdf",
 								key=f"{f_name}_drive_0"
 							)
 						if stock_pdf_stock:
-							f_name = f"{sc.replace(' ', '_')}"
+							f_bytes = open(stock_pdf_stock, "rb").read()
+							if f_bytes_z is None:
+								# by default use the syspro version, if none, use the matching stock name file
+								f_bytes_z = f_bytes
 							st.download_button(
 								label="Download found PDF from drive?",
-								data=open(stock_pdf_stock, "rb").read(),
+								data=f_bytes,
 								file_name=f"{f_name}_found.pdf",
 								mime="application/pdf",
 								key=f"{f_name}_drive_1"
 							)
+
+						# zf_name = f"{f_name}.pdf"
+						zf_name = safe_windows_filename(f_name) + ".pdf"
+						assert isinstance(f_bytes_z, (bytes, bytearray)) and len(f_bytes_z) > 5 and f_bytes_z[:5] == b"%PDF-"
+						assert 1 == 2, "THE ZIPPING ISNT WORKING, FIX IT"
+
+						if zf_name not in [tup[0] for tup in pdfs_to_zip]:
+							if stock_pdf_listed:
+								pdfs_to_zip.append((zf_name, f_bytes_z))
+							elif stock_pdf_stock:
+								pdfs_to_zip.append((zf_name, f_bytes_z))
 					ii += 1
 
-		if stdf_sales_order_pick_sheets:
-			if stdf_sales_order_pick_sheets["selection"]:
-				if stdf_sales_order_pick_sheets["selection"]["rows"]:
-					textbox_stockcode = df_sales_order_pick_sheets.loc[
-						stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+		if pdfs_to_zip:
+			zip_bytes = rlu.build_zip_bytes(pdfs_to_zip)
+			st.download_button(
+				"Download Sales Order Pick Sheets",
+				data=zip_bytes,
+				file_name=f"reports_{datetime.datetime.now():%Y%m%d_%H%M%S}.zip",
+				mime="application/zip",
+			)
+			import zipfile
+			import io
+			zf = zipfile.ZipFile(io.BytesIO(zip_bytes))
+			bad = zf.testzip()  # returns first bad file name if CRC fails, else None
+			st.write("zip testzip():", bad)
+			st.write("zip names sample:", zf.namelist()[:20])
+
+		# if stdf_sales_order_pick_sheets:
+		# 	if stdf_sales_order_pick_sheets["selection"]:
+		# 		if stdf_sales_order_pick_sheets["selection"]["rows"]:
+		# 			textbox_stockcode = df_sales_order_pick_sheets.loc[
+		# 				stdf_sales_order_pick_sheets["selection"]["rows"][0], "MStockCode"]
+		textbox_stockcode = get_selected_rows(df_sales_order_pick_sheets, stdf_sales_order_pick_sheets, "MStockCode", 1)
+		if isinstance(textbox_stockcode, pd.DataFrame):
+			if textbox_stockcode.empty:
+				textbox_stockcode = None
+			else:
+				textbox_stockcode = textbox_stockcode.iloc[0]
+
+
+		# here
+		# buf = io.BytesIO()
 
 		st.divider()
+
+
+elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warranty):
+	# Warranty
+
+	df_jobs: pd.DataFrame = load_jobs()
+	df_war_claims: pd.DataFrame = load_warranty_claims()
+	df_war_jobs: pd.DataFrame = df_jobs[df_jobs["Job"].str[0] == "3"]
+	list_war_jobs = df_war_jobs["Job"].dropna().unique().tolist()
+	list_war_claims = df_war_claims["Claim Number"].dropna().unique().tolist()
+
+	k_pills_war_mode: str = "key_pills_war_mode"
+	st.session_state.setdefault(k_pills_war_mode, 0)
+	pills_war_mode = pills(
+		label="Mode:",
+		options=["By Claim#", "By WO#"],
+		key=k_pills_war_mode,
+		index=0
+	)
+
+	k_selectbox_war_jobs: str = "key_selectbox_war_jobs"
+	by_job: bool = True
+	if pills_war_mode == "By Claim#":
+		# By Claim#
+		by_job = False
+		selectbox_war_jobs = st.multiselect(
+			label="Select some warranty Claim#s:",
+			options=list_war_claims,
+			key=k_selectbox_war_jobs
+		)
+	else:
+		# By WO#
+		selectbox_war_jobs = st.multiselect(
+			label="Select some warranty WO#s:",
+			options=list_war_jobs,
+			key=k_selectbox_war_jobs
+		)
+
+	if selectbox_war_jobs:
+		st.write("Warranty Jobs:")
+		st.write(selectbox_war_jobs)
+
+		df_s = []
+		for i, sel_job in enumerate(selectbox_war_jobs):
+			if by_job:
+				df_s.append(load_warranty_data(job=sel_job))
+			else:
+				df_s.append(load_warranty_data(claim=sel_job))
+		if len(df_s) > 0:
+			df_war_data: pd.DataFrame = pd.concat(df_s)
+		else:
+			df_war_data: pd.DataFrame = df_s[0]
+
+		stdf_war_data = display_df_paginated(
+			df_war_data,
+			"Warranty Data for Selected Jobs:",
+			key="k_ddp_war_data",
+			selection_mode="multi-row",
+			on_select="rerun"
+		)
+
+		selected = get_selected_rows(df_war_data, stdf_war_data, "StockCode", 1)
+		if selected:
+			textbox_stockcode = selected
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick_list):
 	# Pick List
@@ -3935,7 +4163,9 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			df_bins.groupby(["ParentShelf", "Section", "Group", "IsPath"], as_index=False)
 			.agg({
 				"TtlItemValue":"sum",
-				"Shelf":lambda x: ', '.join(x)
+				"Shelf":lambda x: ', '.join(x),
+				"OldestPurchasedDate": "min",
+				"NewestPurchasedDate": "max"
 			})
 			.rename(columns={
 				"TtlItemValue": "TtlValue",
@@ -4062,39 +4292,55 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		return fig
 
 
-	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1):
+	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True):
 		fig = go.Figure()
 
 		for r in df_cells.itertuples(index=False):
 			x0, x1 = float(r.X0), float(r.X1)
 			y0, y1 = float(r.Y0), float(r.Y1)
 
-			val = float(getattr(r, plot_col, 0.0))
+			try:
+				val_raw = getattr(r, plot_col, 0.0)
+				val = float(val_raw)
+			except:
+				show_val_annotations = False
+				try:
+					min_date = df_cells[plot_col].min()
+					max_date = df_cells[plot_col].max()
+					date_diff = (max_date - min_date).days
+					isdate = is_date(val_raw)
+					if isinstance(isdate, bool):
+						if isdate:
+							isdate = datetime.datetime.strptime(val_raw, "%Y-%m-%d")
+						else:
+							raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
+					val = (isdate - min_date).days
+				except:
+					raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
+
 			t_val = val
 			val *= pillar_scale
 			z1 = np.log10(val + 1.0) if z_log else val
 
-			r_shelves_spl = r.Shelves.split(", ")
+			r_shelves_spl = list(set(r.Shelves.split(", ")))
 			df_parts_in_section: pd.DataFrame = df_parts[df_parts["DefaultBin"].isin(r_shelves_spl)]
 			avg_per_bin = t_val / len(r.Shelves)
 			avg_per_stock = t_val / df_parts_in_section.shape[0]
 
 			bins_per_row = 5
 			if r_shelves_spl:
-				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[i:i+5]) for i in range(len(r_shelves_spl))]))
+				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[bins_per_row*i:bins_per_row*(i+1)]) for i in range(math.ceil(len(r_shelves_spl) // bins_per_row) + 1)]))
 			else:
 				shelves_br = " None "
 
-			hover = (
-				f"Section: <b>{r.ParentShelf}</b><br>"
-				f"Group: <b>{r.Group}</b><br>"
-				f"Value: <b>$ {money(t_val)}</b><br>"
-				f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
-				f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
-				f"Shelves: <b>{shelves_br}</b><br>"
-				f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
-				# f"Value: <b>{val:,.2f}</b><extra></extra>"
-			)
+			hover = f"Section: <b>{r.ParentShelf}</b><br>"
+			hover += f"Group: <b>{r.Group}</b><br>"
+			if show_val_annotations:
+				hover += f"Value: <b>$ {money(t_val)}</b><br>"
+				hover += f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
+				hover += f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
+			hover += f"Shelves: <b>{shelves_br}</b><br>"
+			hover += f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
 
 			add_prism(
 				fig,
@@ -4127,7 +4373,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 	k_pills_warehouse_mode = "key_pills_warehouse_mode"
 	pills_warehouse_mode = pills(
 		label="Mode",
-		options=["Browse", "Valuation"]
+		options=["Browse", "Valuation", "Days Since Last Order"]
 	)
 
 	df_data = load_layout_data(building=radio_warehouse_building)
@@ -4136,7 +4382,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 	df_sections = df_data["ShelfSections"]
 	df_shelves = df_data["Shelves"]
 
-	if pills_warehouse_mode == "Valuation":
+	if pills_warehouse_mode in ("Valuation", "Days Since Last Order"):
 		# df_parts_in_warehouse = df_data["PartsInWarehouse"]
 
 		df_bins_sections: pd.DataFrame = df_bins.merge(
@@ -4161,18 +4407,27 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			& (df_bins_sections["TtlItemValue"] > 0)
 		]
 
-		# display_df_paginated(
-		# 	df_bins_sections,
-		# 	"df_bins",
-		# 	batch_size_options=(750, 2000, 5000),
-		# 	key=f"k_ddp_df_bins"
-		# )
+		display_df_paginated(
+			df_bins,
+			"df_bins",
+			batch_size_options=(750, 2000, 5000),
+			key=f"k_ddp_df_bins"
+		)
+
+		display_df_paginated(
+			df_bins_sections,
+			"df_bins_sections",
+			batch_size_options=(750, 2000, 5000),
+			key=f"k_ddp_df_bins_sections"
+		)
 		df_bins_by_section: pd.DataFrame = df_bins_sections.groupby(
 			by=["ParentShelf", "Section", "Group"]
 		).agg({
 			"TtlItemValue": "sum",
 			"ID_x": "count",
-			'Shelf': lambda x: ', '.join(x)
+			'Shelf': lambda x: ', '.join(x),
+			"OldestPurchasedDate": "min",
+			"NewestPurchasedDate": "max"
 		}).rename(
 			columns={
 				"TtlItemValue": "$ Total",
@@ -4198,6 +4453,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		# df_bins must be available here
 		df_sec_val: pd.DataFrame = build_section_valuation_geometry(df_sections, df_bins_sections, map_all_shelves=map_all_shelves)
 
+		df_sec_val["OldestPurchasedDate"] = pd.to_datetime(df_sec_val["OldestPurchasedDate"], errors="ignore").dt.date
+		df_sec_val["NewestPurchasedDate"] = pd.to_datetime(df_sec_val["NewestPurchasedDate"], errors="ignore").dt.date
+		df_sec_val["DaysSinceLastPurchase"] = datetime.datetime.today().date() - df_sec_val["NewestPurchasedDate"]
+		df_sec_val["DaysSinceLastPurchase"] = df_sec_val["DaysSinceLastPurchase"].apply(lambda x: x.days)
+
 		k_ddp_sec_val = "key_ddp_sec_val"
 		display_df_paginated(
 			df_sec_val,
@@ -4207,7 +4467,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		)
 
 		#
-		st.subheader("Inventory valuation by section (3D)")
+		st.subheader(f"Inventory {'valuation' if pills_search_mode == 'Valuation' else 'age'} by section (3D)")
 
 		k_checkbox_valuation_log = "key_checkbox_valuation_log"
 		st.session_state.setdefault(k_checkbox_valuation_log, True)
@@ -4486,7 +4746,13 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 
 		# now plot using df_plot instead of df_sec_val
 		# fig = plotly_skyscrapers(df_plot, z_log=True)
-		fig = plotly_cell_prisms(df_plot, plot_col="TtlValue", z_log=checkbox_valuation_log, pillar_scale=pillar_scale)
+		fig = plotly_cell_prisms(
+			df_plot,
+			plot_col="TtlValue" if pills_search_mode == "Valuation" else "DaysSinceLastPurchase",
+			z_log=checkbox_valuation_log,
+			pillar_scale=pillar_scale,
+			show_val_annotations=pills_search_mode == "Valuation"
+		)
 		fig = add_section_floor_outlines(fig, df_plot)
 		compass_rot = 94
 		fig = add_compass_rotated(
@@ -5430,7 +5696,11 @@ elif textbox_stockcode:
 					ttl_on_hand -= qty_reqd
 					run_ttl_on_hand -= qty_reqd
 					if ttl_on_hand >= 0:
-						if row["ActiveFlag"] == "1":
+						active = str(row["ActiveFlag"]) == "1"
+						if pd.isna(row["ActiveFlag"]) or (not str(row["ActiveFlag"]).strip()):
+							active = str(row["OrderStatus"]) == "1"
+							active = active and (qty_reqd > 0)
+						if active:
 							st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
 							if st.button(f"Go To {row['SalesOrder']}"):
 								st.session_state.update({
@@ -5705,7 +5975,7 @@ elif textbox_stockcode:
 			st.info(f"No parts found matching search criteria. Check your filters, if needed.")
 
 with cont_top_control:
-	# FINALLY create the widget, this will allow for the state to be programatically changed.
+	# FINALLY create the widget, this will allow for the state to be programmatically changed.
 
 	# st.write(f"{pills_search_mode=}")
 	# st.write(f"{st.session_state.get(k_pills_search_mode)=}")

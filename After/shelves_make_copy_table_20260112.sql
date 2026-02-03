@@ -1,7 +1,7 @@
 /****** Object:  Table [dbo].[INV_WarehouseLayout_HawkinsShelves_Copy20260112]    Script Date: 2026-01-07 12:10:32 ******/
 USE [BWSdb]
 GO
-
+/*
 SET ANSI_NULLS ON
 GO
 
@@ -88,7 +88,7 @@ SELECT
 	[ShelfRow]
 FROM
 	[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
-
+*/
 
 SELECT
 	[Active],
@@ -99,4 +99,15 @@ SELECT
 	[Shelf],
 	[ShelfRow]
 FROM
-	[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves_Copy202601121300]
+	[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+
+
+BEGIN TRAN;
+UPDATE
+	[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+SET
+	[ShelfSectionID] = 17
+WHERE
+	[Shelf] = 'B19'
+ROLLBACK;
+COMMIT;

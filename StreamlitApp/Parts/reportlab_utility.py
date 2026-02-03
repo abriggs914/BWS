@@ -948,9 +948,20 @@ def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
     zbuf = io.BytesIO()
     with zipfile.ZipFile(zbuf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
         for filename, data in named_files:
-            print(f"{filename=}: {len(data)} bytes")
+            if not isinstance(data, (bytes, bytearray)):
+                raise TypeError(f"{filename} is not bytes, got {type(data)}")
             zf.writestr(filename, data)
-    return zbuf.getvalue()
+    zbuf.seek(0)
+    return zbuf.read()
+
+
+# def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
+#     zbuf = io.BytesIO()
+#     with zipfile.ZipFile(zbuf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+#         for filename, data in named_files:
+#             print(f"{filename=}: {len(data)} bytes")
+#             zf.writestr(filename, data)
+#     return zbuf.getvalue()
 
 
 def add_grid_template(

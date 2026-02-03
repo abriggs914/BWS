@@ -18,7 +18,7 @@ SELECT TOP (1000) [ID]
   FROM [BWSdb].[dbo].[INV_WarehouseShelfSections_Hawkins]
 
 
-  SELECT TOP (1000) [ID]
+  SELECT [ID]
       ,[DateCreated]
       ,[LastModified]
       ,[Active]
@@ -29,3 +29,41 @@ SELECT TOP (1000) [ID]
       ,[Shelf]
       ,[ShelfRow]
   FROM [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+  
+  SELECT [ID]
+      ,[DateCreated]
+      ,[LastModified]
+      ,[Active]
+      ,[DateActive]
+      ,[DateInActive]
+      ,[Section]
+      ,[ShelfSectionID]
+      ,[Shelf]
+      ,[ShelfRow]
+  FROM [BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]
+	WHERE [Shelf] = 'E15'
+
+
+
+
+SELECT
+	
+      [ParentShelf]
+      ,[Section]
+      ,[Group]
+      ,[X0]
+      ,[X1]
+      ,[Y0]
+      ,[Y1]
+  FROM [BWSdb].[dbo].[INV_WarehouseShelfSections_Hawkins]
+  GROUP BY
+  
+      [ParentShelf]
+      ,[Section]
+      ,[Group]
+      ,[X0]
+      ,[X1]
+      ,[Y0]
+      ,[Y1]
+	HAVING
+		COUNT(*) > 1
