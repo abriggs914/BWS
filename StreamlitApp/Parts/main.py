@@ -13,7 +13,7 @@ from streamlit_pills import pills
 from streamlit_plotly_events import plotly_events
 from streamlit_calendar import calendar
 from typing import Literal, Optional, Any
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
@@ -22,6 +22,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
 import numpy as np
+import pdfplumber
 import datetime
 import asyncio
 import json
@@ -1284,13 +1285,19 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 				st.rerun()
 
 
-def load_path_pdf(stockcode) -> pd.DataFrame:
+def load_path_pdf(stockcode: Optional[str] = None, all_stockcodes: bool = False) -> pd.DataFrame:
+	if (stockcode is None) and (not all_stockcodes):
+		raise ValueError("'stockcode' or 'all_stockcodes' should be specified")
 	sql = f"""
 SELECT
+	[IM].[StockCode],
 	[IM].[DrawOfficeNum] AS [PDF_Listed],
 	[IM].[StockCode] AS [PDF_Stock]
 FROM
 	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
+"""
+	if not all_stockcodes:
+		sql += f"""
 WHERE
 	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
 """
@@ -1304,6 +1311,7 @@ WHERE
 			os.path.join(PATH_STOCK_PDFS, f"{str(p).removesuffix('.pdf')}.pdf") if ((not pd.isna(p)) and p) else None
 		)
 		df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
+	df = df[~pd.isna(df["PDF_Listed"]) | ~pd.isna(df["PDF_Stock"])]
 	return df
 
 
@@ -1502,6 +1510,85 @@ def prep_inv_by_bin_report(f_name: str, title: str, df: pd.DataFrame):
 	return f_name, report_file_name
 
 
+def prep_pick_list_report(report_file_name: str, title: str, date_str: str, df: pd.DataFrame):
+	report_subtitle: str = f"Generated: {date_str}"
+	report_title: str = title
+	report_author: str = f"{user}"
+
+	theme = rlu.PDFTheme(
+		page_size=rlu.landscape(rlu.LETTER),
+		margin_left=0.35 * rlu.inch,
+		margin_right=0.35 * rlu.inch,
+		margin_top=0.40 * rlu.inch,
+		margin_bottom=0.40 * rlu.inch,
+		header_height=0.25 * rlu.inch,
+		footer_height=0.25 * rlu.inch,
+		table_header_bg=rlu.colors.HexColor("#ADADAD")
+	)
+	meta = rlu.PDFMeta(
+		title=report_title,
+		subtitle=report_subtitle,
+		author=report_author
+	)
+	styles = rlu.build_styles(theme)
+
+	out, doc = rlu.build_pdf(
+		report_file_name,
+		story=None,
+		theme=theme,
+		meta=meta,
+		as_zip=False
+	)
+	buf = out
+	rlu.add_grid_template(
+		doc,
+		theme,
+		template_id="dash",
+		height=0.85,
+		rows=1,
+		cols=1,
+		gutter=0.05 * rlu.inch,
+		merged_cells=[
+			[0, 0, 1, 1]
+		]
+	)
+	doc._firstPageTemplateIndex = next(
+		i for i, t in enumerate(doc.pageTemplates) if t.id == "dash"
+	)
+
+	story = []
+
+	num_cols = [c for c in df.columns if df[c].dtype in ("int64", "float64")]
+	num_fmts = dict(zip(num_cols, ["{:,.2f}" for i in range(len(num_cols))]))
+	mon_cols = [c for c in df.columns if (df[c].dtype in ("int64", "float64")) and ("$" in c)]
+	for c in mon_cols:
+		num_fmts[c] = "$ {:,.2f}"
+
+	story += [
+		rlu.df_table(
+			df,
+			theme,
+			styles,
+			number_format=num_fmts,
+			target_width=doc.width
+		),
+		rlu.FrameBreak()
+	]
+	# print(f"out:")
+	# print(out)
+	# print(f"story:")
+	# print(story)
+	doc.build(story)
+
+	if out is not None:
+		f_name = out.resolve()
+		print(f"Wrote: {f_name}")
+	if buf is not None:
+		# return buf.getvalue()
+		return buf, report_file_name
+	return f_name, report_file_name
+
+
 @st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_layout_data(building: str = "Hawkins") -> dict[str, pd.DataFrame]:
 	# pth_layout: str = r"G:\IT\Network Port Layout\BWS\Hawkins Warehouse Layout Rev3 202601050840.xlsx"
@@ -1653,6 +1740,251 @@ def find_section_at_point(df_sections: pd.DataFrame, x: float, y: float) -> pd.S
 	hits["Area"] = (hits["X1"] - hits["X0"]) * (hits["Y1"] - hits["Y0"])
 	hits = hits.sort_values(["Area", "ID"])
 	return hits.iloc[0]
+
+
+def plotly_skyscrapers(df_sec_val, z_log=True, title="Valuation 3D"):
+	z = df_sec_val["TtlValue"].to_numpy(float)
+	z_plot = np.log10(z + 1) if z_log else z
+
+	fig = go.Figure()
+
+	for _, r in df_sec_val.iterrows():
+		z0 = 0
+		z1 = np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]
+		fig.add_trace(go.Scatter3d(
+			x=[r["cx"], r["cx"]],
+			y=[r["cy"], r["cy"]],
+			z=[z0, z1],
+			mode="lines",
+			hovertemplate=(
+				f"Section: <b>{r['Section']}</b><br>"
+				f"Value: <b>{r['TtlValue']:,.2f}</b><extra></extra>"
+			),
+			showlegend=False
+		))
+
+	fig.update_layout(
+		title=title,
+		scene=dict(
+			xaxis_title="X",
+			yaxis_title="Y",
+			zaxis_title="log10(Value+1)" if z_log else "Value",
+		),
+		margin=dict(l=0, r=0, t=40, b=0),
+	)
+	return fig
+
+
+def add_section_floor_outlines(fig: go.Figure, df_sec_geo, *, opacity=0.8, line_width=4):
+	for r in df_sec_geo.itertuples(index=False):
+		x0, x1, y0, y1 = float(r.X0), float(r.X1), float(r.Y0), float(r.Y1)
+
+		# closed loop rectangle on z=0
+		xs = [x0, x1, x1, x0, x0]
+		ys = [y0, y0, y1, y1, y0]
+		zs = [0, 0, 0, 0, 0]
+
+		fig.add_trace(go.Scatter3d(
+			x=xs, y=ys, z=zs,
+			mode="lines",
+			line=dict(width=line_width),
+			opacity=opacity,
+			hovertemplate=f"Section: <b>{getattr(r, 'Section', '')}</b><extra></extra>",
+			showlegend=False,
+		))
+	return fig
+
+
+# def add_compass(fig: go.Figure, *, x_min, x_max, y_min, y_max, z=0, size=8):
+# 	# place compass near bottom-left of the floor
+# 	base_x = x_min + (x_max - x_min) * 0.08
+# 	base_y = y_min + (y_max - y_min) * 0.08
+#
+# 	# N arrow (+Y)
+# 	fig.add_trace(go.Scatter3d(
+# 		x=[base_x, base_x],
+# 		y=[base_y, base_y + size],
+# 		z=[z, z],
+# 		mode="lines",
+# 		line=dict(width=6),
+# 		showlegend=False,
+# 		hoverinfo="skip"
+# 	))
+# 	fig.add_trace(go.Cone(
+# 		x=[base_x], y=[base_y + size], z=[z],
+# 		u=[0], v=[1], w=[0],  # direction +Y
+# 		sizemode="absolute",
+# 		sizeref=0.8,
+# 		showscale=False,
+# 		hoverinfo="skip"
+# 	))
+# 	fig.add_trace(go.Scatter3d(
+# 		x=[base_x],
+# 		y=[base_y + size + size * 0.25],
+# 		z=[z],
+# 		mode="text",
+# 		text=["N"],
+# 		textfont=dict(size=18),
+# 		showlegend=False,
+# 		hoverinfo="skip"
+# 	))
+#
+# 	# E arrow (+X)
+# 	fig.add_trace(go.Scatter3d(
+# 		x=[base_x, base_x + size],
+# 		y=[base_y, base_y],
+# 		z=[z, z],
+# 		mode="lines",
+# 		line=dict(width=6),
+# 		showlegend=False,
+# 		hoverinfo="skip"
+# 	))
+# 	fig.add_trace(go.Cone(
+# 		x=[base_x + size], y=[base_y], z=[z],
+# 		u=[1], v=[0], w=[0],  # direction +X
+# 		sizemode="absolute",
+# 		sizeref=0.8,
+# 		showscale=False,
+# 		hoverinfo="skip"
+# 	))
+# 	fig.add_trace(go.Scatter3d(
+# 		x=[base_x + size + size * 0.25],
+# 		y=[base_y],
+# 		z=[z],
+# 		mode="text",
+# 		text=["E"],
+# 		textfont=dict(size=18),
+# 		showlegend=False,
+# 		hoverinfo="skip"
+# 	))
+#
+# 	return fig
+
+def add_compass_rotated(
+		fig: go.Figure,
+		*,
+		x_min: float,
+		x_max: float,
+		y_min: float,
+		y_max: float,
+		z: float = 0.0,
+		size: float | None = None,
+		rotation_deg: float = 0.0,
+		corner: Literal["ne", "nw", "se", "sw"] = "sw",
+		pad_frac: float = 0.08,  # fraction of map size used as padding
+):
+	"""
+	Adds a rotated N/E compass to a Plotly 3D figure.
+
+	corner:
+		"ne" = top-right
+		"nw" = top-left
+		"se" = bottom-right
+		"sw" = bottom-left
+	"""
+
+	# Default compass size
+	if size is None:
+		size = (x_max - x_min) * 0.08
+
+	# Padding offsets
+	pad_x = (x_max - x_min) * pad_frac
+	pad_y = (y_max - y_min) * pad_frac
+
+	# Base anchor by corner
+	if corner == "sw":
+		base_x = x_min + pad_x
+		base_y = y_min + pad_y
+	elif corner == "se":
+		base_x = x_max - pad_x
+		base_y = y_min + pad_y
+	elif corner == "nw":
+		base_x = x_min + pad_x
+		base_y = y_max - pad_y
+	elif corner == "ne":
+		base_x = x_max - pad_x
+		base_y = y_max - pad_y
+	else:
+		raise ValueError(f"Invalid corner: {corner}")
+
+	# Rotation math (Z-axis rotation)
+	th = np.deg2rad(rotation_deg)
+
+	# Direction vectors
+	ex, ey = np.cos(th), np.sin(th)  # East
+	nx, ny = -np.sin(th), np.cos(th)  # North (90° CCW)
+
+	# Endpoints
+	ex2, ey2 = base_x + size * ex, base_y + size * ey
+	nx2, ny2 = base_x + size * nx, base_y + size * ny
+
+	# East arrow
+	fig.add_trace(go.Scatter3d(
+		x=[base_x, ex2],
+		y=[base_y, ey2],
+		z=[z, z],
+		mode="lines+text",
+		text=["", "E"],
+		textposition="top center",
+		line=dict(width=6),
+		showlegend=False,
+		hoverinfo="skip",
+		textfont=dict(size=18)
+	))
+
+	# North arrow
+	fig.add_trace(go.Scatter3d(
+		x=[base_x, nx2],
+		y=[base_y, ny2],
+		z=[z, z],
+		mode="lines+text",
+		text=["", "N"],
+		textposition="top center",
+		line=dict(width=6),
+		showlegend=False,
+		hoverinfo="skip",
+		textfont=dict(size=18)
+	))
+
+	return fig
+
+
+def flip_y_value(y: float, y_min: float, y_max: float) -> float:
+	return (y_min + y_max) - y
+
+
+def flip_y_rect_df(df, *, y_min: float, y_max: float, y0c="Y0", y1c="Y1"):
+	out = df.copy()
+	y0f = out[y0c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+	y1f = out[y1c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+	out[y0c] = np.minimum(y0f, y1f)
+	out[y1c] = np.maximum(y0f, y1f)
+	return out
+
+
+def flip_y_points_df(df, *, y_min: float, y_max: float, yc="cy"):
+	out = df.copy()
+	out[yc] = out[yc].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
+	return out
+
+
+def flip_x_value(x: float, x_min: float, x_max: float) -> float:
+	return (x_min + x_max) - x
+
+
+def flip_x_rect_df(df, *, x_min: float, x_max: float, x0c="X0", x1c="X1"):
+	out = df.copy()
+	x0f = out[x0c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+	x1f = out[x1c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+	out[x0c] = np.minimum(x0f, x1f)
+	out[x1c] = np.maximum(x0f, x1f)
+	return out
+
+
+def flip_x_points_df(df, *, x_min: float, x_max: float, xc="cx"):
+	out = df.copy()
+	out[xc] = out[xc].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
+	return out
 
 
 @st.cache_data(ttl=60 * 63, show_spinner=True)
@@ -1819,9 +2151,11 @@ def generate_bin_maps(
 				reported.add(sc)
 
 	if user in admin_end_users:
-		st.write(f"bin_maps")
-		st.write(bin_maps)
-		display_df(df_stocks, f"df_stocks")
+		with st.container(border=True,horizontal=True):
+			st.write("admin_debugging")
+			st.write(f"bin_maps")
+			st.write(bin_maps)
+			display_df(df_stocks, f"df_stocks")
 
 	return bin_maps
 
@@ -2089,8 +2423,10 @@ def load_hawkins_map(
 					plotted=plotted
 				)
 			if user in admin_end_users:
-				st.write(f"plotted ITER BOTTOM")
-				st.write(plotted)
+				with st.container(border=True,horizontal=True):
+					st.write("admin_debugging")
+					st.write(f"plotted ITER BOTTOM")
+					st.write(plotted)
 
 		fig = add_hover_scatter_from_plotted(
 			fig,
@@ -2870,6 +3206,7 @@ op_search_mode_by_pick_list: str = "By Pick List"
 op_search_mode_by_shopclock: str = "ShopClock",
 op_search_mode_syspro: str = "Syspro"
 op_search_mode_warehouse: str = "Warehouse"
+op_search_mode_by_drawing: str = "By Drawing"
 op_search_mode_day_totals: str = "Day Totals"
 op_search_mode_day_testing: str = "Testing"
 options_pills_search_mode = [
@@ -2883,7 +3220,8 @@ options_pills_search_mode = [
 	op_search_mode_by_pick_list,
 	op_search_mode_by_shopclock,
 	op_search_mode_syspro,
-	op_search_mode_warehouse
+	op_search_mode_warehouse,
+	op_search_mode_by_drawing
 ]
 
 admin_end_users = ["abriggs"]
@@ -2904,11 +3242,22 @@ k_pills_search_mode: str = "key_pills_search_mode"
 k_pills_search_mode_save: str = "key_pills_search_mode_save"
 
 if user in admin_end_users:
-	with st.container(border=True):
+	with st.container(border=True, horizontal=True):
+		st.write("admin_debugging")
 		st.write(f"A")
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
 		st.write(f"{st.session_state.get(k_pills_search_mode_save)=}")
 		st.write(f"{textbox_stockcode=}")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
 
 pills_search_mode = st.session_state.setdefault(k_pills_search_mode, 0)
 if st.session_state.get(k_pills_search_mode_save) is not None:
@@ -2918,7 +3267,8 @@ if st.session_state.get(k_pills_search_mode_save) is not None:
 	})
 
 if user in admin_end_users:
-	with st.container(border=True):
+	with st.container(border=True, horizontal=True):
+		st.write("admin_debugging")
 		st.write(f"B")
 		st.write(f"{pills_search_mode=}")
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
@@ -3793,6 +4143,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick_list):
 	# Pick List
+	k_df_pick_list: str = "key_df_pick_list"
 	cols_controls = st.columns(2)
 	df_jobs = load_jobs()
 	with cols_controls[0]:
@@ -3810,7 +4161,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 		pick_list_job = st.selectbox(
 			label="Job:",
 			options=df_jobs["Job"],
-			key=k_pick_list_job
+			key=k_pick_list_job,
+			on_change=lambda : st.session_state.update({k_df_pick_list: None})
 		)
 
 	st.write(f"{pick_list_job=}")
@@ -3821,18 +4173,60 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 				key="btn_pick_list_submit"
 		):
 			df_pick_list = load_pick_list(pick_list_job, *pick_list_ops)
-			st.session_state["k_df_pick_list"] = df_pick_list
+			st.session_state[k_df_pick_list] = df_pick_list
 
-		if st.session_state.get("k_df_pick_list") is not None:
-			df_pick_list = st.session_state["k_df_pick_list"]
-			stdf_pick_list = display_df_paginated(
-				df_pick_list,
-				title="Pick List",
-				key="k_stde_pick_list",
-				batch_size_options=(250, 500, 100),
-				selection_mode="multi-row",
-				on_select="rerun"
+		if st.session_state.get(k_df_pick_list) is not None:
+
+			k_checkbox_need_to_pick: str = "key_checkbox_need_to_pick"
+			st.session_state.setdefault(k_checkbox_need_to_pick, True)
+			checkbox_need_to_pick = st.checkbox(
+				label="Outstanding Only?",
+				key=k_checkbox_need_to_pick
 			)
+
+			show_cols = OrderedDict({
+				"StockCode": "Part",
+				"Bin": "Bin",
+				"Desc": "Desc",
+				"Uom": "UoM",
+				"UnitQtyReqd": "Reqd.",
+				"QtyIssued": "Iss.",
+				"QtyAvailable": "Avail.",
+				"QtyToPick": "To Pick"
+			})
+			cols_pick_lists = st.columns(2)
+			df_pick_list = st.session_state["k_df_pick_list"]
+
+			if checkbox_need_to_pick:
+				df_pick_list = df_pick_list[df_pick_list["QtyToPick"] > 0]
+
+			df_pick_list["Desc"] = df_pick_list["StockDescription"] + " || " + df_pick_list["LongDesc"]
+			st.header(f"Job# {df_pick_list.reset_index().loc[0, 'Job']}")
+			st.subheader(f"{df_pick_list.reset_index().loc[0, 'JobDescription']}")
+			with cols_pick_lists[0]:
+				stdf_pick_list = display_df_paginated(
+					df_pick_list.rename(columns=show_cols)[show_cols.values()],
+					title="Pick List",
+					key="k_stde_pick_list",
+					batch_size_options=(250, 500, 100),
+					selection_mode="multi-row",
+					on_select="rerun"
+				)
+
+			df_possible_0_stock = df_pick_list[
+				(df_pick_list["QtyAvailable"] <= 0)
+				& (df_pick_list["QtyToPick"] > 0)
+			]
+			with cols_pick_lists[1]:
+				stdf_pick_list_0_stock = display_df_paginated(
+					df_possible_0_stock.rename(columns=show_cols)[show_cols.values()],
+					title="Possiblly Out of Stock",
+					key="k_stde_pick_list_0_stock",
+					batch_size_options=(250, 500, 100),
+					selection_mode="multi-row",
+					on_select="rerun"
+				)
+
 			df_selected_pick_list = get_selected_rows(
 				df_pick_list,
 				stdf_pick_list,
@@ -3840,11 +4234,31 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 				n=df_pick_list.shape[0]
 			)
 
-			display_df(
-				df_selected_pick_list,
-				"df_selected_pick_list"
-			)
+			# display_df(
+			# 	df_selected_pick_list,
+			# 	"df_selected_pick_list"
+			# )
 			if not df_selected_pick_list.empty:
+
+				jobs = list(map(lambda x: str(x)[-4:], df_selected_pick_list["Job"].dropna().unique().tolist()))
+				date_str = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
+				pl_f_name: str = "_".join(jobs) + "_pick_list_{DATE}.pdf"
+				title: str = ", ".join(jobs) + f" Pick List Report"
+				report_file_name: str = pl_f_name.format(
+					DATE=date_str.replace(":", "").replace("-", "").replace(" ", "").strip())
+
+				if not os.path.exists(report_file_name):
+					prep_pick_list_report(report_file_name, title, date_str,
+										  df_selected_pick_list.rename(columns=show_cols)[show_cols.values()])
+
+				st.download_button(
+					label="download Pick List Print",
+					data=open(report_file_name, "rb").read(),
+					file_name=report_file_name,
+					mime="application/pdf",
+					key=f"{report_file_name}_drive_3"
+				)
+
 				bin_maps = generate_bin_maps(
 					df_selected_pick_list,
 					col_bin="Bin",
@@ -4362,12 +4776,26 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		)
 		return fig
 
+	def update_sidebar():
+		val = st.session_state.get(k_radio_warehouse_building)
+		st.toast(f"{val=}")
+		st.write(f"{val=}")
+		print(f"{val=}")
+		st.session_state.update({
+			k_degrees_rot_map: 90 if val == "Hawkins" else 0
+		})
+		if user in admin_test_users:
+			st.session_state.update({
+				k_overlay_sections_map: True
+			})
+
 	k_radio_warehouse_building = "key_radio_warehouse_building"
 	st.session_state.setdefault(k_radio_warehouse_building, "Hawkins")
 	radio_warehouse_building = st.radio(
 		label="Mode",
 		options=["Hawkins", "Montana"],
-		key=k_radio_warehouse_building
+		key=k_radio_warehouse_building,
+		on_change=update_sidebar
 	)
 
 	k_pills_warehouse_mode = "key_pills_warehouse_mode"
@@ -4487,243 +4915,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		# st.dataframe(
 		# 	df_sec_val[["Section", "TtlValue", "X0", "X1", "Y0", "Y1"]].sort_values("TtlValue", ascending=False))
 
-		def plotly_skyscrapers(df_sec_val, z_log=True, title="Valuation 3D"):
-			z = df_sec_val["TtlValue"].to_numpy(float)
-			z_plot = np.log10(z + 1) if z_log else z
-
-			fig = go.Figure()
-
-			for _, r in df_sec_val.iterrows():
-				z0 = 0
-				z1 = np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]
-				fig.add_trace(go.Scatter3d(
-					x=[r["cx"], r["cx"]],
-					y=[r["cy"], r["cy"]],
-					z=[z0, z1],
-					mode="lines",
-					hovertemplate=(
-						f"Section: <b>{r['Section']}</b><br>"
-						f"Value: <b>{r['TtlValue']:,.2f}</b><extra></extra>"
-					),
-					showlegend=False
-				))
-
-			fig.update_layout(
-				title=title,
-				scene=dict(
-					xaxis_title="X",
-					yaxis_title="Y",
-					zaxis_title="log10(Value+1)" if z_log else "Value",
-				),
-				margin=dict(l=0, r=0, t=40, b=0),
-			)
-			return fig
-
-		def add_section_floor_outlines(fig: go.Figure, df_sec_geo, *, opacity=0.8, line_width=4):
-			for r in df_sec_geo.itertuples(index=False):
-				x0, x1, y0, y1 = float(r.X0), float(r.X1), float(r.Y0), float(r.Y1)
-
-				# closed loop rectangle on z=0
-				xs = [x0, x1, x1, x0, x0]
-				ys = [y0, y0, y1, y1, y0]
-				zs = [0, 0, 0, 0, 0]
-
-				fig.add_trace(go.Scatter3d(
-					x=xs, y=ys, z=zs,
-					mode="lines",
-					line=dict(width=line_width),
-					opacity=opacity,
-					hovertemplate=f"Section: <b>{getattr(r, 'Section', '')}</b><extra></extra>",
-					showlegend=False,
-				))
-			return fig
-
-		# def add_compass(fig: go.Figure, *, x_min, x_max, y_min, y_max, z=0, size=8):
-		# 	# place compass near bottom-left of the floor
-		# 	base_x = x_min + (x_max - x_min) * 0.08
-		# 	base_y = y_min + (y_max - y_min) * 0.08
-		#
-		# 	# N arrow (+Y)
-		# 	fig.add_trace(go.Scatter3d(
-		# 		x=[base_x, base_x],
-		# 		y=[base_y, base_y + size],
-		# 		z=[z, z],
-		# 		mode="lines",
-		# 		line=dict(width=6),
-		# 		showlegend=False,
-		# 		hoverinfo="skip"
-		# 	))
-		# 	fig.add_trace(go.Cone(
-		# 		x=[base_x], y=[base_y + size], z=[z],
-		# 		u=[0], v=[1], w=[0],  # direction +Y
-		# 		sizemode="absolute",
-		# 		sizeref=0.8,
-		# 		showscale=False,
-		# 		hoverinfo="skip"
-		# 	))
-		# 	fig.add_trace(go.Scatter3d(
-		# 		x=[base_x],
-		# 		y=[base_y + size + size * 0.25],
-		# 		z=[z],
-		# 		mode="text",
-		# 		text=["N"],
-		# 		textfont=dict(size=18),
-		# 		showlegend=False,
-		# 		hoverinfo="skip"
-		# 	))
-		#
-		# 	# E arrow (+X)
-		# 	fig.add_trace(go.Scatter3d(
-		# 		x=[base_x, base_x + size],
-		# 		y=[base_y, base_y],
-		# 		z=[z, z],
-		# 		mode="lines",
-		# 		line=dict(width=6),
-		# 		showlegend=False,
-		# 		hoverinfo="skip"
-		# 	))
-		# 	fig.add_trace(go.Cone(
-		# 		x=[base_x + size], y=[base_y], z=[z],
-		# 		u=[1], v=[0], w=[0],  # direction +X
-		# 		sizemode="absolute",
-		# 		sizeref=0.8,
-		# 		showscale=False,
-		# 		hoverinfo="skip"
-		# 	))
-		# 	fig.add_trace(go.Scatter3d(
-		# 		x=[base_x + size + size * 0.25],
-		# 		y=[base_y],
-		# 		z=[z],
-		# 		mode="text",
-		# 		text=["E"],
-		# 		textfont=dict(size=18),
-		# 		showlegend=False,
-		# 		hoverinfo="skip"
-		# 	))
-		#
-		# 	return fig
-
-		def add_compass_rotated(
-				fig: go.Figure,
-				*,
-				x_min: float,
-				x_max: float,
-				y_min: float,
-				y_max: float,
-				z: float = 0.0,
-				size: float | None = None,
-				rotation_deg: float = 0.0,
-				corner: Literal["ne", "nw", "se", "sw"] = "sw",
-				pad_frac: float = 0.08,  # fraction of map size used as padding
-		):
-			"""
-			Adds a rotated N/E compass to a Plotly 3D figure.
-
-			corner:
-				"ne" = top-right
-				"nw" = top-left
-				"se" = bottom-right
-				"sw" = bottom-left
-			"""
-
-			# Default compass size
-			if size is None:
-				size = (x_max - x_min) * 0.08
-
-			# Padding offsets
-			pad_x = (x_max - x_min) * pad_frac
-			pad_y = (y_max - y_min) * pad_frac
-
-			# Base anchor by corner
-			if corner == "sw":
-				base_x = x_min + pad_x
-				base_y = y_min + pad_y
-			elif corner == "se":
-				base_x = x_max - pad_x
-				base_y = y_min + pad_y
-			elif corner == "nw":
-				base_x = x_min + pad_x
-				base_y = y_max - pad_y
-			elif corner == "ne":
-				base_x = x_max - pad_x
-				base_y = y_max - pad_y
-			else:
-				raise ValueError(f"Invalid corner: {corner}")
-
-			# Rotation math (Z-axis rotation)
-			th = np.deg2rad(rotation_deg)
-
-			# Direction vectors
-			ex, ey = np.cos(th), np.sin(th)  # East
-			nx, ny = -np.sin(th), np.cos(th)  # North (90° CCW)
-
-			# Endpoints
-			ex2, ey2 = base_x + size * ex, base_y + size * ey
-			nx2, ny2 = base_x + size * nx, base_y + size * ny
-
-			# East arrow
-			fig.add_trace(go.Scatter3d(
-				x=[base_x, ex2],
-				y=[base_y, ey2],
-				z=[z, z],
-				mode="lines+text",
-				text=["", "E"],
-				textposition="top center",
-				line=dict(width=6),
-				showlegend=False,
-				hoverinfo="skip",
-				textfont=dict(size=18)
-			))
-
-			# North arrow
-			fig.add_trace(go.Scatter3d(
-				x=[base_x, nx2],
-				y=[base_y, ny2],
-				z=[z, z],
-				mode="lines+text",
-				text=["", "N"],
-				textposition="top center",
-				line=dict(width=6),
-				showlegend=False,
-				hoverinfo="skip",
-				textfont=dict(size=18)
-			))
-
-			return fig
-
-		def flip_y_value(y: float, y_min: float, y_max: float) -> float:
-			return (y_min + y_max) - y
-
-		def flip_y_rect_df(df, *, y_min: float, y_max: float, y0c="Y0", y1c="Y1"):
-			out = df.copy()
-			y0f = out[y0c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
-			y1f = out[y1c].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
-			out[y0c] = np.minimum(y0f, y1f)
-			out[y1c] = np.maximum(y0f, y1f)
-			return out
-
-		def flip_y_points_df(df, *, y_min: float, y_max: float, yc="cy"):
-			out = df.copy()
-			out[yc] = out[yc].astype(float).apply(lambda v: flip_y_value(v, y_min, y_max))
-			return out
-
-		def flip_x_value(x: float, x_min: float, x_max: float) -> float:
-			return (x_min + x_max) - x
-
-		def flip_x_rect_df(df, *, x_min: float, x_max: float, x0c="X0", x1c="X1"):
-			out = df.copy()
-			x0f = out[x0c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
-			x1f = out[x1c].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
-			out[x0c] = np.minimum(x0f, x1f)
-			out[x1c] = np.maximum(x0f, x1f)
-			return out
-
-		def flip_x_points_df(df, *, x_min: float, x_max: float, xc="cx"):
-			out = df.copy()
-			out[xc] = out[xc].astype(float).apply(lambda v: flip_x_value(v, x_min, x_max))
-			return out
-
-
 		# fig = plotly_skyscrapers(df_sec_val, z_log=True)
 		# st.plotly_chart(fig, use_container_width=True)
 
@@ -4777,6 +4968,9 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		st.plotly_chart(fig, use_container_width=True)
 
 	else:
+		k_degrees_rot_map: str = "key_degrees_rot_map"
+		k_overlay_sections_map: str = "key_overlay_sections_map"
+
 		# Interactive Warehouse
 		if "selected_section_id" not in st.session_state:
 			st.session_state["selected_section_id"] = None
@@ -4789,13 +4983,13 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			default_bg = st.color_picker("Default BG", value="#FFFFFF")
 			st.caption("Tip: click a section rectangle to inspect its shelves.")
 
-			rotation_deg = st.selectbox("Rotation", [0, 90, 180, 270], index=1)
+			rotation_deg = st.selectbox("Rotation", [0, 90, 180, 270], index=1, key=k_degrees_rot_map)
 
 			if st.button("Clear selection"):
 				st.session_state["selected_section_id"] = None
 				st.rerun()
 
-			overlay_section = st.checkbox("Overlay Sections", value=show_sections)
+			overlay_section = st.checkbox("Overlay Sections", value=show_sections, key=k_overlay_sections_map)
 
 		img0 = layout_to_rgb_image(df_layout, bg_map)
 		H, W = img0.shape[:2]
@@ -4811,161 +5005,254 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			selected_section_id=st.session_state["selected_section_id"]
 		)
 
-		# Click capture
-		st.subheader("Interactive Map")
-		clicked = plotly_events(fig, click_event=True, hover_event=False, select_event=False, override_height=800)
+		k_checkbox_use_plotly_events: str = "k_checkbox_use_plotly_events"
+		st.session_state.setdefault(k_checkbox_use_plotly_events, False)
+		checkbox_use_plotly_events = st.checkbox(
+			label="Use Plotly Events?",
+			key=k_checkbox_use_plotly_events,
+			help="Using Plotly Events offers interactability with the map, however it runs poorly on low-resource machines."
+		)
 
-		# Display selection results
-		st.subheader("Selection")
+		if checkbox_use_plotly_events:
+			# Click capture
+			st.subheader("Interactive Map")
+			clicked = plotly_events(fig, click_event=True, hover_event=False, select_event=False, override_height=800)
 
-		if clicked:
-			xr = float(clicked[0]["x"])
-			yr = float(clicked[0]["y"])
+			# Display selection results
+			st.subheader("Selection")
 
-			# convert rotated click back to original coords
-			x, y = inv_rot_point_xy(xr, yr, W=W, H=H, rotation_deg=rotation_deg)
-			st.write({"clicked_col_x": x, "clicked_row_y": y})
+			if clicked:
+				xr = float(clicked[0]["x"])
+				yr = float(clicked[0]["y"])
 
-			sec_row = find_section_at_point(df_sections, x=x, y=y)  # NOTE: original df_sections
+				# convert rotated click back to original coords
+				x, y = inv_rot_point_xy(xr, yr, W=W, H=H, rotation_deg=rotation_deg)
+				st.write({"clicked_col_x": x, "clicked_row_y": y})
 
-			if sec_row is None:
-				st.session_state["selected_section_id"] = None
-				st.info("No ShelfSection contains that point.")
-			else:
-				st.session_state["selected_section_id"] = int(sec_row["ID"])
-				sec = str(sec_row["Section"]).strip().upper()
-				grp = sec_row["Group"]
-				sec_id = sec_row.get("ID", None)
+				sec_row = find_section_at_point(df_sections, x=x, y=y)  # NOTE: original df_sections
 
-				st.success(f"Clicked Section: {sec}, Group: {grp}, ID: {sec_id}")
-
-				# Filter shelves that belong to this section/group
-				# Your Shelves sheet columns: Section, ShelfSection, Shelf, ShelfRow
-				cols = {c.lower(): c for c in df_shelves.columns}
-				col_section = cols.get("section")
-				col_group = cols.get("shelfsectionid")
-				st.write(f"{col_section}, {col_group}")
-				if not (col_section and col_group):
-					st.warning("Shelves sheet must have columns like: Section and ShelfSectionID (group).")
+				if sec_row is None:
+					st.session_state["selected_section_id"] = None
+					st.info("No ShelfSection contains that point.")
 				else:
-					df_hit = df_shelves[
-						(df_shelves[col_section].astype(str).str.strip().str.upper() == sec) &
-						(df_shelves[col_group] == sec_id)
-						].copy()
+					st.session_state["selected_section_id"] = int(sec_row["ID"])
+					sec = str(sec_row["Section"]).strip().upper()
+					grp = sec_row["Group"]
+					sec_id = sec_row.get("ID", None)
 
-					# if df_hit.empty:
-					# 	st.info("No shelves defined for this section/group yet.")
-					# else:
-					df_hit = df_hit.sort_values(["ShelfRow", "Shelf"])
-					st.write("Shelves in selected section")
+					st.success(f"Clicked Section: {sec}, Group: {grp}, ID: {sec_id}")
 
-					sel_mask = (
-							(df_shelves["Section"].astype(str).str.upper().str.strip() == sec) &
-							(df_shelves["ShelfSectionID"] == sec_id)
-					)
-					df_sel = df_shelves.loc[sel_mask].copy()
-					df_sel.sort_values(["ShelfRow"], inplace=True)
+					# Filter shelves that belong to this section/group
+					# Your Shelves sheet columns: Section, ShelfSection, Shelf, ShelfRow
+					cols = {c.lower(): c for c in df_shelves.columns}
+					col_section = cols.get("section")
+					col_group = cols.get("shelfsectionid")
+					st.write(f"{col_section}, {col_group}")
+					if not (col_section and col_group):
+						st.warning("Shelves sheet must have columns like: Section and ShelfSectionID (group).")
+					else:
+						display_df_paginated(
+							df_shelves,
+							f"df_shelves_{radio_warehouse_building}",
+							key=f"ddp_df_df_shelves",
+							batch_size_options=(500, 2500, 5000)
+						)
+						df_hit = df_shelves[
+							# (df_shelves[col_section].astype(str).str.strip().str.upper() == sec) &
+							(df_shelves[col_group] == sec_id)
+							].copy()
 
-					df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"],
-																			ascending=[False, True]).reset_index(drop=True)
-					display_df(
-						df_hit_show,
-						"df_hit_show"
-					)
-					k_stde_section_shelves: str = "key_stde_section_shelves"
-					stde_section_shelves = st.data_editor(
-						df_hit_show,
-						key=k_stde_section_shelves,
-						num_rows="dynamic",
-						hide_index=True,
-						column_config={
-							"Shelf": st.column_config.TextColumn(required=True),
-							"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7, required=True),
-						}
-					)
-
-					st.write(f"st.session_state[{k_stde_section_shelves}]")
-					st.write(st.session_state[k_stde_section_shelves])
-
-					if st.button("Apply shelf edits to working copy"):
-						# edited2 = stde_section_shelves.copy()
-						# display_df(
-						# 	edited2,
-						# 	"edited2 A"
-						# )
-						# edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
-						# edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
-						# display_df(
-						# 	edited2,
-						# 	"edited2 B"
-						# )
-						#
-						# errs = validate_shelves(edited2)
-						# if errs:
-						# 	st.error("\n".join(errs))
+						# if df_hit.empty:
+						# 	st.info("No shelves defined for this section/group yet.")
 						# else:
-						# 	edited2 = normalize_order(edited2)
-						#
-						#
-						#
-						# 	# stamp required IDs
-						# 	edited2["Section"] = sec
-						# 	edited2["ShelfSectionID"] = sec_id
-						# 	edited2["Group"] = grp
-						#
-						# 	# replace slice in master
-						# 	df_master = df_shelves.copy()
-						# 	# df_master = df_master.loc[~sel_mask].copy()  # drop old rows
-						# 	# df_master = pd.concat([df_master, edited2], ignore_index=True)
-						#
-						# 	# df_shelves = df_master
-						# 	st.toast("Updated saved successfully.")
-						# 	push_shelf_changes(df_master, edited2, sel_mask)
-						# 	load_layout_data.clear()
+						df_hit = df_hit.sort_values(["ShelfRow", "Shelf"])
+						st.write("Shelves in selected section")
 
-						# df_shelves = df_master
-						st.toast("Updated saved successfully.")
-						default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
-						push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
-										   default_insert_cols=default_insert_cols)
-						load_layout_data.clear()
-						st.rerun()
+						sel_mask = (
+								(df_shelves["Section"].astype(str).str.upper().str.strip() == sec) &
+								(df_shelves["ShelfSectionID"] == sec_id)
+						)
+						df_sel = df_shelves.loc[sel_mask].copy()
+						df_sel.sort_values(["ShelfRow"], inplace=True)
 
-					# Floor-level highlights
-					if "ShelfRow" in df_hit.columns:
-						floor = df_hit[df_hit["ShelfRow"] < 2]
-						if not floor.empty:
-							st.write("Floor-level shelves (ShelfRow < 2):")
-							display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
+						df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"],
+																				ascending=[False, True]).reset_index(drop=True)
+						display_df(
+							df_hit_show,
+							"df_hit_show"
+						)
+						k_stde_section_shelves: str = "key_stde_section_shelves"
+						stde_section_shelves = st.data_editor(
+							df_hit_show,
+							key=k_stde_section_shelves,
+							num_rows="dynamic",
+							hide_index=True,
+							column_config={
+								"Shelf": st.column_config.TextColumn(required=True),
+								"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7, required=True),
+							}
+						)
 
-					df_parts_in_loc = df_parts[
-						df_parts["DefaultBin"].str.lower().isin(
-							map(lambda v: str(v).lower(), df_hit["Shelf"].dropna().unique()))
-					]
-					df_parts_in_loc = df_parts_in_loc.merge(
-						df_shelves,
-						left_on="DefaultBin",
-						right_on="Shelf",
-						how="left"
-					)
-					df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
+						st.write(f"st.session_state[{k_stde_section_shelves}]")
+						st.write(st.session_state[k_stde_section_shelves])
 
-					show_cols = [
-						"StockCode",
-						"DefaultBin",
-						"Description",
-						"LongDesc",
-						"GroundLvl"
-					]
-					stdf_parts_in_loc = display_df_paginated(
-						df_parts_in_loc[show_cols],
-						"Parts in this location:",
-						key="key_stdf_parts_in_loc"
-					)
+						if st.button("Apply shelf edits to working copy"):
+							# edited2 = stde_section_shelves.copy()
+							# display_df(
+							# 	edited2,
+							# 	"edited2 A"
+							# )
+							# edited2["Shelf"] = edited2["Shelf"].astype(str).str.strip()
+							# edited2["ShelfRow"] = pd.to_numeric(edited2["ShelfRow"], errors="coerce").astype("Int64")
+							# display_df(
+							# 	edited2,
+							# 	"edited2 B"
+							# )
+							#
+							# errs = validate_shelves(edited2)
+							# if errs:
+							# 	st.error("\n".join(errs))
+							# else:
+							# 	edited2 = normalize_order(edited2)
+							#
+							#
+							#
+							# 	# stamp required IDs
+							# 	edited2["Section"] = sec
+							# 	edited2["ShelfSectionID"] = sec_id
+							# 	edited2["Group"] = grp
+							#
+							# 	# replace slice in master
+							# 	df_master = df_shelves.copy()
+							# 	# df_master = df_master.loc[~sel_mask].copy()  # drop old rows
+							# 	# df_master = pd.concat([df_master, edited2], ignore_index=True)
+							#
+							# 	# df_shelves = df_master
+							# 	st.toast("Updated saved successfully.")
+							# 	push_shelf_changes(df_master, edited2, sel_mask)
+							# 	load_layout_data.clear()
+
+							# df_shelves = df_master
+							st.toast("Updated saved successfully.")
+							default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
+							push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
+											   default_insert_cols=default_insert_cols)
+							load_layout_data.clear()
+							st.rerun()
+
+						# Floor-level highlights
+						if "ShelfRow" in df_hit.columns:
+							floor = df_hit[df_hit["ShelfRow"] < 2]
+							if not floor.empty:
+								st.write("Floor-level shelves (ShelfRow < 2):")
+								display_df_paginated(floor, title="Floor level", key="key_shelves_floor")
+
+						df_parts_in_loc = df_parts[
+							df_parts["DefaultBin"].str.lower().isin(
+								map(lambda v: str(v).lower(), df_hit["Shelf"].dropna().unique()))
+						]
+						df_parts_in_loc = df_parts_in_loc.merge(
+							df_shelves,
+							left_on="DefaultBin",
+							right_on="Shelf",
+							how="left"
+						)
+						df_parts_in_loc["GroundLvl"] = df_parts_in_loc["ShelfRow"] < 2
+
+						show_cols = [
+							"StockCode",
+							"DefaultBin",
+							"Description",
+							"LongDesc",
+							"GroundLvl"
+						]
+						stdf_parts_in_loc = display_df_paginated(
+							df_parts_in_loc[show_cols],
+							"Parts in this location:",
+							key="key_stdf_parts_in_loc"
+						)
 
 
+			else:
+				st.info("Click a section overlay to see shelves in that space.")
 		else:
-			st.info("Click a section overlay to see shelves in that space.")
+			st.subheader(f"{radio_warehouse_building} Map")
+			chart = st.plotly_chart(fig)
+
+elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_drawing):
+	# By Drawing
+	# Drawings
+
+	df_stock_pdfs: pd.DataFrame = load_path_pdf(all_stockcodes=True)
+
+	path_pdf = r"\\server4\Design\VaultWorkspace_BWS\PDFS\WF-MVL-003.PDF"
+	parts_data = []
+
+	display_df_paginated(
+		df_parts,
+		"df_parts",
+		batch_size_options=(100, 500, 2500),
+		key="stdf_parts_by_drawing_a"
+	)
+
+	display_df_paginated(
+		df_stock_pdfs,
+		"df_parts",
+		batch_size_options=(100, 500, 2500),
+		key="stdf_parts_by_drawing_b"
+	)
+
+	df_parts_drawings: pd.DataFrame = df_parts.merge(
+		df_stock_pdfs,
+		left_on="StockCode",
+		right_on="StockCode",
+		how="inner",
+		suffixes=("_pdf", "_parts")
+	)
+
+	cols_by_drawing = st.columns(2)
+
+	# with cols_by_drawing[0]:
+	# 	display_df_paginated(
+	# 		df_part_drawings,
+	# 		"df_parts",
+	# 		batch_size_options=(100, 500, 2500),
+	# 		key="stdf_parts_by_drawing"
+	# 	)
+	with cols_by_drawing[1]:
+		uploaded_file = st.file_uploader("Upload a drawing PDF", type=["pdf"])
+
+	if uploaded_file:
+		st.success("✅ PDF uploaded. Click below to extract parts.")
+		if st.button("Yes, Extract Parts"):
+			parts_data = []
+
+			with pdfplumber.open(uploaded_file) as pdf:
+				for i, page in enumerate(pdf.pages):
+					st.write(f"🔍 Processing page {i + 1}...")
+					e_table = page.extract_table()
+					st.write(e_table)
+					table = pd.DataFrame(e_table).reset_index()
+					col = 1
+					# if col not in table.columns:
+					# 	col = 1
+					st.write(f"{table.columns.tolist()=}")
+					table = table.loc[
+						(~pd.isna(table[col]))
+						& (table[col].str.upper() != "ITEM NO.")
+						& (table[col].str.upper() != "ITEM")
+						]
+					parts_data.append(table)
+
+			if parts_data:
+				for i, df_parts in enumerate(parts_data):
+					display_df(
+						df_parts,
+						f"DF #{i}"
+					)
+					st.success(f"✅ Extracted {df_parts.shape[0]} unique parts.")
+			else:
+				st.warning("⚠️ No parts list could be detected. Try another file or check formatting.")
 
 # elif pills_search_mode == op_search_mode_day_totals:
 elif (user in admin_end_users) and (pills_search_mode == options_pills_search_mode.index(op_search_mode_day_totals)):
@@ -5331,7 +5618,8 @@ else:
 ###############################################
 
 if user in admin_end_users:
-	with st.container(border=True):
+	with st.container(border=True, horizontal=True):
+		st.write("admin_debugging")
 		st.write(f"{pills_search_mode=}")
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
 		st.write(f"{textbox_stockcode=}")
@@ -5847,7 +6135,9 @@ elif textbox_stockcode:
 
 			with st.expander(f"Map", expanded=bool(found_map_to_bin)):
 				if user in admin_end_users:
-					st.write(found_map_to_bin)
+					with st.container(border=True, horizontal=True):
+						st.write("admin_debugging")
+						st.write(found_map_to_bin)
 				if found_map_to_bin:
 					st.subheader("Map Controls")
 					show_sections = False
