@@ -5188,37 +5188,47 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 	path_pdf = r"\\server4\Design\VaultWorkspace_BWS\PDFS\WF-MVL-003.PDF"
 	parts_data = []
 
-	display_df_paginated(
-		df_parts,
-		"df_parts",
-		batch_size_options=(100, 500, 2500),
-		key="stdf_parts_by_drawing_a"
-	)
-
-	display_df_paginated(
-		df_stock_pdfs,
-		"df_parts",
-		batch_size_options=(100, 500, 2500),
-		key="stdf_parts_by_drawing_b"
-	)
+	# display_df_paginated(
+	# 	df_parts,
+	# 	"df_parts",
+	# 	batch_size_options=(100, 500, 2500),
+	# 	key="stdf_parts_by_drawing_a"
+	# )
+	#
+	# display_df_paginated(
+	# 	df_stock_pdfs,
+	# 	"df_parts",
+	# 	batch_size_options=(100, 500, 2500),
+	# 	key="stdf_parts_by_drawing_b"
+	# )
 
 	df_parts_drawings: pd.DataFrame = df_parts.merge(
 		df_stock_pdfs,
 		left_on="StockCode",
 		right_on="StockCode",
-		how="inner",
+		how="left",
 		suffixes=("_pdf", "_parts")
 	)
 
 	cols_by_drawing = st.columns(2)
 
-	# with cols_by_drawing[0]:
-	# 	display_df_paginated(
-	# 		df_part_drawings,
-	# 		"df_parts",
-	# 		batch_size_options=(100, 500, 2500),
-	# 		key="stdf_parts_by_drawing"
-	# 	)
+	with cols_by_drawing[0]:
+		stdf_parts = display_df_paginated(
+			df_parts_drawings,
+			"df_parts",
+			batch_size_options=(100, 500, 2500),
+			key="stdf_parts_by_drawing",
+			on_select="rerun",
+			selection_mode="single-row"
+		)
+
+		df_sel_parts: pd.DataFrame = get_selected_rows(df_parts_drawings, stdf_parts, df_parts_drawings.columns, n=None)
+		if not df_sel_parts.empty:
+			display_df(
+				df_sel_parts,
+				"Selected Drawings"
+			)
+
 	with cols_by_drawing[1]:
 		uploaded_file = st.file_uploader("Upload a drawing PDF", type=["pdf"])
 
