@@ -1,0 +1,4 @@
+2026-02-09
+    Version 3.0.0
+    Transition from streamlit_auth.py to streamlit_auth_sql.py. Pushes all authentication to SQL server.
+    Implemented .streamlit/secrets.toml

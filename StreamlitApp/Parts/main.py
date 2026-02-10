@@ -2,12 +2,13 @@ import random
 
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated, get_selected_rows
 from pyodbc_connection import connect
-from streamlit_auth import st_auth, show_change_password, save_user_settings, get_user_settings
+from streamlit_auth_sql import st_auth, show_change_password, save_user_settings, get_user_settings
 from datetime_utility import time_between, datetime_is_tz_aware, is_date
 from utility import percent, money, clamp
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
 import reportlab_utility as rlu
+import extract_drawing_parts as edp
 
 from streamlit_pills import pills
 from streamlit_plotly_events import plotly_events
@@ -27,12 +28,19 @@ import datetime
 import asyncio
 import json
 import math
+import io
 import os
 import re
 
+
+VERSION = (3, 0, 0)
+VERSION_DATE = datetime.datetime(2026, 2, 9, 7, 40)
+version_str: str = f"v{'.'.join(map(str, VERSION))}"
+
+
 st.set_page_config(
 	layout="wide",
-	page_title="Parts"
+	page_title=f"Parts {version_str}"
 )
 
 CHANGE_REQUEST_FILE: str = "change_requests.json"
@@ -45,6 +53,13 @@ BUILDING_CODE_MONTANA: int = 2
 BUILDING_CODE_UNKNOWN: int = -99
 PREFIX_PO_DD_RPT: str = "pos_due_"
 PREFIX_PO_RD_RPT: str = "pos_rec_"
+
+VALID_SALES_ORDER_ACTIVE_STATUS_CODES: list[str] = list(map(str, [1, 2]))
+
+
+# def query(sql, **connection_data) -> pd.DataFrame:
+# 	df = connect(sql, **connection_data)
+# 	return df
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
@@ -1285,14 +1300,20 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 				st.rerun()
 
 
+@st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_path_pdf(stockcode: Optional[str] = None, all_stockcodes: bool = False) -> pd.DataFrame:
+	s_d = datetime.datetime.now()
+	if user in admin_test_users:
+		with st.container(border=True, horizontal=True):
+			st.write(f"BEGIN load_path_pdf {s_d:%Y-%m-%d %H:%M:%S}")
+
 	if (stockcode is None) and (not all_stockcodes):
 		raise ValueError("'stockcode' or 'all_stockcodes' should be specified")
+	str_size = 256
 	sql = f"""
 SELECT
-	[IM].[StockCode],
-	[IM].[DrawOfficeNum] AS [PDF_Listed],
-	[IM].[StockCode] AS [PDF_Stock]
+	CAST(LEFT([IM].[DrawOfficeNum], {str_size}) AS NVARCHAR({str_size})) AS [PDF_Listed],
+	CAST(LEFT([IM].[StockCode], {str_size}) AS NVARCHAR({str_size})) AS [PDF_Stock]
 FROM
 	[SysproCompanyA].[dbo].[InvMaster] [IM] WITH (NOLOCK)
 """
@@ -1301,7 +1322,16 @@ FROM
 WHERE
 	LOWER([IM].[StockCode]) = LOWER('{stockcode}')
 """
-	df = connect(sql)
+	df = connect(sql, **dict(uid="SRS", pwd=""))
+	m_d = datetime.datetime.now()
+	if user in admin_test_users:
+		with st.container(border=True, horizontal=True):
+			e_d = datetime.datetime.now()
+			st.write(f"MID load_path_pdf {m_d:%Y-%m-%d %H:%M:%S}")
+
+			dd = (m_d-s_d).total_seconds()
+			st.write(f"{dd} seconds past")
+	df["StockCode"] = df["PDF_Stock"]
 	for col in [
 		"PDF_Listed",
 		"PDF_Stock"
@@ -1310,8 +1340,15 @@ WHERE
 			lambda p:
 			os.path.join(PATH_STOCK_PDFS, f"{str(p).removesuffix('.pdf')}.pdf") if ((not pd.isna(p)) and p) else None
 		)
-		df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
+		# df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
 	df = df[~pd.isna(df["PDF_Listed"]) | ~pd.isna(df["PDF_Stock"])]
+	if user in admin_test_users:
+		with st.container(border=True, horizontal=True):
+			e_d = datetime.datetime.now()
+			st.write(f"END load_path_pdf {e_d:%Y-%m-%d %H:%M:%S}")
+
+			dd = (e_d-s_d).total_seconds()
+			st.write(f"{dd} total seconds")
 	return df
 
 
@@ -2974,6 +3011,190 @@ def prep_pdf_report_po_dd(df_pos_in_range, report_file_name, top_level: bool = T
 	)
 
 
+# HEADERS = [
+# 	"PARTS LIST", "ITEM QTY", "STOCK", "PART", "DESCRIPTION", "DESC",
+# 	"LENGTH", "WIDTH", "AREA", "COMMENTS"
+# ]
+#
+# # Tune to your stockcode formats (examples):
+# RE_STOCKCODE = re.compile(r"^[A-Z0-9][A-Z0-9\-]{2,}$")  # generic
+# RE_ITEMNO    = re.compile(r"^(ITEM|ITEM NO\.?|ITEM#)\s*$", re.I)
+#
+# def normalize_cell(x):
+# 	if x is None:
+# 		return ""
+# 	return str(x).strip()
+#
+# def has_header_tokens_in_data(df: pd.DataFrame) -> bool:
+# 	# If any header word appears frequently in the first ~3 rows, extraction likely included header/title junk
+# 	if df.empty:
+# 		return True
+# 	sample = df.head(4).astype(str).apply(lambda s: s.str.upper())
+# 	header_hits = 0
+# 	for h in HEADERS:
+# 		header_hits += sample.apply(lambda col: col.str.contains(re.escape(h))).sum().sum()
+# 	return header_hits >= 3
+#
+# def looks_like_stockcode_col(series: pd.Series) -> bool:
+# 	s = series.dropna().astype(str).str.strip()
+# 	if s.empty:
+# 		return False
+# 	# too many spaces => probably description column
+# 	space_ratio = (s.str.contains(r"\s").mean())
+# 	if space_ratio > 0.30:
+# 		return False
+# 	# regex match ratio
+# 	return (s.str.match(RE_STOCKCODE).mean()) > 0.50
+#
+# def score_table(df: pd.DataFrame) -> float:
+# 	if df is None or df.empty:
+# 		return -1e9
+# 	# basic shape expectations
+# 	nrows, ncols = df.shape
+# 	score = 0.0
+# 	if ncols >= 3:
+# 		score += 2
+# 	if ncols >= 5:
+# 		score += 1
+# 	if nrows >= 3:
+# 		score += 1
+#
+# 	# penalize header junk
+# 	if has_header_tokens_in_data(df):
+# 		score -= 3
+#
+# 	# reward if we can identify a likely stockcode column
+# 	for c in df.columns[:min(3, ncols)]:
+# 		if looks_like_stockcode_col(df[c]):
+# 			score += 3
+# 			break
+#
+# 	# penalize if first column is basically ITEM labels only
+# 	c0 = df.iloc[:, 0].astype(str).str.upper().str.strip()
+# 	if (c0.str.match(RE_ITEMNO).mean()) > 0.3:
+# 		score -= 2
+#
+# 	return score
+#
+# def tables_pass(page, settings):
+# 	tables = page.extract_tables(table_settings=settings) or []
+# 	dfs = []
+# 	for t in tables:
+# 		df = pd.DataFrame(t)
+# 		# drop fully empty rows
+# 		df = df.replace({None: ""})
+# 		df = df.loc[~(df.apply(lambda r: all(normalize_cell(x)=="" for x in r), axis=1))]
+# 		# drop fully empty cols
+# 		df = df.loc[:, ~(df.apply(lambda c: all(normalize_cell(x)=="" for x in c), axis=0))]
+# 		if not df.empty:
+# 			dfs.append(df.reset_index(drop=True))
+# 	return dfs
+#
+# def find_header_band_bbox(page):
+# 	# find words; if headers occur, estimate a bbox band below them
+# 	words = page.extract_words(use_text_flow=True, keep_blank_chars=False) or []
+# 	if not words:
+# 		return None
+#
+# 	hits = []
+# 	for w in words:
+# 		txt = (w.get("text") or "").strip().upper()
+# 		if txt in HEADERS or any(h in txt for h in HEADERS if len(h) >= 4):
+# 			hits.append(w)
+#
+# 	if not hits:
+# 		return None
+#
+# 	# pick lowest header y (closest to table start), then crop below it
+# 	# pdfplumber coords: top smaller -> higher on page
+# 	y_bottom_of_header = max(h["bottom"] for h in hits)
+# 	# crop from a bit above that header bottom to near page bottom
+# 	top = max(0, y_bottom_of_header - 5)
+# 	bottom = page.height
+# 	left = 0
+# 	right = page.width
+# 	return (left, top, right, bottom)
+#
+# @st.cache_data(show_spinner=False)
+# def extract_parts_tables_from_pdf(pdf_bytes: bytes) -> dict:
+# 	"""
+# 	Returns dict with:
+# 	  - 'tables': list[pd.DataFrame]
+# 	  - 'best': pd.DataFrame | None
+# 	  - 'meta': list of per-table info
+# 	Cacheable by pdf_bytes.
+# 	"""
+# 	out_tables = []
+# 	meta = []
+#
+# 	with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+# 		for pageno, page in enumerate(pdf.pages, start=1):
+# 			# optional crop based on header band
+# 			# bbox = find_header_band_bbox(page)
+# 			# st.write("bbox")
+# 			# st.write(bbox)
+# 			bbox = (0, 0, page.width, page.height)
+# 			work_page = page.crop(bbox) if bbox else page
+#
+# 			# Pass 1: stricter (good when ruling lines exist)
+# 			settings1 = dict(
+# 				vertical_strategy="lines",
+# 				horizontal_strategy="lines",
+# 				intersection_tolerance=5,
+# 				snap_tolerance=3,
+# 				join_tolerance=3,
+# 				edge_min_length=10,
+# 				min_words_vertical=2,
+# 				min_words_horizontal=1,
+# 			)
+#
+# 			dfs1 = tables_pass(work_page, settings1)
+#
+# 			# if nothing or sanity fails, Pass 2: stream-ish (text alignment)
+# 			settings2 = dict(
+# 				vertical_strategy="text",
+# 				horizontal_strategy="text",
+# 				snap_tolerance=3,
+# 				join_tolerance=3,
+# 				intersection_tolerance=5,
+# 				min_words_vertical=1,
+# 				min_words_horizontal=1,
+# 				text_tolerance=3,
+# 				text_x_tolerance=2,
+# 				text_y_tolerance=2,
+# 			)
+#
+# 			dfs2 = []
+# 			if not dfs1 or all(score_table(d) < 1 for d in dfs1):
+# 				dfs2 = tables_pass(work_page, settings2)
+#
+# 			dfs = dfs1 if dfs1 else []
+# 			if dfs2:
+# 				dfs.extend(dfs2)
+#
+# 			# score, store
+# 			for df in dfs:
+# 				sc = score_table(df)
+# 				out_tables.append(df)
+# 				meta.append({"page": pageno, "bbox": bbox, "score": sc, "nrows": df.shape[0], "ncols": df.shape[1]})
+#
+# 	best = None
+# 	if out_tables:
+# 		best_idx = max(range(len(out_tables)), key=lambda i: meta[i]["score"])
+# 		best = out_tables[best_idx]
+#
+# 	return {"tables": out_tables, "best": best, "meta": meta}
+
+
+@st.cache_data(show_spinner=False)
+def extract_from_bytes(pdf_bytes: bytes, correction_cols_to_ignore: Optional[list] = None):
+	bio = io.BytesIO(pdf_bytes)
+	cands = edp.extract_table_candidates(bio)
+	parts = edp.pick_best_parts_table(cands, correction_cols_to_ignore=correction_cols_to_ignore)
+	rev = edp.pick_best_revision_table(cands)
+	return cands, parts, rev
+
+
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
 	if out_type == "str":
 		return str(po_num).rjust(word_size, "0")
@@ -3052,7 +3273,8 @@ if not st_auth():
 	# Go no further
 	st.stop()
 
-st.header("Parts")
+
+st.header(f"Parts {version_str}")
 user = st.session_state.get("user", "??")
 st.write(f"welcome {user}")
 # if st.button("change password"):
@@ -3948,9 +4170,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 		# )
 		#
 		# #################################################
-
-
-		import re
 
 		_WINDOWS_RESERVED = {
 			"CON", "PRN", "AUX", "NUL",
@@ -5206,7 +5425,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 		df_stock_pdfs,
 		left_on="StockCode",
 		right_on="StockCode",
-		how="left",
+		how="outer",
 		suffixes=("_pdf", "_parts")
 	)
 
@@ -5216,7 +5435,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 		stdf_parts = display_df_paginated(
 			df_parts_drawings,
 			"df_parts",
-			batch_size_options=(100, 500, 2500),
+			batch_size_options=(500, 2000, 5000),
 			key="stdf_parts_by_drawing",
 			on_select="rerun",
 			selection_mode="single-row"
@@ -5224,43 +5443,210 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 
 		df_sel_parts: pd.DataFrame = get_selected_rows(df_parts_drawings, stdf_parts, df_parts_drawings.columns, n=None)
 		if not df_sel_parts.empty:
-			display_df(
-				df_sel_parts,
-				"Selected Drawings"
-			)
+			# display_df(
+			# 	df_sel_parts,
+			# 	"Selected Drawings"
+			# )
+			if isinstance(df_sel_parts, pd.DataFrame):
+				if df_sel_parts.empty:
+					textbox_stockcode = None
+				else:
+					textbox_stockcode = df_sel_parts.iloc[0]
 
 	with cols_by_drawing[1]:
-		uploaded_file = st.file_uploader("Upload a drawing PDF", type=["pdf"])
+		k_df_sel_drawing: str = "key_df_sel_drawing"
+		uploaded_file = st.file_uploader(
+			"Upload a drawing PDF",
+			type=["pdf"],
+			on_change=lambda: st.session_state.update({k_df_sel_drawing: None})
+		)
 
-	if uploaded_file:
-		st.success("✅ PDF uploaded. Click below to extract parts.")
-		if st.button("Yes, Extract Parts"):
-			parts_data = []
+		k_selectbox_drawing_select: str = "key_selectbox_drawing_select"
+		st.session_state.setdefault(k_selectbox_drawing_select, None)
+		selectbox_drawing_select = st.selectbox(
+			label="Or, select a part:",
+			options=df_stock_pdfs["StockCode"].dropna().unique().tolist() + [None] ,
+			key=k_selectbox_drawing_select
+		)
 
-			with pdfplumber.open(uploaded_file) as pdf:
-				for i, page in enumerate(pdf.pages):
-					st.write(f"🔍 Processing page {i + 1}...")
-					e_table = page.extract_table()
-					st.write(e_table)
-					table = pd.DataFrame(e_table).reset_index()
-					col = 1
-					# if col not in table.columns:
-					# 	col = 1
-					st.write(f"{table.columns.tolist()=}")
-					table = table.loc[
-						(~pd.isna(table[col]))
-						& (table[col].str.upper() != "ITEM NO.")
-						& (table[col].str.upper() != "ITEM")
-						]
-					parts_data.append(table)
+		if selectbox_drawing_select and (not uploaded_file):
+			uploaded_file = selectbox_drawing_select
 
+		if uploaded_file:
+			st.success("✅ PDF uploaded. Click below to extract parts.")
+			if st.button("Yes, Extract Parts"):
+				parts_data = []
+
+				# parts_data = extract_parts_tables_from_pdf(uploaded_file.getvalue())
+				# st.write("parts_data")
+				# st.write(parts_data)
+				pdf_bytes = uploaded_file.getvalue()
+				# res = extract_parts_tables_from_pdf(pdf_bytes)
+				#
+				# if res["best"] is None:
+				# 	st.warning("No parts list detected.")
+				# else:
+				# 	st.success("✅ Best table detected:")
+				# 	st.dataframe(res["best"])
+				#
+				# 	with st.expander("All detected tables"):
+				# 		for i, (df, m) in enumerate(zip(res["tables"], res["meta"])):
+				# 			st.write(f"Table {i} — page {m['page']} — score {m['score']:.2f} — {m['nrows']}x{m['ncols']}")
+				# 			st.dataframe(df)
+
+				pdf_bytes = uploaded_file.getvalue()
+				cands, parts, rev = extract_from_bytes(pdf_bytes, correction_cols_to_ignore=["itemno"])
+
+				if parts:
+					# st.success(f"Parts table found (page {parts.page}, method {parts.method}, score {parts.score:.2f})")
+					# st.dataframe(parts.df)
+					parts_data = [parts.df]
+				else:
+					st.warning("No parts table detected.")
+
+				# with st.expander("All table candidates"):
+				# 	for c in sorted(cands, key=lambda x: x.score, reverse=True)[:20]:
+				# 		st.write(
+				# 			f"{c.kind} | page {c.page} | score {c.score:.2f} | bbox {c.bbox} | method {c.method} | shape {c.df.shape}")
+				# 		st.dataframe(c.df)
+
+				# st.stop()
+
+				# with pdfplumber.open(uploaded_file) as pdf:
+				# 	for i, page in enumerate(pdf.pages):
+				# 		st.write(f"🔍 Processing page {i + 1}...")
+				# 		e_table = page.extract_table()
+				# 		st.write(e_table)
+				# 		e_txt = page.extract_text_lines()
+				# 		st.write(len(e_txt))
+				# 		st.write([d['text'] for d in e_txt[:5]])
+				# 		table = pd.DataFrame(e_table).reset_index()
+				# 		col = 1
+				# 		# if col not in table.columns:
+				# 		# 	col = 1
+				# 		st.write(f"{table.columns.tolist()=}")
+				# 		table = table.loc[
+				# 			(~pd.isna(table[col]))
+				# 			& (table[col].str.upper() != "ITEM NO.")
+				# 			& (table[col].str.upper() != "ITEM")
+				# 			]
+				# 		parts_data.append(table)
+
+				st.session_state.update({
+					k_df_sel_drawing: parts_data
+				})
+		if st.session_state.get(k_df_sel_drawing, None) is not None:
+			parts_data: list[pd.DataFrame] = st.session_state.get(k_df_sel_drawing, [])
 			if parts_data:
-				for i, df_parts in enumerate(parts_data):
-					display_df(
-						df_parts,
-						f"DF #{i}"
+				for i, df_parts_ in enumerate(parts_data):
+
+					stdf_parts = display_df_paginated(
+						df_parts_,
+						f"Page #{i+1}",
+						batch_size_options=(100, 500, 2500),
+						key=f"stdf_parts_p{i}_by_drawing",
+						on_select="rerun",
+						selection_mode="single-row"
 					)
-					st.success(f"✅ Extracted {df_parts.shape[0]} unique parts.")
+
+
+					inv_stockcode = edp.get_stockcode_col(df_parts_)
+
+					df_sel_parts: pd.DataFrame = get_selected_rows(df_parts_, stdf_parts,
+																   inv_stockcode, n=1)
+					if isinstance(df_sel_parts, pd.DataFrame):
+						if not df_sel_parts.empty:
+							textbox_stockcode = df_sel_parts.iloc[0]
+					else:
+						if df_sel_parts:
+							textbox_stockcode = df_sel_parts
+
+					st.success(f"✅ Extracted {df_parts_.shape[0]} unique parts.")
+
+					st.write(f"{inv_stockcode=}, {type(inv_stockcode)=}")
+					st.write({inv_stockcode: 'StockCode'})
+
+					if st.button(
+						"BFS",
+						key=f"key_btn_submit_bfs_py_drawing"
+					):
+						df_p_ = df_parts_.copy()
+						df_drawings_to_search: pd.DataFrame = df_p_.merge(
+							df_stock_pdfs,
+							left_on=inv_stockcode,
+							right_on="StockCode",
+							suffixes=("_parts", "_pdf"),
+							how="inner"
+						)
+
+						if df_drawings_to_search.empty:
+							cols_without_part = df_parts_.columns.tolist()
+							cols_without_part.remove(inv_stockcode)
+							inv_stockcode_new = edp.get_stockcode_col(df_parts_[cols_without_part])
+							df_drawings_to_search: pd.DataFrame = df_p_.merge(
+								df_stock_pdfs,
+								left_on=inv_stockcode_new,
+								right_on="StockCode",
+								suffixes=("_parts", "_pdf"),
+								how="inner"
+							)
+
+						display_df(
+							df_drawings_to_search,
+							"dfs_drawings_to_search"
+						)
+						parent_cols : list = list(df_drawings_to_search.columns)
+						dfs_captured_sub_parts: list = []
+
+						# Perform BFS HERE
+
+						for i, row in df_drawings_to_search.iterrows():
+							sc = row["StockCode"]
+							f_name = row["PDF_Listed"]
+							if pd.isna(f_name) or (not f_name):
+								f_name = row["PDF_Stock"]
+							st.write(f"Row# {i=}, {f_name=}")
+							if (not pd.isna(f_name)) and f_name:
+								with open(f_name, "rb") as f_bin:
+									pdf_bytes = f_bin.read()
+									cands, parts, rev = extract_from_bytes(pdf_bytes, correction_cols_to_ignore=["itemno"])
+
+									if parts:
+										st.write(f"{parts.score=}")
+										st.success(f"Parts table found (page {parts.page}, method {parts.method}, score {parts.score:.2f})")
+										st.write(f"{edp.get_stockcode_col(parts.df)=}")
+										st.dataframe(parts.df)
+										if parts.score > 3:
+											col_sc: str  = edp.get_stockcode_col(parts.df)
+											df_parts_in_sub = parts.df.merge(
+												df_stock_pdfs,
+												left_on=col_sc,
+												right_on="StockCode",
+												suffixes=("_parts", "_pdf"),
+												how="left"
+											)
+											lst_sub_components = df_parts_in_sub[col_sc]
+											dfs_captured_sub_parts.append(
+												df_parts_in_sub
+											)
+										else:
+											st.info(f"Poor score, omit {i=}")
+									else:
+										st.warning("No parts detected.")
+
+						if dfs_captured_sub_parts:
+							df_cap = pd.concat(dfs_captured_sub_parts, ignore_index=True)
+							st.write("parent_cols")
+							st.write(parent_cols)
+							st.write("df_cap.columns")
+							st.write(df_cap.columns)
+							display_df(
+								df_cap,
+								"df_cap"
+							)
+						else:
+							st.info(f"No captured parts")
+
 			else:
 				st.warning("⚠️ No parts list could be detected. Try another file or check formatting.")
 
@@ -5697,9 +6083,9 @@ elif textbox_stockcode:
 					width="stretch"
 				)
 
-				df_stock_pdf = load_path_pdf(selectbox_stockcode)
-				stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"]
-				stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"]
+				df_stock_pdf = load_path_pdf(selectbox_stockcode).reset_index(drop=True)
+				stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"] if not df_stock_pdf.empty else None
+				stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"] if not df_stock_pdf.empty else None
 				with st.popover(f"Drawings"):
 					if stock_pdf_listed or stock_pdf_stock:
 						f_name = f"{selectbox_stockcode.replace(' ', '_')}"
@@ -5996,7 +6382,7 @@ elif textbox_stockcode:
 					if ttl_on_hand >= 0:
 						active = str(row["ActiveFlag"]) == "1"
 						if pd.isna(row["ActiveFlag"]) or (not str(row["ActiveFlag"]).strip()):
-							active = str(row["OrderStatus"]) == "1"
+							active = str(row["OrderStatus"]) in VALID_SALES_ORDER_ACTIVE_STATUS_CODES
 							active = active and (qty_reqd > 0)
 						if active:
 							st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
