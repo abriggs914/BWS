@@ -475,6 +475,7 @@ def save_user_settings(settings_in: dict) -> tuple[bool, str]:
 		return True, "Settings updated successfully."
 	except Exception as e:
 		conn.rollback()
+		st.error(e)
 		return False, f"Settings update failed: {e}"
 
 

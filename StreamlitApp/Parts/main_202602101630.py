@@ -32,11 +32,9 @@ import io
 import os
 import re
 
-
 VERSION = (3, 0, 0)
 VERSION_DATE = datetime.datetime(2026, 2, 9, 7, 40)
 version_str: str = f"v{'.'.join(map(str, VERSION))}"
-
 
 st.set_page_config(
 	layout="wide",
@@ -84,7 +82,7 @@ def load_drawings_non_stocked():
 		(pd.isna(df_pdfs["Description"]))
 		& (~pd.isna(df_pdfs["StockCode"]))
 		& (~pd.isna(df_pdfs["pdf"]))
-	]
+		]
 	return df_pdfs
 
 
@@ -526,15 +524,15 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 		[PD].[MDiscPct1],
 		[PD].[MDiscPct2],
 		[PD].[MDiscPct3],
-	
+
 		[PH].[Supplier] AS [PHSupplier],
-	
+
 		[PR].[PoDate],
 		[PR].[QtyReceived],
 		[PR].[PriceReceived],
 		[PR].[Currency],
 		[PR].[ExchangeRate],
-	
+
 		[AS].[SupplierName] AS [Supplier],
 		[AS].[SupShortName],
 		[AS].[Contact],
@@ -576,7 +574,7 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 		AND ([PD].[MStockCode] = [PR].[StockCode])
 		AND ([PD].[MWarehouse] = [PR].[Warehouse])
 		AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
-	
+
 	LEFT JOIN
 		[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
 	ON
@@ -606,15 +604,15 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 		[PD].[MDiscPct1],
 		[PD].[MDiscPct2],
 		[PD].[MDiscPct3],
-	
+
 		[PH].[Supplier] AS [PHSupplier],
-	
+
 		[PR].[PoDate],
 		[PR].[QtyReceived],
 		[PR].[PriceReceived],
 		[PR].[Currency],
 		[PR].[ExchangeRate],
-	
+
 		[AS].[SupplierName] AS [Supplier],
 		[AS].[SupShortName],
 		[AS].[Contact],
@@ -656,7 +654,7 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 		AND ([PD].[MStockCode] = [PR].[StockCode])
 		AND ([PD].[MWarehouse] = [PR].[Warehouse])
 		AND ([PD].[MLastReceiptDat] = [PR].[LastDateReceived])
-	
+
 	LEFT JOIN
 		[SysproCompanyA].[dbo].[ApSupplier] [AS] WITH (NOLOCK)
 	ON
@@ -885,7 +883,7 @@ SELECT
 	[PM].[ExchangeRate],
 	[PM].[OrderEntryDate],
 	[PM].[OrderDueDate],
-	
+
 	[PM].[OrderStatus],
 	[PM].[CancelledFlag],
 	[PM].[ActiveFlag],
@@ -899,7 +897,7 @@ SELECT
 	[PS].[Telephone],
 	[PS].[Email],
 	[PS].[Nationality],
-	
+
 	[PD].[MStockCode],
 	[PD].[MLastReceiptDat],
 	[PD].[MLatestDueDate],
@@ -1146,7 +1144,6 @@ GROUP BY
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_warranty_data(job: Optional[int] = None, claim: Optional[int] = None) -> pd.DataFrame:
-
 	if (job is None) and (claim is None):
 		raise ValueError("Must specify either job or claim")
 
@@ -1159,13 +1156,13 @@ def load_warranty_data(job: Optional[int] = None, claim: Optional[int] = None) -
 	sql = f"""
 	DECLARE @war_wo NVARCHAR(8) = '{job}';
 	DECLARE @claim_mode BIT = {claim_mode};
-	
+
 	IF @claim_mode = 0 BEGIN
 		IF LEN(@war_wo) <> 8 BEGIN
 			SET @war_wo = '3' + RIGHT('00000000' + SUBSTRING(ISNULL(@war_wo, ' '), 1, (CASE WHEN LEN(ISNULL(@war_wo, ' ')) < 5 THEN LEN(ISNULL(@war_wo, ' ')) ELSE 5 END)), 7)
 		END
 	END
-		
+
 	SELECT
 	[WM].[Job],
 	[WM].[JobDescription],
@@ -1183,7 +1180,7 @@ def load_warranty_data(job: Optional[int] = None, claim: Optional[int] = None) -
 	[WC].[Customer],
 	[WC].[Dealer],
 	[WC].[S/N]
-	
+
 	--,*
 FROM
 	[BWSdb].[dbo].[Warranty Claims] [WC]
@@ -1355,7 +1352,7 @@ WHERE
 			e_d = datetime.datetime.now()
 			st.write(f"MID load_path_pdf {m_d:%Y-%m-%d %H:%M:%S}")
 
-			dd = (m_d-s_d).total_seconds()
+			dd = (m_d - s_d).total_seconds()
 			st.write(f"{dd} seconds past")
 	df["StockCode"] = df["PDF_Stock"]
 	for col in [
@@ -1366,14 +1363,14 @@ WHERE
 			lambda p:
 			os.path.join(PATH_STOCK_PDFS, f"{str(p).removesuffix('.pdf')}.pdf") if ((not pd.isna(p)) and p) else None
 		)
-		# df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
+	# df[col] = df[col].apply(lambda p: p if os.path.exists(p) else None)
 	df = df[~pd.isna(df["PDF_Listed"]) | ~pd.isna(df["PDF_Stock"])]
 	if user in admin_test_users:
 		with st.container(border=True, horizontal=True):
 			e_d = datetime.datetime.now()
 			st.write(f"END load_path_pdf {e_d:%Y-%m-%d %H:%M:%S}")
 
-			dd = (e_d-s_d).total_seconds()
+			dd = (e_d - s_d).total_seconds()
 			st.write(f"{dd} total seconds")
 	return df
 
@@ -1532,7 +1529,6 @@ def prep_inv_by_bin_report(f_name: str, title: str, df: pd.DataFrame):
 	)
 
 	story = []
-
 
 	# # cell 0, 0
 	# story += [rlu.FrameBreak()]
@@ -2136,7 +2132,7 @@ def generate_bin_maps(
 				)
 				df_building_code = df_building_code[
 					df_building_code["StockCode"].str.lower().str.strip() == row[col_stock].lower().strip()
-				].reset_index(drop=True)
+					].reset_index(drop=True)
 				# display_df(
 				# 	df_building_code,
 				# 	f"{i=}"
@@ -2214,7 +2210,7 @@ def generate_bin_maps(
 				reported.add(sc)
 
 	if user in admin_end_users:
-		with st.container(border=True,horizontal=True):
+		with st.container(border=True, horizontal=True):
 			st.write("admin_debugging")
 			st.write(f"bin_maps")
 			st.write(bin_maps)
@@ -2486,7 +2482,7 @@ def load_hawkins_map(
 					plotted=plotted
 				)
 			if user in admin_end_users:
-				with st.container(border=True,horizontal=True):
+				with st.container(border=True, horizontal=True):
 					st.write("admin_debugging")
 					st.write(f"plotted ITER BOTTOM")
 					st.write(plotted)
@@ -2781,14 +2777,14 @@ def input_purchase_order_due_date_report_parameters():
 					# st.write(f"{i=}, {j=}, {offset=}")
 					# st.write(k_btn)
 					if st.button(
-						# label="Today",
-						label=f"{'+' if j == 0 else '-'}{offset}",
-						key=k_btn
+							# label="Today",
+							label=f"{'+' if j == 0 else '-'}{offset}",
+							key=k_btn
 					):
 						d0_, d1_ = st.session_state.get(k_slider_dates, [datetime.date.today(), datetime.date.today()])
 						dd_ = (d1_ - d0_).days
 						td = d0_ if i == 0 else d1_
-						td += datetime.timedelta(days=offset*(1 if j == 0 else -1))
+						td += datetime.timedelta(days=offset * (1 if j == 0 else -1))
 						new_dates = [td, d1_] if i == 0 else [d0_, td]
 						if new_dates[1] < new_dates[0]:
 							if j == 0:
@@ -2811,27 +2807,28 @@ def input_purchase_order_due_date_report_parameters():
 
 	with cols[0]:
 		if st.button(
-			label="cancel",
-			key="k_btn_po_dd_cancel"
+				label="cancel",
+				key="k_btn_po_dd_cancel"
 		):
 			st.rerun()
 
 	with cols[2]:
 		if date_input_po_dd:
 			if st.button(
-				label="submit",
-				key="k_btn_po_dd_submit"
+					label="submit",
+					key="k_btn_po_dd_submit"
 			):
 				d0, d1 = date_input_po_dd
 				df_pos_in_range: pd.DataFrame = df_pos[
 					((d0 <= df_pos["OrderDueDate"])
 					 & (df_pos["OrderDueDate"] <= d1)
-					)
+					 )
 					| ((d0 <= df_pos["MLatestDueDate"])
 					   & (df_pos["MLatestDueDate"] <= d1)
-					)
-				]
-				df_pos_in_range["MLatestDueDate"] = df_pos_in_range["MLatestDueDate"].fillna(df_pos_in_range["OrderDueDate"])
+					   )
+					]
+				df_pos_in_range["MLatestDueDate"] = df_pos_in_range["MLatestDueDate"].fillna(
+					df_pos_in_range["OrderDueDate"])
 				df_test = df_pos_in_range[
 					["OrderDueDate", "MLatestDueDate"]
 				]
@@ -2841,7 +2838,7 @@ def input_purchase_order_due_date_report_parameters():
 				)
 				df_pos_in_range["Date"] = df_pos_in_range[
 					["OrderDueDate", "MLatestDueDate"]
-				# ].max().max()
+					# ].max().max()
 				].max(axis=1, skipna=True)
 
 				df_pos_in_range.sort_values(
@@ -2873,8 +2870,8 @@ def init_po_df_show_cols():
 		})
 
 
-def prep_po_pdf_report(df_pos_in_range, report_file_name, top_level: bool = True, mode: Literal["due", "received"] = "due"):
-
+def prep_po_pdf_report(df_pos_in_range, report_file_name, top_level: bool = True,
+					   mode: Literal["due", "received"] = "due"):
 	if st.session_state.get(k_df_po_show_cols) is None:
 		init_po_df_show_cols()
 
@@ -2948,7 +2945,7 @@ def prep_po_pdf_report(df_pos_in_range, report_file_name, top_level: bool = True
 		df_po_datas = df_po_datas[
 			(~pd.isna(df_po_datas["MStockCode"]))
 			& (df_po_datas["MStockCode"].str.strip() != "")
-		]
+			]
 		print("\n\n\nHERE\n\n\n")
 		print(df_po_datas.head(10))
 		print(df_po_datas.columns)
@@ -3240,7 +3237,6 @@ def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 
 
 
 def nz(val: Any, length: int):
-
 	def helper(val_: str, length_: int):
 		if len(val_) > length_:
 			return val_[:length_] + "... "
@@ -3316,10 +3312,8 @@ if not st_auth():
 	# Go no further
 	st.stop()
 
-
 admin_end_users = ["abriggs"]
 admin_test_users = ["rec"] + admin_end_users
-
 
 st.header(f"Parts {version_str}")
 user = st.session_state.get("user", "??")
@@ -3328,8 +3322,8 @@ st.write(f"welcome {user}")
 if user in admin_test_users:
 	with st.sidebar:
 		if st.button(
-			label="Clear Cache & Rerun",
-			key=f"k_clear_cache_rerun"
+				label="Clear Cache & Rerun",
+				key=f"k_clear_cache_rerun"
 		):
 			st.cache_data.clear()
 			st.cache_resource.clear()
@@ -3396,7 +3390,8 @@ with st.popover("Filter"):
 	st.write("loaded_settings")
 	st.write(loaded_settings)
 	st.write(type(loaded_settings))
-	loaded_settings_bd = st.session_state.setdefault(k_loaded_settings_session, (success_loaded_settings, loaded_settings))
+	loaded_settings_bd = st.session_state.setdefault(k_loaded_settings_session,
+													 (success_loaded_settings, loaded_settings))
 	success_loaded_settings, loaded_settings = loaded_settings_bd
 	if success_loaded_settings:
 		for k, v in loaded_settings.items():
@@ -3780,13 +3775,15 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin)
 			min_prefix = min(len(textbox_bin_a), len(textbox_bin_b))
 			with cols_by_bin_range[3]:
 				if st.button(
-					label="submit",
-					key="submit_by_bin_range"
+						label="submit",
+						key="submit_by_bin_range"
 				):
 					df_by_bin_range = df_bins[
-						(textbox_bin_a.lower().strip() <= df_bins["DefaultBin"].str.lower().str.strip().str[:min_prefix])
-						& (df_bins["DefaultBin"].str.lower().str.strip().str[:min_prefix] <= textbox_bin_b.lower().strip())
-					]
+						(textbox_bin_a.lower().strip() <= df_bins["DefaultBin"].str.lower().str.strip().str[
+														  :min_prefix])
+						& (df_bins["DefaultBin"].str.lower().str.strip().str[
+						   :min_prefix] <= textbox_bin_b.lower().strip())
+						]
 					st.session_state.update({
 						k_df_by_bin_range: df_by_bin_range,
 						k_title_by_bin_range: f"Inventory between {textbox_bin_a.upper().strip()} and {textbox_bin_b.upper().strip()} in {selectbox_by_bin_warehouse}"
@@ -3849,11 +3846,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin)
 					)
 
 
-	# if stdf_search_bin:
+# if stdf_search_bin:
 # 	if stdf_search_bin["selection"]:
-	# 		if stdf_search_bin["selection"]["rows"]:
-	# 			textbox_stockcode = df_search_bin.reset_index().loc[
-	# 				stdf_search_bin["selection"]["rows"][0], "StockCode"]
+# 		if stdf_search_bin["selection"]["rows"]:
+# 			textbox_stockcode = df_search_bin.reset_index().loc[
+# 				stdf_search_bin["selection"]["rows"][0], "StockCode"]
 
 # elif pills_search_mode == op_search_mode_by_section:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_section):
@@ -3942,11 +3939,12 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 	k_stde_df_pos_in_range_ord = "key_stde_df_pos_in_range_ord"
 
 	if user in admin_test_users:
-		pdfs = [f for f in os.listdir(os.getcwd()) if f.lower().endswith(".pdf") and (f.lower().startswith(PREFIX_PO_DD_RPT.lower()))]
+		pdfs = [f for f in os.listdir(os.getcwd()) if
+				f.lower().endswith(".pdf") and (f.lower().startswith(PREFIX_PO_DD_RPT.lower()))]
 		if pdfs:
 			if st.button(
-				label=f"Delete {len(pdfs)} existing reports?",
-				key="key_delete_existing_reports"
+					label=f"Delete {len(pdfs)} existing reports?",
+					key="key_delete_existing_reports"
 			):
 				for pdf in pdfs:
 					os.remove(os.path.join(os.getcwd(), pdf))
@@ -4011,8 +4009,10 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 						df_pos_in_range_ord,
 						"df_pos_in_range_ord"
 					)
-					d0 = df_pos_in_range_ord["Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].min()
-					d1 = df_pos_in_range_ord["Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].max()
+					d0 = df_pos_in_range_ord[
+						"Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].min()
+					d1 = df_pos_in_range_ord[
+						"Due Date" if "Due Date" in df_pos_in_range_ord else show_cols_po_ext["Due Date"]].max()
 					display_df_paginated(
 						df_pos_in_range_ord,
 						f"POs in Range {d0} - {d1}",
@@ -4068,8 +4068,12 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 			df_pos_in_range_ord: pd.DataFrame = st.session_state.get(k_stde_df_pos_in_range_ord)
 			if not df_pos_in_range.empty or not df_pos_in_range_ord.empty:
 				if (df_pos_in_range_ord is not None) and (not df_pos_in_range_ord.empty):
-					d0 = df_pos_in_range_ord["Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext["Received Date"]].min()
-					d1 = df_pos_in_range_ord["Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext["Received Date"]].max()
+					d0 = df_pos_in_range_ord[
+						"Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext[
+							"Received Date"]].min()
+					d1 = df_pos_in_range_ord[
+						"Received Date" if "Received Date" in df_pos_in_range_ord else show_cols_po_ext[
+							"Received Date"]].max()
 					display_df_paginated(
 						df_pos_in_range_ord,
 						f"POs in Range {d0} - {d1}",
@@ -4169,8 +4173,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 					df_stocks=df_sos_bins
 				)
 
-			bin_maps_hawkins = [val for val in bin_maps if val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI, BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
-			bin_maps_montana = [val for val in bin_maps if val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
+			bin_maps_hawkins = [val for val in bin_maps if
+								val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI, BUILDING_CODE_HAWKINS,
+														 BUILDING_CODE_UNKNOWN)]
+			bin_maps_montana = [val for val in bin_maps if
+								val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
 
 			rotation_deg = 90
 			fig = load_hawkins_map(
@@ -4292,7 +4299,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 
 						# zf_name = f"{f_name}.pdf"
 						zf_name = safe_windows_filename(f_name) + ".pdf"
-						assert isinstance(f_bytes_z, (bytes, bytearray)) and len(f_bytes_z) > 5 and f_bytes_z[:5] == b"%PDF-"
+						assert isinstance(f_bytes_z, (bytes, bytearray)) and len(f_bytes_z) > 5 and f_bytes_z[
+																									:5] == b"%PDF-"
 						assert 1 == 2, "THE ZIPPING ISNT WORKING, FIX IT"
 
 						if zf_name not in [tup[0] for tup in pdfs_to_zip]:
@@ -4312,6 +4320,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 			)
 			import zipfile
 			import io
+
 			zf = zipfile.ZipFile(io.BytesIO(zip_bytes))
 			bad = zf.testzip()  # returns first bad file name if CRC fails, else None
 			st.write("zip testzip():", bad)
@@ -4328,7 +4337,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 				textbox_stockcode = None
 			else:
 				textbox_stockcode = textbox_stockcode.iloc[0]
-
 
 		# here
 		# buf = io.BytesIO()
@@ -4420,7 +4428,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 			label="Job:",
 			options=df_jobs["Job"],
 			key=k_pick_list_job,
-			on_change=lambda : st.session_state.update({k_df_pick_list: None})
+			on_change=lambda: st.session_state.update({k_df_pick_list: None})
 		)
 
 	st.write(f"{pick_list_job=}")
@@ -4474,7 +4482,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 			df_possible_0_stock = df_pick_list[
 				(df_pick_list["QtyAvailable"] <= 0)
 				& (df_pick_list["QtyToPick"] > 0)
-			]
+				]
 			with cols_pick_lists[1]:
 				stdf_pick_list_0_stock = display_df_paginated(
 					df_possible_0_stock.rename(columns=show_cols)[show_cols.values()],
@@ -4525,7 +4533,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 
 				bin_maps_hawkins = [val for val in bin_maps if
 									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI,
-															BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
+															 BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
 				bin_maps_montana = [val for val in bin_maps if
 									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
 
@@ -4861,8 +4869,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		val = (
 			df_bins.groupby(["ParentShelf", "Section", "Group", "IsPath"], as_index=False)
 			.agg({
-				"TtlItemValue":"sum",
-				"Shelf":lambda x: ', '.join(x),
+				"TtlItemValue": "sum",
+				"Shelf": lambda x: ', '.join(x),
 				"OldestPurchasedDate": "min",
 				"NewestPurchasedDate": "max"
 			})
@@ -4899,7 +4907,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 				(~pd.isna(out["Section"]))
 				& (~pd.isna(out["ParentShelf"]))
 				& (out["TtlValue"] > 0)
-			]
+				]
 
 		# if map_all_shelves:
 		# 	# out = out[out["TtlValue"] > 0]
@@ -4928,6 +4936,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		# )
 
 		return out
+
 
 	def plot_section_value_3d(df_sec_val: pd.DataFrame, *, elev=25, azim=-55, z_log=False):
 		# Place bars by LOWER-LEFT corner
@@ -4965,6 +4974,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		plt.tight_layout()
 		return fig
 
+
 	def add_prism(fig: go.Figure, *, x0, x1, y0, y1, z0, z1, name="", color=None, opacity=0.85, hover=None):
 		# 8 vertices of the prism
 		verts = np.array([
@@ -4991,7 +5001,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		return fig
 
 
-	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True):
+	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1,
+						   show_val_annotations: bool = True):
 		fig = go.Figure()
 
 		for r in df_cells.itertuples(index=False):
@@ -5028,7 +5039,9 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 
 			bins_per_row = 5
 			if r_shelves_spl:
-				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[bins_per_row*i:bins_per_row*(i+1)]) for i in range(math.ceil(len(r_shelves_spl) // bins_per_row) + 1)]))
+				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join(
+					[", </b><b>".join(r_shelves_spl[bins_per_row * i:bins_per_row * (i + 1)]) for i in
+					 range(math.ceil(len(r_shelves_spl) // bins_per_row) + 1)]))
 			else:
 				shelves_br = " None "
 
@@ -5061,6 +5074,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		)
 		return fig
 
+
 	def update_sidebar():
 		val = st.session_state.get(k_radio_warehouse_building)
 		st.toast(f"{val=}")
@@ -5073,6 +5087,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			st.session_state.update({
 				k_overlay_sections_map: True
 			})
+
 
 	k_radio_warehouse_building = "key_radio_warehouse_building"
 	st.session_state.setdefault(k_radio_warehouse_building, "Hawkins")
@@ -5118,7 +5133,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		df_bins_sections = df_bins_sections[
 			~pd.isna(df_bins_sections["TtlItemValue"])
 			& (df_bins_sections["TtlItemValue"] > 0)
-		]
+			]
 
 		display_df_paginated(
 			df_bins,
@@ -5164,7 +5179,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		)
 
 		# df_bins must be available here
-		df_sec_val: pd.DataFrame = build_section_valuation_geometry(df_sections, df_bins_sections, map_all_shelves=map_all_shelves)
+		df_sec_val: pd.DataFrame = build_section_valuation_geometry(df_sections, df_bins_sections,
+																	map_all_shelves=map_all_shelves)
 
 		df_sec_val["OldestPurchasedDate"] = pd.to_datetime(df_sec_val["OldestPurchasedDate"], errors="ignore").dt.date
 		df_sec_val["NewestPurchasedDate"] = pd.to_datetime(df_sec_val["NewestPurchasedDate"], errors="ignore").dt.date
@@ -5345,7 +5361,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 						df_hit = df_shelves[
 							# (df_shelves[col_section].astype(str).str.strip().str.upper() == sec) &
 							(df_shelves[col_group] == sec_id)
-							].copy()
+						].copy()
 
 						# if df_hit.empty:
 						# 	st.info("No shelves defined for this section/group yet.")
@@ -5361,7 +5377,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 						df_sel.sort_values(["ShelfRow"], inplace=True)
 
 						df_hit_show = df_hit[["Shelf", "ShelfRow"]].sort_values(["ShelfRow", "Shelf"],
-																				ascending=[False, True]).reset_index(drop=True)
+																				ascending=[False, True]).reset_index(
+							drop=True)
 						display_df(
 							df_hit_show,
 							"df_hit_show"
@@ -5374,7 +5391,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 							hide_index=True,
 							column_config={
 								"Shelf": st.column_config.TextColumn(required=True),
-								"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7, required=True),
+								"ShelfRow": st.column_config.NumberColumn(min_value=1, step=1, max_value=7,
+																		  required=True),
 							}
 						)
 
@@ -5420,7 +5438,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 							# df_shelves = df_master
 							st.toast("Updated saved successfully.")
 							default_insert_cols = dict(Section=sec, ShelfSectionID=sec_id)
-							push_shelf_changes(k_stde_section_shelves, "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
+							push_shelf_changes(k_stde_section_shelves,
+											   "[BWSdb].[dbo].[INV_WarehouseLayout_HawkinsShelves]",
 											   default_insert_cols=default_insert_cols)
 							load_layout_data.clear()
 							st.rerun()
@@ -5530,7 +5549,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 		st.session_state.setdefault(k_selectbox_drawing_select, None)
 		selectbox_drawing_select = st.selectbox(
 			label="Or, select a part:",
-			options=df_stock_pdfs["StockCode"].dropna().unique().tolist() + [None] ,
+			options=df_stock_pdfs["StockCode"].dropna().unique().tolist() + [None],
 			key=k_selectbox_drawing_select
 		)
 
@@ -5546,7 +5565,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 				# st.write("parts_data")
 				# st.write(parts_data)
 				if isinstance(uploaded_file, str):
-					pdf_bytes = open(os.path.join(PATH_STOCK_PDFS, uploaded_file.lower().removesuffix(".pdf") + ".pdf"), "rb").read()
+					pdf_bytes = open(os.path.join(PATH_STOCK_PDFS, uploaded_file.lower().removesuffix(".pdf") + ".pdf"),
+									 "rb").read()
 				else:
 					pdf_bytes = uploaded_file.getvalue()
 
@@ -5610,13 +5630,12 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 
 					stdf_parts = display_df_paginated(
 						df_parts_,
-						f"Page #{i+1}",
+						f"Page #{i + 1}",
 						batch_size_options=(100, 500, 2500),
 						key=f"stdf_parts_p{i}_by_drawing",
 						on_select="rerun",
 						selection_mode="single-row"
 					)
-
 
 					inv_stockcode = edp.get_stockcode_col(df_parts_)
 
@@ -5635,8 +5654,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 					st.write({inv_stockcode: 'StockCode'})
 
 					if st.button(
-						"DFS",
-						key=f"key_btn_submit_dfs_py_drawing"
+							"DFS",
+							key=f"key_btn_submit_dfs_py_drawing"
 					):
 						df_p_ = df_parts_.copy()
 						df_drawings_to_search: pd.DataFrame = df_p_.merge(
@@ -5663,7 +5682,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 							df_drawings_to_search,
 							"dfs_drawings_to_search"
 						)
-						parent_cols : list = list(df_drawings_to_search.columns)
+						parent_cols: list = list(df_drawings_to_search.columns)
 						dfs_captured_sub_parts: list = []
 
 						# Perform BFS HERE
@@ -5676,7 +5695,8 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 						while to_visit:
 							sc = to_visit.pop(0)
 							visited.append(sc)
-							df_sc = df_stock_pdfs[df_stock_pdfs["StockCode"].str.lower().str.strip() == sc.lower().strip()]
+							df_sc = df_stock_pdfs[
+								df_stock_pdfs["StockCode"].str.lower().str.strip() == sc.lower().strip()]
 							if df_sc.empty:
 								df_sc = df_drawings_not_parts[
 									df_drawings_not_parts["StockCode"].str.lower().str.strip() == sc.lower().strip()]
@@ -5691,15 +5711,17 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_draw
 							if (not pd.isna(f_name)) and f_name:
 								with open(f_name, "rb") as f_bin:
 									pdf_bytes = f_bin.read()
-									cands, parts, rev = extract_from_bytes(pdf_bytes, correction_cols_to_ignore=["itemno"])
+									cands, parts, rev = extract_from_bytes(pdf_bytes,
+																		   correction_cols_to_ignore=["itemno"])
 
 									if parts:
 										st.write(f"{parts.score=}")
-										st.success(f"Parts table found (page {parts.page}, method {parts.method}, score {parts.score:.2f})")
+										st.success(
+											f"Parts table found (page {parts.page}, method {parts.method}, score {parts.score:.2f})")
 										st.write(f"{edp.get_stockcode_col(parts.df)=}")
 										st.dataframe(parts.df)
 										if parts.score > 3:
-											col_sc: str  = edp.get_stockcode_col(parts.df)
+											col_sc: str = edp.get_stockcode_col(parts.df)
 											df_parts_in_sub = parts.df.merge(
 												df_stock_pdfs,
 												left_on=col_sc,
@@ -5794,8 +5816,8 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 		)
 
 		st.write(f"{cols_maps=}")
-		st.write(f"{cols_maps==0}")
-		st.write(f"{cols_maps==1}")
+		st.write(f"{cols_maps == 0}")
+		st.write(f"{cols_maps == 1}")
 		if cols_maps == "Hawkins":
 			df_data = load_layout_data(building="hawkins")
 			df_layout = df_data["Layout"]
@@ -5886,10 +5908,11 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 
 	else:
 		from dataframe_utility import random_df
+
+
 		# from utility import money
 		# from typing import Literal
 		# import os
-
 
 		def test_0():
 
@@ -5908,7 +5931,8 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 					"Price": "float"
 				},
 				index_cols="Jersey",
-				auto_number=[0, 2],  # use autonumbering for ID and Receive Date Ensures unique values and sequential ordering
+				auto_number=[0, 2],
+				# use autonumbering for ID and Receive Date Ensures unique values and sequential ordering
 				min_random_float=75,
 				max_random_float=500,
 				min_random_int=0,
@@ -5990,8 +6014,8 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 			st.code(report_file_name)
 
 			if st.button(
-				label="Generate PDF",
-				key="testing_generate_pdf",
+					label="Generate PDF",
+					key="testing_generate_pdf",
 			):
 				doc = rlu.SimpleDocTemplate("table_grids.pdf", pagesize=rlu.letter)
 				story = []
@@ -6002,8 +6026,8 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 						]
 
 				tblstyle = rlu.TableStyle([('INNERGRID', (0, 0), (-1, -1), 0.25, rlu.colors.red),
-									   ('BOX', (0, 0), (-1, -1), 0.25, rlu.colors.black),
-									   ])
+										   ('BOX', (0, 0), (-1, -1), 0.25, rlu.colors.black),
+										   ])
 
 				tbl = rlu.Table(data)
 				tbl.setStyle(tblstyle)
@@ -6019,95 +6043,95 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 				doc.build(story)
 
 			# theme = rlu.PDFTheme(
-				# 	page_size=rlu.landscape(rlu.LETTER)
-				# )
-				# meta = rlu.PDFMeta(
-				# 	title=report_title,
-				# 	subtitle=report_subtitle,
-				# 	author=report_author,
-				# )
-				# styles = rlu.build_styles(theme)
-				#
-				# out, doc = rlu.build_pdf(
-				# 	report_file_name,
-				# 	story=None,
-				# 	theme=theme,
-				# 	meta=meta,
-				# 	as_zip=False
-				# )
-				# buf = out
-				# story = []
-				# if mode == "received":
-				# 	pdf_header = pdf_header.replace("Due Date", "Received")
-				#
-				# # add_grid_template(
-				# #     doc,
-				# #     theme,
-				# #     template_id="dash",
-				# #     rows=df_pos_in_range.shape[0] + 1,
-				# #     cols=1
-				# #     # ,
-				# #     # merged_cells=[(0, 0, 1, 2)]
-				# # )
-				# rlu.add_grid_template(
-				# 	doc,
-				# 	theme,
-				# 	rows=2,
-				# 	cols=2,
-				# 	merged_cells=[(0, 0, 1, 2)]
-				# )
-				#
-				# story += [
-				# 	rlu.h3(pdf_header, styles)
-				# ]
-				#
-				# # cell 0, 0
-				# story += [
-				# 	# rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
-				# 	# rlu.FrameBreak(),
-				# 	rlu.df_table(
-				# 		df=df_jerseys,
-				# 		theme=theme,
-				# 		styles=styles,
-				# 		target_width=doc.width,
-				# 		number_format={
-				# 			# show_cols["MPrice"]: "$ {:,.2f}"
-				# 			"Price Per Day": lambda x: money(x),
-				# 			"Price": lambda x: money(x)
-				# 		},
-				# 		header_align="CENTER"
-				# 		,
-				# 		# col_align={
-				# 		#     show_cols["QtyOutstanding"]: "RIGHT",
-				# 		#     show_cols["MOrderQty"]: "RIGHT",
-				# 		#     show_cols["MReceivedQty"]: "RIGHT",
-				# 		#     show_cols["TPrice"]: "RIGHT",
-				# 		#     show_cols["PurchaseOrder"]: "LEFT",
-				# 		#     show_cols["MStockCode"]: "LEFT",
-				# 		#     show_cols["MOrigDueDate"]: "CENTER"
-				# 		# }
-				# 	)
-				# ]
-				#
-				# # # # TOC (optional) â€” headings added after it will populate it
-				# # # story += rlu.toc(styles)
-				# #
-				# # story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
-				# # story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
-				# # story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
-				# # story += [rlu.vspace(12)]
-				# #
-				# # # If you have a matplotlib chart saved as PNG:
-				# # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
-				# # # story += [h2("A figure", styles)]
-				# # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
-				#
-				# # out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
-				#
-				# doc.build(story)
-				# f_name = out.resolve()
-				# print(f"Wrote: {f_name}")
-				# return f_name
+			# 	page_size=rlu.landscape(rlu.LETTER)
+			# )
+			# meta = rlu.PDFMeta(
+			# 	title=report_title,
+			# 	subtitle=report_subtitle,
+			# 	author=report_author,
+			# )
+			# styles = rlu.build_styles(theme)
+			#
+			# out, doc = rlu.build_pdf(
+			# 	report_file_name,
+			# 	story=None,
+			# 	theme=theme,
+			# 	meta=meta,
+			# 	as_zip=False
+			# )
+			# buf = out
+			# story = []
+			# if mode == "received":
+			# 	pdf_header = pdf_header.replace("Due Date", "Received")
+			#
+			# # add_grid_template(
+			# #     doc,
+			# #     theme,
+			# #     template_id="dash",
+			# #     rows=df_pos_in_range.shape[0] + 1,
+			# #     cols=1
+			# #     # ,
+			# #     # merged_cells=[(0, 0, 1, 2)]
+			# # )
+			# rlu.add_grid_template(
+			# 	doc,
+			# 	theme,
+			# 	rows=2,
+			# 	cols=2,
+			# 	merged_cells=[(0, 0, 1, 2)]
+			# )
+			#
+			# story += [
+			# 	rlu.h3(pdf_header, styles)
+			# ]
+			#
+			# # cell 0, 0
+			# story += [
+			# 	# rlu.df_table(df_pos_in_range[df_pos_in_range["PurchaseOrder"] == po_num], theme, styles),
+			# 	# rlu.FrameBreak(),
+			# 	rlu.df_table(
+			# 		df=df_jerseys,
+			# 		theme=theme,
+			# 		styles=styles,
+			# 		target_width=doc.width,
+			# 		number_format={
+			# 			# show_cols["MPrice"]: "$ {:,.2f}"
+			# 			"Price Per Day": lambda x: money(x),
+			# 			"Price": lambda x: money(x)
+			# 		},
+			# 		header_align="CENTER"
+			# 		,
+			# 		# col_align={
+			# 		#     show_cols["QtyOutstanding"]: "RIGHT",
+			# 		#     show_cols["MOrderQty"]: "RIGHT",
+			# 		#     show_cols["MReceivedQty"]: "RIGHT",
+			# 		#     show_cols["TPrice"]: "RIGHT",
+			# 		#     show_cols["PurchaseOrder"]: "LEFT",
+			# 		#     show_cols["MStockCode"]: "LEFT",
+			# 		#     show_cols["MOrigDueDate"]: "CENTER"
+			# 		# }
+			# 	)
+			# ]
+			#
+			# # # # TOC (optional) â€” headings added after it will populate it
+			# # # story += rlu.toc(styles)
+			# #
+			# # story += [rlu.h1("Section 1", styles), rlu.p("Some paragraph text.", styles)]
+			# # story += [rlu.h2("Sales Order Pick Sheets Combined", styles)]
+			# # story += [rlu.df_table(df_sales_order_pick_sheets, theme, styles, number_format={"Value": "{:,.2f}"})]
+			# # story += [rlu.vspace(12)]
+			# #
+			# # # If you have a matplotlib chart saved as PNG:
+			# # # plt.savefig("chart.png", dpi=150, bbox_inches="tight")
+			# # # story += [h2("A figure", styles)]
+			# # # story += figure("chart.png", styles, caption="Figure 1: Example chart", max_width=6.5*inch)
+			#
+			# # out = rlu.build_pdf(report_file_name, story, theme=theme, meta=meta)
+			#
+			# doc.build(story)
+			# f_name = out.resolve()
+			# print(f"Wrote: {f_name}")
+			# return f_name
 
 			if os.path.exists(report_file_name):
 				from streamlit_pdf_viewer import pdf_viewer
@@ -6118,6 +6142,7 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 				)
 			else:
 				st.info("Generate a PDF first.")
+
 
 		test_0()
 
@@ -6142,450 +6167,446 @@ if user in admin_end_users:
 
 found_stockcode = False
 
-if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(textbox_stockcode, pd.DataFrame) and not textbox_stockcode.empty):
-
+if isinstance(textbox_stockcode, (pd.DataFrame, pd.Series)):
+	st.info(f"Select a stock code for more details.")
+elif textbox_stockcode:
 	# searching for stockcode specific results
-	if isinstance(textbox_stockcode, str):
-		selectbox_stockcode = None
-		if textbox_stockcode:
-			if textbox_stockcode.lower() in list_stockcodes:
-				selectbox_stockcode = textbox_stockcode
-				found_stockcode = True
-			else:
-				st.warning(f"Stockcode '{textbox_stockcode}' not found.")
 
-		if selectbox_stockcode:
-			df_stock_movements: pd.DataFrame = load_stockcode_movements(selectbox_stockcode)
-			df_stock_movements.sort_values(
-				by=["EntryDate", "TrnTime"],
-				ascending=[False, False],
-				inplace=True
-			)
-			df_stock_sales_orders: pd.DataFrame = load_so_details(stockcode=selectbox_stockcode)
-			df_stock_sales_orders.sort_values(
-				by="MCustRequestDat",
-				ascending=False,
-				inplace=True
-			)
-			df_stock_purchase_orders: pd.DataFrame = load_po_details(selectbox_stockcode)
-			df_stock_purchase_orders.sort_values(
-				by="MLatestDueDate",
-				ascending=False,
-				inplace=True
-			)
-			df_stock_allocations = load_allocations(selectbox_stockcode)
-			df_stock_allocations.sort_values(
-				by=["DateRequired", "TrnDateTime"],
-				ascending=[True, False],
-				inplace=True
-			)
+	selectbox_stockcode = None
+	if textbox_stockcode:
+		if textbox_stockcode.lower() in list_stockcodes:
+			selectbox_stockcode = textbox_stockcode
+			found_stockcode = True
+		else:
+			st.warning(f"Stockcode '{textbox_stockcode}' not found.")
 
-			if checkbox_warehouse_1_only:
-				df_stock_movements = df_stock_movements[df_stock_movements["Warehouse"] == "01"]
-				df_stock_allocations = df_stock_allocations[df_stock_allocations["Warehouse"] == "01"]
-			# df_stock_sales_orders = df_stock_sales_orders[df_stock_sales_orders["Warehouse"] == "01"]
-			# df_stock_purchase_orders = df_stock_purchase_orders[df_stock_purchase_orders["Warehouse"] == "01"]
+	if selectbox_stockcode:
+		df_stock_movements: pd.DataFrame = load_stockcode_movements(selectbox_stockcode)
+		df_stock_movements.sort_values(
+			by=["EntryDate", "TrnTime"],
+			ascending=[False, False],
+			inplace=True
+		)
+		df_stock_sales_orders: pd.DataFrame = load_so_details(stockcode=selectbox_stockcode)
+		df_stock_sales_orders.sort_values(
+			by="MCustRequestDat",
+			ascending=False,
+			inplace=True
+		)
+		df_stock_purchase_orders: pd.DataFrame = load_po_details(selectbox_stockcode)
+		df_stock_purchase_orders.sort_values(
+			by="MLatestDueDate",
+			ascending=False,
+			inplace=True
+		)
+		df_stock_allocations = load_allocations(selectbox_stockcode)
+		df_stock_allocations.sort_values(
+			by=["DateRequired", "TrnDateTime"],
+			ascending=[True, False],
+			inplace=True
+		)
 
-			df_stock: pd.DataFrame = df_parts[df_parts["StockCode"].str.lower() == selectbox_stockcode.lower()]
-			df_yt: pd.DataFrame = load_yellow_tags(selectbox_stockcode)
+		if checkbox_warehouse_1_only:
+			df_stock_movements = df_stock_movements[df_stock_movements["Warehouse"] == "01"]
+			df_stock_allocations = df_stock_allocations[df_stock_allocations["Warehouse"] == "01"]
+		# df_stock_sales_orders = df_stock_sales_orders[df_stock_sales_orders["Warehouse"] == "01"]
+		# df_stock_purchase_orders = df_stock_purchase_orders[df_stock_purchase_orders["Warehouse"] == "01"]
 
-			if not df_stock.empty:
-				ser_stock: pd.Series = df_stock.iloc[0]
+		df_stock: pd.DataFrame = df_parts[df_parts["StockCode"].str.lower() == selectbox_stockcode.lower()]
+		df_yt: pd.DataFrame = load_yellow_tags(selectbox_stockcode)
 
-				bin_location: str = ser_stock["DefaultBin"]
-				qty_on_hand: float = ser_stock["QtyOnHand"]
+		if not df_stock.empty:
+			ser_stock: pd.Series = df_stock.iloc[0]
 
-				show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
-				show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
-				cols_information = st.columns([0.4, 0.2, 0.4])
-				with cols_information[0]:
-					display_df(
-						ser_stock[show_cols_info],
-						title="Info",
-						width="stretch"
-					)
+			bin_location: str = ser_stock["DefaultBin"]
+			qty_on_hand: float = ser_stock["QtyOnHand"]
 
-					df_stock_pdf = load_path_pdf(selectbox_stockcode).reset_index(drop=True)
-					stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"] if not df_stock_pdf.empty else None
-					stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"] if not df_stock_pdf.empty else None
-					with st.popover(f"Drawings"):
-						if stock_pdf_listed or stock_pdf_stock:
-							f_name = f"{selectbox_stockcode.replace(' ', '_')}"
-							if os.path.exists(stock_pdf_listed):
-								if stock_pdf_listed:
-									st.download_button(
-										label="download PDF as listed in Syspro?",
-										data=open(stock_pdf_listed, "rb").read(),
-										file_name=f"{f_name}_syspro.pdf",
-										mime="application/pdf",
-										key=f"{f_name}_drive_2"
-									)
-							if os.path.exists(stock_pdf_stock):
-								if stock_pdf_stock:
-									f_name = f"{selectbox_stockcode.replace(' ', '_')}"
-									st.download_button(
-										label="Download found PDF from drive?",
-										data=open(stock_pdf_stock, "rb").read(),
-										file_name=f"{f_name}_found.pdf",
-										mime="application/pdf",
-										key=f"{f_name}_drive_3"
-									)
-				# else:
-				#     st.info(f"No PDFs found for this stockcode.")
+			show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
+			show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
+			cols_information = st.columns([0.4, 0.2, 0.4])
+			with cols_information[0]:
+				display_df(
+					ser_stock[show_cols_info],
+					title="Info",
+					width="stretch"
+				)
 
-				with cols_information[1]:
-					st.metric(
-						"Bin:",
-						value=bin_location
-					)
-					st.metric(
-						"On Hand:",
-						value=qty_on_hand
-					)
-					if st.button(
-							label="Submit a change?"
-					):
-						submit_change(ser_stock)
+				df_stock_pdf = load_path_pdf(selectbox_stockcode).reset_index(drop=True)
+				stock_pdf_listed = df_stock_pdf.loc[0, "PDF_Listed"] if not df_stock_pdf.empty else None
+				stock_pdf_stock = df_stock_pdf.loc[0, "PDF_Stock"] if not df_stock_pdf.empty else None
+				with st.popover(f"Drawings"):
+					if stock_pdf_listed or stock_pdf_stock:
+						f_name = f"{selectbox_stockcode.replace(' ', '_')}"
+						if os.path.exists(stock_pdf_listed):
+							if stock_pdf_listed:
+								st.download_button(
+									label="download PDF as listed in Syspro?",
+									data=open(stock_pdf_listed, "rb").read(),
+									file_name=f"{f_name}_syspro.pdf",
+									mime="application/pdf",
+									key=f"{f_name}_drive_2"
+								)
+						if os.path.exists(stock_pdf_stock):
+							if stock_pdf_stock:
+								f_name = f"{selectbox_stockcode.replace(' ', '_')}"
+								st.download_button(
+									label="Download found PDF from drive?",
+									data=open(stock_pdf_stock, "rb").read(),
+									file_name=f"{f_name}_found.pdf",
+									mime="application/pdf",
+									key=f"{f_name}_drive_3"
+								)
+			# else:
+			#     st.info(f"No PDFs found for this stockcode.")
 
-					df_stock_change_requests = df_change_requests[
-						df_change_requests["stockcode"].str.lower() == selectbox_stockcode.lower()]
-					with st.popover("Previously Submitted Change Requests:", width=500):
-						if not df_stock_change_requests.empty:
-							for i, row in df_stock_change_requests.reset_index(drop=True).iterrows():
-								date_ = eval(row["date"])
-								user_ = row["user"]
-								field_ = row["field"]
-								old_ = row["old"].strip().replace("", "_")
-								new_ = row["new"]
-								notes_ = row["notes"]
-								done_ = row["completed"]
-								done_by_ = row["completed_by"]
-								done_date_ = row["completed_date"]
-								msg_0 = f"{date_}, {user_}"
-								msg_1 = f"{field_}: {old_} -> {new_}"
-								st.write(msg_0)
-								st.write(msg_1)
-								if notes_:
-									st.write(f"{notes_}")
-								if i > 0:
-									st.divider()
-					# display_df_paginated(
-					#     df_stock_change_requests,
-					#     title="Previously Submitted Change Requests:",
-					#     key="key_df_stock_change_requests"
-					# )
+			with cols_information[1]:
+				st.metric(
+					"Bin:",
+					value=bin_location
+				)
+				st.metric(
+					"On Hand:",
+					value=qty_on_hand
+				)
+				if st.button(
+						label="Submit a change?"
+				):
+					submit_change(ser_stock)
 
-				with cols_information[2]:
-					display_df(
-						ser_stock[show_cols_qty],
-						title="Quantity Info",
-						width="stretch"
-					)
-				# 202601060910 the series looks better as a table
-				# df_show_qty = pd.DataFrame(ser_stock[show_cols_qty]).transpose()
-				# df_show_qty.columns = [col.replace("Qty", "") for col in df_show_qty.columns]
-				# display_df(
-				# 	# np.transpose(ser_stock[show_cols_qty]),
-				# 	df_show_qty,
-				# 	title="Quantity Info",
-				# 	width="stretch"
+				df_stock_change_requests = df_change_requests[
+					df_change_requests["stockcode"].str.lower() == selectbox_stockcode.lower()]
+				with st.popover("Previously Submitted Change Requests:", width=500):
+					if not df_stock_change_requests.empty:
+						for i, row in df_stock_change_requests.reset_index(drop=True).iterrows():
+							date_ = eval(row["date"])
+							user_ = row["user"]
+							field_ = row["field"]
+							old_ = row["old"].strip().replace("", "_")
+							new_ = row["new"]
+							notes_ = row["notes"]
+							done_ = row["completed"]
+							done_by_ = row["completed_by"]
+							done_date_ = row["completed_date"]
+							msg_0 = f"{date_}, {user_}"
+							msg_1 = f"{field_}: {old_} -> {new_}"
+							st.write(msg_0)
+							st.write(msg_1)
+							if notes_:
+								st.write(f"{notes_}")
+							if i > 0:
+								st.divider()
+			# display_df_paginated(
+			#     df_stock_change_requests,
+			#     title="Previously Submitted Change Requests:",
+			#     key="key_df_stock_change_requests"
+			# )
+
+			with cols_information[2]:
+				display_df(
+					ser_stock[show_cols_qty],
+					title="Quantity Info",
+					width="stretch"
+				)
+			# 202601060910 the series looks better as a table
+			# df_show_qty = pd.DataFrame(ser_stock[show_cols_qty]).transpose()
+			# df_show_qty.columns = [col.replace("Qty", "") for col in df_show_qty.columns]
+			# display_df(
+			# 	# np.transpose(ser_stock[show_cols_qty]),
+			# 	df_show_qty,
+			# 	title="Quantity Info",
+			# 	width="stretch"
+			# )
+
+			k_checkbox_movement_inc_issue = "key_checkbox_movement_inc_issue"
+			checkbox_movement_inc_issue = st.session_state.setdefault(k_checkbox_movement_inc_issue, True)
+			k_checkbox_movement_inc_sale = "key_checkbox_movement_inc_sale"
+			checkbox_movement_inc_sale = st.session_state.setdefault(k_checkbox_movement_inc_sale, True)
+			k_checkbox_movement_inc_rec = "key_checkbox_movement_inc_rec"
+			checkbox_movement_inc_rec = st.session_state.setdefault(k_checkbox_movement_inc_rec, True)
+
+			if not checkbox_movement_inc_issue:
+				df_stock_movements = df_stock_movements[
+					df_stock_movements["TrnType"] != "ISSUE"
+					]
+			if not checkbox_movement_inc_sale:
+				df_stock_movements = df_stock_movements[
+					df_stock_movements["TrnType"] != "SALE"
+					]
+			if not checkbox_movement_inc_rec:
+				df_stock_movements = df_stock_movements[
+					df_stock_movements["TrnType"] != "REC"
+					]
+			total_records: int = df_stock_movements.shape[0]
+
+			with st.expander(f"Movements ({total_records}):", expanded=False):
+				k_max_records_movements = "key_max_records_movements"
+				st.session_state.setdefault(k_max_records_movements, df_stock_movements.shape[0])
+				if st.button(
+						"Show All?"
+				):
+					st.session_state.update({
+						k_max_records_movements: total_records,
+						k_checkbox_movement_inc_issue: True,
+						k_checkbox_movement_inc_sale: True,
+						k_checkbox_movement_inc_rec: True
+					})
+				# st.rerun()
+
+				checkbox_movement_inc_issue = st.checkbox(
+					label="Include 'Issue' movements?",
+					key=k_checkbox_movement_inc_issue
+				)
+				checkbox_movement_inc_sale = st.checkbox(
+					label="Include 'Sale' movements?",
+					key=k_checkbox_movement_inc_sale
+				)
+				checkbox_movement_inc_rec = st.checkbox(
+					label="Include 'Rec' movements?",
+					key=k_checkbox_movement_inc_rec
+				)
+
+				# max_records_movements = st.number_input(
+				#     label="Max Records:",
+				#     key=k_max_records_movements,
+				#     min_value=0,
+				#     max_value=df_stock_movements.shape[0]
 				# )
 
-				k_checkbox_movement_inc_issue = "key_checkbox_movement_inc_issue"
-				checkbox_movement_inc_issue = st.session_state.setdefault(k_checkbox_movement_inc_issue, True)
-				k_checkbox_movement_inc_sale = "key_checkbox_movement_inc_sale"
-				checkbox_movement_inc_sale = st.session_state.setdefault(k_checkbox_movement_inc_sale, True)
-				k_checkbox_movement_inc_rec = "key_checkbox_movement_inc_rec"
-				checkbox_movement_inc_rec = st.session_state.setdefault(k_checkbox_movement_inc_rec, True)
+				# df_stock_movements = df_stock_movements.head(max_records_movements)
 
-				if not checkbox_movement_inc_issue:
-					df_stock_movements = df_stock_movements[
-						df_stock_movements["TrnType"] != "ISSUE"
-						]
-				if not checkbox_movement_inc_sale:
-					df_stock_movements = df_stock_movements[
-						df_stock_movements["TrnType"] != "SALE"
-						]
-				if not checkbox_movement_inc_rec:
-					df_stock_movements = df_stock_movements[
-						df_stock_movements["TrnType"] != "REC"
-						]
-				total_records: int = df_stock_movements.shape[0]
+				show_cols = df_stock_movements.columns.to_list()
+				cols_to_rem = [
+					"StockCode",
+					"EntryDate",
+					"TrnTime",
+					"Warehouse"
+				]
+				# if checkbox_warehouse_1_only:
+				#     cols_to_rem.append("Warehouse")
+				for col in cols_to_rem:
+					show_cols.remove(col)
 
-				with st.expander(f"Movements ({total_records}):", expanded=False):
-					k_max_records_movements = "key_max_records_movements"
-					st.session_state.setdefault(k_max_records_movements, df_stock_movements.shape[0])
-					if st.button(
-							"Show All?"
-					):
-						st.session_state.update({
-							k_max_records_movements: total_records,
-							k_checkbox_movement_inc_issue: True,
-							k_checkbox_movement_inc_sale: True,
-							k_checkbox_movement_inc_rec: True
-						})
-					# st.rerun()
+				# display_df(
+				#     df_stock_movements,
+				#     "df_stock_movements"
+				# )
 
-					checkbox_movement_inc_issue = st.checkbox(
-						label="Include 'Issue' movements?",
-						key=k_checkbox_movement_inc_issue
-					)
-					checkbox_movement_inc_sale = st.checkbox(
-						label="Include 'Sale' movements?",
-						key=k_checkbox_movement_inc_sale
-					)
-					checkbox_movement_inc_rec = st.checkbox(
-						label="Include 'Rec' movements?",
-						key=k_checkbox_movement_inc_rec
-					)
+				display_df_paginated(
+					df_stock_movements[show_cols],
+					# f"Movements for StockCode: {selectbox_stockcode}"
+					title=f"Total: ({total_records} Rows x {len(show_cols)} Cols) - Showing:",
+					width="stretch",
+					key=f"key_stdf_stock_movements"
+				)
 
-					# max_records_movements = st.number_input(
-					#     label="Max Records:",
-					#     key=k_max_records_movements,
-					#     min_value=0,
-					#     max_value=df_stock_movements.shape[0]
-					# )
+			# move_events = []
+			# for i, row in df_stock_movements.iterrows():
+			#     sc = row["StockCode"]
+			#     tt = row["TrnType"]
+			#     qty = row["TrnQty"]
+			#     ref = row["SalesOrder"] if ((not pd.isna(row["SalesOrder"])) and (row["SalesOrder"])) else row["Job"]
+			#     date_s = row["TrnDateTime"]
+			#     date_e = date_s + datetime.timedelta(minutes=10)
+			#     move_events.append({
+			#         "id": i,
+			#         "title": f"{tt} {qty} {ref}",
+			#         "start": date_s.strftime(UTC_FMT).removesuffix("Z"),
+			#         "end": date_e.strftime(UTC_FMT).removesuffix("Z")
+			#         # ,
+			#         # "url": NHL_URL.removesuffix("/") + row["game_center_link"]
+			#     })
+			#
+			# # print(move_events)
+			#
+			# k_cal_movements: str = "key_cal_movements"
+			# if k_cal_movements in st.session_state:
+			#     cm = st.session_state[k_cal_movements]
+			#     st.write(f"cm:")
+			#     st.write(cm)
+			#     es = cm.get("eventsSet", {})
+			#     view = es.get("view", {})
+			#     active_start = view.get("activeStart")
+			#     active_end = view.get("activeEnd")
+			#     if active_start is None:
+			#         active_start = datetime.datetime.now().isoformat()
+			#     if active_end is None:
+			#         active_end = datetime.datetime.now().replace(hour=23, minute=59, second=59).isoformat()
+			#     print(f"{active_start=}")
+			#     print(f"{active_end=}")
+			#     ac_s = datetime.datetime.fromisoformat(active_start)
+			#     ac_e = datetime.datetime.fromisoformat(active_end)
+			#     print(f"{ac_s=}")
+			#     print(f"{ac_e=}")
+			#     ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
+			#     if active_start and active_end:
+			#         me = []
+			#         for me in move_events:
+			#             start = datetime.datetime.fromisoformat(me["start"])
+			#             end = datetime.datetime.fromisoformat(me["end"])
+			#             if datetime_is_tz_aware(ac_m) and ((not datetime_is_tz_aware(start)) or (not datetime_is_tz_aware(end))):
+			#                 tz = ac_m.tzinfo
+			#                 start = start.replace(tzinfo=tz)
+			#                 end = end.replace(tzinfo=tz)
+			#             if datetime_is_tz_aware(start) and (not datetime_is_tz_aware(end)):
+			#                 tz = start.tzinfo
+			#                 end = end.replace(tzinfo=tz)
+			#             elif (not datetime_is_tz_aware(start)) and datetime_is_tz_aware(end):
+			#                 tz = end.tzinfo
+			#                 start = start.replace(tzinfo=tz)
+			#             if start <= ac_m <= end:
+			#                 me.append(me)
+			#         move_events = me
+			#
+			# st.write(move_events)
+			#
+			# cal_movements = calendar(
+			#     events=move_events,
+			#     options={
+			#         "multiMonthMaxColumns": 3,
+			#         "height": 1800,
+			#         "contentHeight": 500,
+			#         "expandRows": True,
+			#         "dayMaxEventRows": 10,  # unlimited rows per day (or set an int)
+			#         "eventDisplay": "block",
+			#         "displayEventTime": False,
+			#         "slotMinTime": "05:00:00",
+			#         "slotMaxTime": "17:30:00",
+			#         "initialView": "resourceTimelineDay"
+			#         # ,
+			#         # "moreLinkClick": "popover",  # still works without callbacks
+			#     },
+			#     key=k_cal_movements
+			# )
+			# st.write(cal_movements)
 
-					# df_stock_movements = df_stock_movements.head(max_records_movements)
-
-					show_cols = df_stock_movements.columns.to_list()
-					cols_to_rem = [
-						"StockCode",
-						"EntryDate",
-						"TrnTime",
-						"Warehouse"
+			k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
+			checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
+			if checkbox_po_unfulfilled_only:
+				df_stock_purchase_orders = df_stock_purchase_orders[
+					(df_stock_purchase_orders["MCompleteFlag"] != "Y")
+					& (df_stock_purchase_orders["MReceivedQty"] < df_stock_purchase_orders["MOrderQty"])
 					]
-					# if checkbox_warehouse_1_only:
-					#     cols_to_rem.append("Warehouse")
-					for col in cols_to_rem:
+			with st.expander(f"Purchase Orders ({df_stock_purchase_orders.shape[0]}):",
+							 expanded=bool(df_stock_purchase_orders.shape[0])):
+				k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
+				st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
+				checkbox_po_unfulfilled_only = st.checkbox(
+					label="Unfulfilled Purchase Orders Only?",
+					key=k_checkbox_po_unfulfilled_only
+				)
+
+				display_df(
+					df_stock_purchase_orders,
+					title="Purchase Orders",
+					width="stretch"
+				)
+
+			k_checkbox_so_unfulfilled_only = "key_checkbox_so_unfulfilled_only"
+			checkbox_so_unfulfilled_only = st.session_state.setdefault(k_checkbox_so_unfulfilled_only, True)
+			if checkbox_so_unfulfilled_only:
+				df_stock_sales_orders = df_stock_sales_orders[
+					(df_stock_sales_orders["CancelledFlag"] != "Y")
+					& (df_stock_sales_orders["ActiveFlag"] != "N")
+					]
+			with st.expander(f"Sales Orders ({df_stock_sales_orders.shape[0]}):",
+							 expanded=bool(df_stock_sales_orders.shape[0])):
+				checkbox_so_unfulfilled_only = st.checkbox(
+					label="Unfulfilled Sales Orders Only?",
+					key=k_checkbox_so_unfulfilled_only
+				)
+
+				display_df(
+					df_stock_sales_orders,
+					title="Sales Orders",
+					width="stretch"
+				)
+
+				ttl_on_hand: float = ser_stock["QtyOnHand"]
+				run_ttl_on_hand: float = ttl_on_hand
+				for i, row in df_stock_sales_orders.iterrows():
+					qty_reqd: float = row["MBackOrderQty"]
+					if qty_on_hand is None:
+						qty_on_hand = row["MOrderQty"] - row["MShipQty"]
+					ttl_on_hand -= qty_reqd
+					run_ttl_on_hand -= qty_reqd
+					if ttl_on_hand >= 0:
+						active = str(row["ActiveFlag"]) == "1"
+						if pd.isna(row["ActiveFlag"]) or (not str(row["ActiveFlag"]).strip()):
+							active = str(row["OrderStatus"]) in VALID_SALES_ORDER_ACTIVE_STATUS_CODES
+							active = active and (qty_reqd > 0)
+						if active:
+							st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
+							if st.button(f"Go To {row['SalesOrder']}"):
+								st.session_state.update({
+									k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so),
+									k_multiselect_sales_order_search: [row["SalesOrder"]]
+									# k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so)
+								})
+								st.rerun()
+					else:
+						st.error(f"Short {abs(ttl_on_hand)} {row['MOrderUom']} to fulfill SO# {row['SalesOrder']}")
+						ttl_on_hand = 0  # reset to 0 for order specific shortage count
+
+			k_checkbox_alloc_unfulfilled_only: str = "key_checkbox_alloc_unfulfilled_only"
+			checkbox_alloc_unfulfilled_only = st.session_state.setdefault(k_checkbox_alloc_unfulfilled_only, True)
+			if checkbox_alloc_unfulfilled_only:
+				df_stock_allocations = df_stock_allocations[
+					(df_stock_allocations["AllocCompleted"] != "Y")
+				]
+			with st.expander(f"Allocations ({df_stock_allocations.shape[0]}):",
+							 expanded=bool(df_stock_allocations.shape[0])):
+				checkbox_alloc_unfulfilled_only = st.checkbox(
+					label="Unfulfilled Allocations Only?",
+					key=k_checkbox_alloc_unfulfilled_only
+				)
+
+				show_cols = df_stock_allocations.columns.to_list()
+				if checkbox_alloc_unfulfilled_only:
+					cols_to_drop = [
+						"TrnDateTime",
+						"AllocCompleted",
+					]
+					if checkbox_warehouse_1_only:
+						cols_to_drop.append("Warehouse")
+					for col in cols_to_drop:
 						show_cols.remove(col)
 
-					# display_df(
-					#     df_stock_movements,
-					#     "df_stock_movements"
-					# )
+				display_df(
+					df_stock_allocations[show_cols],
+					title="Allocations",
+					width="stretch"
+				)
 
-					display_df_paginated(
-						df_stock_movements[show_cols],
-						# f"Movements for StockCode: {selectbox_stockcode}"
-						title=f"Total: ({total_records} Rows x {len(show_cols)} Cols) - Showing:",
-						width="stretch",
-						key=f"key_stdf_stock_movements"
-					)
+			k_checkbox_yt_unfulfilled_only: str = "key_checkbox_yt_unfulfilled_only"
+			checkbox_yt_unfulfilled_only = st.session_state.setdefault(k_checkbox_yt_unfulfilled_only, True)
+			if checkbox_yt_unfulfilled_only:
+				df_yt = df_yt[
+					(df_yt["Active"] == 1)
+				]
+			with st.expander(f"Yellow Tags ({df_yt.shape[0]})", expanded=bool(df_yt.shape[0])):
+				checkbox_yt_unfulfilled_only = st.checkbox(
+					label="Unfulfilled Yellow Tags Only?",
+					key=k_checkbox_yt_unfulfilled_only
+				)
+				display_df_paginated(
+					df_yt,
+					title="Yellow Tags",
+					key=f"key_stdf_yellow_tags"
+				)
 
-				# move_events = []
-				# for i, row in df_stock_movements.iterrows():
-				#     sc = row["StockCode"]
-				#     tt = row["TrnType"]
-				#     qty = row["TrnQty"]
-				#     ref = row["SalesOrder"] if ((not pd.isna(row["SalesOrder"])) and (row["SalesOrder"])) else row["Job"]
-				#     date_s = row["TrnDateTime"]
-				#     date_e = date_s + datetime.timedelta(minutes=10)
-				#     move_events.append({
-				#         "id": i,
-				#         "title": f"{tt} {qty} {ref}",
-				#         "start": date_s.strftime(UTC_FMT).removesuffix("Z"),
-				#         "end": date_e.strftime(UTC_FMT).removesuffix("Z")
-				#         # ,
-				#         # "url": NHL_URL.removesuffix("/") + row["game_center_link"]
-				#     })
-				#
-				# # print(move_events)
-				#
-				# k_cal_movements: str = "key_cal_movements"
-				# if k_cal_movements in st.session_state:
-				#     cm = st.session_state[k_cal_movements]
-				#     st.write(f"cm:")
-				#     st.write(cm)
-				#     es = cm.get("eventsSet", {})
-				#     view = es.get("view", {})
-				#     active_start = view.get("activeStart")
-				#     active_end = view.get("activeEnd")
-				#     if active_start is None:
-				#         active_start = datetime.datetime.now().isoformat()
-				#     if active_end is None:
-				#         active_end = datetime.datetime.now().replace(hour=23, minute=59, second=59).isoformat()
-				#     print(f"{active_start=}")
-				#     print(f"{active_end=}")
-				#     ac_s = datetime.datetime.fromisoformat(active_start)
-				#     ac_e = datetime.datetime.fromisoformat(active_end)
-				#     print(f"{ac_s=}")
-				#     print(f"{ac_e=}")
-				#     ac_m = ac_s + datetime.timedelta(seconds=(ac_e - ac_s).total_seconds() / 2)
-				#     if active_start and active_end:
-				#         me = []
-				#         for me in move_events:
-				#             start = datetime.datetime.fromisoformat(me["start"])
-				#             end = datetime.datetime.fromisoformat(me["end"])
-				#             if datetime_is_tz_aware(ac_m) and ((not datetime_is_tz_aware(start)) or (not datetime_is_tz_aware(end))):
-				#                 tz = ac_m.tzinfo
-				#                 start = start.replace(tzinfo=tz)
-				#                 end = end.replace(tzinfo=tz)
-				#             if datetime_is_tz_aware(start) and (not datetime_is_tz_aware(end)):
-				#                 tz = start.tzinfo
-				#                 end = end.replace(tzinfo=tz)
-				#             elif (not datetime_is_tz_aware(start)) and datetime_is_tz_aware(end):
-				#                 tz = end.tzinfo
-				#                 start = start.replace(tzinfo=tz)
-				#             if start <= ac_m <= end:
-				#                 me.append(me)
-				#         move_events = me
-				#
-				# st.write(move_events)
-				#
-				# cal_movements = calendar(
-				#     events=move_events,
-				#     options={
-				#         "multiMonthMaxColumns": 3,
-				#         "height": 1800,
-				#         "contentHeight": 500,
-				#         "expandRows": True,
-				#         "dayMaxEventRows": 10,  # unlimited rows per day (or set an int)
-				#         "eventDisplay": "block",
-				#         "displayEventTime": False,
-				#         "slotMinTime": "05:00:00",
-				#         "slotMaxTime": "17:30:00",
-				#         "initialView": "resourceTimelineDay"
-				#         # ,
-				#         # "moreLinkClick": "popover",  # still works without callbacks
-				#     },
-				#     key=k_cal_movements
-				# )
-				# st.write(cal_movements)
-
-				k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
-				checkbox_po_unfulfilled_only = st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
-				if checkbox_po_unfulfilled_only:
-					df_stock_purchase_orders = df_stock_purchase_orders[
-						(df_stock_purchase_orders["MCompleteFlag"] != "Y")
-						& (df_stock_purchase_orders["MReceivedQty"] < df_stock_purchase_orders["MOrderQty"])
-						]
-				with st.expander(f"Purchase Orders ({df_stock_purchase_orders.shape[0]}):",
-								 expanded=bool(df_stock_purchase_orders.shape[0])):
-					k_checkbox_po_unfulfilled_only = "key_checkbox_po_unfulfilled_only"
-					st.session_state.setdefault(k_checkbox_po_unfulfilled_only, True)
-					checkbox_po_unfulfilled_only = st.checkbox(
-						label="Unfulfilled Purchase Orders Only?",
-						key=k_checkbox_po_unfulfilled_only
-					)
-
-					display_df(
-						df_stock_purchase_orders,
-						title="Purchase Orders",
-						width="stretch"
-					)
-
-				k_checkbox_so_unfulfilled_only = "key_checkbox_so_unfulfilled_only"
-				checkbox_so_unfulfilled_only = st.session_state.setdefault(k_checkbox_so_unfulfilled_only, True)
-				if checkbox_so_unfulfilled_only:
-					df_stock_sales_orders = df_stock_sales_orders[
-						(df_stock_sales_orders["CancelledFlag"] != "Y")
-						& (df_stock_sales_orders["ActiveFlag"] != "N")
-						]
-				with st.expander(f"Sales Orders ({df_stock_sales_orders.shape[0]}):",
-								 expanded=bool(df_stock_sales_orders.shape[0])):
-					checkbox_so_unfulfilled_only = st.checkbox(
-						label="Unfulfilled Sales Orders Only?",
-						key=k_checkbox_so_unfulfilled_only
-					)
-
-					display_df(
-						df_stock_sales_orders,
-						title="Sales Orders",
-						width="stretch"
-					)
-
-					ttl_on_hand: float = ser_stock["QtyOnHand"]
-					run_ttl_on_hand: float = ttl_on_hand
-					for i, row in df_stock_sales_orders.iterrows():
-						qty_reqd: float = row["MBackOrderQty"]
-						if qty_on_hand is None:
-							qty_on_hand = row["MOrderQty"] - row["MShipQty"]
-						ttl_on_hand -= qty_reqd
-						run_ttl_on_hand -= qty_reqd
-						if ttl_on_hand >= 0:
-							active = str(row["ActiveFlag"]) == "1"
-							if pd.isna(row["ActiveFlag"]) or (not str(row["ActiveFlag"]).strip()):
-								active = str(row["OrderStatus"]) in VALID_SALES_ORDER_ACTIVE_STATUS_CODES
-								active = active and (qty_reqd > 0)
-							if active:
-								st.success(f"Enough on hand to fulfill SO# {row['SalesOrder']}.")
-								if st.button(f"Go To {row['SalesOrder']}"):
-									st.session_state.update({
-										k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so),
-										k_multiselect_sales_order_search: [row["SalesOrder"]]
-										# k_pills_search_mode: options_pills_search_mode.index(op_search_mode_by_so)
-									})
-									st.rerun()
-						else:
-							st.error(f"Short {abs(ttl_on_hand)} {row['MOrderUom']} to fulfill SO# {row['SalesOrder']}")
-							ttl_on_hand = 0  # reset to 0 for order specific shortage count
-
-				k_checkbox_alloc_unfulfilled_only: str = "key_checkbox_alloc_unfulfilled_only"
-				checkbox_alloc_unfulfilled_only = st.session_state.setdefault(k_checkbox_alloc_unfulfilled_only, True)
-				if checkbox_alloc_unfulfilled_only:
-					df_stock_allocations = df_stock_allocations[
-						(df_stock_allocations["AllocCompleted"] != "Y")
-					]
-				with st.expander(f"Allocations ({df_stock_allocations.shape[0]}):",
-								 expanded=bool(df_stock_allocations.shape[0])):
-					checkbox_alloc_unfulfilled_only = st.checkbox(
-						label="Unfulfilled Allocations Only?",
-						key=k_checkbox_alloc_unfulfilled_only
-					)
-
-					show_cols = df_stock_allocations.columns.to_list()
-					if checkbox_alloc_unfulfilled_only:
-						cols_to_drop = [
-							"TrnDateTime",
-							"AllocCompleted",
-						]
-						if checkbox_warehouse_1_only:
-							cols_to_drop.append("Warehouse")
-						for col in cols_to_drop:
-							show_cols.remove(col)
-
-					display_df(
-						df_stock_allocations[show_cols],
-						title="Allocations",
-						width="stretch"
-					)
-
-				k_checkbox_yt_unfulfilled_only: str = "key_checkbox_yt_unfulfilled_only"
-				checkbox_yt_unfulfilled_only = st.session_state.setdefault(k_checkbox_yt_unfulfilled_only, True)
-				if checkbox_yt_unfulfilled_only:
-					df_yt = df_yt[
-						(df_yt["Active"] == 1)
-					]
-				with st.expander(f"Yellow Tags ({df_yt.shape[0]})", expanded=bool(df_yt.shape[0])):
-					checkbox_yt_unfulfilled_only = st.checkbox(
-						label="Unfulfilled Yellow Tags Only?",
-						key=k_checkbox_yt_unfulfilled_only
-					)
-					display_df_paginated(
-						df_yt,
-						title="Yellow Tags",
-						key=f"key_stdf_yellow_tags"
-					)
-
-					ttl_on_hand: float = ser_stock["QtyOnHand"]
-					run_ttl_on_hand: float = ttl_on_hand
-					for i, row in df_yt.iterrows():
-						qty_reqd: float = row["QtyMissing"]
-						ttl_on_hand -= qty_reqd
-						run_ttl_on_hand -= qty_reqd
-						if ttl_on_hand >= 0:
-							st.success(
-								f"Enough on hand to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
-						else:
-							st.error(
-								f"Short {abs(ttl_on_hand)} to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
-							ttl_on_hand = 0  # reset to 0 for order specific shortage count
-
-			elif isinstance(textbox_stockcode, pd.DataFrame):
-				# collect stockcodes for bin map
-
-			# ensure bin mapping process will not be null
+				ttl_on_hand: float = ser_stock["QtyOnHand"]
+				run_ttl_on_hand: float = ttl_on_hand
+				for i, row in df_yt.iterrows():
+					qty_reqd: float = row["QtyMissing"]
+					ttl_on_hand -= qty_reqd
+					run_ttl_on_hand -= qty_reqd
+					if ttl_on_hand >= 0:
+						st.success(
+							f"Enough on hand to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
+					else:
+						st.error(
+							f"Short {abs(ttl_on_hand)} to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
+						ttl_on_hand = 0  # reset to 0 for order specific shortage count
 
 			df_data = load_layout_data(building="hawkins")
 			df_layout = df_data["Layout"]
@@ -6794,7 +6815,8 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 		st.write(f"{selectbox_stockcode=}")
 		st.write(f"{df_drawings_not_parts.shape=}")
 		st.write(df_drawings_not_parts.sort_values(by="pdf", ascending=True).reset_index().iloc[0: 300])
-		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip() == selectbox_stockcode.lower().strip()]
+		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[
+			df_drawings_not_parts["StockCode"].str.lower().str.strip() == selectbox_stockcode.lower().strip()]
 
 		if df_pdfs_non_stock_search.shape[0]:
 			st.write(f"StockCode '{selectbox_stockcode}' found multiple PDFs matching this text:")
@@ -6813,8 +6835,8 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 					)
 				with cols_non_stock[1]:
 					if st.button(
-						label=f"Extract parts from {file_local} (If any exist)",
-						key=f"extract_non_stock_pdf_{i=}_{file_local}"
+							label=f"Extract parts from {file_local} (If any exist)",
+							key=f"extract_non_stock_pdf_{i=}_{file_local}"
 					):
 						# set session_state values to go to selected Drawing
 						st.session_state.update({
@@ -6822,8 +6844,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 							k_selectbox_drawing_select: row["StockCode"]
 						})
 						st.rerun()
-else:
-	st.info(f"Select a stock code for more details.")
+
 with cont_top_control:
 	# FINALLY create the widget, this will allow for the state to be programmatically changed.
 
