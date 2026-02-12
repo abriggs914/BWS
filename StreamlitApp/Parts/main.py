@@ -1805,37 +1805,261 @@ def find_section_at_point(df_sections: pd.DataFrame, x: float, y: float) -> pd.S
 	return hits.iloc[0]
 
 
-def plotly_skyscrapers(df_sec_val, z_log=True, title="Valuation 3D"):
-	z = df_sec_val["TtlValue"].to_numpy(float)
-	z_plot = np.log10(z + 1) if z_log else z
+# def plotly_skyscrapers(df_sec_val, z_log=True, title="Valuation 3D"):
+# 	z = df_sec_val["TtlValue"].to_numpy(float)
+# 	z_plot = np.log10(z + 1) if z_log else z
+#
+# 	fig = go.Figure()
+#
+# 	for _, r in df_sec_val.iterrows():
+# 		z0 = 0
+# 		z1 = np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]
+# 		fig.add_trace(go.Scatter3d(
+# 			x=[r["cx"], r["cx"]],
+# 			y=[r["cy"], r["cy"]],
+# 			z=[z0, z1],
+# 			mode="lines",
+# 			hovertemplate=(
+# 				f"Section: <b>{r['Section']}</b><br>"
+# 				f"Value: <b>{r['TtlValue']:,.2f}</b><extra></extra>"
+# 			),
+# 			showlegend=False
+# 		))
+#
+# 	fig.update_layout(
+# 		title=title,
+# 		scene=dict(
+# 			xaxis_title="X",
+# 			yaxis_title="Y",
+# 			zaxis_title="log10(Value+1)" if z_log else "Value",
+# 		),
+# 		margin=dict(l=0, r=0, t=40, b=0),
+# 	)
+# 	return fig
 
+
+def build_section_valuation_geometry(
+		df_sections: pd.DataFrame,
+		df_bins: pd.DataFrame,
+		map_all_shelves: bool = True
+) -> pd.DataFrame:
+	# 1) valuation per section
+	val = (
+		df_bins.groupby(["ParentShelf", "Section", "Group", "IsPath"], as_index=False)
+		.agg({
+			"TtlItemValue":"sum",
+			"Shelf":lambda x: ', '.join(x),
+			"OldestPurchasedDate": "min",
+			"NewestPurchasedDate": "max"
+		})
+		.rename(columns={
+			"TtlItemValue": "TtlValue",
+			"Shelf": "Shelves"
+		})
+	)
+	val["Section"] = val["Section"].astype(str).str.strip().str.upper()
+	val["Group"] = val["Group"].astype(str).str.strip().str.upper()
+
+	# 2) section geometry (combine all rectangles for a Section into one bounding box)
+	geo = df_sections.copy()
+	geo["Section"] = geo["Section"].astype(str).str.strip().str.upper()
+	geo["Group"] = geo["Group"].astype(str).str.strip().str.upper()
+
+	geo2 = (
+		geo.groupby(["Section", "Group"], as_index=False)
+		.agg(
+			X0=("X0", "min"),
+			X1=("X1", "max"),
+			Y0=("Y0", "min"),
+			Y1=("Y1", "max"),
+		)
+	)
+
+	# 3) join
+	out = geo2.merge(val, on=["Section", "Group"], how="left")
+	out["TtlValue"] = out["TtlValue"].fillna(0.0)
+	out["Shelves"] = out["Shelves"].fillna("")
+
+	if not map_all_shelves:
+		out = out[
+			(~pd.isna(out["Section"]))
+			& (~pd.isna(out["ParentShelf"]))
+			& (out["TtlValue"] > 0)
+		]
+
+	# if map_all_shelves:
+	# 	# out = out[out["TtlValue"] > 0]
+	# 	# out = out[
+	# 	# 	~pd.isna(out["ParentShelf"])
+	# 	# ]
+	# 	out = out[
+	# 		(~pd.isna(out["Section"]))
+	# 		& (~pd.isna(out["ParentShelf"]))
+	# 		& (out["TtlValue"] > 0)
+	# 	]
+	# else:
+	# 	out = out[out["IsPath"] == 0]
+
+	# 4) derived geometry for bar placement/sizing
+	out["cx"] = (out["X0"] + out["X1"]) / 2.0
+	out["cy"] = (out["Y0"] + out["Y1"]) / 2.0
+	out["dx"] = (out["X1"] - out["X0"]).clip(lower=0.5)  # avoid zero width
+	out["dy"] = (out["Y1"] - out["Y0"]).clip(lower=0.5)
+
+	# display_df_paginated(
+	# 	out,
+	# 	"out",
+	# 	key="out",
+	# 	batch_size_options=(250, 750, 1500)
+	# )
+
+	return out
+
+def plot_section_value_3d(df_sec_val: pd.DataFrame, *, elev=25, azim=-55, z_log=False):
+	# Place bars by LOWER-LEFT corner
+	x = (df_sec_val["cx"] - df_sec_val["dx"] / 2.0).to_numpy()
+	y = (df_sec_val["cy"] - df_sec_val["dy"] / 2.0).to_numpy()
+	dx = df_sec_val["dx"].to_numpy()
+	dy = df_sec_val["dy"].to_numpy()
+
+	z0 = np.zeros(len(df_sec_val), dtype=float)
+	dz_raw = df_sec_val["TtlValue"].to_numpy(dtype=float)
+
+	# Optional log scaling for huge value ranges
+	if z_log:
+		dz = np.log10(dz_raw + 1.0)
+		z_label = "log10(Value + 1)"
+	else:
+		dz = dz_raw
+		z_label = "Value"
+
+	fig = plt.figure(figsize=(12, 7))
+	ax = fig.add_subplot(111, projection="3d")
+
+	# IMPORTANT: no explicit colors unless you ask; use default
+	ax.bar3d(x, y, z0, dx, dy, dz, shade=True)
+
+	ax.set_xlabel("X (grid)")
+	ax.set_ylabel("Y (grid)")
+	ax.set_zlabel(z_label)
+	ax.view_init(elev=elev, azim=azim)
+
+	# Optional: label section names (can clutter)
+	# for _, r in df_sec_val.iterrows():
+	#     ax.text(r["cx"], r["cy"], (np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]) + 0.1, r["Section"], fontsize=8)
+
+	plt.tight_layout()
+	return fig
+
+def add_prism(fig: go.Figure, *, x0, x1, y0, y1, z0, z1, name="", color=None, opacity=0.85, hover=None):
+	# 8 vertices of the prism
+	verts = np.array([
+		[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],  # bottom
+		[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],  # top
+	], dtype=float)
+
+	# Triangulate faces (two triangles per face)
+	I = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+	J = [1, 2, 5, 6, 6, 7, 4, 7, 5, 6, 1, 2]
+	K = [2, 3, 6, 7, 7, 4, 0, 4, 6, 7, 5, 6]
+	# The above is a compact triangulation; if any face looks off, I can give you the explicit face list.
+
+	fig.add_trace(go.Mesh3d(
+		x=verts[:, 0], y=verts[:, 1], z=verts[:, 2],
+		i=I, j=J, k=K,
+		opacity=opacity,
+		color=color,  # optional
+		name=name,
+		hovertext=hover,
+		hoverinfo="text" if hover else "skip",
+		showscale=False
+	))
+	return fig
+
+
+def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True):
 	fig = go.Figure()
 
-	for _, r in df_sec_val.iterrows():
-		z0 = 0
-		z1 = np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]
-		fig.add_trace(go.Scatter3d(
-			x=[r["cx"], r["cx"]],
-			y=[r["cy"], r["cy"]],
-			z=[z0, z1],
-			mode="lines",
-			hovertemplate=(
-				f"Section: <b>{r['Section']}</b><br>"
-				f"Value: <b>{r['TtlValue']:,.2f}</b><extra></extra>"
-			),
-			showlegend=False
-		))
+	for r in df_cells.itertuples(index=False):
+		x0, x1 = float(r.X0), float(r.X1)
+		y0, y1 = float(r.Y0), float(r.Y1)
+
+		try:
+			val_raw = getattr(r, plot_col, 0.0)
+			val = float(val_raw)
+		except:
+			show_val_annotations = False
+			try:
+				min_date = df_cells[plot_col].min()
+				max_date = df_cells[plot_col].max()
+				date_diff = (max_date - min_date).days
+				isdate = is_date(val_raw)
+				if isinstance(isdate, bool):
+					if isdate:
+						isdate = datetime.datetime.strptime(val_raw, "%Y-%m-%d")
+					else:
+						raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
+				val = (isdate - min_date).days
+			except:
+				raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
+
+		t_val = val
+		val *= pillar_scale
+		z1 = np.log10(val + 1.0) if z_log else val
+
+		r_shelves_spl = list(set(r.Shelves.split(", ")))
+		df_parts_in_section: pd.DataFrame = df_parts[df_parts["DefaultBin"].isin(r_shelves_spl)]
+		avg_per_bin = t_val / len(r.Shelves)
+		avg_per_stock = t_val / df_parts_in_section.shape[0]
+
+		bins_per_row = 5
+		if r_shelves_spl:
+			shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[bins_per_row*i:bins_per_row*(i+1)]) for i in range(math.ceil(len(r_shelves_spl) // bins_per_row) + 1)]))
+		else:
+			shelves_br = " None "
+
+		hover = f"Section: <b>{r.ParentShelf}</b><br>"
+		hover += f"Group: <b>{r.Group}</b><br>"
+		if show_val_annotations:
+			hover += f"Value: <b>$ {money(t_val)}</b><br>"
+			hover += f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
+			hover += f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
+		hover += f"Shelves: <b>{shelves_br}</b><br>"
+		hover += f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
+
+		add_prism(
+			fig,
+			x0=x0, x1=x1,
+			y0=y0, y1=y1,
+			z0=0.0, z1=z1,
+			opacity=opacity,
+			hover=hover
+		)
 
 	fig.update_layout(
-		title=title,
+		margin=dict(l=0, r=0, t=40, b=0),
 		scene=dict(
+			aspectmode="data",
 			xaxis_title="X",
 			yaxis_title="Y",
 			zaxis_title="log10(Value+1)" if z_log else "Value",
-		),
-		margin=dict(l=0, r=0, t=40, b=0),
+		)
 	)
 	return fig
+
+
+def update_sidebar():
+	val = st.session_state.get(k_radio_warehouse_building)
+	st.toast(f"{val=}")
+	st.write(f"{val=}")
+	print(f"{val=}")
+	st.session_state.update({
+		k_degrees_rot_map: 90 if val == "Hawkins" else 0
+	})
+	if user in admin_test_users:
+		st.session_state.update({
+			k_overlay_sections_map: True
+		})
 
 
 def add_section_floor_outlines(fig: go.Figure, df_sec_geo, *, opacity=0.8, line_width=4):
@@ -4581,14 +4805,19 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_supp
 			"Supplier Parts",
 			key="stdf_supp",
 			selection_mode="multi-row",
-			on_select="rerun"
+			on_select="rerun",
+			batch_size_options=(250, 1000, 2500)
 		)
 
 		textbox_stockcode: pd.DataFrame = get_selected_rows(df_supp, stdf_supp, "StockCode", n=None)
 		if isinstance(textbox_stockcode, pd.DataFrame):
 			if not textbox_stockcode.empty:
-				if textbox_stockcode.shape[0] == 1:
-					textbox_stockcode = textbox_stockcode.iloc[0]["StockCode"]
+				# if textbox_stockcode.shape[0] == 1:
+				textbox_stockcode = textbox_stockcode.iloc[0]["StockCode"]
+		# if isinstance(textbox_stockcode, pd.Series):
+		# 	st.write("textbox_stockcode")
+		# 	st.write(textbox_stockcode)
+		# 	textbox_stockcode = textbox_stockcode["StockCode"]
 
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shopclock):
@@ -4851,228 +5080,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_syspro)
 		)
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehouse):
-
-	def build_section_valuation_geometry(
-			df_sections: pd.DataFrame,
-			df_bins: pd.DataFrame,
-			map_all_shelves: bool = True
-	) -> pd.DataFrame:
-		# 1) valuation per section
-		val = (
-			df_bins.groupby(["ParentShelf", "Section", "Group", "IsPath"], as_index=False)
-			.agg({
-				"TtlItemValue":"sum",
-				"Shelf":lambda x: ', '.join(x),
-				"OldestPurchasedDate": "min",
-				"NewestPurchasedDate": "max"
-			})
-			.rename(columns={
-				"TtlItemValue": "TtlValue",
-				"Shelf": "Shelves"
-			})
-		)
-		val["Section"] = val["Section"].astype(str).str.strip().str.upper()
-		val["Group"] = val["Group"].astype(str).str.strip().str.upper()
-
-		# 2) section geometry (combine all rectangles for a Section into one bounding box)
-		geo = df_sections.copy()
-		geo["Section"] = geo["Section"].astype(str).str.strip().str.upper()
-		geo["Group"] = geo["Group"].astype(str).str.strip().str.upper()
-
-		geo2 = (
-			geo.groupby(["Section", "Group"], as_index=False)
-			.agg(
-				X0=("X0", "min"),
-				X1=("X1", "max"),
-				Y0=("Y0", "min"),
-				Y1=("Y1", "max"),
-			)
-		)
-
-		# 3) join
-		out = geo2.merge(val, on=["Section", "Group"], how="left")
-		out["TtlValue"] = out["TtlValue"].fillna(0.0)
-		out["Shelves"] = out["Shelves"].fillna("")
-
-		if not map_all_shelves:
-			out = out[
-				(~pd.isna(out["Section"]))
-				& (~pd.isna(out["ParentShelf"]))
-				& (out["TtlValue"] > 0)
-			]
-
-		# if map_all_shelves:
-		# 	# out = out[out["TtlValue"] > 0]
-		# 	# out = out[
-		# 	# 	~pd.isna(out["ParentShelf"])
-		# 	# ]
-		# 	out = out[
-		# 		(~pd.isna(out["Section"]))
-		# 		& (~pd.isna(out["ParentShelf"]))
-		# 		& (out["TtlValue"] > 0)
-		# 	]
-		# else:
-		# 	out = out[out["IsPath"] == 0]
-
-		# 4) derived geometry for bar placement/sizing
-		out["cx"] = (out["X0"] + out["X1"]) / 2.0
-		out["cy"] = (out["Y0"] + out["Y1"]) / 2.0
-		out["dx"] = (out["X1"] - out["X0"]).clip(lower=0.5)  # avoid zero width
-		out["dy"] = (out["Y1"] - out["Y0"]).clip(lower=0.5)
-
-		# display_df_paginated(
-		# 	out,
-		# 	"out",
-		# 	key="out",
-		# 	batch_size_options=(250, 750, 1500)
-		# )
-
-		return out
-
-	def plot_section_value_3d(df_sec_val: pd.DataFrame, *, elev=25, azim=-55, z_log=False):
-		# Place bars by LOWER-LEFT corner
-		x = (df_sec_val["cx"] - df_sec_val["dx"] / 2.0).to_numpy()
-		y = (df_sec_val["cy"] - df_sec_val["dy"] / 2.0).to_numpy()
-		dx = df_sec_val["dx"].to_numpy()
-		dy = df_sec_val["dy"].to_numpy()
-
-		z0 = np.zeros(len(df_sec_val), dtype=float)
-		dz_raw = df_sec_val["TtlValue"].to_numpy(dtype=float)
-
-		# Optional log scaling for huge value ranges
-		if z_log:
-			dz = np.log10(dz_raw + 1.0)
-			z_label = "log10(Value + 1)"
-		else:
-			dz = dz_raw
-			z_label = "Value"
-
-		fig = plt.figure(figsize=(12, 7))
-		ax = fig.add_subplot(111, projection="3d")
-
-		# IMPORTANT: no explicit colors unless you ask; use default
-		ax.bar3d(x, y, z0, dx, dy, dz, shade=True)
-
-		ax.set_xlabel("X (grid)")
-		ax.set_ylabel("Y (grid)")
-		ax.set_zlabel(z_label)
-		ax.view_init(elev=elev, azim=azim)
-
-		# Optional: label section names (can clutter)
-		# for _, r in df_sec_val.iterrows():
-		#     ax.text(r["cx"], r["cy"], (np.log10(r["TtlValue"] + 1) if z_log else r["TtlValue"]) + 0.1, r["Section"], fontsize=8)
-
-		plt.tight_layout()
-		return fig
-
-	def add_prism(fig: go.Figure, *, x0, x1, y0, y1, z0, z1, name="", color=None, opacity=0.85, hover=None):
-		# 8 vertices of the prism
-		verts = np.array([
-			[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],  # bottom
-			[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],  # top
-		], dtype=float)
-
-		# Triangulate faces (two triangles per face)
-		I = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
-		J = [1, 2, 5, 6, 6, 7, 4, 7, 5, 6, 1, 2]
-		K = [2, 3, 6, 7, 7, 4, 0, 4, 6, 7, 5, 6]
-		# The above is a compact triangulation; if any face looks off, I can give you the explicit face list.
-
-		fig.add_trace(go.Mesh3d(
-			x=verts[:, 0], y=verts[:, 1], z=verts[:, 2],
-			i=I, j=J, k=K,
-			opacity=opacity,
-			color=color,  # optional
-			name=name,
-			hovertext=hover,
-			hoverinfo="text" if hover else "skip",
-			showscale=False
-		))
-		return fig
-
-
-	def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True):
-		fig = go.Figure()
-
-		for r in df_cells.itertuples(index=False):
-			x0, x1 = float(r.X0), float(r.X1)
-			y0, y1 = float(r.Y0), float(r.Y1)
-
-			try:
-				val_raw = getattr(r, plot_col, 0.0)
-				val = float(val_raw)
-			except:
-				show_val_annotations = False
-				try:
-					min_date = df_cells[plot_col].min()
-					max_date = df_cells[plot_col].max()
-					date_diff = (max_date - min_date).days
-					isdate = is_date(val_raw)
-					if isinstance(isdate, bool):
-						if isdate:
-							isdate = datetime.datetime.strptime(val_raw, "%Y-%m-%d")
-						else:
-							raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
-					val = (isdate - min_date).days
-				except:
-					raise ValueError(f"Problem plotting {plot_col=}: {val_raw=}")
-
-			t_val = val
-			val *= pillar_scale
-			z1 = np.log10(val + 1.0) if z_log else val
-
-			r_shelves_spl = list(set(r.Shelves.split(", ")))
-			df_parts_in_section: pd.DataFrame = df_parts[df_parts["DefaultBin"].isin(r_shelves_spl)]
-			avg_per_bin = t_val / len(r.Shelves)
-			avg_per_stock = t_val / df_parts_in_section.shape[0]
-
-			bins_per_row = 5
-			if r_shelves_spl:
-				shelves_br = f"<b> ({len(r_shelves_spl)})</b><br>" + ("<br>".join([", </b><b>".join(r_shelves_spl[bins_per_row*i:bins_per_row*(i+1)]) for i in range(math.ceil(len(r_shelves_spl) // bins_per_row) + 1)]))
-			else:
-				shelves_br = " None "
-
-			hover = f"Section: <b>{r.ParentShelf}</b><br>"
-			hover += f"Group: <b>{r.Group}</b><br>"
-			if show_val_annotations:
-				hover += f"Value: <b>$ {money(t_val)}</b><br>"
-				hover += f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
-				hover += f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
-			hover += f"Shelves: <b>{shelves_br}</b><br>"
-			hover += f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
-
-			add_prism(
-				fig,
-				x0=x0, x1=x1,
-				y0=y0, y1=y1,
-				z0=0.0, z1=z1,
-				opacity=opacity,
-				hover=hover
-			)
-
-		fig.update_layout(
-			margin=dict(l=0, r=0, t=40, b=0),
-			scene=dict(
-				aspectmode="data",
-				xaxis_title="X",
-				yaxis_title="Y",
-				zaxis_title="log10(Value+1)" if z_log else "Value",
-			)
-		)
-		return fig
-
-	def update_sidebar():
-		val = st.session_state.get(k_radio_warehouse_building)
-		st.toast(f"{val=}")
-		st.write(f"{val=}")
-		print(f"{val=}")
-		st.session_state.update({
-			k_degrees_rot_map: 90 if val == "Hawkins" else 0
-		})
-		if user in admin_test_users:
-			st.session_state.update({
-				k_overlay_sections_map: True
-			})
 
 	k_radio_warehouse_building = "key_radio_warehouse_building"
 	st.session_state.setdefault(k_radio_warehouse_building, "Hawkins")
@@ -6133,20 +6140,34 @@ else:
 # If a stockcode is selected, then show details
 ###############################################
 
+if isinstance(textbox_stockcode, pd.Series):
+	textbox_stockcode = pd.DataFrame(textbox_stockcode)
+
 if user in admin_end_users:
 	with st.container(border=True, horizontal=True):
 		st.write("admin_debugging")
+		st.write("C")
 		st.write(f"{pills_search_mode=}")
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
-		st.write(f"{textbox_stockcode=}")
+		st.write(f"textbox_stockcode")
+		st.write(f"{type(textbox_stockcode)=}")
+		st.write(textbox_stockcode)
 
 found_stockcode = False
+
+df_data = load_layout_data(building="hawkins")
+df_layout = df_data["Layout"]
+df_legend = df_data["Legend"]
+df_sections = df_data["ShelfSections"]
+df_shelves = df_data["Shelves"]
+found_map_to_bin: list = []
+bin_locations = []
+selectbox_stockcode = None
 
 if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(textbox_stockcode, pd.DataFrame) and not textbox_stockcode.empty):
 
 	# searching for stockcode specific results
 	if isinstance(textbox_stockcode, str):
-		selectbox_stockcode = None
 		if textbox_stockcode:
 			if textbox_stockcode.lower() in list_stockcodes:
 				selectbox_stockcode = textbox_stockcode
@@ -6582,25 +6603,35 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 								f"Short {abs(ttl_on_hand)} to fulfill Yellow Tag #{row['ID']} for WO# {row["WO"]} from {row['DateCreated']:%Y-%m-%d %H:%M:%S}.")
 							ttl_on_hand = 0  # reset to 0 for order specific shortage count
 
-			elif isinstance(textbox_stockcode, pd.DataFrame):
-				# collect stockcodes for bin map
+				bin_locations = [bin_location]
+		else:
+			st.info(f"No parts found matching search criteria. Check your filters, if needed.")
 
-			# ensure bin mapping process will not be null
+	elif isinstance(textbox_stockcode, (pd.DataFrame, pd.Series)):
+		# collect stockcodes for bin map
+		textbox_stockcode = textbox_stockcode.merge(
+			df_parts[["StockCode", "DefaultBin"]],
+			on="StockCode",
+			how="left"
+		)
+		# st.write("instance pd")
+		# st.write(textbox_stockcode)
+		bin_locations = textbox_stockcode["DefaultBin"].dropna().unique().tolist()
 
-			df_data = load_layout_data(building="hawkins")
-			df_layout = df_data["Layout"]
-			df_legend = df_data["Legend"]
-			df_sections = df_data["ShelfSections"]
-			df_shelves = df_data["Shelves"]
-
-			found_map_to_bin: dict = {}
-
-			df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip() == bin_location.strip().lower()]
-			if not df_bin_shelf.empty:
-				ser_bin_section = df_bin_shelf.iloc[0]
-				bin_section = ser_bin_section["Section"]
-				bin_section_id = ser_bin_section["ShelfSectionID"]
-				bin_shelf_row = ser_bin_section["ShelfRow"]
+	if bin_locations:
+		bin_locations = [bl.lower().strip() for bl in bin_locations]
+		df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip().isin(bin_locations)]
+		# display_df(
+		# 	df_bin_shelf,
+		# 	"df_bin_shelf"
+		# )
+		if not df_bin_shelf.empty:
+			for i, row in df_bin_shelf.iterrows():
+				# ser_bin_section = df_bin_shelf.iloc[0]
+				bin_location = row["Shelf"]
+				bin_section = row["Section"]
+				bin_section_id = row["ShelfSectionID"]
+				bin_shelf_row = row["ShelfRow"]
 
 				df_bin_shelf_section = df_sections.loc[df_sections["ID"] == bin_section_id]
 				if not df_bin_shelf_section.empty:
@@ -6609,7 +6640,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						bsr = int(bin_shelf_row)
 					except (ValueError, TypeError):
 						bsr = bin_shelf_row
-					found_map_to_bin = dict(
+					found_map_to_bin.append(dict(
 						p_shelf=ser_bin_shelf_section["ParentShelf"],
 						group=ser_bin_shelf_section["Group"],
 						x0=ser_bin_shelf_section["X0"],
@@ -6620,21 +6651,28 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						section_id=bin_section_id,
 						shelf_row=bsr,
 						bin_location=bin_location,
-						stockcode=textbox_stockcode
-					)
+						stockcode=", ".join(
+							textbox_stockcode[textbox_stockcode["DefaultBin"].str.lower().str.strip() == bin_location.lower().strip()].merge(
+								df_bin_shelf,
+								left_on="DefaultBin",
+								right_on="Shelf",
+								how="inner"
+							)["StockCode"].dropna().unique().tolist()
+						)
+					))
 
-					x0 = found_map_to_bin["x0"]
-					y0 = found_map_to_bin["y0"]
-					x1 = found_map_to_bin["x1"]
-					y1 = found_map_to_bin["y1"]
+					x0 = found_map_to_bin[-1]["x0"]
+					y0 = found_map_to_bin[-1]["y0"]
+					x1 = found_map_to_bin[-1]["x1"]
+					y1 = found_map_to_bin[-1]["y1"]
 					w = x1 - x0
 					h = y1 - y0
-					found_map_to_bin["w"] = w
-					found_map_to_bin["h"] = h
+					found_map_to_bin[-1]["w"] = w
+					found_map_to_bin[-1]["h"] = h
 					cx = x0 + w
 					cy = y0 + h
-					found_map_to_bin["cx"] = cx
-					found_map_to_bin["cy"] = cy
+					found_map_to_bin[-1]["cx"] = cx
+					found_map_to_bin[-1]["cy"] = cy
 
 					if not st.session_state.get(k_use_full_map_dot_size, False):
 						ds = st.session_state.get(k_map_dot_size, 1)
@@ -6647,7 +6685,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						cx = x_0 + (ds / 2)
 						cy = y_0 + (ds / 2)
 
-						found_map_to_bin.update({
+						found_map_to_bin[-1].update({
 							"x0": x_0,
 							"y0": y_0,
 							"x1": x_1,
@@ -6658,143 +6696,143 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 							"cy": cy
 						})
 
-			with st.expander(f"Map", expanded=bool(found_map_to_bin)):
-				if user in admin_end_users:
-					with st.container(border=True, horizontal=True):
-						st.write("admin_debugging")
-						st.write(found_map_to_bin)
-				if found_map_to_bin:
-					st.subheader("Map Controls")
-					show_sections = False
-					rotation_deg = 90
-					overlay_section = st.checkbox("Overlay Sections", value=show_sections)
-					checkbox_use_full_map_dot_size = st.checkbox(
-						label="Use full bin size for dot marking",
-						key=k_use_full_map_dot_size
-					)
-					number_input_map_dot_size = st.number_input(
-						label="Use full bin size for dot marking",
-						key=k_map_dot_size,
-						min_value=1,
-						max_value=100
-					)
-					colour_dot = st.color_picker(
-						label="Dot Colour:",
-						value=Colour("#CC1112").hex_code
-					)
+	with st.expander(f"Map", expanded=bool(found_map_to_bin)):
+		if user in admin_end_users:
+			with st.container(border=True, horizontal=True):
+				st.write("admin_debugging")
+				st.write("D")
+				st.write(found_map_to_bin)
+		if found_map_to_bin:
+			st.subheader("Map Controls")
+			show_sections = False
+			rotation_deg = 90
+			overlay_section = st.checkbox("Overlay Sections", value=show_sections)
+			checkbox_use_full_map_dot_size = st.checkbox(
+				label="Use full bin size for dot marking",
+				key=k_use_full_map_dot_size
+			)
+			number_input_map_dot_size = st.number_input(
+				label="Use full bin size for dot marking",
+				key=k_map_dot_size,
+				min_value=1,
+				max_value=100
+			)
+			colour_dot = st.color_picker(
+				label="Dot Colour:",
+				value=Colour("#CC1112").hex_code
+			)
 
-					fig = load_hawkins_map(
-						building="hawkins",
-						found_map_to_bin=found_map_to_bin,
-						dot_colour=colour_dot,
-						title=f"Bin {bin_location} shown on map:",
-						deg_rot=rotation_deg
-					)
+			fig = load_hawkins_map(
+				building="hawkins",
+				found_map_to_bin=found_map_to_bin,
+				dot_colour=colour_dot,
+				title=f"Bin {bin_location} shown on map:",
+				deg_rot=rotation_deg
+			)
 
-					fig.update_layout(
-						width=1200,
-						height=700
-					)
-					chart = st.plotly_chart(
-						fig
-					)
+			fig.update_layout(
+				width=1200,
+				height=700
+			)
+			chart = st.plotly_chart(
+				fig
+			)
 
-				# st.session_state["selected_section_id"] = None
-				# bg_map = build_legend_bg_map(df_legend)
-				#
-				# st.subheader("Map Controls")
-				# show_sections = False
-				# rotation_deg = 90
-				# overlay_section = st.checkbox("Overlay Sections", value=show_sections)
-				# checkbox_use_full_map_dot_size = st.checkbox(
-				# 	label="Use full bin size for dot marking",
-				# 	key=k_use_full_map_dot_size
-				# )
-				# number_input_map_dot_size = st.number_input(
-				# 	label="Use full bin size for dot marking",
-				# 	key=k_map_dot_size,
-				# 	min_value=1,
-				# 	max_value=100
-				# )
-				# colour_dot = st.color_picker(
-				# 	label="Dot Colour:",
-				# 	value=Colour("#CC1112").hex_code
-				# )
-				#
-				# img0 = layout_to_rgb_image(df_layout, bg_map)
-				# H, W = img0.shape[:2]
-				#
-				# img = rotate_img(img0, rotation_deg)
-				# df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=rotation_deg)
-				# msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] if found_map_to_bin else ''}'
-				# fig = build_plotly_map(
-				# 	img=img,
-				# 	df_sections=df_sections_plot,
-				# 	bg_map=bg_map,
-				# 	rotation_deg=rotation_deg,
-				# 	show_sections=overlay_section,
-				# 	selected_section_id=st.session_state["selected_section_id"],
-				# 	title=f"Bin {bin_location} shown on map{msg_shelf}:"
-				# )
-				# if found_map_to_bin:
-				# 	x0 = found_map_to_bin["x0"]
-				# 	y0 = found_map_to_bin["y0"]
-				# 	x1 = found_map_to_bin["x1"]
-				# 	y1 = found_map_to_bin["y1"]
-				# 	cx = found_map_to_bin["cx"]
-				# 	cy = found_map_to_bin["cy"]
-				# 	x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=rotation_deg)
-				# 	x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=rotation_deg)
-				# 	cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=rotation_deg)
-				# 	found_map_to_bin.update({
-				# 		"x0": x0,
-				# 		"y0": y0,
-				# 		"x1": x1,
-				# 		"y1": y1,
-				# 		"cx": cx,
-				# 		"cy": cy
-				# 	})
-				# 	fig.add_shape(
-				# 		type="circle",
-				# 		xref="x", yref="y",
-				# 		x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
-				# 		y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
-				# 		line=dict(width=2, color=colour_dot),
-				# 		fillcolor=colour_dot,
-				# 		opacity=0.5,
-				# 		layer="above",
-				# 	)
-				# 	x_off = 40
-				# 	y_off = 18
-				# 	fig.add_annotation(
-				# 		x=found_map_to_bin["cx"],
-				# 		y=found_map_to_bin["cy"],
-				# 		xref="x", yref="y",
-				# 		ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
-				# 		ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
-				# 		text=f"StockCode: '{textbox_stockcode}' located in bin '{bin_location}' on{msg_shelf.lower()}",
-				# 		showarrow=True,
-				# 		font=dict(size=10, color="black")
-				# 	)
-				# fig.update_layout(
-				# 	width=1200,
-				# 	height=700
-				# )
-				# chart = st.plotly_chart(
-				# 	fig
-				# )
-				else:
-					st.info(f"Could not locate '{bin_location}' on the map.")
-
+		# st.session_state["selected_section_id"] = None
+		# bg_map = build_legend_bg_map(df_legend)
+		#
+		# st.subheader("Map Controls")
+		# show_sections = False
+		# rotation_deg = 90
+		# overlay_section = st.checkbox("Overlay Sections", value=show_sections)
+		# checkbox_use_full_map_dot_size = st.checkbox(
+		# 	label="Use full bin size for dot marking",
+		# 	key=k_use_full_map_dot_size
+		# )
+		# number_input_map_dot_size = st.number_input(
+		# 	label="Use full bin size for dot marking",
+		# 	key=k_map_dot_size,
+		# 	min_value=1,
+		# 	max_value=100
+		# )
+		# colour_dot = st.color_picker(
+		# 	label="Dot Colour:",
+		# 	value=Colour("#CC1112").hex_code
+		# )
+		#
+		# img0 = layout_to_rgb_image(df_layout, bg_map)
+		# H, W = img0.shape[:2]
+		#
+		# img = rotate_img(img0, rotation_deg)
+		# df_sections_plot = rot_rect(df_sections, W=W, H=H, rotation_deg=rotation_deg)
+		# msg_shelf = f' Shelf #{found_map_to_bin['shelf_row'] if found_map_to_bin else ''}'
+		# fig = build_plotly_map(
+		# 	img=img,
+		# 	df_sections=df_sections_plot,
+		# 	bg_map=bg_map,
+		# 	rotation_deg=rotation_deg,
+		# 	show_sections=overlay_section,
+		# 	selected_section_id=st.session_state["selected_section_id"],
+		# 	title=f"Bin {bin_location} shown on map{msg_shelf}:"
+		# )
+		# if found_map_to_bin:
+		# 	x0 = found_map_to_bin["x0"]
+		# 	y0 = found_map_to_bin["y0"]
+		# 	x1 = found_map_to_bin["x1"]
+		# 	y1 = found_map_to_bin["y1"]
+		# 	cx = found_map_to_bin["cx"]
+		# 	cy = found_map_to_bin["cy"]
+		# 	x0, y0 = rot_point_xy(x0, y0, W=W, H=H, rotation_deg=rotation_deg)
+		# 	x1, y1 = rot_point_xy(x1, y1, W=W, H=H, rotation_deg=rotation_deg)
+		# 	cx, cy = rot_point_xy(cx, cy, W=W, H=H, rotation_deg=rotation_deg)
+		# 	found_map_to_bin.update({
+		# 		"x0": x0,
+		# 		"y0": y0,
+		# 		"x1": x1,
+		# 		"y1": y1,
+		# 		"cx": cx,
+		# 		"cy": cy
+		# 	})
+		# 	fig.add_shape(
+		# 		type="circle",
+		# 		xref="x", yref="y",
+		# 		x0=found_map_to_bin["x0"], x1=found_map_to_bin["x1"],
+		# 		y0=found_map_to_bin["y0"], y1=found_map_to_bin["y1"],
+		# 		line=dict(width=2, color=colour_dot),
+		# 		fillcolor=colour_dot,
+		# 		opacity=0.5,
+		# 		layer="above",
+		# 	)
+		# 	x_off = 40
+		# 	y_off = 18
+		# 	fig.add_annotation(
+		# 		x=found_map_to_bin["cx"],
+		# 		y=found_map_to_bin["cy"],
+		# 		xref="x", yref="y",
+		# 		ax=x_off if ((found_map_to_bin["cx"] + x_off) <= W) else -x_off,
+		# 		ay=y_off if ((found_map_to_bin["cy"] + y_off) <= H) else -y_off,
+		# 		text=f"StockCode: '{textbox_stockcode}' located in bin '{bin_location}' on{msg_shelf.lower()}",
+		# 		showarrow=True,
+		# 		font=dict(size=10, color="black")
+		# 	)
+		# fig.update_layout(
+		# 	width=1200,
+		# 	height=700
+		# )
+		# chart = st.plotly_chart(
+		# 	fig
+		# )
 		else:
-			st.info(f"No parts found matching search criteria. Check your filters, if needed.")
+			st.info(f"Could not locate '{bin_locations}' on the map.")
 
-	if textbox_stockcode or selectbox_stockcode:
+	if (isinstance(textbox_stockcode, pd.DataFrame) and (not textbox_stockcode.empty)) or ((isinstance(textbox_stockcode, str)) and (textbox_stockcode or selectbox_stockcode)):
 		selectbox_stockcode = selectbox_stockcode or textbox_stockcode
 		st.write(f"{selectbox_stockcode=}")
 		st.write(f"{df_drawings_not_parts.shape=}")
 		st.write(df_drawings_not_parts.sort_values(by="pdf", ascending=True).reset_index().iloc[0: 300])
-		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip() == selectbox_stockcode.lower().strip()]
+		lst_stockcodes: list = [selectbox_stockcode] if isinstance(selectbox_stockcode, str) else selectbox_stockcode["StockCode"].dropna().unique().tolist()
+		lst_stockcodes = [sc.lower().strip() for sc in lst_stockcodes]
+		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(selectbox_stockcode)]
 
 		if df_pdfs_non_stock_search.shape[0]:
 			st.write(f"StockCode '{selectbox_stockcode}' found multiple PDFs matching this text:")
