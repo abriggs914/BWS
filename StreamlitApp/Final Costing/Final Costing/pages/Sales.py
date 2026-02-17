@@ -21,6 +21,45 @@ from pyodbc_connection import connect
 from streamlit_utility import aligned_text, display_df
 from streamlit_calendar import calendar as st_calendar
 
+
+import streamlit_auth_sql as auth
+########################################################################
+# Begin Auth Boilerplate
+
+APP_NAME: str = st.secrets["app"]['app_name']
+PAGE_NAME: str = f"{APP_NAME}_sales"
+
+if not auth.st_auth(APP_NAME):
+	st.info(f"Please contact Avery for further help with registering for this program.")
+	# Go no further
+	st.stop()
+
+admin_end_users = ["abriggs"]
+admin_test_users = ["rec"] + admin_end_users
+user = st.session_state.get("user", "??")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
+		with st.popover("session_state"):
+			info_dict = auth.load_session_state_info()
+			st.write(info_dict)
+
+# if st.button("change password"):
+with st.popover("change password"):
+	if auth.show_change_password(APP_NAME):
+		st.rerun()
+
+# End Auth Boilerplate
+########################################################################
+
+
 DEFAULT_USER: str = "Jason Morgan"
 
 MAX_HOLD_TIME: int = 1000 * 60 * 60
@@ -2232,8 +2271,8 @@ if pills_control == options_pills_control[1]:
 # st.write("==")
 # st.write(df_model_group)
 
-# # # Create a dummy streamlit page
-# # import streamlit as st
+# # # Create a dummy .streamlit page
+# # import .streamlit as st
 # # from streamlit_scroll_navigation import scroll_navbar
 # #
 # # # Anchor IDs and icons
@@ -2730,7 +2769,7 @@ if pills_control == options_pills_control[1]:
 # # import pdfplumber
 # # from PyPDF2 import PdfMerger
 # #
-# # import streamlit as st
+# # import .streamlit as st
 # #
 # # from streamlit_pdf_viewer import st_pdf_viewer
 # # from streamlit_js_eval import streamlit_js_eval
@@ -2763,8 +2802,8 @@ if pills_control == options_pills_control[1]:
 # # # st.write(f"A")
 # #
 # #
-# # # # Create a dummy streamlit page
-# # # import streamlit as st
+# # # # Create a dummy .streamlit page
+# # # import .streamlit as st
 # # # from streamlit_scroll_navigation import scroll_navbar
 # # #
 # # # # Anchor IDs and icons

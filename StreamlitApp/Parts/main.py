@@ -33,14 +33,15 @@ import os
 import re
 
 
-VERSION = (3, 0, 0)
-VERSION_DATE = datetime.datetime(2026, 2, 9, 7, 40)
+VERSION = (3, 0, 1)
+VERSION_DATE = datetime.datetime(2026, 2, 17, 9, 12)
 version_str: str = f"v{'.'.join(map(str, VERSION))}"
+APP_NAME: str = f"Parts {version_str}"
 
 
 st.set_page_config(
 	layout="wide",
-	page_title=f"Parts {version_str}"
+	page_title=APP_NAME
 )
 
 CHANGE_REQUEST_FILE: str = "change_requests.json"
@@ -3535,7 +3536,7 @@ async def run_day():
 # st.write(f"{end}")
 
 
-if not st_auth():
+if not st_auth(APP_NAME):
 	st.info(f"Please contact Avery for further help with registering for this program.")
 	# Go no further
 	st.stop()
@@ -3545,7 +3546,7 @@ admin_end_users = ["abriggs"]
 admin_test_users = ["rec"] + admin_end_users
 
 
-st.header(f"Parts {version_str}")
+st.header(APP_NAME)
 user = st.session_state.get("user", "??")
 st.write(f"welcome {user}")
 
@@ -3573,7 +3574,7 @@ if user in admin_test_users:
 
 # if st.button("change password"):
 with st.popover("change password"):
-	if show_change_password():
+	if show_change_password(APP_NAME):
 		st.rerun()
 
 ##
@@ -3663,14 +3664,14 @@ with st.popover("Filter"):
 	# st.write(current_settings)
 
 	if success_loaded_settings:
-		save_user_settings(current_settings)
+		save_user_settings(APP_NAME, current_settings)
 		loaded_settings = (True, current_settings)
 
 	if loaded_settings != current_settings:
 		if st.button(
 				"Save these settings as your preferred settings?"
 		):
-			save_user_settings(current_settings)
+			save_user_settings(APP_NAME, current_settings)
 	st.session_state.update({k_loaded_settings_session: (True, current_settings)})
 
 if checkbox_warehouse_1_only:
@@ -3757,6 +3758,7 @@ if user in admin_test_users:
 
 # Global vars or keys to ensure functionality cross-pill
 textbox_stockcode = None
+df_unmatched_stockcodes: pd.DataFrame = pd.DataFrame(columns=["StockCode"])
 k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
 k_selectbox_drawing_select: str = "key_selectbox_drawing_select"
 k_pills_search_mode: str = "key_pills_search_mode"
@@ -4611,6 +4613,41 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 		else:
 			df_war_data: pd.DataFrame = df_s[0]
 
+		display_df_paginated(
+			df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
+			"df_unmatched_stockcodes_part_c",
+			key="afadsafsdfwedfsadsfgdsfsdfds"
+		)
+
+		display_df_paginated(
+			df_parts[df_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
+			"df_unmatched_stockcodes_part_b",
+			key="afadsafsdfwedfsadsfg"
+		)
+
+		df_unmatched_stockcodes = df_war_data.merge(
+			df_drawings_not_parts,
+			on="StockCode",
+			how="outer",
+			suffixes=["_a", "_b"]
+		)
+		df_unmatched_stockcodes = df_unmatched_stockcodes[pd.isna(df_unmatched_stockcodes["StockCode"])]
+		display_df_paginated(
+			df_unmatched_stockcodes,
+			"df_unmatched_stockcodes_part_a",
+			key="afadsafsdfweg"
+		)
+
+		k_checkbox_incomplete_warranty_items_only: str = "key_checkbox_incomplete_warranty_items_only"
+		st.session_state.setdefault(k_checkbox_incomplete_warranty_items_only, True)
+		checkbox_incomplete_warranty_items_only = st.checkbox(
+			label="Incomplete Items Only",
+			key=k_checkbox_incomplete_warranty_items_only,
+			help=f"[QtyIssued] == 0"
+		)
+		if checkbox_incomplete_warranty_items_only:
+			df_war_data = df_war_data[df_war_data["QtyIssued"] == 0]
+
 		stdf_war_data = display_df_paginated(
 			df_war_data,
 			"Warranty Data for Selected Jobs:",
@@ -4619,9 +4656,17 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 			on_select="rerun"
 		)
 
-		selected = get_selected_rows(df_war_data, stdf_war_data, "StockCode", 1)
-		if selected:
-			textbox_stockcode = selected
+		selected = get_selected_rows(df_war_data, stdf_war_data, "StockCode", n=None)
+		if isinstance(selected, (pd.DataFrame, pd.Series)):
+			if selected.shape[0] == 1:
+				textbox_stockcode = selected.reset_index().loc[0, "StockCode"]
+			elif selected.empty:
+				textbox_stockcode = None
+			else:
+				textbox_stockcode = selected
+		else:
+			if selected:
+				textbox_stockcode = selected
 
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick_list):
 	# Pick List
@@ -4677,7 +4722,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 				"QtyToPick": "To Pick"
 			})
 			cols_pick_lists = st.columns(2)
-			df_pick_list = st.session_state["k_df_pick_list"]
+			df_pick_list = st.session_state[k_df_pick_list]
 
 			if checkbox_need_to_pick:
 				df_pick_list = df_pick_list[df_pick_list["QtyToPick"] > 0]
@@ -6166,6 +6211,9 @@ selectbox_stockcode = None
 
 if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(textbox_stockcode, pd.DataFrame) and not textbox_stockcode.empty):
 
+	if isinstance(textbox_stockcode, pd.DataFrame) and (textbox_stockcode.shape[0] == 1):
+		textbox_stockcode = textbox_stockcode.reset_index().loc[0, "StockCode"]
+
 	# searching for stockcode specific results
 	if isinstance(textbox_stockcode, str):
 		if textbox_stockcode:
@@ -6652,7 +6700,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						shelf_row=bsr,
 						bin_location=bin_location,
 						stockcode=", ".join(
-							textbox_stockcode[textbox_stockcode["DefaultBin"].str.lower().str.strip() == bin_location.lower().strip()].merge(
+							df_parts[df_parts["DefaultBin"].str.lower().str.strip() == bin_location.lower().strip()].merge(
 								df_bin_shelf,
 								left_on="DefaultBin",
 								right_on="Shelf",
@@ -6827,12 +6875,13 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 
 	if (isinstance(textbox_stockcode, pd.DataFrame) and (not textbox_stockcode.empty)) or ((isinstance(textbox_stockcode, str)) and (textbox_stockcode or selectbox_stockcode)):
 		selectbox_stockcode = selectbox_stockcode or textbox_stockcode
-		st.write(f"{selectbox_stockcode=}")
-		st.write(f"{df_drawings_not_parts.shape=}")
-		st.write(df_drawings_not_parts.sort_values(by="pdf", ascending=True).reset_index().iloc[0: 300])
+		# st.write(f"{selectbox_stockcode=}")
+		# st.write(f"{df_drawings_not_parts.shape=}")
+		# st.write(df_drawings_not_parts.sort_values(by="pdf", ascending=True).reset_index().iloc[0: 300])
 		lst_stockcodes: list = [selectbox_stockcode] if isinstance(selectbox_stockcode, str) else selectbox_stockcode["StockCode"].dropna().unique().tolist()
 		lst_stockcodes = [sc.lower().strip() for sc in lst_stockcodes]
-		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(selectbox_stockcode)]
+		lst_selectbox_stockcode = [selectbox_stockcode] if not isinstance(selectbox_stockcode, list) else selectbox_stockcode
+		df_pdfs_non_stock_search: pd.DataFrame = df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(lst_selectbox_stockcode)]
 
 		if df_pdfs_non_stock_search.shape[0]:
 			st.write(f"StockCode '{selectbox_stockcode}' found multiple PDFs matching this text:")
@@ -6862,6 +6911,16 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						st.rerun()
 else:
 	st.info(f"Select a stock code for more details.")
+
+if not df_unmatched_stockcodes.empty:
+	display_df_paginated(
+		df=df_unmatched_stockcodes,
+		title="Unmatched StockCodes",
+		key="stdf_unmatched_stockcodes"
+	)
+	st.info("These stockcodes were filtered out of an initial result set, either due to user filters, invalid Syspro foreign key, or another setting / configuration. If you believe these stockcodes should be in the valid Syspro result sets above, please contact Avery to review your session.")
+
+
 with cont_top_control:
 	# FINALLY create the widget, this will allow for the state to be programmatically changed.
 

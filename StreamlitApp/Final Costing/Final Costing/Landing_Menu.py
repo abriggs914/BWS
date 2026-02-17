@@ -1,4 +1,10 @@
+import datetime
+
 import streamlit as st
+import pandas as pd
+
+import streamlit_auth_sql as auth
+import secrets
 
 
 st.set_page_config(
@@ -6,8 +12,39 @@ st.set_page_config(
 	page_title="BWSStreamlitLanding"
 )
 
-
 st.header("Welcome to BWS Streamlit Environment!")
+
+APP_NAME: str = st.secrets["app"]['app_name']
+PAGE_NAME: str = f"{APP_NAME}_landing_menu"
+
+
+if not auth.st_auth(APP_NAME):
+	st.info(f"Please contact Avery for further help with registering for this program.")
+	# Go no further
+	st.stop()
+
+admin_end_users = ["abriggs"]
+admin_test_users = ["rec"] + admin_end_users
+user = st.session_state.get("user", "??")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
+		with st.popover("session_state"):
+			info_dict = auth.load_session_state_info()
+			st.write(info_dict)
+
+# if st.button("change password"):
+with st.popover("change password"):
+	if auth.show_change_password(APP_NAME):
+		st.rerun()
+
 st.subheader("Please select a page to visit:")
 
 

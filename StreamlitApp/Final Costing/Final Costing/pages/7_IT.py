@@ -24,6 +24,7 @@ from streamlit_utility_bws import load_it_requests, load_departments, load_itr_p
     load_itr_customers, load_itr_hardware, load_itstr_user_directory, load_itr_software, load_itr_training, \
     get_next_it_request_number, get_tables, get_cols, load_production_file
 from utility import isnumber, next_available_file_name
+import streamlit_auth_sql as auth
 
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
 ROOT_DIRECTORY_REQUESTS = r"\\bwsfp01.bwsdomain.local\Public\IT\Requests"
@@ -588,6 +589,42 @@ def get_request_sub_types(rt_in: str = None) -> list[str]:
 #
 #     if sql:
 #         print(f"{sql=}")
+
+
+########################################################################
+# Begin Auth Boilerplate
+
+APP_NAME: str = st.secrets["app"]['app_name']
+PAGE_NAME: str = f"{APP_NAME}_it"
+if not auth.st_auth(APP_NAME):
+	st.info(f"Please contact Avery for further help with registering for this program.")
+	# Go no further
+	st.stop()
+
+admin_end_users = ["abriggs"]
+admin_test_users = ["rec"] + admin_end_users
+user = st.session_state.get("user", "??")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
+		with st.popover("session_state"):
+			info_dict = auth.load_session_state_info()
+			st.write(info_dict)
+
+# if st.button("change password"):
+with st.popover("change password"):
+	if auth.show_change_password(APP_NAME):
+		st.rerun()
+
+# End Auth Boilerplate
+########################################################################
 
 
 # default values for request_form()
@@ -4098,7 +4135,7 @@ Eval does not work properly in the immediate window. You must test using Script.
 import os
 
 # aliases
-import streamlit as st
+import .streamlit as st
 
 # 3rd-party modules
 from streamlit_pdf_viewer import pdf_viewer
@@ -4111,7 +4148,7 @@ pdf_height = 600
 root_pdf_folder = r"\\server4.bwsdomain.local\Design\DRAWINGS\Promos\9E) PROMOS BY MODEL 2025\Tags (2025)"
 
 
-# First section of a streamlit Application
+# First section of a .streamlit Application
 # this line can only be called once, and should be called at the beginning.
 st.set_page_config(
 	layout="wide",
@@ -4139,7 +4176,7 @@ def load_pdf_binary(pdf_file):
 		return f.read()
 
 
-# Begin streamlit widgets
+# Begin .streamlit widgets
 if not os.path.exists(root_pdf_folder):
 	# check folder exists before proceeding
 	st.error(NotADirectoryError(f"Could not find '{root_pdf_folder}'."))
@@ -4193,7 +4230,7 @@ else:
 	st.info(f"No PDF files were found in this folder '{root_pdf_folder}'.")
             """,
             "desc": """
-Sample code to show how to use a pdf_viewer widget in streamlit.
+Sample code to show how to use a pdf_viewer widget in .streamlit.
             """,
             "warn": """
 3rd-party widget - has weird interaction with the session_state

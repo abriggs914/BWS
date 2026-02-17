@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_agraph import Node, agraph, Config, Edge
-# import streamlit.components.v1 as components
+# import .streamlit.components.v1 as components
 # import pygwalker as pyg
 
 from colour_utility import Colour, gradient
@@ -19,6 +19,43 @@ st.set_page_config(
 	layout="wide",
 	page_title="Testing IT"
 )
+
+import streamlit_auth_sql as auth
+########################################################################
+# Begin Auth Boilerplate
+
+APP_NAME: str = st.secrets["app"]['app_name']
+PAGE_NAME: str = f"{APP_NAME}_testing_it"
+
+if not auth.st_auth(APP_NAME):
+	st.info(f"Please contact Avery for further help with registering for this program.")
+	# Go no further
+	st.stop()
+
+admin_end_users = ["abriggs"]
+admin_test_users = ["rec"] + admin_end_users
+user = st.session_state.get("user", "??")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
+		with st.popover("session_state"):
+			info_dict = auth.load_session_state_info()
+			st.write(info_dict)
+
+# if st.button("change password"):
+with st.popover("change password"):
+	if auth.show_change_password(APP_NAME):
+		st.rerun()
+
+# End Auth Boilerplate
+########################################################################
 
 
 def display_df(

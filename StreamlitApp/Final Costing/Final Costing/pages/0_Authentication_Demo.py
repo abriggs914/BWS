@@ -663,7 +663,7 @@ else:
 # from typing import Any, Optional
 #
 # import pandas as pd
-# import streamlit as st
+# import .streamlit as st
 # from streamlit_extras.add_vertical_space import add_vertical_space
 # from streamlit_autorefresh import st_autorefresh
 #

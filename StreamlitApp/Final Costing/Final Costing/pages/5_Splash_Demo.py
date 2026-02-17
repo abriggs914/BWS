@@ -50,7 +50,7 @@ def aligned_text(
 ) -> str:
     """
     Return formatted HTML, and in-line CSS to h_align a given text in a container.
-    Use with streamlit's markdown function and with 'unsafe_allow_html' set to True.
+    Use with .streamlit's markdown function and with 'unsafe_allow_html' set to True.
     See coloured_text() for streamlined-colour-only functionality.
     """
     if isinstance(line_height, float):

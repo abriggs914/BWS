@@ -46,3 +46,30 @@ CREATE TABLE [dbo].[ITSTR_AppUserAccessLog] (
     [UserAgent]     NVARCHAR(256) NULL
 );
 GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON [dbo].[ITSTR_AppUsers]
+TO
+    [SRS],
+    [SCSRS],
+    [USER5],
+    [SGEU1];
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON [dbo].[ITSTR_AppUserSettings]
+TO
+    [SRS],
+    [SCSRS],
+    [USER5],
+    [SGEU1];
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON [dbo].[ITSTR_AppUserAccessLog]
+TO
+    [SRS],
+    [SCSRS],
+    [USER5],
+    [SGEU1];
+GO

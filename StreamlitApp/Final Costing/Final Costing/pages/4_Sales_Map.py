@@ -18,6 +18,43 @@ import pydeck as pdk
 # Company Boilerplate
 #####################
 
+import streamlit_auth_sql as auth
+########################################################################
+# Begin Auth Boilerplate
+
+APP_NAME: str = st.secrets["app"]['app_name']
+PAGE_NAME: str = f"{APP_NAME}_sales_map"
+
+if not auth.st_auth(APP_NAME):
+	st.info(f"Please contact Avery for further help with registering for this program.")
+	# Go no further
+	st.stop()
+
+admin_end_users = ["abriggs"]
+admin_test_users = ["rec"] + admin_end_users
+user = st.session_state.get("user", "??")
+
+if user in admin_test_users:
+	with st.sidebar:
+		if st.button(
+			label="Clear Cache & Rerun",
+			key=f"k_clear_cache_rerun"
+		):
+			st.cache_data.clear()
+			st.cache_resource.clear()
+			st.rerun()
+		with st.popover("session_state"):
+			info_dict = auth.load_session_state_info()
+			st.write(info_dict)
+
+# if st.button("change password"):
+with st.popover("change password"):
+	if auth.show_change_password(APP_NAME):
+		st.rerun()
+
+# End Auth Boilerplate
+########################################################################
+
 
 APP_SHORT_NAME = "Sales Map"
 TIME_APP_REFRESH = 45 * 1000  # every 45 seconds
@@ -43,7 +80,7 @@ CREDS_STG: dict[str: Any] = {
 #######################
 
 
-# call this first or streamlit will be cranky if you do it later.
+# call this first or .streamlit will be cranky if you do it later.
 st.set_page_config(layout="wide")
 st.title(APP_SHORT_NAME)
 DEFAULT_SESSION_STATE = {
@@ -694,7 +731,7 @@ if tab_choice == tab_names[1]:
     #
     # with grid["content_row_1"]:
     #     add_vertical_space(3)
-    #     # Add SQL dataframe to streamlit site
+    #     # Add SQL dataframe to .streamlit site
     #     st.write(MonitoringSchedulesqlquerydf.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 else:
