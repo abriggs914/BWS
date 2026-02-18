@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from datetime import datetime, date, time, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence, Union
+from PyPDF2 import PdfMerger
 
 import io
+import os
 import zipfile
 
 import numpy as np
@@ -944,18 +946,63 @@ def build_pdf(
     return (buf if buf else out_path), doc
 
 
+def merge_pdfs(pdf_paths: List[str], output_path: str) -> None:
+    """
+    Merge multiple PDF files into a single PDF.
+
+    :param pdf_paths: List of PDF file paths to merge (in order).
+    :param output_path: Path to save the merged PDF.
+    """
+    if not pdf_paths:
+        raise ValueError("No PDF files provided for merging.")
+
+    merger = PdfMerger()
+
+    try:
+        for pdf in pdf_paths:
+            if not os.path.isfile(pdf):
+                raise FileNotFoundError(f"File not found: {pdf}")
+            merger.append(pdf)  # Streams directly from disk
+        merger.write(output_path)
+        print(f"Merged PDF saved to: {output_path}")
+    finally:
+        merger.close()
+
+
 def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
+
+    if not named_files:
+        return b""
+
+    nf_0 = named_files[0]
+    with_bytes = False
+    if isinstance(nf_0, tuple):
+        with_bytes = True
+
     zbuf = io.BytesIO()
     with zipfile.ZipFile(zbuf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for filename, data in named_files:
-            if not isinstance(data, (bytes, bytearray)):
-                raise TypeError(f"{filename} is not bytes, got {type(data)}")
-            zf.writestr(filename, data)
-    zbuf.seek(0)
-    return zbuf.read()
+        if with_bytes:
+            # Already have bytes in memory
+            for filename, data in named_files:
+                if not isinstance(filename, str):
+                    raise TypeError(f"Filename must be str, got {type(filename)}")
+                if not isinstance(data, (bytes, bytearray)):
+                    raise TypeError(f"{filename} is not bytes, got {type(data)}")
+                zf.writestr(filename, data)
+        else:
+            # File paths — stream directly into ZIP
+            for filepath in named_files:
+                if not isinstance(filepath, str):
+                    raise TypeError(f"File path must be str, got {type(filepath)}")
+                if not os.path.isfile(filepath):
+                    raise FileNotFoundError(f"File not found: {filepath}")
+                # This streams from disk into the ZIP without reading all into memory
+                zf.write(filepath, arcname=os.path.basename(filepath))
 
+    # Ensure ZIP is finalized before returning
+    return zbuf.getvalue()
 
-# def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
+        # def build_zip_bytes(named_files: list[tuple[str, bytes]]) -> bytes:
 #     zbuf = io.BytesIO()
 #     with zipfile.ZipFile(zbuf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
 #         for filename, data in named_files:

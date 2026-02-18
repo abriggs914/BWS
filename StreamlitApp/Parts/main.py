@@ -13,7 +13,7 @@ import extract_drawing_parts as edp
 from streamlit_pills import pills
 from streamlit_plotly_events import plotly_events
 from streamlit_calendar import calendar
-from typing import Literal, Optional, Any
+from typing import Literal, Optional, Any, List
 from collections import defaultdict, OrderedDict
 
 import matplotlib.pyplot as plt
@@ -45,7 +45,7 @@ st.set_page_config(
 )
 
 CHANGE_REQUEST_FILE: str = "change_requests.json"
-PATH_STOCK_PDFS: str = r"J:\VaultWorkspace_BWS\PDFS"
+PATH_STOCK_PDFS: str = r"\\server4.bwsdomain.local\Design\VaultWorkspace_BWS\PDFS"
 UTC_FMT: str = "%Y-%m-%dT%H:%M:%SZ"
 BUILDING_CODE_BOTH: int = 0
 BUILDING_CODE_VMI: int = -2
@@ -3446,6 +3446,16 @@ def extract_from_bytes(pdf_bytes: bytes, correction_cols_to_ignore: Optional[lis
 	return cands, parts, rev
 
 
+@st.cache_data(show_spinner=False, ttl=60*10)
+def check_pdf_exists(pdf: str) -> bool:
+	return os.path.exists(pdf)
+
+
+@st.cache_data(show_spinner=True, show_time=True, ttl=60*60)
+def prep_printable_parts_pdf_report(lst_pdfs: List[str], output_file: str) -> None:
+	rlu.merge_pdfs(lst_pdfs, output_path=output_file)
+
+
 def po_fmt(po_num: int | str, out_type: Literal["int", "str"], word_size: int = 15) -> int | str:
 	if out_type == "str":
 		return str(po_num).rjust(word_size, "0")
@@ -3783,6 +3793,7 @@ if user in admin_end_users:
 	with st.container(border=True, horizontal=True):
 		st.write("admin_debugging")
 		st.write(f"B")
+
 		st.write(f"{pills_search_mode=}")
 		st.write(f"{st.session_state.get(k_pills_search_mode)=}")
 		st.write(f"{textbox_stockcode=}")
@@ -3795,78 +3806,80 @@ if user in admin_end_users:
 
 cont_top_control = st.container()
 if pills_search_mode == op_search_mode_advanced:
-	# Multi
-	k_text_multi_0 = "key_text_multi_0"
-	k_text_multi_1 = "key_text_multi_1"
-	k_text_multi_2 = "key_text_multi_2"
-	t0 = st.session_state.setdefault(k_text_multi_0, "")
-	t1 = st.session_state.setdefault(k_text_multi_1, "")
-	t2 = st.session_state.setdefault(k_text_multi_2, "")
-	# t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
-	with st.container():
-		cols_search_term = st.columns([0.45, 0.55])
-		cont_search_result = st.container()
-
-		with cols_search_term[0]:
-			if st.button(
-					"clear"
-			):
-				st.session_state.update({
-					k_text_multi_0: "",
-					k_text_multi_1: "",
-					k_text_multi_2: "",
-					k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
-				})
-		# st.rerun()
-
-		text_widgets = []
-		for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
-			with cols_search_term[0]:
-				text_widgets.append(st.text_input(
-					label=f"Term {i + 1}",
-					key=key,
-					on_change=lambda: st.session_state.update({k_search_text_widgets: None})
-				))
-			if not st.session_state.get(key):
-				break
-
-		textbox_stockcode = None
-		k_search_text_widgets: str = "key_search_text_widgets"
-		with cols_search_term[0]:
-			if st.button(
-					"submit"
-			):
-				st.session_state.update({k_search_text_widgets: text_widgets})
-		# st.rerun()
-
-		if st.session_state.setdefault(k_search_text_widgets):
-			df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
-			k_stdf_searched = "key_stdf_searched"
-			show_cols = [
-				"StockCode",
-				"DefaultBin",
-				"Description",
-				"LongDesc"
-			]
-			with cols_search_term[1]:
-
-				with st.container(border=True):
-					stdf_searched = display_df_paginated(
-						df=df_searched[show_cols],
-						title="df_searched",
-						on_select="rerun",
-						selection_mode="single-row",
-						key=k_stdf_searched,
-						width=1600
-					)
-
-			# st.write(stdf_searched)
-
-			if stdf_searched:
-				if stdf_searched["selection"]:
-					if stdf_searched["selection"]["rows"]:
-						textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
-	st.divider()
+	pass
+	# st.error("HERE")
+	# # Multi
+	# k_text_multi_0 = "key_text_multi_0"
+	# k_text_multi_1 = "key_text_multi_1"
+	# k_text_multi_2 = "key_text_multi_2"
+	# t0 = st.session_state.setdefault(k_text_multi_0, "")
+	# t1 = st.session_state.setdefault(k_text_multi_1, "")
+	# t2 = st.session_state.setdefault(k_text_multi_2, "")
+	# # t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
+	# with st.container():
+	# 	cols_search_term = st.columns([0.45, 0.55])
+	# 	cont_search_result = st.container()
+	#
+	# 	with cols_search_term[0]:
+	# 		if st.button(
+	# 				"clear"
+	# 		):
+	# 			st.session_state.update({
+	# 				k_text_multi_0: "",
+	# 				k_text_multi_1: "",
+	# 				k_text_multi_2: "",
+	# 				k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+	# 			})
+	# 	# st.rerun()
+	#
+	# 	text_widgets = []
+	# 	for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
+	# 		with cols_search_term[0]:
+	# 			text_widgets.append(st.text_input(
+	# 				label=f"Term {i + 1}",
+	# 				key=key,
+	# 				on_change=lambda: st.session_state.update({k_search_text_widgets: None})
+	# 			))
+	# 		if not st.session_state.get(key):
+	# 			break
+	#
+	# 	textbox_stockcode = None
+	# 	k_search_text_widgets: str = "key_search_text_widgets"
+	# 	with cols_search_term[0]:
+	# 		if st.button(
+	# 				"submit"
+	# 		):
+	# 			st.session_state.update({k_search_text_widgets: text_widgets})
+	# 	# st.rerun()
+	#
+	# 	if st.session_state.setdefault(k_search_text_widgets):
+	# 		df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
+	# 		k_stdf_searched = "key_stdf_searched"
+	# 		show_cols = [
+	# 			"StockCode",
+	# 			"DefaultBin",
+	# 			"Description",
+	# 			"LongDesc"
+	# 		]
+	# 		with cols_search_term[1]:
+	#
+	# 			with st.container(border=True):
+	# 				stdf_searched = display_df_paginated(
+	# 					df=df_searched[show_cols],
+	# 					title="df_searched",
+	# 					on_select="rerun",
+	# 					selection_mode="single-row",
+	# 					key=k_stdf_searched,
+	# 					width=1600
+	# 				)
+	#
+	# 		# st.write(stdf_searched)
+	#
+	# 		if stdf_searched:
+	# 			if stdf_searched["selection"]:
+	# 				if stdf_searched["selection"]["rows"]:
+	# 					textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
+	# st.divider()
 
 # if pills_search_mode == op_search_mode_advanced:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_advanced):
@@ -4568,6 +4581,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 	df_jobs: pd.DataFrame = load_jobs()
 	df_war_claims: pd.DataFrame = load_warranty_claims()
 	df_war_jobs: pd.DataFrame = df_jobs[df_jobs["Job"].str[0] == "3"]
+	df_stock_pdfs: pd.DataFrame = load_path_pdf(all_stockcodes=True)
 	list_war_jobs = df_war_jobs["Job"].dropna().unique().tolist()
 	list_war_claims = df_war_claims["Claim Number"].dropna().unique().tolist()
 
@@ -4613,16 +4627,22 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 		else:
 			df_war_data: pd.DataFrame = df_s[0]
 
-		display_df_paginated(
-			df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
-			"df_unmatched_stockcodes_part_c",
-			key="afadsafsdfwedfsadsfgdsfsdfds"
-		)
+		# display_df_paginated(
+		# 	df_drawings_not_parts[df_drawings_not_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
+		# 	"df_unmatched_stockcodes_part_c",
+		# 	key="afadsafsdfwedfsadsfgdsfsdfds"
+		# )
+		#
+		# display_df_paginated(
+		# 	df_parts[df_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
+		# 	"df_unmatched_stockcodes_part_b",
+		# 	key="afadsafsdfwedfsadsfg"
+		# )
 
-		display_df_paginated(
-			df_parts[df_parts["StockCode"].str.lower().str.strip().isin(df_war_data["StockCode"].dropna().unique())],
-			"df_unmatched_stockcodes_part_b",
-			key="afadsafsdfwedfsadsfg"
+		df_war_data = df_war_data.merge(
+			df_stock_pdfs,
+			how="left",
+			on="StockCode"
 		)
 
 		df_unmatched_stockcodes = df_war_data.merge(
@@ -4632,11 +4652,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 			suffixes=["_a", "_b"]
 		)
 		df_unmatched_stockcodes = df_unmatched_stockcodes[pd.isna(df_unmatched_stockcodes["StockCode"])]
-		display_df_paginated(
-			df_unmatched_stockcodes,
-			"df_unmatched_stockcodes_part_a",
-			key="afadsafsdfweg"
-		)
+		# display_df_paginated(
+		# 	df_unmatched_stockcodes,
+		# 	"df_unmatched_stockcodes_part_a",
+		# 	key="afadsafsdfweg"
+		# )
 
 		k_checkbox_incomplete_warranty_items_only: str = "key_checkbox_incomplete_warranty_items_only"
 		st.session_state.setdefault(k_checkbox_incomplete_warranty_items_only, True)
@@ -4655,6 +4675,52 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_warr
 			selection_mode="multi-row",
 			on_select="rerun"
 		)
+
+		lst_pdfs = []
+		for i, row in df_war_data.iterrows():
+			pdf_listed = row["PDF_Listed"]
+			pdf_stock = row["PDF_Stock"]
+			if not check_pdf_exists(pdf_listed):
+				if check_pdf_exists(pdf_stock):
+					if pdf_stock not in lst_pdfs:
+						lst_pdfs.append(pdf_stock)
+			else:
+				if pdf_listed not in lst_pdfs:
+					lst_pdfs.append(pdf_listed)
+
+		date_str = f"{datetime.datetime.now():%Y%m%d%H%M%S}"
+		pdf_pick_report_name: str = f"claim_pick_sheet_{date_str}.pdf"
+		pdf_pick_report_a, pdf_pick_report_b = prep_pick_list_report(
+			pdf_pick_report_name,
+			title="Claim Pick Report",
+			date_str=date_str,
+			df=df_war_data
+		)
+
+		lst_pdfs.sort()
+		lst_pdfs.insert(0, pdf_pick_report_b)
+
+		if not lst_pdfs:
+			st.info(f"No drawings were found to exist for these warranty claims or WOs.")
+		else:
+			st.write("lst_pdfs")
+			st.write(lst_pdfs)
+			# zip_bytes = rlu.build_zip_bytes([(pdf, load_pdf_binary(pdf)) for pdf in lst_pdfs])
+			p_rpt_name: str = f"war_claims_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.pdf"
+			zip_bytes = rlu.build_zip_bytes(lst_pdfs)
+			prep_printable_parts_pdf_report(lst_pdfs, output_file=p_rpt_name)
+			st.download_button(
+				"Download Part PDFs",
+				data=zip_bytes,
+				file_name=f"war_claims_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.zip",
+				mime="application/zip",
+			)
+			st.download_button(
+				"Printable Report",
+				data=open(p_rpt_name, "rb").read(),
+				file_name=p_rpt_name,
+				mime="application/pdf",
+			)
 
 		selected = get_selected_rows(df_war_data, stdf_war_data, "StockCode", n=None)
 		if isinstance(selected, (pd.DataFrame, pd.Series)):
@@ -5519,7 +5585,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_drawing):
 	# By Drawing
 	# Drawings
-
 	df_stock_pdfs: pd.DataFrame = load_path_pdf(all_stockcodes=True)
 
 	path_pdf = r"\\server4\Design\VaultWorkspace_BWS\PDFS\WF-MVL-003.PDF"
