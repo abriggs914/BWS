@@ -1,6 +1,6 @@
-from streamlit_utility import st, pd, display_df, display_df_paginated, get_selected_rows
-
 import streamlit_auth_sql as auth
+from streamlit_utility import st, pd, display_df, display_df_paginated, get_selected_rows
+from utility import nz
 from pyodbc_connection import connect
 
 import datetime
@@ -309,7 +309,7 @@ WHERE
 	return df
 
 
-@st.cache_data(ttl=60*60, show_spinner=True, show_log=True)
+@st.cache_data(ttl=60*60, show_spinner=True, show_time=True)
 def load_quote_standards(quote: str) -> pd.DataFrame:
 	sql = f"""
 SELECT
@@ -361,10 +361,248 @@ UNION ALL (
 	FROM 
 		[BWSdb].[dbo].[Order StandardsV2] [S_OS] WITH (NOLOCK)
 	WHERE
-		[B_OS].[SGQuote] = '{quote}'
+		[S_OS].[SGQuote] = '{quote}'
 )
 """
 	df = connect(sql)
+	df["Description"] = df["Description"].apply(lambda d: nz(d, length=LEN_DESCRIPTION_TEXT))
+	return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True, show_time=True)
+def load_quote_options(quote: str) -> pd.DataFrame:
+	sql = f"""
+	SELECT 
+	'BWS' AS [Company],
+	[B_OO].[ID],
+    [B_OO].[Quote Date],
+    [B_OO].[Order Date],
+    [B_OO].[WO#] AS [WO],
+    CAST([B_OO].[Quote#] AS NVARCHAR(255)) AS [Quote],
+    [B_OO].[Option No],
+    [B_OO].[Price],
+    [B_OO].[Qty],
+    [B_OO].[Sections],
+    [B_OO].[Description],
+    [B_OO].[Comments],
+    [B_OO].[Weight],
+    [B_OO].[Cost],
+    [B_OO].[Material Cost],
+    [B_OO].[Machine Shop],
+    [B_OO].[Steel Kit],
+    [B_OO].[Axles],
+    [B_OO].[Stakes/Bunks],
+    [B_OO].[Beam],
+    [B_OO].[GNK],
+    [B_OO].[Parts],
+    [B_OO].[Line],
+    [B_OO].[Step 1],
+    [B_OO].[Step 2],
+    [B_OO].[Blast],
+    [B_OO].[Paint],
+    [B_OO].[Finish],
+    [B_OO].[Finish - GNK],
+    [B_OO].[Final Assembly],
+    [B_OO].[Tire Assembly],
+    [B_OO].[Shipping],
+    [B_OO].[Start Date],
+    [B_OO].[End Date],
+    [B_OO].[SortSe],
+    [B_OO].[Width],
+    [B_OO].[Spread],
+    [B_OO].[Draw/Part#],
+    [B_OO].[OptionInfo],
+    [B_OO].[OptionPromptFlag],
+    [B_OO].[OptionPrompt],
+    [B_OO].[OptionConfigInfo],
+    [B_OO].[ordopt_timestamp],
+    [B_OO].[Are WO Specs Different?],
+    [B_OO].[Comments V2],
+    [B_OO].[Galvanized],
+    [B_OO].[Sections_French],
+    [B_OO].[Description_French],
+    [B_OO].[OptionInfo_French],
+    [B_OO].[OptionPrompt_French]
+FROM
+	[BWSdb].[dbo].[Order Options] [B_OO] WITH (NOLOCK)
+WHERE
+    CAST([B_OO].[Quote#] AS NVARCHAR(255)) = '{quote}'
+
+UNION ALL (
+	SELECT 
+		'STG' AS [Company],
+		[S_OO].[ID],
+		[S_OO].[Quote Date],
+		[S_OO].[Order Date],
+		[S_OO].[WO#],
+		[S_OO].[SGQuote],
+		[S_OO].[Option No],
+		[S_OO].[Price],
+		[S_OO].[Qty],
+		[S_OO].[Sections],
+		[S_OO].[Description],
+		[S_OO].[Comments],
+		[S_OO].[Weight],
+		[S_OO].[Cost],
+		[S_OO].[Material Cost],
+		[S_OO].[Machine Shop],
+		[S_OO].[Steel Kit],
+		[S_OO].[Axles],
+		[S_OO].[Stakes/Bunks],
+		[S_OO].[Beam],
+		[S_OO].[GNK],
+		[S_OO].[Parts],
+		[S_OO].[Line],
+		[S_OO].[Step 1],
+		[S_OO].[Step 2],
+		[S_OO].[Blast],
+		[S_OO].[Paint],
+		[S_OO].[Finish],
+		[S_OO].[Finish - GNK],
+		[S_OO].[Final Assembly],
+		[S_OO].[Tire Assembly],
+		[S_OO].[Shipping],
+		[S_OO].[Start Date],
+		[S_OO].[End Date],
+		[S_OO].[SortSe],
+		[S_OO].[Width],
+		[S_OO].[Spread],
+		[S_OO].[Draw/Part#],
+		[S_OO].[OptionInfo],
+		[S_OO].[OptionPromptFlag],
+		[S_OO].[OptionPrompt],
+		[S_OO].[OptionConfigInfo],
+		[S_OO].[ordopt_timestamp],
+		[S_OO].[Are WO Specs Different?],
+		[S_OO].[Comments V2],
+		[S_OO].[Galvanized],
+		NULL AS [Sections_French],
+		NULL AS [Description_French],
+		NULL AS [OptionInfo_French],
+		NULL AS [OptionPrompt_French]
+	FROM
+		[BWSdb].[dbo].[Order OptionsV2] [S_OO] WITH (NOLOCK)
+	WHERE
+		CAST([S_OO].[SGQuote] AS NVARCHAR(255)) = '{quote}'
+
+)
+	"""
+	df = connect(sql)
+	df["Description"] = df["Description"].apply(lambda d: nz(d, length=LEN_DESCRIPTION_TEXT))
+	return df
+
+
+@st.cache_data(ttl=60*60, show_spinner=True, show_time=True)
+def load_quote_npos(quote: str) -> pd.DataFrame:
+	sql = f"""
+SELECT 
+	'BWS' AS [Company],
+	[B_CW].[ID],
+    [B_CW].[Quote Date],
+    CAST([B_CW].[Quote#] AS NVARCHAR(255)) AS [Quote],
+    [B_CW].[Order Date],
+    [B_CW].[WO#] AS [WO],
+    [B_CW].[Section],
+    [B_CW].[SortSe],
+    [B_CW].[Description],
+    [B_CW].[Qty],
+    [B_CW].[Price],
+    [B_CW].[Cost],
+    [B_CW].[Material Cost],
+    [B_CW].[Labour Cost],
+    [B_CW].[Made In Material],
+    [B_CW].[Bought Out Material],
+    [B_CW].[Weight],
+    [B_CW].[Machine Shop],
+    [B_CW].[Steel Kit],
+    [B_CW].[Axles],
+    [B_CW].[Stakes/Bunks],
+    [B_CW].[Beam],
+    [B_CW].[GNK],
+    [B_CW].[Parts],
+    [B_CW].[Line],
+    [B_CW].[Step 1],
+    [B_CW].[Step 2],
+    [B_CW].[Blast],
+    [B_CW].[Paint],
+    [B_CW].[Finish],
+    [B_CW].[Finish - GNK],
+    [B_CW].[Final Assembly],
+    [B_CW].[Tire Assembly],
+    [B_CW].[Shipping],
+    [B_CW].[Eng Hours],
+    [B_CW].[Option Date],
+    [B_CW].[Draw/Part#],
+    [B_CW].[NPOInfo],
+    [B_CW].[NPOPromptFlag],
+    [B_CW].[NPOPrompt],
+    [B_CW].[NPOConfigInfo],
+    [B_CW].[NPOExpirationDate],
+    [B_CW].[cw_timestamp],
+    [B_CW].[US Price],
+    [B_CW].[Are WO Specs Different?],
+    [B_CW].[Galvanized]
+FROM
+	[BWSdb].[dbo].[Custom Work] [B_CW] WITH (NOLOCK)
+WHERE
+	CAST([B_CW].[Quote#] AS NVARCHAR(255)) = '{quote}'
+UNION ALL (
+	SELECT 
+		'STG' AS [Company],
+		[S_CW].[ID],
+		[S_CW].[Quote Date],
+		[S_CW].[SGQuote],
+		[S_CW].[Order Date],
+		[S_CW].[WO#],
+		[S_CW].[Section],
+		[S_CW].[SortSe],
+		[S_CW].[Description],
+		[S_CW].[Qty],
+		[S_CW].[Price],
+		[S_CW].[Cost],
+		[S_CW].[Material Cost],
+		[S_CW].[Labour Cost],
+		[S_CW].[Made In Material],
+		[S_CW].[Bought Out Material],
+		[S_CW].[Weight],
+		[S_CW].[Machine Shop],
+		[S_CW].[Steel Kit],
+		[S_CW].[Axles],
+		[S_CW].[Stakes/Bunks],
+		[S_CW].[Beam],
+		[S_CW].[GNK],
+		[S_CW].[Parts],
+		[S_CW].[Line],
+		[S_CW].[Step 1],
+		[S_CW].[Step 2],
+		[S_CW].[Blast],
+		[S_CW].[Paint],
+		[S_CW].[Finish],
+		[S_CW].[Finish - GNK],
+		[S_CW].[Final Assembly],
+		[S_CW].[Tire Assembly],
+		[S_CW].[Shipping],
+		[S_CW].[Eng Hours],
+		[S_CW].[Option Date],
+		[S_CW].[Draw/Part#],
+		[S_CW].[NPOInfo],
+		[S_CW].[NPOPromptFlag],
+		[S_CW].[NPOPrompt],
+		[S_CW].[NPOConfigInfo],
+		[S_CW].[NPOExpirationDate],
+		[S_CW].[cw_timestamp],
+		[S_CW].[US Price],
+		[S_CW].[Are WO Specs Different?],
+		NULL AS [Galvanized]
+	FROM
+		[BWSdb].[dbo].[Custom WorkV2] [S_CW] WITH (NOLOCK)	
+	WHERE
+		CAST([S_CW].[SGQuote] AS NVARCHAR(255)) = '{quote}'
+)
+	"""
+	df = connect(sql)
+	df["Description"] = df["Description"].apply(lambda d: nz(d, length=LEN_DESCRIPTION_TEXT))
+	df = df[df["Description"] != "None"]
 	return df
 
 
@@ -442,9 +680,21 @@ def quote_card(df: pd.DataFrame):
 	date_invoiced: datetime.date | None = ser["O_InvoiceDate"]
 	date_wo_reviewed: datetime.date | None = ser["O_WOReviewDate"]
 
+	df_standards: pd.DataFrame = load_quote_standards(quote)
+	df_options: pd.DataFrame = load_quote_options(quote)
+	df_npos: pd.DataFrame = load_quote_npos(quote)
+
+	df_standards.sort_values(
+		by=["SortG", "SortGv2", "SortSe", "SortSev2"],
+		inplace=True
+	)
+	# df_options["ActPrice"] = df_options["Price"].apply(lambda p: (p if not us_sale else (p * fx_rate)) if not pd.isna(p) else 0)
+	df_options["ActPrice"] = df_options.apply(lambda row: row["Qty"] * ((row["Price"] if not us_sale else (row["Price"] * fx_rate)) if not pd.isna(row["Price"]) else 0), axis=1)
+	df_npos["ActPrice"] = df_npos.apply(lambda row: row["Qty"] * ((row["Price"] if not us_sale else row["US Price"]) if not pd.isna(row["Price"]) else 0), axis=1)
+
 	base_price: float = ser["O_Price"]
-	option_price: float = 0
-	npo_price: float = 0
+	option_price: float = df_options["ActPrice"].sum()
+	npo_price: float = df_npos["ActPrice"].sum()
 	fx_rate: float | None = ser.get("O_FERate", 1)
 	disc_volume: float | None = ser["O_VolumeDiscount"]
 	disc_program: float | None = ser["O_ProgramDiscount"]
@@ -463,6 +713,55 @@ def quote_card(df: pd.DataFrame):
 	id_sales_person: int = ser["O_SalePersonID"]
 
 	declined: bool = declined != 4
+
+	cols_standards = {
+		"Description": "Desc",
+		"Group": "Grp",
+		"Section": "Sec",
+	}
+	cols_standards_specific = cols_standards.copy()
+	cols_standards_specific.update({
+		"IDOS": "IDOS",
+		"Company": "Comp",
+		"SortG": "G0",
+		"SortSe": "S0",
+		"SortGv2": "G1",
+		"SortSev2": "S1"
+	})
+
+	cols_options = {
+		"Qty": "Qty",
+		"Description": "Desc",
+		"ActPrice": "ActPrice",
+		"Sections": "Sec",
+	}
+	cols_options_specific = cols_options.copy()
+	cols_options_specific.update({
+		"ID": "IDOO",
+		"Company": "Comp",
+		"Weight": "lbs",
+		"Cost": "Cost",
+		"Material Cost": "MatCost",
+		"Price": "Price"
+	})
+
+	cols_npos = {
+		"Qty": "Qty",
+		"Description": "Desc",
+		"ActPrice": "ActPrice"
+	}
+	cols_npos_specific = cols_npos.copy()
+	cols_npos_specific.update({
+		"ID": "IDCW",
+		"Company": "Comp",
+		"Price": "Price",
+		"US Price": "USPrice",
+		"Material Cost": "MatCost",
+		"Labour Cost": "LabCost",
+		"Weight": "lbs",
+		"Made In Material": "MadeInMat",
+		"Bought Out Material": "BoughtOutMat"
+	})
 
 	dates = {
 		"Quoted": date_quote,
@@ -487,13 +786,13 @@ def quote_card(df: pd.DataFrame):
 	# d2_val = calc_discount(base_price, discounts[1], option_price, npo_price)
 	# d3_val = calc_discount(base_price, discounts[2], option_price, npo_price)
 	gross: float = base_price + option_price + npo_price
-	disc1_v: float = discounts[0]["value"] if discounts[0]["type"] == "fixed" else (gross * discounts[0]["value"] * -1 / 100 if discounts[0]["type"] == "percent" else 0)
+	disc1_v: float = discounts[0]["value"] if discounts[0]["type"].lower() == "fixed" else (100 * gross * discounts[0]["value"] * -1 / 100 if discounts[0]["type"].lower() == "percent" else 0)
 	disc1_sub: float = gross + disc1_v
-	disc2_v: float = discounts[1]["value"] if discounts[1]["type"] == "fixed" else (
-		disc1_sub * discounts[1]["value"] * -1 / 100 if discounts[1]["type"] == "percent" else 0)
+	disc2_v: float = discounts[1]["value"] if discounts[1]["type"].lower() == "fixed" else (
+		100 * disc1_sub * discounts[1]["value"] * -1 / 100 if discounts[1]["type"].lower() == "percent" else 0)
 	disc2_sub: float = disc1_sub + disc2_v
-	disc3_v: float = discounts[2]["value"] if discounts[2]["type"] == "fixed" else (
-		disc2_sub * discounts[2]["value"] * -1 / 100 if discounts[2]["type"] == "percent" else 0)
+	disc3_v: float = discounts[2]["value"] if discounts[2]["type"].lower() == "fixed" else (
+		100 * disc2_sub * discounts[2]["value"] * -1 / 100 if discounts[2]["type"].lower() == "percent" else 0)
 	disc3_sub: float = disc2_sub + disc3_v  # this is the value that shows as 'Payable in ## Funds' on the Quote Reports
 
 	made_in, bought_out, sub_contract, lab_act = 0, 0, 0, 0
@@ -504,41 +803,23 @@ def quote_card(df: pd.DataFrame):
 	mgn_per: float = (sale_price / (abs(total_cost) if (total_cost != 0) else 1)) - 1
 
 	sale_price_cdn: float = disc3_sub * fx_rate
-	disc1_cdn: float = discounts[0]["value"] * (fx_rate if discounts[0]["type"] == "percent" else 1)
-	disc2_cdn: float = discounts[1]["value"] * (fx_rate if discounts[1]["type"] == "percent" else 1)
-	disc3_cdn: float = discounts[2]["value"] * (fx_rate if discounts[2]["type"] == "percent" else 1)
+	disc1_cdn: float = 100 * discounts[0]["value"] * (fx_rate if discounts[0]["type"].lower() == "percent" else 1)
+	disc2_cdn: float = 100 * discounts[1]["value"] * (fx_rate if discounts[1]["type"].lower() == "percent" else 1)
+	disc3_cdn: float = 100 * discounts[2]["value"] * (fx_rate if discounts[2]["type"].lower() == "percent" else 1)
 	gross_cdn: float = gross * fx_rate
-	disc1_v_cdn: float = disc1_cdn if discounts[0]["type"] == "fixed" else (
-		gross_cdn * disc1_cdn * -1 / 100 if discounts[0]["type"] == "percent" else 0)
+	disc1_v_cdn: float = disc1_cdn if discounts[0]["type"].lower() == "fixed" else (
+		gross_cdn * disc1_cdn * -1 / 100 if discounts[0]["type"].lower() == "percent" else 0)
 	disc1_sub_cdn: float = gross_cdn + disc1_v_cdn
-	disc2_v_cdn: float = disc2_cdn if discounts[1]["type"] == "fixed" else (
-		disc1_sub * disc2_cdn * -1 / 100 if discounts[1]["type"] == "percent" else 0)
+	disc2_v_cdn: float = disc2_cdn if discounts[1]["type"].lower() == "fixed" else (
+		disc1_sub * disc2_cdn * -1 / 100 if discounts[1]["type"].lower() == "percent" else 0)
 	disc2_sub_cdn: float = disc1_sub_cdn + disc2_v_cdn
-	disc3_v_cdn: float = disc3_cdn if discounts[2]["type"] == "fixed" else (
-		disc2_sub * disc3_cdn * -1 / 100 if discounts[2]["type"] == "percent" else 0)
+	disc3_v_cdn: float = disc3_cdn if discounts[2]["type"].lower() == "fixed" else (
+		disc2_sub * disc3_cdn * -1 / 100 if discounts[2]["type"].lower() == "percent" else 0)
 	disc3_sub_cdn: float = disc2_sub_cdn + disc3_v_cdn  # this is the CDN equivalent of the payable line of Quote Reports
 	mgn_dol_cdn: float = sale_price_cdn - abs(total_cost)
 	mgn_per_cdn: float = (sale_price_cdn / (abs(total_cost) if (total_cost != 0) else 1)) - 1
 
-	lines = [
-		[("Company:", company), ("Declined:", declined), ("US Sale:", us_sale)],
-		[("Quote:", quote), ("WO:", wo), ("S/N:", serial)],
-		[("Model:", model), ("Base Price: ", f"$ {base_price:,.2f}")],
-		[("Dealer:", id_dealer), ("Sales Rep:", id_sales_person)],
-		[("SO:", sales_order), ("PO:", purchase_order)],
-		[("Width:", width), ("Spread:", spread)],
-		[("Promo:", promo_dwg)],
-		[("Special Instructions:", special_instructions)],
-		[("Notes:", special_instructions)],
-		[("Program:", disc_program), ("Volume:", disc_volume)]
-	]
-
-	# lines = [line_data for line_data in lines if any([ld[1] for ld in line_data])]
-
-	# grid = [st.columns([0.5/3, 0.5/3, 0.5/3, 0.5]) for _ in lines]
-	grid = st.columns([0.5/3, 0.5/3, 0.5/3, 0.5])
-
-	st.write({
+	price_calc_work: dict = {
 		"gross": gross,
 		"disc1_v": disc1_v,
 		"disc1_sub": disc1_sub,
@@ -568,8 +849,50 @@ def quote_card(df: pd.DataFrame):
 		"disc3_v_cdn": disc3_v_cdn,
 		"disc3_sub_cdn": disc3_sub_cdn,
 		"mgn_dol_cdn": mgn_dol_cdn,
-		mgn_per_cdn: mgn_per_cdn
-	})
+		"ActPrice": int(round(mgn_dol_cdn, 0)),
+	}
+
+	st.write("discounts")
+	st.write(discounts)
+	st.write(price_calc_work)
+
+	lines = [
+		[("Company:", company), ("Declined:", declined), ("US Sale:", us_sale)],
+		[("Quote:", quote), ("WO:", wo), ("S/N:", serial)],
+		[("Model:", model), ("Dealer:", id_dealer), ("Sales Rep:", id_sales_person)],
+		[("SO:", sales_order), ("PO:", purchase_order)],
+		[("Width:", width), ("Spread:", spread)],
+		[("Promo:", promo_dwg)],
+		[("Special Instructions:", special_instructions)],
+		[("Notes:", special_instructions)],
+		[("Program:", disc_program), ("Volume:", disc_volume)],
+		[("Base Price: ", f"$ {base_price:,.2f}"), ("Option Price: ", f"$ {option_price:,.2f}"), ("NPO Price: ", f"$ {npo_price:,.2f}")],
+		[(d[f"name"], f"$ {price_calc_work[f'disc{i+1}_v_cdn']:,.2f}") for i, d in enumerate(discounts) if d["name"]]
+	]
+
+	# lines = [line_data for line_data in lines if any([ld[1] for ld in line_data])]
+
+	# grid = [st.columns([0.5/3, 0.5/3, 0.5/3, 0.5]) for _ in lines]
+	grid = st.columns([0.5/3, 0.5/3, 0.5/3, 0.5])
+
+	cont_order_info = st.columns(3)
+	with cont_order_info[0]:
+		display_df(
+			df_standards[cols_standards.keys()].rename(columns=cols_standards),
+			f"Standards"
+		)
+
+	with cont_order_info[1]:
+		display_df(
+			df_options[cols_options.keys()].rename(columns=cols_options),
+			f"Options"
+		)
+
+	with cont_order_info[2]:
+		display_df(
+			df_npos[cols_npos.keys()].rename(columns=cols_npos),
+			f"NPOs"
+		)
 
 	for i, line_data in enumerate(lines):
 		for j in range(3):
@@ -579,11 +902,13 @@ def quote_card(df: pd.DataFrame):
 				with grid[j]:
 					with st.container(horizontal=True, border=True):
 						if isinstance(v, (bool, np.bool_)):
+							st.write(k)
 							st.checkbox(
 								label=k,
 								key=f"k_checkbox_{i=}_{j=}_{k=}{akey}",
 								value=v,
-								disabled=True
+								disabled=True,
+								label_visibility="collapsed"
 							)
 						else:
 							sv: str = f"{v}"
@@ -598,11 +923,10 @@ def quote_card(df: pd.DataFrame):
 								st.write(k)
 								st.write(sv)
 			else:
-				cont = st.container(border=True, height=100)
-				with cont:
-					st.write("SPACE")
-		st.write("discounts")
-		st.write(discounts)
+				with grid[j]:
+					cont = st.container(border=False, height=57)
+					# with cont:
+					# 	st.write("SPACE")
 
 	with grid[3]:
 		df_dates: pd.DataFrame = pd.DataFrame([{"event": k, "date": v} for k, v in dates.items()])
@@ -687,6 +1011,8 @@ version_str: str = f"v{'.'.join(map(str, VERSION))}"
 APP_NAME: str = st.secrets["app"]['app_name']
 akey: str = "_sales"
 PAGE_NAME: str = f"{APP_NAME}{akey}"
+
+LEN_DESCRIPTION_TEXT: int = 40
 
 st.set_page_config(
 	layout="wide",
@@ -858,12 +1184,15 @@ if any([multiselect_quotes, multiselect_wos, multiselect_sns]):
 		"Orders",
 		key=k_stdf_selected_orders,
 		batch_size_options=(100, 250, 1000),
-		# selection_mode="single-row",
-		# on_select="rerun",
+		# selection_mode="single-cell",
+		# on_select=st.rerun,
 		column_config={"selection": st.column_config.CheckboxColumn(
 			label="Selected"
-		)}
+		)},
+		editor=True
 	)
+	st.write("stdf_orders_sel")
+	st.write(stdf_orders_sel)
 
 	df_selected = get_selected_rows(
 		df_orders_sel,

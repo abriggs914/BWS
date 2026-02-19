@@ -16,8 +16,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.10
-    Date...........2026-01-06
+    Version..............1.11
+    Date...........2026-02-19
     Author(s)....Avery Briggs
     """
 
@@ -154,7 +154,8 @@ def display_df(
 		column_config: Any | None = None,
 		key: Any | None = None,
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
-		selection_mode: Any = "multi-row"
+		selection_mode: Any = "multi-row",
+		editor: bool = False
 ):
 	title = title if title else ""
 	shape = df.shape
@@ -168,22 +169,42 @@ def display_df(
 	if hide_index == "if_int":
 		hide_index = str(df.index.dtype).lower() == "int64"
 
+	if width is None:
+		width = "stretch"
+
+	# if use_container_width is None:
+	# 	use_container_width = "stretch"
+
 	if height is None:
 		height = "auto"
 
 	# st.write(f"{title=}, {hide_index=}")
-	stdf = st.dataframe(
-		data=df,
-		hide_index=hide_index,
-		width=width,
-		height=height,
-		use_container_width=use_container_width,
-		column_order=column_order,
-		column_config=column_config,
-		key=key,
-		on_select=on_select,
-		selection_mode=selection_mode
-	)
+	if editor:
+		stdf = st.data_editor(
+			data=df,
+			hide_index=hide_index,
+			width=width,
+			height=height,
+			use_container_width=use_container_width,
+			column_order=column_order,
+			column_config=column_config,
+			key=key,
+			# on_select=on_select,
+			# selection_mode=selection_mode
+		)
+	else:
+		stdf = st.dataframe(
+			data=df,
+			hide_index=hide_index,
+			width=width,
+			height=height,
+			use_container_width=use_container_width,
+			column_order=column_order,
+			column_config=column_config,
+			key=key,
+			on_select=on_select,
+			selection_mode=selection_mode
+		)
 	return stdf
 
 
@@ -218,7 +239,8 @@ def display_df_paginated(
 		column_config: Any | None = None,
 		key: Any | None = None,
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
-		selection_mode: Any = "multi-row"
+		selection_mode: Any = "multi-row",
+		editor: bool =False
 ):
 	if key is None:
 		# sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
@@ -295,21 +317,26 @@ def display_df_paginated(
 			column_config=column_config,
 			key=key,
 			on_select=on_select,
-			selection_mode=selection_mode
+			selection_mode=selection_mode,
+			editor=editor
 		)
 
 
 def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Series:
 	cols = [col.lower().strip() for col in df.columns]
-	if stdf:
-		if any([
-			"selection" in cols,
-			"selected" in cols,
-			"included" in cols,
-			"include" in cols,
-			"+" in cols
-		]):
-			return df[df["selection"] == True].reset_index()
+	if (isinstance(stdf, pd.DataFrame) and (not stdf.empty)) or stdf:
+		cols_to_check = [
+			"selection",
+			"selected",
+			"included",
+			"include",
+			"+"
+		]
+		cols_to_check_found = [col for col in cols_to_check if col in stdf.columns]
+		if bool([col for col in cols_to_check if col in df.columns]):
+			for col in cols_to_check_found:
+				stdf = stdf[stdf[col] == True].reset_index()
+			return stdf
 		if stdf["selection"]:
 			if stdf["selection"]["rows"]:
 				if n == 1:

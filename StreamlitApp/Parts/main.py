@@ -4,7 +4,7 @@ from streamlit_utility import display_df, load_pdf_binary, display_df_paginated,
 from pyodbc_connection import connect
 from streamlit_auth_sql import st_auth, show_change_password, save_user_settings, get_user_settings
 from datetime_utility import time_between, datetime_is_tz_aware, is_date
-from utility import percent, money, clamp
+from utility import percent, money, clamp, nz
 from colour_utility import Colour, random_colour, gradient_merge
 from json_utility import jsonify
 import reportlab_utility as rlu
@@ -3472,25 +3472,6 @@ def so_fmt(so_num: int | str, out_type: Literal["int", "str"], word_size: int = 
 		while so_num and (so_num[0] == "0"):
 			so_num = so_num[1:]
 		return so_num
-
-
-def nz(val: Any, length: int):
-
-	def helper(val_: str, length_: int):
-		if len(val_) > length_:
-			return val_[:length_] + "... "
-		return val_
-
-	if isinstance(val, (pd.Series, pd.DataFrame)):
-		if val.empty:
-			return ""
-		else:
-			for i, va in enumerate(val):
-				val[i] = va[:length]
-			return val
-	if pd.isna(val):
-		return ""
-	return helper(str(val))
 
 
 def safe_windows_filename(name: str, *, default="file") -> str:
