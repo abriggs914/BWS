@@ -300,7 +300,16 @@ def display_df_paginated(
 
 
 def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Series:
+	cols = [col.lower().strip() for col in df.columns]
 	if stdf:
+		if any([
+			"selection" in cols,
+			"selected" in cols,
+			"included" in cols,
+			"include" in cols,
+			"+" in cols
+		]):
+			return df[df["selection"] == True].reset_index()
 		if stdf["selection"]:
 			if stdf["selection"]["rows"]:
 				if n == 1:

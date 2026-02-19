@@ -1,11 +1,11 @@
-import numpy as np
-
 from streamlit_utility import st, pd, display_df, display_df_paginated, get_selected_rows
 
 import streamlit_auth_sql as auth
 from pyodbc_connection import connect
 
 import datetime
+import numpy as np
+from typing import Optional
 
 from streamlit_pills import pills
 import plotly.express as px
@@ -309,10 +309,110 @@ WHERE
 	return df
 
 
+@st.cache_data(ttl=60*60, show_spinner=True, show_log=True)
+def load_quote_standards(quote: str) -> pd.DataFrame:
+	sql = f"""
+SELECT
+	'BWS' AS [Cmpany],
+	[B_OS].[IDOS],
+	CAST([B_OS].[Quote#] AS NVARCHAR(255)) AS [Quote],
+    [B_OS].[WO#],
+    [B_OS].[Model No],
+    [B_OS].[Standard No],
+    [B_OS].[Group],
+    [B_OS].[Section],
+    [B_OS].[Description],
+    [B_OS].[Start Date],
+    [B_OS].[End Date],
+    [B_OS].[SortG],
+    [B_OS].[SortSe],
+    [B_OS].[SortGv2],
+    [B_OS].[SortSev2],
+    [B_OS].[os_timestamp],
+    [B_OS].[Group_French],
+    [B_OS].[Section_French],
+    [B_OS].[Description_French]
+FROM 
+	[BWSdb].[dbo].[Order Standards] [B_OS] WITH (NOLOCK)
+WHERE
+	CAST([B_OS].[Quote#] AS NVARCHAR(255)) = '{quote}' 
+
+UNION ALL (
+	SELECT
+		'STG' AS [Cmpany],
+		[S_OS].[IDOS],
+		[S_OS].[SGQuote],
+		[S_OS].[WO#],
+		[S_OS].[Model No],
+		[S_OS].[Standard No],
+		[S_OS].[Group],
+		[S_OS].[Section],
+		[S_OS].[Description],
+		[S_OS].[Start Date],
+		[S_OS].[End Date],
+		[S_OS].[SortG],
+		[S_OS].[SortSe],
+		[S_OS].[SortGv2],
+		[S_OS].[SortSev2],
+		[S_OS].[os_timestamp],
+		NULL AS [Group_French],
+		NULL AS [Section_French],
+		NULL AS [Description_French]
+	FROM 
+		[BWSdb].[dbo].[Order StandardsV2] [S_OS] WITH (NOLOCK)
+	WHERE
+		[B_OS].[SGQuote] = '{quote}'
+)
+"""
+	df = connect(sql)
+	return df
+
+
+def calc_discount(base_price: float, disc: Optional[tuple] = None, option_price: float = 0, npo_price: float = 0) -> tuple[float]:
+	gross: float = base_price + options + npos
+	disc1_v: float = disc1 if disc1_type == "fixed" else (gross * disc1 * -1 / 100 if disc1_type == "percent" else 0)
+	disc1_sub: float = gross + disc1_v
+	disc2_v: float = disc2 if disc2_type == "fixed" else (
+		disc1_sub * disc2 * -1 / 100 if disc2_type == "percent" else 0)
+	disc2_sub: float = disc1_sub + disc2_v
+	disc3_v: float = disc3 if disc3_type == "fixed" else (
+		disc2_sub * disc3 * -1 / 100 if disc3_type == "percent" else 0)
+	disc3_sub: float = disc2_sub + disc3_v  # this is the value that shows as 'Payable in ## Funds' on the Quote Reports
+
+	sale_price: float = disc3_sub
+	total_cost: float = made_in + bought_out + sub_contract + lab_act  # this is negative
+	mgn_dol: float = sale_price - abs(total_cost)
+	mgn_per: float = (sale_price / (abs(total_cost) if (total_cost != 0) else 1)) - 1
+
+	sale_price_cdn: float = disc3_sub * fx_rate
+	disc1_cdn: float = disc1 * (fx_rate if disc1_type == "percent" else 1)
+	disc2_cdn: float = disc2 * (fx_rate if disc2_type == "percent" else 1)
+	disc3_cdn: float = disc3 * (fx_rate if disc3_type == "percent" else 1)
+	gross_cdn: float = gross * fx_rate
+	disc1_v_cdn: float = disc1_cdn if disc1_type == "fixed" else (
+		gross_cdn * disc1_cdn * -1 / 100 if disc1_type == "percent" else 0)
+	disc1_sub_cdn: float = gross_cdn + disc1_v_cdn
+	disc2_v_cdn: float = disc2_cdn if disc2_type == "fixed" else (
+		disc1_sub * disc2_cdn * -1 / 100 if disc2_type == "percent" else 0)
+	disc2_sub_cdn: float = disc1_sub_cdn + disc2_v_cdn
+	disc3_v_cdn: float = disc3_cdn if disc3_type == "fixed" else (
+		disc2_sub * disc3_cdn * -1 / 100 if disc3_type == "percent" else 0)
+	disc3_sub_cdn: float = disc2_sub_cdn + disc3_v_cdn  # this is the CDN equivalent of the payable line of Quote Reports
+	mgn_dol_cdn: float = sale_price_cdn - abs(total_cost)
+	mgn_per_cdn: float = (sale_price_cdn / (abs(total_cost) if (total_cost != 0) else 1)) - 1
+	
+	if disc is None:
+		disc = [None] * 3
+	d_name, d_type, d_val = disc
+	d_name: str = f"{d_name}".replace(" ", "").strip().lower()
+	p = base_price
+	return p
+
 
 def quote_card(df: pd.DataFrame):
 	ser = df.reset_index().iloc[0]
 	company: str = ser["O_Company"]
+	us_sale: bool = ser["O_USSale"]
 	declined: int = ser["O_DeclineRejected"]
 	quote: str = ser["O_Quote"]
 	wo: int | None = ser["O_WO"]
@@ -342,15 +442,22 @@ def quote_card(df: pd.DataFrame):
 	date_invoiced: datetime.date | None = ser["O_InvoiceDate"]
 	date_wo_reviewed: datetime.date | None = ser["O_WOReviewDate"]
 
-	price: float = ser["O_Price"]
+	base_price: float = ser["O_Price"]
+	option_price: float = 0
+	npo_price: float = 0
+	fx_rate: float | None = ser.get("O_FERate", 1)
 	disc_volume: float | None = ser["O_VolumeDiscount"]
 	disc_program: float | None = ser["O_ProgramDiscount"]
-	discounts = [None] * 3
-	for i in range(len(discounts)):
+
+	if fx_rate is None:
+		fx_rate = 1
+
+	discounts = []
+	for i in range(3):
 		k_key = f"O_Discount{i+1}_Name"
 		k_type = f"O_Discount{i+1}_Type"
 		k_val = f"O_Discount{i+1}"
-		discounts[i] = (k_key, k_type, k_val)
+		discounts.append({k: ser[v] for k, v in {"name": k_key, "type": k_type, "value": k_val}.items()})
 
 	id_dealer: int = ser["O_DealerID"]
 	id_sales_person: int = ser["O_SalePersonID"]
@@ -376,16 +483,54 @@ def quote_card(df: pd.DataFrame):
 
 	dates = {k: v for k, v in dates.items() if not pd.isna(v)}
 
+	# d1_val = calc_discount(base_price, discounts[0], option_price, npo_price)
+	# d2_val = calc_discount(base_price, discounts[1], option_price, npo_price)
+	# d3_val = calc_discount(base_price, discounts[2], option_price, npo_price)
+	gross: float = base_price + option_price + npo_price
+	disc1_v: float = discounts[0]["value"] if discounts[0]["type"] == "fixed" else (gross * discounts[0]["value"] * -1 / 100 if discounts[0]["type"] == "percent" else 0)
+	disc1_sub: float = gross + disc1_v
+	disc2_v: float = discounts[1]["value"] if discounts[1]["type"] == "fixed" else (
+		disc1_sub * discounts[1]["value"] * -1 / 100 if discounts[1]["type"] == "percent" else 0)
+	disc2_sub: float = disc1_sub + disc2_v
+	disc3_v: float = discounts[2]["value"] if discounts[2]["type"] == "fixed" else (
+		disc2_sub * discounts[2]["value"] * -1 / 100 if discounts[2]["type"] == "percent" else 0)
+	disc3_sub: float = disc2_sub + disc3_v  # this is the value that shows as 'Payable in ## Funds' on the Quote Reports
+
+	made_in, bought_out, sub_contract, lab_act = 0, 0, 0, 0
+
+	sale_price: float = disc3_sub
+	total_cost: float = made_in + bought_out + sub_contract + lab_act  # this is negative
+	mgn_dol: float = sale_price - abs(total_cost)
+	mgn_per: float = (sale_price / (abs(total_cost) if (total_cost != 0) else 1)) - 1
+
+	sale_price_cdn: float = disc3_sub * fx_rate
+	disc1_cdn: float = discounts[0]["value"] * (fx_rate if discounts[0]["type"] == "percent" else 1)
+	disc2_cdn: float = discounts[1]["value"] * (fx_rate if discounts[1]["type"] == "percent" else 1)
+	disc3_cdn: float = discounts[2]["value"] * (fx_rate if discounts[2]["type"] == "percent" else 1)
+	gross_cdn: float = gross * fx_rate
+	disc1_v_cdn: float = disc1_cdn if discounts[0]["type"] == "fixed" else (
+		gross_cdn * disc1_cdn * -1 / 100 if discounts[0]["type"] == "percent" else 0)
+	disc1_sub_cdn: float = gross_cdn + disc1_v_cdn
+	disc2_v_cdn: float = disc2_cdn if discounts[1]["type"] == "fixed" else (
+		disc1_sub * disc2_cdn * -1 / 100 if discounts[1]["type"] == "percent" else 0)
+	disc2_sub_cdn: float = disc1_sub_cdn + disc2_v_cdn
+	disc3_v_cdn: float = disc3_cdn if discounts[2]["type"] == "fixed" else (
+		disc2_sub * disc3_cdn * -1 / 100 if discounts[2]["type"] == "percent" else 0)
+	disc3_sub_cdn: float = disc2_sub_cdn + disc3_v_cdn  # this is the CDN equivalent of the payable line of Quote Reports
+	mgn_dol_cdn: float = sale_price_cdn - abs(total_cost)
+	mgn_per_cdn: float = (sale_price_cdn / (abs(total_cost) if (total_cost != 0) else 1)) - 1
+
 	lines = [
-		[("Company:", company), ("Declined:", declined)],
+		[("Company:", company), ("Declined:", declined), ("US Sale:", us_sale)],
 		[("Quote:", quote), ("WO:", wo), ("S/N:", serial)],
-		[("Model:", model), ("Price: ", f"$ {price:,.2f}")],
+		[("Model:", model), ("Base Price: ", f"$ {base_price:,.2f}")],
 		[("Dealer:", id_dealer), ("Sales Rep:", id_sales_person)],
 		[("SO:", sales_order), ("PO:", purchase_order)],
 		[("Width:", width), ("Spread:", spread)],
 		[("Promo:", promo_dwg)],
 		[("Special Instructions:", special_instructions)],
-		[("Notes:", special_instructions)]
+		[("Notes:", special_instructions)],
+		[("Program:", disc_program), ("Volume:", disc_volume)]
 	]
 
 	# lines = [line_data for line_data in lines if any([ld[1] for ld in line_data])]
@@ -393,31 +538,71 @@ def quote_card(df: pd.DataFrame):
 	# grid = [st.columns([0.5/3, 0.5/3, 0.5/3, 0.5]) for _ in lines]
 	grid = st.columns([0.5/3, 0.5/3, 0.5/3, 0.5])
 
+	st.write({
+		"gross": gross,
+		"disc1_v": disc1_v,
+		"disc1_sub": disc1_sub,
+		"disc2_v": disc2_v,
+		"disc2_sub": disc2_sub,
+		"disc3_v": disc3_v,
+		"disc3_sub": disc3_sub,
+		"made_in": made_in,
+		"bought_out": bought_out,
+		"sub_contract": sub_contract,
+		"lab_act": lab_act,
+
+		"sale_price": sale_price,
+		"total_cost": total_cost,
+		"mgn_dol": mgn_dol,
+		"mgn_per": mgn_per,
+
+		"sale_price_cdn": sale_price_cdn,
+		"disc1_cdn": disc1_cdn,
+		"disc2_cdn": disc2_cdn,
+		"disc3_cdn": disc3_cdn,
+		"gross_cdn": gross_cdn,
+		"disc1_v_cdn": disc1_v_cdn,
+		"disc1_sub_cdn": disc1_sub_cdn,
+		"disc2_v_cdn": disc2_v_cdn,
+		"disc2_sub_cdn": disc2_sub_cdn,
+		"disc3_v_cdn": disc3_v_cdn,
+		"disc3_sub_cdn": disc3_sub_cdn,
+		"mgn_dol_cdn": mgn_dol_cdn,
+		mgn_per_cdn: mgn_per_cdn
+	})
+
 	for i, line_data in enumerate(lines):
-		for j, k_v in enumerate(line_data):
-			k, v = k_v
+		for j in range(3):
 			# st.write(f"{k=}, {v=}, {type(v)=}")
-			with grid[j]:
-				with st.container(horizontal=True, border=True):
-					if isinstance(v, (bool, np.bool_)):
-						st.checkbox(
-							label=k,
-							key=f"k_checkbox_{i=}_{j=}_{k=}{akey}",
-							value=v,
-							disabled=True
-						)
-					else:
-						sv: str = f"{v}"
-						if len(sv) > 25:
-							st.text_area(
+			if j < len(line_data):
+				k, v = line_data[j]
+				with grid[j]:
+					with st.container(horizontal=True, border=True):
+						if isinstance(v, (bool, np.bool_)):
+							st.checkbox(
 								label=k,
-								value=sv,
-								disabled=True,
-								key=f"k_textarea_{i=}_{j=}_{k=}{akey}"
+								key=f"k_checkbox_{i=}_{j=}_{k=}{akey}",
+								value=v,
+								disabled=True
 							)
 						else:
-							st.write(k)
-							st.write(sv)
+							sv: str = f"{v}"
+							if len(sv) > 25:
+								st.text_area(
+									label=k,
+									value=sv,
+									disabled=True,
+									key=f"k_textarea_{i=}_{j=}_{k=}{akey}"
+								)
+							else:
+								st.write(k)
+								st.write(sv)
+			else:
+				cont = st.container(border=True, height=100)
+				with cont:
+					st.write("SPACE")
+		st.write("discounts")
+		st.write(discounts)
 
 	with grid[3]:
 		df_dates: pd.DataFrame = pd.DataFrame([{"event": k, "date": v} for k, v in dates.items()])
@@ -652,13 +837,32 @@ if any([multiselect_quotes, multiselect_wos, multiselect_sns]):
 		else:
 			df_orders_sel = pd.DataFrame(data={"No Data": [None]})
 
+	df_orders_sel["selection"] = False
+	k_stdf_selected_orders: str = f"key_stdf_selected_orders{akey}"
+	if len(df_orders_sel) == 1:
+		df_orders_sel["selection"] = True
+
+	cols = df_orders_sel.columns.tolist()
+	cols.remove("selection")
+	cols.insert(0, "selection")
+
+	# if len(df_orders_sel) == 1 and k_stdf_selected_orders not in st.session_state:
+	# 	# Preselect the first row (index 0)
+	# 	st.session_state[k_stdf_selected_orders] = {
+	# 		"selection": {"rows": [0], "columns": []}
+	# 	}
+
+
 	stdf_orders_sel = display_df_paginated(
-		df_orders_sel,
+		df_orders_sel[cols],
 		"Orders",
-		key=f"k_stdf_selected_orders{akey}",
+		key=k_stdf_selected_orders,
 		batch_size_options=(100, 250, 1000),
-		selection_mode="single-row",
-		on_select="rerun"
+		# selection_mode="single-row",
+		# on_select="rerun",
+		column_config={"selection": st.column_config.CheckboxColumn(
+			label="Selected"
+		)}
 	)
 
 	df_selected = get_selected_rows(
