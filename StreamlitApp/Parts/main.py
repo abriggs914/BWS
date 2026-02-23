@@ -1978,8 +1978,14 @@ def add_prism(fig: go.Figure, *, x0, x1, y0, y1, z0, z1, name="", color=None, op
 	return fig
 
 
-def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True):
+def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pillar_scale: float = 1, show_val_annotations: bool = True, fmt = None):
 	fig = go.Figure()
+
+	if fmt is None:
+		fmt = lambda x: x
+
+	if not callable(fmt):
+		raise ValueError("fmt must be callable or None")
 
 	for r in df_cells.itertuples(index=False):
 		x0, x1 = float(r.X0), float(r.X1)
@@ -2021,10 +2027,10 @@ def plotly_cell_prisms(df_cells, plot_col: str, *, z_log=True, opacity=0.85, pil
 
 		hover = f"Section: <b>{r.ParentShelf}</b><br>"
 		hover += f"Group: <b>{r.Group}</b><br>"
+		hover += f"Value: <b>{fmt(t_val)}</b><br>"
 		if show_val_annotations:
-			hover += f"Value: <b>$ {money(t_val)}</b><br>"
-			hover += f"Val / Bin: <b>$ {money(avg_per_bin)}</b><br>"
-			hover += f"Val / Part: <b>$ {money(avg_per_stock)}</b><br>"
+			hover += f"Val / Bin: <b>{fmt(avg_per_bin)}</b><br>"
+			hover += f"Val / Part: <b>{fmt(avg_per_stock)}</b><br>"
 		hover += f"Shelves: <b>{shelves_br}</b><br>"
 		hover += f"Parts: <b>{df_parts_in_section.shape[0]}</b>"
 
@@ -2494,10 +2500,12 @@ def build_plotly_map(
 			color = bg_map.get(sec, "#000000")
 			p_shelf = row.get("ParentShelf", "")
 
-			x0 = float(row[x0c]);
+			x0 = float(row[x0c])
 			x1 = float(row[x1c])
-			y0 = float(row[y0c]);
+			y0 = float(row[y0c])
 			y1 = float(row[y1c])
+			w = x1 - x0
+			h = y1 - y0
 
 			bx_color = Colour(color).inverted().hex_code
 			fig.add_shape(
@@ -3522,6 +3530,21 @@ async def run_day():
 		pb_week.progress((v / days_of_work) + dp, text=f"Week {percent((v / days_of_work) + dp)}")
 
 
+@ st.cache_data(ttl=60*60, show_time=True, show_spinner=True)
+def load_job_numbers() -> pd.DataFrame:
+	sql = """
+SELECT
+	[WM].[Job]
+FROM 
+	[SysproCompanyA].[dbo].[WipMaster] [WM]
+GROUP BY
+	[WM].[Job]
+;
+	"""
+	df = connect(sql)
+	return df
+
+
 # st.write(f"{end}, {p_sec=}, {v=}")
 # st.write(f"{start}")
 # st.write(f"{end}")
@@ -3654,6 +3677,8 @@ with st.popover("Filter"):
 	# st.write("current_settings")
 	# st.write(current_settings)
 
+	st.write(f"{success_loaded_settings=}")
+
 	if success_loaded_settings:
 		save_user_settings(APP_NAME, current_settings)
 		loaded_settings = (True, current_settings)
@@ -3711,6 +3736,7 @@ op_search_mode_simple: str = "Simple"
 op_search_mode_advanced: str = "Advanced"
 op_search_mode_by_bin: str = "By Bin"
 op_search_mode_by_section: str = "By Section"
+op_search_mode_by_job: str = "By WO"
 op_search_mode_by_po: str = "By PO"
 op_search_mode_by_so: str = "By SO"
 op_search_mode_by_warranty: str = "By Warranty"
@@ -3729,6 +3755,7 @@ options_pills_search_mode = [
 	op_search_mode_by_section,
 	op_search_mode_by_po,
 	op_search_mode_by_so,
+	op_search_mode_by_job,
 	op_search_mode_by_warranty,
 	op_search_mode_by_pick_list,
 	op_search_mode_by_supplier,
@@ -3754,6 +3781,8 @@ k_multiselect_sales_order_search = "key_multiselect_sales_order_search"
 k_selectbox_drawing_select: str = "key_selectbox_drawing_select"
 k_pills_search_mode: str = "key_pills_search_mode"
 k_pills_search_mode_save: str = "key_pills_search_mode_save"
+k_degrees_rot_map: str = "key_degrees_rot_map"
+k_overlay_sections_map: str = "key_overlay_sections_map"
 
 if user in admin_end_users:
 	with st.container(border=True, horizontal=True):
@@ -3786,84 +3815,7 @@ if user in admin_end_users:
 # cont_top_control = st.container()
 
 cont_top_control = st.container()
-if pills_search_mode == op_search_mode_advanced:
-	pass
-	# st.error("HERE")
-	# # Multi
-	# k_text_multi_0 = "key_text_multi_0"
-	# k_text_multi_1 = "key_text_multi_1"
-	# k_text_multi_2 = "key_text_multi_2"
-	# t0 = st.session_state.setdefault(k_text_multi_0, "")
-	# t1 = st.session_state.setdefault(k_text_multi_1, "")
-	# t2 = st.session_state.setdefault(k_text_multi_2, "")
-	# # t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
-	# with st.container():
-	# 	cols_search_term = st.columns([0.45, 0.55])
-	# 	cont_search_result = st.container()
-	#
-	# 	with cols_search_term[0]:
-	# 		if st.button(
-	# 				"clear"
-	# 		):
-	# 			st.session_state.update({
-	# 				k_text_multi_0: "",
-	# 				k_text_multi_1: "",
-	# 				k_text_multi_2: "",
-	# 				k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
-	# 			})
-	# 	# st.rerun()
-	#
-	# 	text_widgets = []
-	# 	for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
-	# 		with cols_search_term[0]:
-	# 			text_widgets.append(st.text_input(
-	# 				label=f"Term {i + 1}",
-	# 				key=key,
-	# 				on_change=lambda: st.session_state.update({k_search_text_widgets: None})
-	# 			))
-	# 		if not st.session_state.get(key):
-	# 			break
-	#
-	# 	textbox_stockcode = None
-	# 	k_search_text_widgets: str = "key_search_text_widgets"
-	# 	with cols_search_term[0]:
-	# 		if st.button(
-	# 				"submit"
-	# 		):
-	# 			st.session_state.update({k_search_text_widgets: text_widgets})
-	# 	# st.rerun()
-	#
-	# 	if st.session_state.setdefault(k_search_text_widgets):
-	# 		df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
-	# 		k_stdf_searched = "key_stdf_searched"
-	# 		show_cols = [
-	# 			"StockCode",
-	# 			"DefaultBin",
-	# 			"Description",
-	# 			"LongDesc"
-	# 		]
-	# 		with cols_search_term[1]:
-	#
-	# 			with st.container(border=True):
-	# 				stdf_searched = display_df_paginated(
-	# 					df=df_searched[show_cols],
-	# 					title="df_searched",
-	# 					on_select="rerun",
-	# 					selection_mode="single-row",
-	# 					key=k_stdf_searched,
-	# 					width=1600
-	# 				)
-	#
-	# 		# st.write(stdf_searched)
-	#
-	# 		if stdf_searched:
-	# 			if stdf_searched["selection"]:
-	# 				if stdf_searched["selection"]["rows"]:
-	# 					textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
-	# st.divider()
-
-# if pills_search_mode == op_search_mode_advanced:
-elif pills_search_mode == options_pills_search_mode.index(op_search_mode_advanced):
+if pills_search_mode == options_pills_search_mode.index(op_search_mode_advanced):
 	# Multi
 	k_text_multi_0 = "key_text_multi_0"
 	k_text_multi_1 = "key_text_multi_1"
@@ -4099,6 +4051,18 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_sect
 				key=f"key_stdf_search_section"
 			)
 
+# elif pills_search_mode == op_search_mode_by_so:
+elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_job):
+	# Job
+	df_jobs = load_job_numbers()
+	# k_checkbox_top
+	display_df_paginated(
+		df_jobs,
+		"Jobs",
+		batch_size_options=(100, 500, 5000),
+		key=f"key_ddp_jobs"
+	)
+
 # elif pills_search_mode == op_search_mode_by_po:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 	# By PO
@@ -4329,7 +4293,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
 		else:
 			st.info("Submit dates via the 'Received Report' button.")
 
-# elif pills_search_mode == op_search_mode_by_so:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 	# By SO
 	df_sales_orders = load_sales_orders()
@@ -5278,8 +5241,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			batch_size_options=(750, 1500, 2500)
 		)
 
-		#
-		st.subheader(f"Inventory {'valuation' if pills_search_mode == 'Valuation' else 'age'} by section (3D)")
+		st.subheader(f"Inventory {'valuation' if pills_warehouse_mode == 'Valuation' else 'age'} by section (3D)")
 
 		k_checkbox_valuation_log = "key_checkbox_valuation_log"
 		st.session_state.setdefault(k_checkbox_valuation_log, True)
@@ -5302,11 +5264,12 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		# fig = plotly_skyscrapers(df_sec_val, z_log=True)
 		# st.plotly_chart(fig, use_container_width=True)
 
-		y_min = float(df_sec_val["Y0"].min())
-		y_max = float(df_sec_val["Y1"].max())
+		offset: int = 5
+		y_min = float(df_sec_val["Y0"].min()) - offset
+		y_max = float(df_sec_val["Y1"].max()) + offset
 
-		x_min = float(df_sec_val["X0"].min())
-		x_max = float(df_sec_val["X1"].max())
+		x_min = float(df_sec_val["X0"].min()) - offset
+		x_max = float(df_sec_val["X1"].max()) + offset
 
 		df_plot = df_sec_val.copy()
 		# df_plot = build_shelf_cell_df(df_sections, df_shelves, df_legend)
@@ -5323,10 +5286,11 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 		# fig = plotly_skyscrapers(df_plot, z_log=True)
 		fig = plotly_cell_prisms(
 			df_plot,
-			plot_col="TtlValue" if pills_search_mode == "Valuation" else "DaysSinceLastPurchase",
+			plot_col="TtlValue" if pills_warehouse_mode == "Valuation" else "DaysSinceLastPurchase",
 			z_log=checkbox_valuation_log,
 			pillar_scale=pillar_scale,
-			show_val_annotations=pills_search_mode == "Valuation"
+			show_val_annotations=pills_warehouse_mode == "Valuation",
+			fmt=money if pills_warehouse_mode == "Valuation" else int
 		)
 		fig = add_section_floor_outlines(fig, df_plot)
 		compass_rot = 94
@@ -5349,11 +5313,9 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_warehou
 			margin=dict(l=0, r=0, t=40, b=0),
 		)
 
-		st.plotly_chart(fig, use_container_width=True)
+		st.plotly_chart(fig, use_container_width=True, config=dict(height=800))
 
 	else:
-		k_degrees_rot_map: str = "key_degrees_rot_map"
-		k_overlay_sections_map: str = "key_overlay_sections_map"
 
 		# Interactive Warehouse
 		if "selected_section_id" not in st.session_state:
@@ -6222,9 +6184,15 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 else:
 	# Single
 	k_textbox_stockcode = "key_textbox_stockcode"
-	textbox_stockcode = st.text_input(
+	# textbox_stockcode = st.text_input(
+	# 	label="Stockcode:",
+	# 	key=k_textbox_stockcode
+	# )
+	textbox_stockcode = st.selectbox(
 		label="Stockcode:",
-		key=k_textbox_stockcode
+		key=k_textbox_stockcode,
+		options=list_stockcodes,
+		accept_new_options=True
 	)
 
 ###############################################

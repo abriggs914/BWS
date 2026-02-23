@@ -12,8 +12,8 @@ VERSION = \
     General Pyodbc connection handler.
     Geared towards BWS connections.
     Improved to use SQL over JSON.
-    Version...............1.1
-    Date...........2026-02-17
+    Version...............1.2
+    Date...........2026-02-23
     Author(s)....Avery Briggs
     """
 
@@ -135,7 +135,7 @@ def _get_user_row(username: str):
 		"""
 		SELECT ID, username, PasswordHashHex, SaltHex, pbkdf2Iterations,
 			   FirstAccessUTC, LastAccessUTC, TimesAccessed, Active
-		FROM [dbo].[ITSTR_AppUsers]
+		FROM [BWSdb].[dbo].[ITSTR_AppUsers]
 		WHERE UserName = ?
 		""",
 		username,
@@ -154,7 +154,7 @@ def _log_event(app_name: str, username: str | None, user_id: int | None, success
 		cur = conn.cursor()
 		cur.execute(
 			"""
-			INSERT INTO [dbo].[ITSTR_AppUserAccessLog] (ID, UserName, Success, EventType, EventUTC, RemoteIP, UserAgent, AppName)
+			INSERT INTO [BWSdb].[dbo].[ITSTR_AppUserAccessLog] (ID, UserName, Success, EventType, EventUTC, RemoteIP, UserAgent, AppName)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			""",
 			user_id,
@@ -203,7 +203,7 @@ def register_user(app_name: str, username: str, password: str) -> tuple[bool, st
 
 		cur.execute(
 			"""
-			INSERT INTO dbo.ITSTR_AppUsers
+			INSERT INTO [BWSdb].[dbo].[ITSTR_AppUsers]
 				(UserName, PasswordHashHex, SaltHex, pbkdf2Iterations,
 				 FirstAccessUTC, LastAccessUTC, TimesAccessed, Active)
 			OUTPUT INSERTED.ID
@@ -221,7 +221,7 @@ def register_user(app_name: str, username: str, password: str) -> tuple[bool, st
 		# create settings row (empty JSON object)
 		cur = cur.execute(
 			"""
-			INSERT INTO [dbo].[ITSTR_AppUserSettings] (ID, SettingsJSON, UpdatedUTC)
+			INSERT INTO [BWSdb].[dbo].[ITSTR_AppUserSettings] (ID, SettingsJSON, UpdatedUTC)
 			VALUES (?, ?, ?)
 			""",
 			user_id,
@@ -252,7 +252,7 @@ def login_user(app_name: str, username: str, password: str) -> tuple[bool, str]:
 		cur.execute(
 			"""
 			SELECT ID, PasswordHashHex, SaltHex, pbkdf2Iterations, Active
-			FROM [dbo].[ITSTR_AppUsers] WITH (UPDLOCK, ROWLOCK)
+			FROM [BWSdb].[dbo].[ITSTR_AppUsers] WITH (UPDLOCK, ROWLOCK)
 			WHERE UserName = ?
 			""",
 			username,
@@ -277,7 +277,7 @@ def login_user(app_name: str, username: str, password: str) -> tuple[bool, str]:
 		now = utc_now().replace(tzinfo=None)
 		cur.execute(
 			"""
-			UPDATE [dbo].[ITSTR_AppUsers]
+			UPDATE [BWSdb].[dbo].[ITSTR_AppUsers]
 			SET LastAccessUTC = ?,
 				TimesAccessed = TimesAccessed + 1
 			WHERE ID = ?
@@ -304,7 +304,7 @@ def change_user_password(app_name: str, username: str, old_password: str, new_pa
 		cur.execute(
 			"""
 			SELECT ID, PasswordHashHex, SaltHex, pbkdf2Iterations
-			FROM [dbo].[ITSTR_AppUsers] WITH (UPDLOCK, ROWLOCK)
+			FROM [BWSdb].[dbo].[ITSTR_AppUsers] WITH (UPDLOCK, ROWLOCK)
 			WHERE UserName = ?
 			""",
 			username,
@@ -437,7 +437,7 @@ def save_user_settings(app_name: str, settings_in: dict) -> tuple[bool, str]:
 	try:
 		# Read-modify-write (safe because settings are per-user; still transactional)
 		cur.execute(
-			"SELECT settings_json FROM [dbo].[ITSTR_AppUserSettings] WITH (UPDLOCK, ROWLOCK) WHERE ID = ?",
+			"SELECT [SettingsJSON] FROM [BWSdb].[dbo].[ITSTR_AppUserSettings] WITH (UPDLOCK, ROWLOCK) WHERE ID = ?",
 			int(row["ID"]),
 		)
 		srow = cur.fetchone()
@@ -454,7 +454,7 @@ def save_user_settings(app_name: str, settings_in: dict) -> tuple[bool, str]:
 		if srow:
 			cur.execute(
 				"""
-				UPDATE [dbo].[ITSTR_AppUserSettings]
+				UPDATE [BWSdb].[dbo].[ITSTR_AppUserSettings]
 				SET SettingsJSON = ?, UpdatedUTC = ?
 				WHERE ID = ?
 				""",
@@ -465,7 +465,7 @@ def save_user_settings(app_name: str, settings_in: dict) -> tuple[bool, str]:
 		else:
 			cur.execute(
 				"""
-				INSERT INTO [dbo].[ITSTR_AppUserSettings] (ID, SettingsJSON, UpdatedUTC)
+				INSERT INTO [BWSdb].[dbo].[ITSTR_AppUserSettings] (ID, SettingsJSON, UpdatedUTC)
 				VALUES (?, ?, ?)
 				""",
 				int(row["ID"]),
