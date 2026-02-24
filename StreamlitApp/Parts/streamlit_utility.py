@@ -16,8 +16,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.11
-    Date...........2026-02-19
+    Version..............1.12
+    Date...........2026-02-24
     Author(s)....Avery Briggs
     """
 
@@ -221,6 +221,7 @@ def split_frame(input_df: pd.DataFrame, rows: int):
 	# st.write(f"{rows=}")
 	# st.write(input_df.head(3))
 	df = [input_df.reset_index().loc[i: i + rows - 1, :] for i in range(0, input_df.shape[0] + rows, rows)]
+	df = [input_df.reset_index(drop=True).loc[i: i + rows - 1, :] for i in range(0, input_df.shape[0] + rows, rows)]
 	return df
 
 
@@ -240,7 +241,7 @@ def display_df_paginated(
 		key: Any | None = None,
 		on_select: Literal["ignore", "rerun"] | Any = "ignore",
 		selection_mode: Any = "multi-row",
-		editor: bool =False
+		editor: bool = False
 ):
 	if key is None:
 		# sub_widget_keys = f"stdf_paginated_{datetime.datetime.now():%Y%m%d%%H%M%S}"
@@ -299,10 +300,15 @@ def display_df_paginated(
 		st.markdown(f"Page **{current_page}** of **{total_pages}** ")
 		st.markdown(f"**{df.shape[0]}** total records")
 
+	# st.write("df.columns.tolist()")
+	# st.write(df.columns.tolist())
 	pages = split_frame(df, batch_size)
 	# st.write(f"{len(pages)=}")
 	# st.write(f"{[len(p) for p in pages]=}")
 	# st.write(f"{batch_size=}")
+	# st.write(f"{type(pages[current_page - 1])=}")
+	# st.write("pages[current_page - 1].columns.tolist()")
+	# st.write(pages[current_page - 1].columns.tolist())
 	with pagination:
 		return display_df(
 			df=pages[current_page - 1] if pages else pd.DataFrame(data=[{"data": None}]),
@@ -323,7 +329,11 @@ def display_df_paginated(
 
 
 def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Series:
-	cols = [col.lower().strip() for col in df.columns]
+	cols_og = {col: col.lower().strip() for col in (df.columns if cols is None else (cols if isinstance(cols, (list, tuple, type(pd.DataFrame(data={"data": []}).columns))) else [cols]))}
+	cols = list(cols_og.values())
+	# st.write(f"cols")
+	# st.write(f"A {cols=}")
+	# st.write(f"{type(df.columns)=}")
 	if (isinstance(stdf, pd.DataFrame) and (not stdf.empty)) or stdf:
 		cols_to_check = [
 			"selection",
@@ -332,11 +342,15 @@ def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Se
 			"include",
 			"+"
 		]
-		cols_to_check_found = [col for col in cols_to_check if col in stdf.columns]
+		stdf_columns = stdf.columns if isinstance(stdf, (pd.DataFrame, pd.Series)) else stdf.get("columns", [])
+		cols_to_check_found = [col for col in cols_to_check if col in stdf_columns]
 		if bool([col for col in cols_to_check if col in df.columns]):
 			for col in cols_to_check_found:
 				stdf = stdf[stdf[col] == True].reset_index()
 			return stdf
+		# st.write(f"B {cols=}")
+		# st.write(f"{df.columns=}")
+		# st.write(f"{stdf.keys()=}")
 		if stdf["selection"]:
 			if stdf["selection"]["rows"]:
 				if n == 1:
@@ -344,7 +358,7 @@ def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Se
 				else:
 					if n is None:
 						n = len(stdf["selection"]["rows"])
-					return df.reset_index().loc[stdf["selection"]["rows"][:n], cols]
+					return df.reset_index().rename(columns=cols_og).loc[stdf["selection"]["rows"][:n], cols].rename(columns={v: k for k, v in cols_og.items()})
 	return pd.DataFrame()
 
 

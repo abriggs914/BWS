@@ -1,5 +1,7 @@
 import random
 
+from streamlit.util import AttributeDictionary
+
 from streamlit_utility import display_df, load_pdf_binary, display_df_paginated, get_selected_rows
 from pyodbc_connection import connect
 from streamlit_auth_sql import st_auth, show_change_password, save_user_settings, get_user_settings
@@ -757,6 +759,16 @@ EXEC [BWSdb].[dbo].[sp_REC_3TermSearch] @st1={st1},  @st2={st2},  @st3={st3}, @w
 	return df
 
 
+@st.cache_data(ttl=60 * 60, show_spinner=True, show_time=True)
+def change_advanced_search_filters(idx: int, keys: list[str]):
+	key = keys[idx]
+	term: str = st.session_state.get(key, "")
+	if not term:
+		if idx < len(keys):
+			for k in keys[idx+1:]:
+				st.session_state.update({k: None})
+
+
 @st.cache_data(ttl=60 * 60, show_spinner=True)
 def load_shopclock_frame(date_in: Optional[datetime.date] = None) -> pd.DataFrame:
 	if date_in is None:
@@ -1103,7 +1115,7 @@ ON
 	sql += "WHERE\n\t" + (ao.join(crit))
 	sql += f"\n\tAND ((DATEADD(YEAR, -{abs(year_int)}, GETDATE()) <= [dtJP].[TrnDateTime]) AND ([dtJP].[TrnDateTime] <= DATEADD(YEAR, {abs(year_int)}, GETDATE())))"
 	df = connect(sql, do_show=True, do_print=True)
-	if user in admin_end_users:
+	if show_debug and (user in admin_end_users):
 		with st.expander(f"sql_i"):
 			st.code(
 				sql,
@@ -2321,7 +2333,7 @@ def generate_bin_maps(
 	lst_bins = map(str.lower, df_stocks[col_bin].unique().tolist())
 	lst_stockcodes = df_stocks[col_stock].unique().tolist()
 
-	if user in admin_end_users:
+	if show_debug and (user in admin_end_users):
 		display_df(
 			df_stocks,
 			"START DF"
@@ -2340,7 +2352,7 @@ def generate_bin_maps(
 		left_on="Shelf",
 		right_on=col_bin
 	)
-	if user in admin_end_users:
+	if show_debug and (user in admin_end_users):
 		display_df(
 			df_bin_shelf,
 			"df_bin_shelf"
@@ -2444,7 +2456,7 @@ def generate_bin_maps(
 				st.warning(f"Could not map {sc} in {bin}")
 				reported.add(sc)
 
-	if user in admin_end_users:
+	if show_debug and (user in admin_end_users):
 		with st.container(border=True,horizontal=True):
 			st.write("admin_debugging")
 			st.write(f"bin_maps")
@@ -2718,7 +2730,7 @@ def load_hawkins_map(
 					overlay_sections=overlay_sections,
 					plotted=plotted
 				)
-			if user in admin_end_users:
+			if show_debug and (user in admin_end_users):
 				with st.container(border=True,horizontal=True):
 					st.write("admin_debugging")
 					st.write(f"plotted ITER BOTTOM")
@@ -3545,6 +3557,42 @@ GROUP BY
 	return df
 
 
+@st.cache_data(ttl=60*60, show_time=True, show_spinner=True)
+def load_stockcode_types(lst_types: Optional[list | str] = None) -> pd.DataFrame:
+	if lst_types is not None:
+		if not isinstance(lst_types, list):
+			lst_types = [lst_types]
+		if not lst_types:
+			return pd.DataFrame({"StockCode": [], "Word": []})
+		lst_types: str = "'" + ("','".join(map(str.lower, lst_types))) + "'"
+		sql = f"""
+SELECT
+	[IDW].[StockCode],
+	[IM].[Description],
+	[IM].[LongDesc],
+	[IW].[DefaultBin],
+	[IDW].[Word]
+FROM [BWSdb].[dbo].[INV_InvDescWord] [IDW]
+INNER JOIN [SysproCompanyA].[dbo].[InvMaster] [IM]
+ON [IDW].[StockCode] = [IM].[StockCode] COLLATE DATABASE_DEFAULT
+INNER JOIN [SysproCompanyA].[dbo].[InvWarehouse] [IW]
+ON ([IM].[StockCode] = [IW].[StockCode]) AND ([IW].[Warehouse] = [IM].[WarehouseToUse])
+WHERE LOWER([IDW].[Word]) IN ({lst_types}) 
+ORDER BY Word;
+		"""
+	else:
+		sql = """
+SELECT TOP 10000 Word, COUNT(*) AS ItemsContaining
+FROM [BWSdb].[dbo].[INV_InvDescWord]
+GROUP BY Word
+HAVING COUNT(*) > 8
+ORDER BY Word
+;
+"""
+	df = connect(sql)
+	return df
+
+
 # st.write(f"{end}, {p_sec=}, {v=}")
 # st.write(f"{start}")
 # st.write(f"{end}")
@@ -3614,8 +3662,19 @@ list_stockcodes = list(map(str.lower, df_parts["StockCode"].unique()))
 
 # search for all parts in a bin
 
+k_checkbox_show_admin_debugging: str = "k_checkbox_show_admin_debugging"
+show_debug: bool = st.session_state.setdefault(k_checkbox_show_admin_debugging, True)
 list_settings_keys = []
 with st.popover("Filter"):
+
+	if user in admin_end_users:
+		show_debug = st.checkbox(
+			label="Show Admin Debugging?",
+			key=k_checkbox_show_admin_debugging
+		)
+	else:
+		st.session_state.update({k_checkbox_show_admin_debugging: False})
+
 	k_checkbox_warehouse_1_only = "key_checkbox_warehouse_1_only"
 	k_checkbox_hawkins_parts_inc = "key_checkbox_hawkins_parts_inc"
 	k_checkbox_montana_parts_inc = "key_checkbox_montana_parts_inc"
@@ -3632,9 +3691,9 @@ with st.popover("Filter"):
 
 	k_loaded_settings_session = "key_loaded_settings_session"
 	success_loaded_settings, loaded_settings = get_user_settings()
-	st.write("loaded_settings")
-	st.write(loaded_settings)
-	st.write(type(loaded_settings))
+	# st.write("loaded_settings")
+	# st.write(loaded_settings)
+	# st.write(type(loaded_settings))
 	loaded_settings_bd = st.session_state.setdefault(k_loaded_settings_session, (success_loaded_settings, loaded_settings))
 	success_loaded_settings, loaded_settings = loaded_settings_bd
 	if success_loaded_settings:
@@ -3765,7 +3824,7 @@ options_pills_search_mode = [
 	op_search_mode_by_drawing
 ]
 
-if user in admin_end_users:
+if show_debug and (user in admin_end_users):
 	options_pills_search_mode.append(
 		op_search_mode_day_totals
 	)
@@ -3784,7 +3843,7 @@ k_pills_search_mode_save: str = "key_pills_search_mode_save"
 k_degrees_rot_map: str = "key_degrees_rot_map"
 k_overlay_sections_map: str = "key_overlay_sections_map"
 
-if user in admin_end_users:
+if show_debug and (user in admin_end_users):
 	with st.container(border=True, horizontal=True):
 		st.write("admin_debugging")
 		st.write(f"A")
@@ -3799,7 +3858,7 @@ if st.session_state.get(k_pills_search_mode_save) is not None:
 		k_pills_search_mode_save: None
 	})
 
-if user in admin_end_users:
+if show_debug and (user in admin_end_users):
 	with st.container(border=True, horizontal=True):
 		st.write("admin_debugging")
 		st.write(f"B")
@@ -3816,78 +3875,130 @@ if user in admin_end_users:
 
 cont_top_control = st.container()
 if pills_search_mode == options_pills_search_mode.index(op_search_mode_advanced):
-	# Multi
-	k_text_multi_0 = "key_text_multi_0"
-	k_text_multi_1 = "key_text_multi_1"
-	k_text_multi_2 = "key_text_multi_2"
-	t0 = st.session_state.setdefault(k_text_multi_0, "")
-	t1 = st.session_state.setdefault(k_text_multi_1, "")
-	t2 = st.session_state.setdefault(k_text_multi_2, "")
-	# t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
-	with st.container():
-		cols_search_term = st.columns([0.45, 0.55])
-		cont_search_result = st.container()
 
-		with cols_search_term[0]:
-			if st.button(
-					"clear"
-			):
-				st.session_state.update({
-					k_text_multi_0: "",
-					k_text_multi_1: "",
-					k_text_multi_2: "",
-					k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
-				})
-		# st.rerun()
+	k_pills_advanced_search_mode: str = "k_pills_advanced_search_mode"
+	options_pills_advanced_search_mode = [
+		"3 Term",
+		"By Type"
+	]
+	pills_advanced_search_mode = pills(
+		label="Advanced Search Mode",
+		options=options_pills_advanced_search_mode
+	)
 
-		text_widgets = []
-		for i, key in enumerate([k_text_multi_0, k_text_multi_1, k_text_multi_2]):
+	if pills_advanced_search_mode == options_pills_advanced_search_mode[1]:
+		# By Type
+		df_general_types: pd.DataFrame = load_stockcode_types()
+		lst_words = df_general_types["Word"].dropna().unique().tolist()
+
+		k_multiselectbox_stockcode_type: str = "key_multiselectbox_stockcode_type"
+		selectbox_stockcode_type = st.multiselect(
+			label="Select Type:",
+			options=lst_words,
+			key=k_multiselectbox_stockcode_type,
+			max_selections=20
+		)
+
+		df_sel_type_stockcodes: pd.DataFrame = load_stockcode_types(selectbox_stockcode_type)
+		if not df_sel_type_stockcodes.empty:
+			k_stdf_sel_type_stockcodes: str = "key_stdf_sel_type_stockcodes"
+			stdf_sel_type_stockcodes = display_df_paginated(
+				df_sel_type_stockcodes,
+				"Stockcodes with Selected Types",
+				batch_size_options=(250, 750, 2250),
+				key=k_stdf_sel_type_stockcodes,
+				hide_index=True,
+				selection_mode="multi-row",
+				on_select="rerun"
+			)
+
+		textbox_stockcode = get_selected_rows(df_sel_type_stockcodes, stdf_sel_type_stockcodes, cols="StockCode", n=None)
+
+	else:
+		# Multi
+		k_text_multi_0 = "key_text_multi_0"
+		k_text_multi_1 = "key_text_multi_1"
+		k_text_multi_2 = "key_text_multi_2"
+		t0 = st.session_state.setdefault(k_text_multi_0, "")
+		t1 = st.session_state.setdefault(k_text_multi_1, "")
+		t2 = st.session_state.setdefault(k_text_multi_2, "")
+		# t_texts = max(3, min(1, sum([int(bool(x)) for x in [t0, t1, t2]]) + 1))
+		with st.container():
+			cols_search_term = st.columns([0.45, 0.55])
+			cont_search_result = st.container()
+
 			with cols_search_term[0]:
-				text_widgets.append(st.text_input(
-					label=f"Term {i + 1}",
-					key=key,
-					on_change=lambda: st.session_state.update({k_search_text_widgets: None})
-				))
+				if st.button(
+						"clear"
+				):
+					st.session_state.update({
+						k_text_multi_0: "",
+						k_text_multi_1: "",
+						k_text_multi_2: "",
+						k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+					})
+			# st.rerun()
 
-		textbox_stockcode = None
-		k_search_text_widgets: str = "key_search_text_widgets"
-		with cols_search_term[0]:
-			if st.button(
-					"submit"
-			):
-				st.session_state.update({
-					k_search_text_widgets: text_widgets,
-					k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
-				})
-		# st.rerun()
+			text_widgets = []
+			count_new_max = 1
+			count_new_curr = 0
+			keys_search_terms = [k_text_multi_0, k_text_multi_1, k_text_multi_2]
+			for i, key in enumerate(keys_search_terms):
+				# st.write(f"{st.session_state.get(key)=}")
+				k_none = not bool(st.session_state.get(key))
+				if k_none:
+					count_new_curr += 1
+				# st.write(f"{k_none=}, {count_new_curr=}")
+				if (not k_none) or (count_new_curr <= count_new_max):
+					with cols_search_term[0]:
+						text_widgets.append(st.text_input(
+							label=f"Term {i + 1}",
+							key=key,
+							# on_change=lambda: st.session_state.update({k_search_text_widgets: None})
+							on_change=lambda i_=i: change_advanced_search_filters(i_, keys_search_terms)
+						))
+					if k_none:
+						count_new_curr += 1
 
-		if st.session_state.setdefault(k_search_text_widgets):
-			df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
-			k_stdf_searched = "key_stdf_searched"
-			show_cols = [
-				"StockCode",
-				"DefaultBin",
-				"Description",
-				"LongDesc"
-			]
-			with cols_search_term[1]:
+			textbox_stockcode = None
+			k_search_text_widgets: str = "key_search_text_widgets"
+			with cols_search_term[0]:
+				if st.button(
+						"submit"
+				):
+					st.session_state.update({
+						k_search_text_widgets: text_widgets,
+						k_pills_search_mode_save: st.session_state.get(k_pills_search_mode)
+					})
+			# st.rerun()
 
-				with st.container(border=True):
-					stdf_searched = display_df_paginated(
-						df=df_searched[show_cols],
-						title="df_searched",
-						on_select="rerun",
-						selection_mode="single-row",
-						key=k_stdf_searched
-					)
+			if st.session_state.setdefault(k_search_text_widgets):
+				df_searched = search_three_term(*st.session_state.get(k_search_text_widgets, []))
+				k_stdf_searched = "key_stdf_searched"
+				show_cols = [
+					"StockCode",
+					"DefaultBin",
+					"Description",
+					"LongDesc"
+				]
+				with cols_search_term[1]:
 
-			# st.write(stdf_searched)
+					with st.container(border=True):
+						stdf_searched = display_df_paginated(
+							df=df_searched[show_cols],
+							title="df_searched",
+							on_select="rerun",
+							selection_mode="single-row",
+							key=k_stdf_searched
+						)
 
-			if stdf_searched:
-				if stdf_searched["selection"]:
-					if stdf_searched["selection"]["rows"]:
-						textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
-	st.divider()
+				# st.write(stdf_searched)
+
+				if stdf_searched:
+					if stdf_searched["selection"]:
+						if stdf_searched["selection"]["rows"]:
+							textbox_stockcode = df_searched.loc[stdf_searched["selection"]["rows"][0], "StockCode"]
+
 
 # elif pills_search_mode == op_search_mode_by_bin:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_bin):
@@ -4324,6 +4435,14 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 			on_select="rerun"
 		)
 
+		# st.write(f"{type(stdf_sales_orders)=}")
+		# st.write(f"{isinstance(stdf_sales_orders, dict)=}")
+		# if isinstance(stdf_sales_orders, AttributeDictionary):
+		# 	st.write("keys")
+		# 	st.write(stdf_sales_orders.keys())
+		# 	for i, k in enumerate(stdf_sales_orders.keys()):
+		# 		st.write(f"{i=}, {k=}, {stdf_sales_orders[k]=}")
+		# st.write(f"{type(stdf_sales_orders)=}")
 		df_selected_sos = get_selected_rows(df_sales_orders, stdf_sales_orders, df_sales_orders.columns, n=None)
 		if not df_selected_sos.empty:
 			df_selected_sos = df_selected_sos.merge(
@@ -4431,59 +4550,72 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 						found[i] = []
 					found[i].append(sc)
 
-		cols_per_row = 3
-		cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(len(found) / cols_per_row)))]
+		# cols_per_row = 3
+		# cols_grid = [st.columns(cols_per_row, border=True) for i in range(int(math.ceil(len(found) / cols_per_row)))]
+		#
+		# ii = 0
+		# pdfs_to_zip = []
+		# for i, row in df_sales_order_pick_sheets.iterrows():
+		# 	so = row["SalesOrder"]
+		# 	sc = row["MStockCode"]
+		# 	df_so_stock_path = load_path_pdf(sc)
+		# 	if not df_so_stock_path.empty:
+		# 		stock_pdf_listed = df_so_stock_path.loc[0, "PDF_Listed"]
+		# 		stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
+		# 		if stock_pdf_listed or stock_pdf_stock:
+		# 			with cols_grid[ii // cols_per_row][ii % cols_per_row]:
+		# 				st.write(f"SO# {so}")
+		# 				st.write(f"PART# {sc}")
+		# 				f_name = f"{sc.replace(' ', '_')}"
+		# 				f_bytes = None
+		# 				f_bytes_z = None
+		# 				if stock_pdf_listed and os.path.exists(stock_pdf_listed):
+		# 					f_bytes = open(stock_pdf_listed, "rb").read()
+		# 					f_bytes_z = f_bytes
+		# 					st.download_button(
+		# 						label="download PDF as listed in Syspro?",
+		# 						data=f_bytes,
+		# 						file_name=f"{f_name}_syspro.pdf",
+		# 						mime="application/pdf",
+		# 						key=f"{f_name}_drive_0"
+		# 					)
+		# 				if stock_pdf_stock and os.path.exists(stock_pdf_stock):
+		# 					f_bytes = open(stock_pdf_stock, "rb").read()
+		# 					if f_bytes_z is None:
+		# 						# by default use the syspro version, if none, use the matching stock name file
+		# 						f_bytes_z = f_bytes
+		# 					st.download_button(
+		# 						label="Download found PDF from drive?",
+		# 						data=f_bytes,
+		# 						file_name=f"{f_name}_found.pdf",
+		# 						mime="application/pdf",
+		# 						key=f"{f_name}_drive_1"
+		# 					)
+		#
+		# 				# zf_name = f"{f_name}.pdf"
+		# 				zf_name = safe_windows_filename(f_name) + ".pdf"
+		# 				assert isinstance(f_bytes_z, (bytes, bytearray)) and len(f_bytes_z) > 5 and f_bytes_z[:5] == b"%PDF-"
+		# 				assert 1 == 2, "THE ZIPPING ISNT WORKING, FIX IT"
+		#
+		# 				if zf_name not in [tup[0] for tup in pdfs_to_zip]:
+		# 					if stock_pdf_listed:
+		# 						pdfs_to_zip.append((zf_name, f_bytes_z))
+		# 					elif stock_pdf_stock:
+		# 						pdfs_to_zip.append((zf_name, f_bytes_z))
+		# 			ii += 1
 
-		ii = 0
 		pdfs_to_zip = []
 		for i, row in df_sales_order_pick_sheets.iterrows():
 			so = row["SalesOrder"]
 			sc = row["MStockCode"]
-			df_so_stock_path = load_path_pdf(sc)
+			df_so_stock_path: pd.DataFrame = load_path_pdf(sc)
 			if not df_so_stock_path.empty:
 				stock_pdf_listed = df_so_stock_path.loc[0, "PDF_Listed"]
 				stock_pdf_stock = df_so_stock_path.loc[0, "PDF_Stock"]
-				if stock_pdf_listed or stock_pdf_stock:
-					with cols_grid[ii // cols_per_row][ii % cols_per_row]:
-						st.write(f"SO# {so}")
-						st.write(f"PART# {sc}")
-						f_name = f"{sc.replace(' ', '_')}"
-						f_bytes = None
-						f_bytes_z = None
-						if stock_pdf_listed:
-							f_bytes = open(stock_pdf_listed, "rb").read()
-							f_bytes_z = f_bytes
-							st.download_button(
-								label="download PDF as listed in Syspro?",
-								data=f_bytes,
-								file_name=f"{f_name}_syspro.pdf",
-								mime="application/pdf",
-								key=f"{f_name}_drive_0"
-							)
-						if stock_pdf_stock:
-							f_bytes = open(stock_pdf_stock, "rb").read()
-							if f_bytes_z is None:
-								# by default use the syspro version, if none, use the matching stock name file
-								f_bytes_z = f_bytes
-							st.download_button(
-								label="Download found PDF from drive?",
-								data=f_bytes,
-								file_name=f"{f_name}_found.pdf",
-								mime="application/pdf",
-								key=f"{f_name}_drive_1"
-							)
-
-						# zf_name = f"{f_name}.pdf"
-						zf_name = safe_windows_filename(f_name) + ".pdf"
-						assert isinstance(f_bytes_z, (bytes, bytearray)) and len(f_bytes_z) > 5 and f_bytes_z[:5] == b"%PDF-"
-						assert 1 == 2, "THE ZIPPING ISNT WORKING, FIX IT"
-
-						if zf_name not in [tup[0] for tup in pdfs_to_zip]:
-							if stock_pdf_listed:
-								pdfs_to_zip.append((zf_name, f_bytes_z))
-							elif stock_pdf_stock:
-								pdfs_to_zip.append((zf_name, f_bytes_z))
-					ii += 1
+				if check_pdf_exists(stock_pdf_listed):
+					pdfs_to_zip.append(stock_pdf_listed)
+				elif check_pdf_exists(stock_pdf_stock):
+					pdfs_to_zip.append(stock_pdf_stock)
 
 		if pdfs_to_zip:
 			zip_bytes = rlu.build_zip_bytes(pdfs_to_zip)
@@ -6184,16 +6316,18 @@ elif (user in admin_test_users) and (pills_search_mode == options_pills_search_m
 else:
 	# Single
 	k_textbox_stockcode = "key_textbox_stockcode"
-	# textbox_stockcode = st.text_input(
-	# 	label="Stockcode:",
-	# 	key=k_textbox_stockcode
-	# )
-	textbox_stockcode = st.selectbox(
+	textbox_stockcode = st.text_input(
 		label="Stockcode:",
-		key=k_textbox_stockcode,
-		options=list_stockcodes,
-		accept_new_options=True
+		key=k_textbox_stockcode
 	)
+	# textbox_stockcode = st.selectbox(
+	# 	label="Stockcode:",
+	# 	key=k_textbox_stockcode,
+	# 	options=list_stockcodes,
+	# 	accept_new_options=True
+	# )
+
+st.divider()
 
 ###############################################
 # If a stockcode is selected, then show details
@@ -6202,7 +6336,7 @@ else:
 if isinstance(textbox_stockcode, pd.Series):
 	textbox_stockcode = pd.DataFrame(textbox_stockcode)
 
-if user in admin_end_users:
+if show_debug and (user in admin_end_users):
 	with st.container(border=True, horizontal=True):
 		st.write("admin_debugging")
 		st.write("C")
@@ -6759,7 +6893,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 						})
 
 	with st.expander(f"Map", expanded=bool(found_map_to_bin)):
-		if user in admin_end_users:
+		if show_debug and (user in admin_end_users):
 			with st.container(border=True, horizontal=True):
 				st.write("admin_debugging")
 				st.write("D")

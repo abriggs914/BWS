@@ -2,7 +2,7 @@
 -- Selects
 
 
-SELECT TOP (1000) [ID]
+SELECT [ID]
       ,[DateCreated]
       ,[LastModified]
       ,[Active]
