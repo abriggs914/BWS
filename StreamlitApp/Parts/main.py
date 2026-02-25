@@ -15,7 +15,7 @@ import extract_drawing_parts as edp
 from streamlit_pills import pills
 from streamlit_plotly_events import plotly_events
 from streamlit_calendar import calendar
-from typing import Literal, Optional, Any, List
+from typing import Literal, Optional, Any, List, Tuple
 from collections import defaultdict, OrderedDict
 
 import matplotlib.pyplot as plt
@@ -680,62 +680,123 @@ def load_po_details(stockcode: Optional[str] = None, purchaseorder: Optional[str
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=True)
-def load_allocations(stockcode: str) -> pd.DataFrame:
-	sql = f"""
-SELECT
-	[JP].[TrnDateTime],
-	[JL].[FirstPlannedStartDate] AS [DateRequired],
-	[JM].[Job],
-	[JM].[StockCode],
-	[JM].[Warehouse],
-	[JM].[UnitQtyReqd],
-	[JM].[UnitCost],
-	[JM].[OperationOffset],
-	[JM].[OpOffsetFlag],
-	[JM].[QtyIssued],
-	[JM].[ValueIssued],
-	[JM].[NetUnitQtyReqd],
-	[JM].[QtyToIssue],
-	[JM].[AllocCompleted]
-FROM
-	[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
-LEFT JOIN (
+def load_allocations(stockcode: Optional[str] = None, job: Optional[str] = None) -> pd.DataFrame:
+	if (stockcode is None) and (job is None):
+		raise ValueError("Either stockcode or job must be specified")
+	sc_mode: bool = stockcode is not None
+
+	if not sc_mode:
+		sql = f"""
+			SELECT
+				[JP].[TrnDateTime],
+				[JL].[FirstPlannedStartDate] AS [DateRequired],
+				[JM].[Job],
+				[JM].[StockCode],
+				[JM].[Warehouse],
+				[JM].[UnitQtyReqd],
+				[JM].[UnitCost],
+				[JM].[OperationOffset],
+				[JM].[OpOffsetFlag],
+				[JM].[QtyIssued],
+				[JM].[ValueIssued],
+				[JM].[NetUnitQtyReqd],
+				[JM].[QtyToIssue],
+				[JM].[AllocCompleted]
+			FROM
+				[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+			LEFT JOIN (
+				SELECT
+					[JP].*,
+					[JPdt].[TrnDateTime]
+				FROM
+					[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+				INNER JOIN
+					[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [JPdt] WITH (NOLOCK)
+				ON
+					([JP].[Job] = [JPdt].[Job])
+					AND ([JP].[Line] = [JPdt].[Line])
+					AND ([JP].[MStockCode] = [JPdt].[MStockCode])
+			) AS [JP]
+			ON
+				([JM].[StockCode] = [JP].[MStockCode])
+				AND ([JM].[Job] = [JP].[Job])
+			LEFT JOIN
+				[BWSdb].[dbo].[Production] [PD] WITH (NOLOCK)
+			ON
+				([JM].[Job] = CAST([PD].[WO#] AS NVARCHAR(MAX)))
+			LEFT JOIN (
+				SELECT
+					[JL].[Job],
+					MIN([JL].[PlannedStartDate]) AS [FirstPlannedStartDate]
+				FROM
+					[SysproCompanyA].[dbo].[WipJobAllLab] [JL] WITH (NOLOCK)
+				GROUP BY
+					[JL].[Job]
+			) AS [JL]
+			ON
+				([JM].[Job] = [JL].[Job])
+			WHERE
+				LOWER([JM].[Job]) = LOWER('{job}')
+				AND ([JM].[QtyIssued] <= [JM].[QtyToIssue])
+				--AND ([JM].[AllocCompleted] = 'N'))
+			;
+			"""
+	else:
+		sql = f"""
 	SELECT
-		[JP].*,
-		[JPdt].[TrnDateTime]
+		[JP].[TrnDateTime],
+		[JL].[FirstPlannedStartDate] AS [DateRequired],
+		[JM].[Job],
+		[JM].[StockCode],
+		[JM].[Warehouse],
+		[JM].[UnitQtyReqd],
+		[JM].[UnitCost],
+		[JM].[OperationOffset],
+		[JM].[OpOffsetFlag],
+		[JM].[QtyIssued],
+		[JM].[ValueIssued],
+		[JM].[NetUnitQtyReqd],
+		[JM].[QtyToIssue],
+		[JM].[AllocCompleted]
 	FROM
-		[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
-	INNER JOIN
-		[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [JPdt] WITH (NOLOCK)
+		[SysproCompanyA].[dbo].[WipJobAllMat] [JM] WITH (NOLOCK)
+	LEFT JOIN (
+		SELECT
+			[JP].*,
+			[JPdt].[TrnDateTime]
+		FROM
+			[SysproCompanyA].[dbo].[WipJobPost] [JP] WITH (NOLOCK)
+		INNER JOIN
+			[SysproCompanyA].[dbo].[v_PROD_WipJobPostDateTime] [JPdt] WITH (NOLOCK)
+		ON
+			([JP].[Job] = [JPdt].[Job])
+			AND ([JP].[Line] = [JPdt].[Line])
+			AND ([JP].[MStockCode] = [JPdt].[MStockCode])
+	) AS [JP]
 	ON
-		([JP].[Job] = [JPdt].[Job])
-		AND ([JP].[Line] = [JPdt].[Line])
-		AND ([JP].[MStockCode] = [JPdt].[MStockCode])
-) AS [JP]
-ON
-	([JM].[StockCode] = [JP].[MStockCode])
-	AND ([JM].[Job] = [JP].[Job])
-LEFT JOIN
-	[BWSdb].[dbo].[Production] [PD] WITH (NOLOCK)
-ON
-	([JM].[Job] = CAST([PD].[WO#] AS NVARCHAR(MAX)))
-LEFT JOIN (
-	SELECT
-		[JL].[Job],
-		MIN([JL].[PlannedStartDate]) AS [FirstPlannedStartDate]
-	FROM
-		[SysproCompanyA].[dbo].[WipJobAllLab] [JL] WITH (NOLOCK)
-	GROUP BY
-		[JL].[Job]
-) AS [JL]
-ON
-	([JM].[Job] = [JL].[Job])
-WHERE
-	LOWER([JM].[StockCode]) = LOWER('{stockcode}')
-	AND ([JM].[QtyIssued] <= [JM].[QtyToIssue])
-	--AND ([JM].[AllocCompleted] = 'N'))
-;
-"""
+		([JM].[StockCode] = [JP].[MStockCode])
+		AND ([JM].[Job] = [JP].[Job])
+	LEFT JOIN
+		[BWSdb].[dbo].[Production] [PD] WITH (NOLOCK)
+	ON
+		([JM].[Job] = CAST([PD].[WO#] AS NVARCHAR(MAX)))
+	LEFT JOIN (
+		SELECT
+			[JL].[Job],
+			MIN([JL].[PlannedStartDate]) AS [FirstPlannedStartDate]
+		FROM
+			[SysproCompanyA].[dbo].[WipJobAllLab] [JL] WITH (NOLOCK)
+		GROUP BY
+			[JL].[Job]
+	) AS [JL]
+	ON
+		([JM].[Job] = [JL].[Job])
+	WHERE
+		LOWER([JM].[StockCode]) = LOWER('{stockcode}')
+		AND ([JM].[QtyIssued] <= [JM].[QtyToIssue])
+		--AND ([JM].[AllocCompleted] = 'N'))
+	;
+	"""
 	df = connect(sql)
 	return df
 
@@ -1273,7 +1334,8 @@ def load_change_requests() -> pd.DataFrame:
 def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 	k_selectbox_change_field: str = "key_selectbox_change_field"
 	options_selectbox_change_field = [
-		"DefaultBin"
+		"DefaultBin",
+		"Nickname",
 	]
 	selectbox_change_field = st.selectbox(
 		label="Select a field to change:",
@@ -1282,7 +1344,7 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 	)
 	if selectbox_change_field:
 		k_text_field_current: str = "key_text_field_current"
-		curr_val = ser_stock[selectbox_change_field]
+		curr_val = ser_stock.get(selectbox_change_field, None)
 		st.session_state.update({k_text_field_current: curr_val})
 		text_field_current = st.text_input(
 			label="Current:",
@@ -1290,14 +1352,14 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 			disabled=True
 		)
 		k_text_field_new: str = "key_text_field_new"
-		curr_val = ser_stock[selectbox_change_field]
+		curr_val = ser_stock.get(selectbox_change_field, None)
 		text_field_new = st.session_state.setdefault(k_text_field_new, "")
 		text_field_new = st.text_input(
 			label="New:",
 			key=k_text_field_new
 		)
 		k_text_field_notes: str = "key_text_field_notes"
-		curr_val = ser_stock[selectbox_change_field]
+		curr_val = ser_stock.get(selectbox_change_field, None)
 		text_field_notes = st.session_state.setdefault(k_text_field_notes, "")
 		text_field_notes = st.text_input(
 			label="Notes:",
@@ -1316,18 +1378,19 @@ def submit_change(ser_stock: pd.Series) -> tuple[bool, str]:
 						json.dump([], f)
 				with open(path_abs, "r") as f:
 					data = json.load(f)
-				data.append({
-					"user": st.session_state["user"],
-					"date": jsonify(datetime.datetime.now()),
-					"stockcode": ser_stock["StockCode"],
-					"field": selectbox_change_field,
-					"old": text_field_current,
-					"new": text_field_new,
-					"notes": text_field_notes,
-					"completed": None,
-					"completed_by": None,
-					"completed_date": None
-				})
+				if text_field_current != text_field_new:
+					data.append({
+						"user": st.session_state["user"],
+						"date": jsonify(datetime.datetime.now()),
+						"stockcode": ser_stock["StockCode"],
+						"field": selectbox_change_field,
+						"old": text_field_current,
+						"new": text_field_new,
+						"notes": text_field_notes,
+						"completed": None,
+						"completed_by": None,
+						"completed_date": None
+					})
 
 				with open(path_abs, "w") as f:
 					json.dump(data, f)
@@ -2321,8 +2384,13 @@ def generate_bin_maps(
 		df_stocks: pd.DataFrame,
 		col_bin: str = "DefaultBin",
 		col_stock: str = "MStockCode",
-		building: str = "Hawkins"
-):
+		building: str = "Hawkins",
+		do_report: bool = True,
+		rpt_type: Literal["both", "stockcode", "bin", "phrase"] = "phrase"
+) -> Tuple[list, set]:
+	df = df_stocks.copy()
+	df[col_stock] = df[col_stock].astype(str)
+	df[col_bin] = df[col_bin].astype(str)
 	bin_maps = []
 	df_data = load_layout_data(building=building)
 	df_layout = df_data["Layout"]
@@ -2330,14 +2398,19 @@ def generate_bin_maps(
 	df_sections = df_data["ShelfSections"]
 	df_shelves = df_data["Shelves"]
 
-	lst_bins = map(str.lower, df_stocks[col_bin].unique().tolist())
-	lst_stockcodes = df_stocks[col_stock].unique().tolist()
+	lst_bins = map(str.lower, df[col_bin].unique().tolist())
+	lst_stockcodes = df[col_stock].unique().tolist()
 
 	if show_debug and (user in admin_end_users):
-		display_df(
-			df_stocks,
-			"START DF"
-		)
+		with st.container(horizontal=True, border=True):
+			display_df(
+				df,
+				"START DF"
+			)
+			display_df(
+				df_shelves,
+				"df_shelves"
+			)
 
 	df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip().isin(lst_bins)]
 	df_bin_shelf = df_bin_shelf.merge(
@@ -2347,7 +2420,7 @@ def generate_bin_maps(
 		right_on="ID"
 	)
 	df_bin_shelf = df_bin_shelf.merge(
-		df_stocks[[col_bin, col_stock]],
+		df[[col_bin, col_stock]],
 		how="left",
 		left_on="Shelf",
 		right_on=col_bin
@@ -2440,7 +2513,7 @@ def generate_bin_maps(
 
 	reported = set()
 	for i, sc in enumerate(lst_stockcodes):
-		bin = df_stocks.loc[df_stocks[col_stock] == sc].reset_index().loc[0, col_bin]
+		bin = df.loc[df[col_stock] == sc].reset_index().loc[0, col_bin]
 		if bin_maps:
 			found = False
 			for data in bin_maps:
@@ -2449,21 +2522,26 @@ def generate_bin_maps(
 					break
 			if not found:
 				if sc not in reported:
-					st.warning(f"Could not map {sc} in {bin}")
-					reported.add(sc)
+					rpt_val = sc if rpt_type == "stockcode" else (bin if rpt_type == "bin" else ((sc, bin) if rpt_type == "both" else f"Could not map {sc} in {bin} in {building.title()} parts room"))
+					if do_report:
+						st.warning(rpt_val)
+					reported.add(rpt_val)
 		else:
 			if sc not in reported:
-				st.warning(f"Could not map {sc} in {bin}")
-				reported.add(sc)
+				rpt_val = sc if rpt_type == "stockcode" else (
+					bin if rpt_type == "bin" else ((sc, bin) if rpt_type == "both" else f"Could not map {sc} in {bin} in {building.title()} parts room"))
+				if do_report:
+					st.warning(rpt_val)
+				reported.add(rpt_val)
 
 	if show_debug and (user in admin_end_users):
 		with st.container(border=True,horizontal=True):
 			st.write("admin_debugging")
 			st.write(f"bin_maps")
 			st.write(bin_maps)
-			display_df(df_stocks, f"df_stocks")
+			display_df(df, f"df_stocks")
 
-	return bin_maps
+	return bin_maps, reported
 
 
 def build_plotly_map(
@@ -3543,17 +3621,32 @@ async def run_day():
 
 
 @ st.cache_data(ttl=60*60, show_time=True, show_spinner=True)
-def load_job_numbers() -> pd.DataFrame:
+def load_job_numbers_cached() -> pd.DataFrame:
 	sql = """
 SELECT
-	[WM].[Job]
+	[WM].[Job],
+	[WM].[JobDescription],
+	[WM].[JobTenderDate]
 FROM 
-	[SysproCompanyA].[dbo].[WipMaster] [WM]
+	[SysproCompanyA].[dbo].[WipMaster] [WM] WITH (NOLOCK)
 GROUP BY
-	[WM].[Job]
+	[WM].[Job],
+	[WM].[JobDescription],
+	[WM].[JobTenderDate]
 ;
 	"""
 	df = connect(sql)
+	df["JobTenderDate"] = pd.to_datetime(df["JobTenderDate"], errors="coerce")
+	return df
+
+
+@ st.cache_data(ttl=60*60, show_time=True, show_spinner=True)
+def load_job_numbers(low_date: datetime.date, high_date: datetime.date, valid_prefixes: Optional[list] = None) -> pd.DataFrame:
+	df = load_job_numbers_cached()
+	valid_prefixes = [] if valid_prefixes is None else valid_prefixes
+	df = df.loc[(low_date <= df["JobTenderDate"].dt.date) & (df["JobTenderDate"].dt.date <= high_date)]
+	for prefix in valid_prefixes:
+		df = df.loc[df["Job"].str.startswith(prefix)]
 	return df
 
 
@@ -4165,14 +4258,62 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_sect
 # elif pills_search_mode == op_search_mode_by_so:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_job):
 	# Job
-	df_jobs = load_job_numbers()
+
+	with st.popover("filter"):
+		k_slider_dates_job: str = "key_slider_dates_job"
+		dn = datetime.datetime.now().date()
+		min_date = datetime.timedelta(days=(-365 * 1.5) // 1) + dn
+		max_date = datetime.timedelta(days=(365 * 1.5) // 1) + dn
+		dd = (max_date - min_date).days
+		d4 = dd // 4
+		st.session_state.setdefault(k_slider_dates_job, (datetime.timedelta(days=-d4) + dn, datetime.timedelta(days=d4) + dn))
+		slider_dates_job = st.slider(
+			label="Date Range:",
+			key=k_slider_dates_job,
+			min_value=min_date,
+			max_value=max_date,
+			help=f"Date filtering is applied to the job tender date field."
+		)
+
+		k_checkbox_top_level_only: str = "key_checkbox_top_level_only"
+		st.session_state.setdefault(k_checkbox_top_level_only, False)
+		checkbox_top_level_only = st.checkbox(
+			label="Top Level Jobs Only?",
+			key=k_checkbox_top_level_only,
+			help=f"Top level jobs are 8-digit Work Order numbers beginning with a '1'."
+		)
+
+	low_date, high_date = slider_dates_job
+	df_jobs = load_job_numbers(
+		low_date=low_date,
+		high_date=high_date,
+		valid_prefixes=["1"] if checkbox_top_level_only else []
+	)
 	# k_checkbox_top
-	display_df_paginated(
+	stdf_jobs = display_df_paginated(
 		df_jobs,
 		"Jobs",
-		batch_size_options=(100, 500, 5000),
-		key=f"key_ddp_jobs"
+		batch_size_options=(500, 1500, 5000),
+		key=f"key_ddp_jobs",
+		selection_mode="single-row",
+		on_select="rerun"
 	)
+
+	df_sel_jobs: pd.DataFrame = get_selected_rows(df_jobs, stdf_jobs, df_jobs.columns, n=None)
+	if isinstance(df_sel_jobs, pd.DataFrame) and (not df_sel_jobs.empty):
+		ser_sel_job: pd.Series = df_sel_jobs.reset_index().iloc[0]
+		job: str = ser_sel_job["Job"]
+		df_job_allocs: pd.DataFrame = load_allocations(job=job)
+
+		stdf_sel_job_allocs = display_df_paginated(
+			df_job_allocs,
+			"Allocations",
+			key=f"stdf_sel_job_allocs",
+			selection_mode="multi-row",
+			on_select="rerun"
+		)
+
+		textbox_stockcode = get_selected_rows(df_job_allocs, stdf_sel_job_allocs, "StockCode", n=None)
 
 # elif pills_search_mode == op_search_mode_by_po:
 elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_po):
@@ -4467,7 +4608,7 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_so):
 			# so_bins = map(lambda v: str(v).strip().lower(), df_selected_sos["DefaultBin"].dropna())
 			df_sos_bins = df_selected_sos[["DefaultBin", "MStockCode"]]
 			with st.expander("Details"):
-				bin_maps = generate_bin_maps(
+				bin_maps, missed_reported = generate_bin_maps(
 					df_stocks=df_sos_bins
 				)
 
@@ -4928,16 +5069,30 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_pick
 					key=f"{report_file_name}_drive_3"
 				)
 
-				bin_maps = generate_bin_maps(
+				bin_maps_hawk, missed_reported_hawk = generate_bin_maps(
 					df_selected_pick_list,
 					col_bin="Bin",
-					col_stock="StockCode"
+					col_stock="StockCode",
+					do_report=False,
+					building="hawkins"
 				)
 
-				bin_maps_hawkins = [val for val in bin_maps if
+				bin_maps_mont, missed_reported_mont = generate_bin_maps(
+					df_selected_pick_list,
+					col_bin="Bin",
+					col_stock="StockCode",
+					do_report=False,
+					building="montana"
+				)
+
+				with st.expander(f"Stockcodes that could not be mapped:", expanded=False):
+					for rpt in missed_reported_hawk.union(missed_reported_mont):
+						st.info(rpt)
+
+				bin_maps_hawkins = [val for val in bin_maps_hawk if
 									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_VMI,
 															BUILDING_CODE_HAWKINS, BUILDING_CODE_UNKNOWN)]
-				bin_maps_montana = [val for val in bin_maps if
+				bin_maps_montana = [val for val in bin_maps_mont if
 									val["building_code"] in (BUILDING_CODE_BOTH, BUILDING_CODE_MONTANA)]
 
 				rotation_deg = 90
@@ -5017,8 +5172,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shop
 		key="key_stdf_shopclock"
 	)
 
-	st.divider()
-
 	k_checkbox_include_machines: str = "key_checkbox_include_machines"
 	checkbox_include_machines = st.session_state.setdefault(k_checkbox_include_machines, False)
 
@@ -5055,8 +5208,6 @@ elif pills_search_mode == options_pills_search_mode.index(op_search_mode_by_shop
 			label="Include NP?",
 			key=k_checkbox_include_np
 		)
-
-		st.divider()
 
 		radio_colour_by = st.radio(
 			label="Colour By:",
@@ -6348,14 +6499,15 @@ if show_debug and (user in admin_end_users):
 
 found_stockcode = False
 
-df_data = load_layout_data(building="hawkins")
-df_layout = df_data["Layout"]
-df_legend = df_data["Legend"]
-df_sections = df_data["ShelfSections"]
-df_shelves = df_data["Shelves"]
+# df_data = load_layout_data(building="hawkins")
+# df_layout_hawk = df_data["Layout"]
+# df_legend_hawk = df_data["Legend"]
+# df_sections_hawk = df_data["ShelfSections"]
+# df_shelves_hawk = df_data["Shelves"]
 found_map_to_bin: list = []
 bin_locations = []
 selectbox_stockcode = None
+bin_location = None
 
 if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(textbox_stockcode, pd.DataFrame) and not textbox_stockcode.empty):
 
@@ -6810,95 +6962,116 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 			on="StockCode",
 			how="left"
 		)
-		# st.write("instance pd")
-		# st.write(textbox_stockcode)
+		st.write("instance pd")
+		st.write(textbox_stockcode)
 		bin_locations = textbox_stockcode["DefaultBin"].dropna().unique().tolist()
 
-	if bin_locations:
-		bin_locations = [bl.lower().strip() for bl in bin_locations]
-		df_bin_shelf = df_shelves.loc[df_shelves["Shelf"].str.lower().str.strip().isin(bin_locations)]
-		# display_df(
-		# 	df_bin_shelf,
-		# 	"df_bin_shelf"
-		# )
-		if not df_bin_shelf.empty:
-			for i, row in df_bin_shelf.iterrows():
-				# ser_bin_section = df_bin_shelf.iloc[0]
-				bin_location = row["Shelf"]
-				bin_section = row["Section"]
-				bin_section_id = row["ShelfSectionID"]
-				bin_shelf_row = row["ShelfRow"]
+	# if bin_locations:
+	# 	bin_locations = [bl.lower().strip() for bl in bin_locations]
+	# 	df_bin_shelf = df_shelves_hawk.loc[df_shelves_hawk["Shelf"].str.lower().str.strip().isin(bin_locations)]
+	# 	st.write(f"bin_locations")
+	# 	st.write(bin_locations)
+	# 	display_df(
+	# 		df_bin_shelf,
+	# 		"df_bin_shelf"
+	# 	)
+	# 	# if not df_bin_shelf.empty:
+	# 	# 	for i, row in df_bin_shelf.iterrows():
+	# 	# 		# ser_bin_section = df_bin_shelf.iloc[0]
+	# 	# 		bin_location = row["Shelf"]
+	# 	# 		bin_section = row["Section"]
+	# 	# 		bin_section_id = row["ShelfSectionID"]
+	# 	# 		bin_shelf_row = row["ShelfRow"]
+	# 	#
+	# 	# 		df_bin_shelf_section = df_sections_hawk.loc[df_sections_hawk["ID"] == bin_section_id]
+	# 	# 		if not df_bin_shelf_section.empty:
+	# 	# 			ser_bin_shelf_section = df_bin_shelf_section.iloc[0]
+	# 	# 			try:
+	# 	# 				bsr = int(bin_shelf_row)
+	# 	# 			except (ValueError, TypeError):
+	# 	# 				bsr = bin_shelf_row
+	# 	# 			found_map_to_bin.append(dict(
+	# 	# 				p_shelf=ser_bin_shelf_section["ParentShelf"],
+	# 	# 				group=ser_bin_shelf_section["Group"],
+	# 	# 				x0=ser_bin_shelf_section["X0"],
+	# 	# 				x1=ser_bin_shelf_section["X1"],
+	# 	# 				y0=ser_bin_shelf_section["Y0"],
+	# 	# 				y1=ser_bin_shelf_section["Y1"],
+	# 	# 				section=bin_section,
+	# 	# 				section_id=bin_section_id,
+	# 	# 				shelf_row=bsr,
+	# 	# 				bin_location=bin_location,
+	# 	# 				stockcode=", ".join(
+	# 	# 					df_parts[df_parts["DefaultBin"].str.lower().str.strip() == bin_location.lower().strip()].merge(
+	# 	# 						df_bin_shelf,
+	# 	# 						left_on="DefaultBin",
+	# 	# 						right_on="Shelf",
+	# 	# 						how="inner"
+	# 	# 					)["StockCode"].dropna().unique().tolist()
+	# 	# 				)
+	# 	# 			))
+	# 	#
+	# 	# 			x0 = found_map_to_bin[-1]["x0"]
+	# 	# 			y0 = found_map_to_bin[-1]["y0"]
+	# 	# 			x1 = found_map_to_bin[-1]["x1"]
+	# 	# 			y1 = found_map_to_bin[-1]["y1"]
+	# 	# 			w = x1 - x0
+	# 	# 			h = y1 - y0
+	# 	# 			found_map_to_bin[-1]["w"] = w
+	# 	# 			found_map_to_bin[-1]["h"] = h
+	# 	# 			cx = x0 + w
+	# 	# 			cy = y0 + h
+	# 	# 			found_map_to_bin[-1]["cx"] = cx
+	# 	# 			found_map_to_bin[-1]["cy"] = cy
+	# 	#
+	# 	# 			if not st.session_state.get(k_use_full_map_dot_size, False):
+	# 	# 				ds = st.session_state.get(k_map_dot_size, 1)
+	# 	# 				wd = (ds - w) / 2
+	# 	# 				hd = (ds - h) / 2
+	# 	# 				x_0 = x0 - wd
+	# 	# 				x_1 = x1 + wd
+	# 	# 				y_0 = y0 - hd
+	# 	# 				y_1 = y1 + hd
+	# 	# 				cx = x_0 + (ds / 2)
+	# 	# 				cy = y_0 + (ds / 2)
+	# 	#
+	# 	# 				found_map_to_bin[-1].update({
+	# 	# 					"x0": x_0,
+	# 	# 					"y0": y_0,
+	# 	# 					"x1": x_1,
+	# 	# 					"y1": y_1,
+	# 	# 					"w": ds,
+	# 	# 					"h": ds,
+	# 	# 					"cx": cx,
+	# 	# 					"cy": cy
+	# 	# 				})
 
-				df_bin_shelf_section = df_sections.loc[df_sections["ID"] == bin_section_id]
-				if not df_bin_shelf_section.empty:
-					ser_bin_shelf_section = df_bin_shelf_section.iloc[0]
-					try:
-						bsr = int(bin_shelf_row)
-					except (ValueError, TypeError):
-						bsr = bin_shelf_row
-					found_map_to_bin.append(dict(
-						p_shelf=ser_bin_shelf_section["ParentShelf"],
-						group=ser_bin_shelf_section["Group"],
-						x0=ser_bin_shelf_section["X0"],
-						x1=ser_bin_shelf_section["X1"],
-						y0=ser_bin_shelf_section["Y0"],
-						y1=ser_bin_shelf_section["Y1"],
-						section=bin_section,
-						section_id=bin_section_id,
-						shelf_row=bsr,
-						bin_location=bin_location,
-						stockcode=", ".join(
-							df_parts[df_parts["DefaultBin"].str.lower().str.strip() == bin_location.lower().strip()].merge(
-								df_bin_shelf,
-								left_on="DefaultBin",
-								right_on="Shelf",
-								how="inner"
-							)["StockCode"].dropna().unique().tolist()
-						)
-					))
+	if isinstance(textbox_stockcode, str):
+		df_stocks = pd.DataFrame({"StockCode": [textbox_stockcode], "DefaultBin": [bin_location]})
+	else:
+		df_stocks = textbox_stockcode.copy()
 
-					x0 = found_map_to_bin[-1]["x0"]
-					y0 = found_map_to_bin[-1]["y0"]
-					x1 = found_map_to_bin[-1]["x1"]
-					y1 = found_map_to_bin[-1]["y1"]
-					w = x1 - x0
-					h = y1 - y0
-					found_map_to_bin[-1]["w"] = w
-					found_map_to_bin[-1]["h"] = h
-					cx = x0 + w
-					cy = y0 + h
-					found_map_to_bin[-1]["cx"] = cx
-					found_map_to_bin[-1]["cy"] = cy
+	found_map_to_bin_hawk, missed_reported_hawk = generate_bin_maps(
+		df_stocks,
+		col_stock="StockCode",
+		building="hawkins",
+		do_report=False
+	)
+	found_map_to_bin_mont, missed_reported_mont = generate_bin_maps(
+		df_stocks,
+		col_stock="StockCode",
+		building="Montana",
+		do_report=False
+	)
 
-					if not st.session_state.get(k_use_full_map_dot_size, False):
-						ds = st.session_state.get(k_map_dot_size, 1)
-						wd = (ds - w) / 2
-						hd = (ds - h) / 2
-						x_0 = x0 - wd
-						x_1 = x1 + wd
-						y_0 = y0 - hd
-						y_1 = y1 + hd
-						cx = x_0 + (ds / 2)
-						cy = y_0 + (ds / 2)
-
-						found_map_to_bin[-1].update({
-							"x0": x_0,
-							"y0": y_0,
-							"x1": x_1,
-							"y1": y_1,
-							"w": ds,
-							"h": ds,
-							"cx": cx,
-							"cy": cy
-						})
-
-	with st.expander(f"Map", expanded=bool(found_map_to_bin)):
+	with st.expander(f"Map", expanded=bool(found_map_to_bin_hawk) or bool(found_map_to_bin_mont)):
 		if show_debug and (user in admin_end_users):
 			with st.container(border=True, horizontal=True):
 				st.write("admin_debugging")
 				st.write("D")
-				st.write(found_map_to_bin)
-		if found_map_to_bin:
+				st.write(found_map_to_bin_hawk)
+				st.write(found_map_to_bin_mont)
+		if found_map_to_bin_hawk or found_map_to_bin_mont:
 			st.subheader("Map Controls")
 			show_sections = False
 			rotation_deg = 90
@@ -6918,21 +7091,56 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 				value=Colour("#CC1112").hex_code
 			)
 
-			fig = load_hawkins_map(
-				building="hawkins",
-				found_map_to_bin=found_map_to_bin,
-				dot_colour=colour_dot,
-				title=f"Bin {bin_location} shown on map:",
-				deg_rot=rotation_deg
-			)
+			if bin_location is None:
+				title_hawk = "Part Locations Hawkins Parts Room"
+				title_mont = "Part Locations Montana Parts Room"
+			else:
+				title_hawk = f"Bin {bin_location} shown on map:"
+				title_mont = f"Bin {bin_location} shown on map:"
 
-			fig.update_layout(
-				width=1200,
-				height=700
-			)
-			chart = st.plotly_chart(
-				fig
-			)
+			if found_map_to_bin_hawk:
+				fig_hawk = load_hawkins_map(
+					building="hawkins",
+					found_map_to_bin=found_map_to_bin_hawk,
+					dot_colour=colour_dot,
+					title=title_hawk,
+					deg_rot=rotation_deg
+				)
+
+				fig_hawk.update_layout(
+					width=1200,
+					height=700
+				)
+				chart_hawk = st.plotly_chart(
+					fig_hawk
+				)
+			else:
+				st.info(f"No parts found to be located at Hawkins Parts Room")
+
+			if found_map_to_bin_mont:
+				fig_mont = load_hawkins_map(
+					building="montana",
+					found_map_to_bin=found_map_to_bin_mont,
+					dot_colour=colour_dot,
+					title=title_mont,
+					deg_rot=rotation_deg - 90
+				)
+
+				fig_mont.update_layout(
+					width=1200,
+					height=700
+				)
+				chart_hawk = st.plotly_chart(
+					fig_mont
+				)
+			else:
+				st.info(f"No parts found to be located at Montana Parts Room")
+
+			to_report: set = missed_reported_hawk
+			to_report.update(missed_reported_mont)
+			st.write("Missed StockCodes:")
+			for rpt in to_report:
+				st.warning(rpt)
 
 		# st.session_state["selected_section_id"] = None
 		# bg_map = build_legend_bg_map(df_legend)
@@ -7019,7 +7227,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 		# 	fig
 		# )
 		else:
-			st.info(f"Could not locate '{bin_locations}' on the map.")
+			st.info(f"Could not locate '{found_map_to_bin_hawk + found_map_to_bin_mont}' on the map.")
 
 	if (isinstance(textbox_stockcode, pd.DataFrame) and (not textbox_stockcode.empty)) or ((isinstance(textbox_stockcode, str)) and (textbox_stockcode or selectbox_stockcode)):
 		selectbox_stockcode = selectbox_stockcode or textbox_stockcode
