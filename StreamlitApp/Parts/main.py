@@ -6563,6 +6563,7 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 
 				bin_location: str = ser_stock["DefaultBin"]
 				qty_on_hand: float = ser_stock["QtyOnHand"]
+				uom: float = ser_stock["StockUom"]
 
 				show_cols_info = [col for col in ser_stock.index if "qty" not in str(col).lower()]
 				show_cols_qty = [col for col in ser_stock.index if "qty" in str(col).lower()]
@@ -6604,12 +6605,16 @@ if (isinstance(textbox_stockcode, str) and textbox_stockcode) or (isinstance(tex
 
 				with cols_information[1]:
 					st.metric(
+						"StockCode:",
+						value=selectbox_stockcode
+					)
+					st.metric(
 						"Bin:",
 						value=bin_location
 					)
 					st.metric(
 						"On Hand:",
-						value=qty_on_hand
+						value=f"{qty_on_hand} {uom}"
 					)
 					if st.button(
 							label="Submit a change?"

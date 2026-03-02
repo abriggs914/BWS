@@ -2,6 +2,7 @@ from typing import Literal, Optional, Iterable, Any
 
 import math
 import pandas as pd
+from numba.cuda.kernels.transpose import transpose
 from streamlit_js_eval import streamlit_js_eval
 
 import streamlit as st
@@ -16,8 +17,8 @@ from colour_utility import Colour
 VERSION = \
 	"""	
     Streamlit utility functions
-    Version..............1.12
-    Date...........2026-02-24
+    Version..............1.13
+    Date...........2026-02-26
     Author(s)....Avery Briggs
     """
 
@@ -354,7 +355,12 @@ def get_selected_rows(df: pd.DataFrame, stdf, cols, n=1) -> pd.DataFrame | pd.Se
 		if stdf["selection"]:
 			if stdf["selection"]["rows"]:
 				if n == 1:
-					return df.reset_index().loc[stdf["selection"]["rows"][0], cols]
+					# st.write(f"GSR {n=}, {df.shape=}")
+					# st.write(stdf["selection"]["rows"][0])
+					# st.write(f"{df.columns=}")
+					# st.write(df.to_dict())
+					# st.write(stdf)
+					return pd.DataFrame(df.reset_index().rename(columns=cols_og).loc[stdf["selection"]["rows"][0], cols]).transpose().rename(columns={v: k for k, v in cols_og.items()})
 				else:
 					if n is None:
 						n = len(stdf["selection"]["rows"])
