@@ -9,6 +9,42 @@ from pytesseract import Output
 from itertools import groupby
 
 
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+VERSION = \
+    """	
+    General OCR Utility Functions for Pytesseract
+    Version..............1.01
+    Date...........2026-03-06
+    Author(s)....Avery Briggs
+    """
+
+
+def VERSION_DETAILS():
+    return VERSION.lower().split("version")[0].strip()
+
+
+def VERSION_NUMBER():
+    return float(".".join(VERSION.lower().split("version")[-1].split("date")[0].split(".")[-2:]).strip())
+
+
+def VERSION_DATE():
+    return datetime.datetime.strptime(VERSION.lower().split("date")[-1].split("author")[0].split(".")[-1].strip(),
+                                      "%Y-%m-%dictionary")
+
+
+def VERSION_AUTHORS():
+    return [w.removeprefix(".").strip().title() for w in VERSION.lower().split("author(s)")[-1].split("..") if
+            w.strip()]
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\abriggs\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 
 def clean_numeric(txt):
