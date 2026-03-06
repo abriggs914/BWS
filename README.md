@@ -20,14 +20,14 @@ Some examples of work completed at BWS:
 - Below are screenshots primarily from MS Access and Streamlit
   environments.
 
-![](-images/media/image1.png){width="6.5in"
+![](images/media/image1.png){width="6.5in"
 height="3.1381944444444443in"}
 
 Output of a program that walks file trees and gathers documents based on
 pattern match for exporting. Reports any missed files such that
 appropriate personnel can be contacted to produce these files.
 
-![](-images/media/image2.png){width="6.5in"
+![](images/media/image2.png){width="6.5in"
 height="3.9506944444444443in"}
 
 MS Access parameter form for custom printing of the production schedule.
@@ -36,44 +36,40 @@ wish to see certain dates or lines. Presets streamline data input to
 select information directed related to the user, such as printer
 location and lines.
 
-![](-images/media/image3.png){width="6.5in"
+![](images/media/image3.png){width="6.5in"
 height="2.6118055555555557in"}
 
 View of the main Access database landing menu. The bottom right
 indicates a version control warning.
 
-![](-images/media/image4.png){width="6.5in" height="3.65625in"}
+![](images/media/image4.png){width="6.5in" height="3.65625in"}
 
-![](-images/media/image5.png){width="6.5in"
-height="3.053472222222222in"}
+![](images/media/image5.png){width="6.5in" height="3.053472222222222in"}
 
 Custom heat map applied to the Main menu of a large Access database.
 Used to track program usage, and data pipelines, allowing senior
 management review how data is access, and where and who.
 
-![](-images/media/image6.png){width="6.5in"
-height="5.779166666666667in"}
+![](images/media/image6.png){width="6.5in" height="5.779166666666667in"}
 
 Input and Edit form for IT issues from an internal department view.
 Allows internal IT communicate and track issues. Uses SQL triggers to
 automate email notifications.
 
-![](-images/media/image7.png){width="6.5in"
+![](images/media/image7.png){width="6.5in"
 height="2.1465277777777776in"}
 
 Streamlit interface to query database values using custom search
 criteria. Used internally to automaticity generate the query's code for
 IT to edit existing forms highlighting answers to common queries.
 
-![](-images/media/image8.png){width="6.5in"
-height="3.966666666666667in"}
+![](images/media/image8.png){width="6.5in" height="3.966666666666667in"}
 
 Testing area menu in Access offering users the ability to access project
 demos, and sensitive work-in-progress components. Once a project was
 deemed solid enough here it was moved to another portion of the program.
 
-![](-images/media/image9.png){width="6.5in"
-height="4.384027777777778in"}
+![](images/media/image9.png){width="6.5in" height="4.384027777777778in"}
 
 This form allows a user to automatically export and import text file
 resources between accdb files. Access uses text files to save resources
@@ -82,13 +78,13 @@ constantly checking-out and returning one master copy of the DB, this
 offered us the ability to work concurrently if we prefixed our work with
 a project identifier. Then we could move files quickly and safely.
 
-![](-images/media/image10.png){width="6.5in"
+![](images/media/image10.png){width="6.5in"
 height="3.201388888888889in"}
 
 Streamlit dashboard charting for inventory allocations by model.
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image11.png){width="6.5in"
+incorrect.](images/media/image11.png){width="6.5in"
 height="3.1534722222222222in"}
 
 Generic dashboard for sales margin analysis. View is initial, showcasing
@@ -96,20 +92,20 @@ the breadth of data that can be quickly referenced, stored and rendered
 is large.
 
 ![A graph with different colored squares AI-generated content may be
-incorrect.](-images/media/image12.png){width="6.5in"
+incorrect.](images/media/image12.png){width="6.5in"
 height="2.0118055555555556in"}
 
 Simple bar chart showing side-by-side comparison of some high-level job
 totals.
 
-![](-images/media/image13.png){width="6.5in"
+![](images/media/image13.png){width="6.5in"
 height="3.959722222222222in"}
 
 Plotly express timeline showing weeks worth of employee usages of
 certain access programs. Values are shown as aggregates of whole days
 effectively showing how much each user uses each access function.
 
-![](-images/media/image14.png){width="6.5in"
+![](images/media/image14.png){width="6.5in"
 height="3.8020833333333335in"}
 
 Experimental program demonstrating a Work Order's StockCode allocations
@@ -117,11 +113,11 @@ as a graph. Colour highlighting indicates issue status. Graph is
 interactive allowing selection to view the StockCode nodes.
 
 ![A screenshot of a graph AI-generated content may be
-incorrect.](-images/media/image15.png){width="6.5in"
+incorrect.](images/media/image15.png){width="6.5in"
 height="3.3159722222222223in"}
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image16.png){width="6.5in"
+incorrect.](images/media/image16.png){width="6.5in"
 height="3.276388888888889in"}
 
 Plotly charts showcasing figures from production and financial
@@ -130,20 +126,20 @@ zooming, and leverages the built-in functions of this modern plotting
 library (hover tips, exporting snapshots, etc...).
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image17.png){width="6.5in" height="3.775in"}
+incorrect.](images/media/image17.png){width="6.5in" height="3.775in"}
 
 Margin performance for a selected list of Work Orders, plotting a
 trend-line to provide improved insight. Graphs used in finance and BoM
 departments to monitor and present sales trends for specified groupings
 or selections.
 
-![](-images/media/image18.png){width="6.5in" height="3.15in"}
+![](images/media/image18.png){width="6.5in" height="3.15in"}
 
 Experimental program in Streamlit to demonstrate word patterns via a
 word-cloud. Currently showing model names for two separate companies.
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image19.png){width="6.5in"
+incorrect.](images/media/image19.png){width="6.5in"
 height="3.157638888888889in"}
 
 IT request form recreated in Streamlit, offers an improvement to the
@@ -153,8 +149,8 @@ a request is created. Build-time and maintenance is also a significant
 improvement to VBA solutions.
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image20.png){width="6.5in"
-height="3.115972222222222in"}![](-images/media/image21.png){width="6.5in"
+incorrect.](images/media/image20.png){width="6.5in"
+height="3.115972222222222in"}![](images/media/image21.png){width="6.5in"
 height="3.345138888888889in"}
 
 Streamlit front-end for SQL server solutions. Program quickly writes
@@ -165,7 +161,7 @@ for query style. Used by IT department to dynamically generate
 boilerplate to improve development times. Also maintained code integrity
 between developer's work.
 
-![](-images/media/image22.png){width="6.5in"
+![](images/media/image22.png){width="6.5in"
 height="3.0930555555555554in"}
 
 Continuation of SQL generation program. Allows user to create a generic
@@ -174,10 +170,10 @@ create the specified table with an accompanying history table, and two
 triggers to maintain history and LastModified DateActive / DateInActive
 columns.
 
-![](-images/media/image23.png){width="6.5in"
+![](images/media/image23.png){width="6.5in"
 height="3.765277777777778in"}
 
-![](-images/media/image24.png){width="6.5in"
+![](images/media/image24.png){width="6.5in"
 height="2.0993055555555555in"}
 
 Using geopy and Streamlit map widget, I can leverage MapBox, or google
@@ -188,7 +184,7 @@ sales-person, dealer, or model data based on given criteria. Can graph
 sales points in 2D and 3D, adding a dimension for frequency or other
 sales values.
 
-![](-images/media/image25.png){width="6.5in"
+![](images/media/image25.png){width="6.5in"
 height="3.0930555555555554in"}
 
 Created a Streamlit front-end to access common code resources used by
@@ -200,12 +196,12 @@ company operations. Extendable and scalable for new snippets provided by
 developers. Used an internal tag system to relate or connect resources.
 
 ![A screenshot of a computer AI-generated content may be
-incorrect.](-images/media/image26.png){width="6.5in" height="2.90625in"}
+incorrect.](images/media/image26.png){width="6.5in" height="2.90625in"}
 
 Streamlit dashboard interface to compare a selected quote against recent
 performance, specifically production speed, checkpoint to checkpoint.
 
-![](-images/media/image27.png){width="6.5in"
+![](images/media/image27.png){width="6.5in"
 height="6.620833333333334in"}
 
 Streamlit program to view PDF Work Orders in a meeting setting. Program
