@@ -1,10 +1,14 @@
+# BWS Internal Tools and Automation
+
+This repository contains examples of internal software tools, dashboards, and automation systems developed to support operational workflows at BWS Manufacturing.
+
 Some examples of work completed at BWS:
 
 - Work performed primarily using Python, SQL Server 2008, and MS Access.
 
 - Notable libraries and modules used; streamlit, pandas, numpy, plotly, altair, matplotlib, streamlit_js_eval, streamlit_extras, streamlit.components, geopy, cv2, pytesseract, pdfplumber, pyPDF2, asyncio, subprocess, pyodbc, moviepy, re, sqlparse, difflib, json, csv, PIL, wkhtmltopdf, pdfkit, pydeck, secrets, hashlib, tkinter, customtkinter, pyautogui, plyer, locale, shutil
 
-- Focuses mainly on Dashboard generation, interactive charting, UI and UX development, automation, data and resource consolidation and other general process improvement ventures.
+- Focuses primarily on dashboard development, interactive data visualization, UI/UX tooling, automation, data consolidation, and other process-improvement initiatives.
 
 - The goal was to increase data visibility, reduce need and frequency of reconciliation, and produce robust histories recording how data was changed including all relevant details.
 
